@@ -1,93 +1,192 @@
-@use 'gauzy/_gauzy-overrides' as *;
+@use 'themes' as *;
+@use '@shared/panel' as *;
+
+// This component renders in exactly ONE place — the Quick Settings panel, via
+// `ngx-theme-selector-container [isClassic]="false"` — so it is styled on the
+// panel scale directly instead of being overridden from its parent.
+//
+// What it replaces: an empty `nb-select` used as a toggle (see the template),
+// and 48px rows carrying a 120px-wide screenshot each. Eight of those is a
+// filmstrip inside a 22.5rem panel; the thumbnail only has to say "light" or
+// "dark" and roughly which palette, which a 44px chip does.
+//
+// NOTE ON SELECTORS: the list is rendered by a popover, i.e. into
+// `.cdk-overlay-container` at the end of the document. Angular bakes this
+// component's `_ngcontent` attribute into those elements when it creates them,
+// so plain class selectors still reach them — but anything written under
+// `:host` does NOT, because the elements are no longer inside the host. Every
+// rule below the trigger is therefore deliberately top-level. The popover
+// CONTAINER itself (`nb-popover`) comes from Nebular, not from this template,
+// so its chrome lives in the global `_overlays.scss` under `.gz-theme-popover`.
+
+:host {
+  display: block;
+  width: 100%;
+}
 
 .theme-card {
   display: flex;
   flex-direction: column;
   width: 100%;
 }
-.theme-container {
+
+// ── Trigger ──────────────────────────────────────────────────────────────────
+// Laid out like the control rows above it (label left, value right) so the four
+// preference rows share one left edge and one right edge.
+.theme-trigger {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  gap: 0.75rem;
   width: 100%;
-}
-.themes{
-  max-height: calc(100vh - 25rem);
-  overflow-y: auto;
-}
-.card-container {
-  background: nb-theme(gauzy-card-2);
-  margin-top: 8px;
-  border-radius: nb-theme(border-radius);
-  // Compact option: small thumbnail on the left, theme name on the right
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 48px;
-  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: nb-theme(text-basic-color);
+  font-family: inherit;
+  font-size: $panel-text-row;
+  font-weight: 400;
+  line-height: 1rem;
+  text-align: start;
   cursor: pointer;
-  &.selected {
-    .check {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: nb-theme(text-primary-color);
-      font-size: 8px;
-      font-weight: 900;
-      &:before {
-        font-family: 'Font Awesome 7 Free';
-        content: '\f00c';
-      }
-    }
-  }
-  .image-container {
-    order: -1; // thumbnail sits left of the name (markup keeps the name first)
-    flex: 0 0 auto;
-    width: 120px;
-    height: 100%;
-    overflow: hidden;
-    position: relative;
-    img {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: left top;
-    }
-  }
-  span {
-    padding: 0 8px;
-    font-size: 13px;
-    flex: 1 1 auto;
-    min-width: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .check {
-    width: 1rem;
-    height: 1rem;
-    background-color: white;
-    border-radius: 50%;
-    box-shadow: var(--gauzy-shadow) inset;
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 2px;
+    border-radius: $panel-row-radius;
   }
 }
-:host .theme-card ::ng-deep {
-  nb-select.appearance-outline .select-button {
-    border-width: 2px;
-    border-color: rgba($color: rgba(126, 126, 143), $alpha: 0.5);
+
+// The right half is the actual control surface: same 1.75rem hairline box as
+// the selects in the rows above, so the column has one right edge.
+.theme-trigger-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+  flex: 0 0 auto;
+  width: 8.75rem;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  border-radius: $panel-row-radius;
+  box-shadow: inset 0 0 0 1px #{$panel-hairline};
+  transition: background-color 0.12s ease-in-out;
+
+  .theme-trigger:hover & {
+    background-color: #{$panel-hover-tint};
   }
-  nb-select.appearance-outline.status-basic .select-button.placeholder {
-    color: rgba($color: rgba(126, 126, 143), $alpha: 1);
+}
+
+.theme-trigger-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.theme-trigger-chevron {
+  flex: 0 0 auto;
+  width: 0.75rem;
+  height: 0.75rem;
+  font-size: 0.75rem;
+  color: nb-theme(text-hint-color);
+  transition: transform 0.15s ease-in-out;
+
+  .theme-trigger.open & {
+    transform: rotate(180deg);
   }
-  nb-select.size-small .select-button {
-    font-size: nb-theme(select-small-text-font-size);
-    font-weight: nb-theme(select-small-text-font-weight);
-    line-height: nb-theme(select-small-text-line-height);
+}
+
+// ── Options ──────────────────────────────────────────────────────────────────
+// Sized here rather than on the popover: the overlay is width-fit-to-content,
+// so the list is what decides how wide the panel comes out.
+.gz-theme-list {
+  display: flex;
+  flex-direction: column;
+  gap: $panel-gap;
+  width: 13.5rem;
+  max-height: min(24rem, 60vh);
+  @include gauzy-panel-scroll();
+}
+
+// A flat row like every other row in the panel — a thumbnail chip, the name,
+// and a check on the current one. No resting fill and no per-row card: eight
+// filled cards in a column was the "list of blocks" look the rest of the app
+// has already moved away from.
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.25rem $panel-row-pad-y;
+  border: 0;
+  border-radius: $panel-row-radius;
+  background-color: transparent;
+  color: nb-theme(text-basic-color);
+  font-family: inherit;
+  font-size: $panel-text-row;
+  font-weight: 400;
+  line-height: 1rem;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease-in-out,
+    color 0.12s ease-in-out;
+
+  &:hover {
+    background-color: #{$panel-hover-tint};
   }
-  @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: -2px;
+  }
+
+  &.selected {
+    background-color: #{$panel-active-tint};
+    font-weight: 600;
+  }
+}
+
+.theme-thumb {
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 1.5rem;
+  overflow: hidden;
+  border-radius: 0.25rem;
+  // The screenshots are mostly flat colour at this size, so the chip needs its
+  // own hairline to stay legible against a surface of the same tone.
+  box-shadow: inset 0 0 0 1px #{$panel-hairline};
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: left top;
+  }
+}
+
+.theme-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+// Only the current theme carries the mark. It keeps its box either way, so the
+// names do not shift horizontally when the selection moves.
+.theme-check {
+  flex: 0 0 auto;
+  width: 0.75rem;
+  height: 0.75rem;
+  font-size: 0.75rem;
+  color: nb-theme(text-basic-color);
+  visibility: hidden;
+
+  .theme-option.selected & {
+    visibility: visible;
+  }
 }
