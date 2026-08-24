@@ -1,8 +1,15 @@
+jest.mock('dotenv', () => ({
+	config: jest.fn(() => ({ parsed: {} }))
+}));
+
+import * as dotenv from 'dotenv';
 import '../../core/entities/internal';
 
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { ID, IGetProfileActivity, IProfileActivity } from '@gauzy/contracts';
+import { knex as createKnex } from 'knex';
 import { MultiORM, MultiORMEnum } from '../../core/utils';
+import { ProfileActivityPeriod, resolveProfileActivityPeriod } from './profile-activity.helper';
 import { StatisticService } from './statistic.service';
 
 const TENANT_ID = '7d1c7e8d-a91a-4f58-a5ba-5aa4b7fb21fd';
@@ -65,6 +72,10 @@ class TestStatisticService extends StatisticService {
 
 	setProfileOrm(orm: MultiORM | string): void {
 		this.ormType = orm as MultiORM;
+	}
+
+	compileProfileActivityQuery(input: IGetProfileActivity, tenantId: ID, period: ProfileActivityPeriod): any {
+		return this.buildProfileActivityRowsQuery(input, tenantId, period);
 	}
 
 	protected assertProfileActivityAccess(input: IGetProfileActivity): Promise<ID> {
@@ -201,6 +212,14 @@ function expectNoRelationOrHydrationCalls(builder: Record<string, jest.Mock>): v
 		expect(builder[method]).not.toHaveBeenCalled();
 	}
 }
+
+describe('profile activity query spec environment isolation', () => {
+	it('hoists a no-op dotenv config mock before config, entity, and service imports', () => {
+		expect(jest.isMockFunction(dotenv.config)).toBe(true);
+		expect(dotenv.config).toHaveBeenCalled();
+		expect(dotenv.config()).toEqual({ parsed: {} });
+	});
+});
 
 describe('StatisticService profile activity query orchestration', () => {
 	it('finishes authorization before creating a TypeORM time-log builder', async () => {
@@ -363,6 +382,42 @@ describe('StatisticService TypeORM profile activity query shape', () => {
 });
 
 describe('StatisticService MikroORM/Knex profile activity query shape', () => {
+	it('compiles PostgreSQL grouping by the selected date with one timezone parameter identity', async () => {
+		const pgKnex = createKnex({ client: 'pg' });
+		const queryEvents = jest.fn();
+		pgKnex.on('query', queryEvents);
+		const service = new TestStatisticService(
+			{},
+			{ getKnex: () => pgKnex },
+			{ dbConnectionOptions: { type: DatabaseTypeEnum.postgres } },
+			jest.fn().mockResolvedValue(TENANT_ID)
+		);
+		service.setProfileOrm(MultiORMEnum.MikroORM);
+
+		try {
+			const compiledQuery = service.compileProfileActivityQuery(
+				request,
+				TENANT_ID,
+				resolveProfileActivityPeriod(request)
+			);
+			const native = compiledQuery.builder.toSQL().toNative();
+			const evidence = {
+				nativeSql: native.sql,
+				timezoneParameterPositions: native.bindings.flatMap((value: unknown, index: number) =>
+					value === 'Europe/Madrid' ? [index] : []
+				)
+			};
+
+			expect(evidence).toEqual({
+				nativeSql: expect.stringMatching(/\bgroup by 1\b/i),
+				timezoneParameterPositions: [0]
+			});
+			expect(queryEvents).not.toHaveBeenCalled();
+		} finally {
+			await pgKnex.destroy();
+		}
+	});
+
 	it.each([
 		[DatabaseTypeEnum.mysql, 'CHAR'],
 		[DatabaseTypeEnum.sqlite, 'TEXT'],
@@ -417,7 +472,7 @@ describe('StatisticService MikroORM/Knex profile activity query shape', () => {
 			'Europe/Madrid',
 			'date'
 		]);
-		expect(fixture.builder.groupByRaw).toHaveBeenCalledWith(dateSql, ['time_log.startedAt', 'Europe/Madrid']);
+		expect(fixture.builder.groupByRaw).toHaveBeenCalledWith('1');
 		expect(sql).toContain('SUM(EXTRACT(EPOCH FROM (?? - ??))) AS ??');
 		expect(sql).toContain("?? >= (CAST(? AS timestamptz) AT TIME ZONE 'UTC')");
 		expect(sql).toContain("?? < (CAST(? AS timestamptz) AT TIME ZONE 'UTC')");

@@ -302,7 +302,7 @@ export class StatisticService {
 						'duration'
 					])
 				])
-				.groupByRaw(dateExpression, ['time_log.startedAt', canonicalTimeZone]);
+				.groupByRaw('1');
 		} else {
 			const castType = dbType === DatabaseTypeEnum.mysql ? 'CHAR' : 'TEXT';
 			query.select([

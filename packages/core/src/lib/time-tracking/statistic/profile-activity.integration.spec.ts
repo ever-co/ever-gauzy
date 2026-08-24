@@ -1,3 +1,8 @@
+jest.mock('dotenv', () => ({
+	config: jest.fn(() => ({ parsed: {} }))
+}));
+
+import * as dotenv from 'dotenv';
 import '../../core/entities/internal';
 
 import { DatabaseTypeEnum } from '@gauzy/config';
@@ -223,6 +228,12 @@ class IntegrationStatisticService extends StatisticService {
 }
 
 describe('profile activity one-select BetterSqlite integration', () => {
+	it('hoists a no-op dotenv config mock before config, entity, and service imports', () => {
+		expect(jest.isMockFunction(dotenv.config)).toBe(true);
+		expect(dotenv.config).toHaveBeenCalled();
+		expect(dotenv.config()).toEqual({ parsed: {} });
+	});
+
 	it('runs the TypeORM production path with automatic soft-delete exclusion and no joins', async () => {
 		const capturedQueries: Array<{ sql: string; parameters?: unknown[] }> = [];
 		let capture = false;
