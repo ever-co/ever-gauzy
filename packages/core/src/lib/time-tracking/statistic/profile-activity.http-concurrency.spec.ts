@@ -10,6 +10,7 @@ jest.mock('@gauzy/config', () => ({
 		betterSqlite3: 'better-sqlite3',
 		mongodb: 'mongodb'
 	},
+	environment: { allowSuperAdminRole: false },
 	isBetterSqlite3: () => true,
 	isMySQL: () => false,
 	isPostgres: () => false,
@@ -47,8 +48,11 @@ jest.mock('../time-log/repository/type-orm-time-log.repository', () => ({
 jest.mock('../../employee/managed-employee.service', () => ({
 	ManagedEmployeeService: class ManagedEmployeeService {}
 }));
+jest.mock('../../role-permission/role-permission.service', () => ({
+	RolePermissionService: class RolePermissionService {}
+}));
 jest.mock('../../shared/guards', () => ({
-	TenantPermissionGuard: class TenantPermissionGuard {}
+	TenantPermissionGuard: jest.requireActual('../../shared/guards/tenant-permission.guard').TenantPermissionGuard
 }));
 jest.mock('../../shared/pipes', () => jest.requireActual('../../shared/pipes/use-validation.pipe'));
 
@@ -58,6 +62,7 @@ import { spawn } from 'node:child_process';
 import { AddressInfo } from 'node:net';
 import { isAbsolute, resolve } from 'node:path';
 import { CanActivate, Controller, ExecutionContext, Get, INestApplication } from '@nestjs/common';
+import { GUARDS_METADATA } from '@nestjs/common/constants';
 import { Test } from '@nestjs/testing';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { ID, IGetProfileActivity, IProfileActivity } from '@gauzy/contracts';
@@ -118,8 +123,19 @@ type FixtureTimeLog = {
 
 type VerifierMetrics = {
 	ok: boolean;
-	profile: { count: number; minMilliseconds: number; p95Milliseconds: number; maxMilliseconds: number };
-	liveness: { count: number; minMilliseconds: number; p95Milliseconds: number; maxMilliseconds: number };
+	errorCode?: string;
+	profile: {
+		count: number;
+		minMilliseconds: number | null;
+		p95Milliseconds: number | null;
+		maxMilliseconds: number | null;
+	};
+	liveness: {
+		count: number;
+		minMilliseconds: number | null;
+		p95Milliseconds: number | null;
+		maxMilliseconds: number | null;
+	};
 	thresholdsMilliseconds: {
 		profileP95Milliseconds: number;
 		livenessP95Milliseconds: number;
@@ -137,6 +153,10 @@ type ChildResult = {
 	stderrOverflow: boolean;
 	timedOut: boolean;
 };
+
+function finiteNumber(value: unknown): number | null {
+	return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
 
 const TimeLogSchema = new EntitySchema<FixtureTimeLog>({
 	name: 'ProfileActivityHttpConcurrencyTimeLog',
@@ -335,6 +355,15 @@ async function terminateAndWait(child: ReturnType<typeof spawn> | undefined): Pr
 jest.setTimeout(90_000);
 
 describe('profile activity loopback HTTP concurrency evidence', () => {
+	it('retains the production tenant guard class as the controller and override token', () => {
+		const actual = jest.requireActual<typeof import('../../shared/guards/tenant-permission.guard')>(
+			'../../shared/guards/tenant-permission.guard'
+		).TenantPermissionGuard;
+
+		expect(TenantPermissionGuard).toBe(actual);
+		expect(Reflect.getMetadata(GUARDS_METADATA, ProfileActivityController)).toEqual([actual]);
+	});
+
 	it('loads the actual service without consulting an ambient database type', () => {
 		const hadDatabaseType = Object.prototype.hasOwnProperty.call(process.env, 'DB_TYPE');
 		const previousDatabaseType = process.env.DB_TYPE;
@@ -448,6 +477,30 @@ describe('profile activity loopback HTTP concurrency evidence', () => {
 			expect(result.stdoutOverflow).toBe(false);
 			expect(result.stderrOverflow).toBe(false);
 			expect(result.signal).toBeNull();
+			const lines = result.stdout.trim().split(/\r?\n/u);
+			expect(lines).toHaveLength(1);
+			const metrics = JSON.parse(lines[0]) as VerifierMetrics;
+			if (result.code !== 0) {
+				const errorCode =
+					typeof metrics.errorCode === 'string' && /^[A-Z][A-Z0-9_]*$/u.test(metrics.errorCode)
+						? metrics.errorCode
+						: 'UNKNOWN_FAILURE';
+				console.info(
+					`PROFILE_ACTIVITY_HTTP_FAILURE ${JSON.stringify({
+						errorCode,
+						profile: {
+							count: finiteNumber(metrics.profile?.count),
+							p95Milliseconds: finiteNumber(metrics.profile?.p95Milliseconds),
+							maxMilliseconds: finiteNumber(metrics.profile?.maxMilliseconds)
+						},
+						liveness: {
+							count: finiteNumber(metrics.liveness?.count),
+							p95Milliseconds: finiteNumber(metrics.liveness?.p95Milliseconds),
+							maxMilliseconds: finiteNumber(metrics.liveness?.maxMilliseconds)
+						}
+					})}`
+				);
+			}
 			expect(result.code).toBe(0);
 			expect(result.stderr).toBe('');
 			const queryPath = profileQueryPath();
@@ -463,9 +516,6 @@ describe('profile activity loopback HTTP concurrency evidence', () => {
 			for (const forbidden of Object.values(forbiddenValues)) {
 				expect(result.stdout).not.toContain(forbidden);
 			}
-			const lines = result.stdout.trim().split(/\r?\n/u);
-			expect(lines).toHaveLength(1);
-			const metrics = JSON.parse(lines[0]) as VerifierMetrics;
 
 			expect(metrics.ok).toBe(true);
 			expect(metrics.profile.count).toBe(32);
