@@ -1,20 +1,6 @@
 @use 'themes' as *;
 @use '@shared/panel' as *;
 
-// The account menu, opened by the user button at the foot of the sidebar.
-//
-// It used to be a 36 x 18rem box split down the middle: menu rows on the left,
-// a brand-tinted half on the right holding the download links, Help, Hotkeys
-// and three theme/language controls. Two columns of unrelated things at two
-// different visual weights, pinned flush into the bottom-left corner of the
-// viewport, is not what an account menu looks like — it is a dialog.
-//
-// One narrow column instead, on the panel scale shared with What's New and
-// Quick Settings (`@shared/_panel`): identity, then rows grouped by 10px
-// overlines and separated by hairlines, then a 9px footer strip. This popup is
-// positioned by the layout rather than rendered into `.cdk-overlay-container`,
-// so it draws its own container chrome (same as `gauzy-workspace-menu`).
-
 :host {
   display: block;
 }
@@ -23,8 +9,6 @@
   @include gauzy-panel-surface();
   display: flex;
   flex-direction: column;
-  // Narrow on purpose: every row is one short label, so a wider box would only
-  // add whitespace between the label and the edge.
   width: 17.5rem;
   max-width: calc(100vw - 1.5rem);
   max-height: calc(100vh - 6rem);
@@ -36,9 +20,6 @@
 .panel-header {
   @include gauzy-panel-header();
 
-  // `gauzy-user` brings its own row padding and hover tint. The header already
-  // carries the panel's gutter, so the identity row drops its inline padding
-  // and its avatar lands on the same x as the icons of the rows below.
   gauzy-user {
     flex: 1 1 auto;
     min-width: 0;
@@ -71,8 +52,6 @@
   @include gauzy-panel-row();
   font-family: inherit;
 
-  // The away/active label is translated with a <strong> inside it; without
-  // this the emphasis jumps a weight class above the row it sits in.
   ::ng-deep strong {
     font-weight: 600;
   }
@@ -117,8 +96,6 @@
         background-color 0.12s ease-in-out,
         color 0.12s ease-in-out;
 
-      // Was a `scale(1.5)` plus a 1px box on hover — a 9px glyph growing
-      // into a bordered chip, and the row reflowing around it.
       &:hover {
         background-color: #{$panel-hover-tint};
         color: nb-theme(text-basic-color);
@@ -132,13 +109,6 @@
   }
 }
 
-// ── Embedded widgets ─────────────────────────────────────────────────────────
-// Same treatment as in Quick Settings, and for the same reason: the theme
-// switch, theme picker and language picker are shared components whose own
-// stylesheets pin a 120px/129px trigger with a 2px grey border, so in a 17.5rem
-// column they neither fit nor line up. One extra class of specificity — these
-// selectors sit under `.account-panel`, theirs do not — is enough to win
-// without an `!important`.
 .account-panel ::ng-deep {
   .theme-container,
   .switch-container {

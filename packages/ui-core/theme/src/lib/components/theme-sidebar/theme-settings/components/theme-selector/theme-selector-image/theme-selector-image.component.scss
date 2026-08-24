@@ -1,24 +1,6 @@
 @use 'themes' as *;
 @use '@shared/panel' as *;
 
-// This component renders in exactly ONE place — the Quick Settings panel, via
-// `ngx-theme-selector-container [isClassic]="false"` — so it is styled on the
-// panel scale directly instead of being overridden from its parent.
-//
-// What it replaces: an empty `nb-select` used as a toggle (see the template),
-// and 48px rows carrying a 120px-wide screenshot each. Eight of those is a
-// filmstrip inside a 22.5rem panel; the thumbnail only has to say "light" or
-// "dark" and roughly which palette, which a 44px chip does.
-//
-// NOTE ON SELECTORS: the list is rendered by a popover, i.e. into
-// `.cdk-overlay-container` at the end of the document. Angular bakes this
-// component's `_ngcontent` attribute into those elements when it creates them,
-// so plain class selectors still reach them — but anything written under
-// `:host` does NOT, because the elements are no longer inside the host. Every
-// rule below the trigger is therefore deliberately top-level. The popover
-// CONTAINER itself (`nb-popover`) comes from Nebular, not from this template,
-// so its chrome lives in the global `_overlays.scss` under `.gz-theme-popover`.
-
 :host {
   display: block;
   width: 100%;
@@ -30,9 +12,6 @@
   width: 100%;
 }
 
-// ── Trigger ──────────────────────────────────────────────────────────────────
-// Laid out like the control rows above it (label left, value right) so the four
-// preference rows share one left edge and one right edge.
 .theme-trigger {
   display: flex;
   align-items: center;
@@ -58,8 +37,6 @@
   }
 }
 
-// The right half is the actual control surface: same 1.75rem hairline box as
-// the selects in the rows above, so the column has one right edge.
 .theme-trigger-value {
   display: flex;
   align-items: center;
@@ -97,9 +74,6 @@
   }
 }
 
-// ── Options ──────────────────────────────────────────────────────────────────
-// Sized here rather than on the popover: the overlay is width-fit-to-content,
-// so the list is what decides how wide the panel comes out.
 .gz-theme-list {
   display: flex;
   flex-direction: column;
@@ -109,10 +83,6 @@
   @include gauzy-panel-scroll();
 }
 
-// A flat row like every other row in the panel — a thumbnail chip, the name,
-// and a check on the current one. No resting fill and no per-row card: eight
-// filled cards in a column was the "list of blocks" look the rest of the app
-// has already moved away from.
 .theme-option {
   display: flex;
   align-items: center;
@@ -155,8 +125,6 @@
   height: 1.5rem;
   overflow: hidden;
   border-radius: 0.25rem;
-  // The screenshots are mostly flat colour at this size, so the chip needs its
-  // own hairline to stay legible against a surface of the same tone.
   box-shadow: inset 0 0 0 1px #{$panel-hairline};
 
   img {
@@ -176,8 +144,6 @@
   text-overflow: ellipsis;
 }
 
-// Only the current theme carries the mark. It keeps its box either way, so the
-// names do not shift horizontally when the selection moves.
 .theme-check {
   flex: 0 0 auto;
   width: 0.75rem;

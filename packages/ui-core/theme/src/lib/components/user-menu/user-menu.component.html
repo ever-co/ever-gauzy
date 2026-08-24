@@ -1,7 +1,4 @@
 <div gauzyOutside (clickOutside)="onClickOutside($event)" class="account-panel" [nbSpinner]="isSubmit$ | async">
-	<!-- Identity first, the way every account menu opens: who you are signed in
-	     as, then what you can do about it. It used to be tucked into the bottom
-	     of the left half of a two-column box. -->
 	<header class="panel-header">
 		<gauzy-user showIdentity="true" [user$]="user$" (clicked)="onClick()"></gauzy-user>
 		<button type="button" class="panel-close" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="onClick()">
@@ -15,7 +12,6 @@
 		@if (employee$ | async) {
 			<button type="button" class="panel-row" [class.disabled-row]="isSubmit$ | async" (click)="onChangeStatus()">
 				<nb-icon icon="moon-outline"></nb-icon>
-				<!-- The label carries a <strong> in every locale, hence innerHTML. -->
 				<span
 					[innerHTML]="
 						((employee$ | async)?.isAway
@@ -77,10 +73,7 @@
 	</footer>
 </div>
 
-<!-- TODO: Implement commented features. Kept from the previous markup so the
-     intent is not lost; the styles that went with it (`.sub-menu`, `.status`,
-     `.notifications`, `.button`) were dropped with the two-column layout and
-     have to come back as panel rows if these are ever built.
+<!-- TODO: Implement commented features
 
 <div underConstruction class="sub-menu">
   <span><i class="far fa-smile"></i>{{ 'USER_MENU.STATUS' | translate }}</span>

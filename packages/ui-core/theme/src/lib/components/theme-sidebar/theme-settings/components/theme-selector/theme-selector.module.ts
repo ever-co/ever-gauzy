@@ -27,8 +27,6 @@ import { ThemeSelectorComponent } from './theme-selector.component';
 		TranslateModule.forChild(),
 		NbButtonModule,
 		NbIconModule,
-		// The theme list opens as a popover so it does not expand inside — and
-		// scroll — the Quick Settings panel it is rendered in.
 		NbPopoverModule
 	]
 })

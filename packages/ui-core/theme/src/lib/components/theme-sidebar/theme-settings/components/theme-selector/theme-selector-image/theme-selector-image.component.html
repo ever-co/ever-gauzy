@@ -1,13 +1,4 @@
 <div class="theme-card">
-	<!-- A disclosure button, not a combobox. This used to be an `nb-select` with
-	     ZERO options, used purely as a toggle: clicking it opened Nebular's own
-	     (empty) option-list overlay next to the inline list it was revealing, so
-	     the control promised a dropdown and delivered an empty box.
-
-	     The list itself is a POPOVER rather than the inline block it replaced.
-	     Eight rows expanding inside Quick Settings gave that panel its own
-	     scrollbar and pushed the Settings button below the fold; an overlay
-	     opens over the page and leaves the panel exactly the size it was. -->
 	<button
 		type="button"
 		class="theme-trigger"
@@ -27,8 +18,6 @@
 	</button>
 </div>
 
-<!-- Rendered into `.cdk-overlay-container`, so only rules written WITHOUT a
-     `:host` prefix reach it — see the component's stylesheet. -->
 <ng-template #themeList>
 	<div class="gz-theme-list" role="listbox">
 		@for (theme of themes; track theme.value) {

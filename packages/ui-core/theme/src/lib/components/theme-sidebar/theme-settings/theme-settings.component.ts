@@ -28,22 +28,6 @@ export const QUICK_SETTINGS_SIDEBAR_TAG = 'settings_sidebar';
 export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	private state: boolean;
 
-	/**
-	 * Whether the document click currently being dispatched landed inside a CDK
-	 * overlay rather than on the page.
-	 *
-	 * `OutsideDirective` reports only "inside the panel / outside the panel", and
-	 * every dropdown this panel hosts — the language list, the layout list, the
-	 * theme popover — renders into `.cdk-overlay-container` at the END of the
-	 * document, i.e. outside the panel element. Without this, picking a language
-	 * closed Quick Settings, and the theme popover could never be used at all: the
-	 * click that chose a theme would take the panel down with it.
-	 *
-	 * Set from a listener on THIS component's host, which is registered before the
-	 * directive's (the directive sits on an element inside this component's
-	 * template), so it is already up to date when `onClickOutside` runs for the
-	 * same event.
-	 */
 	private clickedInOverlay = false;
 
 	@HostListener('document:click', ['$event.target'])

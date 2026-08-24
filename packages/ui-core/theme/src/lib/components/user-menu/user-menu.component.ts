@@ -33,14 +33,6 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	private armed = false;
 	private armTimer: ReturnType<typeof setTimeout> | undefined;
 
-	/**
-	 * Whether the document click being dispatched landed inside a CDK overlay.
-	 *
-	 * Same reason as `ngx-theme-settings`: this panel hosts the language and
-	 * theme selectors, whose option lists render into `.cdk-overlay-container` at
-	 * the end of the document — outside this element, so `gauzyOutside` calls
-	 * them an outside click and the menu closed the moment a language was picked.
-	 */
 	private clickedInOverlay = false;
 
 	@HostListener('document:click', ['$event.target'])

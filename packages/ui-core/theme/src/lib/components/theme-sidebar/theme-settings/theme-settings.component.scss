@@ -1,17 +1,6 @@
 @use 'themes' as *;
 @use '@shared/panel' as *;
 
-// Quick Settings, opened by the gear action in the header. The container box —
-// radius, hairline, elevation, surface — is drawn by the nb-sidebar this renders
-// into (`.settings-sidebar.expanded .main-container-fixed` in
-// one-column.layout.scss); everything here is rhythm, type and the way the
-// embedded selector widgets are made to agree with each other.
-//
-// What this replaces: a 16px heading, `nb-list` rows at the page's 14px with a
-// 5%-black divider under each, four ghost buttons for the support links, and a
-// pile of dead rules (`.settings-row`, `.switcher`, `.title-uppercase`,
-// `.language-select`) left over from a settings PAGE this panel never was.
-
 @include nb-install-component() {
   .quick-settings-panel {
     display: flex;
@@ -26,9 +15,6 @@
 
   .panel-header {
     @include gauzy-panel-header();
-    // The sidebar's `.scrollable` is the scroll port (the panel is
-    // `height: auto` under a `max-height`), so the title bar holds its
-    // place by sticking to the top of it.
     position: sticky;
     top: calc(-1 * #{$panel-pad});
     z-index: 1;
@@ -57,11 +43,8 @@
     gap: $panel-gap;
   }
 
-  // A row that hosts a control. The label comes from the embedded component's
-  // own template, so the row only owns the box; `.theme` is the widget inside.
   .control-row {
     @include gauzy-panel-control-row();
-    // The widgets lay out their own label/control pair edge to edge.
     padding-inline: 0;
 
     .theme {
@@ -69,8 +52,6 @@
     }
   }
 
-  // Support / help entries: flat rows, not the four ghost buttons they were —
-  // those competed with the primary Settings action underneath them.
   .panel-row {
     @include gauzy-panel-row();
     font-family: inherit;
@@ -92,19 +73,7 @@
     }
   }
 
-  // ── Embedded widgets ─────────────────────────────────────────────────────
-  // The theme switch, theme picker, language picker and layout picker are
-  // shared components (the auth pages and the desktop app render them too), so
-  // their own stylesheets stay as they are and the panel's reading of them
-  // lives here. Each had pinned its own trigger — 120px / 129px wide, a 2px
-  // grey border, a 2rem box — so four controls in one column lined up on four
-  // different edges. One extra class of specificity is enough to win: those
-  // rules are `[_nghost-x] nb-select.appearance-outline .select-button`, and
-  // these are the same thing under `.quick-settings-panel`.
   .quick-settings-panel ::ng-deep {
-    // The label half of every widget's own `.theme-container` row. (The theme
-    // picker is not in this list: it renders only here, so it is styled on the
-    // panel scale in its own stylesheet rather than being overridden.)
     .theme-container,
     .switch-container {
       font-size: $panel-text-row;
@@ -123,15 +92,11 @@
     }
 
     nb-select.appearance-outline .select-button {
-      // The same width as the theme picker's trigger below, so the four
-      // preference rows share one right edge.
       width: 8.75rem;
       min-width: 8.75rem;
       height: 1.75rem;
       min-height: 1.75rem;
       padding: 0 0.5rem;
-      // A 1px hairline, the same line weight as every other control and as
-      // the panel's own edge — not the 2px 50%-grey each widget had pinned.
       border: 0;
       box-shadow: inset 0 0 0 1px #{$panel-hairline};
       border-radius: $panel-row-radius;
@@ -146,8 +111,6 @@
       color: nb-theme(text-basic-color);
     }
 
-    // The layout picker's tiny "Reset layout" escape hatch, tucked under its
-    // select. A text-weight control, so it reads as secondary to the row.
     .reset-layout {
       font-size: $panel-text-label;
       padding: 0.1875rem 0.375rem;
