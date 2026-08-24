@@ -24,11 +24,30 @@ jest.mock('../../role-permission/role-permission.module', () => {
 	return { RolePermissionModule };
 });
 
+jest.mock('../../shared/guards', () => {
+	class TenantPermissionGuard {}
+	class PassingGuard {}
+
+	return new Proxy(
+		{ __esModule: true, TenantPermissionGuard },
+		{
+			get: (target, property) => (property in target ? target[property as keyof typeof target] : PassingGuard)
+		}
+	);
+});
+
+jest.mock('../task.module', () => {
+	class TaskModule {}
+
+	return { TaskModule };
+});
+
 import { Type } from '@nestjs/common';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppModule } from '../../app/app.module';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TagModule } from '../../tags/tag.module';
 import { TagService } from '../../tags/tag.service';
@@ -40,6 +59,7 @@ import { IssueTypeModule } from '../issue-type/issue-type.module';
 import { IssueTypeService } from '../issue-type/issue-type.service';
 import { MikroOrmIssueTypeRepository } from '../issue-type/repository/mikro-orm-issue-type.repository';
 import { TypeOrmIssueTypeRepository } from '../issue-type/repository/type-orm-issue-type.repository';
+import { TaskLinkedIssueModule } from '../linked-issue/task-linked-issue.module';
 import { CommandHandlers as TaskPriorityCommandHandlers } from '../priorities/commands/handlers';
 import { TaskPriorityController } from '../priorities/priority.controller';
 import { TaskPriorityModule } from '../priorities/priority.module';
@@ -66,8 +86,14 @@ import { TypeOrmTaskStatusRepository } from '../statuses/repository/type-orm-tas
 import { TaskStatusController } from '../statuses/status.controller';
 import { TaskStatusModule } from '../statuses/status.module';
 import { TaskStatusService } from '../statuses/status.service';
+import { TaskModule } from '../task.module';
 import { TaskVersionModule } from '../versions/version.module';
 import { TaskVersionService } from '../versions/version.service';
+import { TaskMetadataBootstrapQueryDTO } from './dto';
+import * as TaskMetadataBootstrapExports from './index';
+import { TaskMetadataBootstrapController } from './task-metadata-bootstrap.controller';
+import { TaskMetadataBootstrapModule } from './task-metadata-bootstrap.module';
+import { TaskMetadataBootstrapService } from './task-metadata-bootstrap.service';
 
 type ModuleMetadataCase = {
 	name: string;
@@ -188,5 +214,51 @@ describe('task metadata module exports', () => {
 
 	it('preserves all three existing TagModule exports in order', () => {
 		expectExactExports(TagModule, [TagService, TypeOrmTagRepository, MikroOrmTagRepository]);
+	});
+
+	it('declares the standalone bootstrap module with only the exact dependencies and components', () => {
+		const imports = getMetadata<unknown[]>(MODULE_METADATA.IMPORTS, TaskMetadataBootstrapModule);
+
+		expect(imports).toEqual([
+			TaskStatusModule,
+			TaskPriorityModule,
+			TaskSizeModule,
+			TagModule,
+			TaskVersionModule,
+			IssueTypeModule,
+			TaskRelatedIssueTypeModule,
+			RolePermissionModule
+		]);
+		expect(imports).not.toContain(TaskModule);
+		expect(getMetadata(MODULE_METADATA.PROVIDERS, TaskMetadataBootstrapModule)).toEqual([
+			TaskMetadataBootstrapService
+		]);
+		expect(getMetadata(MODULE_METADATA.CONTROLLERS, TaskMetadataBootstrapModule)).toEqual([
+			TaskMetadataBootstrapController
+		]);
+	});
+
+	it('exports only the DTO, module, and service from the local barrel', () => {
+		expect(Object.keys(TaskMetadataBootstrapExports).sort()).toEqual(
+			[
+				TaskMetadataBootstrapQueryDTO.name,
+				TaskMetadataBootstrapModule.name,
+				TaskMetadataBootstrapService.name
+			].sort()
+		);
+		expect(TaskMetadataBootstrapExports).not.toHaveProperty(TaskMetadataBootstrapController.name);
+	});
+
+	it('registers the bootstrap module once immediately after IssueTypeModule in AppModule', () => {
+		const imports = getMetadata<unknown[]>(MODULE_METADATA.IMPORTS, AppModule);
+		const issueTypeIndex = imports.indexOf(IssueTypeModule);
+
+		expect(issueTypeIndex).toBeGreaterThanOrEqual(0);
+		expect(imports.filter((module) => module === TaskMetadataBootstrapModule)).toHaveLength(1);
+		expect(imports.slice(issueTypeIndex, issueTypeIndex + 3)).toEqual([
+			IssueTypeModule,
+			TaskMetadataBootstrapModule,
+			TaskLinkedIssueModule
+		]);
 	});
 });
