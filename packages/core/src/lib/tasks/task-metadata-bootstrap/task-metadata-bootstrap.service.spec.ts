@@ -41,6 +41,7 @@ jest.mock('../versions/version.service', () => {
 });
 
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import {
 	IIssueType,
 	IPagination,
@@ -102,8 +103,16 @@ describe('TaskMetadataBootstrapService', () => {
 	let issueTypeService: jest.Mocked<Pick<IssueTypeService, 'fetchAll'>>;
 	let taskRelatedIssueTypeService: jest.Mocked<Pick<TaskRelatedIssueTypeService, 'fetchAll'>>;
 	let loaderMocks: Array<{ mock: { invocationCallOrder: number[] } }>;
+	let databaseType: DatabaseTypeEnum;
+	let configService: ConfigService;
 
 	beforeEach(() => {
+		databaseType = DatabaseTypeEnum.postgres;
+		configService = {
+			get dbConnectionOptions() {
+				return { type: databaseType };
+			}
+		} as ConfigService;
 		currentTenantId = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(tenantId);
 		taskStatusService = { fetchAll: jest.fn().mockResolvedValue(taskStatuses) };
 		taskPriorityService = { fetchAll: jest.fn().mockResolvedValue(taskPriorities) };
@@ -130,7 +139,8 @@ describe('TaskMetadataBootstrapService', () => {
 			tagService as unknown as TagService,
 			taskVersionService as unknown as TaskVersionService,
 			issueTypeService as unknown as IssueTypeService,
-			taskRelatedIssueTypeService as unknown as TaskRelatedIssueTypeService
+			taskRelatedIssueTypeService as unknown as TaskRelatedIssueTypeService,
+			configService
 		);
 	});
 
@@ -254,7 +264,7 @@ describe('TaskMetadataBootstrapService', () => {
 		expectNoLoaderCalls();
 	});
 
-	it('starts every selected loader before any deferred result resolves', async () => {
+	it('keeps non-blocking database loaders parallel by starting every selection before any result resolves', async () => {
 		const statusDeferred = deferred<typeof taskStatuses>();
 		const priorityDeferred = deferred<typeof taskPriorities>();
 		const sizeDeferred = deferred<typeof taskSizes>();
@@ -314,6 +324,42 @@ describe('TaskMetadataBootstrapService', () => {
 			issueTypes,
 			relatedIssueTypes
 		});
+	});
+
+	it('yields to the event loop between synchronous better-sqlite3 loaders', async () => {
+		databaseType = DatabaseTypeEnum.betterSqlite3;
+		const events: string[] = [];
+
+		taskStatusService.fetchAll.mockImplementation(() => {
+			events.push('taskStatuses');
+			setImmediate(() => events.push('after-taskStatuses'));
+			return Promise.resolve(taskStatuses);
+		});
+		taskPriorityService.fetchAll.mockImplementation(() => {
+			events.push('taskPriorities');
+			setImmediate(() => events.push('after-taskPriorities'));
+			return Promise.resolve(taskPriorities);
+		});
+		taskSizeService.fetchAll.mockImplementation(() => {
+			events.push('taskSizes');
+			return Promise.resolve(taskSizes);
+		});
+
+		await expect(
+			service.bootstrap({
+				organizationId,
+				include: ['taskStatuses', 'taskPriorities', 'taskSizes']
+			})
+		).resolves.toStrictEqual({ taskStatuses, taskPriorities, taskSizes });
+		await new Promise<void>((resolve) => setImmediate(resolve));
+
+		expect(events).toStrictEqual([
+			'taskStatuses',
+			'after-taskStatuses',
+			'taskPriorities',
+			'after-taskPriorities',
+			'taskSizes'
+		]);
 	});
 
 	it('rejects the whole selection with the original loader error and does not retry', async () => {

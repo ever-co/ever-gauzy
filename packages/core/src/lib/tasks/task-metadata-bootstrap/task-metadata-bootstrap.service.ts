@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import {
 	ITaskMetadataBootstrapQuery,
 	ITaskMetadataBootstrapResponse,
@@ -18,6 +19,11 @@ type TaskMetadataLoaderMap = {
 	[Section in TaskMetadataSection]: () => Promise<NonNullable<ITaskMetadataBootstrapResponse[Section]>>;
 };
 
+type TaskMetadataEntry = readonly [
+	TaskMetadataSection,
+	NonNullable<ITaskMetadataBootstrapResponse[TaskMetadataSection]>
+];
+
 @Injectable()
 export class TaskMetadataBootstrapService {
 	constructor(
@@ -27,7 +33,8 @@ export class TaskMetadataBootstrapService {
 		private readonly tagService: TagService,
 		private readonly taskVersionService: TaskVersionService,
 		private readonly issueTypeService: IssueTypeService,
-		private readonly taskRelatedIssueTypeService: TaskRelatedIssueTypeService
+		private readonly taskRelatedIssueTypeService: TaskRelatedIssueTypeService,
+		private readonly configService: ConfigService
 	) {}
 
 	async bootstrap(query: ITaskMetadataBootstrapQuery): Promise<ITaskMetadataBootstrapResponse> {
@@ -56,8 +63,28 @@ export class TaskMetadataBootstrapService {
 			relatedIssueTypes: () => this.taskRelatedIssueTypeService.fetchAll(scope)
 		};
 
-		const entries = await Promise.all(include.map(async (section) => [section, await loaders[section]()] as const));
+		const entries =
+			this.configService.dbConnectionOptions.type === DatabaseTypeEnum.betterSqlite3
+				? await this.loadSynchronousSqliteSections(include, loaders)
+				: await Promise.all(include.map(async (section) => [section, await loaders[section]()] as const));
 
 		return Object.fromEntries(entries) as ITaskMetadataBootstrapResponse;
+	}
+
+	private async loadSynchronousSqliteSections(
+		include: readonly TaskMetadataSection[],
+		loaders: TaskMetadataLoaderMap
+	): Promise<TaskMetadataEntry[]> {
+		const entries: TaskMetadataEntry[] = [];
+
+		for (const [index, section] of include.entries()) {
+			entries.push([section, await loaders[section]()]);
+
+			if (index < include.length - 1) {
+				await new Promise<void>((resolve) => setImmediate(resolve));
+			}
+		}
+
+		return entries;
 	}
 }
