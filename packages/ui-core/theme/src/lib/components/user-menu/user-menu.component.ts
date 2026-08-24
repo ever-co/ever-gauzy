@@ -194,15 +194,21 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 		this._isUpdatingStatus$.next(true);
 		try {
 			const { id, isAway, tenantId, organizationId } = this.employee;
+			// The guard above rules out a lookup in flight, so this is the lookup the
+			// employee on screen came from. A user switch starting mid-update advances
+			// the counter, which is how the write below spots that it is obsolete.
+			const lookupId = this.lookupId;
 			const payload: IEmployeeUpdateInput = {
 				isAway: !isAway,
 				tenantId,
 				organizationId
 			};
 			await this._employeeService.updateProfile(id, payload);
-			// A lookup may have swapped the employee while this update was in flight;
-			// applying the payload then would show one employee's away flag on another.
-			if (this.employee?.id === id) {
+			// A user switch may have happened while this update was in flight. The
+			// cached employee alone cannot tell: it still holds the previous one until
+			// the new lookup settles, so the counter has to agree as well — otherwise
+			// the away flag of the user who just left lands on the menu.
+			if (lookupId === this.lookupId && this.employee?.id === id) {
 				this._employee$.next({ ...this.employee, ...payload });
 			}
 		} catch (error) {
