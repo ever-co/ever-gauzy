@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
 import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
@@ -8,10 +8,10 @@ import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-user-menu',
-    templateUrl: './user-menu.component.html',
-    styleUrls: ['./user-menu.component.scss'],
-    standalone: false
+	selector: 'gauzy-user-menu',
+	templateUrl: './user-menu.component.html',
+	styleUrls: ['./user-menu.component.scss'],
+	standalone: false
 })
 export class UserMenuComponent implements OnInit, OnDestroy {
 	private _user$: Observable<IUser>;
@@ -32,6 +32,21 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	 */
 	private armed = false;
 	private armTimer: ReturnType<typeof setTimeout> | undefined;
+
+	/**
+	 * Whether the document click being dispatched landed inside a CDK overlay.
+	 *
+	 * Same reason as `ngx-theme-settings`: this panel hosts the language and
+	 * theme selectors, whose option lists render into `.cdk-overlay-container` at
+	 * the end of the document — outside this element, so `gauzyOutside` calls
+	 * them an outside click and the menu closed the moment a language was picked.
+	 */
+	private clickedInOverlay = false;
+
+	@HostListener('document:click', ['$event.target'])
+	public trackOverlayClick(target: EventTarget | null): void {
+		this.clickedInOverlay = target instanceof Element && !!target.closest('.cdk-overlay-container');
+	}
 
 	public downloadApps = [
 		{
@@ -90,7 +105,7 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	}
 
 	public onClickOutside(clickedInside: boolean) {
-		if (!clickedInside && this.armed) {
+		if (!clickedInside && !this.clickedInOverlay && this.armed) {
 			this.onClick();
 		}
 	}
