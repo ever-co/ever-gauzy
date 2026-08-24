@@ -330,6 +330,45 @@ $overlay-item-padding-x: 0.625rem; // 10px
     text-transform: uppercase;
   }
 
+  // ── Overlays opened FROM a chrome panel ─────────────────────────────────
+  // The Quick Settings and account panels run on their own small scale (see
+  // `@shared/_panel`: 10px rows), so a dropdown of theirs rendering at the
+  // app-wide 13px menu size lands on the screen a size and a half larger than
+  // the trigger it just came out of. These two classes are opted INTO by the
+  // handful of controls that live in those panels (`optionsListClass`,
+  // `nbPopoverClass`), so every other dropdown in the app keeps the standard
+  // size — this is a panel-local step down, not a global one.
+  .cdk-overlay-container nb-option-list.gz-panel-options {
+    nb-option {
+      padding: 0.3125rem 0.5rem;
+      font-size: 0.625rem;
+      line-height: 0.875rem;
+    }
+
+    // The language options carry a flag chip; at 10px the stock 18x12 is
+    // taller than the line it sits on.
+    nb-option .flag-icon {
+      width: 0.875rem;
+      height: 0.625rem;
+    }
+  }
+
+  // The theme picker's list. It is a popover rather than an inline panel
+  // because expanding eight rows INSIDE Quick Settings gave that panel its own
+  // scrollbar and pushed the Settings button out of reach; an overlay opens
+  // over the page instead and leaves the panel exactly as it was.
+  .cdk-overlay-container .gz-theme-popover nb-popover {
+    // Its own rows carry the padding, so the container only insets enough that
+    // a hovered row's radius never touches the edge.
+    padding: #{$overlay-padding};
+
+    // No arrow: this is a menu hanging off a control, not a speech bubble —
+    // the same call as the rail flyout above.
+    .arrow {
+      display: none;
+    }
+  }
+
   // ── Separators ──────────────────────────────────────────────────────────
   // 1px hairlines at low alpha, never a thick divider. Bootstrap's reboot
   // gives every `hr` a 1px `currentColor` border at 25% opacity, which reads
