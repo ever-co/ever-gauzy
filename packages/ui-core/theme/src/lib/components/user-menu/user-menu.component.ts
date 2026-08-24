@@ -35,6 +35,14 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 
 	private clickedInOverlay = false;
 
+	/**
+	 * Identifies the employee lookup currently in flight. The panel can stay open
+	 * across a user or organization switch, so a slow earlier request can settle
+	 * after a newer one; anything that no longer matches this counter is stale and
+	 * must not touch the employee or the loading state.
+	 */
+	private lookupId = 0;
+
 	@HostListener('document:click', ['$event.target'])
 	public trackOverlayClick(target: EventTarget | null): void {
 		this.clickedInOverlay = target instanceof Element && !!target.closest('.cdk-overlay-container');
@@ -90,22 +98,32 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 				distinctUntilChange(),
 				filter(({ employee }) => !!employee),
 				tap(async (user: IUser) => {
+					const employeeId = user?.employee?.id;
+					const lookupId = ++this.lookupId;
 					this._isSubmit$.next(true);
 					try {
-						const employee = await firstValueFrom(
-							this._employeeService.getEmployeeById(user?.employee?.id)
-						);
+						const employee = await firstValueFrom(this._employeeService.getEmployeeById(employeeId));
+						if (lookupId !== this.lookupId) {
+							return;
+						}
 						this._employee$.next(employee);
 					} catch (error) {
-						// Drop the previously loaded employee: the panel can stay open across a
-						// user or organization switch, and keeping the old one would let
-						// onChangeStatus() write the away flag to the wrong employee.
-						this._employee$.next(null);
+						// Only a still-current failure may clear the cached employee, and only
+						// when that cache belongs to someone else: keeping a stale employee
+						// would let onChangeStatus() write the away flag to the wrong one,
+						// while a failed refresh of the same employee should leave the status
+						// control on the data it already has.
+						if (lookupId === this.lookupId && this.employee?.id !== employeeId) {
+							this._employee$.next(null);
+						}
 						this._errorHandler.handleError(error);
 					} finally {
 						// Always release the loading state, otherwise a failed load leaves
 						// the status control stuck behind a spinner for the whole session.
-						this._isSubmit$.next(false);
+						// A superseded lookup leaves it to the newer one still running.
+						if (lookupId === this.lookupId) {
+							this._isSubmit$.next(false);
+						}
 					}
 				}),
 

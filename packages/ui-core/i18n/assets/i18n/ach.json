@@ -4678,6 +4678,7 @@
 		"CUSTOM": "crwdns11038:0crwdne11038:0",
 		"SET_AS_NOTIFICATION_SCHEDULE": "crwdns11040:0crwdne11040:0",
 		"SET_YOURSELF_AS_AWAY": "crwdns11042:0crwdne11042:0",
+		"SET_YOURSELF_AS_ACTIVE": "Ket keni calo <strong>ma itye</strong>",
 		"HOTKEYS": "crwdns11044:0crwdne11044:0",
 		"HELP": "crwdns11046:0crwdne11046:0",
 		"SIGN_OUT": "crwdns11048:0crwdne11048:0",
