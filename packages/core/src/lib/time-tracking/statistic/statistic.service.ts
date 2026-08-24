@@ -248,7 +248,7 @@ export class StatisticService {
 
 	private async supportsPostgresTimeZone(canonicalTimeZone: string): Promise<boolean> {
 		const cached = this.profileActivityPostgresTimeZoneSupport.get(canonicalTimeZone);
-		if (cached) {
+		if (cached !== undefined) {
 			return cached;
 		}
 
@@ -318,12 +318,16 @@ export class StatisticService {
 						})
 						.join(' ')} END`
 				: 'NULL';
-			const durationExpression =
-				dbType === DatabaseTypeEnum.postgres
-					? 'SUM(EXTRACT(EPOCH FROM (time_log.stoppedAt - time_log.startedAt)))'
-					: dbType === DatabaseTypeEnum.mysql
-						? 'SUM(TIMESTAMPDIFF(MICROSECOND, time_log.startedAt, time_log.stoppedAt) / 1000000.0)'
-						: 'SUM((julianday(time_log.stoppedAt) - julianday(time_log.startedAt)) * 86400.0)';
+			let durationExpression: string;
+			if (dbType === DatabaseTypeEnum.postgres) {
+				durationExpression = 'SUM(EXTRACT(EPOCH FROM (time_log.stoppedAt - time_log.startedAt)))';
+			} else if (dbType === DatabaseTypeEnum.mysql) {
+				durationExpression =
+					'SUM(TIMESTAMPDIFF(MICROSECOND, time_log.startedAt, time_log.stoppedAt) / 1000000.0)';
+			} else {
+				durationExpression =
+					'SUM((julianday(time_log.stoppedAt) - julianday(time_log.startedAt)) * 86400.0)';
+			}
 
 			query.select(dateExpression, 'date').addSelect(durationExpression, 'duration').groupBy('1');
 			buckets.forEach((bucket, index) => {
@@ -405,24 +409,26 @@ export class StatisticService {
 					: 'WHEN ?? < ? THEN ?';
 			});
 			const dateExpression = buckets.length ? `CASE ${cases.join(' ')} END` : 'NULL';
-			const duration =
-				dbType === DatabaseTypeEnum.postgres
-					? knex.raw('SUM(EXTRACT(EPOCH FROM (?? - ??))) AS ??', [
-							'time_log.stoppedAt',
-							'time_log.startedAt',
-							'duration'
-						])
-					: dbType === DatabaseTypeEnum.mysql
-						? knex.raw('SUM(TIMESTAMPDIFF(MICROSECOND, ??, ??) / 1000000.0) AS ??', [
-								'time_log.startedAt',
-								'time_log.stoppedAt',
-								'duration'
-							])
-						: knex.raw('SUM((?? - ??) / 1000.0) AS ??', [
-								'time_log.stoppedAt',
-								'time_log.startedAt',
-								'duration'
-							]);
+			let duration: Knex.Raw;
+			if (dbType === DatabaseTypeEnum.postgres) {
+				duration = knex.raw('SUM(EXTRACT(EPOCH FROM (?? - ??))) AS ??', [
+					'time_log.stoppedAt',
+					'time_log.startedAt',
+					'duration'
+				]);
+			} else if (dbType === DatabaseTypeEnum.mysql) {
+				duration = knex.raw('SUM(TIMESTAMPDIFF(MICROSECOND, ??, ??) / 1000000.0) AS ??', [
+					'time_log.startedAt',
+					'time_log.stoppedAt',
+					'duration'
+				]);
+			} else {
+				duration = knex.raw('SUM((?? - ??) / 1000.0) AS ??', [
+					'time_log.stoppedAt',
+					'time_log.startedAt',
+					'duration'
+				]);
+			}
 
 			query.select([knex.raw(`${dateExpression} AS ??`, [...dateBindings, 'date']), duration]).groupByRaw('1');
 		}
