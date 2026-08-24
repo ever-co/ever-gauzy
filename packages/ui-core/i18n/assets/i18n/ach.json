@@ -1099,7 +1099,9 @@
 		"TABLE": "crwdns7056:0crwdne7056:0",
 		"CARDS_GRID": "crwdns7058:0crwdne7058:0",
 		"SPRINT_VIEW": "crwdns8236:0crwdne8236:0",
-		"QUICK_SETTINGS": "crwdns11022:0crwdne11022:0"
+		"QUICK_SETTINGS": "crwdns11022:0crwdne11022:0",
+		"PREFERENCES": "Preferences",
+		"SUPPORT": "Support"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "crwdns10190:0crwdne10190:0",
@@ -4679,7 +4681,10 @@
 		"HOTKEYS": "crwdns11044:0crwdne11044:0",
 		"HELP": "crwdns11046:0crwdne11046:0",
 		"SIGN_OUT": "crwdns11048:0crwdne11048:0",
-		"PROFILE": "crwdns11050:0crwdne11050:0"
+		"PROFILE": "crwdns11050:0crwdne11050:0",
+		"ACCOUNT": "Account",
+		"PREFERENCES": "Preferences",
+		"DOWNLOAD_APPS": "Download apps"
 	},
 	"WORKSPACES": {
 		"MENUS": {
