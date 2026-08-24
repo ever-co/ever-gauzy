@@ -37,6 +37,16 @@
   }
 }
 
+.theme-trigger-label {
+  // The value box beside it is a fixed 8.75rem, so the label is the only part
+  // that can give: without min-width it refuses to shrink past its longest word
+  // and a long translation pushes the trigger wider than the panel.
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .theme-trigger-value {
   display: flex;
   align-items: center;
@@ -56,6 +66,7 @@
 }
 
 .theme-trigger-name {
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
