@@ -1,13 +1,146 @@
-@use '@shared/_whats-new';
-@use 'gauzy/_gauzy-dialogs';
+@use 'themes' as *;
+@use '@shared/panel' as *;
 
-::ng-deep.changelog-sidebar {
-  .main-container {
-    width: 33rem !important;
-  }
+// This used to pull in `@shared/_whats-new`, the partial the LOGIN page's
+// What's New panel also uses — so the two surfaces shared a peach-tinted card,
+// a 25px pad and an 18px heading. They are not the same surface: the login one
+// is a marketing panel on an empty page, this one is app chrome hanging off a
+// header icon. It now follows the panel scale (`@shared/_panel`) instead, and
+// the login panel keeps the old partial untouched.
+//
+// The container box — radius, hairline, shadow, surface colour — is drawn by
+// the nb-sidebar this renders into (`.changelog-sidebar.expanded
+// .main-container-fixed` in one-column.layout.scss), so everything here is
+// inset, rhythm and type.
+
+:host {
+  display: block;
+  width: 100%;
 }
-i {
-  position: absolute;
-  right: 0.75rem;
-  top: 0.75rem;
+
+.whats-new-panel {
+  display: flex;
+  flex-direction: column;
+  padding: $panel-pad;
+  box-sizing: border-box;
+  font-family: nb-theme(font-family-primary);
+  font-size: $panel-text-row;
+  line-height: 1.4;
+  color: nb-theme(text-basic-color);
+}
+
+.panel-header {
+  @include gauzy-panel-header();
+  flex: 0 0 auto;
+  // The scroll port is the sidebar's `.scrollable` (see one-column.layout.scss
+  // for why it cannot be this component), so the title bar holds its place by
+  // sticking to the top of it. It needs the opaque surface and a z-index of
+  // its own, or the entries scroll through it.
+  position: sticky;
+  top: calc(-1 * #{$panel-pad});
+  z-index: 1;
+  background-color: nb-theme(background-basic-color-1);
+}
+
+.panel-title {
+  @include gauzy-panel-title();
+}
+
+.panel-close {
+  @include gauzy-panel-close();
+}
+
+.panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-top: $panel-pad;
+}
+
+// ── Entry cards ──────────────────────────────────────────────────────────────
+// `ngx-changelog-entry` is the SHARED card (ui-core/shared), rendered here and
+// on the login page, so its own stylesheet stays as it is and the sidebar's
+// denser reading of it lives here, scoped to this panel. Everything below is a
+// step down the panel scale: 10px title, 9px date, 9px copy.
+.panel-body ::ng-deep {
+  ngx-changelog-entry {
+    display: block;
+
+    // The divider belongs BETWEEN cards, so the last one does not draw a
+    // line against the panel's bottom edge.
+    &:last-of-type .entry {
+      border-bottom: 0;
+    }
+  }
+
+  .entry {
+    // Was `1px solid lightgray` — a fixed grey that is a hard line on a
+    // white surface and nearly invisible on the dark themes.
+    border-bottom: 1px solid #{$panel-hairline};
+    border-radius: $panel-row-radius;
+    padding: 0.5rem $panel-gutter 0.625rem;
+
+    &.linked:hover {
+      background-color: #{$panel-hover-tint};
+    }
+
+    .entry-headings-wrapper {
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.1875rem;
+
+      .icon {
+        // Was a 15px right margin; the flex `gap` above owns the space
+        // now, so the icon only has to sit on the title's cap height.
+        margin: 0.0625rem 0 0;
+        width: 0.875rem;
+        height: 0.875rem;
+        font-size: 0.875rem;
+        color: nb-theme(text-hint-color);
+      }
+
+      .entry-headings {
+        min-width: 0;
+      }
+
+      .entry-header {
+        font-size: $panel-text-label;
+        font-weight: 600;
+        line-height: 0.875rem;
+        letter-spacing: -0.004em;
+        margin-bottom: 0.125rem;
+      }
+
+      .entry-header-date {
+        // The smallest step on the scale, tracked out and in caps: a
+        // date is metadata, and at 9px it reads as a stamp rather than
+        // as a second line of the title.
+        font-size: $panel-text-micro;
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: nb-theme(text-hint-color);
+      }
+    }
+
+    .paragraph {
+      margin: 0;
+      font-size: $panel-text-body;
+      line-height: 0.8125rem;
+      color: nb-theme(text-hint-color);
+    }
+
+    .entry-img {
+      margin: 0.375rem 0 0;
+      border-radius: $panel-row-radius;
+    }
+
+    .learn-more-hint {
+      margin: 0.3125rem 0 0;
+      // Sits with the copy it follows, not with the title above it.
+      font-size: $panel-text-micro;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+  }
 }
