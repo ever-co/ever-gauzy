@@ -1,9 +1,58 @@
 jest.mock('dotenv', () => ({
 	config: jest.fn(() => ({ parsed: {} }))
 }));
+jest.mock('@gauzy/config', () => ({
+	ConfigService: class ConfigService {},
+	DatabaseTypeEnum: {
+		postgres: 'postgres',
+		mysql: 'mysql',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		mongodb: 'mongodb'
+	},
+	isBetterSqlite3: () => true,
+	isMySQL: () => false,
+	isPostgres: () => false,
+	isSqlite: () => false
+}));
+jest.mock('../../core/context', () => ({
+	RequestContext: {
+		currentTenantId: jest.fn()
+	}
+}));
+jest.mock('../../core/entities/internal', () => ({
+	TimeLog: class TimeLog {}
+}));
+jest.mock('../../core/utils', () => ({
+	MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
+	getDateRangeFormat: jest.fn(),
+	getORMType: () => 'typeorm'
+}));
+jest.mock('../../user/user.service', () => ({ UserService: class UserService {} }));
+jest.mock('../../time-tracking/time-slot/repository/type-orm-time-slot.repository', () => ({
+	TypeOrmTimeSlotRepository: class TypeOrmTimeSlotRepository {}
+}));
+jest.mock('../../employee/repository/type-orm-employee.repository', () => ({
+	TypeOrmEmployeeRepository: class TypeOrmEmployeeRepository {}
+}));
+jest.mock('../activity/repository/type-orm-activity.repository', () => ({
+	TypeOrmActivityRepository: class TypeOrmActivityRepository {}
+}));
+jest.mock('../time-log/repository/mikro-orm-time-log.repository', () => ({
+	MikroOrmTimeLogRepository: class MikroOrmTimeLogRepository {}
+}));
+jest.mock('../time-log/repository/type-orm-time-log.repository', () => ({
+	TypeOrmTimeLogRepository: class TypeOrmTimeLogRepository {}
+}));
+jest.mock('../../employee/managed-employee.service', () => ({
+	ManagedEmployeeService: class ManagedEmployeeService {}
+}));
+jest.mock('../../shared/guards', () => ({
+	TenantPermissionGuard: class TenantPermissionGuard {}
+}));
+jest.mock('../../shared/pipes', () => jest.requireActual('../../shared/pipes/use-validation.pipe'));
 
 import * as dotenv from 'dotenv';
-import '../../core/entities/internal';
 
 import { spawn } from 'node:child_process';
 import { AddressInfo } from 'node:net';
@@ -205,8 +254,15 @@ function minimalChildEnvironment(baseUrl: string): NodeJS.ProcessEnv {
 	return environment;
 }
 
-function wait(milliseconds: number): Promise<void> {
-	return new Promise((resolveWait) => setTimeout(resolveWait, milliseconds));
+function raceWithDeadline<T>(promise: Promise<T>, milliseconds: number): Promise<T | null> {
+	let timer: NodeJS.Timeout | undefined;
+	const deadline = new Promise<null>((resolveDeadline) => {
+		timer = setTimeout(() => resolveDeadline(null), milliseconds);
+	});
+
+	return Promise.race([promise, deadline]).finally(() => {
+		if (timer) clearTimeout(timer);
+	});
 }
 
 function captureStream(
@@ -245,13 +301,12 @@ async function waitForVerifier(child: ReturnType<typeof spawn>): Promise<ChildRe
 		child.once('error', reject);
 		child.once('close', (code, signal) => resolveClose({ code, signal }));
 	});
-	const deadline = wait(CHILD_DEADLINE_MILLISECONDS).then(() => null);
-	let close = await Promise.race([closePromise, deadline]);
+	let close = await raceWithDeadline(closePromise, CHILD_DEADLINE_MILLISECONDS);
 
 	if (close === null) {
 		timedOut = true;
 		child.kill();
-		close = await Promise.race([closePromise, wait(CHILD_KILL_DEADLINE_MILLISECONDS).then(() => null)]);
+		close = await raceWithDeadline(closePromise, CHILD_KILL_DEADLINE_MILLISECONDS);
 		if (close === null) throw new Error('Verifier child did not close after termination');
 	}
 
@@ -270,15 +325,39 @@ async function terminateAndWait(child: ReturnType<typeof spawn> | undefined): Pr
 
 	const closed = new Promise<void>((resolveClose) => child.once('close', () => resolveClose()));
 	child.kill();
-	await Promise.race([closed, wait(CHILD_KILL_DEADLINE_MILLISECONDS)]);
+	const closeObserved = await raceWithDeadline(
+		closed.then(() => true),
+		CHILD_KILL_DEADLINE_MILLISECONDS
+	);
+	if (closeObserved === null) throw new Error('Verifier child did not close after termination');
 }
 
 jest.setTimeout(90_000);
 
 describe('profile activity loopback HTTP concurrency evidence', () => {
+	it('loads the actual service without consulting an ambient database type', () => {
+		const hadDatabaseType = Object.prototype.hasOwnProperty.call(process.env, 'DB_TYPE');
+		const previousDatabaseType = process.env.DB_TYPE;
+
+		try {
+			process.env.DB_TYPE = 'mongodb';
+			jest.isolateModules(() => {
+				const actual = jest.requireActual<typeof import('./statistic.service')>('./statistic.service');
+				expect(actual.StatisticService).toBeDefined();
+			});
+			expect(dotenv.config).not.toHaveBeenCalled();
+		} finally {
+			if (hadDatabaseType) process.env.DB_TYPE = previousDatabaseType;
+			else delete process.env.DB_TYPE;
+		}
+
+		expect(Object.prototype.hasOwnProperty.call(process.env, 'DB_TYPE')).toBe(hadDatabaseType);
+		expect(process.env.DB_TYPE).toBe(previousDatabaseType);
+	});
+
 	it('keeps profile and public liveness responsive through the redacting external verifier', async () => {
 		expect(jest.isMockFunction(dotenv.config)).toBe(true);
-		expect(dotenv.config).toHaveBeenCalled();
+		expect(dotenv.config).not.toHaveBeenCalled();
 
 		const capturedQueries: string[] = [];
 		let capture = false;
@@ -371,6 +450,19 @@ describe('profile activity loopback HTTP concurrency evidence', () => {
 			expect(result.signal).toBeNull();
 			expect(result.code).toBe(0);
 			expect(result.stderr).toBe('');
+			const queryPath = profileQueryPath();
+			const forbiddenValues = {
+				token: BEARER_TOKEN,
+				tenant: TENANT_ID,
+				employee: EMPLOYEE_ID,
+				path: PROFILE_PATHNAME,
+				queryPath,
+				baseUrl,
+				fullUrl: `${baseUrl}${queryPath}`
+			};
+			for (const forbidden of Object.values(forbiddenValues)) {
+				expect(result.stdout).not.toContain(forbidden);
+			}
 			const lines = result.stdout.trim().split(/\r?\n/u);
 			expect(lines).toHaveLength(1);
 			const metrics = JSON.parse(lines[0]) as VerifierMetrics;

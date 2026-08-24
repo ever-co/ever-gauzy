@@ -1,9 +1,54 @@
 jest.mock('dotenv', () => ({
 	config: jest.fn(() => ({ parsed: {} }))
 }));
+jest.mock('@gauzy/config', () => ({
+	ConfigService: class ConfigService {},
+	DatabaseTypeEnum: {
+		postgres: 'postgres',
+		mysql: 'mysql',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		mongodb: 'mongodb'
+	},
+	isBetterSqlite3: () => true,
+	isMySQL: () => false,
+	isPostgres: () => false,
+	isSqlite: () => false
+}));
+jest.mock('../../core/context', () => ({
+	RequestContext: {
+		currentTenantId: jest.fn()
+	}
+}));
+jest.mock('../../core/entities/internal', () => ({
+	TimeLog: class TimeLog {}
+}));
+jest.mock('../../core/utils', () => ({
+	MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
+	getDateRangeFormat: jest.fn(),
+	getORMType: () => 'typeorm'
+}));
+jest.mock('../../user/user.service', () => ({ UserService: class UserService {} }));
+jest.mock('../../time-tracking/time-slot/repository/type-orm-time-slot.repository', () => ({
+	TypeOrmTimeSlotRepository: class TypeOrmTimeSlotRepository {}
+}));
+jest.mock('../../employee/repository/type-orm-employee.repository', () => ({
+	TypeOrmEmployeeRepository: class TypeOrmEmployeeRepository {}
+}));
+jest.mock('../activity/repository/type-orm-activity.repository', () => ({
+	TypeOrmActivityRepository: class TypeOrmActivityRepository {}
+}));
+jest.mock('../time-log/repository/mikro-orm-time-log.repository', () => ({
+	MikroOrmTimeLogRepository: class MikroOrmTimeLogRepository {}
+}));
+jest.mock('../time-log/repository/type-orm-time-log.repository', () => ({
+	TypeOrmTimeLogRepository: class TypeOrmTimeLogRepository {}
+}));
+jest.mock('../../employee/managed-employee.service', () => ({
+	ManagedEmployeeService: class ManagedEmployeeService {}
+}));
 
 import * as dotenv from 'dotenv';
-import '../../core/entities/internal';
 
 import { monitorEventLoopDelay } from 'node:perf_hooks';
 import { DatabaseTypeEnum } from '@gauzy/config';
@@ -173,9 +218,29 @@ function roundedMilliseconds(nanoseconds: number): number {
 jest.setTimeout(60_000);
 
 describe('profile activity in-process concurrency evidence', () => {
+	it('loads the actual service without consulting an ambient database type', () => {
+		const hadDatabaseType = Object.prototype.hasOwnProperty.call(process.env, 'DB_TYPE');
+		const previousDatabaseType = process.env.DB_TYPE;
+
+		try {
+			process.env.DB_TYPE = 'mongodb';
+			jest.isolateModules(() => {
+				const actual = jest.requireActual<typeof import('./statistic.service')>('./statistic.service');
+				expect(actual.StatisticService).toBeDefined();
+			});
+			expect(dotenv.config).not.toHaveBeenCalled();
+		} finally {
+			if (hadDatabaseType) process.env.DB_TYPE = previousDatabaseType;
+			else delete process.env.DB_TYPE;
+		}
+
+		expect(Object.prototype.hasOwnProperty.call(process.env, 'DB_TYPE')).toBe(hadDatabaseType);
+		expect(process.env.DB_TYPE).toBe(previousDatabaseType);
+	});
+
 	it('keeps 32 real one-select service calls structurally stable without blocking the event loop', async () => {
 		expect(jest.isMockFunction(dotenv.config)).toBe(true);
-		expect(dotenv.config).toHaveBeenCalled();
+		expect(dotenv.config).not.toHaveBeenCalled();
 
 		const capturedQueries: string[] = [];
 		let capture = false;

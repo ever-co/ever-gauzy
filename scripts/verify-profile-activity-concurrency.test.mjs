@@ -5,6 +5,7 @@ import { afterEach, test } from 'node:test';
 import {
 	createAlternatingRequestPlan,
 	createVerifierAgent,
+	evaluateLatencyThresholds,
 	nearestRankPercentile,
 	requestAndDrain,
 	resolveVerifierTargets,
@@ -142,6 +143,54 @@ test('rejects unsafe base URLs and profile paths before making requests', () => 
 	}
 });
 
+test('rejects leading, trailing, and embedded ASCII whitespace before URL parsing', () => {
+	const baseUrl = 'http://127.0.0.1:3000';
+	const invalidCases = [
+		{ baseUrl: ` ${baseUrl}`, queryPath: QUERY_PATH, code: 'BASE_WHITESPACE' },
+		{ baseUrl: `${baseUrl}\t`, queryPath: QUERY_PATH, code: 'BASE_WHITESPACE' },
+		{ baseUrl: 'http://127.0.0.1:\n3000', queryPath: QUERY_PATH, code: 'BASE_WHITESPACE' },
+		{ baseUrl, queryPath: `\t//example.invalid${PROFILE_PATH}`, code: 'QUERY_WHITESPACE' },
+		{ baseUrl, queryPath: `\nhttps://example.invalid${QUERY_PATH}`, code: 'QUERY_WHITESPACE' },
+		{ baseUrl, queryPath: `${QUERY_PATH} `, code: 'QUERY_WHITESPACE' },
+		{ baseUrl, queryPath: `${PROFILE_PATH}\u007f?organizationId=unsafe`, code: 'QUERY_WHITESPACE' }
+	];
+
+	for (const invalidCase of invalidCases) {
+		assert.throws(
+			() => resolveVerifierTargets({ ...invalidCase, allowRemote: false }),
+			failureCode(invalidCase.code)
+		);
+	}
+});
+
+test('compares unrounded p95 and max latencies to every threshold', () => {
+	assert.throws(
+		() => evaluateLatencyThresholds(Array(32).fill(750.0004), Array(32).fill(1)),
+		(error) => {
+			assert.equal(error.code, 'PROFILE_P95_THRESHOLD');
+			assert.equal(error.metrics.profile.p95Milliseconds, 750);
+			return true;
+		}
+	);
+	assert.throws(
+		() => evaluateLatencyThresholds(Array(32).fill(1), Array(32).fill(250.0004)),
+		(error) => {
+			assert.equal(error.code, 'LIVENESS_P95_THRESHOLD');
+			assert.equal(error.metrics.liveness.p95Milliseconds, 250);
+			return true;
+		}
+	);
+	assert.throws(
+		() => evaluateLatencyThresholds(Array(32).fill(1), [...Array(31).fill(1), 500.0004]),
+		(error) => {
+			assert.equal(error.code, 'LIVENESS_MAX_THRESHOLD');
+			assert.equal(error.metrics.liveness.p95Milliseconds, 1);
+			assert.equal(error.metrics.liveness.maxMilliseconds, 500);
+			return true;
+		}
+	);
+});
+
 test('maps hard request deadlines and non-success statuses to stable codes', async () => {
 	const { server, baseUrl } = await listen((request, response) => {
 		if (request.url === '/slow') return;
@@ -156,6 +205,39 @@ test('maps hard request deadlines and non-success statuses to stable codes', asy
 			requestAndDrain(new URL('/unavailable', baseUrl), agent, {}, 1000),
 			failureCode('HTTP_STATUS')
 		);
+	} finally {
+		agent.destroy();
+		await closeServer(server);
+	}
+});
+
+test('times through delayed body completion and aborts a post-header timeout', async () => {
+	let postHeaderClosed;
+	const postHeaderCloseObserved = new Promise((resolve) => {
+		postHeaderClosed = resolve;
+	});
+	const { server, baseUrl } = await listen((request, response) => {
+		if (request.url === '/delayed-body') {
+			response.writeHead(200, { 'content-type': 'application/json' });
+			response.write('{"ok":');
+			setTimeout(() => response.end('true}'), 45);
+			return;
+		}
+
+		response.once('close', postHeaderClosed);
+		response.writeHead(200, { 'content-type': 'application/json' });
+		response.flushHeaders();
+	});
+	const agent = createVerifierAgent('http:');
+
+	try {
+		const latency = await requestAndDrain(new URL('/delayed-body', baseUrl), agent, {}, 1000);
+		assert.ok(latency >= 35, `expected body-inclusive latency, received ${latency}ms`);
+		await assert.rejects(
+			requestAndDrain(new URL('/post-header-timeout', baseUrl), agent, {}, 30),
+			failureCode('REQUEST_TIMEOUT')
+		);
+		await postHeaderCloseObserved;
 	} finally {
 		agent.destroy();
 		await closeServer(server);
@@ -220,6 +302,47 @@ test('emits one safe JSON line and never leaks request or response details on fa
 	assert.equal(payload.errorCode, 'HTTP_STATUS');
 	for (const forbidden of [TOKEN, TENANT_ID, EMPLOYEE_ID, PROFILE_PATH, baseUrl]) {
 		assert.equal(output.includes(forbidden), false);
+	}
+
+	await closeServer(server);
+});
+
+test('emits one safe success JSON line without any request input or full URL', async () => {
+	const { server, baseUrl } = await listen((_request, response) => {
+		response.writeHead(200, { 'content-type': 'application/json' });
+		response.end('{"ok":true}');
+	});
+	let output = '';
+
+	const exitCode = await runFromEnvironment(
+		{
+			PROFILE_ACTIVITY_BASE_URL: baseUrl,
+			PROFILE_ACTIVITY_BEARER_TOKEN: TOKEN,
+			PROFILE_ACTIVITY_TENANT_ID: TENANT_ID,
+			PROFILE_ACTIVITY_QUERY_PATH: QUERY_PATH
+		},
+		(line) => {
+			output += line;
+		}
+	);
+
+	assert.equal(exitCode, 0);
+	assert.equal(output.trim().split(/\r?\n/u).length, 1);
+	const payload = JSON.parse(output);
+	assert.equal(payload.ok, true);
+	assert.equal(payload.profile.count, 32);
+	assert.equal(payload.liveness.count, 32);
+	const forbiddenValues = {
+		token: TOKEN,
+		tenant: TENANT_ID,
+		employee: EMPLOYEE_ID,
+		path: PROFILE_PATH,
+		queryPath: QUERY_PATH,
+		baseUrl,
+		fullUrl: `${baseUrl}${QUERY_PATH}`
+	};
+	for (const [label, forbidden] of Object.entries(forbiddenValues)) {
+		assert.equal(output.includes(forbidden), false, `${label} leaked in success JSON`);
 	}
 
 	await closeServer(server);

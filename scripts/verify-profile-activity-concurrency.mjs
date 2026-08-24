@@ -38,6 +38,10 @@ function requiredString(value, code) {
 	return value;
 }
 
+function rejectUrlWhitespace(value, code) {
+	if (value !== value.trim() || /[\u0000-\u0020\u007f]/u.test(value)) fail(code);
+}
+
 function decodePathForSafety(pathname) {
 	let decoded = pathname.replaceAll('\\', '/');
 
@@ -90,6 +94,8 @@ export function resolveVerifierTargets({ baseUrl, queryPath, allowRemote }) {
 	const rawBaseUrl = requiredString(baseUrl, 'BASE_URL_REQUIRED');
 	const rawQueryPath = requiredString(queryPath, 'QUERY_PATH_REQUIRED');
 	let base;
+	rejectUrlWhitespace(rawBaseUrl, 'BASE_WHITESPACE');
+	rejectUrlWhitespace(rawQueryPath, 'QUERY_WHITESPACE');
 
 	try {
 		base = new URL(rawBaseUrl);
@@ -194,12 +200,21 @@ export function requestAndDrain(url, agent, headers, deadlineMilliseconds = REQU
 	});
 }
 
-function latencyMetrics(samples) {
+function rawLatencyMetrics(samples) {
 	return {
 		count: samples.length,
-		minMilliseconds: Number(Math.min(...samples).toFixed(3)),
-		p95Milliseconds: Number(nearestRankPercentile(samples, 0.95).toFixed(3)),
-		maxMilliseconds: Number(Math.max(...samples).toFixed(3))
+		minMilliseconds: Math.min(...samples),
+		p95Milliseconds: nearestRankPercentile(samples, 0.95),
+		maxMilliseconds: Math.max(...samples)
+	};
+}
+
+function roundedLatencyMetrics(rawMetrics) {
+	return {
+		count: rawMetrics.count,
+		minMilliseconds: Number(rawMetrics.minMilliseconds.toFixed(3)),
+		p95Milliseconds: Number(rawMetrics.p95Milliseconds.toFixed(3)),
+		maxMilliseconds: Number(rawMetrics.maxMilliseconds.toFixed(3))
 	};
 }
 
@@ -212,14 +227,28 @@ function emptyLatencyMetrics() {
 	};
 }
 
-function successMetrics(profileSamples, livenessSamples) {
-	return {
+export function evaluateLatencyThresholds(profileSamples, livenessSamples) {
+	const rawProfile = rawLatencyMetrics(profileSamples);
+	const rawLiveness = rawLatencyMetrics(livenessSamples);
+	const metrics = {
 		ok: true,
-		profile: latencyMetrics(profileSamples),
-		liveness: latencyMetrics(livenessSamples),
+		profile: roundedLatencyMetrics(rawProfile),
+		liveness: roundedLatencyMetrics(rawLiveness),
 		thresholdsMilliseconds: THRESHOLDS,
 		caveat: HTTP_ONLY_CAVEAT
 	};
+
+	if (rawProfile.p95Milliseconds > THRESHOLDS.profileP95Milliseconds) {
+		fail('PROFILE_P95_THRESHOLD', metrics);
+	}
+	if (rawLiveness.p95Milliseconds > THRESHOLDS.livenessP95Milliseconds) {
+		fail('LIVENESS_P95_THRESHOLD', metrics);
+	}
+	if (rawLiveness.maxMilliseconds > THRESHOLDS.livenessMaxMilliseconds) {
+		fail('LIVENESS_MAX_THRESHOLD', metrics);
+	}
+
+	return metrics;
 }
 
 function failureMetrics(errorCode, measuredMetrics) {
@@ -276,18 +305,7 @@ export async function verifyProfileActivityConcurrency({
 			fail('REQUEST_COUNT');
 		}
 
-		const metrics = successMetrics(profileSamples, livenessSamples);
-		if (metrics.profile.p95Milliseconds > THRESHOLDS.profileP95Milliseconds) {
-			fail('PROFILE_P95_THRESHOLD', metrics);
-		}
-		if (metrics.liveness.p95Milliseconds > THRESHOLDS.livenessP95Milliseconds) {
-			fail('LIVENESS_P95_THRESHOLD', metrics);
-		}
-		if (metrics.liveness.maxMilliseconds > THRESHOLDS.livenessMaxMilliseconds) {
-			fail('LIVENESS_MAX_THRESHOLD', metrics);
-		}
-
-		return metrics;
+		return evaluateLatencyThresholds(profileSamples, livenessSamples);
 	} finally {
 		agent.destroy();
 	}
