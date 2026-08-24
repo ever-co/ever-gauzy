@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbSidebarService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
@@ -20,13 +20,36 @@ export const QUICK_SETTINGS_SIDEBAR_TAG = 'settings_sidebar';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-theme-settings',
-    styleUrls: ['./theme-settings.component.scss'],
-    templateUrl: './theme-settings.component.html',
-    standalone: false
+	selector: 'ngx-theme-settings',
+	styleUrls: ['./theme-settings.component.scss'],
+	templateUrl: './theme-settings.component.html',
+	standalone: false
 })
 export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	private state: boolean;
+
+	/**
+	 * Whether the document click currently being dispatched landed inside a CDK
+	 * overlay rather than on the page.
+	 *
+	 * `OutsideDirective` reports only "inside the panel / outside the panel", and
+	 * every dropdown this panel hosts — the language list, the layout list, the
+	 * theme popover — renders into `.cdk-overlay-container` at the END of the
+	 * document, i.e. outside the panel element. Without this, picking a language
+	 * closed Quick Settings, and the theme popover could never be used at all: the
+	 * click that chose a theme would take the panel down with it.
+	 *
+	 * Set from a listener on THIS component's host, which is registered before the
+	 * directive's (the directive sits on an element inside this component's
+	 * template), so it is already up to date when `onClickOutside` runs for the
+	 * same event.
+	 */
+	private clickedInOverlay = false;
+
+	@HostListener('document:click', ['$event.target'])
+	public trackOverlayClick(target: EventTarget | null): void {
+		this.clickedInOverlay = target instanceof Element && !!target.closest('.cdk-overlay-container');
+	}
 
 	/**
 	 * Support chat is only offered when this deployment configured a Chatwoot
@@ -47,7 +70,10 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	 */
 	public readonly faqUrl: string = 'https://docs.gauzy.co/reference/faq';
 
-	constructor(private readonly sidebarService: NbSidebarService, private readonly router: Router) {}
+	constructor(
+		private readonly sidebarService: NbSidebarService,
+		private readonly router: Router
+	) {}
 
 	ngOnInit(): void {
 		// This ran in ngAfterViewChecked — i.e. after every change-detection pass — opening a new
@@ -126,7 +152,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	 * @param event
 	 */
 	public onClickOutside(event: boolean) {
-		if (!event && this.state) this.closeSidebar();
+		if (!event && !this.clickedInOverlay && this.state) this.closeSidebar();
 	}
 
 	/**
