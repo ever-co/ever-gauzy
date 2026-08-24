@@ -4,7 +4,16 @@ import { environment } from '@gauzy/ui-config';
 import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
 import { EmployeesService, ErrorHandlingService } from '@gauzy/ui-core/core';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
+import {
+	BehaviorSubject,
+	tap,
+	Observable,
+	filter,
+	firstValueFrom,
+	combineLatest,
+	map,
+	distinctUntilChanged
+} from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,7 +25,16 @@ import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
 export class UserMenuComponent implements OnInit, OnDestroy {
 	private _user$: Observable<IUser>;
 	private _employee$: BehaviorSubject<IEmployee>;
-	private _isSubmit$: BehaviorSubject<boolean>;
+	/**
+	 * The employee lookup and the status update run independently — a user or
+	 * organization switch can start a lookup while `onChangeStatus()` is still
+	 * waiting on the server — so each keeps its own in-flight flag. With a single
+	 * shared flag, whichever request settled first re-enabled the status control
+	 * while the other was still running.
+	 */
+	private _isLoadingEmployee$: BehaviorSubject<boolean>;
+	private _isUpdatingStatus$: BehaviorSubject<boolean>;
+	private _isSubmit$: Observable<boolean>;
 	platFormWebSiteUrl: string;
 
 	@Output()
@@ -86,7 +104,12 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	) {
 		this._user$ = new Observable();
 		this._employee$ = new BehaviorSubject(null);
-		this._isSubmit$ = new BehaviorSubject(false);
+		this._isLoadingEmployee$ = new BehaviorSubject(false);
+		this._isUpdatingStatus$ = new BehaviorSubject(false);
+		this._isSubmit$ = combineLatest([this._isLoadingEmployee$, this._isUpdatingStatus$]).pipe(
+			map(([isLoadingEmployee, isUpdatingStatus]) => isLoadingEmployee || isUpdatingStatus),
+			distinctUntilChanged()
+		);
 		this.platFormWebSiteUrl = environment.PLATFORM_WEBSITE_URL;
 	}
 
@@ -96,11 +119,22 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 		this.user$
 			.pipe(
 				distinctUntilChange(),
-				filter(({ employee }) => !!employee),
+				tap((user: IUser) => {
+					// A user without an employee still has to invalidate the lookup in
+					// flight: the filter below drops the emission, so without this an
+					// earlier request could settle afterwards and repopulate the menu with
+					// the previous employee, letting onChangeStatus() update that record.
+					if (!user?.employee) {
+						this.lookupId++;
+						this._employee$.next(null);
+						this._isLoadingEmployee$.next(false);
+					}
+				}),
+				filter((user: IUser) => !!user?.employee),
 				tap(async (user: IUser) => {
-					const employeeId = user?.employee?.id;
+					const employeeId = user.employee.id;
 					const lookupId = ++this.lookupId;
-					this._isSubmit$.next(true);
+					this._isLoadingEmployee$.next(true);
 					try {
 						const employee = await firstValueFrom(this._employeeService.getEmployeeById(employeeId));
 						if (lookupId !== this.lookupId) {
@@ -108,12 +142,16 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 						}
 						this._employee$.next(employee);
 					} catch (error) {
-						// Only a still-current failure may clear the cached employee, and only
-						// when that cache belongs to someone else: keeping a stale employee
-						// would let onChangeStatus() write the away flag to the wrong one,
-						// while a failed refresh of the same employee should leave the status
-						// control on the data it already has.
-						if (lookupId === this.lookupId && this.employee?.id !== employeeId) {
+						// A superseded lookup owns nothing on screen any more: neither its
+						// failure nor its error message belongs to the employee now shown.
+						if (lookupId !== this.lookupId) {
+							return;
+						}
+						// Clear the cached employee only when it belongs to someone else:
+						// keeping a stale employee would let onChangeStatus() write the away
+						// flag to the wrong one, while a failed refresh of the same employee
+						// should leave the status control on the data it already has.
+						if (this.employee?.id !== employeeId) {
 							this._employee$.next(null);
 						}
 						this._errorHandler.handleError(error);
@@ -122,7 +160,7 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 						// the status control stuck behind a spinner for the whole session.
 						// A superseded lookup leaves it to the newer one still running.
 						if (lookupId === this.lookupId) {
-							this._isSubmit$.next(false);
+							this._isLoadingEmployee$.next(false);
 						}
 					}
 				}),
@@ -149,10 +187,11 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	public async onChangeStatus(): Promise<void> {
 		// Guard against a second activation while a request is already in flight:
 		// the disabled attribute covers pointer and keyboard, this covers the rest.
-		if (!this.employee || this._isSubmit$.getValue()) {
+		// A lookup in flight counts too — the employee on screen is about to change.
+		if (!this.employee || this._isLoadingEmployee$.getValue() || this._isUpdatingStatus$.getValue()) {
 			return;
 		}
-		this._isSubmit$.next(true);
+		this._isUpdatingStatus$.next(true);
 		try {
 			const { id, isAway, tenantId, organizationId } = this.employee;
 			const payload: IEmployeeUpdateInput = {
@@ -161,11 +200,15 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 				organizationId
 			};
 			await this._employeeService.updateProfile(id, payload);
-			this._employee$.next({ ...this.employee, ...payload });
+			// A lookup may have swapped the employee while this update was in flight;
+			// applying the payload then would show one employee's away flag on another.
+			if (this.employee?.id === id) {
+				this._employee$.next({ ...this.employee, ...payload });
+			}
 		} catch (error) {
 			this._errorHandler.handleError(error);
 		} finally {
-			this._isSubmit$.next(false);
+			this._isUpdatingStatus$.next(false);
 		}
 	}
 
@@ -189,6 +232,6 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	}
 
 	public get isSubmit$(): Observable<boolean> {
-		return this._isSubmit$.asObservable();
+		return this._isSubmit$;
 	}
 }
