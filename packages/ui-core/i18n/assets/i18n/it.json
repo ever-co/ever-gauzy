@@ -1203,7 +1203,9 @@
 		"CARDS_GRID": "Griglia di carte",
 		"SPRINT_VIEW": "Vista della sprint",
 		"QUICK_SETTINGS": "Impostazioni rapide",
-		"NO_LAYOUT": "Nessun layout di dati disponibile"
+		"NO_LAYOUT": "Nessun layout di dati disponibile",
+		"PREFERENCES": "Preferenze",
+		"SUPPORT": "Supporto"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Cosa c'è di nuovo?",
@@ -5393,7 +5395,10 @@
 		"HOTKEYS": "Tasti di scelta rapida",
 		"HELP": "Aiuto",
 		"SIGN_OUT": "Esci",
-		"PROFILE": "Profilo"
+		"PROFILE": "Profilo",
+		"ACCOUNT": "Account",
+		"PREFERENCES": "Preferenze",
+		"DOWNLOAD_APPS": "Scarica le app"
 	},
 	"WORKSPACES": {
 		"MENUS": {

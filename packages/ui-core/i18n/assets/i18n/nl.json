@@ -1203,7 +1203,9 @@
 		"CARDS_GRID": "Kaartenraster",
 		"SPRINT_VIEW": "Sprintweergave",
 		"QUICK_SETTINGS": "Snelle instellingen",
-		"NO_LAYOUT": "Geen gegevenslay-out beschikbaar"
+		"NO_LAYOUT": "Geen gegevenslay-out beschikbaar",
+		"PREFERENCES": "Voorkeuren",
+		"SUPPORT": "Ondersteuning"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Wat is er nieuw?",
@@ -5393,7 +5395,10 @@
 		"HOTKEYS": "Sneltoetsen",
 		"HELP": "Help",
 		"SIGN_OUT": "Afmelden",
-		"PROFILE": "Profiel"
+		"PROFILE": "Profiel",
+		"ACCOUNT": "Account",
+		"PREFERENCES": "Voorkeuren",
+		"DOWNLOAD_APPS": "Apps downloaden"
 	},
 	"WORKSPACES": {
 		"MENUS": {
