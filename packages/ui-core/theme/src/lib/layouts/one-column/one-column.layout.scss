@@ -193,6 +193,7 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     padding: 0.5rem 0.75rem;
     --gz-user-surface: #{nb-theme(gauzy-sidebar-background-2)};
     --gz-user-presence: none;
+    --gz-user-email-size: 0.75rem;
 
     gauzy-user {
       flex: 1 1 auto;
