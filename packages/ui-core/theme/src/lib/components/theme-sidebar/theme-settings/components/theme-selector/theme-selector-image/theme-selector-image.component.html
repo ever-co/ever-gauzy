@@ -3,6 +3,7 @@
 		type="button"
 		class="theme-trigger"
 		[class.open]="isOpen"
+		aria-haspopup="true"
 		[attr.aria-expanded]="isOpen"
 		[nbPopover]="themeList"
 		nbPopoverTrigger="click"
@@ -19,14 +20,13 @@
 </div>
 
 <ng-template #themeList>
-	<div class="gz-theme-list" role="listbox">
+	<div class="gz-theme-list" role="group" [attr.aria-label]="'SETTINGS_MENU.THEMES' | translate">
 		@for (theme of themes; track theme.value) {
 			<button
 				type="button"
 				class="theme-option"
-				role="option"
 				[class.selected]="(selected | async)?.value === theme.value"
-				[attr.aria-selected]="(selected | async)?.value === theme.value"
+				[attr.aria-pressed]="(selected | async)?.value === theme.value"
 				(click)="selectTheme(theme.value)"
 			>
 				<span class="theme-thumb">
