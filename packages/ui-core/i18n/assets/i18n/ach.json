@@ -1100,8 +1100,8 @@
 		"CARDS_GRID": "crwdns7058:0crwdne7058:0",
 		"SPRINT_VIEW": "crwdns8236:0crwdne8236:0",
 		"QUICK_SETTINGS": "crwdns11022:0crwdne11022:0",
-		"PREFERENCES": "Preferences",
-		"SUPPORT": "Support"
+		"PREFERENCES": "Gin ma imito",
+		"SUPPORT": "Kony"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "crwdns10190:0crwdne10190:0",
@@ -4682,14 +4682,14 @@
 		"HELP": "crwdns11046:0crwdne11046:0",
 		"SIGN_OUT": "crwdns11048:0crwdne11048:0",
 		"PROFILE": "crwdns11050:0crwdne11050:0",
-		"ACCOUNT": "Account",
-		"PREFERENCES": "Preferences",
-		"DOWNLOAD_APPS": "Download apps",
-		"DOWNLOAD_MACOS": "Download for macOS",
-		"DOWNLOAD_WINDOWS": "Download for Windows",
-		"DOWNLOAD_LINUX": "Download for Linux",
-		"DOWNLOAD_MOBILE": "Download the mobile app",
-		"DOWNLOAD_BROWSER_EXTENSION": "Download the browser extension"
+		"ACCOUNT": "Akaunt",
+		"PREFERENCES": "Gin ma imito",
+		"DOWNLOAD_APPS": "Gam apps",
+		"DOWNLOAD_MACOS": "Gam pi macOS",
+		"DOWNLOAD_WINDOWS": "Gam pi Windows",
+		"DOWNLOAD_LINUX": "Gam pi Linux",
+		"DOWNLOAD_MOBILE": "Gam app me cim",
+		"DOWNLOAD_BROWSER_EXTENSION": "Gam lamed me browser"
 	},
 	"WORKSPACES": {
 		"MENUS": {
