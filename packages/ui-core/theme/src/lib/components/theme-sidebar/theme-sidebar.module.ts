@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbIconModule, NbSelectModule, NbTooltipModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { ChangelogEntryComponent } from '@gauzy/ui-core/shared';
+import { ChangelogEntryComponent, DirectivesModule } from '@gauzy/ui-core/shared';
 import { ThemeSidebarComponent } from './theme-sidebar.component';
 import { ThemeSettingsModule } from './theme-settings/theme-settings.module';
 import { ChangelogComponent } from './changelog/changelog.component';
@@ -17,6 +17,7 @@ import { ThemeSettingsComponent } from './theme-settings/theme-settings.componen
 		NbTooltipModule,
 		TranslateModule.forChild(),
 		ThemeSettingsModule,
+		DirectivesModule,
 		// Standalone card shared with the login page's What's New panel
 		ChangelogEntryComponent
 	],
