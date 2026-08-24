@@ -1204,7 +1204,9 @@
 		"CARDS_GRID": "Grille de cartes",
 		"SPRINT_VIEW": "Vue Sprint",
 		"QUICK_SETTINGS": "Paramètres rapides",
-		"NO_LAYOUT": "Aucun modèle de données disponible"
+		"NO_LAYOUT": "Aucun modèle de données disponible",
+		"PREFERENCES": "Préférences",
+		"SUPPORT": "Assistance"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Quoi de neuf?",
@@ -5384,7 +5386,15 @@
 		"HOTKEYS": "Raccourcis clavier",
 		"HELP": "Aidez-moi",
 		"SIGN_OUT": "Déconnecter",
-		"PROFILE": "Profil"
+		"PROFILE": "Profil",
+		"ACCOUNT": "Compte",
+		"PREFERENCES": "Préférences",
+		"DOWNLOAD_APPS": "Télécharger les applications",
+		"DOWNLOAD_MACOS": "Télécharger pour macOS",
+		"DOWNLOAD_WINDOWS": "Télécharger pour Windows",
+		"DOWNLOAD_LINUX": "Télécharger pour Linux",
+		"DOWNLOAD_MOBILE": "Télécharger l'application mobile",
+		"DOWNLOAD_BROWSER_EXTENSION": "Télécharger l'extension de navigateur"
 	},
 	"WORKSPACES": {
 		"MENUS": {

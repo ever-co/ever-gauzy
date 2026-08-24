@@ -1205,7 +1205,9 @@
 		"CARDS_GRID": "Cuadrícula de Tarjetas",
 		"SPRINT_VIEW": "Sprint View",
 		"QUICK_SETTINGS": "Configuración rápida",
-		"NO_LAYOUT": "No hay diseño de datos disponible"
+		"NO_LAYOUT": "No hay diseño de datos disponible",
+		"PREFERENCES": "Preferencias",
+		"SUPPORT": "Soporte"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "¿Qué hay de nuevo?",
@@ -5395,7 +5397,15 @@
 		"HOTKEYS": "Atajos de teclado.",
 		"HELP": "Ayuda",
 		"SIGN_OUT": "Cerrar sesión",
-		"PROFILE": "Perfil"
+		"PROFILE": "Perfil",
+		"ACCOUNT": "Cuenta",
+		"PREFERENCES": "Preferencias",
+		"DOWNLOAD_APPS": "Descargar aplicaciones",
+		"DOWNLOAD_MACOS": "Descargar para macOS",
+		"DOWNLOAD_WINDOWS": "Descargar para Windows",
+		"DOWNLOAD_LINUX": "Descargar para Linux",
+		"DOWNLOAD_MOBILE": "Descargar la aplicación móvil",
+		"DOWNLOAD_BROWSER_EXTENSION": "Descargar la extensión del navegador"
 	},
 	"WORKSPACES": {
 		"MENUS": {

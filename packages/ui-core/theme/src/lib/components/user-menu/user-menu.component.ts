@@ -1,22 +1,40 @@
-import { Component, Input, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
 import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
 import { EmployeesService, ErrorHandlingService } from '@gauzy/ui-core/core';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
+import {
+	BehaviorSubject,
+	tap,
+	Observable,
+	filter,
+	firstValueFrom,
+	combineLatest,
+	map,
+	distinctUntilChanged
+} from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'gauzy-user-menu',
-    templateUrl: './user-menu.component.html',
-    styleUrls: ['./user-menu.component.scss'],
-    standalone: false
+	selector: 'gauzy-user-menu',
+	templateUrl: './user-menu.component.html',
+	styleUrls: ['./user-menu.component.scss'],
+	standalone: false
 })
 export class UserMenuComponent implements OnInit, OnDestroy {
 	private _user$: Observable<IUser>;
 	private _employee$: BehaviorSubject<IEmployee>;
-	private _isSubmit$: BehaviorSubject<boolean>;
+	/**
+	 * The employee lookup and the status update run independently — a user or
+	 * organization switch can start a lookup while `onChangeStatus()` is still
+	 * waiting on the server — so each keeps its own in-flight flag. With a single
+	 * shared flag, whichever request settled first re-enabled the status control
+	 * while the other was still running.
+	 */
+	private _isLoadingEmployee$: BehaviorSubject<boolean>;
+	private _isUpdatingStatus$: BehaviorSubject<boolean>;
+	private _isSubmit$: Observable<boolean>;
 	platFormWebSiteUrl: string;
 
 	@Output()
@@ -33,26 +51,50 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	private armed = false;
 	private armTimer: ReturnType<typeof setTimeout> | undefined;
 
+	private clickedInOverlay = false;
+
+	/**
+	 * Identifies the employee lookup currently in flight. The panel can stay open
+	 * across a user or organization switch, so a slow earlier request can settle
+	 * after a newer one; anything that no longer matches this counter is stale and
+	 * must not touch the employee or the loading state.
+	 */
+	private lookupId = 0;
+
+	@HostListener('document:click', ['$event.target'])
+	public trackOverlayClick(target: EventTarget | null): void {
+		this.clickedInOverlay = target instanceof Element && !!target.closest('.cdk-overlay-container');
+	}
+
+	/**
+	 * Each entry carries a `label` translation key because the anchors render an
+	 * icon only — without it a screen reader announces five identical links.
+	 */
 	public downloadApps = [
 		{
 			link: environment.DESKTOP_APP_DOWNLOAD_LINK_APPLE,
-			icon: 'fab fa-apple'
+			icon: 'fab fa-apple',
+			label: 'USER_MENU.DOWNLOAD_MACOS'
 		},
 		{
 			link: environment.DESKTOP_APP_DOWNLOAD_LINK_WINDOWS,
-			icon: 'fa-brands fa-windows'
+			icon: 'fa-brands fa-windows',
+			label: 'USER_MENU.DOWNLOAD_WINDOWS'
 		},
 		{
 			link: environment.DESKTOP_APP_DOWNLOAD_LINK_LINUX,
-			icon: 'fa-brands fa-linux'
+			icon: 'fa-brands fa-linux',
+			label: 'USER_MENU.DOWNLOAD_LINUX'
 		},
 		{
 			link: environment.MOBILE_APP_DOWNLOAD_LINK,
-			icon: 'fas fa-mobile'
+			icon: 'fas fa-mobile',
+			label: 'USER_MENU.DOWNLOAD_MOBILE'
 		},
 		{
 			link: environment.EXTENSION_DOWNLOAD_LINK,
-			icon: 'fa-brands fa-chrome'
+			icon: 'fa-brands fa-chrome',
+			label: 'USER_MENU.DOWNLOAD_BROWSER_EXTENSION'
 		}
 	];
 
@@ -62,7 +104,12 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	) {
 		this._user$ = new Observable();
 		this._employee$ = new BehaviorSubject(null);
-		this._isSubmit$ = new BehaviorSubject(false);
+		this._isLoadingEmployee$ = new BehaviorSubject(false);
+		this._isUpdatingStatus$ = new BehaviorSubject(false);
+		this._isSubmit$ = combineLatest([this._isLoadingEmployee$, this._isUpdatingStatus$]).pipe(
+			map(([isLoadingEmployee, isUpdatingStatus]) => isLoadingEmployee || isUpdatingStatus),
+			distinctUntilChanged()
+		);
 		this.platFormWebSiteUrl = environment.PLATFORM_WEBSITE_URL;
 	}
 
@@ -72,12 +119,50 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 		this.user$
 			.pipe(
 				distinctUntilChange(),
-				filter(({ employee }) => !!employee),
+				tap((user: IUser) => {
+					// A user without an employee still has to invalidate the lookup in
+					// flight: the filter below drops the emission, so without this an
+					// earlier request could settle afterwards and repopulate the menu with
+					// the previous employee, letting onChangeStatus() update that record.
+					if (!user?.employee) {
+						this.lookupId++;
+						this._employee$.next(null);
+						this._isLoadingEmployee$.next(false);
+					}
+				}),
+				filter((user: IUser) => !!user?.employee),
 				tap(async (user: IUser) => {
-					this._isSubmit$.next(true);
-					const employee = await firstValueFrom(this._employeeService.getEmployeeById(user?.employee?.id));
-					this._employee$.next(employee);
-					this._isSubmit$.next(false);
+					const employeeId = user.employee.id;
+					const lookupId = ++this.lookupId;
+					this._isLoadingEmployee$.next(true);
+					try {
+						const employee = await firstValueFrom(this._employeeService.getEmployeeById(employeeId));
+						if (lookupId !== this.lookupId) {
+							return;
+						}
+						this._employee$.next(employee);
+					} catch (error) {
+						// A superseded lookup owns nothing on screen any more: neither its
+						// failure nor its error message belongs to the employee now shown.
+						if (lookupId !== this.lookupId) {
+							return;
+						}
+						// Clear the cached employee only when it belongs to someone else:
+						// keeping a stale employee would let onChangeStatus() write the away
+						// flag to the wrong one, while a failed refresh of the same employee
+						// should leave the status control on the data it already has.
+						if (this.employee?.id !== employeeId) {
+							this._employee$.next(null);
+						}
+						this._errorHandler.handleError(error);
+					} finally {
+						// Always release the loading state, otherwise a failed load leaves
+						// the status control stuck behind a spinner for the whole session.
+						// A superseded lookup leaves it to the newer one still running.
+						if (lookupId === this.lookupId) {
+							this._isLoadingEmployee$.next(false);
+						}
+					}
 				}),
 
 				untilDestroyed(this)
@@ -90,7 +175,7 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	}
 
 	public onClickOutside(clickedInside: boolean) {
-		if (!clickedInside && this.armed) {
+		if (!clickedInside && !this.clickedInOverlay && this.armed) {
 			this.onClick();
 		}
 	}
@@ -100,23 +185,37 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	}
 
 	public async onChangeStatus(): Promise<void> {
+		// Guard against a second activation while a request is already in flight:
+		// the disabled attribute covers pointer and keyboard, this covers the rest.
+		// A lookup in flight counts too — the employee on screen is about to change.
+		if (!this.employee || this._isLoadingEmployee$.getValue() || this._isUpdatingStatus$.getValue()) {
+			return;
+		}
+		this._isUpdatingStatus$.next(true);
 		try {
-			if (!this.employee) {
-				return;
-			}
-			this._isSubmit$.next(true);
 			const { id, isAway, tenantId, organizationId } = this.employee;
+			// The guard above rules out a lookup in flight, so this is the lookup the
+			// employee on screen came from. A user switch starting mid-update advances
+			// the counter, which is how the write below spots that it is obsolete.
+			const lookupId = this.lookupId;
 			const payload: IEmployeeUpdateInput = {
 				isAway: !isAway,
 				tenantId,
 				organizationId
 			};
 			await this._employeeService.updateProfile(id, payload);
-			this._employee$.next({ ...this.employee, ...payload });
+			// A user switch may have happened while this update was in flight. The
+			// cached employee alone cannot tell: it still holds the previous one until
+			// the new lookup settles, so the counter has to agree as well — otherwise
+			// the away flag of the user who just left lands on the menu.
+			if (lookupId === this.lookupId && this.employee?.id === id) {
+				this._employee$.next({ ...this.employee, ...payload });
+			}
 		} catch (error) {
 			this._errorHandler.handleError(error);
+		} finally {
+			this._isUpdatingStatus$.next(false);
 		}
-		this._isSubmit$.next(false);
 	}
 
 	public get employee(): IEmployee {
@@ -139,6 +238,6 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	}
 
 	public get isSubmit$(): Observable<boolean> {
-		return this._isSubmit$.asObservable();
+		return this._isSubmit$;
 	}
 }

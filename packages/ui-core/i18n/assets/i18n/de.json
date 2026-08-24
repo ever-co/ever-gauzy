@@ -1203,7 +1203,9 @@
 		"CARDS_GRID": "Kartenraster",
 		"SPRINT_VIEW": "Sprint-Ansicht",
 		"QUICK_SETTINGS": "Schnelleinstellungen",
-		"NO_LAYOUT": "Kein Datenlayout verfügbar"
+		"NO_LAYOUT": "Kein Datenlayout verfügbar",
+		"PREFERENCES": "Einstellungen",
+		"SUPPORT": "Support"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Was gibt es Neues?",
@@ -5389,7 +5391,15 @@
 		"HOTKEYS": "Tastenkombinationen",
 		"HELP": "Hilfe",
 		"SIGN_OUT": "Abmelden",
-		"PROFILE": "Profil"
+		"PROFILE": "Profil",
+		"ACCOUNT": "Konto",
+		"PREFERENCES": "Einstellungen",
+		"DOWNLOAD_APPS": "Apps herunterladen",
+		"DOWNLOAD_MACOS": "Für macOS herunterladen",
+		"DOWNLOAD_WINDOWS": "Für Windows herunterladen",
+		"DOWNLOAD_LINUX": "Für Linux herunterladen",
+		"DOWNLOAD_MOBILE": "Mobile App herunterladen",
+		"DOWNLOAD_BROWSER_EXTENSION": "Browser-Erweiterung herunterladen"
 	},
 	"WORKSPACES": {
 		"MENUS": {
