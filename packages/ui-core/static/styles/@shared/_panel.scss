@@ -1,0 +1,272 @@
+// ── Chrome panels ────────────────────────────────────────────────────────────
+// The three panels that open out of the app shell — "What's New" (the gift
+// action in the header), "Quick Settings" (the gear action beside it) and the
+// account menu (the user button at the foot of the sidebar) — are the same KIND
+// of surface: a small, dense popup of flat rows, opened from an icon and
+// dismissed by clicking away.
+//
+// Each had grown its own scale (an 18px heading over a peach-tinted card, a
+// 16px heading over 14px list rows, a 36x18rem box with a brand-tinted half),
+// so the three read as three different products. This partial is the ONE scale
+// they share, in the same spirit as `_overlays.scss`: that file owns the
+// overlays the CDK renders at <body> level, this one owns the panels the layout
+// positions itself, and both describe the same container/item split —
+//
+//   CONTAINER  one hairline + one soft shadow + the surface radius + small pad
+//   ITEMS      flat rows: no border, no fill at rest, a neutral tint on hover
+//
+// Type is deliberately SMALL and tight: chrome should read as chrome and stay
+// out of the way of the page it frames. Nothing here is a raw hex — every
+// colour resolves a registered token (see `_gauzy-theme-maps.scss`) with an
+// alpha-neutral fallback, so one value reads correctly on the light AND the
+// dark themes without a per-theme branch.
+// ─────────────────────────────────────────────────────────────────────────────
+@use 'themes' as *;
+
+// ── Chrome ───────────────────────────────────────────────────────────────────
+// The same values the overlay menus and the workspace switcher use. The shadow
+// is an interpolated literal because a `var()` fallback swallows every comma
+// after the first, so the two-layer list has to be emitted verbatim.
+$panel-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+$panel-shadow: #{'var(--gauzy-overlay-shadow, 0 8px 24px -6px rgba(0, 0, 0, 0.16), 0 2px 6px -2px rgba(0, 0, 0, 0.08))'};
+$panel-hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+$panel-active-tint: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+
+// Surface radius for the panel itself, row radius for the things inside it —
+// the same two-step scale as the cards and the overlay menus, never a literal.
+$panel-radius: var(--border-radius, 8px);
+$panel-row-radius: var(--gauzy-radius-sm, 6px);
+
+// ── Type scale ───────────────────────────────────────────────────────────────
+// THREE visible steps — 9px, 10px, 12px. Five names, because five jobs share
+// them; a fourth SIZE is a sign the panel is doing too much.
+//
+// The panel above the page is not the page: 12px is the TITLE here, while the
+// page's own body copy is 14px. Anything in a panel that reads at page size is
+// competing with the page it floats over.
+$panel-text-micro: 0.5625rem; //  9px — timestamps, hint text, footnotes
+$panel-text-body: 0.5625rem; //   9px — running copy inside a card
+$panel-text-label: 0.625rem; //  10px — section overlines, captions
+$panel-text-row: 0.625rem; //    10px — row labels, control labels
+$panel-text-title: 0.75rem; //   12px — the panel's own title
+
+// ── Spacing ──────────────────────────────────────────────────────────────────
+// One small rhythm. `$panel-gutter` is the inline inset EVERY row, header and
+// footer shares, so every label lines up down the left edge of the panel.
+$panel-pad: 0.375rem; //      6px — inset of the container
+$panel-gutter: 0.625rem; //  10px — inline padding of a row / header / footer
+$panel-row-pad-y: 0.375rem; // 6px — block padding of a row
+$panel-gap: 0.125rem; //      2px — between sibling rows
+
+/**
+ * The container chrome: one hairline, one soft shadow, the surface radius.
+ * `background-basic-color-1` rather than a transparent inherit — these panels
+ * float over page content, so the surface has to be opaque.
+ */
+@mixin gauzy-panel-surface() {
+  border: 1px solid #{$panel-hairline};
+  border-radius: $panel-radius;
+  box-shadow: #{$panel-shadow};
+  background-color: nb-theme(background-basic-color-1);
+  color: nb-theme(text-basic-color);
+  // Chrome sets its own scale; it must not inherit the page's 14px body.
+  font-family: nb-theme(font-family-primary);
+  font-size: $panel-text-row;
+  line-height: 1.4;
+}
+
+/**
+ * The title bar: a 12px title on the left, the close affordance on the right,
+ * separated from the body by a hairline rather than by empty space (the body
+ * scrolls under it, so the line is what tells the eye where the panel starts).
+ */
+@mixin gauzy-panel-header() {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  // Flush with the panel edge, cancelling the container's own inset. The
+  // title then keeps the gutter every row below it uses, so the whole panel
+  // reads off one left edge; the trailing side is one step tighter because
+  // the close button carries its own padding out to the corner.
+  margin: calc(-1 * #{$panel-pad}) calc(-1 * #{$panel-pad}) 0;
+  padding: 0.5rem $panel-gutter 0.5rem calc(#{$panel-gutter} + #{$panel-pad});
+  border-bottom: 1px solid #{$panel-hairline};
+}
+
+@mixin gauzy-panel-title() {
+  margin: 0;
+  font-size: $panel-text-title;
+  font-weight: 600;
+  // Tightened: small semibold type otherwise reads loose at this size.
+  letter-spacing: -0.006em;
+  line-height: 1.125rem;
+  color: nb-theme(text-basic-color);
+}
+
+/**
+ * Close affordance. A real square target with a hover tint — these panels used
+ * to close on a bare 12px glyph absolutely positioned in the corner, which is
+ * both a ~12px hit area and invisible to the keyboard.
+ */
+@mixin gauzy-panel-close() {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.375rem;
+  height: 1.375rem;
+  padding: 0;
+  border: 0;
+  border-radius: $panel-row-radius;
+  background: transparent;
+  color: nb-theme(text-hint-color);
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease-in-out,
+    color 0.12s ease-in-out;
+
+  &:hover {
+    background-color: #{$panel-hover-tint};
+    color: nb-theme(text-basic-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: -2px;
+  }
+
+  nb-icon,
+  i {
+    font-size: 0.75rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    line-height: 1;
+  }
+}
+
+/**
+ * Section overline — the 10px muted, tracked-out caps label that groups a run
+ * of rows. This is what replaces the panels' second and third heading levels:
+ * one title per panel, and everything below it is a group label.
+ */
+@mixin gauzy-panel-overline() {
+  display: block;
+  margin: 0;
+  padding: 0.5rem $panel-gutter 0.25rem;
+  font-size: $panel-text-label;
+  font-weight: 600;
+  // Caps need back the tracking that uppercasing takes away.
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: nb-theme(text-hint-color);
+  user-select: none;
+}
+
+/**
+ * A flat menu row. The same contract as `gauzy-overlay-item()` in
+ * `_overlays.scss`, one step tighter: these panels are chrome, not menus opened
+ * over the page.
+ */
+@mixin gauzy-panel-row() {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: $panel-row-pad-y $panel-gutter;
+  border: 0;
+  border-radius: $panel-row-radius;
+  box-shadow: none;
+  background-color: transparent;
+  color: nb-theme(text-basic-color);
+  font-size: $panel-text-row;
+  font-weight: 400;
+  line-height: 1rem;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  // Colour only: transitioning `all` animates the radius too and makes the row
+  // look like it is inflating into a block.
+  transition:
+    background-color 0.12s ease-in-out,
+    color 0.12s ease-in-out;
+
+  &:hover {
+    background-color: #{$panel-hover-tint};
+    color: nb-theme(text-basic-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: -2px;
+  }
+
+  // One step above the label, not two: a 14px glyph next to 11px text reads
+  // as the row's subject rather than as its marker.
+  nb-icon,
+  i {
+    flex: 0 0 auto;
+    font-size: 0.8125rem;
+    width: 0.8125rem;
+    height: 0.8125rem;
+    color: nb-theme(text-hint-color);
+  }
+}
+
+/**
+ * A row that HOSTS a control (a select, a toggle) instead of being one: label
+ * on the left, widget on the right, and no hover tint — the target is the
+ * widget, so lighting up the whole row would be a lie.
+ */
+@mixin gauzy-panel-control-row() {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0;
+  padding: $panel-row-pad-y $panel-gutter;
+  font-size: $panel-text-row;
+  font-weight: 400;
+  line-height: 1rem;
+  color: nb-theme(text-basic-color);
+}
+
+/**
+ * Hairline between two groups of rows. Never `divider-color`: that resolves to
+ * #edf1f7 on the light themes and vanishes on the dark ones.
+ */
+@mixin gauzy-panel-divider() {
+  height: 1px;
+  margin: $panel-pad 0;
+  border: 0;
+  background-color: #{$panel-hairline};
+}
+
+/**
+ * Scroll port for a panel body. `overscroll-behavior: contain` stops the page
+ * behind the panel from taking over the wheel once the list hits its end.
+ */
+@mixin gauzy-panel-scroll() {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+/**
+ * Footer strip — 9px muted meta at the foot of a panel, above a hairline.
+ */
+@mixin gauzy-panel-footer() {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: $panel-pad calc(-1 * #{$panel-pad}) calc(-1 * #{$panel-pad});
+  padding: 0.4375rem calc(#{$panel-gutter} + #{$panel-pad});
+  border-top: 1px solid #{$panel-hairline};
+  font-size: $panel-text-micro;
+  line-height: 1;
+  color: nb-theme(text-hint-color);
+}
