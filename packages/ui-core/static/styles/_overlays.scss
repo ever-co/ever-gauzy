@@ -344,7 +344,7 @@ $overlay-item-padding-x: 0.625rem; // 10px
     }
   }
 
-  .cdk-overlay-container .gz-theme-popover nb-popover {
+  .cdk-overlay-container nb-popover.gz-theme-popover {
     padding: #{$overlay-padding};
 
     .arrow {
