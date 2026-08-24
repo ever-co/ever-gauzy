@@ -2,7 +2,8 @@ import { IGetProfileActivity, IProfileActivity } from '@gauzy/contracts';
 import { moment } from '../../core/moment-extend';
 
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const DATE_TIME_WITH_OFFSET_PATTERN = /(?:T|\s)\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}(?::?\d{2})?)$/i;
+const DATE_TIME_PATTERN = /(?:T|\s)\d{2}:\d{2}/i;
+const TIME_ZONE_SUFFIX_PATTERN = /(?:Z|[+-]\d{2}(?::?\d{2})?)$/i;
 const MAX_LOCAL_BOUNDARY_SEARCH_DAYS = 7;
 const MAX_SAFE_DURATION_MILLISECONDS = BigInt(Number.MAX_SAFE_INTEGER);
 
@@ -83,9 +84,10 @@ function parseTimestampMilliseconds(value: unknown): number | null {
 	}
 
 	const timestamp = value.trim();
-	const normalizedTimestamp = DATE_TIME_WITH_OFFSET_PATTERN.test(timestamp)
-		? timestamp
-		: `${timestamp.replace(/^(\d{4}-\d{2}-\d{2})\s+/, '$1T')}Z`;
+	const normalizedTimestamp =
+		DATE_TIME_PATTERN.test(timestamp) && TIME_ZONE_SUFFIX_PATTERN.test(timestamp)
+			? timestamp
+			: `${timestamp.replace(/^(\d{4}-\d{2}-\d{2})\s+/, '$1T')}Z`;
 	const parsed = moment.parseZone(normalizedTimestamp, moment.ISO_8601, true);
 	const milliseconds = parsed.valueOf();
 
@@ -154,7 +156,7 @@ export function buildProfileActivityResponse(
 		}
 	}
 
-	const dates = [...durations.keys()].sort();
+	const dates = [...durations.keys()].sort((left, right) => left.localeCompare(right));
 	const totalMilliseconds = dates.reduce((total, date) => total + (durations.get(date) ?? 0n), 0n);
 	const response: IProfileActivity = {
 		employeeId: request.employeeId,

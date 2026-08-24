@@ -77,6 +77,47 @@ function isLoopbackHostname(hostname) {
 	);
 }
 
+function parseUrl(value, code, base) {
+	try {
+		return new URL(value, base);
+	} catch {
+		fail(code);
+	}
+}
+
+function validateBaseUrl(base, allowRemote) {
+	if (base.protocol !== 'http:' && base.protocol !== 'https:') fail('BASE_PROTOCOL');
+	if (base.username || base.password) fail('BASE_CREDENTIALS');
+	if (base.hash) fail('BASE_FRAGMENT');
+	if (base.search) fail('BASE_QUERY');
+	if (!allowRemote && !isLoopbackHostname(base.hostname)) fail('REMOTE_HOST_REFUSED');
+}
+
+function validateRelativeQueryPath(rawQueryPath, base) {
+	if (/^[\\/]{2}/u.test(rawQueryPath)) fail('QUERY_PROTOCOL_RELATIVE');
+	if (/^[a-z][a-z\d+.-]*:/iu.test(rawQueryPath)) {
+		const absolute = parseUrl(rawQueryPath, 'QUERY_ABSOLUTE');
+		if (absolute.origin !== base.origin) fail('QUERY_CROSS_ORIGIN');
+		fail('QUERY_ABSOLUTE');
+	}
+	if (rawQueryPath.includes('#')) fail('QUERY_FRAGMENT');
+	if (isTraversalPath(rawQueryPath)) fail('QUERY_TRAVERSAL');
+}
+
+function validateProfileUrl(profileUrl, base) {
+	if (profileUrl.origin !== base.origin) fail('QUERY_CROSS_ORIGIN');
+	if (profileUrl.username || profileUrl.password) fail('QUERY_CREDENTIALS');
+	if (profileUrl.hash) fail('QUERY_FRAGMENT');
+	if (profileUrl.pathname !== PROFILE_PATHNAME) fail('QUERY_PATH');
+}
+
+function transportForProtocol(protocol) {
+	if (protocol === 'https:') return https;
+	if (protocol === 'http:') return http;
+
+	return null;
+}
+
 export function nearestRankPercentile(samples, percentile) {
 	if (!Array.isArray(samples) || samples.length === 0 || percentile <= 0 || percentile > 1) {
 		fail('PERCENTILE_INPUT');
@@ -93,47 +134,14 @@ export function createAlternatingRequestPlan(count = REQUEST_COUNT) {
 export function resolveVerifierTargets({ baseUrl, queryPath, allowRemote }) {
 	const rawBaseUrl = requiredString(baseUrl, 'BASE_URL_REQUIRED');
 	const rawQueryPath = requiredString(queryPath, 'QUERY_PATH_REQUIRED');
-	let base;
 	rejectUrlWhitespace(rawBaseUrl, 'BASE_WHITESPACE');
 	rejectUrlWhitespace(rawQueryPath, 'QUERY_WHITESPACE');
 
-	try {
-		base = new URL(rawBaseUrl);
-	} catch {
-		fail('BASE_URL_INVALID');
-	}
-
-	if (base.protocol !== 'http:' && base.protocol !== 'https:') fail('BASE_PROTOCOL');
-	if (base.username || base.password) fail('BASE_CREDENTIALS');
-	if (base.hash) fail('BASE_FRAGMENT');
-	if (base.search) fail('BASE_QUERY');
-	if (!allowRemote && !isLoopbackHostname(base.hostname)) fail('REMOTE_HOST_REFUSED');
-
-	if (/^[\\/]{2}/u.test(rawQueryPath)) fail('QUERY_PROTOCOL_RELATIVE');
-	if (/^[a-z][a-z\d+.-]*:/iu.test(rawQueryPath)) {
-		let absolute;
-		try {
-			absolute = new URL(rawQueryPath);
-		} catch {
-			fail('QUERY_ABSOLUTE');
-		}
-		if (absolute.origin !== base.origin) fail('QUERY_CROSS_ORIGIN');
-		fail('QUERY_ABSOLUTE');
-	}
-	if (rawQueryPath.includes('#')) fail('QUERY_FRAGMENT');
-	if (isTraversalPath(rawQueryPath)) fail('QUERY_TRAVERSAL');
-
-	let profileUrl;
-	try {
-		profileUrl = new URL(rawQueryPath, base);
-	} catch {
-		fail('QUERY_URL_INVALID');
-	}
-
-	if (profileUrl.origin !== base.origin) fail('QUERY_CROSS_ORIGIN');
-	if (profileUrl.username || profileUrl.password) fail('QUERY_CREDENTIALS');
-	if (profileUrl.hash) fail('QUERY_FRAGMENT');
-	if (profileUrl.pathname !== PROFILE_PATHNAME) fail('QUERY_PATH');
+	const base = parseUrl(rawBaseUrl, 'BASE_URL_INVALID');
+	validateBaseUrl(base, allowRemote);
+	validateRelativeQueryPath(rawQueryPath, base);
+	const profileUrl = parseUrl(rawQueryPath, 'QUERY_URL_INVALID', base);
+	validateProfileUrl(profileUrl, base);
 
 	return {
 		profileUrl,
@@ -142,10 +150,10 @@ export function resolveVerifierTargets({ baseUrl, queryPath, allowRemote }) {
 }
 
 export function createVerifierAgent(protocol) {
-	const Agent = protocol === 'https:' ? https.Agent : protocol === 'http:' ? http.Agent : null;
-	if (!Agent) fail('BASE_PROTOCOL');
+	const transport = transportForProtocol(protocol);
+	if (!transport) fail('BASE_PROTOCOL');
 
-	return new Agent({
+	return new transport.Agent({
 		keepAlive: true,
 		maxSockets: MINIMUM_AGENT_SOCKETS,
 		maxTotalSockets: MINIMUM_AGENT_SOCKETS,
@@ -154,7 +162,7 @@ export function createVerifierAgent(protocol) {
 }
 
 export function requestAndDrain(url, agent, headers, deadlineMilliseconds = REQUEST_DEADLINE_MILLISECONDS) {
-	const transport = url.protocol === 'https:' ? https : url.protocol === 'http:' ? http : null;
+	const transport = transportForProtocol(url.protocol);
 	if (!transport) return Promise.reject(new VerifierFailure('BASE_PROTOCOL'));
 
 	return new Promise((resolveRequest, rejectRequest) => {
