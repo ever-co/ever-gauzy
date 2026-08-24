@@ -333,6 +333,15 @@ function planText(rows: ExplainRow[]): string {
 	return rows.map(({ detail }) => detail).join('\n');
 }
 
+function scansWholeTimeLogTable(plan: string): boolean {
+	const unquotedPlan = plan.replace(/["`\[\]]/g, '');
+	return /\bSCAN\s+(?:TABLE\s+)?time_log\b/i.test(unquotedPlan);
+}
+
+function requiresProfileActivityIndexReview(plan: string, p95Milliseconds: number): boolean {
+	return scansWholeTimeLogTable(plan) || p95Milliseconds > MIGRATION_P95_THRESHOLD_MILLISECONDS;
+}
+
 async function scalarCount(dataSource: DataSource, sql: string, parameters: unknown[] = []): Promise<number> {
 	const [row] = (await dataSource.query(sql, parameters)) as Array<{ count: number | string }>;
 	return Number(row.count);
@@ -382,11 +391,21 @@ async function createCurrentIndexes(dataSource: DataSource): Promise<void> {
 jest.setTimeout(180_000);
 
 describe('profile activity production query plan evidence', () => {
-	it('keeps the 10,000-row scoped read below the conjunctive migration gate', async () => {
+	it('keeps the 10,000-row scoped read below the migration review gate', async () => {
 		expect(jest.isMockFunction(dotenv.config)).toBe(true);
 		expect(dotenv.config).toHaveBeenCalled();
 		expect(dotenv.config()).toEqual({ parsed: {} });
 		expect(nearestRankP95(Array.from({ length: 21 }, (_, index) => index + 1))).toBe(20);
+
+		const syntheticFastFullScanPlan = 'SCAN time_log';
+		const syntheticIndexedPlan = 'SEARCH time_log USING INDEX IDX_profile_activity_employee (employeeId=?)';
+		expect(requiresProfileActivityIndexReview(syntheticFastFullScanPlan, 1)).toBe(true);
+		expect(
+			requiresProfileActivityIndexReview(syntheticIndexedPlan, MIGRATION_P95_THRESHOLD_MILLISECONDS + 0.001)
+		).toBe(true);
+		expect(requiresProfileActivityIndexReview(syntheticIndexedPlan, MIGRATION_P95_THRESHOLD_MILLISECONDS)).toBe(
+			false
+		);
 
 		const dataSource = new DataSource({
 			type: 'better-sqlite3',
@@ -426,7 +445,7 @@ describe('profile activity production query plan evidence', () => {
 			await dropCurrentIndexes(dataSource);
 			await dataSource.query('ANALYZE');
 			const noIndexControlPlan = planText(await explainQuery(dataSource, sql, parameters));
-			expect(noIndexControlPlan).toMatch(/\bSCAN\s+time_log\b/i);
+			expect(scansWholeTimeLogTable(noIndexControlPlan)).toBe(true);
 
 			await createCurrentIndexes(dataSource);
 			await dataSource.query('ANALYZE');
@@ -475,7 +494,7 @@ describe('profile activity production query plan evidence', () => {
 			const currentPlan = planText(await explainQuery(dataSource, sql, parameters));
 			expect(currentPlan).toMatch(/\btime_log\b/i);
 			expect(currentPlan).toContain(CURRENT_INDEXES.employee.name);
-			expect(currentPlan).not.toMatch(/\bSCAN\s+time_log\b/i);
+			expect(scansWholeTimeLogTable(currentPlan)).toBe(false);
 			expect(currentPlan).not.toMatch(/AUTOMATIC/i);
 
 			const currentRows = (await builder.getRawMany()) as ProfileActivityRawRow[];
@@ -512,12 +531,10 @@ describe('profile activity production query plan evidence', () => {
 
 			const matchingRows = currentRows.length;
 			const candidateRows = candidateCounts.employee;
-			const migrationGate =
-				candidateRows / matchingRows >= 20 &&
-				currentLatency.p95Milliseconds > MIGRATION_P95_THRESHOLD_MILLISECONDS;
+			const migrationReviewGate = requiresProfileActivityIndexReview(currentPlan, currentLatency.p95Milliseconds);
 
 			expect(candidateRows / matchingRows).toBe(40);
-			expect(migrationGate).toBe(false);
+			expect(migrationReviewGate).toBe(false);
 		} finally {
 			if (dataSource.isInitialized) {
 				await dataSource.destroy();
