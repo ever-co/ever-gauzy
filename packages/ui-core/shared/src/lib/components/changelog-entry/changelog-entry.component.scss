@@ -147,6 +147,9 @@
 	}
 }
 
-:host(.compact:last-of-type) .entry {
+// `.last` is set by the list that renders these entries. Keying off the class
+// rather than `:last-of-type` keeps the rule correct if the panel ever renders
+// a sibling of another element type, or a non-compact entry, after the list.
+:host(.compact.last) .entry {
 	border-bottom: 0;
 }

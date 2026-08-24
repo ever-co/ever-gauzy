@@ -13,7 +13,7 @@
 
 	<div class="panel-body">
 		@for (item of items$ | async; track item.id) {
-			<ngx-changelog-entry class="compact" [entry]="item" />
+			<ngx-changelog-entry class="compact" [class.last]="$last" [entry]="item" />
 		}
 	</div>
 </section>
