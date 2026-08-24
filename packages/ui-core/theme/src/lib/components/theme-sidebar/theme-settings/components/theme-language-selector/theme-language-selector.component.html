@@ -1,32 +1,32 @@
 <div class="theme-container">
-  {{ 'SETTINGS_MENU.LANGUAGE' | translate }}
-  <div>
-    @if (languages.length) {
-      <nb-select
-        [(selected)]="preferredLanguage"
-        [(ngModel)]="preferredLanguage"
-        [placeholder]="'SETTINGS_MENU.ENGLISH' | translate"
-        (selectedChange)="switchLanguage()"
-        status="basic"
-        size="small"
-        outline
-        optionsListClass="fit-content"
-        >
-        <nb-select-label>
-          @if (getFlagUrl(selectedLanguage?.code); as flagUrl) {
-            <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
-          }
-          {{ selectedLanguage?.name | translate }}
-        </nb-select-label>
-        @for (lang of languages; track lang) {
-          <nb-option [value]="lang.value">
-            @if (getFlagUrl(lang.code); as flagUrl) {
-              <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
-            }
-            {{ lang.name | translate }}
-          </nb-option>
-        }
-      </nb-select>
-    }
-  </div>
+	{{ 'SETTINGS_MENU.LANGUAGE' | translate }}
+	<div>
+		@if (languages.length) {
+			<nb-select
+				[(selected)]="preferredLanguage"
+				[(ngModel)]="preferredLanguage"
+				[placeholder]="'SETTINGS_MENU.ENGLISH' | translate"
+				(selectedChange)="switchLanguage()"
+				status="basic"
+				size="small"
+				outline
+				optionsListClass="fit-content gz-panel-options"
+			>
+				<nb-select-label>
+					@if (getFlagUrl(selectedLanguage?.code); as flagUrl) {
+						<img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
+					}
+					{{ selectedLanguage?.name | translate }}
+				</nb-select-label>
+				@for (lang of languages; track lang) {
+					<nb-option [value]="lang.value">
+						@if (getFlagUrl(lang.code); as flagUrl) {
+							<img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
+						}
+						{{ lang.name | translate }}
+					</nb-option>
+				}
+			</nb-select>
+		}
+	</div>
 </div>

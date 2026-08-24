@@ -1202,7 +1202,9 @@
 		"CARDS_GRID": "شبكة البطاقات",
 		"SPRINT_VIEW": "عرض السبرينت",
 		"QUICK_SETTINGS": "الإعدادات السريعة",
-		"NO_LAYOUT": "No data layout available"
+		"NO_LAYOUT": "لا يوجد تخطيط بيانات متاح",
+		"PREFERENCES": "التفضيلات",
+		"SUPPORT": "الدعم"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "ما الجديد؟",
@@ -5378,7 +5380,15 @@
 		"HOTKEYS": "مفاتيح الاختصار",
 		"HELP": "مساعدة",
 		"SIGN_OUT": "تسجيل الخروج",
-		"PROFILE": "الملف الشخصي"
+		"PROFILE": "الملف الشخصي",
+		"ACCOUNT": "الحساب",
+		"PREFERENCES": "التفضيلات",
+		"DOWNLOAD_APPS": "تنزيل التطبيقات",
+		"DOWNLOAD_MACOS": "التنزيل لنظام macOS",
+		"DOWNLOAD_WINDOWS": "التنزيل لنظام Windows",
+		"DOWNLOAD_LINUX": "التنزيل لنظام Linux",
+		"DOWNLOAD_MOBILE": "تنزيل تطبيق الهاتف المحمول",
+		"DOWNLOAD_BROWSER_EXTENSION": "تنزيل إضافة المتصفح"
 	},
 	"WORKSPACES": {
 		"MENUS": {
