@@ -5398,7 +5398,12 @@
 		"PROFILE": "Perfil",
 		"ACCOUNT": "Conta",
 		"PREFERENCES": "Preferências",
-		"DOWNLOAD_APPS": "Baixar aplicativos"
+		"DOWNLOAD_APPS": "Baixar aplicativos",
+		"DOWNLOAD_MACOS": "Baixar para macOS",
+		"DOWNLOAD_WINDOWS": "Baixar para Windows",
+		"DOWNLOAD_LINUX": "Baixar para Linux",
+		"DOWNLOAD_MOBILE": "Baixar o aplicativo móvel",
+		"DOWNLOAD_BROWSER_EXTENSION": "Baixar a extensão do navegador"
 	},
 	"WORKSPACES": {
 		"MENUS": {

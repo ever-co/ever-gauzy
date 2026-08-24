@@ -5400,7 +5400,12 @@
 		"PROFILE": "Perfil",
 		"ACCOUNT": "Cuenta",
 		"PREFERENCES": "Preferencias",
-		"DOWNLOAD_APPS": "Descargar aplicaciones"
+		"DOWNLOAD_APPS": "Descargar aplicaciones",
+		"DOWNLOAD_MACOS": "Descargar para macOS",
+		"DOWNLOAD_WINDOWS": "Descargar para Windows",
+		"DOWNLOAD_LINUX": "Descargar para Linux",
+		"DOWNLOAD_MOBILE": "Descargar la aplicación móvil",
+		"DOWNLOAD_BROWSER_EXTENSION": "Descargar la extensión del navegador"
 	},
 	"WORKSPACES": {
 		"MENUS": {

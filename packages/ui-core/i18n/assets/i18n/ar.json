@@ -5383,7 +5383,12 @@
 		"PROFILE": "الملف الشخصي",
 		"ACCOUNT": "الحساب",
 		"PREFERENCES": "التفضيلات",
-		"DOWNLOAD_APPS": "تنزيل التطبيقات"
+		"DOWNLOAD_APPS": "تنزيل التطبيقات",
+		"DOWNLOAD_MACOS": "التنزيل لنظام macOS",
+		"DOWNLOAD_WINDOWS": "التنزيل لنظام Windows",
+		"DOWNLOAD_LINUX": "التنزيل لنظام Linux",
+		"DOWNLOAD_MOBILE": "تنزيل تطبيق الهاتف المحمول",
+		"DOWNLOAD_BROWSER_EXTENSION": "تنزيل إضافة المتصفح"
 	},
 	"WORKSPACES": {
 		"MENUS": {

@@ -5425,7 +5425,12 @@
 		"PROFILE": "Profile",
 		"ACCOUNT": "Акаунт",
 		"PREFERENCES": "Предпочитания",
-		"DOWNLOAD_APPS": "Изтегляне на приложения"
+		"DOWNLOAD_APPS": "Изтегляне на приложения",
+		"DOWNLOAD_MACOS": "Изтегляне за macOS",
+		"DOWNLOAD_WINDOWS": "Изтегляне за Windows",
+		"DOWNLOAD_LINUX": "Изтегляне за Linux",
+		"DOWNLOAD_MOBILE": "Изтегляне на мобилното приложение",
+		"DOWNLOAD_BROWSER_EXTENSION": "Изтегляне на разширението за браузър"
 	},
 	"WORKSPACES": {
 		"MENUS": {

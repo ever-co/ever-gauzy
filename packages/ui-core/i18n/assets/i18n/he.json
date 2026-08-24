@@ -5388,7 +5388,12 @@
 		"PROFILE": "Profile",
 		"ACCOUNT": "חשבון",
 		"PREFERENCES": "העדפות",
-		"DOWNLOAD_APPS": "הורדת אפליקציות"
+		"DOWNLOAD_APPS": "הורדת אפליקציות",
+		"DOWNLOAD_MACOS": "הורדה עבור macOS",
+		"DOWNLOAD_WINDOWS": "הורדה עבור Windows",
+		"DOWNLOAD_LINUX": "הורדה עבור Linux",
+		"DOWNLOAD_MOBILE": "הורדת אפליקציית המובייל",
+		"DOWNLOAD_BROWSER_EXTENSION": "הורדת תוסף הדפדפן"
 	},
 	"WORKSPACES": {
 		"MENUS": {

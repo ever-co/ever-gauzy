@@ -5398,7 +5398,12 @@
 		"PROFILE": "Profiel",
 		"ACCOUNT": "Account",
 		"PREFERENCES": "Voorkeuren",
-		"DOWNLOAD_APPS": "Apps downloaden"
+		"DOWNLOAD_APPS": "Apps downloaden",
+		"DOWNLOAD_MACOS": "Downloaden voor macOS",
+		"DOWNLOAD_WINDOWS": "Downloaden voor Windows",
+		"DOWNLOAD_LINUX": "Downloaden voor Linux",
+		"DOWNLOAD_MOBILE": "Mobiele app downloaden",
+		"DOWNLOAD_BROWSER_EXTENSION": "Browserextensie downloaden"
 	},
 	"WORKSPACES": {
 		"MENUS": {

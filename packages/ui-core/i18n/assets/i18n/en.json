@@ -5981,7 +5981,12 @@
 		"PROFILE": "Profile",
 		"ACCOUNT": "Account",
 		"PREFERENCES": "Preferences",
-		"DOWNLOAD_APPS": "Download apps"
+		"DOWNLOAD_APPS": "Download apps",
+		"DOWNLOAD_MACOS": "Download for macOS",
+		"DOWNLOAD_WINDOWS": "Download for Windows",
+		"DOWNLOAD_LINUX": "Download for Linux",
+		"DOWNLOAD_MOBILE": "Download the mobile app",
+		"DOWNLOAD_BROWSER_EXTENSION": "Download the browser extension"
 	},
 	"WORKSPACES": {
 		"MENUS": {
