@@ -1202,7 +1202,9 @@
 		"CARDS_GRID": "Siatka kart",
 		"SPRINT_VIEW": "Widok sprintu",
 		"QUICK_SETTINGS": "Szybkie ustawienia",
-		"NO_LAYOUT": "Brak dostępnego układu danych"
+		"NO_LAYOUT": "Brak dostępnego układu danych",
+		"PREFERENCES": "Preferencje",
+		"SUPPORT": "Wsparcie"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Co nowego?",
@@ -5392,7 +5394,10 @@
 		"HOTKEYS": "Skróty klawiszowe",
 		"HELP": "Pomoc",
 		"SIGN_OUT": "Wyloguj się",
-		"PROFILE": "Profil"
+		"PROFILE": "Profil",
+		"ACCOUNT": "Konto",
+		"PREFERENCES": "Preferencje",
+		"DOWNLOAD_APPS": "Pobierz aplikacje"
 	},
 	"WORKSPACES": {
 		"MENUS": {

@@ -1211,7 +1211,9 @@
 		"CARDS_GRID": "Сетка карт",
 		"SPRINT_VIEW": "Просмотр спринта",
 		"QUICK_SETTINGS": "Быстрые настройки",
-		"NO_LAYOUT": "Нет доступного макета данных"
+		"NO_LAYOUT": "Нет доступного макета данных",
+		"PREFERENCES": "Предпочтения",
+		"SUPPORT": "Поддержка"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Что нового?",
@@ -5390,7 +5392,10 @@
 		"HOTKEYS": "Горячие клавиши",
 		"HELP": "Помогите",
 		"SIGN_OUT": "Выйти",
-		"PROFILE": "Профиль"
+		"PROFILE": "Профиль",
+		"ACCOUNT": "Аккаунт",
+		"PREFERENCES": "Предпочтения",
+		"DOWNLOAD_APPS": "Скачать приложения"
 	},
 	"WORKSPACES": {
 		"MENUS": {

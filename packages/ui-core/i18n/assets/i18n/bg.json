@@ -1232,7 +1232,9 @@
 		"CARDS_GRID": "Карти и мрежа",
 		"SPRINT_VIEW": "Визуализация на спринт",
 		"QUICK_SETTINGS": "Бързи настройки",
-		"NO_LAYOUT": "Няма наличен изглед за данни"
+		"NO_LAYOUT": "Няма наличен изглед за данни",
+		"PREFERENCES": "Предпочитания",
+		"SUPPORT": "Поддръжка"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Какво ново?",
@@ -5420,7 +5422,10 @@
 		"HOTKEYS": "Hotkeys",
 		"HELP": "Помощ",
 		"SIGN_OUT": "Sign Out",
-		"PROFILE": "Profile"
+		"PROFILE": "Profile",
+		"ACCOUNT": "Акаунт",
+		"PREFERENCES": "Предпочитания",
+		"DOWNLOAD_APPS": "Изтегляне на приложения"
 	},
 	"WORKSPACES": {
 		"MENUS": {
