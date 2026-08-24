@@ -3,6 +3,8 @@ import { moment } from '../../core/moment-extend';
 
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DATE_TIME_WITH_OFFSET_PATTERN = /(?:T|\s)\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}(?::?\d{2})?)$/i;
+const MAX_LOCAL_BOUNDARY_SEARCH_DAYS = 7;
+const MAX_SAFE_DURATION_MILLISECONDS = BigInt(Number.MAX_SAFE_INTEGER);
 
 export interface ProfileActivityPeriod {
 	startDate: Date;
@@ -14,10 +16,28 @@ export type ProfileActivityRawRow =
 	| { date: string; duration: unknown }
 	| { startedAt: Date | string; stoppedAt: Date | string };
 
+function resolveLocalDateBoundary(date: string, timeZone: string): Date {
+	const requestedDate = moment.utc(date, 'YYYY-MM-DD', true);
+	if (!requestedDate.isValid() || moment.tz.zone(timeZone) === null) {
+		throw new RangeError('Profile activity period contains an invalid local date boundary');
+	}
+
+	for (let offset = 0; offset <= MAX_LOCAL_BOUNDARY_SEARCH_DAYS; offset++) {
+		const candidateLabel = requestedDate.clone().add(offset, 'days').format('YYYY-MM-DD');
+		const candidate = moment.tz(candidateLabel, 'YYYY-MM-DD', true, timeZone);
+
+		if (candidate.isValid() && candidate.clone().tz(timeZone).format('YYYY-MM-DD') >= date) {
+			return candidate.toDate();
+		}
+	}
+
+	throw new RangeError('Profile activity local date boundary could not be resolved safely');
+}
+
 export function resolveProfileActivityPeriod(request: IGetProfileActivity): ProfileActivityPeriod {
 	return {
-		startDate: moment.tz(request.startDate, 'YYYY-MM-DD', true, request.timeZone).toDate(),
-		endDate: moment.tz(request.endDate, 'YYYY-MM-DD', true, request.timeZone).toDate(),
+		startDate: resolveLocalDateBoundary(request.startDate, request.timeZone),
+		endDate: resolveLocalDateBoundary(request.endDate, request.timeZone),
 		timeZone: request.timeZone
 	};
 }
@@ -26,7 +46,7 @@ function isDateLabel(value: unknown): value is string {
 	return typeof value === 'string' && DATE_ONLY_PATTERN.test(value) && moment(value, 'YYYY-MM-DD', true).isValid();
 }
 
-function normalizeAggregateMilliseconds(value: unknown): number | null {
+function normalizeAggregateMilliseconds(value: unknown): bigint | null {
 	if (typeof value !== 'number' && typeof value !== 'string') {
 		return null;
 	}
@@ -41,13 +61,21 @@ function normalizeAggregateMilliseconds(value: unknown): number | null {
 	}
 
 	const milliseconds = Math.round(seconds * 1000);
-	return Number.isSafeInteger(milliseconds) && milliseconds > 0 ? milliseconds : null;
+	if (milliseconds <= 0) {
+		return null;
+	}
+
+	if (!Number.isSafeInteger(milliseconds)) {
+		throw new RangeError('Profile activity duration exceeds the safe integer range');
+	}
+
+	return BigInt(milliseconds);
 }
 
 function parseTimestampMilliseconds(value: unknown): number | null {
 	if (value instanceof Date) {
 		const milliseconds = value.getTime();
-		return Number.isFinite(milliseconds) ? milliseconds : null;
+		return Number.isSafeInteger(milliseconds) ? milliseconds : null;
 	}
 
 	if (typeof value !== 'string' || value.trim() === '') {
@@ -59,19 +87,16 @@ function parseTimestampMilliseconds(value: unknown): number | null {
 		? timestamp
 		: `${timestamp.replace(/^(\d{4}-\d{2}-\d{2})\s+/, '$1T')}Z`;
 	const parsed = moment.parseZone(normalizedTimestamp, moment.ISO_8601, true);
+	const milliseconds = parsed.valueOf();
 
-	return parsed.isValid() ? parsed.valueOf() : null;
+	return parsed.isValid() && Number.isSafeInteger(milliseconds) ? milliseconds : null;
 }
 
-function addDuration(durations: Map<string, number>, date: string, milliseconds: number): void {
-	const nextDuration = (durations.get(date) ?? 0) + milliseconds;
-
-	if (Number.isSafeInteger(nextDuration)) {
-		durations.set(date, nextDuration);
-	}
+function addDuration(durations: Map<string, bigint>, date: string, milliseconds: bigint): void {
+	durations.set(date, (durations.get(date) ?? 0n) + milliseconds);
 }
 
-function collectAggregateRow(durations: Map<string, number>, row: Record<string, unknown>): void {
+function collectAggregateRow(durations: Map<string, bigint>, row: Record<string, unknown>): void {
 	if (!isDateLabel(row.date)) {
 		return;
 	}
@@ -84,7 +109,7 @@ function collectAggregateRow(durations: Map<string, number>, row: Record<string,
 	addDuration(durations, row.date, milliseconds);
 }
 
-function collectProjectionRow(durations: Map<string, number>, row: Record<string, unknown>, timeZone: string): void {
+function collectProjectionRow(durations: Map<string, bigint>, row: Record<string, unknown>, timeZone: string): void {
 	const startedAt = parseTimestampMilliseconds(row.startedAt);
 	const stoppedAt = parseTimestampMilliseconds(row.stoppedAt);
 
@@ -92,8 +117,8 @@ function collectProjectionRow(durations: Map<string, number>, row: Record<string
 		return;
 	}
 
-	const milliseconds = stoppedAt - startedAt;
-	if (!Number.isSafeInteger(milliseconds) || milliseconds <= 0) {
+	const milliseconds = BigInt(stoppedAt) - BigInt(startedAt);
+	if (milliseconds <= 0n) {
 		return;
 	}
 
@@ -101,12 +126,20 @@ function collectProjectionRow(durations: Map<string, number>, row: Record<string
 	addDuration(durations, date, milliseconds);
 }
 
+function toPublicDurationSeconds(milliseconds: bigint): number {
+	if (milliseconds > MAX_SAFE_DURATION_MILLISECONDS) {
+		throw new RangeError('Profile activity duration exceeds the safe integer range');
+	}
+
+	return Number(milliseconds) / 1000;
+}
+
 export function buildProfileActivityResponse(
 	request: IGetProfileActivity,
 	period: ProfileActivityPeriod,
 	rows: ProfileActivityRawRow[]
 ): IProfileActivity {
-	const durations = new Map<string, number>();
+	const durations = new Map<string, bigint>();
 
 	for (const candidate of rows) {
 		if (candidate === null || typeof candidate !== 'object' || Array.isArray(candidate)) {
@@ -122,11 +155,11 @@ export function buildProfileActivityResponse(
 	}
 
 	const dates = [...durations.keys()].sort();
-	const totalMilliseconds = dates.reduce((total, date) => total + (durations.get(date) ?? 0), 0);
+	const totalMilliseconds = dates.reduce((total, date) => total + (durations.get(date) ?? 0n), 0n);
 	const response: IProfileActivity = {
 		employeeId: request.employeeId,
 		activeDays: dates.length,
-		totalDuration: totalMilliseconds / 1000,
+		totalDuration: toPublicDurationSeconds(totalMilliseconds),
 		firstActiveOn: dates[0] ?? null,
 		lastActiveOn: dates.at(-1) ?? null,
 		period: {
@@ -137,7 +170,10 @@ export function buildProfileActivityResponse(
 	};
 
 	if (request.includeDaily === true) {
-		response.daily = dates.map((date) => ({ date, duration: (durations.get(date) ?? 0) / 1000 }));
+		response.daily = dates.map((date) => ({
+			date,
+			duration: toPublicDurationSeconds(durations.get(date) ?? 0n)
+		}));
 	}
 
 	return response;

@@ -52,6 +52,16 @@ describe('profile activity period', () => {
 			expect((period.endDate.getTime() - period.startDate.getTime()) / 3_600_000).toBe(expectedHours);
 		}
 	);
+
+	it('maps a fully skipped Apia date to the same earliest boundary as the following date', () => {
+		const period = resolveProfileActivityPeriod(
+			createRequest({ startDate: '2011-12-30', endDate: '2011-12-31', timeZone: 'Pacific/Apia' })
+		);
+
+		expect(period.startDate.toISOString()).toBe('2011-12-30T10:00:00.000Z');
+		expect(period.endDate.toISOString()).toBe('2011-12-30T10:00:00.000Z');
+		expect(period.endDate.getTime() - period.startDate.getTime()).toBe(0);
+	});
 });
 
 describe('profile activity response', () => {
@@ -144,6 +154,28 @@ describe('profile activity response', () => {
 		expect(response.activeDays).toBe(1);
 		expect(response.totalDuration).toBe(0.001);
 		expect(response.daily).toEqual([{ date: '2026-01-02', duration: 0.001 }]);
+	});
+
+	it('throws instead of silently dropping a same-day duration that exceeds the safe integer range', () => {
+		const nearLimitSeconds = (Number.MAX_SAFE_INTEGER - 1) / 1000;
+
+		expect(() =>
+			buildResponse(createRequest({ includeDaily: true }), [
+				{ date: '2026-01-01', duration: nearLimitSeconds },
+				{ date: '2026-01-01', duration: 0.002 }
+			])
+		).toThrow(RangeError);
+	});
+
+	it('throws before converting an unsafe overall duration assembled from safe day buckets', () => {
+		const safeBucketSeconds = (Number.MAX_SAFE_INTEGER - 1) / 1000;
+
+		expect(() =>
+			buildResponse(createRequest({ includeDaily: true }), [
+				{ date: '2026-01-01', duration: safeBucketSeconds },
+				{ date: '2026-01-02', duration: safeBucketSeconds }
+			])
+		).toThrow(RangeError);
 	});
 
 	it.each([null, '', '2026-1-01', '2026-02-30', 'not-a-date'])(
