@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { Knex } from 'knex';
 import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as moment from 'moment';
@@ -22,6 +23,7 @@ import {
 	ITimeLog,
 	ID,
 	IGetProfileActivity,
+	IProfileActivity,
 	IWeeklyStatisticsActivities,
 	ITodayStatisticsActivities
 } from '@gauzy/contracts';
@@ -51,9 +53,41 @@ import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activ
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
+import { moment as timezoneMoment } from '../../core/moment-extend';
+import {
+	buildProfileActivityResponse,
+	ProfileActivityPeriod,
+	ProfileActivityRawRow,
+	resolveProfileActivityPeriod
+} from './profile-activity.helper';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
+
+type ProfileActivityDatabaseType =
+	| DatabaseTypeEnum.postgres
+	| DatabaseTypeEnum.mysql
+	| DatabaseTypeEnum.sqlite
+	| DatabaseTypeEnum.betterSqlite3;
+
+type ProfileActivityRowsQuery =
+	| { ormType: MultiORMEnum.TypeORM; builder: SelectQueryBuilder<TimeLog> }
+	| { ormType: MultiORMEnum.MikroORM; builder: Knex.QueryBuilder };
+
+const PROFILE_ACTIVITY_DATABASE_TYPES: ReadonlySet<DatabaseTypeEnum> = new Set([
+	DatabaseTypeEnum.postgres,
+	DatabaseTypeEnum.mysql,
+	DatabaseTypeEnum.sqlite,
+	DatabaseTypeEnum.betterSqlite3
+]);
+
+function isProfileActivityDatabaseType(value: unknown): value is ProfileActivityDatabaseType {
+	return PROFILE_ACTIVITY_DATABASE_TYPES.has(value as DatabaseTypeEnum);
+}
+
+function toUtcNaiveDateTime(value: Date): string {
+	return value.toISOString().replace('T', ' ').replace('Z', '');
+}
 
 @Injectable()
 export class StatisticService {
@@ -111,6 +145,197 @@ export class StatisticService {
 		}
 
 		return tenantId;
+	}
+
+	/**
+	 * Returns the lightweight activity summary for one authorized employee.
+	 */
+	async getProfileActivity(request: IGetProfileActivity): Promise<IProfileActivity> {
+		const tenantId = await this.assertProfileActivityAccess(request);
+		const period = resolveProfileActivityPeriod(request);
+		const rows = await this.getProfileActivityRows(request, tenantId, period);
+
+		return buildProfileActivityResponse(request, period, rows);
+	}
+
+	/**
+	 * Executes the single raw time-log read. The builder boundary remains available to focused
+	 * query-plan tests without exposing it as an application API.
+	 */
+	protected async getProfileActivityRows(
+		request: IGetProfileActivity,
+		tenantId: ID,
+		period: ProfileActivityPeriod
+	): Promise<ProfileActivityRawRow[]> {
+		const query = this.buildProfileActivityRowsQuery(request, tenantId, period);
+
+		if (query.ormType === MultiORMEnum.TypeORM) {
+			return (await query.builder.getRawMany()) as ProfileActivityRawRow[];
+		}
+
+		return (await query.builder) as ProfileActivityRawRow[];
+	}
+
+	/**
+	 * Builds, but does not execute, the one-select profile activity query.
+	 */
+	protected buildProfileActivityRowsQuery(
+		request: IGetProfileActivity,
+		tenantId: ID,
+		period: ProfileActivityPeriod
+	): ProfileActivityRowsQuery {
+		const dbType = this.configService.dbConnectionOptions.type;
+
+		if (!isProfileActivityDatabaseType(dbType)) {
+			throw new Error(`Unsupported profile activity database: ${String(dbType)}`);
+		}
+		if (this.ormType !== MultiORMEnum.TypeORM && this.ormType !== MultiORMEnum.MikroORM) {
+			throw new Error(`Unsupported profile activity ORM: ${String(this.ormType)}`);
+		}
+
+		const canonicalTimeZone = timezoneMoment.tz.zone(request.timeZone)?.name;
+		if (!canonicalTimeZone) {
+			throw new RangeError('Profile activity timezone is invalid');
+		}
+
+		const usePostgresAggregate = dbType === DatabaseTypeEnum.postgres && canonicalTimeZone !== 'America/Coyhaique';
+
+		if (this.ormType === MultiORMEnum.TypeORM) {
+			return {
+				ormType: MultiORMEnum.TypeORM,
+				builder: this.buildTypeOrmProfileActivityQuery(
+					request,
+					tenantId,
+					period,
+					dbType,
+					canonicalTimeZone,
+					usePostgresAggregate
+				)
+			};
+		}
+
+		return {
+			ormType: MultiORMEnum.MikroORM,
+			builder: this.buildKnexProfileActivityQuery(
+				request,
+				tenantId,
+				period,
+				dbType,
+				canonicalTimeZone,
+				usePostgresAggregate
+			)
+		};
+	}
+
+	private buildTypeOrmProfileActivityQuery(
+		request: IGetProfileActivity,
+		tenantId: ID,
+		period: ProfileActivityPeriod,
+		dbType: ProfileActivityDatabaseType,
+		canonicalTimeZone: string,
+		usePostgresAggregate: boolean
+	): SelectQueryBuilder<TimeLog> {
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+
+		if (usePostgresAggregate) {
+			const dateExpression =
+				"TO_CHAR((time_log.startedAt AT TIME ZONE 'UTC') AT TIME ZONE :profileTimeZone, 'YYYY-MM-DD')";
+			query
+				.select(dateExpression, 'date')
+				.addSelect('SUM(EXTRACT(EPOCH FROM (time_log.stoppedAt - time_log.startedAt)))', 'duration')
+				.setParameter('profileTimeZone', canonicalTimeZone)
+				.groupBy(dateExpression);
+		} else {
+			const castType = dbType === DatabaseTypeEnum.mysql ? 'CHAR' : 'TEXT';
+			query
+				.select(`CAST(time_log.startedAt AS ${castType})`, 'startedAt')
+				.addSelect(`CAST(time_log.stoppedAt AS ${castType})`, 'stoppedAt');
+		}
+
+		query
+			.where('time_log.tenantId = :profileTenantId', { profileTenantId: tenantId })
+			.andWhere('time_log.organizationId = :profileOrganizationId', {
+				profileOrganizationId: request.organizationId
+			})
+			.andWhere('time_log.employeeId = :profileEmployeeId', { profileEmployeeId: request.employeeId });
+
+		if (dbType === DatabaseTypeEnum.postgres) {
+			query
+				.andWhere("time_log.startedAt >= (CAST(:profileStart AS timestamptz) AT TIME ZONE 'UTC')", {
+					profileStart: period.startDate.toISOString()
+				})
+				.andWhere("time_log.startedAt < (CAST(:profileEnd AS timestamptz) AT TIME ZONE 'UTC')", {
+					profileEnd: period.endDate.toISOString()
+				});
+		} else {
+			query
+				.andWhere('time_log.startedAt >= :profileStart', {
+					profileStart: toUtcNaiveDateTime(period.startDate)
+				})
+				.andWhere('time_log.startedAt < :profileEnd', {
+					profileEnd: toUtcNaiveDateTime(period.endDate)
+				});
+		}
+
+		return query.andWhere('time_log.stoppedAt IS NOT NULL').andWhere('time_log.stoppedAt > time_log.startedAt');
+	}
+
+	private buildKnexProfileActivityQuery(
+		request: IGetProfileActivity,
+		tenantId: ID,
+		period: ProfileActivityPeriod,
+		dbType: ProfileActivityDatabaseType,
+		canonicalTimeZone: string,
+		usePostgresAggregate: boolean
+	): Knex.QueryBuilder {
+		const knex = this.mikroOrmTimeLogRepository.getKnex() as unknown as Knex;
+		const query = knex('time_log');
+
+		if (usePostgresAggregate) {
+			const dateExpression = "TO_CHAR((?? AT TIME ZONE 'UTC') AT TIME ZONE ?, 'YYYY-MM-DD')";
+			query
+				.select([
+					knex.raw(`${dateExpression} AS ??`, ['time_log.startedAt', canonicalTimeZone, 'date']),
+					knex.raw('SUM(EXTRACT(EPOCH FROM (?? - ??))) AS ??', [
+						'time_log.stoppedAt',
+						'time_log.startedAt',
+						'duration'
+					])
+				])
+				.groupByRaw(dateExpression, ['time_log.startedAt', canonicalTimeZone]);
+		} else {
+			const castType = dbType === DatabaseTypeEnum.mysql ? 'CHAR' : 'TEXT';
+			query.select([
+				knex.raw(`CAST(?? AS ${castType}) AS ??`, ['time_log.startedAt', 'startedAt']),
+				knex.raw(`CAST(?? AS ${castType}) AS ??`, ['time_log.stoppedAt', 'stoppedAt'])
+			]);
+		}
+
+		query
+			.whereRaw('?? = ?', ['time_log.tenantId', tenantId])
+			.whereRaw('?? = ?', ['time_log.organizationId', request.organizationId])
+			.whereRaw('?? = ?', ['time_log.employeeId', request.employeeId]);
+
+		if (dbType === DatabaseTypeEnum.postgres) {
+			query
+				.whereRaw("?? >= (CAST(? AS timestamptz) AT TIME ZONE 'UTC')", [
+					'time_log.startedAt',
+					period.startDate.toISOString()
+				])
+				.whereRaw("?? < (CAST(? AS timestamptz) AT TIME ZONE 'UTC')", [
+					'time_log.startedAt',
+					period.endDate.toISOString()
+				]);
+		} else {
+			query
+				.whereRaw('?? >= ?', ['time_log.startedAt', toUtcNaiveDateTime(period.startDate)])
+				.whereRaw('?? < ?', ['time_log.startedAt', toUtcNaiveDateTime(period.endDate)]);
+		}
+
+		return query
+			.whereRaw('?? IS NOT NULL', ['time_log.stoppedAt'])
+			.whereRaw('?? > ??', ['time_log.stoppedAt', 'time_log.startedAt'])
+			.whereRaw('?? IS NULL', ['time_log.deletedAt']);
 	}
 
 	/**
