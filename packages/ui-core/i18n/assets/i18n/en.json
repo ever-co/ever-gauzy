@@ -1269,7 +1269,9 @@
 		"BILLING_PORTAL_HINT": "Open the secure Stripe portal to update payment details, download receipts and manage your subscription.",
 		"BILLING_OPEN_PORTAL": "Open billing portal",
 		"BILLING_LOAD_FAILED": "Some billing details could not be loaded. What you see may be incomplete.",
-		"BILLING_RETRY": "Try again"
+		"BILLING_RETRY": "Try again",
+		"PREFERENCES": "Preferences",
+		"SUPPORT": "Support"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "What's new?",
@@ -5976,7 +5978,10 @@
 		"HOTKEYS": "Hotkeys",
 		"HELP": "Help",
 		"SIGN_OUT": "Sign Out",
-		"PROFILE": "Profile"
+		"PROFILE": "Profile",
+		"ACCOUNT": "Account",
+		"PREFERENCES": "Preferences",
+		"DOWNLOAD_APPS": "Download apps"
 	},
 	"WORKSPACES": {
 		"MENUS": {
