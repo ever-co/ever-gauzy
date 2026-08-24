@@ -30,8 +30,10 @@
 
 	<div class="panel-divider"></div>
 
-	<!-- Support / help entries, moved here from the speech-bubble header menu. -->
-	<div class="panel-section">
+	<!-- Support / help entries, moved here from the speech-bubble header menu.
+	     `support-links` carries no styling — it is the scope the message-button E2E
+	     spec locates these entries by (MessageButtonPageObject.supportLinksCss). -->
+	<div class="panel-section support-links">
 		<span class="panel-overline">{{ 'SETTINGS_MENU.SUPPORT' | translate }}</span>
 
 		@if (isSupportChatAvailable) {
