@@ -19,7 +19,13 @@ import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status
 		CqrsModule
 	],
 	controllers: [TaskStatusController],
-	providers: [TaskStatusService, TypeOrmTaskStatusRepository, MikroOrmTaskStatusRepository, ...QueryHandlers, ...CommandHandlers],
+	providers: [
+		TaskStatusService,
+		TypeOrmTaskStatusRepository,
+		MikroOrmTaskStatusRepository,
+		...QueryHandlers,
+		...CommandHandlers
+	],
 	exports: [TaskStatusService]
 })
 export class TaskStatusModule {}
