@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as moment from 'moment';
 import * as chalk from 'chalk';
@@ -20,6 +20,8 @@ import {
 	IManualTimesStatistics,
 	TimeLogType,
 	ITimeLog,
+	ID,
+	IGetProfileActivity,
 	IWeeklyStatisticsActivities,
 	ITodayStatisticsActivities
 } from '@gauzy/contracts';
@@ -68,6 +70,48 @@ export class StatisticService {
 		private readonly configService: ConfigService,
 		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {}
+
+	/**
+	 * Verifies the profile activity target and request-scoped viewing policy before a time-log read.
+	 *
+	 * @param request - Employee, organization, and optional team access scope
+	 * @returns The tenant ID derived from the current request context
+	 * @throws ForbiddenException when the target or policy is not accessible
+	 */
+	protected async assertProfileActivityAccess(
+		request: Pick<IGetProfileActivity, 'employeeId' | 'organizationId' | 'organizationTeamId'>
+	): Promise<ID> {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!tenantId) {
+			throw new ForbiddenException();
+		}
+
+		const targetExists = await this.typeOrmEmployeeRepository.existsBy({
+			id: request.employeeId,
+			tenantId,
+			organizationId: request.organizationId,
+			isActive: true,
+			isArchived: false,
+			deletedAt: IsNull()
+		});
+
+		if (!targetExists) {
+			throw new ForbiddenException();
+		}
+
+		const canViewProfile = await this._managedEmployeeService.canViewEmployeeProfile(
+			request.employeeId,
+			request.organizationId,
+			request.organizationTeamId
+		);
+
+		if (!canViewProfile) {
+			throw new ForbiddenException();
+		}
+
+		return tenantId;
+	}
 
 	/**
 	 * Fetches the overall tracked time for time slots, aggregating data from related time logs.

@@ -208,6 +208,99 @@ export class ManagedEmployeeService {
 	}
 
 	/**
+	 * Checks whether the current employee may view another employee's profile activity.
+	 *
+	 * Team-based access requires both employees to be active members of the same active team.
+	 * Managers may view active teammates; other teammates may view profiles only when the
+	 * team's profile-sharing setting is explicitly enabled.
+	 *
+	 * @param targetEmployeeId - Employee whose profile will be viewed
+	 * @param organizationId - Organization that owns the profile and team
+	 * @param organizationTeamId - Optional team used for teammate access
+	 * @returns true when the current request context is allowed to view the profile
+	 */
+	async canViewEmployeeProfile(targetEmployeeId: ID, organizationId: ID, organizationTeamId?: ID): Promise<boolean> {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!tenantId) {
+			return false;
+		}
+
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return true;
+		}
+
+		const currentEmployeeId = RequestContext.currentUser()?.employeeId;
+
+		if (currentEmployeeId === targetEmployeeId) {
+			return true;
+		}
+
+		if (!currentEmployeeId || !organizationTeamId) {
+			return false;
+		}
+
+		const memberships = await this.typeOrmTeamEmployeeRepository
+			.createQueryBuilder('member')
+			.innerJoinAndSelect('member.organizationTeam', 'team')
+			.where('member.employeeId IN (:...employeeIds)', {
+				employeeIds: [currentEmployeeId, targetEmployeeId]
+			})
+			.andWhere('member.organizationTeamId = :organizationTeamId', { organizationTeamId })
+			.andWhere('member.tenantId = :tenantId', { tenantId })
+			.andWhere('member.organizationId = :organizationId', { organizationId })
+			.andWhere('member.isActive = :memberIsActive', { memberIsActive: true })
+			.andWhere('member.isArchived = :memberIsArchived', { memberIsArchived: false })
+			.andWhere('member.deletedAt IS NULL')
+			.andWhere('team.id = :organizationTeamId', { organizationTeamId })
+			.andWhere('team.tenantId = :tenantId', { tenantId })
+			.andWhere('team.organizationId = :organizationId', { organizationId })
+			.andWhere('team.isActive = :teamIsActive', { teamIsActive: true })
+			.andWhere('team.isArchived = :teamIsArchived', { teamIsArchived: false })
+			.andWhere('team.deletedAt IS NULL')
+			.getMany();
+
+		const isExactActiveMembership = (membership: (typeof memberships)[number]): boolean => {
+			const team = membership.organizationTeam;
+
+			return (
+				membership.organizationTeamId === organizationTeamId &&
+				membership.tenantId === tenantId &&
+				membership.organizationId === organizationId &&
+				membership.isActive === true &&
+				membership.isArchived === false &&
+				membership.deletedAt == null &&
+				team?.id === organizationTeamId &&
+				team.tenantId === tenantId &&
+				team.organizationId === organizationId &&
+				team.isActive === true &&
+				team.isArchived === false &&
+				team.deletedAt == null
+			);
+		};
+
+		const actorMemberships = memberships.filter(
+			(membership) => membership.employeeId === currentEmployeeId && isExactActiveMembership(membership)
+		);
+		const targetMemberships = memberships.filter(
+			(membership) => membership.employeeId === targetEmployeeId && isExactActiveMembership(membership)
+		);
+
+		if (!isNotEmpty(actorMemberships) || !isNotEmpty(targetMemberships)) {
+			return false;
+		}
+
+		if (actorMemberships.some((membership) => membership.isManager === true)) {
+			return true;
+		}
+
+		return (
+			actorMemberships.some((membership) => membership.organizationTeam.shareProfileView === true) &&
+			targetMemberships.some((membership) => membership.organizationTeam.shareProfileView === true)
+		);
+	}
+
+	/**
 	 * Checks if the current employee can manage ALL specified employees.
 	 *
 	 * This method verifies that the current user can manage every employee in the provided list.
