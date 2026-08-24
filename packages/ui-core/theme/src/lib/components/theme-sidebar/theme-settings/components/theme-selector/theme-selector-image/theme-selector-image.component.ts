@@ -20,11 +20,11 @@ export class ThemeSelectorImageComponent extends ThemeSelectorComponent {
 		this.ngOnInit();
 	}
 
-	public get isOpen(): boolean {
+	protected get isOpen(): boolean {
 		return !!this._popover?.isShown;
 	}
 
-	public selectTheme(theme: string): void {
+	protected selectTheme(theme: string): void {
 		this.onSelectedTheme(theme);
 		this._popover?.hide();
 	}
