@@ -59,8 +59,8 @@ class IsProfileActivityDateRangeConstraint implements ValidatorConstraintInterfa
 			return true;
 		}
 
-		const start = moment.tz(query.startDate, 'YYYY-MM-DD', true, query.timeZone);
-		const end = moment.tz(query.endDate, 'YYYY-MM-DD', true, query.timeZone);
+		const start = moment.utc(query.startDate, 'YYYY-MM-DD', true);
+		const end = moment.utc(query.endDate, 'YYYY-MM-DD', true);
 		const localCalendarSpanDays = end.diff(start, 'days');
 
 		return end.isAfter(start) && localCalendarSpanDays <= MAX_LOCAL_CALENDAR_SPAN_DAYS;

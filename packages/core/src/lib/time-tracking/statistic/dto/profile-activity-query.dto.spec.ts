@@ -99,6 +99,26 @@ describe('ProfileActivityQueryDTO', () => {
 		expect(hasError(errors, 'endDate')).toBe(true);
 	});
 
+	it('accepts an exact 366-day Gregorian date-label span around a skipped local midnight', async () => {
+		const { errors } = await validatePayload({
+			startDate: '2018-08-13',
+			endDate: '2019-08-14',
+			timeZone: 'America/Santiago'
+		});
+
+		expect(errors).toHaveLength(0);
+	});
+
+	it('rejects a 367-day Gregorian date-label span when the zone skips local midnight', async () => {
+		const { errors } = await validatePayload({
+			startDate: '2018-08-12',
+			endDate: '2019-08-14',
+			timeZone: 'America/Santiago'
+		});
+
+		expect(hasError(errors, 'endDate')).toBe(true);
+	});
+
 	it.each([
 		[true, true],
 		[false, false],
