@@ -97,6 +97,10 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 						);
 						this._employee$.next(employee);
 					} catch (error) {
+						// Drop the previously loaded employee: the panel can stay open across a
+						// user or organization switch, and keeping the old one would let
+						// onChangeStatus() write the away flag to the wrong employee.
+						this._employee$.next(null);
 						this._errorHandler.handleError(error);
 					} finally {
 						// Always release the loading state, otherwise a failed load leaves
