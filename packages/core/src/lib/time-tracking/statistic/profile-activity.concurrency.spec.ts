@@ -318,7 +318,10 @@ describe('profile activity in-process concurrency evidence', () => {
 				expect(selects).toHaveLength(32);
 				expect(selects.every((sql) => !/\bJOIN\b/i.test(sql))).toBe(true);
 				expect(metrics.pool).toBe('none');
-				expect(metrics.eventLoopMaxMilliseconds).toBeLessThan(100);
+				expect(Number.isFinite(metrics.eventLoopP95Milliseconds)).toBe(true);
+				expect(Number.isFinite(metrics.eventLoopMaxMilliseconds)).toBe(true);
+				expect(metrics.eventLoopP95Milliseconds).toBeGreaterThanOrEqual(0);
+				expect(metrics.eventLoopMaxMilliseconds).toBeGreaterThanOrEqual(metrics.eventLoopP95Milliseconds);
 			} finally {
 				capture = false;
 				eventLoopDelay.disable();

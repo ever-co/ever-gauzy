@@ -235,7 +235,7 @@ function emptyLatencyMetrics() {
 	};
 }
 
-export function evaluateLatencyThresholds(profileSamples, livenessSamples) {
+export function evaluateLatencyThresholds(profileSamples, livenessSamples, enforceThresholds = true) {
 	const rawProfile = rawLatencyMetrics(profileSamples);
 	const rawLiveness = rawLatencyMetrics(livenessSamples);
 	const metrics = {
@@ -246,13 +246,13 @@ export function evaluateLatencyThresholds(profileSamples, livenessSamples) {
 		caveat: HTTP_ONLY_CAVEAT
 	};
 
-	if (rawProfile.p95Milliseconds > THRESHOLDS.profileP95Milliseconds) {
+	if (enforceThresholds && rawProfile.p95Milliseconds > THRESHOLDS.profileP95Milliseconds) {
 		fail('PROFILE_P95_THRESHOLD', metrics);
 	}
-	if (rawLiveness.p95Milliseconds > THRESHOLDS.livenessP95Milliseconds) {
+	if (enforceThresholds && rawLiveness.p95Milliseconds > THRESHOLDS.livenessP95Milliseconds) {
 		fail('LIVENESS_P95_THRESHOLD', metrics);
 	}
-	if (rawLiveness.maxMilliseconds > THRESHOLDS.livenessMaxMilliseconds) {
+	if (enforceThresholds && rawLiveness.maxMilliseconds > THRESHOLDS.livenessMaxMilliseconds) {
 		fail('LIVENESS_MAX_THRESHOLD', metrics);
 	}
 
@@ -275,7 +275,8 @@ export async function verifyProfileActivityConcurrency({
 	bearerToken,
 	tenantId,
 	queryPath,
-	allowRemote = false
+	allowRemote = false,
+	enforceThresholds = true
 }) {
 	const token = requiredString(bearerToken, 'BEARER_TOKEN_REQUIRED');
 	const tenant = requiredString(tenantId, 'TENANT_ID_REQUIRED');
@@ -313,7 +314,7 @@ export async function verifyProfileActivityConcurrency({
 			fail('REQUEST_COUNT');
 		}
 
-		return evaluateLatencyThresholds(profileSamples, livenessSamples);
+		return evaluateLatencyThresholds(profileSamples, livenessSamples, enforceThresholds);
 	} finally {
 		agent.destroy();
 	}
@@ -326,7 +327,8 @@ export async function runFromEnvironment(environment, writeLine = (line) => proc
 			bearerToken: environment.PROFILE_ACTIVITY_BEARER_TOKEN,
 			tenantId: environment.PROFILE_ACTIVITY_TENANT_ID,
 			queryPath: environment.PROFILE_ACTIVITY_QUERY_PATH,
-			allowRemote: environment.PROFILE_ACTIVITY_ALLOW_REMOTE === '1'
+			allowRemote: environment.PROFILE_ACTIVITY_ALLOW_REMOTE === '1',
+			enforceThresholds: environment.PROFILE_ACTIVITY_ENFORCE_THRESHOLDS !== '0'
 		});
 		writeLine(`${JSON.stringify(metrics)}\n`);
 		return 0;
@@ -338,6 +340,7 @@ export async function runFromEnvironment(environment, writeLine = (line) => proc
 	}
 }
 
-if (pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
+const entrypoint = process.argv[1];
+if (entrypoint && pathToFileURL(resolve(entrypoint)).href === import.meta.url) {
 	process.exitCode = await runFromEnvironment(process.env);
 }

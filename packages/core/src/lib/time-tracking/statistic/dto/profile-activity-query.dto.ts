@@ -85,12 +85,12 @@ export class ProfileActivityQueryDTO implements IGetProfileActivity {
 	@IsUUID()
 	readonly organizationTeamId?: ID;
 
-	@ApiProperty({ type: () => String, example: '2024-01-01' })
+	@ApiProperty({ type: () => String, example: '2024-01-01', description: 'Inclusive local calendar date' })
 	@IsString()
 	@Validate(IsStrictLocalDateConstraint)
 	readonly startDate: string;
 
-	@ApiProperty({ type: () => String, example: '2024-01-31' })
+	@ApiProperty({ type: () => String, example: '2024-01-31', description: 'Exclusive local calendar date' })
 	@IsString()
 	@Validate(IsStrictLocalDateConstraint)
 	@Validate(IsProfileActivityDateRangeConstraint)

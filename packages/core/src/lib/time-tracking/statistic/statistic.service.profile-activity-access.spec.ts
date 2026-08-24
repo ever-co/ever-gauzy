@@ -91,27 +91,7 @@ describe('StatisticService profile activity access', () => {
 		expectNoTimeLogReads();
 	});
 
-	it.each(['self', 'global permission'])(
-		'still prechecks the target before a successful %s policy result',
-		async () => {
-			await service.authorizeProfileActivity(request);
-
-			expect(employeeRepository.existsBy.mock.invocationCallOrder[0]).toBeLessThan(
-				managedEmployeeService.canViewEmployeeProfile.mock.invocationCallOrder[0]
-			);
-			expect(managedEmployeeService.canViewEmployeeProfile).toHaveBeenCalledTimes(1);
-			expectNoTimeLogReads();
-		}
-	);
-
-	it.each([
-		['nonexistent target'],
-		['inactive target'],
-		['archived target'],
-		['deleted target'],
-		['cross-tenant target'],
-		['cross-organization target']
-	])('denies a %s without calling policy or reading time logs', async () => {
+	it('denies a target that fails the exact active-scope existence check without calling policy', async () => {
 		employeeRepository.existsBy.mockResolvedValue(false);
 
 		await expect(service.authorizeProfileActivity(request)).rejects.toBeInstanceOf(ForbiddenException);

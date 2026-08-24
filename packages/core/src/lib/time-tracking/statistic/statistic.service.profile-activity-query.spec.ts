@@ -104,7 +104,7 @@ function createTypeOrmBuilder(rows: unknown[] = projectionRows) {
 	return builder;
 }
 
-function createKnexBuilder(rows: unknown[] = projectionRows) {
+function createKnexBuilder(rows: unknown[] = projectionRows, postgresTimeZoneSupported = true) {
 	let executionCount = 0;
 	const builder: Record<string, any> = {};
 	for (const method of [
@@ -126,7 +126,11 @@ function createKnexBuilder(rows: unknown[] = projectionRows) {
 	});
 
 	const knex: any = jest.fn(() => builder);
-	knex.raw = jest.fn((sql: string, bindings?: unknown[]) => ({ sql, bindings }));
+	knex.raw = jest.fn((sql: string, bindings?: unknown[]) =>
+		/pg_timezone_names/i.test(sql)
+			? Promise.resolve({ rows: [{ supported: postgresTimeZoneSupported }] })
+			: { sql, bindings }
+	);
 
 	return {
 		builder,
@@ -143,12 +147,14 @@ function createService(options: {
 	typeOrmRows?: unknown[];
 	knexRows?: unknown[];
 	authorize?: Authorization;
+	postgresTimeZoneSupported?: boolean;
 }) {
 	const typeOrmBuilder = createTypeOrmBuilder(options.typeOrmRows);
 	const typeOrmTimeLogRepository = {
-		createQueryBuilder: jest.fn(() => typeOrmBuilder)
+		createQueryBuilder: jest.fn(() => typeOrmBuilder),
+		query: jest.fn().mockResolvedValue([{ supported: options.postgresTimeZoneSupported ?? true }])
 	};
-	const knexFixture = createKnexBuilder(options.knexRows);
+	const knexFixture = createKnexBuilder(options.knexRows, options.postgresTimeZoneSupported);
 	const mikroOrmTimeLogRepository = {
 		getKnex: jest.fn(() => knexFixture.knex)
 	};
@@ -276,20 +282,19 @@ describe('StatisticService profile activity query orchestration', () => {
 
 describe('StatisticService TypeORM profile activity query shape', () => {
 	it.each([
-		[DatabaseTypeEnum.mysql, 'CHAR'],
-		[DatabaseTypeEnum.sqlite, 'TEXT'],
-		[DatabaseTypeEnum.betterSqlite3, 'TEXT']
-	])('uses one %s UTC-naive projection with the expected %s cast', async (dialect, castType) => {
-		const fixture = createService({ orm: MultiORMEnum.TypeORM, dialect });
+		[DatabaseTypeEnum.mysql, 'TIMESTAMPDIFF(MICROSECOND'],
+		[DatabaseTypeEnum.sqlite, 'julianday(time_log.stoppedAt)'],
+		[DatabaseTypeEnum.betterSqlite3, 'julianday(time_log.stoppedAt)']
+	])('uses one bounded %s daily aggregate with %s duration arithmetic', async (dialect, durationSql) => {
+		const fixture = createService({ orm: MultiORMEnum.TypeORM, dialect, typeOrmRows: aggregateRows });
 
 		await expect(fixture.service.getProfileActivity(request)).resolves.toEqual(expectedResponse);
 
 		const sql = typeOrmSql(fixture.typeOrmBuilder);
 		const parameters = typeOrmParameters(fixture.typeOrmBuilder);
-		expect(sql).toContain(`CAST(time_log.startedAt AS ${castType})`);
-		expect(sql).toContain(`CAST(time_log.stoppedAt AS ${castType})`);
+		expect(sql).toContain('CASE WHEN time_log.startedAt < :profileDayEnd0 THEN :profileDayLabel0');
+		expect(sql).toContain(durationSql);
 		expect(sql).not.toContain('TO_CHAR');
-		expect(sql).not.toContain('EXTRACT(EPOCH');
 		expect(sql).toContain('time_log.startedAt >= :profileStart');
 		expect(sql).toContain('time_log.startedAt < :profileEnd');
 		expect(parameters).toMatchObject({
@@ -299,9 +304,36 @@ describe('StatisticService TypeORM profile activity query shape', () => {
 			profileStart: '2026-07-31 22:00:00.000',
 			profileEnd: '2026-08-02 22:00:00.000'
 		});
-		expect(fixture.typeOrmBuilder.groupBy).not.toHaveBeenCalled();
+		expect(fixture.typeOrmBuilder.groupBy).toHaveBeenCalledWith('1');
+		expect(fixture.typeOrmBuilder.setParameter).toHaveBeenCalledWith('profileDayEnd0', '2026-08-01 22:00:00.000');
+		expect(fixture.typeOrmBuilder.setParameter).toHaveBeenCalledWith('profileDayLabel0', '2026-08-01');
+		expect(fixture.typeOrmBuilder.setParameter).toHaveBeenCalledTimes(4);
 		expect(fixture.typeOrmBuilder.getRawMany).toHaveBeenCalledTimes(1);
 		expectNoRelationOrHydrationCalls(fixture.typeOrmBuilder);
+	});
+
+	it('keeps an exact 366-day SQLite aggregate below the legacy 999-parameter ceiling', async () => {
+		const annualRequest = {
+			...request,
+			startDate: '2024-03-10',
+			endDate: '2025-03-11',
+			timeZone: 'America/New_York'
+		};
+		const fixture = createService({
+			orm: MultiORMEnum.TypeORM,
+			dialect: DatabaseTypeEnum.betterSqlite3,
+			typeOrmRows: []
+		});
+
+		await fixture.service.getProfileActivity(annualRequest);
+
+		const bucketParameterCount = fixture.typeOrmBuilder.setParameter.mock.calls.length;
+		const sharedPredicateParameterCount = Object.keys(typeOrmParameters(fixture.typeOrmBuilder)).length;
+		expect(bucketParameterCount).toBe(366 * 2);
+		expect(bucketParameterCount + sharedPredicateParameterCount).toBe(737);
+		expect(bucketParameterCount + sharedPredicateParameterCount).toBeLessThan(999);
+		expect(fixture.typeOrmBuilder.groupBy).toHaveBeenCalledWith('1');
+		expect(fixture.typeOrmBuilder.getRawMany).toHaveBeenCalledTimes(1);
 	});
 
 	it('uses one parameterized PostgreSQL aggregate and identical date grouping expression', async () => {
@@ -311,6 +343,7 @@ describe('StatisticService TypeORM profile activity query shape', () => {
 			typeOrmRows: aggregateRows
 		});
 
+		await expect(fixture.service.getProfileActivity(request)).resolves.toEqual(expectedResponse);
 		await expect(fixture.service.getProfileActivity(request)).resolves.toEqual(expectedResponse);
 
 		const sql = typeOrmSql(fixture.typeOrmBuilder);
@@ -330,16 +363,38 @@ describe('StatisticService TypeORM profile activity query shape', () => {
 			profileEnd: '2026-08-02T22:00:00.000Z'
 		});
 		expect(fixture.typeOrmBuilder.setParameter).toHaveBeenCalledWith('profileTimeZone', 'Europe/Madrid');
+		expect(fixture.typeOrmTimeLogRepository.query).toHaveBeenCalledTimes(1);
+		expect(fixture.typeOrmTimeLogRepository.query).toHaveBeenCalledWith(
+			expect.stringMatching(/pg_timezone_names/i),
+			['Europe/Madrid']
+		);
 		expect(sql).not.toContain(TENANT_ID);
 		expect(sql).not.toContain(ORGANIZATION_ID);
 		expect(sql).not.toContain(EMPLOYEE_ID);
 		expect(sql).not.toContain('Europe/Madrid');
-		expect(fixture.typeOrmBuilder.getRawMany).toHaveBeenCalledTimes(1);
+		expect(fixture.typeOrmBuilder.getRawMany).toHaveBeenCalledTimes(2);
 		expectNoRelationOrHydrationCalls(fixture.typeOrmBuilder);
 	});
 
+	it('retries PostgreSQL timezone capability lookup after a transient failure', async () => {
+		const fixture = createService({
+			orm: MultiORMEnum.TypeORM,
+			dialect: DatabaseTypeEnum.postgres,
+			typeOrmRows: aggregateRows
+		});
+		fixture.typeOrmTimeLogRepository.query
+			.mockRejectedValueOnce(new Error('temporary database outage'))
+			.mockResolvedValueOnce([{ supported: true }]);
+
+		await expect(fixture.service.getProfileActivity(request)).resolves.toEqual(expectedResponse);
+		await expect(fixture.service.getProfileActivity(request)).resolves.toEqual(expectedResponse);
+
+		expect(fixture.typeOrmTimeLogRepository.query).toHaveBeenCalledTimes(2);
+		expect(fixture.typeOrmBuilder.setParameter).toHaveBeenCalledWith('profileTimeZone', 'Europe/Madrid');
+	});
+
 	it.each(['America/Coyhaique', 'america/coyhaique'])(
-		'uses the PostgreSQL text projection with PostgreSQL bounds for %s',
+		'uses the bounded PostgreSQL fallback aggregate when pg_timezone_names lacks %s',
 		async (timeZone) => {
 			const coyhaiqueRequest = {
 				...request,
@@ -347,17 +402,22 @@ describe('StatisticService TypeORM profile activity query shape', () => {
 				startDate: '2026-01-01',
 				endDate: '2026-01-02'
 			};
-			const fixture = createService({ orm: MultiORMEnum.TypeORM, dialect: DatabaseTypeEnum.postgres });
+			const fixture = createService({
+				orm: MultiORMEnum.TypeORM,
+				dialect: DatabaseTypeEnum.postgres,
+				typeOrmRows: aggregateRows,
+				postgresTimeZoneSupported: false
+			});
 
 			await fixture.service.getProfileActivity(coyhaiqueRequest);
 
 			const sql = typeOrmSql(fixture.typeOrmBuilder);
-			expect(sql).toContain('CAST(time_log.startedAt AS TEXT)');
-			expect(sql).toContain('CAST(time_log.stoppedAt AS TEXT)');
+			expect(sql).toContain('CASE WHEN time_log.startedAt <');
 			expect(sql).not.toContain('TO_CHAR');
-			expect(sql).not.toContain('EXTRACT(EPOCH');
+			expect(sql).toContain('SUM(EXTRACT(EPOCH');
 			expect(sql).toContain("time_log.startedAt >= (CAST(:profileStart AS timestamptz) AT TIME ZONE 'UTC')");
-			expect(fixture.typeOrmBuilder.groupBy).not.toHaveBeenCalled();
+			expect(fixture.typeOrmBuilder.groupBy).toHaveBeenCalledWith('1');
+			expect(fixture.typeOrmTimeLogRepository.query).toHaveBeenCalledTimes(1);
 			expect(fixture.typeOrmBuilder.getRawMany).toHaveBeenCalledTimes(1);
 		}
 	);
@@ -419,41 +479,43 @@ describe('StatisticService MikroORM/Knex profile activity query shape', () => {
 	});
 
 	it.each([
-		[DatabaseTypeEnum.mysql, 'CHAR'],
-		[DatabaseTypeEnum.sqlite, 'TEXT'],
-		[DatabaseTypeEnum.betterSqlite3, 'TEXT']
-	])('uses one %s UTC-naive projection with the expected %s cast', async (dialect, castType) => {
-		const fixture = createService({ orm: MultiORMEnum.MikroORM, dialect });
+		[DatabaseTypeEnum.mysql, 'TIMESTAMPDIFF(MICROSECOND', '2026-07-31 22:00:00.000', '2026-08-02 22:00:00.000'],
+		[DatabaseTypeEnum.sqlite, 'SUM((?? - ??) / 1000.0)', 1785535200000, 1785708000000],
+		[DatabaseTypeEnum.betterSqlite3, 'SUM((?? - ??) / 1000.0)', 1785535200000, 1785708000000]
+	])(
+		'uses one bounded %s daily aggregate with %s duration arithmetic',
+		async (dialect, durationSql, expectedStart, expectedEnd) => {
+			const fixture = createService({ orm: MultiORMEnum.MikroORM, dialect, knexRows: aggregateRows });
 
-		await expect(fixture.service.getProfileActivity(request)).resolves.toEqual(expectedResponse);
+			await expect(fixture.service.getProfileActivity(request)).resolves.toEqual(expectedResponse);
 
-		const sql = knexSql(fixture);
-		const bindings = knexBindings(fixture);
-		expect(sql).toContain(`CAST(?? AS ${castType}) AS ??`);
-		expect(sql).not.toContain('TO_CHAR');
-		expect(sql).not.toContain('EXTRACT(EPOCH');
-		expect(sql).toContain('?? >= ?');
-		expect(sql).toContain('?? < ?');
-		expect(bindings).toEqual(
-			expect.arrayContaining([
-				'time_log.startedAt',
-				'time_log.stoppedAt',
-				TENANT_ID,
-				ORGANIZATION_ID,
-				EMPLOYEE_ID,
-				'2026-07-31 22:00:00.000',
-				'2026-08-02 22:00:00.000'
-			])
-		);
-		expect(fixture.builder.groupByRaw).not.toHaveBeenCalled();
-		expect(fixture.getExecutionCount()).toBe(1);
-		expect(fixture.builder.then).toHaveBeenCalledTimes(1);
-		expect(fixture.knex).toHaveBeenCalledTimes(1);
-		expect(fixture.typeOrmTimeLogRepository.createQueryBuilder).not.toHaveBeenCalled();
-		for (const method of ['innerJoin', 'leftJoin', 'join', 'joinRaw', 'first', 'pluck']) {
-			expect(fixture.builder[method]).not.toHaveBeenCalled();
+			const sql = knexSql(fixture);
+			const bindings = knexBindings(fixture);
+			expect(sql).toContain('CASE WHEN ?? < ? THEN ?');
+			expect(sql).toContain(durationSql);
+			expect(sql).not.toContain('TO_CHAR');
+			expect(sql).toContain('?? >= ?');
+			expect(sql).toContain('?? < ?');
+			expect(bindings).toEqual(
+				expect.arrayContaining([
+					'time_log.startedAt',
+					TENANT_ID,
+					ORGANIZATION_ID,
+					EMPLOYEE_ID,
+					expectedStart,
+					expectedEnd
+				])
+			);
+			expect(fixture.builder.groupByRaw).toHaveBeenCalledWith('1');
+			expect(fixture.getExecutionCount()).toBe(1);
+			expect(fixture.builder.then).toHaveBeenCalledTimes(1);
+			expect(fixture.knex).toHaveBeenCalledTimes(1);
+			expect(fixture.typeOrmTimeLogRepository.createQueryBuilder).not.toHaveBeenCalled();
+			for (const method of ['innerJoin', 'leftJoin', 'join', 'joinRaw', 'first', 'pluck']) {
+				expect(fixture.builder[method]).not.toHaveBeenCalled();
+			}
 		}
-	});
+	);
 
 	it('uses one parameterized PostgreSQL aggregate with bound identifiers, values, and timezone', async () => {
 		const fixture = createService({
@@ -472,6 +534,7 @@ describe('StatisticService MikroORM/Knex profile activity query shape', () => {
 			'Europe/Madrid',
 			'date'
 		]);
+		expect(fixture.knex.raw).toHaveBeenCalledWith(expect.stringMatching(/pg_timezone_names/i), ['Europe/Madrid']);
 		expect(fixture.builder.groupByRaw).toHaveBeenCalledWith('1');
 		expect(sql).toContain('SUM(EXTRACT(EPOCH FROM (?? - ??))) AS ??');
 		expect(sql).toContain("?? >= (CAST(? AS timestamptz) AT TIME ZONE 'UTC')");
@@ -494,7 +557,7 @@ describe('StatisticService MikroORM/Knex profile activity query shape', () => {
 	});
 
 	it.each(['America/Coyhaique', 'america/coyhaique'])(
-		'uses the PostgreSQL text projection with PostgreSQL bounds for %s',
+		'uses the bounded PostgreSQL fallback aggregate when pg_timezone_names lacks %s',
 		async (timeZone) => {
 			const coyhaiqueRequest = {
 				...request,
@@ -502,16 +565,21 @@ describe('StatisticService MikroORM/Knex profile activity query shape', () => {
 				startDate: '2026-01-01',
 				endDate: '2026-01-02'
 			};
-			const fixture = createService({ orm: MultiORMEnum.MikroORM, dialect: DatabaseTypeEnum.postgres });
+			const fixture = createService({
+				orm: MultiORMEnum.MikroORM,
+				dialect: DatabaseTypeEnum.postgres,
+				knexRows: aggregateRows,
+				postgresTimeZoneSupported: false
+			});
 
 			await fixture.service.getProfileActivity(coyhaiqueRequest);
 
 			const sql = knexSql(fixture);
-			expect(sql).toContain('CAST(?? AS TEXT) AS ??');
+			expect(sql).toContain("CASE WHEN ?? < (CAST(? AS timestamptz) AT TIME ZONE 'UTC') THEN ?");
 			expect(sql).not.toContain('TO_CHAR');
-			expect(sql).not.toContain('EXTRACT(EPOCH');
+			expect(sql).toContain('SUM(EXTRACT(EPOCH');
 			expect(sql).toContain("?? >= (CAST(? AS timestamptz) AT TIME ZONE 'UTC')");
-			expect(fixture.builder.groupByRaw).not.toHaveBeenCalled();
+			expect(fixture.builder.groupByRaw).toHaveBeenCalledWith('1');
 			expect(fixture.getExecutionCount()).toBe(1);
 		}
 	);

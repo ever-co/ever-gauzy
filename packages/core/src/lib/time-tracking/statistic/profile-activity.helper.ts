@@ -5,12 +5,18 @@ const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DATE_TIME_PATTERN = /(?:T|\s)\d{2}:\d{2}/i;
 const TIME_ZONE_SUFFIX_PATTERN = /(?:Z|[+-]\d{2}(?::?\d{2})?)$/i;
 const MAX_LOCAL_BOUNDARY_SEARCH_DAYS = 7;
+const MAX_LOCAL_CALENDAR_SPAN_DAYS = 366;
 const MAX_SAFE_DURATION_MILLISECONDS = BigInt(Number.MAX_SAFE_INTEGER);
 
 export interface ProfileActivityPeriod {
 	startDate: Date;
 	endDate: Date;
 	timeZone: string;
+}
+
+export interface ProfileActivityDayBucket {
+	date: string;
+	endDate: Date;
 }
 
 export type ProfileActivityRawRow =
@@ -41,6 +47,45 @@ export function resolveProfileActivityPeriod(request: IGetProfileActivity): Prof
 		endDate: resolveLocalDateBoundary(request.endDate, request.timeZone),
 		timeZone: request.timeZone
 	};
+}
+
+/**
+ * Builds ordered, half-open local-day boundaries for a bounded profile activity request.
+ * A boundary-only representation keeps the generated aggregate below SQLite's parameter
+ * limit while assigning every selected UTC instant to the same IANA local date as Node.
+ */
+export function buildProfileActivityDayBuckets(request: IGetProfileActivity): ProfileActivityDayBucket[] {
+	const start = moment.utc(request.startDate, 'YYYY-MM-DD', true);
+	const end = moment.utc(request.endDate, 'YYYY-MM-DD', true);
+	const spanDays = end.diff(start, 'days');
+
+	if (
+		!start.isValid() ||
+		!end.isValid() ||
+		moment.tz.zone(request.timeZone) === null ||
+		spanDays <= 0 ||
+		spanDays > MAX_LOCAL_CALENDAR_SPAN_DAYS
+	) {
+		throw new RangeError('Profile activity day buckets require a valid range of at most 366 local days');
+	}
+
+	const buckets: ProfileActivityDayBucket[] = [];
+	let cursor = start.clone();
+	let intervalStart = resolveLocalDateBoundary(cursor.format('YYYY-MM-DD'), request.timeZone);
+
+	while (cursor.isBefore(end)) {
+		const date = cursor.format('YYYY-MM-DD');
+		cursor = cursor.clone().add(1, 'day');
+		const intervalEnd = resolveLocalDateBoundary(cursor.format('YYYY-MM-DD'), request.timeZone);
+
+		if (intervalEnd.getTime() > intervalStart.getTime()) {
+			buckets.push({ date, endDate: intervalEnd });
+		}
+
+		intervalStart = intervalEnd;
+	}
+
+	return buckets;
 }
 
 function isDateLabel(value: unknown): value is string {

@@ -203,8 +203,8 @@ function createFixtureRows(): FixtureTimeLog[] {
 	];
 }
 
-function asNaiveUtc(date: Date | null): string | null {
-	return date === null ? null : date.toISOString().replace('T', ' ').replace('Z', '');
+function asEpochMilliseconds(date: Date | null): number | null {
+	return date === null ? null : date.getTime();
 }
 
 class IntegrationStatisticService extends StatisticService {
@@ -270,7 +270,7 @@ describe('profile activity one-select BetterSqlite integration', () => {
 			expect(selects[0].sql).toMatch(/deletedAt[^\n]*IS NULL/i);
 			expect(selects[0].sql).toMatch(/startedAt[^\n]*>=/i);
 			expect(selects[0].sql).toMatch(/startedAt[^\n]*</i);
-			expect(selects[0].sql).not.toContain(TEAM_ID);
+			expect(selects[0].sql).not.toMatch(/organizationTeamId/i);
 		} finally {
 			if (dataSource.isInitialized) await dataSource.destroy();
 		}
@@ -302,9 +302,9 @@ describe('profile activity one-select BetterSqlite integration', () => {
 			await knex('time_log').insert(
 				createFixtureRows().map((row) => ({
 					...row,
-					startedAt: asNaiveUtc(row.startedAt),
-					stoppedAt: asNaiveUtc(row.stoppedAt),
-					deletedAt: asNaiveUtc(row.deletedAt)
+					startedAt: asEpochMilliseconds(row.startedAt),
+					stoppedAt: asEpochMilliseconds(row.stoppedAt),
+					deletedAt: asEpochMilliseconds(row.deletedAt)
 				}))
 			);
 			const service = new IntegrationStatisticService(MultiORMEnum.MikroORM, {}, { getKnex: () => knex });
@@ -318,7 +318,7 @@ describe('profile activity one-select BetterSqlite integration', () => {
 			expect(selects[0]).toMatch(/deletedAt[^\n]*is null/i);
 			expect(selects[0]).toMatch(/startedAt[^\n]*>=/i);
 			expect(selects[0]).toMatch(/startedAt[^\n]*</i);
-			expect(selects[0]).not.toContain(TEAM_ID);
+			expect(selects[0]).not.toMatch(/organizationTeamId/i);
 		} finally {
 			await knex.destroy();
 		}

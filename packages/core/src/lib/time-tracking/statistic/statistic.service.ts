@@ -55,6 +55,7 @@ import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-l
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { moment as timezoneMoment } from '../../core/moment-extend';
 import {
+	buildProfileActivityDayBuckets,
 	buildProfileActivityResponse,
 	ProfileActivityPeriod,
 	ProfileActivityRawRow,
@@ -89,9 +90,16 @@ function toUtcNaiveDateTime(value: Date): string {
 	return value.toISOString().replace('T', ' ').replace('Z', '');
 }
 
+function toMikroOrmProfileDateTime(value: Date, dbType: ProfileActivityDatabaseType): string | number {
+	return dbType === DatabaseTypeEnum.sqlite || dbType === DatabaseTypeEnum.betterSqlite3
+		? value.getTime()
+		: toUtcNaiveDateTime(value);
+}
+
 @Injectable()
 export class StatisticService {
 	private readonly logger = new Logger(StatisticService.name);
+	private readonly profileActivityPostgresTimeZoneSupport = new Map<string, Promise<boolean>>();
 	protected ormType: MultiORM = ormType;
 
 	constructor(
@@ -167,7 +175,17 @@ export class StatisticService {
 		tenantId: ID,
 		period: ProfileActivityPeriod
 	): Promise<ProfileActivityRawRow[]> {
-		const query = this.buildProfileActivityRowsQuery(request, tenantId, period);
+		if (period.endDate.getTime() <= period.startDate.getTime()) {
+			return [];
+		}
+
+		const dbType = this.configService.dbConnectionOptions.type;
+		const canonicalTimeZone = timezoneMoment.tz.zone(request.timeZone)?.name;
+		const usePostgresAggregate =
+			dbType === DatabaseTypeEnum.postgres &&
+			canonicalTimeZone !== undefined &&
+			(await this.supportsPostgresTimeZone(canonicalTimeZone));
+		const query = this.buildProfileActivityRowsQuery(request, tenantId, period, usePostgresAggregate);
 
 		if (query.ormType === MultiORMEnum.TypeORM) {
 			return (await query.builder.getRawMany()) as ProfileActivityRawRow[];
@@ -182,7 +200,8 @@ export class StatisticService {
 	protected buildProfileActivityRowsQuery(
 		request: IGetProfileActivity,
 		tenantId: ID,
-		period: ProfileActivityPeriod
+		period: ProfileActivityPeriod,
+		useSupportedPostgresTimeZone = true
 	): ProfileActivityRowsQuery {
 		const dbType = this.configService.dbConnectionOptions.type;
 
@@ -198,7 +217,7 @@ export class StatisticService {
 			throw new RangeError('Profile activity timezone is invalid');
 		}
 
-		const usePostgresAggregate = dbType === DatabaseTypeEnum.postgres && canonicalTimeZone !== 'America/Coyhaique';
+		const usePostgresAggregate = dbType === DatabaseTypeEnum.postgres && useSupportedPostgresTimeZone;
 
 		if (this.ormType === MultiORMEnum.TypeORM) {
 			return {
@@ -227,6 +246,47 @@ export class StatisticService {
 		};
 	}
 
+	private async supportsPostgresTimeZone(canonicalTimeZone: string): Promise<boolean> {
+		const cached = this.profileActivityPostgresTimeZoneSupport.get(canonicalTimeZone);
+		if (cached) {
+			return cached;
+		}
+
+		let lookup: Promise<boolean>;
+		lookup = this.queryPostgresTimeZoneSupport(canonicalTimeZone).catch((error: unknown) => {
+			if (this.profileActivityPostgresTimeZoneSupport.get(canonicalTimeZone) === lookup) {
+				this.profileActivityPostgresTimeZoneSupport.delete(canonicalTimeZone);
+			}
+			this.logger.warn(
+				`PostgreSQL timezone lookup failed for ${canonicalTimeZone}; using the portable profile aggregate`,
+				error instanceof Error ? error.stack : undefined
+			);
+			return false;
+		});
+		this.profileActivityPostgresTimeZoneSupport.set(canonicalTimeZone, lookup);
+
+		return lookup;
+	}
+
+	private async queryPostgresTimeZoneSupport(canonicalTimeZone: string): Promise<boolean> {
+		const sql = 'SELECT EXISTS (SELECT 1 FROM pg_timezone_names WHERE name = $1) AS "supported"';
+		let result: unknown;
+
+		if (this.ormType === MultiORMEnum.TypeORM) {
+			result = await this.typeOrmTimeLogRepository.query(sql, [canonicalTimeZone]);
+		} else if (this.ormType === MultiORMEnum.MikroORM) {
+			const knex = this.mikroOrmTimeLogRepository.getKnex() as unknown as Knex;
+			result = await knex.raw(sql.replace('$1', '?'), [canonicalTimeZone]);
+		} else {
+			return false;
+		}
+
+		const row = Array.isArray(result) ? result[0] : (result as { rows?: unknown[] } | null | undefined)?.rows?.[0];
+		const supported = (row as { supported?: unknown } | null | undefined)?.supported;
+
+		return supported === true || supported === 1 || supported === '1' || supported === 't' || supported === 'true';
+	}
+
 	private buildTypeOrmProfileActivityQuery(
 		request: IGetProfileActivity,
 		tenantId: ID,
@@ -246,10 +306,36 @@ export class StatisticService {
 				.setParameter('profileTimeZone', canonicalTimeZone)
 				.groupBy(dateExpression);
 		} else {
-			const castType = dbType === DatabaseTypeEnum.mysql ? 'CHAR' : 'TEXT';
-			query
-				.select(`CAST(time_log.startedAt AS ${castType})`, 'startedAt')
-				.addSelect(`CAST(time_log.stoppedAt AS ${castType})`, 'stoppedAt');
+			const buckets = buildProfileActivityDayBuckets(request);
+			const dateExpression = buckets.length
+				? `CASE ${buckets
+						.map((_, index) => {
+							const boundary =
+								dbType === DatabaseTypeEnum.postgres
+									? `(CAST(:profileDayEnd${index} AS timestamptz) AT TIME ZONE 'UTC')`
+									: `:profileDayEnd${index}`;
+							return `WHEN time_log.startedAt < ${boundary} THEN :profileDayLabel${index}`;
+						})
+						.join(' ')} END`
+				: 'NULL';
+			const durationExpression =
+				dbType === DatabaseTypeEnum.postgres
+					? 'SUM(EXTRACT(EPOCH FROM (time_log.stoppedAt - time_log.startedAt)))'
+					: dbType === DatabaseTypeEnum.mysql
+						? 'SUM(TIMESTAMPDIFF(MICROSECOND, time_log.startedAt, time_log.stoppedAt) / 1000000.0)'
+						: 'SUM((julianday(time_log.stoppedAt) - julianday(time_log.startedAt)) * 86400.0)';
+
+			query.select(dateExpression, 'date').addSelect(durationExpression, 'duration').groupBy('1');
+			buckets.forEach((bucket, index) => {
+				query
+					.setParameter(
+						`profileDayEnd${index}`,
+						dbType === DatabaseTypeEnum.postgres
+							? bucket.endDate.toISOString()
+							: toUtcNaiveDateTime(bucket.endDate)
+					)
+					.setParameter(`profileDayLabel${index}`, bucket.date);
+			});
 		}
 
 		query
@@ -304,11 +390,41 @@ export class StatisticService {
 				])
 				.groupByRaw('1');
 		} else {
-			const castType = dbType === DatabaseTypeEnum.mysql ? 'CHAR' : 'TEXT';
-			query.select([
-				knex.raw(`CAST(?? AS ${castType}) AS ??`, ['time_log.startedAt', 'startedAt']),
-				knex.raw(`CAST(?? AS ${castType}) AS ??`, ['time_log.stoppedAt', 'stoppedAt'])
-			]);
+			const buckets = buildProfileActivityDayBuckets(request);
+			const dateBindings: unknown[] = [];
+			const cases = buckets.map((bucket) => {
+				dateBindings.push(
+					'time_log.startedAt',
+					dbType === DatabaseTypeEnum.postgres
+						? bucket.endDate.toISOString()
+						: toMikroOrmProfileDateTime(bucket.endDate, dbType),
+					bucket.date
+				);
+				return dbType === DatabaseTypeEnum.postgres
+					? "WHEN ?? < (CAST(? AS timestamptz) AT TIME ZONE 'UTC') THEN ?"
+					: 'WHEN ?? < ? THEN ?';
+			});
+			const dateExpression = buckets.length ? `CASE ${cases.join(' ')} END` : 'NULL';
+			const duration =
+				dbType === DatabaseTypeEnum.postgres
+					? knex.raw('SUM(EXTRACT(EPOCH FROM (?? - ??))) AS ??', [
+							'time_log.stoppedAt',
+							'time_log.startedAt',
+							'duration'
+						])
+					: dbType === DatabaseTypeEnum.mysql
+						? knex.raw('SUM(TIMESTAMPDIFF(MICROSECOND, ??, ??) / 1000000.0) AS ??', [
+								'time_log.startedAt',
+								'time_log.stoppedAt',
+								'duration'
+							])
+						: knex.raw('SUM((?? - ??) / 1000.0) AS ??', [
+								'time_log.stoppedAt',
+								'time_log.startedAt',
+								'duration'
+							]);
+
+			query.select([knex.raw(`${dateExpression} AS ??`, [...dateBindings, 'date']), duration]).groupByRaw('1');
 		}
 
 		query
@@ -328,8 +444,8 @@ export class StatisticService {
 				]);
 		} else {
 			query
-				.whereRaw('?? >= ?', ['time_log.startedAt', toUtcNaiveDateTime(period.startDate)])
-				.whereRaw('?? < ?', ['time_log.startedAt', toUtcNaiveDateTime(period.endDate)]);
+				.whereRaw('?? >= ?', ['time_log.startedAt', toMikroOrmProfileDateTime(period.startDate, dbType)])
+				.whereRaw('?? < ?', ['time_log.startedAt', toMikroOrmProfileDateTime(period.endDate, dbType)]);
 		}
 
 		return query
@@ -2750,7 +2866,7 @@ export class StatisticService {
 					employee.user = {
 						name: user?.name ?? null,
 						imageUrl: user?.imageUrl ?? null
-					}
+					};
 					delete employee.user_id;
 
 					// Fetch up to 9 recent time slots per employee with screenshots

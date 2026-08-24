@@ -1,5 +1,6 @@
 import { IGetProfileActivity } from '@gauzy/contracts';
 import {
+	buildProfileActivityDayBuckets,
 	buildProfileActivityResponse,
 	ProfileActivityRawRow,
 	resolveProfileActivityPeriod
@@ -61,6 +62,35 @@ describe('profile activity period', () => {
 		expect(period.startDate.toISOString()).toBe('2011-12-30T10:00:00.000Z');
 		expect(period.endDate.toISOString()).toBe('2011-12-30T10:00:00.000Z');
 		expect(period.endDate.getTime() - period.startDate.getTime()).toBe(0);
+	});
+
+	it('builds one ordered UTC boundary per real local day across DST', () => {
+		const buckets = buildProfileActivityDayBuckets(
+			createRequest({ startDate: '2024-03-30', endDate: '2024-04-02', timeZone: 'Europe/Madrid' })
+		);
+
+		expect(buckets).toEqual([
+			{ date: '2024-03-30', endDate: new Date('2024-03-30T23:00:00.000Z') },
+			{ date: '2024-03-31', endDate: new Date('2024-03-31T22:00:00.000Z') },
+			{ date: '2024-04-01', endDate: new Date('2024-04-01T22:00:00.000Z') }
+		]);
+	});
+
+	it('omits a fully skipped local date without leaving a UTC interval unassigned', () => {
+		const buckets = buildProfileActivityDayBuckets(
+			createRequest({ startDate: '2011-12-29', endDate: '2012-01-01', timeZone: 'Pacific/Apia' })
+		);
+
+		expect(buckets).toEqual([
+			{ date: '2011-12-29', endDate: new Date('2011-12-30T10:00:00.000Z') },
+			{ date: '2011-12-31', endDate: new Date('2011-12-31T10:00:00.000Z') }
+		]);
+	});
+
+	it('rejects an internal caller that bypasses the 366-local-day DTO cap', () => {
+		expect(() =>
+			buildProfileActivityDayBuckets(createRequest({ startDate: '2024-01-01', endDate: '2025-01-02' }))
+		).toThrow(RangeError);
 	});
 });
 

@@ -189,6 +189,11 @@ test('compares unrounded p95 and max latencies to every threshold', () => {
 			return true;
 		}
 	);
+
+	const diagnostic = evaluateLatencyThresholds(Array(32).fill(900), Array(32).fill(600), false);
+	assert.equal(diagnostic.ok, true);
+	assert.equal(diagnostic.profile.p95Milliseconds, 900);
+	assert.equal(diagnostic.liveness.maxMilliseconds, 600);
 });
 
 test('maps hard request deadlines and non-success statuses to stable codes', async () => {

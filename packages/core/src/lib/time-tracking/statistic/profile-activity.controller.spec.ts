@@ -43,11 +43,6 @@ import { StatisticController } from './statistic.controller';
 import { StatisticModule } from './statistic.module';
 import { StatisticService } from './statistic.service';
 
-type ProfileActivityValidationPipe = ValidationPipe & {
-	isTransformEnabled: boolean;
-	validatorOptions: { whitelist?: boolean };
-};
-
 const API_TAGS_METADATA = 'swagger/apiUseTags';
 
 const query = {
@@ -82,7 +77,7 @@ function createController(getProfileActivity: StatisticService['getProfileActivi
 }
 
 describe('ProfileActivityController', () => {
-	it('registers the exact guarded GET query endpoint and validation boundary', () => {
+	it('registers the exact guarded GET query endpoint and exercises its public validation boundary', async () => {
 		const handler = ProfileActivityController.prototype.getProfileActivity;
 
 		expect(Reflect.getMetadata(API_TAGS_METADATA, ProfileActivityController)).toEqual(['TimesheetStatistic']);
@@ -101,11 +96,16 @@ describe('ProfileActivityController', () => {
 			[`${RouteParamtypes.QUERY}:0`]: { index: 0, data: undefined, pipes: [] }
 		});
 
-		const pipes = Reflect.getMetadata(PIPES_METADATA, handler) as ProfileActivityValidationPipe[];
+		const pipes = Reflect.getMetadata(PIPES_METADATA, handler) as ValidationPipe[];
 		expect(pipes).toHaveLength(1);
 		expect(pipes[0]).toBeInstanceOf(ValidationPipe);
-		expect(pipes[0].isTransformEnabled).toBe(true);
-		expect(pipes[0].validatorOptions.whitelist).toBe(true);
+		const transformed = await pipes[0].transform(
+			{ ...query, includeDaily: 'true', ignored: 'not part of the contract' },
+			{ type: 'query', metatype: ProfileActivityQueryDTO, data: undefined }
+		);
+		expect(transformed).toBeInstanceOf(ProfileActivityQueryDTO);
+		expect(transformed).toEqual(query);
+		expect(Object.prototype.hasOwnProperty.call(transformed, 'ignored')).toBe(false);
 	});
 
 	it('returns the exact service promise and result for the exact transformed DTO object', async () => {
