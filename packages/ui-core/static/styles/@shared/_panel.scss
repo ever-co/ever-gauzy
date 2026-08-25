@@ -10,10 +10,10 @@ $panel-active-tint: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
 $panel-radius: var(--border-radius, 8px);
 $panel-row-radius: var(--gauzy-radius-sm, 6px);
 
-$panel-text-micro: 0.5625rem; //  9px
-$panel-text-label: 0.625rem; //  10px
-$panel-text-row: 0.625rem; //    10px
-$panel-text-title: 0.75rem; //   12px
+$panel-text-micro: 0.6875rem; // 11px
+$panel-text-label: 0.75rem; //   12px
+$panel-text-row: 0.75rem; //     12px
+$panel-text-title: 0.875rem; //  14px
 
 $panel-pad: 0.375rem; //      6px
 $panel-gutter: 0.625rem; //  10px
@@ -79,9 +79,9 @@ $panel-gap: 0.125rem; //      2px
 
   nb-icon,
   i {
-    font-size: 0.75rem;
-    width: 0.75rem;
-    height: 0.75rem;
+    font-size: 0.875rem;
+    width: 0.875rem;
+    height: 0.875rem;
     line-height: 1;
   }
 }
@@ -134,9 +134,9 @@ $panel-gap: 0.125rem; //      2px
   nb-icon,
   i {
     flex: 0 0 auto;
-    font-size: 0.8125rem;
-    width: 0.8125rem;
-    height: 0.8125rem;
+    font-size: 0.9375rem;
+    width: 0.9375rem;
+    height: 0.9375rem;
     color: nb-theme(text-hint-color);
   }
 }

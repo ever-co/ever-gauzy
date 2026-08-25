@@ -43,7 +43,7 @@
         // Unpressured, both resolve to the same width (text, capped below).
         width: auto;
         max-width: 150px;
-        font-size: 0.75rem;
+        font-size: 0.875rem;
         font-weight: 400;
         color: nb-theme(text-basic-color);
       }
@@ -167,7 +167,7 @@ nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal:hover
 
 .text {
   margin: 0 10px;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-style: normal;
   font-weight: 500;
   line-height: 16px;

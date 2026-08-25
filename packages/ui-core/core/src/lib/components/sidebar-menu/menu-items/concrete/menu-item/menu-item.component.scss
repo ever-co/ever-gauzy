@@ -53,11 +53,11 @@ $menu-row-color: var(--gauzy-text-color-2, var(--text-hint-color));
 $menu-row-weight: 400;
 $menu-row-active-weight: 500;
 
-// 12px for every label in the nav — deliberately NOT `menu-text-font-size`
+// 14px for every label in the nav — deliberately NOT `menu-text-font-size`
 // (0.8125rem / 13px), which is the app's shared CONTROL text size and is also
 // what overlay menus, ng-select rows and the settings menu resolve. The sidebar
 // runs on its own step; the shared token stays where it is.
-$menu-row-font-size: 0.75rem;
+$menu-row-font-size: 0.875rem;
 
 // Row padding, one step tighter than the shared `menu-item-padding`
 // (0.5rem 0.75rem). The bigger label would otherwise push a row from 36px to
@@ -139,7 +139,7 @@ $menu-child-indent: 1.25rem;
     > i {
       flex: 0 0 auto;
       width: $menu-icon-column;
-      font-size: 0.75rem;
+      font-size: 0.875rem;
       text-align: center;
       color: inherit;
       opacity: 0.85;
@@ -393,7 +393,7 @@ $menu-child-indent: 1.25rem;
   i {
     flex: 0 0 auto;
     width: $menu-icon-column;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     text-align: center;
     color: inherit;
     opacity: 0.85;
