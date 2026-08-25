@@ -24,6 +24,10 @@ type TaskMetadataEntry = readonly [
 	NonNullable<ITaskMetadataBootstrapResponse[TaskMetadataSection]>
 ];
 
+function assertUnreachableSection(_section: never): never {
+	throw new BadRequestException();
+}
+
 @Injectable()
 export class TaskMetadataBootstrapService {
 	constructor(
@@ -66,9 +70,35 @@ export class TaskMetadataBootstrapService {
 		const entries =
 			this.configService.dbConnectionOptions.type === DatabaseTypeEnum.betterSqlite3
 				? await this.loadSynchronousSqliteSections(include, loaders)
-				: await Promise.all(include.map(async (section) => [section, await loaders[section]()] as const));
+				: await Promise.all(
+						include.map(async (section) => [section, await this.loadSection(section, loaders)] as const)
+					);
 
 		return Object.fromEntries(entries) as ITaskMetadataBootstrapResponse;
+	}
+
+	private loadSection(
+		section: TaskMetadataSection,
+		loaders: TaskMetadataLoaderMap
+	): Promise<NonNullable<ITaskMetadataBootstrapResponse[TaskMetadataSection]>> {
+		switch (section) {
+			case 'taskStatuses':
+				return loaders.taskStatuses();
+			case 'taskPriorities':
+				return loaders.taskPriorities();
+			case 'taskSizes':
+				return loaders.taskSizes();
+			case 'taskLabels':
+				return loaders.taskLabels();
+			case 'taskVersions':
+				return loaders.taskVersions();
+			case 'issueTypes':
+				return loaders.issueTypes();
+			case 'relatedIssueTypes':
+				return loaders.relatedIssueTypes();
+			default:
+				return assertUnreachableSection(section);
+		}
 	}
 
 	private async loadSynchronousSqliteSections(
@@ -78,7 +108,7 @@ export class TaskMetadataBootstrapService {
 		const entries: TaskMetadataEntry[] = [];
 
 		for (const [index, section] of include.entries()) {
-			entries.push([section, await loaders[section]()]);
+			entries.push([section, await this.loadSection(section, loaders)]);
 
 			if (index < include.length - 1) {
 				await new Promise<void>((resolve) => setImmediate(resolve));
