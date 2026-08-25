@@ -1,6 +1,7 @@
 @forward 'report';
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 .popover-container {
   display: flex;
@@ -404,7 +405,7 @@ nb-tab {
   ::ng-deep {
     @include card_overrides(auto, $default-card-height, $default-radius);
     @include ga-overrides.ng-select-overrides(
-	  ga-overrides.$default-height,
+      ga-overrides.$default-height,
       $default-radius,
       ga-overrides.$default-box-shadow-inset
     );
@@ -465,7 +466,7 @@ nb-tab {
       }
       & .history-item.history-comment {
         margin-top: 6px;
-        font-size: .85rem;
+        font-size: 0.85rem;
         &.history-comment::first-letter {
           text-transform: capitalize;
         }
@@ -474,7 +475,7 @@ nb-tab {
 
     // border bottom
     & nb-list-item::after {
-      content: "";
+      content: '';
       display: block;
       width: 100%;
       border-bottom: thin solid var(--accordion-header-border-color);
@@ -482,4 +483,64 @@ nb-tab {
       bottom: 0;
     }
   }
+}
+
+:host {
+  @include ga-hub.density-tokens();
+}
+
+:host .estimate-page ::ng-deep .ga-page-title-trail {
+  margin-top: -0.25rem;
+  font-size: 0.75rem;
+
+  .ga-breadcrumb-list {
+    gap: 0.125rem;
+  }
+
+  .ga-breadcrumb-item {
+    gap: 0.125rem;
+    font-size: 0.75rem;
+    line-height: 1.5rem;
+  }
+
+  .ga-breadcrumb-link,
+  .ga-breadcrumb-text,
+  .ga-breadcrumb-current {
+    height: 1.5rem;
+    max-width: 14rem;
+    padding-inline: 0.375rem;
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .ga-breadcrumb-separator nb-icon {
+    font-size: 0.875rem;
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+}
+
+:host .table-scroll-container {
+  @include ga-hub.surface();
+}
+
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+}
+
+:host ::ng-deep {
+  @include ga-hub.tag-stack-spacing();
+}
+
+:host ::ng-deep ga-status-badge {
+  @include ga-hub.status-badge-tints();
+}
+
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
 }
