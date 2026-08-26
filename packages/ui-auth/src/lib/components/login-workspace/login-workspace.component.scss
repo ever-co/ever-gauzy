@@ -3,9 +3,6 @@
 
 :host {
   .section-wrapper {
-    // Same compaction as the login screen: the card was sized for a tall desktop
-    // viewport, and one `row-gap` owns the vertical rhythm instead of every block
-    // carrying its own bottom margin against the next block's top margin.
     width: 700px;
     max-width: 100%;
     display: flex;
@@ -21,9 +18,6 @@
       display: flex;
       flex-direction: column;
       row-gap: 20px;
-      // Every direct child used to add its own 15px side padding on top of the
-      // wrapper's, so the dividers, inputs and footer links each started at a
-      // slightly different x.
       & > * {
         padding-left: 0;
         padding-right: 0;
@@ -32,8 +26,6 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        // Was 57px. 12px on top of the row-gap reads as a masthead band (32px),
-        // matching the login screen.
         margin-bottom: 12px;
       }
       & .title {
@@ -63,10 +55,8 @@
         text-align: start;
         margin: 0;
       }
-      // Both dividers exist only to draw a 1px line; the row-gap spaces them.
       & .hr-div-strong {
         @include hr-div-strong;
-        // The mixin hard-codes 416px, wider than this now-narrower card.
         width: 100%;
         margin: 0;
       }
@@ -85,8 +75,6 @@
             font-family: Inter;
             font-weight: 600;
             font-size: 12px;
-            // Was full-strength `text-basic-color`, which made the field labels
-            // as loud as the heading. The hint token tracks light and dark.
             color: nb-theme(text-hint-color);
             padding-left: 0;
             text-transform: none;
@@ -125,8 +113,6 @@
           margin-top: 16px;
           & .submit-btn {
             @include submit-btn;
-            // Was a right-aligned pill with 65px of side padding; full width
-            // matches the primary action on the login screen.
             width: 100%;
             margin: 0;
             padding: 9px 20px;
@@ -188,8 +174,6 @@
           }
         }
       }
-      // The one pair that wants a tighter gap than the card rhythm: two one-line
-      // links that would read as unrelated paragraphs 20px apart.
       .sign-in-or-up {
         display: flex;
         flex-direction: column;
@@ -221,8 +205,6 @@
   }
 }
 
-// The short-viewport blocks only turn the single gap value (and the form's
-// internal one) down, so they can't drift out of step with the base layout.
 @media screen and (max-height: 980px) and (min-width: 491px) {
   :host .section-wrapper .-wrapper {
     padding: 20px;

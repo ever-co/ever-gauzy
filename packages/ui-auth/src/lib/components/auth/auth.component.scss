@@ -14,10 +14,6 @@
   // never needed. They already span their column, so `100%` is both correct and
   // scrollbar-safe.
   & .header {
-    // Nebular gives `nb-card-header` no background of its own (it only paints one
-    // under `.status-*`), so this strip is transparent by default and stays that
-    // way. The band came from this file's own `.register` rule below, which the
-    // template stamps on the header AND the body — see the note there.
     background: transparent;
     border-bottom: none;
     padding-top: 14px;
@@ -36,9 +32,6 @@
   }
   & .card {
     margin-bottom: 0;
-    // The shell is exactly one viewport tall and lays its header/body out as a
-    // column, so the body can take "whatever is left" instead of guessing the
-    // header height with a magic number. Nothing can push the page past 100vh.
     height: 100vh;
     max-height: 100vh;
     width: 100%;
@@ -57,13 +50,6 @@
     overflow-y: auto;
     display: flex;
     justify-content: center;
-    // NOT `align-items: center`. A centred flex item that is taller than its
-    // scroll container overflows equally in both directions, and the overflow
-    // above the container is unreachable — no scrollbar reaches it. That is what
-    // cut the logo and the top of "Register" off the register screen. Starting
-    // the item at the top and centring it with `margin: auto` on `.auth-block`
-    // below gives the same centred look when it fits, and a fully scrollable card
-    // when it does not.
     align-items: flex-start;
     padding-top: 16px;
     padding-bottom: 16px;
@@ -75,7 +61,6 @@
       align-items: center;
     }
     & .auth-block {
-      // Centres vertically only while there is free space — see `.body` above.
       margin: auto 0;
       min-width: 100%;
       display: flex;
@@ -129,10 +114,6 @@
     display: none;
   }
 }
-// The template stamps `[class.register]` on the header AND the body. As a bare
-// `.register` this painted both, so the register screen got an opaque band across
-// its header. Scoped to `.body`, the surface stays where it was meant to go and
-// the header stays a bare strip holding the back arrow and the theme toggle.
 .body.register {
   background: $register-background-light-color;
 }

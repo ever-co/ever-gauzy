@@ -2,14 +2,10 @@
 @use '@shared/reusable' as *;
 
 .main-section {
-  // Same compaction as the login screen. This is the tallest auth screen (four
-  // fields plus the terms checkbox), so it gained the most from it.
   width: 700px;
   max-width: 100%;
   display: flex;
   justify-content: space-between;
-  // `stretch` made the features column as tall as whichever side was taller,
-  // which on a short viewport is a fight neither side wins.
   align-items: flex-start;
   column-gap: 20px;
   row-gap: 20px;
@@ -21,17 +17,12 @@
   padding: 24px;
   background: nb-theme(gauzy-card-2);
   border-radius: nb-theme(border-radius);
-  // One column gap owns the whole vertical rhythm; the blocks below set no
-  // vertical margin of their own. Change this value to retune the card.
   display: flex;
   flex-direction: column;
   row-gap: 20px;
   &.dark {
     background: #292933;
   }
-  // Every direct child used to add its own 15px side padding on top of the
-  // wrapper's, so the dividers, the inputs and the footer links each started at a
-  // slightly different x.
   & > * {
     padding-left: 0;
     padding-right: 0;
@@ -49,10 +40,8 @@
       margin: 0;
     }
   }
-  // Both dividers exist only to draw a 1px line; the row-gap spaces them.
   & .hr-div-strong {
     @include hr-div-strong;
-    // The mixin hard-codes 416px, wider than this now-narrower card.
     width: 100%;
     margin: 0;
   }
@@ -61,8 +50,6 @@
     width: 100%;
     margin: 0;
   }
-  // The one pair that wants a tighter gap than the card rhythm: two one-line
-  // links that would read as unrelated paragraphs 20px apart.
   & .another-actions {
     display: flex;
     flex-direction: column;
@@ -70,8 +57,6 @@
   }
   & .another-action {
     @include another-action;
-    // The mixin's padding-top/left was the only thing separating these two lines,
-    // so they read as one wrapped paragraph.
     padding: 0;
     margin: 0;
     font-size: 13px;
@@ -94,8 +79,6 @@
   height: auto;
 }
 .svg-wrapper {
-  // Was 55px. 12px on top of the row-gap reads as a masthead band (32px),
-  // matching the login screen.
   margin-bottom: 12px;
   display: flex;
   align-items: flex-start;
@@ -111,17 +94,12 @@
       font-family: Inter;
       font-weight: 600;
       font-size: 12px;
-      // Was full-strength `text-basic-color`, which made the field labels as loud
-      // as the heading. The hint token is the theme's own muted text, so it
-      // tracks light and dark.
       color: nb-theme(text-hint-color);
     }
     ::ng-deep input.input-full-width {
       border: 1px solid rgba(98, 54, 255, 0.5) !important;
       background-color: transparent;
       color: nb-theme(text-basic-color);
-      // `fieldSize="medium"` in the markup does most of the shrinking; this keeps
-      // the box from growing back on themes with a taller medium field.
       height: 38px;
       font-size: 13px;
     }
@@ -135,8 +113,6 @@
     margin-top: 16px;
     & .submit-btn {
       @include submit-btn;
-      // Was a right-aligned pill with 65px of side padding; full width matches
-      // the primary action on the login screen.
       width: 100%;
       padding: 9px 20px;
       font-size: 14px;
@@ -253,11 +229,6 @@
   }
 }
 
-// NOTE: a `.links { @include social-links-style; }` block used to sit here. It
-// never applied — `.links` lives in the ngx-social-links template, so emulated
-// encapsulation stamps it with that component's attribute, not this one. The
-// real styling is in social-links.component.scss, which this screen shares with
-// the login screen.
 
 .theme-switch {
   @include not-mobile-screen {
@@ -270,8 +241,6 @@
   vertical-align: middle;
 }
 
-// The short-viewport blocks only turn the single gap value (and the form's
-// internal one) down, so they can't drift out of step with the base layout.
 @include small-laptop-screen {
   .register-wrapper {
     padding: 20px;
@@ -334,7 +303,6 @@
   .features-wrapper {
     width: 440px;
     max-width: 100%;
-    // The container's row-gap already separates the two stacked cards.
     margin-top: 0;
   }
 }

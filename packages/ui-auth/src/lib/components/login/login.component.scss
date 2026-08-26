@@ -2,16 +2,11 @@
 @use '@shared/reusable' as *;
 
 .login-container {
-  // The card was sized for a tall desktop viewport and overflowed anything
-  // shorter. Every vertical rhythm value below is roughly half of what it was so
-  // the form, the socials and the demo column all land inside one screen.
   width: 700px;
   max-width: 100%;
   position: relative;
   display: flex;
   justify-content: space-between;
-  // Horizontal gap to the demo column; the wrapper's `row-gap` handles vertical
-  // spacing when this flips to a column on tablet.
   column-gap: 20px;
   row-gap: 20px;
   & .login-wrapper {
@@ -22,16 +17,9 @@
     width: 440px;
     max-width: 100%;
     height: 100%;
-    // One column gap owns the whole vertical rhythm. Before this the spacing was
-    // an accumulation of each block's own bottom margin plus the next block's top
-    // margin, which is why no two gaps down the card were the same. Blocks below
-    // set no vertical margin of their own; change this value to retune the card.
     display: flex;
     flex-direction: column;
     row-gap: 20px;
-    // Every direct child used to carry its own 15px side padding on top of the
-    // wrapper's, so the dividers, the inputs and the footer links each started at
-    // a slightly different x. One padding on the wrapper lines them all up.
     & > * {
       padding-left: 0;
       padding-right: 0;
@@ -40,10 +28,6 @@
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      // The masthead reads as its own band rather than another row in the stack,
-      // so it takes 12px on top of the card's row-gap: 32px down to the heading.
-      // On the flex item, not on the logo inside it, so the theme switch beside
-      // it stays on the same baseline.
       margin-bottom: 12px;
 
       & .ever-logo-svg {
@@ -70,9 +54,6 @@
           font-size: 12px;
           font-style: normal;
           font-weight: 400;
-          // Was inheriting the body's full-strength text colour, so the strap line
-          // carried the same weight as the "Login" heading above it. The hint
-          // token is the theme's own muted text, so it tracks light and dark.
           color: nb-theme(text-hint-color);
           // Was 11px — a line box SHORTER than the 14px glyphs sitting in it, so
           // the strap line under "Login" rode into the divider below and its
@@ -86,10 +67,8 @@
         }
       }
     }
-    // Both rules exist only to draw a 1px line; the column gap spaces them.
     & .hr-div-strong {
       @include hr-div-strong;
-      // The mixin hard-codes 416px, which is wider than this (now narrower) card.
       width: 100%;
       margin: 0;
     }
@@ -98,8 +77,6 @@
       width: 100%;
       margin: 0;
     }
-    // The only pair that wants a tighter gap than the card rhythm: two one-line
-    // links that would read as unrelated paragraphs 20px apart.
     & .another-actions {
       display: flex;
       flex-direction: column;
@@ -107,7 +84,6 @@
     }
   }
   & form {
-    // On top of the card's row-gap, so the form sits clear of the heading band.
     margin: 24px 0 0;
     .form-control-group {
       margin-bottom: 16px;
@@ -118,17 +94,12 @@
       font-family: Inter;
       font-size: 12px;
       font-weight: 600;
-      // Same muted token as the strap line under "Login" — was full-strength
-      // `text-basic-color`, which made the field labels as loud as the heading.
-      // Weight stays at 600 so they still read as labels at this size.
       color: nb-theme(text-hint-color);
     }
     ::ng-deep input.input-full-width {
       border: 1px solid rgba(98, 54, 255, 0.5) !important;
       background-color: transparent;
       color: nb-theme(text-basic-color); // Reverted to theme variable
-      // `fieldSize="medium"` in the markup does most of the shrinking; this keeps
-      // the box from growing back on themes with a taller medium field.
       height: 38px;
       font-size: 13px;
     }
@@ -145,7 +116,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      // The submit wrapper below owns the gap down to the button.
       margin: 16px 0 0;
       .accept-group {
         margin: 0;
@@ -270,9 +240,6 @@
   }
   & .another-action {
     @include another-action;
-    // The mixin's padding-top/left was the only thing separating these two lines,
-    // so they read as one wrapped paragraph. The gap does the spacing now and the
-    // left padding goes away so they line up with the inputs above.
     padding: 0;
     margin: 0;
     font-size: 13px;
@@ -290,8 +257,6 @@
   // demo side container
   & .card-body {
     padding: 20px 16px;
-    // Same idea as the login card: one gap for the three demo buttons instead of
-    // a margin on each. The heading pair below opts out of it.
     display: flex;
     flex-direction: column;
     row-gap: 8px;
@@ -305,8 +270,6 @@
         border: 1px solid #6e49e8;
       }
     }
-    // The three demo buttons are separated by `<br />` in the markup; collapsing
-    // those lets the button margins alone control the spacing.
     & br {
       display: none;
     }
@@ -326,10 +289,7 @@
     line-height: 18px;
     letter-spacing: -0.009em;
     text-align: left;
-    // Was an 8px inset on top of the card's own padding, so the heading hung
-    // right of the buttons underneath it.
     padding-left: 0;
-    // Pulls the sub-title up against its heading, out of the 8px button rhythm.
     margin: 0 0 -4px;
   }
   & .sub-title {
@@ -340,7 +300,6 @@
     line-height: 16px;
     letter-spacing: 0em;
     text-align: left;
-    // +8px gap = 16px of air before the first button.
     margin: 0 0 8px;
     padding-left: 0;
     color: #7e7e8f;
@@ -348,12 +307,8 @@
   & .custom-btn {
     -webkit-box-shadow: 3px 11px 30px -17px #3366ff;
     box-shadow: 3px 11px 30px -17px #3366ff;
-    // `width: auto` let each button shrink to its label, so the three of them had
-    // three different right edges. They already carry `fullWidth` in the markup.
     width: 100%;
     padding: 10px 16px;
-    // `!important` beats the `.mt-3` utility the markup puts on each button; the
-    // card's row-gap spaces them now.
     margin: 0 !important;
     display: inline-flex;
     align-items: center;
@@ -438,7 +393,6 @@
   .features-wrapper {
     width: 440px;
     max-width: 100%;
-    // The container's row-gap already separates the two stacked cards.
     margin-top: 0;
     & .demo-credentials-buttons {
       & * {
@@ -515,9 +469,6 @@
 }
 
 // Compact layout for short viewport heights (e.g. MacBook 14" ~980px, standard laptops ~768px)
-// Now that one gap owns the card's rhythm, these blocks only have to turn that
-// single value (plus the form's internal one) down, instead of re-stating a dozen
-// margins and drifting out of step with the base layout every time it changes.
 @media screen and (max-height: 980px) and (min-width: 491px) {
   .login-container {
     & .login-wrapper {
