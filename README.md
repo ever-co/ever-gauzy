@@ -188,6 +188,10 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 ## 🚀 Quick Start
 
+### Deploy on RepoCloud
+
+Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/details/Ever%20Gauzy/).
+
 ### With Docker Compose
 
 -   Clone repo.
