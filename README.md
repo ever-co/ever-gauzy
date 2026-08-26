@@ -24,7 +24,7 @@
 -   **Work and Project Management** (PM)
 -   **Employee Time-Tracking, Activity & Productivity Tracking**
 
-![overview](https://docs.gauzy.co/overview.png)
+<img width="1905" height="988" alt="image" src="https://github.com/user-attachments/assets/6197a87a-8ae9-4380-91c3-3f85f8406542" />
 
 Ever® Gauzy™ Platform is a part of our larger Open Platform for **Collaborative, On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
 
@@ -188,7 +188,13 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 ## 🚀 Quick Start
 
-### With Docker Compose
+### Super Quick Start
+
+<https://app.gauzy.co>.
+
+Note: it's currently in Alpha version/testing mode, please use it cautiously!
+
+### Run with Docker Compose
 
 -   Clone repo.
 -   Make sure you have the latest Docker Compose [installed locally](https://docs.docker.com/compose/install). Important: you need a minimum [v2.20](https://docs.docker.com/compose/release-notes/#2200).
@@ -233,7 +239,7 @@ Together with Gauzy, the Docker Compose commands described above for Production 
 -   [Cube](https://github.com/cube-js/cube) - "Semantic Layer" used for Reports, Dashboards, Analytics, and other BI-related features, with UI available on <http://localhost:4000>.
 -   [Zipkin](https://github.com/openzipkin/zipkin) - distributed tracing system.
 
-### Manually
+### Quick Start to manually build & run
 
 #### Required
 
@@ -264,7 +270,7 @@ Notes:
 -   Optionally (recommended for production) install and run [Jitsu](https://github.com/jitsucom/jitsu). Note: the platform will work without Jitsu, however, data ingestion will be disabled for additional analyses / real-time pipelines.
 -   Optionally (recommended for production) install and run [Cube](https://github.com/cube-js/cube). Note: the platform will work without Cube, however some advanced (dynamic) reporting and data processing capabilities will be disabled.
 
-### Production
+### 🏭 Production
 
 #### General information
 
@@ -273,6 +279,7 @@ Notes:
 #### Kubernetes
 
 -   We recommend deploying to Kubernetes (k8s), either manually (see below) or with our [Terraform Modules](https://github.com/ever-co/ever-gauzy-terraform) or [Ever Helm Charts](https://github.com/ever-co/ever-charts).
+
 -   For more simple deployment scenarios with k8s, please see [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
 
 #### DigitalOcean App Platform
@@ -286,6 +293,12 @@ Notes:
 #### Pulumi
 
 -   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project (WIP), it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
+
+### 🚗 Other self-hosting options
+
+#### Deploy on RepoCloud
+
+Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/details/Ever%20Gauzy/).
 
 ## 💌 Contact Us
 
