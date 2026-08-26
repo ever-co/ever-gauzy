@@ -99,9 +99,9 @@
 
 			.icon {
 				margin: 0.0625rem 0 0;
-				width: 0.875rem;
-				height: 0.875rem;
-				font-size: 0.875rem;
+				width: 1rem;
+				height: 1rem;
+				font-size: 1rem;
 				color: nb-theme(text-hint-color);
 			}
 
@@ -110,14 +110,14 @@
 			}
 
 			.entry-header {
-				font-size: 0.625rem;
+				font-size: 0.75rem;
 				line-height: 0.875rem;
 				letter-spacing: -0.004em;
 				margin-bottom: 0.125rem;
 			}
 
 			.entry-header-date {
-				font-size: 0.4375rem;
+				font-size: 0.5625rem;
 				font-weight: 500;
 				line-height: 1;
 				letter-spacing: 0.06em;
@@ -128,7 +128,7 @@
 
 		.paragraph {
 			margin: 0;
-			font-size: 0.625rem;
+			font-size: 0.75rem;
 			line-height: 0.9375rem;
 			color: nb-theme(text-hint-color);
 		}
@@ -140,7 +140,7 @@
 
 		.learn-more-hint {
 			margin: 0.25rem 0 0;
-			font-size: 0.5625rem;
+			font-size: 0.6875rem;
 			font-weight: 600;
 			letter-spacing: 0.01em;
 		}

@@ -66,6 +66,13 @@ $control-padding-x: 1rem;
 // One line box plus both block insets — i.e. the height `nb-select` computes for
 // itself, so both combobox flavours land on the same size instead of 36 vs 42.
 $default-height: calc(#{nb-theme(select-medium-text-line-height)} + #{$control-padding-y} * 2);
+// One step under `$default-height` for the search / filter forms that sit ABOVE a
+// table inside a fixed-height tab body, where every pixel the form takes comes
+// straight out of the rows. A literal rather than a derivation of `$default-height`
+// for the same reason that value is a `calc()`: it is opaque to Sass, so there is
+// no way to take a step off it. Shared so the pages that compact a filter panel
+// cannot drift apart on what "compact" means.
+$compact-control-height: 1.875rem;
 $default-radius: nb-theme(border-radius);
 // Was `calc(button-rectangle-border-radius / 1.625)` — an arithmetic dodge that
 // only existed to walk the old 2rem stadium back to something usable (~19.7px).
