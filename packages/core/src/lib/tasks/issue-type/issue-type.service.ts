@@ -73,7 +73,10 @@ export class IssueTypeService extends TaskMetadataService<IssueType> {
 					cqb.where((qb: SelectQueryBuilder<IssueType>) => {
 						this.getFilterQuery(qb, params);
 					});
-					await cqb.getOneOrFail();
+					const exists = await cqb.getOne();
+					if (!exists) {
+						return await this.getDefaultEntities();
+					}
 
 					/**
 					 * Find task issue types for given params
