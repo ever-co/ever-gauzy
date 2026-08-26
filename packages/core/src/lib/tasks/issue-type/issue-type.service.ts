@@ -47,8 +47,7 @@ export class IssueTypeService extends TaskMetadataService<IssueType> {
 	 * Fetches issue types based on specified parameters.
 	 *
 	 * @param params - Parameters for finding issue types (IIssueTypeFindInput).
-	 * @returns A Promise resolving to an object with items (array of issue types) and total count.
-	 * @throws Error if no records are found or an error occurs during the query.
+	 * @returns The matching issue types, or system defaults when the requested scope has none.
 	 */
 	public async fetchAll(params: IIssueTypeFindInput): Promise<IPagination<IIssueType>> {
 		try {
