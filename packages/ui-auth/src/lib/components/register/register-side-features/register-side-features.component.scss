@@ -6,18 +6,20 @@
   width: 100%;
   height: 100%;
   border-radius: 12px;
-  padding: 20px 20px 40px;
+  // Was `20px 20px 40px` — the extra 20px of dead space at the bottom pushed this
+  // column past the (now much shorter) register card beside it.
+  padding: 16px;
 }
 .main-header {
   color: white;
   font-family: Inter;
-  font-size: 18px;
+  font-size: 15px;
   font-style: normal;
   font-weight: 600;
-  line-height: 22px;
+  line-height: 19px;
   letter-spacing: -0.009em;
   text-align: left;
-  margin-bottom: 39px;
+  margin-bottom: 14px;
 }
 .feature-wrapper {
   width: 100%;
@@ -28,8 +30,8 @@
   background: rgba(255, 255, 255, 0.15);
   border-radius: 1px;
   transform: matrix(1, 0, 0, -1, 0, 0);
-  margin-bottom: 20px;
-  margin-top: 20px;
+  margin-bottom: 12px;
+  margin-top: 12px;
 }
 .hidden {
   display: none;

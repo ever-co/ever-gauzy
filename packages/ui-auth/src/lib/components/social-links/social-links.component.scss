@@ -1,10 +1,41 @@
 @use '@shared/reusable' as *;
 
 .links {
-  margin-top: 21px;
+  // The login card spaces this block with its own column gap, so the only margin
+  // left here is the one between the "Or sign in with" line and the icon row.
+  margin-top: 0;
+  font-size: 13px;
   @include social-links-style;
   & .socials {
-    margin-top: 15px;
-    margin-bottom: 25px;
+    margin-top: 10px;
+    margin-bottom: 0;
+    // The mixin spaces these with a right-only margin, which leaves a trailing gap
+    // after the last icon and shifts the whole row left of centre. `gap` spaces
+    // them evenly and keeps the row actually centred.
+    gap: 10px;
+    // The mixin also sizes them for a tall desktop viewport (40px targets holding
+    // 32px glyphs). Scale them down so the row costs ~28px instead of ~55px.
+    & .social-link {
+      margin: 0;
+      border-radius: 8px;
+      width: 28px;
+      height: 28px;
+      @include small-mobile-screen {
+        margin: 0;
+        width: 28px;
+        height: 28px;
+      }
+      & nb-icon {
+        width: 18px;
+        height: 18px;
+        @include small-laptop-screen {
+          height: 18px;
+        }
+        @include small-mobile-screen {
+          height: 16px;
+          width: 16px;
+        }
+      }
+    }
   }
 }

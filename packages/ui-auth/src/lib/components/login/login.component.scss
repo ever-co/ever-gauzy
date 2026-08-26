@@ -2,27 +2,52 @@
 @use '@shared/reusable' as *;
 
 .login-container {
-  width: 765px;
+  // The card was sized for a tall desktop viewport and overflowed anything
+  // shorter. Every vertical rhythm value below is roughly half of what it was so
+  // the form, the socials and the demo column all land inside one screen.
+  width: 700px;
+  max-width: 100%;
   position: relative;
   display: flex;
   justify-content: space-between;
+  // Horizontal gap to the demo column; the wrapper's `row-gap` handles vertical
+  // spacing when this flips to a column on tablet.
+  column-gap: 20px;
+  row-gap: 20px;
   & .login-wrapper {
     background: nb-theme(gauzy-card-2);
     border-radius: nb-theme(border-radius);
     box-sizing: border-box;
-    padding: 32px;
-    width: 476px;
+    padding: 24px;
+    width: 440px;
+    max-width: 100%;
     height: 100%;
+    // One column gap owns the whole vertical rhythm. Before this the spacing was
+    // an accumulation of each block's own bottom margin plus the next block's top
+    // margin, which is why no two gaps down the card were the same. Blocks below
+    // set no vertical margin of their own; change this value to retune the card.
+    display: flex;
+    flex-direction: column;
+    row-gap: 20px;
+    // Every direct child used to carry its own 15px side padding on top of the
+    // wrapper's, so the dividers, the inputs and the footer links each started at
+    // a slightly different x. One padding on the wrapper lines them all up.
     & > * {
-      padding-left: 15px;
-      padding-right: 15px;
+      padding-left: 0;
+      padding-right: 0;
     }
     & .svg-wrapper {
       display: flex;
+      align-items: flex-start;
       justify-content: space-between;
+      // The masthead reads as its own band rather than another row in the stack,
+      // so it takes 12px on top of the card's row-gap: 32px down to the heading.
+      // On the flex item, not on the logo inside it, so the theme switch beside
+      // it stays on the same baseline.
+      margin-bottom: 12px;
 
       & .ever-logo-svg {
-        margin-bottom: 32px;
+        margin-bottom: 0;
       }
     }
     & .headings {
@@ -32,62 +57,87 @@
       & .headings-inner {
         & .title {
           font-family: Inter;
-          font-size: 24px;
+          font-size: 19px;
           font-style: normal;
           font-weight: 700;
-          line-height: 30px;
+          line-height: 24px;
           letter-spacing: 0em;
-          margin-bottom: 18px;
+          margin-bottom: 4px;
           text-align: start;
         }
         & .sub-title {
           font-family: Inter;
-          font-size: 14px;
+          font-size: 12px;
           font-style: normal;
           font-weight: 400;
+          // Was inheriting the body's full-strength text colour, so the strap line
+          // carried the same weight as the "Login" heading above it. The hint
+          // token is the theme's own muted text, so it tracks light and dark.
+          color: nb-theme(text-hint-color);
           // Was 11px — a line box SHORTER than the 14px glyphs sitting in it, so
           // the strap line under "Login" rode into the divider below and its
           // descenders were cut by the next block. Every other auth screen
           // (forgot-password, reset-password, login-workspace) sets 14/17 for the
           // same element; the features column further down this very file does too.
-          line-height: 17px;
+          line-height: 16px;
           letter-spacing: 0em;
-          margin-bottom: 26px;
+          margin-bottom: 0;
           text-align: start;
         }
       }
     }
+    // Both rules exist only to draw a 1px line; the column gap spaces them.
     & .hr-div-strong {
       @include hr-div-strong;
+      // The mixin hard-codes 416px, which is wider than this (now narrower) card.
+      width: 100%;
+      margin: 0;
     }
     & .hr-div-soft {
       @include hr-div-soft;
+      width: 100%;
+      margin: 0;
+    }
+    // The only pair that wants a tighter gap than the card rhythm: two one-line
+    // links that would read as unrelated paragraphs 20px apart.
+    & .another-actions {
+      display: flex;
+      flex-direction: column;
+      row-gap: 8px;
     }
   }
   & form {
-    margin-top: 29px;
-    margin-bottom: 42px;
+    // On top of the card's row-gap, so the form sits clear of the heading band.
+    margin: 24px 0 0;
     .form-control-group {
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
     .label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-family: Inter;
+      font-size: 12px;
       font-weight: 600;
-      color: nb-theme(text-basic-color); // Reverted to theme variable for light mode support
+      // Same muted token as the strap line under "Login" — was full-strength
+      // `text-basic-color`, which made the field labels as loud as the heading.
+      // Weight stays at 600 so they still read as labels at this size.
+      color: nb-theme(text-hint-color);
     }
     ::ng-deep input.input-full-width {
       border: 1px solid rgba(98, 54, 255, 0.5) !important;
       background-color: transparent;
       color: nb-theme(text-basic-color); // Reverted to theme variable
+      // `fieldSize="medium"` in the markup does most of the shrinking; this keeps
+      // the box from growing back on themes with a taller medium field.
+      height: 38px;
+      font-size: 13px;
     }
     .error-container {
       max-width: 100%;
-      margin-top: 4px;
 
       .caption {
-        margin: 0;
+        margin: 4px 0 0;
+        font-size: 11px;
         line-height: 1.3;
       }
     }
@@ -95,8 +145,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
-      margin-top: 10px;
+      // The submit wrapper below owns the gap down to the button.
+      margin: 16px 0 0;
       .accept-group {
         margin: 0;
 
@@ -113,6 +163,8 @@
             border-color: #8f9bb3 !important; // Light grey border
             background-color: transparent;
             border-width: 1px !important;
+            width: 16px;
+            height: 16px;
           }
           .custom-checkbox.checked {
             background-color: #6236ff !important;
@@ -126,7 +178,7 @@
         .forgot-password-link {
           text-decoration: none;
           font-family: Inter;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 500;
           color: nb-theme(color-primary-default); // Make it alive with primary color
           cursor: pointer;
@@ -139,15 +191,18 @@
     }
     & .submit-btn-wrapper {
       width: 100%;
-      margin-top: 20px;
+      margin-top: 16px;
       & .submit-btn {
         @include submit-btn;
         width: 100%;
+        padding: 9px 20px;
+        font-size: 14px;
         font-weight: 700;
+        text-align: center;
         text-transform: none;
         letter-spacing: normal;
         border-radius: 8px;
-        min-height: 48px;
+        min-height: 40px;
         transition:
           background-color 0.2s,
           border-color 0.2s;
@@ -199,12 +254,12 @@
       }
     }
     .login-magic-wrapper {
-      margin-top: 24px;
+      margin-top: 16px;
       text-align: center;
       width: 100%;
       & a {
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13px;
         text-decoration: none;
         color: nb-theme(color-primary-default);
         &:hover {
@@ -214,8 +269,14 @@
     }
   }
   & .another-action {
-    margin-top: 10px;
     @include another-action;
+    // The mixin's padding-top/left was the only thing separating these two lines,
+    // so they read as one wrapped paragraph. The gap does the spacing now and the
+    // left padding goes away so they line up with the inputs above.
+    padding: 0;
+    margin: 0;
+    font-size: 13px;
+    line-height: 18px;
     .text-link {
       text-decoration: none;
       &:hover {
@@ -225,10 +286,15 @@
   }
 }
 .features-wrapper {
-  width: 260px;
+  width: 244px;
   // demo side container
   & .card-body {
-    padding: 38px 15px;
+    padding: 20px 16px;
+    // Same idea as the login card: one gap for the three demo buttons instead of
+    // a margin on each. The heading pair below opts out of it.
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
     background: nb-theme(color-primary-transparent-default);
     border-radius: nb-theme(border-radius);
     &.dark {
@@ -238,6 +304,11 @@
         background: #6e49e8;
         border: 1px solid #6e49e8;
       }
+    }
+    // The three demo buttons are separated by `<br />` in the markup; collapsing
+    // those lets the button margins alone control the spacing.
+    & br {
+      display: none;
     }
   }
   // non-demo side container
@@ -249,52 +320,65 @@
   }
   & .title {
     font-family: Inter;
-    font-size: 16px;
+    font-size: 14px;
     font-style: normal;
     font-weight: 600;
-    line-height: 19px;
+    line-height: 18px;
     letter-spacing: -0.009em;
     text-align: left;
-    padding-left: 13px;
+    // Was an 8px inset on top of the card's own padding, so the heading hung
+    // right of the buttons underneath it.
+    padding-left: 0;
+    // Pulls the sub-title up against its heading, out of the 8px button rhythm.
+    margin: 0 0 -4px;
   }
   & .sub-title {
     font-family: Inter;
-    font-size: 14px;
+    font-size: 12px;
     font-style: normal;
     font-weight: 400;
-    line-height: 17px;
+    line-height: 16px;
     letter-spacing: 0em;
     text-align: left;
-    margin-bottom: 20px;
-    padding-left: 13px;
+    // +8px gap = 16px of air before the first button.
+    margin: 0 0 8px;
+    padding-left: 0;
     color: #7e7e8f;
   }
   & .custom-btn {
     -webkit-box-shadow: 3px 11px 30px -17px #3366ff;
     box-shadow: 3px 11px 30px -17px #3366ff;
-    width: auto;
-    padding: 13px 28px;
+    // `width: auto` let each button shrink to its label, so the three of them had
+    // three different right edges. They already carry `fullWidth` in the markup.
+    width: 100%;
+    padding: 10px 16px;
+    // `!important` beats the `.mt-3` utility the markup puts on each button; the
+    // card's row-gap spaces them now.
+    margin: 0 !important;
     display: inline-flex;
-    justify-content: flex-start;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     background-color: white;
     color: nb-theme(color-primary-500);
     border: 1px solid white;
     font-family: Inter;
-    font-size: 15px;
+    font-size: 13px;
     font-style: normal;
     font-weight: 700;
-    line-height: 16px;
+    line-height: 15px;
     letter-spacing: -0.009em;
-    text-align: left;
+    text-align: center;
     & > nb-icon {
-      width: 16px;
+      width: 14px;
       height: 14px;
+      margin: 0;
     }
     @include small-laptop-screen {
-      padding: 10px 20px;
+      padding: 9px 14px;
     }
     @include tablet-screen {
-      padding: 15px 25px;
+      padding: 10px 18px;
     }
     &:hover {
       background-color: #fafafa;
@@ -303,11 +387,12 @@
   }
 }
 .demo-credentials-select {
-  width: 200px;
+  width: 180px;
   position: absolute;
   top: 0;
   right: 0;
   border-radius: nb-theme(button-rectangle-border-radius);
+  font-size: 12px;
   & * {
     z-index: 6;
   }
@@ -317,14 +402,14 @@
     box-sizing: border-box;
   }
   & .demo-credentials-select-item {
-    width: 200px;
+    width: 180px;
     position: relative;
     z-index: 5;
     background: nb-theme(background-basic-color-2);
     color: nb-theme(text-basic-color);
   }
   & .demo-credentials-header {
-    padding: 5px 5px 5px 15px;
+    padding: 3px 5px 3px 12px;
     box-sizing: border-box;
     display: flex;
     justify-content: space-between;
@@ -332,11 +417,16 @@
     background: nb-theme(background-basic-color-2);
     color: nb-theme(text-basic-color);
     border-radius: 20px;
+    font-size: 12px;
     & .demo-text-span {
       @include mobile-screen {
         display: none;
       }
     }
+  }
+  & .demo-credentials-body {
+    font-size: 12px;
+    line-height: 16px;
   }
 }
 
@@ -344,13 +434,12 @@
   .login-container {
     flex-direction: column;
     align-items: center;
-    & .another-action {
-      margin-top: 0;
-    }
   }
   .features-wrapper {
-    width: 476px;
-    margin-top: 30px;
+    width: 440px;
+    max-width: 100%;
+    // The container's row-gap already separates the two stacked cards.
+    margin-top: 0;
     & .demo-credentials-buttons {
       & * {
         text-align: center;
@@ -368,7 +457,8 @@
     width: 100%;
     & .login-wrapper {
       width: 100%;
-      padding: 20px 12px;
+      padding: 16px 12px;
+      row-gap: 16px;
       & .headings {
         & .headings-inner {
           width: 100%;
@@ -380,12 +470,12 @@
         }
       }
       & .headings.headings-demo {
-        height: 135px;
+        height: 110px;
         align-items: flex-start;
       }
     }
     & form {
-      margin-bottom: 35px;
+      margin-bottom: 20px;
       & .submit-btn-wrapper {
         justify-content: center;
         & .submit-btn {
@@ -404,7 +494,7 @@
     width: 100%;
   }
   .demo-credentials-select {
-    top: 83px;
+    top: 70px;
     left: 50%;
     transform: translate(-50%);
     z-index: 6;
@@ -425,28 +515,31 @@
 }
 
 // Compact layout for short viewport heights (e.g. MacBook 14" ~980px, standard laptops ~768px)
+// Now that one gap owns the card's rhythm, these blocks only have to turn that
+// single value (plus the form's internal one) down, instead of re-stating a dozen
+// margins and drifting out of step with the base layout every time it changes.
 @media screen and (max-height: 980px) and (min-width: 491px) {
   .login-container {
     & .login-wrapper {
-      padding: 32px;
+      padding: 20px;
+      row-gap: 16px;
       & .svg-wrapper {
-        & .ever-logo-svg {
-          margin-bottom: 16px;
-        }
-      }
-      & .headings {
-        & .headings-inner {
-          & .title {
-            margin-bottom: 16px;
-          }
-          & .sub-title {
-            margin-bottom: 8px;
-          }
-        }
+        margin-bottom: 8px;
       }
     }
-    & .another-action {
-      margin-top: 4px;
+    & form {
+      .form-control-group {
+        margin-bottom: 14px;
+      }
+      .options-row {
+        margin-top: 14px;
+      }
+      & .submit-btn-wrapper {
+        margin-top: 14px;
+      }
+      .login-magic-wrapper {
+        margin-top: 14px;
+      }
     }
   }
 }
@@ -455,29 +548,33 @@
 @media (max-height: 700px) {
   .login-container {
     & .login-wrapper {
-      padding: 32px;
+      padding: 16px 20px;
+      row-gap: 12px;
       & .svg-wrapper {
-        & .ever-logo-svg {
-          margin-bottom: 8px;
-        }
+        margin-bottom: 4px;
       }
-      & .headings {
-        & .headings-inner {
-          & .title {
-            margin-bottom: 8px;
-          }
-          & .sub-title {
-            margin-bottom: 8px;
-          }
-        }
+    }
+    & form {
+      .form-control-group {
+        margin-bottom: 12px;
+      }
+      .options-row {
+        margin-top: 12px;
+      }
+      & .submit-btn-wrapper {
+        margin-top: 12px;
+      }
+      .login-magic-wrapper {
+        margin-top: 12px;
       }
     }
   }
 }
 
 .hr-div-soft {
-  margin-bottom: 4px;
   @include hr-div-soft;
+  width: 100%;
+  margin: 0;
 }
 .theme-switch {
   @include not-mobile-screen {
@@ -489,7 +586,7 @@
 
 ::ng-deep .remember-me .text {
   font-family: Inter;
-  font-size: 13px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 600;
   line-height: 13px;

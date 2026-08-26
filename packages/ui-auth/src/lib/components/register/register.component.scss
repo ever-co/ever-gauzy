@@ -1,50 +1,81 @@
 @use 'themes' as *;
 @use '@shared/reusable' as *;
 
-@mixin addPaddings {
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
 .main-section {
-  width: 765px;
+  // Same compaction as the login screen. This is the tallest auth screen (four
+  // fields plus the terms checkbox), so it gained the most from it.
+  width: 700px;
+  max-width: 100%;
   display: flex;
   justify-content: space-between;
+  // `stretch` made the features column as tall as whichever side was taller,
+  // which on a short viewport is a fight neither side wins.
+  align-items: flex-start;
+  column-gap: 20px;
+  row-gap: 20px;
 }
 .register-wrapper {
-  width: 476px;
+  width: 440px;
+  max-width: 100%;
   height: 100%;
-  padding: 30px;
+  padding: 24px;
   background: nb-theme(gauzy-card-2);
   border-radius: nb-theme(border-radius);
+  // One column gap owns the whole vertical rhythm; the blocks below set no
+  // vertical margin of their own. Change this value to retune the card.
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
   &.dark {
     background: #292933;
   }
+  // Every direct child used to add its own 15px side padding on top of the
+  // wrapper's, so the dividers, the inputs and the footer links each started at a
+  // slightly different x.
   & > * {
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 0;
+    padding-right: 0;
   }
   & .title-wrapper {
-    margin-bottom: 24px;
+    margin: 0;
     & > .title {
       font-family: Inter;
-      font-size: 24px;
+      font-size: 19px;
       font-style: normal;
       font-weight: 700;
-      line-height: 30px;
+      line-height: 24px;
       letter-spacing: 0em;
       text-align: left;
+      margin: 0;
     }
   }
+  // Both dividers exist only to draw a 1px line; the row-gap spaces them.
   & .hr-div-strong {
     @include hr-div-strong;
+    // The mixin hard-codes 416px, wider than this now-narrower card.
+    width: 100%;
+    margin: 0;
   }
   & .hr-div-soft {
     @include hr-div-soft;
+    width: 100%;
+    margin: 0;
+  }
+  // The one pair that wants a tighter gap than the card rhythm: two one-line
+  // links that would read as unrelated paragraphs 20px apart.
+  & .another-actions {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
   }
   & .another-action {
-    margin-top: 12px;
     @include another-action;
+    // The mixin's padding-top/left was the only thing separating these two lines,
+    // so they read as one wrapped paragraph.
+    padding: 0;
+    margin: 0;
+    font-size: 13px;
+    line-height: 18px;
     .text-link {
       text-decoration: none;
       &:hover {
@@ -59,44 +90,62 @@
   }
 }
 .features-wrapper {
-  width: 260px;
-  height: 100%;
+  width: 244px;
+  height: auto;
 }
 .svg-wrapper {
-  margin-bottom: 55px;
+  // Was 55px. 12px on top of the row-gap reads as a masthead band (32px),
+  // matching the login screen.
+  margin-bottom: 12px;
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
 }
 .form {
-  margin-top: 21px;
-  margin-bottom: 42px;
+  margin: 24px 0 0;
   & .form-control-group {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     .label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-family: Inter;
       font-weight: 600;
-      color: nb-theme(text-basic-color);
+      font-size: 12px;
+      // Was full-strength `text-basic-color`, which made the field labels as loud
+      // as the heading. The hint token is the theme's own muted text, so it
+      // tracks light and dark.
+      color: nb-theme(text-hint-color);
     }
     ::ng-deep input.input-full-width {
       border: 1px solid rgba(98, 54, 255, 0.5) !important;
       background-color: transparent;
       color: nb-theme(text-basic-color);
+      // `fieldSize="medium"` in the markup does most of the shrinking; this keeps
+      // the box from growing back on themes with a taller medium field.
+      height: 38px;
+      font-size: 13px;
+    }
+    .caption {
+      font-size: 11px;
+      line-height: 1.3;
+      margin: 4px 0 0;
     }
   }
   & .btn-wrapper {
-    text-align: end;
-    @include mobile-screen {
-      text-align: center;
-    }
+    margin-top: 16px;
     & .submit-btn {
       @include submit-btn;
-      padding: 13px 65px;
+      // Was a right-aligned pill with 65px of side padding; full width matches
+      // the primary action on the login screen.
+      width: 100%;
+      padding: 9px 20px;
+      font-size: 14px;
       font-weight: 700;
+      text-align: center;
       text-transform: none;
       letter-spacing: normal;
       border-radius: 8px;
+      min-height: 40px;
       line-height: 20px;
       transition:
         background-color 0.2s,
@@ -148,7 +197,8 @@
     }
   }
   & .accept-group {
-    margin: 0 0 24px 0;
+    margin: 4px 0 0;
+    font-size: 12px;
     ::ng-deep nb-checkbox {
       display: flex;
       align-items: center;
@@ -162,11 +212,19 @@
         border-color: #8f9bb3 !important; // Light grey border
         background-color: transparent;
         border-width: 1px !important;
+        width: 16px;
+        height: 16px;
       }
       .custom-checkbox.checked {
         background-color: #6236ff !important;
         border-color: #6236ff !important;
       }
+    }
+    & .normal-terms-text,
+    & .terms-link {
+      font-family: Inter;
+      font-size: 12px;
+      line-height: 16px;
     }
     @include mobile-screen {
       margin-left: -10px;
@@ -194,11 +252,12 @@
     }
   }
 }
-.links {
-  margin-top: 21px;
-  margin-bottom: 28px;
-  @include social-links-style;
-}
+
+// NOTE: a `.links { @include social-links-style; }` block used to sit here. It
+// never applied — `.links` lives in the ngx-social-links template, so emulated
+// encapsulation stamps it with that component's attribute, not this one. The
+// real styling is in social-links.component.scss, which this screen shares with
+// the login screen.
 
 .theme-switch {
   @include not-mobile-screen {
@@ -211,84 +270,58 @@
   vertical-align: middle;
 }
 
+// The short-viewport blocks only turn the single gap value (and the form's
+// internal one) down, so they can't drift out of step with the base layout.
 @include small-laptop-screen {
   .register-wrapper {
-    padding: 16px 24px;
-    & .another-action {
-      margin-top: 0;
-      padding-left: 10px;
-    }
+    padding: 20px;
+    row-gap: 16px;
   }
   .svg-wrapper {
-    padding-top: 8px;
-    margin-bottom: 32px;
-  }
-  .form {
-    margin-top: 16px;
-    margin-bottom: 16px;
-    & .form-control-group {
-      margin-bottom: 12px;
-    }
-    & .accept-group {
-      margin-top: 12px;
-    }
-  }
-  .links {
-    margin-top: 8px;
     margin-bottom: 8px;
   }
-
-  // Further compact for short viewports within the small-laptop width range
-  // (491–1024px wide, height <1080px) — deterministic: no conflict with the
-  // wide-screen height query below.
-  @media screen and (max-height: 1080px) {
-    .register-wrapper {
-      & .title-wrapper {
-        margin-bottom: 8px;
-      }
-      & .another-action {
-        margin-top: 4px;
-      }
-    }
-    .svg-wrapper {
-      margin-bottom: 16px;
-    }
-    .form {
-      & .accept-group {
-        margin: 0 0 8px 0;
-      }
+  .form {
+    & .form-control-group {
+      margin-bottom: 12px;
     }
   }
 }
 
-// Compact layout for short viewport heights on wider screens (>1024px wide)
-@media screen and (max-height: 1080px) and (min-width: 1025px) {
+@media screen and (max-height: 980px) and (min-width: 491px) {
   .register-wrapper {
-    padding: 16px 24px;
-    & .title-wrapper {
-      margin-bottom: 8px;
-    }
-    & .another-action {
-      margin-top: 4px;
-    }
+    padding: 20px;
+    row-gap: 16px;
   }
   .svg-wrapper {
-    padding-top: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
   }
   .form {
-    margin-top: 16px;
-    margin-bottom: 16px;
+    margin-top: 20px;
     & .form-control-group {
       margin-bottom: 12px;
     }
-    & .accept-group {
-      margin: 0 0 8px 0;
+    & .btn-wrapper {
+      margin-top: 14px;
     }
   }
-  .links {
-    margin-top: 8px;
-    margin-bottom: 8px;
+}
+
+@media screen and (max-height: 820px) and (min-width: 491px) {
+  .register-wrapper {
+    padding: 16px 20px;
+    row-gap: 12px;
+  }
+  .svg-wrapper {
+    margin-bottom: 4px;
+  }
+  .form {
+    margin-top: 16px;
+    & .form-control-group {
+      margin-bottom: 10px;
+    }
+    & .btn-wrapper {
+      margin-top: 12px;
+    }
   }
 }
 
@@ -299,8 +332,10 @@
     align-items: center;
   }
   .features-wrapper {
-    width: 476px;
-    margin-top: 30px;
+    width: 440px;
+    max-width: 100%;
+    // The container's row-gap already separates the two stacked cards.
+    margin-top: 0;
   }
 }
 
@@ -310,7 +345,8 @@
     width: 100%;
   }
   .register-wrapper {
-    padding: 20px 12px;
+    padding: 16px 12px;
+    row-gap: 16px;
     & .title-wrapper {
       & > .title {
         text-align: center;
