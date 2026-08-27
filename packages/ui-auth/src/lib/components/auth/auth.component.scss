@@ -30,7 +30,8 @@
       display: none;
     }
   }
-  & .header.register {
+  & .header.register,
+  & .header.login {
     position: fixed;
     top: 0;
     left: 0;
@@ -133,15 +134,19 @@
     display: none;
   }
 }
-.body.register {
-  background: $register-background-light-color;
-  // The register header is `position: fixed`, so it no longer reserves its own
-  // 68px in the card's flex column. Pay that height back here so the form starts
-  // where it did before instead of sliding under the theme switch.
+// The register/login header is `position: fixed`, so it no longer reserves its
+// own 68px in the card's flex column. Pay that height back here so the form
+// starts where it did before instead of sliding under the theme switch.
+.body.register,
+.body.login {
   padding-top: 68px + 16px;
   @include mobile-screen {
     padding-top: 16px;
   }
+}
+
+.body.register {
+  background: $register-background-light-color;
 }
 
 .hide-go-back {
