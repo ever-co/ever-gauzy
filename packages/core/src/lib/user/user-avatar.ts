@@ -67,11 +67,21 @@ interface IExistingUserAvatar {
  * orphan the ImageAsset behind it. This mirrors the way the same function already refuses to
  * overwrite an existing password hash.
  *
- * A user still carrying only the old seeded `imageUrl` has no ImageAsset at all, so they are still
- * given one: that backfill is the entire point of the change.
+ * Not every real avatar has an ImageAsset behind it — a social-login user typically carries only the
+ * provider's URL, and a user created without one carries the dummy placeholder. Neither is a legacy
+ * seed path, so neither may be overwritten either.
+ *
+ * A user still carrying the old seeded `imageUrl` has no ImageAsset and no usable URL, so they are
+ * still given one: that backfill is the entire point of the change.
  */
 export function shouldSeedAvatar(existingUser?: IExistingUserAvatar | null): boolean {
 	if (!existingUser) return true;
 
-	return !existingUser.imageId && !existingUser.image;
+	// An asset already exists: whatever it is, it is theirs.
+	if (existingUser.imageId || existingUser.image) return false;
+
+	// A URL that is not a legacy seed path resolves on its own, so it is a real avatar.
+	if (existingUser.imageUrl && !getSeedAvatarFileName(existingUser.imageUrl)) return false;
+
+	return true;
 }

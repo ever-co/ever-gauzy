@@ -79,9 +79,25 @@ describe('shouldSeedAvatar', () => {
 		expect(shouldSeedAvatar({ image: { id: '00000000-0000-4000-8000-000000000002' } })).toBe(false);
 	});
 
-	it('backfills an existing user that has no image asset yet', () => {
+	// Not every real avatar has an ImageAsset behind it: a social-login user typically carries only
+	// the provider's URL, and a user created without one carries the dummy placeholder. Neither is a
+	// legacy seed path, so neither may be overwritten.
+	it('does not replace a real avatar URL that has no ImageAsset behind it', () => {
+		expect(shouldSeedAvatar({ imageUrl: 'https://cdn.example.com/avatar.jpg' })).toBe(false);
+	});
+
+	it('does not replace the dummy placeholder a user was given at creation', () => {
+		expect(shouldSeedAvatar({ imageUrl: 'https://dummyimage.com/330x300/000/fff&text=A' })).toBe(false);
+	});
+
+	it('backfills an existing user that still carries the legacy seed path', () => {
 		expect(shouldSeedAvatar({ imageUrl: 'assets/images/avatars/alish.jpg' })).toBe(true);
+		expect(shouldSeedAvatar({ imageUrl: '/assets/images/avatars/avatar-default.svg' })).toBe(true);
+	});
+
+	it('backfills an existing user with no avatar at all', () => {
 		expect(shouldSeedAvatar({ imageId: null, image: null })).toBe(true);
+		expect(shouldSeedAvatar({ imageUrl: '' })).toBe(true);
 		expect(shouldSeedAvatar({})).toBe(true);
 	});
 });
