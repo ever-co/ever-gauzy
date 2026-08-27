@@ -1,0 +1,88 @@
+name: Unit Tests
+
+# The repository has ~330 `*.spec.ts` files and an `nx` `test` target on 20+ projects
+# (`@nx/jest:jest`, already cached via `nx.json` targetDefaults) — but until now NO workflow ever
+# invoked any of them. CI ran builds plus Playwright/Cypress end-to-end suites only, so a green pull
+# request proved the code COMPILED and said nothing about the unit tests. This workflow wires the
+# existing targets up; it adds no test tooling of its own.
+#
+# Scope is deliberately `stage` only (owner, 2026-08-28). Stage is where the cascade lands before
+# production, pushes to it are infrequent, and keeping the job off `develop` and every pull request
+# means this cannot slow the day-to-day loop while the suites' true state is still unknown.
+#
+# NOT a required status check, on purpose. These suites have never run in CI, so the first runs may
+# well be red — that is the information this workflow exists to surface, and it should surface it
+# without blocking the cascade. Promote it to a required check once it has been green for a while.
+on:
+  push:
+    branches:
+      - stage
+  # So the suites can be exercised on demand from any branch that carries this file, without
+  # waiting for a cascade to land on stage.
+  workflow_dispatch:
+
+concurrency:
+  group: gauzy-unit-tests-${{ github.ref }}
+  # Deliberately NOT `cancel-in-progress: true`. A cancelled test run produces no verdict, and a
+  # gate that reports nothing is worse than no gate: this repository's sibling project already lost
+  # a stage e2e gate that way — six consecutive runs cancelled by the next push, so the gate never
+  # once said pass or fail. Pushes to `stage` are infrequent, so queueing costs very little here.
+  cancel-in-progress: false
+
+# Least-privilege scope for the automatic GITHUB_TOKEN: this job only reads the checkout.
+permissions:
+  contents: read
+
+env:
+  # Same archive name the build workflow uses, so the restore script finds what it expects.
+  NODE_MODULES_ARCHIVE: node-modules.tar.zst
+
+jobs:
+  unit-tests:
+    name: unit-tests
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    # A cold dependency install on this fleet is measured in hours, not minutes (the build workflow
+    # documents 88 min / 3h20m / 3h46m for the same work). The ceiling costs nothing on the warm
+    # path, which is a cache lookup.
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Restore node_modules archive
+        # Best effort: the same key the build workflow writes, so a stage push that already built
+        # this exact lockfile reuses that tree instead of installing again. `restore-node-modules.sh`
+        # below installs from scratch when the archive is not there, so a miss is not fatal.
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      # Route any install through the internal Verdaccio cache. Placed AFTER the cache restore
+      # because this action rewrites yarn.lock's resolved URLs, and `hashFiles()` in the key above
+      # evaluates at step runtime — configuring the registry first would move the key and split the
+      # cache namespace by VIP reachability.
+      - name: Configure Registry
+        uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
+
+      - name: Restore node_modules
+        shell: bash
+        # Unpacks the archive, or installs from scratch when it is unavailable. One step, so there
+        # is no `if:` on a previous step's outcome to get wrong.
+        run: .github/scripts/restore-node-modules.sh
+
+      - name: Run unit tests
+        # `--continue` so one failing project still lets every other project report; without it the
+        # first failure hides the rest and each fix needs another full run to find the next problem.
+        # `--parallel=2` rather than the nx default of 3: jest already forks per project, and this
+        # fleet has a documented history of Node heap exhaustion when several suites run at once.
+        run: yarn nx run-many -t test --continue --parallel=2
