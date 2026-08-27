@@ -80,12 +80,14 @@ nb-icon,
 @include tablet-screen {
   .feature-img {
     width: 360px;
+    max-width: 100%;
     height: 232px;
   }
 }
 @include mobile-screen {
   .feature-img {
     width: 90%;
+    max-width: 100%;
     height: 45vw;
   }
 }
