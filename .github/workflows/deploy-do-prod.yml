@@ -8,6 +8,19 @@ on:
     types:
       - completed
 
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# This workflow only builds/tests/deploys from a checkout — read access is sufficient.
+concurrency:
+  # Collapse superseded runs WITHOUT interrupting one that is already applying: GitHub
+  # keeps a single pending run per group, so a newer commit replaces the one waiting
+  # while the in-flight deploy finishes. `cancel-in-progress: true` is deliberately NOT
+  # used here — killing a rollout mid-apply can leave the target half-updated.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   deploy-prod:
     if: ${{ vars.DO_ENABLED == 'true' }}

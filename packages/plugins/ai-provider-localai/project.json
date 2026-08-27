@@ -1,0 +1,59 @@
+{
+	"name": "plugin-ai-provider-localai",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/ai-provider-localai/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": [
+				"dist/{projectRoot}"
+			]
+		}
+	},
+	"tags": [],
+	"implicitDependencies": [
+		"constants",
+		"contracts",
+		"plugin",
+		"plugin-ai-chat"
+	],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": [
+				"{options.outputPath}"
+			],
+			"options": {
+				"outputPath": "dist/packages/plugins/ai-provider-localai",
+				"tsConfig": "packages/plugins/ai-provider-localai/tsconfig.lib.json",
+				"packageJson": "packages/plugins/ai-provider-localai/package.json",
+				"main": "packages/plugins/ai-provider-localai/src/index.ts",
+				"assets": [
+					"packages/plugins/ai-provider-localai/*.md"
+				]
+			},
+			"dependsOn": [
+				"^build"
+			]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
+			"options": {
+				"jestConfig": "packages/plugins/ai-provider-localai/jest.config.ts"
+			}
+		}
+	}
+}

@@ -183,7 +183,10 @@ nb-accordion {
           }
         }
         &.toggles {
-          width: 500px;
+          // The 500px block is the intended width; the cap keeps it from
+          // overflowing a layout column narrowed by the AI chat (a viewport
+          // breakpoint below cannot see that — the window did not change).
+          width: min(500px, 100%);
           display: flex;
           flex-direction: column;
           margin-left: -5px;

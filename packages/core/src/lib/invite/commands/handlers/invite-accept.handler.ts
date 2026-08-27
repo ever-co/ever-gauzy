@@ -47,8 +47,8 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 
 			// Assign role to user
 			const { id: inviteId } = invite;
-			const { role } = await this.inviteService.findOneByIdString(inviteId, {
-				relations: { role: true }
+			const { role, tenant, tenantId } = await this.inviteService.findOneByIdString(inviteId, {
+				relations: { role: true, tenant: true }
 			});
 			// Pin BOTH the relation and its foreign key to the role stored on the invite. The request
 			// body is attacker-controlled on this @Public() route, and the flat `roleId` column wins
@@ -56,6 +56,16 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 			// would let an invitee accept with `user.roleId` of any role (e.g. SUPER_ADMIN).
 			input['user']['role'] = role;
 			input['user']['roleId'] = role.id;
+			// The account is created for the INVITED address (the one the token/code was validated
+			// against) — never for a different, auto-verified address supplied in the body.
+			input['user']['email'] = invite.email;
+			// The INVITE decides which tenant the account is created in. `AuthService.register` reads
+			// `input.user.tenant`, which is body-supplied on this @Public() route — leaving it in place
+			// let an invitee for tenant A register into tenant B by naming B's tenant in the payload.
+			if (tenant || tenantId) {
+				input['user']['tenant'] = tenant ?? { id: tenantId };
+				input['user']['tenantId'] = tenant?.id ?? tenantId;
+			}
 			input['inviteId'] = inviteId;
 
 			// Invite accept for employee, candidate & user

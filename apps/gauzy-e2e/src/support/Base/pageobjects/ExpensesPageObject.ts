@@ -30,7 +30,9 @@ export const ExpensesPage = {
 	cardBodyCss:
 		'ga-expenses-mutation nb-card-header .title, ngx-expense-category-mutation nb-card-header .title',
 	duplicateExpenseButtonCss: 'div.actions-container button.action.primary:has-text("Duplicate")',
-	manageCategoriesButtonCss: 'div.card-header-title > button.action.primary.soft',
+	// The button lives on the ACTION side of the page header (next to `+ Add`),
+	// not beside the <h4> in the title block.
+	manageCategoriesButtonCss: 'nb-card-header div.gauzy-button-container > button.action.primary.soft',
 	expenseNameInputCss: '[placeholder="Expense name"]',
 	SaveCategoryButtonCss: 'nb-card-footer > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',

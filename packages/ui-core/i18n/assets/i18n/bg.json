@@ -1185,6 +1185,21 @@
 		"START_SERVER": "Стартирай Сървъра",
 		"STOP_SERVER": "Спри Сървъра"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Потребителски интерфейс",
+			"DESCRIPTION": "Изберете кой интерфейс да използват всички в този наемател за страниците, налични и в двата варианта.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (по подразбиране)",
+				"REACT": "React (нов)"
+			},
+			"HINT": "Важи за целия наемател, на всяко устройство. Днес таблото за проследяване на времето е налично и в двата интерфейса; ще последват още страници.",
+			"READ_ONLY": "Само администраторите на наемателя могат да променят тази настройка.",
+			"SAVING": "Запазване…",
+			"SAVED": "Предпочитанието за интерфейс е запазено",
+			"SAVE_ERROR": "Предпочитанието за интерфейс не можа да бъде запазено."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
 		"LIGHT": "Светла",
@@ -1217,7 +1232,9 @@
 		"CARDS_GRID": "Карти и мрежа",
 		"SPRINT_VIEW": "Визуализация на спринт",
 		"QUICK_SETTINGS": "Бързи настройки",
-		"NO_LAYOUT": "Няма наличен изглед за данни"
+		"NO_LAYOUT": "Няма наличен изглед за данни",
+		"PREFERENCES": "Предпочитания",
+		"SUPPORT": "Поддръжка"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Какво ново?",
@@ -3695,7 +3712,9 @@
 		"SELECT_AN_ORGANIZATION": "Организация",
 		"SELECT_PROJECT": "Проект",
 		"SELECT_TEAM": "Отбор",
-		"AI_CHAT": "AI чат"
+		"AI_CHAT": "AI чат",
+		"COLLAPSE_SIDEBAR": "Свиване на страничната лента",
+		"EXPAND_SIDEBAR": "Разгъване на страничната лента"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI асистент",
@@ -3721,6 +3740,12 @@
 		"STOP": "Спиране на генерирането",
 		"ERROR": "Нещо се обърка.",
 		"RETRY": "Опитайте отново",
+		"DICTATION_FAILED": "Записът не можа да бъде транскрибиран.",
+		"DICTATION_NOT_CONFIGURED": "Диктовката се нуждае от гласов доставчик. Добавете такъв на страницата с настройки „Доставчици на ИИ“.",
+		"DICTATION_ASK_ADMIN": "Диктовката се нуждае от гласов доставчик — помолете администратор да добави такъв в Настройки → Доставчици на ИИ.",
+		"DICTATION_KEY_REJECTED": "Гласовият доставчик отхвърли своя API ключ. Актуализирайте го на страницата с настройки „Доставчици на ИИ“.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Гласовият доставчик отхвърли своя API ключ — помолете администратор да го актуализира в Настройки → Доставчици на ИИ.",
+		"DICTATION_OPEN_SETTINGS": "Отвори Доставчици на ИИ",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
@@ -5397,7 +5422,15 @@
 		"HOTKEYS": "Hotkeys",
 		"HELP": "Помощ",
 		"SIGN_OUT": "Sign Out",
-		"PROFILE": "Profile"
+		"PROFILE": "Profile",
+		"ACCOUNT": "Акаунт",
+		"PREFERENCES": "Предпочитания",
+		"DOWNLOAD_APPS": "Изтегляне на приложения",
+		"DOWNLOAD_MACOS": "Изтегляне за macOS",
+		"DOWNLOAD_WINDOWS": "Изтегляне за Windows",
+		"DOWNLOAD_LINUX": "Изтегляне за Linux",
+		"DOWNLOAD_MOBILE": "Изтегляне на мобилното приложение",
+		"DOWNLOAD_BROWSER_EXTENSION": "Изтегляне на разширението за браузър"
 	},
 	"WORKSPACES": {
 		"MENUS": {

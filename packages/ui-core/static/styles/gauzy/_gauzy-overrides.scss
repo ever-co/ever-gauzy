@@ -66,6 +66,13 @@ $control-padding-x: 1rem;
 // One line box plus both block insets — i.e. the height `nb-select` computes for
 // itself, so both combobox flavours land on the same size instead of 36 vs 42.
 $default-height: calc(#{nb-theme(select-medium-text-line-height)} + #{$control-padding-y} * 2);
+// One step under `$default-height` for the search / filter forms that sit ABOVE a
+// table inside a fixed-height tab body, where every pixel the form takes comes
+// straight out of the rows. A literal rather than a derivation of `$default-height`
+// for the same reason that value is a `calc()`: it is opaque to Sass, so there is
+// no way to take a step off it. Shared so the pages that compact a filter panel
+// cannot drift apart on what "compact" means.
+$compact-control-height: 1.875rem;
 $default-radius: nb-theme(border-radius);
 // Was `calc(button-rectangle-border-radius / 1.625)` — an arithmetic dodge that
 // only existed to walk the old 2rem stadium back to something usable (~19.7px).
@@ -301,9 +308,35 @@ $default-box-shadow: $control-hairline;
 
   nb-stepper .header .step .label {
     display: none;
+    // For the steppers that switch the label back on (the contact wizard names
+    // its four steps): the label is the one shrinkable part of a step, so it has
+    // to be allowed to — Nebular gives it `width: max-content`, and a flex item
+    // whose specified width IS its content can never shrink below it. Capped to
+    // the step and ellipsized, a name that has no room truncates instead of
+    // running out of the header (which is what clipped step 4 of that wizard).
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   nb-stepper.horizontal .header .step {
+    // Nebular's theme (`_stepper.component.theme.scss`) gives every horizontal
+    // step `width: stepper-step-index-width` = 2rem and centres the label under
+    // it by letting it overflow that box on both sides. Nothing here ever
+    // overrode the WIDTH — only the margin — so a step stayed a 32px flex item
+    // whatever it held, and a step that shows its label ran past the header's
+    // right edge (there is no connector after the last step to hide behind).
+    // A step is sized by its content and may shrink; the connectors between
+    // them take the slack (below).
+    width: auto;
+    flex: 0 1 auto;
+    // Not 0: the 24px index chip is centred in this box, and the connector that
+    // follows a step is pulled 5px back under the chip's edge (`margin-left:
+    // -5px` below), which relies on the 4px of clearance a 2rem box leaves on
+    // either side of the chip. A step with a label is wider than this anyway.
+    min-width: 2rem;
     margin: 0;
     display: flex;
     align-items: center;
@@ -332,7 +365,12 @@ $default-box-shadow: $control-hairline;
   }
 
   nb-stepper .header .connector {
-    flex: auto;
+    // Grows into whatever the steps leave, and shrinks first when they do not
+    // fit (a 1rem basis and shrink factor 1 against steps whose basis is their
+    // content), down to a floor that still reads as a bar. `flex: auto` had a
+    // content basis of 0 and could vanish entirely under a wide step.
+    flex: 1 1 1rem;
+    min-width: 0.5rem;
     background-color: var(--gauzy-sidebar-background-3);
     height: 10px !important;
     margin: 0px 10px 0 -5px !important;
@@ -644,28 +682,26 @@ $default-box-shadow: $control-hairline;
 // that would add 8px to every tab bar in the app, and this pass is allowed to
 // change type sizes, not the boxes around them.
 @mixin nb-tabset-overrides() {
+  :root nb-route-tabset .route-tabset .route-tab a.tab-link.tab-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  :root nb-route-tabset .route-tabset .route-tab.route-tab a.tab-link.tab-link nb-icon + .tab-text {
+    margin-inline-start: 0;
+  }
+
   nb-tabset .tabset .tab.active a.tab-link {
     @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 600);
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-    color: var(--text-primary-color);
-
-    nb-icon {
-      svg {
-        fill: var(--text-primary-color);
-      }
-    }
+    @include tab-link-colour(var(--text-primary-color));
   }
 
   nb-route-tabset .route-tabset .route-tab.active a.tab-link {
     @include tab-link-typography(nb-theme(route-tabset-tab-text-font-size), 600);
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-    color: var(--text-primary-color);
-
-    nb-icon {
-      svg {
-        fill: var(--text-primary-color);
-      }
-    }
+    @include tab-link-colour(var(--text-primary-color));
   }
 
   nb-tabset .tabset .tab a.tab-link {
@@ -704,10 +740,4 @@ $default-box-shadow: $control-hairline;
 // selected by the caller; this mixin only says what a tab link's colour is.
 @mixin tab-link-colour($colour) {
   color: $colour;
-
-  nb-icon {
-    svg {
-      fill: $colour;
-    }
-  }
 }

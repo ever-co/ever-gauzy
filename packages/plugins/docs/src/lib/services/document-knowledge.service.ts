@@ -135,7 +135,10 @@ export class DocumentKnowledgeService {
 	 */
 	public async bulkReindex(input: BulkKnowledgeReindexDTO = {}): Promise<IBulkReindexResult> {
 		const tenantId = RequestContext.currentTenantId() as ID;
-		const organizationId = RequestContext.currentOrganizationId() as ID;
+		// Same rule as every other docs path: an unresolvable organization scope is a 400, never
+		// "the whole tenant" (a null used to be dropped from the where and enqueued reindex jobs for
+		// every indexed document of the tenant with a null organization key).
+		const organizationId = this.documentService.resolveOrganizationId();
 		const scope = input.scope ?? 'model-drift';
 		const dryRun = input.dryRun === true;
 

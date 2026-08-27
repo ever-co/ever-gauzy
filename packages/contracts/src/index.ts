@@ -146,6 +146,7 @@ export * from './lib/soundshot.model';
 export * from './lib/tag.model';
 export * from './lib/task-estimation.model';
 export * from './lib/task-linked-issue.model';
+export * from './lib/task-metadata.model';
 export * from './lib/task-priority.model';
 export * from './lib/task-related-issue-type.model';
 export * from './lib/task-size.model';

@@ -37,7 +37,6 @@ import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '
 import {
 	FavoriteToggleModule,
 	SharedModule,
-	SingleStatisticModule,
 	SmartDataViewLayoutModule,
 	TagsColorInputModule,
 	TeamSelectModule
@@ -69,6 +68,7 @@ import { SourceBadgeComponent } from './components/table/cells/source-badge.comp
 import { StatusBadgeComponent } from './components/table/cells/status-badge.component';
 import { RowActionsComponent } from './components/table/cells/row-actions.component';
 import { TagChipsComponent } from './components/table/cells/tag-chips.component';
+import { UpdatedCellComponent } from './components/table/cells/updated-cell.component';
 import { DocsTableComponent } from './components/table/docs-table.component';
 import { DocsTreeComponent } from './components/tree/docs-tree.component';
 import { DocsDropStripComponent } from './components/upload/docs-drop-strip.component';
@@ -116,6 +116,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		SourceBadgeComponent,
 		CategoryChipsComponent,
 		TagChipsComponent,
+		UpdatedCellComponent,
 		RowActionsComponent,
 		DocsFilterBarComponent,
 		PresetChipsComponent,
@@ -173,7 +174,6 @@ import { UploadQueueService } from './services/upload-queue.service';
 		NgSelectModule,
 		FavoriteToggleModule,
 		SharedModule,
-		SingleStatisticModule,
 		SmartDataViewLayoutModule,
 		TagsColorInputModule,
 		// Only the team selector is pulled in from ui-core: the full `SelectorsModule`

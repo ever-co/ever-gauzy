@@ -2,12 +2,16 @@ import { type CSSProperties, type KeyboardEvent, useCallback, useEffect, useRef,
 import { chatTheme } from '../chat-theme';
 import { type ChatTranslate, passthroughChatTranslate } from '../use-chat-translate';
 
-/** Button height, and therefore the height of a single-line input row. */
-const ROW_HEIGHT = 28;
-/** Line box of one line of text at the chat's base size. */
+/** Send-button diameter. The action row is deliberately small — the message is the subject. */
+const SEND_SIZE = 26;
+/** The quiet tools sit a step below the primary action. */
+const TOOL_SIZE = 24;
+/** Line box of one line of message text. */
 const LINE_HEIGHT = 20;
-/** Auto-grow ceiling (~3 lines) before the textarea starts scrolling. */
-const MAX_TEXTAREA_HEIGHT = 80;
+/** A single empty line — the composer opens one line tall and grows from there. */
+const MIN_TEXTAREA_HEIGHT = LINE_HEIGHT;
+/** Auto-grow ceiling (~6 lines) before the textarea starts scrolling. */
+const MAX_TEXTAREA_HEIGHT = 120;
 
 /**
  * What the dictation control is doing.
@@ -16,6 +20,46 @@ const MAX_TEXTAREA_HEIGHT = 80;
  * released by then, so the timer must stop and the panel must stop implying it is still listening.
  */
 type DictationState = 'idle' | 'recording' | 'transcribing';
+
+/**
+ * A failed transcription, with the server's machine-readable reason.
+ *
+ * `POST /api/ai-chat/transcribe` answers 503 with `{ message, code, settingsPath }` where `code`
+ * is an `AiSpeechErrorCode` (`AI_SPEECH_NOT_CONFIGURED` / `AI_SPEECH_KEY_REJECTED` /
+ * `AI_SPEECH_FAILED`). The panel's `onTranscribe` throws this so the input can render a
+ * translated, actionable message with a link to the AI Providers page; a plain `Error` (network,
+ * old server) keeps the message-only path.
+ */
+export class DictationError extends Error {
+	override readonly name = 'DictationError';
+	/** `AiSpeechErrorCode` string, when the server sent one. */
+	readonly code?: string;
+	/** Where the problem is fixed (`/pages/settings/ai`), when the server sent it. */
+	readonly settingsPath?: string;
+	/** HTTP status of the failed response. */
+	readonly status?: number;
+
+	constructor(message: string, details: { code?: string; settingsPath?: string; status?: number } = {}) {
+		super(message);
+		Object.setPrototypeOf(this, new.target.prototype);
+		this.code = details.code;
+		this.settingsPath = details.settingsPath;
+		this.status = details.status;
+	}
+}
+
+/** What the dictation error block renders: a translated line, and optionally a settings action. */
+interface DictationErrorView {
+	message: string;
+	/** Present when the fix lives on the AI Providers page AND this user may open it. */
+	settingsPath?: string;
+}
+
+/** Codes the server sends for dictation failures (mirrors `AiSpeechErrorCode` in @gauzy/contracts). */
+const SPEECH_NOT_CONFIGURED = 'AI_SPEECH_NOT_CONFIGURED';
+const SPEECH_KEY_REJECTED = 'AI_SPEECH_KEY_REJECTED';
+/** Fallback path when the server sent a code but no path (older server build). */
+const DEFAULT_AI_SETTINGS_PATH = '/pages/settings/ai';
 
 export interface ChatInputProps {
 	value: string;
@@ -39,6 +83,15 @@ export interface ChatInputProps {
 	 * failing on click: a control that cannot work should not be offered.
 	 */
 	onTranscribe?: (audio: Blob) => Promise<string>;
+	/**
+	 * Open the AI Providers settings page (`settingsPath`, default `/pages/settings/ai`).
+	 *
+	 * Supplied ONLY when the user may actually go there (`AI_CHAT_SETTINGS`): with it, a dictation
+	 * failure caused by configuration shows an "Open AI Providers" action; without it, the message
+	 * tells the user to ask an administrator. A link that bounces to the settings index is worse
+	 * than no link.
+	 */
+	onOpenAiSettings?: (settingsPath?: string) => void;
 	/**
 	 * Upload a file the user picked and attach it to this conversation.
 	 *
@@ -101,6 +154,7 @@ export function ChatInput({
 	onStop,
 	onEscape,
 	onTranscribe,
+	onOpenAiSettings,
 	onAttachFile,
 	onAttachFromDocuments,
 	isAttaching = false,
@@ -114,7 +168,67 @@ export function ChatInput({
 	const [dictation, setDictation] = useState<DictationState>('idle');
 	const [elapsed, setElapsed] = useState(0);
 	const [autoSend, setAutoSend] = useState(false);
-	const [dictationError, setDictationError] = useState<string | null>(null);
+	const [dictationError, setDictationError] = useState<DictationErrorView | null>(null);
+	/** Latest settings opener, for the recorder's callbacks (attached once, at take start). */
+	const onOpenAiSettingsRef = useRef(onOpenAiSettings);
+	onOpenAiSettingsRef.current = onOpenAiSettings;
+
+	/**
+	 * Turn a transcription failure into what the error block shows.
+	 *
+	 * Per server code: "not configured" and "key rejected" name the fix and — when this user may
+	 * open it — carry the settings link; a plain failure relays the server's own message, which
+	 * already says what the provider reported. Anything that is not a {@link DictationError} keeps
+	 * the generic fallback.
+	 */
+	const describeDictationError = useCallback(
+		(error: unknown): DictationErrorView => {
+			if (!(error instanceof DictationError)) {
+				return {
+					message:
+						error instanceof Error && error.message
+							? error.message
+							: t('AI_ASSISTANT.DICTATION_FAILED', 'Could not transcribe the recording.')
+				};
+			}
+			const canOpen = typeof onOpenAiSettingsRef.current === 'function';
+			const settingsPath = error.settingsPath || DEFAULT_AI_SETTINGS_PATH;
+			if (error.code === SPEECH_NOT_CONFIGURED) {
+				return canOpen
+					? {
+							message: t(
+								'AI_ASSISTANT.DICTATION_NOT_CONFIGURED',
+								'Dictation needs a voice provider. Add one on the AI Providers settings page.'
+							),
+							settingsPath
+						}
+					: {
+							message: t(
+								'AI_ASSISTANT.DICTATION_ASK_ADMIN',
+								'Dictation needs a voice provider — ask an administrator to add one in Settings → AI Providers.'
+							)
+						};
+			}
+			if (error.code === SPEECH_KEY_REJECTED) {
+				return canOpen
+					? {
+							message: t(
+								'AI_ASSISTANT.DICTATION_KEY_REJECTED',
+								'The voice provider rejected its API key. Update it on the AI Providers settings page.'
+							),
+							settingsPath
+						}
+					: {
+							message: t(
+								'AI_ASSISTANT.DICTATION_KEY_REJECTED_ASK_ADMIN',
+								'The voice provider rejected its API key — ask an administrator to update it in Settings → AI Providers.'
+							)
+						};
+			}
+			return { message: error.message || t('AI_ASSISTANT.DICTATION_FAILED', 'Could not transcribe the recording.') };
+		},
+		[t]
+	);
 
 	const recorderRef = useRef<MediaRecorder | null>(null);
 	const chunksRef = useRef<BlobPart[]>([]);
@@ -164,13 +278,13 @@ export function ChatInput({
 	const onTranscribeRef = useRef(onTranscribe);
 	onTranscribeRef.current = onTranscribe;
 
-	// Auto-resize textarea. The floor is the row height so a single line is vertically centred
-	// against the buttons rather than sitting hard against the bottom of the row.
+	// Auto-resize textarea. The floor is one line box: the field sits above its own action row,
+	// so it never has to match the height of anything beside it.
 	useEffect(() => {
 		const el = textareaRef.current;
 		if (el) {
 			el.style.height = 'auto';
-			el.style.height = `${Math.min(Math.max(el.scrollHeight, ROW_HEIGHT), MAX_TEXTAREA_HEIGHT)}px`;
+			el.style.height = `${Math.min(Math.max(el.scrollHeight, MIN_TEXTAREA_HEIGHT), MAX_TEXTAREA_HEIGHT)}px`;
 		}
 	}, [value]);
 
@@ -265,11 +379,7 @@ export function ChatInput({
 					})
 					.catch((error: unknown) => {
 						if (session !== sessionRef.current) return;
-						setDictationError(
-							error instanceof Error
-								? error.message
-								: t('AI_ASSISTANT.DICTATION_FAILED', 'Could not transcribe the recording.')
-						);
+						setDictationError(describeDictationError(error));
 					})
 					.finally(() => {
 						if (session === sessionRef.current) setDictation('idle');
@@ -285,17 +395,18 @@ export function ChatInput({
 		} catch (error: unknown) {
 			releaseRecorder();
 			setDictation('idle');
-			setDictationError(
-				error instanceof DOMException && (error.name === 'NotAllowedError' || error.name === 'SecurityError')
-					? t('AI_ASSISTANT.MIC_DENIED', 'Microphone access was denied.')
-					: t('AI_ASSISTANT.MIC_UNAVAILABLE', 'No microphone is available.')
-			);
+			setDictationError({
+				message:
+					error instanceof DOMException && (error.name === 'NotAllowedError' || error.name === 'SecurityError')
+						? t('AI_ASSISTANT.MIC_DENIED', 'Microphone access was denied.')
+						: t('AI_ASSISTANT.MIC_UNAVAILABLE', 'No microphone is available.')
+			});
 		} finally {
 			startingRef.current = false;
 		}
 		// Deliberately narrow: everything the async callbacks need is read through a ref, so the
 		// identity of this callback does not have to change when a prop does.
-	}, [onTranscribe, dictation, releaseRecorder, t]);
+	}, [onTranscribe, dictation, releaseRecorder, t, describeDictationError]);
 
 	// A conversation switch abandons the take, for the same reason a collapse does: the words were
 	// meant for the chat that is no longer open.
@@ -385,38 +496,51 @@ export function ChatInput({
 
 	const containerStyle: CSSProperties = {
 		borderTop: `1px solid ${chatTheme.border}`,
-		padding: '8px 10px',
+		padding: '10px 12px 12px',
 		flexShrink: 0
 	};
 
+	// The message is written across the FULL width and the controls tuck underneath it, rather
+	// than the field being squeezed between two clusters of buttons on one row.
 	const formStyle: CSSProperties = {
 		display: 'flex',
-		alignItems: 'flex-end',
+		flexDirection: 'column',
+		alignItems: 'stretch',
 		gap: 6,
 		backgroundColor: chatTheme.inputBg,
 		borderRadius: chatTheme.inputRadius,
 		border: `1px solid ${isFocused ? chatTheme.inputFocusBorder : chatTheme.inputBorder}`,
-		padding: '6px 8px',
-		transition: `border-color ${chatTheme.transitionSpeed} ease`
+		// A visible focus ring is what tells the user the composer is live; the border
+		// alone moved by one hairline and read as no change at all.
+		boxShadow: isFocused ? chatTheme.inputFocusRing : 'none',
+		padding: '8px 8px 6px',
+		transition: `border-color ${chatTheme.transitionSpeed} ease, box-shadow ${chatTheme.transitionSpeed} ease`
+	};
+
+	/** The action row under the message: quiet tools left, Send pushed to the end. */
+	const toolRowStyle: CSSProperties = {
+		display: 'flex',
+		alignItems: 'center',
+		gap: 2,
+		minWidth: 0
 	};
 
 	const textareaStyle: CSSProperties = {
-		flex: 1,
+		width: '100%',
 		border: 'none',
 		outline: 'none',
 		backgroundColor: 'transparent',
 		color: chatTheme.inputText,
-		fontSize: chatTheme.fontSizeBase,
+		fontSize: chatTheme.fontSizeInput,
 		fontFamily: chatTheme.fontFamily,
 		lineHeight: `${LINE_HEIGHT}px`,
+		letterSpacing: '0.01em',
 		resize: 'none',
-		// A single line occupies the full row height with the text centred inside it: the row is as
-		// tall as the buttons beside it, and the leftover space is split evenly above and below.
-		// Previously the box was 20px tall and bottom-aligned against 28px buttons, which put every
-		// pixel of that difference above the text and none below.
-		minHeight: ROW_HEIGHT,
+		// Nothing sits beside the field any more, so it needs no padding of its own to line up
+		// against: the form's padding is the whole inset, and the box is exactly its text.
+		minHeight: MIN_TEXTAREA_HEIGHT,
 		maxHeight: MAX_TEXTAREA_HEIGHT,
-		padding: `${(ROW_HEIGHT - LINE_HEIGHT) / 2}px 0`,
+		padding: '0 2px',
 		boxSizing: 'border-box',
 		margin: 0,
 		minWidth: 0,
@@ -430,9 +554,11 @@ export function ChatInput({
 		WebkitAppearance: 'none'
 	};
 
+	const canSend = Boolean(value.trim());
+
 	const buttonStyle: CSSProperties = {
-		width: ROW_HEIGHT,
-		height: ROW_HEIGHT,
+		width: SEND_SIZE,
+		height: SEND_SIZE,
 		borderRadius: '50%',
 		backgroundColor: isBusy ? chatTheme.red : chatTheme.accent,
 		color: '#ffffff',
@@ -442,15 +568,18 @@ export function ChatInput({
 		alignItems: 'center',
 		justifyContent: 'center',
 		flexShrink: 0,
-		transition: `background-color ${chatTheme.transitionSpeed} ease`,
-		opacity: !isBusy && !value.trim() ? 0.4 : 1,
+		// Anchored to the end of the action row, away from the quiet tools.
+		marginLeft: 'auto',
+		padding: 0,
+		boxShadow: !isBusy && !canSend ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.18)',
+		opacity: !isBusy && !canSend ? 0.35 : 1,
 		outline: 'none'
 	};
 
 	/** The quiet leading-edge tools: attach, library, dictate. */
 	const toolButtonStyle = (active = false, enabled = true): CSSProperties => ({
-		width: ROW_HEIGHT,
-		height: ROW_HEIGHT,
+		width: TOOL_SIZE,
+		height: TOOL_SIZE,
 		borderRadius: 6,
 		backgroundColor: active ? chatTheme.redSoft : 'transparent',
 		color: active ? chatTheme.red : chatTheme.textMuted,
@@ -469,12 +598,13 @@ export function ChatInput({
 		display: 'flex',
 		alignItems: 'center',
 		gap: 10,
-		marginBottom: 6,
-		padding: '6px 10px',
+		marginBottom: 8,
+		padding: '7px 10px',
 		borderRadius: chatTheme.inputRadius,
 		border: `1px solid ${chatTheme.inputBorder}`,
 		backgroundColor: chatTheme.inputBg,
 		fontSize: chatTheme.fontSizeSmall,
+		lineHeight: 1.5,
 		color: chatTheme.inputText
 	};
 
@@ -482,10 +612,12 @@ export function ChatInput({
 		border: `1px solid ${primary ? chatTheme.accent : chatTheme.inputBorder}`,
 		backgroundColor: 'transparent',
 		color: primary ? chatTheme.accent : chatTheme.inputText,
-		borderRadius: 6,
-		padding: '3px 10px',
+		borderRadius: chatTheme.controlRadius,
+		padding: '4px 11px',
 		fontSize: chatTheme.fontSizeSmall,
+		fontWeight: chatTheme.fontWeightMedium,
 		fontFamily: chatTheme.fontFamily,
+		lineHeight: 1.5,
 		cursor: 'pointer',
 		outline: 'none'
 	});
@@ -551,12 +683,44 @@ export function ChatInput({
 						display: 'flex',
 						alignItems: 'flex-start',
 						gap: 6,
-						marginBottom: 6,
+						marginBottom: 8,
+						padding: '6px 9px',
+						borderRadius: chatTheme.controlRadius,
+						backgroundColor: 'rgba(255, 61, 113, 0.1)',
 						fontSize: chatTheme.fontSizeSmall,
+						lineHeight: 1.5,
 						color: chatTheme.red
 					}}
 				>
-					<span style={{ flex: 1 }}>{dictationError}</span>
+					<span style={{ flex: 1 }}>
+						{dictationError.message}
+						{/* The fix lives on the AI Providers page and this user may open it: say so with a
+						    link rather than a sentence that names a page they then have to find. Only
+						    rendered when the panel supplied the opener (i.e. the user has AI_CHAT_SETTINGS). */}
+						{dictationError.settingsPath && onOpenAiSettings && (
+							<>
+								{' '}
+								<button
+									type="button"
+									onClick={() => {
+										onOpenAiSettings(dictationError.settingsPath);
+										setDictationError(null);
+									}}
+									style={{
+										border: 'none',
+										background: 'transparent',
+										color: chatTheme.accent,
+										cursor: 'pointer',
+										padding: 0,
+										font: 'inherit',
+										textDecoration: 'underline'
+									}}
+								>
+									{t('AI_ASSISTANT.DICTATION_OPEN_SETTINGS', 'Open AI Providers')}
+								</button>
+							</>
+						)}
+					</span>
 					{/* Otherwise it sits above the composer until the next take, which the user may
 					    reasonably not want to start. */}
 					<button
@@ -607,106 +771,6 @@ export function ChatInput({
 					/>
 				)}
 
-				<button
-					type="button"
-					{...(onAttachFile && !isAttaching
-						? { onClick: () => fileInputRef.current?.click() }
-						: { 'aria-disabled': true as const, onClick: (e: { preventDefault: () => void }) => e.preventDefault() })}
-					style={toolButtonStyle(false, Boolean(onAttachFile) && !isAttaching)}
-					title={
-						onAttachFile
-							? t('AI_ASSISTANT.ATTACH', 'Attach a file')
-							: t('AI_ASSISTANT.ATTACH_SOON', 'Attach files or folders (coming soon)')
-					}
-					aria-label={
-						onAttachFile
-							? t('AI_ASSISTANT.ATTACH', 'Attach a file')
-							: t('AI_ASSISTANT.ATTACH_SOON', 'Attach files or folders (coming soon)')
-					}
-				>
-					<svg
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-					</svg>
-				</button>
-
-				<button
-					type="button"
-					{...(onAttachFromDocuments && !isAttaching
-						? { onClick: () => onAttachFromDocuments() }
-						: { 'aria-disabled': true as const, onClick: (e: { preventDefault: () => void }) => e.preventDefault() })}
-					style={toolButtonStyle(false, Boolean(onAttachFromDocuments) && !isAttaching)}
-					title={
-						onAttachFromDocuments
-							? t('AI_ASSISTANT.ATTACH_FROM_DOCUMENTS', 'Attach from Documents')
-							: t('AI_ASSISTANT.LIBRARY_SOON', 'Choose from the file library (coming soon)')
-					}
-					aria-label={
-						onAttachFromDocuments
-							? t('AI_ASSISTANT.ATTACH_FROM_DOCUMENTS', 'Attach from Documents')
-							: t('AI_ASSISTANT.LIBRARY_SOON', 'Choose from the file library (coming soon)')
-					}
-				>
-					<svg
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-						<polyline points="14 2 14 8 20 8" />
-						<line x1="8" y1="13" x2="16" y2="13" />
-						<line x1="8" y1="17" x2="13" y2="17" />
-					</svg>
-				</button>
-
-				{onTranscribe && (
-					<button
-						type="button"
-						onClick={isRecording ? finishDictation : startDictation}
-						disabled={isTranscribing}
-						style={toolButtonStyle(isRecording, !isTranscribing)}
-						title={
-							isRecording
-								? t('AI_ASSISTANT.STOP_DICTATION', 'Stop dictation')
-								: t('AI_ASSISTANT.DICTATE', 'Dictate a message')
-						}
-						aria-label={
-							isRecording
-								? t('AI_ASSISTANT.STOP_DICTATION', 'Stop dictation')
-								: t('AI_ASSISTANT.DICTATE', 'Dictate a message')
-						}
-						aria-pressed={isRecording}
-					>
-						<svg
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						>
-							<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-							<path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-							<line x1="12" y1="19" x2="12" y2="23" />
-						</svg>
-					</button>
-				)}
-
 				<textarea
 					ref={textareaRef}
 					value={value}
@@ -716,29 +780,31 @@ export function ChatInput({
 					onBlur={() => setIsFocused(false)}
 					placeholder={t('AI_ASSISTANT.PLACEHOLDER', 'Type a message…')}
 					rows={1}
+					className="gz-ai-chat-textarea"
 					style={textareaStyle}
 					aria-label={t('AI_ASSISTANT.PLACEHOLDER', 'Type a message…')}
 				/>
 
-				{isBusy ? (
+				{/* Action row. Small on purpose: attach, library and dictation are occasional,
+				    the message above them is the subject of this panel. */}
+				<div style={toolRowStyle}>
 					<button
 						type="button"
-						onClick={onStop}
-						style={buttonStyle}
-						title={t('AI_ASSISTANT.STOP', 'Stop generating')}
-						aria-label={t('AI_ASSISTANT.STOP', 'Stop generating')}
-					>
-						<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-							<rect x="6" y="6" width="12" height="12" rx="2" />
-						</svg>
-					</button>
-				) : (
-					<button
-						type="submit"
-						disabled={!value.trim()}
-						style={buttonStyle}
-						title={t('AI_ASSISTANT.SEND', 'Send message')}
-						aria-label={t('AI_ASSISTANT.SEND', 'Send message')}
+						{...(onAttachFile && !isAttaching
+							? { onClick: () => fileInputRef.current?.click() }
+							: { 'aria-disabled': true as const, onClick: (e: { preventDefault: () => void }) => e.preventDefault() })}
+						className="gz-ai-chat-tool-btn"
+						style={toolButtonStyle(false, Boolean(onAttachFile) && !isAttaching)}
+						title={
+							onAttachFile
+								? t('AI_ASSISTANT.ATTACH', 'Attach a file')
+								: t('AI_ASSISTANT.ATTACH_SOON', 'Attach files or folders (coming soon)')
+						}
+						aria-label={
+							onAttachFile
+								? t('AI_ASSISTANT.ATTACH', 'Attach a file')
+								: t('AI_ASSISTANT.ATTACH_SOON', 'Attach files or folders (coming soon)')
+						}
 					>
 						<svg
 							width="14"
@@ -750,11 +816,119 @@ export function ChatInput({
 							strokeLinecap="round"
 							strokeLinejoin="round"
 						>
-							<line x1="22" y1="2" x2="11" y2="13" />
-							<polygon points="22 2 15 22 11 13 2 9 22 2" />
+							<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
 						</svg>
 					</button>
-				)}
+
+					<button
+						type="button"
+						{...(onAttachFromDocuments && !isAttaching
+							? { onClick: () => onAttachFromDocuments() }
+							: { 'aria-disabled': true as const, onClick: (e: { preventDefault: () => void }) => e.preventDefault() })}
+						className="gz-ai-chat-tool-btn"
+						style={toolButtonStyle(false, Boolean(onAttachFromDocuments) && !isAttaching)}
+						title={
+							onAttachFromDocuments
+								? t('AI_ASSISTANT.ATTACH_FROM_DOCUMENTS', 'Attach from Documents')
+								: t('AI_ASSISTANT.LIBRARY_SOON', 'Choose from the file library (coming soon)')
+						}
+						aria-label={
+							onAttachFromDocuments
+								? t('AI_ASSISTANT.ATTACH_FROM_DOCUMENTS', 'Attach from Documents')
+								: t('AI_ASSISTANT.LIBRARY_SOON', 'Choose from the file library (coming soon)')
+						}
+					>
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						>
+							<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+							<polyline points="14 2 14 8 20 8" />
+							<line x1="8" y1="13" x2="16" y2="13" />
+							<line x1="8" y1="17" x2="13" y2="17" />
+						</svg>
+					</button>
+
+					{onTranscribe && (
+						<button
+							type="button"
+							onClick={isRecording ? finishDictation : startDictation}
+							disabled={isTranscribing}
+							className="gz-ai-chat-tool-btn"
+							style={toolButtonStyle(isRecording, !isTranscribing)}
+							title={
+								isRecording
+									? t('AI_ASSISTANT.STOP_DICTATION', 'Stop dictation')
+									: t('AI_ASSISTANT.DICTATE', 'Dictate a message')
+							}
+							aria-label={
+								isRecording
+									? t('AI_ASSISTANT.STOP_DICTATION', 'Stop dictation')
+									: t('AI_ASSISTANT.DICTATE', 'Dictate a message')
+							}
+							aria-pressed={isRecording}
+						>
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+								<path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+								<line x1="12" y1="19" x2="12" y2="23" />
+							</svg>
+						</button>
+					)}
+
+					{isBusy ? (
+						<button
+							type="button"
+							onClick={onStop}
+							className="gz-ai-chat-send-btn"
+							style={buttonStyle}
+							title={t('AI_ASSISTANT.STOP', 'Stop generating')}
+							aria-label={t('AI_ASSISTANT.STOP', 'Stop generating')}
+						>
+							<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+								<rect x="6" y="6" width="12" height="12" rx="2" />
+							</svg>
+						</button>
+					) : (
+						<button
+							type="submit"
+							disabled={!canSend}
+							className="gz-ai-chat-send-btn"
+							style={buttonStyle}
+							title={t('AI_ASSISTANT.SEND', 'Send message')}
+							aria-label={t('AI_ASSISTANT.SEND', 'Send message')}
+						>
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<line x1="22" y1="2" x2="11" y2="13" />
+								<polygon points="22 2 15 22 11 13 2 9 22 2" />
+							</svg>
+						</button>
+					)}
+				</div>
 			</form>
 		</div>
 	);

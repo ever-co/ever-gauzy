@@ -12,12 +12,14 @@ services:
       # the Dockerfile also accepts DEMO, NODE_OPTIONS and NX_BRANCH with built-in
       # defaults. All other configuration is runtime environment (see `environment:`
       # below) — the API image does not bake env values at build time.
+      # Same default as the runtime `NODE_ENV` below: with `development` here the image shipped the
+      # dev nx build while running as production.
       args:
-        NODE_ENV: ${NODE_ENV:-development}
+        NODE_ENV: ${NODE_ENV:-production}
     environment:
       API_HOST: ${API_HOST:-api}
       API_PORT: ${API_PORT:-3000}
-      NODE_ENV: ${NODE_ENV:-development}
+      NODE_ENV: ${NODE_ENV:-production}
       DB_HOST: db
       API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
       CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4200}

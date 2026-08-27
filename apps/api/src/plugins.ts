@@ -8,6 +8,14 @@ import { AiProviderVercelGatewayPlugin } from '@gauzy/plugin-ai-provider-vercel-
 import { AiProviderGauzyAiPlugin } from '@gauzy/plugin-ai-provider-gauzy-ai';
 import { AiProviderGeminiPlugin } from '@gauzy/plugin-ai-provider-gemini';
 import { AiProviderGrokPlugin } from '@gauzy/plugin-ai-provider-grok';
+import { AiProviderGroqPlugin } from '@gauzy/plugin-ai-provider-groq';
+import { AiProviderMistralPlugin } from '@gauzy/plugin-ai-provider-mistral';
+import { AiProviderDeepgramPlugin } from '@gauzy/plugin-ai-provider-deepgram';
+import { AiProviderElevenLabsPlugin } from '@gauzy/plugin-ai-provider-elevenlabs';
+import { AiProviderSpeachesPlugin } from '@gauzy/plugin-ai-provider-speaches';
+import { AiProviderLocalAiPlugin } from '@gauzy/plugin-ai-provider-localai';
+import { AiProviderWhisperCppPlugin } from '@gauzy/plugin-ai-provider-whisper-cpp';
+import { AiProviderOpenAiCompatiblePlugin } from '@gauzy/plugin-ai-provider-openai-compatible';
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
@@ -65,6 +73,18 @@ export const plugins = [
 	AiProviderGauzyAiPlugin,
 	AiProviderGeminiPlugin,
 	AiProviderGrokPlugin,
+	// OpenAI-compatible cloud providers with chat + speech-to-text (dictation).
+	AiProviderGroqPlugin,
+	AiProviderMistralPlugin,
+	// LOCAL / self-hosted providers (no API key needed): Speaches + whisper.cpp are voice-only,
+	// LocalAI and the generic OpenAI-compatible endpoint do chat + voice.
+	AiProviderSpeachesPlugin,
+	AiProviderLocalAiPlugin,
+	AiProviderWhisperCppPlugin,
+	AiProviderOpenAiCompatiblePlugin,
+	// Cloud speech-to-text only providers (voice / dictation).
+	AiProviderDeepgramPlugin,
+	AiProviderElevenLabsPlugin,
 	// Documents hub plugin — registered after the AI chat/provider plugins so the provider registry is populated first.
 	DocsPlugin,
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.

@@ -1,5 +1,6 @@
 <div class="docs-saved-views">
 	<button
+		#trigger
 		nbButton
 		ghost
 		size="small"
@@ -10,11 +11,11 @@
 		(click)="toggle()"
 	>
 		<nb-icon icon="bookmark-outline"></nb-icon>
-		{{ activeLabel }}
+		<span class="docs-saved-views-trigger-label">{{ activeLabel }}</span>
 		<nb-icon [icon]="open ? 'chevron-up-outline' : 'chevron-down-outline'" size="tiny"></nb-icon>
 	</button>
 
-	<div class="docs-saved-views-panel" *ngIf="open" role="menu">
+	<div class="docs-saved-views-panel" *ngIf="open" role="menu" [ngStyle]="panelStyle">
 		<!-- Save current view -->
 		<div class="docs-saved-views-save">
 			<input
@@ -54,6 +55,8 @@
 				<!-- Inline rename -->
 				<ng-container *ngIf="renamingId === view.id; else viewRow">
 					<!-- Only one row can be in rename mode at a time, so the id stays unique. -->
+					<!-- Esc stops here: the component also closes the whole panel on a
+					     document-level Esc, so the rename would take the panel with it. -->
 					<input
 						nbInput
 						fieldSize="tiny"
@@ -63,7 +66,7 @@
 						[attr.aria-label]="'DOCS.SAVED_VIEWS.RENAME' | translate"
 						[(ngModel)]="renameDraft"
 						(keydown.enter)="commitRename(view)"
-						(keydown.escape)="cancelRename()"
+						(keydown.escape)="cancelRename(); $event.stopPropagation()"
 					/>
 					<button nbButton ghost size="tiny" type="button" (click)="commitRename(view)">
 						<nb-icon icon="checkmark-outline"></nb-icon>

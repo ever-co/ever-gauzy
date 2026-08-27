@@ -34,7 +34,7 @@ import {
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
-import { isSqlite } from '@gauzy/config';
+import { isPostgres, isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
@@ -411,12 +411,19 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
+				// TypeORM's `query()` hands the parameters straight to the driver, so the placeholder
+				// syntax is dialect-specific: PostgreSQL uses `$1`, while SQLite/better-sqlite3 and
+				// MySQL use `?`. `$1` on better-sqlite3 is parsed as a *named* parameter, so binding
+				// a positional array throws "RangeError: Too many parameter values were provided"
+				// and every `GET /tasks/:id?includeRootEpic=true` fails on SQLite (demo) instances.
+				const idPlaceholder = isPostgres() ? '$1' : '?';
+
 				// Define the recursive SQL query to find the parent epic
 				const query = p(`
 					WITH RECURSIVE IssueHierarchy AS (
 						SELECT *
 						FROM task
-						WHERE id = $1
+						WHERE id = ${idPlaceholder}
 					UNION ALL
 						SELECT i.*
 						FROM task i
@@ -1379,7 +1386,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				...(types.length && { issueType: In(types) }),
 				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
 				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) }),
-				organizationId: taskView.organizationId || organizationId,
+				// Only scope by organization when one is known: the view's organizationId is a nullable
+				// column and the stored query params may carry null (a null used to be dropped silently).
+				...(taskView.organizationId || organizationId
+					? { organizationId: taskView.organizationId || organizationId }
+					: {}),
 				tenantId
 			};
 

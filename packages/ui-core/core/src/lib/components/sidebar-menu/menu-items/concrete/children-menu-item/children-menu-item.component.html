@@ -21,6 +21,7 @@
 	<div
 		[nbTooltip]="item?.title"
 		nbTooltipPlacement="right"
+		[nbTooltipDisabled]="tooltipDisabled"
 		[class]="(selected ? 'sub-item selected' : 'sub-item') + (!collapse ? ' custom' : '')"
 	>
 		<span (click)="select()" class="info">

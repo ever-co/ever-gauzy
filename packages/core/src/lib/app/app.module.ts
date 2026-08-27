@@ -153,6 +153,7 @@ import { TagModule } from '../tags/tag.module';
 import { DailyPlanModule } from '../tasks/daily-plan/daily-plan.module';
 import { TaskEstimationModule } from '../tasks/estimation/task-estimation.module';
 import { IssueTypeModule } from '../tasks/issue-type/issue-type.module';
+import { TaskMetadataBootstrapModule } from '../tasks/task-metadata-bootstrap';
 import { TaskLinkedIssueModule } from '../tasks/linked-issue/task-linked-issue.module';
 import { TaskPriorityModule } from '../tasks/priorities/priority.module';
 import { TaskRelatedIssueTypeModule } from '../tasks/related-issue-type/related-issue-type.module';
@@ -166,6 +167,7 @@ import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { BillingModule } from '../shared/billing';
 import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.guard';
 import { TimeOffPolicyModule } from '../time-off-policy/time-off-policy.module';
 import { TimeOffRequestModule } from '../time-off-request/time-off-request.module';
@@ -445,6 +447,9 @@ if (environment.THROTTLE_ENABLED) {
 		RolePermissionModule,
 		TenantModule,
 		TenantSettingModule,
+		// In-product billing pages. Every route inside 404s unless STRIPE_SECRET_KEY is set, so a
+		// self-hosted install carries the module but exposes no billing surface.
+		BillingModule,
 		TagModule,
 		TagTypeModule,
 		SkillModule,
@@ -506,6 +511,7 @@ if (environment.THROTTLE_ENABLED) {
 		PublicShareModule,
 		EmailResetModule,
 		IssueTypeModule,
+		TaskMetadataBootstrapModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
 		TaskEstimationModule,

@@ -7,8 +7,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-right: 10px;
-  padding-left: 10px;
+  padding-right: 0;
+  padding-left: 0;
   // The wrapper is an anchor when the feature carries a learnMoreUrl —
   // keep the text styling identical either way.
   color: inherit;
@@ -21,7 +21,7 @@
   width: 100%;
   display: flex;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   & > nb-icon {
     margin-right: 5px;
     margin-top: 1.5px;
@@ -34,17 +34,18 @@
     display: flex;
     align-items: flex-start;
     font-family: Inter;
-    font-size: 14px;
+    font-size: 13px;
     font-style: normal;
     font-weight: 600;
-    line-height: 17px;
+    line-height: 16px;
     letter-spacing: 0em;
     text-align: left;
   }
 }
 .feature-img {
-  width: 201px;
-  height: 130px;
+  width: 100%;
+  max-width: 176px;
+  height: 104px;
   border: 1px solid black;
   -webkit-box-shadow: 0px 8px 21px -11px #000000;
   box-shadow: 0px 8px 21px -11px #000000;
@@ -53,10 +54,10 @@
 }
 .description {
   font-family: Inter;
-  font-size: 12px;
+  font-size: 11px;
   font-style: normal;
   font-weight: 400;
-  line-height: 16px;
+  line-height: 15px;
   letter-spacing: 0em;
   text-align: left;
   width: 100%;
@@ -68,23 +69,25 @@ nb-icon,
 }
 @include small-laptop-screen {
   .description {
-    font-size: 14px;
+    font-size: 12px;
   }
   .feature-img {
-    width: 208px;
-    height: 135px;
+    max-width: 184px;
+    height: 110px;
   }
 }
 
 @include tablet-screen {
   .feature-img {
     width: 360px;
+    max-width: 100%;
     height: 232px;
   }
 }
 @include mobile-screen {
   .feature-img {
     width: 90%;
+    max-width: 100%;
     height: 45vw;
   }
 }

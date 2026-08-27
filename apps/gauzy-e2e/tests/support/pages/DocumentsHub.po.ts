@@ -329,14 +329,22 @@ export const detailMetadataVisible = async () => {
  * summary text itself to a soft assertion the caller can read in the report.
  */
 export const softVerifyAiSummaryPresent = async () => {
+	// `expect.soft` DEFERS a failure to the end of the test — it does not make it non-fatal. So the
+	// condition this helper documents as expected (`GAUZY_DOCS_AI_ENABLED=false`, hence no summary)
+	// was failing the run anyway, which is how it took down this scenario once the detail panel
+	// started loading a real document. The structural assertion below is the one that carries meaning;
+	// whether classification actually produced prose is genuinely informational, so it is LOGGED.
+	await verifyElementIsVisible(`${DocumentsHubPage.detailPanelCss} .docs-detail-section`);
 	const summary = getPage()
 		.locator(DocumentsHubPage.detailPanelCss)
 		.locator('.docs-detail-section p:not(.muted)')
 		.first();
 	const hasSummary = await summary.isVisible().catch(() => false);
-	expect
-		.soft(hasSummary, 'no AI summary rendered — expected while GAUZY_DOCS_AI_ENABLED=false, informational only')
-		.toBe(true);
+	console.log(
+		hasSummary
+			? '[docs-hub] AI summary rendered'
+			: '[docs-hub] no AI summary rendered — expected while GAUZY_DOCS_AI_ENABLED=false'
+	);
 };
 
 /**
@@ -356,13 +364,18 @@ export const closeDetailPanel = async () => {
 // ─── Create a PAGE document ──────────────────────────────────────────────────────────────────────
 
 export const newPageButtonVisible = async () => {
-	await verifyElementIsVisible(DocumentsHubPage.newPageButtonCss);
+	// Assert the `New ▾` trigger, not the menu item: the item lives in an overlay that only exists
+	// once the menu is open.
+	await verifyElementIsVisible(DocumentsHubPage.newMenuTriggerCss);
 };
 
 export const clickNewPageButton = async () => {
-	// The browse card shows a full-card [nbSpinner] while the first list load runs; a coordinate click
-	// lands on that overlay and the dialog never opens. Settle, dispatch, and confirm on the dialog.
-	await dispatchClickWhenSettled(DocumentsHubPage.newPageButtonCss, DocumentsHubPage.createNameInputCss);
+	// Two hops now — open `New ▾`, then choose Page. The browse card shows a full-card [nbSpinner]
+	// while the first list load runs; a coordinate click lands on that overlay and nothing opens.
+	// Settle and dispatch each hop, confirming on what that hop is supposed to produce (the menu item,
+	// then the create dialog's name input) so a swallowed click fails here rather than 24s later.
+	await dispatchClickWhenSettled(DocumentsHubPage.newMenuTriggerCss, DocumentsHubPage.newMenuPageItemCss);
+	await dispatchClickWhenSettled(DocumentsHubPage.newMenuPageItemCss, DocumentsHubPage.createNameInputCss);
 };
 
 export const createDialogVisible = async () => {

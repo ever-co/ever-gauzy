@@ -43,7 +43,7 @@
 					[placeholder]="'REGISTER_PAGE.PLACEHOLDERS.FULL_NAME' | translate"
 					autofocus
 					fullWidth
-					fieldSize="large"
+					fieldSize="medium"
 					[status]="fullName.dirty ? (fullName.invalid ? 'danger' : 'success') : 'basic'"
 					[required]="getConfigValue('forms.validation.fullName.required')"
 					[minlength]="getConfigValue('forms.validation.fullName.minLength')"
@@ -87,7 +87,7 @@
 					noSpaceEdges
 					[placeholder]="'REGISTER_PAGE.PLACEHOLDERS.EMAIL' | translate"
 					fullWidth
-					fieldSize="large"
+					fieldSize="medium"
 					[status]="email.dirty ? (email.invalid ? 'danger' : 'success') : 'basic'"
 					[required]="getConfigValue('forms.validation.email.required')"
 					[attr.aria-invalid]="email.invalid && email.touched ? true : null"
@@ -124,7 +124,7 @@
 						name="password"
 						[placeholder]="'REGISTER_PAGE.PLACEHOLDERS.PASSWORD' | translate"
 						fullWidth
-						fieldSize="large"
+						fieldSize="medium"
 						[status]="password.dirty ? (password.invalid ? 'danger' : 'success') : 'basic'"
 						[required]="getConfigValue('forms.validation.password.required')"
 						[minlength]="getConfigValue('forms.validation.password.minLength')"
@@ -180,7 +180,7 @@
 						name="rePass"
 						[placeholder]="'REGISTER_PAGE.PLACEHOLDERS.CONFIRM_PASSWORD' | translate"
 						fullWidth
-						fieldSize="large"
+						fieldSize="medium"
 						[status]="
 							confirmPassword.dirty
 								? confirmPassword.invalid || password.value != confirmPassword.value
@@ -267,19 +267,20 @@
 		</section>
 		<div class="hr-div-soft"></div>
 
-		<section class="another-action" aria-label="Sign In Workspace">
-			{{ 'WORKSPACES.UNKNOWN_WORKSPACE' | translate }}
-			<a class="text-link" routerLink="/auth/login-workspace">
-				{{ 'WORKSPACES.FIND_WORKSPACE' | translate }}
-			</a>
-		</section>
-
-		<section class="another-action" aria-label="Sign in">
-			{{ 'REGISTER_PAGE.HAVE_AN_ACCOUNT' | translate }}
-			<a class="text-link" routerLink="../login">
-				{{ 'BUTTONS.LOGIN' | translate }}
-			</a>
-		</section>
+		<div class="another-actions">
+			<section class="another-action" aria-label="Sign In Workspace">
+				{{ 'WORKSPACES.UNKNOWN_WORKSPACE' | translate }}
+				<a class="text-link" routerLink="/auth/login-workspace">
+					{{ 'WORKSPACES.FIND_WORKSPACE' | translate }}
+				</a>
+			</section>
+			<section class="another-action" aria-label="Sign in">
+				{{ 'REGISTER_PAGE.HAVE_AN_ACCOUNT' | translate }}
+				<a class="text-link" routerLink="../login">
+					{{ 'BUTTONS.LOGIN' | translate }}
+				</a>
+			</section>
+		</div>
 	</div>
 	<div class="features-wrapper">
 		<ngx-register-side-features></ngx-register-side-features>

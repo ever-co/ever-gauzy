@@ -13,7 +13,11 @@ services:
           - key: DEMO
             value: false
           - key: NODE_ENV
-            value: development
+            value: production
+          # API and webapp live on two different *.onrender.com sites (public suffix), so the
+          # production default of CORP: same-site would block every API-served image.
+          - key: CORP_POLICY
+            value: cross-origin
           - key: ADMIN_PASSWORD_RESET
             value: true
           - key: LOG_LEVEL
@@ -29,11 +33,13 @@ services:
           - key: CLIENT_BASE_URL
             value: https://ever-gauzy-webapp.onrender.com
           - key: EXPRESS_SESSION_SECRET
-            value: gauzy
+            generateValue: true
           - key: JWT_SECRET
-            value: secretKey
+            generateValue: true
           - key: JWT_REFRESH_TOKEN_SECRET
-            value: refreshSecretKey
+            generateValue: true
+          - key: JWT_VERIFICATION_TOKEN_SECRET
+            generateValue: true
           - key: JWT_REFRESH_TOKEN_EXPIRATION_TIME
             value: 86400
           - key: ALLOWED_ORIGINS

@@ -11,150 +11,161 @@
 // below (merged last, so these values win over per-theme ones). Keep density
 // changes here so every theme stays in sync.
 $gauzy-density: (
-	// Typography — 14px body, 13px controls, tighter headings
-	text-paragraph-font-size: 0.875rem,
-	text-subtitle-font-size: 0.9375rem,
-	text-subtitle-2-font-size: 0.8125rem,
-	text-label-font-size: 0.75rem,
-	text-caption-font-size: 0.75rem,
-	text-button-medium-font-size: 0.8125rem,
-	text-heading-4-font-size: 1.5rem,
-	text-heading-5-font-size: 1.25rem,
-	text-heading-6-font-size: 1rem,
-	// ── Page / card title ──────────────────────────────────────────────────
-	// The ONE step every card title resolves to, whether it comes from the
-	// shared `ngx-header-title` or from a heading a template dropped straight
-	// into an `nb-card-header`. A page heading only has to out-rank body copy;
-	// at the h4 step (1.5rem/700) it read as an oversized breadcrumb path.
-	//
-	// Kept as its own token rather than reusing `text-heading-5-*`: those
-	// describe what an <h5> is worth ANYWHERE, while this describes a role,
-	// and the rules that consume it deliberately apply to h1..h5 alike. Every
-	// theme key is emitted as a CSS custom property, so the component that
-	// owns the shared title can read the same value from its inline styles.
-	gauzy-page-title-font-size: 1.25rem,
-	gauzy-page-title-font-weight: 600,
-	gauzy-page-title-line-height: 1.75rem,
-	gauzy-page-title-letter-spacing: -0.01em,
-	// Menus / sidebar
-	menu-item-padding: 0.5rem 0.75rem,
-	menu-text-font-size: 0.8125rem,
-	menu-text-font-weight: 500,
-	menu-item-divider-width: 0,
-	// Flat-chrome tokens (shadcn-like): a small radius and a low-contrast
-	// hover fill shared by breadcrumb links, sidebar rows, settings menu rows
-	// and overlay menu items, so "hover" reads identically everywhere in all 8
-	// themes.
-	// NOTE: deliberately smaller than `border-radius` (0.625rem) — that is the
-	// CARD radius, and a 10px pill on a 20px row is what made menu items look
-	// like blocks.
-	gauzy-radius-sm: 0.375rem,
-	// Translucent NEUTRAL rather than an alias of a background token: aliasing
-	// `background-basic-color-2` painted an invisible hover in `gauzy-dark`,
-	// where that token is rgba(32, 32, 35, 1) — the exact colour of the surfaces
-	// it sits on (`gauzy-card-1`, and the header/layout backgrounds aliased to
-	// it). A low-alpha grey darkens a light surface and lightens a dark one, so
-	// one value works in every theme without a per-theme branch.
-	gauzy-hover-tint: rgba(126, 126, 143, 0.12),
-	// Active / current row: exactly twice the hover alpha. The pair stays
-	// distinguishable on both surfaces while neither reads as a filled block.
-	gauzy-active-tint: rgba(126, 126, 143, 0.2),
-	// Overlay container hairline — shared by the global overlay rules and by the
-	// popups that are positioned by the layout instead of `.cdk-overlay-container`
-	// (user menu, workspace menu), so all of them resolve one value.
-	gauzy-overlay-border-color: rgba(126, 126, 143, 0.18),
-	menu-item-divider-style: none,
-	// Cards
-	card-padding: 1rem,
-	card-header-padding: 0.875rem 1rem,
-	// NOTE: header-height / layout-padding are intentionally NOT compacted:
-	// the fixed header's real height is content-driven (demo banner + toolbar)
-	// while Nebular offsets the page by the header-height variable only, so
-	// shrinking the variable clips the top of the page content.
-	// Tabs
-	tabset-tab-padding: 0.75rem 1.25rem,
-	tabset-tab-text-font-size: 0.875rem,
-	route-tabset-tab-padding: 0.75rem 1.25rem,
-	route-tabset-tab-text-font-size: 0.875rem,
-	// Inputs / selects
-	input-medium-text-font-size: 0.8125rem,
-	input-medium-padding: 0.4375rem 0.75rem,
-	select-medium-text-font-size: 0.8125rem,
-	// ── Header band ────────────────────────────────────────────────────────
-	// ONE height for every control in the header action cluster. Those controls
-	// are unrelated widgets — `ng-select` triggers (employee / project / team /
-	// organization) and a bare `<input>` wrapped in a pill (the date range) —
-	// so nothing derives a common height for them, and each used to land on
-	// whatever its own internals produced. The date range came out ~10px taller
-	// than its neighbors because the global `input { min-height: … }` control
-	// floor in `text-inputs-overrides` clamps the field inside its pill to a
-	// full-size control, which the pill then has to wrap.
-	//
-	// Deliberately shorter than the full-size control height that floor
-	// resolves to: the header band is chrome, not a form.
-	gauzy-header-control-height: 2rem,
-	// ── Data tables (angular2-smart-table) ─────────────────────────────────
-	// The library ships its own emulated component CSS and nothing in this repo
-	// used to contest it:
-	//     :host                          { font-size: 1rem }
-	//     :host ::ng-deep table          { line-height: 1.5em }   ->  24px
-	//     :host ::ng-deep table tr td/th { font-size: .875em;     ->  14px
-	//                                      padding: .5em 1em }    ->  7px 14px
-	// (the `em` in that padding resolves against the CELL's own 14px font-size,
-	// which is where the odd 7px/14px box came from). The rules in
-	// `_overrides.scss` consume the tokens below instead, so all 8 themes move
-	// together. Bootstrap is NOT in play here: its cell padding lives on
-	// `.table`, and the library's `<table [ngClass]="tableClass">` takes that
-	// class from `settings.attr.class`, which Gauzy never sets.
-	//
-	// 0.8125rem (13px) is the deliberate readability floor for cell text.
-	gauzy-table-font-size: 0.8125rem,
-	gauzy-table-line-height: 1.25rem,
-	gauzy-table-cell-padding-y: 0.375rem,
-	gauzy-table-cell-padding-x: 0.625rem,
-	// Header stays distinct through weight + colour (see the
-	// `.angular2-smart-titles` rules in `_overrides.scss`), not through height.
-	gauzy-table-header-font-size: 0.75rem,
-	gauzy-table-header-line-height: 0.9375rem,
-	gauzy-table-header-padding-y: 0.5rem,
-	gauzy-table-header-padding-x: 0.625rem,
-	// Filter row: the control is the tallest thing in it, so that row measures
-	// `gauzy-table-control-height + 2 * gauzy-table-filter-padding-y`.
-	gauzy-table-filter-padding-y: 0.25rem,
-	gauzy-table-control-height: 1.75rem,
-	// Chips / status pills rendered INSIDE cells. They have their own box and
-	// therefore their own say in the row height, so they are compacted in the
-	// same proportion rather than left at their old 24px-per-chip footprint.
-	gauzy-table-chip-font-size: 0.6875rem,
-	gauzy-table-chip-line-height: 0.875rem,
-	gauzy-table-chip-padding-y: 0.0625rem,
-	gauzy-table-chip-padding-x: 0.375rem,
-	gauzy-table-chip-gap: 0.1875rem,
-	// Vertical breathing room between a cell's text line and the chip row under
-	// it. Distinct from `gauzy-table-chip-gap` (chip↔chip): collapsing the two
-	// into one token is what let the chips ride up into the text.
-	gauzy-table-chip-block-gap: 0.25rem,
-	// A status pill should cost a row exactly one line box and no more.
-	gauzy-table-badge-height: 1.25rem,
-	// ── People lists inside cells (`ngx-people-list`) ───────────────────────
-	// One shared treatment for "several people in one cell" (Members,
-	// Managers, Employees, Assigned To, Interviewers …). The whole group must
-	// cost the row a SINGLE line box, so the avatar is the tallest thing in it
-	// and everything else is sized off `gauzy-people-avatar-size`.
-	gauzy-people-avatar-size: 1.25rem,
-	// Horizontal gap between two people; also the gap between the avatar and
-	// the name inside one person.
-	gauzy-people-gap: 0.375rem,
-	// Gap inside the avatar-only stack. Deliberately NOT a negative margin:
-	// overlapped avatars need a ring to stay legible, and a ring is exactly the
-	// per-person border this treatment exists to get rid of.
-	gauzy-people-stack-gap: 0.125rem,
-	// Names truncate on WIDTH, never on a character count: anything shorter
-	// than this renders in full, only genuinely long names get an ellipsis.
-	gauzy-people-name-max-width: 8rem,
-	gauzy-people-font-size: 0.75rem,
-	// Initials fallback + the "+N" chip, both of which sit inside an avatar box.
-	gauzy-people-initials-font-size: 0.5625rem
+  // Typography — 14px body, 13px controls, tighter headings
+  text-paragraph-font-size: 0.875rem,
+  text-subtitle-font-size: 0.9375rem,
+  text-subtitle-2-font-size: 0.8125rem,
+  text-label-font-size: 0.75rem,
+  text-caption-font-size: 0.75rem,
+  text-button-medium-font-size: 0.8125rem,
+  text-heading-4-font-size: 1.5rem,
+  text-heading-5-font-size: 1.25rem,
+  text-heading-6-font-size: 1rem,
+  // ── Page / card title ──────────────────────────────────────────────────
+  // The ONE step every card title resolves to, whether it comes from the
+  // shared `ngx-header-title` or from a heading a template dropped straight
+  // into an `nb-card-header`. A page heading only has to out-rank body copy;
+  //
+  // Kept as its own token rather than reusing `text-heading-5-*`: those
+  // describe what an <h5> is worth ANYWHERE, while this describes a role,
+  // and the rules that consume it deliberately apply to h1..h5 alike. Every
+  // theme key is emitted as a CSS custom property, so the component that
+  // owns the shared title can read the same value from its inline styles.
+  gauzy-page-title-font-size: 1rem,
+  gauzy-page-title-font-weight: 600,
+  gauzy-page-title-line-height: 1.5rem,
+  gauzy-page-title-letter-spacing: -0.01em,
+  // The reference box every item on the page title LINE is centred in — the
+  // heading itself and the action block beside it (`.ga-page-header` in
+  // `_overrides.scss`). It is the tallest control that line hosts: a small
+  // filled `[nbButton]` (1rem line + 2 × 0.375rem padding + 2 × 1px border =
+  // 1.875rem) inside the `.visible-slot` pill of `ngx-gauzy-button-action`
+  // (+ 2 × 2px) = 2.125rem. Taller than the 1.75rem title line, so the title
+  // centres inside it; anything shorter (an `.action` button, the action
+  // strip) centres too. A page that puts a medium button here overshoots the
+  // box and is off-axis by half the difference — use `size="small"` on the line.
+  gauzy-page-title-row-height: 2.125rem,
+  // Menus / sidebar
+  menu-item-padding: 0.5rem 0.75rem,
+  menu-text-font-size: 0.8125rem,
+  menu-text-font-weight: 500,
+  menu-item-divider-width: 0,
+  // Flat-chrome tokens (shadcn-like): a small radius and a low-contrast
+  // hover fill shared by breadcrumb links, sidebar rows, settings menu rows
+  // and overlay menu items, so "hover" reads identically everywhere in all 8
+  // themes.
+  // NOTE: deliberately smaller than `border-radius` (0.625rem) — that is the
+  // CARD radius, and a 10px pill on a 20px row is what made menu items look
+  // like blocks.
+  gauzy-radius-sm: 0.375rem,
+  // Translucent NEUTRAL rather than an alias of a background token: aliasing
+  // `background-basic-color-2` painted an invisible hover in `gauzy-dark`,
+  // where that token is rgba(32, 32, 35, 1) — the exact colour of the surfaces
+  // it sits on (`gauzy-card-1`, and the header/layout backgrounds aliased to
+  // it). A low-alpha grey darkens a light surface and lightens a dark one, so
+  // one value works in every theme without a per-theme branch.
+  gauzy-hover-tint: rgba(126, 126, 143, 0.12),
+  // Active / current row: exactly twice the hover alpha. The pair stays
+  // distinguishable on both surfaces while neither reads as a filled block.
+  gauzy-active-tint: rgba(126, 126, 143, 0.2),
+  // Overlay container hairline — shared by the global overlay rules and by the
+  // popups that are positioned by the layout instead of `.cdk-overlay-container`
+  // (user menu, workspace menu), so all of them resolve one value.
+  gauzy-overlay-border-color: rgba(126, 126, 143, 0.18),
+  menu-item-divider-style: none,
+  // Cards
+  card-padding: 1rem,
+  card-header-padding: 0.875rem 1rem,
+  // NOTE: header-height / layout-padding are intentionally NOT compacted:
+  // the fixed header's real height is content-driven (demo banner + toolbar)
+  // while Nebular offsets the page by the header-height variable only, so
+  // shrinking the variable clips the top of the page content.
+  // Tabs
+  tabset-tab-padding: 0.75rem 1.25rem,
+  tabset-tab-text-font-size: 0.875rem,
+  route-tabset-tab-padding: 0.75rem 1.25rem,
+  route-tabset-tab-text-font-size: 0.875rem,
+  // Inputs / selects
+  input-medium-text-font-size: 0.8125rem,
+  input-medium-padding: 0.4375rem 0.75rem,
+  select-medium-text-font-size: 0.8125rem,
+  // ── Header band ────────────────────────────────────────────────────────
+  // ONE height for every control in the header action cluster. Those controls
+  // are unrelated widgets — `ng-select` triggers (employee / project / team /
+  // organization) and a bare `<input>` wrapped in a pill (the date range) —
+  // so nothing derives a common height for them, and each used to land on
+  // whatever its own internals produced. The date range came out ~10px taller
+  // than its neighbors because the global `input { min-height: … }` control
+  // floor in `text-inputs-overrides` clamps the field inside its pill to a
+  // full-size control, which the pill then has to wrap.
+  //
+  // Deliberately shorter than the full-size control height that floor
+  // resolves to: the header band is chrome, not a form. 1.75rem still clears
+  // the cluster's 0.6875rem text and its 1.125rem avatars.
+  gauzy-header-control-height: 1.75rem,
+  gauzy-header-text-size: 0.6875rem,
+  // ── Data tables (angular2-smart-table) ─────────────────────────────────
+  // The library ships its own emulated component CSS and nothing in this repo
+  // used to contest it:
+  //     :host                          { font-size: 1rem }
+  //     :host ::ng-deep table          { line-height: 1.5em }   ->  24px
+  //     :host ::ng-deep table tr td/th { font-size: .875em;     ->  14px
+  //                                      padding: .5em 1em }    ->  7px 14px
+  // (the `em` in that padding resolves against the CELL's own 14px font-size,
+  // which is where the odd 7px/14px box came from). The rules in
+  // `_overrides.scss` consume the tokens below instead, so all 8 themes move
+  // together. Bootstrap is NOT in play here: its cell padding lives on
+  // `.table`, and the library's `<table [ngClass]="tableClass">` takes that
+  // class from `settings.attr.class`, which Gauzy never sets.
+  //
+  // 0.8125rem (13px) is the deliberate readability floor for cell text.
+  gauzy-table-font-size: 0.8125rem,
+  gauzy-table-line-height: 1.25rem,
+  gauzy-table-cell-padding-y: 0.375rem,
+  gauzy-table-cell-padding-x: 0.625rem,
+  // Header stays distinct through weight + colour (see the
+  // `.angular2-smart-titles` rules in `_overrides.scss`), not through height.
+  gauzy-table-header-font-size: 0.75rem,
+  gauzy-table-header-line-height: 0.9375rem,
+  gauzy-table-header-padding-y: 0.5rem,
+  gauzy-table-header-padding-x: 0.625rem,
+  // Filter row: the control is the tallest thing in it, so that row measures
+  // `gauzy-table-control-height + 2 * gauzy-table-filter-padding-y`.
+  gauzy-table-filter-padding-y: 0.25rem,
+  gauzy-table-control-height: 1.75rem,
+  // Chips / status pills rendered INSIDE cells. They have their own box and
+  // therefore their own say in the row height, so they are compacted in the
+  // same proportion rather than left at their old 24px-per-chip footprint.
+  gauzy-table-chip-font-size: 0.6875rem,
+  gauzy-table-chip-line-height: 0.875rem,
+  gauzy-table-chip-padding-y: 0.0625rem,
+  gauzy-table-chip-padding-x: 0.375rem,
+  gauzy-table-chip-gap: 0.1875rem,
+  // Vertical breathing room between a cell's text line and the chip row under
+  // it. Distinct from `gauzy-table-chip-gap` (chip↔chip): collapsing the two
+  // into one token is what let the chips ride up into the text.
+  gauzy-table-chip-block-gap: 0.25rem,
+  // A status pill should cost a row exactly one line box and no more.
+  gauzy-table-badge-height: 1.25rem,
+  // ── People lists inside cells (`ngx-people-list`) ───────────────────────
+  // One shared treatment for "several people in one cell" (Members,
+  // Managers, Employees, Assigned To, Interviewers …). The whole group must
+  // cost the row a SINGLE line box, so the avatar is the tallest thing in it
+  // and everything else is sized off `gauzy-people-avatar-size`.
+  gauzy-people-avatar-size: 1.25rem,
+  // Horizontal gap between two people; also the gap between the avatar and
+  // the name inside one person.
+  gauzy-people-gap: 0.375rem,
+  // Gap inside the avatar-only stack. Deliberately NOT a negative margin:
+  // overlapped avatars need a ring to stay legible, and a ring is exactly the
+  // per-person border this treatment exists to get rid of.
+  gauzy-people-stack-gap: 0.125rem,
+  // Names truncate on WIDTH, never on a character count: anything shorter
+  // than this renders in full, only genuinely long names get an ellipsis.
+  gauzy-people-name-max-width: 8rem,
+  gauzy-people-font-size: 0.75rem,
+  // Initials fallback + the "+N" chip, both of which sit inside an avatar box.
+  gauzy-people-initials-font-size: 0.5625rem
 );
 
 // ── Action buttons: colour by TEXT + BORDER, not by fill ────────────────────
@@ -181,54 +192,54 @@ $gauzy-density: (
 $gauzy-action-statuses: (success, danger, warning, info);
 
 @function gauzy-action-buttons($statuses: $gauzy-action-statuses) {
-	$tokens: ();
+  $tokens: ();
 
-	@each $status in $statuses {
-		// Token NAMES (unquoted), resolved per-theme by `nb-deep-find-value`, so
-		// the light and dark accent maps below can hold different values behind
-		// one set of button tokens.
-		$text: string.unquote('gauzy-action-#{$status}-text');
-		$border: string.unquote('gauzy-action-#{$status}-border');
-		$tint: string.unquote('gauzy-action-#{$status}-tint');
-		$tint-strong: string.unquote('gauzy-action-#{$status}-tint-strong');
+  @each $status in $statuses {
+    // Token NAMES (unquoted), resolved per-theme by `nb-deep-find-value`, so
+    // the light and dark accent maps below can hold different values behind
+    // one set of button tokens.
+    $text: string.unquote('gauzy-action-#{$status}-text');
+    $border: string.unquote('gauzy-action-#{$status}-border');
+    $tint: string.unquote('gauzy-action-#{$status}-tint');
+    $tint-strong: string.unquote('gauzy-action-#{$status}-tint-strong');
 
-		@each $appearance in (filled, outline) {
-			$p: 'button-#{$appearance}-#{$status}';
+    @each $appearance in (filled, outline) {
+      $p: 'button-#{$appearance}-#{$status}';
 
-			$tokens: map.merge(
-				$tokens,
-				(
-					string.unquote('#{$p}-background-color'): transparent,
-					string.unquote('#{$p}-border-color'): $border,
-					string.unquote('#{$p}-text-color'): $text,
-					// Hover / focus / active are the only places a fill remains, and
-					// it is a low-alpha tint of the button's own accent rather than a
-					// second saturated colour.
-					string.unquote('#{$p}-focus-background-color'): $tint,
-					string.unquote('#{$p}-focus-border-color'): $text,
-					string.unquote('#{$p}-hover-background-color'): $tint,
-					string.unquote('#{$p}-hover-border-color'): $text,
-					string.unquote('#{$p}-active-background-color'): $tint-strong,
-					string.unquote('#{$p}-active-border-color'): $text,
-					string.unquote('#{$p}-disabled-background-color'): transparent,
-					string.unquote('#{$p}-disabled-border-color'): color-basic-transparent-300,
-					string.unquote('#{$p}-disabled-text-color'): text-disabled-color
-				)
-			);
-		}
+      $tokens: map.merge(
+        $tokens,
+        (
+          string.unquote('#{$p}-background-color'): transparent,
+          string.unquote('#{$p}-border-color'): $border,
+          string.unquote('#{$p}-text-color'): $text,
+          // Hover / focus / active are the only places a fill remains, and
+          // it is a low-alpha tint of the button's own accent rather than a
+          // second saturated colour.
+          string.unquote('#{$p}-focus-background-color'): $tint,
+          string.unquote('#{$p}-focus-border-color'): $text,
+          string.unquote('#{$p}-hover-background-color'): $tint,
+          string.unquote('#{$p}-hover-border-color'): $text,
+          string.unquote('#{$p}-active-background-color'): $tint-strong,
+          string.unquote('#{$p}-active-border-color'): $text,
+          string.unquote('#{$p}-disabled-background-color'): transparent,
+          string.unquote('#{$p}-disabled-border-color'): color-basic-transparent-300,
+          string.unquote('#{$p}-disabled-text-color'): text-disabled-color
+        )
+      );
+    }
 
-		// `outline` carries a text colour per interaction state; `filled` does not.
-		$tokens: map.merge(
-			$tokens,
-			(
-				string.unquote('button-outline-#{$status}-focus-text-color'): $text,
-				string.unquote('button-outline-#{$status}-hover-text-color'): $text,
-				string.unquote('button-outline-#{$status}-active-text-color'): $text
-			)
-		);
-	}
+    // `outline` carries a text colour per interaction state; `filled` does not.
+    $tokens: map.merge(
+      $tokens,
+      (
+        string.unquote('button-outline-#{$status}-focus-text-color'): $text,
+        string.unquote('button-outline-#{$status}-hover-text-color'): $text,
+        string.unquote('button-outline-#{$status}-active-text-color'): $text
+      )
+    );
+  }
 
-	@return $tokens;
+  @return $tokens;
 }
 
 // The accents themselves. Two sets, because one value cannot be legible on both
@@ -241,56 +252,74 @@ $gauzy-action-statuses: (success, danger, warning, info);
 // Borders sit at 40 % alpha of the same hue so the edge reads as "this button is
 // green / red" without becoming a second saturated block.
 $gauzy-action-accents-light: (
-	// emerald-700
-	gauzy-action-success-text: #047857,
-	gauzy-action-success-border: rgba(4, 120, 87, 0.4),
-	gauzy-action-success-tint: rgba(4, 120, 87, 0.08),
-	gauzy-action-success-tint-strong: rgba(4, 120, 87, 0.14),
-	// red-600 — replaces a pure #ff0000 / #ff3d71 fill
-	gauzy-action-danger-text: #dc2626,
-	gauzy-action-danger-border: rgba(220, 38, 38, 0.4),
-	gauzy-action-danger-tint: rgba(220, 38, 38, 0.08),
-	gauzy-action-danger-tint-strong: rgba(220, 38, 38, 0.14),
-	// amber-700
-	gauzy-action-warning-text: #b45309,
-	gauzy-action-warning-border: rgba(180, 83, 9, 0.4),
-	gauzy-action-warning-tint: rgba(180, 83, 9, 0.08),
-	gauzy-action-warning-tint-strong: rgba(180, 83, 9, 0.14),
-	// blue-700
-	gauzy-action-info-text: #1d4ed8,
-	gauzy-action-info-border: rgba(29, 78, 216, 0.4),
-	gauzy-action-info-tint: rgba(29, 78, 216, 0.08),
-	gauzy-action-info-tint-strong: rgba(29, 78, 216, 0.14)
+  // emerald-700
+  gauzy-action-success-text: #047857,
+  gauzy-action-success-border: rgba(4, 120, 87, 0.4),
+  gauzy-action-success-tint: rgba(4, 120, 87, 0.08),
+  gauzy-action-success-tint-strong: rgba(4, 120, 87, 0.14),
+  // red-600 — replaces a pure #ff0000 / #ff3d71 fill
+  gauzy-action-danger-text: #dc2626,
+  gauzy-action-danger-border: rgba(220, 38, 38, 0.4),
+  gauzy-action-danger-tint: rgba(220, 38, 38, 0.08),
+  gauzy-action-danger-tint-strong: rgba(220, 38, 38, 0.14),
+  // amber-700
+  gauzy-action-warning-text: #b45309,
+  gauzy-action-warning-border: rgba(180, 83, 9, 0.4),
+  gauzy-action-warning-tint: rgba(180, 83, 9, 0.08),
+  gauzy-action-warning-tint-strong: rgba(180, 83, 9, 0.14),
+  // blue-700
+  gauzy-action-info-text: #1d4ed8,
+  gauzy-action-info-border: rgba(29, 78, 216, 0.4),
+  gauzy-action-info-tint: rgba(29, 78, 216, 0.08),
+  gauzy-action-info-tint-strong: rgba(29, 78, 216, 0.14)
 );
 
 $gauzy-action-accents-dark: (
-	// emerald-400
-	gauzy-action-success-text: #34d399,
-	gauzy-action-success-border: rgba(52, 211, 153, 0.4),
-	gauzy-action-success-tint: rgba(52, 211, 153, 0.1),
-	gauzy-action-success-tint-strong: rgba(52, 211, 153, 0.18),
-	// red-400
-	gauzy-action-danger-text: #f87171,
-	gauzy-action-danger-border: rgba(248, 113, 113, 0.4),
-	gauzy-action-danger-tint: rgba(248, 113, 113, 0.12),
-	gauzy-action-danger-tint-strong: rgba(248, 113, 113, 0.2),
-	// amber-400
-	gauzy-action-warning-text: #fbbf24,
-	gauzy-action-warning-border: rgba(251, 191, 36, 0.4),
-	gauzy-action-warning-tint: rgba(251, 191, 36, 0.12),
-	gauzy-action-warning-tint-strong: rgba(251, 191, 36, 0.2),
-	// blue-400
-	gauzy-action-info-text: #60a5fa,
-	gauzy-action-info-border: rgba(96, 165, 250, 0.4),
-	gauzy-action-info-tint: rgba(96, 165, 250, 0.12),
-	gauzy-action-info-tint-strong: rgba(96, 165, 250, 0.2)
+  // emerald-400
+  gauzy-action-success-text: #34d399,
+  gauzy-action-success-border: rgba(52, 211, 153, 0.4),
+  gauzy-action-success-tint: rgba(52, 211, 153, 0.1),
+  gauzy-action-success-tint-strong: rgba(52, 211, 153, 0.18),
+  // red-400
+  gauzy-action-danger-text: #f87171,
+  gauzy-action-danger-border: rgba(248, 113, 113, 0.4),
+  gauzy-action-danger-tint: rgba(248, 113, 113, 0.12),
+  gauzy-action-danger-tint-strong: rgba(248, 113, 113, 0.2),
+  // amber-400
+  gauzy-action-warning-text: #fbbf24,
+  gauzy-action-warning-border: rgba(251, 191, 36, 0.4),
+  gauzy-action-warning-tint: rgba(251, 191, 36, 0.12),
+  gauzy-action-warning-tint-strong: rgba(251, 191, 36, 0.2),
+  // blue-400
+  gauzy-action-info-text: #60a5fa,
+  gauzy-action-info-border: rgba(96, 165, 250, 0.4),
+  gauzy-action-info-tint: rgba(96, 165, 250, 0.12),
+  gauzy-action-info-tint-strong: rgba(96, 165, 250, 0.2)
+);
+
+$gauzy-menu-scrollbar-light: (
+  gauzy-menu-scrollbar-track: rgba(126, 126, 143, 0.08),
+  gauzy-menu-scrollbar-thumb: rgba(126, 126, 143, 0.55),
+  gauzy-menu-scrollbar-thumb-hover: rgba(126, 126, 143, 0.85)
+);
+
+$gauzy-menu-scrollbar-dark: (
+  gauzy-menu-scrollbar-track: rgba(255, 255, 255, 0.07),
+  gauzy-menu-scrollbar-thumb: rgba(0, 0, 0, 0.7),
+  gauzy-menu-scrollbar-thumb-hover: rgba(0, 0, 0, 0.9)
 );
 
 // What actually gets merged into a theme, last, so it wins over the per-theme
 // map — same contract `$gauzy-density` has always had. Themes take the light or
 // the dark accent set depending on the canvas they paint.
-$gauzy-shared-light: map.merge(map.merge($gauzy-density, $gauzy-action-accents-light), gauzy-action-buttons());
-$gauzy-shared-dark: map.merge(map.merge($gauzy-density, $gauzy-action-accents-dark), gauzy-action-buttons());
+$gauzy-shared-light: map.merge(
+  map.merge(map.merge($gauzy-density, $gauzy-action-accents-light), gauzy-action-buttons()),
+  $gauzy-menu-scrollbar-light
+);
+$gauzy-shared-dark: map.merge(
+  map.merge(map.merge($gauzy-density, $gauzy-action-accents-dark), gauzy-action-buttons()),
+  $gauzy-menu-scrollbar-dark
+);
 
 // ── Canvas token sets for themes that do not define their own ───────────────
 // Every registration in themes.scss carries a hand-tuned block of gauzy-*
@@ -300,51 +329,51 @@ $gauzy-shared-dark: map.merge(map.merge($gauzy-density, $gauzy-action-accents-da
 // the 'dark'/'corporate' blocks, reused as sane defaults for any theme whose
 // canvas matches; a theme that wants its own look overrides per key.
 $gauzy-canvas-dark: (
-	gauzy-card-1: card-background-color,
-	gauzy-card-2: rgba(16, 16, 20, 0.3),
-	gauzy-card-3: rgba(5, 5, 5, 0.5),
-	gauzy-card-4: rgba(5, 5, 5, 0.25),
-	gauzy-card-5: rgba(7, 9, 1, 1),
-	gauzy-card-6: rgba(52, 52, 62, 1),
-	gauzy-input-background: rgba(255, 255, 255, 0.15),
-	gauzy-background-transparent: color-primary-transparent-default,
-	gauzy-border-default-color: rgba(255, 255, 255, 0.1),
-	gauzy-border-table: rgba(16, 16, 20, 0.5),
-	gauzy-sidebar-background-1: background-basic-color-2,
-	gauzy-sidebar-background-2: background-basic-color-2,
-	gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
-	gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
-	gauzy-siderbar-background-5: rgb(18, 18, 17),
-	gauzy-text-color-1: rgba(255, 255, 255, 1),
-	gauzy-text-color-2: rgba(255, 255, 255, 0.5),
-	gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%),
-	gauzy-scrollbar: rgba(126, 126, 143, 0.25),
-	gauzy-primary-background: rgb(58, 62, 75),
-	layout-padding: 24px 24px 0 12px,
-	header-height: 4.5rem
+  gauzy-card-1: card-background-color,
+  gauzy-card-2: rgba(16, 16, 20, 0.3),
+  gauzy-card-3: rgba(5, 5, 5, 0.5),
+  gauzy-card-4: rgba(5, 5, 5, 0.25),
+  gauzy-card-5: rgba(7, 9, 1, 1),
+  gauzy-card-6: rgba(52, 52, 62, 1),
+  gauzy-input-background: rgba(255, 255, 255, 0.15),
+  gauzy-background-transparent: color-primary-transparent-default,
+  gauzy-border-default-color: rgba(255, 255, 255, 0.1),
+  gauzy-border-table: rgba(16, 16, 20, 0.5),
+  gauzy-sidebar-background-1: background-basic-color-2,
+  gauzy-sidebar-background-2: background-basic-color-2,
+  gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
+  gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
+  gauzy-siderbar-background-5: rgb(18, 18, 17),
+  gauzy-text-color-1: rgba(255, 255, 255, 1),
+  gauzy-text-color-2: rgba(255, 255, 255, 0.5),
+  gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 35%),
+  gauzy-scrollbar: rgba(126, 126, 143, 0.25),
+  gauzy-primary-background: rgb(58, 62, 75),
+  layout-padding: 24px 24px 0 12px,
+  header-height: 4.5rem
 );
 
 $gauzy-canvas-light: (
-	gauzy-card-1: rgba(255, 255, 255, 1),
-	gauzy-card-2: rgba(50, 50, 50, 0.03),
-	gauzy-card-3: rgba(255, 255, 255, 0.5),
-	gauzy-card-4: rgba(255, 255, 255, 0.75),
-	gauzy-card-5: rgba(248, 246, 254, 1),
-	gauzy-card-6: rgba(249, 249, 249, 1),
-	gauzy-input-background: rgba(255, 255, 255, 1),
-	gauzy-background-transparent: color-primary-transparent-default,
-	gauzy-border-default-color: rgba(126, 126, 143, 0.1),
-	gauzy-border-table: rgba(126, 126, 143, 0.1),
-	gauzy-sidebar-background-1: #ebebeb,
-	gauzy-sidebar-background-2: rgba(251, 251, 251, 1),
-	gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
-	gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
-	gauzy-siderbar-background-5: rgb(237, 237, 238),
-	gauzy-text-color-1: rgba(66, 66, 66, 1),
-	gauzy-text-color-2: rgba(126, 126, 143, 1),
-	gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
-	gauzy-scrollbar: rgba(126, 126, 143, 0.1),
-	gauzy-primary-background: rgb(246, 247, 254),
-	layout-padding: 24px 24px 0 12px,
-	header-height: 4.5rem
+  gauzy-card-1: rgba(255, 255, 255, 1),
+  gauzy-card-2: rgba(50, 50, 50, 0.03),
+  gauzy-card-3: rgba(255, 255, 255, 0.5),
+  gauzy-card-4: rgba(255, 255, 255, 0.75),
+  gauzy-card-5: rgba(248, 246, 254, 1),
+  gauzy-card-6: rgba(249, 249, 249, 1),
+  gauzy-input-background: rgba(255, 255, 255, 1),
+  gauzy-background-transparent: color-primary-transparent-default,
+  gauzy-border-default-color: rgba(126, 126, 143, 0.1),
+  gauzy-border-table: rgba(126, 126, 143, 0.1),
+  gauzy-sidebar-background-1: #ebebeb,
+  gauzy-sidebar-background-2: rgba(251, 251, 251, 1),
+  gauzy-sidebar-background-3: rgba(126, 126, 143, 0.1),
+  gauzy-sidebar-background-4: rgba(126, 126, 143, 0.05),
+  gauzy-siderbar-background-5: rgb(237, 237, 238),
+  gauzy-text-color-1: rgba(66, 66, 66, 1),
+  gauzy-text-color-2: rgba(126, 126, 143, 1),
+  gauzy-shadow: 0px 1px 1px 0px rgb(0 0 0 / 15%),
+  gauzy-scrollbar: rgba(126, 126, 143, 0.1),
+  gauzy-primary-background: rgb(246, 247, 254),
+  layout-padding: 24px 24px 0 12px,
+  header-height: 4.5rem
 );

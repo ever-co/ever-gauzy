@@ -1,5 +1,13 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use './swiper' as swiper;
+$panel-gap: 1rem;
+$panel-padding: 0.75rem;
+$action-gap: 0.5rem;
+// Narrowest an Overview card may get before the row drops to fewer columns.
+$widget-min-width: 13.75rem;
+$widget-min-width-sm: 9.5rem;
+// Width the page title claims before the action strip is wrapped below it.
+$header-title-basis: 18rem;
 
 :host {
   background-color: rgba(50, 50, 50, 0.02);
@@ -16,48 +24,201 @@
 
   // Include Swiper styles from separate file (doesn't need ng-deep for Custom Elements in template)
   @include swiper.swiper-styles();
+}
 
-  nb-card.member-list {
-    nb-card-body {
-      padding: 8px;
-      .list {
-        max-height: 65vh;
-        overflow-y: auto;
-      }
+:host .page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: $panel-gap;
+  row-gap: $action-gap;
+  width: 100%;
+
+  &__main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    // A REAL basis, not `1 1 0%`.
+    //
+    // From a zero basis this block never reports a size the row can wrap on, so
+    // the action strip always won the line and the title took whatever was left
+    // — around 60px on a narrow card, which stacked the page title one fragment
+    // per line and clipped the breadcrumb trail parked underneath it. With a
+    // basis the flex line wraps as soon as the title cannot sit beside the
+    // actions, and the title gets the full width instead of a sliver of it.
+    // `min-width: 0` still lets it shrink below that basis once it is on a line
+    // of its own.
+    flex: 1 1 $header-title-basis;
+    min-width: 0;
+  }
+
+  &__title {
+    margin: 0;
+    min-width: 0;
+    // Wrap between words; break inside one only when that word cannot fit on a
+    // line by itself.
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $action-gap;
+    flex: 0 1 auto;
+    // Keeps the strip at the end of the row once it wraps onto a line of its
+    // own, where `space-between` would otherwise lay it out at the start. An
+    // auto margin rather than an alignment, so it holds in RTL too.
+    margin-inline-start: auto;
+  }
+}
+
+:host .page-header__actions {
+  --tt-control-height: #{nb-theme(gauzy-header-control-height)};
+
+  ga-timezone-filter ::ng-deep .popover-button[nbButton],
+  .refresh-button[nbButton],
+  .manage-widget[nbButton] {
+    height: var(--tt-control-height);
+    min-width: 0;
+    padding-block: 0;
+    padding-inline: 0.625rem;
+    font-size: nb-theme(text-label-font-size);
+    font-weight: 500;
+    line-height: 1rem;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+
+    color: var(--gauzy-text-color-2);
+    background-color: var(--gauzy-card-1);
+    border: none;
+    box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+    border-radius: nb-theme(gauzy-radius-sm);
+    transition:
+      background-color 0.15s ease,
+      box-shadow 0.15s ease,
+      color 0.15s ease;
+
+    &:hover:not([disabled]) {
+      background-color: var(--gauzy-hover-tint);
+      color: var(--gauzy-text-color-1);
+    }
+
+    &[disabled] {
+      background-color: transparent;
+      box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+      color: var(--gauzy-text-color-2);
+      opacity: 0.55;
+      cursor: not-allowed;
     }
   }
 
-  .nb-card-header {
-    display: flex;
-    justify-content: space-between;
+  ga-timezone-filter ::ng-deep .popover-button[nbButton] nb-icon,
+  .refresh-button[nbButton] nb-icon,
+  .manage-widget[nbButton] nb-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    flex: 0 0 auto;
+  }
+
+  .custom-toggle {
+    display: inline-flex;
     align-items: center;
-  }
+    height: var(--tt-control-height);
 
-  .card-header {
-    background-color: unset;
-  }
+    ::ng-deep {
+      .toggle-label {
+        margin-bottom: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+      }
 
-  .button-container {
-    display: flex;
-    gap: 1rem;
+      span.text {
+        color: var(--gauzy-text-color-2);
+        font-size: nb-theme(text-label-font-size);
+        font-weight: 500;
+        line-height: 1rem;
+        white-space: nowrap;
+        padding: 0;
+      }
+    }
   }
+}
 
-  [nbButton].appearance-outline.status-primary {
-    background-color: unset;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 15px;
-    letter-spacing: 0em;
-    border-color: var(--gauzy-background-transparent);
-    color: var(--button-outline-primary-text-color);
-    border-width: 2px;
-    padding: 4px 10px;
+@media screen and (max-width: 36rem) {
+  :host .page-header__actions {
+    .refresh-button .action-label,
+    .manage-widget .action-label {
+      display: none;
+    }
+
+    .refresh-button[nbButton],
+    .manage-widget[nbButton] {
+      padding-inline: 0.5rem;
+      gap: 0;
+    }
+
+    // "AKDT: America - Yakutat / 12 hour" is ~300px of nowrap label — nearly a
+    // phone's whole width for one control. Clipped, it still shows the zone
+    // abbreviation, and the popover carries the full name anyway.
+    ga-timezone-filter ::ng-deep .popover-button[nbButton] > div {
+      max-width: 9rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }
 
 .hour-label {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: $panel-gap;
+  flex-wrap: wrap;
+  margin-bottom: $panel-padding;
+
+  ngx-avatar {
+    width: auto;
+    flex: 0 1 auto;
+    min-width: 0;
+
+    ::ng-deep {
+      .avatar-wrapper,
+      .inner-wrapper,
+      .names-wrapper {
+        width: auto;
+        min-width: 0;
+      }
+
+      .link-text,
+      .caption {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .caption {
+        max-width: 16rem;
+      }
+    }
+  }
+}
+
+.button-container {
+  display: flex;
+  align-items: center;
+  gap: $action-gap;
+  flex: 0 0 auto;
 }
 
 .link-text {
@@ -70,21 +231,16 @@
 .member-weekly-activity-graph {
   display: flex;
   align-items: flex-end;
-  margin-left: 15px;
-  min-height: 30px;
+  gap: 2px;
+  margin-inline-start: 0.625rem;
+  height: 1.25rem;
 
   .bar-graph-entry {
-    width: 7px;
-    margin-right: 3px;
-    background-color: #0095ff;
-    min-height: 1px;
+    width: 4px;
+    border-radius: 1px;
+    background-color: var(--color-info-default);
+    min-height: 2px;
   }
-}
-
-nb-badge {
-  position: unset;
-  display: table;
-  margin: 10px auto 0;
 }
 
 .filter {
@@ -143,61 +299,486 @@ nb-badge {
     }
   }
 
-  ::ng-deep {
-    .toggle-label {
-      margin-bottom: 0;
-    }
-  }
-
-  .custom-toggle {
-    ::ng-deep {
-      span.text {
-        color: nb-theme(text-primary-color);
-      }
-    }
-  }
-
   .card-body {
     background-color: var(--gauzy-card-2);
   }
-
-  .project-name {
-    color: var(--gauzy-text-color-1);
-    font-size: 14px;
-    font-weight: 600;
-  }
 }
 
-.custom-card-body-inner-list {
-  padding: 0 9px;
-  overflow: unset;
-  .custom-card-button {
-    display: flex;
-    justify-content: flex-end;
-    margin: 1rem 15px 0 15px;
-  }
-}
-
-.font-weight-bold {
-  font-weight: 600;
-  color: var(--gauzy-text-color-2);
-}
-nb-card-header {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 16px;
-  letter-spacing: -0.009em;
-  color: var(--gauzy-text-color-2);
-}
-.custom-container {
-  display: grid;
-  -webkit-box-align: center;
+:host .window-header {
+  display: flex;
   align-items: center;
-  -webkit-box-pack: start;
-  justify-content: start;
-  column-gap: 1rem;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  justify-content: space-between;
+  gap: $action-gap;
+  padding-block: $panel-padding;
+  padding-inline-start: $panel-padding;
+  padding-inline-end: 2.25rem;
+
+  &__title {
+    font-size: nb-theme(text-subtitle-2-font-size);
+    font-weight: 600;
+    line-height: 1.125rem;
+    letter-spacing: -0.009em;
+    color: var(--gauzy-text-color-2);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__action {
+    flex: 0 0 auto;
+  }
+}
+
+:host .window-body {
+  padding: 0 $panel-padding $panel-padding;
+  overflow: unset;
+}
+
+:host .custom-card-body-inner {
+  padding-top: $panel-padding;
+}
+
+:host .custom-card-body-inner > .row {
+  margin-inline: 0;
+
+  > .col {
+    padding-inline: 0;
+  }
+
+  + .row {
+    margin-top: $panel-gap;
+  }
+}
+
+:host ngx-screenshots-item ::ng-deep {
+  .card {
+    box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+    background-color: var(--gauzy-card-1);
+    min-width: 0;
+    max-width: none;
+
+    &:hover {
+      box-shadow:
+        inset 0 0 0 1px var(--gauzy-border-default-color),
+        0 8px 20px -12px rgba(0, 0, 0, 0.45);
+    }
+
+    &.danger-bordered {
+      box-shadow: none;
+    }
+  }
+
+  nb-progress-bar.size-tiny .progress-container {
+    height: 5px;
+  }
+
+  .image-container {
+    background-color: var(--gauzy-hover-tint) !important;
+  }
+
+  .image-container img.default-image {
+    box-sizing: border-box !important;
+    padding: 2.5rem !important;
+    opacity: 0.35 !important;
+  }
+
+  .slot-info {
+    padding: $panel-padding !important;
+
+    .time-span {
+      margin-top: 0 !important;
+      margin-bottom: 0.5rem !important;
+    }
+
+    .inline-time-span {
+      font-size: nb-theme(gauzy-table-header-font-size);
+      font-weight: 600;
+      line-height: 1.125rem;
+      color: var(--gauzy-text-color-1);
+      font-variant-numeric: tabular-nums;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .caption {
+      margin-top: 0.125rem !important;
+      line-height: 1rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .activity-count {
+      margin-top: 0.375rem !important;
+      font-size: nb-theme(gauzy-table-header-font-size);
+      line-height: 1rem;
+      color: var(--gauzy-text-color-2);
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .image-container .hover {
+    padding: 0.5rem !important;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.45) 55%,
+      rgba(0, 0, 0, 0.2) 100%
+    ) !important;
+  }
+
+  .image-container .view-button {
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.375rem;
+
+    button[nbButton] {
+      height: 1.75rem;
+      padding: 0 0.625rem;
+      border-radius: nb-theme(gauzy-radius-sm);
+      justify-content: center;
+      margin: 0 !important;
+    }
+  }
+
+  .image-container .hover .actions {
+    gap: 0.375rem;
+
+    button[nbButton] {
+      width: 1.5rem;
+      height: 1.5rem;
+      padding: 0;
+      border-radius: nb-theme(gauzy-radius-sm);
+      margin: 0 !important;
+
+      &.ml-auto {
+        margin-inline-start: auto !important;
+      }
+
+      nb-icon {
+        font-size: 0.875rem;
+        width: 0.875rem;
+        height: 0.875rem;
+        margin: 0;
+      }
+    }
+  }
+}
+
+:host .window-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 5rem;
+  padding: $panel-padding;
+  font-size: nb-theme(gauzy-table-font-size);
+  line-height: nb-theme(gauzy-table-line-height);
+  color: var(--gauzy-text-color-2);
+}
+
+:host .data-list {
+  --tt-row-padding-block: 0.875rem;
+
+  &::ng-deep nb-list-item {
+    padding: var(--tt-row-padding-block) nb-theme(gauzy-table-cell-padding-x);
+    font-size: nb-theme(gauzy-table-font-size);
+    line-height: nb-theme(gauzy-table-line-height);
+    color: var(--gauzy-text-color-1);
+    border-bottom: 1px solid var(--gauzy-border-default-color);
+    transition: background-color 0.15s ease-in-out;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: var(--gauzy-hover-tint);
+    }
+  }
+
+  &::ng-deep nb-list-item.data-list__head {
+    padding: nb-theme(gauzy-table-header-padding-y) nb-theme(gauzy-table-header-padding-x);
+    font-size: nb-theme(gauzy-table-header-font-size);
+    line-height: nb-theme(gauzy-table-header-line-height);
+    background-color: nb-theme(gauzy-card-3);
+    border-radius: nb-theme(gauzy-radius-sm);
+    border-bottom: none;
+    margin-bottom: 2px;
+
+    &:hover {
+      background-color: nb-theme(gauzy-card-3);
+    }
+  }
+
+  ::ng-deep .row {
+    margin-inline: 0;
+    align-items: center;
+    row-gap: 0.25rem;
+  }
+}
+
+:host .cell {
+  min-width: 0;
+  padding-inline: 0.375rem;
+  color: var(--gauzy-text-color-1);
+
+  &--centered {
+    text-align: center;
+  }
+
+  &--clip {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &--figure,
+  &--numeric {
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-2);
+  }
+
+  &--numeric {
+    text-align: end;
+  }
+}
+
+:host .cell ngx-avatar ::ng-deep {
+  .inner-wrapper {
+    min-width: 0;
+  }
+
+  // Without this the 32px thumbnail is the first thing flexbox shrinks, so the
+  // avatar squashed to an oval before the name ever started to ellipsize.
+  .image-outer-wrapper,
+  .image-container {
+    flex: 0 0 auto;
+  }
+
+  .names-wrapper {
+    min-width: 0;
+  }
+
+  .link-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+:host .font-weight-bold {
+  font-weight: 600;
+  color: var(--gauzy-text-color-2);
+  text-transform: none;
+}
+
+:host .project-name {
+  color: var(--gauzy-text-color-1);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: nb-theme(gauzy-table-line-height);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:host .manual-time-list nb-list-item:not(.data-list__head),
+:host .projects-list nb-list-item,
+:host .apps-urls-list nb-list-item {
+  font-size: 12px;
+}
+
+:host .manual-time-list .col-3.cell ngx-avatar ::ng-deep .link-text,
+:host .manual-time-list .col-3.cell ngx-avatar ::ng-deep .caption {
+  font-size: 12px;
+}
+
+:host .progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+
+  &__value {
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+    font-size: nb-theme(gauzy-table-header-font-size);
+    color: var(--gauzy-text-color-2);
+    min-width: 2.25rem;
+    text-align: end;
+  }
+
+  nb-progress-bar {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+  }
+}
+
+// Apps & URLs rows.
+//
+// `ngx-activity-item` is shared with the reports, where it is laid out on
+// `col-sm-*`. Below 576px those columns each go full width, so this was the one
+// window that stacked its title, its bar and its duration onto three lines
+// while every other window kept its shape. The basis values below hold the same
+// title / progress / duration split as Projects and Tasks at every width, and
+// the duration cell is given the `.cell--numeric` treatment those two windows
+// use so all three time columns read as one column.
+:host ngx-activity-item.tracking-progress ::ng-deep {
+  .row {
+    margin-inline: 0;
+  }
+
+  .clickable {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .clickable > [class*='col-sm-'] {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding-inline: 0.375rem;
+    font-size: 12px;
+  }
+
+  // Title — matches `.col-5` in Projects / Tasks.
+  .clickable > .col-sm-5 {
+    flex-basis: 41.6667%;
+    max-width: 41.6667%;
+  }
+
+  // Percentage + bar — matches `.col-4`.
+  .clickable > .col-sm-5 + .col-sm-5 {
+    flex-basis: 33.3333%;
+    max-width: 33.3333%;
+  }
+
+  // Duration — matches `.col.cell.cell--numeric`.
+  .clickable > .col-sm-2 {
+    flex: 1 1 auto;
+    max-width: none;
+    text-align: end;
+    font-size: 12px;
+    line-height: nb-theme(gauzy-table-line-height);
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .col.no-child,
+  .col.child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    padding-inline: 0;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: nb-theme(gauzy-table-line-height);
+  }
+
+  // The inner value + bar pair, rebuilt on `.progress-cell`'s metrics.
+  .clickable > .col-sm-5 + .col-sm-5 > .row {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+
+    > .col {
+      padding-inline: 0;
+      min-width: 0;
+    }
+  }
+
+  .percentage-col {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 2.25rem;
+    padding-inline: 0;
+    font-size: nb-theme(gauzy-table-header-font-size);
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-2);
+    text-align: end;
+  }
+
+  // Bootstrap's `.mb-1` is `!important`, so this has to out-specify it.
+  nb-progress-bar.mb-1 {
+    margin: 0 !important;
+  }
+}
+
+:host nb-card.member-list {
+  .data-list {
+    --tt-row-padding-block: 0.625rem;
+  }
+
+  .list {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding-inline-end: 0.25rem;
+  }
+}
+
+:host .activity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: nb-theme(gauzy-table-chip-block-gap);
+  min-width: 0;
+
+  .duration {
+    font-variant-numeric: tabular-nums;
+    font-size: nb-theme(gauzy-table-font-size);
+    line-height: nb-theme(gauzy-table-line-height);
+    color: var(--gauzy-text-color-1);
+    white-space: nowrap;
+  }
+
+  .activity-percentage {
+    display: flex;
+  }
+}
+
+:host .period-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+:host nb-badge {
+  position: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  height: nb-theme(gauzy-table-badge-height);
+  padding: nb-theme(gauzy-table-chip-padding-y) nb-theme(gauzy-table-chip-padding-x);
+  font-size: nb-theme(gauzy-table-chip-font-size);
+  line-height: nb-theme(gauzy-table-chip-line-height);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border-radius: nb-theme(gauzy-radius-sm);
+}
+
+:host [nbButton].appearance-outline.status-primary {
+  background-color: unset;
+  font-size: nb-theme(text-label-font-size);
+  font-weight: 500;
+  line-height: 1rem;
+  letter-spacing: 0em;
+  border-color: var(--gauzy-background-transparent);
+  color: var(--button-outline-primary-text-color);
+  border-width: 1px;
+  height: 1.75rem;
+  padding: 0 0.625rem;
+  white-space: nowrap;
 }
 
 .custom-card-body-inner,
@@ -205,20 +786,49 @@ nb-card-header {
   background-color: nb-theme(gauzy-card-2);
 }
 
-nb-card-body > .header-widget {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 16px;
+:host nb-card-body > .header-widget {
+  font-size: nb-theme(text-label-font-size);
+  font-weight: 500;
+  line-height: 1rem;
   letter-spacing: -0.009em;
   color: var(--gauzy-text-color-2);
-  margin-bottom: 15px;
+  margin-bottom: 0.375rem;
+  min-width: 0;
+
   nb-icon {
     font-size: 11px;
   }
+
+  .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-inline-end: 1.25rem;
+  }
 }
 
-.counter-container {
-  width: 71%;
+:host .h1 {
+  margin-bottom: 0;
+  font-variant-numeric: tabular-nums;
+  // A long duration used to wrap onto a second line and push that one card
+  // taller than the rest of the row.
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:host .counter-container {
+  width: 100%;
+  // `auto`, not a fixed margin: the counter is pushed to the bottom of the card
+  // so the bars line up across the row no matter how tall the text above is.
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+:host ::ng-deep ga-widget #widget nb-card-body {
+  display: flex;
+  flex-direction: column;
+  padding: $panel-padding;
 }
 
 .manage-widget {
@@ -248,20 +858,22 @@ nb-card-body > .header-widget {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 14px;
-  gap: 21px;
+  padding: $panel-padding;
+  gap: $panel-padding;
   min-width: 219px;
+  max-width: 17rem;
   .category {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 14px;
+    gap: 0.5rem;
     width: 100%;
     .view {
       font-size: 10px;
       font-weight: 600;
       line-height: 12px;
       letter-spacing: 0em;
+      text-transform: uppercase;
       color: rgba(126, 126, 143, 0.5);
       align-items: center;
       display: flex;
@@ -270,20 +882,41 @@ nb-card-body > .header-widget {
       width: 100%;
     }
     .title {
-      font-size: 12px;
+      font-size: nb-theme(text-label-font-size);
       font-weight: 400;
-      line-height: 15px;
+      line-height: 1rem;
       letter-spacing: 0em;
       color: var(--gauzy-text-color-2);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 0.5rem;
       cursor: pointer;
       width: 100%;
+      min-width: 0;
+      padding: 0.25rem 0.375rem;
+      border-radius: nb-theme(gauzy-radius-sm);
+      transition: background-color 0.15s ease-in-out;
+
+      &:hover {
+        background-color: var(--gauzy-hover-tint);
+        color: var(--gauzy-text-color-1);
+      }
+      i {
+        flex: 0 0 0.75rem;
+        font-size: 0.6875rem;
+        text-align: center;
+      }
+
+      &__label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
   }
   .line {
-    border-bottom: 0.5px solid rgba(126, 126, 143, 0.25);
+    border-bottom: 1px solid var(--gauzy-border-default-color);
     width: 100%;
   }
 }
@@ -294,14 +927,177 @@ nb-card-body > .header-widget {
 :host .container {
   max-width: unset;
   border-radius: 0 0 $default-radius $default-radius;
-  @include nb-ltr(padding, 0 0.5rem 0 0);
-  @include nb-rtl(padding, 0 0 0 0.5rem);
+  padding: 0;
+}
+
+// The Overview row.
+//
+// `ga-widget` writes an inline pixel width onto each card, interpolated from
+// `window.innerWidth` by a polynomial that runs once at creation and is never
+// recomputed on resize. Those widths do not divide the row evenly, so the cards
+// sat ragged, and on a narrow viewport they overflowed instead of reflowing.
+// The grid tracks below own the width instead — `!important` is what it takes
+// to outrank that inline style — and `auto-fit` reflows on the *container*, so
+// this stays right whether the sidebar is open or collapsed.
+:host ::ng-deep ga-widget-layout {
+  display: block;
+  margin-bottom: $panel-gap;
+
+  .grid-boundary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax($widget-min-width, 1fr));
+    align-items: stretch;
+    gap: $panel-gap;
+    margin: 0;
+  }
+
+  .grid-boundary > * {
+    min-width: 0;
+  }
+
+  // A widget switched off in "Manage widgets" (or hidden by permissions) empties
+  // `ga-widget` but leaves its drop-list wrapper in the DOM; without this the
+  // wrapper holds an empty column open in the middle of the row.
+  .grid-boundary > *:has(> ga-widget:empty) {
+    display: none;
+  }
+
+  ga-widget {
+    display: block;
+    min-width: 0;
+    height: 100%;
+  }
+
+  ga-widget #widget {
+    width: 100% !important;
+    min-width: 0;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+  }
+
+  ga-widget nb-card {
+    height: 100%;
+    margin: 0;
+  }
 }
 
 :host .card-body {
-  @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
-  @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+  padding: $panel-gap;
   border-radius: 0 0 $default-radius $default-radius;
   // Was a `!important` viewport calc; see the `card_overrides` note above.
   height: auto !important;
+}
+
+:host .card-header {
+  background-color: unset;
+  padding: $panel-gap $panel-gap 0.75rem;
+}
+
+// ---------------------------------------------------------------------------
+// Narrow layouts.
+//
+// Every window is a bootstrap row sized in percentages, so the columns keep
+// their proportions as the card narrows — what actually breaks the design is
+// the chrome around them: padding measured for a half-width desktop column, and
+// a handful of fixed-size ornaments. Trim those instead of restacking the rows,
+// so each header cell stays above the data it labels.
+// ---------------------------------------------------------------------------
+@media screen and (max-width: 48rem) {
+  :host .card-body {
+    padding: 0.75rem;
+  }
+
+  :host .window-header {
+    padding-block: 0.625rem;
+    padding-inline-start: 0.625rem;
+    padding-inline-end: 2rem;
+  }
+
+  :host .window-body {
+    padding: 0 0.5rem 0.5rem;
+  }
+
+  :host .data-list {
+    --tt-row-padding-block: 0.625rem;
+
+    &::ng-deep nb-list-item,
+    &::ng-deep nb-list-item.data-list__head {
+      padding-inline: 0.375rem;
+    }
+  }
+
+  :host .cell {
+    padding-inline: 0.25rem;
+  }
+
+  :host .progress-cell {
+    gap: 0.375rem;
+
+    &__value {
+      min-width: 2rem;
+    }
+  }
+
+  :host ngx-activity-item.tracking-progress ::ng-deep {
+    .clickable > [class*='col-sm-'] {
+      padding-inline: 0.25rem;
+    }
+
+    .clickable > .col-sm-5 + .col-sm-5 > .row {
+      gap: 0.375rem;
+    }
+
+    .percentage-col {
+      min-width: 2rem;
+    }
+  }
+
+  // The Members row carries the most per cell — an avatar, two durations and two
+  // badges. The weekly sparkline is decoration beside all of that, and it is
+  // what tips the row into wrapping, so it is the first thing to go.
+  :host .member-weekly-activity-graph {
+    display: none;
+  }
+
+  :host nb-card.member-list .list {
+    max-height: 55vh;
+  }
+
+  :host .hour-label {
+    gap: 0.5rem;
+
+    ngx-avatar ::ng-deep .caption {
+      max-width: 10rem;
+    }
+  }
+}
+
+@media screen and (max-width: 36rem) {
+  :host ::ng-deep ga-widget-layout .grid-boundary {
+    grid-template-columns: repeat(auto-fit, minmax($widget-min-width-sm, 1fr));
+    gap: 0.75rem;
+  }
+
+  :host .h1 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  :host .card-body {
+    padding: 0.75rem;
+  }
+
+  :host .card-header {
+    padding: 0.75rem 0.75rem 0.5rem;
+  }
+}
+
+// Recent Activities carousel: the slide width itself lives in `_swiper.scss` (that
+// mixin is included under `:host`, so a rule here could never outrank it). This only
+// keeps the container able to shrink inside a narrow window.
+.m-swiper {
+  display: block;
+  width: 100%;
+  min-width: 0;
 }

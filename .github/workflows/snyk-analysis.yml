@@ -13,6 +13,14 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# `security-events: write` is required by codeql-action/upload-sarif; `actions: read`
+# lets it resolve the run it is attaching results to on pull_request events.
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   analyze:
     name: Analyze

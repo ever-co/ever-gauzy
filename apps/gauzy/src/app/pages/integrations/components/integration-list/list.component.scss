@@ -1,72 +1,184 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-cards' as *;
 
+$inset: 1rem;
+
 :host {
-	nb-card,
-	nb-card-body {
-		background-color: var(--gauzy-card-2);
-		border-radius: var(--border-radius);
-	}
-	nb-card-body {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		padding: 1rem;
-		.layout-selector {
-			align-self: flex-end;
-		}
-		.table-scroll-container {
-			display: flex;
-			flex-direction: column;
-			gap: 4px;
-		}
-		nb-card {
-			background-color: var(--gauzy-card-1);
-			.card-body-table {
-				display: flex;
-				flex-direction: row;
-				align-items: center;
-				cursor: pointer;
-				gap: 0;
-				.title {
-					font-weight: 600;
-					color: var(--gauzy-text-color-1);
-				}
-				.description {
-					font-size: 13px;
-					color: var(--gauzy-text-color-2);
-				}
-				// Was `rgba(50, 50, 50, 0.03)` — 3% black. Over `--gauzy-card-1` that
-				// is a faint grey on the light themes and effectively nothing on the
-				// near-black ones, so an integration row gave no hover feedback at all
-				// in dark. `--gauzy-hover-tint` is the shared translucent neutral: it
-				// darkens a light surface and lightens a dark one.
-				&:hover {
-					background: var(--gauzy-hover-tint);
-				}
-				img {
-					width: 100%;
-					height: 48px;
-					object-fit: fill;
-					max-width: fit-content;
-				}
-			}
-		}
-	}
-	.columns-header {
-		background-color: nb-theme(gauzy-card-2);
-		border-radius: 8px;
-		margin-bottom: 10px;
-		@include nb-ltr(padding, 12px 30px 12px 24px);
-		@include nb-rtl(padding, 12px 24px 12px 30px);
-		font-size: 12px;
-		font-style: normal;
-		font-weight: 600;
-		line-height: 15px;
-		letter-spacing: 0em;
-	}
-	.last-sync {
-		font-size: 12px;
-		color: var(--gauzy-text-color-1);
-	}
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+    border-radius: var(--border-radius);
+  }
+  nb-card-header {
+    padding-left: $inset;
+    padding-right: $inset;
+  }
+  ::ng-deep nb-card-header {
+    h4 {
+      margin-bottom: 0;
+    }
+    ngx-header-title {
+      display: inline-flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      column-gap: 0.375rem;
+
+      .name,
+      .org-name {
+        font-size: 0.9375rem;
+        line-height: 1.5rem;
+        letter-spacing: normal;
+      }
+    }
+    .ga-page-title-trail {
+      margin-top: 0.5rem;
+    }
+    .ga-breadcrumb-item {
+      font-size: 12px;
+      line-height: 1.125rem;
+    }
+    .ga-breadcrumb-current {
+      color: var(--gauzy-text-color-1);
+    }
+  }
+  nb-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: $inset;
+    .layout-selector {
+      align-self: flex-end;
+    }
+    .table-scroll-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    nb-card {
+      background-color: var(--gauzy-card-1);
+      margin-bottom: 0;
+      .card-body-table {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        cursor: pointer;
+        gap: 0;
+        min-height: 4.5rem;
+        padding: 0.75rem $inset;
+        overflow: visible;
+        > div {
+          padding-left: 0;
+          padding-right: $inset;
+
+          &:last-child {
+            padding-right: 0;
+          }
+        }
+        .title,
+        .description {
+          display: block;
+          max-width: 100%;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+        .title {
+          font-size: 14px;
+          font-weight: 600;
+          line-height: 1.4;
+          color: var(--gauzy-text-color-1);
+        }
+        .description {
+          font-size: 10px;
+          line-height: 1.35;
+          color: var(--gauzy-text-color-2);
+        }
+        &:hover {
+          background: var(--gauzy-hover-tint);
+        }
+        img {
+          width: 100%;
+          height: 40px;
+          object-fit: contain;
+          object-position: left center;
+          @include nb-rtl(object-position, right center);
+        }
+        .toggle-cell {
+          display: flex;
+          align-items: center;
+          overflow: visible;
+        }
+        .status-cell {
+          display: flex;
+          align-items: center;
+
+          .badge {
+            margin: 0;
+            padding: 0.25rem 0.5rem;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1rem;
+            border-radius: var(--border-radius);
+
+            &.badge-success {
+              color: nb-theme(gauzy-action-success-text);
+              background-color: nb-theme(gauzy-action-success-tint-strong);
+            }
+
+            &.badge-danger {
+              color: nb-theme(gauzy-action-danger-text);
+              background-color: nb-theme(gauzy-action-danger-tint-strong);
+            }
+          }
+        }
+        .row-actions {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 0.375rem;
+
+          button {
+            margin: 0;
+          }
+
+          .icon-only {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+          }
+        }
+      }
+    }
+  }
+  .columns-header {
+    display: flex;
+    align-items: center;
+    background-color: var(--gauzy-card-2);
+    border-radius: 8px;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0.625rem $inset;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gauzy-text-color-2);
+
+    > div {
+      padding-left: 0;
+      padding-right: $inset;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+
+      &:last-child {
+        padding-right: 0;
+      }
+    }
+  }
+  .last-sync {
+    font-size: 12px;
+    color: var(--gauzy-text-color-2);
+  }
 }

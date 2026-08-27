@@ -1,9 +1,53 @@
-<nb-card class="card-scroll">
+<nb-card class="card-scroll general-settings">
 	<nb-card-header>
 		<h4>
-			<ngx-header-title [allowEmployee]="false">
+			<!-- A tenant-wide page: never "for <Organization>" (nor "for <Employee>"). -->
+			<ngx-header-title [allowEmployee]="false" [allowOrganization]="false">
 				{{ 'MENU.SETTINGS' | translate }} - {{ 'MENU.GENERAL' | translate }}
 			</ngx-header-title>
 		</h4>
 	</nb-card-header>
+	<nb-card-body>
+		<!-- ── Preferred UI (Angular vs React) ─────────────────────────────── -->
+		<section class="setting-section" [nbSpinner]="loading()" nbSpinnerStatus="primary" nbSpinnerSize="small">
+			<div class="setting-header">
+				<div class="setting-copy">
+					<h5 class="setting-title">{{ 'SETTINGS_GENERAL.PREFERRED_UI.TITLE' | translate }}</h5>
+					<p class="setting-description">{{ 'SETTINGS_GENERAL.PREFERRED_UI.DESCRIPTION' | translate }}</p>
+				</div>
+				@if (saving()) {
+					<span class="setting-status">{{ 'SETTINGS_GENERAL.PREFERRED_UI.SAVING' | translate }}</span>
+				}
+			</div>
+
+			<!-- `nb-radio-group` silently drops children that are not `nb-radio`, so nothing else
+			     may be projected in here (see PR #9835). -->
+			<nb-radio-group
+				class="preferred-ui-options"
+				name="preferredUi"
+				[value]="preferredUi()"
+				[disabled]="!canEdit() || saving()"
+				(valueChange)="onPreferredUiChange($event)"
+			>
+				<nb-radio [value]="PreferredUiEnum.ANGULAR">
+					{{ 'SETTINGS_GENERAL.PREFERRED_UI.OPTIONS.ANGULAR' | translate }}
+				</nb-radio>
+				<nb-radio [value]="PreferredUiEnum.REACT">
+					{{ 'SETTINGS_GENERAL.PREFERRED_UI.OPTIONS.REACT' | translate }}
+				</nb-radio>
+			</nb-radio-group>
+
+			<p class="setting-hint">
+				<nb-icon icon="info-outline"></nb-icon>
+				<span>{{ 'SETTINGS_GENERAL.PREFERRED_UI.HINT' | translate }}</span>
+			</p>
+
+			@if (!canEdit()) {
+				<p class="setting-hint muted">
+					<nb-icon icon="lock-outline"></nb-icon>
+					<span>{{ 'SETTINGS_GENERAL.PREFERRED_UI.READ_ONLY' | translate }}</span>
+				</p>
+			}
+		</section>
+	</nb-card-body>
 </nb-card>

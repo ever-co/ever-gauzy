@@ -74,10 +74,7 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 	@Put(':id')
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: GoalKPI): Promise<IKPI> {
 		try {
-			return await this.goalKpiService.create({
-				id,
-				...entity
-			});
+			return await this.goalKpiService.create({ ...entity, id });
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

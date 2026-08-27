@@ -5,6 +5,28 @@ on:
     branches:
       - master
 
+concurrency:
+  # Serialize releases on a ref, but NEVER cancel one: this job takes about a minute, so
+  # superseding it saves nothing — and cancelling it silently breaks the delivery chain.
+  # The image build is wired to this workflow with
+  #   workflow_run: types: [completed]   +   if: workflow_run.conclusion == 'success'
+  # so a CANCELLED release makes its image build SKIP. If that happens to the last release
+  # of a burst, no image is published for the new code at all and the environment keeps
+  # serving the previous image until somebody pushes again (demo sat a day behind exactly
+  # this way on 2026-08-20).
+  #
+  # Superseding still happens where the time actually goes: `build.yml` and the image
+  # builds cancel their own older runs, so a burst of merges still produces exactly ONE
+  # full compile and ONE published image — the newest.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# `contents: write` is required: the release action creates the version tag together with
+# the GitHub release that the downstream image/desktop builds key off.
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ${{ matrix.os }}
@@ -18,15 +40,20 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v5
 
-      - name: Bump version and push tag
+      # Calculate ONLY — `dry_run` means no tag is pushed here. The release step below
+      # creates the tag together with the release, so there is never a window in which a
+      # tag exists without its release (a cancelled run used to strand one forever: the
+      # next run computes the NEXT version and never backfills the orphan).
+      - name: Calculate the next version (no tag pushed)
         uses: mathieudutour/github-tag-action@v6.1
         id: tag_version
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: true
           release_branches: master,main,develop,stage
           pre_release_branches: something_to_possible_use_later
 
-      - name: Create a GitHub release
+      - name: Create the tag and the GitHub release (one call)
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
@@ -34,5 +61,7 @@ jobs:
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.tag_version.outputs.new_tag }}
+          # Create the tag as part of this call, pinned to the commit that was built.
+          commit: ${{ github.sha }}
           name: ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}

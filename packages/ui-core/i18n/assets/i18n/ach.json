@@ -1062,6 +1062,21 @@
 		"FOCUS": "crwdns11138:0crwdne11138:0",
 		"APPLICATIONS": "crwdns11140:0crwdne11140:0"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "User interface",
+			"DESCRIPTION": "Choose which interface everyone in this tenant uses for pages that are available in both flavours.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (default)",
+				"REACT": "React (new)"
+			},
+			"HINT": "Applies to the whole tenant, on every device. Today the Time Tracking dashboard is available in both interfaces; more pages will follow.",
+			"READ_ONLY": "Only tenant administrators can change this setting.",
+			"SAVING": "Saving…",
+			"SAVED": "Interface preference saved",
+			"SAVE_ERROR": "The interface preference could not be saved."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "crwdns2106:0crwdne2106:0",
 		"LIGHT": "crwdns2108:0crwdne2108:0",
@@ -1084,7 +1099,9 @@
 		"TABLE": "crwdns7056:0crwdne7056:0",
 		"CARDS_GRID": "crwdns7058:0crwdne7058:0",
 		"SPRINT_VIEW": "crwdns8236:0crwdne8236:0",
-		"QUICK_SETTINGS": "crwdns11022:0crwdne11022:0"
+		"QUICK_SETTINGS": "crwdns11022:0crwdne11022:0",
+		"PREFERENCES": "Gin ma imito",
+		"SUPPORT": "Kony"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "crwdns10190:0crwdne10190:0",
@@ -3355,7 +3372,9 @@
 		"SELECT_A_DATE": "crwdns2641:0crwdne2641:0",
 		"SELECT_AN_ORGANIZATION": "crwdns2643:0crwdne2643:0",
 		"SELECT_PROJECT": "crwdns8704:0crwdne8704:0",
-		"AI_CHAT": "Lok ki AI"
+		"AI_CHAT": "Lok ki AI",
+		"COLLAPSE_SIDEBAR": "Kan bar ma i nget",
+		"EXPAND_SIDEBAR": "Yab bar ma i nget"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Lakony me AI",
@@ -3381,6 +3400,12 @@
 		"STOP": "Cung tyeko",
 		"ERROR": "Gin mo pe otimme maber.",
 		"RETRY": "Tem doki",
+		"DICTATION_FAILED": "Could not transcribe the recording.",
+		"DICTATION_NOT_CONFIGURED": "Dictation needs a voice provider. Add one on the AI Providers settings page.",
+		"DICTATION_ASK_ADMIN": "Dictation needs a voice provider — ask an administrator to add one in Settings → AI Providers.",
+		"DICTATION_KEY_REJECTED": "The voice provider rejected its API key. Update it on the AI Providers settings page.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "The voice provider rejected its API key — ask an administrator to update it in Settings → AI Providers.",
+		"DICTATION_OPEN_SETTINGS": "Open AI Providers",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
@@ -4653,10 +4678,19 @@
 		"CUSTOM": "crwdns11038:0crwdne11038:0",
 		"SET_AS_NOTIFICATION_SCHEDULE": "crwdns11040:0crwdne11040:0",
 		"SET_YOURSELF_AS_AWAY": "crwdns11042:0crwdne11042:0",
+		"SET_YOURSELF_AS_ACTIVE": "Ket keni calo <strong>ma itye</strong>",
 		"HOTKEYS": "crwdns11044:0crwdne11044:0",
 		"HELP": "crwdns11046:0crwdne11046:0",
 		"SIGN_OUT": "crwdns11048:0crwdne11048:0",
-		"PROFILE": "crwdns11050:0crwdne11050:0"
+		"PROFILE": "crwdns11050:0crwdne11050:0",
+		"ACCOUNT": "Akaunt",
+		"PREFERENCES": "Gin ma imito",
+		"DOWNLOAD_APPS": "Gam apps",
+		"DOWNLOAD_MACOS": "Gam pi macOS",
+		"DOWNLOAD_WINDOWS": "Gam pi Windows",
+		"DOWNLOAD_LINUX": "Gam pi Linux",
+		"DOWNLOAD_MOBILE": "Gam app me cim",
+		"DOWNLOAD_BROWSER_EXTENSION": "Gam lamed me browser"
 	},
 	"WORKSPACES": {
 		"MENUS": {

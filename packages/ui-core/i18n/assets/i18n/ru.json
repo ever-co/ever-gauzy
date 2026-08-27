@@ -1164,6 +1164,21 @@
 		"START_SERVER": "Запустить сервер",
 		"STOP_SERVER": "Остановить сервер"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Пользовательский интерфейс",
+			"DESCRIPTION": "Выберите, какой интерфейс используют все пользователи этого тенанта для страниц, доступных в обоих вариантах.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (по умолчанию)",
+				"REACT": "React (новый)"
+			},
+			"HINT": "Действует для всего тенанта на любом устройстве. Сейчас панель учёта времени доступна в обоих интерфейсах; другие страницы появятся позже.",
+			"READ_ONLY": "Только администраторы тенанта могут изменить эту настройку.",
+			"SAVING": "Сохранение…",
+			"SAVED": "Предпочтение интерфейса сохранено",
+			"SAVE_ERROR": "Не удалось сохранить предпочтение интерфейса."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
 		"LIGHT": "Светлый",
@@ -1196,7 +1211,9 @@
 		"CARDS_GRID": "Сетка карт",
 		"SPRINT_VIEW": "Просмотр спринта",
 		"QUICK_SETTINGS": "Быстрые настройки",
-		"NO_LAYOUT": "Нет доступного макета данных"
+		"NO_LAYOUT": "Нет доступного макета данных",
+		"PREFERENCES": "Предпочтения",
+		"SUPPORT": "Поддержка"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Что нового?",
@@ -3666,7 +3683,9 @@
 		"SELECT_AN_ORGANIZATION": "Организация",
 		"SELECT_PROJECT": "Проект",
 		"SELECT_TEAM": "Команда",
-		"AI_CHAT": "ИИ-чат"
+		"AI_CHAT": "ИИ-чат",
+		"COLLAPSE_SIDEBAR": "Свернуть боковую панель",
+		"EXPAND_SIDEBAR": "Развернуть боковую панель"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "ИИ-ассистент",
@@ -3692,6 +3711,12 @@
 		"STOP": "Остановить генерацию",
 		"ERROR": "Что-то пошло не так.",
 		"RETRY": "Повторить",
+		"DICTATION_FAILED": "Не удалось расшифровать запись.",
+		"DICTATION_NOT_CONFIGURED": "Для диктовки нужен голосовой провайдер. Добавьте его на странице настроек «Провайдеры ИИ».",
+		"DICTATION_ASK_ADMIN": "Для диктовки нужен голосовой провайдер — попросите администратора добавить его в Настройки → Провайдеры ИИ.",
+		"DICTATION_KEY_REJECTED": "Голосовой провайдер отклонил API-ключ. Обновите его на странице настроек «Провайдеры ИИ».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Голосовой провайдер отклонил API-ключ — попросите администратора обновить его в Настройки → Провайдеры ИИ.",
+		"DICTATION_OPEN_SETTINGS": "Открыть Провайдеры ИИ",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
@@ -5367,7 +5392,15 @@
 		"HOTKEYS": "Горячие клавиши",
 		"HELP": "Помогите",
 		"SIGN_OUT": "Выйти",
-		"PROFILE": "Профиль"
+		"PROFILE": "Профиль",
+		"ACCOUNT": "Аккаунт",
+		"PREFERENCES": "Предпочтения",
+		"DOWNLOAD_APPS": "Скачать приложения",
+		"DOWNLOAD_MACOS": "Скачать для macOS",
+		"DOWNLOAD_WINDOWS": "Скачать для Windows",
+		"DOWNLOAD_LINUX": "Скачать для Linux",
+		"DOWNLOAD_MOBILE": "Скачать мобильное приложение",
+		"DOWNLOAD_BROWSER_EXTENSION": "Скачать расширение для браузера"
 	},
 	"WORKSPACES": {
 		"MENUS": {

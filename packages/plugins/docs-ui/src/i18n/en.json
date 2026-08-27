@@ -501,6 +501,11 @@
 	},
 	"BULK": {
 		"SELECTED": "{{ count }} selected",
+		"SECTION_ORGANIZE": "Organize",
+		"SECTION_TAGS": "Tags",
+		"SECTION_KNOWLEDGE": "AI knowledge",
+		"SECTION_REVIEW": "Review",
+		"SECTION_DANGER": "Danger zone",
 		"ARCHIVE": "Archive",
 		"RESTORE": "Unarchive",
 		"CATEGORIES": "Set categories",

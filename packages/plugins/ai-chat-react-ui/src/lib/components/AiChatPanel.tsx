@@ -15,18 +15,25 @@ import {
 } from 'ai';
 import { useInjector } from '@gauzy/ui-react';
 import { AgentPageBridgeService, ChatSidebarService, Store } from '@gauzy/ui-core/core';
-import { AI_CHAT_RATE_LIMIT_CODE, PermissionsEnum, type IAiChatRateLimitEnvelope } from '@gauzy/contracts';
+import {
+	AI_CHAT_RATE_LIMIT_CODE,
+	AI_CHAT_SETTINGS_PATH,
+	PermissionsEnum,
+	type IAiChatRateLimitEnvelope,
+	type IAiSpeechErrorBody
+} from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
 import { executeClientTool, isClientTool } from '../chat-client-tools';
 import { useAngularSignal } from '../use-angular-signal';
 import { useChatTranslate } from '../use-chat-translate';
 import { ChatMessageList } from './ChatMessageList';
-import { ChatInput } from './ChatInput';
+import { ChatInput, DictationError } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
 import { DocsAttachPicker } from './DocsAttachPicker';
 import { buildAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
 import { chatTheme } from '../chat-theme';
+import { chatMarkdownCss } from '../chat-markdown-css';
 
 /**
  * What the docs upload endpoint answers with (the slice this panel reads).
@@ -138,6 +145,10 @@ export function AiChatPanel() {
 	 *
 	 * `FormData` deliberately WITHOUT a Content-Type header: the browser has to set it, because only
 	 * it knows the multipart boundary. Setting it by hand produces a body the server cannot parse.
+	 *
+	 * A failure throws a {@link DictationError} carrying the server's `code` and `settingsPath` (a
+	 * 503 body is `{ message, code, settingsPath }`), so the input can render an actionable,
+	 * translated message with a link to the AI Providers page instead of the raw server sentence.
 	 */
 	const transcribeAudio = useCallback(
 		async (audio: Blob): Promise<string> => {
@@ -150,17 +161,43 @@ export function AiChatPanel() {
 			});
 			if (!response.ok) {
 				// The server's message names the actual problem — no speech-capable provider, a
-				// rejected key — so it is worth more to the user than a status code.
-				const detail = await response
+				// rejected key — so it is worth more to the user than a status code; the code is what
+				// lets the UI say WHERE to fix it.
+				const body = await response
 					.json()
-					.then((body: { message?: string }) => body?.message)
-					.catch(() => undefined);
-				throw new Error(detail || `Transcription failed (HTTP ${response.status})`);
+					.then((parsed: Partial<IAiSpeechErrorBody> | null) => parsed ?? {})
+					.catch(() => ({}) as Partial<IAiSpeechErrorBody>);
+				const message =
+					typeof body.message === 'string' && body.message.trim()
+						? body.message
+						: `Transcription failed (HTTP ${response.status})`;
+				throw new DictationError(message, {
+					code: typeof body.code === 'string' ? body.code : undefined,
+					settingsPath: typeof body.settingsPath === 'string' ? body.settingsPath : undefined,
+					status: response.status
+				});
 			}
 			const body = (await response.json()) as { text?: string };
 			return body.text ?? '';
 		},
 		[authHeaders]
+	);
+
+	/**
+	 * Open the AI Providers settings page from a dictation error, when this user may.
+	 *
+	 * Passed to the input as `onOpenAiSettings` ONLY when the user holds `AI_CHAT_SETTINGS` — the
+	 * input then shows an "Open AI Providers" action; without it, the message tells the user to ask
+	 * an administrator instead of offering a link that would bounce them to the settings index.
+	 */
+	const openAiSettings = useCallback(
+		(settingsPath?: string) => {
+			void injector
+				.get(AgentPageBridgeService)
+				.openPage(settingsPath || AI_CHAT_SETTINGS_PATH)
+				.catch(() => undefined);
+		},
+		[injector]
 	);
 
 	const transport = useMemo(
@@ -578,12 +615,13 @@ export function AiChatPanel() {
 		display: 'flex',
 		alignItems: 'center',
 		gap: 8,
-		padding: '8px 10px 8px 12px',
+		padding: '10px 10px 10px 13px',
 		borderBottom: `1px solid ${chatTheme.border}`,
 		flexShrink: 0,
 		color: chatTheme.textPrimary,
 		fontSize: chatTheme.fontSizeBase,
-		fontWeight: 600,
+		fontWeight: chatTheme.fontWeightSemibold,
+		letterSpacing: '-0.005em',
 		// Drives the `@container` rule that drops the button words on a narrow
 		// panel — the labels are the point, but not at the cost of clipping.
 		containerType: 'inline-size'
@@ -604,7 +642,7 @@ export function AiChatPanel() {
 		justifyContent: 'center',
 		width: 26,
 		height: 26,
-		borderRadius: 6,
+		borderRadius: chatTheme.controlRadius,
 		border: 'none',
 		backgroundColor: 'transparent',
 		color: chatTheme.textSecondary,
@@ -618,11 +656,11 @@ export function AiChatPanel() {
 	const headerBtnLabelledStyle: CSSProperties = {
 		...headerBtnStyle,
 		width: 'auto',
-		gap: 4,
-		padding: '0 7px',
+		gap: 5,
+		padding: '0 8px',
 		fontFamily: 'inherit',
 		fontSize: '0.6875rem',
-		fontWeight: 600,
+		fontWeight: chatTheme.fontWeightMedium,
 		letterSpacing: '0.01em',
 		whiteSpace: 'nowrap'
 	};
@@ -655,10 +693,10 @@ export function AiChatPanel() {
 
 	return (
 		<div ref={rootRef} style={containerStyle}>
-			{/* Inline keyframes + width containment for streamed markdown:
-			    wide content (code blocks, tables) must scroll inside its own
-			    box instead of stretching the narrow panel and squeezing the
-			    input row. */}
+			{/* Keyframes, the shared markdown sheet, and every state inline styles
+			    cannot express (hover, focus, ::placeholder). Wide streamed content
+			    (code blocks, tables) scrolls inside its own box here rather than
+			    stretching the narrow panel and squeezing the input row. */}
 			<style>{`
 				@keyframes fadeIn {
 					from { opacity: 0; transform: translateY(4px); }
@@ -668,17 +706,50 @@ export function AiChatPanel() {
 					0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
 					40% { transform: scale(1); opacity: 1; }
 				}
-				.gz-ai-chat-markdown { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
-				.gz-ai-chat-markdown pre {
-					max-width: 100%; overflow-x: auto; white-space: pre;
-					font-size: 0.75rem; border-radius: 8px;
+
+				${chatMarkdownCss}
+
+				/* Tool steps. The row is the expander, so the label carries the affordance:
+				   accent coloured, underlined on hover, like every other link here. */
+				.gz-ai-chat-tool-label { transition: color ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-tool-row:hover .gz-ai-chat-tool-label { text-decoration: underline; }
+				.gz-ai-chat-tool-row:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+					border-radius: 4px;
 				}
-				.gz-ai-chat-markdown code { overflow-wrap: anywhere; }
-				.gz-ai-chat-markdown table {
-					display: block; max-width: 100%; width: fit-content;
-					overflow-x: auto; font-size: 0.75rem;
+
+				/* Attachment chips on a user message. */
+				.gz-ai-chat-user-chip { transition: background-color ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-user-chip:hover { background-color: rgba(255, 255, 255, 0.26) !important; }
+
+				/* ── Composer ─────────────────────────────────────────────────────
+				   The placeholder tone and every hover/focus state live here: inline
+				   styles can express neither, so the composer read as flat and inert. */
+				.gz-ai-chat-textarea::placeholder {
+					color: ${chatTheme.inputPlaceholder};
+					opacity: 1;
 				}
-				.gz-ai-chat-markdown img, .gz-ai-chat-markdown video { max-width: 100%; height: auto; }
+				.gz-ai-chat-tool-btn {
+					transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-tool-btn:hover:not(:disabled):not([aria-disabled='true']):not([aria-pressed='true']) {
+					background-color: color-mix(in srgb, currentColor 10%, transparent) !important;
+					color: inherit !important;
+				}
+				.gz-ai-chat-tool-btn:focus-visible,
+				.gz-ai-chat-send-btn:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+				}
+				.gz-ai-chat-send-btn {
+					transition: background-color ${chatTheme.transitionSpeed} ease, transform ${chatTheme.transitionSpeed} ease,
+						filter ${chatTheme.transitionSpeed} ease, opacity ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-send-btn:hover:not(:disabled) { transform: scale(1.05); filter: brightness(1.08); }
+				.gz-ai-chat-send-btn:active:not(:disabled) { transform: scale(0.96); }
+				.gz-ai-chat-send-btn:disabled { cursor: default; }
+
 				/* Panel header controls. Inline styles cannot express :hover, so these
 				   buttons gave no feedback at all and read as decoration. */
 				.gz-ai-chat-head-btn:hover {
@@ -996,14 +1067,15 @@ export function AiChatPanel() {
 				{error && (
 					<div
 						style={{
-							padding: '6px 12px',
-							backgroundColor: 'rgba(255, 61, 113, 0.15)',
+							padding: '8px 12px',
+							backgroundColor: 'rgba(255, 61, 113, 0.12)',
 							color: chatTheme.red,
 							fontSize: chatTheme.fontSizeSmall,
+							lineHeight: 1.5,
 							borderTop: `1px solid ${chatTheme.border}`,
 							display: 'flex',
 							alignItems: 'center',
-							gap: 6
+							gap: 7
 						}}
 					>
 						<span>⚠</span>
@@ -1018,6 +1090,8 @@ export function AiChatPanel() {
 								cursor: 'pointer',
 								textDecoration: 'underline',
 								fontSize: chatTheme.fontSizeSmall,
+								fontWeight: chatTheme.fontWeightMedium,
+								fontFamily: 'inherit',
 								padding: 0
 							}}
 						>
@@ -1036,8 +1110,8 @@ export function AiChatPanel() {
 							display: 'flex',
 							flexWrap: 'wrap',
 							alignItems: 'center',
-							gap: 4,
-							padding: '6px 10px 0'
+							gap: 5,
+							padding: '10px 12px 0'
 						}}
 					>
 						{attachments.map((attachment, index) => (
@@ -1046,14 +1120,16 @@ export function AiChatPanel() {
 								style={{
 									display: 'inline-flex',
 									alignItems: 'center',
-									gap: 4,
+									gap: 5,
 									maxWidth: '100%',
-									padding: '3px 8px',
+									padding: '4px 9px',
 									borderRadius: 999,
 									border: `1px solid ${chatTheme.border}`,
 									backgroundColor: chatTheme.surface,
 									color: chatTheme.textPrimary,
-									fontSize: chatTheme.fontSizeSmall
+									fontSize: chatTheme.fontSizeMessage,
+									fontWeight: chatTheme.fontWeightMedium,
+									lineHeight: 1.5
 								}}
 							>
 								<span aria-hidden="true">📎</span>
@@ -1085,7 +1161,13 @@ export function AiChatPanel() {
 							</span>
 						))}
 						{attachmentError && (
-							<span style={{ color: chatTheme.red, fontSize: chatTheme.fontSizeSmall }}>
+							<span
+								style={{
+									color: chatTheme.red,
+									fontSize: chatTheme.fontSizeSmall,
+									lineHeight: 1.5
+								}}
+							>
 								{attachmentError}
 							</span>
 						)}
@@ -1101,6 +1183,7 @@ export function AiChatPanel() {
 					onStop={() => void stop()}
 					onEscape={isDetachedView ? undefined : handleCollapse}
 					onTranscribe={transcribeAudio}
+					onOpenAiSettings={canOpenAiSettings() ? openAiSettings : undefined}
 					onAttachFile={handleAttachFile}
 					onAttachFromDocuments={() => {
 						setAttachmentError(null);

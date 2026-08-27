@@ -12,7 +12,7 @@ import {
 	ID,
 	IOrganizationProjectsFindInput
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	NavigationService,
@@ -21,8 +21,8 @@ import {
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { TruncatePipe } from '../../../pipes';
 import { ALL_PROJECT_SELECTED } from './default-project';
+import { entitySelectPanelClass } from '../../entity-select-panel-class';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -56,6 +56,22 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 * @default false
 	 */
 	@Input() shortened: boolean = false;
+
+	/**
+	 * Extra class(es) for the DROPDOWN PANEL, not for this component.
+	 *
+	 * The header passes `header-entity-select` so its panels can be set in the header band's
+	 * text; see `.ng-dropdown-panel.header-entity-select` in `_overrides.scss`.
+	 */
+	@Input() dropdownClass: string;
+
+	/**
+	 * The class list ng-select puts on its appended panel. See `entitySelectPanelClass()` for
+	 * why an appended panel needs the whole list rebuilt rather than added to.
+	 */
+	get panelClass(): string | null {
+		return entitySelectPanelClass(this.dropdownClass);
+	}
 
 	/**
 	 * Determines whether the component is disabled and non-interactive.
@@ -191,7 +207,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _organizationProjectStore: OrganizationProjectStore,
-		private readonly _truncatePipe: TruncatePipe,
 		private readonly _navigationService: NavigationService,
 		private readonly _activatedRoute: ActivatedRoute
 	) {}
@@ -525,35 +540,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 */
 	isClearable(): boolean {
 		return this.selectedProject !== ALL_PROJECT_SELECTED;
-	}
-
-	/**
-	 * Returns a shortened version of the name, with truncation applied to both first and last names.
-	 *
-	 * @param {string} name - The full name to be shortened.
-	 * @param {number} [limit=20] - The maximum character limit for the shortened name.
-	 * @returns {string | undefined} - The shortened name, or undefined if the name is empty.
-	 */
-	getShortenedName(name: string, limit = 20): string | undefined {
-		if (isEmpty(name)) {
-			return;
-		}
-
-		const chunks = name.split(/\s+/);
-		const firstName = chunks.shift();
-		const lastName = chunks.join(' ');
-
-		// If both first and last names exist, truncate both
-		if (firstName && lastName) {
-			return (
-				this._truncatePipe.transform(firstName, Math.floor(limit / 2), false, '') +
-				' ' +
-				this._truncatePipe.transform(lastName, Math.floor(limit / 2), false, '.')
-			);
-		}
-
-		// Fallback to truncating either firstName or lastName if available
-		return this._truncatePipe.transform(firstName || lastName, limit) || '[error: bad name]';
 	}
 
 	/**

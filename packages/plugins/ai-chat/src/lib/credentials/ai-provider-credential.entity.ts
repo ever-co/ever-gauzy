@@ -82,4 +82,28 @@ export class AiProviderCredential extends TenantOrganizationBaseEntity implement
 	@Length(1, 255, { message: 'Default model must be between 1 and 255 characters' })
 	@MultiORMColumn({ nullable: true })
 	defaultModel?: string;
+
+	/**
+	 * Whether this provider is the tenant's default for VOICE (dictation / speech-to-text).
+	 * Independent of `isDefault` (chat). At most one credential per tenant has `isVoiceDefault = true`.
+	 */
+	@ApiPropertyOptional({
+		type: () => Boolean,
+		description: "Whether this provider is the tenant's default voice (dictation) provider",
+		default: false
+	})
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	isVoiceDefault?: boolean;
+
+	/**
+	 * Preferred speech-to-text model for this provider (overrides the provider's own speech default).
+	 */
+	@ApiPropertyOptional({ type: () => String, description: 'Preferred speech-to-text model id (e.g. whisper-1)' })
+	@IsOptional()
+	@IsString({ message: 'Speech model must be a string' })
+	@Length(1, 255, { message: 'Speech model must be between 1 and 255 characters' })
+	@MultiORMColumn({ nullable: true })
+	speechModel?: string;
 }

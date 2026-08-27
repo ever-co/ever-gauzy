@@ -1157,6 +1157,21 @@
 		"START_SERVER": "Démarrer le serveur",
 		"STOP_SERVER": "Arrêter le serveur"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Interface utilisateur",
+			"DESCRIPTION": "Choisissez l'interface utilisée par tous les membres de ce tenant pour les pages disponibles dans les deux versions.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (par défaut)",
+				"REACT": "React (nouveau)"
+			},
+			"HINT": "S'applique à tout le tenant, sur tous les appareils. Aujourd'hui, le tableau de bord de suivi du temps est disponible dans les deux interfaces ; d'autres pages suivront.",
+			"READ_ONLY": "Seuls les administrateurs du tenant peuvent modifier ce paramètre.",
+			"SAVING": "Enregistrement…",
+			"SAVED": "Préférence d'interface enregistrée",
+			"SAVE_ERROR": "La préférence d'interface n'a pas pu être enregistrée."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Thèmes",
 		"LIGHT": "Clair",
@@ -1189,7 +1204,9 @@
 		"CARDS_GRID": "Grille de cartes",
 		"SPRINT_VIEW": "Vue Sprint",
 		"QUICK_SETTINGS": "Paramètres rapides",
-		"NO_LAYOUT": "Aucun modèle de données disponible"
+		"NO_LAYOUT": "Aucun modèle de données disponible",
+		"PREFERENCES": "Préférences",
+		"SUPPORT": "Assistance"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Quoi de neuf?",
@@ -3631,7 +3648,9 @@
 		"SELECT_AN_ORGANIZATION": "Organisation",
 		"SELECT_PROJECT": "Projet",
 		"SELECT_TEAM": "Équipe",
-		"AI_CHAT": "Chat IA"
+		"AI_CHAT": "Chat IA",
+		"COLLAPSE_SIDEBAR": "Réduire la barre latérale",
+		"EXPAND_SIDEBAR": "Développer la barre latérale"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Assistant IA",
@@ -3657,6 +3676,12 @@
 		"STOP": "Arrêter la génération",
 		"ERROR": "Une erreur s'est produite.",
 		"RETRY": "Réessayer",
+		"DICTATION_FAILED": "Impossible de transcrire l'enregistrement.",
+		"DICTATION_NOT_CONFIGURED": "La dictée nécessite un fournisseur vocal. Ajoutez-en un sur la page de paramètres « Fournisseurs IA ».",
+		"DICTATION_ASK_ADMIN": "La dictée nécessite un fournisseur vocal — demandez à un administrateur d'en ajouter un dans Paramètres → Fournisseurs IA.",
+		"DICTATION_KEY_REJECTED": "Le fournisseur vocal a rejeté sa clé API. Mettez-la à jour sur la page de paramètres « Fournisseurs IA ».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Le fournisseur vocal a rejeté sa clé API — demandez à un administrateur de la mettre à jour dans Paramètres → Fournisseurs IA.",
+		"DICTATION_OPEN_SETTINGS": "Ouvrir les fournisseurs IA",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
@@ -5361,7 +5386,15 @@
 		"HOTKEYS": "Raccourcis clavier",
 		"HELP": "Aidez-moi",
 		"SIGN_OUT": "Déconnecter",
-		"PROFILE": "Profil"
+		"PROFILE": "Profil",
+		"ACCOUNT": "Compte",
+		"PREFERENCES": "Préférences",
+		"DOWNLOAD_APPS": "Télécharger les applications",
+		"DOWNLOAD_MACOS": "Télécharger pour macOS",
+		"DOWNLOAD_WINDOWS": "Télécharger pour Windows",
+		"DOWNLOAD_LINUX": "Télécharger pour Linux",
+		"DOWNLOAD_MOBILE": "Télécharger l'application mobile",
+		"DOWNLOAD_BROWSER_EXTENSION": "Télécharger l'extension de navigateur"
 	},
 	"WORKSPACES": {
 		"MENUS": {

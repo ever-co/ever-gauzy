@@ -1,6 +1,7 @@
 @forward 'report';
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 .popover-container {
   display: flex;
@@ -404,7 +405,7 @@ nb-tab {
   ::ng-deep {
     @include card_overrides(auto, $default-card-height, $default-radius);
     @include ga-overrides.ng-select-overrides(
-	  ga-overrides.$default-height,
+      ga-overrides.$default-height,
       $default-radius,
       ga-overrides.$default-box-shadow-inset
     );
@@ -465,7 +466,7 @@ nb-tab {
       }
       & .history-item.history-comment {
         margin-top: 6px;
-        font-size: .85rem;
+        font-size: 0.85rem;
         &.history-comment::first-letter {
           text-transform: capitalize;
         }
@@ -474,7 +475,7 @@ nb-tab {
 
     // border bottom
     & nb-list-item::after {
-      content: "";
+      content: '';
       display: block;
       width: 100%;
       border-bottom: thin solid var(--accordion-header-border-color);
@@ -482,4 +483,256 @@ nb-tab {
       bottom: 0;
     }
   }
+}
+
+:host {
+  @include ga-hub.density-tokens();
+}
+
+:host .estimate-page ::ng-deep .ga-page-title-trail {
+  margin-top: -0.25rem;
+  font-size: 0.75rem;
+
+  .ga-breadcrumb-list {
+    gap: 0.125rem;
+  }
+
+  .ga-breadcrumb-item {
+    gap: 0.125rem;
+    font-size: 0.75rem;
+    line-height: 1.5rem;
+  }
+
+  .ga-breadcrumb-link,
+  .ga-breadcrumb-text,
+  .ga-breadcrumb-current {
+    height: 1.5rem;
+    max-width: 14rem;
+    padding-inline: 0.375rem;
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .ga-breadcrumb-separator nb-icon {
+    font-size: 0.875rem;
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+}
+
+:host .table-scroll-container {
+  @include ga-hub.surface();
+}
+
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+}
+
+:host ::ng-deep {
+  @include ga-hub.tag-stack-spacing();
+}
+
+:host ::ng-deep ga-status-badge {
+  @include ga-hub.status-badge-tints();
+}
+
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
+}
+
+// ── Tab bar ──────────────────────────────────────────────────────────────────
+// One step down from the app-wide `tabset-tab-text-font-size` (0.875rem) for
+// this page only: Browse / Search / History are three short words, and at the
+// shared size they read heavier than the card title above them.
+//
+// `.tab-link.tab-link` is doubled on purpose. The global rules in
+// `gauzy/_gauzy-overrides.scss` are `nb-tabset .tabset .tab a.tab-link` (0,3,2)
+// and `nb-tabset .tabset .tab.active a.tab-link` (0,4,2); a single `.tab-link`
+// here would only tie with the active one, and a tie between a component sheet
+// and a global sheet is decided by stylesheet order, which is not ours to rely
+// on. Doubling takes both, active and idle, without `!important`.
+:host ::ng-deep nb-tabset .tabset .tab a.tab-link.tab-link {
+  font-size: 0.75rem;
+  line-height: 0.875rem;
+}
+
+// ── Search panel ─────────────────────────────────────────────
+// The search form is an accordion stacked ABOVE the table inside a fixed-height
+// `.custom-content-body` (`calc(100vh - 19.5rem)`), with the table as the flex
+// child that absorbs whatever is left. Expanded, the form's full-size controls —
+// three rows of 42px fields, each with a label and a 1rem gutter — ate nearly all
+// of it, so opening Search left the table only a row or two tall.
+//
+// Scoped to `.search-tab nb-accordion`, NOT to `.search-tab`: the table renders
+// inside the same tab, and a bare `.search-tab ::ng-deep input` would also catch
+// the smart-table filter row and pull it off the shared `ga-hub` density above.
+// Everything here shrinks the FORM; the table just gets the reclaimed height.
+:host .search-tab {
+  // `.mb-3` (1rem) between the form and the table.
+  nb-accordion.mb-3 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  nb-accordion-item-header {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 0;
+  }
+
+  // The chevron box is sized to its glyph in the `nb-accordion-item-header` rule
+  // near the top of this file (1.75rem); it comes down with the header.
+  nb-accordion-item-header ::ng-deep nb-icon {
+    width: 1.375rem;
+    height: 1.375rem;
+    font-size: 0.875rem;
+  }
+
+  nb-accordion-item-body ::ng-deep .item-body {
+    padding: 0.75rem;
+  }
+
+  nb-accordion {
+    .form-group {
+      margin-bottom: 0.5rem;
+    }
+
+    .label {
+      margin-bottom: 0.1875rem;
+    }
+
+    // Wrappers this file pins at 42px for the full-density form.
+    .input-icon,
+    .input-date {
+      height: ga-overrides.$compact-control-height;
+    }
+
+    .input-icon .icon {
+      font-size: 0.875rem;
+    }
+
+    // The `min-height` on these three comes from `input-appearance()` — pulled in
+    // by the `:host nb-accordion` dialog include above — as `!important`, so the
+    // compact floor has to be `!important` too to be reachable at all.
+    ::ng-deep input,
+    ::ng-deep nb-select.appearance-outline.status-basic .select-button,
+    ::ng-deep .ng-select .ng-select-container {
+      min-height: ga-overrides.$compact-control-height !important;
+      height: ga-overrides.$compact-control-height;
+      padding-block: 0;
+      font-size: 0.75rem;
+    }
+
+    // `ng-select` and `nb-tag-list` draw their own text input INSIDE the trigger
+    // the rule above just sized; that inner input must not get a box of its own,
+    // or it stacks a second control height inside the first.
+    ::ng-deep .ng-select .ng-select-container input,
+    ::ng-deep nb-tag-list input {
+      min-height: 0 !important;
+      height: auto;
+      padding-block: 0;
+    }
+
+    ::ng-deep .ng-select .ng-select-container .ng-value-container {
+      font-size: 0.75rem;
+    }
+
+    // The status select pins its own 42px by id (1,1,0) higher up in this file.
+    ::ng-deep #inputStatus .select-button {
+      height: ga-overrides.$compact-control-height;
+      font-size: 0.75rem;
+    }
+
+    // Submit / reset sit in a bare `.row`; the file-wide `button { margin: 5px }`
+    // is the only thing spacing them.
+    button {
+      margin: 0.25rem;
+      font-size: 0.75rem;
+    }
+  }
+}
+
+// ── Search tab: one scroll port on the parent ────────────────────────────────
+// `.custom-content-body` is a fixed-height flex column (`calc(100vh - 19.5rem)`),
+// and inside it the table is a scroll container of its own — so `min-height: auto`
+// resolves to 0 for it and the flex algorithm is free to crush it. With the form
+// expanded that is exactly what happened: the form took its content height, the
+// table got whatever was left (on a short viewport, one clipped row), and nothing
+// anywhere overflowed, so no scrollbar ever appeared to say there was more.
+//
+// The fix is to stop making the two fight over a fixed budget. The table stops
+// scrolling internally in this tab and contributes its full height, the body
+// overflows, and the body scrolls — one scrollbar, form and table in one flow,
+// which is also what makes the sticky `thead` land at the top of the visible area
+// once the form scrolls away (sticky resolves against the nearest scroll port).
+//
+// Only the Search tab: Browse has no form above the table and is better off with
+// the table scrolling in place under a fixed pager.
+:host .search-tab .custom-content-body {
+  overflow-y: auto;
+  // A trackpad flick that reaches the end of this list should not then scroll the
+  // page behind it.
+  overscroll-behavior-y: contain;
+
+  // Natural height, no shrinking — the form is not what should give way.
+  nb-accordion {
+    flex: 0 0 auto;
+  }
+
+  .table-scroll-container {
+    // `overflow-y: auto` + `max-height: calc(100vh - 28rem)` come from the global
+    // `.table-scroll-container` rule in `_overrides.scss`; `flex-grow: 10` from
+    // the `.custom-content-body` block above. All three exist to make the table
+    // scroll inside a fixed box, which is the behaviour being handed to the
+    // parent here.
+    overflow-y: visible;
+    max-height: none;
+    min-height: 0;
+    flex: 0 0 auto;
+  }
+
+  // The pager rides the bottom edge of the scroll port instead of sitting at the
+  // far end of the scrolled content, so paging never requires scrolling first.
+  // `z-index` keeps it over the sticky `thead`, which shares the same port.
+  .pagination-container {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    flex: 0 0 auto;
+  }
+}
+
+// ── Pager: an opaque strip, not a transparent one ────────────────────────────
+// `--gauzy-card-2` — the tab surface, and the obvious pick for a backdrop — is
+// translucent in EVERY theme (alpha 0.02 in gauzy-light, 0.3 in gauzy-dark, 0.5
+// in corporate; see `themes.scss`), so a pager painted with it still shows the
+// table rows through itself. That is invisible while the pager sits below a
+// clipped table and unmissable once it is sticky over a scrolling one.
+//
+// `--gauzy-card-1` is the one card token that is opaque in all of them (an alias
+// of `card-background-color`, or an explicit alpha-1 rgba), and it is already
+// what `ga-hub.surface()` paints the table with — so the pager reads as the foot
+// of the same block rather than a second surface.
+:host .pagination-container {
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  border-radius: 0 0 var(--border-radius, 0.5rem) var(--border-radius, 0.5rem);
+  // Covers the 0.25rem `pager-container()` spends on a transparent `margin-top`,
+  // which is a gap the rows would otherwise scroll through underneath.
+  margin-top: 0;
+  padding: 0.375rem 0.5rem;
+}
+
+// ── Search form: controls sized to their content ─────────────────────────────
+// The fields are laid out on a Bootstrap grid (`col-sm-4` / `-3` / `-2`) and every
+// control carries `fullWidth`, so each one stretched to a third or a quarter of
+// the card — a number field nearly 500px wide for a 6-digit estimate number.
+// Capping the COLUMN rather than the control keeps the grid's wrapping and order
+// intact (the cap only bites where the percentage is the larger of the two) and
+// carries the label above the field with it.
+:host .search-tab nb-accordion .row > [class*='col-'] {
+  max-width: 14rem;
 }

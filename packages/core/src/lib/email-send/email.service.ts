@@ -1107,12 +1107,15 @@ export class EmailService {
 	 * @returns A promise that resolves to the updated email history record.
 	 */
 	async resendEmail(id: ID, input: IResendEmailInput, languageCode: LanguagesEnum): Promise<IEmailHistory> {
-		// Destructure the organization and tenant IDs from the input.
-		const { organizationId, tenantId } = input;
+		// The tenant comes from the authenticated request, never from the body: this is a raw
+		// repository lookup (no TenantAwareCrudService scoping), and a missing/null body tenantId
+		// would otherwise drop the tenant predicate entirely (GHSA-44pv-34gx-q9p4 class).
+		const tenantId = RequestContext.currentTenantId();
+		const { organizationId } = input;
 
 		// Fetch the email history record with its associated email template and organization.
 		const emailHistory = await this.typeOrmEmailHistoryRepository.findOne({
-			where: { id, organizationId, tenantId },
+			where: { id, tenantId, ...(organizationId ? { organizationId } : {}) },
 			relations: { emailTemplate: true, organization: true }
 		});
 

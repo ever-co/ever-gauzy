@@ -97,15 +97,35 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	 */
 	async markAllAsRead(): Promise<IMarkAllAsReadResponse> {
 		try {
-			// Retrieve the current employee ID
-			const receiverEmployeeId = RequestContext.currentEmployeeId();
+			// The receiver is the caller's OWN employee record. RequestContext.currentEmployeeId() is
+			// deliberately null for CHANGE_SELECTED_EMPLOYEE holders, so read the identity off the JWT
+			// user too. A null receiver used to be dropped from the (raw, non-tenant-scoped) UPDATE
+			// criteria, i.e. an admin's "mark all read" marked EVERY tenant's notifications read.
+			const receiverEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+			if (!receiverEmployeeId) {
+				return { success: true, count: 0 };
+			}
+			const tenantId = RequestContext.currentTenantId();
+			if (!tenantId) {
+				// The raw UPDATE below is not tenant-scoped by itself; never run it without a tenant.
+				return { success: true, count: 0 };
+			}
+			const criteria = { isRead: false, isArchived: false, receiverEmployeeId, tenantId };
+
+			// Nothing unread is a successful no-op, not an error (TenantAwareCrudService.update() first
+			// looks the criteria up and raises NotFound when no row matches). Any OTHER lookup failure
+			// is a real error and must not be reported as a successful no-op.
+			const { success, record: unread, error: lookupError } = await this.findOneOrFailByWhereOptions(criteria);
+			if (!success && !(lookupError instanceof NotFoundException)) {
+				throw lookupError;
+			}
+			if (!unread) {
+				return { success: true, count: 0 };
+			}
 
 			// Update all unread and un-archived notifications for the current employee
 			// Assume super.update returns an object with an "affected" property that represents the number of records updated.
-			const updateResult = (await super.update(
-				{ isRead: false, isArchived: false, receiverEmployeeId },
-				{ isRead: true, readAt: new Date() }
-			)) as UpdateResult;
+			const updateResult = (await super.update(criteria, { isRead: true, readAt: new Date() })) as UpdateResult;
 
 			// Extract the count of notifications that were updated.
 			const count = updateResult?.affected || 0;

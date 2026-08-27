@@ -5,6 +5,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { AuthModule } from '../auth/auth.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from '../role/role.module';
+import { StripeSubscriptionService } from '../shared/billing/stripe-subscription.service';
 import { UserModule } from '../user/user.module';
 import { FeatureModule } from './../feature/feature.module';
 import { TenantController } from './tenant.controller';
@@ -26,7 +27,14 @@ import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.reposito
 		forwardRef(() => FeatureModule)
 	],
 	controllers: [TenantController],
-	providers: [TenantService, TypeOrmTenantRepository, MikroOrmTenantRepository, ...CommandHandlers],
+	providers: [
+		TenantService,
+		TypeOrmTenantRepository,
+		MikroOrmTenantRepository,
+		// Lets onboardTenant() record the tenant -> Stripe customer link. Inert without a Stripe key.
+		StripeSubscriptionService,
+		...CommandHandlers
+	],
 	exports: [TenantService, TypeOrmTenantRepository, MikroOrmTenantRepository]
 })
 export class TenantModule {}

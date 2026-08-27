@@ -1156,6 +1156,21 @@
 		"START_SERVER": "开始服务器",
 		"STOP_SERVER": "停止服务器"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "用户界面",
+			"DESCRIPTION": "选择此租户中所有用户在同时提供两种版本的页面上使用哪种界面。",
+			"OPTIONS": {
+				"ANGULAR": "Angular（默认）",
+				"REACT": "React（新）"
+			},
+			"HINT": "适用于整个租户及所有设备。目前时间跟踪仪表板同时提供两种界面；更多页面即将推出。",
+			"READ_ONLY": "只有租户管理员可以更改此设置。",
+			"SAVING": "正在保存…",
+			"SAVED": "界面偏好已保存",
+			"SAVE_ERROR": "无法保存界面偏好。"
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "主题",
 		"LIGHT": "光",
@@ -1188,7 +1203,9 @@
 		"CARDS_GRID": "卡片网格",
 		"SPRINT_VIEW": "Sprint View 时事回顾",
 		"QUICK_SETTINGS": "快捷设置",
-		"NO_LAYOUT": "没有可用的数据布局"
+		"NO_LAYOUT": "没有可用的数据布局",
+		"PREFERENCES": "偏好设置",
+		"SUPPORT": "支持"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "有什么新的吗？",
@@ -3637,7 +3654,9 @@
 		"SELECT_AN_ORGANIZATION": "组织",
 		"SELECT_PROJECT": "项目",
 		"SELECT_TEAM": "团队",
-		"AI_CHAT": "AI 聊天"
+		"AI_CHAT": "AI 聊天",
+		"COLLAPSE_SIDEBAR": "收起侧边栏",
+		"EXPAND_SIDEBAR": "展开侧边栏"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI 助手",
@@ -3663,6 +3682,12 @@
 		"STOP": "停止生成",
 		"ERROR": "出了点问题。",
 		"RETRY": "重试",
+		"DICTATION_FAILED": "无法转录录音。",
+		"DICTATION_NOT_CONFIGURED": "听写需要语音提供商。请在“AI 提供商”设置页面添加一个。",
+		"DICTATION_ASK_ADMIN": "听写需要语音提供商——请管理员在“设置 → AI 提供商”中添加。",
+		"DICTATION_KEY_REJECTED": "语音提供商拒绝了其 API 密钥。请在“AI 提供商”设置页面更新。",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "语音提供商拒绝了其 API 密钥——请管理员在“设置 → AI 提供商”中更新。",
+		"DICTATION_OPEN_SETTINGS": "打开 AI 提供商",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
@@ -5370,7 +5395,15 @@
 		"HOTKEYS": "快捷键",
 		"HELP": "帮助",
 		"SIGN_OUT": "退出",
-		"PROFILE": "个人资料"
+		"PROFILE": "个人资料",
+		"ACCOUNT": "账户",
+		"PREFERENCES": "偏好设置",
+		"DOWNLOAD_APPS": "下载应用",
+		"DOWNLOAD_MACOS": "下载 macOS 版",
+		"DOWNLOAD_WINDOWS": "下载 Windows 版",
+		"DOWNLOAD_LINUX": "下载 Linux 版",
+		"DOWNLOAD_MOBILE": "下载移动应用",
+		"DOWNLOAD_BROWSER_EXTENSION": "下载浏览器扩展"
 	},
 	"WORKSPACES": {
 		"MENUS": {

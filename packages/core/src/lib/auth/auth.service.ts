@@ -1204,6 +1204,25 @@ export class AuthService extends SocialAuthService {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
 
+		// -1. This is a CREATION sink reachable from public routes (/auth/register, /invite/accept,
+		// /invite/contact) whose bodies are attacker-controlled. Strip everything that identifies or
+		// privileges an EXISTING account before the payload is spread into create()/save():
+		// a body `user.id` would turn the save into an UPDATE of that row (account takeover), and
+		// hash / verification / token columns must only ever be derived server-side.
+		if (input.user) {
+			const {
+				id: _id,
+				hash: _hash,
+				emailVerifiedAt: _emailVerifiedAt,
+				emailToken: _emailToken,
+				code: _code,
+				codeExpireAt: _codeExpireAt,
+				refreshToken: _refreshToken,
+				...safeUser
+			} = input.user as any;
+			input.user = safeUser;
+		}
+
 		// 0. Validate the terms acceptance BEFORE anything irreversible happens.
 		//
 		// The register form gates its submit button on a hard-required terms
@@ -1230,7 +1249,13 @@ export class AuthService extends SocialAuthService {
 			input.user.roleId = input.user.role.id;
 		}
 
-		// 1. If createdByUserId is provided, get the creating user and use their tenant
+		// 1. If createdByUserId is provided, get the creating user and use their tenant — but only when
+		// it names the AUTHENTICATED caller. On the public invite routes the field is attacker-controlled
+		// and used to override the invite's tenant with any user's tenant (cross-tenant registration).
+		const authenticatedUserId = RequestContext.currentUserId();
+		if (input.createdByUserId && (!authenticatedUserId || String(input.createdByUserId) !== String(authenticatedUserId))) {
+			delete input.createdByUserId;
+		}
 		if (input.createdByUserId) {
 			const creatingUser = await this.userService.findOneByIdString(input.createdByUserId, {
 				relations: {
@@ -1238,6 +1263,10 @@ export class AuthService extends SocialAuthService {
 				}
 			});
 			tenant = creatingUser.tenant;
+		}
+		// Keep the flat FK consistent with the trusted tenant relation (mirrors the roleId pin above).
+		if (tenant?.id && input.user) {
+			input.user.tenantId = tenant.id;
 		}
 
 		// 2. Register new user

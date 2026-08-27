@@ -1155,6 +1155,21 @@
 		"START_SERVER": "تشغيل الخادم",
 		"STOP_SERVER": "توقف الخادم"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "واجهة المستخدم",
+			"DESCRIPTION": "اختر الواجهة التي يستخدمها جميع أعضاء هذا المستأجر للصفحات المتاحة بكلا النوعين.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (افتراضي)",
+				"REACT": "React (جديد)"
+			},
+			"HINT": "ينطبق على المستأجر بأكمله وعلى كل الأجهزة. حاليًا لوحة تتبع الوقت متاحة بكلتا الواجهتين؛ وستتبعها صفحات أخرى.",
+			"READ_ONLY": "يمكن لمسؤولي المستأجر فقط تغيير هذا الإعداد.",
+			"SAVING": "جارٍ الحفظ…",
+			"SAVED": "تم حفظ تفضيل الواجهة",
+			"SAVE_ERROR": "تعذر حفظ تفضيل الواجهة."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "الثيمات",
 		"LIGHT": "ضوء",
@@ -1187,7 +1202,9 @@
 		"CARDS_GRID": "شبكة البطاقات",
 		"SPRINT_VIEW": "عرض السبرينت",
 		"QUICK_SETTINGS": "الإعدادات السريعة",
-		"NO_LAYOUT": "No data layout available"
+		"NO_LAYOUT": "لا يوجد تخطيط بيانات متاح",
+		"PREFERENCES": "التفضيلات",
+		"SUPPORT": "الدعم"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "ما الجديد؟",
@@ -3622,7 +3639,9 @@
 		"SELECT_AN_ORGANIZATION": "مؤسسة",
 		"SELECT_PROJECT": "مشروع",
 		"SELECT_TEAM": "فريق",
-		"AI_CHAT": "دردشة الذكاء الاصطناعي"
+		"AI_CHAT": "دردشة الذكاء الاصطناعي",
+		"COLLAPSE_SIDEBAR": "طي الشريط الجانبي",
+		"EXPAND_SIDEBAR": "توسيع الشريط الجانبي"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "مساعد الذكاء الاصطناعي",
@@ -3648,6 +3667,12 @@
 		"STOP": "إيقاف التوليد",
 		"ERROR": "حدث خطأ ما.",
 		"RETRY": "إعادة المحاولة",
+		"DICTATION_FAILED": "تعذّر تفريغ التسجيل.",
+		"DICTATION_NOT_CONFIGURED": "يحتاج الإملاء إلى مزوّد صوت. أضف واحدًا في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"DICTATION_ASK_ADMIN": "يحتاج الإملاء إلى مزوّد صوت — اطلب من المسؤول إضافة واحد في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"DICTATION_KEY_REJECTED": "رفض مزوّد الصوت مفتاح API الخاص به. حدّثه في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "رفض مزوّد الصوت مفتاح API الخاص به — اطلب من المسؤول تحديثه في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"DICTATION_OPEN_SETTINGS": "فتح مزوّدي الذكاء الاصطناعي",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
@@ -5355,7 +5380,15 @@
 		"HOTKEYS": "مفاتيح الاختصار",
 		"HELP": "مساعدة",
 		"SIGN_OUT": "تسجيل الخروج",
-		"PROFILE": "الملف الشخصي"
+		"PROFILE": "الملف الشخصي",
+		"ACCOUNT": "الحساب",
+		"PREFERENCES": "التفضيلات",
+		"DOWNLOAD_APPS": "تنزيل التطبيقات",
+		"DOWNLOAD_MACOS": "التنزيل لنظام macOS",
+		"DOWNLOAD_WINDOWS": "التنزيل لنظام Windows",
+		"DOWNLOAD_LINUX": "التنزيل لنظام Linux",
+		"DOWNLOAD_MOBILE": "تنزيل تطبيق الهاتف المحمول",
+		"DOWNLOAD_BROWSER_EXTENSION": "تنزيل إضافة المتصفح"
 	},
 	"WORKSPACES": {
 		"MENUS": {

@@ -3,6 +3,7 @@
 @forward 'var';
 @use './themes' as *;
 @use 'var' as *;
+@use '@nebular/theme/styles/global/breakpoints' as *;
 
 /* Apply style on scrollbar for Firefox */
 * {
@@ -271,6 +272,30 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     flex-direction: column;
     min-height: 0;
 
+    // ── The WIDTH half of the same story ──────────────────────────────────
+    // Nebular already lets the column shrink (`flex: 1 0; min-width: 0`), and
+    // the AI chat column takes up to 860px of the row when it is expanded, so
+    // the canvas can get narrower than the page it holds. Nothing used to say
+    // what happens then: the column's overflow was `visible`, so a card that
+    // could not shrink ran out past the column, past `.columns` and `.content`,
+    // and the only box that could scroll it was the whole-page
+    // `.scrollable-container` above — which slides the page under the FIXED
+    // nav sidebar and header band. A horizontal scrollbar you cannot use, on a
+    // page that looks simply cut off.
+    //
+    // So the column itself is the scroll port: what does not fit scrolls INSIDE
+    // the canvas, beside the sidebars and under the header band, and the
+    // vertical frame above stays exactly what it is (the column is already
+    // height-bounded, so a page that fits sees no scrollbar at all; one that
+    // is taller than the column now scrolls here rather than at the page
+    // level, i.e. above the footer instead of under it). `overflow-x` alone
+    // is spelled out, but CSS pairs the two axes: a non-`visible` x forces y
+    // to `auto` as well, which is the intended result. `overscroll-behavior`
+    // keeps a trackpad swipe past the end of the canvas from turning into a
+    // browser back/forward navigation.
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+
     // The outlet is an anchor for the routed view, never a box of its own.
     > router-outlet {
       display: none;
@@ -279,13 +304,22 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     > router-outlet + * {
       flex: 1 1 auto;
       min-height: 0;
+      // The routed page is the column's only real child, stretched to the
+      // column's width; `min-width: 0` here plus on the card chain below is the
+      // width counterpart of the `min-height: 0` release above, so a page that
+      // CAN shrink (a wrapping form, a table inside its own scroll container)
+      // does so instead of asking the column to scroll.
+      min-width: 0;
+      max-width: 100%;
     }
 
     nb-card {
       min-height: 0;
+      min-width: 0;
 
       > nb-card-body {
         min-height: 0;
+        min-width: 0;
       }
     }
   }
@@ -319,6 +353,10 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     .layout .layout-container .content .columns {
       min-height: 0; // allow the flex child to shrink below its content size
       overflow: hidden; // dashboard panels already scroll internally
+    }
+
+    .layout .layout-container .content .columns nb-layout-column {
+      padding-top: 12px;
     }
 
     // Same reasoning one level down: the dashboard page must shrink WITH the
@@ -399,18 +437,19 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
   angular2-smart-table table {
     border-collapse: separate !important;
 
-    // Filter-row controls track the table density: they are the tallest thing
-    // in the filter row, so their height IS that row's height.
+    // Filter-row controls: COLOUR only. Every metric of these widgets (height,
+    // line-height, padding, the flex centring of the ng-select trigger) has ONE
+    // home, `gauzy/_gauzy-table-filters.scss`, which reads the same
+    // `--gauzy-table-control-height` token. This block used to restate the
+    // height and a 16px placeholder line box, and disagreed with a second copy
+    // (1.875rem) in that file — two sources of truth for one row.
     .angular2-smart-filter input {
-      height: var(--gauzy-table-control-height, 1.75rem);
       background-color: var(--gauzy-sidebar-background-3) !important;
       border: none !important;
     }
 
     .angular2-smart-filter .ng-select .ng-select-container {
       background-color: var(--gauzy-sidebar-background-3) !important;
-      height: var(--gauzy-table-control-height, 1.75rem);
-      min-height: auto;
 
       input {
         background-color: transparent !important;
@@ -418,9 +457,7 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     }
 
     .angular2-smart-filter .ng-select .ng-select-container .ng-value-container .ng-placeholder {
-      font-size: 13px;
       font-weight: 400;
-      line-height: 16px;
       letter-spacing: 0em;
       color: var(--input-basic-placeholder-text-color);
     }
@@ -631,6 +668,98 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     }
   }
 
+  // The header band's four selectors are the same components used in forms and
+  // dialogs all over the app, so their panel cannot be styled by the shared
+  // `gauzy-entity-select` block below: a form's trigger is a full-size control,
+  // and shrinking ITS options to header size would break the pairing rather
+  // than complete it.
+  //
+  // `header-entity-select` is the marker the header passes down (`dropdownClass`
+  // on each selector), which ng-select copies onto the appended panel. It means
+  // exactly one thing: this panel belongs to a trigger in the header band, so
+  // its rows are set in the band's text rather than the app's menu text.
+  //
+  // The row COLOUR is deliberately not copied. The trigger is chrome and takes
+  // the muted `--gauzy-text-color-2`; a panel is a list someone reads and picks
+  // from, so its rows keep the full-contrast `text-basic-color` the block above
+  // gives them (and the same note as `_overlays.scss` applies — a muted label on
+  // a tinted row lands near 2.7:1 in the dark themes).
+  .ng-dropdown-panel.header-entity-select {
+    .ng-dropdown-panel-items .ng-option,
+    .ng-dropdown-panel-items .ng-option .ng-option-label,
+    .ng-dropdown-panel-items .ng-option > span {
+      font-size: nb-theme(gauzy-header-text-size);
+      line-height: 1.125rem;
+    }
+
+    // The panel's own header/footer slots are part of the same list. The
+    // 'no items found' and add-tag rows are NOT listed: ng-select renders both
+    // as `.ng-option`, so the rule above already has them.
+    .ng-dropdown-header,
+    .ng-dropdown-footer {
+      font-size: nb-theme(gauzy-header-text-size);
+    }
+
+    // Row geometry is deliberately left to the block below, which sizes every
+    // entity-select row the same way. Only the text changes here.
+  }
+
+  .ng-dropdown-panel.gauzy-entity-select {
+    .ng-dropdown-panel-items {
+      padding: 3px;
+    }
+
+    .ng-dropdown-panel-items .ng-option {
+      display: flex !important;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3125rem 0.5rem !important;
+      font-weight: 400;
+      min-height: 1.75rem;
+    }
+
+    .ng-dropdown-panel-items img {
+      flex: none;
+      width: 1.125rem;
+      height: 1.125rem;
+      border-radius: var(--gauzy-radius-sm, 6px);
+      object-fit: cover;
+    }
+
+    .ng-dropdown-panel-items .avatar-fallback {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.125rem;
+      height: 1.125rem;
+      border-radius: var(--gauzy-radius-sm, 6px);
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+      color: var(--gauzy-text-color-2, var(--text-hint-color));
+      font-size: 0.75rem;
+
+      svg {
+        width: 1em;
+        height: 1em;
+      }
+    }
+
+    .ng-dropdown-panel-items .ng-option > span,
+    .ng-dropdown-panel-items .ng-option .ng-option-label {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .ng-dropdown-panel-items .ng-option.ng-option-selected,
+    .ng-dropdown-panel-items .ng-option.ng-option-selected:hover,
+    .ng-dropdown-panel-items .ng-option.ng-option-selected .ng-option-label {
+      font-weight: 500;
+    }
+  }
+
   .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input > input {
     color: var(--gauzy-text-color-1);
   }
@@ -705,10 +834,6 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
   // step above this. Every page that restated the old 24px has therefore had
   // that rule DELETED rather than left to lose a specificity race it wins.
   //
-  // h6 is deliberately excluded: at 1rem it already sits BELOW this step and
-  // is what templates reach for when a card header carries a SUB-heading
-  // (the file-storage provider blocks, the dashboard team panels). Pulling it
-  // up would make those louder rather than quieter.
   nb-card-header {
     h1,
     h2,
@@ -718,6 +843,13 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
       font-size: nb-theme(gauzy-page-title-font-size);
       font-weight: nb-theme(gauzy-page-title-font-weight);
       line-height: nb-theme(gauzy-page-title-line-height);
+      letter-spacing: nb-theme(gauzy-page-title-letter-spacing);
+    }
+
+    h6 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1.25rem;
       letter-spacing: nb-theme(gauzy-page-title-letter-spacing);
     }
   }
@@ -867,8 +999,64 @@ nb-card-header.ga-page-header {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: wrap;
-  align-items: center;
+  // TOP-anchored, not centred — see "One vertical axis" below.
+  align-items: flex-start;
   column-gap: 1rem;
+
+  // ── One vertical axis for everything on the title line ───────────────────
+  //
+  // The title block is TWO lines tall once `ngx-header-title` has parked the
+  // breadcrumb trail under the heading (`.ga-page-title-trail`, a full-basis,
+  // last-ordered item of the wrapping title row). With `align-items: center` on
+  // this header, the action row (`+ Add`, the Edit/Delete strip, the grid-vs-list
+  // selector) was centred on that two-line block, while a secondary button that
+  // shares the title ROW (Users' "Manage Invites", Time-off's settings cog,
+  // Expenses' "Manage Categories") was centred on the first line only — two
+  // centring contexts, ~13px apart, on what reads as one toolbar. Two smaller
+  // things widened the split: the heading kept Bootstrap's 0.5rem
+  // `margin-bottom` inside its flex box (so the title glyphs sat ~4px above the
+  // line's centre), and page stylesheets that forward `gauzy/_gauzy-table` give
+  // every `button` a 5px margin, which inflated the buttons' line by 10px on some
+  // pages and not others.
+  //
+  // So both sides are anchored to the TOP of the header and centre their content
+  // in the same reference box, `gauzy-page-title-row-height` (see
+  // `_gauzy-theme-maps.scss`: the tallest control this line hosts, a small filled
+  // button inside the `.visible-slot` pill): the heading pads its line box out
+  // to that height, and the action block is a flex box of that min-height. Same
+  // top edge, same box, same centre — the axis is shared by construction, and
+  // the trail on the heading's second line no longer takes part in it.
+  // Two ways to reach the heading: the title block's own child (the common
+  // shape), and the heading's direct parent as stamped by `relocateTrail`
+  // (`.ga-page-title-row`) — which is a NESTED div on pages such as Employees
+  // that wrap the heading and a secondary button in `.card-header-title` blocks
+  // of their own.
+  > .ga-page-header-main > :is(h1, h2, h3, h4, h5, h6),
+  .ga-page-title-row > :is(h1, h2, h3, h4, h5, h6) {
+    // Symmetric block padding rather than `display: flex` + `min-height`: it
+    // centres the 1.75rem title line in the reference box without turning the
+    // heading's inline content (`ngx-header-title`, a qualifier span, an icon)
+    // into flex items, and a title that wraps to two lines stays centred too.
+    // The literals are only the CSS-var fallbacks (same convention as the
+    // table density block above); the values live in the theme maps.
+    padding-block: calc(
+      (var(--gauzy-page-title-row-height, 2.125rem) - var(--gauzy-page-title-line-height, 1.75rem)) / 2
+    );
+    // Bootstrap reboot's `margin-bottom: 0.5rem` — the trail below carries its
+    // own `margin-top`, so the heading's box is its line box plus that padding
+    // and nothing else.
+    margin-block: 0;
+  }
+
+  // Block margins only: the horizontal 5px from `_gauzy-table.scss` is the
+  // spacing between neighbouring buttons and stays. Vertically it made a
+  // button's box taller than the button, on the pages that happen to forward
+  // that partial, which is why the two halves of a toolbar could never share a
+  // reference box across pages.
+  > .ga-page-header-main button,
+  > .ga-page-header-actions button {
+    margin-block: 0;
+  }
 
   // Whatever else the page stacked under the title stays stacked: a full basis
   // keeps each remaining child (a filter strip, a table's column headings) on a
@@ -933,7 +1121,22 @@ nb-card-header.ga-page-header {
     // Beats Bootstrap's `align-self-end`, which several pages use to right-align
     // this block while the header was still a column. Along a row that same
     // declaration would drop the buttons to the bottom of the title block.
-    align-self: center !important;
+    // TOP, not centre: see "One vertical axis" above — the block is centred on
+    // the title LINE through the shared reference box below, not on the whole
+    // (title + trail) block.
+    align-self: flex-start !important;
+
+    // The same reference box the heading uses, so the buttons and the title
+    // glyphs share one centre; a secondary button a page renders in this block
+    // (Expenses' "Manage Categories" next to `+ Add`) is centred here too.
+    // `display: flex` also beats Bootstrap's `d-flex` no-ops on the pages that
+    // give this block `align-self-end d-flex align-items-center`.
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    column-gap: 0.5rem;
+    min-height: var(--gauzy-page-title-row-height, 2.125rem);
 
     // `ngx-gauzy-button-action` pads itself for a standalone row; on the title's
     // line the title block already sets the height, and that padding IS the band
@@ -1294,6 +1497,44 @@ angular2-smart-table {
     width: auto !important;
     right: 1rem !important;
     max-width: max-content;
+  }
+}
+
+// ── ...except the header's organization panel, which opens LEFTWARDS ─────────
+//
+// The rule above anchors an appended panel on ng-select's inline `left` (its
+// trigger) and lets it run to 1rem from the right edge of the screen. That
+// works for a panel with room to its right. The organization control is the
+// last one in the header cluster and is now only as wide as its logo, so it
+// has almost no room there: the panel had a few dozen pixels to open into and
+// squeezed every option into it.
+//
+// So this one drops the trigger anchor and takes the opposite one — `left:
+// auto` + `right`, which is the same "open towards the middle of the screen"
+// treatment a right-hand app menu gets. The panel is sized by its options
+// (`max-content`), floored so a one-word organization name still reads as a
+// menu, and capped so a long one cannot run off the left edge.
+//
+// `right` is measured from the viewport, not from the trigger, because CSS
+// cannot know where the trigger's right edge is — what follows the selector in
+// the header (the timer, the sidebar actions) is conditional. 1.5rem is the
+// `.actions` row's own right margin, so the panel lines up with the edge of the
+// header cluster.
+//
+// Scoped to `min-width: xl` — the complement of the `media-breakpoint-down(lg)`
+// rule that hides `.show-large-up` — because that is exactly the range in which
+// the header's copy of the selector is the one on screen. Below it the header
+// copy is hidden and the `.extra-actions` overflow panel owns a full-width copy
+// instead, which has all the room it needs and keeps the default anchoring.
+@include media-breakpoint-up(xl) {
+  html:not([dir='rtl']) > body > ng-dropdown-panel.ng-dropdown-panel.organization-entity-select {
+    left: auto !important;
+    right: 1.5rem !important;
+    width: max-content !important;
+    // Overrides the inline `min-width`, which ng-select sets to the trigger's
+    // width — that is the logo-sized pill now, not a menu.
+    min-width: 14rem !important;
+    max-width: min(24rem, calc(100vw - 3rem));
   }
 }
 
