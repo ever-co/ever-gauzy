@@ -91,6 +91,7 @@ runs:
         # turned 'this repo has no cache configured' into 'this repo's CI is red'. Tracked files are
         # restored; untracked leftovers from a previous run on a clean:false runner are removed.
         reset_failed=""
+        reset_err=""
         for f in .npmrc .yarnrc yarn.lock package-lock.json; do
           # Exit status matters: 0 = tracked, 1 = genuinely absent, anything else (128 = git
           # metadata unavailable) means we CANNOT tell. Treating every nonzero as absent would
@@ -100,21 +101,38 @@ runs:
           # `git ls-files ...; tracked=$?` form never reaches the assignment on any repo
           # where $f is untracked - the step dies with exit 1 and no output at all
           # (measured on the first pnpm consumer repo of this action, 2026-08-21).
-          if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+          # Stderr is CAPTURED, not discarded (`2>&1 >/dev/null` = stderr into the
+          # substitution, git's stdout dropped). On 2026-08-27 three self-hosted Windows
+          # runners failed here with a bare "(git-exit-128)" and finding the real error -
+          # "fatal: detected dubious ownership", after the runner service account changed
+          # out from under a NETWORK SERVICE-owned workspace - took a remote login to the
+          # machines, because this log never showed it. The first stderr line now rides
+          # along in the ::error below so the annotation self-diagnoses. The exit-status
+          # handling and fail-closed behavior are unchanged.
+          if probe_err=$(git ls-files --error-unmatch "$f" 2>&1 >/dev/null); then
             tracked=0
           else
             tracked=$?
           fi
           if [ "$tracked" -eq 0 ]; then
-            git checkout -- "$f" || reset_failed="$reset_failed $f"
+            if ! restore_err=$(git checkout -- "$f" 2>&1); then
+              # Re-emit so the raw log keeps the full message it has always shown.
+              if [ -n "$restore_err" ]; then printf '%s\n' "$restore_err" >&2; fi
+              reset_failed="$reset_failed $f"
+              if [ -z "$reset_err" ]; then reset_err="${restore_err%%$'\n'*}"; fi
+            fi
           elif [ "$tracked" -eq 1 ]; then
             rm -f "$f"
           else
             reset_failed="$reset_failed $f(git-exit-$tracked)"
+            if [ -z "$reset_err" ]; then reset_err="${probe_err%%$'\n'*}"; fi
           fi
         done
         if [ -n "$reset_failed" ]; then
-          echo "::error title=Could not reset registry configuration::git checkout -- failed for:$reset_failed. The previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
+          # The runner percent-DECODES workflow-command data (%25 -> %, %0A -> LF), so a
+          # literal % in git's message must be re-encoded or the annotation mangles it.
+          reset_err="${reset_err//%/%25}"
+          echo "::error title=Could not reset registry configuration::git checkout -- failed for:$reset_failed.${reset_err:+ First git error: $reset_err.} The previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
           exit 1
         fi
 
