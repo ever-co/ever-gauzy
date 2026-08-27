@@ -54,7 +54,9 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       // Underline only on hover: a permanently underlined link in a strip this
       // thin turns the whole band into a rule.
       border-bottom: 1px solid transparent;
-      transition: color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+      transition:
+        color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out;
     }
 
     a:hover,
@@ -340,6 +342,24 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
 :host .actions nb-action > nb-icon {
   font-size: 1rem;
   color: $header-text-color;
+}
+
+// The icon-only triggers at the end of the cluster (What's New, Quick Settings,
+// the small-screen selector toggle). Nebular sizes an nb-action from the
+// actions-medium padding, which makes each one a wide slab beside the compact
+// selector pills; a square the height of the pills reads as an icon button.
+:host .actions nb-action.toggle-layout {
+  width: var(--gauzy-header-control-height, 1.75rem);
+  height: var(--gauzy-header-control-height, 1.75rem);
+  padding: 0;
+  justify-content: center;
+  border-radius: var(--gauzy-radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 0.12s ease-in-out;
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  }
 }
 
 .employee-selector,

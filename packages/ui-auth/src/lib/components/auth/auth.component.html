@@ -1,7 +1,7 @@
 <nb-layout>
 	<nb-layout-column class="wrapper">
 		<nb-card class="card">
-			<nb-card-header class="header" [class.register]="isRegister">
+			<nb-card-header class="header" [class.register]="isRegister" [class.login]="isLogin">
 				<nav [class.hide-go-back]="!(queryParams$ | async)?.returnUrl" class="navigation">
 					<a (click)="goBack()" class="link back-link" aria-label="Back">
 						<nb-icon icon="arrow-back"></nb-icon>
@@ -9,7 +9,7 @@
 				</nav>
 				<gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
 			</nb-card-header>
-			<nb-card-body class="body" [class.register]="isRegister">
+			<nb-card-body class="body" [class.register]="isRegister" [class.login]="isLogin">
 				<nb-auth-block class="auth-block">
 					<router-outlet></router-outlet>
 				</nb-auth-block>

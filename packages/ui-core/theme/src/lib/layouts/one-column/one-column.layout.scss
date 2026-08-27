@@ -1,5 +1,6 @@
 @use '@nebular/theme/styles/global/breakpoints' as *;
 @use 'themes' as *;
+@use '@shared/panel' as *;
 
 // Same hairline as cards, overlays and the user/workspace menus — a translucent
 // grey that darkens light surfaces and lightens dark ones, so ONE value is
@@ -30,7 +31,7 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   }
 
   .changelog-sidebar.expanded {
-    width: 29.5rem !important;
+    width: 22.5rem !important;
     height: fit-content;
     z-index: 1042;
   }
@@ -170,9 +171,9 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
   gauzy-user-menu {
     position: absolute;
-    bottom: 0px;
-    @include nb-ltr(left, 0px);
-    @include nb-rtl(right, 0px);
+    bottom: 3.25rem;
+    @include nb-ltr(left, 0.75rem);
+    @include nb-rtl(right, 0.75rem);
     z-index: 1041;
   }
 
@@ -192,6 +193,7 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     padding: 0.5rem 0.75rem;
     --gz-user-surface: #{nb-theme(gauzy-sidebar-background-2)};
     --gz-user-presence: none;
+    --gz-user-email-size: 0.875rem;
 
     gauzy-user {
       flex: 1 1 auto;
@@ -383,7 +385,8 @@ nb-sidebar[tag='menu-sidebar'] {
     // the trailing edge on narrow windows. `max-width` still wins over an
     // `!important` width, which is why the width above can stay as it was.
     max-width: calc(100vw - 2.5rem);
-    box-shadow: 0px 6px 30px 0px rgba(0, 0, 0, 0.2);
+    border: 1px solid #{$panel-hairline};
+    box-shadow: #{$panel-shadow};
     z-index: 1041;
     border-radius: nb-theme(border-radius);
     // Opaque against the page behind it: the rounded box itself carries the
@@ -398,16 +401,23 @@ nb-sidebar[tag='menu-sidebar'] {
     }
   }
   nb-layout .layout .layout-container nb-sidebar.changelog-sidebar.expanded .main-container-fixed {
-    top: calc(var(--header-height) - 27px);
-    height: fit-content;
-    max-height: 100vh;
+    top: calc(var(--gz-header-height, var(--header-height, 4.5rem)) + 0.5rem);
+    height: auto;
+    max-height: calc(100vh - var(--gz-header-height, var(--header-height, 4.5rem)) - 1rem);
     width: 22.5rem !important;
-    box-shadow: 0px 6px 30px 0px rgba(0, 0, 0, 0.2);
+    max-width: calc(100vw - 2.5rem);
+    border: 1px solid #{$panel-hairline};
+    box-shadow: #{$panel-shadow};
     z-index: 1041;
     border-radius: nb-theme(border-radius);
+    background-color: nb-theme(background-basic-color-1);
+    overflow: hidden;
     .scrollable {
       background-color: nb-theme(background-basic-color-1);
       border-radius: nb-theme(border-radius);
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
       padding: 0;
     }
   }
@@ -602,7 +612,8 @@ nb-sidebar[tag='menu-sidebar'] {
   padding: 0 0.5rem;
 }
 
-:host ::ng-deep nb-layout .layout .layout-container nb-sidebar.settings-sidebar.expanded .main-container-fixed {
+:host ::ng-deep nb-layout .layout .layout-container nb-sidebar.settings-sidebar.expanded .main-container-fixed,
+:host ::ng-deep nb-layout .layout .layout-container nb-sidebar.changelog-sidebar.expanded .main-container-fixed {
   @include nb-ltr(right, 20px);
   @include nb-rtl(left, 20px);
 }

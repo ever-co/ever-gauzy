@@ -321,7 +321,7 @@ switch (dbType) {
 			// null -> IS NULL, undefined -> key omitted. Never 'ignore' for null (GHSA-44pv-34gx-q9p4); see database-helpers.ts.
 			invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR,
 			database: sqlitePath,
-			logging: 'all',
+			logging: getLoggingOptions(process.env.DB_LOGGING),
 			logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
 			prepareDatabase: (db) => {

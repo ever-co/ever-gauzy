@@ -153,6 +153,7 @@ import { TagModule } from '../tags/tag.module';
 import { DailyPlanModule } from '../tasks/daily-plan/daily-plan.module';
 import { TaskEstimationModule } from '../tasks/estimation/task-estimation.module';
 import { IssueTypeModule } from '../tasks/issue-type/issue-type.module';
+import { TaskMetadataBootstrapModule } from '../tasks/task-metadata-bootstrap';
 import { TaskLinkedIssueModule } from '../tasks/linked-issue/task-linked-issue.module';
 import { TaskPriorityModule } from '../tasks/priorities/priority.module';
 import { TaskRelatedIssueTypeModule } from '../tasks/related-issue-type/related-issue-type.module';
@@ -510,6 +511,7 @@ if (environment.THROTTLE_ENABLED) {
 		PublicShareModule,
 		EmailResetModule,
 		IssueTypeModule,
+		TaskMetadataBootstrapModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
 		TaskEstimationModule,

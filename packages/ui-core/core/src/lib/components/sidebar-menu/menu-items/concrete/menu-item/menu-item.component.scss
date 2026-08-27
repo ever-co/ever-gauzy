@@ -56,7 +56,7 @@ $menu-row-active-weight: 500;
 // 14px for every label in the nav — deliberately NOT `menu-text-font-size`
 // (0.8125rem / 13px), which is the app's shared CONTROL text size and is also
 // what overlay menus, ng-select rows and the settings menu resolve. The sidebar
-// is read at a glance and from a distance; the shared token stays where it is.
+// runs on its own step; the shared token stays where it is.
 $menu-row-font-size: 0.875rem;
 
 // Row padding, one step tighter than the shared `menu-item-padding`
@@ -139,7 +139,7 @@ $menu-child-indent: 1.25rem;
     > i {
       flex: 0 0 auto;
       width: $menu-icon-column;
-      font-size: 0.8125rem;
+      font-size: 0.875rem;
       text-align: center;
       color: inherit;
       opacity: 0.85;
@@ -393,7 +393,7 @@ $menu-child-indent: 1.25rem;
   i {
     flex: 0 0 auto;
     width: $menu-icon-column;
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     text-align: center;
     color: inherit;
     opacity: 0.85;
@@ -461,7 +461,7 @@ $menu-child-indent: 1.25rem;
 // Which section this is — in the rail the parent row has no label of its own,
 // so without this the panel is a list of links from nowhere. Same treatment as
 // the group captions in the overlay menus, but at 10px: it is a caption over
-// the list, and the wider the gap to the 14px rows under it, the more clearly
+// the list, and the wider the gap to the rows under it, the more clearly
 // it reads as a label rather than as the first entry.
 .rail-flyout-title {
   padding: 0.375rem $menu-row-inline-padding 0.25rem;

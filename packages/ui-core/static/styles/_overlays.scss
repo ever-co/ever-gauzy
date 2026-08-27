@@ -330,6 +330,28 @@ $overlay-item-padding-x: 0.625rem; // 10px
     text-transform: uppercase;
   }
 
+  // ── Overlays opened FROM a chrome panel ─────────────────────────────────
+  .cdk-overlay-container nb-option-list.gz-panel-options {
+    nb-option {
+      padding: 0.3125rem 0.5rem;
+      font-size: 0.75rem;
+      line-height: 0.875rem;
+    }
+
+    nb-option .flag-icon {
+      width: 0.875rem;
+      height: 0.625rem;
+    }
+  }
+
+  .cdk-overlay-container nb-popover.gz-theme-popover {
+    padding: #{$overlay-padding};
+
+    .arrow {
+      display: none;
+    }
+  }
+
   // ── Separators ──────────────────────────────────────────────────────────
   // 1px hairlines at low alpha, never a thick divider. Bootstrap's reboot
   // gives every `hr` a 1px `currentColor` border at 25% opacity, which reads

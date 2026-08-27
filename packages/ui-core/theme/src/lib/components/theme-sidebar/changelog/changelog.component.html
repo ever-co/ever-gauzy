@@ -1,11 +1,19 @@
-<section class="section-wrapper">
-	<span class="cancel"><i class="fas fa-times" (click)="closeSidebar()"></i></span>
-	<div class="whats-new-wrapper">
-		<h3 class="main-header">
-			{{ 'CHANGELOG_MENU.HEADER' | translate }}
-		</h3>
+<section class="whats-new-panel" gauzyOutside (clickOutside)="onClickOutside($event)">
+	<header class="panel-header">
+		<h3 class="panel-title">{{ 'CHANGELOG_MENU.HEADER' | translate }}</h3>
+		<button
+			type="button"
+			class="panel-close"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			(click)="closeSidebar()"
+		>
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</header>
+
+	<div class="panel-body">
 		@for (item of items$ | async; track item.id) {
-			<ngx-changelog-entry [entry]="item" />
+			<ngx-changelog-entry class="compact" [class.last]="$last" [entry]="item" />
 		}
 	</div>
 </section>

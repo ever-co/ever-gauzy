@@ -1203,7 +1203,9 @@
 		"CARDS_GRID": "卡片网格",
 		"SPRINT_VIEW": "Sprint View 时事回顾",
 		"QUICK_SETTINGS": "快捷设置",
-		"NO_LAYOUT": "没有可用的数据布局"
+		"NO_LAYOUT": "没有可用的数据布局",
+		"PREFERENCES": "偏好设置",
+		"SUPPORT": "支持"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "有什么新的吗？",
@@ -5393,7 +5395,15 @@
 		"HOTKEYS": "快捷键",
 		"HELP": "帮助",
 		"SIGN_OUT": "退出",
-		"PROFILE": "个人资料"
+		"PROFILE": "个人资料",
+		"ACCOUNT": "账户",
+		"PREFERENCES": "偏好设置",
+		"DOWNLOAD_APPS": "下载应用",
+		"DOWNLOAD_MACOS": "下载 macOS 版",
+		"DOWNLOAD_WINDOWS": "下载 Windows 版",
+		"DOWNLOAD_LINUX": "下载 Linux 版",
+		"DOWNLOAD_MOBILE": "下载移动应用",
+		"DOWNLOAD_BROWSER_EXTENSION": "下载浏览器扩展"
 	},
 	"WORKSPACES": {
 		"MENUS": {

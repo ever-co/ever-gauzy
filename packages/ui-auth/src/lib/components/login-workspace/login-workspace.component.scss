@@ -3,64 +3,79 @@
 
 :host {
   .section-wrapper {
-    width: 765px;
+    width: 440px;
+    max-width: 100%;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    column-gap: 20px;
+    row-gap: 20px;
     .-wrapper {
       background: nb-theme(gauzy-card-2);
       border-radius: nb-theme(border-radius);
-      padding: 30px;
-      width: 476px;
+      padding: 24px;
+      width: 440px;
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      row-gap: 20px;
       & > * {
-        padding-left: 15px;
-        padding-right: 15px;
+        padding-left: 0;
+        padding-right: 0;
       }
       & .svg-wrapper {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 57px;
+        align-items: flex-start;
+        margin-bottom: 12px;
       }
       & .title {
         font-family: Inter;
-        font-size: 24px;
+        font-size: 19px;
         font-style: normal;
         font-weight: 700;
-        line-height: 30px;
+        line-height: 24px;
         letter-spacing: 0em;
         text-align: left;
+        margin: 0;
       }
       & .sub-title {
-        width: 358px;
+        width: 100%;
         max-width: 100%;
         // Same fixed-height flex box as forgot-password / reset-password: a
         // two-line instruction overflowed it and crossed the divider below.
-        min-height: 34px;
+        min-height: 32px;
         font-family: 'Inter';
         font-style: normal;
         font-weight: 400;
-        font-size: 14px;
-        line-height: 17px;
+        font-size: 12px;
+        line-height: 16px;
+        color: nb-theme(text-hint-color);
         display: flex;
         align-items: center;
         text-align: start;
-        margin-bottom: 15px;
+        margin: 0;
       }
       & .hr-div-strong {
         @include hr-div-strong;
+        width: 100%;
+        margin: 0;
+      }
+      .hr-div-soft {
+        @include hr-div-soft;
+        width: 100%;
+        margin: 0;
       }
       .form {
-        margin-top: 21px;
-        margin-bottom: 25px;
+        margin: 24px 0 0;
         & .form-group {
-          margin-bottom: 16px;
+          margin-bottom: 14px;
           & .label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-family: Inter;
             font-weight: 600;
-            font-size: 0.9375rem;
-            color: nb-theme(text-basic-color);
+            font-size: 12px;
+            color: nb-theme(text-hint-color);
             padding-left: 0;
             text-transform: none;
           }
@@ -68,38 +83,50 @@
             border: 1px solid rgba(98, 54, 255, 0.5) !important;
             background-color: transparent;
             color: nb-theme(text-basic-color);
+            height: 38px;
+            font-size: 13px;
           }
         }
         // Ensure consistent styling for ngx-password-form-field
         ::ng-deep ngx-password-form-field {
+          .form-group {
+            margin-bottom: 0;
+          }
           .label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-family: Inter;
             font-weight: 600;
-            font-size: 0.9375rem;
-            color: nb-theme(text-basic-color);
+            font-size: 12px;
+            color: nb-theme(text-hint-color);
           }
           input {
             border: 1px solid rgba(98, 54, 255, 0.5) !important;
             background-color: transparent;
             color: nb-theme(text-basic-color);
+            height: 38px;
+            font-size: 13px;
           }
         }
         & .submit-btn-wrapper {
           display: flex;
-          justify-content: flex-end;
+          margin-top: 16px;
           & .submit-btn {
             @include submit-btn;
-            margin-bottom: 0;
-            margin-top: 15px;
-            padding: 13px 65px;
+            width: 100%;
+            margin: 0;
+            padding: 9px 20px;
+            font-size: 14px;
             font-weight: 700;
+            text-align: center;
             text-transform: none;
             letter-spacing: normal;
             border-radius: 8px;
+            min-height: 40px;
             line-height: 20px;
-            transition: background-color 0.2s, border-color 0.2s;
+            transition:
+              background-color 0.2s,
+              border-color 0.2s;
             // Disabled/Submitting state (MUST BE FIRST)
             &[disabled],
             &.btn-pulse {
@@ -147,24 +174,25 @@
           }
         }
       }
-      .hr-div-soft {
-        @include hr-div-soft;
+      .sign-in-or-up {
+        display: flex;
+        flex-direction: column;
+        row-gap: 8px;
       }
       .redirect-link-p {
         font-family: 'Inter';
         font-style: normal;
         font-weight: 400;
-        font-size: 14px;
-        line-height: 17px;
-        /* identical to box height */
+        font-size: 13px;
+        line-height: 18px;
         color: #7e7e8f;
-        margin-bottom: 0;
+        margin: 0;
         & .text-link {
           font-family: Inter;
-          font-size: 14px;
+          font-size: 13px;
           font-style: normal;
           font-weight: 600;
-          line-height: 17px;
+          line-height: 18px;
           letter-spacing: 0em;
           color: nb-theme(color-primary-default);
           text-decoration: none;
@@ -173,6 +201,54 @@
           }
         }
       }
+    }
+  }
+}
+
+@media screen and (max-height: 980px) and (min-width: 491px) {
+  :host .section-wrapper .-wrapper {
+    padding: 20px;
+    row-gap: 16px;
+    & .svg-wrapper {
+      margin-bottom: 8px;
+    }
+    .form {
+      & .form-group {
+        margin-bottom: 12px;
+      }
+      & .submit-btn-wrapper {
+        margin-top: 14px;
+      }
+    }
+  }
+}
+
+@media (max-height: 700px) {
+  :host .section-wrapper .-wrapper {
+    padding: 16px 20px;
+    row-gap: 12px;
+    & .svg-wrapper {
+      margin-bottom: 4px;
+    }
+    .form {
+      margin-top: 16px;
+      & .form-group {
+        margin-bottom: 10px;
+      }
+      & .submit-btn-wrapper {
+        margin-top: 12px;
+      }
+    }
+  }
+}
+
+@include mobile-screen {
+  :host .section-wrapper {
+    width: 100%;
+    .-wrapper {
+      width: 100%;
+      padding: 16px 12px;
+      row-gap: 16px;
     }
   }
 }
