@@ -57,6 +57,13 @@ export const createSeededUserAvatar = async (
 		// key is part of a URL and must always use forward slashes.
 		const storageKey = storagePath.split(path.sep).join('/');
 
+		// Resolve the absolute URL BEFORE persisting anything, so a failure here cannot leave an
+		// ImageAsset row behind that nothing references. The URL is also stored on `imageUrl` so the
+		// column is usable on its own, without a reader having to load the `image` relation.
+		const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL).getProviderInstance();
+		const url = await store.url(storageKey);
+		if (!url) return undefined;
+
 		const asset = new ImageAsset();
 		asset.name = fileName;
 		asset.url = storageKey;
@@ -68,12 +75,7 @@ export const createSeededUserAvatar = async (
 
 		const image = await dataSource.getRepository(ImageAsset).save(asset);
 
-		// Resolve the absolute URL now, so the stored `imageUrl` column is usable on its own and does
-		// not depend on a reader loading the `image` relation.
-		const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL).getProviderInstance();
-		const url = await store.url(storageKey);
-
-		return url ? { image, url } : undefined;
+		return { image, url };
 	} catch (error) {
 		console.error(`Error while seeding avatar "${fileName}":`, error?.message);
 		return undefined;

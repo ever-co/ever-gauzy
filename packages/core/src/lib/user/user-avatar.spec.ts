@@ -1,4 +1,4 @@
-import { getSeedAvatarFileName } from './user-avatar';
+import { getSeedAvatarFileName, shouldSeedAvatar } from './user-avatar';
 
 /**
  * Seeded users and employees carry `imageUrl: 'assets/images/avatars/<file>'` — a path that only
@@ -54,5 +54,34 @@ describe('getSeedAvatarFileName', () => {
 
 	it('refuses a backslash-separated nested path', () => {
 		expect(getSeedAvatarFileName('assets/images/avatars/nested\\alish.jpg')).toBeUndefined();
+	});
+});
+
+/**
+ * `generateDefaultUser` reuses an existing row when one is found, so a re-seed against a persistent
+ * database must not replace an avatar the user uploaded themselves (and must not orphan its asset).
+ * This mirrors how the same function already preserves an existing password hash.
+ *
+ * A user still carrying the old seeded `imageUrl` has no ImageAsset at all, so they are still
+ * backfilled — that is the case this change exists to repair.
+ */
+describe('shouldSeedAvatar', () => {
+	it('seeds for a brand new user', () => {
+		expect(shouldSeedAvatar(undefined)).toBe(true);
+		expect(shouldSeedAvatar(null)).toBe(true);
+	});
+
+	it('does not replace an avatar the user already has', () => {
+		expect(shouldSeedAvatar({ imageId: '00000000-0000-4000-8000-000000000001' })).toBe(false);
+	});
+
+	it('does not replace an avatar known only through the loaded relation', () => {
+		expect(shouldSeedAvatar({ image: { id: '00000000-0000-4000-8000-000000000002' } })).toBe(false);
+	});
+
+	it('backfills an existing user that has no image asset yet', () => {
+		expect(shouldSeedAvatar({ imageUrl: 'assets/images/avatars/alish.jpg' })).toBe(true);
+		expect(shouldSeedAvatar({ imageId: null, image: null })).toBe(true);
+		expect(shouldSeedAvatar({})).toBe(true);
 	});
 });

@@ -51,3 +51,27 @@ export function getSeedAvatarFileName(imageUrl?: string | null): string | undefi
 
 	return fileName;
 }
+
+/** The parts of a persisted user this decision needs; kept structural so the helper stays pure. */
+interface IExistingUserAvatar {
+	imageId?: string | null;
+	image?: unknown;
+	imageUrl?: string | null;
+}
+
+/**
+ * Whether the seed should create an avatar for this user.
+ *
+ * `generateDefaultUser` reuses an existing row when it finds one, so re-seeding a persistent database
+ * must not replace an avatar the user uploaded themselves — that would both change their profile and
+ * orphan the ImageAsset behind it. This mirrors the way the same function already refuses to
+ * overwrite an existing password hash.
+ *
+ * A user still carrying only the old seeded `imageUrl` has no ImageAsset at all, so they are still
+ * given one: that backfill is the entire point of the change.
+ */
+export function shouldSeedAvatar(existingUser?: IExistingUserAvatar | null): boolean {
+	if (!existingUser) return true;
+
+	return !existingUser.imageId && !existingUser.image;
+}

@@ -22,7 +22,7 @@ import { getUserDummyImage, Role } from '../core';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from '../employee/default-employees';
 import { DEFAULT_CANDIDATES } from '../candidate/default-candidates';
 import { DEFAULT_SUPER_ADMINS, DEFAULT_ADMINS } from './default-users';
-import { getSeedAvatarFileName } from './user-avatar';
+import { getSeedAvatarFileName, shouldSeedAvatar } from './user-avatar';
 import { createSeededUserAvatar } from './user-avatar.seed';
 
 export const createDefaultAdminUsers = async (
@@ -342,16 +342,22 @@ const generateDefaultUser = async (
 	// `imageUrl` it 404s for every other client. Store the avatar as a real ImageAsset instead — the
 	// same path an uploaded avatar takes — so the URL is absolute and resolvable everywhere. If the
 	// asset cannot be prepared, fall back to the dummy image rather than a path that cannot load.
-	const avatar = await createSeededUserAvatar(dataSource, imageUrl, tenant);
+	//
+	// A user who already has an avatar keeps it: re-seeding must not overwrite one they uploaded, the
+	// same way the password hash below is preserved. Existing users that only carry the old seeded
+	// path have no ImageAsset yet, so they are still backfilled.
+	if (shouldSeedAvatar(existingUser)) {
+		const avatar = await createSeededUserAvatar(dataSource, imageUrl, tenant);
 
-	if (avatar) {
-		user.image = avatar.image;
-		user.imageUrl = avatar.url;
-	} else {
-		// A seed-asset reference we could not prepare cannot load anywhere, so never persist it;
-		// anything else (an absolute URL supplied by a seed) is kept as-is.
-		const usable = getSeedAvatarFileName(imageUrl) ? undefined : imageUrl;
-		user.imageUrl = usable || getUserDummyImage(user);
+		if (avatar) {
+			user.image = avatar.image;
+			user.imageUrl = avatar.url;
+		} else {
+			// A seed-asset reference we could not prepare cannot load anywhere, so never persist it;
+			// anything else (an absolute URL supplied by a seed) is kept as-is.
+			const usable = getSeedAvatarFileName(imageUrl) ? undefined : imageUrl;
+			user.imageUrl = usable || getUserDummyImage(user);
+		}
 	}
 	user.preferredLanguage = preferredLanguage;
 	user.preferredComponentLayout = preferredComponentLayout;
