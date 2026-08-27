@@ -30,6 +30,25 @@
       display: none;
     }
   }
+  & .header.register {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: rgb(18 18 20 / 0%);
+    border-bottom: none;
+    padding: 14px 24px;
+    height: 68px;
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0;
+    @include mobile-screen {
+      display: none;
+    }
+  }
   & .card {
     margin-bottom: 0;
     height: 100vh;
@@ -116,6 +135,13 @@
 }
 .body.register {
   background: $register-background-light-color;
+  // The register header is `position: fixed`, so it no longer reserves its own
+  // 68px in the card's flex column. Pay that height back here so the form starts
+  // where it did before instead of sliding under the theme switch.
+  padding-top: 68px + 16px;
+  @include mobile-screen {
+    padding-top: 16px;
+  }
 }
 
 .hide-go-back {
