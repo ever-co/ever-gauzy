@@ -199,7 +199,7 @@
     }
     & .normal-terms-text,
     & .terms-link {
-      font-family: Inter;
+      font-family: Inter, sans-serif;
       font-size: 12px;
       line-height: 16px;
     }
@@ -209,7 +209,7 @@
       text-align: center;
       margin-top: 0;
       & .normal-terms-text {
-        font-family: Inter;
+        font-family: Inter, sans-serif;
         font-size: 10px;
         font-style: normal;
         font-weight: 400;
@@ -218,7 +218,7 @@
         text-align: left;
       }
       & .terms-link {
-        font-family: Inter;
+        font-family: Inter, sans-serif;
         font-size: 10px;
         font-style: normal;
         font-weight: 600;
