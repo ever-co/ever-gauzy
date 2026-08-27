@@ -20,10 +20,11 @@
     display: flex;
     flex-direction: column;
     row-gap: 20px;
-    & > * {
+    & > *:not(nb-alert) {
       padding-left: 0;
       padding-right: 0;
     }
+    @include auth-alert;
     & .svg-wrapper {
       display: flex;
       align-items: flex-start;
