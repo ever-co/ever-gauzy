@@ -46,7 +46,14 @@ jobs:
     # path, which is a cache lookup.
     timeout-minutes: 360
     steps:
+      # Action versions deliberately match `build.yml` rather than the newer majors used elsewhere in
+      # the repository: this job consumes the node_modules cache that workflow writes, so the
+      # producer and the consumer are kept on the same actions.
       - uses: actions/checkout@v4
+        with:
+          # This job only reads the tree — it never pushes — so the checkout credential does not need
+          # to outlive the step in `.git/config`.
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -81,8 +88,11 @@ jobs:
         run: .github/scripts/restore-node-modules.sh
 
       - name: Run unit tests
-        # `--continue` so one failing project still lets every other project report; without it the
-        # first failure hides the rest and each fix needs another full run to find the next problem.
+        # `--nxBail=false` so one failing project still lets every other project report; without that
+        # the first failure hides the rest and each fix costs another full run to find the next
+        # problem. It is the real flag name — nx has no `--continue`, and an unknown option is
+        # forwarded to the executor, so `--continue` would have reached jest instead of doing this.
+        #
         # `--parallel=2` rather than the nx default of 3: jest already forks per project, and this
         # fleet has a documented history of Node heap exhaustion when several suites run at once.
-        run: yarn nx run-many -t test --continue --parallel=2
+        run: yarn nx run-many -t test --nxBail=false --parallel=2
