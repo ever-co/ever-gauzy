@@ -24,8 +24,8 @@ const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
  * Returns the bare filename of a seeded avatar reference, or `undefined` when the value is not one.
  *
  * Anything already resolvable on its own — an absolute URL, a protocol-relative URL, or the
- * `dummyimage.com` placeholder a user gets when no avatar was supplied — is left alone, because it is
- * a real avatar rather than a seed asset reference.
+ * https://dummyimage.com placeholder a user gets when no avatar was supplied — is left alone,
+ * because it is a real avatar rather than a seed asset reference.
  *
  * The result is passed to a file copy, so a value that could escape the flat seed directory
  * (traversal, or any nested path) is refused.
