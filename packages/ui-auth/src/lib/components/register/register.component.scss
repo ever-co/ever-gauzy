@@ -23,10 +23,11 @@
   &.dark {
     background: #292933;
   }
-  & > * {
+  & > *:not(nb-alert) {
     padding-left: 0;
     padding-right: 0;
   }
+  @include auth-alert;
   & .title-wrapper {
     margin: 0;
     & > .title {
