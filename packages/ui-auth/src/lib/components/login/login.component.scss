@@ -361,7 +361,7 @@
     position: relative;
     z-index: 5;
     background: nb-theme(background-basic-color-2);
-    color: nb-theme(text-basic-color);
+    color: nb-theme(text-hint-color);
   }
   & .demo-credentials-header {
     padding: 3px 5px 3px 12px;
@@ -370,9 +370,14 @@
     justify-content: space-between;
     width: 100%;
     background: nb-theme(background-basic-color-2);
-    color: nb-theme(text-basic-color);
+    color: nb-theme(text-hint-color);
     border-radius: 20px;
     font-size: 12px;
+    ::ng-deep nb-icon {
+      color: nb-theme(text-hint-color);
+      width: 16px;
+      height: 16px;
+    }
     & .demo-text-span {
       @include mobile-screen {
         display: none;
@@ -382,6 +387,10 @@
   & .demo-credentials-body {
     font-size: 12px;
     line-height: 16px;
+    color: nb-theme(text-hint-color);
+    & div {
+      color: nb-theme(text-hint-color);
+    }
   }
 }
 
