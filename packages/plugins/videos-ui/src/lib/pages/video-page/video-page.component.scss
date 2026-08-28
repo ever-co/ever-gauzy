@@ -1,3 +1,5 @@
+@use 'themes' as *;
+
 .custom-card {
   height: calc(100vh - 17.5rem);
   background-color: var(--gauzy-card-2);
@@ -25,5 +27,31 @@
     nb-spinner {
       border-radius: var(--border-radius);
     }
+  }
+}
+
+// Videos tab — the same cap the other Time & Activity tabs get. The duration
+// chip keeps its white-on-black: it sits over a thumbnail, where the contrast
+// is doing legibility work rather than drawing attention.
+:host plug-video-item ::ng-deep {
+  .title,
+  .author {
+    font-size: nb-theme(gauzy-table-header-font-size);
+  }
+
+  .video-player .duration {
+    font-size: nb-theme(gauzy-table-header-font-size);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+:host plug-video-item ::ng-deep #item + div {
+  font-size: nb-theme(gauzy-table-header-font-size);
+}
+
+:host ngx-no-data-message ::ng-deep {
+  h5,
+  div {
+    font-size: nb-theme(gauzy-table-header-font-size);
   }
 }

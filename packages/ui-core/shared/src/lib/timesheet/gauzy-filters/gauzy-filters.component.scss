@@ -210,8 +210,20 @@ nb-select {
             line-height: nb-theme(select-medium-text-line-height);
         }
 
+        // The timezone pill is a filled `status="basic"` nbButton, so it arrives with
+        // Nebular's basic border — near-white on the dark canvas, and the loudest edge
+        // in a row where every other control is borderless. Same normalization as the
+        // activity-level button above: drop the border, take the shared hairline, and
+        // match the select trigger's height and radius.
+        .popover-button[nbButton] {
+            border: none !important;
+            min-height: 2rem;
+            border-radius: $default-button-radius !important;
+        }
+
         .activity-level-filter,
-        .select-button {
+        .select-button,
+        .popover-button[nbButton] {
             // The shared control hairline rather than the old black drop shadow, which is
             // invisible on the near-black canvas and was the second thing setting this
             // button's edge apart from the selects next to it.

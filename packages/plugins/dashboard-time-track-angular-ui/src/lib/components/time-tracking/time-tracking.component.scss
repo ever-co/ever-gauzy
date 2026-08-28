@@ -722,6 +722,29 @@ $header-title-basis: 18rem;
     overflow-y: auto;
     padding-inline-end: 0.25rem;
   }
+
+  .window-header__title {
+    font-size: nb-theme(gauzy-table-header-font-size);
+    line-height: nb-theme(gauzy-table-header-line-height);
+  }
+
+  .window-empty {
+    font-size: nb-theme(gauzy-table-header-font-size);
+  }
+
+  .data-list::ng-deep nb-list-item:not(.data-list__head) {
+    font-size: nb-theme(gauzy-table-header-font-size);
+  }
+
+  .cell ngx-avatar ::ng-deep .link-text {
+    font-size: nb-theme(gauzy-table-header-font-size);
+  }
+
+  .activity .duration {
+    font-size: nb-theme(gauzy-table-header-font-size);
+    font-weight: 400;
+    color: var(--gauzy-text-color-2);
+  }
 }
 
 :host .activity {
