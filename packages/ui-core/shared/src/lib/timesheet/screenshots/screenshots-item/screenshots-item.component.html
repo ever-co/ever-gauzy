@@ -2,7 +2,12 @@
 	@if (timeSlot) {
 	<div class="activity">
 		@if (employees && employees.length > 1) {
-		<div class="image-container curser-pointer" [nbPopover]="workedEmployeeTemplate" [nbPopoverTrigger]="'hint'">
+		<div
+			class="image-container curser-pointer"
+			[nbPopover]="workedEmployeeTemplate"
+			[nbPopoverTrigger]="'hint'"
+			nbPopoverClass="worked-employees-popover"
+		>
 			<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
 			<span class="screenshot-count">
 				<i class="fas fa-users"></i>
@@ -112,7 +117,7 @@
 <ng-template #workedEmployeeTemplate>
 	<nb-list>
 		@for (employee of employees; track employee) {
-		<nb-list-item class="row border-top align-items-center">
+		<nb-list-item class="worked-employee">
 			<ngx-employee-links [value]="employee?.user" [isNavigation]="false"></ngx-employee-links>
 		</nb-list-item>
 		}

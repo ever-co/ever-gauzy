@@ -228,11 +228,129 @@
   text-align: left;
 }
 
-::ng-deep {
-  .cdk-overlay-container {
-    nb-overlay-container {
-      nb-list {
-        overflow: hidden !important;
+// ---------------------------------------------------------------------------
+// "N people worked in this slot" popover, behind the members badge.
+//
+// It renders into the CDK overlay container, outside this component's tree, so
+// it can only be reached from a global rule. Scoped to the `nbPopoverClass`
+// this card sets rather than left bare: the rule that used to live here,
+// `.cdk-overlay-container nb-overlay-container nb-list`, matched every Nebular
+// list in every overlay in the application.
+//
+// `overflow: hidden` was that rule's whole payload, and on a busy slot it
+// silently cut employees off the bottom of the list with nothing to scroll.
+// ---------------------------------------------------------------------------
+::ng-deep .worked-employees-popover {
+  // The panel's background stays Nebular's `popover-background-color` — the
+  // arrow's `::after` is painted from the same token, so overriding one without
+  // the other leaves a mismatched notch under the panel.
+  nb-popover {
+    box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.55);
+  }
+
+  // The panel inset goes on the CONTENT, not on `nb-popover`.
+  //
+  // Two reasons. `.primitive-overlay` — the wrapper Nebular's own padding is
+  // applied to — is rendered `*ngIf="isStringContent"`, and this popover is
+  // driven by a TemplateRef, so that element is simply not in the DOM here and
+  // a rule targeting it styles nothing. And padding on `nb-popover` itself
+  // would shift the arrow: it is absolutely positioned, so its offsets resolve
+  // against the panel's PADDING box, and `top: -arrow-size` would pull the
+  // arrow inside the panel instead of leaving it hanging off the edge.
+  //
+  // This is the convention `_overlays.scss` documents for template-driven
+  // popovers — the container supplies the chrome, the content supplies padding.
+  nb-list {
+    // 4px, the same inset `$overlay-padding` gives every other overlay panel in
+    // the app — enough to keep the rows off the panel edge, no more.
+    padding: 0.25rem;
+    // Two names per line. The floor on each column is what keeps the pair
+    // readable: below it the grid would rather shrink a column than wrap, and
+    // both names would sit permanently ellipsised. `minmax(…, 1fr)` — not
+    // `auto` — because `1fr` alone refuses to go under its content's intrinsic
+    // width, which is exactly what stops a long name from ever truncating.
+    display: grid;
+    grid-template-columns: repeat(2, minmax(6.5rem, 1fr));
+    gap: 0.125rem 0.25rem;
+    align-content: start;
+    // Around five rows — ten people — before it scrolls, so one heavily-shared
+    // slot cannot grow a popover taller than the card it is anchored to.
+    max-height: 9rem;
+    overflow-y: auto;
+    background: transparent;
+  }
+
+  nb-list-item.worked-employee {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    // Was `row border-top align-items-center` — bootstrap's `.row` carries
+    // negative inline margins meant for a grid gutter, which pulled each name
+    // out of the panel's padding, and `.border-top` drew a rule between rows
+    // that Nebular's own `border-bottom` had already drawn.
+    padding: 0.25rem 0.375rem;
+    // Grid items floor at their content width unless told otherwise, which would
+    // push the column past its track and break the ellipsis below.
+    min-width: 0;
+    border: 0;
+    border-radius: nb-theme(gauzy-radius-sm);
+    background: transparent;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--gauzy-hover-tint);
+    }
+  }
+
+  // The shared employee chip is built for a table cell, where a primary-tinted
+  // pill and an underline mark it as a link to the employee's page. Nothing
+  // here is navigable — the template passes `isNavigation="false"` — so that
+  // treatment only read as three broken links stacked in a dark panel. Flatten
+  // it to a plain avatar-and-name row.
+  //
+  // The `!important`s are load-bearing: the chip's padding and image margin come
+  // from `nb-ltr`/`nb-rtl`, which prefix the selector with `[dir=ltr]` and so
+  // outrank anything reachable from out here.
+  ngx-employee-links {
+    min-width: 0;
+
+    a {
+      width: 100%;
+      min-width: 0;
+      gap: 0.375rem;
+      padding: 0 !important;
+      background-color: transparent !important;
+      color: var(--gauzy-text-color-1);
+      text-decoration: none;
+      cursor: default;
+
+      .names-wrapper {
+        // The cell version clips at 110px to protect a column width; here the
+        // grid track does that job. `min-width: 0` is what lets the name shrink
+        // inside its flex row far enough for the ellipsis to engage — a flex
+        // item's default `min-width: auto` would hold it at full text width.
+        max-width: none;
+        min-width: 0;
+        // 10px. Well below `gauzy-table-header-font-size` (0.75rem), the
+        // smallest size the theme defines as a token, so it is a deliberate
+        // literal: this is a dense two-up list of names in a transient hint
+        // popover, not page or table chrome that has to hold its own.
+        font-size: 0.625rem;
+        line-height: 0.8125rem;
+      }
+
+      img {
+        flex: 0 0 auto;
+        // 18px — the size the component's own `<img>` attributes ask for, so the
+        // photo is no longer upscaled past its intrinsic box.
+        width: 1.125rem;
+        height: 1.125rem;
+        border-radius: 50%;
+        object-fit: cover;
+        margin: 0 !important;
+        // Stands in for the photo while it loads, and keeps a broken URL as a
+        // neutral disc instead of a bare glyph.
+        background-color: var(--gauzy-hover-tint);
       }
     }
   }
