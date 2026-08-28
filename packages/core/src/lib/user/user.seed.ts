@@ -354,8 +354,11 @@ const generateDefaultUser = async (
 			user.imageUrl = avatar.url;
 		} else {
 			// A seed-asset reference we could not prepare cannot load anywhere, so never persist it;
-			// anything else (an absolute URL supplied by a seed) is kept as-is.
-			const usable = getSeedAvatarFileName(imageUrl) ? undefined : imageUrl;
+			// anything else (an absolute URL supplied by a seed) is kept as-is. Trimmed for the same
+			// reason as in `shouldSeedAvatar`: a whitespace-only value is truthy but is not a URL,
+			// and persisting it would leave a blank avatar rather than falling back to the dummy.
+			const trimmed = imageUrl?.trim();
+			const usable = !trimmed || getSeedAvatarFileName(trimmed) ? undefined : trimmed;
 			user.imageUrl = usable || getUserDummyImage(user);
 		}
 	}

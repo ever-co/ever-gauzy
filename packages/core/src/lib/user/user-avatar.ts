@@ -80,8 +80,11 @@ export function shouldSeedAvatar(existingUser?: IExistingUserAvatar | null): boo
 	// An asset already exists: whatever it is, it is theirs.
 	if (existingUser.imageId || existingUser.image) return false;
 
-	// A URL that is not a legacy seed path resolves on its own, so it is a real avatar.
-	if (existingUser.imageUrl && !getSeedAvatarFileName(existingUser.imageUrl)) return false;
+	// A URL that is not a legacy seed path resolves on its own, so it is a real avatar. Trimmed
+	// first: a whitespace-only value is truthy but is not an avatar, and preserving it would leave
+	// the user with a blank URL instead of backfilling one.
+	const imageUrl = existingUser.imageUrl?.trim();
+	if (imageUrl && !getSeedAvatarFileName(imageUrl)) return false;
 
 	return true;
 }

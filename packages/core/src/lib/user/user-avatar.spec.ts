@@ -100,4 +100,10 @@ describe('shouldSeedAvatar', () => {
 		expect(shouldSeedAvatar({ imageUrl: '' })).toBe(true);
 		expect(shouldSeedAvatar({})).toBe(true);
 	});
+
+	// A whitespace-only value is truthy but is not an avatar: preserving it would leave the user with
+	// a blank URL instead of backfilling one.
+	it('treats a whitespace-only avatar URL as no avatar', () => {
+		expect(shouldSeedAvatar({ imageUrl: '   ' })).toBe(true);
+	});
 });
