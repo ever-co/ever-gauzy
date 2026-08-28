@@ -48,54 +48,138 @@
       background: rgba($color: #000000, $alpha: 0.1);
       min-height: 130px;
       position: relative;
+      // ------------------------------------------------------------------
+      // Hover overlay.
+      //
+      // Owned here rather than in each consumer. The Screenshots tab, the
+      // dashboard's Recent Activities strip and the Recent Activities widget
+      // all render this card, and the first two each carried their own copy of
+      // the scrim and the button metrics, which had already drifted apart.
+      //
+      // Revealed on `:focus-within` as well as `:hover`: the buttons inside are
+      // real tab stops, so on the keyboard alone they used to take focus while
+      // the overlay holding them sat at `opacity: 0` — the user was typing into
+      // something they could not see.
+      // ------------------------------------------------------------------
       .hover {
-        padding: 5px;
+        padding: 0.5rem;
         display: flex;
         flex-direction: column;
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba($color: #000000, $alpha: 0.7);
+        inset: 0;
+        // Dark at the top behind the action chips and again at the bottom where
+        // the overlay meets the slot info, lighter through the middle so the
+        // screenshot still reads underneath instead of being crushed flat.
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.74) 0%,
+          rgba(0, 0, 0, 0.42) 42%,
+          rgba(0, 0, 0, 0.74) 100%
+        );
         opacity: 0;
         z-index: 9;
         align-items: center;
-        justify-content: center;
-        transition: opacity 0.5s;
+        justify-content: flex-start;
+        transition: opacity 0.18s ease;
         border-radius: nb-theme(border-radius) nb-theme(border-radius) 0px 0px;
       }
+
+      // Select / delete / info chips ride the top edge; `w-100` is on the
+      // template's own element.
+      .hover .actions {
+        gap: 0.375rem;
+        flex: 0 0 auto;
+
+        button[nbButton] {
+          width: 1.5rem;
+          height: 1.5rem;
+          padding: 0;
+          margin: 0;
+          border-radius: nb-theme(gauzy-radius-sm);
+
+          nb-icon {
+            font-size: 0.875rem;
+            width: 0.875rem;
+            height: 0.875rem;
+            margin: 0;
+          }
+        }
+
+        // Delete carries `ml-auto` in the template to hold the trailing edge;
+        // the blanket `margin: 0` above would otherwise cancel it.
+        button[nbButton].ml-auto {
+          margin-inline-start: auto;
+        }
+      }
+
       .view-button {
-        height: 100%;
         width: 100%;
+        // Takes whatever height the action row leaves and centres in it, so the
+        // pair sits in the same place whether or not the chips above render.
         flex-grow: 1;
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: space-around;
-        button {
+        // Side by side, NOT stacked: the thumbnail is only 130px tall, and a
+        // column of two full-width buttons under the chip row filled it edge to
+        // edge. `wrap` lets them fall back to stacked on a card narrow enough
+        // that they genuinely do not fit.
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375rem;
+        // Settles up into place as the scrim fades in.
+        transform: translateY(0.25rem);
+        transition: transform 0.18s ease;
+
+        button[nbButton] {
+          height: 1.75rem;
+          padding: 0 0.625rem;
+          margin: 0;
           font-size: 12px;
           font-weight: 400;
           line-height: 16px;
           letter-spacing: -0.009em;
-          text-align: left;
+          text-align: center;
+          justify-content: center;
+          border-radius: nb-theme(gauzy-radius-sm);
+        }
+
+        // `secondary` is not one of Nebular's statuses — nothing in the theme
+        // defines it — so View Info falls back to `basic` and lands on an
+        // arbitrary photograph with no contrast guarantee at all. Give it its
+        // own translucent ground and edge so it reads on a light screenshot and
+        // still pairs with the filled primary next to it.
+        button[nbButton][status='secondary'] {
+          background-color: rgba(255, 255, 255, 0.16);
+          border-color: rgba(255, 255, 255, 0.4);
+          color: #fff;
+
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.28);
+          }
         }
       }
 
-      &.select-mode {
-        .hover {
-          justify-content: normal;
-        }
-        .select-hidden {
-          display: none;
-        }
+      &.select-mode .select-hidden {
+        display: none;
       }
 
-      &.select-mode,
-      &:hover {
-        .hover {
-          opacity: 1;
-        }
+      // Select mode pins the overlay open on EVERY card at once, so it drops to
+      // a light top-only wash. At the full scrim the user would be picking
+      // slots out of a grid of near-black tiles.
+      &.select-mode .hover {
+        opacity: 1;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 60%);
+      }
+
+      &:hover .hover,
+      &:focus-within .hover {
+        opacity: 1;
+      }
+
+      &:hover .view-button,
+      &:focus-within .view-button {
+        transform: translateY(0);
       }
 
       .no-image {
@@ -172,5 +256,21 @@
   .inline-time-span {
     white-space: nowrap;
     font-size: 0.75rem;
+  }
+}
+
+// The overlay's fade and the buttons' rise are decoration, not information —
+// the scrim reaching full opacity is what conveys "this card is active", and
+// that still happens instantly here.
+@media (prefers-reduced-motion: reduce) {
+  :host .activity .image-container {
+    .hover {
+      transition: none;
+    }
+
+    .view-button {
+      transform: none;
+      transition: none;
+    }
   }
 }
