@@ -52,6 +52,22 @@ export function getSeedAvatarFileName(imageUrl?: string | null): string | undefi
 	return fileName;
 }
 
+/**
+ * Whether a value can resolve on its own, independent of the page it is rendered on.
+ *
+ * Absolute (`https:`, `data:`, ...), protocol-relative (`//host/...`) and root-relative (`/...`)
+ * values all can. A bare relative path cannot — that is the whole defect this module exists to
+ * prevent — so it must never be persisted as a user's `imageUrl`.
+ */
+export function isSelfResolvingImageUrl(url?: string | null): boolean {
+	if (!url) return false;
+
+	const value = url.trim();
+	if (!value) return false;
+
+	return HAS_SCHEME.test(value) || value.startsWith('//') || value.startsWith('/');
+}
+
 /** The parts of a persisted user this decision needs; kept structural so the helper stays pure. */
 interface IExistingUserAvatar {
 	imageId?: string | null;

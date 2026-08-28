@@ -22,7 +22,7 @@ import { getUserDummyImage, Role } from '../core';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from '../employee/default-employees';
 import { DEFAULT_CANDIDATES } from '../candidate/default-candidates';
 import { DEFAULT_SUPER_ADMINS, DEFAULT_ADMINS } from './default-users';
-import { getSeedAvatarFileName, shouldSeedAvatar } from './user-avatar';
+import { isSelfResolvingImageUrl, shouldSeedAvatar } from './user-avatar';
 import { createSeededUserAvatar } from './user-avatar.seed';
 
 export const createDefaultAdminUsers = async (
@@ -353,12 +353,11 @@ const generateDefaultUser = async (
 			user.image = avatar.image;
 			user.imageUrl = avatar.url;
 		} else {
-			// A seed-asset reference we could not prepare cannot load anywhere, so never persist it;
-			// anything else (an absolute URL supplied by a seed) is kept as-is. Trimmed for the same
-			// reason as in `shouldSeedAvatar`: a whitespace-only value is truthy but is not a URL,
-			// and persisting it would leave a blank avatar rather than falling back to the dummy.
-			const trimmed = imageUrl?.trim();
-			const usable = !trimmed || getSeedAvatarFileName(trimmed) ? undefined : trimmed;
+			// Persist the value ONLY if it can resolve on its own. A seed-asset reference we could
+			// not prepare, any other bare relative path, and an empty or whitespace-only value all
+			// fail to load wherever they are rendered — which is the defect this whole change
+			// exists to remove — so they fall back to the dummy image instead.
+			const usable = isSelfResolvingImageUrl(imageUrl) ? imageUrl.trim() : undefined;
 			user.imageUrl = usable || getUserDummyImage(user);
 		}
 	}

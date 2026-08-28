@@ -1,4 +1,4 @@
-import { getSeedAvatarFileName, shouldSeedAvatar } from './user-avatar';
+import { getSeedAvatarFileName, isSelfResolvingImageUrl, shouldSeedAvatar } from './user-avatar';
 
 /**
  * Seeded users and employees carry `imageUrl: 'assets/images/avatars/<file>'` — a path that only
@@ -105,5 +105,32 @@ describe('shouldSeedAvatar', () => {
 	// a blank URL instead of backfilling one.
 	it('treats a whitespace-only avatar URL as no avatar', () => {
 		expect(shouldSeedAvatar({ imageUrl: '   ' })).toBe(true);
+	});
+});
+
+/**
+ * `generateDefaultUser` must never persist an `imageUrl` that cannot load where it is rendered —
+ * that is the defect this module exists to remove. Only values that resolve on their own survive;
+ * everything else falls back to the dummy image.
+ */
+describe('isSelfResolvingImageUrl', () => {
+	it('accepts values that resolve without a base', () => {
+		expect(isSelfResolvingImageUrl('https://cdn.example.com/a.jpg')).toBe(true);
+		expect(isSelfResolvingImageUrl('http://localhost:3000/a.png')).toBe(true);
+		expect(isSelfResolvingImageUrl('data:image/svg+xml;base64,AAA=')).toBe(true);
+		expect(isSelfResolvingImageUrl('//cdn.example.com/a.jpg')).toBe(true);
+		expect(isSelfResolvingImageUrl('/assets/images/avatars/alish.jpg')).toBe(true);
+	});
+
+	it('rejects a bare relative path, which is the value that 404s', () => {
+		expect(isSelfResolvingImageUrl('assets/images/avatars/alish.jpg')).toBe(false);
+		expect(isSelfResolvingImageUrl('assets/images/logos/ever-large.jpg')).toBe(false);
+	});
+
+	it('rejects empty, whitespace-only, null and undefined', () => {
+		expect(isSelfResolvingImageUrl('')).toBe(false);
+		expect(isSelfResolvingImageUrl('   ')).toBe(false);
+		expect(isSelfResolvingImageUrl(null)).toBe(false);
+		expect(isSelfResolvingImageUrl(undefined)).toBe(false);
 	});
 });
