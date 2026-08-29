@@ -1,40 +1,82 @@
 @use 'themes' as *;
+@use 'var' as *;
 
 :host .custom-card {
   border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);
   background-color: nb-theme(gauzy-card-2);
   @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
   @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+  // ONE height for the whole feature, and it is on the CARD rather than on each
+  // tab's scroll body.
+  //
+  // The bodies used to carry it themselves — `calc(100vh - 27rem)` here,
+  // `calc(100vh - 21.5rem) !important` on Apps / Visited Sites. Those two differ
+  // because the tabs genuinely differ: this tab and Screenshots put a row of
+  // summary cards above the body, Apps / Visited Sites puts only a filter row
+  // there. So every tab had to restate the whole stack above it and keep its own
+  // number in step with its own header — which is how they came to be 5.5rem
+  // apart and how both went stale as that chrome was retuned.
+  //
+  // Sizing the CARD instead makes the difference cancel: what is subtracted here
+  // is only the chrome OUTSIDE the card, which every tab shares (app header,
+  // card header, tab strip, footer). Each tab's own header then takes its
+  // natural height inside the card and the body flexes into what is left, so a
+  // tab that grows a header shortens its own body automatically and no number
+  // has to be retuned for it.
+  //
+  // The 10.5rem itself is set by eye, not derived — nothing in the theme exposes
+  // the true rendered height of the card header or the tab strip. It is still
+  // under what the chrome outside the card occupies (the fixed app header is
+  // 4.5rem before the card header, the tab strip and the footer are counted), so
+  // the card runs past the fold and the page scrolls to reach its last rows.
+  // That is the trade being made here: the tab bodies get the height, the page
+  // carries the overflow.
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 10.5rem);
+  // Preferred where supported: on mobile browsers `vh` is frozen at the
+  // largest viewport, so a visible URL bar pushes the card off the bottom.
+  height: calc(100dvh - 10.5rem);
+
   .custom-card-body {
     overflow-y: overlay;
     overflow-x: hidden;
     padding-right: 11px;
-    // The summary cards and the filter row now share a single line, so the body
-    // reclaims the height the stacked filter row used to take.
-    height: calc(100vh - 27rem);
+    // Takes whatever this tab's own header row leaves inside the card.
+    // `min-height: 0` because a flex item will not shrink under its content
+    // without it, which would push a long list out through the card's bottom.
+    flex: 1 1 auto;
+    min-height: 0;
   }
 }
 
 // Summary cards on the leading edge, filters on the trailing edge, one row.
 // Top-aligned, so the filter controls sit level with the top of the cards rather
 // than floating at their vertical centre.
+//
+// `nowrap`, and a statistics block that does not shrink: the summary cards hold
+// their full size (see below) and the filter block is what gives when the line
+// runs short. Under `xxl` the two no longer fit at all and the header wraps
+// again — the last block in this section.
 :host .header-bar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.75rem 1rem;
+  // Natural height, and no shrinking when the body below grows into the card.
+  flex: 0 0 auto;
   @include nb-ltr(padding-right, 0.5rem);
   @include nb-rtl(padding-left, 0.5rem);
 
   .header-statistics {
-    flex: 1 1 22rem;
+    flex: 0 0 auto;
     min-width: 0;
   }
 
   .header-filters {
     display: block;
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-width: 0;
   }
 }
@@ -42,17 +84,20 @@
 // `ga-daily-statistics` lays its cards out as a 25%-wide grid meant for a
 // full-width row; sharing the line with the filters, they size to their content
 // instead so the two blocks can sit side by side.
+//
+// One row at full size: with a shrink factor the last cards — "Activity" and
+// "Total Hours" — squeezed toward their floor and then dropped beneath the ones
+// before them. 15rem flat, and the row that holds them does not wrap.
 :host ga-daily-statistics ::ng-deep {
   .main-wrapper {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 1rem;
     width: auto;
   }
 
   .daily-item {
-    flex: 0 1 15rem;
-    min-width: 11rem;
+    flex: 0 0 15rem;
   }
 
   nb-card-body {
@@ -74,11 +119,143 @@
 
   // `align-items-end` on the filter list is a bootstrap utility (`!important`), so
   // the top alignment has to be restated here rather than inherited from the row.
+  //
+  // `flex-wrap` carries `!important` for a related reason: `report` has a
+  // top-level `::ng-deep .filter-item-list { flex-wrap: nowrap !important }`,
+  // which Angular emits unscoped. The screenshot tab loads `report`, and once
+  // its styles are in the document that rule reaches this tab too — pinning the
+  // controls open in one long row and pushing the filter block off the line.
   .filter-item-list {
     align-items: flex-start !important;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    flex-wrap: wrap !important;
+    // From the start: the row is authored right-aligned for a full-width header of
+    // its own, so a wrapped second row ended up alone against the far edge.
+    justify-content: flex-start;
+    // Spacing moves from each column's gutter onto the row itself, so the first
+    // control starts flush and the last one ends flush.
+    column-gap: 0.5rem;
     row-gap: 0.5rem;
+  }
+
+  // The two wrappers between the filter row and the header: a bootstrap `row` with
+  // negative gutters and an `ml-auto` column that pushes the block right. Neither
+  // is doing anything for a block that is already placed by the header flexbox —
+  // so the gutters go, and the wrapper carries an even inset of its own instead,
+  // which is what keeps the first and last control off the block's edges now that
+  // the columns inside it have none.
+  .main-wrapper {
+    padding: 0 0.5rem;
+  }
+
+  .col-auto.ml-auto {
+    @include nb-ltr(margin-left, 0 !important);
+    @include nb-rtl(margin-right, 0 !important);
+    padding: 0;
+  }
+
+  .filter-item-list > .col-auto {
+    @include nb-ltr(padding-left, 0);
+    @include nb-rtl(padding-right, 0);
+  }
+
+  // The controls are sized for a full-width row of their own — a 220px floor per
+  // filter, plus a timezone pill that grows to fit "AWST: Australia - West /
+  // 12 hour". Sharing the line with the summary cards, four of those overflowed
+  // and wrapped the whole block onto its own row again.
+  //
+  // `.main-wrapper` is in the selector purely for weight. The floor is set at
+  // `:host .filter-item-list .filter-item` inside `filters.component`, which
+  // Angular scopes into five class-level parts (both encapsulation attributes
+  // included); everything this file can reach through `::ng-deep` brings four, so
+  // the 220px won and these columns stayed wide. Naming one more ancestor is what
+  // tips it, without another `!important` in a file that already has too many.
+  .main-wrapper .filter-item-list .filter-item {
+    min-width: 6.5rem;
+  }
+
+  // Source and Log Type hold one short word each, so they go under the shared
+  // floor. Activity Level keeps the wider column — its trigger grows to
+  // "Activity Level : 0% - 100%" once a range is set.
+  .main-wrapper .filter-item-list .source-filter,
+  .main-wrapper .filter-item-list .log-type-filter {
+    min-width: 4.5rem;
+    // Capped as well as floored: these columns are `col-auto`, so once a few values
+    // are picked the trigger renders "Desktop, Mobile, Browser Extension" and the
+    // column grows back to the width this is trying to take off it.
+    max-width: 9rem;
+  }
+
+  // Which means the trigger has to be able to clip. Nebular lays the button out as
+  // a flex row, and its text sits in a bare span that will not shrink below its
+  // content without `min-width: 0`.
+  .source-filter .select-button > span,
+  .log-type-filter .select-button > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // Released so the column above is what governs the width; the component's own
+  // 150px floor would otherwise hold each select open past it.
+  .filter-item-list nb-select {
+    min-width: 0;
+  }
+
+  // The pill keeps the zone abbreviation and the hour format that identify it and
+  // clips the long territory name; the popover carries the full label anyway.
+  ga-timezone-filter .popover-button[nbButton] > div {
+    max-width: 6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// The group-by control, projected into the filter row. Projected content keeps
+// the encapsulation of the component that DECLARES it — this page — so the
+// filter component's own class rules (`.single-filter-wrapper`, its `nb-select`
+// floor) never reach it and the box is stated here instead. Its `::ng-deep`
+// rules do reach it, which is what keeps the select trigger identical to the
+// ones beside it without restating any of that.
+:host .header-bar .group-by-filter {
+  // `single-filter-wrapper` and `filter-item` are on this element so it takes the
+  // same column as the filters beside it, but those classes are declared in the
+  // filter component's own stylesheet — scoped, so they never reach projected
+  // content. What they contribute is restated here: the trailing gutter the
+  // siblings drop, and the bottom margin that keeps a wrapped row off the one
+  // below it.
+  padding-right: 0;
+  margin-bottom: 5px;
+
+  .group-by-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+  }
+
+  // Same cap as the rest of the tab chrome, and it stays on one line: a wrapped
+  // label would push the control below the row it is meant to sit in.
+  .label {
+    font-size: nb-theme(gauzy-table-header-font-size);
+    line-height: nb-theme(gauzy-table-header-line-height);
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--gauzy-text-color-2);
+  }
+
+  nb-select {
+    min-width: 6.5rem;
+  }
+}
+
+// Below this the line cannot seat full-size cards and a filter block at once,
+// and the cards are the half that must not shrink — so the header goes back to
+// wrapping and the filters take a row of their own beneath them.
+@include respond(xxl) {
+  :host .header-bar {
+    flex-wrap: wrap;
   }
 }
 
