@@ -224,7 +224,7 @@ nb-select {
             border-radius: $default-button-radius !important;
         }
 
-        .filter-item-list .clear-fitlers [nbButton] {
+        .filter-item-list .clear-filters [nbButton] {
             font-size: nb-theme(gauzy-table-header-font-size);
             line-height: nb-theme(gauzy-table-header-line-height);
         }
@@ -303,6 +303,15 @@ nb-select {
 
             &:focus {
                 outline: none;
+            }
+
+            // Dropping the outline is right for a pointer — the drag itself says
+            // which handle is live. A keyboard user has nothing else marking the
+            // armed handle, so give focus-visible its own ring: a gap in the panel
+            // colour keeps the primary band outside it readable over the bar.
+            &:focus-visible {
+                outline: none;
+                box-shadow: 0 0 0 2px var(--gauzy-card-1), 0 0 0 5px var(--color-primary-default);
             }
         }
 

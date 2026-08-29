@@ -143,21 +143,6 @@
           justify-content: center;
           border-radius: nb-theme(gauzy-radius-sm);
         }
-
-        // `secondary` is not one of Nebular's statuses — nothing in the theme
-        // defines it — so View Info falls back to `basic` and lands on an
-        // arbitrary photograph with no contrast guarantee at all. Give it its
-        // own translucent ground and edge so it reads on a light screenshot and
-        // still pairs with the filled primary next to it.
-        button[nbButton][status='secondary'] {
-          background-color: rgba(255, 255, 255, 0.16);
-          border-color: rgba(255, 255, 255, 0.4);
-          color: #fff;
-
-          &:hover {
-            background-color: rgba(255, 255, 255, 0.28);
-          }
-        }
       }
 
       &.select-mode .select-hidden {
