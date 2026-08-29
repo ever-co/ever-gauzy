@@ -1,24 +1,26 @@
-<div class="group-by-wrapper">
-	<div class="label">
-		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+@if (showGroupBy) {
+	<div class="group-by-wrapper">
+		<div class="label">
+			{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+		</div>
+		<div>
+			<nb-select [(ngModel)]="groupBy" optionsListClass="nb-options">
+				<nb-option [value]="ReportGroupFilterEnum.date">
+					{{ 'REPORT_PAGE.DATE' | translate }}
+				</nb-option>
+				<nb-option [value]="ReportGroupFilterEnum.employee">
+					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+				</nb-option>
+				<nb-option [value]="ReportGroupFilterEnum.project">
+					{{ 'REPORT_PAGE.PROJECT' | translate }}
+				</nb-option>
+				<nb-option [value]="ReportGroupFilterEnum.client">
+					{{ 'REPORT_PAGE.CLIENT' | translate }}
+				</nb-option>
+			</nb-select>
+		</div>
 	</div>
-	<div>
-		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
-			<nb-option [value]="ReportGroupFilterEnum.date">
-				{{ 'REPORT_PAGE.DATE' | translate }}
-			</nb-option>
-			<nb-option [value]="ReportGroupFilterEnum.employee">
-				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-			</nb-option>
-			<nb-option [value]="ReportGroupFilterEnum.project">
-				{{ 'REPORT_PAGE.PROJECT' | translate }}
-			</nb-option>
-			<nb-option [value]="ReportGroupFilterEnum.client">
-				{{ 'REPORT_PAGE.CLIENT' | translate }}
-			</nb-option>
-		</nb-select>
-	</div>
-</div>
+}
 <div
 	class="row-table tables-wrapper day-grid-container"
 	[nbSpinner]="loading"
