@@ -2,10 +2,23 @@
 	@if (timeSlot) {
 	<div class="activity">
 		@if (employees && employees.length > 1) {
+		<!--
+			`hover`, not `hint`. Nebular's hint strategy closes the panel the instant the pointer
+			leaves this element, so the list could never be reached: the moment the user moved
+			towards it to scroll a busy slot it was already gone. The hover strategy only closes
+			once a mousemove lands outside BOTH the host and the panel, which is what makes the
+			names reachable and the list scrollable.
+
+			The offset goes with it. Nebular's default 15px leaves a gap between the card and
+			the panel that the 11px arrow cannot span, and a pointer resting in that band counts
+			as outside both — so the panel closed on the way to itself. 8px is fully bridged by
+			the arrow.
+		-->
 		<div
 			class="image-container curser-pointer"
 			[nbPopover]="workedEmployeeTemplate"
-			[nbPopoverTrigger]="'hint'"
+			[nbPopoverTrigger]="'hover'"
+			[nbPopoverOffset]="8"
 			nbPopoverClass="worked-employees-popover"
 		>
 			<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
