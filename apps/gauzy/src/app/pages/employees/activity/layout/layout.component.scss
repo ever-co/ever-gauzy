@@ -1,6 +1,43 @@
 @use 'themes' as *;
 
+// ---------------------------------------------------------------------------
+// Close the gap between the fixed app header and this page's card.
+//
+// That gap is `nb-layout-column`'s top padding, which Nebular sets from the
+// `layout-padding` token. It cannot be zeroed from here the ordinary way — the
+// column is an ANCESTOR of this component, and `:host-context()` only lets a
+// rule MATCH on an ancestor, never style one. So the card is pulled back up by
+// exactly as much as the column pushes it down.
+//
+// Scoped to this component on purpose rather than retuning the token.
+// `layout-padding` is global — every page in the app rests on it — and
+// `_gauzy-theme-maps.scss` carries an explicit note that it and `header-height`
+// were left uncompacted because the fixed header's real height is
+// content-driven (the demo banner stacks on top of the toolbar) while Nebular
+// offsets the page by the `header-height` variable alone. This padding is the
+// slack that covers that difference, so dropping it app-wide risks tucking the
+// top of other pages under the header.
+//
+// The values below mirror what Nebular applies to the column across all three
+// of its cases: `layout-padding` (24px top), `layout-medium-padding` at md-down
+// and `layout-small-padding` at sm-down. The medium one happens to carry the
+// same 24px top as the default, so only the small case needs its own value. If
+// `layout-padding` is ever retuned, retune this with it.
+// ---------------------------------------------------------------------------
 :host {
+  // A component host is an unknown element, so it computes to `display: inline`
+  // — and a margin-top on an inline box does nothing at all.
+  display: block;
+  margin-top: -24px;
+
+  // `media-breakpoint-down(sm)` in Nebular's grid, spelled out: the mixin lives
+  // in `@nebular/theme/styles/global/breakpoints`, which `themes` does not
+  // forward, and 767.98px is what `breakpoint-max(sm)` resolves to (md's 768px
+  // less 0.02).
+  @media (max-width: 767.98px) {
+    margin-top: -1rem;
+  }
+
   nb-card {
     nb-card-body {
       overflow: unset;
