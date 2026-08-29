@@ -5,11 +5,33 @@
 			class="header-filters"
 			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
-		></ngx-gauzy-filters>
+		>
+			<!-- Projected into the filter row: group-by reads as one of the filters
+			     rather than as a control of its own above the table. -->
+			<div class="col-auto filter-item single-filter-wrapper group-by-filter">
+				<div class="group-by-wrapper">
+					<div class="label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</div>
+					<nb-select [(ngModel)]="groupBy" optionsListClass="nb-options gauzy-filters-options">
+						<nb-option [value]="ReportGroupFilterEnum.date">
+							{{ 'REPORT_PAGE.DATE' | translate }}
+						</nb-option>
+						<nb-option [value]="ReportGroupFilterEnum.employee">
+							{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+						</nb-option>
+						<nb-option [value]="ReportGroupFilterEnum.project">
+							{{ 'REPORT_PAGE.PROJECT' | translate }}
+						</nb-option>
+						<nb-option [value]="ReportGroupFilterEnum.client">
+							{{ 'REPORT_PAGE.CLIENT' | translate }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+		</ngx-gauzy-filters>
 	</div>
 	<div class="custom-card-body">
 		<div class="grid-container">
-			<ga-daily-grid [filters]="filters"></ga-daily-grid>
+			<ga-daily-grid [filters]="filters" [groupBy]="groupBy" [showGroupBy]="false"></ga-daily-grid>
 		</div>
 	</div>
 </div>
