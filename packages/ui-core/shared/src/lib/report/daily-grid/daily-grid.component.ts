@@ -33,13 +33,6 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 	loading: boolean;
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
 
-	/**
-	 * Whether this component draws the group-by control itself.
-	 *
-	 * A host that wants the control somewhere else — the Time & Activity page puts
-	 * it in the header filter row, beside the other filters — turns this off and
-	 * drives `groupBy` through the input below instead.
-	 */
 	@Input() showGroupBy: boolean = true;
 
 	/*
@@ -49,11 +42,6 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 	get groupBy(): ReportGroupByFilter {
 		return this._groupBy;
 	}
-	/**
-	 * Written by the internal select, or by a host that draws its own control. The
-	 * change is what reloads the report either way, which is why reacting to it
-	 * lives here rather than in a separate handler bound from the template.
-	 */
 	@Input() set groupBy(groupBy: ReportGroupByFilter) {
 		if (!groupBy || groupBy === this._groupBy) {
 			return;

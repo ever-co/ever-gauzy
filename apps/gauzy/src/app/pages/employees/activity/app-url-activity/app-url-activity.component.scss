@@ -4,13 +4,7 @@
   .percentage-col {
     width: 90px;
   }
-  // No height here any more. This tab's `calc(100vh - 21.5rem) !important` was
-  // 5.5rem off the other tabs' figure for a real reason — it has a filter row
-  // above the body where they have a row of summary cards — but that is exactly
-  // the difference the card-level height in `time-activities.component` now
-  // absorbs on its own. See the comment there.
   .filters {
-    // Natural height, so the body below it takes the rest of the card.
     flex: 0 0 auto;
   }
   ::ng-deep {

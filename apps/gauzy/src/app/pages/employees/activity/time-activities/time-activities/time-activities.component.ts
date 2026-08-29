@@ -14,11 +14,6 @@ export class TimeActivitiesComponent implements OnInit {
 	filters: ITimeLogFilters;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
-	/**
-	 * Group-by belongs with the other filters on this page, so the control is drawn
-	 * in the header row (`ga-daily-grid` is told not to draw its own) and the value
-	 * is owned here and passed down to the grid.
-	 */
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	readonly ReportGroupFilterEnum = ReportGroupFilterEnum;
 

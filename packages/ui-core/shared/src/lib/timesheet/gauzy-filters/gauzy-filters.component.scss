@@ -63,8 +63,6 @@ nb-select {
 
 :host {
     ::ng-deep {
-        // The trigger's value and placeholder are drawn in a bare span inside the
-        // button, which is where the size set on the button has to land.
         .select-button > span {
             font-size: inherit;
             line-height: inherit;
@@ -210,9 +208,6 @@ nb-select {
             // trailing edge, where the select positions its own.
             justify-content: space-between;
             text-align: left;
-            // Size comes from the group rule below, which puts every control in this
-            // row on the shared chrome token.
-            //
             // An unset select shows its PLACEHOLDER, so that is the weight to match —
             // not the heavier weight it switches to once a value is chosen.
             font-weight: nb-theme(select-medium-placeholder-text-font-weight);
@@ -229,15 +224,11 @@ nb-select {
             border-radius: $default-button-radius !important;
         }
 
-        // Size only — the Clear button keeps its danger fill, so it must stay out of
-        // the group rule below, which restates the select's surface.
         .filter-item-list .clear-fitlers [nbButton] {
             font-size: nb-theme(gauzy-table-header-font-size);
             line-height: nb-theme(gauzy-table-header-line-height);
         }
 
-        // An unset select swaps to a `.placeholder` class that carries its own size
-        // from the same theme block, so it is named too.
         .filter-item-list .select-button.placeholder {
             font-size: nb-theme(gauzy-table-header-font-size);
             line-height: nb-theme(gauzy-table-header-line-height);
@@ -252,21 +243,12 @@ nb-select {
             box-shadow: $default-box-shadow;
             background-color: nb-theme(gauzy-card-1) !important;
             color: nb-theme(select-outline-basic-text-color) !important;
-            // One size for every trigger in the row — the selects arrive at Nebular's
-            // medium select scale and the two buttons at its button scale, which is
-            // three different sizes standing next to each other. The token is the same
-            // one the table chrome uses (0.75rem), so the filters read as chrome rather
-            // than as content.
             font-size: nb-theme(gauzy-table-header-font-size);
             line-height: nb-theme(gauzy-table-header-line-height);
         }
     }
 }
 
-// Option panels for the filters above. `::ng-deep` at the top level is emitted
-// without the component's scoping attribute, which is the only way to reach an
-// overlay that Nebular renders outside this component — hence the class on the
-// panels themselves, so the size lands on these lists and no others.
 ::ng-deep {
     .cdk-overlay-pane .gauzy-filters-options,
     .cdk-overlay-pane.gauzy-filters-popover {
@@ -274,9 +256,6 @@ nb-select {
         line-height: var(--gauzy-table-header-line-height);
     }
 
-    // `nb-option` carries Nebular's own option text size at `.size-medium nb-option`,
-    // which weighs the same as a plain class plus element — so the panel element is
-    // named too, and the size holds whichever stylesheet the browser saw last.
     .cdk-overlay-pane nb-option-list.gauzy-filters-options {
         nb-option,
         nb-option .text,
@@ -287,22 +266,8 @@ nb-select {
     }
 }
 
-// ---------------------------------------------------------------------------
-// The activity-level range popover.
-//
-// Styling only — the slider keeps its floor, ceil, step and both outputs. What
-// changes is that it arrives as the library's stock control: a 32px cyan handle
-// on a grey rail, sized for a form rather than for a filter popover, and the
-// only surface in this row that does not use the app's own colours.
-//
-// Reached through an unscoped `::ng-deep`, keyed on the class the trigger puts
-// on the panel, because the popover is rendered into the overlay container.
-// ---------------------------------------------------------------------------
 ::ng-deep .gauzy-filters-popover {
     .slider-dropdown {
-        // Narrower than the stock 300px, and the padding restated because the
-        // template's `p-3` is a uniform box that leaves the bubbles crowding the top
-        // edge and dead space under the rail.
         width: 15rem;
         padding: 1.5rem 1rem 0.5rem !important;
     }
@@ -310,8 +275,6 @@ nb-select {
     .ngx-slider {
         margin: 0.5rem 0 1.25rem;
 
-        // A hairline rail in the app's border colour, filled with the primary accent
-        // — the same pairing the progress bars in the stat cards use.
         .ngx-slider-bar {
             height: 4px;
             background: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.24));
@@ -321,13 +284,9 @@ nb-select {
             background: var(--color-primary-default);
         }
 
-        // Handles at a size that suits a 15rem popover: a filled dot ringed in the
-        // accent, rather than the library's 32px puck with a white pip in it.
         .ngx-slider-pointer {
             width: 14px;
             height: 14px;
-            // `-(handle / 2) + (rail / 2)`, the library's own centring arithmetic at
-            // the sizes above.
             top: -5px;
             background-color: var(--gauzy-card-1);
             box-shadow: 0 0 0 2px var(--color-primary-default), 0 2px 6px rgba(0, 0, 0, 0.35);
@@ -347,9 +306,6 @@ nb-select {
             }
         }
 
-        // Value bubbles read as chrome, at the same size as the filter row itself.
-        // The floor and ceil labels stay but recede, so the two live values are what
-        // the eye lands on.
         .ngx-slider-bubble {
             bottom: 0.875rem;
             font-size: var(--gauzy-table-header-font-size);

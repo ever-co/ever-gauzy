@@ -6,8 +6,6 @@
 			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
 		>
-			<!-- Projected into the filter row: group-by reads as one of the filters
-			     rather than as a control of its own above the table. -->
 			<div class="col-auto filter-item single-filter-wrapper group-by-filter">
 				<div class="group-by-wrapper">
 					<div class="label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</div>

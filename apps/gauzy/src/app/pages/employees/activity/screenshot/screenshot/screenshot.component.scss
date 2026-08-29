@@ -96,36 +96,14 @@
       }
     }
   }
-  // No `.custom-card-body` height here on purpose, and there is no longer a
-  // budget to restate: the forwarded `time-activities.component` sizes the CARD
-  // and the body flexes into whatever this tab's own header row leaves. The
-  // 31rem this file used to subtract was budgeted for a header where the filter
-  // row sat ABOVE the summary cards — the kind of staleness a per-tab number
-  // invites and the card-level one cannot.
 }
 
-// The header row: summary cards and the filter block on one line.
-//
-// Stated here rather than left to `time-activities.component`, which this file
-// forwards and which already carries the same layout. This tab owns the markup
-// (`.header-bar` in `screenshot.component.html`), so it declares the box that
-// markup depends on instead of inheriting it invisibly from a sibling tab's
-// stylesheet. The values match that file deliberately — the three Time &
-// Activity tabs are meant to share one header — so if the shared block is
-// retuned, retune this with it.
-//
-// Everything the header row rests on beyond this box — summary cards held at
-// full size on one row, the trimmed filter controls — belongs to the shared
-// components rather than to this markup, so it stays in that file and reaches
-// here through the forward.
 :host .header-bar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: nowrap;
   gap: 0.75rem 1rem;
-  // Breathing room on both edges, so the row is not flush against the card's
-  // sides the way the body content below it is not.
   padding-left: 0.5rem;
   padding-right: 0.5rem;
 
@@ -134,9 +112,6 @@
     min-width: 0;
   }
 
-  // Grows to fill what the cards leave, so the filters inside it start where the
-  // cards end instead of being pushed to the far edge — the block is what places
-  // them, and the row inside it is start-aligned by the forwarded rules.
   .header-filters {
     display: block;
     flex: 1 1 auto;
@@ -144,9 +119,6 @@
   }
 }
 
-// The narrow fallback restated for the same reason, and it has to be: the
-// forwarded copy is emitted ABOVE the block above, so on this tab the unmedia'd
-// `nowrap` would otherwise win at every width.
 @include respond(xxl) {
   :host .header-bar {
     flex-wrap: wrap;

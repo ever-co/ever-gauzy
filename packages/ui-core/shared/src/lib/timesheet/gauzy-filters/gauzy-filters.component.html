@@ -1,8 +1,6 @@
 <div class="row col-auto main-wrapper">
   <div class="col-auto ml-auto">
     <div class="row filter-item-list align-items-end">
-      <!-- Host-supplied filters sit at the head of the row. Nothing is projected
-           by default, so the row is unchanged for pages that pass no content. -->
       <ng-content></ng-content>
       @if (hasTimeZoneFilter) {
         <div class="col-auto single-filter-wrapper">
