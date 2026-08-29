@@ -258,6 +258,17 @@
 // `overflow: hidden` was that rule's whole payload, and on a busy slot it
 // silently cut employees off the bottom of the list with nothing to scroll.
 // ---------------------------------------------------------------------------
+
+// The row box the panel's height is derived from. Kept as variables because the
+// "five names in view" cap is arithmetic over them, not a number someone picked:
+// change a row's padding or the avatar size and the cap has to follow.
+//
+// 26px — an 18px avatar with the row's 4px of padding above and below it.
+$popover-row-height: 1.625rem;
+// 2px between rows, 4px of panel inset around the whole list.
+$popover-row-gap: 0.125rem;
+$popover-list-padding: 0.25rem;
+
 ::ng-deep .worked-employees-popover {
   // The panel's background stays Nebular's `popover-background-color` — the
   // arrow's `::after` is painted from the same token, so overriding one without
@@ -281,27 +292,68 @@
   nb-list {
     // 4px, the same inset `$overlay-padding` gives every other overlay panel in
     // the app — enough to keep the rows off the panel edge, no more.
-    padding: 0.25rem;
-    // Two names per line. The floor on each column is what keeps the pair
-    // readable: below it the grid would rather shrink a column than wrap, and
-    // both names would sit permanently ellipsised. `minmax(…, 1fr)` — not
-    // `auto` — because `1fr` alone refuses to go under its content's intrinsic
-    // width, which is exactly what stops a long name from ever truncating.
+    padding: $popover-list-padding;
+    // One name per line. `minmax(0, 1fr)` rather than a bare `1fr`: a grid track
+    // sized `1fr` refuses to go under its content's intrinsic width, so a long
+    // name would widen the panel instead of ellipsising inside it.
     display: grid;
-    grid-template-columns: repeat(2, minmax(6.5rem, 1fr));
-    gap: 0.125rem 0.25rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: $popover-row-gap 0;
     align-content: start;
-    // Around five rows — ten people — before it scrolls, so one heavily-shared
-    // slot cannot grow a popover taller than the card it is anchored to.
-    max-height: 9rem;
+    // The panel still sizes to its longest name, but between bounds — a list of
+    // short names should not collapse to a sliver, and a long one should
+    // ellipsise rather than grow a popover wider than the card behind it.
+    min-width: 8rem;
+    max-width: 15rem;
+    // Exactly five names in view; the rest are scrolled to. Computed from the
+    // row box rather than eyeballed, so the cut lands on a row boundary instead
+    // of halfway through the sixth name: five rows, the four gaps between them,
+    // and the panel's own inset top and bottom. Border-box is global (Nebular's
+    // normalize), so the padding counts inside this figure.
+    max-height: $popover-row-height * 5 + $popover-row-gap * 4 + $popover-list-padding * 2;
     overflow-y: auto;
+    // Keeps a wheel gesture that reaches the end of the list from carrying on
+    // into the page behind it. That scroll would move the card the popover is
+    // anchored to, and the overlay repositions with it — the panel would slide
+    // out from under the pointer mid-read and then close.
+    overscroll-behavior: contain;
     background: transparent;
+
+    // A narrow, always-drawn thumb rather than the platform default. On a panel
+    // this small an overlay scrollbar that only appears once the user is
+    // already scrolling gives no sign there is more of the list to reach.
+    //
+    // `text-hint-color`, not the border token the card's own edges use: that one
+    // is white at 0.1 alpha on the dark themes, which as a 6px thumb on a panel
+    // this dark is invisible — the same as having no scrollbar at all. The hint
+    // colour is a mid grey that reads against both grounds.
+    scrollbar-width: thin;
+    scrollbar-color: nb-theme(text-hint-color) transparent;
+
+    &::-webkit-scrollbar {
+      width: 0.375rem;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: nb-theme(text-hint-color);
+      border-radius: 999px;
+    }
   }
 
   nb-list-item.worked-employee {
     display: flex;
     align-items: center;
     margin: 0;
+    // Pinned rather than left to the content, and this is what makes the
+    // five-in-view figure above hold: a row is normally as tall as the 18px
+    // avatar, but `ngx-employee-links` omits the `<img>` entirely when the user
+    // has no photo, and those rows would collapse to the name's line box. A
+    // mixed list would then show five and a bit.
+    min-height: $popover-row-height;
     // Was `row border-top align-items-center` — bootstrap's `.row` carries
     // negative inline margins meant for a grid gutter, which pulled each name
     // out of the panel's padding, and `.border-top` drew a rule between rows
@@ -338,23 +390,40 @@
       gap: 0.375rem;
       padding: 0 !important;
       background-color: transparent !important;
-      color: var(--gauzy-text-color-1);
+      // `!important` for the same reason as the two above, though a different
+      // rule: the chip's own `:host a { color: text-primary-color }` compiles to
+      // `[_nghost-x] a[_ngcontent-x]`, which outranks anything selectable from
+      // out here — so without this the names rendered in the primary purple,
+      // reading as links in a panel where nothing is navigable.
+      color: var(--gauzy-text-color-1) !important;
       text-decoration: none;
       cursor: default;
 
       .names-wrapper {
         // The cell version clips at 110px to protect a column width; here the
-        // grid track does that job. `min-width: 0` is what lets the name shrink
-        // inside its flex row far enough for the ellipsis to engage — a flex
-        // item's default `min-width: auto` would hold it at full text width.
+        // panel's own `max-width` does that job. `min-width: 0` is what lets the
+        // name shrink inside its flex row far enough for the ellipsis to engage
+        // — a flex item's default `min-width: auto` would hold it at full text
+        // width, and the grid track would grow to match.
         max-width: none;
         min-width: 0;
-        // 10px. Well below `gauzy-table-header-font-size` (0.75rem), the
-        // smallest size the theme defines as a token, so it is a deliberate
-        // literal: this is a dense two-up list of names in a transient hint
-        // popover, not page or table chrome that has to hold its own.
-        font-size: 0.625rem;
-        line-height: 0.8125rem;
+        // 11px, the size the members badge is set at — the badge and the list it
+        // opens are the same piece of information, and its own comment already
+        // claims the two match. Still below `gauzy-table-header-font-size`
+        // (0.75rem), the smallest size the theme defines as a token, so it stays
+        // a deliberate literal: this is a name list in a transient hint popover,
+        // not page or table chrome that has to hold its own.
+        //
+        // The line box stays under the 18px avatar next to it, so the row height
+        // the five-in-view cap is derived from does not move with this.
+        font-size: 0.6875rem;
+        line-height: 0.875rem;
+        // Text colour 1 is a flat white on the dark themes, which at this size
+        // glares. Held just off it — enough to read as white, not enough to
+        // shout. Applied here rather than to the `a` so the avatar next to it
+        // keeps its full opacity, and as opacity rather than a literal so the
+        // light themes soften their dark ink by the same amount.
+        opacity: 0.82;
       }
 
       img {
