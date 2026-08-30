@@ -1,0 +1,66 @@
+# Mirror desktop-app installers from GitHub Releases into the R2 bucket behind downloads.ever.co.
+#
+# The download links on gauzy.co used to point at ever.sfo3.cdn.digitaloceanspaces.com, which died
+# with the DigitalOcean account and left every desktop download broken. GitHub Releases stays the
+# source of truth and the auto-update feed; R2 is a CDN mirror in front of it.
+#
+# This runs on a schedule rather than hooking the release workflows: it is self-healing (a missed or
+# failed run is corrected by the next one), it touches none of the ~24 existing desktop build
+# workflows, and it is idempotent -- an asset already present at the right size is skipped.
+name: mirror-releases-to-r2
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'List what would be uploaded without uploading'
+        type: boolean
+        default: false
+  schedule:
+    # Every 6 hours. Releases are cut far less often than this, so the window between a release
+    # being published and being mirrored is bounded -- and until it is mirrored the website keeps
+    # linking to GitHub, because it only rewrites URLs listed in manifest.json.
+    - cron: '0 */6 * * *'
+
+concurrency:
+  # Two concurrent mirrors would race on manifest.json and could publish one that omits keys the
+  # other just uploaded.
+  group: mirror-releases-to-r2
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify R2 credentials and signing
+        # Runs before any mirroring. R2 answers "signature rejected" in a way the mirror reads as
+        # "object absent", so without this a credential or signing fault would look like an empty
+        # mirror and publish an empty manifest instead of failing.
+        env:
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_S3_ENDPOINT: ${{ secrets.R2_S3_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: node scripts/mirror-releases-to-r2.mjs --selftest
+
+      - name: Mirror release assets to R2
+        env:
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_S3_ENDPOINT: ${{ secrets.R2_S3_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          # The release repos are public, so this only needs to lift the unauthenticated API rate
+          # limit -- it is not granting cross-repo access.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run == true }}
+        run: node scripts/mirror-releases-to-r2.mjs
