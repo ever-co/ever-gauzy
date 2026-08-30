@@ -418,53 +418,6 @@ $header-title-basis: 18rem;
       font-variant-numeric: tabular-nums;
     }
   }
-
-  .image-container .hover {
-    padding: 0.5rem !important;
-    background: linear-gradient(
-      to top,
-      rgba(0, 0, 0, 0.82) 0%,
-      rgba(0, 0, 0, 0.45) 55%,
-      rgba(0, 0, 0, 0.2) 100%
-    ) !important;
-  }
-
-  .image-container .view-button {
-    justify-content: center !important;
-    align-items: center !important;
-    gap: 0.375rem;
-
-    button[nbButton] {
-      height: 1.75rem;
-      padding: 0 0.625rem;
-      border-radius: nb-theme(gauzy-radius-sm);
-      justify-content: center;
-      margin: 0 !important;
-    }
-  }
-
-  .image-container .hover .actions {
-    gap: 0.375rem;
-
-    button[nbButton] {
-      width: 1.5rem;
-      height: 1.5rem;
-      padding: 0;
-      border-radius: nb-theme(gauzy-radius-sm);
-      margin: 0 !important;
-
-      &.ml-auto {
-        margin-inline-start: auto !important;
-      }
-
-      nb-icon {
-        font-size: 0.875rem;
-        width: 0.875rem;
-        height: 0.875rem;
-        margin: 0;
-      }
-    }
-  }
 }
 
 :host .window-empty {
@@ -721,6 +674,29 @@ $header-title-basis: 18rem;
     max-height: 65vh;
     overflow-y: auto;
     padding-inline-end: 0.25rem;
+  }
+
+  .window-header__title {
+    font-size: nb-theme(gauzy-table-header-font-size);
+    line-height: nb-theme(gauzy-table-header-line-height);
+  }
+
+  .window-empty {
+    font-size: nb-theme(gauzy-table-header-font-size);
+  }
+
+  .data-list::ng-deep nb-list-item:not(.data-list__head) {
+    font-size: nb-theme(gauzy-table-header-font-size);
+  }
+
+  .cell ngx-avatar ::ng-deep .link-text {
+    font-size: nb-theme(gauzy-table-header-font-size);
+  }
+
+  .activity .duration {
+    font-size: nb-theme(gauzy-table-header-font-size);
+    font-weight: 400;
+    color: var(--gauzy-text-color-2);
   }
 }
 

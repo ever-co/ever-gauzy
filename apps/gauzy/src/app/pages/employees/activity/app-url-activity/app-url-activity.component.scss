@@ -4,8 +4,8 @@
   .percentage-col {
     width: 90px;
   }
-  .custom-card-body {
-    height: calc(100vh - 21.5rem) !important;
+  .filters {
+    flex: 0 0 auto;
   }
   ::ng-deep {
     nb-progress-bar {
@@ -51,4 +51,44 @@
 }
 .arrow {
   width: 32px;
+}
+
+// Apps / Visited Sites tabs — see the cap comment in
+// `time-activities.component.scss`, which this file forwards.
+:host {
+  // `.mini-card` is both the column-heading strip and every row group, and its
+  // cells carry no size of their own, so capping the card caps the lot.
+  .mini-card {
+    font-size: nb-theme(gauzy-table-header-font-size);
+
+    &.head {
+      color: var(--gauzy-text-color-2);
+    }
+
+    .times {
+      font-size: nb-theme(gauzy-table-header-font-size);
+      color: var(--gauzy-text-color-2);
+    }
+  }
+
+  ngx-activity-item ::ng-deep {
+    .no-child,
+    .child {
+      font-size: nb-theme(gauzy-table-header-font-size);
+      line-height: nb-theme(gauzy-table-header-line-height);
+    }
+
+    .child-items {
+      font-size: nb-theme(gauzy-table-header-font-size);
+    }
+
+    // Percentage and duration columns: the same muted numeric treatment the
+    // dashboard already gives this component's time column.
+    .percentage-col,
+    .col-sm-2.text-right,
+    .child-items .col-sm-3.text-right {
+      font-variant-numeric: tabular-nums;
+      color: var(--gauzy-text-color-2);
+    }
+  }
 }

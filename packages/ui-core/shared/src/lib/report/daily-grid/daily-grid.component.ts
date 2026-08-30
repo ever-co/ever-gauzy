@@ -31,8 +31,24 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 	dailyLogs: IReportDayData[] = [];
 	loading: boolean;
-	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
+
+	@Input() showGroupBy: boolean = true;
+
+	/*
+	 * Getter & Setter for the group-by filter
+	 */
+	private _groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
+	get groupBy(): ReportGroupByFilter {
+		return this._groupBy;
+	}
+	@Input() set groupBy(groupBy: ReportGroupByFilter) {
+		if (!groupBy || groupBy === this._groupBy) {
+			return;
+		}
+		this._groupBy = groupBy;
+		this.subject$.next(true);
+	}
 
 	/*
 	 * Getter & Setter for dynamic filters
@@ -79,13 +95,6 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 
 	ngAfterViewInit() {
 		this.cd.detectChanges();
-	}
-
-	/**
-	 * Change by group filter
-	 */
-	groupByChange() {
-		this.subject$.next(true);
 	}
 
 	/**
