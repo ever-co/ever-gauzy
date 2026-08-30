@@ -53,6 +53,15 @@ const ASSET_RE = /\.(exe|dmg|deb|rpm|AppImage|zip|snap|pkg|msi)$/i;
 const sha256hex = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const hmac = (k, d) => crypto.createHmac('sha256', k).update(d).digest();
 
+/**
+ * Make a remote-derived string safe to print.
+ *
+ * Release tags, asset names and error bodies all come from outside this script. Printed raw, a
+ * newline or carriage return in one of them can forge additional log lines in the CI output.
+ */
+const CONTROL_CHARS = new RegExp('[\u0000-\u001f\u007f]', 'g');
+const safe = (v) => String(v).replace(CONTROL_CHARS, ' ').slice(0, 200);
+
 function sign({ method, key, payloadHash, extra = {} }) {
 	const url = new URL(`${ENDPOINT}/${BUCKET}/${key}`);
 	const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
@@ -66,7 +75,11 @@ function sign({ method, key, payloadHash, extra = {} }) {
 	};
 	const lower = {};
 	for (const [k, v] of Object.entries(headers)) lower[k.toLowerCase()] = String(v).trim();
-	const names = Object.keys(lower).sort();
+	// SigV4 requires the signed-header list in byte order, so compare code units directly.
+	// 🛑 Do NOT switch this to localeCompare: it is locale-aware and would order some headers
+	// differently from what the server canonicalises, producing SignatureDoesNotMatch.
+	const byByte = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+	const names = Object.keys(lower).sort(byByte);
 
 	const canonicalRequest = [
 		method,
@@ -134,7 +147,7 @@ if (process.argv.includes('--selftest')) {
 		console.log(`selftest OK: signed PUT + HEAD round-tripped ${key} (${body.length} bytes)`);
 		process.exit(0);
 	} catch (e) {
-		console.error(`selftest FAILED: ${e.message}`);
+		console.error(`selftest FAILED: ${safe(e.message)}`);
 		process.exit(1);
 	}
 }
@@ -149,7 +162,7 @@ for (const [repo, prefix] of Object.entries(APPS)) {
 	try {
 		releases = await gh(`/repos/ever-co/${repo}/releases?per_page=20`);
 	} catch (e) {
-		console.error(`  ${repo}: cannot list releases -- ${e.message}`);
+		console.error(`  ${repo}: cannot list releases -- ${safe(e.message)}`);
 		failed++;
 		continue;
 	}
@@ -166,7 +179,7 @@ for (const [repo, prefix] of Object.entries(APPS)) {
 			console.log(`  ${dir}: no release found`);
 			continue;
 		}
-		console.log(`  ${dir}: ${rel.tag_name} (${rel.assets.length} assets)`);
+		console.log(`  ${dir}: ${safe(rel.tag_name)} (${rel.assets.length} assets)`);
 
 		for (const asset of rel.assets) {
 			if (!ASSET_RE.test(asset.name)) continue;
@@ -180,7 +193,7 @@ for (const [repo, prefix] of Object.entries(APPS)) {
 					continue;
 				}
 				if (DRY) {
-					console.log(`    would upload ${key} (${mb}MB)`);
+					console.log(`    would upload ${safe(key)} (${mb}MB)`);
 					continue;
 				}
 
@@ -207,10 +220,10 @@ for (const [repo, prefix] of Object.entries(APPS)) {
 
 				mirrored.push(key);
 				uploaded++;
-				console.log(`    uploaded ${key} (${mb}MB)`);
+				console.log(`    uploaded ${safe(key)} (${mb}MB)`);
 			} catch (e) {
 				failed++;
-				console.error(`    FAILED ${key}: ${e.message}`);
+				console.error(`    FAILED ${safe(key)}: ${safe(e.message)}`);
 			}
 		}
 	}
@@ -220,7 +233,8 @@ if (!DRY) {
 	const manifest = {
 		generated: new Date().toISOString(),
 		base: 'https://downloads.ever.co',
-		keys: mirrored.sort()
+		// Byte order, and a copy rather than sorting `mirrored` in place.
+		keys: [...mirrored].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
 	};
 	await put('manifest.json', Buffer.from(JSON.stringify(manifest, null, 1)), 'application/json');
 	console.log(`\nmanifest.json published with ${mirrored.length} keys`);
