@@ -26,9 +26,11 @@ assert_encoded() {
 	local expected="$2"
 	local output
 
-	reset_failed=" .npmrc(git-exit-128)"
-	reset_err="$diagnostic"
-	output="$(eval "$escape_block")"
+	output="$(
+		reset_failed=" .npmrc(git-exit-128)" \
+			reset_err="$diagnostic" \
+			bash -c "$escape_block"
+	)"
 
 	if [[ "$output" == *$'\r'* || "$output" == *$'\n'* ]]; then
 		echo "Workflow command contains an unescaped CR or LF" >&2
