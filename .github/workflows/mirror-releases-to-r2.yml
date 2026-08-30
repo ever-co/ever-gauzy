@@ -33,7 +33,26 @@ permissions:
 
 jobs:
   mirror:
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    # GitHub-hosted on purpose, and the one job in this repo that is.
+    #
+    # The self-hosted ARC runners CANNOT REACH CLOUDFLARE R2. Measured from inside a running
+    # ever-k8s-linux-x64-4 runner pod on 2026-08-30:
+    #
+    #   https://<account>.r2.cloudflarestorage.com   000  (connection timed out)
+    #   https://downloads.ever.co                    000  (connection timed out)
+    #   https://api.github.com                       200
+    #   https://registry-1.docker.io/v2/             401  (reachable)
+    #   https://cloudflare.com                       301  (reachable)
+    #
+    # Forcing IPv4 does not help, so it is not the usual AAAA-first problem: it is the ISP-level
+    # blackhole of certain Cloudflare anycast prefixes that this fleet has hit before -- the same
+    # fault that forced cdn.ever.co to be terminated in-cluster. The destinations are reachable
+    # from outside the homelab, so a GitHub-hosted runner works.
+    #
+    # This is a deliberate, narrow exception to the self-hosted-only convention: the entire purpose
+    # of this job is to talk to Cloudflare, which a self-hosted runner structurally cannot do.
+    # ever-gauzy is a public repository, so GitHub-hosted minutes are free.
+    runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
