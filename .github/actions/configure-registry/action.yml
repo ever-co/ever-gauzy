@@ -129,9 +129,12 @@ runs:
           fi
         done
         if [ -n "$reset_failed" ]; then
-          # The runner percent-DECODES workflow-command data (%25 -> %, %0A -> LF), so a
-          # literal % in git's message must be re-encoded or the annotation mangles it.
+          # The runner percent-DECODES workflow-command data (%25 -> %, %0D -> CR,
+          # %0A -> LF), so encode literal percent and line controls before emission.
+          # Percent must go first so the generated escape sequences stay intact.
           reset_err="${reset_err//%/%25}"
+          reset_err="${reset_err//$'\r'/%0D}"
+          reset_err="${reset_err//$'\n'/%0A}"
           echo "::error title=Could not reset registry configuration::git checkout -- failed for:$reset_failed.${reset_err:+ First git error: $reset_err.} The previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
           exit 1
         fi
