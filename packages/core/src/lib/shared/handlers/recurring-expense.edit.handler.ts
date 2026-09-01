@@ -75,6 +75,13 @@ export abstract class RecurringExpenseEditHandler<
 			value: input.value,
 			categoryName: input.categoryName,
 		};
+		// input.employeeId is only present on employee recurring expenses. `undefined` means the
+		// caller didn't touch it (organization recurring expenses never send it at all), so leave
+		// the existing assignment alone; an explicit `null` is a deliberate switch to "All
+		// Employees" and has to be persisted, not silently dropped (#8889).
+		if (input.employeeId !== undefined) {
+			updateObject.employeeId = input.employeeId;
+		}
 		return await this.crudService.update(id, updateObject);
 	};
 
@@ -142,7 +149,14 @@ export abstract class RecurringExpenseEditHandler<
 			currency: originalExpense.currency,
 			parentRecurringExpenseId: originalExpense.parentRecurringExpenseId
 		};
-		if (originalExpense.employeeId) {
+		// Prefer what the caller actually submitted for employeeId over the original expense's
+		// value. Falling back to `originalExpense.employeeId` unconditionally (the previous
+		// behavior) meant switching a per-employee expense to "All Employees" (employeeId: null)
+		// while also crossing into this replacement-expense path silently kept the old employee
+		// on the new row (#8889) — the request succeeded but nothing actually changed.
+		if (input.employeeId !== undefined) {
+			createObject.employeeId = input.employeeId;
+		} else if (originalExpense.employeeId) {
 			createObject.employeeId = originalExpense.employeeId;
 		}
 		if (originalExpense.organizationId) {
@@ -216,12 +230,7 @@ export abstract class RecurringExpenseEditHandler<
 		const newEndMonth = startMonth > 0 ? startMonth - 1 : 11;
 		const newEndDay = getLastDayOfMonth(newEndYear, newEndMonth);
 
-		const dateUpdate: any = {
-			endDay: newEndDay,
-			endMonth: newEndMonth,
-			endYear: newEndYear,
-			endDate: new Date(newEndYear, newEndMonth, newEndDay)
-		};
+		const dateUpdate: any = { endDay: newEndDay, endMonth: newEndMonth, endYear: newEndYear, endDate: new Date(newEndYear, newEndMonth, newEndDay) };
 		await this.crudService.update(id, dateUpdate);
 	}
 
