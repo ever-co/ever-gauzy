@@ -2,6 +2,96 @@ import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import { CreateEmployeeRecurringExpenseDTO } from './create-employee-recurring-expense.dto';
 
+/**
+ * `POST /employee-recurring-expense` runs `@UseValidationPipe({ transform: true })`. The "All
+ * Employees" option on the Add-expense dialog (`ga-employee-selector` with `showAllEmployeesOption`)
+ * submits the ALL_EMPLOYEES_SELECTED sentinel, which `RecurringExpensesEmployeeComponent`
+ * (`_recurringExpenseMutationResultTransform`) turns into `{ employeeId: null }` with no `employee`
+ * key at all — a legitimate org-level recurring expense with no specific employee attached.
+ *
+ * Before this fix, `EmployeeFeatureDTO`'s `@ValidateIf` pair still forced `@IsObject()` on the
+ * missing `employee` and `@IsString()` on the null `employeeId`, so BOTH failed and every "All
+ * Employees" recurring expense was rejected with an HTTP 400 (#8889) — reproducible purely from the
+ * DTO, with no server or database involved. A previous attempt (#8899) worked around this by
+ * removing the "All Employees" option from the UI instead of fixing the validation, and was reverted
+ * (#8900) because the option is meant to work.
+ */
+
+const VALID_EMPLOYEE_ID = '00000000-0000-4000-8000-000000000001';
+
+// `EmployeeRecurringExpenseDTO` extends `TenantOrganizationBaseDTO`, which requires one of
+// `organization` / `organizationId` / `sentTo`. We satisfy that with `sentTo` (a plain
+// `@IsString()`) rather than `organizationId`, since `organizationId` also runs
+// `@IsOrganizationBelongsToUser()` — an async validator that checks `RequestContext` and the
+// database. There's no request or database in this suite, so that check would always fail here
+// regardless of the employeeId behavior under test, which is the whole point of validating the
+// DTO directly with no server involved.
+const REQUIRED_FIELDS = {
+	value: 250,
+	categoryName: 'Travel',
+	startDay: 1,
+	startMonth: 1,
+	startYear: 2026,
+	startDate: new Date('2026-01-01'),
+	currency: 'USD',
+	sentTo: 'test-recipient'
+};
+
+async function validatePayload(
+	payload: Record<string, unknown>
+): Promise<{ dto: CreateEmployeeRecurringExpenseDTO; errors: ValidationError[] }> {
+	const dto = plainToInstance(CreateEmployeeRecurringExpenseDTO, payload);
+	const errors = await validate(dto);
+
+	return { dto, errors };
+}
+
+describe('CreateEmployeeRecurringExpenseDTO', () => {
+	it('accepts an "All Employees" recurring expense (employeeId: null, no employee object)', async () => {
+		const { errors } = await validatePayload({
+			...REQUIRED_FIELDS,
+			employeeId: null
+		});
+
+		expect(errors).toHaveLength(0);
+	});
+
+	it('accepts an "All Employees" recurring expense when employeeId is omitted entirely', async () => {
+		const { errors } = await validatePayload({ ...REQUIRED_FIELDS });
+
+		expect(errors).toHaveLength(0);
+	});
+
+	it('still accepts a recurring expense for a specific employee', async () => {
+		const { errors, dto } = await validatePayload({
+			...REQUIRED_FIELDS,
+			employeeId: VALID_EMPLOYEE_ID
+		});
+
+		expect(errors).toHaveLength(0);
+		expect(dto.employeeId).toBe(VALID_EMPLOYEE_ID);
+	});
+
+	it('still rejects a malformed employeeId (control: proves employeeId is not just ignored)', async () => {
+		const { errors } = await validatePayload({
+			...REQUIRED_FIELDS,
+			employeeId: 12345
+		});
+
+		expect(errors.some((error) => error.property === 'employeeId')).toBe(true);
+	});
+
+	it('still rejects a request missing the required expense fields (control: PartialType only relaxed employee/employeeId)', async () => {
+		const { errors } = await validatePayload({ employeeId: null });
+
+		expect(errors.some((error) => error.property === 'value')).toBe(true);
+		expect(errors.some((error) => error.property === 'categoryName')).toBe(true);
+	});
+});
+import { plainToInstance } from 'class-transformer';
+import { validate, ValidationError } from 'class-validator';
+import { CreateEmployeeRecurringExpenseDTO } from './create-employee-recurring-expense.dto';
+
 // Reproduces #8889 from the DTO alone (no server/DB needed): the "All Employees" option sends
 // { employeeId: null } with no employee key, which EmployeeFeatureDTO's ValidateIf pair used
 // to reject with HTTP 400. See CreateEmployeeRecurringExpenseDTO for the root cause and fix.
