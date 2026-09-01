@@ -78,8 +78,10 @@ export abstract class RecurringExpenseEditHandler<
 		// input.employeeId is only present on employee recurring expenses. `undefined` means the
 		// caller didn't touch it (organization recurring expenses never send it at all), so leave
 		// the existing assignment alone; an explicit `null` is a deliberate switch to "All
-		// Employees" and has to be persisted, not silently dropped (#8889).
-		if (input.employeeId !== undefined) {
+		// Employees" and has to be persisted, not silently dropped (#8889). An empty string is
+		// neither of those — it isn't a valid employee id and class-validator's @IsUUID should
+		// already reject it, but treat it the same as "untouched" here too rather than persist it.
+		if (input.employeeId !== undefined && input.employeeId !== '') {
 			updateObject.employeeId = input.employeeId;
 		}
 		return await this.crudService.update(id, updateObject);
@@ -153,8 +155,9 @@ export abstract class RecurringExpenseEditHandler<
 		// value. Falling back to `originalExpense.employeeId` unconditionally (the previous
 		// behavior) meant switching a per-employee expense to "All Employees" (employeeId: null)
 		// while also crossing into this replacement-expense path silently kept the old employee
-		// on the new row (#8889) — the request succeeded but nothing actually changed.
-		if (input.employeeId !== undefined) {
+		// on the new row (#8889) — the request succeeded but nothing actually changed. An empty
+		// string isn't a valid id either, so treat it like "untouched" rather than persist it.
+		if (input.employeeId !== undefined && input.employeeId !== '') {
 			createObject.employeeId = input.employeeId;
 		} else if (originalExpense.employeeId) {
 			createObject.employeeId = originalExpense.employeeId;
@@ -230,7 +233,12 @@ export abstract class RecurringExpenseEditHandler<
 		const newEndMonth = startMonth > 0 ? startMonth - 1 : 11;
 		const newEndDay = getLastDayOfMonth(newEndYear, newEndMonth);
 
-		const dateUpdate: any = { endDay: newEndDay, endMonth: newEndMonth, endYear: newEndYear, endDate: new Date(newEndYear, newEndMonth, newEndDay) };
+		const dateUpdate: any = {
+			endDay: newEndDay,
+			endMonth: newEndMonth,
+			endYear: newEndYear,
+			endDate: new Date(newEndYear, newEndMonth, newEndDay)
+		};
 		await this.crudService.update(id, dateUpdate);
 	}
 
