@@ -74,6 +74,20 @@ describe('RecurringExpenseEditHandler', () => {
 			const updatePayload = crudService.update.mock.calls[0][1];
 			expect(updatePayload).not.toHaveProperty('employeeId');
 		});
+
+		it('does not persist an empty-string employeeId (not a valid id, and not the "untouched" signal)', async () => {
+			const crudService = makeFakeCrudService({ id: 'expense-1', employeeId: 'employee-1' });
+			const handler = new TestRecurringExpenseEditHandler(crudService as any);
+
+			await handler.executeCommand('expense-1', {
+				...BASE_INPUT,
+				startDateUpdateType: StartDateUpdateTypeEnum.NO_CHANGE,
+				employeeId: ''
+			});
+
+			const updatePayload = crudService.update.mock.calls[0][1];
+			expect(updatePayload).not.toHaveProperty('employeeId');
+		});
 	});
 
 	describe('a later-month edit that is safe to apply (INCREASE_SAFE_WITHIN_LIMIT -> increaseSafe)', () => {
@@ -114,6 +128,22 @@ describe('RecurringExpenseEditHandler', () => {
 				...BASE_INPUT,
 				startMonth: 5,
 				startDateUpdateType: StartDateUpdateTypeEnum.INCREASE_SAFE_WITHIN_LIMIT
+			});
+
+			expect(crudService.create).toHaveBeenCalledWith(
+				expect.objectContaining({ employeeId: 'employee-1' })
+			);
+		});
+
+		it('falls back to the original employee, not an empty-string employeeId, on the replacement expense', async () => {
+			const crudService = makeFakeCrudService(originalExpense);
+			const handler = new TestRecurringExpenseEditHandler(crudService as any);
+
+			await handler.executeCommand('expense-1', {
+				...BASE_INPUT,
+				startMonth: 5,
+				startDateUpdateType: StartDateUpdateTypeEnum.INCREASE_SAFE_WITHIN_LIMIT,
+				employeeId: ''
 			});
 
 			expect(crudService.create).toHaveBeenCalledWith(
