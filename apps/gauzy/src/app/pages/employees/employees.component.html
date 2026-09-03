@@ -1,26 +1,36 @@
 <nb-card>
   <nb-card-header class="d-flex flex-column pb-0">
+    <!-- Heading and its secondary button are direct siblings of one
+         `.card-header-title` row, the shape Users and Candidates already use.
+         The two nested `.card-header-title` blocks this replaced each ran their
+         own `justify-content: space-between`, so the button was pushed to the far
+         edge of a row it was the only occupant of, and the `.mr-2` wrapper then
+         spaced it against nothing. -->
     <div class="card-header-title">
-      <div class="card-header-title">
-        <h4>
-          <ngx-header-title [allowEmployee]="false">
-            {{ 'EMPLOYEES_PAGE.HEADER' | translate }}
-          </ngx-header-title>
-        </h4>
-      </div>
-      <div class="card-header-title">
-        <div class="mr-2">
-          <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_VIEW]">
-            <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INVITE_VIEW]">
-              @if (organization?.invitesAllowed) {
-                <button nbButton status="primary" [routerLink]="'/pages/employees/invites'">
-                  {{ 'BUTTONS.MANAGE_INVITES' | translate }}
-                </button>
-              }
-            </ng-template>
-          </ng-template>
-        </div>
-      </div>
+      <h4>
+        <ngx-header-title [allowEmployee]="false">
+          {{ 'EMPLOYEES_PAGE.HEADER' | translate }}
+        </ngx-header-title>
+      </h4>
+      <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_VIEW]">
+        <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INVITE_VIEW]">
+          @if (organization?.invitesAllowed) {
+            <!-- `size="small"` and `.action`: every other button in this header
+                 carries both. Without them this one rendered a full step taller
+                 than Invite / Add beside it, which is what put the header's two
+                 halves on different vertical centres. -->
+            <button
+              nbButton
+              class="action"
+              size="small"
+              status="primary"
+              [routerLink]="'/pages/employees/invites'"
+            >
+              {{ 'BUTTONS.MANAGE_INVITES' | translate }}
+            </button>
+          }
+        </ng-template>
+      </ng-template>
     </div>
     <div class="gauzy-button-container">
       <ngx-gauzy-button-action
