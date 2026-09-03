@@ -1,4 +1,5 @@
 @use '@shared/_pg-card' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 .tasks-component {
   &__settings {
@@ -51,5 +52,75 @@ nb-card-body {
   th:first-child,
   td:first-child {
     white-space: nowrap;
+  }
+}
+
+:host {
+  @include ga-hub.density-tokens();
+}
+
+:host .table-scroll-container {
+  @include ga-hub.surface();
+}
+
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+}
+
+:host ::ng-deep {
+  @include ga-hub.tag-stack-spacing();
+}
+
+:host ::ng-deep ga-status-badge {
+  @include ga-hub.status-badge-tints();
+}
+
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
+}
+
+:host ::ng-deep gauzy-task-badge-view .badge-color {
+  height: var(--gauzy-table-badge-height, 1rem);
+  padding: var(--gauzy-table-chip-padding-y, 0) var(--gauzy-table-chip-padding-x, 0.3125rem);
+  gap: var(--gauzy-table-chip-gap, 0.125rem);
+  font-size: var(--gauzy-table-header-font-size, 0.75rem);
+  line-height: var(--gauzy-table-header-line-height, 0.8125rem);
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+
+  .badge-img {
+    width: var(--gauzy-table-header-font-size, 0.75rem);
+    height: var(--gauzy-table-header-font-size, 0.75rem);
+  }
+}
+
+:host ::ng-deep ngx-project .project-render.project-render {
+  align-items: center;
+  gap: var(--gauzy-people-gap, 0.375rem);
+  min-width: 0;
+
+  img {
+    flex: 0 0 auto;
+    width: var(--gauzy-people-avatar-size, 1rem);
+    height: var(--gauzy-people-avatar-size, 1rem);
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    box-shadow: none;
+  }
+
+  .name {
+    max-width: var(--gauzy-people-name-max-width, 8rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--gauzy-people-font-size, 0.6875rem);
+    line-height: var(--gauzy-people-avatar-size, 1rem);
+  }
+
+  span .member.member {
+    font-size: var(--gauzy-table-chip-font-size, 0.625rem);
+    line-height: var(--gauzy-table-chip-line-height, 0.75rem);
   }
 }
