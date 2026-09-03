@@ -44,27 +44,27 @@ nb-card-body {
   }
 }
 
-// The ID column (first in the grid, fixed 90px in _loadSmartTableSettings) must
-// keep values like "#GAU-7777" on one line — they would otherwise wrap at the
-// hyphen. Scoped to this page's table because HashNumberPipe is shared and must
-// stay presentation-free; card grid and sprint views render no such cells.
-:host ::ng-deep angular2-smart-table {
-  th:first-child,
-  td:first-child {
-    white-space: nowrap;
-  }
-}
-
+// ── Density tokens ───────────────────────────────────────────────────────────
+// The canonical list-page block Payments, Invoices/Estimates and Pipelines all
+// carry, so the four read as one surface.
+//
+// The tokens sit on `:host`, not on the table, and that placement is the point:
+// the renderers that consume them (`ngx-status-view`, `ga-notes-with-tags`,
+// `ngx-people-list`, `ngx-created-by-user`, the skeleton) are separate
+// components, and custom properties are the only thing that crosses those
+// boundaries. The card-grid and sprint layouts inherit the same scale for free,
+// which is wanted — a token is a proportion, so those layouts stay coherent.
+//
+// Hard-coded overrides for renderers that never joined the token system are a
+// different matter: a literal `1rem` is not a proportion, and the card and
+// sprint layouts have room the table does not. Those live under
+// `angular2-smart-table` below, never here.
 :host {
   @include ga-hub.density-tokens();
 }
 
 :host .table-scroll-container {
   @include ga-hub.surface();
-}
-
-:host ::ng-deep angular2-smart-table {
-  @include ga-hub.rows();
 }
 
 :host ::ng-deep {
@@ -83,66 +83,116 @@ nb-card-body {
   @include ga-hub.pager();
 }
 
-:host ::ng-deep gauzy-task-badge-view .badge-color {
-  height: var(--gauzy-table-badge-height, 1rem);
-  padding: var(--gauzy-table-chip-padding-y, 0) var(--gauzy-table-chip-padding-x, 0.3125rem);
-  gap: var(--gauzy-table-chip-gap, 0.125rem);
-  font-size: var(--gauzy-table-header-font-size, 0.75rem);
-  line-height: var(--gauzy-table-header-line-height, 0.8125rem);
-  border-radius: var(--gauzy-radius-sm, 0.375rem);
+// ── Everything scoped to the Smart Table ─────────────────────────────────────
+// One block, because `ga-card-grid` instantiates every column's
+// `renderComponent` itself (`card-grid-custom.component.ts`) and the sprint card
+// renders `ngx-project` and `ngx-status-view` directly in its own template — so
+// anything keyed on a renderer's element name alone reaches all three layouts.
+// The table is the only one built to a 1rem line box; the others have room.
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
 
-  .badge-img {
-    width: var(--gauzy-table-header-font-size, 0.75rem);
-    height: var(--gauzy-table-header-font-size, 0.75rem);
-  }
-}
-
-:host ::ng-deep ngx-project .project-render.project-render {
-  align-items: center;
-  gap: var(--gauzy-people-gap, 0.375rem);
-  min-width: 0;
-
-  img {
-    flex: 0 0 auto;
-    width: var(--gauzy-people-avatar-size, 1rem);
-    height: var(--gauzy-people-avatar-size, 1rem);
-    border-radius: var(--gauzy-radius-sm, 0.375rem);
-    box-shadow: none;
-  }
-
-  .name {
-    max-width: var(--gauzy-people-name-max-width, 8rem);
-    overflow: hidden;
-    text-overflow: ellipsis;
+  // The ID column (first in the grid, fixed 90px in _loadSmartTableSettings)
+  // must keep values like "#GAU-7777" on one line — they would otherwise wrap at
+  // the hyphen. Scoped here because HashNumberPipe is shared and must stay
+  // presentation-free; card grid and sprint views render no such cells.
+  th:first-child,
+  td:first-child {
     white-space: nowrap;
-    font-size: var(--gauzy-people-font-size, 0.6875rem);
-    line-height: var(--gauzy-people-avatar-size, 1rem);
   }
 
-  span .member.member {
-    font-size: var(--gauzy-table-chip-font-size, 0.625rem);
-    line-height: var(--gauzy-table-chip-line-height, 0.75rem);
+  // ── Created At column ──────────────────────────────────────────────────────
+  // The 110px in `_loadSmartTableSettings` lands as an inline `[style.width]` on
+  // the `th`, but the table is `table-layout: auto`, where a declared width is a
+  // hint the browser may still shrink to the column's MIN-CONTENT. For this
+  // header that floor is the longest single word ("Created"), so on a crowded
+  // table the label wrapped to two lines and took every row with it — the width
+  // alone does not hold the column open.
+  //
+  // `nowrap` raises the floor to the whole label, so the declared width becomes
+  // the real one. The cell below is already held on one line by the shared
+  // `ngx-created-at` rule in `styles/_overrides.scss`; this is the header half
+  // of the same idea, and the same pairing `taskNumber` uses above.
+  //
+  // The hook is the library's own: the titles row renders each header as
+  // `class="angular2-smart-th {{ column.id }}"`, so this tracks the column by id
+  // rather than by position — the column set differs across the Tasks, My Tasks
+  // and Team Tasks views this component serves.
+  th.angular2-smart-th.createdAt {
+    white-space: nowrap;
   }
-}
 
-// ── Created At column ────────────────────────────────────────────────────────
-// The 110px in `_loadSmartTableSettings` lands as an inline `[style.width]` on
-// the `th`, but the table is `table-layout: auto`, where a declared width is a
-// hint the browser may still shrink to the column's MIN-CONTENT. For this
-// header that floor is the longest single word ("Created"), so on a crowded
-// table the label wrapped to two lines and took every row with it — the width
-// alone does not hold the column open.
-//
-// `nowrap` raises the floor to the whole label, so the declared width becomes
-// the real one. The cell below it is already held on one line by the shared
-// `ngx-created-at` rule in `styles/_overrides.scss`; this is the header half of
-// the same idea, and the same pairing `taskNumber` uses (a 90px width in the
-// settings, `nowrap` on the first column above).
-//
-// The class hook is the library's own: the titles row renders each header as
-// `class="angular2-smart-th {{ column.id }}"`, so this tracks the column by id
-// rather than by position — the column set differs across the Tasks, My Tasks
-// and Team Tasks views this component serves.
-:host ::ng-deep angular2-smart-table th.angular2-smart-th.createdAt {
-  white-space: nowrap;
+  // ── Status pill ────────────────────────────────────────────────────────────
+  // `ngx-status-view` renders `gauzy-task-badge-view` for any task carrying a
+  // `taskStatus` row (only the enum fallback uses the token-sized `.badge` in
+  // its own sheet). That component hard-codes 4px padding and an 18px icon,
+  // taller than the 1rem line box the rest of the row is built to.
+  //
+  // SPECIFICITY: its sheet nests `.badge-color` under `:host`, which shims to
+  // `[_nghost] .badge-color[_ngcontent]` — (0,3,0), and (0,5,0) for `.badge-img`
+  // — while this selector's `:host ::ng-deep` buys only the one `[_nghost]`
+  // attribute. The doubled classes make up the difference, the same idiom the
+  // Invoices and Pipelines sheets use on `.tab-link.tab-link`.
+  gauzy-task-badge-view .badge-color.badge-color {
+    height: var(--gauzy-table-badge-height, 1rem);
+    padding: var(--gauzy-table-chip-padding-y, 0) var(--gauzy-table-chip-padding-x, 0.3125rem);
+    gap: var(--gauzy-table-chip-gap, 0.125rem);
+    font-size: var(--gauzy-table-header-font-size, 0.75rem);
+    line-height: var(--gauzy-table-header-line-height, 0.8125rem);
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+
+    .badge-img.badge-img {
+      width: var(--gauzy-table-header-font-size, 0.75rem);
+      height: var(--gauzy-table-header-font-size, 0.75rem);
+    }
+  }
+
+  // ── Project cell ───────────────────────────────────────────────────────────
+  // The other renderer that never joined the token system: its sheet pins a 28px
+  // logo, a 14px/17px name and a 10px gap, so the Project column carried the
+  // largest text and the tallest box in the table — the name outsized the column
+  // HEADER, and the logo alone was nearly twice the row's 1rem line box.
+  //
+  // Sized off the same `gauzy-people-*` tokens `ngx-people-list` uses, so
+  // Project and the Members / Assigned-To columns beside it share one avatar
+  // size, one gap and one name treatment, and the cell costs a single line box.
+  //
+  // SPECIFICITY: the component's rules shim to `.project-render[_ngc] img[_ngc]`
+  // (0,3,1), `… .name[_ngc]` (0,4,0) and `… span[_ngc] .member[_ngc]` (0,5,1);
+  // the doubled `.project-render` and `.member` clear them.
+  ngx-project .project-render.project-render {
+    align-items: center;
+    gap: var(--gauzy-people-gap, 0.375rem);
+    min-width: 0;
+
+    img {
+      flex: 0 0 auto;
+      width: var(--gauzy-people-avatar-size, 1rem);
+      height: var(--gauzy-people-avatar-size, 1rem);
+      border-radius: var(--gauzy-radius-sm, 0.375rem);
+      // `--gauzy-shadow` is a 35 %-black drop shadow: invisible under a logo on
+      // the dark canvas, a smudge around a 1rem one on the light canvas.
+      box-shadow: none;
+    }
+
+    .name {
+      // Truncates on WIDTH, never on a character count — the same rule as
+      // `.person-name`, so a short project renders in full and only a genuinely
+      // long one picks up an ellipsis instead of wrapping the row to two lines.
+      max-width: var(--gauzy-people-name-max-width, 8rem);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: var(--gauzy-people-font-size, 0.6875rem);
+      // Matched to the logo, so the two share one line box.
+      line-height: var(--gauzy-people-avatar-size, 1rem);
+    }
+
+    // The secondary "Members count N" line, on the rows that carry one: a step
+    // below the name so the two read as label and detail rather than two names.
+    span .member.member {
+      font-size: var(--gauzy-table-chip-font-size, 0.625rem);
+      line-height: var(--gauzy-table-chip-line-height, 0.75rem);
+    }
+  }
 }
