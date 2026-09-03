@@ -1,4 +1,5 @@
 @use 'gauzy/_gauzy-overrides' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 @forward '@shared/_pg-card';
 
 nb-card {
@@ -36,4 +37,65 @@ nb-card {
     height: 100%;
     overflow: auto;
   }
+}
+
+// ── Density tokens ───────────────────────────────────────────────────────────
+// The canonical list-page block Payments, Invoices/Estimates, Pipelines and
+// Tasks carry, so the list pages read as one surface.
+//
+// The tokens sit on `:host`, not on the table: the renderers that consume them
+// (`ga-picture-name-tags`, `ngx-tags-only`, `ga-employee-work-status`,
+// `employee-time-tracking-status`, the skeleton) are separate components, and
+// custom properties are the only thing that crosses those boundaries. The
+// card-grid layout inherits the same scale for free, which is wanted — a token
+// is a proportion, so that layout stays coherent at its own size.
+//
+// Hard-coded overrides for renderers outside the token system would be a
+// different matter and would belong under `angular2-smart-table` below, since
+// `ga-card-grid` instantiates every column's `renderComponent` itself
+// (`card-grid-custom.component.ts`) and a literal is not a proportion. This
+// page needs none: its cell renderers already read the tokens.
+:host {
+  @include ga-hub.density-tokens();
+}
+
+:host .table-scroll-container {
+  @include ga-hub.surface();
+}
+
+:host ::ng-deep {
+  @include ga-hub.tag-stack-spacing();
+}
+
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
+}
+
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+}
+
+// ── Status pills ─────────────────────────────────────────────────────────────
+// Every other list page routes its statuses through `ga-status-badge`, which is
+// what the canonical block points `status-badge-tints()` at. This page does not:
+// the Status and Time Tracking cells emit plain `<div class="badge badge-*">`,
+// so the only thing painting them was `bootstrap.css` (loaded whole in
+// `project.json`) — a saturated fill with white text, i.e. the filled colour
+// block the rest of the app moved away from. Beside them, "Not Started" already
+// draws itself as a muted pill from its own sheet, so one cell could show a
+// flat grey chip next to a solid green one.
+//
+// Pointed at the two renderers that emit those classes, which brings them to
+// the same accent-on-tint treatment Payments shows, and lands the accessible
+// colours: the inherited `color-success-default` measured 2.9:1 on white.
+//
+// Page-wide rather than table-scoped, unlike the density literals above: this is
+// colour, not size, and the card-grid layout renders the very same components.
+:host ::ng-deep ga-employee-work-status,
+:host ::ng-deep employee-time-tracking-status {
+  @include ga-hub.status-badge-tints();
 }
