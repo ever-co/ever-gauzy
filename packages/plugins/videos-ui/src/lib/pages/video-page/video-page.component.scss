@@ -30,6 +30,36 @@
   }
 }
 
+// Filters on the trailing edge, matching the other Time & Activity tabs. This
+// file does not forward `time-activities.component`, so the alignment those tabs
+// share is restated here: the bar is authored as a bootstrap `.row.col-auto`
+// with `space-between` and negative gutters, so end its row explicitly and drop
+// the gutters — otherwise it hangs past the card's padding edge.
+:host .custom-card-header {
+  display: flex;
+  justify-content: flex-end;
+  // Matches `.custom-card-body`'s inset, so the controls line up with the video
+  // grid below them rather than sitting proud of it. Logical, so it follows the
+  // trailing edge under RTL the way `flex-end` above already does.
+  padding-inline-end: 1rem;
+
+  ::ng-deep ngx-gauzy-filters {
+    .main-wrapper {
+      width: 100%;
+      margin: 0;
+      justify-content: flex-end;
+    }
+
+    // The negative gutters this column's padding cancelled are gone with the
+    // row's margin, so the padding would now read as a real 15px inset off the
+    // trailing edge. Its `ml-auto` is left alone — bootstrap sets it
+    // `!important` and it pushes the same way `flex-end` already does.
+    .col-auto.ml-auto {
+      padding: 0;
+    }
+  }
+}
+
 // Videos tab — the same cap the other Time & Activity tabs get. The duration
 // chip keeps its white-on-black: it sits over a thumbnail, where the contrast
 // is doing legibility work rather than drawing attention.

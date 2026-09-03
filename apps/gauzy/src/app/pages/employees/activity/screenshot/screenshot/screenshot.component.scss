@@ -112,8 +112,13 @@
     min-width: 0;
   }
 
+  // Restated from `time-activities.component.scss`, which this file forwards:
+  // that block declares the same `.header-bar`, so the copy below wins and has
+  // to carry the end-alignment too. The filter row itself is ended by the
+  // forwarded `ngx-gauzy-filters .main-wrapper` rule.
   .header-filters {
-    display: block;
+    display: flex;
+    justify-content: flex-end;
     flex: 1 1 auto;
     min-width: 0;
   }

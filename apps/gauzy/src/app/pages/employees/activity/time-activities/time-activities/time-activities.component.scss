@@ -38,8 +38,11 @@
     min-width: 0;
   }
 
+  // A flex slot that ends its content, so the filter row lands on the trailing
+  // edge of the header rather than starting wherever its box happens to begin.
   .header-filters {
-    display: block;
+    display: flex;
+    justify-content: flex-end;
     flex: 1 1 auto;
     min-width: 0;
   }
@@ -75,6 +78,12 @@
   .main-wrapper {
     margin: 0;
     flex-wrap: nowrap;
+    // The bar is authored as `space-between` plus an `ml-auto` push on its inner
+    // column — and the `.col-auto.ml-auto` reset below drops that push, since the
+    // negative gutters it went with are gone. So the row has to be ended here
+    // instead: full width of its slot, contents flush to the trailing edge.
+    width: 100%;
+    justify-content: flex-end;
   }
 
   // `align-items-end` on the filter list is a bootstrap utility (`!important`), so
