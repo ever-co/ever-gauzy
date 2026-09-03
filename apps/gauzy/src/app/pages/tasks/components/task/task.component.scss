@@ -124,3 +124,25 @@ nb-card-body {
     line-height: var(--gauzy-table-chip-line-height, 0.75rem);
   }
 }
+
+// ── Created At column ────────────────────────────────────────────────────────
+// The 110px in `_loadSmartTableSettings` lands as an inline `[style.width]` on
+// the `th`, but the table is `table-layout: auto`, where a declared width is a
+// hint the browser may still shrink to the column's MIN-CONTENT. For this
+// header that floor is the longest single word ("Created"), so on a crowded
+// table the label wrapped to two lines and took every row with it — the width
+// alone does not hold the column open.
+//
+// `nowrap` raises the floor to the whole label, so the declared width becomes
+// the real one. The cell below it is already held on one line by the shared
+// `ngx-created-at` rule in `styles/_overrides.scss`; this is the header half of
+// the same idea, and the same pairing `taskNumber` uses (a 90px width in the
+// settings, `nowrap` on the first column above).
+//
+// The class hook is the library's own: the titles row renders each header as
+// `class="angular2-smart-th {{ column.id }}"`, so this tracks the column by id
+// rather than by position — the column set differs across the Tasks, My Tasks
+// and Team Tasks views this component serves.
+:host ::ng-deep angular2-smart-table th.angular2-smart-th.createdAt {
+  white-space: nowrap;
+}
