@@ -16,9 +16,15 @@ nb-card {
   align-items: center;
 }
 :host {
+  // Spacing and vertical centring both come from the header's action row, which
+  // `GauzyButtonActionComponent` marks `.ga-page-header-actions`: a flex row with
+  // `align-items: center` and `column-gap: 0.5rem` (see `.ga-page-header` in
+  // `styles/_overrides.scss`). What used to be here fought it on both counts —
+  // `padding-top: 5px` grew the box at the top only, so centring the BOX pushed
+  // the toggle inside it below the buttons' centre, and the 28px/12px margins
+  // stacked onto the row's own gap to give 36px on one side of the toggle and
+  // 20px on the other.
   .custom-toggle {
-    margin: 0 28px 0 12px;
-    padding-top: 5px;
     ::ng-deep {
       nb-toggle.status-danger .toggle.checked {
         background-color: rgba(245, 109, 88, 1);
