@@ -36,11 +36,14 @@
   gap: 0.75rem 1rem;
   flex: 0 0 auto;
   // The table below ends at a 16px inset: the scroll container is held 11px off
-  // the card's edge and the 5px scrollbar sits inside that. This row reaches the
-  // same 16px as 8px here plus the 8px the filter row's own wrapper adds, so the
-  // two end on one line.
-  @include nb-ltr(padding-right, 0.5rem);
-  @include nb-rtl(padding-left, 0.5rem);
+  // the card's edge and the 5px scrollbar sits inside that. The filter row does
+  // not end there on its own — `.filter-item-list` is a bootstrap `.row` whose
+  // negative gutters are never reset, so its trailing item overhangs the wrapper
+  // it sits in. Carry the difference here instead; the value is set against the
+  // rendered result rather than derived, since the overhang comes from gutters
+  // this page does not own.
+  @include nb-ltr(padding-right, 31px);
+  @include nb-rtl(padding-left, 31px);
 
   .header-statistics {
     flex: 0 0 auto;
