@@ -32,3 +32,48 @@
     }
   }
 }
+
+// ── Tab body fill ───────────────────────────────────────────────────────────
+// Carry the card body's height down to the routed tab so a tab shorter than the
+// card fills it instead of stopping at its own content and leaving a band of
+// empty canvas underneath.
+//
+// Nebular's `nb-route-tabset` template is `<ul class="route-tabset">` followed
+// by `<router-outlet>`, so the routed component renders as the outlet's SIBLING
+// inside the tabset — `> router-outlet ~ *` is how you address it. The outlet
+// itself is taken out of the flow so it is not a zero-height flex item between
+// the strip and the tab.
+//
+// This mirrors the same chain on the dashboard tabset
+// (pages/dashboard/dashboard.component.scss). `min-height: 0` at every step
+// because a flex item's default `min-height: auto` refuses to shrink below its
+// content, which is what turns a long tab into a page-level scroll instead of a
+// scroll inside the card.
+:host ::ng-deep .tabset-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  > nb-route-tabset {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    > .route-tabset {
+      flex: 0 0 auto;
+    }
+
+    > router-outlet {
+      display: none;
+    }
+
+    > router-outlet ~ * {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+  }
+}
