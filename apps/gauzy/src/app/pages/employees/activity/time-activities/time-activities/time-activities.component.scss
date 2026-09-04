@@ -42,8 +42,8 @@
   // it sits in. Carry the difference here instead; the value is set against the
   // rendered result rather than derived, since the overhang comes from gutters
   // this page does not own.
-  @include nb-ltr(padding-right, 31px);
-  @include nb-rtl(padding-left, 31px);
+  @include nb-ltr(padding-right, 27px);
+  @include nb-rtl(padding-left, 27px);
 
   .header-statistics {
     flex: 0 0 auto;
