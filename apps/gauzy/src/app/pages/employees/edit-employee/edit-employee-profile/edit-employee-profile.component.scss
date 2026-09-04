@@ -74,6 +74,25 @@
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
+
+      // The routed tab is the scroller for every tab (each one hands its own
+      // fill element `flex: 1 0 auto` and lets overflow come here), so without
+      // this its scrollbar runs down the very edge of the card body — over the
+      // card's rounded corner, hard against the frame.
+      //
+      // It has to be a MARGIN. Padding would not move it: a scrollbar is laid
+      // out at the border edge of the scroll container, outside the padding box,
+      // so `padding-inline-end` would only push the content away from a
+      // scrollbar that stayed where it was. Shrinking the border box is the only
+      // thing that brings the bar inward.
+      //
+      // 0.5rem, half the 1rem margin the tabs' inner cards carry (`m-3`), so the
+      // bar lands in the gutter beside the card rather than on top of its edge.
+      // Logical, not `nb-ltr`/`nb-rtl`: those emit a `[dir=ltr]` prefix that has
+      // to be paired with `:host` to survive Angular's style scoping, which this
+      // nested `::ng-deep` selector cannot do — `margin-inline-end` flips on its
+      // own regardless.
+      margin-inline-end: 0.5rem;
     }
   }
 }
