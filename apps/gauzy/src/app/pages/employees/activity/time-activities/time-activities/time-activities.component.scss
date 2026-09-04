@@ -261,6 +261,18 @@
     line-height: nb-theme(gauzy-table-header-line-height);
   }
 
+  // `report.scss` gives every row a fixed 86px box, pads it 10px/20px and pins
+  // the content to the top. That was sized for the old scale; at the table-header
+  // size the single `.table-inner-wrapper` fills a little over half of it and the
+  // rest reads as a gap under each row. Let the content set the height and pad it
+  // evenly, so the row is only as tall as what it holds.
+  .table-row {
+    height: auto;
+    justify-content: center;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
   // Durations move off the near-white `--gauzy-text-color-1` onto the muted
   // numeric colour, so a row reads as one line with the badge carrying the
   // emphasis rather than as a block of white.
