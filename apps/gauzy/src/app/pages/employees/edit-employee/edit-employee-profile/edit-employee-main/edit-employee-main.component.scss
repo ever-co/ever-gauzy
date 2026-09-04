@@ -12,48 +12,77 @@ $radius: nb-theme(border-radius);
 // through `:host` so it matches that specificity, and this file is listed SECOND
 // in `styleUrls`, so on a tie it is the later rule that wins. Keep it last.
 
+// The tab is a flex item of the tabset now (see
+// edit-employee-profile.component.scss), which hands it the height the card body
+// has left over. The `max-height: calc(100vh - 20.5rem)` this used to carry was a
+// SECOND guess at the page chrome alongside the card's own: when the two
+// disagreed — as they do whenever the header collapses to the "select an
+// employee" line — the tab stopped short of the bottom of the card and left a
+// band of empty canvas under the form. `min-height: 0` so a tall tab scrolls
+// inside itself rather than pushing the card past the viewport.
 :host {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  // `height: auto` reclaims the `height: 100%` the organization stylesheet puts
+  // on this host: as a flex item that made the BASIS a full tabset height, one
+  // the tab strip has already spent part of, so the tab only came out right by
+  // being shrunk back down again. Growing from content height says the same
+  // thing directly.
+  height: auto;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
-  max-height: calc(100vh - 20.5rem);
   border-radius: 0 $radius $radius $radius;
 }
 
-// ── The two columns ─────────────────────────────────────────────────────────
-// `align-items: stretch` so the summary panel runs the full height of the form
-// beside it. Left to its content the panel was a short grey stub floating in a
-// tall empty tab, which is what made the page look unfinished.
+// The two columns stand on the tab's full height. `edit-organization-main` gives
+// this `height: 100%`, which on a scrolling host is a CAP as well as a floor:
+// a form taller than the card would spill out of a box that stopped at the fold,
+// so the panel's fill and the tab's own background ended mid-scroll. As a
+// minimum it stretches to fill the tab and still grows with the form.
 :host .content {
-  display: flex;
-  align-items: stretch;
-  padding: 1.25rem;
+  height: auto;
+  min-height: 100%;
 }
 
 // ── Summary panel ───────────────────────────────────────────────────────────
-// The template pins this to bootstrap's `w-25`, so the width is not ours to
-// set; what it was missing was the chrome that makes a panel read as a panel —
-// padding, a radius, and an edge.
+// The panel's padding, its top-left alignment and its radius are left to
+// `edit-organization-main.component.scss`. Two things are not:
+//
+// FILL — `rgba(126, 126, 143, 0.1)` is the literal value that stylesheet writes,
+// the value this token carries on the light themes; on `gauzy-dark` the token is
+// a LIFTING white tint instead, so reading it keeps the photo column one visible
+// step off the tab surface there rather than hoping a grey wash shows up on
+// near-black.
+//
+// HEIGHT — `height: auto` in place of that stylesheet's `height: 100%`, and the
+// difference is the whole point. `align-items: stretch` on `.content` only
+// stretches an item whose cross size is `auto`; a computed `height: 100%` opts
+// the panel OUT of stretching and then resolves against a parent that is
+// `min-height`-sized, i.e. indefinite — so it fell back to content height and the
+// panel stopped under the rate line while the form ran on for another 200px.
+// That short panel was the only thing on this tab that showed the empty band at
+// all: the tab's own fill is `gauzy-card-2`, `rgba(255, 255, 255, 0.02)` on the
+// dark theme, which is invisible against the card behind it. As `auto` the panel
+// stretches to the full height of `.content`, which now fills the tab.
 :host .organization-container {
-  padding: 1.25rem;
-  gap: 1rem;
-  align-items: center;
-  text-align: center;
-  height: auto;
-  // `rgba(126, 126, 143, 0.1)` is the literal value this token carries on the
-  // light themes; on `gauzy-dark` the token is a LIFTING white tint instead, so
-  // reading it keeps the photo column one visible step off the tab surface there
-  // rather than hoping a grey wash shows up on near-black.
   background-color: var(--gauzy-sidebar-background-3);
-  border: 1px solid var(--gauzy-border-default-color);
-  border-radius: $radius;
+  height: auto;
 }
 
-:host .organization-photo {
+// Scoped through `.organization-container` on purpose. The organization
+// stylesheet styles this as `:host .organization-container .organization-photo
+// img`; a shorter selector here loses the tie and the image keeps ITS size
+// instead of filling the box below. Matching that specificity means source
+// order decides, and this file is listed second in `styleUrls`.
+:host .organization-container .organization-photo {
   // Sized on the BOX, not just the image: with a broken or absent photo the box
   // used to collapse to the width of the alt text, and the upload glyph — which
-  // centres on this box — drifted off the corner of the avatar with it.
-  width: 112px;
-  height: 112px;
+  // centres on this box — drifted off the corner of the avatar with it. 100px is
+  // the size the photo has always been.
+  width: 100px;
+  height: 100px;
   flex: 0 0 auto;
   position: relative;
   border-radius: $radius;
@@ -77,16 +106,26 @@ $radius: nb-theme(border-radius);
 
   // Stand-in for an employee with no photo, matching the one the page header
   // already renders.
+  //
+  // `background-color` is the load-bearing line. The organization stylesheet
+  // paints EVERY div in this box solid black — `.organization-photo div
+  // { background: black; position: absolute }` — which is right for the one div
+  // it was written for, the hover scrim, but it also catches this placeholder:
+  // a no-photo employee got a black square with a faint icon on it, on every
+  // theme. Reclaim the fill (and the box, which that rule also absolutely
+  // positions) rather than trying to make the scrim rule more specific.
   .organization-photo-placeholder {
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: var(--gauzy-sidebar-background-3);
     color: nb-theme(text-hint-color);
 
     nb-icon {
-      font-size: 2.5rem;
-      width: 2.5rem;
-      height: 2.5rem;
+      font-size: 2.25rem;
+      width: 2.25rem;
+      height: 2.25rem;
     }
   }
 
@@ -97,15 +136,46 @@ $radius: nb-theme(border-radius);
     border-radius: 0;
     transition: opacity 0.2s ease-in-out;
   }
+
+  // The upload affordance. At the 68px the markup gives it, over a 100px avatar,
+  // it covered two thirds of the photo — and the template pins it to a permanent
+  // 0.3 opacity, so at rest it read as something broken sitting on top of the
+  // image rather than as a control. As a small badge in the bottom corner it
+  // stays out of the subject of the photo, and the template's own hover binding
+  // still takes it to full opacity over the darkening scrim.
+  //
+  // Both offsets are restated because the organization stylesheet centres this
+  // with `calc(50% - 68px / 2)` — a hard-coded half of the OLD size, which would
+  // throw a smaller glyph off centre by the difference. Logical insets rather
+  // than the `nb-ltr`/`nb-rtl` pair: those are gated on an explicit `[dir]`
+  // attribute, while these flip on their own.
+  svg {
+    width: 28px;
+    height: 28px;
+    top: auto;
+    bottom: 6px;
+    inset-inline-start: auto;
+    inset-inline-end: 6px;
+    // The input above it (z-index 3) is what takes the click; this must never
+    // intercept one.
+    pointer-events: none;
+
+    // The markup hard-codes `#0091FF`, a blue that belongs to no theme here.
+    // The two circles carry their own `opacity` attributes, so overriding only
+    // the fill keeps the badge's light/dark ring intact.
+    circle {
+      fill: nb-theme(color-primary-500);
+    }
+  }
 }
 
 // nb-badge positions itself absolutely against its parent by default, which in
 // a flex column means it would leave the flow and stack on the avatar. This
-// carried an inline `position: relative; margin-top: 20px` in the template; the
-// position belongs here, and the panel's own `gap` now owns the spacing.
+// carried an inline `position: relative; margin-top: 20px` in the template —
+// same two declarations, just no longer hard-coded on the element.
 :host .vetted-badge {
   position: relative;
-  align-self: center;
+  margin-top: 20px;
 }
 
 // ── Optional stats (vetted / job success / total jobs / hours / rate) ────────
@@ -114,6 +184,9 @@ $radius: nb-theme(border-radius);
 // supporting figures.
 :host .employee-stats {
   width: 100%;
+  // The offset the first `.employee-optional-info` used to carry itself, moved
+  // to the block so the rows below it can sit on their own tighter rhythm.
+  margin-top: 20px;
 }
 
 :host .employee-optional-info {
