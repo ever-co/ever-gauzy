@@ -1,5 +1,26 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
+// Namespaced rather than `as *`: `var` also forwards the theming module that
+// `_gauzy-cards` brings in above, and two `as *` loads of it would collide.
+@use 'var' as v;
+
+// How far the meta row (public-page button, username, email) is inset so it
+// starts under the employee NAME rather than under the back arrow. It is the
+// sum of the three things that precede the name on the row above:
+//   1.5rem back button + 1.5rem of its own margin (back-navigation.component.scss)
+//   48px avatar (`img.employee-image` below)
+//   0.75rem `.employee-info` gap
+// Spelled out so the next person to resize the avatar knows this follows it.
+$meta-indent: calc(3rem + 48px + 0.75rem);
+
+// The two header rows — identity on top, contact meta underneath — with one
+// rhythm between them. `.header-container` was a plain block, so the rows were
+// separated by whatever stray margins their children happened to carry.
+.header-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
 
 // The avatar and the name/position block sit side by side. Without this the
 // container is a plain block: the `<img>` makes a line box of its own and the
@@ -9,6 +30,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 // Sized on the element that actually carries the class. This was
@@ -22,6 +44,9 @@ img.employee-image,
   flex: 0 0 48px;
   object-fit: cover;
   border-radius: nb-theme(border-radius);
+  // A hairline keeps the avatar reading as a framed portrait instead of a
+  // floating cut-out, on both the pale and the near-black canvas.
+  border: 1px solid var(--gauzy-border-default-color);
 }
 
 // Stand-in for an employee with no photo. The `<img>` used to render
@@ -33,15 +58,33 @@ img.employee-image,
   justify-content: center;
   background-color: var(--gauzy-sidebar-background-3);
   color: nb-theme(text-hint-color);
+
+  nb-icon {
+    font-size: 1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
 }
 
 // The page header's own two-step type scale: the name out-ranks body copy, the
 // position is demoted. Both used to inherit body size and weight, so the two
 // lines read as one undifferentiated block.
+// Name and verified tick on one baseline. The template's `flex-column` class is
+// bootstrap's `flex-direction` only — it never made `.employee-details` a flex
+// container — so this row owns its own alignment rather than borrowing it.
+.employee-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
 .employee-name {
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 600;
-  line-height: 1.375rem;
+  line-height: 1.5rem;
+  letter-spacing: -0.01em;
+  color: var(--gauzy-text-color-1);
 }
 
 .employee-position {
@@ -50,29 +93,76 @@ img.employee-image,
   color: nb-theme(text-hint-color);
 }
 
-.edit-public-page {
-  .edit-public-button {
+// ── Contact meta row ────────────────────────────────────────────────────────
+// The second `.employee-info` in the template — the only direct `.employee-info`
+// child of the container, the identity block being nested a row deeper. Its
+// three items used to stack, each on a full-width line of body-sized text, which
+// gave the email more visual weight than the employee's own name. They belong on
+// one wrapping line of supporting copy, indented to the name above them.
+// `:host` is load-bearing here, not decoration. `nb-ltr`/`nb-rtl` emit a
+// `[dir=ltr] ` PREFIX on the whole selector, and Angular's style scoping only
+// leaves that prefix alone when the selector also carries `:host` — without it
+// the scoping attribute lands on `[dir=ltr]` itself, which is on `<html>` and
+// never matches, so the rule silently does nothing.
+:host .header-container > .employee-info {
+  @include nb-ltr(padding-left, $meta-indent);
+  @include nb-rtl(padding-right, $meta-indent);
+
+  .employee-details {
     display: flex;
-    flex-direction: row;
-    justify-content: center;
+    flex-wrap: wrap;
     align-items: center;
-    padding: 2px 12px;
-    box-sizing: border-box;
-    border-radius: nb-theme(button-rectangle-border-radius);
-    border: 2px solid nb-theme(color-primary-transparent-default);
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: 11px;
-    letter-spacing: 0em;
-    text-align: left;
-    color: nb-theme(text-primary-color);
-    cursor: pointer;
+    gap: 0.5rem 1.25rem;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
   }
 }
 
+.edit-public-page {
+  .edit-public-button {
+    // `inline-flex`, not `flex`: as a block the button stretched to the full
+    // width of the header and read as a banner rather than an action.
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.75rem;
+    padding: 0 0.75rem;
+    box-sizing: border-box;
+    border-radius: nb-theme(button-rectangle-border-radius);
+    border: 1px solid nb-theme(color-primary-transparent-default);
+    background-color: nb-theme(color-primary-transparent-100);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    color: nb-theme(text-primary-color);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+
+    &:hover {
+      background-color: nb-theme(color-primary-transparent-200);
+      border-color: nb-theme(color-primary-transparent-focus);
+    }
+
+    nb-icon {
+      font-size: 0.875rem;
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+  }
+}
+
+// Supporting copy: a muted label with the value carrying the weight. This was a
+// flat `opacity: 0.7` on the whole line, which dimmed the value as much as the
+// label and left both at body size.
 .transparent {
-  opacity: 0.7;
+  color: nb-theme(text-hint-color);
+
+  strong {
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+  }
 }
 
 // Removed with this pass, all of them dead: `.edit-icon` (declared twice),
@@ -81,8 +171,22 @@ img.employee-image,
 // .setting-block` painted a fixed `#eaf3fc` pale blue that would have been a
 // light panel on the near-black theme had anything ever used it.
 
+// Trails the name now, so the row's `gap` owns the spacing rather than a margin
+// on the icon itself.
 .icon-verified {
-  margin-right: 5px;
+  flex: 0 0 auto;
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+}
+
+// Below the tablet break the avatar-width indent throws the meta row off the
+// left edge of a narrow card; drop it and let the row start at the container.
+@media only screen and (max-width: v.$break-md) {
+  :host .header-container > .employee-info {
+    @include nb-ltr(padding-left, 0);
+    @include nb-rtl(padding-right, 0);
+  }
 }
 
 :host {
