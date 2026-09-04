@@ -10,6 +10,7 @@
 import '../../../core/entities/internal';
 
 import { IRecurringExpenseEditInput, StartDateUpdateTypeEnum } from '@gauzy/contracts';
+import { RequestContext } from '../../../core/context';
 import { EmployeeRecurringExpenseEditHandler } from './employee-recurring-expense.edit.handler';
 
 /**
@@ -54,6 +55,58 @@ const BASE_INPUT: IRecurringExpenseEditInput = {
 };
 
 describe('EmployeeRecurringExpenseEditHandler', () => {
+	// Every case below except the permission suite speaks for a caller who is allowed to pick an
+	// employee. Without a live request `RequestContext.hasPermission` is false, which would send
+	// them all down the restricted branch and test the wrong thing.
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	describe('a caller without CHANGE_SELECTED_EMPLOYEE', () => {
+		// `TenantAwareCrudService.update()` scopes the row to the caller's tenant but applies no
+		// employee guard of its own, so this is the only thing standing between an unprivileged
+		// caller and reassigning an expense. `EmployeeRecurringExpenseCreateHandler` enforces the
+		// same rule on create; the two paths must not diverge.
+		beforeEach(() => {
+			jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
+			jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue('caller-employee');
+		});
+
+		it('cannot reassign an expense to another employee', async () => {
+			const crudService = makeFakeCrudService({ id: 'expense-1', employeeId: 'caller-employee' });
+
+			await makeHandler(crudService).executeCommand('expense-1', {
+				...BASE_INPUT,
+				startDateUpdateType: StartDateUpdateTypeEnum.NO_CHANGE,
+				employeeId: 'someone-else'
+			});
+
+			expect(crudService.update).toHaveBeenCalledWith(
+				'expense-1',
+				expect.objectContaining({ employeeId: 'caller-employee' })
+			);
+		});
+
+		it('cannot switch an expense to "All Employees"', async () => {
+			const crudService = makeFakeCrudService({ id: 'expense-1', employeeId: 'caller-employee' });
+
+			await makeHandler(crudService).executeCommand('expense-1', {
+				...BASE_INPUT,
+				startDateUpdateType: StartDateUpdateTypeEnum.NO_CHANGE,
+				employeeId: null
+			});
+
+			expect(crudService.update).toHaveBeenCalledWith(
+				'expense-1',
+				expect.objectContaining({ employeeId: 'caller-employee' })
+			);
+		});
+	});
+
 	describe('a same-month edit (NO_CHANGE / WITHIN_MONTH / REDUCE_SAFE -> updateExpenseStartDateAndValue)', () => {
 		it('clears the employee assignment when the input explicitly sets employeeId to null', async () => {
 			const crudService = makeFakeCrudService({ id: 'expense-1', employeeId: 'employee-1' });

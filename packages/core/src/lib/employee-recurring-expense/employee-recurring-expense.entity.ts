@@ -111,7 +111,7 @@ export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity imple
 	// Nullable, like the `employee` relation above it: an expense created for "All Employees" has
 	// no specific employee attached (#8889). The column has always been `nullable: true`; the type
 	// now says so too, matching `IEmployeeRecurringExpense`.
-	@ApiPropertyOptional({ type: () => String })
+	@ApiPropertyOptional({ type: () => String, nullable: true })
 	@RelationId((it: EmployeeRecurringExpense) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
