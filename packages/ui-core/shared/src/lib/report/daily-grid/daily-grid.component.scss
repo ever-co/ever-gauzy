@@ -34,20 +34,30 @@
   width: 20%;
   min-width: 20%;
 }
+// Matches the two 30% columns the data rows carry (To Do and Notes). The
+// accordion header repeats the same pair as empty spacers, so both rows sum to
+// the same width and shrink by the same ratio — which is what keeps Time and
+// Activity in the header aligned with their columns in the table below.
 .todo-column {
   width: 30%;
-  &.header {
-    width: 28%;
-    &.client {
-      width: 22%;
-    }
-  }
 }
 .time-column {
   width: 15%;
 }
 .activity-column {
   width: 15%;
+}
+
+// The header and the data rows carry the same columns, but they resolve inside
+// different boxes: the rows sit inside `nb-accordion-item-body` and its inset,
+// while the header sits in the card and carries the expand chevron as an extra
+// flex item after the last column. Both leave the header's columns ending
+// further along than the rows', so its Time and Activity read as pushed right.
+// Inset the trailing edge by the chevron's width to bring them back onto the
+// columns the table below uses.
+:host ::ng-deep nb-accordion-item-header {
+  @include nb-ltr(padding-right, 44px);
+  @include nb-rtl(padding-left, 44px);
 }
 
 @include respond(lg) {
