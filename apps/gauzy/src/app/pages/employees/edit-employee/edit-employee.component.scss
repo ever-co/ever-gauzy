@@ -197,3 +197,21 @@ img.employee-image,
   );
   @include ga-overrides.input-appearance(42px, var(--gauzy-card-1));
 }
+
+// The card body is given a definite height by the override above, but it is a
+// plain block, so the tabset inside it laid itself out at CONTENT height: on the
+// account tab the form ended after the Save row and the rest of the card was
+// left as bare canvas. As a flex column the body can hand its leftover height
+// down to the profile tabset, which passes it on to the routed tab
+// (edit-employee-profile.component.scss).
+:host nb-card-body {
+  display: flex;
+  flex-direction: column;
+
+  > ngx-edit-employee-profile {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
