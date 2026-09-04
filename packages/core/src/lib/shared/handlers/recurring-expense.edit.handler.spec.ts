@@ -1,23 +1,23 @@
-import { IRecurringExpenseEditInput, StartDateUpdateTypeEnum } from '@gauzy/contracts';
+import { StartDateUpdateTypeEnum } from '@gauzy/contracts';
 
 /**
  * `RecurringExpenseEditHandler` is shared by employee recurring expenses (which have an
  * `employeeId` column) and organization recurring expenses (which do not). Only the employee
  * subclass may ever write an employee assignment, so this suite pins the base class's half of that
- * contract: it must leave `employeeId` alone no matter what the caller sent.
+ * contract: `assignEmployeeId` is a no-op here, and no write path may smuggle an `employeeId`
+ * through on its own.
  *
  * That matters because `OrganizationRecurringExpenseController.update` takes a raw `@Body()` with
  * no DTO and no validation pipe, so an `employeeId` in the request body reaches this handler
  * unfiltered. Writing it onto an `OrganizationRecurringExpense` would hand the ORM a column that
- * does not exist. The employee-side behavior is covered in
+ * does not exist. The employee-side behavior — where the assignment is actually resolved — lives in
  * `employee-recurring-expense/commands/handlers/employee-recurring-expense.edit.handler.spec.ts`.
  *
- * These tests exercise the handler directly against a fake `CrudService`, with no NestJS module,
- * database, or HTTP layer involved. `../../core` is mocked out entirely: the handler only uses it
- * for the `CrudService` *type* (erased at compile time; we pass a fake object) and the tiny
- * `getLastDayOfMonth` helper (reimplemented below), but that barrel also re-exports the full
- * entity/module graph for the whole app — pulling in the real thing here would turn a focused
- * handler test into something that needs half the monorepo's dependencies just to import.
+ * `../../core` is mocked out entirely: the handler only uses it for the `CrudService` *type*
+ * (erased at compile time; we pass a fake object) and the tiny `getLastDayOfMonth` helper
+ * (reimplemented below), but that barrel also re-exports the full entity/module graph for the whole
+ * app — pulling in the real thing here would turn a focused handler test into something that needs
+ * half the monorepo's dependencies just to import.
  */
 jest.mock('../../core', () => ({
 	getLastDayOfMonth: (year: number, month: number) => new Date(year, month + 1, 0).getDate()
@@ -27,101 +27,90 @@ import { RecurringExpenseEditHandler } from './recurring-expense.edit.handler';
 
 class TestRecurringExpenseEditHandler extends RecurringExpenseEditHandler<any> {}
 
-function makeFakeCrudService(originalExpense: Record<string, unknown>) {
-	return {
-		findOneByIdString: jest.fn().mockResolvedValue(originalExpense),
-		update: jest.fn().mockResolvedValue({}),
-		create: jest.fn().mockResolvedValue({})
-	};
-}
-
-const BASE_INPUT: IRecurringExpenseEditInput = {
-	startDay: 1,
-	startMonth: 1,
-	startYear: 2026,
+// An organization recurring expense: no employeeId anywhere on the stored row.
+const ORGANIZATION_EXPENSE = {
+	id: 'expense-1',
+	organizationId: 'org-1',
+	splitExpense: false,
 	categoryName: 'Travel',
-	value: 250,
-	currency: 'USD'
+	currency: 'USD',
+	parentRecurringExpenseId: 'parent-1',
+	endYear: 2026,
+	endMonth: 2,
+	endDay: 28
 };
 
 describe('RecurringExpenseEditHandler (shared base)', () => {
-	describe('a same-month edit (NO_CHANGE / WITHIN_MONTH / REDUCE_SAFE -> updateExpenseStartDateAndValue)', () => {
-		it('still applies the start date and value changes', async () => {
-			const crudService = makeFakeCrudService({ id: 'expense-1' });
-			const handler = new TestRecurringExpenseEditHandler(crudService as any);
+	let crudService: {
+		findOneByIdString: jest.Mock;
+		update: jest.Mock;
+		create: jest.Mock;
+	};
+	let handler: TestRecurringExpenseEditHandler;
 
-			await handler.executeCommand('expense-1', {
-				...BASE_INPUT,
-				startDateUpdateType: StartDateUpdateTypeEnum.NO_CHANGE
-			});
+	function arrange(storedExpense: Record<string, unknown> = ORGANIZATION_EXPENSE) {
+		crudService = {
+			findOneByIdString: jest.fn().mockResolvedValue(storedExpense),
+			update: jest.fn().mockResolvedValue({}),
+			create: jest.fn().mockResolvedValue({})
+		};
+		handler = new TestRecurringExpenseEditHandler(crudService as any);
+	}
 
-			expect(crudService.update).toHaveBeenCalledWith(
-				'expense-1',
-				expect.objectContaining({ startDay: 1, startMonth: 1, startYear: 2026, value: 250 })
-			);
-		});
+	function edit(overrides: Record<string, unknown>) {
+		return handler.executeCommand('expense-1', {
+			startDay: 1,
+			startMonth: 1,
+			startYear: 2026,
+			categoryName: 'Travel',
+			value: 250,
+			currency: 'USD',
+			...overrides
+		} as any);
+	}
 
-		it('never writes employeeId, even when the caller supplied one', async () => {
-			const crudService = makeFakeCrudService({ id: 'expense-1' });
-			const handler = new TestRecurringExpenseEditHandler(crudService as any);
+	describe('assignEmployeeId', () => {
+		it('is a no-op, so an organization recurring expense can never be given an employee', () => {
+			arrange();
+			const target: Record<string, any> = {};
 
-			await handler.executeCommand('expense-1', {
-				...BASE_INPUT,
-				startDateUpdateType: StartDateUpdateTypeEnum.NO_CHANGE,
-				employeeId: 'employee-1'
-			});
+			(handler as any).assignEmployeeId(target, { employeeId: 'employee-1' }, { employeeId: 'employee-2' });
 
-			expect(crudService.update.mock.calls[0][1]).not.toHaveProperty('employeeId');
-		});
-
-		it('never writes employeeId when the caller sent an explicit null', async () => {
-			const crudService = makeFakeCrudService({ id: 'expense-1' });
-			const handler = new TestRecurringExpenseEditHandler(crudService as any);
-
-			await handler.executeCommand('expense-1', {
-				...BASE_INPUT,
-				startDateUpdateType: StartDateUpdateTypeEnum.NO_CHANGE,
-				employeeId: null
-			});
-
-			expect(crudService.update.mock.calls[0][1]).not.toHaveProperty('employeeId');
+			expect(target).toEqual({});
 		});
 	});
 
-	describe('a later-month edit that is safe to apply (INCREASE_SAFE_WITHIN_LIMIT -> increaseSafe)', () => {
-		const originalExpense = {
-			id: 'expense-1',
-			organizationId: 'org-1',
-			splitExpense: false,
-			categoryName: 'Travel',
-			currency: 'USD',
-			parentRecurringExpenseId: 'parent-1',
-			endYear: 2026,
-			endMonth: 2,
-			endDay: 28
-		};
+	describe('a same-month edit (NO_CHANGE / WITHIN_MONTH / REDUCE_SAFE)', () => {
+		it.each([['a specific id', 'employee-1'], ['an explicit null', null]])(
+			'applies the start date and value but writes no employeeId, given %s',
+			async (_label, employeeId) => {
+				arrange();
 
-		it('creates the replacement expense carrying the organization forward', async () => {
-			const crudService = makeFakeCrudService(originalExpense);
-			const handler = new TestRecurringExpenseEditHandler(crudService as any);
+				await edit({ startDateUpdateType: StartDateUpdateTypeEnum.NO_CHANGE, employeeId });
 
-			await handler.executeCommand('expense-1', {
-				...BASE_INPUT,
-				startMonth: 5,
-				startDateUpdateType: StartDateUpdateTypeEnum.INCREASE_SAFE_WITHIN_LIMIT
+				const [, written] = crudService.update.mock.calls[0];
+				expect(written).toMatchObject({ startDay: 1, startMonth: 1, startYear: 2026, value: 250 });
+				expect(written).not.toHaveProperty('employeeId');
+			}
+		);
+	});
+
+	describe('a later-month edit that is safe to apply (INCREASE_SAFE_WITHIN_LIMIT)', () => {
+		it('carries the organization onto the replacement expense', async () => {
+			arrange();
+
+			await edit({ startMonth: 5, startDateUpdateType: StartDateUpdateTypeEnum.INCREASE_SAFE_WITHIN_LIMIT });
+
+			expect(crudService.create.mock.calls[0][0]).toMatchObject({
+				organizationId: 'org-1',
+				parentRecurringExpenseId: 'parent-1'
 			});
-
-			expect(crudService.create).toHaveBeenCalledWith(
-				expect.objectContaining({ organizationId: 'org-1', parentRecurringExpenseId: 'parent-1' })
-			);
 		});
 
-		it('never writes employeeId onto the replacement expense, whatever the caller sent', async () => {
-			const crudService = makeFakeCrudService({ ...originalExpense, employeeId: 'employee-1' });
-			const handler = new TestRecurringExpenseEditHandler(crudService as any);
+		it('writes no employeeId onto the replacement expense, even when the stored row has one', async () => {
+			arrange({ ...ORGANIZATION_EXPENSE, employeeId: 'employee-1' });
 
-			await handler.executeCommand('expense-1', {
-				...BASE_INPUT,
+			await edit({
 				startMonth: 5,
 				startDateUpdateType: StartDateUpdateTypeEnum.INCREASE_SAFE_WITHIN_LIMIT,
 				employeeId: 'employee-2'
