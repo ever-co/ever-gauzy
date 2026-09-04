@@ -39,11 +39,23 @@ $radius: nb-theme(border-radius);
 // The two columns stand on the tab's full height. `edit-organization-main` gives
 // this `height: 100%`, which on a scrolling host is a CAP as well as a floor:
 // a form taller than the card would spill out of a box that stopped at the fold,
-// so the panel's fill and the tab's own background ended mid-scroll. As a
-// minimum it stretches to fill the tab and still grows with the form.
+// so the panel's fill and the tab's own background ended mid-scroll.
+//
+// `min-height: 100%` was the first attempt at the floor and it did not hold: a
+// percentage height resolves against the CONTAINING BLOCK's height, and this
+// host is `height: auto` — its size comes out of flex layout on the tabset, not
+// out of anything the cascade can see here. So the percentage fell back to zero,
+// `.content` was laid out at content height, and the band of bare card body
+// under the Save row came back with the summary panel stopping short beside it.
+//
+// `flex: 1 0 auto` says the same thing in the one language the host actually
+// speaks: it IS a flex column (see `:host` above), so the tab's leftover height
+// goes to its only item. `0` for flex-shrink, deliberately — the host scrolls,
+// and a form taller than the tab must keep its own height and scroll inside the
+// host rather than being squeezed back to fit.
 :host .content {
   height: auto;
-  min-height: 100%;
+  flex: 1 0 auto;
 }
 
 // ── Summary panel ───────────────────────────────────────────────────────────
