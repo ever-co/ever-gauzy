@@ -9,10 +9,10 @@
         padding-top: 5px;
 
         .logo-wrapper {
-            min-width: 28px;
-            min-height: 28px;
-            width: 28px;
-            height: 28px;
+            min-width: 24px;
+            min-height: 24px;
+            width: 24px;
+            height: 24px;
             @include nb-rtl(margin-left, 10px);
             @include nb-ltr(margin-right, 10px);
 
