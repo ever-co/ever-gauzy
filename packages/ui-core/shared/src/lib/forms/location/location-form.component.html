@@ -9,12 +9,15 @@
                 {{ 'FORM.LABELS.FIND_ADDRESS' | translate }}
               </label>
               <nb-form-field>
+                <!-- Self-closed: this used to carry a stray "å" as its content,
+                     which rendered as a literal character beside the search
+                     glyph in every form that shows the address autocomplete. -->
                 <nb-icon
                   icon-basic-color
                   nbPrefix
                   icon="search-outline"
                   pack="eva"
-                >å</nb-icon>
+                ></nb-icon>
                 <input
                   #autocomplete
                   id="findInput"
