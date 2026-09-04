@@ -1,8 +1,36 @@
 @use 'themes' as *;
 
+// The tabset already hands this tab the height the card body has left over
+// (edit-employee-profile.component.scss), so there is nothing here left to
+// measure. `height: calc(100vh - 20.5rem)` was a SECOND guess at the page chrome
+// alongside the card's own, and whenever the two disagreed — as they do the
+// moment the header collapses to the "select an employee" line — this one won
+// and the tab stopped short of the bottom of the card, leaving a band of bare
+// card body under the map. Same removal as the account tab
+// (edit-employee-main.component.scss).
+//
+// The tab surface is painted here rather than left to `ga-employee-location`,
+// which only colours its own `nb-card`: that card carries a `m-3` body, so
+// without a fill on the tab the margin around it showed the card body straight
+// through.
 :host {
+  background-color: var(--gauzy-card-2);
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
-  height: calc(100vh - 20.5rem);
+
+  // `ga-employee-location` is shared with the candidate pages, so its own
+  // `height: 100%` is left alone there and overridden only for this tab: the
+  // percentage resolves against a host sized by flex layout, which the cascade
+  // cannot see. `flex-shrink: 0` because the host scrolls — a form taller than
+  // the tab keeps its height and scrolls inside the host.
+  > ga-employee-location {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    flex: 1 0 auto;
+  }
+
   ::ng-deep {
     .container {
       max-width: none;
@@ -16,6 +44,8 @@
   ::ng-deep {
     nb-card {
       padding: 1rem;
+      // Carries the fill on down to the card the tab actually shows.
+      flex: 1 0 auto;
 
       nb-card-body {
         margin: 0 !important;
