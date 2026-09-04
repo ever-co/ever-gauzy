@@ -32,12 +32,12 @@ const ORGANIZATION_EXPENSE = {
 	id: 'expense-1',
 	organizationId: 'org-1',
 	splitExpense: false,
-	categoryName: 'Travel',
-	currency: 'USD',
+	categoryName: 'Software',
+	currency: 'EUR',
 	parentRecurringExpenseId: 'parent-1',
-	endYear: 2026,
-	endMonth: 2,
-	endDay: 28
+	endYear: 2027,
+	endMonth: 6,
+	endDay: 30
 };
 
 describe('RecurringExpenseEditHandler (shared base)', () => {
@@ -57,14 +57,16 @@ describe('RecurringExpenseEditHandler (shared base)', () => {
 		handler = new TestRecurringExpenseEditHandler(crudService as any);
 	}
 
+	// Values deliberately unlike the employee suite's fixture: these two suites cover different
+	// classes and share no setup, so nothing here should be mistaken for the employee case.
 	function edit(overrides: Record<string, unknown>) {
 		return handler.executeCommand('expense-1', {
-			startDay: 1,
-			startMonth: 1,
-			startYear: 2026,
-			categoryName: 'Travel',
-			value: 250,
-			currency: 'USD',
+			startDay: 15,
+			startMonth: 3,
+			startYear: 2027,
+			categoryName: 'Software',
+			value: 99,
+			currency: 'EUR',
 			...overrides
 		} as any);
 	}
@@ -89,7 +91,7 @@ describe('RecurringExpenseEditHandler (shared base)', () => {
 				await edit({ startDateUpdateType: StartDateUpdateTypeEnum.NO_CHANGE, employeeId });
 
 				const [, written] = crudService.update.mock.calls[0];
-				expect(written).toMatchObject({ startDay: 1, startMonth: 1, startYear: 2026, value: 250 });
+				expect(written).toMatchObject({ startDay: 15, startMonth: 3, startYear: 2027, value: 99 });
 				expect(written).not.toHaveProperty('employeeId');
 			}
 		);
@@ -99,7 +101,7 @@ describe('RecurringExpenseEditHandler (shared base)', () => {
 		it('carries the organization onto the replacement expense', async () => {
 			arrange();
 
-			await edit({ startMonth: 5, startDateUpdateType: StartDateUpdateTypeEnum.INCREASE_SAFE_WITHIN_LIMIT });
+			await edit({ startMonth: 8, startDateUpdateType: StartDateUpdateTypeEnum.INCREASE_SAFE_WITHIN_LIMIT });
 
 			expect(crudService.create.mock.calls[0][0]).toMatchObject({
 				organizationId: 'org-1',
@@ -111,7 +113,7 @@ describe('RecurringExpenseEditHandler (shared base)', () => {
 			arrange({ ...ORGANIZATION_EXPENSE, employeeId: 'employee-1' });
 
 			await edit({
-				startMonth: 5,
+				startMonth: 8,
 				startDateUpdateType: StartDateUpdateTypeEnum.INCREASE_SAFE_WITHIN_LIMIT,
 				employeeId: 'employee-2'
 			});
