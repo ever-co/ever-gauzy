@@ -1,47 +1,176 @@
 @use 'themes' as *;
+@use 'var' as v;
 
 $radius: nb-theme(border-radius);
 
-.employee-optional-info {
-  	margin-top: 20px;
-}
-
-// `rgba(126, 126, 143, 0.1)` is the literal value this token carries on the
-// light themes; on `gauzy-dark` the token is a LIFTING white tint instead, so
-// reading it keeps the photo column one visible step off the tab surface there
-// rather than hoping a grey wash shows up on near-black.
-.organization-container {
-  background-color: var(--gauzy-sidebar-background-3);
-}
-
-.organization-photo img {
-  width: 100px;
-  height: 100px;
-  // A 25 %-black drop shadow is invisible against the near-black canvas — this
-  // avatar had no edge at all on `gauzy-dark`. The token is the same hairline
-  // on the light themes and a 1px ring on the dark one.
-  box-shadow: var(--gauzy-shadow);
-  object-fit: cover;
-  border-radius: $radius;
-}
-
-.content {
-  padding: 20px;
-}
+// NOTE ON SPECIFICITY: this component also loads
+// `edit-organization-main.component.scss` (see its `styleUrls`), whose rules are
+// written as `:host .content` / `:host .organization-container …`. A bare
+// `.content { … }` here therefore LOSES to it — which is why the old
+// `.content { padding: 20px }` in this file never took effect and the tab was
+// laid out on the organization page's 1rem padding. Everything below is scoped
+// through `:host` so it matches that specificity, and this file is listed SECOND
+// in `styleUrls`, so on a tie it is the later rule that wins. Keep it last.
 
 :host {
   padding: 0;
   overflow-y: auto;
   max-height: calc(100vh - 20.5rem);
   border-radius: 0 $radius $radius $radius;
+}
 
-  ::ng-deep .employee-form{
-    @include nb-ltr(padding-left, 1rem);
-    @include nb-rtl(padding-right, 1rem);
+// ── The two columns ─────────────────────────────────────────────────────────
+// `align-items: stretch` so the summary panel runs the full height of the form
+// beside it. Left to its content the panel was a short grey stub floating in a
+// tall empty tab, which is what made the page look unfinished.
+:host .content {
+  display: flex;
+  align-items: stretch;
+  padding: 1.25rem;
+}
+
+// ── Summary panel ───────────────────────────────────────────────────────────
+// The template pins this to bootstrap's `w-25`, so the width is not ours to
+// set; what it was missing was the chrome that makes a panel read as a panel —
+// padding, a radius, and an edge.
+:host .organization-container {
+  padding: 1.25rem;
+  gap: 1rem;
+  align-items: center;
+  text-align: center;
+  height: auto;
+  // `rgba(126, 126, 143, 0.1)` is the literal value this token carries on the
+  // light themes; on `gauzy-dark` the token is a LIFTING white tint instead, so
+  // reading it keeps the photo column one visible step off the tab surface there
+  // rather than hoping a grey wash shows up on near-black.
+  background-color: var(--gauzy-sidebar-background-3);
+  border: 1px solid var(--gauzy-border-default-color);
+  border-radius: $radius;
+}
+
+:host .organization-photo {
+  // Sized on the BOX, not just the image: with a broken or absent photo the box
+  // used to collapse to the width of the alt text, and the upload glyph — which
+  // centres on this box — drifted off the corner of the avatar with it.
+  width: 112px;
+  height: 112px;
+  flex: 0 0 auto;
+  position: relative;
+  border-radius: $radius;
+  overflow: hidden;
+  background-color: var(--gauzy-card-1);
+  border: 1px solid var(--gauzy-border-default-color);
+
+  img,
+  .organization-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+    // A 25 %-black drop shadow is invisible against the near-black canvas — this
+    // avatar had no edge at all on `gauzy-dark`. The border on the box above is
+    // the same hairline on the light themes and a 1px ring on the dark one, so
+    // the shadow this used to carry is no longer doing any work.
+    box-shadow: none;
+    display: block;
   }
 
-  .employee-form {
-    overflow: auto;
-    overflow-x: hidden;
+  // Stand-in for an employee with no photo, matching the one the page header
+  // already renders.
+  .organization-photo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: nb-theme(text-hint-color);
+
+    nb-icon {
+      font-size: 2.5rem;
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+  }
+
+  // The hover scrim the template toggles between opacity 0 and 0.2. It had no
+  // transition, so the wash snapped on and off under the cursor. `:not([class])`
+  // picks out the bare scrim div from the classed placeholder beside it.
+  > div:not([class]) {
+    border-radius: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+}
+
+// nb-badge positions itself absolutely against its parent by default, which in
+// a flex column means it would leave the flow and stack on the avatar. This
+// carried an inline `position: relative; margin-top: 20px` in the template; the
+// position belongs here, and the panel's own `gap` now owns the spacing.
+:host .vetted-badge {
+  position: relative;
+  align-self: center;
+}
+
+// ── Optional stats (vetted / job success / total jobs / hours / rate) ────────
+// Each line used to carry `margin-top: 20px`, so four of them opened four big
+// unequal gaps down the panel. As a divided list they read as one block of
+// supporting figures.
+:host .employee-stats {
+  width: 100%;
+}
+
+:host .employee-optional-info {
+  margin-top: 0;
+  padding: 0.5rem 0;
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  color: nb-theme(text-hint-color);
+
+  & + .employee-optional-info {
+    border-top: 1px solid var(--gauzy-border-default-color);
+  }
+}
+
+// ── Form column ─────────────────────────────────────────────────────────────
+:host .employee-form {
+  overflow: auto;
+  overflow-x: hidden;
+  @include nb-ltr(padding-left, 1.25rem);
+  @include nb-rtl(padding-right, 1.25rem);
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  // The save row sat on the default form-group spacing, so it crowded the last
+  // field. A rule above it separates the commit action from the inputs.
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--gauzy-border-default-color);
+
+    button {
+      min-width: 7.5rem;
+    }
+  }
+}
+
+// Below the tablet break the 25/75 split leaves neither column usable. The
+// bootstrap widths carry `!important`, so unwinding them takes the same.
+@media only screen and (max-width: v.$break-md) {
+  :host .content {
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1rem;
+  }
+
+  :host .organization-container,
+  :host .employee-form {
+    width: 100% !important;
+  }
+
+  :host .employee-form {
+    @include nb-ltr(padding-left, 0);
+    @include nb-rtl(padding-right, 0);
   }
 }
