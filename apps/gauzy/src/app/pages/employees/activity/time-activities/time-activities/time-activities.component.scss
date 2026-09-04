@@ -14,7 +14,12 @@
   .custom-card-body {
     overflow-y: overlay;
     overflow-x: hidden;
-    padding-right: 11px;
+    // The scrollbar draws on this element's own trailing edge, so the way to move
+    // it off the card's edge is to narrow the element rather than pad its content.
+    // Inset by 11px and the 5px bar sits inside that, putting the table's trailing
+    // edge on the same 16px inset the filter row above uses.
+    @include nb-ltr(margin-right, 11px);
+    @include nb-rtl(margin-left, 11px);
     flex: 1 1 auto;
     min-height: 0;
   }
@@ -30,6 +35,10 @@
   flex-wrap: nowrap;
   gap: 0.75rem 1rem;
   flex: 0 0 auto;
+  // The table below ends at a 16px inset: the scroll container is held 11px off
+  // the card's edge and the 5px scrollbar sits inside that. This row reaches the
+  // same 16px as 8px here plus the 8px the filter row's own wrapper adds, so the
+  // two end on one line.
   @include nb-ltr(padding-right, 0.5rem);
   @include nb-rtl(padding-left, 0.5rem);
 
