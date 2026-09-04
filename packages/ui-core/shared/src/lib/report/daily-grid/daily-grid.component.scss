@@ -53,11 +53,13 @@
 // while the header sits in the card and carries the expand chevron as an extra
 // flex item after the last column. Both leave the header's columns ending
 // further along than the rows', so its Time and Activity read as pushed right.
-// Inset the trailing edge by the chevron's width to bring them back onto the
-// columns the table below uses.
+// Inset the trailing edge to bring them back towards the columns the table below
+// uses. The value is set against the rendered result rather than derived: the two
+// boxes differ by the body's inset and the chevron both, so no single figure
+// follows from the stylesheet alone.
 :host ::ng-deep nb-accordion-item-header {
-  @include nb-ltr(padding-right, 44px);
-  @include nb-rtl(padding-left, 44px);
+  @include nb-ltr(padding-right, 40px);
+  @include nb-rtl(padding-left, 40px);
 }
 
 @include respond(lg) {
