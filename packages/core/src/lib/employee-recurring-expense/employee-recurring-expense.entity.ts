@@ -1,6 +1,6 @@
 import { CurrenciesEnum, ID, IEmployee, IEmployeeRecurringExpense } from '@gauzy/contracts';
 import { Optional } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsNumber, IsString, Max, Min, IsDate, IsOptional } from 'class-validator';
 import { RelationId } from 'typeorm';
 import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -108,9 +108,12 @@ export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity imple
 	})
 	employee?: IEmployee;
 
-	@ApiProperty({ type: () => String })
+	// Nullable, like the `employee` relation above it: an expense created for "All Employees" has
+	// no specific employee attached (#8889). The column has always been `nullable: true`; the type
+	// now says so too, matching `IEmployeeRecurringExpense`.
+	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: EmployeeRecurringExpense) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	employeeId: ID;
+	employeeId?: ID;
 }

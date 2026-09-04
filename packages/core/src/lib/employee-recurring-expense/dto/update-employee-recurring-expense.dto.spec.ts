@@ -1,3 +1,14 @@
+/**
+ * Importing the DTO pulls in `employee/dto` -> `core/dto` -> `shared/validators`, which reaches
+ * `employee.entity` -> `core/entities/internal` -> `dashboard.entity`, which applies
+ * `@IsEmployeeBelongsToOrganization()` while `shared/validators` is still initializing. Entering
+ * that cycle from this side leaves the decorator undefined and the suite dies at import time with
+ * "IsEmployeeBelongsToOrganization is not a function". Loading the entity graph FIRST resolves the
+ * cycle in the order the application itself uses, so this side-effect import must stay above the
+ * others.
+ */
+import '../../core/entities/internal';
+
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import { UpdateEmployeeRecurringExpenseDTO } from './update-employee-recurring-expense.dto';
@@ -12,14 +23,18 @@ import { UpdateEmployeeRecurringExpenseDTO } from './update-employee-recurring-e
  *
  * This only covers DTO validation. The edit handler's own bug — silently discarding that null and
  * keeping the previous employee — is covered separately in
- * `shared/handlers/recurring-expense.edit.handler.spec.ts`.
+ * `commands/handlers/employee-recurring-expense.edit.handler.spec.ts`.
  */
 
 const VALID_EMPLOYEE_ID = '00000000-0000-4000-8000-000000000001';
 
-// See create-employee-recurring-expense.dto.spec.ts: `sentTo` satisfies
-// `TenantOrganizationBaseDTO` without pulling in the async, database-backed
-// `IsOrganizationBelongsToUser()` check that `organizationId` would trigger.
+// `EmployeeRecurringExpenseDTO` extends `TenantOrganizationBaseDTO`, which requires one of
+// `organization` / `organizationId` / `sentTo`. We satisfy that with `sentTo` (a plain
+// `@IsString()`) rather than `organizationId`, since `organizationId` also runs
+// `@IsOrganizationBelongsToUser()` — an async validator that checks `RequestContext` and the
+// database. There's no request or database in this suite, so that check would always fail here
+// regardless of the employeeId behavior under test, which is the whole point of validating the
+// DTO directly with no server involved.
 const REQUIRED_FIELDS = {
 	value: 250,
 	categoryName: 'Travel',

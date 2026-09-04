@@ -1,3 +1,14 @@
+/**
+ * Importing the DTO pulls in `employee/dto` -> `core/dto` -> `shared/validators`, which reaches
+ * `employee.entity` -> `core/entities/internal` -> `dashboard.entity`, which applies
+ * `@IsEmployeeBelongsToOrganization()` while `shared/validators` is still initializing. Entering
+ * that cycle from this side leaves the decorator undefined and the suite dies at import time with
+ * "IsEmployeeBelongsToOrganization is not a function". Loading the entity graph FIRST resolves the
+ * cycle in the order the application itself uses, so this side-effect import must stay above the
+ * others.
+ */
+import '../../core/entities/internal';
+
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import { CreateEmployeeRecurringExpenseDTO } from './create-employee-recurring-expense.dto';
@@ -5,9 +16,10 @@ import { CreateEmployeeRecurringExpenseDTO } from './create-employee-recurring-e
 /**
  * `POST /employee-recurring-expense` runs `@UseValidationPipe({ transform: true })`. The "All
  * Employees" option on the Add-expense dialog (`ga-employee-selector` with `showAllEmployeesOption`)
- * submits the ALL_EMPLOYEES_SELECTED sentinel, which `RecurringExpensesEmployeeComponent`
- * (`_recurringExpenseMutationResultTransform`) turns into `{ employeeId: null }` with no `employee`
- * key at all — a legitimate org-level recurring expense with no specific employee attached.
+ * submits the ALL_EMPLOYEES_SELECTED sentinel, whose `id` is `null`, which
+ * `RecurringExpensesEmployeeComponent` (`_recurringExpenseMutationResultTransform`) turns into
+ * `{ employeeId: null }` with no `employee` key at all — a legitimate org-level recurring expense
+ * with no specific employee attached.
  *
  * Before this fix, `EmployeeFeatureDTO`'s `@ValidateIf` pair still forced `@IsObject()` on the
  * missing `employee` and `@IsString()` on the null `employeeId`, so BOTH failed and every "All
@@ -87,75 +99,4 @@ describe('CreateEmployeeRecurringExpenseDTO', () => {
 		expect(errors.some((error) => error.property === 'value')).toBe(true);
 		expect(errors.some((error) => error.property === 'categoryName')).toBe(true);
 	});
-});
-import { plainToInstance } from 'class-transformer';
-import { validate, ValidationError } from 'class-validator';
-import { CreateEmployeeRecurringExpenseDTO } from './create-employee-recurring-expense.dto';
-
-// Reproduces #8889 from the DTO alone (no server/DB needed): the "All Employees" option sends
-// { employeeId: null } with no employee key, which EmployeeFeatureDTO's ValidateIf pair used
-// to reject with HTTP 400. See CreateEmployeeRecurringExpenseDTO for the root cause and fix.
-
-const VALID_EMPLOYEE_ID = '00000000-0000-4000-8000-000000000001';
-
-const REQUIRED_FIELDS = {
-  value: 250,
-  categoryName: 'Travel',
-  startDay: 1,
-  startMonth: 1,
-  startYear: 2026,
-  startDate: new Date('2026-01-01'),
-  currency: 'USD'
-};
-
-async function validatePayload(
-  payload: Record<string, unknown>
-): Promise<{ dto: CreateEmployeeRecurringExpenseDTO; errors: ValidationError[] }> {
-  const dto = plainToInstance(CreateEmployeeRecurringExpenseDTO, payload);
-  const errors = await validate(dto);
-
-  return { dto, errors };
-}
-
-describe('CreateEmployeeRecurringExpenseDTO', () => {
-  it('accepts an "All Employees" recurring expense (employeeId: null, no employee object)', async () => {
-    const { errors } = await validatePayload({
-      ...REQUIRED_FIELDS,
-      employeeId: null
-    });
-
-    expect(errors).toHaveLength(0);
-  });
-
-  it('accepts an "All Employees" recurring expense when employeeId is omitted entirely', async () => {
-    const { errors } = await validatePayload({ ...REQUIRED_FIELDS });
-
-    expect(errors).toHaveLength(0);
-  });
-
-  it('still accepts a recurring expense for a specific employee', async () => {
-    const { errors, dto } = await validatePayload({
-      ...REQUIRED_FIELDS,
-      employeeId: VALID_EMPLOYEE_ID
-    });
-
-    expect(errors).toHaveLength(0);
-    expect(dto.employeeId).toBe(VALID_EMPLOYEE_ID);
-  });
-
-  it('still rejects a malformed employeeId (control: proves employeeId is not just ignored)', async () => {
-    const { errors } = await validatePayload({
-      ...REQUIRED_FIELDS,
-      employeeId: 12345
-    });
-
-    expect(errors.some((error) => error.property === 'employeeId')).toBe(true);
-  });
-
-  it('still rejects a request missing required fields (control: PartialType only relaxed employee/employeeId)', async () => {
-    const { errors } = await validatePayload({ employeeId: null });
-
-    expect(errors.some((error) => error.property === 'value')).toBe(true);
-    expect(errors.some((error) => error.property === 'categoryName')).toBe(true);
-  });
 });

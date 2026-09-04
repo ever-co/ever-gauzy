@@ -55,6 +55,29 @@ export abstract class RecurringExpenseEditHandler<
 	}
 
 	/**
+	 * Copy the employee assignment onto an object that is about to be written.
+	 *
+	 * Recurring expenses come in two flavours and only one of them has an employee:
+	 * `EmployeeRecurringExpense` has an `employeeId` column, `OrganizationRecurringExpense` does
+	 * not. This base class is shared by both, and `OrganizationRecurringExpenseController.update`
+	 * takes a raw `@Body()` with no DTO and no validation pipe, so an `employeeId` in the request
+	 * body reaches this handler unfiltered. Writing it onto an organization recurring expense
+	 * would hand the ORM a column that does not exist. So the base class does nothing here, and
+	 * `EmployeeRecurringExpenseEditHandler` overrides this to implement the real behavior (#8889).
+	 *
+	 * @param target The update/create object being assembled.
+	 * @param input The caller's edit input.
+	 * @param originalExpense The expense being edited; omitted on paths that must not fall back to it.
+	 */
+	protected assignEmployeeId(
+		target: Record<string, any>,
+		input: IRecurringExpenseEditInput,
+		originalExpense?: IRecurringExpenseModel | any
+	): void {
+		// Intentionally a no-op: organization recurring expenses have no employee column.
+	}
+
+	/**
 	 * Update the original expense with the input values.
 	 * This is to be used when there is no other change required to update the expense.
 	 */
@@ -75,15 +98,9 @@ export abstract class RecurringExpenseEditHandler<
 			value: input.value,
 			categoryName: input.categoryName,
 		};
-		// input.employeeId is only present on employee recurring expenses. `undefined` means the
-		// caller didn't touch it (organization recurring expenses never send it at all), so leave
-		// the existing assignment alone; an explicit `null` is a deliberate switch to "All
-		// Employees" and has to be persisted, not silently dropped (#8889). An empty string is
-		// neither of those — it isn't a valid employee id and class-validator's @IsUUID should
-		// already reject it, but treat it the same as "untouched" here too rather than persist it.
-		if (input.employeeId !== undefined && input.employeeId !== '') {
-			updateObject.employeeId = input.employeeId;
-		}
+		// No `originalExpense`: on this path an employee assignment is only ever written when the
+		// caller explicitly asked for one. Base class leaves `updateObject` untouched.
+		this.assignEmployeeId(updateObject, input);
 		return await this.crudService.update(id, updateObject);
 	};
 
@@ -151,17 +168,9 @@ export abstract class RecurringExpenseEditHandler<
 			currency: originalExpense.currency,
 			parentRecurringExpenseId: originalExpense.parentRecurringExpenseId
 		};
-		// Prefer what the caller actually submitted for employeeId over the original expense's
-		// value. Falling back to `originalExpense.employeeId` unconditionally (the previous
-		// behavior) meant switching a per-employee expense to "All Employees" (employeeId: null)
-		// while also crossing into this replacement-expense path silently kept the old employee
-		// on the new row (#8889) — the request succeeded but nothing actually changed. An empty
-		// string isn't a valid id either, so treat it like "untouched" rather than persist it.
-		if (input.employeeId !== undefined && input.employeeId !== '') {
-			createObject.employeeId = input.employeeId;
-		} else if (originalExpense.employeeId) {
-			createObject.employeeId = originalExpense.employeeId;
-		}
+		// With `originalExpense`: the replacement row inherits the original's employee unless the
+		// caller asked for something else. Base class leaves `createObject` untouched.
+		this.assignEmployeeId(createObject, input, originalExpense);
 		if (originalExpense.organizationId) {
 			createObject.organizationId = originalExpense.organizationId;
 			createObject.splitExpense = originalExpense.splitExpense;
