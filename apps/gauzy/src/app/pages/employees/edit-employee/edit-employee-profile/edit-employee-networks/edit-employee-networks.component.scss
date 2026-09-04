@@ -2,14 +2,39 @@
 
 $radius: nb-theme(border-radius);
 
+// The tabset already hands this tab the height the card body has left over
+// (edit-employee-profile.component.scss), so there is nothing here left to
+// measure. `max-height: calc(100vh - 20.5rem)` was a SECOND guess at the page
+// chrome alongside the card's own, and whenever the two disagreed — as they do
+// the moment the header collapses to the "select an employee" line — the smaller
+// one won and the tab stopped short of the bottom of the card, leaving a band of
+// bare card body under the form. Same removal as the account tab
+// (edit-employee-main.component.scss).
+//
+// `height: auto` reclaims the `height: 100%` that
+// `edit-organization-main.component.scss` — loaded ahead of this file in
+// `styleUrls` — puts on the host: as a flex item that made the BASIS a full
+// tabset height, one the tab strip has already spent part of, so the tab only
+// came out right by being shrunk back down again.
 :host {
   background-color: var(--gauzy-card-2);
   border-radius: $radius;
+  display: flex;
+  flex-direction: column;
+  height: auto;
   overflow-y: auto;
-  max-height: calc(100vh - 20.5rem);
+
+  // The form card stands on the tab's full height instead of stopping at the
+  // last field, so the tab surface reaches the bottom of the card body.
+  // `flex-shrink: 0` deliberately: the host scrolls, so a form taller than the
+  // tab keeps its own height and scrolls inside the host rather than being
+  // squeezed back to fit.
+  > nb-card {
+    flex: 1 0 auto;
+  }
 }
 
-nb-card-body{
-	background-color: var(--gauzy-sidebar-background-2);
-	border-radius: var(--border-radius);
+nb-card-body {
+  background-color: var(--gauzy-sidebar-background-2);
+  border-radius: var(--border-radius);
 }
