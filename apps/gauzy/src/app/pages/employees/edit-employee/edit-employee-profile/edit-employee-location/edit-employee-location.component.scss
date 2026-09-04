@@ -1,5 +1,3 @@
-@use 'themes' as *;
-
 // The tabset already hands this tab the height the card body has left over
 // (edit-employee-profile.component.scss), so there is nothing here left to
 // measure. `height: calc(100vh - 20.5rem)` was a SECOND guess at the page chrome
@@ -10,46 +8,28 @@
 // (edit-employee-main.component.scss).
 //
 // The tab surface is painted here rather than left to `ga-employee-location`,
-// which only colours its own `nb-card`: that card carries a `m-3` body, so
-// without a fill on the tab the margin around it showed the card body straight
-// through.
+// which paints its own two panels: without a fill on the tab, the gap between
+// and around them showed the card body straight through.
 :host {
   background-color: var(--gauzy-card-2);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
 
-  // `ga-employee-location` is shared with the candidate pages, so its own
+  // `ga-employee-location` is shared with the candidate page, so its own
   // `height: 100%` is left alone there and overridden only for this tab: the
   // percentage resolves against a host sized by flex layout, which the cascade
-  // cannot see. `flex-shrink: 0` because the host scrolls — a form taller than
+  // cannot see. `flex-shrink: 0` because the host scrolls — a panel taller than
   // the tab keeps its height and scrolls inside the host.
+  //
+  // Everything below this used to be a set of `::ng-deep` patches into that
+  // component's bootstrap scaffolding (`.container`, `.col-4`, its `nb-card`).
+  // The scaffolding is gone and the component owns its own layout now, so the
+  // patches went with it.
   > ga-employee-location {
     display: flex;
     flex-direction: column;
     height: auto;
     flex: 1 0 auto;
-  }
-
-  ::ng-deep {
-    .container {
-      max-width: none;
-      .col-4 {
-        @include nb-ltr(padding-left, 0 !important);
-        @include nb-rtl(padding-right, 0 !important);
-      }
-    }
-  }
-
-  ::ng-deep {
-    nb-card {
-      padding: 1rem;
-      // Carries the fill on down to the card the tab actually shows.
-      flex: 1 0 auto;
-
-      nb-card-body {
-        margin: 0 !important;
-      }
-    }
   }
 }
