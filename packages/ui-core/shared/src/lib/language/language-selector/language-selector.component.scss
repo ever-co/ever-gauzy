@@ -1,23 +1,35 @@
-.language-color {
-  position: unset;
+// One flex row for the flag and the language name, used by the closed trigger
+// and by every dropdown row. The flag used to be a bare inline `<img>` next to
+// a text node, aligned with `vertical-align: middle` — which aligns to the
+// middle of the parent's x-height, not to the middle of the line, so the flag
+// sat a fraction high against the name and the gap between them shifted with
+// the font. A flex row centres the two on each other outright.
+.language-option {
   display: inline-flex;
-  align-self: center;
-  width: 1rem;
-  height: 1rem;
-  margin-right: 1em;
-  margin-left: 1em;
-}
-
-.language-label {
-  display: unset;
-  margin-right: 0.7em;
-}
-
-.flag-icon {
-  width: 1.125rem;
-  height: 0.75rem;
-  margin-inline-end: 0.375rem;
-  border-radius: 2px;
-  object-fit: cover;
+  align-items: center;
+  gap: 0.375rem;
+  // So the row can shrink inside the trigger's `overflow: hidden` value box
+  // rather than pushing the arrow out.
+  min-width: 0;
+  max-width: 100%;
   vertical-align: middle;
 }
+
+// The flag keeps its box while the name takes the ellipsis.
+.flag-icon {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 0.75rem;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.language-option-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Removed with this pass: `.language-color` and `.language-label` named nothing
+// in this template — the colour swatch they styled was replaced by the flag.
