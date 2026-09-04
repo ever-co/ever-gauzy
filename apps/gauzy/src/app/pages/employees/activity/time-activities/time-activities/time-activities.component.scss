@@ -199,15 +199,66 @@
   }
 }
 
-// Time & Activities grid. The table body carries no font-size of its own, so it
-// inherited the 0.875rem paragraph size; setting the container caps every cell
-// that does not override it, and the three that do are listed alongside.
-:host ga-daily-grid ::ng-deep {
+// ---------------------------------------------------------------------------
+// Time & Activities grid — the whole `.grid-container` runs at the table-header
+// scale (0.75rem / 12px).
+//
+// Most of the table carries no size of its own, so the declaration on the
+// container inherits down and does the bulk of the work. Everything listed
+// under it is an element that DOES declare a size and would otherwise ignore
+// the container: the shared `report.scss` chrome, and the nested cell
+// components, each of which ships its own scale.
+//
+// The size is taken from `gauzy-table-header-font-size` rather than written as
+// a literal, so the grid tracks the same scale as the group-by label and the
+// stat-strip labels capped above.
+//
+// Line-height is restated wherever the size is, because these components pair a
+// px size with a px leading — dropping the size alone would leave leading set
+// for larger text and the rows would read as loosely set.
+// ---------------------------------------------------------------------------
+:host .grid-container {
+  font-size: nb-theme(gauzy-table-header-font-size);
+  line-height: nb-theme(gauzy-table-header-line-height);
+}
+
+:host .grid-container ga-daily-grid ::ng-deep {
+  // `report.scss` chrome: the column-heading strip, the activity badge (14px),
+  // and the header the mobile breakpoint switches on (16px).
   .day-grid-container,
+  .columns-header,
   .responsive-table-header,
+  .responsive-table-content,
   nb-accordion-item-header,
   nb-badge {
     font-size: nb-theme(gauzy-table-header-font-size);
+    line-height: nb-theme(gauzy-table-header-line-height);
+  }
+
+  // Nested cell components. Each sets a px size on its own inner text, so the
+  // container's inheritance stops at their host element.
+  ngx-avatar {
+    .link-text,
+    .caption {
+      font-size: nb-theme(gauzy-table-header-font-size);
+      line-height: nb-theme(gauzy-table-header-line-height);
+    }
+  }
+
+  ga-project-column-view {
+    .main-header,
+    .employees-count {
+      font-size: nb-theme(gauzy-table-header-font-size);
+      line-height: nb-theme(gauzy-table-header-line-height);
+    }
+  }
+
+  // The client cell. Its `.link-text` carries the size, so the host declaration
+  // alone would not reach it. The 8px counter chip further in is left alone —
+  // it is a count badge rather than body text.
+  ngx-contact-links .link-text {
+    font-size: nb-theme(gauzy-table-header-font-size);
+    line-height: nb-theme(gauzy-table-header-line-height);
   }
 
   // Durations move off the near-white `--gauzy-text-color-1` onto the muted
