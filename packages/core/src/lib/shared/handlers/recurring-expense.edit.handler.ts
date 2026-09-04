@@ -55,6 +55,29 @@ export abstract class RecurringExpenseEditHandler<
 	}
 
 	/**
+	 * Copy the employee assignment onto an object that is about to be written.
+	 *
+	 * Recurring expenses come in two flavours and only one of them has an employee:
+	 * `EmployeeRecurringExpense` has an `employeeId` column, `OrganizationRecurringExpense` does
+	 * not. This base class is shared by both, and `OrganizationRecurringExpenseController.update`
+	 * takes a raw `@Body()` with no DTO and no validation pipe, so an `employeeId` in the request
+	 * body reaches this handler unfiltered. Writing it onto an organization recurring expense
+	 * would hand the ORM a column that does not exist. So the base class does nothing here, and
+	 * `EmployeeRecurringExpenseEditHandler` overrides this to implement the real behavior (#8889).
+	 *
+	 * @param target The update/create object being assembled.
+	 * @param input The caller's edit input.
+	 * @param originalExpense The expense being edited; omitted on paths that must not fall back to it.
+	 */
+	protected assignEmployeeId(
+		target: Record<string, any>,
+		input: IRecurringExpenseEditInput,
+		originalExpense?: IRecurringExpenseModel | any
+	): void {
+		// Intentionally a no-op: organization recurring expenses have no employee column.
+	}
+
+	/**
 	 * Update the original expense with the input values.
 	 * This is to be used when there is no other change required to update the expense.
 	 */
@@ -75,6 +98,9 @@ export abstract class RecurringExpenseEditHandler<
 			value: input.value,
 			categoryName: input.categoryName,
 		};
+		// No `originalExpense`: on this path an employee assignment is only ever written when the
+		// caller explicitly asked for one. Base class leaves `updateObject` untouched.
+		this.assignEmployeeId(updateObject, input);
 		return await this.crudService.update(id, updateObject);
 	};
 
@@ -142,9 +168,9 @@ export abstract class RecurringExpenseEditHandler<
 			currency: originalExpense.currency,
 			parentRecurringExpenseId: originalExpense.parentRecurringExpenseId
 		};
-		if (originalExpense.employeeId) {
-			createObject.employeeId = originalExpense.employeeId;
-		}
+		// With `originalExpense`: the replacement row inherits the original's employee unless the
+		// caller asked for something else. Base class leaves `createObject` untouched.
+		this.assignEmployeeId(createObject, input, originalExpense);
 		if (originalExpense.organizationId) {
 			createObject.organizationId = originalExpense.organizationId;
 			createObject.splitExpense = originalExpense.splitExpense;
