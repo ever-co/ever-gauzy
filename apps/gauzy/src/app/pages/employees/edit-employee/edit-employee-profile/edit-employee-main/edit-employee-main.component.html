@@ -27,25 +27,36 @@
 				</g>
 			</svg>
 			<div [style.opacity]="hoverState ? '0.2' : '0'"></div>
-			@if (form) {
+			<!-- Guarded on the URL rather than on the form: the image rendered
+			     whenever the form existed, so an employee with no photo got the
+			     browser's broken-image glyph and its alt text in the panel. -->
+			@if (form?.get('imageUrl')?.value; as avatarUrl) {
 			<img
-				[src]="form.get('imageUrl')?.value"
+				[src]="avatarUrl"
 				alt="Profile Photo"
 				(mouseenter)="hoverState = true"
 				(mouseleave)="hoverState = false"
 			/>
+			} @else {
+			<div
+				class="organization-photo-placeholder"
+				(mouseenter)="hoverState = true"
+				(mouseleave)="hoverState = false"
+			>
+				<nb-icon icon="person-outline"></nb-icon>
+			</div>
 			}
 		</div>
 		@if (selectedEmployee?.isVetted) {
 		<nb-badge
+			class="vetted-badge"
 			status="success"
-			style="position: relative; margin-top: 20px"
 			[text]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.VETTED' | translate"
 			position="bottom-left"
 		>
 		</nb-badge>
 		} @if (selectedEmployee) {
-		<div>
+		<div class="employee-stats">
 			@if (selectedEmployee?.jobSuccess) {
 			<div class="employee-optional-info">
 				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.JOB_SUCCESS' | translate }}: {{ selectedEmployee.jobSuccess }}%
