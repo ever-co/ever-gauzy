@@ -135,6 +135,53 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
+// ── Map ─────────────────────────────────────────────────────────────────────
+// `ga-leaflet-map` wraps its map div in `.row.mt-3.mb-3 > .col-12`, and the
+// `.leaflet-container` rule in `forms/maps/leaflet.component.scss` — written as a
+// bare `::ng-deep`, so it is scoped to nothing and lands globally — hard-codes
+// `height: calc(100vh - 30rem) !important`. That is a guess at the page chrome
+// of whatever page the map happens to be on, and it has nothing to do with the
+// panel it is sitting in here: it left the map either short of the panel or
+// running past it, and the panel's fill showing through the difference.
+//
+// Flex the whole chain instead, so the map is exactly as tall as its panel and
+// no arithmetic is involved.
+:host ::ng-deep ga-leaflet-map {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  > .row {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    // Unsets the `mt-3 mb-3` the template carries. Inside a panel the spacing is
+    // the panel's to give, and a margin here would show as a band of panel fill
+    // above and below the tiles.
+    margin: 0;
+
+    > .col-12 {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 0;
+    }
+  }
+
+  .leaflet-container {
+    flex: 1 1 auto;
+    // `!important` answers an `!important`: the rule being overridden is global
+    // and carries one, so nothing quieter reaches it. `auto` rather than a
+    // height of our own — flex-grow above is what sizes this.
+    height: auto !important;
+    // The panel already clips to the radius; a second rounding here would show
+    // as a lighter hairline inside the corner.
+    border-radius: 0 !important;
+  }
+}
+
 // Below the large break the two panels have no useful width side by side, so
 // they stack: the form at its natural height, the map on the floor it needs to
 // stay legible.
