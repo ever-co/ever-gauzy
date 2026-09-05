@@ -7,7 +7,7 @@ import '../../core/entities/internal';
 import { DatabaseTypeEnum, defineConfig } from '@gauzy/config';
 import { ICountsStatistics, IGetCountsStatistics } from '@gauzy/contracts';
 import { knex as createKnex, Knex } from 'knex';
-import { DataSource, EntitySchema } from 'typeorm';
+import { DataSource, EntitySchema, EntitySchemaColumnOptions } from 'typeorm';
 import { MultiORMEnum } from '../../core/utils';
 import { StatisticService } from './statistic.service';
 
@@ -98,20 +98,31 @@ type FixtureTimeSlot = {
 
 type FixtureTimeSlotTimeLog = { timeSlotId: string; timeLogId: string };
 
+// The text columns the queries under test read; the TypeORM schemas and the Knex tables are both
+// built from these lists so the two fixtures cannot drift apart.
+const TIME_LOG_TEXT_COLUMNS = [
+	'tenantId',
+	'organizationId',
+	'employeeId',
+	'projectId',
+	'organizationTeamId',
+	'logType',
+	'source',
+	'startedAt'
+] as const;
+const TIME_SLOT_TEXT_COLUMNS = ['tenantId', 'organizationId', 'employeeId', 'startedAt'] as const;
+
+function textColumns(names: readonly string[]): Record<string, EntitySchemaColumnOptions> {
+	return Object.fromEntries(names.map((name) => [name, { type: 'varchar' }]));
+}
+
 // Entity names mirror the production classes so the generated aliases ("TimeSlot", "time_log") match.
 const TimeLogSchema = new EntitySchema<FixtureTimeLog>({
 	name: 'TimeLog',
 	tableName: 'time_log',
 	columns: {
 		id: { primary: true, type: 'varchar' },
-		tenantId: { type: 'varchar' },
-		organizationId: { type: 'varchar' },
-		employeeId: { type: 'varchar' },
-		projectId: { type: 'varchar' },
-		organizationTeamId: { type: 'varchar' },
-		logType: { type: 'varchar' },
-		source: { type: 'varchar' },
-		startedAt: { type: 'varchar' },
+		...textColumns(TIME_LOG_TEXT_COLUMNS),
 		stoppedAt: { type: 'varchar', nullable: true },
 		deletedAt: { type: 'varchar', nullable: true, deleteDate: true }
 	}
@@ -122,10 +133,7 @@ const TimeSlotSchema = new EntitySchema<FixtureTimeSlot>({
 	tableName: 'time_slot',
 	columns: {
 		id: { primary: true, type: 'varchar' },
-		tenantId: { type: 'varchar' },
-		organizationId: { type: 'varchar' },
-		employeeId: { type: 'varchar' },
-		startedAt: { type: 'varchar' },
+		...textColumns(TIME_SLOT_TEXT_COLUMNS),
 		overall: { type: Number },
 		duration: { type: Number },
 		deletedAt: { type: 'varchar', nullable: true, deleteDate: true }
@@ -269,14 +277,48 @@ function expectSummedInSql(capturedQueries: string[]): string[] {
 	return selects;
 }
 
+// Collects the SQL issued once the fixtures are in place, so only the queries under test are asserted.
+class QueryCapture {
+	readonly queries: string[] = [];
+	private armed = false;
+
+	arm(): void {
+		this.armed = true;
+	}
+
+	record(sql: string): void {
+		if (this.armed) this.queries.push(sql);
+	}
+}
+
+async function createKnexTables(knex: Knex): Promise<void> {
+	await knex.schema.createTable('time_log', (table) => {
+		table.string('id').primary();
+		TIME_LOG_TEXT_COLUMNS.forEach((column) => table.string(column).notNullable());
+		table.string('stoppedAt').nullable();
+		table.string('deletedAt').nullable();
+	});
+	await knex.schema.createTable('time_slot', (table) => {
+		table.string('id').primary();
+		TIME_SLOT_TEXT_COLUMNS.forEach((column) => table.string(column).notNullable());
+		table.integer('overall').notNullable();
+		table.integer('duration').notNullable();
+		table.string('deletedAt').nullable();
+	});
+	await knex.schema.createTable('time_slot_time_logs', (table) => {
+		table.string('timeSlotId').notNullable();
+		table.string('timeLogId').notNullable();
+		table.primary(['timeSlotId', 'timeLogId']);
+	});
+}
+
 describe('counts statistics activities BetterSqlite integration', () => {
 	// getDateRangeFormat reads the global config, not the ConfigService injected into the service:
 	// pin it so the date bounds use the SQLite text format whatever DB_TYPE the shell exports.
 	beforeAll(() => defineConfig({ dbConnectionOptions: { type: DatabaseTypeEnum.betterSqlite3 } }));
 
 	it('sums the grouped rows in SQL on the TypeORM path and keeps the counts unchanged', async () => {
-		const capturedQueries: string[] = [];
-		let capture = false;
+		const capture = new QueryCapture();
 		const dataSource = new DataSource({
 			type: 'better-sqlite3',
 			database: ':memory:',
@@ -284,9 +326,7 @@ describe('counts statistics activities BetterSqlite integration', () => {
 			synchronize: true,
 			logging: ['query'],
 			logger: {
-				logQuery: (sql: string) => {
-					if (capture) capturedQueries.push(sql);
-				},
+				logQuery: (sql: string) => capture.record(sql),
 				logQueryError: () => undefined,
 				logQuerySlow: () => undefined,
 				logSchemaBuild: () => undefined,
@@ -308,10 +348,10 @@ describe('counts statistics activities BetterSqlite integration', () => {
 				.execute();
 			const service = new CountsStatisticService(MultiORMEnum.TypeORM, timeSlotRepository, {});
 			stubOtherCounts(service);
-			capture = true;
+			capture.arm();
 
 			await expectCounts(service);
-			for (const sql of expectSummedInSql(capturedQueries)) {
+			for (const sql of expectSummedInSql(capture.queries)) {
 				expect(sql).toMatch(/deletedAt[^\n]*IS NULL/i);
 			}
 		} finally {
@@ -325,50 +365,20 @@ describe('counts statistics activities BetterSqlite integration', () => {
 			connection: { filename: ':memory:' },
 			useNullAsDefault: true
 		});
-		const capturedQueries: string[] = [];
-		let capture = false;
-		knex.on('query', ({ sql }) => {
-			if (capture) capturedQueries.push(sql);
-		});
+		const capture = new QueryCapture();
+		knex.on('query', ({ sql }) => capture.record(sql));
 
 		try {
-			await knex.schema.createTable('time_log', (table) => {
-				table.string('id').primary();
-				table.string('tenantId').notNullable();
-				table.string('organizationId').notNullable();
-				table.string('employeeId').notNullable();
-				table.string('projectId').notNullable();
-				table.string('organizationTeamId').notNullable();
-				table.string('logType').notNullable();
-				table.string('source').notNullable();
-				table.string('startedAt').notNullable();
-				table.string('stoppedAt').nullable();
-				table.string('deletedAt').nullable();
-			});
-			await knex.schema.createTable('time_slot', (table) => {
-				table.string('id').primary();
-				table.string('tenantId').notNullable();
-				table.string('organizationId').notNullable();
-				table.string('employeeId').notNullable();
-				table.string('startedAt').notNullable();
-				table.integer('overall').notNullable();
-				table.integer('duration').notNullable();
-				table.string('deletedAt').nullable();
-			});
-			await knex.schema.createTable('time_slot_time_logs', (table) => {
-				table.string('timeSlotId').notNullable();
-				table.string('timeLogId').notNullable();
-				table.primary(['timeSlotId', 'timeLogId']);
-			});
+			await createKnexTables(knex);
 			await knex('time_log').insert(createFixtureTimeLogs());
 			await knex('time_slot').insert(createFixtureTimeSlots());
 			await knex('time_slot_time_logs').insert(createFixtureLinks());
 			const service = new CountsStatisticService(MultiORMEnum.MikroORM, {}, { getKnex: () => knex });
 			stubOtherCounts(service);
-			capture = true;
+			capture.arm();
 
 			await expectCounts(service);
-			expectSummedInSql(capturedQueries);
+			expectSummedInSql(capture.queries);
 		} finally {
 			await knex.destroy();
 		}
