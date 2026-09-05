@@ -80,13 +80,6 @@ type StatisticsActivityRowsQuery =
 	| { ormType: MultiORMEnum.TypeORM; builder: SelectQueryBuilder<TimeSlot> }
 	| { ormType: MultiORMEnum.MikroORM; knex: Knex; builder: Knex.QueryBuilder };
 
-/** Totals of an activity query grouped by time_log.id, summed by the database. */
-interface StatisticsActivityTotals {
-	trackedDuration: number;
-	overall: number;
-	duration: number;
-}
-
 const PROFILE_ACTIVITY_DATABASE_TYPES: ReadonlySet<DatabaseTypeEnum> = new Set([
 	DatabaseTypeEnum.postgres,
 	DatabaseTypeEnum.mysql,
@@ -669,18 +662,13 @@ export class StatisticService {
 			isOnlyMeSelected
 		);
 
-		let weekActivities = {
-			overall: 0,
-			duration: 0
-		};
-
 		// Define the start and end dates
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
 		);
 
-		let rows: StatisticsActivityRowsQuery;
+		let groupedQuery: StatisticsActivityRowsQuery;
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -725,7 +713,7 @@ export class StatisticService {
 				}
 
 				qb.groupBy('time_log.id');
-				rows = { ormType: MultiORMEnum.MikroORM, knex, builder: qb };
+				groupedQuery = { ormType: MultiORMEnum.MikroORM, knex, builder: qb };
 				break;
 			}
 			case MultiORMEnum.TypeORM:
@@ -794,22 +782,12 @@ export class StatisticService {
 
 				// Group by time_log.id to get the total duration and overall for each time slot
 				query.groupBy(p(`"time_log"."id"`));
-				rows = { ormType: MultiORMEnum.TypeORM, builder: query };
+				groupedQuery = { ormType: MultiORMEnum.TypeORM, builder: query };
 				break;
 			}
 		}
 
-		const totals = await this.sumStatisticsActivityRows(rows, 'week_duration');
-
-		// The percentage stays in JavaScript: an SQL division would truncate on SQLite and round
-		// differently on Postgres, changing the second decimal reported by getCounts.
-		const weekPercentage = totals.duration > 0 ? (totals.overall * 100) / totals.duration : 0;
-
-		// Assign the calculated values to weekActivities
-		weekActivities['duration'] = totals.trackedDuration;
-		weekActivities['overall'] = weekPercentage;
-
-		return weekActivities;
+		return this.aggregateStatisticsActivities(groupedQuery, 'week_duration');
 	}
 
 	/**
@@ -845,19 +823,13 @@ export class StatisticService {
 			isOnlyMeSelected
 		);
 
-		// Get average activity and total duration of the work for today.
-		let todayActivities = {
-			overall: 0,
-			duration: 0
-		};
-
 		// Get date range for today
 		const { start: startToday, end: endToday } = getDateRangeFormat(
 			moment.utc(todayStart || moment().startOf('day')),
 			moment.utc(todayEnd || moment().endOf('day'))
 		);
 
-		let rows: StatisticsActivityRowsQuery;
+		let groupedQuery: StatisticsActivityRowsQuery;
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -902,7 +874,7 @@ export class StatisticService {
 				}
 
 				qb.groupBy('time_log.id');
-				rows = { ormType: MultiORMEnum.MikroORM, knex, builder: qb };
+				groupedQuery = { ormType: MultiORMEnum.MikroORM, knex, builder: qb };
 				break;
 			}
 			case MultiORMEnum.TypeORM:
@@ -975,55 +947,48 @@ export class StatisticService {
 				}
 
 				query.groupBy(p(`"time_log"."id"`));
-				rows = { ormType: MultiORMEnum.TypeORM, builder: query };
+				groupedQuery = { ormType: MultiORMEnum.TypeORM, builder: query };
 				break;
 			}
 		}
 
-		const totals = await this.sumStatisticsActivityRows(rows, 'today_duration');
-
-		// See getWeeklyStatisticsActivities: the percentage is computed in JavaScript on purpose.
-		const todayPercentage = totals.duration > 0 ? (totals.overall * 100) / totals.duration : 0;
-
-		// Assign the calculated values to todayActivities
-		todayActivities['duration'] = totals.trackedDuration;
-		todayActivities['overall'] = todayPercentage;
-
-		return todayActivities;
+		return this.aggregateStatisticsActivities(groupedQuery, 'today_duration');
 	}
 
 	/**
 	 * Sums the rows of an activity query grouped by time_log.id in SQL, so only three totals leave
-	 * the database instead of one row per time log. The grouped query is wrapped as a derived table
-	 * and kept as is: its ROUND(SUM / COUNT) per time_log undoes the time_slot/time_log fan-out,
-	 * and summing after rounding is what the previous in-memory loop did.
+	 * the database instead of one row per time log, then derives the activity percentage from them.
+	 * The grouped query is wrapped as a derived table and kept as is: its ROUND(SUM / COUNT) per
+	 * time_log undoes the time_slot/time_log fan-out, and summing after rounding is what the previous
+	 * in-memory loop did. The percentage stays in JavaScript: an SQL division would truncate on SQLite
+	 * and round differently on Postgres, changing the second decimal reported by getCounts.
 	 *
-	 * @param rows - The grouped query, per ORM
+	 * @param groupedQuery - The grouped query, per ORM
 	 * @param durationAlias - Alias of the per-log tracked duration column in that query
-	 * @returns The tracked duration, overall and duration totals
+	 * @returns The tracked duration and the activity percentage
 	 */
-	private async sumStatisticsActivityRows(
-		rows: StatisticsActivityRowsQuery,
+	private async aggregateStatisticsActivities(
+		groupedQuery: StatisticsActivityRowsQuery,
 		durationAlias: 'week_duration' | 'today_duration'
-	): Promise<StatisticsActivityTotals> {
+	): Promise<IWeeklyStatisticsActivities> {
 		let totals: Record<string, unknown> | undefined;
 
-		switch (rows.ormType) {
+		switch (groupedQuery.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const { knex, builder } = rows;
+				const { knex, builder } = groupedQuery;
 				totals = await knex
 					.from(builder.as('t'))
 					.select([
-						knex.raw(`COALESCE(SUM("t"."${durationAlias}"), 0) AS tracked_duration`),
-						knex.raw('COALESCE(SUM("t"."overall"), 0) AS overall'),
-						knex.raw('COALESCE(SUM("t"."duration"), 0) AS duration')
+						knex.raw(p(`COALESCE(SUM("t"."${durationAlias}"), 0) AS tracked_duration`)),
+						knex.raw(p(`COALESCE(SUM("t"."overall"), 0) AS overall`)),
+						knex.raw(p(`COALESCE(SUM("t"."duration"), 0) AS duration`))
 					])
 					.first();
 				break;
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
-				const { builder } = rows;
+				const { builder } = groupedQuery;
 				totals = await this.typeOrmTimeSlotRepository.manager
 					.createQueryBuilder()
 					.select(p(`COALESCE(SUM("t"."${durationAlias}"), 0)`), 'tracked_duration')
@@ -1036,10 +1001,13 @@ export class StatisticService {
 			}
 		}
 
+		const trackedDuration = Number(totals?.tracked_duration) || 0;
+		const overall = Number(totals?.overall) || 0;
+		const duration = Number(totals?.duration) || 0;
+
 		return {
-			trackedDuration: Number(totals?.tracked_duration) || 0,
-			overall: Number(totals?.overall) || 0,
-			duration: Number(totals?.duration) || 0
+			duration: trackedDuration,
+			overall: duration > 0 ? (overall * 100) / duration : 0
 		};
 	}
 
