@@ -68,6 +68,12 @@ jobs:
   lint:
     name: lint (non-blocking)
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    # Non-blocking at the JOB level, not just on the ESLint step. The step-level flag below keeps
+    # a red lint result from failing the job; this keeps anything else in the job — a cache miss,
+    # a registry hiccup, an install failure on the fleet — from doing it either. The requirement
+    # is that this job cannot redden CI for anyone, and a job that goes red because a runner had
+    # a bad day would break that just as surely as a lint error would.
+    continue-on-error: true
     # A cold dependency install on this fleet is measured in hours, not minutes. The ceiling costs
     # nothing on the warm path, which is a cache lookup.
     timeout-minutes: 360
