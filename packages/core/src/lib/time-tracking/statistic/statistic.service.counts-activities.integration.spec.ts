@@ -15,7 +15,8 @@ import { StatisticService } from './statistic.service';
  * Locks the counts semantics while the per-row aggregation moves from JavaScript to SQL:
  *  - a time log spanning several time slots must be counted once (ROUND(SUM / COUNT) per log),
  *  - a time slot linked to two time logs must contribute its overall/duration once per log,
- *  - the activity percentage is still computed in JavaScript from the two sums.
+ *  - the activity percentage is still computed in JavaScript from the two sums,
+ *  - soft-deleted time logs and time slots stay out of the counts on both ORM paths.
  * The expected numbers below are derived by hand from those rules, so the same spec passes
  * against the previous in-memory implementation.
  */
@@ -173,7 +174,12 @@ function log(
 	};
 }
 
-function slot(id: string, startedAt: string, overall: number, duration = 600): FixtureTimeSlot {
+function slot(
+	id: string,
+	startedAt: string,
+	overall: number,
+	overrides: Partial<FixtureTimeSlot> = {}
+): FixtureTimeSlot {
 	return {
 		id,
 		tenantId: TENANT_ID,
@@ -181,8 +187,9 @@ function slot(id: string, startedAt: string, overall: number, duration = 600): F
 		employeeId: EMPLOYEE_ID,
 		startedAt,
 		overall,
-		duration,
-		deletedAt: null
+		duration: 600,
+		deletedAt: null,
+		...overrides
 	};
 }
 
@@ -194,13 +201,19 @@ function createFixtureTimeLogs(): FixtureTimeLog[] {
 		// Counted in the plain week, dropped by the project / source filters.
 		log('log-other-project', '2026-01-08 09:00:00.000', '2026-01-08 09:10:00.000', { projectId: OTHER_PROJECT_ID }),
 		log('log-other-source', '2026-01-08 10:00:00.000', '2026-01-08 10:10:00.000', { source: 'MOBILE' }),
-		// Excluded rows: other organization, outside the week, stopped before started, no time slot.
+		// Excluded rows: other organization, outside the week, stopped before started, no time slot,
+		// soft-deleted log, live log whose only slot is soft-deleted. The last two sit inside "today" so
+		// they would move both the week and the today counts if the soft-delete filter went missing.
 		log('log-other-organization', '2026-01-06 12:00:00.000', '2026-01-06 12:10:00.000', {
 			organizationId: OTHER_ORGANIZATION_ID
 		}),
 		log('log-previous-week', '2026-01-02 09:00:00.000', '2026-01-02 09:10:00.000'),
 		log('log-negative', '2026-01-06 13:00:00.000', '2026-01-06 12:59:00.000'),
-		log('log-without-slot', '2026-01-06 14:00:00.000', '2026-01-06 14:10:00.000')
+		log('log-without-slot', '2026-01-06 14:00:00.000', '2026-01-06 14:10:00.000'),
+		log('log-soft-deleted', '2026-01-06 15:00:00.000', '2026-01-06 15:10:00.000', {
+			deletedAt: '2026-01-06 16:00:00.000'
+		}),
+		log('log-with-soft-deleted-slot', '2026-01-06 16:00:00.000', '2026-01-06 16:10:00.000')
 	];
 }
 
@@ -214,7 +227,9 @@ function createFixtureTimeSlots(): FixtureTimeSlot[] {
 		slot('slot-other-source', '2026-01-08 10:00:00.000', 480),
 		slot('slot-other-organization', '2026-01-06 12:00:00.000', 600),
 		slot('slot-previous-week', '2026-01-02 09:00:00.000', 600),
-		slot('slot-negative', '2026-01-06 13:00:00.000', 600)
+		slot('slot-negative', '2026-01-06 13:00:00.000', 600),
+		slot('slot-of-soft-deleted-log', '2026-01-06 15:00:00.000', 600),
+		slot('slot-soft-deleted', '2026-01-06 16:00:00.000', 600, { deletedAt: '2026-01-06 17:00:00.000' })
 	];
 }
 
@@ -227,7 +242,9 @@ function createFixtureLinks(): FixtureTimeSlotTimeLog[] {
 		{ timeSlotId: 'slot-other-source', timeLogId: 'log-other-source' },
 		{ timeSlotId: 'slot-other-organization', timeLogId: 'log-other-organization' },
 		{ timeSlotId: 'slot-previous-week', timeLogId: 'log-previous-week' },
-		{ timeSlotId: 'slot-negative', timeLogId: 'log-negative' }
+		{ timeSlotId: 'slot-negative', timeLogId: 'log-negative' },
+		{ timeSlotId: 'slot-of-soft-deleted-log', timeLogId: 'log-soft-deleted' },
+		{ timeSlotId: 'slot-soft-deleted', timeLogId: 'log-with-soft-deleted-slot' }
 	];
 }
 
@@ -257,24 +274,26 @@ const derivedTableOverGroupedLogs = /from \(select[\s\S]*group by [`"]time_log[`
 const perLogFanOutDivision = /ROUND\([\s\S]*\/ COUNT\(/i;
 // The IN lists and the BETWEEN range must sit inside the derived table, before its closing alias.
 const filtersInsideDerivedTable = /projectId[^\n]* in \([\s\S]*overall[^\n]* between [\s\S]*\)\s*(as\s+)?[`"]t[`"]/i;
+const softDeleteFilter = /deletedAt[^\n]*IS NULL/i;
 
 async function expectCounts(service: StatisticService): Promise<void> {
 	await expect(service.getCounts(request)).resolves.toEqual(expectedCounts);
 	await expect(service.getCounts(filteredRequest)).resolves.toEqual(expectedFilteredCounts);
 }
 
-// Two getCounts calls, each running one week and one today query: four SELECTs, all summed in SQL.
-function expectSummedInSql(capturedQueries: string[]): string[] {
+// Two getCounts calls, each running one week and one today query: four SELECTs, all summed in SQL
+// and all skipping soft-deleted rows.
+function expectSummedInSql(capturedQueries: string[]): void {
 	const selects = capturedQueries.filter((sql) => /^\s*select\b/i.test(sql));
 	expect(selects).toHaveLength(4);
 	for (const sql of selects) {
 		expect(sql).toMatch(derivedTableOverGroupedLogs);
 		expect(sql).toMatch(perLogFanOutDivision);
+		expect(sql).toMatch(softDeleteFilter);
 	}
 	for (const sql of selects.slice(2)) {
 		expect(sql).toMatch(filtersInsideDerivedTable);
 	}
-	return selects;
 }
 
 // Collects the SQL issued once the fixtures are in place, so only the queries under test are asserted.
@@ -351,9 +370,7 @@ describe('counts statistics activities BetterSqlite integration', () => {
 			capture.arm();
 
 			await expectCounts(service);
-			for (const sql of expectSummedInSql(capture.queries)) {
-				expect(sql).toMatch(/deletedAt[^\n]*IS NULL/i);
-			}
+			expectSummedInSql(capture.queries);
 		} finally {
 			if (dataSource.isInitialized) await dataSource.destroy();
 		}

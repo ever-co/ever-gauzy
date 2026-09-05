@@ -689,7 +689,10 @@ export class StatisticService {
 					.andWhere('time_log.organizationId', organizationId)
 					.whereBetween('time_slot.startedAt', [start, end])
 					.whereBetween('time_log.startedAt', [start, end])
-					.whereRaw('"time_log"."stoppedAt" >= "time_log"."startedAt"');
+					.whereRaw('"time_log"."stoppedAt" >= "time_log"."startedAt"')
+					// TypeORM adds these through @DeleteDateColumn; Knex has to spell them out.
+					.whereNull('time_slot.deletedAt')
+					.whereNull('time_log.deletedAt');
 
 				if (isNotEmpty(employeeIds)) {
 					qb = qb.whereIn('time_slot.employeeId', employeeIds).whereIn('time_log.employeeId', employeeIds);
@@ -850,7 +853,10 @@ export class StatisticService {
 					.andWhere('time_log.organizationId', organizationId)
 					.whereBetween('time_slot.startedAt', [startToday, endToday])
 					.whereBetween('time_log.startedAt', [startToday, endToday])
-					.whereRaw('"time_log"."stoppedAt" >= "time_log"."startedAt"');
+					.whereRaw('"time_log"."stoppedAt" >= "time_log"."startedAt"')
+					// TypeORM adds these through @DeleteDateColumn; Knex has to spell them out.
+					.whereNull('time_slot.deletedAt')
+					.whereNull('time_log.deletedAt');
 
 				if (isNotEmpty(employeeIds)) {
 					qb = qb.whereIn('time_slot.employeeId', employeeIds).whereIn('time_log.employeeId', employeeIds);
