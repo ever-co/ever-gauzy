@@ -22,25 +22,6 @@
  */
 const nx = require('@nx/eslint-plugin');
 
-/** Files ESLint should never look at. */
-const IGNORES = [
-	'**/node_modules',
-	'**/dist',
-	'**/build',
-	'**/out-tsc',
-	'**/coverage',
-	'**/.angular',
-	'**/.nx',
-	'**/*.d.ts',
-	// Generated TypeORM migrations: several hundred machine-written files that dominate both the
-	// lint wall clock and the finding count, and that nobody hand-edits.
-	'packages/core/src/lib/database/migrations/**',
-	// Codegen output.
-	'**/*.generated.ts',
-	'packages/plugins/integration-ai/src/lib/sdk/gauzy-ai-sdk.ts',
-	'**/src/assets/**'
-];
-
 module.exports = [
 	// Registers the `@nx` plugin namespace (enforce-module-boundaries, dependency-checks,
 	// nx-plugin-checks) that the project configs rely on.
@@ -48,9 +29,27 @@ module.exports = [
 	...nx.configs['flat/typescript'],
 	...nx.configs['flat/javascript'],
 
-	// Replaces the legacy root `.eslintrc.json`'s `"ignorePatterns": ["**/*"]`, which disabled
-	// linting for the entire workspace.
-	{ ignores: IGNORES },
+	// Files ESLint should never look at. Replaces the legacy root `.eslintrc.json`'s
+	// `"ignorePatterns": ["**/*"]`, which disabled linting for the entire workspace.
+	{
+		ignores: [
+			'**/node_modules',
+			'**/dist',
+			'**/build',
+			'**/out-tsc',
+			'**/coverage',
+			'**/.angular',
+			'**/.nx',
+			'**/*.d.ts',
+			// Generated TypeORM migrations: several hundred machine-written files that dominate
+			// both the lint wall clock and the finding count, and that nobody hand-edits.
+			'packages/core/src/lib/database/migrations/**',
+			// Codegen output.
+			'**/*.generated.ts',
+			'packages/plugins/integration-ai/src/lib/sdk/gauzy-ai-sdk.ts',
+			'**/src/assets/**'
+		]
+	},
 
 	{
 		files: ['**/*.ts', '**/*.tsx', '**/*.cts', '**/*.mts', '**/*.js', '**/*.jsx', '**/*.cjs', '**/*.mjs'],
