@@ -3,7 +3,6 @@ import { Knex } from 'knex';
 import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as moment from 'moment';
-import * as chalk from 'chalk';
 import {
 	PermissionsEnum,
 	IGetActivitiesStatistics,
@@ -45,7 +44,7 @@ import {
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
 import { TimeLog } from './../../core/entities/internal';
-import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils';
+import { MultiORMEnum, getDateRangeFormat, getORMType, isDevelopment } from './../../core/utils';
 import { UserService } from '../../user/user.service';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -117,6 +116,16 @@ export class StatisticService {
 		private readonly configService: ConfigService,
 		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {}
+
+	/**
+	 * Developer-only diagnostics. Silent outside a development runtime, and the message is only built
+	 * when it will be printed, so hot paths (dashboard counts, team listing) never pay for it.
+	 */
+	private debug(message: () => string): void {
+		if (isDevelopment()) {
+			this.logger.debug(message());
+		}
+	}
 
 	/**
 	 * Verifies the profile activity target and request-scoped viewing policy before a time-log read.
@@ -582,11 +591,9 @@ export class StatisticService {
 			}
 		}
 
-		console.log('Overall Tracked Time Duration (seconds):', overallDurationInSeconds);
-
 		// Convert the overall duration in seconds to hours
 		const overallDurationInHours = overallDurationInSeconds / 3600;
-		console.log('Overall Tracked Time Duration (hours):', overallDurationInHours);
+		this.debug(() => `Overall Tracked Time Duration: ${overallDurationInSeconds}s (${overallDurationInHours}h)`);
 
 		return overallDurationInHours;
 	}
@@ -785,8 +792,6 @@ export class StatisticService {
 			}
 		}
 
-		console.log('weekly time statistics activity', JSON.stringify(weekTimeStatistics));
-
 		// Initialize variables to accumulate values
 		let totalWeekDuration = 0;
 		let totalOverall = 0;
@@ -975,8 +980,6 @@ export class StatisticService {
 				break;
 			}
 		}
-
-		console.log('today time statistics activity', JSON.stringify(todayTimeStatistics));
 
 		// Initialize variables to accumulate values
 		let totalTodayDuration = 0;
@@ -2029,7 +2032,7 @@ export class StatisticService {
 					}
 					sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
 					sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-					console.log(chalk.green(sq.toString() + ' || Get Today Statistics Query MikroORM!'));
+					this.debug(() => `${sq.toString()} || Get Today Statistics Query MikroORM`);
 					// Execute the raw SQL query and get the results
 					todayStatistics = (await knex.raw(sq.toString())).rows || [];
 				}
@@ -2096,7 +2099,7 @@ export class StatisticService {
 					qb.groupBy(p(`"${qb.alias}"."id"`));
 					qb.addGroupBy(p(`"task"."id"`));
 					qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-					console.log(qb.getQuery(), ' || Get Today Statistics Query TypeORM');
+					this.debug(() => `${qb.getQuery()} || Get Today Statistics Query TypeORM`);
 					// Execute the SQL query and get the results
 					todayStatistics = await qb.getRawMany();
 				}
@@ -2167,7 +2170,7 @@ export class StatisticService {
 					}
 					sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
 					sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-					console.log(chalk.green(sq.toString() + ' || Get Statistics Query MikroORM!'));
+					this.debug(() => `${sq.toString()} || Get Statistics Query MikroORM`);
 					// Execute the raw SQL query and get the results
 					statistics = (await knex.raw(sq.toString())).rows || [];
 				}
@@ -2237,7 +2240,7 @@ export class StatisticService {
 					qb.groupBy(p(`"${qb.alias}"."id"`));
 					qb.addGroupBy(p(`"task"."id"`));
 					qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-					console.log(qb.getQueryAndParameters(), 'Get Statistics Query TypeORM');
+					this.debug(() => `${JSON.stringify(qb.getQueryAndParameters())} || Get Statistics Query TypeORM`);
 					// Execute the raw SQL query and get the results
 					statistics = await qb.getRawMany();
 				}
@@ -2292,7 +2295,7 @@ export class StatisticService {
 							}
 						});
 					}
-					console.log(chalk.green(sq.toString() + ' || Get Total Duration Query MikroORM!'));
+					this.debug(() => `${sq.toString()} || Get Total Duration Query MikroORM`);
 					// Execute the raw SQL query and get the results
 					[totalDuration] = (await knex.raw(sq.toString())).rows || [];
 				}
@@ -2334,7 +2337,7 @@ export class StatisticService {
 							})
 						);
 					}
-					console.log(qb.getQuery(), 'Get Total Duration Query TypeORM!');
+					this.debug(() => `${qb.getQuery()} || Get Total Duration Query TypeORM`);
 					// Execute the raw SQL query and get the results
 					totalDuration = await qb.getRawOne();
 				}
@@ -2346,9 +2349,10 @@ export class StatisticService {
 
 		// ------------------------------------------------
 
-		console.log('Find Statistics length: ', statistics.length);
-		console.log('Find Today Statistics length: ', todayStatistics.length);
-		console.log('Find Total Duration: ', totalDuration?.duration);
+		this.debug(
+			() =>
+				`Find Statistics length: ${statistics.length}, Today Statistics length: ${todayStatistics.length}, Total Duration: ${totalDuration?.duration}`
+		);
 
 		/* Code that cause issues... We try to optimize it using "hashing" approach etc
 
@@ -2402,7 +2406,7 @@ export class StatisticService {
 
 		const totalDurationValue = statistics.reduce((total, stat) => total + (parseInt(stat.duration, 10) || 0), 0);
 
-		console.log('Total Duration Value: ', totalDurationValue);
+		this.debug(() => `Total Duration Value: ${totalDurationValue}`);
 
 		const todayStatsLookup = todayStatistics.reduce((acc, stat) => {
 			const taskId = stat.taskId;
@@ -2461,8 +2465,6 @@ export class StatisticService {
 		if (isNotEmpty(take)) {
 			tasks = tasks.splice(0, take);
 		}
-
-		console.log('Task Aggregates: ', tasks);
 
 		return tasks;
 	}
