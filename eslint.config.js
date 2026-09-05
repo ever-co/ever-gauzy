@@ -81,8 +81,8 @@ module.exports = [
 
 			// Re-enabled deliberately. `typescript-eslint`'s `eslint-recommended` overlay — pulled
 			// in by `nx.configs['flat/typescript']` — turns these OFF on the grounds that `tsc`
-			// already reports them. That reasoning does not hold here: this workspace has no
-			// typecheck gate in CI, and a duplicate object key in `packages/core/jest.config.ts`
+			// already reports them. That reasoning does not hold here: no CI job in this
+			// workspace runs `tsc --noEmit`, and a duplicate object key in `packages/core/jest.config.ts`
 			// has already silently changed behaviour once. These are the guardrail.
 			'no-dupe-keys': 'error',
 			'no-dupe-class-members': 'error',
