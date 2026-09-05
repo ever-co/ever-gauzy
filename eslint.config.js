@@ -31,7 +31,13 @@ module.exports = [
 
 	// Files ESLint should never look at. Replaces the legacy root `.eslintrc.json`'s
 	// `"ignorePatterns": ["**/*"]`, which disabled linting for the entire workspace.
+	//
+	// The `name` is not decoration: with a single `ignores` key this object literal is
+	// grammatically ambiguous with a block containing a labelled statement, and Codacy's PMD
+	// resolves it the wrong way and reports "Unnecessary block". A second key removes the
+	// ambiguity, and ESLint 9 surfaces `name` in config inspection and error messages anyway.
 	{
+		name: 'gauzy/global-ignores',
 		ignores: [
 			'**/node_modules',
 			'**/dist',
