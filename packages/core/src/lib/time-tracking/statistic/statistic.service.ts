@@ -43,7 +43,7 @@ import {
 } from './statistic.helper';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
-import { TimeLog } from './../../core/entities/internal';
+import { TimeLog, TimeSlot } from './../../core/entities/internal';
 import { MultiORMEnum, getDateRangeFormat, getORMType, isDevelopment } from './../../core/utils';
 import { UserService } from '../../user/user.service';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
@@ -73,6 +73,18 @@ type ProfileActivityDatabaseType =
 type ProfileActivityRowsQuery =
 	| { ormType: MultiORMEnum.TypeORM; builder: SelectQueryBuilder<TimeLog> }
 	| { ormType: MultiORMEnum.MikroORM; builder: Knex.QueryBuilder };
+
+/** An activity query grouped by time_log.id, ready to be summed by the database. */
+type StatisticsActivityRowsQuery =
+	| { ormType: MultiORMEnum.TypeORM; builder: SelectQueryBuilder<TimeSlot> }
+	| { ormType: MultiORMEnum.MikroORM; knex: Knex; builder: Knex.QueryBuilder };
+
+/** Totals of an activity query grouped by time_log.id, summed by the database. */
+interface StatisticsActivityTotals {
+	trackedDuration: number;
+	overall: number;
+	duration: number;
+}
 
 const PROFILE_ACTIVITY_DATABASE_TYPES: ReadonlySet<DatabaseTypeEnum> = new Set([
 	DatabaseTypeEnum.postgres,
@@ -674,8 +686,7 @@ export class StatisticService {
 			moment.utc(endDate || moment().endOf('week'))
 		);
 
-		// Create a query builder for the TimeSlot entity
-		let weekTimeStatistics: any[] = [];
+		let rows: StatisticsActivityRowsQuery;
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -719,7 +730,8 @@ export class StatisticService {
 					qb = qb.whereIn('time_log.source', source);
 				}
 
-				weekTimeStatistics = await qb.groupBy('time_log.id');
+				qb.groupBy('time_log.id');
+				rows = { ormType: MultiORMEnum.MikroORM, knex, builder: qb };
 				break;
 			}
 			case MultiORMEnum.TypeORM:
@@ -787,28 +799,20 @@ export class StatisticService {
 				}
 
 				// Group by time_log.id to get the total duration and overall for each time slot
-				weekTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
+				query.groupBy(p(`"time_log"."id"`));
+				rows = { ormType: MultiORMEnum.TypeORM, builder: query };
 				break;
 			}
 		}
 
-		// Initialize variables to accumulate values
-		let totalWeekDuration = 0;
-		let totalOverall = 0;
-		let totalDuration = 0;
+		const totals = await this.sumStatisticsActivityRows(rows, 'week_duration');
 
-		// Iterate over the weekTimeStatistics array once to calculate all values
-		for (const stat of weekTimeStatistics) {
-			totalWeekDuration += Number(stat.week_duration) || 0;
-			totalOverall += Number(stat.overall) || 0;
-			totalDuration += Number(stat.duration) || 0;
-		}
-
-		// Calculate the week percentage, avoiding division by zero
-		const weekPercentage = totalDuration > 0 ? (totalOverall * 100) / totalDuration : 0;
+		// The percentage stays in JavaScript: an SQL division would truncate on SQLite and round
+		// differently on Postgres, changing the second decimal reported by getCounts.
+		const weekPercentage = totals.duration > 0 ? (totals.overall * 100) / totals.duration : 0;
 
 		// Assign the calculated values to weekActivities
-		weekActivities['duration'] = totalWeekDuration;
+		weekActivities['duration'] = totals.trackedDuration;
 		weekActivities['overall'] = weekPercentage;
 
 		return weekActivities;
@@ -859,8 +863,7 @@ export class StatisticService {
 			moment.utc(todayEnd || moment().endOf('day'))
 		);
 
-		// Create a query builder for the TimeSlot entity
-		let todayTimeStatistics: any[] = [];
+		let rows: StatisticsActivityRowsQuery;
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -904,7 +907,8 @@ export class StatisticService {
 					qb = qb.whereIn('time_log.source', source);
 				}
 
-				todayTimeStatistics = await qb.groupBy('time_log.id');
+				qb.groupBy('time_log.id');
+				rows = { ormType: MultiORMEnum.MikroORM, knex, builder: qb };
 				break;
 			}
 			case MultiORMEnum.TypeORM:
@@ -976,31 +980,73 @@ export class StatisticService {
 					query.andWhere(p(`"time_log"."source" IN (:...source)`), { source });
 				}
 
-				todayTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
+				query.groupBy(p(`"time_log"."id"`));
+				rows = { ormType: MultiORMEnum.TypeORM, builder: query };
 				break;
 			}
 		}
 
-		// Initialize variables to accumulate values
-		let totalTodayDuration = 0;
-		let totalOverall = 0;
-		let totalDuration = 0;
+		const totals = await this.sumStatisticsActivityRows(rows, 'today_duration');
 
-		// Iterate over the todayTimeStatistics array once to calculate all values
-		for (const stat of todayTimeStatistics) {
-			totalTodayDuration += Number(stat.today_duration) || 0;
-			totalOverall += Number(stat.overall) || 0;
-			totalDuration += Number(stat.duration) || 0;
-		}
-
-		// Calculate today's percentage, avoiding division by zero
-		const todayPercentage = totalDuration > 0 ? (totalOverall * 100) / totalDuration : 0;
+		// See getWeeklyStatisticsActivities: the percentage is computed in JavaScript on purpose.
+		const todayPercentage = totals.duration > 0 ? (totals.overall * 100) / totals.duration : 0;
 
 		// Assign the calculated values to todayActivities
-		todayActivities['duration'] = totalTodayDuration;
+		todayActivities['duration'] = totals.trackedDuration;
 		todayActivities['overall'] = todayPercentage;
 
 		return todayActivities;
+	}
+
+	/**
+	 * Sums the rows of an activity query grouped by time_log.id in SQL, so only three totals leave
+	 * the database instead of one row per time log. The grouped query is wrapped as a derived table
+	 * and kept as is: its ROUND(SUM / COUNT) per time_log undoes the time_slot/time_log fan-out,
+	 * and summing after rounding is what the previous in-memory loop did.
+	 *
+	 * @param rows - The grouped query, per ORM
+	 * @param durationAlias - Alias of the per-log tracked duration column in that query
+	 * @returns The tracked duration, overall and duration totals
+	 */
+	private async sumStatisticsActivityRows(
+		rows: StatisticsActivityRowsQuery,
+		durationAlias: 'week_duration' | 'today_duration'
+	): Promise<StatisticsActivityTotals> {
+		let totals: Record<string, unknown> | undefined;
+
+		switch (rows.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const { knex, builder } = rows;
+				totals = await knex
+					.from(builder.as('t'))
+					.select([
+						knex.raw(`COALESCE(SUM("t"."${durationAlias}"), 0) AS tracked_duration`),
+						knex.raw('COALESCE(SUM("t"."overall"), 0) AS overall'),
+						knex.raw('COALESCE(SUM("t"."duration"), 0) AS duration')
+					])
+					.first();
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const { builder } = rows;
+				totals = await this.typeOrmTimeSlotRepository.manager
+					.createQueryBuilder()
+					.select(p(`COALESCE(SUM("t"."${durationAlias}"), 0)`), 'tracked_duration')
+					.addSelect(p(`COALESCE(SUM("t"."overall"), 0)`), 'overall')
+					.addSelect(p(`COALESCE(SUM("t"."duration"), 0)`), 'duration')
+					.from(`(${builder.getQuery()})`, 't')
+					.setParameters(builder.getParameters())
+					.getRawOne();
+				break;
+			}
+		}
+
+		return {
+			trackedDuration: Number(totals?.tracked_duration) || 0,
+			overall: Number(totals?.overall) || 0,
+			duration: Number(totals?.duration) || 0
+		};
 	}
 
 	/**
