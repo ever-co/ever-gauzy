@@ -11,8 +11,10 @@
  */
 import '../../core/entities/internal';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Between, In } from 'typeorm';
+import * as moment from 'moment';
 import { IGetTimesheetInput } from '@gauzy/contracts';
-import { MultiORMEnum } from '../../core/utils';
+import { getDateRangeFormat, MultiORMEnum } from '../../core/utils';
 import {
 	executedFilters,
 	mockRequestContext,
@@ -70,7 +72,8 @@ describe('TimeSheetService', () => {
 			endDate: '2026-01-31T23:59:59.999Z'
 		};
 
-		// The `Brackets` entry carries the startedAt range together with the status and employee predicates.
+		// The startedAt range and the employee predicate live in the object literal inside the `Brackets`.
+		const { start, end } = getDateRangeFormat(moment.utc(request.startDate), moment.utc(request.endDate));
 		const scopingConditions = [
 			'Brackets',
 			'"timesheet"."tenantId" = :tenantId',
@@ -108,10 +111,19 @@ describe('TimeSheetService', () => {
 
 				await run(request);
 
-				const { conditions, parameters } = executedFilters(builder);
+				const { conditions, parameters, clauses } = executedFilters(builder);
 				expect(conditions).toEqual(expect.arrayContaining(scopingConditions));
 				expect(parameters).toEqual(
 					expect.objectContaining({ tenantId: TENANT_ID, organizationId: ORGANIZATION_ID })
+				);
+				// A caller without CHANGE_SELECTED_EMPLOYEE is narrowed to their own employee id.
+				expect(clauses.map(({ condition }) => condition)).toEqual(
+					expect.arrayContaining([
+						expect.objectContaining({
+							startedAt: Between(start, end),
+							employeeId: In([CURRENT_EMPLOYEE_ID])
+						})
+					])
 				);
 			}
 		);

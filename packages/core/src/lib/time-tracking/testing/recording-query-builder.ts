@@ -1,12 +1,19 @@
+import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { IUser, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 
-export type RecordedClause = { condition: unknown; parameters?: Record<string, unknown> };
+export type RecordedClause = {
+	condition: unknown;
+	parameters?: Record<string, unknown>;
+	/** Predicates a `Brackets` factory attached, captured when the brackets were added. */
+	nested?: RecordedClause[];
+};
 
 /**
  * Stand-in for TypeORM's SelectQueryBuilder that keeps only what the time-tracking specs depend
  * on: `where(callback)` clears the clause list and runs the callback synchronously (typeorm
- * `SelectQueryBuilder.where` -> `QueryBuilder.getWhereCondition`), and the terminal calls render
+ * `SelectQueryBuilder.where` -> `QueryBuilder.getWhereCondition`), a `Brackets` factory runs
+ * against a nested builder as soon as the brackets are added, and the terminal calls render
  * whatever clauses exist at that instant. A filter added by a promise still pending when the
  * query executes never reaches the SQL, which is the defect these specs guard against.
  */
@@ -30,13 +37,13 @@ export class RecordingQueryBuilder {
 		if (typeof where === 'function') {
 			where(this);
 		} else {
-			this.clauses.push({ condition: where, parameters });
+			this.clauses.push(this.record(where, parameters));
 		}
 		return this;
 	}
 
 	andWhere(condition: unknown, parameters?: Record<string, unknown>): this {
-		this.clauses.push({ condition, parameters });
+		this.clauses.push(this.record(condition, parameters));
 		return this;
 	}
 
@@ -49,25 +56,41 @@ export class RecordingQueryBuilder {
 		this.executedClauses = [...this.clauses];
 		return [];
 	}
+
+	private record(condition: unknown, parameters?: Record<string, unknown>): RecordedClause {
+		if (condition instanceof Brackets) {
+			const nested = new RecordingQueryBuilder(this.alias);
+			// The double only implements the where/andWhere subset the factories use.
+			condition.whereFactory(nested as unknown as WhereExpressionBuilder);
+			return { condition, nested: nested.clauses };
+		}
+		return { condition, parameters };
+	}
 }
 
 /**
- * Clauses and merged parameters in place when the query executed. String conditions are
- * normalised to double quotes so the assertions hold whatever quoting the database helper
- * applied; other conditions (e.g. `Brackets`) are reported by their class name.
+ * Clauses in place when the query executed, with the predicates of every `Brackets` flattened in
+ * after their brackets. String conditions are normalised to double quotes so the assertions hold
+ * whatever quoting the database helper applied; other conditions (e.g. `Brackets`) are reported
+ * by their class name. `clauses` keeps the raw entries for object-literal predicates.
  */
 export function executedFilters(builder: RecordingQueryBuilder): {
 	conditions: string[];
 	parameters: Record<string, unknown>;
+	clauses: RecordedClause[];
 } {
 	if (!builder.executedClauses) {
 		throw new Error('The query was never executed');
 	}
+	const flatten = (clauses: RecordedClause[]): RecordedClause[] =>
+		clauses.flatMap((clause) => (clause.nested ? [clause, ...flatten(clause.nested)] : [clause]));
+	const clauses = flatten(builder.executedClauses);
 	return {
-		conditions: builder.executedClauses.map(({ condition }) =>
+		conditions: clauses.map(({ condition }) =>
 			typeof condition === 'string' ? condition.replace(/`/g, '"') : (condition as object).constructor.name
 		),
-		parameters: Object.assign({}, ...builder.executedClauses.map(({ parameters }) => parameters ?? {}))
+		parameters: Object.assign({}, ...clauses.map(({ parameters }) => parameters ?? {})),
+		clauses
 	};
 }
 

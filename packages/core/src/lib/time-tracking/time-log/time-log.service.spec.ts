@@ -13,7 +13,8 @@ import '../../core/entities/internal';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommandBus } from '@nestjs/cqrs';
 import { IGetTimeLogReportInput } from '@gauzy/contracts';
-import { MultiORMEnum } from '../../core/utils';
+import { moment } from '../../core/moment-extend';
+import { getDateRangeFormat, MultiORMEnum } from '../../core/utils';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import {
 	executedFilters,
@@ -83,12 +84,15 @@ describe('TimeLogService', () => {
 			timeZone: 'UTC'
 		};
 
-		// The `Brackets` entry is the startedAt date range.
+		// The date range is the pair of startedAt predicates inside the `Brackets`.
+		const { start, end } = getDateRangeFormat(moment.utc(request.startDate), moment.utc(request.endDate));
 		const scopingConditions = [
 			'"time_log"."tenantId" = :tenantId',
 			'"time_log"."organizationId" = :organizationId',
 			'"time_log"."employeeId" IN (:...employeeIds)',
-			'Brackets'
+			'Brackets',
+			'"time_log"."startedAt" >= :startDate',
+			'"time_log"."startedAt" < :endDate'
 		];
 
 		const reportMethods: Array<[string, (input: IGetTimeLogReportInput) => Promise<unknown>]> = [
@@ -129,7 +133,9 @@ describe('TimeLogService', () => {
 					expect.objectContaining({
 						tenantId: TENANT_ID,
 						organizationId: ORGANIZATION_ID,
-						employeeIds: [TARGET_EMPLOYEE_ID]
+						employeeIds: [TARGET_EMPLOYEE_ID],
+						startDate: start,
+						endDate: end
 					})
 				);
 			}
