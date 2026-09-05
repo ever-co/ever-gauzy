@@ -12,10 +12,15 @@
 import '../../core/entities/internal';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommandBus } from '@nestjs/cqrs';
-import { IGetTimeLogReportInput, IUser, PermissionsEnum } from '@gauzy/contracts';
-import { RequestContext } from '../../core/context';
+import { IGetTimeLogReportInput } from '@gauzy/contracts';
 import { MultiORMEnum } from '../../core/utils';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
+import {
+	executedFilters,
+	mockRequestContext,
+	nextMacrotask,
+	RecordingQueryBuilder
+} from '../testing/recording-query-builder';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { TimeLogService } from './time-log.service';
 
@@ -25,66 +30,22 @@ const USER_ID = 'c3b2a190-8f7e-4d6c-9b5a-4e3d2c1b0a9f';
 const CURRENT_EMPLOYEE_ID = '7e6d5c4b-3a29-4180-9f8e-7d6c5b4a3928';
 const TARGET_EMPLOYEE_ID = '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
 
-type RecordedClause = { condition: unknown; parameters?: Record<string, unknown> };
-
-/**
- * Stand-in for TypeORM's SelectQueryBuilder that keeps only what the regression depends on:
- * `where(callback)` clears the clause list and runs the callback synchronously (typeorm
- * `SelectQueryBuilder.where` -> `QueryBuilder.getWhereCondition`), and `getMany()` renders whatever
- * clauses exist at that instant. A filter added by a promise still pending when `getMany()` runs
- * never reaches the SQL, which is the defect this suite guards against.
- */
-class RecordingQueryBuilder {
-	readonly alias = 'time_log';
-	/** Clauses present when `getMany()` ran, i.e. the ones that would have reached the SQL. */
-	executedClauses: RecordedClause[] | null = null;
-	private clauses: RecordedClause[] = [];
-
-	innerJoin(): this {
-		return this;
-	}
-
-	setFindOptions(): this {
-		return this;
-	}
-
-	where(where: unknown, parameters?: Record<string, unknown>): this {
-		this.clauses = [];
-		if (typeof where === 'function') {
-			where(this);
-		} else {
-			this.clauses.push({ condition: where, parameters });
-		}
-		return this;
-	}
-
-	andWhere(condition: unknown, parameters?: Record<string, unknown>): this {
-		this.clauses.push({ condition, parameters });
-		return this;
-	}
-
-	async getMany(): Promise<never[]> {
-		this.executedClauses = [...this.clauses];
-		return [];
-	}
-}
-
 describe('TimeLogService', () => {
 	let service: TimeLogService;
 	let builder: RecordingQueryBuilder;
 	let canManageEmployees: jest.Mock;
 
 	beforeEach(async () => {
-		builder = new RecordingQueryBuilder();
+		builder = new RecordingQueryBuilder('time_log');
 		canManageEmployees = jest.fn();
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [TimeLogService]
 		})
 			/**
-			 * Every dependency is automocked to an empty object, except the three the report
-			 * methods actually touch: the TypeORM repository (hands out the recording builder),
-			 * the manager check, and the command bus used by `getDailyReport` to group results.
+			 * Every dependency is mocked to an empty object, except the three the report methods
+			 * actually touch: the TypeORM repository (hands out the recording builder), the
+			 * manager check, and the command bus used by `getDailyReport` to group results.
 			 */
 			.useMocker((token) => {
 				if (token === TypeOrmTimeLogRepository) {
@@ -140,33 +101,17 @@ describe('TimeLogService', () => {
 			['getTimeLimit', (input) => service.getTimeLimit({ ...input, duration: 'day' })]
 		];
 
-		const actAs = (caller: { canChangeSelectedEmployee: boolean }) => {
-			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
-			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
-				id: USER_ID,
-				employeeId: CURRENT_EMPLOYEE_ID
-			} as IUser);
-			jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-				(permission) =>
-					caller.canChangeSelectedEmployee && permission === PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
-		};
+		const actAs = (caller: { canChangeSelectedEmployee: boolean }) =>
+			mockRequestContext({
+				tenantId: TENANT_ID,
+				user: { id: USER_ID, employeeId: CURRENT_EMPLOYEE_ID },
+				canChangeSelectedEmployee: caller.canChangeSelectedEmployee
+			});
 
-		/** Resolves on a later macrotask, like the repository round-trip behind the real manager check. */
-		const resolveLater = (value: boolean) => () =>
-			new Promise<boolean>((resolve) => setImmediate(() => resolve(value)));
-
-		const executedFilters = () => {
-			expect(builder.executedClauses).not.toBeNull();
-			const clauses = builder.executedClauses as RecordedClause[];
-			return {
-				conditions: clauses.map(({ condition }) =>
-					typeof condition === 'string'
-						? condition.replace(/`/g, '"')
-						: (condition as object).constructor.name
-				),
-				parameters: Object.assign({}, ...clauses.map(({ parameters }) => parameters ?? {}))
-			};
+		// Resolves on a later macrotask, like the repository round-trip behind the real manager check.
+		const resolveLater = (value: boolean) => async () => {
+			await nextMacrotask();
+			return value;
 		};
 
 		it.each<[string, (input: IGetTimeLogReportInput) => Promise<unknown>]>(reportMethods)(
@@ -178,7 +123,7 @@ describe('TimeLogService', () => {
 				await run(request);
 
 				expect(canManageEmployees).toHaveBeenCalledWith([TARGET_EMPLOYEE_ID], []);
-				const { conditions, parameters } = executedFilters();
+				const { conditions, parameters } = executedFilters(builder);
 				expect(conditions).toEqual(expect.arrayContaining(scopingConditions));
 				expect(parameters).toEqual(
 					expect.objectContaining({
@@ -196,7 +141,7 @@ describe('TimeLogService', () => {
 
 			await service.getDailyReport(request);
 
-			const { conditions, parameters } = executedFilters();
+			const { conditions, parameters } = executedFilters(builder);
 			expect(conditions).toEqual(expect.arrayContaining(scopingConditions));
 			expect(parameters).toEqual(expect.objectContaining({ employeeIds: [CURRENT_EMPLOYEE_ID] }));
 		});
@@ -207,7 +152,7 @@ describe('TimeLogService', () => {
 			await service.getDailyReport(request);
 
 			expect(canManageEmployees).not.toHaveBeenCalled();
-			const { conditions, parameters } = executedFilters();
+			const { conditions, parameters } = executedFilters(builder);
 			expect(conditions).toEqual(expect.arrayContaining(scopingConditions));
 			expect(parameters).toEqual(expect.objectContaining({ employeeIds: [TARGET_EMPLOYEE_ID] }));
 		});
@@ -218,7 +163,7 @@ describe('TimeLogService', () => {
 			await service.getDailyReport({ ...request, onlyMe: true });
 
 			expect(canManageEmployees).not.toHaveBeenCalled();
-			const { conditions, parameters } = executedFilters();
+			const { conditions, parameters } = executedFilters(builder);
 			expect(conditions).toEqual(expect.arrayContaining(scopingConditions));
 			expect(parameters).toEqual(expect.objectContaining({ employeeIds: [CURRENT_EMPLOYEE_ID] }));
 		});

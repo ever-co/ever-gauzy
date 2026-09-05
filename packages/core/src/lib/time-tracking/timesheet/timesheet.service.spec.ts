@@ -11,9 +11,14 @@
  */
 import '../../core/entities/internal';
 import { Test, TestingModule } from '@nestjs/testing';
-import { IGetTimesheetInput, IUser, PermissionsEnum } from '@gauzy/contracts';
-import { RequestContext } from '../../core/context';
+import { IGetTimesheetInput } from '@gauzy/contracts';
 import { MultiORMEnum } from '../../core/utils';
+import {
+	executedFilters,
+	mockRequestContext,
+	nextMacrotask,
+	RecordingQueryBuilder
+} from '../testing/recording-query-builder';
 import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repository';
 import { TimeSheetService } from './timesheet.service';
 
@@ -23,65 +28,17 @@ const USER_ID = 'd4c3b2a1-0f9e-4d8c-7b6a-5f4e3d2c1b0a';
 const CURRENT_EMPLOYEE_ID = '6f5e4d3c-2b1a-4098-8f7e-6d5c4b3a2918';
 const TARGET_EMPLOYEE_ID = '3a4b5c6d-7e8f-4a9b-8c0d-1e2f3a4b5c6d';
 
-type RecordedClause = { condition: unknown; parameters?: Record<string, unknown> };
-
-/**
- * Stand-in for TypeORM's SelectQueryBuilder that keeps only what matters here: `where(callback)`
- * clears the clause list and runs the callback synchronously, and the terminal calls render
- * whatever clauses exist at that instant. Same double as in time-log.service.spec.ts, since both
- * services attach their tenant scoping through the same filter-helper pattern.
- */
-class RecordingQueryBuilder {
-	readonly alias = 'timesheet';
-	/** Clauses present when the query executed, i.e. the ones that would have reached the SQL. */
-	executedClauses: RecordedClause[] | null = null;
-	private clauses: RecordedClause[] = [];
-
-	innerJoin(): this {
-		return this;
-	}
-
-	setFindOptions(): this {
-		return this;
-	}
-
-	where(where: unknown, parameters?: Record<string, unknown>): this {
-		this.clauses = [];
-		if (typeof where === 'function') {
-			where(this);
-		} else {
-			this.clauses.push({ condition: where, parameters });
-		}
-		return this;
-	}
-
-	andWhere(condition: unknown, parameters?: Record<string, unknown>): this {
-		this.clauses.push({ condition, parameters });
-		return this;
-	}
-
-	async getCount(): Promise<number> {
-		this.executedClauses = [...this.clauses];
-		return 0;
-	}
-
-	async getMany(): Promise<never[]> {
-		this.executedClauses = [...this.clauses];
-		return [];
-	}
-}
-
 describe('TimeSheetService', () => {
 	let service: TimeSheetService;
 	let builder: RecordingQueryBuilder;
 
 	beforeEach(async () => {
-		builder = new RecordingQueryBuilder();
+		builder = new RecordingQueryBuilder('timesheet');
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [TimeSheetService]
 		})
-			// Every dependency is automocked except the TypeORM repository, which hands out the recording builder.
+			// Every dependency is mocked to an empty object, except the TypeORM repository, which hands out the recording builder.
 			.useMocker((token) =>
 				token === TypeOrmTimesheetRepository
 					? { metadata: { tableName: 'timesheet' }, createQueryBuilder: () => builder }
@@ -94,7 +51,10 @@ describe('TimeSheetService', () => {
 		Object.defineProperty(service, 'ormType', { value: MultiORMEnum.TypeORM });
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
+		// Let a helper left dangling by an un-awaited call settle while the context mocks are still in
+		// place, so a regression fails on the assertions instead of crashing the worker.
+		await nextMacrotask();
 		jest.restoreAllMocks();
 	});
 
@@ -122,33 +82,35 @@ describe('TimeSheetService', () => {
 			['getTimeSheets', (input) => service.getTimeSheets(input)]
 		];
 
-		const actAsEmployee = () => {
-			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
-			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
-				id: USER_ID,
-				employeeId: CURRENT_EMPLOYEE_ID
-			} as IUser);
-			jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-				(permission) => permission !== PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
+		/**
+		 * getFilterTimesheetQuery has no awaited operation today, so calling it inside a
+		 * synchronous `where(callback)` would still attach every clause in time. Suspend it before
+		 * it runs, the way the first await added to it would, so the suite fails as soon as the
+		 * helper is called without being awaited again.
+		 */
+		const suspendFilterHelper = () => {
+			const original = TimeSheetService.prototype.getFilterTimesheetQuery;
+			jest.spyOn(service, 'getFilterTimesheetQuery').mockImplementation(async (qb, input) => {
+				await nextMacrotask();
+				return original.call(service, qb, input);
+			});
 		};
 
 		it.each<[string, (input: IGetTimesheetInput) => Promise<unknown>]>(queries)(
 			'%s applies the tenant, organization and date filters before executing',
 			async (_name, run) => {
-				actAsEmployee();
+				mockRequestContext({
+					tenantId: TENANT_ID,
+					user: { id: USER_ID, employeeId: CURRENT_EMPLOYEE_ID },
+					canChangeSelectedEmployee: false
+				});
+				suspendFilterHelper();
 
 				await run(request);
 
-				expect(builder.executedClauses).not.toBeNull();
-				const clauses = builder.executedClauses as RecordedClause[];
-				const conditions = clauses.map(({ condition }) =>
-					typeof condition === 'string'
-						? condition.replace(/`/g, '"')
-						: (condition as object).constructor.name
-				);
+				const { conditions, parameters } = executedFilters(builder);
 				expect(conditions).toEqual(expect.arrayContaining(scopingConditions));
-				expect(Object.assign({}, ...clauses.map(({ parameters }) => parameters ?? {}))).toEqual(
+				expect(parameters).toEqual(
 					expect.objectContaining({ tenantId: TENANT_ID, organizationId: ORGANIZATION_ID })
 				);
 			}
