@@ -137,7 +137,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 							brandColor: true
 						}
 					},
-					...(request?.relations ? { relations: parseFindOptionsRelations(request.relations) } : {})
+					...(request.relations ? { relations: parseFindOptionsRelations(request.relations) } : {})
 				});
 
 				// Apply filters to the query
