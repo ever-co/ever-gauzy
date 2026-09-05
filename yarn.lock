@@ -4904,7 +4904,7 @@
 
 "@electron/node-gyp@10.2.0-electron.1", "@electron/node-gyp@https://github.com/electron/node-gyp#06b29aafb7708acef8b3669835c8a7857ebc92d2":
   version "10.2.0-electron.1"
-  resolved "https://registry.npmjs.org/@electron/node-gyp/-/node-gyp-10.2.0-electron.1.tgz#ca5f125dcd0ffb275797c0c418c0d64005e0f815"
+  resolved "https://registry.yarnpkg.com/@electron/node-gyp/-/node-gyp-10.2.0-electron.1.tgz#ca5f125dcd0ffb275797c0c418c0d64005e0f815"
   integrity sha512-YdpRE6qSNYyf7gBv1LBDc8OAs8f/mZthzM1k4pFzodNq8dBGf64MWC5Bq8VVlgdafjQXLpINHvtRAUC9uinoqw==
   dependencies:
     env-paths "^2.2.0"
@@ -17062,12 +17062,12 @@
     debug "^4.4.3"
 
 "@typescript-eslint/scope-manager@8.56.0", "@typescript-eslint/scope-manager@8.69.0", "@typescript-eslint/scope-manager@^8.0.0":
-  version "8.61.1"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/scope-manager/-/scope-manager-8.61.1.tgz#2479921a40fdb0afa18f5838fae6167264b417b2"
-  integrity sha512-L2bdIeoQS8FlKAvONAr20w6OcLXeB+qiDKbAooS9A0Ben+iSIkBef0FxqwKWYqt5sa0i4KJtxVyVmhMylKzF5w==
+  version "8.69.0"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/scope-manager/-/scope-manager-8.69.0.tgz#13f3d1e25108e95a9ceb5a198806d1fa558f8c7a"
+  integrity sha512-ewfspqWvSxKSOaplqAUNbaSFO0eB6w1EtQ+esfYFRm3614Ty4uNtExkcbgd6nWsXphbqKyf9ZYdbZdv2xEoWEQ==
   dependencies:
-    "@typescript-eslint/types" "8.61.1"
-    "@typescript-eslint/visitor-keys" "8.61.1"
+    "@typescript-eslint/types" "8.69.0"
+    "@typescript-eslint/visitor-keys" "8.69.0"
 
 "@typescript-eslint/tsconfig-utils@8.55.0":
   version "8.55.0"
@@ -17115,11 +17115,6 @@
   version "8.56.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/types/-/types-8.56.0.tgz#a2444011b9a98ca13d70411d2cbfed5443b3526a"
   integrity sha512-DBsLPs3GsWhX5HylbP9HNG15U0bnwut55Lx12bHB9MpXxQ+R5GC8MwQe+N1UFXxAeQDvEsEDY6ZYwX03K7Z6HQ==
-
-"@typescript-eslint/types@8.61.1":
-  version "8.61.1"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/types/-/types-8.61.1.tgz#0c51f518e4e6848371a1c988e859d59eb7522d5a"
-  integrity sha512-G+CRlPqLv7Bz1IZVs03x5K59F1veqL0EJUROAdGhKsEq8qOiRiZbI+HUojPq5l0fEGOKModD9br6lObhB8zkoA==
 
 "@typescript-eslint/types@8.69.0", "@typescript-eslint/types@^8.69.0":
   version "8.69.0"
@@ -17181,12 +17176,12 @@
     "@typescript-eslint/types" "8.56.0"
     "@typescript-eslint/typescript-estree" "8.56.0"
 
-"@typescript-eslint/visitor-keys@8.55.0", "@typescript-eslint/visitor-keys@8.56.0", "@typescript-eslint/visitor-keys@8.61.1", "@typescript-eslint/visitor-keys@8.69.0", "@typescript-eslint/visitor-keys@^8.0.0":
-  version "8.61.1"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/visitor-keys/-/visitor-keys-8.61.1.tgz#546cf102b4efdb72a9a08e63a1b0d7d745eb66eb"
-  integrity sha512-6fJ9MHWtK14C1DSkiMlHUSOmrVebL7150xZJBlJiL62jjhIA4JmOq6flwBgDxIdBKKdoiZRel+dfPD5MLfny3w==
+"@typescript-eslint/visitor-keys@8.55.0", "@typescript-eslint/visitor-keys@8.56.0", "@typescript-eslint/visitor-keys@8.69.0", "@typescript-eslint/visitor-keys@^8.0.0":
+  version "8.69.0"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/visitor-keys/-/visitor-keys-8.69.0.tgz#f659785dbb79733c40499f71a65439e2033966b5"
+  integrity sha512-+rmdgPA+EXkNgKYvHvFfhrs35utXbwaC5PGpDquSXcoXQDKUA5UjV0LmTucG/4JXkM31BTu4TilHtrN8IVBe8w==
   dependencies:
-    "@typescript-eslint/types" "8.61.1"
+    "@typescript-eslint/types" "8.69.0"
     eslint-visitor-keys "^5.0.0"
 
 "@ungap/structured-clone@^1.0.0":
@@ -20339,9 +20334,9 @@ caniuse-api@^3.0.0:
     lodash.uniq "^4.5.0"
 
 caniuse-lite@^1.0.0, caniuse-lite@^1.0.30001699, caniuse-lite@^1.0.30001759, caniuse-lite@^1.0.30001766:
-  version "1.0.30001799"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001799.tgz#5c909138c27f1a61219d3e092071c1cc7d32dc55"
-  integrity sha512-hG1bReV+OUU+MOqK4t/ZWI0tZOyz3rqS9XuhOUz1cIcbwBKjOyJEJuw9ER5JuNyqxNk8u/JUVbGibBOL1yrjFw==
+  version "1.0.30001810"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001810.tgz#4970b477dea3278374de9bc43aa8f5d39fc3cda2"
+  integrity sha512-TITQPUkaz+aVk5GL6NhOdwk1aEaNTSDPsGFWrTuhKGtjTF70jL/Oht2W4c6rXUe5fu7Ie19VIahAXHIIiWWNeg==
 
 canonicalize@^1.0.1:
   version "1.0.8"
@@ -33089,7 +33084,7 @@ lru-cache@^6.0.0:
   dependencies:
     yallist "^4.0.0"
 
-lru.min@^1.1.0, lru.min@^1.1.3, lru.min@^1.1.4:
+lru.min@^1.1.0, lru.min@^1.1.4:
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/lru.min/-/lru.min-1.1.4.tgz#6ea1737a8c1ba2300cc87ad46910a4bdffa0117b"
   integrity sha512-DqC6n3QQ77zdFpCMASA1a3Jlb64Hv2N2DciFGkO/4L9+q/IpIAuRlKOvCXabtRW6cQf8usbmM6BE/TOPysCdIA==
@@ -35253,25 +35248,10 @@ mysql2@3.20.0:
     named-placeholders "^1.1.6"
     sql-escaper "^1.3.3"
 
-mysql2@^3.16.3:
-  version "3.17.2"
-  resolved "https://registry.yarnpkg.com/mysql2/-/mysql2-3.17.2.tgz#8a632d4b5f82d4531861c496b258904315a76287"
-  integrity sha512-/tFCtdqk5V5Aowpnzshryxuxp63ti4I7kcp3yqAKgWmhYXEXs8+F/IbQ6JTMzQPYc+ElnnhmMD2SqUYLtRVcTQ==
-  dependencies:
-    aws-ssl-profiles "^1.1.2"
-    denque "^2.1.0"
-    generate-function "^2.3.1"
-    iconv-lite "^0.7.2"
-    long "^5.3.2"
-    lru.min "^1.1.3"
-    named-placeholders "^1.1.6"
-    seq-queue "^0.0.5"
-    sql-escaper "^1.3.3"
-
-mysql2@^3.17.3:
-  version "3.17.3"
-  resolved "https://registry.yarnpkg.com/mysql2/-/mysql2-3.17.3.tgz#aa19f55dd7efc5b28e19f020153d0fb64535539f"
-  integrity sha512-uCLmQMe1l96Sb6J3Ii8YJTOWJkhRmxlLJFdOfhD68jPpGTzK2fxEkFMpf5gewyHgUB0FJKzuAuPhYS+oPB0/vA==
+mysql2@^3.16.3, mysql2@^3.17.3:
+  version "3.23.1"
+  resolved "https://registry.yarnpkg.com/mysql2/-/mysql2-3.23.1.tgz#28158b820dd0fa2f279a3ba1ee6b02e384e0ada1"
+  integrity sha512-tTuRnC7qCet2IOfSNMYZ5SwXuBnfvBPAcIA28P0gtruXyZlU1LMxA6uha32kYypoFgyYklMqhLWwt4laYwXR/Q==
   dependencies:
     aws-ssl-profiles "^1.1.2"
     denque "^2.1.0"
@@ -35280,7 +35260,7 @@ mysql2@^3.17.3:
     long "^5.3.2"
     lru.min "^1.1.4"
     named-placeholders "^1.1.6"
-    sql-escaper "^1.3.3"
+    sql-escaper "^1.5.1"
 
 mz@^2.4.0:
   version "2.7.0"
@@ -35624,9 +35604,9 @@ no-case@^2.2.0:
     lower-case "^1.1.1"
 
 node-abi@^3.3.0, node-abi@^3.45.0, node-abi@^3.73.0, node-abi@^3.78.0:
-  version "3.92.0"
-  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-3.92.0.tgz#18e2214677499b8dda81ffcd095afc763d5a9802"
-  integrity sha512-KdHvFWZjEKDf0cakgFjebl371GPsISX2oZHcuyKqM7DtogIsHrqKeLTo8wBHxaXRAQlY2PsPlZmfo+9ZCxEREQ==
+  version "3.96.0"
+  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-3.96.0.tgz#8b038bc6cca97d6cec2e9aafdb81b900da1ff80d"
+  integrity sha512-rebQ/lz7i0EkoLzUVSrKRzA69zMkwLp95kKMWoMDkkM00Suxz0D7zEQPwRml5fQum24mj7bPvmlgLAmu2JCiYg==
   dependencies:
     semver "^7.3.5"
 
@@ -42198,11 +42178,6 @@ send@~0.19.0, send@~0.19.1:
     range-parser "~1.2.1"
     statuses "~2.0.2"
 
-seq-queue@^0.0.5:
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/seq-queue/-/seq-queue-0.0.5.tgz#d56812e1c017a6e4e7c3e3a37a1da6d78dd3c93e"
-  integrity sha512-hr3Wtp/GZIc/6DAGPDcV4/9WoZhjrkXsi5B/07QgX8tsdc6ilr7BFM6PM6rbdAX1kFSDYeZGLipIZZKyQP0O5Q==
-
 sequelize-pool@^7.1.0:
   version "7.1.0"
   resolved "https://registry.yarnpkg.com/sequelize-pool/-/sequelize-pool-7.1.0.tgz#210b391af4002762f823188fd6ecfc7413020768"
@@ -43110,10 +43085,10 @@ sprintf-js@~1.0.2:
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
   integrity sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==
 
-sql-escaper@^1.3.3:
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/sql-escaper/-/sql-escaper-1.3.3.tgz#65faf89f048d26bb9a75566b82b5990ddf8a5b7f"
-  integrity sha512-BsTCV265VpTp8tm1wyIm1xqQCS+Q9NHx2Sr+WcnUrgLrQ6yiDIvHYJV5gHxsj1lMBy2zm5twLaZao8Jd+S8JJw==
+sql-escaper@^1.3.3, sql-escaper@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/sql-escaper/-/sql-escaper-1.5.1.tgz#fbaee511294d1f7da92fb68ca1faee2255839c7b"
+  integrity sha512-4toX5E1fQbBrpfXidaHnF0669nkAdETeIPTs2SUjxxD7RRIs9ICG4gtpmfc68JCEKehsdwLFqBu9VlQqZ1P1gg==
 
 sql-highlight@^6.1.0:
   version "6.1.0"
