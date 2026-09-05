@@ -1,22 +1,200 @@
 @use 'themes' as *;
+// Namespaced: `var` forwards the theming module that `themes` is already loaded
+// as `*` above, and two `as *` loads of it would collide.
+@use 'var' as v;
 
+$radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
+
+// `height: 100%` used to sit here — a percentage of a host whose own size comes
+// out of flex layout on the tab, which is nothing the cascade can resolve at
+// this point, so it fell back to content height. The component grows into
+// whatever height it is handed and falls back to its content elsewhere.
 :host {
-  height: 100%;
-  nb-card {
-    background-color: var(--gauzy-card-2);
-    border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 
-    nb-card-body {
-      background-color: var(--card-background-color);
-      border-radius: 0.625rem;
+// ── The two panels ──────────────────────────────────────────────────────────
+.location {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  padding: 1rem;
+  flex: 1 1 auto;
+  min-height: 0;
+}
 
-      form {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: 1rem;
-        height: 100%;
-      }
+.location__panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
+}
+
+.location__panel--form {
+  // `min()` rather than a flat basis. The layout column loses up to 860px to the
+  // expanded AI chat, and no viewport media query can see that — the window did
+  // not change. The panel takes 22rem when there is room for it and a proportion
+  // of the column when there is not.
+  flex: 0 1 min(22rem, 40%);
+}
+
+.location__panel--map {
+  flex: 1 1 auto;
+  // Leaflet paints square corners of its own, so the panel does the clipping.
+  overflow: hidden;
+  // Leaflet measures its container when it initialises. A floor guarantees there
+  // is something to measure even before flex has resolved, and keeps the map
+  // usable rather than letting it collapse to a strip on a short viewport.
+  min-height: 22rem;
+}
+
+.location__fields {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.location__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+
+  button {
+    min-width: 7.5rem;
+  }
+}
+
+// ── Address fields ──────────────────────────────────────────────────────────
+// `ga-location-form` lays itself out on a bootstrap grid — `col-11` for the
+// search box, `col-8` for country and city, `col-6` for the postcode. Those
+// widths were chosen for a form running the full width of a page; in a 22rem
+// panel they read as four different field lengths chosen at random, and the
+// postcode ends up around 150px. One column, one width, one rhythm.
+//
+// Done from here rather than in `location-form.component.scss` because that
+// component is shared far more widely than this one — organizations, contacts,
+// candidates — and those pages still want their own grid.
+:host ::ng-deep ga-location-form {
+  display: block;
+
+  .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  [class^='col-'],
+  [class*=' col-'] {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  // Latitude and longitude are one value read in two halves, so they keep a
+  // shared row. `formgroupname` is the only stable hook the template offers on
+  // it — attribute NAMES are case-insensitive in HTML, so the camelCase
+  // `formGroupName` in the template still matches this.
+  .row[formgroupname] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 0.75rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  // The coordinates toggle is a control, not a field, and had nothing but the
+  // bootstrap row margin under it.
+  nb-checkbox {
+    display: inline-flex;
+    margin-bottom: 1rem;
+  }
+
+  // The autocomplete search is a different kind of control from the fields
+  // under it — it FILLS them rather than being one of them — and it had nothing
+  // but the same 1rem gap between it and Country to say so. A rule separates the
+  // two, so the panel reads as "search, or enter it yourself".
+  //
+  // `> .row:first-child` is the search row: the `@if` block that renders it is
+  // the first thing in `.fields`, and the `ng-container` holding the rest emits
+  // no element of its own, so its rows are siblings rather than children.
+  > .row:first-child {
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.25rem;
+    border-bottom: $hairline;
+  }
+}
+
+// ── Map ─────────────────────────────────────────────────────────────────────
+// `ga-leaflet-map` wraps its map div in `.row.mt-3.mb-3 > .col-12`, and the
+// `.leaflet-container` rule in `forms/maps/leaflet.component.scss` — written as a
+// bare `::ng-deep`, so it is scoped to nothing and lands globally — hard-codes
+// `height: calc(100vh - 30rem) !important`. That is a guess at the page chrome
+// of whatever page the map happens to be on, and it has nothing to do with the
+// panel it is sitting in here: it left the map either short of the panel or
+// running past it, and the panel's fill showing through the difference.
+//
+// Flex the whole chain instead, so the map is exactly as tall as its panel and
+// no arithmetic is involved.
+:host ::ng-deep ga-leaflet-map {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  > .row {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    // Unsets the `mt-3 mb-3` the template carries. Inside a panel the spacing is
+    // the panel's to give, and a margin here would show as a band of panel fill
+    // above and below the tiles.
+    margin: 0;
+
+    > .col-12 {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 0;
     }
+  }
+
+  .leaflet-container {
+    flex: 1 1 auto;
+    // `!important` answers an `!important`: the rule being overridden is global
+    // and carries one, so nothing quieter reaches it. `auto` rather than a
+    // height of our own — flex-grow above is what sizes this.
+    height: auto !important;
+    // The panel already clips to the radius; a second rounding here would show
+    // as a lighter hairline inside the corner.
+    border-radius: 0 !important;
+  }
+}
+
+// Below the large break the two panels have no useful width side by side, so
+// they stack: the form at its natural height, the map on the floor it needs to
+// stay legible.
+@media only screen and (max-width: v.$break-lg) {
+  .location {
+    flex-direction: column;
+  }
+
+  .location__panel--form {
+    flex: 0 0 auto;
+  }
+
+  .location__panel--map {
+    flex: 0 0 22rem;
   }
 }

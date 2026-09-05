@@ -11,15 +11,30 @@ import { Store } from '@gauzy/ui-core/core';
     selector: 'ga-edit-employee-contacts',
     templateUrl: './edit-employee-contact.component.html',
     styles: [
+        /*
+         * The tabset hands this tab the height the card body has left over
+         * (edit-employee-profile.component.scss), so there is nothing here left
+         * to measure: the `height: calc(100vh - 20.5rem)` this used to carry was
+         * a second guess at the page chrome alongside the card's own, and when
+         * the two disagreed the tab stopped short and left a band of bare card
+         * body under the panel.
+         *
+         * `.container-contact` then grows into the tab rather than asking for
+         * `height: 100%` of a host whose own size comes out of flex layout — a
+         * percentage the cascade cannot resolve. `flex-shrink: 0` because the
+         * host scrolls: a long list keeps its height and scrolls inside the host.
+         */
         `
 			:host {
 				overflow-y: auto;
-				height: calc(100vh - 20.5rem);
+				display: flex;
+				flex-direction: column;
 
 				.container-contact {
 					background-color: var(--gauzy-card-2);
 					padding: 1rem;
-					height: 100%;
+					height: auto;
+					flex: 1 0 auto;
 				}
 
 				nb-card {

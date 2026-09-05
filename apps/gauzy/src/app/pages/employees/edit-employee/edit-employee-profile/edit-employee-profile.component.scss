@@ -32,3 +32,67 @@
     }
   }
 }
+
+// ── Tab body fill ───────────────────────────────────────────────────────────
+// Carry the card body's height down to the routed tab so a tab shorter than the
+// card fills it instead of stopping at its own content and leaving a band of
+// empty canvas underneath.
+//
+// Nebular's `nb-route-tabset` template is `<ul class="route-tabset">` followed
+// by `<router-outlet>`, so the routed component renders as the outlet's SIBLING
+// inside the tabset — `> router-outlet ~ *` is how you address it. The outlet
+// itself is taken out of the flow so it is not a zero-height flex item between
+// the strip and the tab.
+//
+// This mirrors the same chain on the dashboard tabset
+// (pages/dashboard/dashboard.component.scss). `min-height: 0` at every step
+// because a flex item's default `min-height: auto` refuses to shrink below its
+// content, which is what turns a long tab into a page-level scroll instead of a
+// scroll inside the card.
+:host ::ng-deep .tabset-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  > nb-route-tabset {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    > .route-tabset {
+      flex: 0 0 auto;
+    }
+
+    > router-outlet {
+      display: none;
+    }
+
+    > router-outlet ~ * {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      // The routed tab is the scroller for every tab (each one hands its own
+      // fill element `flex: 1 0 auto` and lets overflow come here), so without
+      // this its scrollbar runs down the very edge of the card body — over the
+      // card's rounded corner, hard against the frame.
+      //
+      // It has to be a MARGIN. Padding would not move it: a scrollbar is laid
+      // out at the border edge of the scroll container, outside the padding box,
+      // so `padding-inline-end` would only push the content away from a
+      // scrollbar that stayed where it was. Shrinking the border box is the only
+      // thing that brings the bar inward.
+      //
+      // 0.5rem, half the 1rem margin the tabs' inner cards carry (`m-3`), so the
+      // bar lands in the gutter beside the card rather than on top of its edge.
+      // Logical, not `nb-ltr`/`nb-rtl`: those emit a `[dir=ltr]` prefix that has
+      // to be paired with `:host` to survive Angular's style scoping, which this
+      // nested `::ng-deep` selector cannot do — `margin-inline-end` flips on its
+      // own regardless.
+      margin-inline-end: 0.5rem;
+    }
+  }
+}

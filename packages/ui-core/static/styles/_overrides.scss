@@ -705,6 +705,68 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     // entity-select row the same way. Only the text changes here.
   }
 
+  // ── Language selector panel ─────────────────────────────────────────────
+  //
+  // The `img` rule in `nb-overrides()` above pins EVERY image in EVERY ng-select
+  // panel to a 24x24 square. That is the right box for the thing it was written
+  // for — the round-ish avatars and org logos in the entity selects — but the
+  // language selector's images are 3:2 country FLAGS drawn at 18x12 in the
+  // trigger. In the panel they were blown up to 24x24 and cropped square, which
+  // took each row from ~32px to ~36px and left the open list visibly heavier
+  // than the control it belongs to.
+  //
+  // Same treatment, and the same mechanism, as `gauzy-entity-select` directly
+  // above: the class rides on the `<ng-select>`'s static `class` attribute, and
+  // ng-select copies it onto the panel it appends to `<body>`
+  // (`[class]="appendToValue ? (ngClass() ? ngClass() : classes) : null"`, with
+  // `classes` read from the host attribute). A component stylesheet cannot reach
+  // an appended panel at all, which is why this lives here and not with the
+  // component.
+  .ng-dropdown-panel.language-select {
+    .ng-dropdown-panel-items .ng-option {
+      display: flex !important;
+      align-items: center;
+      // Resolves the TRIGGER's own token rather than the menu one, so the closed
+      // control and the open list cannot drift apart on a future density pass.
+      // The two values are equal today; this is what keeps them equal.
+      //
+      // `!important` on the three metrics that decide how big a row LOOKS. The
+      // base `.ng-option` rule above is `!important` on padding for its own
+      // reasons, and an important declaration beats a more specific plain one —
+      // so a plain `font-size`/`line-height` here would be at the mercy of
+      // whatever the library sheet (loaded after us) and the theme happen to
+      // resolve to. These rows have to read as the trigger's own menu; pin them.
+      font-size: nb-theme(select-medium-text-font-size) !important;
+      line-height: 1.125rem !important;
+      font-weight: 400;
+      // The inline inset lands the option text on the SAME x as the trigger's
+      // text. The trigger insets its value by `$control-padding-x` (1rem) from
+      // the edge of the control; the panel already spends 1px of border plus the
+      // 4px `.ng-dropdown-panel-items` padding before a row starts, so the row
+      // itself owes the remaining 11px. Written as the subtraction so it stays
+      // correct if either of those two changes.
+      padding: 0.3125rem calc(1rem - 5px) !important;
+      // 5px + 5px + an 18px line = a 28px row, against the 32-38px it was.
+      min-height: 1.75rem;
+      // The panel is the trigger's width now, so a long language name has to
+      // truncate rather than force the panel wider. `min-width: 0` is what lets
+      // the flex child actually shrink to allow it.
+      min-width: 0;
+    }
+
+    // The flag's real aspect, matching `.flag-icon` in the selector's own
+    // stylesheet — which loses to the 24px rule above on specificity
+    // (a component's `.flag-icon[_ngcontent]` is one element short of
+    // `.ng-dropdown-panel .ng-dropdown-panel-items img`).
+    .ng-dropdown-panel-items img {
+      flex: none;
+      width: 1.125rem;
+      height: 0.75rem;
+      border-radius: 2px;
+      object-fit: cover;
+    }
+  }
+
   .ng-dropdown-panel.gauzy-entity-select {
     .ng-dropdown-panel-items {
       padding: 3px;
@@ -1493,8 +1555,19 @@ angular2-smart-table {
 // `!important` on the two properties that have to beat an INLINE style; the
 // note above the `.ng-dropdown-panel` block in `nb-overrides()` explains why the
 // rest of this file needs it too.
+//
+// `:not(.language-select)` opts the language dropdown OUT of the widening. The
+// problem this rule solves is a trigger too NARROW to show its options — a
+// filter cell in a table row. A form field is the opposite case: its trigger is
+// already the width of a form column, so `max-content` on a long option
+// ("Limburgish, Limburgan, Limburger") only made the panel spill past the field
+// and over the column beside it. Excluding it here rather than overriding it in
+// the block below is deliberate: ng-select writes the correct width INLINE
+// (`width`/`min-width` = the trigger's box, see `_updateXPosition()`), and an
+// inline style cannot beat an `!important` rule — the only way to let it stand
+// is for this rule not to match.
 @supports (max-width: max-content) {
-  html:not([dir='rtl']) > body > ng-dropdown-panel.ng-dropdown-panel {
+  html:not([dir='rtl']) > body > ng-dropdown-panel.ng-dropdown-panel:not(.language-select) {
     width: auto !important;
     right: 1rem !important;
     max-width: max-content;

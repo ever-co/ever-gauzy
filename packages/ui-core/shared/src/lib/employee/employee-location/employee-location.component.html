@@ -1,35 +1,42 @@
-<nb-card>
-	<nb-card-body class="m-3">
-		<form [formGroup]="form">
-			<div class="container">
-				<div class="row">
-					<div class="col-4">
-						<ga-location-form
-							#locationFormDirective
-							[form]="form"
-							[showAutocompleteSearch]="true"
-							(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
-							(mapGeometryEmitter)="onGeometrySend($event)"
-						></ga-location-form>
-					</div>
-					<div class="col-8">
-						<ga-leaflet-map
-							#leafletTemplate
-							(mapClicked)="onMapClicked($event)"
-						></ga-leaflet-map>
-					</div>
-				</div>
-			</div>
-			<div class="actions">
-				<button
-					[disabled]="form.invalid"
-					(click)="submitForm()"
-					nbButton
-					status="success"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
-			</div>
-		</form>
-	</nb-card-body>
-</nb-card>
+<!--
+	Address and map as two panels side by side, rather than `col-4`/`col-8` inside
+	an `nb-card` inside the tab's own card — three levels of chrome spent on what
+	is really one form and one map. They are two views of the same value: type an
+	address on the left and the pin follows, click the map on the right and the
+	fields follow, so they read better as a pair of equals than as a form with an
+	illustration next to it.
+-->
+<form class="location" [formGroup]="form">
+	<section class="location__panel location__panel--form">
+		<div class="location__fields">
+			<ga-location-form
+				#locationFormDirective
+				[form]="form"
+				[showAutocompleteSearch]="true"
+				(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
+				(mapGeometryEmitter)="onGeometrySend($event)"
+			></ga-location-form>
+		</div>
+
+		<!--
+			The commit action belongs to the fields it commits. It used to sit under
+			BOTH columns, which put it under the map as much as under the form and
+			left it reading as a page-level action.
+		-->
+		<footer class="location__actions">
+			<button
+				type="button"
+				nbButton
+				status="success"
+				[disabled]="form.invalid"
+				(click)="submitForm()"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</footer>
+	</section>
+
+	<section class="location__panel location__panel--map">
+		<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)"></ga-leaflet-map>
+	</section>
+</form>

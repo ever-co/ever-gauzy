@@ -1,25 +1,35 @@
-@use 'themes' as *;
-
+// The tabset already hands this tab the height the card body has left over
+// (edit-employee-profile.component.scss), so there is nothing here left to
+// measure. `height: calc(100vh - 20.5rem)` was a SECOND guess at the page chrome
+// alongside the card's own, and whenever the two disagreed — as they do the
+// moment the header collapses to the "select an employee" line — this one won
+// and the tab stopped short of the bottom of the card, leaving a band of bare
+// card body under the map. Same removal as the account tab
+// (edit-employee-main.component.scss).
+//
+// The tab surface is painted here rather than left to `ga-employee-location`,
+// which paints its own two panels: without a fill on the tab, the gap between
+// and around them showed the card body straight through.
 :host {
+  background-color: var(--gauzy-card-2);
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
-  height: calc(100vh - 20.5rem);
-  ::ng-deep {
-    .container {
-      max-width: none;
-      .col-4 {
-        @include nb-ltr(padding-left, 0 !important);
-        @include nb-rtl(padding-right, 0 !important);
-      }
-    }
-  }
 
-  ::ng-deep {
-    nb-card {
-      padding: 1rem;
-
-      nb-card-body {
-        margin: 0 !important;
-      }
-    }
+  // `ga-employee-location` is shared with the candidate page, so its own
+  // `height: 100%` is left alone there and overridden only for this tab: the
+  // percentage resolves against a host sized by flex layout, which the cascade
+  // cannot see. `flex-shrink: 0` because the host scrolls — a panel taller than
+  // the tab keeps its height and scrolls inside the host.
+  //
+  // Everything below this used to be a set of `::ng-deep` patches into that
+  // component's bootstrap scaffolding (`.container`, `.col-4`, its `nb-card`).
+  // The scaffolding is gone and the component owns its own layout now, so the
+  // patches went with it.
+  > ga-employee-location {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    flex: 1 0 auto;
   }
 }

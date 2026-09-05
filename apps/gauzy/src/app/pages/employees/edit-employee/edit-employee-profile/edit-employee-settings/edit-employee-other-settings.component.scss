@@ -1,11 +1,27 @@
 @use 'themes' as *;
 @use 'var' as *;
 
+// The tabset hands this tab the height the card body has left over
+// (edit-employee-profile.component.scss). `height: 100%` here was a percentage
+// of that — of a box whose own size comes out of flex layout, i.e. of nothing
+// the cascade can resolve at this point — so it fell back to content height. As
+// a flex column the tab simply passes what it is given on to the form.
 :host {
-  height: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 // main sections
+// `height: calc(100vh - 19.25rem)` was a SECOND guess at the page chrome
+// alongside the card's own, and the two disagree the moment the page header
+// collapses to the "select an employee" line: the form was then sized to a
+// height the tab does not have, so it either stopped short — leaving a band of
+// bare card body beneath it — or ran past the bottom of the card. Growing into
+// the tab is the same intent without the guess. `flex-shrink: 0` because the
+// host scrolls: a form taller than the tab keeps its height and scrolls inside
+// the host rather than being squeezed back to fit.
 :host .main-form {
   width: 100%;
   background-color: nb-theme(gauzy-card-2);
@@ -14,8 +30,9 @@
   padding: 20px;
   @include nb-ltr(padding-right, 8px);
   @include nb-rtl(padding-left, 8px);
-  overflow: hidden;
-  height: calc(100vh - 19.25rem);
+  height: auto;
+  flex: 1 0 auto;
+  min-height: 0;
 }
 .aside-nav {
   width: 180px;
@@ -71,9 +88,13 @@
 .fields-section {
   width: calc(100% - 230px);
 }
+// The `overflow: hidden` the form used to carry, and the `max-height:
+// calc(100% - 3rem)` cap here, were the pair that turned this tab into a scroll
+// INSIDE the accordion column. Both hung off the form's fixed viewport height;
+// with the form now growing with its content the percentage resolves against an
+// auto-height box and would cap nothing anyway. The tab host is the scroller
+// instead, which is where every other tab scrolls.
 :host .accordion-section {
-  overflow: auto;
-  max-height: calc(100% - 3rem);
   @include nb-ltr(padding-right, 8px);
   @include nb-rtl(padding-left, 8px);
 }

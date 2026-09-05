@@ -19,18 +19,32 @@ $radius: nb-theme(border-radius);
   background-color: var(--gauzy-card-2);
   border: unset;
 }
+// The tabset already hands this tab the height the card body has left over
+// (edit-employee-profile.component.scss). `calc($default-card-height + 0.25rem)`
+// on the card body below was a SECOND guess at the page chrome alongside the
+// card's own, and the two disagree the moment the page header collapses to the
+// "select an employee" line: the inner card was then sized to a height the tab
+// does not have, so the tab scrolled for no reason on a short form and still
+// left bare card body under a tall one. `auto` lets the body take the height
+// the flex chain gives it, the same way the account tab does
+// (edit-employee-main.component.scss).
 :host {
   background: var(--gauzy-card-2);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 
-  @include nb-card_overrides(
-    auto,
-    calc($default-card-height + 0.25rem),
-    $default-radius
-  );
+  @include nb-card_overrides(auto, auto, $default-radius);
 
+  // The mixin puts `height: 100%` on the card — a percentage of a host whose own
+  // height comes out of flex layout, i.e. of nothing the cascade can resolve
+  // here. Growing into the tab says it directly. `flex-shrink: 0` because the
+  // host scrolls: a form taller than the tab keeps its height and scrolls inside
+  // the host rather than being squeezed back to fit.
   nb-card {
     border-radius: 0;
+    height: auto;
+    flex: 1 0 auto;
   }
 
   nb-card-body {

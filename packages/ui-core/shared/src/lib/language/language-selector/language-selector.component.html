@@ -1,5 +1,15 @@
 @if (_template === 'ng-select') {
+  <!-- No `[size]` here: `ng-select` has no such input (checked against the
+       installed build's input list), so the binding only ever wrote a stray DOM
+       property. `size` is honoured on the `nb-select` branch below, which does
+       declare it. -->
+  <!-- `class` is not decoration: ng-select copies the host's STATIC class
+       attribute onto the panel it appends to <body>, and that is the only
+       handle a stylesheet has on an appended panel. `.ng-dropdown-panel.language-select`
+       in `static/styles/_overrides.scss` uses it to give the flags their real
+       3:2 box back — the global panel rule sizes every image 24x24 square. -->
   <ng-select
+    class="language-select"
     [items]="languages"
     appendTo="body"
     bindLabel="name"
@@ -8,49 +18,56 @@
     [addTag]="(addTag) ? addLanguage : null"
     (change)="onChangeLanguage($event)"
     [closeOnSelect]="true"
-    [size]="size"
     [clearable]="clearable"
     [placeholder]="placeholder"
+    [labelForId]="labelForId"
     [(ngModel)]="selectedLanguageCode"
-    >
+  >
     <ng-template ng-label-tmp let-item="item">
-      @if (getFlagUrl(item?.code); as flagUrl) {
-        <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
-      }
-      {{ item?.name }}
+      <span class="language-option">
+        @if (getFlagUrl(item?.code); as flagUrl) {
+          <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" width="18" height="12" alt="" />
+        }
+        <span class="language-option-name">{{ item?.name }}</span>
+      </span>
     </ng-template>
     <ng-template ng-option-tmp let-item="item">
-      @if (getFlagUrl(item?.code); as flagUrl) {
-        <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
-      }
-      {{ item?.name }}
+      <span class="language-option">
+        @if (getFlagUrl(item?.code); as flagUrl) {
+          <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" width="18" height="12" alt="" />
+        }
+        <span class="language-option-name">{{ item?.name }}</span>
+      </span>
     </ng-template>
     <ng-template ng-tag-tmp let-newLanguageName="searchTerm">
-      <b>{{ 'LANGUAGE_PAGE.ADD_NEW_LANGUAGE' | translate }}</b
-        >: {{ newLanguageName }}
-      </ng-template>
-    </ng-select>
-  } @else {
-    <nb-select
-      fullWidth
-      (selectedChange)="onSelectedChange($event)"
-      [size]="size"
-      [placeholder]="placeholder"
-      [(ngModel)]="selectedLanguageCode"
-      >
-      <nb-select-label>
+      <b>{{ 'LANGUAGE_PAGE.ADD_NEW_LANGUAGE' | translate }}</b>: {{ newLanguageName }}
+    </ng-template>
+  </ng-select>
+} @else {
+  <nb-select
+    fullWidth
+    (selectedChange)="onSelectedChange($event)"
+    [size]="size"
+    [placeholder]="placeholder"
+    [(ngModel)]="selectedLanguageCode"
+  >
+    <nb-select-label>
+      <span class="language-option">
         @if (getFlagUrl(selectedLanguage?.code); as flagUrl) {
-          <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
+          <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" width="18" height="12" alt="" />
         }
-        {{ selectedLanguage?.name }}
-      </nb-select-label>
-      @for (language of languages; track language) {
-        <nb-option [value]="language.code">
+        <span class="language-option-name">{{ selectedLanguage?.name }}</span>
+      </span>
+    </nb-select-label>
+    @for (language of languages; track language) {
+      <nb-option [value]="language.code">
+        <span class="language-option">
           @if (getFlagUrl(language.code); as flagUrl) {
-            <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
+            <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" width="18" height="12" alt="" />
           }
-          {{ language.name }}
-        </nb-option >
-      }
-    </nb-select>
-  }
+          <span class="language-option-name">{{ language.name }}</span>
+        </span>
+      </nb-option>
+    }
+  </nb-select>
+}

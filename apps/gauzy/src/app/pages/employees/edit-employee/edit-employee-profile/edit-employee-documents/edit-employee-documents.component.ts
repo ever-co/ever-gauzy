@@ -21,6 +21,40 @@ import { EmployeeStore } from '@gauzy/ui-core/core';
 @Component({
 	selector: 'ga-edit-employee-documents',
 	templateUrl: './edit-employee-documents.component.html',
+	/*
+	 * This tab carried no styles at all, so it was the one tab with no surface of
+	 * its own: the panel floated on bare card body, and on a deployment with the
+	 * Documents feature off the tab rendered nothing and the card body showed
+	 * through for its whole height. The fill and the flex column are the same two
+	 * the sibling tabs use — the tabset hands each tab the height the card body
+	 * has left over (edit-employee-profile.component.scss), and the panel grows
+	 * into it. `flex-shrink: 0` because the host scrolls: a long list of links
+	 * keeps its height and scrolls inside the host.
+	 *
+	 * `gz-document-links-panel` is shared with the invoice and estimate pages, so
+	 * it is sized from here rather than in its own stylesheet.
+	 */
+	styles: [
+		`
+			:host {
+				background-color: var(--gauzy-card-2);
+				padding: 1rem;
+				display: flex;
+				flex-direction: column;
+				overflow-y: auto;
+			}
+
+			:host > gz-document-links-panel {
+				display: flex;
+				flex-direction: column;
+				flex: 1 0 auto;
+			}
+
+			:host ::ng-deep gz-document-links-panel > .docs-links-panel {
+				flex: 1 0 auto;
+			}
+		`
+	],
 	standalone: false
 })
 export class EditEmployeeDocumentsComponent implements OnInit, OnDestroy {
