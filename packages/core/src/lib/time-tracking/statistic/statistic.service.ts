@@ -44,7 +44,7 @@ import {
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
 import { TimeLog, TimeSlot } from './../../core/entities/internal';
-import { MultiORMEnum, getDateRangeFormat, getORMType, isDevelopment } from './../../core/utils';
+import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils';
 import { UserService } from '../../user/user.service';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -52,6 +52,7 @@ import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activ
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
+import { debugInDevelopment } from '../../logger';
 import { moment as timezoneMoment } from '../../core/moment-extend';
 import {
 	buildProfileActivityDayBuckets,
@@ -128,16 +129,6 @@ export class StatisticService {
 		private readonly configService: ConfigService,
 		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {}
-
-	/**
-	 * Developer-only diagnostics. Silent outside a development runtime, and the message is only built
-	 * when it will be printed, so hot paths (dashboard counts, team listing) never pay for it.
-	 */
-	private debug(message: () => string): void {
-		if (isDevelopment()) {
-			this.logger.debug(message());
-		}
-	}
 
 	/**
 	 * Verifies the profile activity target and request-scoped viewing policy before a time-log read.
@@ -605,7 +596,10 @@ export class StatisticService {
 
 		// Convert the overall duration in seconds to hours
 		const overallDurationInHours = overallDurationInSeconds / 3600;
-		this.debug(() => `Overall Tracked Time Duration: ${overallDurationInSeconds}s (${overallDurationInHours}h)`);
+		debugInDevelopment(
+			this.logger,
+			() => `Overall Tracked Time Duration: ${overallDurationInSeconds}s (${overallDurationInHours}h)`
+		);
 
 		return overallDurationInHours;
 	}
@@ -2078,7 +2072,7 @@ export class StatisticService {
 					}
 					sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
 					sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-					this.debug(() => `${sq.toString()} || Get Today Statistics Query MikroORM`);
+					debugInDevelopment(this.logger, () => `${sq.toString()} || Get Today Statistics Query MikroORM`);
 					// Execute the raw SQL query and get the results
 					todayStatistics = (await knex.raw(sq.toString())).rows || [];
 				}
@@ -2145,7 +2139,7 @@ export class StatisticService {
 					qb.groupBy(p(`"${qb.alias}"."id"`));
 					qb.addGroupBy(p(`"task"."id"`));
 					qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-					this.debug(() => `${qb.getQuery()} || Get Today Statistics Query TypeORM`);
+					debugInDevelopment(this.logger, () => `${qb.getQuery()} || Get Today Statistics Query TypeORM`);
 					// Execute the SQL query and get the results
 					todayStatistics = await qb.getRawMany();
 				}
@@ -2216,7 +2210,7 @@ export class StatisticService {
 					}
 					sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
 					sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-					this.debug(() => `${sq.toString()} || Get Statistics Query MikroORM`);
+					debugInDevelopment(this.logger, () => `${sq.toString()} || Get Statistics Query MikroORM`);
 					// Execute the raw SQL query and get the results
 					statistics = (await knex.raw(sq.toString())).rows || [];
 				}
@@ -2286,7 +2280,10 @@ export class StatisticService {
 					qb.groupBy(p(`"${qb.alias}"."id"`));
 					qb.addGroupBy(p(`"task"."id"`));
 					qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-					this.debug(() => `${JSON.stringify(qb.getQueryAndParameters())} || Get Statistics Query TypeORM`);
+					debugInDevelopment(
+						this.logger,
+						() => `${JSON.stringify(qb.getQueryAndParameters())} || Get Statistics Query TypeORM`
+					);
 					// Execute the raw SQL query and get the results
 					statistics = await qb.getRawMany();
 				}
@@ -2341,7 +2338,7 @@ export class StatisticService {
 							}
 						});
 					}
-					this.debug(() => `${sq.toString()} || Get Total Duration Query MikroORM`);
+					debugInDevelopment(this.logger, () => `${sq.toString()} || Get Total Duration Query MikroORM`);
 					// Execute the raw SQL query and get the results
 					[totalDuration] = (await knex.raw(sq.toString())).rows || [];
 				}
@@ -2383,7 +2380,7 @@ export class StatisticService {
 							})
 						);
 					}
-					this.debug(() => `${qb.getQuery()} || Get Total Duration Query TypeORM`);
+					debugInDevelopment(this.logger, () => `${qb.getQuery()} || Get Total Duration Query TypeORM`);
 					// Execute the raw SQL query and get the results
 					totalDuration = await qb.getRawOne();
 				}
@@ -2395,7 +2392,8 @@ export class StatisticService {
 
 		// ------------------------------------------------
 
-		this.debug(
+		debugInDevelopment(
+			this.logger,
 			() =>
 				`Find Statistics length: ${statistics.length}, Today Statistics length: ${todayStatistics.length}, Total Duration: ${totalDuration?.duration}`
 		);
@@ -2452,7 +2450,7 @@ export class StatisticService {
 
 		const totalDurationValue = statistics.reduce((total, stat) => total + (parseInt(stat.duration, 10) || 0), 0);
 
-		this.debug(() => `Total Duration Value: ${totalDurationValue}`);
+		debugInDevelopment(this.logger, () => `Total Duration Value: ${totalDurationValue}`);
 
 		const todayStatsLookup = todayStatistics.reduce((acc, stat) => {
 			const taskId = stat.taskId;

@@ -24,7 +24,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { DateRange, IDateRange, IUser } from '@gauzy/contracts';
 import { IDBConnectionOptions } from '@gauzy/common';
-import { getConfig, DatabaseTypeEnum, environment } from '@gauzy/config';
+import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 
 namespace Utils {
@@ -879,13 +879,4 @@ export async function retryQuery<T>(query: () => Promise<T>, retries = 3): Promi
 
 		throw new Error(`Failed to fetch data: ${error?.message}`, error);
 	}
-}
-
-/**
- * Whether the API runs as a development instance: NODE_ENV=development on a non-production build.
- * Both checks are needed because NODE_ENV is a runtime setting while `environment.production`
- * is fixed at build time. Use it to keep developer-only diagnostics out of staging and production.
- */
-export function isDevelopment(): boolean {
-	return process.env.NODE_ENV === 'development' && !environment.production;
 }

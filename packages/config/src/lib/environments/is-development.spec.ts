@@ -2,8 +2,8 @@ jest.mock('dotenv', () => ({
 	config: jest.fn(() => ({ parsed: {} }))
 }));
 
-import { environment } from '@gauzy/config';
-import { isDevelopment } from './utils';
+import { environment } from './environment';
+import { isDevelopment } from './is-development';
 
 describe('isDevelopment', () => {
 	const originalNodeEnv = process.env.NODE_ENV;
