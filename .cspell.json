@@ -4,6 +4,7 @@
 	"$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
 	"ignoreRegExpList": ["GHSA-[A-Za-z0-9-]+"],
 	"words": [
+		"typecheck",
         "ELIFECYCLE",
         "PRIMARYKEY",
         "NOTNULL",
