@@ -22,6 +22,34 @@
  */
 const nx = require('@nx/eslint-plugin');
 
+// Files ESLint should never look at. Replaces the legacy root `.eslintrc.json`'s
+// `"ignorePatterns": ["**/*"]`, which disabled linting for the entire workspace.
+//
+// Declared as a named binding rather than inline in the array below: Codacy's PMD parses a
+// bare object literal in that position as a block statement and reports "Unnecessary block".
+// After `=` there is no such ambiguity. `name` is a real ESLint 9 flat-config field, which
+// surfaces in config inspection; typescript-eslint's own bundled configs set it too.
+const globalIgnores = {
+	name: 'gauzy/global-ignores',
+	ignores: [
+		'**/node_modules',
+		'**/dist',
+		'**/build',
+		'**/out-tsc',
+		'**/coverage',
+		'**/.angular',
+		'**/.nx',
+		'**/*.d.ts',
+		// Generated TypeORM migrations: several hundred machine-written files that dominate
+		// both the lint wall clock and the finding count, and that nobody hand-edits.
+		'packages/core/src/lib/database/migrations/**',
+		// Codegen output.
+		'**/*.generated.ts',
+		'packages/plugins/integration-ai/src/lib/sdk/gauzy-ai-sdk.ts',
+		'**/src/assets/**'
+	]
+};
+
 module.exports = [
 	// Registers the `@nx` plugin namespace (enforce-module-boundaries, dependency-checks,
 	// nx-plugin-checks) that the project configs rely on.
@@ -29,33 +57,7 @@ module.exports = [
 	...nx.configs['flat/typescript'],
 	...nx.configs['flat/javascript'],
 
-	// Files ESLint should never look at. Replaces the legacy root `.eslintrc.json`'s
-	// `"ignorePatterns": ["**/*"]`, which disabled linting for the entire workspace.
-	//
-	// The `name` is not decoration: with a single `ignores` key this object literal is
-	// grammatically ambiguous with a block containing a labelled statement, and Codacy's PMD
-	// resolves it the wrong way and reports "Unnecessary block". A second key removes the
-	// ambiguity, and ESLint 9 surfaces `name` in config inspection and error messages anyway.
-	{
-		name: 'gauzy/global-ignores',
-		ignores: [
-			'**/node_modules',
-			'**/dist',
-			'**/build',
-			'**/out-tsc',
-			'**/coverage',
-			'**/.angular',
-			'**/.nx',
-			'**/*.d.ts',
-			// Generated TypeORM migrations: several hundred machine-written files that dominate
-			// both the lint wall clock and the finding count, and that nobody hand-edits.
-			'packages/core/src/lib/database/migrations/**',
-			// Codegen output.
-			'**/*.generated.ts',
-			'packages/plugins/integration-ai/src/lib/sdk/gauzy-ai-sdk.ts',
-			'**/src/assets/**'
-		]
-	},
+	globalIgnores,
 
 	{
 		files: ['**/*.ts', '**/*.tsx', '**/*.cts', '**/*.mts', '**/*.js', '**/*.jsx', '**/*.cjs', '**/*.mjs'],
