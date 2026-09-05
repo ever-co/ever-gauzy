@@ -95,7 +95,7 @@
 		"@opentelemetry/exporter-zipkin": "^1.30.1",
 		"@opentelemetry/instrumentation": "^0.57.2",
 		"@opentelemetry/propagator-b3": "^1.30.1",
-		"@opentelemetry/propagator-jaeger": "^1.30.1",
+		"@opentelemetry/propagator-jaeger": "^2.9.0",
 		"@opentelemetry/resource-detector-container": "^0.6.1",
 		"@opentelemetry/resources": "^1.30.1",
 		"@opentelemetry/sdk-logs": "^0.57.2",
