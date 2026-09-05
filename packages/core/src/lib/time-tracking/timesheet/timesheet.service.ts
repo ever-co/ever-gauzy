@@ -65,9 +65,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 				query.innerJoin(`${query.alias}.employee`, 'employee');
 
 				// Apply filters to the query
-				query.where((query: SelectQueryBuilder<Timesheet>) => {
-					this.getFilterTimesheetQuery(query, request);
-				});
+				await this.getFilterTimesheetQuery(query, request);
 
 				// Return the total count of timesheets
 				return query.getCount();
@@ -143,9 +141,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 				});
 
 				// Apply filters to the query
-				query.where((query: SelectQueryBuilder<Timesheet>) => {
-					this.getFilterTimesheetQuery(query, request);
-				});
+				await this.getFilterTimesheetQuery(query, request);
 
 				// Return the list of timesheets
 				return await query.getMany();
