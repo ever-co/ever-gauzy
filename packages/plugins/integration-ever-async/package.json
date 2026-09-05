@@ -1,0 +1,62 @@
+{
+	"name": "@gauzy/plugin-integration-ever-async",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform plugin for integration with Ever Async, an async-first team communication assistant",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/integration-ever-async"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-integration-ever-async",
+		"lib:build:prod": "yarn nx build plugin-integration-ever-async",
+		"lib:watch": "yarn nx build plugin-integration-ever-async --watch"
+	},
+	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
+		"@nestjs/swagger": "^11.4.4",
+		"axios": "^1.18.0",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.14.2",
+		"rxjs": "^7.8.2",
+		"tslib": "^2.3.0",
+		"typeorm": "^1.0.0"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	},
+	"keywords": [
+		"Ever Async",
+		"ever-async",
+		"integration",
+		"async communication",
+		"chat context",
+		"plugin"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}
