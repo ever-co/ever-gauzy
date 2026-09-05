@@ -679,9 +679,9 @@ export class StatisticService {
 					.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
 					.select([
 						knex.raw(getDurationQueryString(dbType, 'time_log', 'time_slot') + ' AS week_duration'),
-						knex.raw('COALESCE(SUM("time_slot"."overall"), 0) AS overall'),
-						knex.raw('COALESCE(SUM("time_slot"."duration"), 0) AS duration'),
-						knex.raw('COUNT("time_slot"."id") AS time_slot_count')
+						knex.raw('COALESCE(SUM(??), 0) AS overall', ['time_slot.overall']),
+						knex.raw('COALESCE(SUM(??), 0) AS duration', ['time_slot.duration']),
+						knex.raw('COUNT(??) AS time_slot_count', ['time_slot.id'])
 					])
 					.where('time_slot.tenantId', tenantId)
 					.andWhere('time_slot.organizationId', organizationId)
@@ -689,7 +689,7 @@ export class StatisticService {
 					.andWhere('time_log.organizationId', organizationId)
 					.whereBetween('time_slot.startedAt', [start, end])
 					.whereBetween('time_log.startedAt', [start, end])
-					.whereRaw('"time_log"."stoppedAt" >= "time_log"."startedAt"')
+					.whereRaw('?? >= ??', ['time_log.stoppedAt', 'time_log.startedAt'])
 					// TypeORM adds these through @DeleteDateColumn; Knex has to spell them out.
 					.whereNull('time_slot.deletedAt')
 					.whereNull('time_log.deletedAt');
@@ -843,9 +843,9 @@ export class StatisticService {
 					.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
 					.select([
 						knex.raw(getDurationQueryString(dbType, 'time_log', 'time_slot') + ' AS today_duration'),
-						knex.raw('COALESCE(SUM("time_slot"."overall"), 0) AS overall'),
-						knex.raw('COALESCE(SUM("time_slot"."duration"), 0) AS duration'),
-						knex.raw('COUNT("time_slot"."id") AS time_slot_count')
+						knex.raw('COALESCE(SUM(??), 0) AS overall', ['time_slot.overall']),
+						knex.raw('COALESCE(SUM(??), 0) AS duration', ['time_slot.duration']),
+						knex.raw('COUNT(??) AS time_slot_count', ['time_slot.id'])
 					])
 					.where('time_slot.tenantId', tenantId)
 					.andWhere('time_slot.organizationId', organizationId)
@@ -853,7 +853,7 @@ export class StatisticService {
 					.andWhere('time_log.organizationId', organizationId)
 					.whereBetween('time_slot.startedAt', [startToday, endToday])
 					.whereBetween('time_log.startedAt', [startToday, endToday])
-					.whereRaw('"time_log"."stoppedAt" >= "time_log"."startedAt"')
+					.whereRaw('?? >= ??', ['time_log.stoppedAt', 'time_log.startedAt'])
 					// TypeORM adds these through @DeleteDateColumn; Knex has to spell them out.
 					.whereNull('time_slot.deletedAt')
 					.whereNull('time_log.deletedAt');
