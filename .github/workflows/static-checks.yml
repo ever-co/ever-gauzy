@@ -51,10 +51,19 @@ jobs:
       # No `yarn install`. `tools/tsconfig.jest-configs.json` is standalone — `types: []`,
       # `noResolve`, and a two-declaration shim in `tools/jest-config-globals.d.ts` — precisely so
       # this job needs nothing but the compiler. The compile itself is well under a second across
-      # all 95 configs; fetching the compiler dominates, at roughly half a minute. Against the
-      # hours a cold `yarn install` costs on this fleet, that is the whole trade.
+      # all 95 configs; fetching the compiler dominates. Against the hours a cold `yarn install`
+      # costs on this fleet, that is the whole trade.
+      #
+      # Installed rather than run through `npx --yes`, which fetches on demand and runs the
+      # fetched package's lifecycle scripts — Sonar flags that as a vulnerability (rules S6505
+      # and S8543). Exact version, no scripts, no lockfile writes, and into RUNNER_TEMP so it
+      # cannot disturb the checkout. It is also faster: ~4s to install against ~37s for npx.
+      - name: Install TypeScript
+        run: npm install --no-save --no-package-lock --ignore-scripts --prefix "$RUNNER_TEMP/tsc" typescript@5.9.3
+
       - name: Type-check every jest.config.ts
-        run: npx --yes --package typescript@5.9.3 tsc -p tools/tsconfig.jest-configs.json
+        run: |
+          "$RUNNER_TEMP/tsc/node_modules/.bin/tsc" -p tools/tsconfig.jest-configs.json
 
   lint:
     name: lint (non-blocking)
