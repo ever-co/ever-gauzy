@@ -294,9 +294,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				query.where((qb: SelectQueryBuilder<TimeLog>) => {
-					this.getFilterTimeLogQuery(qb, request);
-				});
+				await this.getFilterTimeLogQuery(query, request);
 
 				// Execute the query and retrieve time logs
 				logs = await query.getMany();
@@ -448,9 +446,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				query.where((qb: SelectQueryBuilder<TimeLog>) => {
-					this.getFilterTimeLogQuery(qb, request);
-				});
+				await this.getFilterTimeLogQuery(query, request);
 
 				// Execute the query and retrieve time logs
 				logs = await query.getMany();
@@ -539,9 +535,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				});
 
 				// Apply additional conditions to the query based on request filters
-				query.where((qb: SelectQueryBuilder<TimeLog>) => {
-					this.getFilterTimeLogQuery(qb, request);
-				});
+				await this.getFilterTimeLogQuery(query, request);
 
 				// Execute the query and retrieve time logs
 				timeLogs = await query.getMany();
@@ -636,9 +630,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				query.where((qb: SelectQueryBuilder<TimeLog>) => {
-					this.getFilterTimeLogQuery(qb, request);
-				});
+				await this.getFilterTimeLogQuery(query, request);
 
 				// Execute the query and retrieve time logs
 				timeLogs = await query.getMany();
@@ -753,9 +745,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				query.where((qb: SelectQueryBuilder<TimeLog>) => {
-					this.getFilterTimeLogQuery(qb, request);
-				});
+				await this.getFilterTimeLogQuery(query, request);
 
 				// Execute the query and retrieve time logs
 				timeLogs = await query.getMany();
