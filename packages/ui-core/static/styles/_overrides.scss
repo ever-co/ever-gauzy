@@ -1556,18 +1556,27 @@ angular2-smart-table {
 // note above the `.ng-dropdown-panel` block in `nb-overrides()` explains why the
 // rest of this file needs it too.
 //
-// `:not(.language-select)` opts the language dropdown OUT of the widening. The
-// problem this rule solves is a trigger too NARROW to show its options — a
-// filter cell in a table row. A form field is the opposite case: its trigger is
-// already the width of a form column, so `max-content` on a long option
-// ("Limburgish, Limburgan, Limburger") only made the panel spill past the field
-// and over the column beside it. Excluding it here rather than overriding it in
-// the block below is deliberate: ng-select writes the correct width INLINE
-// (`width`/`min-width` = the trigger's box, see `_updateXPosition()`), and an
-// inline style cannot beat an `!important` rule — the only way to let it stand
-// is for this rule not to match.
+// The two `:not()`s opt form fields OUT of the widening. The problem this rule
+// solves is a trigger too NARROW to show its options — a filter cell in a table
+// row. A form field is the opposite case: its trigger is already the width of a
+// form column, so `max-content` on a long option ("Limburgish, Limburgan,
+// Limburger", "South Georgia and the South Sandwich Islands") only made the
+// panel spill past the field and over whatever sat beside it. Excluding them
+// here rather than overriding in the block below is deliberate: ng-select writes
+// the correct width INLINE (`width`/`min-width` = the trigger's box, see
+// `_updateXPosition()`), and an inline style cannot beat an `!important` rule —
+// the only way to let it stand is for this rule not to match.
+//
+// `.language-select` is a name, `.form-field-select` is the category: a select
+// standing in a form column, which is every case this rule is wrong for. New
+// ones add that class to their `<ng-select>` (ng-select copies the host's static
+// class attribute onto the appended panel) rather than growing this list.
+// `.language-select` keeps its own name because a second rule below addresses it
+// by that name for the flag sizing.
 @supports (max-width: max-content) {
-  html:not([dir='rtl']) > body > ng-dropdown-panel.ng-dropdown-panel:not(.language-select) {
+  html:not([dir='rtl'])
+    > body
+    > ng-dropdown-panel.ng-dropdown-panel:not(.language-select):not(.form-field-select) {
     width: auto !important;
     right: 1rem !important;
     max-width: max-content;
