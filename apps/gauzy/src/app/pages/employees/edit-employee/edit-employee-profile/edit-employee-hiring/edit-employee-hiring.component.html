@@ -1,82 +1,65 @@
-<nb-card class="m-3">
-	<nb-card-body>
-		<form [formGroup]="form">
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label for="offerDateInput" class="label">{{
-							'FORM.LABELS.OFFER_DATE' | translate
-						}}</label>
-						<input
-							fullWidth
-							id="offerDateInput"
-							formControlName="offerDate"
-							nbInput
-							[nbDatepicker]="offerDatePicker"
-							[placeholder]="'POP_UPS.PICK_DATE' | translate"
-							autocomplete="off"
-						/>
-						<nb-datepicker #offerDatePicker></nb-datepicker>
-					</div>
+<!--
+	The three hiring dates on one panel, on the tab's own two-column grid.
+
+	They were two bootstrap rows, the second of which carried an empty
+	`<div class="col"></div>` to hold the reject date at half width — a spacer
+	standing in for a layout rule. The grid places the third date under the first
+	without one.
+-->
+<div class="tab">
+	<section class="tab__panel">
+		<form class="tab__form" [formGroup]="form">
+			<div class="tab__fields">
+				<div class="form-group">
+					<label for="offerDateInput" class="label">{{ 'FORM.LABELS.OFFER_DATE' | translate }}</label>
+					<input
+						fullWidth
+						id="offerDateInput"
+						formControlName="offerDate"
+						nbInput
+						[nbDatepicker]="offerDatePicker"
+						[placeholder]="'POP_UPS.PICK_DATE' | translate"
+						autocomplete="off"
+					/>
+					<nb-datepicker #offerDatePicker></nb-datepicker>
 				</div>
-				<div class="col">
-					<div class="form-group">
-						<label for="acceptDateInput" class="label">{{
-							'FORM.LABELS.ACCEPT_DATE' | translate
-						}}</label>
-						<input
-							fullWidth
-							id="acceptDateInput"
-							formControlName="acceptDate"
-							nbInput
-							[nbDatepicker]="acceptDatePicker"
-							[placeholder]="'POP_UPS.PICK_DATE' | translate"
-							autocomplete="off"
-							[status]="
-								form.get('acceptDate').invalid
-									? 'danger'
-									: 'basic'
-							"
-						/>
-						<nb-datepicker #acceptDatePicker></nb-datepicker>
-					</div>
+
+				<div class="form-group">
+					<label for="acceptDateInput" class="label">{{ 'FORM.LABELS.ACCEPT_DATE' | translate }}</label>
+					<input
+						fullWidth
+						id="acceptDateInput"
+						formControlName="acceptDate"
+						nbInput
+						[nbDatepicker]="acceptDatePicker"
+						[placeholder]="'POP_UPS.PICK_DATE' | translate"
+						autocomplete="off"
+						[status]="form.get('acceptDate').invalid ? 'danger' : 'basic'"
+					/>
+					<nb-datepicker #acceptDatePicker></nb-datepicker>
+				</div>
+
+				<div class="form-group">
+					<label for="rejectDateInput" class="label">{{ 'FORM.LABELS.REJECT_DATE' | translate }}</label>
+					<input
+						fullWidth
+						id="rejectDateInput"
+						formControlName="rejectDate"
+						nbInput
+						[nbDatepicker]="rejectDatePicker"
+						[placeholder]="'POP_UPS.PICK_DATE' | translate"
+						autocomplete="off"
+						[status]="form.get('rejectDate').invalid ? 'danger' : 'basic'"
+					/>
+					<nb-datepicker #rejectDatePicker></nb-datepicker>
 				</div>
 			</div>
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label for="rejectDateInput" class="label">{{
-							'FORM.LABELS.REJECT_DATE' | translate
-						}}</label>
-						<input
-							fullWidth
-							id="rejectDateInput"
-							formControlName="rejectDate"
-							nbInput
-							[nbDatepicker]="rejectDatePicker"
-							[placeholder]="'POP_UPS.PICK_DATE' | translate"
-							autocomplete="off"
-							[status]="
-								form.get('rejectDate').invalid
-									? 'danger'
-									: 'basic'
-							"
-						/>
-						<nb-datepicker #rejectDatePicker></nb-datepicker>
-					</div>
-				</div>
-				<div class="col"></div>
-			</div>
-			<div class="actions">
-				<button
-					nbButton
-					status="success"
-					[disabled]="form.invalid"
-					(click)="submitForm()"
-				>
+
+			<footer class="tab__actions">
+				<button type="button" nbButton status="success" [disabled]="form.invalid" (click)="submitForm()">
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
-			</div>
+			</footer>
 		</form>
-	</nb-card-body>
-</nb-card>
+	</section>
+</div>

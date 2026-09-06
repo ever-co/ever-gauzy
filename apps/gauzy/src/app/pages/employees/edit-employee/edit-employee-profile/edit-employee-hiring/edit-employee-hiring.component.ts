@@ -9,10 +9,11 @@ import { CompareDateValidator, EmployeeStore, Store } from '@gauzy/ui-core/core'
 @Component({
     selector: 'ga-edit-employee-hiring',
     templateUrl: './edit-employee-hiring.component.html',
-    styleUrls: [
-        '../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
-        './edit-employee-hiring.component.scss'
-    ],
+    // The organisation page's stylesheet used to be loaded ahead of this one. It
+    // was written for a different page — a 563px panel, a `w-25`/`w-75` split, a
+    // `height: 100%` chain — and this tab uses none of it now that it lays itself
+    // out on the tabset's shared panel language.
+    styleUrls: ['./edit-employee-hiring.component.scss'],
     standalone: false
 })
 export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
