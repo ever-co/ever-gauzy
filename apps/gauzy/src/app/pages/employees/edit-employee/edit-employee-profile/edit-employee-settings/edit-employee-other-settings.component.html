@@ -1,326 +1,305 @@
-<form class="main-form" #ngForm="ngForm" [formGroup]="form" (ngSubmit)="onSubmit(ngForm)" novalidate>
-	<aside class="aside-nav">
-		<h4 class="settings-section-header">
+<!--
+	Section rail on the left, the sections themselves on the right, with the
+	commit action on the trailing edge of the right-hand column — the same two-
+	column shape the rest of the employee tabset settled on.
+
+	The fields inside each section were laid out on four different sets of
+	bootstrap columns (`col-6` here, `col-xl-6 col-12 pt-2` there, and on one
+	toggle the `form-group invite-toggle` classes were put on the COLUMN itself
+	rather than on a div inside it, so that one row sat on different padding from
+	its five neighbours). Each section body is on one two-column grid now.
+-->
+<form class="settings" #ngForm="ngForm" [formGroup]="form" (ngSubmit)="onSubmit(ngForm)" novalidate>
+	<aside class="settings__rail">
+		<h4 class="settings__rail-title">
 			{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.SETTINGS_SECTION' | translate }}
 		</h4>
-		<ul>
-			<span (click)="general.toggle()">
-				<li [class.active]="general?.expanded">
+		<!--
+			The rail was `<ul>` wrapping `<span (click)>` wrapping `<li>` — the
+			click target was the span, i.e. the element BETWEEN the list and its
+			item, which is not valid list content and is not focusable. The button
+			is the item now, so it is reachable by keyboard and announces its state.
+		-->
+		<ul class="settings__rail-list">
+			<li>
+				<button type="button" [class.is-active]="general?.expanded" (click)="general.toggle()">
 					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.GENERAL_SETTINGS' | translate }}
-				</li>
-			</span>
-			<span (click)="timer.toggle()">
-				<li [class.active]="timer?.expanded">
+				</button>
+			</li>
+			<li>
+				<button type="button" [class.is-active]="timer?.expanded" (click)="timer.toggle()">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
-				</li>
-			</span>
-			<span (click)="agent.toggle()">
-				<li [class.active]="agent?.expanded">
+				</button>
+			</li>
+			<li>
+				<button type="button" [class.is-active]="agent?.expanded" (click)="agent.toggle()">
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
-				</li>
-			</span>
-			<span (click)="integrations.toggle()">
-				<li [class.active]="integrations?.expanded">
+				</button>
+			</li>
+			<li>
+				<button type="button" [class.is-active]="integrations?.expanded" (click)="integrations.toggle()">
 					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.INTEGRATIONS' | translate }}
-				</li>
-			</span>
+				</button>
+			</li>
 		</ul>
 	</aside>
-	<section class="fields-section">
-		<div class="accordion-section">
+
+	<section class="settings__sections">
+		<div class="settings__accordion">
 			<nb-accordion #accordion>
 				<nb-accordion-item #general [expanded]="true">
 					<nb-accordion-item-header>
 						{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.GENERAL_SETTINGS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
-						<div class="fields">
-							<div class="row">
-								<div class="col-6">
-									<ga-timezone-selector formControlName="timeZone"></ga-timezone-selector>
-								</div>
-								<div class="col-6">
-									<div class="form-group">
-										<label class="label" for="timeZone">
-											{{ 'FORM.LABELS.TIME_FORMAT' | translate }}
-										</label>
-										<ng-select
-											id="timeFormat"
-											appendTo="body"
-											[(items)]="listOfTimeFormats"
-											[placeholder]="'FORM.PLACEHOLDERS.TIME_FORMAT' | translate"
-											[searchable]="false"
-											[clearable]="false"
-											formControlName="timeFormat"
-										></ng-select>
-									</div>
-								</div>
+						<div class="settings__fields">
+							<!--
+								`ga-timezone-selector` renders its own `.form-group` and
+								label, so it is a grid ITEM here rather than something
+								wrapped in one — the wrapper it used to sit in stacked a
+								second field margin under it.
+							-->
+							<ga-timezone-selector formControlName="timeZone"></ga-timezone-selector>
+							<div class="form-group">
+								<!-- Was `for="timeZone"`, i.e. pointing at the timezone
+								     select in the field beside it: clicking this label
+								     opened the wrong dropdown. -->
+								<label class="label" for="timeFormat">
+									{{ 'FORM.LABELS.TIME_FORMAT' | translate }}
+								</label>
+								<ng-select
+									id="timeFormat"
+									appendTo="body"
+									[(items)]="listOfTimeFormats"
+									[placeholder]="'FORM.PLACEHOLDERS.TIME_FORMAT' | translate"
+									[searchable]="false"
+									[clearable]="false"
+									formControlName="timeFormat"
+								></ng-select>
 							</div>
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
+
 				<nb-accordion-item #timer>
 					<nb-accordion-item-header>
 						{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
-						<div class="fields time-tracker">
-							<div class="row">
-								<div class="col-xl-6 col-12 pt-2">
-									<div class="form-group invite-toggle">
-										<nb-toggle
-											class="d-block"
-											formControlName="allowManualTime"
-											status="primary"
-											labelPosition="start"
-										>
-											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MANUAL_TIME' | translate }}
-											<button
-												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_MANUAL_TIME_INFO'
-														| translate
-												"
-												ghost
-												nbButton
-												size="small"
-												status="info"
-											>
-												<nb-icon icon="info"></nb-icon>
-											</button>
-										</nb-toggle>
-									</div>
-								</div>
-								<div class="col-xl-6 col-12 pt-2">
-									<div class="form-group invite-toggle">
-										<nb-toggle
-											class="d-block"
-											formControlName="allowModifyTime"
-											status="primary"
-											labelPosition="start"
-										>
-											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MODIFY_TIME' | translate }}
-											<button
-												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_MODIFY_TIME_INFO'
-														| translate
-												"
-												ghost
-												nbButton
-												size="small"
-												status="info"
-											>
-												<nb-icon icon="info"></nb-icon>
-											</button>
-										</nb-toggle>
-									</div>
-								</div>
-								<div class="col-xl-6 col-12 pt-2">
-									<div class="form-group invite-toggle">
-										<nb-toggle
-											class="d-block"
-											formControlName="allowDeleteTime"
-											labelPosition="start"
-											status="primary"
-										>
-											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_DELETE_TIME' | translate }}
-											<button
-												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_DELETE_TIME_INFO'
-														| translate
-												"
-												ghost
-												nbButton
-												size="small"
-												status="info"
-											>
-												<nb-icon icon="info"></nb-icon>
-											</button>
-										</nb-toggle>
-									</div>
-								</div>
-
-								<div class="col-xl-6 col-12 pt-2 form-group invite-toggle">
-									<nb-toggle
-										class="d-block"
-										formControlName="allowScreenshotCapture"
-										status="primary"
-										labelPosition="start"
+						<div class="settings__fields">
+							<div class="settings__toggle">
+								<nb-toggle formControlName="allowManualTime" status="primary" labelPosition="start">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MANUAL_TIME' | translate }}
+									<button
+										type="button"
+										[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_MANUAL_TIME_INFO'
+												| translate
+										"
+										ghost
+										nbButton
+										size="small"
+										status="info"
 									>
-										{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_SCREEN_CAPTURE' | translate }}
-										<button
-											[nbTooltip]="
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_SCREEN_CAPTURE_INFO' | translate
-											"
-											ghost
-											nbButton
-											size="small"
-											status="info"
-											class="p-0"
-										>
-											<nb-icon icon="info"></nb-icon>
-										</button>
-									</nb-toggle>
-								</div>
-								<div class="col-xl-6 col-12 pt-2">
-									<div class="form-group invite-toggle">
-										<nb-toggle
-											class="d-block"
-											formControlName="trackKeyboardMouseActivity"
-											status="primary"
-											labelPosition="start"
-										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_KEYBOARD_MOUSE_ACTIVITY'
-													| translate
-											}}
-											<button
-												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO'
-														| translate
-												"
-												ghost
-												nbButton
-												size="small"
-												status="info"
-											>
-												<nb-icon icon="info"></nb-icon>
-											</button>
-										</nb-toggle>
-									</div>
-								</div>
-								<div class="col-xl-6 col-12 pt-2">
-									<div class="form-group invite-toggle">
-										<nb-toggle
-											class="d-block"
-											formControlName="trackAllDisplays"
-											status="primary"
-											labelPosition="start"
-										>
-											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ALL_DISPLAYS' | translate }}
-											<button
-												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ALL_DISPLAYS_INFO'
-														| translate
-												"
-												ghost
-												nbButton
-												size="small"
-												status="info"
-											>
-												<nb-icon icon="info"></nb-icon>
-											</button>
-										</nb-toggle>
-									</div>
-								</div>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+								</nb-toggle>
+							</div>
+
+							<div class="settings__toggle">
+								<nb-toggle formControlName="allowModifyTime" status="primary" labelPosition="start">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MODIFY_TIME' | translate }}
+									<button
+										type="button"
+										[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_MODIFY_TIME_INFO'
+												| translate
+										"
+										ghost
+										nbButton
+										size="small"
+										status="info"
+									>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+								</nb-toggle>
+							</div>
+
+							<div class="settings__toggle">
+								<nb-toggle formControlName="allowDeleteTime" status="primary" labelPosition="start">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_DELETE_TIME' | translate }}
+									<button
+										type="button"
+										[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_DELETE_TIME_INFO'
+												| translate
+										"
+										ghost
+										nbButton
+										size="small"
+										status="info"
+									>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+								</nb-toggle>
+							</div>
+
+							<div class="settings__toggle">
+								<nb-toggle
+									formControlName="allowScreenshotCapture"
+									status="primary"
+									labelPosition="start"
+								>
+									{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_SCREEN_CAPTURE' | translate }}
+									<button
+										type="button"
+										[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_SCREEN_CAPTURE_INFO' | translate
+										"
+										ghost
+										nbButton
+										size="small"
+										status="info"
+									>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+								</nb-toggle>
+							</div>
+
+							<div class="settings__toggle">
+								<nb-toggle
+									formControlName="trackKeyboardMouseActivity"
+									status="primary"
+									labelPosition="start"
+								>
+									{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_KEYBOARD_MOUSE_ACTIVITY' | translate }}
+									<button
+										type="button"
+										[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO'
+												| translate
+										"
+										ghost
+										nbButton
+										size="small"
+										status="info"
+									>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+								</nb-toggle>
+							</div>
+
+							<div class="settings__toggle">
+								<nb-toggle formControlName="trackAllDisplays" status="primary" labelPosition="start">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ALL_DISPLAYS' | translate }}
+									<button
+										type="button"
+										[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ALL_DISPLAYS_INFO' | translate
+										"
+										ghost
+										nbButton
+										size="small"
+										status="info"
+									>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+								</nb-toggle>
 							</div>
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
+
 				<nb-accordion-item #agent>
 					<nb-accordion-item-header>
 						{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
-						<div class="fields time-tracker">
-							<div class="row">
-								<div class="col-xl-6 col-12 pt-2">
-									<div class="form-group invite-toggle">
-										<nb-toggle
-											class="d-block"
-											formControlName="allowAgentAppExit"
-											status="primary"
-											labelPosition="start"
-										>
-											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_AGENT_APP_EXIT' | translate }}
-											<button
-												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_AGENT_APP_EXIT_INFO'
-														| translate
-												"
-												ghost
-												nbButton
-												size="small"
-												status="info"
-											>
-												<nb-icon icon="info"></nb-icon>
-											</button>
-										</nb-toggle>
-									</div>
-								</div>
-								<div class="col-xl-6 col-12 pt-2">
-									<div class="form-group invite-toggle">
-										<nb-toggle
-											class="d-block"
-											formControlName="allowLogoutFromAgentApp"
-											status="primary"
-											labelPosition="start"
-										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_LOGOUT_FROM_AGENT_APP'
-													| translate
-											}}
-											<button
-												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_LOGOUT_FROM_AGENT_APP_INFO'
-														| translate
-												"
-												ghost
-												nbButton
-												size="small"
-												status="info"
-											>
-												<nb-icon icon="info"></nb-icon>
-											</button>
-										</nb-toggle>
-									</div>
-								</div>
+						<div class="settings__fields">
+							<div class="settings__toggle">
+								<nb-toggle formControlName="allowAgentAppExit" status="primary" labelPosition="start">
+									{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_AGENT_APP_EXIT' | translate }}
+									<button
+										type="button"
+										[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_AGENT_APP_EXIT_INFO' | translate
+										"
+										ghost
+										nbButton
+										size="small"
+										status="info"
+									>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+								</nb-toggle>
+							</div>
+
+							<div class="settings__toggle">
+								<nb-toggle
+									formControlName="allowLogoutFromAgentApp"
+									status="primary"
+									labelPosition="start"
+								>
+									{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_LOGOUT_FROM_AGENT_APP' | translate }}
+									<button
+										type="button"
+										[nbTooltip]="
+											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_LOGOUT_FROM_AGENT_APP_INFO'
+												| translate
+										"
+										ghost
+										nbButton
+										size="small"
+										status="info"
+									>
+										<nb-icon icon="info"></nb-icon>
+									</button>
+								</nb-toggle>
 							</div>
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
+
 				<nb-accordion-item #integrations>
 					<nb-accordion-item-header>
 						{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.INTEGRATIONS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
-						<div class="fields">
-							<div class="row">
-								<div class="col-6">
-									<div class="form-group">
-										<label class="label">
-											{{ 'FORM.LABELS.UPWORK_ID' | translate }}
-										</label>
-										<input
-											[placeholder]="'FORM.PLACEHOLDERS.UPWORK_ID' | translate"
-											formControlName="upworkId"
-											fullWidth
-											nbInput
-										/>
-									</div>
-								</div>
-								<div class="col-6">
-									<div class="form-group">
-										<label class="label">
-											{{ 'FORM.LABELS.LINKEDIN_ID' | translate }}
-										</label>
-										<input
-											[placeholder]="'FORM.PLACEHOLDERS.LINKEDIN_ID' | translate"
-											formControlName="linkedInId"
-											fullWidth
-											nbInput
-										/>
-									</div>
-								</div>
+						<div class="settings__fields">
+							<div class="form-group">
+								<label class="label" for="upworkId">
+									{{ 'FORM.LABELS.UPWORK_ID' | translate }}
+								</label>
+								<input
+									id="upworkId"
+									[placeholder]="'FORM.PLACEHOLDERS.UPWORK_ID' | translate"
+									formControlName="upworkId"
+									fullWidth
+									nbInput
+								/>
+							</div>
+							<div class="form-group">
+								<label class="label" for="linkedInId">
+									{{ 'FORM.LABELS.LINKEDIN_ID' | translate }}
+								</label>
+								<input
+									id="linkedInId"
+									[placeholder]="'FORM.PLACEHOLDERS.LINKEDIN_ID' | translate"
+									formControlName="linkedInId"
+									fullWidth
+									nbInput
+								/>
 							</div>
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
 			</nb-accordion>
 		</div>
-		<div class="actions">
+
+		<footer class="settings__actions">
 			<button nbButton status="success">
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
-		</div>
+		</footer>
 	</section>
 </form>
