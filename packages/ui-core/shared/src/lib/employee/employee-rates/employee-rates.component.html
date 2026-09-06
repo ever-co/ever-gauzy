@@ -1,148 +1,158 @@
-<div class="content">
-  <div class="employee-form">
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div class="row">
-        <div class="col">
-          <nb-card>
-            @if (isEmployee) {
-              <nb-card-header>
-                {{ 'FORM.RATES.DEFAULT_RATE' | translate }}
-              </nb-card-header>
-            }
-            @if (isCandidate) {
-              <nb-card-header>
-                {{ 'FORM.RATES.EXPECTED_RATE' | translate }}
-              </nb-card-header>
-            }
-            <nb-card-body>
-              <div class="row">
-                <div class="col-6">
-                  <div class="form-group">
-                    <label for="payPeriodsSelect" class="label">
-                      {{ 'FORM.LABELS.PAY_PERIOD' | translate }}
-                    </label>
-                    <nb-select
-                      id="payPeriodsSelect"
-                      formControlName="payPeriod"
-                      [placeholder]="'FORM.LABELS.PAY_PERIOD' | translate"
-                      class="d-block"
-                      size="medium"
-                      fullWidth
-                      >
-                      @for (payPeriod of payPeriods; track payPeriod) {
-                        <nb-option [value]="payPeriod">
-                          {{ payPeriod | replace : '_' : ' ' | titlecase }}
-                        </nb-option>
-                      }
-                    </nb-select>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <ga-currency
-                    formControlName="billRateCurrency"
-                    (optionChange)="currencyChanged($event)"
-                  ></ga-currency>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-6">
-                  <div class="form-group">
-                    <label class="label" for="billRateValueInput">
-                      {{ 'FORM.LABELS.BILL_RATE' | translate }}
-                    </label>
-                    <input
-                      fullWidth
-                      id="billRateValueInput"
-                      type="number"
-                      [min]="minimumBillingRate.value || 0"
-                      step="0.1"
-                      nbInput
-                      formControlName="billRateValue"
-                      [placeholder]="'FORM.PLACEHOLDERS.BILL_RATE' | translate"
-                      />
-                    </div>
-                    @if (billRateValue.errors?.['min']) {
-                      <div class="caption status-danger">
-                        {{ 'FORM.RATES.ERRORS.BILL_RATE' | translate: { min:
-                        billRateValue.errors?.['min']?.min, currency:
-                        billRateCurrency.value } }}
-                      </div>
-                    }
-                  </div>
-                  <div class="col-6">
-                    <div class="form-group">
-                      <label class="label" for="minimumBillingRateInput">
-                        {{ 'FORM.LABELS.BILL_RATE_MIN' | translate }}
-                      </label>
-                      <input
-                        fullWidth
-                        id="minimumBillingRateInput"
-                        type="number"
-                        [min]="0"
-                        step="0.1"
-                        nbInput
-                        formControlName="minimumBillingRate"
-                        [placeholder]="'FORM.PLACEHOLDERS.BILL_RATE_MIN' | translate"
-                        />
-                      </div>
-                      @if (minimumBillingRate.errors?.['min']) {
-                        <div class="caption status-danger">
-                          {{ 'FORM.RATES.ERRORS.BILL_RATE_MIN' | translate: { min:
-                          minimumBillingRate.errors?.['min']?.min, currency:
-                          billRateCurrency.value } }}
-                        </div>
-                      }
-                    </div>
-                  </div>
-                </nb-card-body>
-              </nb-card>
-            </div>
-            <div class="col">
-              <nb-card>
-                <nb-card-header>
-                  {{ 'FORM.RATES.LIMITS' | translate }}
-                </nb-card-header>
-                <nb-card-body>
-                  <div class="form-group">
-                    <label class="label" for="reWeeklyLimitInput">
-                      {{ 'FORM.LABELS.RECURRING_WEEKLY_LIMIT' | translate }}
-                    </label>
-                    <input
-                      fullWidth
-                      id="reWeeklyLimitInput"
-                      nbInput
-                      type="number"
-                      [min]="0"
-                      [max]="168"
-                      step="0.1"
-                      formControlName="reWeeklyLimit"
-                      [placeholder]="'FORM.PLACEHOLDERS.RECURRING_WEEKLY_LIMIT' | translate"
-                      autofocus
-                      />
-                    </div>
-                    @if (reWeeklyLimit.errors?.['max']) {
-                      <div class="caption status-danger">
-                        {{
-                        'FORM.RATES.ERRORS.LIMIT_MAX' | translate : { max: reWeeklyLimit.errors?.['max']?.max
-                        } }}
-                      </div>
-                    }
-                    @if (reWeeklyLimit.errors?.['min']) {
-                      <div class="caption status-danger">
-                        {{
-                        'FORM.RATES.ERRORS.LIMIT_MIN' | translate: { min: reWeeklyLimit.errors?.['min']?.min
-                        } }}
-                      </div>
-                    }
-                  </nb-card-body>
-                </nb-card>
-              </div>
-            </div>
-            <div class="actions">
-              <button [disabled]="form.invalid" type="submit" nbButton status="success">
-                {{ 'BUTTONS.SAVE' | translate }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+<!--
+	Rate and limits as two panels side by side, matching the location tab
+	(employee-location.component.html) and the rest of the employee tabset.
+
+	They were two `nb-card`s in bootstrap columns inside `.content > .employee-form
+	> form` inside the tab's own host — a card inside a card inside the page card
+	for what is one short form. The nesting also cost the fields their alignment:
+	inside a `col`, a `col-6` is a quarter of the row, so the four rate inputs sat
+	at a quarter width beside a Limits card whose one input ran the full width of
+	its own.
+
+	The panel captions are the two `nb-card-header`s, kept — they are what tells
+	the four rate fields apart from the weekly cap.
+-->
+<form class="rates" [formGroup]="form" (ngSubmit)="onSubmit()">
+	<section class="rates__panel rates__panel--rate">
+		<header class="rates__legend">
+			@if (isEmployee) {
+				{{ 'FORM.RATES.DEFAULT_RATE' | translate }}
+			}
+			@if (isCandidate) {
+				{{ 'FORM.RATES.EXPECTED_RATE' | translate }}
+			}
+		</header>
+
+		<div class="rates__fields">
+			<div class="form-group">
+				<label for="payPeriodsSelect" class="label">
+					{{ 'FORM.LABELS.PAY_PERIOD' | translate }}
+				</label>
+				<nb-select
+					id="payPeriodsSelect"
+					formControlName="payPeriod"
+					[placeholder]="'FORM.LABELS.PAY_PERIOD' | translate"
+					class="d-block"
+					size="medium"
+					fullWidth
+				>
+					@for (payPeriod of payPeriods; track payPeriod) {
+						<nb-option [value]="payPeriod">
+							{{ payPeriod | replace : '_' : ' ' | titlecase }}
+						</nb-option>
+					}
+				</nb-select>
+			</div>
+
+			<ga-currency formControlName="billRateCurrency" (optionChange)="currencyChanged($event)"></ga-currency>
+
+			<div class="form-group">
+				<label class="label" for="billRateValueInput">
+					{{ 'FORM.LABELS.BILL_RATE' | translate }}
+				</label>
+				<input
+					fullWidth
+					id="billRateValueInput"
+					type="number"
+					[min]="minimumBillingRate.value || 0"
+					step="0.1"
+					nbInput
+					formControlName="billRateValue"
+					[placeholder]="'FORM.PLACEHOLDERS.BILL_RATE' | translate"
+				/>
+				<!--
+					The error moved INSIDE the field it belongs to. It used to be a
+					sibling of the `.form-group`, i.e. a second child of the column, so
+					it landed under the next field down instead of under its own input.
+				-->
+				@if (billRateValue.errors?.['min']) {
+					<div class="caption status-danger">
+						{{
+							'FORM.RATES.ERRORS.BILL_RATE'
+								| translate
+									: {
+											min: billRateValue.errors?.['min']?.min,
+											currency: billRateCurrency.value
+									  }
+						}}
+					</div>
+				}
+			</div>
+
+			<div class="form-group">
+				<label class="label" for="minimumBillingRateInput">
+					{{ 'FORM.LABELS.BILL_RATE_MIN' | translate }}
+				</label>
+				<input
+					fullWidth
+					id="minimumBillingRateInput"
+					type="number"
+					[min]="0"
+					step="0.1"
+					nbInput
+					formControlName="minimumBillingRate"
+					[placeholder]="'FORM.PLACEHOLDERS.BILL_RATE_MIN' | translate"
+				/>
+				@if (minimumBillingRate.errors?.['min']) {
+					<div class="caption status-danger">
+						{{
+							'FORM.RATES.ERRORS.BILL_RATE_MIN'
+								| translate
+									: {
+											min: minimumBillingRate.errors?.['min']?.min,
+											currency: billRateCurrency.value
+									  }
+						}}
+					</div>
+				}
+			</div>
+		</div>
+
+		<!--
+			The commit action belongs to the fields it commits. It used to sit under
+			BOTH columns, which put it under the limits card as much as under the
+			rate and left it reading as a page-level action.
+		-->
+		<footer class="rates__actions">
+			<button [disabled]="form.invalid" type="submit" nbButton status="success">
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</footer>
+	</section>
+
+	<section class="rates__panel rates__panel--limits">
+		<header class="rates__legend">
+			{{ 'FORM.RATES.LIMITS' | translate }}
+		</header>
+
+		<div class="rates__fields rates__fields--single">
+			<div class="form-group">
+				<label class="label" for="reWeeklyLimitInput">
+					{{ 'FORM.LABELS.RECURRING_WEEKLY_LIMIT' | translate }}
+				</label>
+				<input
+					fullWidth
+					id="reWeeklyLimitInput"
+					nbInput
+					type="number"
+					[min]="0"
+					[max]="168"
+					step="0.1"
+					formControlName="reWeeklyLimit"
+					[placeholder]="'FORM.PLACEHOLDERS.RECURRING_WEEKLY_LIMIT' | translate"
+					autofocus
+				/>
+				@if (reWeeklyLimit.errors?.['max']) {
+					<div class="caption status-danger">
+						{{ 'FORM.RATES.ERRORS.LIMIT_MAX' | translate : { max: reWeeklyLimit.errors?.['max']?.max } }}
+					</div>
+				}
+				@if (reWeeklyLimit.errors?.['min']) {
+					<div class="caption status-danger">
+						{{ 'FORM.RATES.ERRORS.LIMIT_MIN' | translate : { min: reWeeklyLimit.errors?.['min']?.min } }}
+					</div>
+				}
+			</div>
+		</div>
+	</section>
+</form>
