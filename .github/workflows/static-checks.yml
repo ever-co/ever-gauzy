@@ -1,0 +1,144 @@
+name: 'Static Checks'
+
+# Two checks that nothing in CI did before, added after a duplicated `transformIgnorePatterns`
+# key sat in `packages/core/jest.config.ts` undetected (TS1117):
+#
+#   * `typecheck-configs` — `tsc --noEmit` over every jest.config.ts, sub-second for the compile
+#     itself and under a minute for the whole job. This one is REAL: it is green today and it
+#     fails the job if it ever stops being. It is the check that would have caught that bug.
+#   * `lint` — reports the ESLint backlog. Deliberately NON-BLOCKING (`continue-on-error`), and
+#     it must stay that way until the backlog below is worked through. As of the repair in
+#     #10117 the workspace reports roughly 2,650 errors and 6,100 warnings, so a blocking lint
+#     gate would wedge every PR on day one. The tracking task lives in the agent workspace at
+#     `knowledge/TASKS.md` ("Burn down the ESLint backlog").
+#
+# Promote `lint` to blocking only once `nx run-many -t lint` is actually green.
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+# Least-privilege scope for the automatic GITHUB_TOKEN: these jobs only read the checkout.
+permissions:
+  contents: read
+
+env:
+  NODE_MODULES_ARCHIVE: node-modules.tar.zst
+
+jobs:
+  typecheck-configs:
+    name: typecheck-configs
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Read-only job; the checkout credential does not need to outlive the step.
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # No `yarn install`. `tools/tsconfig.jest-configs.json` is standalone — `types: []`,
+      # `noResolve`, and a two-declaration shim in `tools/jest-config-globals.d.ts` — precisely so
+      # this job needs nothing but the compiler. The compile itself is well under a second across
+      # all 95 configs; fetching the compiler dominates. Against the hours a cold `yarn install`
+      # costs on this fleet, that is the whole trade.
+      #
+      # Installed rather than run through `npx --yes`, which fetches on demand and runs the
+      # fetched package's lifecycle scripts — Sonar flags that as a vulnerability (rules S6505
+      # and S8543). Exact version, no scripts, no lockfile writes, and into RUNNER_TEMP so it
+      # cannot disturb the checkout. It is also faster: ~4s to install against ~37s for npx.
+      - name: Install TypeScript
+        run: npm install --no-save --no-package-lock --ignore-scripts --prefix "$RUNNER_TEMP/tsc" typescript@5.9.3
+
+      - name: Type-check every jest.config.ts
+        run: |
+          "$RUNNER_TEMP/tsc/node_modules/.bin/tsc" -p tools/tsconfig.jest-configs.json
+
+  lint:
+    name: lint (non-blocking)
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    # Non-blocking at the JOB level, not just on the ESLint step. The step-level flag below keeps
+    # a red lint result from failing the job; this keeps anything else in the job — a cache miss,
+    # a registry hiccup, an install failure on the fleet — from doing it either. The requirement
+    # is that this job cannot redden CI for anyone, and a job that goes red because a runner had
+    # a bad day would break that just as surely as a lint error would.
+    continue-on-error: true
+    # A cold dependency install on this fleet is measured in hours, not minutes. The ceiling costs
+    # nothing on the warm path, which is a cache lookup.
+    timeout-minutes: 360
+    steps:
+      # Action versions deliberately match `build.yml` rather than the newer majors used elsewhere:
+      # this job consumes the node_modules cache that workflow writes, so producer and consumer are
+      # kept on the same actions.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Restore node_modules archive
+        # Best effort: the same key the build workflow writes, so a push that already built this
+        # exact lockfile reuses that tree instead of installing again. The restore script below
+        # installs from scratch when the archive is absent, so a miss is not fatal.
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      # Placed AFTER the cache restore because this action rewrites yarn.lock's resolved URLs, and
+      # `hashFiles()` in the key above evaluates at step runtime — configuring the registry first
+      # would move the key and split the cache namespace by VIP reachability.
+      - name: Configure Registry
+        uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
+
+      - name: Restore node_modules
+        shell: bash
+        run: .github/scripts/restore-node-modules.sh
+
+      # NON-BLOCKING, on purpose. See the header. `--nxBail=false` so one failing project still
+      # lets every other project report; without it the first failure hides the rest.
+      - name: Run ESLint (report only)
+        id: eslint
+        continue-on-error: true
+        run: yarn nx run-many -t lint --nxBail=false --parallel=2
+
+      # Surface the size of the backlog on the run page, so it is visible without opening logs and
+      # so progress against it is legible over time.
+      - name: Summarize
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## ESLint"
+            echo
+            if [ "${{ steps.eslint.outcome }}" = "success" ]; then
+              echo "\`nx run-many -t lint\` is **green**."
+              echo
+              echo "This job can now be promoted to blocking: drop \`continue-on-error\` from the"
+              echo "\`Run ESLint\` step in \`.github/workflows/static-checks.yml\`."
+            else
+              echo "\`nx run-many -t lint\` reported problems. **This does not fail CI** — the"
+              echo "backlog predates the job (see \`knowledge/TASKS.md\` in the agent workspace)."
+              echo
+              echo "Full output is in the \`Run ESLint (report only)\` step above."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
