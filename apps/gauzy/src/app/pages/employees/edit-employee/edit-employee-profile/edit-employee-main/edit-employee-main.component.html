@@ -1,184 +1,365 @@
-<div class="content">
-	<div class="organization-container w-25 d-flex flex-column">
-		<div class="organization-photo">
-			<ngx-image-uploader
-				(changeHoverState)="hoverState = $event"
-				(uploadedImageAsset)="updateImageAsset($event)"
-				(uploadImageAssetError)="handleImageUploadError($event)"
-			></ngx-image-uploader>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				xmlns:xlink="http://www.w3.org/1999/xlink"
-				width="68"
-				height="68"
-				viewBox="0 0 68 68"
-				[style.opacity]="hoverState ? '1' : '0.3'"
-			>
-				<defs>
-					<path
-						id="a"
-						d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+<!--
+	Identity on the left, the account form on the right, as two panels of equal
+	standing — the same shape the location tab was rebuilt into
+	(employee-location.component.html).
+
+	What was here before was the ORGANISATION page's scaffolding, borrowed whole:
+	a `w-25` column holding nothing but an avatar pinned to its top-left corner,
+	beside a `w-75` column of bootstrap rows. At an employee's width that left the
+	left quarter of the tab empty from the photo down, and stretched every input
+	across half the card, so the eye had no column to run down and the two halves
+	did not line up on anything.
+-->
+<div class="account">
+	<section class="account__panel account__panel--identity">
+		<!--
+			Identity beside the photo rather than under it. Stacked, the panel ran
+			to a 112px avatar plus four lines of identity plus four groups of
+			figures — taller than the tab, so the whole tab scrolled to reach a
+			form that fits on screen. Laid out as a row, the photo costs the panel
+			its own height instead of adding to it.
+		-->
+		<header class="account__head">
+			<!--
+				The whole box is the upload target: `ngx-image-uploader` renders a file
+				input that lays ITSELF out absolutely at 100% × 100% (see
+				`styles` in image-uploader.component.ts), so it covers whichever of the
+				photo or the placeholder is rendered below it.
+			-->
+			<div class="account__avatar" [class.account__avatar--hover]="hoverState">
+				<ngx-image-uploader
+					(changeHoverState)="hoverState = $event"
+					(uploadedImageAsset)="updateImageAsset($event)"
+					(uploadImageAssetError)="handleImageUploadError($event)"
+				></ngx-image-uploader>
+
+				<!--
+					Guarded on the URL AND on whether it actually loaded. Guarding on the
+					form alone rendered the image whenever the form existed, so an
+					employee with no photo got the browser's broken-image glyph and its
+					alt text in the panel; guarding on the URL alone still only proved one
+					was SET, so an employee whose stored photo 404s — a deleted asset, an
+					expired signed URL — got the same glyph. `(error)` falls back to the
+					placeholder either way.
+				-->
+				@if (form?.get('imageUrl')?.value && !avatarFailed) {
+					<img
+						class="account__avatar-image"
+						[src]="form.get('imageUrl').value"
+						alt="Profile Photo"
+						(error)="avatarFailed = true"
 					/>
-				</defs>
-				<g fill="none" fill-rule="evenodd">
-					<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
-					<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
-					<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
-				</g>
-			</svg>
-			<div [style.opacity]="hoverState ? '0.2' : '0'"></div>
-			<!-- Guarded on the URL rather than on the form: the image rendered
-			     whenever the form existed, so an employee with no photo got the
-			     browser's broken-image glyph and its alt text in the panel. -->
-			@if (form?.get('imageUrl')?.value; as avatarUrl) {
-			<img
-				[src]="avatarUrl"
-				alt="Profile Photo"
-				(mouseenter)="hoverState = true"
-				(mouseleave)="hoverState = false"
-			/>
-			} @else {
-			<div
-				class="organization-photo-placeholder"
-				(mouseenter)="hoverState = true"
-				(mouseleave)="hoverState = false"
-			>
-				<nb-icon icon="person-outline"></nb-icon>
+				} @else {
+					<div class="account__avatar-image account__avatar-image--empty">
+						<nb-icon icon="person-outline"></nb-icon>
+					</div>
+				}
+
+				<!--
+					Scrim and badge are driven by the class on the box rather than by
+					two `[style.opacity]` bindings, so the transition between the two
+					states lives with the rest of the styling.
+				-->
+				<span class="account__avatar-scrim" aria-hidden="true"></span>
+				<span class="account__avatar-badge" aria-hidden="true">
+					<nb-icon icon="camera-outline"></nb-icon>
+				</span>
 			</div>
-			}
-		</div>
-		@if (selectedEmployee?.isVetted) {
-		<nb-badge
-			class="vetted-badge"
-			status="success"
-			[text]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.VETTED' | translate"
-			position="bottom-left"
-		>
-		</nb-badge>
-		} @if (selectedEmployee) {
-		<div class="employee-stats">
-			@if (selectedEmployee?.jobSuccess) {
-			<div class="employee-optional-info">
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.JOB_SUCCESS' | translate }}: {{ selectedEmployee.jobSuccess }}%
+
+			<div class="account__identity">
+				<div class="account__name-row">
+					<span class="account__name">{{ selectedEmployee?.user?.name }}</span>
+				</div>
+
+				@if (selectedEmployee?.organizationPosition?.name; as position) {
+					<div class="account__role">{{ position }}</div>
+				}
+
+				<!--
+					The one-line role blurb the Employment tab collects. Nothing else on
+					this page surfaced it, so it was written once and never seen again.
+				-->
+				@if (selectedEmployee?.short_description; as blurb) {
+					<p class="account__blurb">{{ blurb }}</p>
+				}
+
+				<!--
+					The record's standing, as chips. Where the employee sits in their
+					engagement is derived from the two dates the Employment and Hiring
+					tabs write (see `workState`) — "Not Started" in particular is worth
+					saying here, because an employee with no start date is left out of
+					accounts and split expenses and nothing on this tab said so.
+				-->
+				<div class="account__chips">
+					@switch (workState) {
+						@case ('active') {
+							<span class="account__chip account__chip--success">
+								{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
+							</span>
+						}
+						@case ('ended') {
+							<span class="account__chip account__chip--danger">
+								{{ 'EMPLOYEES_PAGE.WORK_ENDED' | translate }}
+							</span>
+						}
+						@case ('not-started') {
+							<span class="account__chip account__chip--warning">
+								{{ 'EMPLOYEES_PAGE.NOT_STARTED' | translate }}
+							</span>
+						}
+					}
+					@if (selectedEmployee?.isVetted) {
+						<span class="account__chip account__chip--success">
+							{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.VETTED' | translate }}
+						</span>
+					}
+					@if (selectedEmployee?.isJobSearchActive) {
+						<span class="account__chip account__chip--info">
+							{{ 'JOBS.JOB_SEARCH' | translate }}
+						</span>
+					}
+				</div>
 			</div>
-			} @if (selectedEmployee?.totalJobs) {
-			<div class="employee-optional-info">
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_JOBS' | translate }}:
-				{{ selectedEmployee.totalJobs }}
+		</header>
+
+		<!--
+			The record's figures as label/value lists under the caption of the TAB
+			that owns each one, so the panel doubles as a summary of what the other
+			tabs hold and as a pointer to where each value is changed.
+
+			Every row is guarded, and every group is guarded on whether it has any
+			row at all — a caption with nothing under it is worse than no caption.
+
+			Only fields the edit page's resolver actually loads appear here: it
+			fetches the employee with `user`, `user.image` and `organizationPosition`
+			and nothing else (employee.resolver.ts), so departments, tags, skills and
+			contact are NOT available on this page and would render permanently
+			empty. Everything below is either a column on the employee record itself
+			or on the user it already loads.
+		-->
+		@if (selectedEmployee) {
+			<div class="account__facts">
+				@if (hasEmploymentFacts) {
+					<section class="account__group">
+						<!--
+							No caption on this group. It leads the list, so the panel it
+							sits in already introduces it, and a caption here would only
+							spend a full-width grid row saying so.
+						-->
+						<dl class="account__stats">
+							@if (selectedEmployee.employeeLevel; as level) {
+								<div class="account__stat">
+									<dt>{{ 'FORM.LABELS.EMPLOYEE_LEVEL' | translate }}</dt>
+									<dd>{{ level }}</dd>
+								</div>
+							}
+							@if (selectedEmployee.startedWorkOn; as startedOn) {
+								<div class="account__stat">
+									<dt>{{ 'FORM.LABELS.DATE_START' | translate }}</dt>
+									<dd>{{ startedOn | dateFormat }}</dd>
+								</div>
+							}
+							@if (selectedEmployee.endWork; as endedOn) {
+								<div class="account__stat">
+									<dt>{{ 'EMPLOYEES_PAGE.END_WORK' | translate }}</dt>
+									<dd>{{ endedOn | dateFormat }}</dd>
+								</div>
+							}
+						</dl>
+					</section>
+				}
+
+				@if (hasRateFacts) {
+					<section class="account__group">
+						<h6 class="account__group-title">
+							{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES' | translate }}
+						</h6>
+						<dl class="account__stats">
+							@if (selectedEmployee.payPeriod; as payPeriod) {
+								<div class="account__stat">
+									<dt>{{ 'FORM.LABELS.PAY_PERIOD' | translate }}</dt>
+									<dd>{{ payPeriod | replace : '_' : ' ' | titlecase }}</dd>
+								</div>
+							}
+							@if (selectedEmployee.billRateCurrency && selectedEmployee.billRateValue) {
+								<div class="account__stat">
+									<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATE' | translate }}</dt>
+									<dd>
+										{{ selectedEmployee.billRateCurrency }}
+										{{ selectedEmployee.billRateValue }} /
+										{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HR' | translate }}
+									</dd>
+								</div>
+							}
+							@if (selectedEmployee.reWeeklyLimit; as weeklyLimit) {
+								<div class="account__stat">
+									<dt>{{ 'FORM.LABELS.RECURRING_WEEKLY_LIMIT' | translate }}</dt>
+									<dd>{{ weeklyLimit }}</dd>
+								</div>
+							}
+						</dl>
+					</section>
+				}
+
+				<section class="account__group">
+					<!--
+						No caption on this group either: "Time Tracking" was standing
+						directly over a row whose own label is "Time Tracking", so the
+						caption said nothing the figure under it did not, and cost a
+						full-width grid row to say it.
+					-->
+					<dl class="account__stats">
+						<!--
+							The one row here that is not optional on the record. Whether
+							tracking is on for this employee at all decides whether any of
+							the timer, screenshot and activity settings on the Settings tab
+							do anything, and nothing on the profile said which way it was
+							set.
+						-->
+						<div class="account__stat">
+							<dt>{{ 'SM_TABLE.TIME_TRACKING' | translate }}</dt>
+							<dd>
+								{{
+									(selectedEmployee.isTrackingEnabled
+										? 'EMPLOYEES_PAGE.ENABLED'
+										: 'EMPLOYEES_PAGE.DISABLED'
+									) | translate
+								}}
+							</dd>
+						</div>
+						@if (selectedEmployee.totalWorkHours; as totalHours) {
+							<div class="account__stat">
+								<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_HOURS' | translate }}</dt>
+								<dd>{{ totalHours }}</dd>
+							</div>
+						}
+						@if (selectedEmployee.user?.timeFormat; as timeFormat) {
+							<div class="account__stat">
+								<dt>{{ 'FORM.LABELS.TIME_FORMAT' | translate }}</dt>
+								<dd>{{ timeFormat }}</dd>
+							</div>
+						}
+					</dl>
+				</section>
+
+				@if (hasJobFacts) {
+					<section class="account__group">
+						<h6 class="account__group-title">{{ 'MENU.JOBS' | translate }}</h6>
+						<dl class="account__stats">
+							@if (selectedEmployee.jobSuccess; as jobSuccess) {
+								<div class="account__stat">
+									<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.JOB_SUCCESS' | translate }}</dt>
+									<dd>{{ jobSuccess }}%</dd>
+								</div>
+							}
+							@if (selectedEmployee.totalJobs; as totalJobs) {
+								<div class="account__stat">
+									<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_JOBS' | translate }}</dt>
+									<dd>{{ totalJobs }}</dd>
+								</div>
+							}
+						</dl>
+					</section>
+				}
 			</div>
-			} @if (selectedEmployee?.totalWorkHours) {
-			<div class="employee-optional-info">
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_HOURS' | translate }}:
-				{{ selectedEmployee.totalWorkHours }}
-			</div>
-			} @if ( selectedEmployee?.billRateCurrency && selectedEmployee?.billRateValue ) {
-			<div class="employee-optional-info">
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATE' | translate }}:
-				{{ selectedEmployee.billRateCurrency }}
-				{{ selectedEmployee.billRateValue }} /
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HR' | translate }}
-			</div>
-			}
-		</div>
 		}
-	</div>
+	</section>
 
-	<div class="employee-form w-75">
-		<form [formGroup]="form">
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label class="label" for="usernameInput">{{ 'FORM.USERNAME' | translate }}</label>
-						<input
-							fullWidth
-							id="usernameInput"
-							type="text"
-							nbInput
-							formControlName="username"
-							placeholder="{{ 'FORM.USERNAME' | translate }}"
-						/>
-					</div>
+	<section class="account__panel account__panel--form">
+		<!--
+			Six fields on a two-column grid, in place of three bootstrap rows whose
+			columns were declared three different ways (`col`, `col`, then
+			`col-sm-6`). The grid gives every field one width and one baseline, and
+			it is the grid — not the markup — that collapses to a single column on a
+			narrow card.
+		-->
+		<form class="account__form" [formGroup]="form">
+			<div class="account__fields">
+				<div class="form-group">
+					<label class="label" for="usernameInput">{{ 'FORM.USERNAME' | translate }}</label>
+					<input
+						fullWidth
+						id="usernameInput"
+						type="text"
+						nbInput
+						formControlName="username"
+						placeholder="{{ 'FORM.USERNAME' | translate }}"
+					/>
 				</div>
-				<div class="col">
-					<div class="form-group">
-						<label for="emailInput" class="label">{{ 'FORM.EMAIL' | translate }}</label>
-						<input
-							fullWidth
-							id="emailInput"
-							type="email"
-							nbInput
-							formControlName="email"
-							placeholder="{{ 'FORM.EMAIL' | translate }}"
-						/>
-					</div>
+
+				<div class="form-group">
+					<label for="emailInput" class="label">{{ 'FORM.EMAIL' | translate }}</label>
+					<input
+						fullWidth
+						id="emailInput"
+						type="email"
+						nbInput
+						formControlName="email"
+						placeholder="{{ 'FORM.EMAIL' | translate }}"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label class="label" for="firstNameInput">{{ 'FORM.LABELS.FIRST_NAME' | translate }}</label>
+					<input
+						fullWidth
+						id="firstNameInput"
+						type="text"
+						nbInput
+						formControlName="firstName"
+						placeholder="{{ 'FORM.PLACEHOLDERS.FIRST_NAME' | translate }}"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label for="lastNameInput" class="label">{{ 'FORM.LABELS.LAST_NAME' | translate }}</label>
+					<input
+						fullWidth
+						id="lastNameInput"
+						type="text"
+						nbInput
+						formControlName="lastName"
+						placeholder="{{ 'FORM.PLACEHOLDERS.LAST_NAME' | translate }}"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label for="preferredLanguage" class="label">
+						{{ 'FORM.LABELS.PREFERRED_LANGUAGE' | translate }}
+					</label>
+					<ngx-language-selector
+						[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE' | translate"
+						class="d-block"
+						labelForId="preferredLanguage"
+						selectBy="object"
+						[template]="'ng-select'"
+						formControlName="preferredLanguage"
+					>
+					</ngx-language-selector>
+				</div>
+
+				<div class="form-group">
+					<label for="profileLinkInput" class="label">{{ 'FORM.LABELS.PROFILE_LINK' | translate }}</label>
+					<input
+						fullWidth
+						id="profileLinkInput"
+						type="text"
+						nbInput
+						formControlName="profile_link"
+						placeholder="{{ 'FORM.PLACEHOLDERS.PROFILE_LINK' | translate }}"
+					/>
 				</div>
 			</div>
 
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label class="label" for="firstNameInput">{{ 'FORM.LABELS.FIRST_NAME' | translate }}</label>
-						<input
-							fullWidth
-							id="firstNameInput"
-							type="text"
-							nbInput
-							formControlName="firstName"
-							placeholder="{{ 'FORM.PLACEHOLDERS.FIRST_NAME' | translate }}"
-						/>
-					</div>
-				</div>
-				<div class="col">
-					<div class="form-group">
-						<label for="lastNameInput" class="label">{{ 'FORM.LABELS.LAST_NAME' | translate }}</label>
-						<input
-							fullWidth
-							id="lastNameInput"
-							type="text"
-							nbInput
-							formControlName="lastName"
-							placeholder="{{ 'FORM.PLACEHOLDERS.LAST_NAME' | translate }}"
-						/>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="preferredLanguage" class="label">{{
-							'FORM.LABELS.PREFERRED_LANGUAGE' | translate
-						}}</label>
-						<ngx-language-selector
-							[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE' | translate"
-							class="d-block"
-							labelForId="preferredLanguage"
-							selectBy="object"
-							[template]="'ng-select'"
-							formControlName="preferredLanguage"
-						>
-						</ngx-language-selector>
-					</div>
-				</div>
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="profileLinkInput" class="label">{{ 'FORM.LABELS.PROFILE_LINK' | translate }}</label>
-						<input
-							fullWidth
-							id="profileLinkInput"
-							type="text"
-							nbInput
-							formControlName="profile_link"
-							placeholder="{{ 'FORM.PLACEHOLDERS.PROFILE_LINK' | translate }}"
-						/>
-					</div>
-				</div>
-			</div>
-
-			<div class="actions">
-				<button [disabled]="form.invalid" (click)="submitForm()" nbButton status="success">
+			<!--
+				The commit action belongs to the panel it commits, on the panel's
+				trailing edge — the same footer the location tab ends on.
+			-->
+			<footer class="account__actions">
+				<button type="button" [disabled]="form.invalid" (click)="submitForm()" nbButton status="success">
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
-			</div>
+			</footer>
 		</form>
-	</div>
+	</section>
 </div>

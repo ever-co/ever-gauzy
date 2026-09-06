@@ -1,261 +1,468 @@
 @use 'themes' as *;
+// Namespaced: `var` forwards the theming module already loaded as `*` above, and
+// two `as *` loads of it would collide.
 @use 'var' as v;
 
 $radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
 
-// NOTE ON SPECIFICITY: this component also loads
-// `edit-organization-main.component.scss` (see its `styleUrls`), whose rules are
-// written as `:host .content` / `:host .organization-container …`. A bare
-// `.content { … }` here therefore LOSES to it — which is why the old
-// `.content { padding: 20px }` in this file never took effect and the tab was
-// laid out on the organization page's 1rem padding. Everything below is scoped
-// through `:host` so it matches that specificity, and this file is listed SECOND
-// in `styleUrls`, so on a tie it is the later rule that wins. Keep it last.
+// NOTE: this component no longer loads `edit-organization-main.component.scss`
+// (see its `styleUrls`). Everything that stylesheet gave this tab was written for
+// the organisation page — a 563px panel, a `w-25`/`w-75` split, a `height: 100%`
+// chain and a `.organization-photo div { background: black }` rule that painted
+// every div in the photo box — and every one of those had to be fought back from
+// here, through `:host`-qualified selectors that only won on source order. The
+// tab owns its layout now, so the fight is gone along with the import.
 
-// The tab is a flex item of the tabset now (see
-// edit-employee-profile.component.scss), which hands it the height the card body
-// has left over. The `max-height: calc(100vh - 20.5rem)` this used to carry was a
-// SECOND guess at the page chrome alongside the card's own: when the two
-// disagreed — as they do whenever the header collapses to the "select an
-// employee" line — the tab stopped short of the bottom of the card and left a
-// band of empty canvas under the form. `min-height: 0` so a tall tab scrolls
-// inside itself rather than pushing the card past the viewport.
+// The tab is a flex item of the tabset (see edit-employee-profile.component.scss),
+// which hands it the height the card body has left over. `min-height: 0` so a
+// tall tab scrolls inside itself rather than pushing the card past the viewport,
+// and the surface is painted here because the two panels below would otherwise
+// leave the gap between them showing straight through to the card body.
 :host {
-  padding: 0;
   display: flex;
   flex-direction: column;
-  // `height: auto` reclaims the `height: 100%` the organization stylesheet puts
-  // on this host: as a flex item that made the BASIS a full tabset height, one
-  // the tab strip has already spent part of, so the tab only came out right by
-  // being shrunk back down again. Growing from content height says the same
-  // thing directly.
+  flex: 1 1 auto;
+  min-height: 0;
   height: auto;
+  overflow-y: auto;
+  background-color: var(--gauzy-card-2);
+  @include nb-ltr(border-radius, 0 $radius $radius $radius);
+  @include nb-rtl(border-radius, $radius 0 $radius $radius);
+}
+
+// ── The two panels ──────────────────────────────────────────────────────────
+// `flex: 1 0 auto` rather than a percentage height: the host's own size comes out
+// of flex layout on the tabset, which is nothing a percentage here can resolve
+// against, so it would fall back to content height and leave a band of bare card
+// body under the Save row. `0` for flex-shrink deliberately — the host scrolls,
+// so a form taller than the tab keeps its height and scrolls inside it.
+.account {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  padding: 1rem;
+  flex: 1 0 auto;
+  min-height: 0;
+}
+
+.account__panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
+}
+
+// `min()` rather than a flat basis. The layout column loses up to 860px to the
+// expanded AI chat, and no viewport media query can see that — the window did not
+// change. The panel takes 23rem when there is room for it and a proportion of the
+// column when there is not. It was 20rem while this held an avatar and one rate
+// line; the figures sit in two columns inside it now and need the width to carry
+// a label and its value in each track without every one of them wrapping.
+.account__panel--identity {
+  flex: 0 1 min(23rem, 36%);
+  align-items: stretch;
+  padding: 1.125rem 1.25rem;
+  text-align: start;
+}
+
+.account__panel--form {
+  flex: 1 1 auto;
+}
+
+// ── Avatar ──────────────────────────────────────────────────────────────────
+// Sized on the BOX, not on the image: with a broken or absent photo the box used
+// to collapse to the width of the alt text, and the upload glyph — which centres
+// on this box — drifted off the corner of the avatar with it.
+//
+// `position: relative` is load-bearing. The file input inside `ngx-image-uploader`
+// positions itself absolutely at 100% by 100%, so this box is the containing
+// block that decides what area takes the click.
+.account__avatar {
+  position: relative;
+  // 112px when this sat alone at the top of the panel; beside the identity text
+  // it only needs to be as tall as the name, role and chips next to it.
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  border-radius: $radius;
+  overflow: hidden;
+  border: 1px solid var(--gauzy-border-default-color);
+  background-color: var(--gauzy-sidebar-background-3);
+  cursor: pointer;
+}
+
+.account__avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  // A 25%-black drop shadow is invisible against the near-black canvas — this
+  // avatar had no edge at all on `gauzy-dark`. The border on the box above is the
+  // same hairline on the light themes and a 1px ring on the dark one, so the
+  // shadow this used to carry is no longer doing any work.
+  box-shadow: none;
+}
+
+// Stand-in for an employee with no photo, matching the one the page header
+// renders.
+.account__avatar-image--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: nb-theme(text-hint-color);
+
+  nb-icon {
+    font-size: 1.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+.account__avatar-scrim {
+  position: absolute;
+  inset: 0;
+  background-color: #000;
+  opacity: 0;
+  // The file input above it (z-index 3) is what takes the click; neither the
+  // scrim nor the badge may ever intercept one.
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+// The upload affordance. The markup used to inline a 68px SVG here, hard-coded to
+// a `#0091FF` that belongs to no theme and pinned by the template to a permanent
+// 0.3 opacity: over a 100px avatar it covered two thirds of the photo and read as
+// something broken sitting on top of the image rather than as a control. As a
+// small badge in the trailing corner it stays out of the subject of the photo and
+// comes up to full strength with the scrim under the cursor.
+//
+// A logical inset rather than the `nb-ltr`/`nb-rtl` pair: those are gated on an
+// explicit `[dir]` attribute, while this flips on its own.
+.account__avatar-badge {
+  position: absolute;
+  bottom: 6px;
+  inset-inline-end: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: nb-theme(color-primary-500);
+  color: nb-theme(text-control-color);
+  opacity: 0.85;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+
+  nb-icon {
+    font-size: 0.8125rem;
+    width: 0.8125rem;
+    height: 0.8125rem;
+  }
+}
+
+.account__avatar--hover {
+  .account__avatar-scrim {
+    opacity: 0.25;
+  }
+
+  .account__avatar-badge {
+    opacity: 1;
+  }
+}
+
+// ── Identity ────────────────────────────────────────────────────────────────
+// Photo on the leading edge, identity text beside it. Stacked, this panel came
+// to a 112px avatar plus four lines of identity plus four groups of figures,
+// which is taller than the tab — so the tab scrolled to reach a form that fits
+// on screen twice over. Side by side the photo costs the panel its own height
+// rather than adding to it, and the type below runs at 11px so the figures fit
+// in what is left.
+.account__head {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.account__identity {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: start;
+}
+
+.account__name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.375rem;
+}
+
+.account__name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: -0.01em;
+  color: var(--gauzy-text-color-1);
+  // A single long token — an address-style name, a pasted handle — would
+  // otherwise push the panel wider than its basis.
+  overflow-wrap: anywhere;
+}
+
+.account__role {
+  margin-top: 0.125rem;
+  font-size: 0.6875rem;
+  line-height: 0.9375rem;
+  color: nb-theme(text-hint-color);
+}
+
+// The short description from the Employment tab. Capped at two lines: it is a
+// free-text field with no length limit behind it, and an employee who pasted a
+// paragraph into it should not push the figures below out of the panel — which
+// is the whole thing this pass is undoing.
+.account__blurb {
+  margin: 0.25rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 0.9375rem;
+  color: nb-theme(text-hint-color);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+// The status chips. This started as one `nb-badge` for the vetted state, which
+// positions itself absolutely against its parent by default: in a flex column
+// that took it out of the flow and stacked it on the avatar, and the template
+// answered with an inline `position: relative; margin-top: 20px` to put it back.
+.account__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+  // Every chip in here is conditional, and before the record has loaded none of
+  // them render — which would leave the row spending its margin on nothing.
+  // `:has()` asks whether anything actually came out; `:empty` would not, since
+  // the block's own whitespace still counts as content.
+  &:not(:has(.account__chip)) {
+    display: none;
+  }
+}
+
+.account__chip {
+  display: inline-flex;
+  align-items: center;
+  height: 1rem;
+  padding: 0 0.375rem;
+  border-radius: 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+// Read from the status tokens rather than from literal colours, so a chip keeps
+// its meaning on the pale themes and on the near-black one alike.
+.account__chip--success {
+  background-color: nb-theme(color-success-transparent-100);
+  color: nb-theme(text-success-color);
+}
+
+.account__chip--danger {
+  background-color: nb-theme(color-danger-transparent-100);
+  color: nb-theme(text-danger-color);
+}
+
+.account__chip--warning {
+  background-color: nb-theme(color-warning-transparent-100);
+  color: nb-theme(text-warning-color);
+}
+
+.account__chip--info {
+  background-color: nb-theme(color-info-transparent-100);
+  color: nb-theme(text-info-color);
+}
+
+// ── Record figures ──────────────────────────────────────────────────────────
+// ONE grid for every figure in the panel, with the section captions spanning it.
+//
+// The first attempt put each section in its own grid cell, two sections to a
+// row, and that is what left the hole in the panel: a grid row is as tall as its
+// tallest item, so a two-row Employment block beside a three-row Rates block was
+// padded out to match it, and Time Tracking started below the taller of the two
+// with a band of nothing under Employment. Two columns of blocks can only line
+// up when the blocks happen to be the same length.
+//
+// Flattened — `display: contents` on the sections and their lists, so it is the
+// individual rows that are the grid items — the figures pair up across the two
+// tracks with no gaps to leave, and every value in a column lines up on the same
+// edge as the one above it whatever the sections around it contain.
+//
+// `align-content: space-between` spends the height the panel has left over: it
+// stretches beside the form panel, and the figures used to stop halfway down and
+// leave the bottom third empty. Divided between eight or so rows the leftover
+// reads as breathing room rather than as one hole at the end.
+.account__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: space-between;
+  gap: 0 1.25rem;
+  flex: 1 1 auto;
+  width: 100%;
+  margin-top: 1.125rem;
+  min-height: 0;
+  text-align: start;
+}
+
+// The section and its list are structure, not boxes: their rows belong to the
+// grid above. Nested `display: contents` so both levels get out of the way.
+.account__group,
+.account__stats {
+  display: contents;
+}
+
+// Spans both tracks, so a caption always introduces a full row of figures rather
+// than sitting over one of them.
+//
+// Only two groups carry one. The employment figures lead the list, where the
+// panel already introduces them, and "Time Tracking" was standing directly over
+// a row whose own label is "Time Tracking" — each was spending a full-width row
+// to say nothing, and each was a break the figures then had to restart from.
+// Without them the tracking figures pack into the cell Rates' odd third row
+// leaves empty, which is what closes the last gap in the grid.
+.account__group-title {
+  grid-column: 1 / -1;
+  margin: 0.75rem 0 0.125rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 0.875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: nb-theme(text-disabled-color);
+}
+
+// `:first-child` reads the DOM, which `display: contents` leaves untouched — so
+// this still finds the first section even though its box is gone.
+.account__group:first-child .account__group-title {
+  margin-top: 0;
+}
+
+// Label over value rather than label opposite value. In a half-width track there
+// is no room for both on one line, and `space-between` on a wrapped row leaves
+// the value stranded mid-column — stacked, every value lines up on the same
+// leading edge as its label and the row height is predictable.
+//
+// The rule sits on each ROW rather than between rows, so the first one under a
+// caption also separates the figures from it.
+.account__stat {
+  padding: 0.3125rem 0;
+  border-top: $hairline;
+  min-width: 0;
+
+  dt {
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+    font-weight: 400;
+    color: nb-theme(text-hint-color);
+    overflow-wrap: anywhere;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+    overflow-wrap: anywhere;
+  }
+}
+
+// ── Form panel ──────────────────────────────────────────────────────────────
+.account__form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+// Two equal columns, `minmax(0, 1fr)` so a wide control — the language selector,
+// a long placeholder — sizes to its track instead of widening it. `align-content:
+// start` keeps the rows on their own rhythm at the top of a tall panel rather
+// than distributing them down it.
+.account__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.25rem;
+  align-content: start;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  border-radius: 0 $radius $radius $radius;
-}
-
-// The two columns stand on the tab's full height. `edit-organization-main` gives
-// this `height: 100%`, which on a scrolling host is a CAP as well as a floor:
-// a form taller than the card would spill out of a box that stopped at the fold,
-// so the panel's fill and the tab's own background ended mid-scroll.
-//
-// `min-height: 100%` was the first attempt at the floor and it did not hold: a
-// percentage height resolves against the CONTAINING BLOCK's height, and this
-// host is `height: auto` — its size comes out of flex layout on the tabset, not
-// out of anything the cascade can see here. So the percentage fell back to zero,
-// `.content` was laid out at content height, and the band of bare card body
-// under the Save row came back with the summary panel stopping short beside it.
-//
-// `flex: 1 0 auto` says the same thing in the one language the host actually
-// speaks: it IS a flex column (see `:host` above), so the tab's leftover height
-// goes to its only item. `0` for flex-shrink, deliberately — the host scrolls,
-// and a form taller than the tab must keep its own height and scroll inside the
-// host rather than being squeezed back to fit.
-:host .content {
-  height: auto;
-  flex: 1 0 auto;
-}
-
-// ── Summary panel ───────────────────────────────────────────────────────────
-// The panel's padding, its top-left alignment and its radius are left to
-// `edit-organization-main.component.scss`. Two things are not:
-//
-// FILL — `rgba(126, 126, 143, 0.1)` is the literal value that stylesheet writes,
-// the value this token carries on the light themes; on `gauzy-dark` the token is
-// a LIFTING white tint instead, so reading it keeps the photo column one visible
-// step off the tab surface there rather than hoping a grey wash shows up on
-// near-black.
-//
-// HEIGHT — `height: auto` in place of that stylesheet's `height: 100%`, and the
-// difference is the whole point. `align-items: stretch` on `.content` only
-// stretches an item whose cross size is `auto`; a computed `height: 100%` opts
-// the panel OUT of stretching and then resolves against a parent that is
-// `min-height`-sized, i.e. indefinite — so it fell back to content height and the
-// panel stopped under the rate line while the form ran on for another 200px.
-// That short panel was the only thing on this tab that showed the empty band at
-// all: the tab's own fill is `gauzy-card-2`, `rgba(255, 255, 255, 0.02)` on the
-// dark theme, which is invisible against the card behind it. As `auto` the panel
-// stretches to the full height of `.content`, which now fills the tab.
-:host .organization-container {
-  background-color: var(--gauzy-sidebar-background-3);
-  height: auto;
-}
-
-// Scoped through `.organization-container` on purpose. The organization
-// stylesheet styles this as `:host .organization-container .organization-photo
-// img`; a shorter selector here loses the tie and the image keeps ITS size
-// instead of filling the box below. Matching that specificity means source
-// order decides, and this file is listed second in `styleUrls`.
-:host .organization-container .organization-photo {
-  // Sized on the BOX, not just the image: with a broken or absent photo the box
-  // used to collapse to the width of the alt text, and the upload glyph — which
-  // centres on this box — drifted off the corner of the avatar with it. 100px is
-  // the size the photo has always been.
-  width: 100px;
-  height: 100px;
-  flex: 0 0 auto;
-  position: relative;
-  border-radius: $radius;
-  overflow: hidden;
-  background-color: var(--gauzy-card-1);
-  border: 1px solid var(--gauzy-border-default-color);
-
-  img,
-  .organization-photo-placeholder {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 0;
-    // A 25 %-black drop shadow is invisible against the near-black canvas — this
-    // avatar had no edge at all on `gauzy-dark`. The border on the box above is
-    // the same hairline on the light themes and a 1px ring on the dark one, so
-    // the shadow this used to carry is no longer doing any work.
-    box-shadow: none;
-    display: block;
-  }
-
-  // Stand-in for an employee with no photo, matching the one the page header
-  // already renders.
-  //
-  // `background-color` is the load-bearing line. The organization stylesheet
-  // paints EVERY div in this box solid black — `.organization-photo div
-  // { background: black; position: absolute }` — which is right for the one div
-  // it was written for, the hover scrim, but it also catches this placeholder:
-  // a no-photo employee got a black square with a faint icon on it, on every
-  // theme. Reclaim the fill (and the box, which that rule also absolutely
-  // positions) rather than trying to make the scrim rule more specific.
-  .organization-photo-placeholder {
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--gauzy-sidebar-background-3);
-    color: nb-theme(text-hint-color);
-
-    nb-icon {
-      font-size: 2.25rem;
-      width: 2.25rem;
-      height: 2.25rem;
-    }
-  }
-
-  // The hover scrim the template toggles between opacity 0 and 0.2. It had no
-  // transition, so the wash snapped on and off under the cursor. `:not([class])`
-  // picks out the bare scrim div from the classed placeholder beside it.
-  > div:not([class]) {
-    border-radius: 0;
-    transition: opacity 0.2s ease-in-out;
-  }
-
-  // The upload affordance. At the 68px the markup gives it, over a 100px avatar,
-  // it covered two thirds of the photo — and the template pins it to a permanent
-  // 0.3 opacity, so at rest it read as something broken sitting on top of the
-  // image rather than as a control. As a small badge in the bottom corner it
-  // stays out of the subject of the photo, and the template's own hover binding
-  // still takes it to full opacity over the darkening scrim.
-  //
-  // Both offsets are restated because the organization stylesheet centres this
-  // with `calc(50% - 68px / 2)` — a hard-coded half of the OLD size, which would
-  // throw a smaller glyph off centre by the difference. Logical insets rather
-  // than the `nb-ltr`/`nb-rtl` pair: those are gated on an explicit `[dir]`
-  // attribute, while these flip on their own.
-  svg {
-    width: 28px;
-    height: 28px;
-    top: auto;
-    bottom: 6px;
-    inset-inline-start: auto;
-    inset-inline-end: 6px;
-    // The input above it (z-index 3) is what takes the click; this must never
-    // intercept one.
-    pointer-events: none;
-
-    // The markup hard-codes `#0091FF`, a blue that belongs to no theme here.
-    // The two circles carry their own `opacity` attributes, so overriding only
-    // the fill keeps the badge's light/dark ring intact.
-    circle {
-      fill: nb-theme(color-primary-500);
-    }
-  }
-}
-
-// nb-badge positions itself absolutely against its parent by default, which in
-// a flex column means it would leave the flow and stack on the avatar. This
-// carried an inline `position: relative; margin-top: 20px` in the template —
-// same two declarations, just no longer hard-coded on the element.
-:host .vetted-badge {
-  position: relative;
-  margin-top: 20px;
-}
-
-// ── Optional stats (vetted / job success / total jobs / hours / rate) ────────
-// Each line used to carry `margin-top: 20px`, so four of them opened four big
-// unequal gaps down the panel. As a divided list they read as one block of
-// supporting figures.
-:host .employee-stats {
-  width: 100%;
-  // The offset the first `.employee-optional-info` used to carry itself, moved
-  // to the block so the rows below it can sit on their own tighter rhythm.
-  margin-top: 20px;
-}
-
-:host .employee-optional-info {
-  margin-top: 0;
-  padding: 0.5rem 0;
-  font-size: 0.8125rem;
-  line-height: 1.125rem;
-  color: nb-theme(text-hint-color);
-
-  & + .employee-optional-info {
-    border-top: 1px solid var(--gauzy-border-default-color);
-  }
-}
-
-// ── Form column ─────────────────────────────────────────────────────────────
-:host .employee-form {
-  overflow: auto;
-  overflow-x: hidden;
-  @include nb-ltr(padding-left, 1.25rem);
-  @include nb-rtl(padding-right, 1.25rem);
+  padding: 1.25rem;
 
   .form-group {
+    min-width: 0;
     margin-bottom: 1.25rem;
-  }
-
-  // The save row sat on the default form-group spacing, so it crowded the last
-  // field. A rule above it separates the commit action from the inputs.
-  .actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--gauzy-border-default-color);
-
-    button {
-      min-width: 7.5rem;
-    }
   }
 }
 
-// Below the tablet break the 25/75 split leaves neither column usable. The
-// bootstrap widths carry `!important`, so unwinding them takes the same.
-@media only screen and (max-width: v.$break-md) {
-  :host .content {
+.account__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+
+  button {
+    min-width: 7.5rem;
+  }
+}
+
+// Below the large break the two panels have no useful width side by side, so they
+// stack: the identity panel at its natural height, the form under it.
+@media only screen and (max-width: v.$break-lg) {
+  .account {
     flex-direction: column;
-    gap: 1.25rem;
+  }
+
+  .account__panel--identity {
+    flex: 0 0 auto;
+  }
+
+  // Stacked, this panel runs the full width of the tab and the figures have room
+  // for more than two tracks; four keeps them near the photo above rather than
+  // spread thin across the whole card.
+  .account__facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-content: start;
+  }
+}
+
+// And below the tablet break the field grid has no useful width either.
+@media only screen and (max-width: v.$break-md) {
+  .account {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .account__fields {
+    grid-template-columns: minmax(0, 1fr);
     padding: 1rem;
   }
 
-  :host .organization-container,
-  :host .employee-form {
-    width: 100% !important;
+  .account__actions {
+    padding: 0.875rem 1rem;
   }
 
-  :host .employee-form {
-    @include nb-ltr(padding-left, 0);
-    @include nb-rtl(padding-right, 0);
+  .account__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
