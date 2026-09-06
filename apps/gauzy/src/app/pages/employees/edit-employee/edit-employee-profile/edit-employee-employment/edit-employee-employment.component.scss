@@ -6,13 +6,6 @@
 
 @include employee-tab-panel;
 
-.tab__form {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
 .tab__note {
   margin: 0.5rem 0 0;
   padding: 0.625rem 0.75rem;

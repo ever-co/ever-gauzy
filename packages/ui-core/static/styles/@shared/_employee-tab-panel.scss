@@ -39,6 +39,15 @@ $tab-hairline: 1px solid var(--gauzy-border-default-color);
     border-radius: $tab-radius;
   }
 
+  // Every tab form wraps the same fields/actions pair, so the column that
+  // carries the scroll between them belongs here rather than in each tab.
+  .tab__form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
   .tab__legend {
     margin: 0 0 1rem;
     font-size: 0.75rem;

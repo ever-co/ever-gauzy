@@ -110,6 +110,17 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		try {
 			if (image) {
 				this.avatarFailed = false;
+				// The store round-trip does come back here — userForm$ drives the user
+				// update, whose `finally` refetches the employee and re-emits
+				// selectedEmployee$, which re-runs _initializeFormValue. But that is a
+				// whole request away, and `imageUrl` is what the <img> binds to, so
+				// patch it now rather than showing the old avatar until the reload
+				// lands. `imageId` goes with it: submitForm() posts the form value, so
+				// saving before the reload would otherwise revert to the old asset.
+				this.form.patchValue({
+					imageId: image.id,
+					imageUrl: image.fullUrl || image.url
+				});
 				// Update user form data in store (assuming updateUserForm is async)
 				await this._employeeStore.updateUserForm({
 					imageId: image.id,
