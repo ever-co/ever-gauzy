@@ -30,9 +30,9 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 
 .membership__title {
   margin: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.25rem;
+  font-size: nb-theme(text-subtitle-2-font-size);
+  font-weight: 500;
+  line-height: 1.125rem;
   color: var(--gauzy-text-color-1);
 }
 
@@ -80,8 +80,9 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 
 .membership__name {
   min-width: 0;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
+  font-size: nb-theme(text-subtitle-2-font-size);
+  font-weight: nb-theme(text-paragraph-font-weight);
+  line-height: 1.125rem;
   color: var(--gauzy-text-color-1);
   overflow-wrap: anywhere;
 }
