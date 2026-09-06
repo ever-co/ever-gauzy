@@ -1,62 +1,88 @@
-<nb-card class="card">
-  <nb-card-header>
-    @if (!showAddCard) {
-      <button (click)="showAddCard = !showAddCard" nbButton status="success">
-        <nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
-      </button>
-    }
-    @if (showAddCard) {
-      <div class="container m-0 w-25">
-        <div class="row">
-          <form [formGroup]="form" class="col">
-            <ng-select
-              id="departmentsSelect"
-              [hideSelected]="true"
-              multiple="true"
-              bindLabel="name"
-              appendTo="body"
-              formControlName="departments"
-              [placeholder]="placeholder"
-              fullWidth
-              >
-              @for (entity of organizationEntities; track entity) {
-                <ng-option [value]="entity.id">
-                  {{ entity.name }}
-                </ng-option>
-              }
-            </ng-select>
-          </form>
-        </div>
-        <div class="row mt-3">
-          <span class="mr-3 ml-3">
-            <button (click)="showAddCard = !showAddCard" nbButton status="basic" outline>
-              {{ 'BUTTONS.CANCEL' | translate }}
-            </button>
-          </span>
-          <span>
-            <button (click)="submitForm()" nbButton status="success" [disabled]="form.invalid">
-              {{ 'BUTTONS.ADD' | translate }}
-            </button>
-          </span>
-        </div>
-      </div>
-    }
-  </nb-card-header>
-  @if (employeeEntities?.length) {
-    <nb-card-body class="entities">
-      <div class="mb-3">
-        <strong>{{ title }}</strong>
-      </div>
-      @for (entity of employeeEntities; track entity) {
-        <nb-card>
-          <nb-card-body>
-            {{ entity.name }}
-            <nb-actions class="float-right" e="medium">
-              <nb-action (click)="removeDepartment(entity.id)" class="d-inline pr-0" icon="close"></nb-action>
-            </nb-actions>
-          </nb-card-body>
-        </nb-card>
-      }
-    </nb-card-body>
-  }
-</nb-card>
+<!--
+	One panel: a header naming the list with the Add action on its trailing edge,
+	then the assigned entities as rows.
+
+	It was `nb-card > nb-card-header + nb-card-body`, with every entity in the
+	list wrapped in an `nb-card` of ITS own — a card per row, inside a card, inside
+	the tab's card. A card is a container for a thing with its own chrome; a name
+	with a remove button beside it is a row.
+
+	The title also moved out of the body. It was a `<strong>` above the list and
+	INSIDE the scrollable region, so the one label saying whether you were looking
+	at contacts or projects scrolled away with the rows it named.
+-->
+<section class="membership">
+	<header class="membership__header">
+		<h6 class="membership__title">{{ title }}</h6>
+
+		@if (!showAddCard) {
+			<button type="button" (click)="showAddCard = !showAddCard" nbButton status="success" size="small">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+		}
+	</header>
+
+	<!--
+		The add form was a `.container.m-0.w-25` — a quarter of the card, whatever
+		the card's width — so the select it holds was narrower than the rows it
+		adds to. It takes the panel's width now, with the two buttons trailing it.
+	-->
+	@if (showAddCard) {
+		<form class="membership__add" [formGroup]="form">
+			<ng-select
+				class="membership__select"
+				id="departmentsSelect"
+				[hideSelected]="true"
+				multiple="true"
+				bindLabel="name"
+				appendTo="body"
+				formControlName="departments"
+				[placeholder]="placeholder"
+			>
+				@for (entity of organizationEntities; track entity) {
+					<ng-option [value]="entity.id">
+						{{ entity.name }}
+					</ng-option>
+				}
+			</ng-select>
+
+			<div class="membership__add-actions">
+				<button type="button" (click)="showAddCard = !showAddCard" nbButton status="basic" outline>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button type="button" (click)="submitForm()" nbButton status="success" [disabled]="form.invalid">
+					{{ 'BUTTONS.ADD' | translate }}
+				</button>
+			</div>
+		</form>
+	}
+
+	@if (employeeEntities?.length) {
+		<ul class="membership__list">
+			@for (entity of employeeEntities; track entity) {
+				<li class="membership__row">
+					<span class="membership__name">{{ entity.name }}</span>
+					<!--
+						The remove control was an `nb-action` inside `nb-actions` — a
+						header/toolbar construct, floated right with `float-right` —
+						carrying an icon and no name at all. A ghost icon button says the
+						same thing and can be labelled.
+					-->
+					<button
+						type="button"
+						class="membership__remove"
+						nbButton
+						ghost
+						size="small"
+						status="basic"
+						[attr.aria-label]="'BUTTONS.REMOVE' | translate"
+						[nbTooltip]="'BUTTONS.REMOVE' | translate"
+						(click)="removeDepartment(entity.id)"
+					>
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</li>
+			}
+		</ul>
+	}
+</section>

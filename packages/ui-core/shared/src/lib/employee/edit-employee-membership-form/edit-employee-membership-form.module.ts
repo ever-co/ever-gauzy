@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbActionsModule, NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
+import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-form.component';
@@ -11,11 +11,13 @@ import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NbCardModule,
 		NbButtonModule,
 		NgSelectModule,
 		NbIconModule,
-		NbActionsModule,
+		// `NbCardModule` and `NbActionsModule` went with the rebuild: the component
+		// no longer nests a card per list row inside a card, and the remove control
+		// is a labelled ghost button rather than an `nb-action` from a toolbar.
+		NbTooltipModule,
 		TranslateModule.forChild()
 	],
 	exports: [EditEmployeeMembershipFormComponent],

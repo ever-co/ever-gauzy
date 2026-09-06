@@ -19,29 +19,35 @@ import { Store } from '@gauzy/ui-core/core';
          * the two disagreed the tab stopped short and left a band of bare card
          * body under the panel.
          *
-         * `.container-contact` then grows into the tab rather than asking for
-         * `height: 100%` of a host whose own size comes out of flex layout — a
-         * percentage the cascade cannot resolve. `flex-shrink: 0` because the
-         * host scrolls: a long list keeps its height and scrolls inside the host.
+         * `ga-edit-employee-membership` was rebuilt from a card-per-row inside a
+         * card into one flat panel, so the `nb-card` overrides that used to live
+         * here have nothing left to override. What remains is the tab surface the
+         * panel sits on and the flex chain that lets it stand on the tab's full
+         * height. `flex-shrink: 0` because the host scrolls: a long list keeps its
+         * height and scrolls inside the host.
          */
         `
 			:host {
 				overflow-y: auto;
 				display: flex;
 				flex-direction: column;
+				background-color: var(--gauzy-card-2);
+			}
 
-				.container-contact {
-					background-color: var(--gauzy-card-2);
-					padding: 1rem;
-					height: auto;
-					flex: 1 0 auto;
-				}
+			.container-contact {
+				display: flex;
+				flex-direction: column;
+				padding: 1rem;
+				height: auto;
+				flex: 1 0 auto;
+				min-height: 0;
+			}
 
-				nb-card {
-					margin: 0 !important;
-					background-color: var(--gauzy-card-3) !important;
-					border-radius: var(--card-border-radius);
-				}
+			.container-contact > ga-edit-employee-membership {
+				display: flex;
+				flex-direction: column;
+				flex: 1 1 auto;
+				min-height: 0;
 			}
 		`
     ],

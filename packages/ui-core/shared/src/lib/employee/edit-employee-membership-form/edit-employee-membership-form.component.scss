@@ -1,32 +1,125 @@
-@use 'gauzy/_gauzy-dialogs' as *;
+@use 'themes' as *;
 
-.employee-form {
-  width: 100%;
-}
+$radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
 
-.card {
-  height: 100%;
-  background-color: var(--gauzy-card-2);
-  border: unset;
-}
-
-.container {
-  padding: 1rem;
-  border-radius: nb-theme(border-radius);
-  background-color: nb-theme(card-background-color);
-}
-
-.entities {
+// `height: 100%` used to sit here — a percentage of a host sized by flex layout
+// on the tab, which is nothing the cascade can resolve at this point, so it fell
+// back to content height anyway. The component grows into whatever height its
+// tab hands it.
+//
+// The `dialog()` mixin went with the rebuild: it dressed the nested `nb-card`s
+// this component no longer has.
+:host {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+
+.membership {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
+}
+
+// The title and the Add action on one row. The title used to be a `<strong>`
+// inside the scrolling body, so the one label saying whether these were contacts
+// or projects scrolled away with them.
+.membership__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: $hairline;
+}
+
+.membership__title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-1);
+}
+
+// ── Add row ─────────────────────────────────────────────────────────────────
+.membership__add {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: $hairline;
+}
+
+// `min-width: 0` so the select takes the row's leftover width rather than sizing
+// to its own longest option and pushing the buttons off the end.
+.membership__select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.membership__add-actions {
+  display: flex;
+  flex: 0 0 auto;
   gap: 0.5rem;
 }
 
-:host{
-  height: 100%;
-  @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
-  nb-card-header,
-  nb-card-body {
-    padding: 1rem;
+// ── Assigned entities ───────────────────────────────────────────────────────
+// Rows, not cards. Each entity used to be its own `nb-card` — fill, border,
+// radius and 1rem of body padding for one line of text and a close icon.
+.membership__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.membership__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  min-height: 2.5rem;
+  transition: background-color 0.15s ease-in-out;
+
+  &:hover {
+    background-color: var(--gauzy-sidebar-background-4);
   }
+}
+
+.membership__name {
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-1);
+  overflow-wrap: anywhere;
+}
+
+// Muted at rest and full strength under the cursor or on keyboard focus —
+// destructive, so it should not compete with the name it sits beside, but it is
+// deliberately never hidden: a hover-only affordance is unreachable on a touch
+// screen, where there is no hover to give.
+.membership__remove {
+  flex: 0 0 auto;
+  opacity: 0.55;
+  transition: opacity 0.15s ease-in-out;
+
+  nb-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.membership__row:hover .membership__remove,
+.membership__remove:hover,
+.membership__remove:focus-visible {
+  opacity: 1;
 }
