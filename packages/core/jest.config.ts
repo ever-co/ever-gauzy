@@ -5,13 +5,6 @@ module.exports = {
 	transform: {
 		'^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }]
 	},
-	// Several dependencies now ship ESM only. Jest's default here is ["/node_modules/"], i.e.
-	// transform nothing under node_modules, so the bare `export` in those packages reached the
-	// CommonJS loader and every suite that transitively imported one died at import time with
-	// "SyntaxError: Unexpected token 'export'" — 14 of 15 suites, silently, since no CI job runs
-	// this project. Listing them explicitly (rather than transforming all of node_modules) keeps
-	// the run fast. Add to this list when a dependency goes ESM-only.
-	transformIgnorePatterns: ['node_modules/(?!(.*/)?(uuid|camelcase|nanoid|@gauzy)/)'],
 	moduleFileExtensions: ['ts', 'js', 'html'],
 	// Dependencies that ship ESM-only builds Jest cannot `require`. A suite that reaches one of
 	// them fails to LOAD rather than failing an assertion — Jest reports that as a suite error,
@@ -26,6 +19,16 @@ module.exports = {
 	//   camelcase                        -> time-tracking suites
 	//   @faker-js/faker                  -> reached through the entity graph (core/seeds)
 	//   @nestjs/axios                    -> ships a raw `index.ts` that re-exports `./dist`
+	// Listing packages explicitly, rather than transforming all of node_modules, is what keeps the
+	// run fast.
+	//
+	// Two things this list depends on that are easy to break from elsewhere:
+	//   - `allowJs: true` in tsconfig.spec.json — ts-jest hands a `.js` file back UNCHANGED when
+	//     allowJs is false, so without it every exception here silently stops working.
+	//   - `@gauzy/*` is deliberately absent, and adding it would do nothing. Jest resolves
+	//     workspace packages to their real source path (`packages/<pkg>/src/index.ts`), which has
+	//     no `node_modules/` segment, so this pattern is never consulted for them. A second, older
+	//     copy of this key used to list `@gauzy`; it was inert there too.
 	transformIgnorePatterns: [
 		'node_modules/(?!(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios)/)'
 	],
