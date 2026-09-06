@@ -5,23 +5,7 @@ import { Component } from '@angular/core';
     template: `
 		<ga-employee-rates [isEmployee]="true"></ga-employee-rates>
 	`,
-    styles: [
-        `
-			:host {
-				background-color: var(--gauzy-card-2);
-				display: flex;
-				flex-direction: column;
-				overflow-y: auto;
-			}
-
-			:host > ga-employee-rates {
-				display: flex;
-				flex-direction: column;
-				height: auto;
-				flex: 1 0 auto;
-			}
-		`
-    ],
+    styleUrls: ['./edit-employee-rate.component.scss'],
     standalone: false
 })
 export class EditEmployeeRatesComponent {}

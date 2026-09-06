@@ -111,7 +111,7 @@
 									<dd>{{ payPeriod | replace : '_' : ' ' | titlecase }}</dd>
 								</div>
 							}
-							@if (selectedEmployee.billRateCurrency && selectedEmployee.billRateValue) {
+							@if (selectedEmployee.billRateCurrency && selectedEmployee.billRateValue != null) {
 								<div class="account__stat">
 									<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATE' | translate }}</dt>
 									<dd>
@@ -121,10 +121,10 @@
 									</dd>
 								</div>
 							}
-							@if (selectedEmployee.reWeeklyLimit; as weeklyLimit) {
+							@if (selectedEmployee.reWeeklyLimit != null) {
 								<div class="account__stat">
 									<dt>{{ 'FORM.LABELS.RECURRING_WEEKLY_LIMIT' | translate }}</dt>
-									<dd>{{ weeklyLimit }}</dd>
+									<dd>{{ selectedEmployee.reWeeklyLimit }}</dd>
 								</div>
 							}
 						</dl>
@@ -144,10 +144,10 @@
 								}}
 							</dd>
 						</div>
-						@if (selectedEmployee.totalWorkHours; as totalHours) {
+						@if (selectedEmployee.totalWorkHours != null) {
 							<div class="account__stat">
 								<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_HOURS' | translate }}</dt>
-								<dd>{{ totalHours }}</dd>
+								<dd>{{ selectedEmployee.totalWorkHours }}</dd>
 							</div>
 						}
 						@if (selectedEmployee.user?.timeFormat; as timeFormat) {
@@ -163,16 +163,16 @@
 					<section class="account__group">
 						<h6 class="account__group-title">{{ 'MENU.JOBS' | translate }}</h6>
 						<dl class="account__stats">
-							@if (selectedEmployee.jobSuccess; as jobSuccess) {
+							@if (selectedEmployee.jobSuccess != null) {
 								<div class="account__stat">
 									<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.JOB_SUCCESS' | translate }}</dt>
-									<dd>{{ jobSuccess }}%</dd>
+									<dd>{{ selectedEmployee.jobSuccess }}%</dd>
 								</div>
 							}
-							@if (selectedEmployee.totalJobs; as totalJobs) {
+							@if (selectedEmployee.totalJobs != null) {
 								<div class="account__stat">
 									<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_JOBS' | translate }}</dt>
-									<dd>{{ totalJobs }}</dd>
+									<dd>{{ selectedEmployee.totalJobs }}</dd>
 								</div>
 							}
 						</dl>

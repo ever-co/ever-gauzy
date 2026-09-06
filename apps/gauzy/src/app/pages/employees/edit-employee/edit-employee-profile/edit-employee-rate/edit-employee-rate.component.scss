@@ -3,7 +3,7 @@
 :host {
   @include employee-tab-host;
 
-  > ga-employee-location {
+  > ga-employee-rates {
     display: flex;
     flex-direction: column;
     height: auto;

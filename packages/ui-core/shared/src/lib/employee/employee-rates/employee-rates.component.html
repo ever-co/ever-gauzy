@@ -88,12 +88,6 @@
 				}
 			</div>
 		</div>
-
-		<footer class="rates__actions">
-			<button [disabled]="form.invalid" type="submit" nbButton status="success">
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</footer>
 	</section>
 
 	<section class="rates__panel rates__panel--limits">
@@ -131,4 +125,10 @@
 			</div>
 		</div>
 	</section>
+
+	<footer class="rates__actions">
+		<button [disabled]="form.invalid" type="submit" nbButton status="success">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</footer>
 </form>

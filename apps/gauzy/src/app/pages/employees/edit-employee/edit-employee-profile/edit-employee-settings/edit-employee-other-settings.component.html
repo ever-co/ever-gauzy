@@ -5,22 +5,42 @@
 		</h4>
 		<ul class="settings__rail-list">
 			<li>
-				<button type="button" [class.is-active]="general?.expanded" (click)="general.toggle()">
+				<button
+					type="button"
+					[class.is-active]="general?.expanded"
+					[attr.aria-expanded]="!!general?.expanded"
+					(click)="general.toggle()"
+				>
 					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.GENERAL_SETTINGS' | translate }}
 				</button>
 			</li>
 			<li>
-				<button type="button" [class.is-active]="timer?.expanded" (click)="timer.toggle()">
+				<button
+					type="button"
+					[class.is-active]="timer?.expanded"
+					[attr.aria-expanded]="!!timer?.expanded"
+					(click)="timer.toggle()"
+				>
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
 				</button>
 			</li>
 			<li>
-				<button type="button" [class.is-active]="agent?.expanded" (click)="agent.toggle()">
+				<button
+					type="button"
+					[class.is-active]="agent?.expanded"
+					[attr.aria-expanded]="!!agent?.expanded"
+					(click)="agent.toggle()"
+				>
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
 				</button>
 			</li>
 			<li>
-				<button type="button" [class.is-active]="integrations?.expanded" (click)="integrations.toggle()">
+				<button
+					type="button"
+					[class.is-active]="integrations?.expanded"
+					[attr.aria-expanded]="!!integrations?.expanded"
+					(click)="integrations.toggle()"
+				>
 					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.INTEGRATIONS' | translate }}
 				</button>
 			</li>

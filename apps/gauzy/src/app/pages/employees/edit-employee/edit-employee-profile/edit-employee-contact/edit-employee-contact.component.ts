@@ -10,32 +10,7 @@ import { Store } from '@gauzy/ui-core/core';
 @Component({
     selector: 'ga-edit-employee-contacts',
     templateUrl: './edit-employee-contact.component.html',
-    styles: [
-        `
-			:host {
-				overflow-y: auto;
-				display: flex;
-				flex-direction: column;
-				background-color: var(--gauzy-card-2);
-			}
-
-			.container-contact {
-				display: flex;
-				flex-direction: column;
-				padding: 1rem;
-				height: auto;
-				flex: 1 0 auto;
-				min-height: 0;
-			}
-
-			.container-contact > ga-edit-employee-membership {
-				display: flex;
-				flex-direction: column;
-				flex: 1 1 auto;
-				min-height: 0;
-			}
-		`
-    ],
+    styleUrls: ['./edit-employee-contact.component.scss'],
     standalone: false
 })
 export class EditEmployeeContactComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

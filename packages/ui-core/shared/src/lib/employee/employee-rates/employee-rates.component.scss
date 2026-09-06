@@ -10,8 +10,12 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   min-height: 0;
 }
 
+// A grid, not a row of flex children: the submit footer is the last element of
+// the form — after every field that can invalidate it — and spans both columns.
 .rates {
-  display: flex;
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  grid-template-rows: minmax(0, 1fr) auto;
   align-items: stretch;
   gap: 1rem;
   padding: 1rem;
@@ -27,14 +31,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   background-color: var(--gauzy-card-3);
   border: $hairline;
   border-radius: $radius;
-}
-
-.rates__panel--rate {
-  flex: 3 1 0;
-}
-
-.rates__panel--limits {
-  flex: 2 1 0;
 }
 
 .rates__legend {
@@ -85,11 +81,14 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 }
 
 .rates__actions {
+  grid-column: 1 / -1;
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
   padding: 0.875rem 1.25rem;
-  border-top: $hairline;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
 
   button {
     min-width: 7.5rem;
@@ -98,12 +97,8 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 
 @media only screen and (max-width: v.$break-lg) {
   .rates {
-    flex-direction: column;
-  }
-
-  .rates__panel--rate,
-  .rates__panel--limits {
-    flex: 0 0 auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
   }
 }
 

@@ -21,27 +21,7 @@ import { EmployeeStore } from '@gauzy/ui-core/core';
 @Component({
 	selector: 'ga-edit-employee-documents',
 	templateUrl: './edit-employee-documents.component.html',
-	styles: [
-		`
-			:host {
-				background-color: var(--gauzy-card-2);
-				padding: 1rem;
-				display: flex;
-				flex-direction: column;
-				overflow-y: auto;
-			}
-
-			:host > gz-document-links-panel {
-				display: flex;
-				flex-direction: column;
-				flex: 1 0 auto;
-			}
-
-			:host ::ng-deep gz-document-links-panel > .docs-links-panel {
-				flex: 1 0 auto;
-			}
-		`
-	],
+	styleUrls: ['./edit-employee-documents.component.scss'],
 	standalone: false
 })
 export class EditEmployeeDocumentsComponent implements OnInit, OnDestroy {

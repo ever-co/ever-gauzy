@@ -24,32 +24,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 @Component({
     selector: 'ga-edit-employee-projects',
     templateUrl: './edit-employee-projects.component.html',
-    styles: [
-        `
-			:host {
-				overflow-y: auto;
-				display: flex;
-				flex-direction: column;
-				background-color: var(--gauzy-card-2);
-			}
-
-			.container-projects {
-				display: flex;
-				flex-direction: column;
-				padding: 1rem;
-				height: auto;
-				flex: 1 0 auto;
-				min-height: 0;
-			}
-
-			.container-projects > ga-edit-employee-membership {
-				display: flex;
-				flex-direction: column;
-				flex: 1 1 auto;
-				min-height: 0;
-			}
-		`
-    ],
+    styleUrls: ['./edit-employee-projects.component.scss'],
     standalone: false
 })
 export class EditEmployeeProjectsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

@@ -41,14 +41,14 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		const employee = this.selectedEmployee;
 		return !!(
 			employee?.payPeriod ||
-			(employee?.billRateCurrency && employee?.billRateValue) ||
-			employee?.reWeeklyLimit
+			(employee?.billRateCurrency && employee?.billRateValue != null) ||
+			employee?.reWeeklyLimit != null
 		);
 	}
 
 	get hasJobFacts(): boolean {
 		const employee = this.selectedEmployee;
-		return !!(employee?.jobSuccess || employee?.totalJobs);
+		return employee?.jobSuccess != null || employee?.totalJobs != null;
 	}
 
 	/*
