@@ -1,9 +1,3 @@
-// The host was left at its default `display: inline`, so the field's own box
-// could not be sized, spaced or aligned from outside it — every consumer that
-// tried (a margin, a width, a flex or grid slot) was silently laying out an
-// inline box wrapping a block. Every other field in the address form is a plain
-// `div.form-group`; this makes the country field the same shape as its
-// neighbours instead of the one that behaves differently.
 :host {
   display: block;
 }

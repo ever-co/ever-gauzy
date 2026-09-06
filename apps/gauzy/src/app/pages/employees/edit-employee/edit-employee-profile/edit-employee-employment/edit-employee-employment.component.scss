@@ -1,16 +1,11 @@
 @use '@shared/employee-tab-panel' as *;
 
-// The tab surface, the panel and the field grid are the employee tabset's shared
-// language — see `@shared/_employee-tab-panel.scss` for what each piece is doing
-// and why the height arithmetic that used to live here is gone.
 :host {
   @include employee-tab-host;
 }
 
 @include employee-tab-panel;
 
-// The form is the panel's only child and has to pass the panel's height on to
-// the scrolling field grid above the footer.
 .tab__form {
   display: flex;
   flex-direction: column;
@@ -18,13 +13,6 @@
   min-height: 0;
 }
 
-// The start-date note. It was a `<p>` inside a `.notes` block that took a column
-// of the row to itself, so the amber panel sat where the next FIELD belonged and
-// pushed the rest of the form across. Under the date it is what it reads as: a
-// note about that one field.
-//
-// `text-align: justify` went with the move — justifying two lines of hint text in
-// a half-width column opens rivers through it.
 .tab__note {
   margin: 0.5rem 0 0;
   padding: 0.625rem 0.75rem;
@@ -36,9 +24,6 @@
   line-height: 1.125rem;
 }
 
-// The editor is a block of its own, not an input: it carries its own frame and
-// toolbar, so it takes the grid's full width (`tab__field--wide` in the template)
-// and needs nothing from the input styling around it.
 .rich-text-editor-wrap {
   min-width: 0;
 }

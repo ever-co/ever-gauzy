@@ -3,13 +3,6 @@
 $radius: nb-theme(border-radius);
 $hairline: 1px solid var(--gauzy-border-default-color);
 
-// `height: 100%` used to sit here — a percentage of a host sized by flex layout
-// on the tab, which is nothing the cascade can resolve at this point, so it fell
-// back to content height anyway. The component grows into whatever height its
-// tab hands it.
-//
-// The `dialog()` mixin went with the rebuild: it dressed the nested `nb-card`s
-// this component no longer has.
 :host {
   display: flex;
   flex-direction: column;
@@ -26,9 +19,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   border-radius: $radius;
 }
 
-// The title and the Add action on one row. The title used to be a `<strong>`
-// inside the scrolling body, so the one label saying whether these were contacts
-// or projects scrolled away with them.
 .membership__header {
   display: flex;
   align-items: center;
@@ -46,7 +36,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   color: var(--gauzy-text-color-1);
 }
 
-// ── Add row ─────────────────────────────────────────────────────────────────
 .membership__add {
   display: flex;
   align-items: center;
@@ -55,8 +44,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   border-bottom: $hairline;
 }
 
-// `min-width: 0` so the select takes the row's leftover width rather than sizing
-// to its own longest option and pushing the buttons off the end.
 .membership__select {
   flex: 1 1 auto;
   min-width: 0;
@@ -68,9 +55,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   gap: 0.5rem;
 }
 
-// ── Assigned entities ───────────────────────────────────────────────────────
-// Rows, not cards. Each entity used to be its own `nb-card` — fill, border,
-// radius and 1rem of body padding for one line of text and a close icon.
 .membership__list {
   list-style: none;
   margin: 0;
@@ -102,10 +86,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   overflow-wrap: anywhere;
 }
 
-// Muted at rest and full strength under the cursor or on keyboard focus —
-// destructive, so it should not compete with the name it sits beside, but it is
-// deliberately never hidden: a hover-only affordance is unreachable on a touch
-// screen, where there is no hover to give.
 .membership__remove {
   flex: 0 0 auto;
   opacity: 0.55;

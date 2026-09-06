@@ -1,31 +1,6 @@
-<!--
-	Identity on the left, the account form on the right, as two panels of equal
-	standing — the same shape the location tab was rebuilt into
-	(employee-location.component.html).
-
-	What was here before was the ORGANISATION page's scaffolding, borrowed whole:
-	a `w-25` column holding nothing but an avatar pinned to its top-left corner,
-	beside a `w-75` column of bootstrap rows. At an employee's width that left the
-	left quarter of the tab empty from the photo down, and stretched every input
-	across half the card, so the eye had no column to run down and the two halves
-	did not line up on anything.
--->
 <div class="account">
 	<section class="account__panel account__panel--identity">
-		<!--
-			Identity beside the photo rather than under it. Stacked, the panel ran
-			to a 112px avatar plus four lines of identity plus four groups of
-			figures — taller than the tab, so the whole tab scrolled to reach a
-			form that fits on screen. Laid out as a row, the photo costs the panel
-			its own height instead of adding to it.
-		-->
 		<header class="account__head">
-			<!--
-				The whole box is the upload target: `ngx-image-uploader` renders a file
-				input that lays ITSELF out absolutely at 100% × 100% (see
-				`styles` in image-uploader.component.ts), so it covers whichever of the
-				photo or the placeholder is rendered below it.
-			-->
 			<div class="account__avatar" [class.account__avatar--hover]="hoverState">
 				<ngx-image-uploader
 					(changeHoverState)="hoverState = $event"
@@ -33,15 +8,6 @@
 					(uploadImageAssetError)="handleImageUploadError($event)"
 				></ngx-image-uploader>
 
-				<!--
-					Guarded on the URL AND on whether it actually loaded. Guarding on the
-					form alone rendered the image whenever the form existed, so an
-					employee with no photo got the browser's broken-image glyph and its
-					alt text in the panel; guarding on the URL alone still only proved one
-					was SET, so an employee whose stored photo 404s — a deleted asset, an
-					expired signed URL — got the same glyph. `(error)` falls back to the
-					placeholder either way.
-				-->
 				@if (form?.get('imageUrl')?.value && !avatarFailed) {
 					<img
 						class="account__avatar-image"
@@ -55,11 +21,6 @@
 					</div>
 				}
 
-				<!--
-					Scrim and badge are driven by the class on the box rather than by
-					two `[style.opacity]` bindings, so the transition between the two
-					states lives with the rest of the styling.
-				-->
 				<span class="account__avatar-scrim" aria-hidden="true"></span>
 				<span class="account__avatar-badge" aria-hidden="true">
 					<nb-icon icon="camera-outline"></nb-icon>
@@ -75,21 +36,10 @@
 					<div class="account__role">{{ position }}</div>
 				}
 
-				<!--
-					The one-line role blurb the Employment tab collects. Nothing else on
-					this page surfaced it, so it was written once and never seen again.
-				-->
 				@if (selectedEmployee?.short_description; as blurb) {
 					<p class="account__blurb">{{ blurb }}</p>
 				}
 
-				<!--
-					The record's standing, as chips. Where the employee sits in their
-					engagement is derived from the two dates the Employment and Hiring
-					tabs write (see `workState`) — "Not Started" in particular is worth
-					saying here, because an employee with no start date is left out of
-					accounts and split expenses and nothing on this tab said so.
-				-->
 				<div class="account__chips">
 					@switch (workState) {
 						@case ('active') {
@@ -122,30 +72,10 @@
 			</div>
 		</header>
 
-		<!--
-			The record's figures as label/value lists under the caption of the TAB
-			that owns each one, so the panel doubles as a summary of what the other
-			tabs hold and as a pointer to where each value is changed.
-
-			Every row is guarded, and every group is guarded on whether it has any
-			row at all — a caption with nothing under it is worse than no caption.
-
-			Only fields the edit page's resolver actually loads appear here: it
-			fetches the employee with `user`, `user.image` and `organizationPosition`
-			and nothing else (employee.resolver.ts), so departments, tags, skills and
-			contact are NOT available on this page and would render permanently
-			empty. Everything below is either a column on the employee record itself
-			or on the user it already loads.
-		-->
 		@if (selectedEmployee) {
 			<div class="account__facts">
 				@if (hasEmploymentFacts) {
 					<section class="account__group">
-						<!--
-							No caption on this group. It leads the list, so the panel it
-							sits in already introduces it, and a caption here would only
-							spend a full-width grid row saying so.
-						-->
 						<dl class="account__stats">
 							@if (selectedEmployee.employeeLevel; as level) {
 								<div class="account__stat">
@@ -202,20 +132,7 @@
 				}
 
 				<section class="account__group">
-					<!--
-						No caption on this group either: "Time Tracking" was standing
-						directly over a row whose own label is "Time Tracking", so the
-						caption said nothing the figure under it did not, and cost a
-						full-width grid row to say it.
-					-->
 					<dl class="account__stats">
-						<!--
-							The one row here that is not optional on the record. Whether
-							tracking is on for this employee at all decides whether any of
-							the timer, screenshot and activity settings on the Settings tab
-							do anything, and nothing on the profile said which way it was
-							set.
-						-->
 						<div class="account__stat">
 							<dt>{{ 'SM_TABLE.TIME_TRACKING' | translate }}</dt>
 							<dd>
@@ -266,13 +183,6 @@
 	</section>
 
 	<section class="account__panel account__panel--form">
-		<!--
-			Six fields on a two-column grid, in place of three bootstrap rows whose
-			columns were declared three different ways (`col`, `col`, then
-			`col-sm-6`). The grid gives every field one width and one baseline, and
-			it is the grid — not the markup — that collapses to a single column on a
-			narrow card.
-		-->
 		<form class="account__form" [formGroup]="form">
 			<div class="account__fields">
 				<div class="form-group">
@@ -351,10 +261,6 @@
 				</div>
 			</div>
 
-			<!--
-				The commit action belongs to the panel it commits, on the panel's
-				trailing edge — the same footer the location tab ends on.
-			-->
 			<footer class="account__actions">
 				<button type="button" [disabled]="form.invalid" (click)="submitForm()" nbButton status="success">
 					{{ 'BUTTONS.SAVE' | translate }}

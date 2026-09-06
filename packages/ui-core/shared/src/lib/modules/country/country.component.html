@@ -3,25 +3,6 @@
 		<label class="label" for="countrySelect">
 			{{ placeholder || 'FORM.LABELS.COUNTRY' | translate }}
 		</label>
-		<!--
-			`class` is not decoration. ng-select reads the host's STATIC class
-			attribute (`inject(new HostAttributeToken('class'))`) and copies it onto
-			the panel it appends to <body>, which is the only handle a stylesheet has
-			on an appended panel. `.form-field-select` opts this one out of the
-			`max-content` widening in `static/styles/_overrides.scss` — see the note
-			there: that widening is for a trigger too NARROW to show its options (a
-			table filter cell), and a form field is the opposite case. Country names
-			run to "South Georgia and the South Sandwich Islands", so the panel was
-			opening far wider than the field and over whatever sat beside it.
-
-			Static and bound `class` coexist: Ivy merges the two, and the bound one
-			is applied after construction so it never reaches ng-select's token.
-
-			`size="medium"` used to sit here and did nothing — `NgSelectComponent`
-			declares no `size` input (checked against the installed build's input
-			list), so it was a stray DOM attribute. Same dead binding the language
-			selector already documents.
-		-->
 		<ng-select
 			#select
 			class="form-field-select"

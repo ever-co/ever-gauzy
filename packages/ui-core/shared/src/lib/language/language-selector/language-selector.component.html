@@ -1,13 +1,4 @@
 @if (_template === 'ng-select') {
-  <!-- No `[size]` here: `ng-select` has no such input (checked against the
-       installed build's input list), so the binding only ever wrote a stray DOM
-       property. `size` is honoured on the `nb-select` branch below, which does
-       declare it. -->
-  <!-- `class` is not decoration: ng-select copies the host's STATIC class
-       attribute onto the panel it appends to <body>, and that is the only
-       handle a stylesheet has on an appended panel. `.ng-dropdown-panel.language-select`
-       in `static/styles/_overrides.scss` uses it to give the flags their real
-       3:2 box back — the global panel rule sizes every image 24x24 square. -->
   <ng-select
     class="language-select"
     [items]="languages"

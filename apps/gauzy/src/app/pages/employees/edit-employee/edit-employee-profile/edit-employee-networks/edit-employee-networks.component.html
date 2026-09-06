@@ -1,12 +1,3 @@
-<!--
-	Eight profile URLs on one panel, on the tab's own two-column grid.
-
-	They were laid out as four bootstrap rows of two `col-sm-3` cells: each field
-	took a QUARTER of the row and the right half of every row was empty, so the
-	form ran down the left side of a card that was twice as wide as anything in
-	it. The grid gives the eight one width and one rhythm, and it is the grid —
-	not the markup — that collapses to a single column on a narrow card.
--->
 <div class="tab">
 	<section class="tab__panel">
 		<form class="tab__form" [formGroup]="form" (ngSubmit)="submitForm()" autocomplete-off>

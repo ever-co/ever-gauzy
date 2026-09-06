@@ -1,33 +1,3 @@
-// ── The employee edit page's tab language ───────────────────────────────────
-//
-// Every tab of `pages/employees/edit/:id` used to invent its own chrome. Some
-// wrapped their form in an `nb-card.m-3` inside the tab host — a card inside a
-// card inside the page card, three levels of frame spent on one form. Some
-// borrowed the ORGANISATION page's stylesheet, which brought a 563px panel and a
-// `w-25`/`w-75` split written for a different page. And each laid its fields out
-// on whatever bootstrap columns were to hand: `col-sm-3` on Networks (two
-// quarter-width fields per row, half the row empty), `col` plus an empty filler
-// `col` on Hiring, three different column classes down one form on Employment.
-//
-// The location tab was rebuilt as flat panels on the tab surface
-// (employee-location.component.scss) and the account tab followed it
-// (edit-employee-main.component.scss). This is that shape, factored out, so the
-// remaining tabs do not each re-derive it — and so moving the rhythm later means
-// editing one file.
-//
-// Usage, from a tab's own stylesheet:
-//
-//     @use '@shared/employee-tab-panel' as *;
-//     :host { @include employee-tab-host; }
-//     @include employee-tab-panel;
-//
-// with the template shaped as
-//
-//     .tab > .tab__panel > (.tab__fields, .tab__actions)
-
-// Forwarded so a tab that loads this partial `as *` also gets `nb-theme` and the
-// `nb-ltr`/`nb-rtl` mixins, and does not have to `@use 'themes'` a second time
-// alongside it.
 @forward 'themes';
 
 @use 'themes' as *;
@@ -36,16 +6,6 @@
 $tab-radius: nb-theme(border-radius);
 $tab-hairline: 1px solid var(--gauzy-border-default-color);
 
-// The tab is a flex item of the tabset (edit-employee-profile.component.scss),
-// which hands it the height the card body has left over. `min-height: 0` so a
-// tall tab scrolls inside itself rather than pushing the card past the viewport,
-// and the surface is painted here because the panels leave the gutter between
-// them showing straight through to the card body otherwise.
-//
-// The `height: calc(100vh - 20.5rem)` these tabs used to carry, in one spelling
-// or another, was a SECOND guess at the page chrome alongside the card's own —
-// and the two disagree the moment the header collapses to the "select an
-// employee" line, which is what left a band of bare card body under a short tab.
 @mixin employee-tab-host {
   display: flex;
   flex-direction: column;
@@ -58,11 +18,6 @@ $tab-hairline: 1px solid var(--gauzy-border-default-color);
   @include nb-rtl(border-radius, $tab-radius 0 $tab-radius $tab-radius);
 }
 
-// `flex: 1 0 auto` on the row rather than a percentage height: the host's own
-// size comes out of flex layout on the tabset, which is nothing a percentage
-// here can resolve against, so it would fall back to content height. `0` for
-// flex-shrink deliberately — the host scrolls, so a form taller than the tab
-// keeps its height and scrolls inside it.
 @mixin employee-tab-panel {
   .tab {
     display: flex;
@@ -84,8 +39,6 @@ $tab-hairline: 1px solid var(--gauzy-border-default-color);
     border-radius: $tab-radius;
   }
 
-  // An optional caption above a group of fields, for the tabs whose fields fall
-  // into more than one subject.
   .tab__legend {
     margin: 0 0 1rem;
     font-size: 0.75rem;
@@ -96,11 +49,6 @@ $tab-hairline: 1px solid var(--gauzy-border-default-color);
     color: nb-theme(text-hint-color);
   }
 
-  // Two equal columns. `minmax(0, 1fr)` so a wide control — an `ng-select` with
-  // long options, a long placeholder — sizes to its track instead of widening
-  // it, which is what let single fields stretch across half a card before.
-  // `align-content: start` keeps the rows on their own rhythm at the top of a
-  // tall panel rather than distributing them down it.
   .tab__fields {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -117,16 +65,11 @@ $tab-hairline: 1px solid var(--gauzy-border-default-color);
       margin-bottom: 1.25rem;
     }
 
-    // For the field that is one value read across the whole form — a rich-text
-    // description, a full-width list — rather than one of a pair.
     > .tab__field--wide {
       grid-column: 1 / -1;
     }
   }
 
-  // The commit action belongs to the panel it commits, on the panel's trailing
-  // edge. It used to sit under the fields on the default form-group spacing, so
-  // it crowded the last input and read as a page-level action.
   .tab__actions {
     display: flex;
     justify-content: flex-end;
@@ -140,7 +83,6 @@ $tab-hairline: 1px solid var(--gauzy-border-default-color);
     }
   }
 
-  // Below the tablet break the two-column grid has no useful width.
   @media only screen and (max-width: v.$break-md) {
     .tab {
       padding: 0.75rem;

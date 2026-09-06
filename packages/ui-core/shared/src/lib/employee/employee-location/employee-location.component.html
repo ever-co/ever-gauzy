@@ -1,11 +1,3 @@
-<!--
-	Address and map as two panels side by side, rather than `col-4`/`col-8` inside
-	an `nb-card` inside the tab's own card — three levels of chrome spent on what
-	is really one form and one map. They are two views of the same value: type an
-	address on the left and the pin follows, click the map on the right and the
-	fields follow, so they read better as a pair of equals than as a form with an
-	illustration next to it.
--->
 <form class="location" [formGroup]="form">
 	<section class="location__panel location__panel--form">
 		<div class="location__fields">
@@ -18,11 +10,6 @@
 			></ga-location-form>
 		</div>
 
-		<!--
-			The commit action belongs to the fields it commits. It used to sit under
-			BOTH columns, which put it under the map as much as under the form and
-			left it reading as a page-level action.
-		-->
 		<footer class="location__actions">
 			<button
 				type="button"

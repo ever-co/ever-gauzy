@@ -1,16 +1,11 @@
 @use '@shared/employee-tab-panel' as *;
 
-// The tab surface, the panel and the field grid are the employee tabset's shared
-// language — see `@shared/_employee-tab-panel.scss` for what each piece is doing
-// and why the height arithmetic that used to live here is gone.
 :host {
   @include employee-tab-host;
 }
 
 @include employee-tab-panel;
 
-// The form is the panel's only child and has to pass the panel's height on to
-// the scrolling field grid above the footer.
 .tab__form {
   display: flex;
   flex-direction: column;

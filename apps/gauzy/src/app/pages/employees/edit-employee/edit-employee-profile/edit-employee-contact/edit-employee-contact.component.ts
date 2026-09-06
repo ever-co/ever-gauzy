@@ -11,21 +11,6 @@ import { Store } from '@gauzy/ui-core/core';
     selector: 'ga-edit-employee-contacts',
     templateUrl: './edit-employee-contact.component.html',
     styles: [
-        /*
-         * The tabset hands this tab the height the card body has left over
-         * (edit-employee-profile.component.scss), so there is nothing here left
-         * to measure: the `height: calc(100vh - 20.5rem)` this used to carry was
-         * a second guess at the page chrome alongside the card's own, and when
-         * the two disagreed the tab stopped short and left a band of bare card
-         * body under the panel.
-         *
-         * `ga-edit-employee-membership` was rebuilt from a card-per-row inside a
-         * card into one flat panel, so the `nb-card` overrides that used to live
-         * here have nothing left to override. What remains is the tab surface the
-         * panel sits on and the flex chain that lets it stand on the tab's full
-         * height. `flex-shrink: 0` because the host scrolls: a long list keeps its
-         * height and scrolls inside the host.
-         */
         `
 			:host {
 				overflow-y: auto;

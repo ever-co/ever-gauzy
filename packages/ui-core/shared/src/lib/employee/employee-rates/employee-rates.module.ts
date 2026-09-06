@@ -13,8 +13,6 @@ import { PipesModule } from '../../pipes/pipes.module';
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		// `NbCardModule` and `NbActionsModule` went with the rebuild: the two
-		// `nb-card`s are two flat panels now, and nothing here uses `nb-actions`.
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,

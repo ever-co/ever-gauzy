@@ -1,18 +1,7 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
-// Namespaced rather than `as *`: `var` also forwards the theming module that
-// `_gauzy-cards` brings in above, and two `as *` loads of it would collide.
 @use 'var' as v;
 
-// The whole header on one row: back, identity, actions.
-//
-// It used to be a `flex-column` of two rows, the second inset by
-// `$meta-indent: calc(3rem + 48px + 0.75rem)` — the summed width of everything
-// preceding the name on the row above — so that the public-page button and the
-// email would line up under it. That indent is what made the meta appear to
-// float in the middle of the header, and it had to be re-derived by hand every
-// time the avatar or the back button changed size. On one row nothing needs
-// measuring: the identity block and the actions are flex items.
 .header-container {
   display: flex;
   align-items: center;
@@ -21,8 +10,6 @@
   min-width: 0;
 }
 
-// The avatar and the name/meta block side by side. `min-width: 0` so a long
-// email shortens this block rather than pushing the actions off the header.
 .employee-info {
   display: flex;
   align-items: center;
@@ -46,13 +33,9 @@ img.employee-image,
   flex: 0 0 44px;
   object-fit: cover;
   border-radius: nb-theme(border-radius);
-  // A hairline keeps the avatar reading as a framed portrait instead of a
-  // floating cut-out, on both the pale and the near-black canvas.
   border: 1px solid var(--gauzy-border-default-color);
 }
 
-// Stand-in for an employee with no photo — and, since the template now watches
-// for a load error too, for one whose stored photo no longer resolves.
 .employee-image-placeholder {
   display: flex;
   align-items: center;
@@ -67,9 +50,6 @@ img.employee-image,
   }
 }
 
-// Name and verified tick on one baseline. The template's `flex-column` class was
-// bootstrap's `flex-direction` only — it never made `.employee-details` a flex
-// container — so this row owns its own alignment rather than borrowing it.
 .employee-name-row {
   display: flex;
   align-items: center;
@@ -83,15 +63,11 @@ img.employee-image,
   line-height: 1.375rem;
   letter-spacing: -0.01em;
   color: var(--gauzy-text-color-1);
-  // The name is the one thing here that must stay whole; the meta line under it
-  // is what gives way on a narrow header.
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-// Trails the name now, so the row's `gap` owns the spacing rather than a margin
-// on the icon itself.
 .icon-verified {
   flex: 0 0 auto;
   font-size: 1rem;
@@ -99,11 +75,6 @@ img.employee-image,
   height: 1rem;
 }
 
-// ── Supporting line ─────────────────────────────────────────────────────────
-// Position, username and email as one line of muted copy. They used to be three
-// full-width lines of BODY-sized text — which gave the email more visual weight
-// than the employee's own name — and then, after a first pass, one wrapping row
-// of `Label: value` pairs indented under the name.
 .employee-meta {
   display: flex;
   align-items: baseline;
@@ -116,8 +87,6 @@ img.employee-image,
   min-width: 0;
 }
 
-// The separator is drawn between items rather than typed into the template, so
-// an absent position or username cannot leave a leading dot behind.
 .employee-meta__item {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -125,26 +94,19 @@ img.employee-image,
   & + .employee-meta__item::before {
     content: '·';
     margin-inline-end: 0.5rem;
-    // The dot belongs to the separator, not to the value: at the value's own
-    // colour it read as punctuation inside the email address next to it.
     color: nb-theme(text-disabled-color);
   }
 }
 
-// ── Actions ─────────────────────────────────────────────────────────────────
 .header-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex: 0 0 auto;
-  // The back button and the identity block take the row's give; the actions keep
-  // their size.
   margin-inline-start: auto;
 }
 
 .edit-public-button {
-  // `inline-flex`, not `flex`: as a block the button stretched to the full width
-  // of the header and read as a banner rather than an action.
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
@@ -176,18 +138,8 @@ img.employee-image,
   }
 }
 
-// `ngx-favorite-toggle` renders a FILLED `nbButton` — it takes a `status` but no
-// appearance — so on the dark theme `status="basic"` painted a solid near-white
-// block in the corner of a near-black header, the highest-contrast thing on the
-// page for a secondary action. Quietened to match the pill beside it; the star
-// itself keeps its own amber when the record is favourited.
-//
-// Done from here rather than in the component's own stylesheet: it is shared
-// with the list views, where a filled button is what the row wants.
 :host ::ng-deep ngx-favorite-toggle {
   .favorite-toggle-button {
-    // Unsets `.favorite-toggle-detail`'s `margin-left: 1rem` — spacing on this
-    // row is the container's `gap` to give.
     margin: 0;
     width: 2rem;
     height: 2rem;
@@ -209,16 +161,12 @@ img.employee-image,
   }
 }
 
-// Removed with an earlier pass, all of them dead: `.edit-icon` (declared twice),
+// Removed with this pass, all of them dead: `.edit-icon` (declared twice),
 // `.setting-name`, `.body-header`, `.settings-body`, `.sub-header` and
 // `.header-content` name nothing in this template, and `.mutation-card
 // .setting-block` painted a fixed `#eaf3fc` pale blue that would have been a
-// light panel on the near-black theme had anything ever used it. `.transparent`
-// and `.edit-public-page` went with this one — the meta row no longer wraps its
-// values in a muted span, and the button is no longer nested in a box of its own.
+// light panel on the near-black theme had anything ever used it.
 
-// Below the tablet break the identity and the actions have no useful width side
-// by side, so the actions drop under the name rather than squeezing it.
 @media only screen and (max-width: v.$break-md) {
   .header-container {
     flex-wrap: wrap;
@@ -236,12 +184,6 @@ img.employee-image,
   @include ga-overrides.input-appearance(42px, var(--gauzy-card-1));
 }
 
-// The card body is given a definite height by the override above, but it is a
-// plain block, so the tabset inside it laid itself out at CONTENT height: on the
-// account tab the form ended after the Save row and the rest of the card was left
-// as bare canvas. As a flex column the body can hand its leftover height down to
-// the profile tabset, which passes it on to the routed tab
-// (edit-employee-profile.component.scss).
 :host nb-card-body {
   display: flex;
   flex-direction: column;

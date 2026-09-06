@@ -1,13 +1,3 @@
-<!--
-	One panel on the tab surface, in place of `nb-card > nb-card-body >
-	.form-container > form` — a card inside a card inside the page card, three
-	levels of frame around one form.
-
-	The fields ran down three different sets of bootstrap columns (`col-md-6`,
-	then bare `col`, then `col-md-6` again), so the same form changed its column
-	width twice on the way down. They are on the tab's own two-column grid now,
-	with the two long-form fields spanning it.
--->
 <div class="tab">
 	<section class="tab__panel">
 		@if (form) {
@@ -26,11 +16,6 @@
 							formControlName="startedWorkOn"
 						/>
 						<nb-datepicker #datepicker></nb-datepicker>
-						<!--
-							The note belongs under the field it is about. It used to be
-							its own `col-md-6` beside it, which put an amber block where
-							the next field should have been and shifted everything below.
-						-->
 						@if (form.get('startedWorkOn').value === null) {
 							<p class="tab__note">
 								{{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }}
@@ -148,10 +133,6 @@
 						</ngx-skills-input>
 					</div>
 
-					<!--
-						A toggle is not a field with a label above it, so it gets the full
-						width and sits under the fields rather than in one of their tracks.
-					-->
 					<div class="form-group tab__field--wide">
 						<nb-checkbox formControlName="anonymousBonus">
 							{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DISPLAY_BONUS_ANONYMOUSLY' | translate }}

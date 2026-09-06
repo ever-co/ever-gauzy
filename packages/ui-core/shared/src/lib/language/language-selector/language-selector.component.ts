@@ -83,13 +83,6 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 
 	@Input() selectBy: 'code' | 'object' = 'code';
 
-	/**
-	 * Id put on the control's focusable element, so a sibling `<label for="...">`
-	 * actually resolves to it. Without one, ng-select generates no id and every
-	 * label pointing at this component was an orphan — clicking it did nothing and
-	 * screen readers announced the control unlabelled. Only the ng-select template
-	 * consumes it; `nb-select` has no equivalent hook.
-	 */
 	@Input() labelForId: string;
 
 	/*

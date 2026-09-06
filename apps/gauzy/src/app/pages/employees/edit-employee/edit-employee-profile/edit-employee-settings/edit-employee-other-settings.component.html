@@ -1,25 +1,8 @@
-<!--
-	Section rail on the left, the sections themselves on the right, with the
-	commit action on the trailing edge of the right-hand column — the same two-
-	column shape the rest of the employee tabset settled on.
-
-	The fields inside each section were laid out on four different sets of
-	bootstrap columns (`col-6` here, `col-xl-6 col-12 pt-2` there, and on one
-	toggle the `form-group invite-toggle` classes were put on the COLUMN itself
-	rather than on a div inside it, so that one row sat on different padding from
-	its five neighbours). Each section body is on one two-column grid now.
--->
 <form class="settings" #ngForm="ngForm" [formGroup]="form" (ngSubmit)="onSubmit(ngForm)" novalidate>
 	<aside class="settings__rail">
 		<h4 class="settings__rail-title">
 			{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.SETTINGS_SECTION' | translate }}
 		</h4>
-		<!--
-			The rail was `<ul>` wrapping `<span (click)>` wrapping `<li>` — the
-			click target was the span, i.e. the element BETWEEN the list and its
-			item, which is not valid list content and is not focusable. The button
-			is the item now, so it is reachable by keyboard and announces its state.
-		-->
 		<ul class="settings__rail-list">
 			<li>
 				<button type="button" [class.is-active]="general?.expanded" (click)="general.toggle()">
@@ -53,17 +36,8 @@
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
 						<div class="settings__fields">
-							<!--
-								`ga-timezone-selector` renders its own `.form-group` and
-								label, so it is a grid ITEM here rather than something
-								wrapped in one — the wrapper it used to sit in stacked a
-								second field margin under it.
-							-->
 							<ga-timezone-selector formControlName="timeZone"></ga-timezone-selector>
 							<div class="form-group">
-								<!-- Was `for="timeZone"`, i.e. pointing at the timezone
-								     select in the field beside it: clicking this label
-								     opened the wrong dropdown. -->
 								<label class="label" for="timeFormat">
 									{{ 'FORM.LABELS.TIME_FORMAT' | translate }}
 								</label>

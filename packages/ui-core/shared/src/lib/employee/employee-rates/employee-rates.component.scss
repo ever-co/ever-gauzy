@@ -1,22 +1,15 @@
 @use 'themes' as *;
-// Namespaced: `var` forwards the theming module already loaded as `*` above, and
-// two `as *` loads of it would collide.
 @use 'var' as v;
 
 $radius: nb-theme(border-radius);
 $hairline: 1px solid var(--gauzy-border-default-color);
 
-// `height: 100%` used to sit here — a percentage of a host whose own size comes
-// out of flex layout on the tab, which is nothing the cascade can resolve at this
-// point, so it fell back to content height. The component grows into whatever
-// height it is handed and falls back to its content elsewhere.
 :host {
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-// ── The two panels ──────────────────────────────────────────────────────────
 .rates {
   display: flex;
   align-items: stretch;
@@ -36,10 +29,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   border-radius: $radius;
 }
 
-// The rate panel carries four fields and the commit action, the limits panel
-// one field, so they are not equals the way the location tab's pair are — a
-// 3:2 split gives the rate fields a pair of usable tracks and still leaves the
-// weekly cap a field rather than a strip.
 .rates__panel--rate {
   flex: 3 1 0;
 }
@@ -48,9 +37,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   flex: 2 1 0;
 }
 
-// The old `nb-card-header`s, as captions rather than as another bar of chrome.
-// A card header brings its own fill, its own bottom border and 1rem of padding
-// on every side; two words naming a group of fields need none of that.
 .rates__legend {
   padding: 0.875rem 1.25rem 0;
   font-size: 0.75rem;
@@ -61,10 +47,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   color: nb-theme(text-hint-color);
 }
 
-// Two equal columns, `minmax(0, 1fr)` so a wide control — the currency select's
-// options, a long placeholder — sizes to its track instead of widening it.
-// `align-content: start` keeps the rows at the top of a panel that is as tall as
-// its neighbour rather than distributing them down it.
 .rates__fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -81,16 +63,10 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
-// The limits panel holds one field; a second track there would only leave an
-// empty column beside it.
 .rates__fields--single {
   grid-template-columns: minmax(0, 1fr);
 }
 
-// `ga-currency` renders its own `.form-group`, so it is a grid ITEM here rather
-// than a wrapper around one — without this it would size to its content and sit
-// narrower than the pay period beside it. The `min-width: 180px` its own
-// stylesheet asks for was written for an inline-flex field on a full-width row.
 :host ::ng-deep ga-currency {
   display: block;
   min-width: 0;
@@ -102,10 +78,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
-// The validation messages. They were siblings of the `.form-group` rather than
-// children of it, so each one landed under the NEXT field down; the template
-// puts them inside their own field now, and this is the spacing that goes with
-// that.
 .caption.status-danger {
   margin-top: 0.25rem;
   font-size: 0.75rem;
@@ -124,8 +96,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
-// Below the large break the two panels have no useful width side by side, and
-// below the tablet break the field grid has none either.
 @media only screen and (max-width: v.$break-lg) {
   .rates {
     flex-direction: column;

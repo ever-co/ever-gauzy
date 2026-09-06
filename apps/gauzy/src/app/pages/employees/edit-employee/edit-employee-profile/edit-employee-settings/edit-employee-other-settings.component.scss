@@ -4,11 +4,6 @@
 $radius: nb-theme(border-radius);
 $hairline: 1px solid var(--gauzy-border-default-color);
 
-// The tabset hands this tab the height the card body has left over
-// (edit-employee-profile.component.scss). `height: 100%` here was a percentage of
-// that — of a box whose own size comes out of flex layout, i.e. of nothing the
-// cascade can resolve at this point — so it fell back to content height. As a
-// flex column the tab simply passes what it is given on to the form.
 :host {
   display: flex;
   flex-direction: column;
@@ -21,17 +16,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   @include nb-rtl(border-radius, $radius 0 $radius $radius);
 }
 
-// `height: calc(100vh - 19.25rem)` was a SECOND guess at the page chrome
-// alongside the card's own, and the two disagree the moment the page header
-// collapses to the "select an employee" line: the form was then sized to a height
-// the tab does not have, so it either stopped short — leaving a band of bare card
-// body beneath it — or ran past the bottom of the card. Growing into the tab is
-// the same intent without the guess. `flex-shrink: 0` because the host scrolls: a
-// form taller than the tab keeps its height and scrolls inside the host.
-//
-// The asymmetric `padding-right: 8px` went with it. It was making room for a
-// scrollbar that is no longer here — the tab host is the scroller now, and it
-// insets its own bar (edit-employee-profile.component.scss).
 .settings {
   display: flex;
   align-items: flex-start;
@@ -41,7 +25,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   min-height: 0;
 }
 
-// ── Section rail ────────────────────────────────────────────────────────────
 .settings__rail {
   flex: 0 0 12.5rem;
   min-width: 0;
@@ -61,8 +44,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   color: nb-theme(text-hint-color);
 }
 
-// The rows are buttons now (see the template), so they need the list styling
-// stripped off them rather than off an `<li>` that was never the click target.
 .settings__rail-list {
   display: flex;
   flex-direction: column;
@@ -92,10 +73,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
       color: var(--gauzy-text-color-1);
     }
 
-    // The open section. This used to be a fill plus an INSET box shadow — a
-    // pressed-in look on a row that is not pressed — and every other row carried
-    // an outset shadow of its own, so the rail read as four raised buttons with
-    // one dented one rather than as a list with a current item.
     &.is-active {
       background-color: nb-theme(color-primary-transparent-100);
       border-color: nb-theme(color-primary-transparent-default);
@@ -105,11 +82,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
-// ── Sections column ─────────────────────────────────────────────────────────
-// `width: calc(100% - 230px)` was the rail's width plus a guess at the gap
-// between them, restated as a percentage of the row — so moving the rail meant
-// remembering to move this too. `min-width: 0` is what actually keeps a wide
-// control from pushing the column past the row.
 .settings__sections {
   display: flex;
   flex-direction: column;
@@ -117,8 +89,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   min-width: 0;
 }
 
-// ── Accordion ───────────────────────────────────────────────────────────────
-// Each section is a panel in the same language as the rail beside it.
 :host ::ng-deep {
   nb-accordion {
     display: flex;
@@ -158,18 +128,11 @@ $hairline: 1px solid var(--gauzy-border-default-color);
     }
   }
 
-  // Nebular's own body padding plus the `.item-body` padding inside it stacked
-  // two paddings around every section; the grid below owns the spacing instead.
   nb-accordion-item-body .item-body {
     padding: 0;
   }
 }
 
-// Two equal columns, `minmax(0, 1fr)` so a wide control — a timezone option, a
-// long toggle label — sizes to its track instead of widening it. The settings
-// fields were on `col-6` in two sections and `col-xl-6 col-12 pt-2` in the other
-// two, which is why the same page had two different field widths and two
-// different row gaps depending on which section was open.
 .settings__fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -184,9 +147,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
-// `ga-timezone-selector` renders its own `.form-group`, so it is a grid item
-// here rather than a wrapper around one — the field margin belongs to the group
-// inside it, not to a second one around it.
 :host ::ng-deep .settings__fields > ga-timezone-selector {
   display: block;
   min-width: 0;
@@ -196,9 +156,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
-// ── Toggles ─────────────────────────────────────────────────────────────────
-// The framed row is the toggle's own; `nb-toggle` fills it so the whole row is
-// the hit target rather than just the switch and its label.
 .settings__toggle {
   display: flex;
 
@@ -233,10 +190,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
-// The selects inside the sections take the input fill, so a dropdown reads as a
-// control on the panel rather than as part of it. This used to be scoped to
-// `nb-accordion-item:first-of-type`, so the Integrations selects were left on the
-// panel colour while the General ones were not.
 :host ::ng-deep .settings__fields {
   .ng-select-container,
   .select-button {
@@ -244,10 +197,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
-// ── Commit action ───────────────────────────────────────────────────────────
-// Was a left-aligned button with `margin-bottom: 20px` hanging under the
-// accordion. On the trailing edge above a rule it reads as the action that
-// commits the sections above it, the same as every other tab.
 .settings__actions {
   display: flex;
   justify-content: flex-end;
@@ -261,9 +210,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   }
 }
 
-// Below the large break the rail has no useful width beside the sections, so it
-// becomes a strip of chips above them; below the tablet break the field grid has
-// no useful width either.
 @media only screen and (max-width: v.$break-lg) {
   .settings {
     flex-direction: column;
