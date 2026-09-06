@@ -1,40 +1,86 @@
 <nb-card class="employee-edit">
   <nb-card-header class="header">
     @if (selectedEmployeeFromHeader && selectedEmployeeFromHeader.id) {
+      <!--
+        One identity row: who this is on the left, what you can do about it on
+        the right.
+
+        It was three stacked rows — name and position, then a `padding-left`
+        indent of back-button + avatar + gap to line a SECOND row of meta up
+        under the name, then the tab strip. That indent is why the public-page
+        button and the email appeared to float in the middle of the header with
+        nothing above or below them to align to, and the three rows together
+        made the header taller than the tab body it introduces.
+      -->
       <div class="header-container">
-        <div class="d-flex align-items-start justify-content-between w-100">
-          <div class="d-flex align-items-start">
-            <ngx-back-navigation></ngx-back-navigation>
-            <div class="employee-info">
-              <!-- Guarded: the image used to render unconditionally, so an
-                   employee with no photo got a broken-image glyph. -->
-              @if (selectedEmployee?.user?.image?.fullUrl || selectedEmployee?.user?.imageUrl; as avatarUrl) {
-                <img class="employee-image" [src]="avatarUrl" alt="Employee Avatar" />
-              } @else {
-                <div class="employee-image-placeholder" aria-hidden="true">
-                  <nb-icon icon="person-outline"></nb-icon>
-                </div>
+        <ngx-back-navigation></ngx-back-navigation>
+
+        <div class="employee-info">
+          <!--
+            Guarded on the URL AND on whether it actually loaded. The `@if` alone
+            only proved a URL was SET: an employee whose stored photo 404s — a
+            deleted asset, an expired signed URL — still rendered an `<img>`, so
+            the header showed the browser's own broken-image glyph where the
+            avatar belongs. `(error)` falls back to the same placeholder an
+            employee with no photo at all gets.
+          -->
+          @if (avatarUrl && !avatarFailed) {
+            <img class="employee-image" [src]="avatarUrl" alt="" (error)="avatarFailed = true" />
+          } @else {
+            <div class="employee-image-placeholder" aria-hidden="true">
+              <nb-icon icon="person-outline"></nb-icon>
+            </div>
+          }
+
+          <div class="employee-details">
+            <!-- The tick trails the name, the way a verified badge reads
+                 everywhere else. -->
+            <div class="employee-name-row">
+              <span class="employee-name">
+                {{ selectedEmployee?.user?.name }}
+              </span>
+              @if (selectedEmployee?.isVerified) {
+                <nb-icon class="icon-verified" icon="checkmark-circle-2" status="primary"></nb-icon>
               }
-              <div class="employee-details flex-column align-items-start">
-                <!-- The tick trails the name, the way a verified badge reads
-                     everywhere else. It used to precede it, and sat in a
-                     `flex-column` box that never became a flex container, so
-                     its placement was whatever inline flow happened to give. -->
-                <div class="employee-name-row">
-                  <span class="employee-name">
-                    {{ selectedEmployee?.user?.name }}
-                  </span>
-                  @if (selectedEmployee?.isVerified) {
-                    <nb-icon class="icon-verified" icon="checkmark-circle-2" status="primary"></nb-icon>
-                  }
-                </div>
-                <!-- An em-dash rather than a blank line where no position is set. -->
-                <div class="employee-position">
-                  {{ selectedEmployee?.organizationPosition?.name || '—' }}
-                </div>
-              </div>
+            </div>
+
+            <!--
+              Position, username and email on one supporting line, separated by
+              the rule in the stylesheet rather than by `Label:` prefixes. Each
+              is self-describing, and at this size the labels were carrying more
+              width than the values they named.
+
+              Every part is guarded, so nothing renders a placeholder for absent
+              data — the position used to fall back to a bare em-dash, which read
+              as a stray character sitting under the name.
+            -->
+            <div class="employee-meta">
+              @if (selectedEmployee?.organizationPosition?.name; as position) {
+                <span class="employee-meta__item">{{ position }}</span>
+              }
+              @if (selectedEmployee?.user?.username; as username) {
+                <span class="employee-meta__item">{{ '@' + username }}</span>
+              }
+              @if (selectedEmployee?.user?.email; as email) {
+                <span class="employee-meta__item">{{ email }}</span>
+              }
             </div>
           </div>
+        </div>
+
+        <!--
+          Both actions on the trailing edge, where a page's actions belong. The
+          public-page link used to sit in the meta row, reading as another piece
+          of contact detail rather than as something to click.
+        -->
+        <div class="header-actions">
+          <ng-template [ngxPermissionsOnly]="['PUBLIC_PAGE_EDIT']">
+            <button type="button" class="edit-public-button" (click)="editPublicPage()">
+              <nb-icon icon="edit-outline"></nb-icon>
+              {{ 'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE' | translate }}
+            </button>
+          </ng-template>
+
           @if (selectedEmployee) {
             <ngx-favorite-toggle
               [entityType]="'Employee'"
@@ -47,28 +93,6 @@
               (favoriteToggled)="onFavoriteToggled($event)"
             ></ngx-favorite-toggle>
           }
-        </div>
-        <div class="employee-info">
-          <div class="employee-details">
-            <div class="edit-public-page">
-              <ng-template [ngxPermissionsOnly]="['PUBLIC_PAGE_EDIT']">
-                <span class="edit-public-button" (click)="editPublicPage()">
-                  <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-                  {{ 'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE' | translate }}
-                </span>
-              </ng-template>
-            </div>
-            @if (selectedEmployee?.user?.username) {
-              <div class="transparent">
-                {{ 'FORM.USERNAME' | translate }}:
-                <strong>{{ selectedEmployee?.user?.username }}</strong>
-              </div>
-            }
-            <div class="transparent">
-              {{ 'FORM.EMAIL' | translate }}:
-              <strong>{{ selectedEmployee?.user?.email }}</strong>
-            </div>
-          </div>
         </div>
       </div>
     } @else {

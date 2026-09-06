@@ -31,6 +31,21 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 	selectedEmployee: IEmployee;
 	selectedEmployeeFromHeader: ISelectedEmployee;
 
+	/**
+	 * Set when the avatar `<img>` raises `error`, i.e. when the employee HAS a
+	 * stored photo URL but it does not resolve — a deleted asset, an expired
+	 * signed URL, a host that is down. Guarding on the URL alone only proved one
+	 * was set, so those employees got the browser's broken-image glyph in the
+	 * page header; this switches them to the same placeholder an employee with no
+	 * photo at all gets. Reset wherever the URL can change.
+	 */
+	avatarFailed = false;
+
+	/** The employee's photo, from the image asset if there is one. */
+	get avatarUrl(): string | null {
+		return this.selectedEmployee?.user?.image?.fullUrl || this.selectedEmployee?.user?.imageUrl || null;
+	}
+
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
@@ -85,7 +100,12 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 						this.selectedEmployee = null;
 					}
 				}),
-				tap(([{ employee }, params]) => (this.selectedEmployee = employee)),
+				tap(([{ employee }, params]) => {
+					this.selectedEmployee = employee;
+					// A new employee means a new URL to try; the previous one's failure
+					// says nothing about this one.
+					this.avatarFailed = false;
+				}),
 				tap(([{ employee }, params]) => {
 					try {
 						if (employee.startedWorkOn) {
@@ -119,6 +139,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 			if (image) {
 				// Update the image for the selected employee
 				this.selectedEmployee.user.image = image;
+				// A freshly uploaded asset is a URL that has not been tried yet.
+				this.avatarFailed = false;
 
 				// Alternatively, update the selectedEmployee in the store with the new image URL
 				this.store.selectedEmployee = {
