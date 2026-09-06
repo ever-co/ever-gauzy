@@ -243,6 +243,15 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				createdAt: {
 					title: this.getTranslation('SM_TABLE.CREATED_AT'),
 					type: 'custom',
+					// One of the few columns that declared no width, so `table-layout:
+					// auto` sized it against neighbours that demand far more min-content
+					// room (Project's logo + name, Creator's avatar + name, the Members
+					// people list) and it came out narrower than its own header. The
+					// content is a fixed-width formatted date rather than a share of the
+					// table, so this is px like `taskNumber` above, not a percentage:
+					// enough for "Created At" plus its sort arrow on one line at the
+					// header token size, with the `ll` date sitting under it.
+					width: '110px',
 					isFilterable: false,
 					renderComponent: CreatedAtComponent,
 					componentInitFunction: (instance: CreatedAtComponent, cell: Cell) => {

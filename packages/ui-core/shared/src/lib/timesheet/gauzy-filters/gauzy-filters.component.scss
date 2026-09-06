@@ -63,6 +63,11 @@ nb-select {
 
 :host {
     ::ng-deep {
+        .select-button > span {
+            font-size: inherit;
+            line-height: inherit;
+        }
+
         &.md-drppicker {
             background-color: nb-theme(background-basic-color-1);
             color: nb-theme(text-basic-color);
@@ -203,21 +208,123 @@ nb-select {
             // trailing edge, where the select positions its own.
             justify-content: space-between;
             text-align: left;
-            font-size: nb-theme(select-medium-text-font-size);
             // An unset select shows its PLACEHOLDER, so that is the weight to match —
             // not the heavier weight it switches to once a value is chosen.
             font-weight: nb-theme(select-medium-placeholder-text-font-weight);
-            line-height: nb-theme(select-medium-text-line-height);
         }
 
-        .activity-level-filter,
-        .select-button {
+        // The timezone pill is a filled `status="basic"` nbButton, so it arrives with
+        // Nebular's basic border — near-white on the dark canvas, and the loudest edge
+        // in a row where every other control is borderless. Same normalization as the
+        // activity-level button above: drop the border, take the shared hairline, and
+        // match the select trigger's height and radius.
+        .popover-button[nbButton] {
+            border: none !important;
+            min-height: 2rem;
+            border-radius: $default-button-radius !important;
+        }
+
+        .filter-item-list .clear-filters [nbButton] {
+            font-size: nb-theme(gauzy-table-header-font-size);
+            line-height: nb-theme(gauzy-table-header-line-height);
+        }
+
+        .filter-item-list .select-button.placeholder {
+            font-size: nb-theme(gauzy-table-header-font-size);
+            line-height: nb-theme(gauzy-table-header-line-height);
+        }
+
+        .filter-item-list .activity-level-filter,
+        .filter-item-list .select-button,
+        .filter-item-list .popover-button[nbButton] {
             // The shared control hairline rather than the old black drop shadow, which is
             // invisible on the near-black canvas and was the second thing setting this
             // button's edge apart from the selects next to it.
             box-shadow: $default-box-shadow;
             background-color: nb-theme(gauzy-card-1) !important;
             color: nb-theme(select-outline-basic-text-color) !important;
+            font-size: nb-theme(gauzy-table-header-font-size);
+            line-height: nb-theme(gauzy-table-header-line-height);
+        }
+    }
+}
+
+::ng-deep {
+    .cdk-overlay-pane .gauzy-filters-options,
+    .cdk-overlay-pane.gauzy-filters-popover {
+        font-size: var(--gauzy-table-header-font-size);
+        line-height: var(--gauzy-table-header-line-height);
+    }
+
+    .cdk-overlay-pane nb-option-list.gauzy-filters-options {
+        nb-option,
+        nb-option .text,
+        nb-option-group {
+            font-size: var(--gauzy-table-header-font-size);
+            line-height: var(--gauzy-table-header-line-height);
+        }
+    }
+}
+
+::ng-deep .gauzy-filters-popover {
+    .slider-dropdown {
+        width: 15rem;
+        padding: 1.5rem 1rem 0.5rem !important;
+    }
+
+    .ngx-slider {
+        margin: 0.5rem 0 1.25rem;
+
+        .ngx-slider-bar {
+            height: 4px;
+            background: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.24));
+        }
+
+        .ngx-slider-selection {
+            background: var(--color-primary-default);
+        }
+
+        .ngx-slider-pointer {
+            width: 14px;
+            height: 14px;
+            top: -5px;
+            background-color: var(--gauzy-card-1);
+            box-shadow: 0 0 0 2px var(--color-primary-default), 0 2px 6px rgba(0, 0, 0, 0.35);
+
+            &::after {
+                display: none;
+            }
+
+            &:hover,
+            &.ngx-slider-active {
+                background-color: var(--color-primary-default);
+                box-shadow: 0 0 0 2px var(--color-primary-default), 0 0 0 6px var(--color-primary-transparent-200, rgba(51, 102, 255, 0.16));
+            }
+
+            &:focus {
+                outline: none;
+            }
+
+            // Dropping the outline is right for a pointer — the drag itself says
+            // which handle is live. A keyboard user has nothing else marking the
+            // armed handle, so give focus-visible its own ring: a gap in the panel
+            // colour keeps the primary band outside it readable over the bar.
+            &:focus-visible {
+                outline: none;
+                box-shadow: 0 0 0 2px var(--gauzy-card-1), 0 0 0 5px var(--color-primary-default);
+            }
+        }
+
+        .ngx-slider-bubble {
+            bottom: 0.875rem;
+            font-size: var(--gauzy-table-header-font-size);
+            line-height: var(--gauzy-table-header-line-height);
+            color: var(--gauzy-text-color-1);
+
+            &.ngx-slider-limit {
+                color: var(--gauzy-text-color-2);
+                opacity: 0.55;
+            }
         }
     }
 }

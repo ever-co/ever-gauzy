@@ -6,12 +6,20 @@ import { CreateUserDTO } from './create-user.dto';
 
 /**
  * Base class for updating user-related fields.
+ *
+ * `imageId` is declared because the route validates with `whitelist: true`, which strips every
+ * undeclared property. Without it a client could upload an avatar (creating the ImageAsset) and then
+ * fail to attach it: `PUT /user/:id` with `{ imageId }` answered `202 Accepted` while silently
+ * dropping the value, so the avatar never changed — and `{ imageId: null }` never cleared one.
+ * It carries `@IsOptional()` + `@IsUUID()` from the entity, so `null` is accepted (clearing the
+ * avatar) while a malformed id is still rejected.
  */
 class UpdateUserBaseDTO extends PickType(User, [
 	'defaultOrganizationId',
 	'defaultTeamId',
 	'lastOrganizationId',
 	'lastTeamId',
+	'imageId',
 	'isActive'
 ] as const) {}
 

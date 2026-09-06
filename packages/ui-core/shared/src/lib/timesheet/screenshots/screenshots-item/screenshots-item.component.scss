@@ -48,54 +48,123 @@
       background: rgba($color: #000000, $alpha: 0.1);
       min-height: 130px;
       position: relative;
+      // ------------------------------------------------------------------
+      // Hover overlay.
+      //
+      // Owned here rather than in each consumer. The Screenshots tab, the
+      // dashboard's Recent Activities strip and the Recent Activities widget
+      // all render this card, and the first two each carried their own copy of
+      // the scrim and the button metrics, which had already drifted apart.
+      //
+      // Revealed on `:focus-within` as well as `:hover`: the buttons inside are
+      // real tab stops, so on the keyboard alone they used to take focus while
+      // the overlay holding them sat at `opacity: 0` — the user was typing into
+      // something they could not see.
+      // ------------------------------------------------------------------
       .hover {
-        padding: 5px;
+        padding: 0.5rem;
         display: flex;
         flex-direction: column;
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba($color: #000000, $alpha: 0.7);
+        inset: 0;
+        // Dark at the top behind the action chips and again at the bottom where
+        // the overlay meets the slot info, lighter through the middle so the
+        // screenshot still reads underneath instead of being crushed flat.
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.74) 0%,
+          rgba(0, 0, 0, 0.42) 42%,
+          rgba(0, 0, 0, 0.74) 100%
+        );
         opacity: 0;
         z-index: 9;
         align-items: center;
-        justify-content: center;
-        transition: opacity 0.5s;
+        justify-content: flex-start;
+        transition: opacity 0.18s ease;
         border-radius: nb-theme(border-radius) nb-theme(border-radius) 0px 0px;
       }
+
+      // Select / delete / info chips ride the top edge; `w-100` is on the
+      // template's own element.
+      .hover .actions {
+        gap: 0.375rem;
+        flex: 0 0 auto;
+
+        button[nbButton] {
+          width: 1.5rem;
+          height: 1.5rem;
+          padding: 0;
+          margin: 0;
+          border-radius: nb-theme(gauzy-radius-sm);
+
+          nb-icon {
+            font-size: 0.875rem;
+            width: 0.875rem;
+            height: 0.875rem;
+            margin: 0;
+          }
+        }
+
+        // Delete carries `ml-auto` in the template to hold the trailing edge;
+        // the blanket `margin: 0` above would otherwise cancel it.
+        button[nbButton].ml-auto {
+          margin-inline-start: auto;
+        }
+      }
+
       .view-button {
-        height: 100%;
         width: 100%;
+        // Takes whatever height the action row leaves and centres in it, so the
+        // pair sits in the same place whether or not the chips above render.
         flex-grow: 1;
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: space-around;
-        button {
+        // Side by side, NOT stacked: the thumbnail is only 130px tall, and a
+        // column of two full-width buttons under the chip row filled it edge to
+        // edge. `wrap` lets them fall back to stacked on a card narrow enough
+        // that they genuinely do not fit.
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375rem;
+        // Settles up into place as the scrim fades in.
+        transform: translateY(0.25rem);
+        transition: transform 0.18s ease;
+
+        button[nbButton] {
+          height: 1.75rem;
+          padding: 0 0.625rem;
+          margin: 0;
           font-size: 12px;
           font-weight: 400;
           line-height: 16px;
           letter-spacing: -0.009em;
-          text-align: left;
+          text-align: center;
+          justify-content: center;
+          border-radius: nb-theme(gauzy-radius-sm);
         }
       }
 
-      &.select-mode {
-        .hover {
-          justify-content: normal;
-        }
-        .select-hidden {
-          display: none;
-        }
+      &.select-mode .select-hidden {
+        display: none;
       }
 
-      &.select-mode,
-      &:hover {
-        .hover {
-          opacity: 1;
-        }
+      // Select mode pins the overlay open on EVERY card at once, so it drops to
+      // a light top-only wash. At the full scrim the user would be picking
+      // slots out of a grid of near-black tiles.
+      &.select-mode .hover {
+        opacity: 1;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 60%);
+      }
+
+      &:hover .hover,
+      &:focus-within .hover {
+        opacity: 1;
+      }
+
+      &:hover .view-button,
+      &:focus-within .view-button {
+        transform: translateY(0);
       }
 
       .no-image {
@@ -109,15 +178,33 @@
         border-radius: 5px;
         text-align: center;
       }
+      // The "N people" badge. It is a count on a 130px thumbnail, so it is
+      // sized as a chip rather than as body text: the glyph and the number both
+      // used to inherit the 14px paragraph size and sat inside 8px of padding on
+      // every side, which made the badge nearly as tall as a button.
       .screenshot-count {
-        padding: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.125rem 0.375rem;
         background: rgba($color: #000000, $alpha: 0.6);
         color: nb-theme(color-danger-default);
         position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        border-radius: nb-theme(border-radius);
+        top: 0.375rem;
+        right: 0.375rem;
+        border-radius: nb-theme(gauzy-radius-sm);
+        // Matches the popover's name size — the badge and the list it opens are
+        // the same piece of information.
+        font-size: 0.6875rem;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
         text-align: center;
+
+        // The glyph reads a shade larger than digits at a shared size, so it is
+        // stepped down rather than left to inherit.
+        i {
+          font-size: 0.625rem;
+        }
       }
 
       img {
@@ -144,11 +231,162 @@
   text-align: left;
 }
 
-::ng-deep {
-  .cdk-overlay-container {
-    nb-overlay-container {
-      nb-list {
-        overflow: hidden !important;
+// ---------------------------------------------------------------------------
+// "N people worked in this slot" popover, behind the members badge.
+//
+// It renders into the CDK overlay container, outside this component's tree, so
+// it can only be reached from a global rule. Scoped to the `nbPopoverClass`
+// this card sets rather than left bare: the rule that used to live here,
+// `.cdk-overlay-container nb-overlay-container nb-list`, matched every Nebular
+// list in every overlay in the application.
+//
+// `overflow: hidden` was that rule's whole payload, and on a busy slot it
+// silently cut employees off the bottom of the list with nothing to scroll.
+// ---------------------------------------------------------------------------
+
+$popover-row-height: 1.625rem;
+$popover-row-gap: 0.125rem;
+$popover-list-padding: 0.25rem;
+
+::ng-deep .worked-employees-popover {
+  // The panel's background stays Nebular's `popover-background-color` — the
+  // arrow's `::after` is painted from the same token, so overriding one without
+  // the other leaves a mismatched notch under the panel.
+  nb-popover {
+    box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.55);
+  }
+
+  // The panel inset goes on the CONTENT, not on `nb-popover`.
+  //
+  // Two reasons. `.primitive-overlay` — the wrapper Nebular's own padding is
+  // applied to — is rendered `*ngIf="isStringContent"`, and this popover is
+  // driven by a TemplateRef, so that element is simply not in the DOM here and
+  // a rule targeting it styles nothing. And padding on `nb-popover` itself
+  // would shift the arrow: it is absolutely positioned, so its offsets resolve
+  // against the panel's PADDING box, and `top: -arrow-size` would pull the
+  // arrow inside the panel instead of leaving it hanging off the edge.
+  //
+  // This is the convention `_overlays.scss` documents for template-driven
+  // popovers — the container supplies the chrome, the content supplies padding.
+  nb-list {
+    // 4px, the same inset `$overlay-padding` gives every other overlay panel in
+    // the app — enough to keep the rows off the panel edge, no more.
+    padding: $popover-list-padding;
+    // One name per line. `minmax(0, 1fr)` rather than a bare `1fr`: a grid track
+    // sized `1fr` refuses to go under its content's intrinsic width, so a long
+    // name would widen the panel instead of ellipsising inside it.
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: $popover-row-gap 0;
+    align-content: start;
+    min-width: 8rem;
+    max-width: 15rem;
+    // Exactly five names in view; the rest are scrolled to. Computed from the
+    // row box rather than eyeballed, so the cut lands on a row boundary instead
+    // of halfway through the sixth name: five rows, the four gaps between them,
+    // and the panel's own inset top and bottom. Border-box is global (Nebular's
+    // normalize), so the padding counts inside this figure.
+    max-height: $popover-row-height * 5 + $popover-row-gap * 4 + $popover-list-padding * 2;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: transparent;
+
+    scrollbar-width: thin;
+    scrollbar-color: nb-theme(text-hint-color) transparent;
+
+    &::-webkit-scrollbar {
+      width: 0.375rem;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: nb-theme(text-hint-color);
+      border-radius: 999px;
+    }
+  }
+
+  nb-list-item.worked-employee {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    min-height: $popover-row-height;
+    // Was `row border-top align-items-center` — bootstrap's `.row` carries
+    // negative inline margins meant for a grid gutter, which pulled each name
+    // out of the panel's padding, and `.border-top` drew a rule between rows
+    // that Nebular's own `border-bottom` had already drawn.
+    padding: 0.25rem 0.375rem;
+    // Grid items floor at their content width unless told otherwise, which would
+    // push the column past its track and break the ellipsis below.
+    min-width: 0;
+    border: 0;
+    border-radius: nb-theme(gauzy-radius-sm);
+    background: transparent;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--gauzy-hover-tint);
+    }
+  }
+
+  // The shared employee chip is built for a table cell, where a primary-tinted
+  // pill and an underline mark it as a link to the employee's page. Nothing
+  // here is navigable — the template passes `isNavigation="false"` — so that
+  // treatment only read as three broken links stacked in a dark panel. Flatten
+  // it to a plain avatar-and-name row.
+  //
+  // The `!important`s are load-bearing: the chip's padding and image margin come
+  // from `nb-ltr`/`nb-rtl`, which prefix the selector with `[dir=ltr]` and so
+  // outrank anything reachable from out here.
+  ngx-employee-links {
+    min-width: 0;
+
+    a {
+      width: 100%;
+      min-width: 0;
+      gap: 0.375rem;
+      padding: 0 !important;
+      background-color: transparent !important;
+      color: var(--gauzy-text-color-1) !important;
+      text-decoration: none;
+      cursor: default;
+
+      .names-wrapper {
+        // The cell version clips at 110px to protect a column width; here the
+        // panel's own `max-width` does that job. `min-width: 0` is what lets the
+        // name shrink inside its flex row far enough for the ellipsis to engage
+        // — a flex item's default `min-width: auto` would hold it at full text
+        // width, and the grid track would grow to match.
+        max-width: none;
+        min-width: 0;
+        // 11px, the size the members badge is set at — the badge and the list it
+        // opens are the same piece of information, and its own comment already
+        // claims the two match. Still below `gauzy-table-header-font-size`
+        // (0.75rem), the smallest size the theme defines as a token, so it stays
+        // a deliberate literal: this is a name list in a transient hint popover,
+        // not page or table chrome that has to hold its own.
+        //
+        // The line box stays under the 18px avatar next to it, so the row height
+        // the five-in-view cap is derived from does not move with this.
+        font-size: 0.6875rem;
+        line-height: 0.875rem;
+        opacity: 0.82;
+      }
+
+      img {
+        flex: 0 0 auto;
+        // 18px — the size the component's own `<img>` attributes ask for, so the
+        // photo is no longer upscaled past its intrinsic box.
+        width: 1.125rem;
+        height: 1.125rem;
+        border-radius: 50%;
+        object-fit: cover;
+        margin: 0 !important;
+        // Stands in for the photo while it loads, and keeps a broken URL as a
+        // neutral disc instead of a bare glyph.
+        background-color: var(--gauzy-hover-tint);
       }
     }
   }
@@ -172,5 +410,21 @@
   .inline-time-span {
     white-space: nowrap;
     font-size: 0.75rem;
+  }
+}
+
+// The overlay's fade and the buttons' rise are decoration, not information —
+// the scrim reaching full opacity is what conveys "this card is active", and
+// that still happens instantly here.
+@media (prefers-reduced-motion: reduce) {
+  :host .activity .image-container {
+    .hover {
+      transition: none;
+    }
+
+    .view-button {
+      transform: none;
+      transition: none;
+    }
   }
 }

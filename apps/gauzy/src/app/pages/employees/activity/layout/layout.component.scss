@@ -1,6 +1,13 @@
 @use 'themes' as *;
 
 :host {
+  display: block;
+  margin-top: -24px;
+
+  @media (max-width: 767.98px) {
+    margin-top: -1rem;
+  }
+
   nb-card {
     nb-card-body {
       overflow: unset;
@@ -14,6 +21,9 @@
     span {
       display: inline-block;
       text-transform: initial;
+      // Capped with the rest of the page: the tab strip is navigation, not a
+      // heading, and it sat a size above every list it labels.
+      font-size: nb-theme(gauzy-table-header-font-size);
       &:first-letter {
         text-transform: uppercase;
       }

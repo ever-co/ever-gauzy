@@ -22,6 +22,8 @@ import { getUserDummyImage, Role } from '../core';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from '../employee/default-employees';
 import { DEFAULT_CANDIDATES } from '../candidate/default-candidates';
 import { DEFAULT_SUPER_ADMINS, DEFAULT_ADMINS } from './default-users';
+import { isSelfResolvingImageUrl, shouldSeedAvatar } from './user-avatar';
+import { createSeededUserAvatar } from './user-avatar.seed';
 
 export const createDefaultAdminUsers = async (
 	dataSource: DataSource,
@@ -333,9 +335,32 @@ const generateDefaultUser = async (
 	user.firstName = firstName;
 	user.lastName = lastName;
 	user.role = role;
-	user.imageUrl = getUserDummyImage(user);
-	user.imageUrl = imageUrl;
 	user.tenant = tenant;
+
+	// The seed references avatars as `assets/images/avatars/<file>`, which only resolves inside the
+	// Angular app (it ships `<base href="/">` and serves those files itself). Written verbatim into
+	// `imageUrl` it 404s for every other client. Store the avatar as a real ImageAsset instead — the
+	// same path an uploaded avatar takes — so the URL is absolute and resolvable everywhere. If the
+	// asset cannot be prepared, fall back to the dummy image rather than a path that cannot load.
+	//
+	// A user who already has an avatar keeps it: re-seeding must not overwrite one they uploaded, the
+	// same way the password hash below is preserved. Existing users that only carry the old seeded
+	// path have no ImageAsset yet, so they are still backfilled.
+	if (shouldSeedAvatar(existingUser)) {
+		const avatar = await createSeededUserAvatar(dataSource, imageUrl, tenant);
+
+		if (avatar) {
+			user.image = avatar.image;
+			user.imageUrl = avatar.url;
+		} else {
+			// Persist the value ONLY if it can resolve on its own. A seed-asset reference we could
+			// not prepare, any other bare relative path, and an empty or whitespace-only value all
+			// fail to load wherever they are rendered — which is the defect this whole change
+			// exists to remove — so they fall back to the dummy image instead.
+			const usable = isSelfResolvingImageUrl(imageUrl) ? imageUrl.trim() : undefined;
+			user.imageUrl = usable || getUserDummyImage(user);
+		}
+	}
 	user.preferredLanguage = preferredLanguage;
 	user.preferredComponentLayout = preferredComponentLayout;
 	user.emailVerifiedAt = user.emailVerifiedAt || new Date();
