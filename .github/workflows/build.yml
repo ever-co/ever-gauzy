@@ -308,6 +308,7 @@ jobs:
         run: .github/scripts/restore-node-modules.sh
 
       - name: Test PostgreSQL migrations
+        # cspell:words PGHOST PGPORT PGDATABASE
         env:
           PGHOST: 127.0.0.1
           PGPORT: ${{ job.services.postgres.ports[5432] }}

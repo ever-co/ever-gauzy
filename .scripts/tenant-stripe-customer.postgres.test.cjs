@@ -1,3 +1,4 @@
+// cspell:words PGHOST PGPORT PGDATABASE SAVEPOINT
 // Run with PGHOST, PGPORT, PGUSER, PGPASSWORD and PGDATABASE pointing to a test database:
 // yarn nx run core:test-postgres-migrations
 // All fixtures use a temporary table and each test rolls back its transaction.
