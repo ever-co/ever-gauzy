@@ -123,8 +123,10 @@
 				[attr.aria-label]="('DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate) + ': ' + figures.income"
 			>
 				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="trending-up-outline"></nb-icon></span>
-				<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}</span>
-				<span class="kpi-value">{{ figures.income }}</span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}</span>
+					<span class="kpi-value">{{ figures.income }}</span>
+				</span>
 				<nb-icon class="kpi-affordance" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
 			</button>
 
@@ -139,8 +141,10 @@
 				"
 			>
 				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="trending-down-outline"></nb-icon></span>
-				<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate }}</span>
-				<span class="kpi-value">{{ figures.expense }}</span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate }}</span>
+					<span class="kpi-value">{{ figures.expense }}</span>
+				</span>
 				<nb-icon class="kpi-affordance" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
 			</button>
 
@@ -157,8 +161,10 @@
 				[attr.aria-label]="('DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate) + ': ' + figures.profit"
 			>
 				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="pie-chart-outline"></nb-icon></span>
-				<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}</span>
-				<span class="kpi-value">{{ figures.profit }}</span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}</span>
+					<span class="kpi-value">{{ figures.profit }}</span>
+				</span>
 				<nb-icon class="kpi-affordance" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
 			</button>
 
@@ -176,8 +182,10 @@
 				[nbTooltip]="bonusFormula ? (bonusFormula.key | translate : bonusFormula.params) : ''"
 			>
 				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="award-outline"></nb-icon></span>
-				<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}</span>
-				<span class="kpi-value">{{ figures.bonus }}</span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}</span>
+					<span class="kpi-value">{{ figures.bonus }}</span>
+				</span>
 			</div>
 			}
 		</section>

@@ -131,7 +131,7 @@ $weight-normal: 400; // labels, captions, chips
 }
 
 .identity-initials {
-	font-size: nb-theme(text-subtitle-2-font-size);
+	font-size: 0.75rem;
 	font-weight: $weight-medium;
 	line-height: 1;
 	letter-spacing: 0.02em;
@@ -149,7 +149,7 @@ $weight-normal: 400; // labels, captions, chips
 	display: flex;
 	align-items: center;
 	gap: $gap-xs;
-	font-size: nb-theme(text-subtitle-font-size);
+	font-size: 0.75rem;
 	// Medium, not semibold: it is already the largest and darkest text in the
 	// bar, and the page title sits directly above it.
 	font-weight: $weight-medium;
@@ -248,7 +248,7 @@ $weight-normal: 400; // labels, captions, chips
 
 	dd {
 		margin: 0;
-		font-size: nb-theme(text-heading-6-font-size);
+		font-size: 0.75rem;
 		font-weight: $weight-medium;
 		line-height: 1.25rem;
 		color: var(--gauzy-text-color-1);
@@ -277,23 +277,22 @@ $weight-normal: 400; // labels, captions, chips
 }
 
 /*
- * A tile is an accent chip, a two-line text stack, and a chevron.
+ * A tile is an accent glyph, a two-line text stack, and a chevron.
  *
- * The icon and the chevron each span BOTH text rows, so the label and the value
- * share one left edge and the tile has a single vertical rhythm. The first pass
- * gave the (now removed) formula line its own full-width row underneath, which
- * started it at the tile's padding while the label and value started past the
- * icon — three different left edges inside one small box.
+ * One flex row: the glyph, then the label-and-value block, then the chevron.
+ *
+ * The row aligns to `flex-start` so the glyph sits level with the label's cap
+ * height instead of floating against the middle of the two-line stack. The
+ * chevron opts back out with `align-self: center`, staying centred against the
+ * tile however the text wraps.
  */
 .kpi {
-	display: grid;
-	grid-template-columns: auto minmax(0, 1fr) auto;
-	grid-template-areas:
-		'icon label affordance'
-		'icon value affordance';
-	align-items: center;
-	column-gap: $gap-sm;
-	row-gap: 0.125rem;
+	display: flex;
+	flex-direction: row;
+	// Top, not centre: the glyph lines up with the label's cap height rather than
+	// floating against the middle of a two-line stack.
+	align-items: flex-start;
+	gap: $gap-sm;
 	width: 100%;
 	padding: $gap-md;
 	border: 0;
@@ -309,10 +308,19 @@ $weight-normal: 400; // labels, captions, chips
 	text-align: start;
 	transition: box-shadow 0.12s ease-in-out, background-color 0.12s ease-in-out;
 
-	// Accent per tile, set by the `kpi--*` modifiers below. Declared here so a
-	// tile without a modifier still resolves to something sensible.
+	/*
+	 * Accent per tile, set by the `kpi--*` modifiers below. Declared here so a
+	 * tile without a modifier still resolves to something sensible.
+	 *
+	 * The modifiers set ONE variable, so a tile's icon can never disagree with
+	 * the rest of the tile — and they read the same
+	 * `gauzy-chart-*` tokens the charts paint with, so the Total Bonus tile and
+	 * the Bonus slice beside it are the same colour by construction. They were
+	 * not: `--info` and `--accent` both resolved to the info step, which made
+	 * Profit and Bonus identical on the tiles while the chart drew Bonus in
+	 * fuchsia.
+	 */
 	--kpi-accent: var(--gauzy-text-color-2);
-	--kpi-accent-tint: var(--gauzy-hover-tint);
 
 	&:not(.kpi--static) {
 		cursor: pointer;
@@ -331,19 +339,19 @@ $weight-normal: 400; // labels, captions, chips
 	}
 
 	&--success {
-		--kpi-accent: var(--gauzy-action-success-text);
-		--kpi-accent-tint: var(--gauzy-action-success-tint);
+		--kpi-accent: var(--gauzy-chart-revenue);
 	}
 
 	&--warning {
-		--kpi-accent: var(--gauzy-action-warning-text);
-		--kpi-accent-tint: var(--gauzy-action-warning-tint);
+		--kpi-accent: var(--gauzy-chart-expenses);
 	}
 
-	&--info,
+	&--info {
+		--kpi-accent: var(--gauzy-chart-profit);
+	}
+
 	&--accent {
-		--kpi-accent: var(--gauzy-action-info-text);
-		--kpi-accent-tint: var(--gauzy-action-info-tint);
+		--kpi-accent: var(--gauzy-chart-bonus);
 	}
 
 	/*
@@ -352,24 +360,25 @@ $weight-normal: 400; // labels, captions, chips
 	 * emphasis rather than the only cue.
 	 */
 	&.is-negative {
-		--kpi-accent: var(--gauzy-action-danger-text);
-		--kpi-accent-tint: var(--gauzy-action-danger-tint);
+		--kpi-accent: var(--gauzy-chart-negative);
 
 		.kpi-value {
-			color: var(--gauzy-action-danger-text);
+			color: var(--gauzy-chart-negative);
 		}
 	}
 }
 
 .kpi-icon {
-	grid-area: icon;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	// Never squeezed by a long label or a wide figure beside it.
+	flex: 0 0 auto;
 	width: 2.25rem;
 	height: 2.25rem;
 	border-radius: var(--gauzy-radius-sm);
-	background-color: var(--kpi-accent-tint);
+	// No fill behind the glyph: the accent is carried by the icon itself, and the
+	// tile already has its own surface and hairline to sit on.
 	color: var(--kpi-accent);
 
 	nb-icon {
@@ -379,8 +388,19 @@ $weight-normal: 400; // labels, captions, chips
 	}
 }
 
+/*
+ * Label over value, as one block beside the glyph. `min-width: 0` so a long
+ * figure shrinks here rather than pushing the chevron off the tile.
+ */
+.kpi-text {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+	row-gap: 0.125rem;
+}
+
 .kpi-label {
-	grid-area: label;
 	font-size: nb-theme(text-caption-font-size);
 	font-weight: $weight-normal;
 	line-height: 1rem;
@@ -392,11 +412,12 @@ $weight-normal: 400; // labels, captions, chips
 }
 
 .kpi-value {
-	grid-area: value;
-	font-size: nb-theme(text-heading-5-font-size);
+	font-size: 0.75rem;
 	// The one place on this page that spends weight.
 	font-weight: $weight-strong;
-	line-height: 1.75rem;
+	// Was 1.75rem, set for the 22px figure this used to be; at 12px that leading
+	// left the number floating well below its label.
+	line-height: 1rem;
 	letter-spacing: -0.01em;
 	color: var(--gauzy-text-color-1);
 	font-variant-numeric: tabular-nums;
@@ -406,8 +427,10 @@ $weight-normal: 400; // labels, captions, chips
 }
 
 .kpi-affordance {
-	grid-area: affordance;
 	flex: 0 0 auto;
+	// Pushed to the trailing edge and centred, whatever the text stack does.
+	margin-inline-start: auto;
+	align-self: center;
 	width: 1rem;
 	height: 1rem;
 	font-size: 1rem;
@@ -430,7 +453,10 @@ $weight-normal: 400; // labels, captions, chips
 	// part of this page that actually rewards extra width.
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
 	gap: $gap-md;
-	align-items: start;
+	// Stretch, not start: the chart panel has a fixed body height and the
+	// breakdown is content-sized, so letting each find its own height left the
+	// row with a ragged bottom edge. They share the taller one now.
+	align-items: stretch;
 
 	@media screen and (max-width: $panels-breakpoint) {
 		grid-template-columns: minmax(0, 1fr);
@@ -481,14 +507,14 @@ $weight-normal: 400; // labels, captions, chips
 		min-height: $switcher-height;
 		height: $switcher-height;
 		padding-block: 0;
-		font-size: nb-theme(text-button-medium-font-size);
+		font-size: 0.75rem;
 		font-weight: $weight-normal;
 	}
 }
 
 .panel-title {
 	margin: 0;
-	font-size: nb-theme(text-subtitle-2-font-size);
+	font-size: 0.75rem;
 	font-weight: $weight-medium;
 	line-height: 1rem;
 	letter-spacing: -0.009em;
@@ -513,7 +539,7 @@ $weight-normal: 400; // labels, captions, chips
 .panel--chart .panel-body {
 	display: flex;
 	flex-direction: column;
-	height: 22rem;
+	height: 20rem;
 	// A flex child will not shrink below its content without this.
 	min-height: 0;
 }
@@ -592,7 +618,7 @@ $weight-normal: 400; // labels, captions, chips
 .stat-row-label {
 	flex: 1 1 auto;
 	min-width: 0;
-	font-size: nb-theme(gauzy-table-font-size);
+	font-size: 0.75rem;
 	line-height: 1.25rem;
 	color: var(--gauzy-text-color-1);
 	// One line each: a wrapped label would break the value's alignment with the
@@ -604,7 +630,7 @@ $weight-normal: 400; // labels, captions, chips
 
 .stat-row-value {
 	flex: 0 0 auto;
-	font-size: nb-theme(text-paragraph-font-size);
+	font-size: 0.75rem;
 	font-weight: $weight-medium;
 	line-height: 1.25rem;
 	color: var(--gauzy-text-color-1);
@@ -619,7 +645,7 @@ $weight-normal: 400; // labels, captions, chips
 	transform: translateY(-50%);
 	width: 1rem;
 	height: 1rem;
-	font-size: 1rem;
+	font-size: 0.75rem;
 	color: var(--gauzy-text-color-2);
 	opacity: 0;
 	transition: opacity 0.12s ease-in-out;
@@ -669,7 +695,7 @@ $weight-normal: 400; // labels, captions, chips
 
 	.state-title {
 		margin: 0;
-		font-size: nb-theme(text-subtitle-2-font-size);
+		font-size: 0.75rem;
 		font-weight: $weight-medium;
 		color: var(--gauzy-text-color-1);
 	}
