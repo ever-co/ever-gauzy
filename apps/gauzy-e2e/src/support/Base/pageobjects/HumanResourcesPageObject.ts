@@ -6,17 +6,32 @@ export const HumanResourcesPage = {
 	// The employee name inside a row is rendered by ngx-avatar as `a.link-text`.
 	employeeRowNameCss: '.table-scrollable ngx-avatar a.link-text',
 	// The selected employee's name is read from the PAGE-HEADER employee selector label, not the HR
-	// card's `.employee-name` span. Reason: clicking an accounting row calls accounting.selectEmployee()
+	// card's `.identity-name` span. Reason: clicking an accounting row calls accounting.selectEmployee()
 	// which writes store.selectedEmployee WITHOUT `fullName`; the HR card binds `selectedEmployee.fullName`
 	// (`human-resources.component.html`) so that span renders EMPTY via this path. The header
 	// ga-employee-selector (`ng-select.employee` -> `ng-label-tmp`) instead renders the name from its own
 	// employee list via getShortenedName(firstName,lastName), so it correctly shows e.g. "Default Employee".
 	employeeNameCss: 'ng-select.employee .selector-template span',
-	// HR dashboard cards are ga-info-block components; the title lives in `.info-block .info-text`
-	// (the old `.statistic-component .title` was the accounting aggregate cards, not these per-employee ones).
-	infoTextCss: '.info-block .info-text',
-	// The clickable card element carrying the (click)="handleClick()" handler that opens the popup.
-	infoBlockCss: '.info-block',
+	// The HR dashboard no longer renders ga-info-block. Its figures now live in two kinds of element:
+	//   * `.kpi`      — the four headline tiles (Total Income, Total Expenses, Profit, Total Bonus)
+	//   * `.stat-row` — the component rows in the Breakdown panel (Income, Direct Income,
+	//                   Total Expense without salary, Salary, and the bonus components)
+	// Titles are in the label span of each, never mixed with the `.kpi-meta` / `.stat-row-meta`
+	// formula text — so a text filter here matches a heading and not the formula that quotes it.
+	infoTextCss: '.kpi-label, .stat-row-label',
+	// The clickable elements carrying the (click) handler that opens a history popup. Both are real
+	// <button>s now (the old .info-block was a click handler on a div).
+	//
+	// `clickCardByHeaderText` filters these by text and takes `.first()`, and Playwright's `hasText`
+	// is a CASE-INSENSITIVE SUBSTRING match — so it matters that a card's only rendered text is its
+	// own heading and its figure. The arithmetic ("Total Income = Income X + Direct Income Y", which
+	// quotes OTHER cards' headings) sits on each card's `nbTooltip`, i.e. in an attribute, and
+	// Playwright does not see attribute text. Each of the four queried headings therefore matches
+	// exactly one card. Keep it that way: printing a formula back into a card's body would make
+	// "Total Income" match the Profit card too, and the test would start depending on DOM order.
+	// The Bonus tile is deliberately excluded: it is `.kpi--static` (a div) because there is no BONUS
+	// history type to open.
+	infoBlockCss: '.kpi:not(.kpi--static), .stat-row:not(.is-static)',
 	// Placeholder lost its "Select " prefix along with every other combobox placeholder.
 	chartDropdownCss: '[placeholder="Chart"]',
 	// nb-select options render into `.option-list nb-option`.
