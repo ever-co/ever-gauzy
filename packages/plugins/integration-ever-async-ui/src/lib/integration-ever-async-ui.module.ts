@@ -65,10 +65,23 @@ export class IntegrationEverAsyncUiModule implements IOnPluginUiBootstrap, IOnPl
 	private _applyDeclarativeRegistrations(): void {
 		if (this._hasAppliedRegistrations || !this._pluginDefinition) return;
 
-		applyDeclarativeRegistrations(this._pluginDefinition, {
-			navBuilder: this._navMenuBuilderService,
-			pageRouteRegistry: this._pageRouteRegistryService
-		});
+		// Page routes live for the registry's lifetime, including across dynamic
+		// module reloads. Reuse this plugin's identical route; other collisions
+		// still reach the registry's normal duplicate-registration error.
+		const routes = this._pluginDefinition.routes?.filter(
+			(route) =>
+				route.location !== 'integrations-sections' ||
+				!this._pageRouteRegistryService
+					.getPageLocationRoutes('integrations-sections')
+					.some((existing) => existing.path === route.path && existing.loadChildren === route.loadChildren)
+		);
+		applyDeclarativeRegistrations(
+			{ ...this._pluginDefinition, routes },
+			{
+				navBuilder: this._navMenuBuilderService,
+				pageRouteRegistry: this._pageRouteRegistryService
+			}
+		);
 
 		this._hasAppliedRegistrations = true;
 	}

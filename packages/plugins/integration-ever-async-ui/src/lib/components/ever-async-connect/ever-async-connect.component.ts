@@ -6,7 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, distinctUntilChanged, forkJoin, of, switchMap, tap, throwError } from 'rxjs';
 import { ID, IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { API_PREFIX } from '@gauzy/ui-core/common';
+import { environment } from '@gauzy/ui-config';
 import { ErrorHandlingService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
@@ -26,6 +26,7 @@ import {
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EverAsyncConnectComponent extends TranslationBaseComponent implements OnInit {
+	private organizationEpoch = 0;
 	private readonly store = inject(Store);
 	private readonly service = inject(EverAsyncService);
 	private readonly location = inject(Location);
@@ -74,12 +75,14 @@ export class EverAsyncConnectComponent extends TranslationBaseComponent implemen
 			.pipe(
 				distinctUntilChanged((a, b) => a?.id === b?.id),
 				tap((org) => {
+					this.organizationEpoch++;
 					this.organization.set(org ?? null);
 					this.settings.set(null);
 					this.credentials.set(null);
 					this.options.set({ employees: [], projects: [] });
 					this.ready.set(false);
 					this.loading.set(false);
+					this.verifying.set(false);
 					this.connectionOk.set(null);
 					this.showSecret.set(false);
 					this.form.reset({ serverUrl: 'https://api-async.ever.co', projectIds: [], isEnabled: true });
@@ -155,6 +158,7 @@ export class EverAsyncConnectComponent extends TranslationBaseComponent implemen
 	}
 
 	testConnection() {
+		const epoch = this.organizationEpoch;
 		const serverUrl = this.form.controls.serverUrl.value.trim();
 		if (this.verifying() || this.form.controls.serverUrl.invalid) {
 			this.form.controls.serverUrl.markAsTouched();
@@ -167,11 +171,14 @@ export class EverAsyncConnectComponent extends TranslationBaseComponent implemen
 			.pipe(untilDestroyed(this))
 			.subscribe({
 				next: (result) => {
+					if (this.organizationEpoch !== epoch) return;
 					this.verifying.set(false);
 					if (this.form.controls.serverUrl.value.trim() === serverUrl) this.connectionOk.set(result.ok);
 				},
 				error: (error) => {
+					if (this.organizationEpoch !== epoch) return;
 					this.verifying.set(false);
+					if (this.form.controls.serverUrl.value.trim() !== serverUrl) return;
 					this.connectionOk.set(false);
 					this.errors.handleError(error);
 				}
@@ -180,6 +187,7 @@ export class EverAsyncConnectComponent extends TranslationBaseComponent implemen
 
 	connect() {
 		const organizationId = this.organization()?.id;
+		const epoch = this.organizationEpoch;
 		if (!organizationId || !this.ready() || this.loading() || !this.canSave) return;
 		if (this.form.invalid) {
 			this.form.markAllAsTouched();
@@ -194,12 +202,12 @@ export class EverAsyncConnectComponent extends TranslationBaseComponent implemen
 				.pipe(untilDestroyed(this))
 				.subscribe({
 					next: () => {
-						if (this.organization()?.id !== organizationId) return;
+						if (this.organizationEpoch !== epoch) return;
 						this.loading.set(false);
 						this.settings.update((value) => (value ? { ...value, ...dto } : value));
 						this.saved();
 					},
-					error: (error) => this.failed(error, organizationId)
+					error: (error) => this.failed(error, epoch)
 				});
 		} else {
 			this.service
@@ -207,7 +215,7 @@ export class EverAsyncConnectComponent extends TranslationBaseComponent implemen
 				.pipe(untilDestroyed(this))
 				.subscribe({
 					next: (result) => {
-						if (this.organization()?.id !== organizationId) return;
+						if (this.organizationEpoch !== epoch) return;
 						this.loading.set(false);
 						this.credentials.set(result);
 						this.settings.set({
@@ -219,13 +227,14 @@ export class EverAsyncConnectComponent extends TranslationBaseComponent implemen
 						});
 						this.saved();
 					},
-					error: (error) => this.failed(error, organizationId)
+					error: (error) => this.failed(error, epoch)
 				});
 		}
 	}
 
 	rotateCredentials() {
 		const organizationId = this.organization()?.id;
+		const epoch = this.organizationEpoch;
 		if (!organizationId || !this.canRotate || this.loading()) return;
 		this.loading.set(true);
 		this.credentials.set(null);
@@ -235,25 +244,29 @@ export class EverAsyncConnectComponent extends TranslationBaseComponent implemen
 			.pipe(untilDestroyed(this))
 			.subscribe({
 				next: (result) => {
-					if (this.organization()?.id !== organizationId) return;
+					if (this.organizationEpoch !== epoch) return;
 					this.loading.set(false);
 					this.credentials.set(result);
 				},
-				error: (error) => this.failed(error, organizationId)
+				error: (error) => this.failed(error, epoch)
 			});
 	}
 
 	private saved() {
 		this.toastr.success(this.getTranslation('INTEGRATIONS.EVER_ASYNC_PAGE.SAVED'));
 	}
-	private failed(error: HttpErrorResponse, organizationId: ID) {
-		if (this.organization()?.id !== organizationId) return;
+	private failed(error: HttpErrorResponse, epoch: number) {
+		if (this.organizationEpoch !== epoch) return;
 		this.loading.set(false);
 		this.errors.handleError(error);
 	}
 
 	get gauzyApiUrl(): string {
-		return new URL(API_PREFIX, window.location.origin).toString().replace(/\/api\/?$/, '');
+		// Match the API interceptor's configured base. The Async connector adds
+		// /api itself; this value is the deployment base, not an endpoint URL.
+		return new URL(environment.API_BASE_URL || window.location.origin, window.location.origin)
+			.toString()
+			.replace(/\/+$/, '');
 	}
 
 	get connectorConfig(): string {
