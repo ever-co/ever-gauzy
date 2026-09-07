@@ -1,0 +1,247 @@
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex align-items-center">
+		<button
+			nbButton
+			status="basic"
+			type="button"
+			size="small"
+			(click)="goBack()"
+			[attr.aria-label]="'BUTTONS.BACK' | translate"
+		>
+			<nb-icon icon="arrow-back-outline"></nb-icon>
+		</button>
+		<h5 class="ml-4">{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.TITLE' | translate }}</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<p class="hint">{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.SETUP_INFO' | translate }}</p>
+		@if (!ready()) {
+			<p role="status">{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.SELECT_ORGANIZATION' | translate }}</p>
+		}
+		@if (ready()) {
+			<form [formGroup]="form" (ngSubmit)="connect()">
+				<div class="form-group">
+					<label class="label" for="ever-async-url">{{
+						'INTEGRATIONS.EVER_ASYNC_PAGE.SERVER_URL' | translate
+					}}</label>
+					<input
+						nbInput
+						fullWidth
+						id="ever-async-url"
+						type="url"
+						formControlName="serverUrl"
+						required
+						aria-describedby="ever-async-url-hint"
+					/>
+					<p id="ever-async-url-hint" class="hint">
+						{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.URL_HINT' | translate }}
+					</p>
+					@if (form.controls.serverUrl.invalid && form.controls.serverUrl.touched) {
+						<p role="alert" class="text-danger">
+							{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.URL_INVALID' | translate }}
+						</p>
+					}
+					<button
+						nbButton
+						type="button"
+						size="small"
+						[disabled]="verifying() || form.controls.serverUrl.invalid"
+						(click)="testConnection()"
+					>
+						{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.TEST_CONNECTION' | translate }}
+					</button>
+					@if (connectionOk() === true) {
+						<p role="status">{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.CONNECTION_OK' | translate }}</p>
+					}
+					@if (connectionOk() === false) {
+						<p role="alert" class="text-danger">
+							{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.CONNECTION_FAILED' | translate }}
+						</p>
+					}
+				</div>
+				<fieldset>
+					<legend>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.PROJECTS' | translate }}</legend>
+					<p class="hint">{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.PROJECTS_HINT' | translate }}</p>
+					@for (project of options().projects; track project.id) {
+						<label class="project-option"
+							><input
+								type="checkbox"
+								[checked]="form.controls.projectIds.value.includes(project.id)"
+								[disabled]="!canSave || loading()"
+								(change)="toggleProject(project.id)"
+							/>
+							{{ project.name }}</label
+						>
+					} @empty {
+						<p>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.NO_PROJECTS' | translate }}</p>
+					}
+				</fieldset>
+				<fieldset formArrayName="userMappings">
+					<legend>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.MAPPINGS' | translate }}</legend>
+					<p class="hint">{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.MAPPINGS_HINT' | translate }}</p>
+					@for (mapping of form.controls.userMappings.controls; track mapping; let i = $index) {
+						<div class="mapping-row" [formGroupName]="i">
+							<div>
+								<label class="label" [for]="'chat-platform-' + i">{{
+									'INTEGRATIONS.EVER_ASYNC_PAGE.CHAT_PLATFORM' | translate
+								}}</label
+								><select [id]="'chat-platform-' + i" formControlName="channel">
+									<option value="slack">Slack</option>
+									<option value="discord">Discord</option>
+								</select>
+							</div>
+							<div>
+								<label class="label" [for]="'chat-workspace-' + i">{{
+									'INTEGRATIONS.EVER_ASYNC_PAGE.CHAT_WORKSPACE' | translate
+								}}</label
+								><input
+									nbInput
+									fullWidth
+									[id]="'chat-workspace-' + i"
+									formControlName="workspace"
+									required
+									maxlength="200"
+								/>
+							</div>
+							<div>
+								<label class="label" [for]="'chat-user-' + i">{{
+									'INTEGRATIONS.EVER_ASYNC_PAGE.CHAT_USER' | translate
+								}}</label
+								><input
+									nbInput
+									fullWidth
+									[id]="'chat-user-' + i"
+									formControlName="chatUserId"
+									required
+									maxlength="200"
+								/>
+							</div>
+							<div>
+								<label class="label" [for]="'employee-' + i">{{
+									'INTEGRATIONS.EVER_ASYNC_PAGE.EMPLOYEE' | translate
+								}}</label
+								><select [id]="'employee-' + i" formControlName="employeeId" required>
+									<option value="">
+										{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.SELECT_EMPLOYEE' | translate }}
+									</option>
+									@for (employee of options().employees; track employee.id) {
+										<option [value]="employee.id">{{ employee.name }}</option>
+									}
+								</select>
+							</div>
+							<button
+								nbButton
+								type="button"
+								size="small"
+								status="basic"
+								[disabled]="!canSave || loading()"
+								(click)="removeMapping(i)"
+							>
+								{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.REMOVE_MAPPING' | translate }}
+							</button>
+						</div>
+					}
+					<button
+						nbButton
+						type="button"
+						size="small"
+						status="basic"
+						[disabled]="!canSave || loading()"
+						(click)="addMapping()"
+					>
+						{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.ADD_MAPPING' | translate }}
+					</button>
+				</fieldset>
+				@if (settings()) {
+					<label class="project-option"
+						><input type="checkbox" formControlName="isEnabled" />
+						{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.ENABLED' | translate }}</label
+					>
+				}
+				<div class="actions">
+					<button nbButton status="primary" type="submit" [disabled]="!canSave || form.invalid || loading()">
+						{{
+							(settings() ? 'INTEGRATIONS.EVER_ASYNC_PAGE.SAVE' : 'INTEGRATIONS.EVER_ASYNC_PAGE.CONNECT')
+								| translate
+						}}
+					</button>
+				</div>
+			</form>
+		}
+		@if (settings()) {
+			<section class="connection-config">
+				<h6>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.CONFIGURE_CONNECTOR' | translate }}</h6>
+				<p>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.CONFIGURE_HINT' | translate }}</p>
+				<dl class="pairing-details">
+					<dt>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.GAUZY_API_URL' | translate }}</dt>
+					<dd>{{ gauzyApiUrl }}</dd>
+					<dt>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.INTEGRATION_ID' | translate }}</dt>
+					<dd>{{ settings()?.integrationTenantId }}</dd>
+					<dt>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.TENANT_ID' | translate }}</dt>
+					<dd>{{ settings()?.tenantId }}</dd>
+					<dt>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.ORGANIZATION_ID' | translate }}</dt>
+					<dd>{{ settings()?.organizationId }}</dd>
+				</dl>
+				<details>
+					<summary>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.SELF_HOSTED_CONFIG' | translate }}</summary>
+					<label class="label" for="ever-async-config">{{
+						'INTEGRATIONS.EVER_ASYNC_PAGE.CONFIGURATION' | translate
+					}}</label>
+					<textarea
+						nbInput
+						fullWidth
+						readonly
+						id="ever-async-config"
+						rows="13"
+						[value]="connectorConfig"
+					></textarea>
+				</details>
+				@if (credentials(); as key) {
+					<p role="status">{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.SECRET_ONCE' | translate }}</p>
+					<label class="label" for="ever-async-key">{{
+						'INTEGRATIONS.EVER_ASYNC_PAGE.API_KEY' | translate
+					}}</label
+					><input nbInput fullWidth readonly id="ever-async-key" [value]="key.apiKey" autocomplete="off" />
+					<label class="label" for="ever-async-secret">{{
+						'INTEGRATIONS.EVER_ASYNC_PAGE.API_SECRET' | translate
+					}}</label
+					><input
+						nbInput
+						fullWidth
+						readonly
+						id="ever-async-secret"
+						[type]="showSecret() ? 'text' : 'password'"
+						[value]="key.apiSecret"
+						autocomplete="off"
+					/>
+					<button nbButton type="button" status="basic" size="small" (click)="showSecret.set(!showSecret())">
+						{{
+							(showSecret()
+								? 'INTEGRATIONS.EVER_ASYNC_PAGE.HIDE_SECRET'
+								: 'INTEGRATIONS.EVER_ASYNC_PAGE.SHOW_SECRET'
+							) | translate
+						}}
+					</button>
+				}
+				<p class="hint">{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.ROTATE_HINT' | translate }}</p>
+				<button
+					nbButton
+					type="button"
+					status="warning"
+					size="small"
+					[disabled]="!canRotate || loading()"
+					(click)="rotateCredentials()"
+				>
+					{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.ROTATE' | translate }}
+				</button>
+				<p>
+					<a
+						href="https://docs-async.ever.co/connectors/ever-gauzy/"
+						target="_blank"
+						rel="noopener noreferrer"
+						>{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.SETUP_GUIDE' | translate }}</a
+					>
+				</p>
+			</section>
+		}
+	</nb-card-body>
+</nb-card>

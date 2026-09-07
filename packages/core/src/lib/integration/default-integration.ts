@@ -119,6 +119,15 @@ export const PROJECT_MANAGE_DEFAULT_INTEGRATIONS = [
 		order: 11,
 		redirectUrl: sluggable(IntegrationEnum.PLANE),
 		provider: IntegrationEnum.PLANE
+	},
+	{
+		name: IntegrationEnum.EVER_ASYNC,
+		imgSrc: 'ever-async.svg',
+		isComingSoon: false,
+		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.PROJECT_MANAGEMENT],
+		order: 12,
+		redirectUrl: 'ever-async',
+		provider: IntegrationEnum.EVER_ASYNC
 	}
 ];
 

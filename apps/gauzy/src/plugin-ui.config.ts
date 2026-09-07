@@ -7,6 +7,7 @@ import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
 import { DocsUiPlugin } from '@gauzy/plugin-docs-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
+import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
 import { DashboardTimeTrackAngularUiPlugin } from '@gauzy/plugin-dashboard-time-track-angular-ui';
@@ -77,6 +78,7 @@ export const uiPluginConfig: PluginUiConfig = {
 		// Integration Plugins
 		IntegrationUpworkPlugin,
 		IntegrationPlanePlugin,
+		IntegrationEverAsyncPlugin,
 
 		// Job Plugins
 		JobsPlugin.init({

@@ -27,6 +27,7 @@ import { IntegrationZapierPlugin } from '@gauzy/plugin-integration-zapier';
 import { IntegrationActivepiecesPlugin } from '@gauzy/plugin-integration-activepieces';
 import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
+import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -105,6 +106,7 @@ export const plugins = [
 	IntegrationUpworkPlugin,
 	// Indicates the inclusion or intention to use the IntegrationPlanePlugin in the codebase.
 	IntegrationPlanePlugin,
+	IntegrationEverAsyncPlugin,
 	// Indicates the inclusion or intention to use the IntegrationSimPlugin in the codebase.
 	IntegrationSimPlugin,
 	// Indicates the inclusion or intention to use the IntegrationZapierPlugin in the codebase.

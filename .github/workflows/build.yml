@@ -317,6 +317,9 @@ jobs:
           PGDATABASE: migration_test
         run: yarn nx run core:test-postgres-migrations
 
+      - name: Test Ever Async integration boundary
+        run: yarn nx run plugin-integration-ever-async:test-integration
+
       - name: Build API
         run: yarn build:api:prod:ci
 

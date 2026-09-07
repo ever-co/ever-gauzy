@@ -47,6 +47,7 @@
 		"@gauzy/plugin-docs": "^0.1.0",
 		"@gauzy/plugin-integration-activepieces": "^0.1.0",
 		"@gauzy/plugin-integration-ai": "^0.1.0",
+		"@gauzy/plugin-integration-ever-async": "^0.1.0",
 		"@gauzy/plugin-integration-github": "^0.1.0",
 		"@gauzy/plugin-integration-hubstaff": "^0.1.0",
 		"@gauzy/plugin-integration-make-com": "^0.1.0",
