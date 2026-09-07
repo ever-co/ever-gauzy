@@ -1,164 +1,722 @@
 @use 'gauzy/_gauzy-cards' as *;
 
-.header {
+/*
+ * ── HR dashboard ─────────────────────────────────────────────────────────────
+ *
+ * Reads top-down as: who → the four totals → what they are made of, beside the
+ * same figures over time. The page used to be a two-column split where the left
+ * column was one undifferentiated stack of label/value rows, so the totals had
+ * no more weight than their own components and there was nothing to scan.
+ *
+ * Everything here paints with the shared gauzy-* tokens (surfaces, borders, the
+ * four action accents) rather than literal colours, so all eight registered
+ * themes and both canvases follow without a per-theme branch.
+ */
+
+// One rhythm for the whole page, so panel padding, grid gutters and row spacing
+// are not each invented separately.
+$gap-lg: 1rem;
+$gap-md: 0.75rem;
+$gap-sm: 0.5rem;
+$gap-xs: 0.25rem;
+
+// Below this the two content panels stop being readable side by side (the chart
+// canvas needs roughly half of it on its own) and stack instead.
+$panels-breakpoint: 62rem;
+
+// The KPI row drops from four across to two, then one, on its own terms — the
+// tiles have a hard minimum width, so `auto-fit` handles it without a query.
+$kpi-min-width: 13.5rem;
+
+// Height of the chart-type switcher in the Employee Statistics header. The
+// panel header's min-height is derived from it so both panels' headers match.
+$switcher-height: 1.875rem;
+
+// ── Type weight ─────────────────────────────────────────────────────────────
+// THREE steps, and only three. An earlier pass set nearly every element on the
+// page to 600 — the employee name, both panel titles, the group headings, the
+// KPI values, the breakdown figures, the contract figures — and when everything
+// is semibold nothing reads as emphasis; the page just looks heavy.
+//
+// Hierarchy is carried by size and by the muted/strong text tokens instead, and
+// weight is spent on one thing: the four headline numbers.
+$weight-strong: 600; // KPI values, and nothing else
+$weight-medium: 500; // titles, headings, secondary figures
+$weight-normal: 400; // labels, captions, chips
+
+
+:host {
+	// `unset, auto`: the dashboard page owns the single scrollbar (see
+	// `../dashboard.component.scss`), so this card must not open a second one.
+	@include nb-card_overrides(unset, auto, 0 $default-radius $default-radius $default-radius);
+
+	// Must stay AFTER `nb-card_overrides`, which emits its own `:host nb-card`
+	// with `height: 100%` at the same specificity — the later block wins.
+	nb-card {
+		height: auto;
+	}
+
+	nb-card,
+	nb-card-body {
+		background-color: var(--gauzy-card-2);
+	}
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.hr-header {
 	background-color: unset;
-	.header-container {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-md;
+}
+
+.hr-title-row {
+	display: flex;
+	align-items: center;
+	min-height: nb-theme(gauzy-page-title-row-height);
+
+	h4 {
+		margin: 0;
+	}
+}
+
+.hr-alert {
+	margin-bottom: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: $gap-xs;
+}
+
+/*
+ * Identity bar: a surface of its own rather than loose text on the header, so
+ * the employee the figures belong to is stated once and unmistakably.
+ */
+.identity-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: $gap-lg;
+	padding: $gap-md;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.identity {
+	display: flex;
+	align-items: center;
+	gap: $gap-md;
+	min-width: 0;
+}
+
+.identity-avatar {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: var(--gauzy-radius-sm);
+	overflow: hidden;
+	// The fallback's own ground; also what shows through a transparent avatar.
+	background-color: var(--gauzy-active-tint);
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.identity-initials {
+	font-size: nb-theme(text-subtitle-2-font-size);
+	font-weight: $weight-medium;
+	line-height: 1;
+	letter-spacing: 0.02em;
+	color: var(--gauzy-text-color-1);
+}
+
+.identity-text {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-xs;
+	min-width: 0;
+}
+
+.identity-name {
+	display: flex;
+	align-items: center;
+	gap: $gap-xs;
+	font-size: nb-theme(text-subtitle-font-size);
+	// Medium, not semibold: it is already the largest and darkest text in the
+	// bar, and the page title sits directly above it.
+	font-weight: $weight-medium;
+	line-height: 1.25rem;
+	color: nb-theme(text-basic-color);
+	min-width: 0;
+}
+
+/*
+ * A real `<button>`, not an icon with a click handler: it is the only way into
+ * the employee's profile from this page, and it has to be reachable by keyboard
+ * and announced as an action.
+ */
+.identity-edit {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	// Visually 1.25rem, but padded out to a comfortable hit area — the icon is
+	// well under any sane minimum on its own.
+	width: 1.5rem;
+	height: 1.5rem;
+	padding: 0;
+	border: 0;
+	border-radius: var(--gauzy-radius-sm);
+	font: inherit;
+	background: transparent;
+	color: var(--gauzy-text-color-2);
+	cursor: pointer;
+	transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+		color: var(--gauzy-text-color-1);
+	}
+}
+
+.identity-traits {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $gap-xs;
+	min-width: 0;
+}
+
+.trait-chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.0625rem 0.375rem;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-hover-tint);
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: $weight-normal;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	max-width: 12rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/*
+ * Contract figures — a definition list, because that is what they are: two
+ * term/value pairs, not a sentence and not a stat tile (they do not change with
+ * the selected period the way the KPI row does).
+ */
+.identity-facts {
+	display: flex;
+	align-items: center;
+	gap: $gap-lg;
+	margin: 0;
+	flex-wrap: wrap;
+
+	.fact {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 1rem;
-		flex-wrap: wrap;
+		flex-direction: column;
+		gap: 0.125rem;
+		// Values read as a column of money, so they align on the end regardless
+		// of how wide the label above them is.
+		align-items: flex-end;
+		text-align: end;
+	}
 
-		.employee-info,
-		.org-info {
-			display: flex;
-			align-items: center;
-			gap: 0.625rem;
-			min-width: 0;
+	dt {
+		margin: 0;
+		font-size: nb-theme(text-caption-font-size);
+		font-weight: $weight-normal;
+		line-height: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
 
-			.employee-image,
-			.org-image {
-				width: 2.25rem;
-				height: 2.25rem;
-				border-radius: var(--gauzy-radius-sm);
-				object-fit: cover;
-				margin-right: 0;
-				margin-left: 0;
-			}
+	dd {
+		margin: 0;
+		font-size: nb-theme(text-heading-6-font-size);
+		font-weight: $weight-medium;
+		line-height: 1.25rem;
+		color: var(--gauzy-text-color-1);
+		// Money lines up column-wise only with fixed-advance digits.
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+
+.hr-body {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	// The body is empty while the header selectors resolve, and `nbSpinner`
+	// overlays its host — without a floor the spinner has nothing to sit in.
+	min-height: 12rem;
+}
+
+/* ── KPI row ─────────────────────────────────────────────────────────────── */
+
+.kpi-row {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax($kpi-min-width, 1fr));
+	gap: $gap-md;
+}
+
+/*
+ * A tile is an accent chip, a two-line text stack, and a chevron.
+ *
+ * The icon and the chevron each span BOTH text rows, so the label and the value
+ * share one left edge and the tile has a single vertical rhythm. The first pass
+ * gave the (now removed) formula line its own full-width row underneath, which
+ * started it at the tile's padding while the label and value started past the
+ * icon — three different left edges inside one small box.
+ */
+.kpi {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	grid-template-areas:
+		'icon label affordance'
+		'icon value affordance';
+	align-items: center;
+	column-gap: $gap-sm;
+	row-gap: 0.125rem;
+	width: 100%;
+	padding: $gap-md;
+	border: 0;
+	border-radius: var(--gauzy-radius-sm);
+	// A `<button>` does not inherit the page font; without this the tile renders
+	// in the browser's default UI font.
+	font: inherit;
+	// A tile is a label and a number. Keeping every tile the same height stops
+	// the row from stepping when one label wraps and its neighbours do not.
+	min-height: 4.25rem;
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	text-align: start;
+	transition: box-shadow 0.12s ease-in-out, background-color 0.12s ease-in-out;
+
+	// Accent per tile, set by the `kpi--*` modifiers below. Declared here so a
+	// tile without a modifier still resolves to something sensible.
+	--kpi-accent: var(--gauzy-text-color-2);
+	--kpi-accent-tint: var(--gauzy-hover-tint);
+
+	&:not(.kpi--static) {
+		cursor: pointer;
+
+		&:hover {
+			background-color: var(--gauzy-hover-tint);
+			box-shadow: inset 0 0 0 1px var(--kpi-accent);
 		}
 
-		.employee-details,
-		.org-details {
-			display: flex;
-			flex-direction: column;
-			justify-content: center;
-			gap: 0.125rem;
-			min-width: 0;
-
-			.employee-name,
-			.org-name {
-				display: flex;
-				align-items: center;
-				gap: 0.25rem;
-				font-weight: 600;
-				font-size: nb-theme(text-subtitle-font-size);
-				line-height: 1.25rem;
-				// `.employee-details` now also styles the muted meta row, so the name has to
-				// state its own colour instead of inheriting the hint colour from it.
-				color: nb-theme(text-basic-color);
-			}
-
-			.employee-position,
-			.org-position {
-				font-size: nb-theme(text-caption-font-size);
-				line-height: 1rem;
-				color: var(--gauzy-text-color-2);
-			}
-
-			.edit-icon {
-				cursor: pointer;
-				height: 0.875rem;
-				width: 0.875rem;
-				color: var(--gauzy-text-color-2);
-			}
+		// Keyboard focus must be at least as loud as hover — this is the only
+		// affordance a keyboard user gets that the tile opens something.
+		&:focus-visible {
+			outline: 2px solid var(--kpi-accent);
+			outline-offset: 2px;
 		}
+	}
 
-		.employee-details {
-			font-size: nb-theme(gauzy-table-font-size);
-			color: var(--gauzy-text-color-2);
-		}
+	&--success {
+		--kpi-accent: var(--gauzy-action-success-text);
+		--kpi-accent-tint: var(--gauzy-action-success-tint);
+	}
 
-		.employee-salary {
-			font-size: nb-theme(text-heading-6-font-size);
-			font-weight: 600;
-			color: var(--gauzy-action-info-text);
+	&--warning {
+		--kpi-accent: var(--gauzy-action-warning-text);
+		--kpi-accent-tint: var(--gauzy-action-warning-tint);
+	}
+
+	&--info,
+	&--accent {
+		--kpi-accent: var(--gauzy-action-info-text);
+		--kpi-accent-tint: var(--gauzy-action-info-tint);
+	}
+
+	/*
+	 * A negative profit or bonus re-points the whole tile at the danger accent.
+	 * The sign in the formatted value carries the same information, so this is
+	 * emphasis rather than the only cue.
+	 */
+	&.is-negative {
+		--kpi-accent: var(--gauzy-action-danger-text);
+		--kpi-accent-tint: var(--gauzy-action-danger-tint);
+
+		.kpi-value {
+			color: var(--gauzy-action-danger-text);
 		}
 	}
 }
 
-.open {
-	cursor: pointer;
+.kpi-icon {
+	grid-area: icon;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.25rem;
+	height: 2.25rem;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--kpi-accent-tint);
+	color: var(--kpi-accent);
+
+	nb-icon {
+		width: 1.125rem;
+		height: 1.125rem;
+		font-size: 1.125rem;
+	}
 }
 
-.body {
+.kpi-label {
+	grid-area: label;
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: $weight-normal;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	// Wraps instead of truncating: these are short, meaningful headings, and a
+	// translation that needs two lines should get them (the tile's `min-height`
+	// already reserves the room).
+	overflow-wrap: anywhere;
+}
+
+.kpi-value {
+	grid-area: value;
+	font-size: nb-theme(text-heading-5-font-size);
+	// The one place on this page that spends weight.
+	font-weight: $weight-strong;
+	line-height: 1.75rem;
+	letter-spacing: -0.01em;
+	color: var(--gauzy-text-color-1);
+	font-variant-numeric: tabular-nums;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.kpi-affordance {
+	grid-area: affordance;
+	flex: 0 0 auto;
+	width: 1rem;
+	height: 1rem;
+	font-size: 1rem;
+	color: var(--gauzy-text-color-2);
+	opacity: 0;
+	transition: opacity 0.12s ease-in-out;
+
+	.kpi:hover &,
+	.kpi:focus-visible & {
+		opacity: 1;
+	}
+}
+
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+
+.hr-panels {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 1rem;
+	// The chart takes the wider share: the breakdown beside it is now a list of
+	// single-line rows that needs no more than its labels, while the chart is the
+	// part of this page that actually rewards extra width.
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+	gap: $gap-md;
 	align-items: start;
 
-	.half-content {
-		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		min-width: 0;
-		ga-info-block {
-			border-radius: var(--border-radius);
-		}
-	}
-	.bonus {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		width: 100%;
-		margin-top: 0.5rem;
-
-		.bonus-value {
-			margin-right: 0;
-			display: flex;
-			flex-direction: column;
-			align-items: flex-end;
-			gap: 0.25rem;
-
-			:first-child {
-				text-align: right;
-				font-size: nb-theme(text-caption-font-size);
-				line-height: 1rem;
-				color: var(--gauzy-text-color-2);
-				margin-bottom: 0;
-				margin-right: 0;
-			}
-
-			:last-child {
-				font-size: nb-theme(text-heading-4-font-size);
-				font-weight: 500;
-				line-height: 2rem;
-				color: var(--gauzy-action-info-text);
-			}
-
-			.negative-bonus-color {
-				color: var(--gauzy-action-danger-text);
-			}
-		}
-
-		.bonus-disclaimer {
-			margin-top: 0.5rem;
-			margin-right: 0;
-			font-size: nb-theme(text-caption-font-size);
-			line-height: 1rem;
-			color: var(--gauzy-text-color-2);
-			max-width: 16rem;
-			text-align: right;
-		}
+	@media screen and (max-width: $panels-breakpoint) {
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
-:host {
-  // `unset, auto`: the dashboard page owns the single scrollbar now (see
-  // `../dashboard.component.scss`), so this card must not open a second one.
-  // The viewport-derived height it used to be pinned to was a hand-tuned guess
-  // that the density pass and the new chips row both invalidated.
-	@include nb-card_overrides(
-    unset,
-    auto,
-    0 $default-radius $default-radius $default-radius
-  );
-  // Must stay AFTER `nb-card_overrides`, which emits its own `:host nb-card`
-  // with `height: 100%` at the same specificity — the later block wins.
-  nb-card {
-    height: auto;
-  }
 
-  nb-card,
-  nb-card-body{
-	background-color: var(--gauzy-card-2);
-  }
+.panel {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	overflow: hidden;
+}
+
+/*
+ * Title on the left, optional control on the right.
+ *
+ * `min-height` is derived, not guessed: it is the switcher's height plus the
+ * header's own padding ($switcher-height + 2 × $gap-md). Both panels share it,
+ * so the Breakdown header — which holds only a title — lines up exactly with
+ * the Employee Statistics header that holds a control, and the two panel bodies
+ * start on the same line.
+ */
+.panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $gap-sm;
+	padding: 0 $gap-md;
+	min-height: $switcher-height + 2 * $gap-md;
+	border-bottom: 1px solid var(--gauzy-border-default-color);
+}
+
+/*
+ * The chart-type switcher, lifted out of `ga-employee-charts` and into this
+ * header. Height is pinned rather than inherited so the derived
+ * `.panel-header` min-height above stays true — the global
+ * `nb-select-overrides` mixin sets only a `min-height` floor, which a longer
+ * option label could push past.
+ */
+.chart-switcher {
+	flex: 0 0 auto;
+	min-width: 8.5rem;
+
+	::ng-deep .select-button {
+		min-height: $switcher-height;
+		height: $switcher-height;
+		padding-block: 0;
+		font-size: nb-theme(text-button-medium-font-size);
+		font-weight: $weight-normal;
+	}
+}
+
+.panel-title {
+	margin: 0;
+	font-size: nb-theme(text-subtitle-2-font-size);
+	font-weight: $weight-medium;
+	line-height: 1rem;
+	letter-spacing: -0.009em;
+	color: var(--gauzy-text-color-1);
+}
+
+.panel-body {
+	padding: $gap-md;
+	min-width: 0;
+}
+
+/*
+ * The chart's height is set HERE, by the panel, not by the canvas.
+ *
+ * Chart.js runs with `maintainAspectRatio: false` so it fills whatever box it
+ * is given — which means that box needs a definite height, and the charts used
+ * to provide one themselves (a hard-coded 20rem on the canvas that took no
+ * account of the legend above the plot or the tick band below it). The panel
+ * owns it now, so the plot, its legend and its axis labels all live inside one
+ * measured area and the panel cannot be resized by switching chart type.
+ */
+.panel--chart .panel-body {
+	display: flex;
+	flex-direction: column;
+	height: 22rem;
+	// A flex child will not shrink below its content without this.
+	min-height: 0;
+}
+
+/* Section label inside the breakdown — "Income", "Expenses", "Bonus". */
+.group-title {
+	margin: 0 0 $gap-sm;
+	font-size: nb-theme(text-caption-font-size);
+	// The uppercasing, the tracking and the muted tone already separate this from
+	// the rows under it; it does not also need to be bold.
+	font-weight: $weight-medium;
+	line-height: 1rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--gauzy-text-color-2);
+
+	// Every group after the first opens a new block, so it needs air above it
+	// that the first one — already sitting against the panel padding — does not.
+	&:not(:first-child) {
+		margin-top: $gap-lg;
+	}
+}
+
+/*
+ * One line of the breakdown: label on the left, figure on the right.
+ *
+ * Rendered as a `<button>` when it drills into a records dialog and a
+ * `<div class="is-static">` when it does not, so the pointer, the focus ring and
+ * the chevron all agree about whether it opens something — the old info-block
+ * was a click handler on a div either way.
+ *
+ * The chevron is taken OUT OF FLOW and the row reserves its width as padding, so
+ * every figure lands on the same right edge whether or not its row has one. In
+ * flow, a static row's value would sit a chevron's width further right than its
+ * clickable neighbours and the column would not read as a column.
+ */
+.stat-row {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: $gap-sm;
+	width: 100%;
+	padding: 0.375rem $gap-sm;
+	padding-inline-end: 1.75rem;
+	border: 0;
+	border-radius: var(--gauzy-radius-sm);
+	font: inherit;
+	background: transparent;
+	text-align: start;
+	color: var(--gauzy-text-color-1);
+	transition: background-color 0.12s ease-in-out;
+
+
+	&:not(.is-static) {
+		cursor: pointer;
+
+		&:hover {
+			background-color: var(--gauzy-hover-tint);
+
+			.stat-row-chevron {
+				opacity: 1;
+			}
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--gauzy-action-info-text);
+			outline-offset: -2px;
+		}
+	}
+
+	&.is-negative .stat-row-value {
+		color: var(--gauzy-action-danger-text);
+	}
+}
+
+.stat-row-label {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: nb-theme(gauzy-table-font-size);
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+	// One line each: a wrapped label would break the value's alignment with the
+	// rows above and below it.
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.stat-row-value {
+	flex: 0 0 auto;
+	font-size: nb-theme(text-paragraph-font-size);
+	font-weight: $weight-medium;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.stat-row-chevron {
+	position: absolute;
+	inset-inline-end: $gap-sm;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 1rem;
+	height: 1rem;
+	font-size: 1rem;
+	color: var(--gauzy-text-color-2);
+	opacity: 0;
+	transition: opacity 0.12s ease-in-out;
+}
+
+/* The negative-bonus caveat that used to float, unattached, under the column. */
+.panel-note {
+	display: flex;
+	align-items: flex-start;
+	gap: $gap-sm;
+	margin: $gap-md 0 0;
+	padding: $gap-sm;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-action-warning-tint);
+	font-size: nb-theme(text-caption-font-size);
+	line-height: 1rem;
+	color: var(--gauzy-text-color-1);
+
+	nb-icon {
+		flex: 0 0 auto;
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+		margin-top: 0.0625rem;
+		color: var(--gauzy-action-warning-text);
+	}
+}
+
+/* ── Empty states ────────────────────────────────────────────────────────── */
+
+.hr-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: $gap-xs;
+	padding: 2.5rem $gap-lg;
+	text-align: center;
+
+	nb-icon {
+		width: 1.5rem;
+		height: 1.5rem;
+		font-size: 1.5rem;
+		margin-bottom: $gap-xs;
+		color: var(--gauzy-text-color-2);
+	}
+
+	.state-title {
+		margin: 0;
+		font-size: nb-theme(text-subtitle-2-font-size);
+		font-weight: $weight-medium;
+		color: var(--gauzy-text-color-1);
+	}
+
+	.state-hint {
+		margin: 0;
+		font-size: nb-theme(text-caption-font-size);
+		line-height: 1rem;
+		color: var(--gauzy-text-color-2);
+		max-width: 22rem;
+	}
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────────── */
+
+/*
+ * Everything above animates colour or opacity only, but a viewer who has asked
+ * for less motion should still get none of it.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.kpi,
+	.stat-row,
+	.identity-edit,
+	.kpi-affordance,
+	.stat-row-chevron {
+		transition: none;
+	}
+}
+
+/* ── Narrow viewports ────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 36rem) {
+	.identity-bar {
+		// Name and figures each take the full width instead of being squeezed
+		// onto one line and truncated to nothing.
+		align-items: flex-start;
+		flex-direction: column;
+		gap: $gap-md;
+	}
+
+	.identity-facts {
+		width: 100%;
+		justify-content: space-between;
+
+		.fact {
+			align-items: flex-start;
+			text-align: start;
+		}
+	}
 }
