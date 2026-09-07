@@ -1,0 +1,119 @@
+name: Cache Janitor
+
+# The repository's Actions cache budget is 10 GB. `build.yml` runs on every pull_request with five
+# `actions/setup-node@v4 … cache: yarn` jobs, and setup-node saves its ~4.66 GB yarn cache PER REF —
+# so `refs/heads/develop`, `refs/heads/stage` and every open PR's `refs/pull/N/merge` each hold their
+# own copy of the SAME content, keyed identically. Two of those fill the budget on their own.
+#
+# The damage is not theoretical. On 2026-08-15 the Playwright suite's dependency cache was gone
+# within the hour it was written, so run 31889575135 paid a cold `yarn bootstrap` in the deps job
+# (3 h 46 m) and its shards started doing the same again — the exact cost the deps/build/e2e job
+# split exists to pay only once.
+#
+# Cache entries are, by definition, reconstructible: the worst case for deleting one is that the next
+# run that wants it re-downloads. That makes pruning duplicates strictly better than letting GitHub's
+# LRU choose a victim at random, which is what happens today.
+#
+# RULE: for each cache key, keep exactly ONE copy — the one on the default branch if it exists,
+# otherwise the most recently used. Delete the rest. Branch-scoped restores are allowed to read the
+# default branch's caches, so the kept copy still serves every PR.
+
+on:
+  schedule:
+    # Every 6 hours. Frequent enough that duplicates never accumulate for long, rare enough that it
+    # never races a build that is mid-save.
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'List what would be deleted without deleting anything'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: write # required to delete cache entries
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    name: Prune duplicate caches
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Prune
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DEFAULT_BRANCH_REF: refs/heads/${{ github.event.repository.default_branch }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          echo "Default branch ref: $DEFAULT_BRANCH_REF"
+          before=$(gh api "repos/$REPO/actions/cache/usage" \
+            --jq '(.active_caches_size_in_bytes/1073741824*100|floor)/100')
+          echo "Cache usage before: ${before} GB"
+
+          # `gh cache list` pages at 100; --limit 100 is the documented maximum per call.
+          gh cache list --repo "$REPO" --limit 100 \
+            --json id,key,ref,sizeInBytes,lastAccessedAt > caches.json
+          echo "Entries: $(jq length caches.json)"
+
+          # For each key: keep the default-branch copy, else the most recently used. Emit the rest.
+          jq -r --arg def "$DEFAULT_BRANCH_REF" '
+            group_by(.key)
+            | map(
+                (map(select(.ref == $def)) | first) as $keep
+                | (sort_by(.lastAccessedAt) | reverse | first) as $newest
+                | ($keep // $newest) as $winner
+                | map(select(.id != $winner.id))
+              )
+            | flatten
+            | .[] | "\(.id)\t\(.ref)\t\((.sizeInBytes/1073741824*100|floor)/100)GB\t\(.key)"
+          ' caches.json > victims.tsv
+
+          count=$(wc -l < victims.tsv | tr -d ' ')
+          if [ "$count" -eq 0 ]; then
+            echo "No duplicate caches to prune."
+            exit 0
+          fi
+
+          echo "Duplicates to remove ($count):"
+          cat victims.tsv
+
+          if [ "${DRY_RUN:-false}" = "true" ]; then
+            echo "::notice::dry run — nothing deleted"
+            exit 0
+          fi
+
+          # A cache can vanish between the list and the delete (another janitor run, GitHub's own
+          # LRU, a branch deletion). That is the desired end state, so a failed delete must not fail
+          # the job.
+          while IFS=$'\t' read -r id ref size key; do
+            [ -z "${id:-}" ] && continue
+            if gh api --method DELETE "repos/$REPO/actions/caches/$id" >/dev/null 2>&1; then
+              echo "deleted $size $ref $key"
+            else
+              echo "::warning::could not delete cache $id ($ref $key) — already gone?"
+            fi
+          done < victims.tsv
+
+          after=$(gh api "repos/$REPO/actions/cache/usage" \
+            --jq '(.active_caches_size_in_bytes/1073741824*100|floor)/100')
+          echo "Cache usage after: ${after} GB"
+          {
+            echo "### Cache janitor"
+            echo ""
+            echo "| | GB |"
+            echo "|---|---|"
+            echo "| before | ${before} |"
+            echo "| after | ${after} |"
+            echo ""
+            echo "Removed **${count}** duplicate entries (kept one copy per key)."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,33 +1,40 @@
 <div class="theme-card">
-	<div class="theme-container">
-		{{ 'SETTINGS_MENU.THEMES' | translate }}
-		<nb-select
-			status="basic"
-			size="small"
-			outline
-			placeholder="{{ (selected | async)?.name | translate }}"
-			(click)="isOpen = !isOpen"
-			[class.open]="isOpen"
-		></nb-select>
-	</div>
-	@if (isOpen) {
-	<div class="themes">
-		@for (theme of themes; track theme) {
-		<div
-			[class.card-container]="(selected | async)?.value === theme.value"
-			[class.selected]="(selected | async)?.value === theme.value"
-			[class.card-container]="!((selected | async)?.value === theme.value)"
-			(click)="onSelectedTheme(theme.value)"
-		>
-			<span>
-				{{ theme.name | translate }}
-				<div class="check"></div
-			></span>
-			<div class="image-container">
-				<img [src]="theme.imageUrl" />
-			</div>
-		</div>
+	<button
+		type="button"
+		class="theme-trigger"
+		[class.open]="isOpen"
+		aria-haspopup="true"
+		[attr.aria-expanded]="isOpen"
+		[nbPopover]="themeList"
+		nbPopoverTrigger="click"
+		nbPopoverPlacement="bottom-end"
+		[nbPopoverOffset]="4"
+		nbPopoverClass="gz-theme-popover"
+	>
+		<span class="theme-trigger-label">{{ 'SETTINGS_MENU.THEMES' | translate }}</span>
+		<span class="theme-trigger-value">
+			<span class="theme-trigger-name">{{ (selected | async)?.name | translate }}</span>
+			<nb-icon class="theme-trigger-chevron" icon="chevron-down-outline"></nb-icon>
+		</span>
+	</button>
+</div>
+
+<ng-template #themeList>
+	<div class="gz-theme-list" role="group" [attr.aria-label]="'SETTINGS_MENU.THEMES' | translate">
+		@for (theme of themes; track theme.value) {
+			<button
+				type="button"
+				class="theme-option"
+				[class.selected]="(selected | async)?.value === theme.value"
+				[attr.aria-pressed]="(selected | async)?.value === theme.value"
+				(click)="selectTheme(theme.value)"
+			>
+				<span class="theme-thumb">
+					<img [src]="theme.imageUrl" [alt]="" />
+				</span>
+				<span class="theme-name">{{ theme.name | translate }}</span>
+				<nb-icon class="theme-check" icon="checkmark-outline"></nb-icon>
+			</button>
 		}
 	</div>
-	}
-</div>
+</ng-template>

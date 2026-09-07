@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { Knex } from 'knex';
+import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as moment from 'moment';
-import * as chalk from 'chalk';
 import {
 	PermissionsEnum,
 	IGetActivitiesStatistics,
@@ -20,6 +20,9 @@ import {
 	IManualTimesStatistics,
 	TimeLogType,
 	ITimeLog,
+	ID,
+	IGetProfileActivity,
+	IProfileActivity,
 	IWeeklyStatisticsActivities,
 	ITodayStatisticsActivities
 } from '@gauzy/contracts';
@@ -40,7 +43,7 @@ import {
 } from './statistic.helper';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
-import { TimeLog } from './../../core/entities/internal';
+import { TimeLog, TimeSlot } from './../../core/entities/internal';
 import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils';
 import { UserService } from '../../user/user.service';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
@@ -49,13 +52,64 @@ import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activ
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
+import { debugInDevelopment } from '../../logger';
+import { moment as timezoneMoment } from '../../core/moment-extend';
+import {
+	buildProfileActivityDayBuckets,
+	buildProfileActivityResponse,
+	ProfileActivityPeriod,
+	ProfileActivityRawRow,
+	resolveProfileActivityPeriod
+} from './profile-activity.helper';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
 
+type ProfileActivityDatabaseType =
+	| DatabaseTypeEnum.postgres
+	| DatabaseTypeEnum.mysql
+	| DatabaseTypeEnum.sqlite
+	| DatabaseTypeEnum.betterSqlite3;
+
+type ProfileActivityRowsQuery =
+	| { ormType: MultiORMEnum.TypeORM; builder: SelectQueryBuilder<TimeLog> }
+	| { ormType: MultiORMEnum.MikroORM; builder: Knex.QueryBuilder };
+
+/** An activity query grouped by time_log.id, ready to be summed by the database. */
+type StatisticsActivityRowsQuery =
+	| { ormType: MultiORMEnum.TypeORM; builder: SelectQueryBuilder<TimeSlot> }
+	| { ormType: MultiORMEnum.MikroORM; knex: Knex; builder: Knex.QueryBuilder };
+
+const PROFILE_ACTIVITY_DATABASE_TYPES: ReadonlySet<DatabaseTypeEnum> = new Set([
+	DatabaseTypeEnum.postgres,
+	DatabaseTypeEnum.mysql,
+	DatabaseTypeEnum.sqlite,
+	DatabaseTypeEnum.betterSqlite3
+]);
+// Matches TimeLogService.getFilterTimeLogQuery: activityLevel percentages are stored as
+// 10-minute slot interaction counts, so the legacy 0..100 request becomes inclusive 0..600.
+const PROFILE_ACTIVITY_LEVEL_START = 0;
+const PROFILE_ACTIVITY_LEVEL_END = 100;
+const PROFILE_ACTIVITY_SLOT_ACTIVITY_MULTIPLIER = 6;
+
+function isProfileActivityDatabaseType(value: unknown): value is ProfileActivityDatabaseType {
+	return PROFILE_ACTIVITY_DATABASE_TYPES.has(value as DatabaseTypeEnum);
+}
+
+function toUtcNaiveDateTime(value: Date): string {
+	return value.toISOString().replace('T', ' ').replace('Z', '');
+}
+
+function toMikroOrmProfileDateTime(value: Date, dbType: ProfileActivityDatabaseType): string | number {
+	return dbType === DatabaseTypeEnum.sqlite || dbType === DatabaseTypeEnum.betterSqlite3
+		? value.getTime()
+		: toUtcNaiveDateTime(value);
+}
+
 @Injectable()
 export class StatisticService {
 	private readonly logger = new Logger(StatisticService.name);
+	private readonly profileActivityPostgresTimeZoneSupport = new Map<string, Promise<boolean>>();
 	protected ormType: MultiORM = ormType;
 
 	constructor(
@@ -68,6 +122,424 @@ export class StatisticService {
 		private readonly configService: ConfigService,
 		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {}
+
+	/**
+	 * Verifies the profile activity target and request-scoped viewing policy before a time-log read.
+	 *
+	 * @param request - Employee, organization, and optional team access scope
+	 * @returns The tenant ID derived from the current request context
+	 * @throws ForbiddenException when the target or policy is not accessible
+	 */
+	protected async assertProfileActivityAccess(
+		request: Pick<IGetProfileActivity, 'employeeId' | 'organizationId' | 'organizationTeamId'>
+	): Promise<ID> {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!tenantId) {
+			throw new ForbiddenException();
+		}
+
+		const targetExists = await this.typeOrmEmployeeRepository.existsBy({
+			id: request.employeeId,
+			tenantId,
+			organizationId: request.organizationId,
+			isActive: true,
+			isArchived: false,
+			deletedAt: IsNull()
+		});
+
+		if (!targetExists) {
+			throw new ForbiddenException();
+		}
+
+		const canViewProfile = await this._managedEmployeeService.canViewEmployeeProfile(
+			request.employeeId,
+			request.organizationId,
+			request.organizationTeamId
+		);
+
+		if (!canViewProfile) {
+			throw new ForbiddenException();
+		}
+
+		return tenantId;
+	}
+
+	/**
+	 * Returns the lightweight activity summary for one authorized employee.
+	 */
+	async getProfileActivity(request: IGetProfileActivity): Promise<IProfileActivity> {
+		const tenantId = await this.assertProfileActivityAccess(request);
+		const period = resolveProfileActivityPeriod(request);
+		const rows = await this.getProfileActivityRows(request, tenantId, period, this.getProfileActivityNow());
+
+		return buildProfileActivityResponse(request, period, rows);
+	}
+
+	/**
+	 * Returns the single instant used to calculate all running time logs in one profile request.
+	 */
+	protected getProfileActivityNow(): Date {
+		return new Date();
+	}
+
+	/**
+	 * Executes the single raw time-log read. The builder boundary remains available to focused
+	 * query-plan tests without exposing it as an application API.
+	 */
+	protected async getProfileActivityRows(
+		request: IGetProfileActivity,
+		tenantId: ID,
+		period: ProfileActivityPeriod,
+		now: Date
+	): Promise<ProfileActivityRawRow[]> {
+		if (period.endDate.getTime() <= period.startDate.getTime()) {
+			return [];
+		}
+
+		const dbType = this.configService.dbConnectionOptions.type;
+		const canonicalTimeZone = timezoneMoment.tz.zone(request.timeZone)?.name;
+		const usePostgresAggregate =
+			dbType === DatabaseTypeEnum.postgres &&
+			canonicalTimeZone !== undefined &&
+			(await this.supportsPostgresTimeZone(canonicalTimeZone));
+		const query = this.buildProfileActivityRowsQuery(request, tenantId, period, usePostgresAggregate, now);
+
+		if (query.ormType === MultiORMEnum.TypeORM) {
+			return (await query.builder.getRawMany()) as ProfileActivityRawRow[];
+		}
+
+		return (await query.builder) as ProfileActivityRawRow[];
+	}
+
+	/**
+	 * Builds, but does not execute, the one-select profile activity query.
+	 */
+	protected buildProfileActivityRowsQuery(
+		request: IGetProfileActivity,
+		tenantId: ID,
+		period: ProfileActivityPeriod,
+		useSupportedPostgresTimeZone = true,
+		now = this.getProfileActivityNow()
+	): ProfileActivityRowsQuery {
+		const dbType = this.configService.dbConnectionOptions.type;
+
+		if (!isProfileActivityDatabaseType(dbType)) {
+			throw new Error(`Unsupported profile activity database: ${String(dbType)}`);
+		}
+		if (this.ormType !== MultiORMEnum.TypeORM && this.ormType !== MultiORMEnum.MikroORM) {
+			throw new Error(`Unsupported profile activity ORM: ${String(this.ormType)}`);
+		}
+
+		const canonicalTimeZone = timezoneMoment.tz.zone(request.timeZone)?.name;
+		if (!canonicalTimeZone) {
+			throw new RangeError('Profile activity timezone is invalid');
+		}
+
+		const usePostgresAggregate = dbType === DatabaseTypeEnum.postgres && useSupportedPostgresTimeZone;
+
+		if (this.ormType === MultiORMEnum.TypeORM) {
+			return {
+				ormType: MultiORMEnum.TypeORM,
+				builder: this.buildTypeOrmProfileActivityQuery(
+					request,
+					tenantId,
+					period,
+					dbType,
+					canonicalTimeZone,
+					usePostgresAggregate,
+					now
+				)
+			};
+		}
+
+		return {
+			ormType: MultiORMEnum.MikroORM,
+			builder: this.buildKnexProfileActivityQuery(
+				request,
+				tenantId,
+				period,
+				dbType,
+				canonicalTimeZone,
+				usePostgresAggregate,
+				now
+			)
+		};
+	}
+
+	private async supportsPostgresTimeZone(canonicalTimeZone: string): Promise<boolean> {
+		const cached = this.profileActivityPostgresTimeZoneSupport.get(canonicalTimeZone);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		let lookup: Promise<boolean>;
+		lookup = this.queryPostgresTimeZoneSupport(canonicalTimeZone).catch((error: unknown) => {
+			if (this.profileActivityPostgresTimeZoneSupport.get(canonicalTimeZone) === lookup) {
+				this.profileActivityPostgresTimeZoneSupport.delete(canonicalTimeZone);
+			}
+			this.logger.warn(
+				`PostgreSQL timezone lookup failed for ${canonicalTimeZone}; using the portable profile aggregate`,
+				error instanceof Error ? error.stack : undefined
+			);
+			return false;
+		});
+		this.profileActivityPostgresTimeZoneSupport.set(canonicalTimeZone, lookup);
+
+		return lookup;
+	}
+
+	private async queryPostgresTimeZoneSupport(canonicalTimeZone: string): Promise<boolean> {
+		const sql = 'SELECT EXISTS (SELECT 1 FROM pg_timezone_names WHERE name = $1) AS "supported"';
+		let result: unknown;
+
+		if (this.ormType === MultiORMEnum.TypeORM) {
+			result = await this.typeOrmTimeLogRepository.query(sql, [canonicalTimeZone]);
+		} else if (this.ormType === MultiORMEnum.MikroORM) {
+			const knex = this.mikroOrmTimeLogRepository.getKnex() as unknown as Knex;
+			result = await knex.raw(sql.replace('$1', '?'), [canonicalTimeZone]);
+		} else {
+			return false;
+		}
+
+		const row = Array.isArray(result) ? result[0] : (result as { rows?: unknown[] } | null | undefined)?.rows?.[0];
+		const supported = (row as { supported?: unknown } | null | undefined)?.supported;
+
+		return supported === true || supported === 1 || supported === '1' || supported === 't' || supported === 'true';
+	}
+
+	private buildTypeOrmProfileActivityQuery(
+		request: IGetProfileActivity,
+		tenantId: ID,
+		period: ProfileActivityPeriod,
+		dbType: ProfileActivityDatabaseType,
+		canonicalTimeZone: string,
+		usePostgresAggregate: boolean,
+		now: Date
+	): SelectQueryBuilder<TimeLog> {
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+		const currentTimeExpression =
+			dbType === DatabaseTypeEnum.postgres
+				? "(CAST(:profileNow AS timestamptz) AT TIME ZONE 'UTC')"
+				: ':profileNow';
+		const stoppedAtExpression = `COALESCE(time_log.stoppedAt, ${currentTimeExpression})`;
+		const profileNow = dbType === DatabaseTypeEnum.postgres ? now.toISOString() : toUtcNaiveDateTime(now);
+
+		if (usePostgresAggregate) {
+			const dateExpression =
+				"TO_CHAR((time_log.startedAt AT TIME ZONE 'UTC') AT TIME ZONE :profileTimeZone, 'YYYY-MM-DD')";
+			query
+				.select(dateExpression, 'date')
+				.addSelect(`SUM(EXTRACT(EPOCH FROM (${stoppedAtExpression} - time_log.startedAt)))`, 'duration')
+				.setParameter('profileTimeZone', canonicalTimeZone)
+				.groupBy(dateExpression);
+		} else {
+			const buckets = buildProfileActivityDayBuckets(request);
+			const dateExpression = buckets.length
+				? `CASE ${buckets
+						.map((_, index) => {
+							const boundary =
+								dbType === DatabaseTypeEnum.postgres
+									? `(CAST(:profileDayEnd${index} AS timestamptz) AT TIME ZONE 'UTC')`
+									: `:profileDayEnd${index}`;
+							return `WHEN time_log.startedAt < ${boundary} THEN :profileDayLabel${index}`;
+						})
+						.join(' ')} END`
+				: 'NULL';
+			let durationExpression: string;
+			if (dbType === DatabaseTypeEnum.postgres) {
+				durationExpression = `SUM(EXTRACT(EPOCH FROM (${stoppedAtExpression} - time_log.startedAt)))`;
+			} else if (dbType === DatabaseTypeEnum.mysql) {
+				durationExpression = `SUM(TIMESTAMPDIFF(MICROSECOND, time_log.startedAt, ${stoppedAtExpression}) / 1000000.0)`;
+			} else {
+				durationExpression = `SUM((julianday(${stoppedAtExpression}) - julianday(time_log.startedAt)) * 86400.0)`;
+			}
+
+			query.select(dateExpression, 'date').addSelect(durationExpression, 'duration').groupBy('1');
+			buckets.forEach((bucket, index) => {
+				query
+					.setParameter(
+						`profileDayEnd${index}`,
+						dbType === DatabaseTypeEnum.postgres
+							? bucket.endDate.toISOString()
+							: toUtcNaiveDateTime(bucket.endDate)
+					)
+					.setParameter(`profileDayLabel${index}`, bucket.date);
+			});
+		}
+
+		query
+			.setParameter('profileNow', profileNow)
+			.where('time_log.tenantId = :profileTenantId', { profileTenantId: tenantId })
+			.andWhere('time_log.organizationId = :profileOrganizationId', {
+				profileOrganizationId: request.organizationId
+			})
+			.andWhere('time_log.employeeId = :profileEmployeeId', { profileEmployeeId: request.employeeId });
+
+		if (dbType === DatabaseTypeEnum.postgres) {
+			query
+				.andWhere("time_log.startedAt >= (CAST(:profileStart AS timestamptz) AT TIME ZONE 'UTC')", {
+					profileStart: period.startDate.toISOString()
+				})
+				.andWhere("time_log.startedAt < (CAST(:profileEnd AS timestamptz) AT TIME ZONE 'UTC')", {
+					profileEnd: period.endDate.toISOString()
+				});
+		} else {
+			query
+				.andWhere('time_log.startedAt >= :profileStart', {
+					profileStart: toUtcNaiveDateTime(period.startDate)
+				})
+				.andWhere('time_log.startedAt < :profileEnd', {
+					profileEnd: toUtcNaiveDateTime(period.endDate)
+				});
+		}
+
+		const quote = dbType === DatabaseTypeEnum.mysql ? '`' : '"';
+		const column = (alias: string, name: string) => `${quote}${alias}${quote}.${quote}${name}${quote}`;
+		const table = (name: string, alias: string) => `${quote}${name}${quote} ${quote}${alias}${quote}`;
+		const matchingTimeSlot = `EXISTS (SELECT 1 FROM ${table(
+			'time_slot_time_logs',
+			'profile_slot_link'
+		)} INNER JOIN ${table('time_slot', 'profile_time_slot')} ON ${column(
+			'profile_time_slot',
+			'id'
+		)} = ${column('profile_slot_link', 'timeSlotId')} WHERE ${column(
+			'profile_slot_link',
+			'timeLogId'
+		)} = ${column('time_log', 'id')} AND ${column('profile_time_slot', 'tenantId')} = :profileTenantId AND ${column(
+			'profile_time_slot',
+			'organizationId'
+		)} = :profileOrganizationId AND ${column(
+			'profile_time_slot',
+			'overall'
+		)} BETWEEN :profileActivityStart AND :profileActivityEnd AND ${column(
+			'profile_time_slot',
+			'deletedAt'
+		)} IS NULL)`;
+
+		return query
+			.andWhere(matchingTimeSlot, {
+				profileActivityStart: PROFILE_ACTIVITY_LEVEL_START * PROFILE_ACTIVITY_SLOT_ACTIVITY_MULTIPLIER,
+				profileActivityEnd: PROFILE_ACTIVITY_LEVEL_END * PROFILE_ACTIVITY_SLOT_ACTIVITY_MULTIPLIER
+			})
+			.andWhere(`${stoppedAtExpression} > time_log.startedAt`);
+	}
+
+	private buildKnexProfileActivityQuery(
+		request: IGetProfileActivity,
+		tenantId: ID,
+		period: ProfileActivityPeriod,
+		dbType: ProfileActivityDatabaseType,
+		canonicalTimeZone: string,
+		usePostgresAggregate: boolean,
+		now: Date
+	): Knex.QueryBuilder {
+		const knex = this.mikroOrmTimeLogRepository.getKnex() as unknown as Knex;
+		const query = knex('time_log');
+		const profileNow =
+			dbType === DatabaseTypeEnum.postgres ? now.toISOString() : toMikroOrmProfileDateTime(now, dbType);
+
+		if (usePostgresAggregate) {
+			const dateExpression = "TO_CHAR((?? AT TIME ZONE 'UTC') AT TIME ZONE ?, 'YYYY-MM-DD')";
+			query
+				.select([
+					knex.raw(`${dateExpression} AS ??`, ['time_log.startedAt', canonicalTimeZone, 'date']),
+					knex.raw(
+						"SUM(EXTRACT(EPOCH FROM (COALESCE(??, (CAST(? AS timestamptz) AT TIME ZONE 'UTC')) - ??))) AS ??",
+						['time_log.stoppedAt', profileNow, 'time_log.startedAt', 'duration']
+					)
+				])
+				.groupByRaw('1');
+		} else {
+			const buckets = buildProfileActivityDayBuckets(request);
+			const dateBindings: unknown[] = [];
+			const cases = buckets.map((bucket) => {
+				dateBindings.push(
+					'time_log.startedAt',
+					dbType === DatabaseTypeEnum.postgres
+						? bucket.endDate.toISOString()
+						: toMikroOrmProfileDateTime(bucket.endDate, dbType),
+					bucket.date
+				);
+				return dbType === DatabaseTypeEnum.postgres
+					? "WHEN ?? < (CAST(? AS timestamptz) AT TIME ZONE 'UTC') THEN ?"
+					: 'WHEN ?? < ? THEN ?';
+			});
+			const dateExpression = buckets.length ? `CASE ${cases.join(' ')} END` : 'NULL';
+			let duration: Knex.Raw;
+			if (dbType === DatabaseTypeEnum.postgres) {
+				duration = knex.raw(
+					"SUM(EXTRACT(EPOCH FROM (COALESCE(??, (CAST(? AS timestamptz) AT TIME ZONE 'UTC')) - ??))) AS ??",
+					['time_log.stoppedAt', profileNow, 'time_log.startedAt', 'duration']
+				);
+			} else if (dbType === DatabaseTypeEnum.mysql) {
+				duration = knex.raw('SUM(TIMESTAMPDIFF(MICROSECOND, ??, COALESCE(??, ?)) / 1000000.0) AS ??', [
+					'time_log.startedAt',
+					'time_log.stoppedAt',
+					profileNow,
+					'duration'
+				]);
+			} else {
+				duration = knex.raw('SUM((COALESCE(??, ?) - ??) / 1000.0) AS ??', [
+					'time_log.stoppedAt',
+					profileNow,
+					'time_log.startedAt',
+					'duration'
+				]);
+			}
+
+			query.select([knex.raw(`${dateExpression} AS ??`, [...dateBindings, 'date']), duration]).groupByRaw('1');
+		}
+
+		query
+			.whereRaw('?? = ?', ['time_log.tenantId', tenantId])
+			.whereRaw('?? = ?', ['time_log.organizationId', request.organizationId])
+			.whereRaw('?? = ?', ['time_log.employeeId', request.employeeId]);
+
+		if (dbType === DatabaseTypeEnum.postgres) {
+			query
+				.whereRaw("?? >= (CAST(? AS timestamptz) AT TIME ZONE 'UTC')", [
+					'time_log.startedAt',
+					period.startDate.toISOString()
+				])
+				.whereRaw("?? < (CAST(? AS timestamptz) AT TIME ZONE 'UTC')", [
+					'time_log.startedAt',
+					period.endDate.toISOString()
+				]);
+		} else {
+			query
+				.whereRaw('?? >= ?', ['time_log.startedAt', toMikroOrmProfileDateTime(period.startDate, dbType)])
+				.whereRaw('?? < ?', ['time_log.startedAt', toMikroOrmProfileDateTime(period.endDate, dbType)]);
+		}
+
+		const matchingTimeSlot =
+			'EXISTS (SELECT 1 FROM ?? INNER JOIN ?? ON ?? = ?? WHERE ?? = ?? AND ?? = ? AND ?? = ? AND ?? BETWEEN ? AND ? AND ?? IS NULL)';
+		query.whereRaw(matchingTimeSlot, [
+			'time_slot_time_logs',
+			'time_slot',
+			'time_slot.id',
+			'time_slot_time_logs.timeSlotId',
+			'time_slot_time_logs.timeLogId',
+			'time_log.id',
+			'time_slot.tenantId',
+			tenantId,
+			'time_slot.organizationId',
+			request.organizationId,
+			'time_slot.overall',
+			PROFILE_ACTIVITY_LEVEL_START * PROFILE_ACTIVITY_SLOT_ACTIVITY_MULTIPLIER,
+			PROFILE_ACTIVITY_LEVEL_END * PROFILE_ACTIVITY_SLOT_ACTIVITY_MULTIPLIER,
+			'time_slot.deletedAt'
+		]);
+
+		return query
+			.whereRaw(
+				dbType === DatabaseTypeEnum.postgres
+					? "COALESCE(??, (CAST(? AS timestamptz) AT TIME ZONE 'UTC')) > ??"
+					: 'COALESCE(??, ?) > ??',
+				['time_log.stoppedAt', profileNow, 'time_log.startedAt']
+			)
+			.whereRaw('?? IS NULL', ['time_log.deletedAt']);
+	}
 
 	/**
 	 * Fetches the overall tracked time for time slots, aggregating data from related time logs.
@@ -115,11 +587,12 @@ export class StatisticService {
 			}
 		}
 
-		console.log('Overall Tracked Time Duration (seconds):', overallDurationInSeconds);
-
 		// Convert the overall duration in seconds to hours
 		const overallDurationInHours = overallDurationInSeconds / 3600;
-		console.log('Overall Tracked Time Duration (hours):', overallDurationInHours);
+		debugInDevelopment(
+			this.logger,
+			() => `Overall Tracked Time Duration: ${overallDurationInSeconds}s (${overallDurationInHours}h)`
+		);
 
 		return overallDurationInHours;
 	}
@@ -189,19 +662,13 @@ export class StatisticService {
 			isOnlyMeSelected
 		);
 
-		let weekActivities = {
-			overall: 0,
-			duration: 0
-		};
-
 		// Define the start and end dates
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
 		);
 
-		// Create a query builder for the TimeSlot entity
-		let weekTimeStatistics: any[] = [];
+		let groupedQuery: StatisticsActivityRowsQuery;
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -212,9 +679,9 @@ export class StatisticService {
 					.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
 					.select([
 						knex.raw(getDurationQueryString(dbType, 'time_log', 'time_slot') + ' AS week_duration'),
-						knex.raw('COALESCE(SUM("time_slot"."overall"), 0) AS overall'),
-						knex.raw('COALESCE(SUM("time_slot"."duration"), 0) AS duration'),
-						knex.raw('COUNT("time_slot"."id") AS time_slot_count')
+						knex.raw('COALESCE(SUM(??), 0) AS overall', ['time_slot.overall']),
+						knex.raw('COALESCE(SUM(??), 0) AS duration', ['time_slot.duration']),
+						knex.raw('COUNT(??) AS time_slot_count', ['time_slot.id'])
 					])
 					.where('time_slot.tenantId', tenantId)
 					.andWhere('time_slot.organizationId', organizationId)
@@ -222,7 +689,10 @@ export class StatisticService {
 					.andWhere('time_log.organizationId', organizationId)
 					.whereBetween('time_slot.startedAt', [start, end])
 					.whereBetween('time_log.startedAt', [start, end])
-					.whereRaw('"time_log"."stoppedAt" >= "time_log"."startedAt"');
+					.whereRaw('?? >= ??', ['time_log.stoppedAt', 'time_log.startedAt'])
+					// TypeORM adds these through @DeleteDateColumn; Knex has to spell them out.
+					.whereNull('time_slot.deletedAt')
+					.whereNull('time_log.deletedAt');
 
 				if (isNotEmpty(employeeIds)) {
 					qb = qb.whereIn('time_slot.employeeId', employeeIds).whereIn('time_log.employeeId', employeeIds);
@@ -245,7 +715,8 @@ export class StatisticService {
 					qb = qb.whereIn('time_log.source', source);
 				}
 
-				weekTimeStatistics = await qb.groupBy('time_log.id');
+				qb.groupBy('time_log.id');
+				groupedQuery = { ormType: MultiORMEnum.MikroORM, knex, builder: qb };
 				break;
 			}
 			case MultiORMEnum.TypeORM:
@@ -313,33 +784,13 @@ export class StatisticService {
 				}
 
 				// Group by time_log.id to get the total duration and overall for each time slot
-				weekTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
+				query.groupBy(p(`"time_log"."id"`));
+				groupedQuery = { ormType: MultiORMEnum.TypeORM, builder: query };
 				break;
 			}
 		}
 
-		console.log('weekly time statistics activity', JSON.stringify(weekTimeStatistics));
-
-		// Initialize variables to accumulate values
-		let totalWeekDuration = 0;
-		let totalOverall = 0;
-		let totalDuration = 0;
-
-		// Iterate over the weekTimeStatistics array once to calculate all values
-		for (const stat of weekTimeStatistics) {
-			totalWeekDuration += Number(stat.week_duration) || 0;
-			totalOverall += Number(stat.overall) || 0;
-			totalDuration += Number(stat.duration) || 0;
-		}
-
-		// Calculate the week percentage, avoiding division by zero
-		const weekPercentage = totalDuration > 0 ? (totalOverall * 100) / totalDuration : 0;
-
-		// Assign the calculated values to weekActivities
-		weekActivities['duration'] = totalWeekDuration;
-		weekActivities['overall'] = weekPercentage;
-
-		return weekActivities;
+		return this.aggregateStatisticsActivities(groupedQuery, 'week_duration');
 	}
 
 	/**
@@ -375,20 +826,13 @@ export class StatisticService {
 			isOnlyMeSelected
 		);
 
-		// Get average activity and total duration of the work for today.
-		let todayActivities = {
-			overall: 0,
-			duration: 0
-		};
-
 		// Get date range for today
 		const { start: startToday, end: endToday } = getDateRangeFormat(
 			moment.utc(todayStart || moment().startOf('day')),
 			moment.utc(todayEnd || moment().endOf('day'))
 		);
 
-		// Create a query builder for the TimeSlot entity
-		let todayTimeStatistics: any[] = [];
+		let groupedQuery: StatisticsActivityRowsQuery;
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -399,9 +843,9 @@ export class StatisticService {
 					.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
 					.select([
 						knex.raw(getDurationQueryString(dbType, 'time_log', 'time_slot') + ' AS today_duration'),
-						knex.raw('COALESCE(SUM("time_slot"."overall"), 0) AS overall'),
-						knex.raw('COALESCE(SUM("time_slot"."duration"), 0) AS duration'),
-						knex.raw('COUNT("time_slot"."id") AS time_slot_count')
+						knex.raw('COALESCE(SUM(??), 0) AS overall', ['time_slot.overall']),
+						knex.raw('COALESCE(SUM(??), 0) AS duration', ['time_slot.duration']),
+						knex.raw('COUNT(??) AS time_slot_count', ['time_slot.id'])
 					])
 					.where('time_slot.tenantId', tenantId)
 					.andWhere('time_slot.organizationId', organizationId)
@@ -409,7 +853,10 @@ export class StatisticService {
 					.andWhere('time_log.organizationId', organizationId)
 					.whereBetween('time_slot.startedAt', [startToday, endToday])
 					.whereBetween('time_log.startedAt', [startToday, endToday])
-					.whereRaw('"time_log"."stoppedAt" >= "time_log"."startedAt"');
+					.whereRaw('?? >= ??', ['time_log.stoppedAt', 'time_log.startedAt'])
+					// TypeORM adds these through @DeleteDateColumn; Knex has to spell them out.
+					.whereNull('time_slot.deletedAt')
+					.whereNull('time_log.deletedAt');
 
 				if (isNotEmpty(employeeIds)) {
 					qb = qb.whereIn('time_slot.employeeId', employeeIds).whereIn('time_log.employeeId', employeeIds);
@@ -432,7 +879,8 @@ export class StatisticService {
 					qb = qb.whereIn('time_log.source', source);
 				}
 
-				todayTimeStatistics = await qb.groupBy('time_log.id');
+				qb.groupBy('time_log.id');
+				groupedQuery = { ormType: MultiORMEnum.MikroORM, knex, builder: qb };
 				break;
 			}
 			case MultiORMEnum.TypeORM:
@@ -504,33 +952,69 @@ export class StatisticService {
 					query.andWhere(p(`"time_log"."source" IN (:...source)`), { source });
 				}
 
-				todayTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
+				query.groupBy(p(`"time_log"."id"`));
+				groupedQuery = { ormType: MultiORMEnum.TypeORM, builder: query };
 				break;
 			}
 		}
 
-		console.log('today time statistics activity', JSON.stringify(todayTimeStatistics));
+		return this.aggregateStatisticsActivities(groupedQuery, 'today_duration');
+	}
 
-		// Initialize variables to accumulate values
-		let totalTodayDuration = 0;
-		let totalOverall = 0;
-		let totalDuration = 0;
+	/**
+	 * Sums the rows of an activity query grouped by time_log.id in SQL, so only three totals leave
+	 * the database instead of one row per time log, then derives the activity percentage from them.
+	 * The grouped query is wrapped as a derived table and kept as is: its ROUND(SUM / COUNT) per
+	 * time_log undoes the time_slot/time_log fan-out, and summing after rounding is what the previous
+	 * in-memory loop did. The percentage stays in JavaScript: an SQL division would truncate on SQLite
+	 * and round differently on Postgres, changing the second decimal reported by getCounts.
+	 *
+	 * @param groupedQuery - The grouped query, per ORM
+	 * @param durationAlias - Alias of the per-log tracked duration column in that query
+	 * @returns The tracked duration and the activity percentage
+	 */
+	private async aggregateStatisticsActivities(
+		groupedQuery: StatisticsActivityRowsQuery,
+		durationAlias: 'week_duration' | 'today_duration'
+	): Promise<IWeeklyStatisticsActivities> {
+		let totals: Record<string, unknown> | undefined;
 
-		// Iterate over the todayTimeStatistics array once to calculate all values
-		for (const stat of todayTimeStatistics) {
-			totalTodayDuration += Number(stat.today_duration) || 0;
-			totalOverall += Number(stat.overall) || 0;
-			totalDuration += Number(stat.duration) || 0;
+		switch (groupedQuery.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const { knex, builder } = groupedQuery;
+				totals = await knex
+					.from(builder.as('t'))
+					.select([
+						knex.raw(p(`COALESCE(SUM("t"."${durationAlias}"), 0) AS tracked_duration`)),
+						knex.raw(p(`COALESCE(SUM("t"."overall"), 0) AS overall`)),
+						knex.raw(p(`COALESCE(SUM("t"."duration"), 0) AS duration`))
+					])
+					.first();
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const { builder } = groupedQuery;
+				totals = await this.typeOrmTimeSlotRepository.manager
+					.createQueryBuilder()
+					.select(p(`COALESCE(SUM("t"."${durationAlias}"), 0)`), 'tracked_duration')
+					.addSelect(p(`COALESCE(SUM("t"."overall"), 0)`), 'overall')
+					.addSelect(p(`COALESCE(SUM("t"."duration"), 0)`), 'duration')
+					.from(`(${builder.getQuery()})`, 't')
+					.setParameters(builder.getParameters())
+					.getRawOne();
+				break;
+			}
 		}
 
-		// Calculate today's percentage, avoiding division by zero
-		const todayPercentage = totalDuration > 0 ? (totalOverall * 100) / totalDuration : 0;
+		const trackedDuration = Number(totals?.tracked_duration) || 0;
+		const overall = Number(totals?.overall) || 0;
+		const duration = Number(totals?.duration) || 0;
 
-		// Assign the calculated values to todayActivities
-		todayActivities['duration'] = totalTodayDuration;
-		todayActivities['overall'] = todayPercentage;
-
-		return todayActivities;
+		return {
+			duration: trackedDuration,
+			overall: duration > 0 ? (overall * 100) / duration : 0
+		};
 	}
 
 	/**
@@ -1562,7 +2046,7 @@ export class StatisticService {
 					}
 					sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
 					sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-					console.log(chalk.green(sq.toString() + ' || Get Today Statistics Query MikroORM!'));
+					debugInDevelopment(this.logger, () => `${sq.toString()} || Get Today Statistics Query MikroORM`);
 					// Execute the raw SQL query and get the results
 					todayStatistics = (await knex.raw(sq.toString())).rows || [];
 				}
@@ -1629,7 +2113,7 @@ export class StatisticService {
 					qb.groupBy(p(`"${qb.alias}"."id"`));
 					qb.addGroupBy(p(`"task"."id"`));
 					qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-					console.log(qb.getQuery(), ' || Get Today Statistics Query TypeORM');
+					debugInDevelopment(this.logger, () => `${qb.getQuery()} || Get Today Statistics Query TypeORM`);
 					// Execute the SQL query and get the results
 					todayStatistics = await qb.getRawMany();
 				}
@@ -1700,7 +2184,7 @@ export class StatisticService {
 					}
 					sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
 					sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-					console.log(chalk.green(sq.toString() + ' || Get Statistics Query MikroORM!'));
+					debugInDevelopment(this.logger, () => `${sq.toString()} || Get Statistics Query MikroORM`);
 					// Execute the raw SQL query and get the results
 					statistics = (await knex.raw(sq.toString())).rows || [];
 				}
@@ -1770,7 +2254,10 @@ export class StatisticService {
 					qb.groupBy(p(`"${qb.alias}"."id"`));
 					qb.addGroupBy(p(`"task"."id"`));
 					qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-					console.log(qb.getQueryAndParameters(), 'Get Statistics Query TypeORM');
+					debugInDevelopment(
+						this.logger,
+						() => `${JSON.stringify(qb.getQueryAndParameters())} || Get Statistics Query TypeORM`
+					);
 					// Execute the raw SQL query and get the results
 					statistics = await qb.getRawMany();
 				}
@@ -1825,7 +2312,7 @@ export class StatisticService {
 							}
 						});
 					}
-					console.log(chalk.green(sq.toString() + ' || Get Total Duration Query MikroORM!'));
+					debugInDevelopment(this.logger, () => `${sq.toString()} || Get Total Duration Query MikroORM`);
 					// Execute the raw SQL query and get the results
 					[totalDuration] = (await knex.raw(sq.toString())).rows || [];
 				}
@@ -1867,7 +2354,7 @@ export class StatisticService {
 							})
 						);
 					}
-					console.log(qb.getQuery(), 'Get Total Duration Query TypeORM!');
+					debugInDevelopment(this.logger, () => `${qb.getQuery()} || Get Total Duration Query TypeORM`);
 					// Execute the raw SQL query and get the results
 					totalDuration = await qb.getRawOne();
 				}
@@ -1879,9 +2366,11 @@ export class StatisticService {
 
 		// ------------------------------------------------
 
-		console.log('Find Statistics length: ', statistics.length);
-		console.log('Find Today Statistics length: ', todayStatistics.length);
-		console.log('Find Total Duration: ', totalDuration?.duration);
+		debugInDevelopment(
+			this.logger,
+			() =>
+				`Find Statistics length: ${statistics.length}, Today Statistics length: ${todayStatistics.length}, Total Duration: ${totalDuration?.duration}`
+		);
 
 		/* Code that cause issues... We try to optimize it using "hashing" approach etc
 
@@ -1935,7 +2424,7 @@ export class StatisticService {
 
 		const totalDurationValue = statistics.reduce((total, stat) => total + (parseInt(stat.duration, 10) || 0), 0);
 
-		console.log('Total Duration Value: ', totalDurationValue);
+		debugInDevelopment(this.logger, () => `Total Duration Value: ${totalDurationValue}`);
 
 		const todayStatsLookup = todayStatistics.reduce((acc, stat) => {
 			const taskId = stat.taskId;
@@ -1994,8 +2483,6 @@ export class StatisticService {
 		if (isNotEmpty(take)) {
 			tasks = tasks.splice(0, take);
 		}
-
-		console.log('Task Aggregates: ', tasks);
 
 		return tasks;
 	}
@@ -2481,7 +2968,7 @@ export class StatisticService {
 					employee.user = {
 						name: user?.name ?? null,
 						imageUrl: user?.imageUrl ?? null
-					}
+					};
 					delete employee.user_id;
 
 					// Fetch up to 9 recent time slots per employee with screenshots

@@ -1,0 +1,379 @@
+<div class="docs-inbound" [nbSpinner]="loading" nbSpinnerStatus="primary">
+	<div class="docs-inbound-header">
+		<h4>{{ 'DOCS.INBOUND.TITLE' | translate }}</h4>
+		<p class="muted">{{ 'DOCS.INBOUND.SUBTITLE' | translate }}</p>
+	</div>
+
+	<!-- Endpoints absent (deployment predates the capture routes) — a notice, never an error. -->
+	<nb-card *ngIf="unsupported" class="docs-inbound-card">
+		<nb-card-body class="docs-inbound-notice">
+			<nb-icon icon="info-outline" status="info"></nb-icon>
+			<span>{{ 'DOCS.INBOUND.UNSUPPORTED' | translate }}</span>
+		</nb-card-body>
+	</nb-card>
+
+	<!-- Load error -->
+	<nb-card *ngIf="loadError" class="docs-inbound-card">
+		<nb-card-body class="docs-inbound-notice">
+			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+			<span>{{ 'DOCS.INBOUND.LOAD_ERROR' | translate }}</span>
+			<button nbButton size="small" (click)="load()">{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}</button>
+		</nb-card-body>
+	</nb-card>
+
+	<!-- Capture switched off deployment-wide: addresses can be prepared, but nothing is accepted. -->
+	<nb-card *ngIf="capabilities && capabilities.inboundEmailEnabled === false" class="docs-inbound-card">
+		<nb-card-body class="docs-inbound-notice">
+			<nb-icon icon="alert-triangle-outline" status="warning"></nb-icon>
+			<span>{{ 'DOCS.INBOUND.DISABLED' | translate }}</span>
+		</nb-card-body>
+	</nb-card>
+
+	<ng-container *ngIf="!unsupported && !loadError">
+		<!-- 1. The shared platform address (minted server-side; the address IS the credential) -->
+		<nb-card class="docs-inbound-card">
+			<nb-card-header>{{ 'DOCS.INBOUND.PLATFORM' | translate }}</nb-card-header>
+			<nb-card-body>
+				<ng-container *ngIf="platform as row; else noPlatform">
+					<div class="docs-inbound-address-row">
+						<code class="docs-inbound-address">{{ row.address.address }}</code>
+						<button
+							nbButton
+							ghost
+							size="small"
+							[attr.aria-label]="'DOCS.INBOUND.COPY_ADDRESS' | translate"
+							[nbTooltip]="'DOCS.INBOUND.COPY_ADDRESS' | translate"
+							(click)="copy(row.address.address, 'DOCS.INBOUND.TOAST_ADDRESS_COPIED')"
+						>
+							<nb-icon icon="clipboard-outline"></nb-icon>
+						</button>
+					</div>
+					<p class="hint">{{ 'DOCS.INBOUND.PLATFORM_HINT' | translate }}</p>
+
+					<dl class="docs-inbound-meta">
+						<dt>{{ 'DOCS.INBOUND.MESSAGES' | translate }}</dt>
+						<dd>{{ row.address.messageCount ?? 0 }}</dd>
+						<dt>{{ 'DOCS.INBOUND.LAST_MESSAGE' | translate }}</dt>
+						<dd>
+							{{
+								row.address.lastMessageAt
+									? (row.address.lastMessageAt | date : 'medium')
+									: ('DOCS.INBOUND.NEVER' | translate)
+							}}
+						</dd>
+					</dl>
+
+					<ng-container *ngxPermissionsOnly="docsPermissions.manage">
+						<!-- Shared controls: allowlist, body import, active flag. -->
+						<ng-container *ngTemplateOutlet="addressControls; context: row.context"></ng-container>
+
+						<!-- Rotating a PLATFORM address REPLACES it: two-step, with the consequence up front. -->
+						<div class="docs-inbound-danger">
+							<ng-container *ngIf="row.confirm !== 'address'; else confirmRotateAddress">
+								<button
+									nbButton
+									size="small"
+									status="warning"
+									[disabled]="row.busy"
+									(click)="askConfirm(row, 'address')"
+								>
+									<nb-icon icon="sync-outline"></nb-icon>
+									{{ 'DOCS.INBOUND.ROTATE_ADDRESS' | translate }}
+								</button>
+								<div class="hint warn">{{ 'DOCS.INBOUND.ROTATE_ADDRESS_WARNING' | translate }}</div>
+							</ng-container>
+							<ng-template #confirmRotateAddress>
+								<div class="hint warn">{{ 'DOCS.INBOUND.ROTATE_ADDRESS_WARNING' | translate }}</div>
+								<div class="docs-inbound-confirm">
+									<button nbButton ghost size="small" (click)="cancelConfirm(row)">
+										{{ 'DOCS.UPLOAD.CANCEL' | translate }}
+									</button>
+									<button
+										nbButton
+										size="small"
+										status="danger"
+										[disabled]="row.busy"
+										(click)="rotateAddress(row)"
+									>
+										{{ 'DOCS.INBOUND.ROTATE_CONFIRM' | translate }}
+									</button>
+								</div>
+							</ng-template>
+						</div>
+					</ng-container>
+				</ng-container>
+
+				<ng-template #noPlatform>
+					<p class="muted">{{ 'DOCS.INBOUND.NO_PLATFORM' | translate }}</p>
+				</ng-template>
+			</nb-card-body>
+		</nb-card>
+
+		<!-- 2. Tenant-owned domains -->
+		<nb-card class="docs-inbound-card">
+			<nb-card-header class="docs-inbound-card-header">
+				<span>{{ 'DOCS.INBOUND.CUSTOM' | translate }}</span>
+				<button
+					*ngxPermissionsOnly="docsPermissions.manage"
+					nbButton
+					size="small"
+					status="primary"
+					[disabled]="adding"
+					(click)="addDomain()"
+				>
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{ 'DOCS.INBOUND.ADD_DOMAIN' | translate }}
+				</button>
+			</nb-card-header>
+			<nb-card-body>
+				<p class="hint">{{ 'DOCS.INBOUND.CUSTOM_HINT' | translate }}</p>
+				<p class="muted" *ngIf="!customDomains.length">{{ 'DOCS.INBOUND.NO_CUSTOM' | translate }}</p>
+
+				<div class="docs-inbound-domain" *ngFor="let row of customDomains; trackBy: trackByRowId">
+					<div class="docs-inbound-address-row">
+						<code class="docs-inbound-address">{{ row.address.address }}</code>
+						<span class="docs-inbound-status" [ngClass]="'is-' + statusBadge(row.address.domainStatus)">
+							{{ statusLabelKey(row.address.domainStatus) | translate }}
+						</span>
+						<button
+							nbButton
+							ghost
+							size="small"
+							[attr.aria-label]="'DOCS.INBOUND.COPY_ADDRESS' | translate"
+							[nbTooltip]="'DOCS.INBOUND.COPY_ADDRESS' | translate"
+							(click)="copy(row.address.address, 'DOCS.INBOUND.TOAST_ADDRESS_COPIED')"
+						>
+							<nb-icon icon="clipboard-outline"></nb-icon>
+						</button>
+					</div>
+					<!-- States what happens to MAIL, not just what happened to the record. -->
+					<div class="hint" [class.warn]="row.address.domainStatus !== statuses.VERIFIED">
+						{{ statusHintKey(row.address.domainStatus) | translate }}
+					</div>
+
+					<!-- DNS TXT record -->
+					<div class="docs-inbound-verification">
+						<div class="label">{{ 'DOCS.INBOUND.VERIFICATION' | translate }}</div>
+
+						<ng-container *ngIf="row.verification as verification; else noRecord">
+							<dl class="docs-inbound-record">
+								<dt>{{ 'DOCS.INBOUND.RECORD_TYPE' | translate }}</dt>
+								<dd><code>{{ verification.recordType }}</code></dd>
+
+								<dt>{{ 'DOCS.INBOUND.RECORD_NAME' | translate }}</dt>
+								<dd>
+									<code>{{ verification.recordName }}</code>
+									<button
+										nbButton
+										ghost
+										size="tiny"
+										[attr.aria-label]="'DOCS.INBOUND.COPY_RECORD_NAME' | translate"
+										[nbTooltip]="'DOCS.INBOUND.COPY_RECORD_NAME' | translate"
+										(click)="copy(verification.recordName, 'DOCS.INBOUND.TOAST_RECORD_COPIED')"
+									>
+										<nb-icon icon="clipboard-outline"></nb-icon>
+									</button>
+								</dd>
+
+								<dt>{{ 'DOCS.INBOUND.RECORD_VALUE' | translate }}</dt>
+								<dd>
+									<code>{{ verification.recordValue }}</code>
+									<button
+										nbButton
+										ghost
+										size="tiny"
+										[attr.aria-label]="'DOCS.INBOUND.COPY_RECORD_VALUE' | translate"
+										[nbTooltip]="'DOCS.INBOUND.COPY_RECORD_VALUE' | translate"
+										(click)="copy(verification.recordValue, 'DOCS.INBOUND.TOAST_RECORD_COPIED')"
+									>
+										<nb-icon icon="clipboard-outline"></nb-icon>
+									</button>
+								</dd>
+							</dl>
+
+							<div class="hint">{{ 'DOCS.INBOUND.VERIFY_HINT' | translate }}</div>
+							<div class="hint" *ngIf="verification.message">{{ verification.message }}</div>
+
+							<dl class="docs-inbound-meta">
+								<dt>{{ 'DOCS.INBOUND.LAST_CHECKED' | translate }}</dt>
+								<dd>
+									{{
+										verification.lastCheckedAt
+											? (verification.lastCheckedAt | date : 'medium')
+											: ('DOCS.INBOUND.NEVER_CHECKED' | translate)
+									}}
+								</dd>
+								<ng-container *ngIf="verification.verifiedAt">
+									<dt>{{ 'DOCS.INBOUND.VERIFIED_AT' | translate }}</dt>
+									<dd>{{ verification.verifiedAt | date : 'medium' }}</dd>
+								</ng-container>
+							</dl>
+
+							<button
+								*ngxPermissionsOnly="docsPermissions.manage"
+								nbButton
+								size="small"
+								status="primary"
+								[disabled]="row.busy"
+								(click)="verify(row)"
+							>
+								<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+								{{ 'DOCS.INBOUND.VERIFY' | translate }}
+							</button>
+						</ng-container>
+
+						<ng-template #noRecord>
+							<p class="muted">{{ 'DOCS.INBOUND.NO_RECORD' | translate }}</p>
+						</ng-template>
+					</div>
+
+					<dl class="docs-inbound-meta">
+						<dt>{{ 'DOCS.INBOUND.MESSAGES' | translate }}</dt>
+						<dd>{{ row.address.messageCount ?? 0 }}</dd>
+						<dt>{{ 'DOCS.INBOUND.LAST_MESSAGE' | translate }}</dt>
+						<dd>
+							{{
+								row.address.lastMessageAt
+									? (row.address.lastMessageAt | date : 'medium')
+									: ('DOCS.INBOUND.NEVER' | translate)
+							}}
+						</dd>
+					</dl>
+
+					<ng-container *ngxPermissionsOnly="docsPermissions.manage">
+						<!-- Shared controls: allowlist, body import, active flag. -->
+						<ng-container *ngTemplateOutlet="addressControls; context: row.context"></ng-container>
+
+						<!-- The relay secret is per-address, so rotating it is a CUSTOM_DOMAIN action only. -->
+						<div class="docs-inbound-danger">
+							<ng-container *ngIf="row.confirm !== 'secret'; else confirmRotateSecret">
+								<button
+									nbButton
+									size="small"
+									status="warning"
+									[disabled]="row.busy"
+									(click)="askConfirm(row, 'secret')"
+								>
+									<nb-icon icon="sync-outline"></nb-icon>
+									{{ 'DOCS.INBOUND.ROTATE_SECRET' | translate }}
+								</button>
+								<div class="hint warn">{{ 'DOCS.INBOUND.ROTATE_SECRET_WARNING' | translate }}</div>
+							</ng-container>
+							<ng-template #confirmRotateSecret>
+								<div class="hint warn">{{ 'DOCS.INBOUND.ROTATE_SECRET_WARNING' | translate }}</div>
+								<div class="docs-inbound-confirm">
+									<button nbButton ghost size="small" (click)="cancelConfirm(row)">
+										{{ 'DOCS.UPLOAD.CANCEL' | translate }}
+									</button>
+									<button
+										nbButton
+										size="small"
+										status="danger"
+										[disabled]="row.busy"
+										(click)="rotateSecret(row)"
+									>
+										{{ 'DOCS.INBOUND.ROTATE_CONFIRM' | translate }}
+									</button>
+								</div>
+							</ng-template>
+						</div>
+					</ng-container>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</ng-container>
+
+	<!--
+		Shared per-address controls. Rendered through `ngTemplateOutlet` with the row's OWN,
+		pre-built context object (`IDocsInboundAddressRow.context`) — an inline
+		`context: { $implicit: row }` would allocate a fresh context every change-detection pass.
+	-->
+	<ng-template #addressControls let-row>
+		<div class="docs-inbound-controls">
+			<!-- Sender allowlist: empty = accept anything that passed SPF/DKIM. -->
+			<div class="docs-inbound-allowlist">
+				<div class="label">{{ 'DOCS.INBOUND.ALLOWLIST' | translate }}</div>
+
+				<div class="docs-inbound-chips" *ngIf="row.allowlist.length; else allowlistEmpty">
+					<span class="docs-inbound-chip" *ngFor="let entry of row.allowlist; trackBy: trackByEntry">
+						<code>{{ entry }}</code>
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							[disabled]="row.busy"
+							[attr.aria-label]="'DOCS.INBOUND.ALLOWLIST_REMOVE' | translate"
+							[nbTooltip]="'DOCS.INBOUND.ALLOWLIST_REMOVE' | translate"
+							(click)="removeAllowlistEntry(row, entry)"
+						>
+							<nb-icon icon="close-outline"></nb-icon>
+						</button>
+					</span>
+				</div>
+				<ng-template #allowlistEmpty>
+					<p class="muted">{{ 'DOCS.INBOUND.ALLOWLIST_EMPTY' | translate }}</p>
+				</ng-template>
+
+				<div class="docs-inbound-allowlist-field">
+					<input
+						nbInput
+						fieldSize="small"
+						type="text"
+						maxlength="320"
+						autocomplete="off"
+						[attr.aria-label]="'DOCS.INBOUND.ALLOWLIST' | translate"
+						placeholder="{{ 'DOCS.INBOUND.ALLOWLIST_PLACEHOLDER' | translate }}"
+						[(ngModel)]="row.allowlistEntry"
+						[disabled]="row.busy"
+						(keydown.enter)="addAllowlistEntry(row)"
+					/>
+					<button
+						nbButton
+						size="small"
+						[disabled]="!canAddAllowlistEntry(row)"
+						(click)="addAllowlistEntry(row)"
+					>
+						{{ 'DOCS.INBOUND.ALLOWLIST_ADD' | translate }}
+					</button>
+					<button
+						nbButton
+						size="small"
+						status="primary"
+						[disabled]="!row.allowlistDirty || row.busy"
+						(click)="saveAllowlist(row)"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+				</div>
+				<div class="hint">{{ 'DOCS.INBOUND.ALLOWLIST_HINT' | translate }}</div>
+				<div class="hint warn" *ngIf="row.allowlist.length >= allowlistMax">
+					{{ 'DOCS.INBOUND.ALLOWLIST_FULL' | translate : { max: allowlistMax } }}
+				</div>
+			</div>
+
+			<div class="docs-inbound-row">
+				<nb-toggle
+					labelPosition="end"
+					[checked]="!!row.address.importBodyAsNote"
+					[disabled]="row.busy"
+					(checkedChange)="onImportBodyToggle(row, $event)"
+				>
+					{{ 'DOCS.INBOUND.IMPORT_BODY' | translate }}
+				</nb-toggle>
+				<div class="hint">{{ 'DOCS.INBOUND.IMPORT_BODY_HINT' | translate }}</div>
+			</div>
+
+			<div class="docs-inbound-row">
+				<nb-toggle
+					labelPosition="end"
+					[checked]="row.address.isActive !== false"
+					[disabled]="row.busy"
+					(checkedChange)="onActiveToggle(row, $event)"
+				>
+					{{ 'DOCS.INBOUND.ACTIVE' | translate }}
+				</nb-toggle>
+				<div class="hint">{{ 'DOCS.INBOUND.ACTIVE_HINT' | translate }}</div>
+			</div>
+		</div>
+	</ng-template>
+</div>

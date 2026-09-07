@@ -1,22 +1,139 @@
 @use 'themes' as *;
+@use 'var' as v;
+
+$radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
 
 :host {
-  height: 100%;
-  nb-card {
-    background-color: var(--gauzy-card-2);
-    border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 
-    nb-card-body {
-      background-color: var(--card-background-color);
-      border-radius: 0.625rem;
+.location {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  padding: 1rem;
+  flex: 1 1 auto;
+  min-height: 0;
+}
 
-      form {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: 1rem;
-        height: 100%;
-      }
+.location__panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
+}
+
+.location__panel--form {
+  flex: 0 1 min(22rem, 40%);
+}
+
+.location__panel--map {
+  flex: 1 1 auto;
+  overflow: hidden;
+  min-height: 22rem;
+}
+
+.location__fields {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.location__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+
+  button {
+    min-width: 7.5rem;
+  }
+}
+
+:host ::ng-deep ga-location-form {
+  display: block;
+
+  .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  [class^='col-'],
+  [class*=' col-'] {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .row[formgroupname] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 0.75rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  nb-checkbox {
+    display: inline-flex;
+    margin-bottom: 1rem;
+  }
+
+  > .row:first-child {
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.25rem;
+    border-bottom: $hairline;
+  }
+}
+
+:host ::ng-deep ga-leaflet-map {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  > .row {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+
+    > .col-12 {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 0;
     }
+  }
+
+  .leaflet-container {
+    flex: 1 1 auto;
+    height: auto !important;
+    border-radius: 0 !important;
+  }
+}
+
+@media only screen and (max-width: v.$break-lg) {
+  .location {
+    flex-direction: column;
+  }
+
+  .location__panel--form {
+    flex: 0 0 auto;
+  }
+
+  .location__panel--map {
+    flex: 0 0 22rem;
   }
 }

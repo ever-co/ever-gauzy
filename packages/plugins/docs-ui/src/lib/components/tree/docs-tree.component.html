@@ -1,0 +1,89 @@
+<div class="docs-tree">
+	<!-- Favorites -->
+	<ng-container *ngIf="favorites$ | async as favorites">
+		<div class="docs-tree-section" *ngIf="favorites.length">
+			<div class="docs-tree-section-title">{{ 'DOCS.TREE.FAVORITES' | translate }}</div>
+			<a class="docs-tree-link" *ngFor="let favorite of favorites" (click)="openFavorite(favorite)">
+				<nb-icon icon="star-outline" size="tiny"></nb-icon>
+				<span class="docs-tree-link-name">{{ favorite.title }}</span>
+			</a>
+		</div>
+	</ng-container>
+
+	<!-- Recents -->
+	<div class="docs-tree-section" *ngIf="recents.length">
+		<div class="docs-tree-section-title">{{ 'DOCS.TREE.RECENTS' | translate }}</div>
+		<a class="docs-tree-link" *ngFor="let recent of recents" (click)="openRecent(recent)">
+			<nb-icon
+				[icon]="recent.kind === kindEnum.FOLDER ? 'folder-outline' : recent.kind === kindEnum.PAGE ? 'file-text-outline' : 'file-outline'"
+				size="tiny"
+			></nb-icon>
+			<span class="docs-tree-link-name">{{ recent.name }}</span>
+		</a>
+	</div>
+
+	<!-- Tree -->
+	<div class="docs-tree-section docs-tree-main">
+		<!-- The section title doubles as the root crumb: drilled into a folder, this is the
+		     sidebar's way back to "everything" (`00-product-spec.md` §6.9 R-TRE-01). A real
+		     <button> so focus, Enter and Space come from the platform; the SCSS only undoes
+		     the user-agent chrome, so it still renders as the section label it always was. -->
+		<button type="button" class="docs-tree-section-title docs-tree-root" (click)="goToRoot()">
+			{{ 'DOCS.TREE.ALL_DOCUMENTS' | translate }}
+		</button>
+		<div class="docs-tree-empty" *ngIf="!nodes.length">
+			<span>{{ 'DOCS.TREE.EMPTY' | translate }}</span>
+			<!-- An empty tree has no node to raise a context menu on, so without these the
+			     first folder/page of a brand-new organization is unreachable from the sidebar. -->
+			<div class="docs-tree-empty-actions" *ngIf="canCreate">
+				<button nbButton ghost size="tiny" (click)="createAtRoot(kindEnum.FOLDER)">
+					{{ 'DOCS.TREE.NEW_FOLDER' | translate }}
+				</button>
+				<button nbButton ghost size="tiny" (click)="createAtRoot(kindEnum.PAGE)">
+					{{ 'DOCS.TREE.NEW_PAGE' | translate }}
+				</button>
+				<button nbButton ghost size="tiny" (click)="uploadHere()">
+					{{ 'DOCS.UPLOAD.BUTTON' | translate }}
+				</button>
+			</div>
+		</div>
+		<tree-root #tree [nodes]="nodes" [options]="options" (moveNode)="onMoveNode($event)" (activate)="onNodeActivate($event)">
+			<ng-template #treeNodeTemplate let-node let-index="index">
+				<span class="docs-tree-node">
+					<span class="docs-tree-node-icon" *ngIf="node.data.icon; else defaultIcon">{{ node.data.icon }}</span>
+					<ng-template #defaultIcon>
+						<nb-icon [icon]="kindIcon(node.data)" size="tiny" [style.color]="node.data.color || null"></nb-icon>
+					</ng-template>
+					<span class="docs-tree-node-name">{{ node.data.name }}</span>
+					<nb-icon
+						*ngIf="node.data.isLocked"
+						icon="lock-outline"
+						size="tiny"
+						class="docs-tree-node-badge"
+					></nb-icon>
+					<nb-icon
+						*ngIf="node.data.visibility === 'PRIVATE'"
+						icon="eye-off-outline"
+						size="tiny"
+						class="docs-tree-node-badge"
+						[nbTooltip]="'DOCS.VISIBILITY.PRIVATE' | translate"
+					></nb-icon>
+					<button
+						*ngIf="menuItemsFor(node.data).length"
+						nbButton
+						ghost
+						size="tiny"
+						class="docs-tree-node-menu"
+						[nbContextMenu]="menuItemsFor(node.data)"
+						[nbContextMenuTag]="menuTag(node.data)"
+						[attr.data-docs-node-menu]="node.data.id"
+						(click)="$event.stopPropagation()"
+						[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
+					>
+						<nb-icon icon="more-horizontal-outline" size="tiny"></nb-icon>
+					</button>
+				</span>
+			</ng-template>
+		</tree-root>
+	</div>
+</div>

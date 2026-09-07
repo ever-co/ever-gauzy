@@ -1,0 +1,161 @@
+:host {
+	display: block;
+}
+
+.docs-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1rem;
+	min-height: 12rem;
+}
+
+.docs-settings-header {
+	h4 {
+		margin: 0;
+	}
+}
+
+.muted {
+	color: var(--text-hint-color);
+	margin: 0;
+}
+
+.hint {
+	color: var(--text-hint-color);
+	font-size: 0.75rem;
+	margin-top: 0.25rem;
+
+	&.warn {
+		color: var(--text-warning-color);
+	}
+}
+
+.docs-storage-line {
+	margin-bottom: 0.5rem;
+	font-size: 0.875rem;
+
+	.docs-storage-percent {
+		margin-left: 0.375rem;
+		color: var(--text-hint-color);
+	}
+}
+
+.docs-storage-quota {
+	margin-top: 1rem;
+
+	.docs-storage-quota-field {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+
+		input {
+			width: 8rem;
+		}
+	}
+
+	.docs-storage-quota-unit {
+		color: var(--text-hint-color);
+		font-size: 0.875rem;
+	}
+}
+
+.label {
+	display: block;
+	margin-bottom: 0.25rem;
+	font-weight: 600;
+}
+
+.docs-settings-card {
+	margin: 0;
+}
+
+.docs-settings-card-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.docs-settings-error {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.docs-knowledge-banner {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+
+	.docs-knowledge-fact {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+
+		code {
+			font-size: 0.8125rem;
+		}
+	}
+}
+
+.docs-settings-row {
+	& + & {
+		margin-top: 1rem;
+	}
+}
+
+.docs-settings-meta {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.25rem 1rem;
+	margin: 0;
+
+	dt {
+		color: var(--text-hint-color);
+	}
+
+	dd {
+		margin: 0;
+	}
+}
+
+.docs-category-table {
+	width: 100%;
+	border-collapse: collapse;
+
+	th,
+	td {
+		padding: 0.5rem 0.375rem;
+		border-bottom: 1px solid var(--divider-color);
+		text-align: left;
+		vertical-align: middle;
+	}
+
+	th {
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		color: var(--text-hint-color);
+	}
+
+	.numeric {
+		text-align: right;
+		width: 6rem;
+	}
+
+	.actions {
+		text-align: right;
+		white-space: nowrap;
+		width: 9rem;
+	}
+}
+
+.docs-category-swatch {
+	display: inline-block;
+	width: 0.625rem;
+	height: 0.625rem;
+	margin-right: 0.375rem;
+	border-radius: 50%;
+	background: var(--text-hint-color);
+	vertical-align: middle;
+}

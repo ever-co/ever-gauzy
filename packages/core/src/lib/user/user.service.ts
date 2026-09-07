@@ -2,7 +2,13 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	Injectable,
+	NotFoundException,
+	UnauthorizedException
+} from '@nestjs/common';
 import {
 	InsertResult,
 	SelectQueryBuilder,
@@ -22,11 +28,14 @@ import {
 	IEmployee,
 	IFindMeUser,
 	IUser,
+	IUserUiPreferences,
+	IUserUiPreferencesUpdateInput,
 	LanguagesEnum,
 	PermissionsEnum,
 	RolesEnum,
 	UserStats
 } from '@gauzy/contracts';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
@@ -38,7 +47,14 @@ import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
+import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
 import { PasswordHashService } from '../password-hash/password-hash.service';
+import { assertRoleAssignmentAllowed } from './role-assignment.helper';
+import {
+	emailVerificationClaimWhere,
+	emailVerificationClaimWhereMikroOrm,
+	magicCodeClaimWhere
+} from '../shared/single-use/claim-criteria';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -256,6 +272,12 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExists(id: string): Promise<boolean> {
+		// An empty id must never reach the repository: `findOneBy({ id: undefined })` drops the predicate
+		// and returns the FIRST user row (see getIfExists) — for the JWT strategy that meant any token
+		// signed with JWT_SECRET but carrying no `id` claim authenticated as that user.
+		if (!id) {
+			return false;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return !!(await this.mikroOrmRepository.findOne({ id } as any));
@@ -272,6 +294,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
+		if (!thirdPartyId) {
+			return false;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return !!(await this.mikroOrmRepository.findOne({ thirdPartyId } as any));
@@ -284,10 +309,20 @@ export class UserService extends TenantAwareCrudService<User> {
 
 	/**
 	 * Retrieves a user with the given ID if it exists.
+	 *
+	 * The id MUST be present. TypeORM silently omits an `undefined` (and, before
+	 * TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR, a `null`) where value, so `findOneBy({ id: undefined })`
+	 * became `SELECT ... LIMIT 1` and returned an arbitrary user — the JWT strategy authenticated any
+	 * JWT_SECRET-signed token that had no `id` claim (invite / estimate / team-join / appointment /
+	 * magic-code tokens) as the first user in the table.
+	 *
 	 * @param {string} id - The ID of the user to retrieve.
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExists(id: string): Promise<User | undefined> {
+		if (!id) {
+			return undefined;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.findOne({ id });
@@ -305,6 +340,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExistsThirdParty(thirdPartyId: string): Promise<User | undefined> {
+		if (!thirdPartyId) {
+			return undefined;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.findOne({ thirdPartyId });
@@ -367,6 +405,11 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @throws ForbiddenException if the user lacks the required permissions or attempts unauthorized updates.
 	 */
 	async updateProfile(id: ID | number, entity: User): Promise<IUser> {
+		// The path id is authoritative. Every check below authorizes THIS id, and save() persists the
+		// entity's id — a body `id` (the update DTO is not whitelisted) must never re-point the write to
+		// another user (e.g. overwrite the SUPER_ADMIN's password hash from a PROFILE_EDIT account).
+		entity.id = id as ID;
+
 		// Retrieve the current user's role ID from the RequestContext
 		const currentRoleId = RequestContext.currentRoleId();
 		const currentUserId = RequestContext.currentUserId();
@@ -417,6 +460,11 @@ export class UserService extends TenantAwareCrudService<User> {
 				if (requestedRoleIds.some((roleId) => String(roleId) !== String(currentRoleId))) {
 					throw new ForbiddenException();
 				}
+			} else {
+				// Updating SOMEONE ELSE: granting SUPER_ADMIN is reserved to callers who may edit super
+				// admins (the same boundary the register handler and invite creation enforce). The role is
+				// resolved from the database — never from a client-supplied role name.
+				await this.assertCanAssignRoles([entity.role?.id, entity.roleId]);
 			}
 
 			// Update password hash if provided
@@ -491,6 +539,54 @@ export class UserService extends TenantAwareCrudService<User> {
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
 		}
+	}
+
+	/**
+	 * Merges a per-feature patch into the current user's stored UI preferences and persists it.
+	 *
+	 * SHALLOW merge per top-level feature key: each key present in `patch` replaces that feature's
+	 * whole object (`null` removes it); other features stay untouched, so independent features
+	 * never clobber each other. Only the CURRENT user (`RequestContext.currentUserId()`) can be
+	 * written — the endpoint carries no id on purpose.
+	 *
+	 * @param patch - Feature-keyed objects to replace (see `IUserUiPreferencesUpdateInput`).
+	 * @returns The merged preferences object as now stored.
+	 * @throws BadRequestException on structurally invalid input or an oversized blob.
+	 * @throws NotFoundException when the current user row cannot be read.
+	 */
+	async updateUiPreferences(patch: IUserUiPreferencesUpdateInput): Promise<IUserUiPreferences> {
+		const userId = RequestContext.currentUserId();
+
+		let clean: IUserUiPreferencesUpdateInput;
+		try {
+			clean = sanitizeUiPreferencesPatch(patch);
+		} catch (error) {
+			throw new BadRequestException(error?.message ?? 'Invalid uiPreferences patch');
+		}
+
+		let user: IUser;
+		try {
+			// TenantAwareCrudService scopes the lookup to the caller's tenant.
+			user = await this.findOneByIdString(userId);
+		} catch (err) {
+			throw new NotFoundException(`The record was not found`, err);
+		}
+
+		const merged = mergeUiPreferences(user.uiPreferences, clean);
+		try {
+			assertUiPreferencesSize(merged);
+		} catch (error) {
+			throw new BadRequestException(error?.message);
+		}
+
+		// `repository.update()` bypasses entity subscribers, so the SQLite text column must be
+		// serialized here (same rule as `ActivityLogService.create`). Postgres/MySQL drivers
+		// serialize json/jsonb columns themselves.
+		const value =
+			isSqlite() || isBetterSqlite3() ? (JSON.stringify(merged) as unknown as IUserUiPreferences) : merged;
+		await this.update(userId, { uiPreferences: value } as any);
+
+		return merged;
 	}
 
 	/**
@@ -599,25 +695,72 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Invalidates the magic sign-in code for all users matching the given email and code.
-	 * Called after a successful workspace sign-in to prevent code reuse.
+	 * Atomically claims a user's email-verification code, enforcing single use.
+	 *
+	 * The code and its expiry stay in the WHERE clause, so the write is its own check: the first
+	 * caller nulls the code and gets 1, and a request racing it matches nothing and gets 0. Keeping
+	 * `codeExpireAt` in the predicate also closes the window where a lookup and a claim straddle
+	 * the expiry boundary, which a claim scoped only by id and code would let through.
+	 *
+	 * This deliberately goes straight to the repositories rather than through `update()`. Email
+	 * confirmation is a PUBLIC endpoint, and `TenantAwareCrudService.update` routes object criteria
+	 * to `findOneByWhereOptions`, which dereferences `RequestContext.currentUser().tenantId` — on an
+	 * unauthenticated request there is no current user, so that path throws. The tenant comes from
+	 * the verified payload instead, which is both safe here and stricter than an id-only claim.
+	 *
+	 * @param id - The user whose code is being claimed.
+	 * @param code - The verification code being consumed.
+	 * @param tenantId - The tenant the code was issued for.
+	 * @returns 1 if this call claimed the code, 0 if it was already used or has expired.
+	 */
+	async claimEmailVerificationCode(id: ID, code: string, tenantId: ID): Promise<number> {
+		const now = new Date();
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.nativeUpdate(
+					emailVerificationClaimWhereMikroOrm(id, code, tenantId, now) as any,
+					{ code: null, codeExpireAt: null } as any
+				);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update(
+					emailVerificationClaimWhere(id, code, tenantId, now),
+					{ code: null, codeExpireAt: null }
+				);
+				return affected ?? 0;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Atomically claims the magic sign-in code for every user matching the given email and code.
+	 *
+	 * The code stays in the WHERE clause, which is what makes this the single-use claim rather
+	 * than mere cleanup: the first caller nulls the code and gets a non-zero row count, and any
+	 * request racing it matches nothing and gets 0. One email can exist in several tenants, so a
+	 * winning claim may cover more than one row — hence a count rather than a boolean.
+	 *
+	 * Callers MUST gate on the return value before handing out sign-in tokens. Treating this as
+	 * fire-and-forget cleanup lets two concurrent requests both authenticate off one code.
 	 *
 	 * @param email - The email address used for the sign-in.
-	 * @param code  - The magic code that was consumed.
-	 * @returns A promise that resolves when the invalidation write completes.
+	 * @param code  - The magic code being consumed.
+	 * @returns The number of user rows claimed; 0 means the code was already consumed.
 	 */
-	async invalidateMagicCode(email: string, code: string): Promise<void> {
+	async invalidateMagicCode(email: string, code: string): Promise<number> {
 		// Common criteria and payload shared by both ORM adapters
-		const where = { email, code };
+		const where = magicCodeClaimWhere(email, code);
 		const update = { code: null, codeExpireAt: null };
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				await this.mikroOrmUserRepository.nativeUpdate(where, update);
-				break;
-			case MultiORMEnum.TypeORM:
-				await this.typeOrmUserRepository.update(where, update);
-				break;
+				return await this.mikroOrmUserRepository.nativeUpdate(where, update);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update(where, update);
+				return affected ?? 0;
+			}
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
 		}
@@ -698,6 +841,61 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	private async getPasswordHash(password: string): Promise<string> {
 		return this._passwordHashService.hash(password);
+	}
+
+	/**
+	 * Refuses a payload that assigns a role the caller may not grant.
+	 *
+	 * @param roleIds Every role identifier in the payload — both the flat `roleId` and `role.id`.
+	 * @throws BadRequestException When an id does not resolve inside the caller's tenant.
+	 * @throws ForbiddenException When SUPER_ADMIN is requested without `SUPER_ADMIN_EDIT`.
+	 */
+	public async assertCanAssignRoles(roleIds: Array<ID | undefined>): Promise<void> {
+		// EVERY candidate is checked, not just the first: the entity carries both a `role` relation and a
+		// flat `roleId` column, and the RELATION wins when the row is persisted — so a body sending a
+		// harmless `roleId` next to a privileged `role: { id }` must not validate the harmless one.
+		const candidates = roleIds.filter((roleId) => isNotEmpty(roleId)) as ID[];
+		const canEditSuperAdmin = RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT);
+		for (const roleId of candidates) {
+			assertRoleAssignmentAllowed(await this.resolveRoleName(roleId), canEditSuperAdmin);
+		}
+	}
+
+	/**
+	 * Resolves the name of a role of the caller's tenant from the database (by entity name, to avoid
+	 * a role -> user -> role import cycle). Returns undefined for an unknown / foreign role.
+	 *
+	 * @param roleId The role id to resolve.
+	 */
+	public async resolveRoleName(roleId: ID): Promise<string | undefined> {
+		if (!roleId) {
+			return undefined;
+		}
+		const tenantId = RequestContext.currentTenantId();
+
+		// Fail CLOSED with no tenant context. `...(tenantId ? { tenantId } : {})` would drop the
+		// predicate entirely and resolve roles across every tenant in the database — the caller then
+		// gets a name for a role it has no claim to, and the SUPER_ADMIN gate reads as satisfied.
+		// An unresolved name makes `assertRoleAssignmentAllowed` throw, which is the safe outcome.
+		if (!tenantId) {
+			return undefined;
+		}
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const role = await this.mikroOrmRepository
+					.getEntityManager()
+					.findOne('Role', { id: roleId, tenantId } as any);
+				return (role as any)?.name;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const role = await this.typeOrmRepository.manager.findOne('Role', {
+					where: { id: roleId, tenantId } as any
+				});
+				return (role as any)?.name;
+			}
+		}
 	}
 
 	/**

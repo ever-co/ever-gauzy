@@ -1,6 +1,30 @@
 import { TlsOptions } from 'tls';
+import type { DataSourceOptions } from 'typeorm';
 
 export type MikroLoggerNamespace = 'query' | 'query-params' | 'schema' | 'discovery' | 'info';
+
+/**
+ * How TypeORM treats `null` and `undefined` values inside `find*` / `count*` / `exists*` and
+ * `update` / `delete` / `softDelete` criteria (`where`) objects. TypeORM ≥ 1.0 defaults both to
+ * `'throw'`; this is the ONE place the application overrides that, and every TypeORM connection
+ * profile in `database.ts` must use it.
+ *
+ * - `undefined: 'ignore'` — an `undefined` value omits the key. That is the optional-filter idiom
+ *   used throughout the codebase (`where: { tenantId, organizationId }` where `organizationId` may
+ *   legitimately be undefined) and matches TypeORM 0.3.
+ * - `null: 'sql-null'` — a `null` value emits `"column" IS NULL` (columns and relations alike),
+ *   i.e. TypeORM ≤ 0.2 and MikroORM semantics, so a `where` object shared by both ORM branches
+ *   means the same thing on both.
+ *
+ * `null` MUST NEVER be `'ignore'`. That silently drops the predicate, so a lookup such as
+ * `{ tenantId: null, organizationId: null }` (meaning "the global, tenant-less row") matches EVERY
+ * tenant's rows — a cross-tenant data-isolation failure (GHSA-44pv-34gx-q9p4). `'sql-null'` is
+ * fail-closed: a null can only ever narrow a query, never widen it. Application code should still
+ * spell the intent out with the explicit `IsNull()` operator; this setting is the safety net for
+ * anything that does not.
+ */
+export const TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR: NonNullable<DataSourceOptions['invalidWhereValuesBehavior']> =
+	Object.freeze({ null: 'sql-null', undefined: 'ignore' } as const);
 
 export enum DatabaseTypeEnum {
 	mongodb = 'mongodb',

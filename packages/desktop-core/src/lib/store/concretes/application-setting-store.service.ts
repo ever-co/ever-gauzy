@@ -32,8 +32,11 @@ export class ApplicationSettingStoreService extends StoreService implements ISto
 			automaticUpdateDelay: 1, // hour
 			timerStarted: false,
 			cdnUpdater: {
-				github: false,
-				digitalOcean: true
+				// The DigitalOcean Spaces CDN update feed (ever.sfo3.cdn.digitaloceanspaces.com)
+				// was decommissioned; GitHub Releases is the only live feed. Default new installs
+				// to GitHub so they never poll the dead CDN.
+				github: true,
+				digitalOcean: false
 			},
 			prerelease: false,
 			preferredLanguage: 'en',

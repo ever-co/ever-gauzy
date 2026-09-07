@@ -1,5 +1,6 @@
 .grid-boundary {
   display: flex;
+  flex-wrap: wrap;
   margin: 0 -0.5rem;
 
   ga-widget {

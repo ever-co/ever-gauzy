@@ -1,20 +1,52 @@
 <nb-accordion *ngxPermissionsOnly="item?.data?.permissionKeys" [class]="item?.class" [class.closed]="!state">
 	<nb-accordion-item [collapsed]="collapse" (collapsedChange)="onCollapse($event)" [class.opened]="selected">
-		@if (!state) {
+		<!-- Collapsed rail. The two variants are SIBLING blocks, never an @if nested in an @if:
+		     nb-accordion-item projects by selector only (`select="nb-accordion-item-header"`, no
+		     catch-all slot), and Angular can infer the slot for a control-flow block only when the
+		     block's single root node is the element itself. Wrapping these in an outer @if makes
+		     that root a container instead, the header matches no slot, and the whole row — icon
+		     included — is dropped. Nothing else may join them inside a block either — a comment is
+		     a second root node, which costs the header its slot just as surely.
+
+		     A rail row is a bare glyph, so its title has to be spoken by `aria-label`; and the
+		     child-bearing variant hides its sub-links behind a HOVER popover, so the keyboard needs
+		     its own way in: focus shows the same panel, Escape dismisses it, and Enter/Space expand
+		     the sidebar so the child rows land in the tab order (an overlay parked at the end of the
+		     document never does).
+
+		     The panel's state rides on `aria-controls`, present only while it is actually up, NOT on
+		     `aria-expanded`: nb-accordion-item-header host-binds that one to the ACCORDION's expanded
+		     state, and a second binding here would either be overridden or, worse, win and lie about
+		     the accordion. `aria-controls` names the live panel without touching it. -->
+		@if (!state && hasChildren) {
 		<nb-accordion-item-header
+			role="button"
+			[attr.aria-label]="item?.title"
+			[attr.aria-controls]="isRailFlyoutShown ? railFlyoutId : null"
+			[nbPopover]="railFlyout"
+			nbPopoverTrigger="hover"
+			nbPopoverPlacement="end-bottom"
+			[nbPopoverOffset]="16"
+			nbPopoverClass="gz-rail-flyout"
+			[class.collapsed]="onCollapse"
+			(click)="redirectTo()"
+			(focus)="showRailFlyout()"
+			(blur)="closeRailFlyout()"
+			(keydown.enter)="expandRailSubmenu($event)"
+			(keydown.space)="expandRailSubmenu($event)"
+			(keydown.escape)="closeRailFlyout()"
+		>
+			<i [class]="item?.icon"></i>
+		</nb-accordion-item-header>
+		} @if (!state && !hasChildren) {
+		<nb-accordion-item-header
+			[attr.aria-label]="item?.title"
 			[gaTooltip]="item?.title"
 			[icon]="item?.icon"
 			[class.collapsed]="onCollapse"
 			(click)="redirectTo()"
 		>
 			<i [class]="item?.icon"></i>
-			@if (state) {
-			<span>
-				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
-					{{ item?.title }}
-				</a>
-			</span>
-			}
 		</nb-accordion-item-header>
 		} @if (state) {
 		<nb-accordion-item-header
@@ -24,19 +56,16 @@
 			(click)="redirectTo()"
 		>
 			<i [class]="item?.icon"></i>
-			@if (state) {
 			<span>
 				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
 					{{ item?.title }}
 				</a>
 			</span>
-			}
 		</nb-accordion-item-header>
-		} @if (item?.children?.length > 0) {
+		} @if (hasChildren) {
 		<nb-accordion-item-body [class.item-collapsed]="!state">
-			@for (subItem of item.children; track subItem?.title) {
+			@for (subItem of visibleChildren; track subItem?.title) {
 			<div>
-				@if (!item?.hidden) {
 				<ga-children-menu-item
 					[id]="subItem?.id"
 					[item]="subItem"
@@ -45,10 +74,34 @@
 					[selected]="subItem === selectedChildren && selected"
 					(focusItemChange)="focusOn($event)"
 				></ga-children-menu-item>
-				}
 			</div>
 			}
 		</nb-accordion-item-body>
 		}
 	</nb-accordion-item>
 </nb-accordion>
+
+<ng-template #railFlyout>
+	<div class="rail-flyout" [id]="railFlyoutId" role="group" [attr.aria-label]="item?.title">
+		<div class="rail-flyout-title">{{ item?.title }}</div>
+		<!-- `mousedown` is swallowed so the press never moves focus off the rail header: the panel is
+		     dismissed on that header's `blur`, and blur fires on mousedown — BEFORE the click — so a
+		     pointer user who had focused the icon would watch the overlay disappear out from under the
+		     press, taking the row's click handler with it. Preventing the default keeps focus put; the
+		     click still lands, and the row list closes the panel itself once it has. -->
+		<div class="rail-flyout-items" (mousedown)="$event.preventDefault()" (click)="closeRailFlyout()">
+			@for (subItem of visibleChildren; track subItem?.title) {
+			<ga-children-menu-item
+				class="rail-flyout-row"
+				[item]="subItem"
+				[parent]="item"
+				[collapse]="true"
+				[tooltipDisabled]="true"
+				[trackActiveRoute]="false"
+				[selected]="subItem === selectedChildren && selected"
+				(focusItemChange)="focusOn($event)"
+			></ga-children-menu-item>
+			}
+		</div>
+	</div>
+</ng-template>

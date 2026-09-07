@@ -18,10 +18,7 @@ export class CandidateUpdateHandler
 		try {
 			//We are using create here because create calls the method save()
 			//We need save() to save ManyToMany relations
-			return await this.candidateService.create({
-				id,
-				...input
-			});
+			return await this.candidateService.create({ ...input, id });
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

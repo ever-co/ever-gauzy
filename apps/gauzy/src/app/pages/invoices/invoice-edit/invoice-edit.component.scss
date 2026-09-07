@@ -166,6 +166,13 @@ div.button-action {
   }
 }
 
+// Record-side Documents panel: its own card, separated from the item grid and
+// the total chips above it (mirrors invoice-view.component.scss).
+.invoice-documents {
+  display: block;
+  margin-top: 1rem;
+}
+
 :host button.gray {
   background-color: rgba(126, 126, 143, 1);
   color: nb-theme(text-control-color);

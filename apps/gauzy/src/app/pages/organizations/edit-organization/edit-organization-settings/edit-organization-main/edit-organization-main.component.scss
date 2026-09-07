@@ -28,7 +28,11 @@
   transition: transform 150ms ease-in-out;
   background-color: rgba(126, 126, 143, 0.1);
   border-radius: nb-theme(border-radius);
-  width: 563px;
+  // The 563px panel is the intended width, but the layout column loses up to
+  // 860px to the expanded AI chat: cap it at the space there is and let it
+  // shrink (it is a flex item of `.content`).
+  width: min(563px, 100%);
+  min-width: 0;
   height: 100%;
 
   .organization-photo {

@@ -15,27 +15,36 @@ name: Playwright Tests
 #   run 30330950619  bootstrap failed after 9 min
 #
 # So the split follows the cost: `yarn bootstrap` (8.9 GB / ~900k files) is isolated in its own
-# job and published to the Actions cache, the two compile steps run in a second job, and the test
-# jobs compile NOTHING — they download the prebuilt bundles, boot them and run one shard each.
-# An evicted pod now costs a single phase, and a re-run of a failed job reuses the cached
-# node_modules + the uploaded bundles instead of redoing everything.
+# job and published as a compressed ARTIFACT, the two compile steps run in a second job, and the
+# test jobs compile NOTHING — they unpack that artifact, download the prebuilt bundles, boot them
+# and run one shard each. An evicted pod now costs a single phase, and a re-run of a failed job
+# reuses the published node_modules + bundles instead of redoing everything.
 on:
-  # Run the e2e suite ONLY when code lands on develop (merge/push). Deliberately NOT on pull_request or
-  # any other branch: the suite is long and shared-DB flaky, so it's gated to the integration
-  # branch. Use the manual "Run workflow" button (workflow_dispatch) to run it on demand from any ref.
+  # Run the e2e suite ONLY when code lands on STAGE. Deliberately NOT on pull_request, and NOT on
+  # develop: the suite is long (hours) and shared-DB flaky, and running it on every develop push spent
+  # that cost on code that was not yet a release candidate. Contributors run it locally before
+  # pushing; this is the last gate before production, so that is where it belongs.
+  # Use the manual "Run workflow" button (workflow_dispatch) to run it on demand from any ref.
   push:
-    branches: [develop]
+    branches: [stage]
   workflow_dispatch:
 
-# Least-privilege GITHUB_TOKEN (CodeQL: a workflow should limit the token's permissions). These jobs
-# only check out code and run tests against a locally-started stack — they need no write scopes.
-# (Same-run artifact upload/download authenticates with the Actions runtime token, not this one.)
-permissions:
-  contents: read
+# Least-privilege GITHUB_TOKEN, granted PER JOB rather than workflow-wide: only `cleanup` needs to
+# delete an artifact, so only `cleanup` gets `actions: write`. The test jobs check out code and run
+# against a locally-started stack, so they need no write scopes at all. (Same-run artifact
+# upload/download authenticates with the Actions runtime token, not this one.)
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
+
+env:
+  # The dependency tree travels between jobs as this one file. Deliberately a workspace-relative
+  # name: `runner.temp` is not available to workflow-level `env` (only the github/vars/inputs
+  # contexts are), and a relative path means the same string works both for `tar` in a `run` step and
+  # for upload/download-artifact. It sits at the workspace ROOT, so it is never inside any of the
+  # `node_modules` directories being archived.
+  NODE_MODULES_ARCHIVE: e2e-node-modules.tar.zst
 
 jobs:
   # ---------------------------------------------------------------------------------------------
@@ -43,43 +52,53 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   deps:
     name: Install dependencies
+    permissions:
+      contents: read
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
-    # Cold path (cache miss) is the whole budget: bootstrap alone has been measured at 88 min and
-    # once at 3 h 28 on these runners, plus the cache save of a ~9 GB tree. Warm path is a no-op
-    # (~2 min). Nothing else runs here, so an eviction costs only the install.
-    timeout-minutes: 240
-    outputs:
-      # Single source of truth for the cache key — every downstream job restores with this exact
-      # value, so a key change can never silently split the cache.
-      node-modules-key: ${{ steps.cache-key.outputs.value }}
+    # `yarn bootstrap` is the whole budget here: measured at 88 min, 3 h 20 m and 3 h 46 m on these
+    # runners. This job exists so that cost is paid ONCE per run — everything downstream unpacks the
+    # archive it publishes. Nothing else runs here, so an evicted pod costs only the install.
+    #
+    # 360, not 240: 3 h 46 m of bootstrap left only ~14 minutes of the old budget for the new
+    # compress + upload phases, and ~900k files do not tar in 14 minutes. A deps timeout publishes
+    # nothing, so every downstream job would bootstrap independently — the exact failure this job
+    # exists to prevent, reappearing only on the slow runs where it hurts most. The ceiling costs
+    # nothing on a fast run.
+    timeout-minutes: 360
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Compute node_modules cache key
-        id: cache-key
-        shell: bash
-        run: echo "value=${{ runner.os }}-${{ runner.arch }}-e2e-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}" >> "$GITHUB_OUTPUT"
+      # NO actions/cache here, deliberately — see the archive step below. The budget is full of
+      # caches that other workflows genuinely need, and writing this one would evict them.
 
-      - name: Restore node_modules cache
-        id: cache
-        uses: actions/cache/restore@v5
+      # Point yarn at the internal Verdaccio VIP before the heaviest install in the fleet. This
+      # job is self-documented at 88 min, 3h20m and 3h46m, and every byte of it currently crosses
+      # the WAN to the public registry: the repo .npmrc pins registry.yarnpkg.com and nothing here
+      # overrode it.
+      #
+      # The action appends to .npmrc/.yarnrc AND rewrites the resolved URLs in yarn.lock. The
+      # rewrite is the load-bearing half: yarn v1 fetches the URL recorded in the lockfile and
+      # ignores the registry setting, so a config-only change here would be a measurable no-op.
+      # Verified separately that this does NOT break --frozen-lockfile: yarn compares package.json
+      # patterns against lockfile entries, and the resolved host is not part of that comparison.
+      #
+      # The action probes the VIP and falls back to the public registry, so a MetalLB speaker flap
+      # costs a slow install rather than a red build. Safe to place here: unlike build.yml, this
+      # workflow deliberately has NO actions/cache, so rewriting yarn.lock cannot move a cache key.
+      - name: Configure Registry
+        uses: ./.github/actions/configure-registry
         with:
-          # yarn workspaces hoist to the root, but package.json `nohoist` (@angular*, @ngtools,
-          # @types/jasmine*) keeps per-workspace copies — cache those too or the restored tree is
-          # incomplete and Angular builds fail. Exact key only, never restore-keys: a partially
-          # matching node_modules is worse than no node_modules.
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-            packages/plugins/*/node_modules
-            tools/node_modules
-          key: ${{ steps.cache-key.outputs.value }}
-
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # NOT contains(matrix.os, ...) as the app workflows use: this workflow defines no
+          # matrix.os (its only matrix key is shard), so that expression collapses to false and
+          # silently disables the in-network VIP retry and its warning. Derive it from the runner
+          # variable this job actually uses instead.
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
       - name: Install Packages & Bootstrap
-        if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         # Retry once: run 30330950619 died here after 9 min. A transient registry/FS hiccup on
         # these container runners is common and the second attempt reuses whatever yarn already
@@ -88,25 +107,48 @@ jobs:
           yarn bootstrap \
             || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
 
-      - name: Save node_modules cache
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v5
-        # Explicit save (not the combined actions/cache post-step) so a FAILED bootstrap can never
-        # publish a half-installed tree: this step only runs when every step above succeeded.
+      - name: Archive node_modules
+        shell: bash
+        # Pack the whole dependency tree into a SINGLE compressed file and hand it to the other jobs
+        # as an ARTIFACT rather than a cache.
+        #
+        # This used to cache the exploded tree (~9 GB, ~900k files) against a 10 GB repository
+        # budget. Measured, not assumed:
+        #   - ACROSS runs it never survived. deps paid a cold bootstrap every time — 3 h 20 m on run
+        #     31848093657, 3 h 46 m on 31889575135.
+        #   - WITHIN a run it was a coin flip. On 31848093657 all four shards hit it; on 31889575135
+        #     the build job hit it and shard 2 missed an hour later, started its own bootstrap, and
+        #     was killed at the 120-minute job timeout 1 h 58 m in. All four shards died that way and
+        #     the 12 h 34 m run produced ZERO test results.
+        #
+        # Shares its implementation with build.yml — see the script.
+        run: .github/scripts/archive-node-modules.sh
+
+      - name: Upload node_modules archive
+        uses: actions/upload-artifact@v7
+        # The handoff. An artifact is scoped to this run and cannot be evicted mid-run by another
+        # workflow's cache write, which is what left shard 2 of run 31889575135 doing its own
+        # bootstrap an hour after deps had published the tree.
         with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-            packages/plugins/*/node_modules
-            tools/node_modules
-          key: ${{ steps.cache-key.outputs.value }}
+          name: e2e-node-modules
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          # Matches `e2e-dist` below: a shard needs BOTH artifacts, so retaining this one longer than
+          # the bundles would not widen the re-run window by a single hour.
+          retention-days: 1
+          compression-level: 0 # already zstd/gzip compressed; re-zipping only burns CPU
+          if-no-files-found: error
+          # Artifacts persist across run ATTEMPTS, so without this a re-run's upload is rejected with
+          # a non-retryable 409 — failing deps at its last step, after the multi-hour bootstrap has
+          # already been paid.
+          overwrite: true
 
   # ---------------------------------------------------------------------------------------------
   # 2) build — compile the API bundle and the static web bundle. No tests run here.
   # ---------------------------------------------------------------------------------------------
   build:
     name: Build API + Web
+    permissions:
+      contents: read
     needs: deps
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     # Observed: build:package:all 7-13 min, web build >47 min (it never finished before the pod
@@ -118,28 +160,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Restore node_modules cache
-        id: cache
-        uses: actions/cache/restore@v5
+      - name: Download node_modules archive
+        id: archive
+        uses: actions/download-artifact@v8
+        # From THIS run, so it cannot have been evicted by another workflow's cache write.
+        continue-on-error: true
         with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-            packages/plugins/*/node_modules
-            tools/node_modules
-          key: ${{ needs.deps.outputs.node-modules-key }}
+          name: e2e-node-modules
 
-      - name: Install Packages & Bootstrap (cache fallback)
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Restore node_modules
         shell: bash
-        # Safety net only — `deps` just populated this key. A miss here means the Actions cache
-        # service is not usable from these runners, which is worth shouting about because every
-        # job then pays the full install again.
-        run: |
-          echo "::warning::node_modules cache miss — falling back to a full bootstrap (1-3 h on these runners)."
-          yarn bootstrap \
-            || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
+        # Unpacks the archive `deps` published, or bootstraps if it is unavailable. One step, and one
+        # copy shared with the other consumer — see the script for why it is not two.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Size the Node heap to this container
         shell: bash
@@ -304,6 +337,8 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   e2e-playwright:
     name: e2e (shard ${{ matrix.shard }})
+    permissions:
+      contents: read
     needs: [deps, build]
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     # Fixed cost per shard is ~25 min (cache restore + artifact download + browser install + the
@@ -326,27 +361,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Restore node_modules cache
-        id: cache
-        uses: actions/cache/restore@v5
+      - name: Download node_modules archive
+        id: archive
+        uses: actions/download-artifact@v8
+        continue-on-error: true
         with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-            packages/plugins/*/node_modules
-            tools/node_modules
-          key: ${{ needs.deps.outputs.node-modules-key }}
+          name: e2e-node-modules
 
-      - name: Install Packages & Bootstrap (cache fallback)
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Restore node_modules
         shell: bash
-        # node_modules is still needed at runtime here: the API bundle keeps third-party deps
-        # external, and Playwright/playwright-bdd run from it.
-        run: |
-          echo "::warning::node_modules cache miss — falling back to a full bootstrap (1-3 h on these runners)."
-          yarn bootstrap \
-            || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
+        # Unpacks the archive `deps` published, or bootstraps if it is unavailable. One step, and one
+        # copy shared with the other consumer — see the script for why it is not two.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Install forever package
         shell: bash
@@ -494,4 +520,49 @@ jobs:
           # One report per shard — download all four to triage a full run.
           name: playwright-report-shard-${{ matrix.shard }}
           path: apps/gauzy-e2e/playwright-report
-          retention-days: 14
+          # 1 day, matching every other artifact here. Four of these per run share the org's Actions
+          # storage with the ~2.87 GB dependency archive; at 14 days they had grown to 3.72 GB across
+          # 100 copies and tipped the quota over, which stops NEW reports uploading — the accumulated
+          # diagnostics evict the diagnostic you actually need, exactly when a run has gone red.
+          # Download the report while triaging (`gh run download <id> -n playwright-report-shard-N`);
+          # a re-run regenerates it.
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------------------------
+  # 4) cleanup — delete the dependency artifact as soon as nothing needs it again.
+  # ---------------------------------------------------------------------------------------------
+  cleanup:
+    name: Delete node_modules artifact
+    permissions:
+      contents: read
+      actions: write # deletes this run's node_modules artifact
+    needs: [deps, build, e2e-playwright]
+    # `always()`: the tree is just as useless after a failed shard, and leaving ~3 GB behind on a red
+    # run is how the quota filled in the first place.
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Delete e2e-node-modules
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # Self-hosted runners provide COMPUTE, not storage: upload-artifact always ships to GitHub's
+        # own storage and bills the org's Actions quota, so a ~3 GB tree per run accumulates until
+        # "Artifact storage quota has been hit" — which is exactly what stopped the Playwright REPORTS
+        # uploading on run 32285142151, blinding the diagnosis on a red run. Retention is already the
+        # 1-day minimum; the only real fix is deleting it the moment the last consumer is done.
+        run: |
+          set -euo pipefail
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="e2e-node-modules") | .id')
+          if [ -z "$ids" ]; then
+            echo "no e2e-node-modules artifact on this run"; exit 0
+          fi
+          for id in $ids; do
+            if gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" >/dev/null 2>&1; then
+              echo "deleted artifact $id"
+            else
+              echo "::warning::could not delete artifact $id — already gone?"
+            fi
+          done

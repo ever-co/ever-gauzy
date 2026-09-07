@@ -1158,6 +1158,21 @@
 		"START_SERVER": "Iniciar servidor",
 		"STOP_SERVER": "Detener servidor."
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Interfaz de usuario",
+			"DESCRIPTION": "Elija qué interfaz usan todos los usuarios de este inquilino para las páginas disponibles en ambas variantes.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (predeterminado)",
+				"REACT": "React (nuevo)"
+			},
+			"HINT": "Se aplica a todo el inquilino, en todos los dispositivos. Hoy el panel de seguimiento de tiempo está disponible en ambas interfaces; seguirán más páginas.",
+			"READ_ONLY": "Solo los administradores del inquilino pueden cambiar esta configuración.",
+			"SAVING": "Guardando…",
+			"SAVED": "Preferencia de interfaz guardada",
+			"SAVE_ERROR": "No se pudo guardar la preferencia de interfaz."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Temas",
 		"LIGHT": "Luz",
@@ -1190,7 +1205,9 @@
 		"CARDS_GRID": "Cuadrícula de Tarjetas",
 		"SPRINT_VIEW": "Sprint View",
 		"QUICK_SETTINGS": "Configuración rápida",
-		"NO_LAYOUT": "No hay diseño de datos disponible"
+		"NO_LAYOUT": "No hay diseño de datos disponible",
+		"PREFERENCES": "Preferencias",
+		"SUPPORT": "Soporte"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "¿Qué hay de nuevo?",
@@ -3317,7 +3334,11 @@
 		"STOP_TIMER": "Detener temporizador",
 		"TIME_LOG": "Registro de tiempo",
 		"VIEW_APPOINTMENTS": "Ver citas",
-		"VIEW_TIME_ACTIVITY": "Ver actividad de tiempo"
+		"VIEW_TIME_ACTIVITY": "Ver actividad de tiempo",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nueva página",
+			"UPLOAD": "Subir"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Contabilidad",
@@ -3325,7 +3346,8 @@
 		"PROJECT_MANAGEMENT": "Gestión de proyectos",
 		"JOBS": "Trabajos",
 		"CONTACTS": "Contactos",
-		"TIME_TRACKING": "Seguimiento del tiempo"
+		"TIME_TRACKING": "Seguimiento del tiempo",
+		"DOCUMENTS": "Documentos"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Nombre",
@@ -3634,7 +3656,9 @@
 		"SELECT_AN_ORGANIZATION": "Organización",
 		"SELECT_PROJECT": "Proyecto",
 		"SELECT_TEAM": "Equipo",
-		"AI_CHAT": "Chat de IA"
+		"AI_CHAT": "Chat de IA",
+		"COLLAPSE_SIDEBAR": "Contraer la barra lateral",
+		"EXPAND_SIDEBAR": "Expandir la barra lateral"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Asistente de IA",
@@ -3660,6 +3684,12 @@
 		"STOP": "Detener la generación",
 		"ERROR": "Algo salió mal.",
 		"RETRY": "Reintentar",
+		"DICTATION_FAILED": "No se pudo transcribir la grabación.",
+		"DICTATION_NOT_CONFIGURED": "El dictado necesita un proveedor de voz. Añade uno en la página de ajustes «Proveedores de IA».",
+		"DICTATION_ASK_ADMIN": "El dictado necesita un proveedor de voz: pide a un administrador que añada uno en Ajustes → Proveedores de IA.",
+		"DICTATION_KEY_REJECTED": "El proveedor de voz rechazó su clave de API. Actualízala en la página de ajustes «Proveedores de IA».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "El proveedor de voz rechazó su clave de API: pide a un administrador que la actualice en Ajustes → Proveedores de IA.",
+		"DICTATION_OPEN_SETTINGS": "Abrir Proveedores de IA",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
@@ -3675,6 +3705,21 @@
 		"REDIRECT_TO_HOME": "Serás redirigido a la página de inicio pronto"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Encuentra documentación, obtén respuestas y contacta al equipo detrás de Gauzy.",
+		"DOCUMENTATION": "Documentación",
+		"DOCUMENTATION_DESC": "Guías y referencia para cada función de Gauzy.",
+		"FAQ": "Preguntas frecuentes",
+		"FAQ_DESC": "Respuestas a las preguntas más frecuentes.",
+		"SUPPORT_CHAT": "Chat de soporte",
+		"SUPPORT_CHAT_DESC": "Chatea con nuestro equipo de soporte.",
+		"REPORT_ISSUE": "Informar de un problema",
+		"REPORT_ISSUE_DESC": "¿Encontraste un error? Abre un issue en GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Código fuente, versiones y discusiones.",
+		"WEBSITE": "Sitio web de Gauzy",
+		"WEBSITE_DESC": "Más información sobre la plataforma Gauzy.",
+		"ABOUT_LINK": "Acerca de Gauzy",
+		"ABOUT_LINK_DESC": "Detalles de versión, licencia y enlaces.",
 		"HELP": "Ayuda",
 		"KNOWLEDGE_BASE": "Base de conocimientos",
 		"CHOSE_ICON": "Elija un icono para establecer.",
@@ -3985,6 +4030,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Todos los derechos reservados.",
+		"DESCRIPTION": "Ever® Gauzy™ es una plataforma abierta de gestión empresarial para economías colaborativas, bajo demanda y compartidas — ERP, CRM, HRM, ATS y gestión de proyectos con seguimiento de tiempo integrado.",
+		"LICENSE": "Código abierto, publicado bajo la licencia",
+		"VERSION_DETAILS": "Detalles de la versión",
+		"VERSION_MISMATCH": "La aplicación web y la API se construyeron a partir de commits diferentes — puede que haya un despliegue en curso.",
+		"WEB_APP": "Aplicación web",
+		"API": "API",
+		"UNTAGGED": "build sin etiqueta",
+		"API_UNAVAILABLE": "Versión de la API no disponible",
+		"LEARN_MORE": "Más información",
 		"ABOUT": "Sobre"
 	},
 	"FOOTER": {
@@ -5342,7 +5397,15 @@
 		"HOTKEYS": "Atajos de teclado.",
 		"HELP": "Ayuda",
 		"SIGN_OUT": "Cerrar sesión",
-		"PROFILE": "Perfil"
+		"PROFILE": "Perfil",
+		"ACCOUNT": "Cuenta",
+		"PREFERENCES": "Preferencias",
+		"DOWNLOAD_APPS": "Descargar aplicaciones",
+		"DOWNLOAD_MACOS": "Descargar para macOS",
+		"DOWNLOAD_WINDOWS": "Descargar para Windows",
+		"DOWNLOAD_LINUX": "Descargar para Linux",
+		"DOWNLOAD_MOBILE": "Descargar la aplicación móvil",
+		"DOWNLOAD_BROWSER_EXTENSION": "Descargar la extensión del navegador"
 	},
 	"WORKSPACES": {
 		"MENUS": {

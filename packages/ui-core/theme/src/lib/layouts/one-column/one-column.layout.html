@@ -1,9 +1,9 @@
 <nb-layout windowMode>
-	<!-- Header — belongs to the CANVAS, not to the whole window.
-	     Three full-height columns: Menu | Chat | Canvas. Nebular renders a `fixed` header at full
-	     width, so the BAND ITSELF is inset to where the canvas begins (see `--gz-canvas-left` in
-	     the layout ts and scss). It used to stay full width and pad its content aside instead,
-	     which put the demo banner and the first filter underneath the chat panel. -->
+	<!-- Header — spans everything right of the nav menu, INCLUDING the chat column.
+	     Nebular renders a `fixed` header at full width, so the BAND ITSELF is inset to the menu
+	     sidebar's trailing edge (see `--gz-band-left/right` in the layout ts and scss); the chat
+	     panel tucks UNDER it (top = `--gz-header-height`, z one below the header's), exactly like
+	     the canvas does. -->
 	@if (user()) {
 		<nb-layout-header fixed>
 			<ngx-header [expanded]="isExpanded()"></ngx-header>
@@ -17,8 +17,63 @@
 			tag="menu-sidebar"
 			(stateChange)="onStateChange($event)"
 		>
-			<div class="custom-box">
+			<div class="custom-box" [class.compacted]="!isExpanded()">
+
+				@if (chatSidebarService.available() && !chatSidebarService.expanded()) {
+					<button
+						class="rail-edge-button ai-agent-launch"
+						type="button"
+						[title]="'HEADER.AI_CHAT' | translate"
+						[attr.aria-label]="'HEADER.AI_CHAT' | translate"
+						(click)="chatSidebarService.expand()"
+					>
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+							focusable="false"
+						>
+							<path d="M12 8V4H8" />
+							<rect width="16" height="12" x="4" y="8" rx="2" />
+							<path d="M2 14h2" />
+							<path d="M20 14h2" />
+							<path d="M15 13v2" />
+							<path d="M9 13v2" />
+						</svg>
+					</button>
+				}
+
 				<div class="custom-row logo">
+					<button
+						class="rail-edge-button rail-toggle"
+						type="button"
+						(click)="toggle()"
+						[title]="(isExpanded() ? 'HEADER.COLLAPSE_SIDEBAR' : 'HEADER.EXPAND_SIDEBAR') | translate"
+						[attr.aria-label]="
+							(isExpanded() ? 'HEADER.COLLAPSE_SIDEBAR' : 'HEADER.EXPAND_SIDEBAR') | translate
+						"
+						[attr.aria-expanded]="isExpanded()"
+					>
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+							focusable="false"
+						>
+							<rect width="18" height="18" x="3" y="3" rx="2" />
+							<path d="M9 3v18" />
+							<path [attr.d]="isExpanded() ? 'm16 15-3-3 3-3' : 'm14 9 3 3-3 3'" />
+						</svg>
+					</button>
+
 					<div
 						class="logo-container"
 						[class.not-collapsed]="!isCollapse() && isExpanded()"
@@ -30,30 +85,6 @@
 							(onCollapsed)="onCollapse($event)"
 							(onWorkspaceToggle)="onWorkspaceToggle($event)"
 						></ngx-gauzy-logo>
-
-						<!-- AI agent launcher — visible whenever the chat is available
-						     but collapsed, so the agent is always one click away.
-						     This is now the ONLY entry point (the header copy was
-						     removed as redundant), so it stays reachable in the
-						     compacted rail too — see one-column.layout.scss.
-						     `ghost` (not `outline`): a quiet icon-only button next to
-						     the workspace name, the way ever.works places it, instead
-						     of a bordered control competing with the switcher. -->
-						@if (chatSidebarService.available() && !chatSidebarService.expanded()) {
-							<button
-								class="ai-agent-launch"
-								nbButton
-								ghost
-								status="basic"
-								size="small"
-								type="button"
-								[title]="'HEADER.AI_CHAT' | translate"
-								[attr.aria-label]="'HEADER.AI_CHAT' | translate"
-								(click)="chatSidebarService.expand()"
-							>
-								<i class="fas fa-robot"></i>
-							</button>
-						}
 					</div>
 				</div>
 
@@ -61,22 +92,8 @@
 					<ng-content select="ga-main-nav-menu"></ng-content>
 				</div>
 
-				<div class="toggle-layout" [class.row]="isExpanded()" [class.column]="!isExpanded()">
-					<div class="custom-row user">
-						<gauzy-user [user$]="user$" (click)="toggleUserMenu()"></gauzy-user>
-					</div>
-
-					<div class="custom-row button">
-						<div class="chevron" [class.collapsed]="!isExpanded()">
-							<button (click)="toggle()" nbButton outline size="small">
-								<i
-									class="fas"
-									[class.fa-angle-double-left]="isExpanded()"
-									[class.fa-angle-double-right]="!isExpanded()"
-								></i>
-							</button>
-						</div>
-					</div>
+				<div class="sidebar-footer" [class.compacted]="!isExpanded()">
+					<gauzy-user [user$]="user$" [showIdentity]="isExpanded()" (clicked)="toggleUserMenu()"></gauzy-user>
 				</div>
 			</div>
 		</nb-sidebar>
@@ -86,10 +103,10 @@
 	     Single @if (like the menu sidebar above): nesting control-flow blocks breaks
 	     nb-layout's select-based content projection for nb-sidebar. -->
 	@if (user() && chatSidebarService.available() && chatSidebarComponent(); as chatComponent) {
-		<!-- A FULL-HEIGHT column, like the nav menu: nothing sits above it, so the panel owns its
-		     own top edge (its title row and icons) instead of starting under the header band.
-		     That needs Nebular's default fixed `.main-container` — see the scss for why COLLAPSED
-		     must then be `display: none` rather than merely zero-width. -->
+		<!-- A column that starts UNDER the fixed header band (top = the band's measured height)
+		     and runs to the viewport bottom, in both docks. It still uses Nebular's default fixed
+		     `.main-container` — see the scss for why COLLAPSED must then be `display: none`
+		     rather than merely zero-width. -->
 		<nb-sidebar
 			class="chat-sidebar"
 			[class]="chatSidebarService.config()?.class ?? ''"

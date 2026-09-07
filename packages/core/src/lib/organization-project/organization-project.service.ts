@@ -1,5 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
@@ -22,6 +22,7 @@ import { CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { isNotEmpty } from '@gauzy/utils';
 import { RelationsQueryDTO } from '../shared/dto';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
+import { sanitizeRichHtml } from '../core/html-sanitizer';
 import { RequestContext } from '../core/context';
 import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { OrganizationProjectEmployee } from '../core/entities/internal';
@@ -63,6 +64,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns A Promise resolving to the created organization project.
 	 */
 	async create(input: IOrganizationProjectCreateInput): Promise<IOrganizationProject> {
+		// Sanitize the rich-text description HTML through the shared server-side allowlist.
+		if (typeof input.description === 'string') {
+			input.description = sanitizeRichHtml(input.description);
+		}
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentRoleId = RequestContext.currentRoleId();
@@ -179,6 +184,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns A Promise resolving to the updated organization project.
 	 */
 	async update(id: ID, input: IOrganizationProjectUpdateInput): Promise<IOrganizationProject> {
+		// Sanitize the rich-text description HTML through the shared server-side allowlist.
+		if (typeof input.description === 'string') {
+			input.description = sanitizeRichHtml(input.description);
+		}
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 		const { memberIds, managerIds, organizationId, ...entity } = input;
 
@@ -689,6 +698,19 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const { organizationId, addedProjectIds = [], removedProjectIds = [], member } = input;
 
+			// The member id comes from the request body and keys the raw-repository DELETE below: an
+			// empty value used to be dropped from the criteria, removing EVERY member of the listed
+			// projects. Fail closed.
+			if (!member?.id) {
+				throw new BadRequestException('member.id is required');
+			}
+			if (!tenantId) {
+				throw new BadRequestException('Tenant context is required');
+			}
+			if (!organizationId) {
+				throw new BadRequestException('organizationId is required');
+			}
+
 			// Handle adding projects
 			if (addedProjectIds.length > 0) {
 				const projectsToAdd = await this.find({
@@ -726,6 +748,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				await this.typeOrmOrganizationProjectEmployeeRepository.delete({
 					organizationProjectId: In(removedProjectIds),
 					employeeId: member.id,
+					organizationId,
 					tenantId
 				});
 			}

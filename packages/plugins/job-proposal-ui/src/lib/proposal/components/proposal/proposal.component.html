@@ -65,31 +65,25 @@
 <!--  -->
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="btn-group actions">
-		<ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
-			<button
-				nbButton
-				type="button"
-				status="basic"
-				class="action secondary"
-				[disabled]="disableButton"
-				size="small"
-				underConstruction
-			>
-				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-				{{ 'BUTTONS.VIEW' | translate }}
-			</button>
+		<!-- View carries the record's OWN guard (the one the details route
+		     enforces), not the edit guard the mutating actions sit behind. It
+		     opens the existing read-only details page, which made the former
+		     DETAILS button a duplicate. -->
+		<ng-template ngxPermissionsOnly="ORG_PROPOSALS_VIEW">
 			<button
 				nbButton
 				type="button"
 				(click)="details(selectedItem)"
 				status="basic"
-				class="action primary"
+				class="action secondary"
 				[disabled]="disableButton"
 				size="small"
 			>
-				<nb-icon icon="info-outline"></nb-icon>
-				{{ 'BUTTONS.DETAILS' | translate }}
+				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
 			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
 			<ng-container
 				[ngTemplateOutlet]="statusButtonTemplate"
 				[ngTemplateOutletContext]="{
@@ -168,20 +162,17 @@
 <!-- Statistics Template -->
 <ng-template #statisticsTemplate>
 	<div class="statistics">
-		<h6>{{ 'PROPOSALS_PAGE.STATISTICS' | translate }}</h6>
-		<div class="custom-container">
-			<div>
-				<span>{{ 'PROPOSALS_PAGE.ACCEPTED_PROPOSALS' | translate }}: </span>
-				<span>{{ countAccepted }}</span>
-			</div>
-			<div>
-				<span>{{ 'PROPOSALS_PAGE.TOTAL_PROPOSALS' | translate }}: </span>
-				<span>{{ totalProposals }}</span>
-			</div>
-			<div>
-				<span>{{ 'PROPOSALS_PAGE.SUCCESS_RATE' | translate }}: </span>
-				<span>{{ successRate }}</span>
-			</div>
+		<div class="stat-card">
+			<span class="stat-value">{{ countAccepted }}</span>
+			<span class="stat-label">{{ 'PROPOSALS_PAGE.ACCEPTED_PROPOSALS' | translate }}</span>
+		</div>
+		<div class="stat-card">
+			<span class="stat-value">{{ totalProposals }}</span>
+			<span class="stat-label">{{ 'PROPOSALS_PAGE.TOTAL_PROPOSALS' | translate }}</span>
+		</div>
+		<div class="stat-card">
+			<span class="stat-value">{{ successRate }}</span>
+			<span class="stat-label">{{ 'PROPOSALS_PAGE.SUCCESS_RATE' | translate }}</span>
 		</div>
 	</div>
 </ng-template>

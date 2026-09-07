@@ -1,13 +1,14 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { LegacyFindManyOptions, LegacyFindOneOptions } from '../utils';
+import { LegacyFindManyOptions, LegacyFindOneOptions, MultiORMEnum } from '../utils';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
+import { assertCriteriaHasPredicate } from './criteria.helper';
 import { ICrudService, IPartialEntity } from './icrud.service';
 import { ITryRequest } from './try-request';
 
@@ -368,6 +369,87 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
+	 * Refuses to persist an entity whose id already names a row of ANOTHER tenant.
+	 *
+	 * create()/save() with an id are upserts: TypeORM's save() looks the row up by primary key only and
+	 * then UPDATEs it, while this service merely stamps the caller's tenantId onto the payload. A body
+	 * that smuggled a foreign id in (`{ id, ...body }` spreads, un-whitelisted update DTOs) therefore
+	 * overwrote — and re-tenanted — another tenant's row (GHSA-gwpq-mmw7-vx85 / GHSA-x4mv-fhwj-g3rp
+	 * class). Rows the caller's tenant owns, and ids that do not exist yet, are untouched.
+	 *
+	 * @param entity - The payload about to be persisted.
+	 * @param tenantId - The caller's tenant.
+	 */
+	protected async assertNotForeignRow(entity: IPartialEntity<T>, tenantId: ID | null): Promise<void> {
+		const id = (entity as any)?.id;
+		if (!id || !tenantId || !this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')) {
+			return;
+		}
+		let existing: unknown;
+		let existingTenantId: ID | null | undefined;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// `filters: false` matters: MikroORM applies the soft-delete filter by default, so a
+				// foreign row that was soft-deleted would be invisible here — the guard would pass and
+				// the upsert would claim it. The TypeORM branch uses `withDeleted: true` for the same
+				// reason.
+				existing = await this.mikroOrmRepository.findOne({ id } as any, {
+					fields: ['id', 'tenantId'] as any,
+					filters: false
+				});
+				existingTenantId = (existing as any)?.tenantId;
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				existing = await this.typeOrmRepository.findOne({
+					where: { id } as FindOptionsWhere<T>,
+					select: { id: true, tenantId: true } as any,
+					withDeleted: true
+				});
+				existingTenantId = (existing as any)?.tenantId;
+				break;
+			}
+		}
+		// Fail CLOSED on a tenant-less row too: on the update-through-create endpoints this guard is the
+		// only ownership check, so a row with a NULL tenantId (legacy / global / written without a
+		// request context) must not be overwritten — and claimed — by a tenant user.
+		if (existing && String(existingTenantId ?? '') !== String(tenantId)) {
+			throw new ForbiddenException('The record belongs to another tenant');
+		}
+	}
+
+	/**
+	 * Batch form of {@link assertNotForeignRow} for createMany()/saveMany() (one lookup for all ids).
+	 */
+	protected async assertNotForeignRows(entities: IPartialEntity<T>[], tenantId: ID | null): Promise<void> {
+		const ids = (entities ?? []).map((entity) => (entity as any)?.id).filter((id) => !!id);
+		if (!ids.length || !tenantId || !this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')) {
+			return;
+		}
+		let existing: any[];
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				existing = await this.mikroOrmRepository.find({ id: { $in: ids } } as any, {
+					fields: ['id', 'tenantId'] as any,
+					filters: false
+				});
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				existing = await this.typeOrmRepository.find({
+					where: { id: In(ids) } as FindOptionsWhere<T>,
+					select: { id: true, tenantId: true } as any,
+					withDeleted: true
+				});
+				break;
+		}
+		if (existing.some((row) => String(row?.tenantId ?? '') !== String(tenantId))) {
+			throw new ForbiddenException('One of the records belongs to another tenant');
+		}
+	}
+
+	/**
 	 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 	 * Note that it copies only properties that are present in entity schema.
 	 *
@@ -377,6 +459,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	public async create(entity: IPartialEntity<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
+		await this.assertNotForeignRow(entity, tenantId);
 
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
 		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
@@ -408,6 +491,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	public async createMany(entities: IPartialEntity<T>[]): Promise<T[]> {
 		const tenantId = RequestContext.currentTenantId();
+		await this.assertNotForeignRows(entities, tenantId);
 		const employeeId = RequestContext.currentEmployeeId();
 
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
@@ -435,6 +519,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	public async save(entity: IPartialEntity<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+		await this.assertNotForeignRow(entity, tenantId);
 
 		return await super.save({
 			...entity,
@@ -470,6 +555,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	public async saveMany(entities: IPartialEntity<T>[]): Promise<T[]> {
 		const tenantId = RequestContext.currentTenantId();
+		await this.assertNotForeignRows(entities, tenantId);
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
 
 		const enriched = entities.map((entity) => ({
@@ -528,6 +614,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				where = { ...where, ...options.where };
 			}
 
+			// The caller's criteria must select rows on its own BEFORE tenant scoping is merged in:
+			// `delete({ employeeId: undefined })` would otherwise pass CrudService's guard on the strength
+			// of the injected tenantId alone and delete every row of the tenant.
+			assertCriteriaHasPredicate(where, 'delete');
+
 			const user = RequestContext.currentUser();
 
 			// Proceed with the delete operation using the merged criteria
@@ -536,6 +627,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				...this.findConditionsWithTenantByUser(user)
 			});
 		} catch (err) {
+			// A malformed criteria (no predicate) is the caller's error, not a missing record.
+			if (err instanceof BadRequestException) {
+				throw err;
+			}
 			console.error('Error during delete operation:', err);
 			throw new NotFoundException(`The record was not found`, err);
 		}

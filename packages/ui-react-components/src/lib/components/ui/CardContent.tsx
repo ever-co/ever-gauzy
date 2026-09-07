@@ -15,7 +15,7 @@ export function CardContent({ children, style, className }: CardContentProps) {
 		<div
 			className={className}
 			style={{
-				padding: '1rem 1.25rem',
+				padding: '1rem',
 				fontFamily: theme.font,
 				...style
 			}}

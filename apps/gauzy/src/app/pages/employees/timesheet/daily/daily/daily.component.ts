@@ -2,7 +2,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
-import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from, of, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from, merge, of, switchMap } from 'rxjs';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -84,7 +84,6 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	ngOnInit() {
 		this._handleSubjectOperationsSubscriber();
 		this._handleUpdateLogSubscriber();
-		this._handleRefreshDailyLogs();
 		this._getDailyTimesheetLogs();
 	}
 
@@ -161,35 +160,37 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	}
 
 	/**
-	 * Retrieves daily time logs based on payloads and handles observables.
+	 * Builds the single stream that both renders the grid and populates `this.logs`.
+	 *
+	 * A payload change and a refresh trigger are merged into ONE pipeline on purpose. They used to be
+	 * two independent subscriptions to the cold `_getDailyLogs()`, and because its `tap` writes
+	 * `this.logs`, a refresh (fired after add/edit/delete via `refreshTrigger$`) replaced `this.logs`
+	 * with a brand-new array of brand-new objects while the template's `logs$ | async` did NOT
+	 * re-emit — `payloads$` had not changed. The grid therefore kept rendering the PREVIOUS objects.
+	 *
+	 * That split is what made the action toolbar die after editing a time log: the rendered row still
+	 * carried `isSelected` (so it stayed highlighted and `selectedLog` stayed set), but
+	 * `isRowSelected()` searches `this.logs` — the new array, where nothing is selected — so
+	 * `[isDisable]` stayed true and View/Edit/Delete were never enabled. Selection state and rendered
+	 * rows must come from the same array, so there is now exactly one subscription.
 	 */
 	private _getDailyTimesheetLogs() {
-		this.logs$ = this.payloads$.pipe(
-			// Ensure payload changes are distinct
-			distinctUntilChange(),
-			// Filter to ensure a valid organization and payloads
-			filter((payloads: ITimeLogFilters) => !!this.organization && !!payloads),
+		this.logs$ = merge(
+			this.payloads$.pipe(
+				// Ensure payload changes are distinct
+				distinctUntilChange(),
+				// Filter to ensure a valid organization and payloads
+				filter((payloads: ITimeLogFilters) => !!this.organization && !!payloads)
+			),
+			// The BehaviorSubject's seed value is `false`, which this filter drops, so a refresh only
+			// re-fetches when something explicitly asks for one.
+			this.refreshTrigger$.pipe(filter((value) => !!this.organization && !!value))
+		).pipe(
 			// SwitchMap to fetch time logs using provided payloads
 			switchMap(() => this._getDailyLogs()),
 			// Ensure lifecycle management to avoid memory leaks
 			untilDestroyed(this)
 		);
-	}
-
-	/**
-	 * Handles the refresh of daily time logs.
-	 */
-	private _handleRefreshDailyLogs() {
-		this.refreshTrigger$
-			.pipe(
-				// Filter to ensure a valid organization
-				filter((value) => !!this.organization && !!value),
-				// SwitchMap to fetch time logs using provided payloads
-				switchMap(() => this._getDailyLogs()),
-				// Ensure lifecycle management to avoid memory leaks
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
 	/**
@@ -223,6 +224,12 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			// Update component state with fetched issues
 			tap((logs: ITimeLog[]) => {
 				this.logs = logs;
+				// A re-query replaces every log OBJECT, so a selection captured from the previous array
+				// describes a row that no longer exists. Drop it with its data: otherwise `selectedLog.data`
+				// keeps `@if (selectedItem)` true, and a later checkbox tick — which opens the strip via
+				// `isCheckboxSelected()` — would surface View/Edit/Delete wired to a time log that is not
+				// on screen. Row highlight and toolbar state now clear together.
+				this.selectTimeLog({ isSelected: false, data: null });
 			}),
 			// Finalize to set loading to false
 			finalize(() => {

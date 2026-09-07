@@ -1,32 +1,106 @@
-@use 'gauzy/_gauzy-dialogs' as *;
+@use 'themes' as *;
 
-.employee-form {
-  width: 100%;
-}
+$radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
 
-.card {
-  height: 100%;
-  background-color: var(--gauzy-card-2);
-  border: unset;
-}
-
-.container {
-  padding: 1rem;
-  border-radius: nb-theme(border-radius);
-  background-color: nb-theme(card-background-color);
-}
-
-.entities {
+:host {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+
+.membership {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
+}
+
+.membership__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: $hairline;
+}
+
+.membership__title {
+  margin: 0;
+  font-size: nb-theme(text-subtitle-2-font-size);
+  font-weight: 500;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.membership__add {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: $hairline;
+}
+
+.membership__select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.membership__add-actions {
+  display: flex;
+  flex: 0 0 auto;
   gap: 0.5rem;
 }
 
-:host{
-  height: 100%;
-  @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
-  nb-card-header,
-  nb-card-body {
-    padding: 1rem;
+.membership__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.membership__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  min-height: 2.5rem;
+  transition: background-color 0.15s ease-in-out;
+
+  &:hover {
+    background-color: var(--gauzy-sidebar-background-4);
   }
+}
+
+.membership__name {
+  min-width: 0;
+  font-size: nb-theme(text-subtitle-2-font-size);
+  font-weight: nb-theme(text-paragraph-font-weight);
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+  overflow-wrap: anywhere;
+}
+
+.membership__remove {
+  flex: 0 0 auto;
+  opacity: 0.55;
+  transition: opacity 0.15s ease-in-out;
+
+  nb-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.membership__row:hover .membership__remove,
+.membership__remove:hover,
+.membership__remove:focus-visible {
+  opacity: 1;
 }

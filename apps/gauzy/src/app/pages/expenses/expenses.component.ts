@@ -254,6 +254,13 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			// Column widths sum to 100% WITH the employee column (10+13+13+12+11+9+14+12+6).
+			// The table runs `table-layout: auto`, so these are proportions, not
+			// pixels: when `ngAfterViewInit` drops the employee column for users who
+			// may not switch employee, the browser scales the remaining 88% back up to
+			// the full width in the same proportions. Vendor and Category used to have
+			// no width at all and were pinned to >= 200px by the `:host` floor their
+			// filter selects carried (removed) — every column now has a say.
 			columns: {
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
@@ -269,6 +276,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				vendorName: {
 					title: this.getTranslation('SM_TABLE.VENDOR'),
 					type: 'string',
+					width: '13%',
 					filter: {
 						type: 'custom',
 						component: VendorFilterComponent
@@ -281,6 +289,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				categoryName: {
 					title: this.getTranslation('SM_TABLE.CATEGORY'),
 					type: 'string',
+					width: '13%',
 					filter: {
 						type: 'custom',
 						component: ExpenseCategoryFilterComponent
@@ -294,6 +303,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					isFilterable: false,
 					type: 'custom',
+					width: '12%',
 					isSortable: false,
 					renderComponent: EmployeeLinksComponent,
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
@@ -304,13 +314,14 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				projectName: {
 					title: this.getTranslation('SM_TABLE.PROJECT'),
 					type: 'string',
+					width: '11%',
 					isFilterable: false,
 					isSortable: false
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
 					type: 'custom',
-					width: '10%',
+					width: '9%',
 					isFilterable: false,
 					renderComponent: IncomeExpenseAmountComponent,
 					componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
@@ -321,6 +332,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'text',
+					width: '14%',
 					class: 'align-row',
 					filter: {
 						type: 'custom',
@@ -333,6 +345,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				purpose: {
 					title: this.getTranslation('POP_UPS.PURPOSE'),
 					type: 'string',
+					width: '12%',
 					class: 'align-row',
 					filter: {
 						type: 'custom',
@@ -345,7 +358,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				statuses: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
-					width: '5%',
+					width: '6%',
 					isFilterable: false,
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
@@ -375,9 +388,18 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 			const { id: organizationId } = this.organization;
 			const { employee } = expense;
 
+			// `expense` is the dialog's RAW form value, so it still carries the `employee` CONTROL — which is
+			// the ALL_EMPLOYEES_SELECTED sentinel (`{ id: null, firstName: 'All Employees', ... }`) whenever no
+			// concrete employee was picked (ga-employee-selector unshifts that option and `defaultSelected`
+			// emits it). CreateExpenseDTO validates that object through EmployeeFeatureDTO, so shipping it
+			// makes the POST 400 with "This employee (...) does not belong to the specified organization".
+			// Only the RESOLVED `employeeId` belongs on the wire — exactly what IncomeComponent.addIncome does.
+			const payload = { ...expense };
+			delete payload.employee;
+
 			// Create the expense using the expense service
 			await this.expenseService.create({
-				...expense,
+				...payload,
 				valueDate: moment(expense.valueDate).startOf('day').toDate(),
 				employeeId: employee ? employee.id : null,
 				organizationId,

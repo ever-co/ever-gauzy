@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
+	BaseEntityEnum,
 	IEmployee,
 	IFavorite,
 	IOrganization,
@@ -34,6 +35,9 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	selectedEmployeeIds: string[];
 	members: string[];
 	employees: IEmployee[] = [];
+
+	/** Entity type the record-side Documents tab attaches its links to. */
+	readonly documentEntity = BaseEntityEnum.OrganizationContact;
 
 	constructor(
 		readonly translateService: TranslateService,

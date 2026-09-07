@@ -35,10 +35,15 @@ export const EditUserPage = {
 	// Options render as nb-option inside the cdk-overlay ul.option-list; filter-by-text needs the
 	// individual options, not the whole list (the bare .option-list contains every role name).
 	roleSelectOptionCss: '.option-list nb-option',
-	// Preferred language is an ngx-language-selector ng-select; options are div.ng-option (mirrors
-	// the proven EditProfile selectors on the same edit-profile-form).
+	// Preferred language is an ngx-language-selector ng-select; options are div.ng-option — which is
+	// what the comment always claimed, but the selector below used to demand a
+	// `> span.ng-option-label` child as well. ng-select only emits that default label span when NO
+	// custom option template is supplied, and #9975 added an `<ng-template ng-option-tmp>` (flag icon
+	// + language name) to language-selector.component.html, so the span disappeared and the option
+	// text is now rendered directly inside div.ng-option. Scoped to the open dropdown panel because
+	// the control is appendTo="body".
 	preferredLanguageCss: 'ngx-language-selector ng-select',
-	preferredLanguageOptionCss: 'div.ng-option > span.ng-option-label',
+	preferredLanguageOptionCss: 'ng-dropdown-panel div.ng-option',
 	// Scope the submit button to the profile form's actions bar so it can't match the org-tab
 	// success buttons (Add / Save org) that share status="success".
 	saveButtonCss: 'div.actions > button[status="success"]',

@@ -29,9 +29,54 @@
 		clicking the control BODY while open lands in the search input and keeps it open,
 		clicking the ARROW closes it, and Escape, an outside click or picking an item all
 		close it too.
+
+		This element also carried three state classes, all of them now gone:
+
+		  [class.organization]="isOpen"
+		  [class.organization]="!isOpen"
+		  [class.close]="!isOpen"
+
+		The first two are one binding written twice, so `.organization` was really just
+		"always on" via whichever copy Angular applied last. Nothing outside this file
+		ever styled it.
+
+		`.close` is the damaging one. `bootstrap.css` is loaded globally (it is in the
+		app's `styles` list) and ships `.close` as a UTILITY for dismiss buttons:
+
+		  .close { float: right; font-size: 1.5rem; font-weight: 700; line-height: 1;
+		           color: #000; text-shadow: 0 1px 0 #fff; opacity: .5 }
+
+		So the control picked all of that up exactly while the dropdown was CLOSED and
+		shed it again on open, which is why the two states did not read as the same
+		widget. `text-shadow` is the one nothing in the app resets: it inherits down to
+		the label and paints a white copy of the text one pixel below it, so the closed
+		trigger looked doubled. `float: right` applies here too, since this ng-select is
+		a block-level child of a plain `<div>`. The `opacity: .5` was already being
+		clawed back by a `.organization.close { opacity: 1 }` rule in the stylesheet —
+		that rule went with these bindings, having nothing left to undo.
+
+		Nothing replaces them: `isOpen` still drives `searchable` and `addTag`, and a
+		stylesheet that wants the open state has ng-select's own `.ng-select-opened`.
+
+		Two classes ride on the element below purely so they reach the DROPDOWN PANEL.
+		With `appendTo` set, ng-select puts them there itself:
+
+		  [class]="appendToValue ? (ngClass() ? ngClass() : classes) : null"
+
+		and that copy is the only handle a stylesheet has on an appended panel — every one
+		of them is otherwise just `.ng-dropdown-panel`. `classes` is read once through
+		`HostAttributeToken('class')`, so it has to be a STATIC attribute; a `[class.x]`
+		binding never reaches the panel. `[ngClass]` REPLACES that fallback rather than
+		adding to it, which is why `panelClass` rebuilds both names.
+
+		`organization-entity-select` lets `_overrides.scss` right-align THIS panel: the
+		header's organization control sits too close to the right edge of the screen for a
+		left-anchored panel.
 	-->
 	<ng-select
 		#select
+		class="gauzy-entity-select organization-entity-select"
+		[ngClass]="panelClass"
 		[addTag]="(hasEditOrganization$ | async) && addTag && isOpen ? createNew : null"
 		[searchable]="isOpen"
 		[clearable]="false"
@@ -45,20 +90,20 @@
 		appendTo="body"
 		(open)="isOpen = true"
 		(close)="isOpen = false"
-		[class.organization]="isOpen"
-		[class.organization]="!isOpen"
-		[class.close]="!isOpen"
 	>
 		<ng-template ng-option-tmp let-item="item" let-index="index">
 			@if (item.imageUrl) {
-			<img [src]="item.imageUrl" width="40" height="40" />
+			<img [src]="item.imageUrl" width="40" height="40" alt="" />
 			}
-			{{ item.name }}
+			<span>{{ item.name }}</span>
 		</ng-template>
 		<ng-template ng-label-tmp let-item="item">
-			<div class="selector-template">
+			<!-- The trigger is a fixed-width pill in the header band, so the name
+			     clips to an ellipsis; the title carries the untruncated one. The
+			     employee, project and team selectors each do the same. -->
+			<div class="selector-template" [title]="item?.name">
 				@if (item.imageUrl) {
-				<img height="25" width="25" [src]="item.imageUrl" />
+				<img height="25" width="25" [src]="item.imageUrl" alt="" />
 				}
 				<span>{{ item.name }}</span>
 			</div>

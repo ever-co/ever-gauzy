@@ -603,14 +603,23 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const { organizationId } = options;
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
+			// Without CHANGE_SELECTED_EMPLOYEE the caller must be a MANAGER member of the team — which
+			// requires an employee identity. Fail closed when there is none: an empty employeeId used to
+			// be dropped from the where, degrading the check to "the team has any manager".
+			const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+			const employeeId = RequestContext.currentEmployeeId();
+			if (!canChangeSelectedEmployee && !employeeId) {
+				throw new ForbiddenException('You do not have permission to delete this team.');
+			}
+
 			const team = await this.findOneByIdString(teamId, {
 				where: {
 					tenantId,
 					organizationId,
-					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+					...(!canChangeSelectedEmployee
 						? {
 								members: {
-									employeeId: RequestContext.currentEmployeeId(),
+									employeeId,
 									role: {
 										name: RolesEnum.MANAGER
 									}

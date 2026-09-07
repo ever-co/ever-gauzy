@@ -49,7 +49,8 @@
 					"node_modules/leaflet/dist/leaflet.css",
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css",
-					"node_modules/streamdown/styles.css"
+					"node_modules/streamdown/styles.css",
+					"node_modules/katex/dist/katex.min.css"
 				],
 				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
@@ -231,7 +232,8 @@
 					"node_modules/leaflet/dist/leaflet.css",
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css",
-					"node_modules/streamdown/styles.css"
+					"node_modules/streamdown/styles.css",
+					"node_modules/katex/dist/katex.min.css"
 				],
 				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [
@@ -342,7 +344,8 @@
 					"node_modules/leaflet/dist/leaflet.css",
 					"packages/ui-core/static/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css",
-					"node_modules/streamdown/styles.css"
+					"node_modules/streamdown/styles.css",
+					"node_modules/katex/dist/katex.min.css"
 				],
 				"scripts": ["node_modules/chart.js/dist/chart.umd.min.js"],
 				"allowedCommonJsDependencies": [

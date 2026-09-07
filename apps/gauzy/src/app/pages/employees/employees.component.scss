@@ -1,4 +1,5 @@
 @use 'gauzy/_gauzy-overrides' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 @forward '@shared/_pg-card';
 
 nb-card {
@@ -15,9 +16,15 @@ nb-card {
   align-items: center;
 }
 :host {
+  // Spacing and vertical centring both come from the header's action row, which
+  // `GauzyButtonActionComponent` marks `.ga-page-header-actions`: a flex row with
+  // `align-items: center` and `column-gap: 0.5rem` (see `.ga-page-header` in
+  // `styles/_overrides.scss`). What used to be here fought it on both counts —
+  // `padding-top: 5px` grew the box at the top only, so centring the BOX pushed
+  // the toggle inside it below the buttons' centre, and the 28px/12px margins
+  // stacked onto the row's own gap to give 36px on one side of the toggle and
+  // 20px on the other.
   .custom-toggle {
-    margin: 0 28px 0 12px;
-    padding-top: 5px;
     ::ng-deep {
       nb-toggle.status-danger .toggle.checked {
         background-color: rgba(245, 109, 88, 1);
@@ -36,4 +43,148 @@ nb-card {
     height: 100%;
     overflow: auto;
   }
+}
+
+// ── Density tokens ───────────────────────────────────────────────────────────
+// The canonical list-page block Payments, Invoices/Estimates, Pipelines and
+// Tasks carry, so the list pages read as one surface.
+//
+// The tokens sit on `:host`, not on the table: the renderers that consume them
+// (`ga-picture-name-tags`, `ngx-tags-only`, `ga-employee-work-status`,
+// `employee-time-tracking-status`, the skeleton) are separate components, and
+// custom properties are the only thing that crosses those boundaries. The
+// card-grid layout inherits the same scale for free, which is wanted — a token
+// is a proportion, so that layout stays coherent at its own size.
+//
+// Hard-coded overrides for renderers outside the token system would be a
+// different matter and would belong under `angular2-smart-table` below, since
+// `ga-card-grid` instantiates every column's `renderComponent` itself
+// (`card-grid-custom.component.ts`) and a literal is not a proportion. This
+// page needs none: its cell renderers already read the tokens.
+:host {
+  @include ga-hub.density-tokens();
+}
+
+:host .table-scroll-container {
+  @include ga-hub.surface();
+}
+
+:host ::ng-deep {
+  @include ga-hub.tag-stack-spacing();
+}
+
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
+}
+
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+}
+
+// ── Status pills ─────────────────────────────────────────────────────────────
+// Every other list page routes its statuses through `ga-status-badge`, which is
+// what the canonical block points `status-badge-tints()` at. This page does not:
+// the Status and Time Tracking cells emit plain `<div class="badge badge-*">`,
+// so the only thing painting them was `bootstrap.css` (loaded whole in
+// `project.json`) — a saturated fill with white text, i.e. the filled colour
+// block the rest of the app moved away from. Beside them, "Not Started" already
+// draws itself as a muted pill from its own sheet, so one cell could show a
+// flat grey chip next to a solid green one.
+//
+// Pointed at the two renderers that emit those classes, which brings them to
+// the same accent-on-tint treatment Payments shows, and lands the accessible
+// colours: the inherited `color-success-default` measured 2.9:1 on white.
+//
+// Page-wide rather than table-scoped, unlike the density literals above: this is
+// colour, not size, and the card-grid layout renders the very same components.
+:host ::ng-deep ga-employee-work-status,
+:host ::ng-deep employee-time-tracking-status {
+  @include ga-hub.status-badge-tints();
+}
+
+// ── Full Name cell ───────────────────────────────────────────────────────────
+// `ga-picture-name-tags` renders `<ngx-avatar class="report-table">`, and that
+// context in `avatar.component.scss` pins a 20px image, a 12px name and an 8px
+// gap inside a padded tinted pill — 26px of chip in rows the density tokens
+// build to a 1rem line box, which made Full Name both the widest-reading and
+// the tallest cell in the table and left every row taller than the equivalent
+// row on Payments.
+//
+// Sized off the `gauzy-people-*` tokens, so the chip matches the scale the rest
+// of the row already follows. Table-scoped, not page-wide: `ga-card-grid`
+// instantiates the same `renderComponent` and its cards have room for the full
+// treatment.
+//
+// SPECIFICITY: `:host-context(.report-table) X` shims to
+// `.report-table[_nghost] X[_ngcontent]` — (0,4,0) for `.inner-wrapper`,
+// `.link-text` and `.image-container` — while `:host ::ng-deep` buys only the
+// one `[_nghost]` attribute. Naming `.report-table` (it sits on the host
+// element) plus one doubled class clears those. The nested `img` is the
+// exception: it shims to `.report-table[_nghost] .image-container[_ngc]
+// img[_ngc]`, (0,5,1), which no reachable combination of doubled classes here
+// beats without reading as line noise, so those two declarations are
+// `!important` — the same register that rule already uses for its own
+// `border-radius`.
+:host ::ng-deep angular2-smart-table ngx-avatar.report-table {
+  .inner-wrapper.inner-wrapper {
+    gap: var(--gauzy-people-gap, 0.375rem);
+    // Keeps the original asymmetry — a hair of inset around the image, more
+    // breathing room after the name — just scaled to the smaller chip. Not zero
+    // on the image side: `.inner-wrapper` is a stadium with `overflow: hidden`,
+    // so a flush image would be clipped by the left-hand curve.
+    @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
+    @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
+  }
+
+  .link-text.link-text {
+    font-size: var(--gauzy-people-font-size, 0.6875rem);
+    line-height: var(--gauzy-people-avatar-size, 1rem);
+  }
+
+  .image-container.image-container {
+    width: var(--gauzy-people-avatar-size, 1rem);
+    height: var(--gauzy-people-avatar-size, 1rem);
+
+    img {
+      width: var(--gauzy-people-avatar-size, 1rem) !important;
+      height: var(--gauzy-people-avatar-size, 1rem) !important;
+    }
+  }
+}
+
+// ── Screen Capture cell ──────────────────────────────────────────────────────
+// The cell is an `nb-toggle`, which Nebular sizes entirely from theme tokens
+// (`_toggle.component.theme.scss`): a 50x30 switch with a 28px knob, and a label
+// at 0.8125rem on a 1.5rem line — the line height alone is half again the row's
+// whole 1rem line box, and the switch is twice it. It was the tallest thing in
+// the table after the Full Name chip.
+//
+// Because every one of those is `nb-theme(...)` — i.e. `var(--toggle-*)` under
+// `$nb-enable-css-custom-properties` — redefining the tokens is the entire fix:
+// no override of Nebular's own rules, so no specificity to fight and nothing to
+// keep in step if that sheet changes. The knob follows the switch: Nebular
+// positions it with `calc(100% - switcher - border - border)` and a 1px margin.
+//
+// The label is matched to the Time Tracking pills in the next column, which
+// carry the same Enabled/Disabled wording at the header token size.
+//
+// Table-scoped: `ga-card-grid` renders the same component, and a card has room
+// for the full-size control. The page's own "Include deleted" toggle sits in
+// the card header, outside this scope, and stays full size.
+:host ::ng-deep angular2-smart-table gauzy-allow-screenshot-capture {
+  // 20x12 keeps Nebular's own 1.667 width:height proportion (the stock switch is
+  // 50x30), so it reads as the same control drawn smaller rather than a squashed
+  // one. It sits inside the row's 1rem line box, which the label now owns.
+  --toggle-height: 0.75rem;
+  --toggle-width: 1.25rem;
+  // `height - 2px`: the knob carries a 1px margin, so this is what centres it
+  // and leaves the same 1px inset at each end that the stock proportions give.
+  --toggle-switcher-size: 0.625rem;
+  --toggle-switcher-icon-size: 0.375rem;
+  --toggle-text-font-size: var(--gauzy-table-header-font-size, 0.75rem);
+  --toggle-text-line-height: var(--gauzy-table-badge-height, 1rem);
 }

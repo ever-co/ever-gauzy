@@ -105,7 +105,10 @@
 }
 
 .feedbacks-card-wrap {
-  min-width: 645px;
+  // Was `min-width: 645px`: a floor wider than the layout column can be once
+  // the AI chat is expanded, so the card overflowed the canvas. It only has to
+  // be allowed to shrink — its content is a flex row of its own.
+  min-width: 0;
   display: flex;
   justify-content: flex-end;
   align-items: center;

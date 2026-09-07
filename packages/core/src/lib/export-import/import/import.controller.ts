@@ -4,7 +4,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ImportStatusEnum, ImportTypeEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { ImportService } from './import.service';
 import { RequestContext } from '../../core/context';
-import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
+import { archiveUploadFileFilter, FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
 import { ImportHistoryCreateCommand } from '../import-history';
@@ -29,7 +29,10 @@ export class ImportController {
 			storage: new FileStorage().storage({
 				dest: path.join('import'),
 				prefix: 'import'
-			})
+			}),
+			// The import format is a ZIP of CSVs; the local provider keeps the client's extension and
+			// the file lands under /public, so anything else is refused before it is stored.
+			fileFilter: archiveUploadFileFilter
 		})
 	)
 	@ApiOperation({ summary: 'Imports templates records.' })

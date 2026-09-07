@@ -68,6 +68,21 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     }
 }
 
+// ── The dropdown's containing block ─────────────────────────────────────────
+// `.md-drppicker` is position:absolute and must ESCAPE `.header-container`'s
+// scroll clip (overflow-x:auto clips BOTH axes): an absolutely positioned box
+// escapes an ancestor's overflow clip only when its CONTAINING BLOCK chain
+// skips the clipper. The wrapping nb-action is already `position: static`
+// (header.component.scss); this root row picked up `position: relative` from
+// the global grid styles and silently became the containing block INSIDE the
+// clip — the dropdown then measured full-size (rects ignore clipping) while
+// painting nothing outside the band. Static here re-homes the containing
+// block to `nb-layout-header.fixed` itself: outside the clip, inside the
+// header's z-1040 stacking context — above canvas and chat by construction.
+:host > .row {
+    position: static;
+}
+
 :host {
      ::ng-deep {
         &.md-drppicker {
@@ -78,12 +93,14 @@ $button-radius: nb-theme(button-rectangle-border-radius);
             display: flex;
             flex-direction: row;
             flex-wrap: nowrap;
-            @include nb-ltr(margin-left, -130%);
-            @include nb-rtl(margin-right, -130%);
-            &.double {
-                @include nb-ltr(margin-left, -146%);
-                @include nb-rtl(margin-right, -146%);
-            }
+            // No horizontal compensation margins here. The old -130%/-146%
+            // offsets were tuned for the wrapping nb-action as the containing
+            // block; that nb-action is now `position: static` (see
+            // header.component.scss — it re-homes the panel outside the
+            // header's scroll clip), so the containing block is the header
+            // band itself and percentage margins would resolve against the
+            // BAND width, throwing the panel off-screen. The library's own
+            // setPosition() places the panel against the input.
             .calendar-table {
                 background-color: nb-theme(background-basic-color-1);
                 border-color: nb-theme(border-basic-color-3);

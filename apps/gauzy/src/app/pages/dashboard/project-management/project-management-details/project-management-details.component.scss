@@ -4,15 +4,30 @@
 // the completion dot loses both its ring and its fill on every theme.
 @use 'gauzy/_gauzy-cards' as *;
 
-$height: calc(100vh - 20.5rem);
+// The grid fills the available page card; the parent owns overflow when the
+// dashboard panels contain more content than the available height.
 $gap: 1rem;
 
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .main {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: $gap;
+  height: auto;
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.375rem;
+
   .inbox {
-    width: 45%;
-    height: $height;
+    height: 100%;
     .soon {
       display: flex;
       justify-content: center;
@@ -21,41 +36,47 @@ $gap: 1rem;
     }
   }
   .today {
-    width: 35%;
-    height: $height;
+    height: 100%;
     .more {
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 11px;
+      font-size: nb-theme(text-caption-font-size);
+      font-weight: 500;
+      line-height: 1rem;
       letter-spacing: 0em;
       color: var(--gauzy-text-color-2);
       display: flex;
       flex-direction: row;
       align-items: center;
-      padding: 10px;
-      gap: 10px;
+      padding: 0.5rem 0.625rem;
+      gap: 0.5rem;
       background-color: var(--gauzy-card-4);
-      border-radius: var(--border-radius);
+      border-radius: var(--gauzy-radius-sm);
       cursor: pointer;
-      margin-right: 14px;
+      transition:
+        background-color 0.12s ease-in-out,
+        color 0.12s ease-in-out;
+
+      &:hover {
+        background-color: var(--gauzy-hover-tint);
+        color: var(--gauzy-text-color-1);
+      }
+
       i {
-        font-size: 11px;
-        border: 2px solid var(--gauzy-border-default-color);
+        font-size: 0.625rem;
+        border: 1px solid var(--gauzy-border-default-color);
         color: var(--gauzy-text-color-2);
-        border-radius: var(--button-rectangle-border-radius);
-        padding: 5px 5.5px;
+        line-height: 1;
       }
     }
     .card.todo {
       display: flex;
-      gap: $gap;
-      align-items: baseline;
+      gap: 0.625rem;
+      align-items: flex-start;
       flex-direction: row;
-      padding: 10px;
+      padding: 0.5rem 0.625rem;
       border: unset;
-      box-shadow: var(--gauzy-shadow);
+      box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
       background-color: var(--gauzy-card-1);
-      border-radius: var(--border-radius);
+      border-radius: var(--gauzy-radius-sm);
       width: 100%;
       cursor: pointer;
       .dot {
@@ -63,61 +84,77 @@ $gap: 1rem;
         // accent, spelled out rather than resolved, so it stayed the same purple
         // on every theme including the ones whose primary is not purple.
         border: 1px solid nb-theme(color-primary-default);
-        padding: 4px;
-        border-radius: var(--border-radius);
+        flex: 0 0 auto;
+        width: 0.625rem;
+        height: 0.625rem;
+        margin-top: 0.1875rem;
+        border-radius: 50%;
         &.checked {
           background-color: nb-theme(color-primary-default);
         }
       }
       .status {
         color: var(--gauzy-text-color-2);
-        font-size: 12px;
-        font-weight: 400;
-        line-height: 15px;
+        font-size: nb-theme(text-caption-font-size);
+        font-weight: 500;
+        line-height: 0.875rem;
         letter-spacing: 0em;
-        margin-bottom: 8px;
+        margin-bottom: 0.125rem;
       }
       .title {
         width: 100%;
         color: var(--gauzy-text-color-1);
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 400;
-        line-height: 15px;
+        line-height: 1.125rem;
         letter-spacing: 0em;
       }
     }
   }
   .last-column {
-    width: 30%;
     display: flex;
     flex-direction: column;
     gap: $gap;
-    height: $height;
-    .card-body-content {
-      height: 100%;
-      max-height: calc(100% - 55px);
-    }
+    height: auto;
+    min-width: 0;
+    min-height: 0;
     .card.project {
       display: flex;
-      gap: $gap;
-      align-items: baseline;
+      gap: 0.625rem;
+      align-items: center;
       flex-direction: row;
-      padding: 10px;
+      padding: 0.375rem 0.625rem;
       border: unset;
-      box-shadow: var(--gauzy-shadow);
+      box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
       background-color: var(--gauzy-card-1);
-      border-radius: var(--border-radius);
+      border-radius: var(--gauzy-radius-sm);
       width: 100%;
     }
     nb-card {
-      height: calc(50% - 0.5rem);
+      height: auto;
+      min-height: 0;
+      flex: 0 0 auto;
     }
     .card.assigned {
-      padding: 10px;
+      padding: 0.5rem 0.625rem;
       background-color: transparent;
-      border: 2px solid var(--gauzy-border-default-color);
-      border-radius: var(--border-radius);
+      border: 1px solid var(--gauzy-border-default-color);
+      border-radius: var(--gauzy-radius-sm);
     }
+    .card.assigned .title {
+      color: var(--gauzy-text-color-2);
+      font-size: 11px;
+      margin-bottom: 0.8rem;
+      line-height: 1rem;
+      letter-spacing: 0em;
+    }
+  }
+}
+
+:host ::ng-deep .last-column .projects .card.project ngx-project {
+  .name,
+  .member {
+    font-size: 12px;
   }
 }
 
@@ -125,39 +162,57 @@ $gap: 1rem;
   nb-card {
     background-color: var(--gauzy-card-1);
     margin: 0;
-    box-shadow: 0px 6px 20px 0px rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
     nb-card-header {
       color: var(--gauzy-text-color-2);
-      padding: 1rem;
+      font-size: nb-theme(text-subtitle-2-font-size);
+      font-weight: 600;
+      line-height: 1rem;
+      padding: 0.75rem 0.875rem;
     }
     nb-card-body {
       background-color: var(--gauzy-sidebar-background-2);
       border-radius: 0 0 var(--border-radius) var(--border-radius);
-      padding: 10px 11px 10px 1rem;
+      padding: 0.75rem 0.875rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+      min-height: 0;
+
       [nbButton].appearance-outline.status-primary {
-        width: fit-content;
-        background-color: unset;
+        align-self: flex-start;
+        height: 2rem;
+        min-height: 2rem;
+        padding-block: 0.375rem;
+        padding-inline: 0.625rem;
         font-size: 12px;
-        font-weight: 600;
-        line-height: 15px;
-        letter-spacing: 0em;
-        border-color: var(--gauzy-background-transparent);
-        color: var(--button-outline-primary-text-color);
-        border-width: 2px;
-        padding: 4px 10px;
+        line-height: 1rem;
       }
+
       .card-body-content {
-        margin: calc(1rem - 2px) 0;
-        padding: 2px 11px 2px 0px;
+        margin: 0;
+        @include nb-ltr(padding-right, 0.375rem);
+        @include nb-rtl(padding-left, 0.375rem);
         overflow: auto;
-        max-height: calc(100% - 104px);
+        flex: 1 1 auto;
+        min-height: 0;
         width: 100%;
         display: flex;
         flex-direction: column;
-        gap: $gap;
+        gap: 0.5rem;
       }
+
     }
   }
+
+  // Four rows: 4 x 40px row height plus three 8px gaps.
+  nb-card.today nb-card-body .card-body-content,
+  nb-card.projects nb-card-body .card-body-content,
+  nb-card.recently nb-card-body .card-body-content {
+    max-height: 11.5rem !important;
+    flex: 0 1 auto;
+  }
+
   ::ng-deep {
     ngx-no-data-message {
       height: 100%;

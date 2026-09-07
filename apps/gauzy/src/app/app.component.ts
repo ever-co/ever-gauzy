@@ -7,7 +7,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, map, mergeMap, take, tap } from 'rxjs';
+import { distinctUntilChanged, filter, map, switchMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
@@ -226,8 +226,27 @@ export class AppComponent implements OnInit, AfterViewInit {
 				}),
 				// Filter for routes in the primary outlet
 				filter((route) => route.outlet === 'primary'),
-				// MergeMap to the route data
-				mergeMap((route) => route.data),
+				// switchMap, NOT mergeMap: `route.data` never completes, so mergeMap leaked one
+				// live inner subscription per navigation for the life of the app — each of which
+				// re-ran the selector/date-picker/URL writes below whenever a retained route's
+				// data re-emitted. switchMap drops the previous route's stream on every
+				// navigation, so exactly one route's data is ever live.
+				switchMap((route) => route.data),
+				// A query-param-only navigation (every picker/selector write now issued
+				// through NavigationService terminates in NavigationEnd — replaceState
+				// never did) does NOT re-run resolvers: `route.data` replays the SAME
+				// object resolved for the last full navigation, stale relative to the
+				// URL just written. Re-applying it stomped `dates$` back to the
+				// pre-arrow range, and the picker's org-roundtrip derivation then
+				// rewrote the OLD range into the URL (~500ms later), overwriting the
+				// user's choice. Reference equality is exact here: the router only
+				// next()s `route.data` when a resolver actually re-ran
+				// (advanceActivatedRoute's shallowEqual guard), so this applies route
+				// data once per RESOLUTION — the same cadence the replaceState world
+				// had. Deliberately NOT the JSON-deep distinctUntilChange(): two
+				// different routes can resolve value-identical data, and suppressing
+				// that transition would skip the new route's bookmark restore.
+				distinctUntilChanged(),
 				/**
 				 * Set Date Range Picker Default Unit and Config
 				 */

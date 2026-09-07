@@ -9,6 +9,7 @@ import {
 	waitElementToHide,
 	waitForSpinnerGone,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	verifyText
 } from '../util';
 import { getPage } from '../page-context';
@@ -24,7 +25,14 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async () => {
-	await clickButton(EditEmployeePage.editButtonCss);
+	// The trigger is an nb-icon inside the HR dashboard header, which sits in an `[nbSpinner]` card and
+	// reflows as the permissions alert / salary / bonus blocks resolve. `clickButton`'s force:true skips
+	// the actionability CHECK but still delivers the click at screen COORDINATES, so it could land on
+	// the spinner overlay or on a position the header had already moved out from under — an
+	// intermittent no-op that left the run sitting on the dashboard (observed as a flaky
+	// "#usernameInput not found"). Settle first, dispatch straight at the element so no overlay can
+	// intercept, and confirm on the edit form's own field.
+	await dispatchClickWhenSettled(EditEmployeePage.editButtonCss, EditEmployeePage.usernameInputCss);
 };
 
 export const usernameInputVisible = async () => {

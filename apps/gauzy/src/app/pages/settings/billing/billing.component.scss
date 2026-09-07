@@ -1,0 +1,140 @@
+@use 'themes' as *;
+
+.billing-section {
+	padding-bottom: 1.5rem;
+	margin-bottom: 1.5rem;
+	border-bottom: 1px solid nb-theme(border-basic-color-3);
+
+	&:last-child {
+		border-bottom: none;
+		margin-bottom: 0;
+		padding-bottom: 0;
+	}
+
+	h5 {
+		margin: 0 0 0.75rem;
+		font-size: 1rem;
+		font-weight: 600;
+	}
+}
+
+.summary {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	max-width: 32rem;
+}
+
+.summary-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+
+	.label {
+		color: nb-theme(text-hint-color);
+	}
+
+	.value {
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+/* Nebular's badge positions itself absolutely, so the readable status sits alongside it. */
+.status-text {
+	text-transform: capitalize;
+}
+
+.pending-cancel {
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	border-radius: nb-theme(border-radius);
+	background-color: nb-theme(color-warning-transparent-100);
+
+	p {
+		margin: 0 0 0.5rem;
+	}
+}
+
+.actions {
+	margin-top: 1rem;
+}
+
+.plans {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+}
+
+.plan {
+	flex: 1 1 12rem;
+	min-width: 12rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 1rem;
+	border: 1px solid nb-theme(border-basic-color-3);
+	border-radius: nb-theme(border-radius);
+
+	&.current {
+		border-color: nb-theme(color-primary-default);
+	}
+
+	.plan-name {
+		font-weight: 600;
+	}
+
+	.plan-price {
+		font-size: 1.25rem;
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+/* The invoice table is the one thing here that can outgrow a narrow pane. */
+.invoice-table-wrapper {
+	overflow-x: auto;
+}
+
+table.invoices {
+	width: 100%;
+	border-collapse: collapse;
+
+	th,
+	td {
+		text-align: left;
+		padding: 0.5rem 0.75rem;
+		border-bottom: 1px solid nb-theme(border-basic-color-3);
+		white-space: nowrap;
+	}
+
+	th {
+		color: nb-theme(text-hint-color);
+		font-weight: 600;
+	}
+
+	td.amount {
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+.muted {
+	color: nb-theme(text-hint-color);
+}
+
+.load-failed {
+	margin-bottom: 1.5rem;
+	padding: 0.75rem 1rem;
+	border-radius: nb-theme(border-radius);
+	background-color: nb-theme(color-danger-transparent-100);
+
+	p {
+		margin: 0 0 0.5rem;
+	}
+}
+
+.empty-state {
+	padding: 2rem 0;
+	text-align: center;
+	color: nb-theme(text-hint-color);
+}

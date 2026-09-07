@@ -4,8 +4,8 @@
   width: 550px;
 }
 .description {
+  display: block;
   margin-top: 10px;
-  height: 150px;
 }
 
 .name-input {
@@ -24,4 +24,10 @@
 
 .nb-radio {
   display: inline-block;
+}
+
+// Record-side Documents panel: its own card under the task form.
+.task-documents {
+  display: block;
+  margin-top: 1rem;
 }

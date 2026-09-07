@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
 import { EmailTemplateEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/utils';
+import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { EmailTemplate } from './email-template.entity';
 import { CrudService, BaseQueryDTO } from './../core/crud';
 import { MultiORMEnum } from './../core/utils';
@@ -131,11 +131,15 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 	): Promise<IEmailTemplate> {
 		let entity: IEmailTemplate;
 		try {
+			// A missing organization / tenant means the GLOBAL template row (IS NULL) — say so with the
+			// explicit operator. This service is a plain CrudService (no tenant scoping), and a literal
+			// null used to be dropped from the SQL, so the "global" lookup matched — and then overwrote —
+			// another tenant's template of the same name (GHSA-44pv-34gx-q9p4 class).
 			const emailTemplate = await this.findOneByWhereOptions({
 				languageCode,
 				name: `${name}/${type}`,
-				organizationId,
-				tenantId
+				organizationId: isEmpty(organizationId) ? IsNull() : organizationId,
+				tenantId: isEmpty(tenantId) ? IsNull() : tenantId
 			});
 			switch (type) {
 				case 'subject':

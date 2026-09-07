@@ -3,12 +3,14 @@ import {
 	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
+	IAiTranscribeOptions,
 	createCatalogueCache,
 	fetchCatalogueJson,
 	importEsm,
 	keyedCatalogue,
 	mergeCatalogue,
-	prettifyModelId
+	prettifyModelId,
+	transcribeViaOpenAiCompatible
 } from '@gauzy/plugin-ai-chat';
 
 /** Stable provider id used by the registry, the UI and BYOK credentials. */
@@ -53,17 +55,6 @@ const NON_CHAT_PATTERNS = [
 	/-instruct(-|$)/
 ];
 
-/** Speech model for dictation. Cheaper and faster than whisper-1, and the current default. */
-const TRANSCRIBE_MODEL = 'gpt-4o-mini-transcribe';
-
-/**
- * Upstream budget for a transcription.
- *
- * Longer than a catalogue fetch on purpose: a minute of speech takes real time to process, and the
- * user is watching a spinner they started deliberately rather than a background refresh.
- */
-const TRANSCRIBE_TIMEOUT_MS = 60_000;
-
 /** Model catalogue cache, keyed per credential: model access is account-specific on OpenAI. */
 const catalogueCache = createCatalogueCache<IAiChatModel[]>();
 
@@ -95,44 +86,58 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 		}
 	});
 
+/** Default API base for chat-adjacent REST calls (transcription). */
+const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
+
+/**
+ * Speech-to-text models for dictation, in the order the settings picker shows them.
+ *
+ * `gpt-4o-mini-transcribe` is the default: cheaper and faster than whisper-1 with better accuracy.
+ * `whisper-1` stays selectable — it is the one model that Azure/proxy endpoints most reliably
+ * implement, and the only one accepting `response_format: 'text'` (which this plugin never sends).
+ */
+const SPEECH_MODELS: IAiChatModel[] = [
+	{ id: 'gpt-4o-mini-transcribe', label: 'GPT-4o mini Transcribe', providerId: PROVIDER_ID },
+	{ id: 'gpt-4o-transcribe', label: 'GPT-4o Transcribe', providerId: PROVIDER_ID },
+	{ id: 'whisper-1', label: 'Whisper v2 (whisper-1)', providerId: PROVIDER_ID }
+];
+
+/** Speech model used when the tenant has not chosen one. */
+const DEFAULT_SPEECH_MODEL = 'gpt-4o-mini-transcribe';
+
 /**
  * Speech-to-text for the chat's dictation control.
  *
  * `/v1/audio/transcriptions` is multipart, and the filename EXTENSION is what OpenAI uses to decide
  * the container — a generic name is rejected with "Invalid file format" even when the bytes are
- * fine — so it is derived from the MIME type the browser actually recorded.
+ * fine — so it is derived from the MIME type the browser actually recorded. That, the bounded and
+ * redacted error read and the status classification all live in the shared
+ * `transcribeViaOpenAiCompatible` helper of `@gauzy/plugin-ai-chat`.
  *
  * A custom base URL is honoured here, unlike the model catalogue: the caller explicitly configured
  * that endpoint as their OpenAI, and this is a request they asked for rather than a background
  * fetch, so there is no credential going anywhere the user did not choose.
+ *
+ * No `response_format`: the `gpt-4o-*-transcribe` models accept ONLY `json`, which is the default.
+ * Asking for `text` — which whisper-1 does support — is rejected outright, so every dictation would
+ * have failed.
  */
 const transcribeAudio = async (
 	audio: Buffer,
 	mimeType: string,
-	credentials: IAiProviderCredentials
-): Promise<string> => {
-	const extension =
-		mimeType.includes('mp4') || mimeType.includes('mpeg') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
-	const form = new FormData();
-	form.append('file', new Blob([new Uint8Array(audio)], { type: mimeType }), `dictation.${extension}`);
-	form.append('model', TRANSCRIBE_MODEL);
-	// No `response_format`: this model accepts ONLY `json`, which is the default. Asking for `text`
-	// — which whisper-1 does support — is rejected outright, so every dictation would have failed.
-
-	const base = credentials.baseUrl?.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
-	const response = await fetch(`${base}/audio/transcriptions`, {
-		method: 'POST',
-		headers: { authorization: `Bearer ${credentials.apiKey}` },
-		body: form,
-		signal: AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS)
+	credentials: IAiProviderCredentials,
+	options?: IAiTranscribeOptions
+): Promise<string> =>
+	transcribeViaOpenAiCompatible({
+		baseUrl: credentials.baseUrl || DEFAULT_BASE_URL,
+		apiKey: credentials.apiKey,
+		audio,
+		mimeType,
+		model: options?.model || DEFAULT_SPEECH_MODEL,
+		language: options?.language,
+		providerLabel: 'OpenAI',
+		providerId: PROVIDER_ID
 	});
-	if (!response.ok) {
-		// No body echo: this request carries a credential.
-		throw new Error(`OpenAI transcription failed: ${response.status} ${response.statusText}`);
-	}
-	const body = (await response.json()) as { text?: string };
-	return (body.text ?? '').trim();
-};
 
 /**
  * OpenAI (GPT) provider definition for the AI chat engine.
@@ -150,6 +155,7 @@ export const openAiProviderDefinition: IAiChatProviderDefinition = {
 	defaultModel: 'gpt-5.5',
 	listModels: listCatalogue,
 	transcribe: transcribeAudio,
+	speech: { models: SPEECH_MODELS, defaultModel: DEFAULT_SPEECH_MODEL },
 	order: 50,
 	websiteUrl: 'https://openai.com',
 	apiKeysUrl: 'https://platform.openai.com/api-keys',
@@ -168,5 +174,24 @@ export const openAiProviderDefinition: IAiChatProviderDefinition = {
 			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
 		});
 		return provider(modelId);
+	},
+
+	/**
+	 * Create an OpenAI `EmbeddingModel` for the Documents knowledge pipeline
+	 * (`@gauzy/plugin-docs` chunk/query embeddings).
+	 *
+	 * Same lazy-ESM pattern as {@link createModel}; callers feature-detect this hook and
+	 * degrade to lexical-only retrieval when a provider does not implement it.
+	 *
+	 * @param modelId Embedding model id (e.g. 'text-embedding-3-small').
+	 * @param credentials Resolved credentials (tenant BYOK, environment, or platform).
+	 */
+	async createEmbeddingModel(modelId: string, credentials: IAiProviderCredentials) {
+		const { createOpenAI } = await importEsm<typeof import('@ai-sdk/openai')>('@ai-sdk/openai');
+		const provider = createOpenAI({
+			apiKey: credentials.apiKey,
+			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
+		});
+		return provider.textEmbeddingModel(modelId);
 	}
 };

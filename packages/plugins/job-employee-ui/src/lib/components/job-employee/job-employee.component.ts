@@ -8,7 +8,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { ID, IEmployee, IOrganization, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IEmployee, IEmployeeJobsStatistics, IOrganization, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { API_PREFIX, distinctUntilChange, isNotNullOrUndefined } from '@gauzy/ui-core/common';
 import {
 	PageDataTableRegistryService,
@@ -24,6 +24,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeLinksComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	NumberEditorComponent,
 	EmployeeLinkEditorComponent,
 	PaginationFilterBaseComponent,
@@ -42,6 +43,9 @@ export enum JobSearchTabsEnum {
 	HISTORY = 'HISTORY'
 }
 
+/** Row shape served by `/employee-job/statistics`: the employee record enriched with its job counters. */
+type JobEmployeeRow = IEmployee & Partial<IEmployeeJobsStatistics>;
+
 /**
  * Job Employee Component
  *
@@ -59,6 +63,22 @@ export enum JobSearchTabsEnum {
 	standalone: false
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateOrgJobEmployeeView = Object.freeze(['ORG_JOB_EMPLOYEE_VIEW']) as string[];
+
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateOrgJobEmployeeViewOrgEmployeesEdit = Object.freeze(['ORG_JOB_EMPLOYEE_VIEW', 'ORG_EMPLOYEES_EDIT']) as string[];
+
 	private readonly _http = inject(HttpClient);
 	private readonly _route = inject(ActivatedRoute);
 	private readonly _router = inject(Router);
@@ -82,6 +102,13 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	public selectedEmployeeId: ID | null = null;
 	public selectedEmployee: IEmployee | null = null;
 	public disableButton = true;
+
+	/*
+	 * Read-only View: a job-search row is a small flat record, so it opens in the
+	 * right-side drawer rather than on a page of its own.
+	 */
+	public viewedEmployee: JobEmployeeRow | null = null;
+	public viewSections: IRecordViewSection[] = [];
 
 	public readonly tabsetId: PageTabsetPageId = this._route.snapshot.data['tabsetId'];
 	public readonly dataTableId: PageDataTablePageId = this._route.snapshot.data['dataTableId'];
@@ -111,6 +138,9 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		this.employees$
 			.pipe(
 				debounceTime(100),
+				// The list is about to be reloaded, so whatever the drawer is showing
+				// is about to go stale — close it rather than leave a detached record open.
+				tap(() => this.closeView()),
 				tap(() => this.getActiveJobEmployees()),
 				untilDestroyed(this)
 			)
@@ -419,17 +449,27 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
 			isEditable: true,
 			actions: {
+				// The library's fallback header title is a hardcoded, untranslated 'Actions'.
+				columnTitle: this.getTranslation('SM_TABLE.ACTIONS'),
 				delete: false,
-				add: true
+				// The toolbar's own Add button handles creation (navigates to the
+				// employees page); the table's inline-create was never wired up.
+				add: false
 			},
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			edit: {
-				editButtonContent: '<i class="nb-edit"></i>',
-				saveButtonContent: '<i class="nb-checkmark"></i>',
-				cancelButtonContent: '<i class="nb-close"></i>',
+				// This is the real per-row action: it puts the row into inline edit of
+				// the two rate columns (plus the status toggle). The old
+				// '<i class="nb-edit">' markup relied on Nebular's long-removed icon
+				// font, so the anchor rendered as a bare green dot. FontAwesome is
+				// loaded globally; native `title` (not nbTooltip) because these strings
+				// are injected via [innerHTML], where directives never bind.
+				editButtonContent: `<i class="fas fa-edit" aria-hidden="true" title="${this.getTranslation('BUTTONS.EDIT')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.EDIT')}</span>`,
+				saveButtonContent: `<i class="fas fa-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
+				cancelButtonContent: `<i class="fas fa-times" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmSave: true
 			},
 			columns: {
@@ -515,8 +555,63 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	 * @returns void
 	 */
 	onSelectEmployee({ isSelected, data }: { isSelected: boolean; data: IEmployee }): void {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
 		this.disableButton = !isSelected;
 		this.selectedEmployee = isSelected ? data : null;
+	}
+
+	/**
+	 * Opens the read-only View of a job employee row in the right-side drawer.
+	 *
+	 * @param selectedItem - Row the action was invoked from, when it came from the grid.
+	 */
+	view(selectedItem?: IEmployee): void {
+		if (selectedItem) {
+			this.onSelectEmployee({ isSelected: true, data: selectedItem });
+		}
+
+		const employee: JobEmployeeRow | null = selectedItem ?? this.selectedEmployee;
+		if (!employee) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections(employee);
+		this.viewedEmployee = employee;
+	}
+
+	closeView(): void {
+		this.viewedEmployee = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the grid columns, read vertically.
+	 * Derived cells (zero-defaulted job counters, currency-formatted rates) are
+	 * pre-computed here exactly as the grid's valuePrepareFunctions render them.
+	 */
+	private buildViewSections(employee: JobEmployeeRow): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'JOB_EMPLOYEE.EMPLOYEE', key: 'user', type: 'person' },
+					{ label: 'JOB_EMPLOYEE.AVAILABLE_JOBS', value: employee.availableJobs ?? 0 },
+					{ label: 'JOB_EMPLOYEE.APPLIED_JOBS', value: employee.appliedJobs ?? 0 },
+					{
+						label: 'JOB_EMPLOYEE.BILLING_RATE',
+						value: this._currencyPipe.transform(employee.billRateValue, employee.billRateCurrency)
+					},
+					{
+						label: 'JOB_EMPLOYEE.MINIMUM_BILLING_RATE',
+						value: this._currencyPipe.transform(employee.minimumBillingRate, employee.billRateCurrency)
+					},
+					{
+						label: 'JOB_EMPLOYEE.JOB_SEARCH_STATUS',
+						value: employee.isJobSearchActive ?? false,
+						type: 'boolean'
+					}
+				]
+			}
+		];
 	}
 
 	/**

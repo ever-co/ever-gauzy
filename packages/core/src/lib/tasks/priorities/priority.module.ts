@@ -18,6 +18,7 @@ import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-prio
 		CqrsModule
 	],
 	controllers: [TaskPriorityController],
-	providers: [TaskPriorityService, TypeOrmTaskPriorityRepository, MikroOrmTaskPriorityRepository, ...CommandHandlers]
+	providers: [TaskPriorityService, TypeOrmTaskPriorityRepository, MikroOrmTaskPriorityRepository, ...CommandHandlers],
+	exports: [TaskPriorityService]
 })
 export class TaskPriorityModule {}

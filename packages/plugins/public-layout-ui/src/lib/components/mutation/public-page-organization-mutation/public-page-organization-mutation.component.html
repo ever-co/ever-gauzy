@@ -180,16 +180,18 @@
 								<p class="label">
 									{{ 'POP_UPS.OVERVIEW' | translate }}
 								</p>
-								<div class="ck-editor">
-									<ckeditor
+								<div class="rich-text-editor-field">
+									<ga-rich-text-editor
 										formControlName="overview"
 										class="overview"
-										[config]="ckConfig"
+										preset="standard"
+										outputFormat="html"
+										minHeight="200px"
 										[class.status-danger]="
 											overview?.invalid && (overview.dirty || overview.touched)
 										"
 										[class.status-success]="overview?.valid && (overview.dirty || overview.touched)"
-									></ckeditor>
+									></ga-rich-text-editor>
 								</div>
 							</div>
 						</div>

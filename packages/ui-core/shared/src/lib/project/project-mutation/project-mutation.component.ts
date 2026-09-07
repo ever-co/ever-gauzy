@@ -3,7 +3,6 @@ import { AbstractControl, UntypedFormBuilder, FormControl, UntypedFormGroup, Val
 import { EMPTY, firstValueFrom, of, switchMap } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { CKEditor4 } from 'ckeditor4-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -46,7 +45,6 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { patterns } from '@gauzy/constants';
 import { FormHelpers } from '../../forms/helpers';
-import { ckEditorConfig } from '../../ckeditor.config';
 import { ProjectModuleMutationComponent } from '../../project-module/project-module-mutation/project-module-mutation.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -69,7 +67,6 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 	public owners: ProjectOwnerEnum[] = Object.values(ProjectOwnerEnum);
 	public taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
 	public showSprintManage = false;
-	public ckConfig: CKEditor4.Config = ckEditorConfig;
 	public organization: IOrganization;
 	public hoverState: boolean;
 	public loading: boolean;

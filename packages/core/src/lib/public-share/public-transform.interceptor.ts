@@ -1,14 +1,8 @@
-import {
-	Injectable,
-	NestInterceptor,
-	ExecutionContext,
-	CallHandler,
-	HttpException,
-	BadRequestException
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { instanceToPlain } from 'class-transformer';
+import { toSafeHttpException } from '../core/interceptors/safe-http-exception';
 
 @Injectable()
 export class PublicTransformInterceptor implements NestInterceptor {
@@ -23,13 +17,11 @@ export class PublicTransformInterceptor implements NestInterceptor {
 	intercept(ctx: ExecutionContext, next: CallHandler): Observable<any> {
 		return next.handle().pipe(
 			map((data) => instanceToPlain(data)),
-			catchError((error: any) => {
-				// If it's a BadRequestException, return a new instance of BadRequestException
-				if (error instanceof BadRequestException) {
-					throw new BadRequestException(error.getResponse());
-				}
-				// For other errors, return a new instance of HttpException
-				throw new HttpException(error.message, error.status);
+			// One rule for every error that escapes a controller — see `toSafeHttpException`:
+			// BadRequest bodies intact, other HTTP exceptions keep their STRUCTURED body minus
+			// driver/transport internals, non-HTTP errors become a real 5xx (never a 200).
+			catchError((error: unknown) => {
+				throw toSafeHttpException(error);
 			})
 		);
 	}

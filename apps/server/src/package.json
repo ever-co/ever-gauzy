@@ -50,13 +50,6 @@
 				"provider": "github",
 				"repo": "ever-gauzy-server",
 				"releaseType": "release"
-			},
-			{
-				"provider": "spaces",
-				"name": "ever",
-				"region": "sfo3",
-				"path": "/ever-gauzy-server",
-				"acl": "public-read"
 			}
 		],
 		"mac": {
@@ -85,7 +78,6 @@
 		"win": {
 			"target": "nsis",
 			"icon": "icon.ico",
-			"verifyUpdateCodeSignature": false,
 			"requestedExecutionLevel": "requireAdministrator"
 		},
 		"snap": {

@@ -29,11 +29,12 @@
   <nb-card-body class="editor">
     @if (form) {
       <form [formGroup]="form">
-        <ckeditor
+        <ga-rich-text-editor
           formControlName="text"
-          (change)="onChange($event)"
-          [config]="ckConfig"
-        ></ckeditor>
+          preset="email"
+          outputFormat="html"
+          (changed)="onChange($event)"
+        ></ga-rich-text-editor>
       </form>
     }
   </nb-card-body>

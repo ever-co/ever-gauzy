@@ -1,4 +1,5 @@
-import { InviteStatusEnum, IUser } from '@gauzy/contracts';
+import { ConflictException } from '@nestjs/common';
+import { IUser } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
@@ -34,42 +35,59 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 			throw Error('Organization no longer allows invites');
 		}
 
+		// Claim the invite BEFORE registering anyone. Everything above this line is a read, so two
+		// parallel acceptances of the same invite are still both live here; the conditional flip to
+		// ACCEPTED is what picks a single winner. Marking the invite accepted only at the end — as
+		// this handler used to — meant both racers passed validation and both ran a full
+		// registration off one invite.
+		if (!(await this.inviteService.claimInvite(inviteId))) {
+			throw new ConflictException('Invite has already been accepted');
+		}
+
 		let user: IUser;
 		try {
-			const { tenantId, email } = invite;
-			user = await this.typeOrmUserRepository.findOneOrFail({
-				where: {
-					email,
-					tenantId
-				},
-				order: {
-					createdAt: 'DESC'
-				}
-			});
-		} catch (error) {
-			const { id: organizationId, tenantId } = organization;
-			/**
-			 * User register after accept invitation
-			 */
-			user = await this.authService.register(
-				{
-					...input,
-					user: {
-						...input.user,
-						tenant: {
-							id: tenantId
-						}
+			// Inner try/catch is find-or-register control flow, not error handling: a missing user
+			// is the signal to create one.
+			try {
+				const { tenantId, email } = invite;
+				user = await this.typeOrmUserRepository.findOneOrFail({
+					where: {
+						email,
+						tenantId
 					},
-					organizationId,
-					inviteId
-				},
-				languageCode
-			);
+					order: {
+						createdAt: 'DESC'
+					}
+				});
+			} catch (error) {
+				const { id: organizationId, tenantId } = organization;
+				/**
+				 * User register after accept invitation
+				 */
+				user = await this.authService.register(
+					{
+						...input,
+						user: {
+							...input.user,
+							tenant: {
+								id: tenantId
+							}
+						},
+						organizationId,
+						inviteId
+					},
+					languageCode
+				);
+			}
+		} catch (error) {
+			// Registration failed, so nothing consumed the invite after all — hand it back rather
+			// than stranding it as ACCEPTED with no user attached.
+			await this.inviteService.releaseInvite(inviteId);
+			throw error;
 		}
 
 		const { id } = user;
 		await this.inviteService.update(inviteId, {
-			status: InviteStatusEnum.ACCEPTED,
 			userId: id
 		});
 

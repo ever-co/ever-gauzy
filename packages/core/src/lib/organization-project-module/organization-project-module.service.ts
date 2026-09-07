@@ -28,6 +28,7 @@ import {
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
+import { sanitizeRichHtml } from './../core/html-sanitizer';
 import { RequestContext } from '../core/context';
 import { MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
@@ -68,6 +69,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	 * @returns The created organization project module.
 	 */
 	async create(entity: IOrganizationProjectModuleCreateInput): Promise<IOrganizationProjectModule> {
+		// Sanitize the rich-text description HTML through the shared server-side allowlist.
+		if (typeof entity.description === 'string') {
+			entity.description = sanitizeRichHtml(entity.description);
+		}
 		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentRoleId = RequestContext.currentRoleId();
@@ -132,10 +137,14 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		id: ID,
 		entity: IOrganizationProjectModuleUpdateInput
 	): Promise<IOrganizationProjectModule | UpdateResult> {
+		// Sanitize the rich-text description HTML through the shared server-side allowlist.
+		if (typeof entity.description === 'string') {
+			entity.description = sanitizeRichHtml(entity.description);
+		}
 		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 
 		try {
-			const { memberIds, managerIds, organizationId, tasks = [] } = entity;
+			const { memberIds, managerIds, tasks = [] } = entity;
 
 			// Retrieve existing module
 			const existingProjectModule = await this.findOneByIdString(id, {
@@ -145,6 +154,11 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			if (!existingProjectModule) {
 				throw new BadRequestException('Module not found');
 			}
+
+			// The member lookups below are scoped by organization: use the module's own organization
+			// when the (partial) update body does not carry one, never a null (a null used to be
+			// dropped from the where and let employees of any organization of the tenant be added).
+			const organizationId = entity.organizationId ?? existingProjectModule.organizationId;
 
 			// Update members and managers if applicable
 			if (Array.isArray(memberIds) || Array.isArray(managerIds)) {

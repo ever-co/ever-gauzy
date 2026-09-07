@@ -16,6 +16,15 @@ export const test = base.extend<{ _bindPage: void }>({
 	_bindPage: [
 		async ({ page }, use) => {
 			setPage(page);
+			// Same opt-in as tests/support/fixtures.ts: filter rows are collapsed
+			// by default for users, but the page objects type into them directly.
+			await page.addInitScript(() => {
+				try {
+					localStorage.setItem('gauzy.smartTable.filtersOpen', 'open');
+				} catch {
+					/* storage unavailable — the spec will surface it */
+				}
+			});
 			await use();
 		},
 		{ auto: true }

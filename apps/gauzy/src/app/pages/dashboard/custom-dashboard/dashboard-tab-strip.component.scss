@@ -15,6 +15,7 @@
 	display: flex;
 	align-items: center;
 	min-width: 0;
+	border-bottom: 1px solid var(--gauzy-border-default-color);
 
 	&__list {
 		display: flex;
@@ -22,7 +23,7 @@
 		gap: 0.375rem;
 		flex: 1 1 auto;
 		min-width: 0;
-		padding: 0.25rem 0;
+		padding: 0;
 		overflow-x: auto;
 		// The strip scrolls horizontally without showing a scrollbar
 		scrollbar-width: none;
@@ -38,24 +39,23 @@
 	display: inline-flex;
 	align-items: center;
 	flex: 0 0 auto;
-	border: 1px solid nb-theme(border-basic-color-4);
-	border-radius: nb-theme(border-radius);
-	background-color: nb-theme(card-background-color);
-	color: nb-theme(text-basic-color);
+	border: 0;
+	border-bottom: 2px solid transparent;
+	background-color: transparent;
+	color: var(--gauzy-text-color-2);
 	overflow: hidden;
-	transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out;
+	transition: border-color 0.15s ease-in-out, color 0.15s ease-in-out;
 
 	&:hover {
-		background-color: nb-theme(background-basic-color-2);
+		color: var(--gauzy-text-color-1);
 	}
 
 	&.active {
-		border-color: nb-theme(color-primary-default);
-		background-color: nb-theme(color-primary-default);
-		color: nb-theme(text-control-color);
+		border-bottom-color: var(--color-primary-default);
+		color: var(--color-primary-default);
 
 		.tab-chip__menu {
-			color: nb-theme(text-control-color);
+			color: var(--color-primary-default);
 		}
 	}
 
@@ -68,7 +68,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
-		padding: 0.3125rem 0.75rem;
+		min-height: 2.25rem;
+		padding: 0.5rem 0.75rem;
 		border: none;
 		background: none;
 		font-family: inherit;
@@ -113,11 +114,10 @@
 
 	// CDK swaps this in for the whole chip, so it needs its own footprint
 	&__placeholder {
-		height: 28px;
+		height: 36px;
 		width: 80px;
-		border: 1px dashed nb-theme(color-primary-default);
-		border-radius: nb-theme(border-radius);
-		background-color: nb-theme(color-primary-transparent-100);
+		border: 1px dashed var(--color-primary-default);
+		background-color: var(--color-primary-transparent-100);
 	}
 }
 
@@ -126,13 +126,12 @@
 	align-items: center;
 	justify-content: center;
 	flex: 0 0 auto;
-	height: 26px;
-	width: 26px;
+	height: 2.25rem;
+	width: 2.25rem;
 	padding: 0;
-	border: 1px dashed nb-theme(border-basic-color-4);
-	border-radius: nb-theme(border-radius);
+	border: 1px dashed var(--gauzy-border-default-color);
 	background: none;
-	color: nb-theme(text-hint-color);
+	color: var(--gauzy-text-color-2);
 	cursor: pointer;
 	transition: border-color 0.15s ease-in-out, color 0.15s ease-in-out;
 
@@ -144,8 +143,8 @@
 
 	&:hover,
 	&:focus-visible {
-		border-color: nb-theme(color-primary-default);
-		color: nb-theme(color-primary-default);
+		border-color: var(--color-primary-default);
+		color: var(--color-primary-default);
 	}
 }
 

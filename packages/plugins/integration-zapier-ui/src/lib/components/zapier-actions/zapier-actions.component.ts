@@ -4,6 +4,7 @@ import { tap, catchError, finalize, switchMap, distinctUntilChanged, map } from 
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { IRecordViewSection } from '@gauzy/ui-core/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { IZapierEndpoint, IOrganization, ID } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -20,6 +21,13 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 
 	/** List of available Zapier actions/endpoints */
 	public actions: IZapierEndpoint[] = [];
+
+	/*
+	 * Read-only View: an action is a tiny record (endpoint metadata), so it
+	 * opens in the right-side drawer rather than on a page of its own.
+	 */
+	public viewedAction: IZapierEndpoint | null = null;
+	public viewSections: IRecordViewSection[] = [];
 
 	/** Current organization data */
 	public organization: IOrganization | null = null;
@@ -82,6 +90,10 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 			return;
 		}
 
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
+
 		this.loading = true;
 
 		this._zapierService
@@ -135,9 +147,38 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 	}
 
 	/**
-	 * Open action details
+	 * Opens the read-only View of an action in the right-side drawer.
+	 *
+	 * @param action - The action row the action was invoked from.
 	 */
-	openActionDetails() {
-		// TODO: Implement action details view
+	openActionDetails(action: IZapierEndpoint): void {
+		if (!action) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections();
+		this.viewedAction = action;
+	}
+
+	closeView(): void {
+		this.viewedAction = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the list row fields first, then the
+	 * identifiers Zapier reports for the endpoint.
+	 */
+	private buildViewSections(): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'SM_TABLE.NAME', key: 'name' },
+					{ label: 'SM_TABLE.DESCRIPTION', key: 'description', type: 'multiline', wide: true },
+					// The record's raw UUID adds nothing a user can act on, and no generic
+					// ID label key exists — the slug is the endpoint's real identifier.
+					{ label: 'FORM.PLACEHOLDERS.CODE', key: 'slug' }
+				]
+			}
+		];
 	}
 }

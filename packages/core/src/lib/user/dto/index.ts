@@ -4,6 +4,7 @@ export * from './register-user.dto';
 export * from './user-login.dto';
 export * from './update-preferred-component-layout.dto';
 export * from './update-preferred-language.dto';
+export * from './update-user-ui-preferences.dto';
 export * from './find-me-query.dto';
 export * from './user-email.dto';
 export * from './user-password.dto';

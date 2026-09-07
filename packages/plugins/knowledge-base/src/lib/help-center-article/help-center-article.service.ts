@@ -18,7 +18,8 @@ import {
 	TenantAwareCrudService,
 	BaseQueryDTO,
 	prepareSQLQuery as p,
-	LIKE_OPERATOR
+	LIKE_OPERATOR,
+	sanitizeRichHtml
 } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import {
@@ -36,6 +37,24 @@ import { HelpCenterArticleVersionService } from './help-center-article-version.s
 import { TypeOrmHelpCenterArticleRepository } from './repository/type-orm-help-center-article.repository';
 import { MikroOrmHelpCenterArticleRepository } from './repository/mikro-orm-help-center-article.repository';
 
+/**
+ * Columns a caller may sort help-center articles by.
+ *
+ * The MikroORM/Knex branch interpolates the order key into the query instead of resolving it
+ * through entity metadata, so the accepted keys must be enumerated explicitly.
+ */
+export const HELP_CENTER_ARTICLE_SORTABLE_FIELDS = [
+	'name',
+	'index',
+	'draft',
+	'privacy',
+	'isLocked',
+	'color',
+	'categoryId',
+	'createdAt',
+	'updatedAt'
+] as const;
+
 @Injectable()
 export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterArticle> {
 	constructor(
@@ -46,10 +65,77 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		super(typeOrmHelpCenterArticleRepository, mikroOrmHelpCenterArticleRepository);
 	}
 
+	/**
+	 * Creates a Help Center article, sanitizing the legacy rich-text `data` HTML column through
+	 * the shared server-side allowlist before persisting — the column is re-rendered with
+	 * `[innerHTML]` in the Help Center reader (see `sanitizeRichHtml`).
+	 *
+	 * @param entity - The article data to persist.
+	 * @returns The persisted article.
+	 */
+	public async create(entity: DeepPartial<HelpCenterArticle>): Promise<HelpCenterArticle> {
+		if (typeof entity.data === 'string') {
+			entity.data = sanitizeRichHtml(entity.data);
+		}
+		return await super.create(entity);
+	}
+
+	/**
+	 * Get every article in a category, sanitizing the legacy rich-text `data` column on the way out.
+	 *
+	 * 🛑 Sanitizing on write is not enough here. `data` is a CKEditor-4 era corpus: every row written
+	 * before `sanitizeRichHtml` shipped went to disk unfiltered, and those rows are re-rendered with
+	 * `[innerHtml]` in the Help Center reader. So the read path re-runs the same allowlist and, when a
+	 * row actually changes, lazily re-saves the clean HTML so the corpus heals one read at a time.
+	 * The allowlist is idempotent, so already-clean rows compare equal and are never re-written.
+	 *
+	 * @param categoryId - The category whose articles to load.
+	 * @returns The articles, with `data` guaranteed to have passed the allowlist.
+	 */
 	async getArticlesByCategoryId(categoryId: ID): Promise<HelpCenterArticle[]> {
-		return await this.find({
+		const articles = await this.find({
 			where: { categoryId } as FindOptionsWhere<HelpCenterArticle>
 		});
+		return await this.sanitizeArticlesData(articles);
+	}
+
+	/**
+	 * Re-run the shared rich-text allowlist over each article's legacy `data` column and lazily
+	 * persist the cleaned HTML for the rows that were not already clean.
+	 *
+	 * The re-save is best-effort: a failure to heal the stored row must never fail the read, because
+	 * the value handed back to the caller is already sanitized either way.
+	 *
+	 * @param articles - The articles to sanitize in place.
+	 * @returns The same array, with sanitized `data`.
+	 */
+	private async sanitizeArticlesData(articles: HelpCenterArticle[]): Promise<HelpCenterArticle[]> {
+		const healed: ID[] = [];
+
+		for (const article of articles) {
+			if (typeof article.data !== 'string' || !article.data) {
+				continue;
+			}
+			const sanitized = sanitizeRichHtml(article.data);
+			if (sanitized !== article.data) {
+				article.data = sanitized;
+				healed.push(article.id);
+			}
+		}
+
+		// Lazily heal the stored corpus — never let this break the read.
+		await Promise.all(
+			healed.map(async (id) => {
+				const article = articles.find((a) => a.id === id);
+				try {
+					await this.typeOrmHelpCenterArticleRepository.update(id, { data: article.data });
+				} catch (error) {
+					console.error(`Failed to persist sanitized Help Center article data for id ${id}`, error);
+				}
+			})
+		);
+
+		return articles;
 	}
 
 	/**
@@ -113,10 +199,21 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 						if (advIsLocked !== undefined) qb = qb.andWhere('kba.isLocked', advIsLocked);
 					}
 
-					// Apply ordering
+					// Apply ordering.
+					//
+					// `options.order` comes straight from the request (BaseQueryDTO validates only that
+					// it is present), and both the column and the direction are interpolated into the
+					// query here rather than mapped through entity metadata. Clamp each against an
+					// explicit allowlist so a request can never place arbitrary text in the ORDER BY
+					// position — the same defense applied to the plugin marketplace search
+					// (GHSA-xqcf-j9jr-7w59).
 					if (options.order) {
 						for (const [key, direction] of Object.entries(options.order)) {
-							qb = qb.orderBy(`kba.${key}`, direction as string);
+							if (!(HELP_CENTER_ARTICLE_SORTABLE_FIELDS as readonly string[]).includes(key)) {
+								continue;
+							}
+							const normalized = String(direction).toUpperCase() === 'ASC' ? 'asc' : 'desc';
+							qb = qb.orderBy(`kba.${key}`, normalized);
 						}
 					}
 
@@ -229,6 +326,10 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	 * Update an article by ID.
 	 */
 	public async updateArticleById(id: ID, input: IHelpCenterArticleUpdate): Promise<void> {
+		// Sanitize the legacy rich-text `data` HTML column through the shared server-side allowlist.
+		if (typeof input.data === 'string') {
+			input.data = sanitizeRichHtml(input.data);
+		}
 		await super.update(id, input);
 	}
 
@@ -249,6 +350,11 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		input: IHelpCenterArticleUpdate,
 		ownedById?: ID
 	): Promise<{ article: IHelpCenterArticle; version: IHelpCenterArticleVersion }> {
+		// Sanitize the legacy rich-text `data` HTML column through the shared server-side allowlist.
+		if (typeof input.data === 'string') {
+			input.data = sanitizeRichHtml(input.data);
+		}
+
 		// 1. Get current article state
 		const { record: currentArticle } = await this.findOneOrFailByIdString(id);
 

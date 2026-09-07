@@ -7,7 +7,7 @@
 	}
 </ng-template>
 
-@if (organization?.id) {
+@if (allowOrganization && organization?.id) {
 	<span class="name">
 		@if (allowEmployee && employee?.id) {
 			<ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">

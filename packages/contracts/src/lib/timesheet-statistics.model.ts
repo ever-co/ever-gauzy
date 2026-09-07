@@ -4,6 +4,7 @@ import { ITask } from './task.model';
 import { ITimeSlot, ITimeLog, ITimeLogFilters, ITimeLogTodayFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
+import { ID } from './base-entity.model';
 
 export interface IGetTimeSlotStatistics extends ITimeLogFilters {
 	employeeId?: string;
@@ -126,4 +127,24 @@ export interface ISelectedDateRange {
 	startDate: Date;
 	endDate: Date;
 	isCustomDate?: boolean;
+}
+
+export interface IGetProfileActivity {
+	organizationId: ID;
+	employeeId: ID;
+	organizationTeamId?: ID;
+	startDate: string;
+	endDate: string;
+	timeZone: string;
+	includeDaily?: boolean;
+}
+
+export interface IProfileActivity {
+	employeeId: ID;
+	activeDays: number;
+	totalDuration: number;
+	firstActiveOn: string | null;
+	lastActiveOn: string | null;
+	period: { startDate: string; endDate: string; timeZone: string };
+	daily?: Array<{ date: string; duration: number }>;
 }

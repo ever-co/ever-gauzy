@@ -19,6 +19,13 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# `contents: write` + `pull-requests: write` are required by the
+# peter-evans/create-pull-request step that pushes the fix branch and opens its PR.
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   build:
     name: MegaLinter

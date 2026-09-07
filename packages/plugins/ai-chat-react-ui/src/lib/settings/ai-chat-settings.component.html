@@ -35,14 +35,20 @@
 					<h5>{{ 'AI_CHAT_UI.SETTINGS.TITLE' | translate }}</h5>
 					<p class="description">{{ 'AI_CHAT_UI.SETTINGS.DESCRIPTION' | translate }}</p>
 				</div>
-				<!-- Header action only once something is configured: with an empty list
+				<!-- Header actions only once something is configured: with an empty list
 				     the centred call-to-action below is the single obvious next step,
 				     and showing both put two identical green buttons on one screen. -->
-				@if (configuredProviders().length) {
-					<button nbButton status="success" (click)="showCatalog()">
-						<nb-icon icon="plus-outline"></nb-icon>
-						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_PROVIDER' | translate }}
-					</button>
+				@if (configuredProviders().length || voiceProviders().length) {
+					<div class="header-actions">
+						<button nbButton status="success" (click)="showCatalog()">
+							<nb-icon icon="plus-outline"></nb-icon>
+							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_PROVIDER' | translate }}
+						</button>
+						<button nbButton outline status="success" (click)="showVoiceCatalog()">
+							<nb-icon icon="mic-outline"></nb-icon>
+							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_VOICE_PROVIDER' | translate }}
+						</button>
+					</div>
 				}
 			</div>
 		</nb-card-header>
@@ -65,17 +71,23 @@
 				</div>
 			}
 
-			@if (!loading() && !configuredProviders().length) {
+			@if (!loading() && !configuredProviders().length && !voiceProviders().length) {
 				<div class="empty-state">
 					<span class="empty-illustration" aria-hidden="true">
 						<nb-icon icon="cube-outline"></nb-icon>
 					</span>
 					<h6 class="empty-title">{{ 'AI_CHAT_UI.SETTINGS.LIST.EMPTY_TITLE' | translate }}</h6>
 					<p class="empty-hint">{{ 'AI_CHAT_UI.SETTINGS.LIST.EMPTY' | translate }}</p>
-					<button nbButton status="success" size="medium" (click)="showCatalog()">
-						<nb-icon icon="plus-outline"></nb-icon>
-						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_PROVIDER' | translate }}
-					</button>
+					<div class="empty-actions">
+						<button nbButton status="success" size="medium" (click)="showCatalog()">
+							<nb-icon icon="plus-outline"></nb-icon>
+							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_PROVIDER' | translate }}
+						</button>
+						<button nbButton outline status="success" size="medium" (click)="showVoiceCatalog()">
+							<nb-icon icon="mic-outline"></nb-icon>
+							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_VOICE_PROVIDER' | translate }}
+						</button>
+					</div>
 					<!-- Name the providers on offer so the empty state teaches what this
 					     page is for, instead of only asking for a click. -->
 					<p class="empty-providers">{{ 'AI_CHAT_UI.SETTINGS.LIST.EMPTY_PROVIDERS' | translate }}</p>
@@ -156,6 +168,96 @@
 					}
 				</div>
 			}
+
+			<!-- ── Voice (dictation) ──
+			     Which configured providers can transcribe, and which one is the tenant's voice
+			     default. Shown whenever the page has SOMETHING configured: a tenant with a chat
+			     provider but no voice provider needs to learn here why dictation is off. -->
+			@if (!loading() && (configuredProviders().length || voiceProviders().length)) {
+				<section class="voice-section" aria-labelledby="ai-chat-voice-title">
+					<div class="section-head">
+						<div>
+							<h6 id="ai-chat-voice-title">
+								<nb-icon icon="mic-outline"></nb-icon>
+								{{ 'AI_CHAT_UI.SETTINGS.VOICE.TITLE' | translate }}
+							</h6>
+							<p class="description">{{ 'AI_CHAT_UI.SETTINGS.VOICE.DESCRIPTION' | translate }}</p>
+						</div>
+					</div>
+
+					@if (voiceProviders().length) {
+						<div class="provider-rows">
+							<div class="row-head">
+								<span>{{ 'AI_CHAT_UI.SETTINGS.LIST.NAME' | translate }}</span>
+								<span>{{ 'AI_CHAT_UI.SETTINGS.LIST.SOURCE' | translate }}</span>
+								<span>{{ 'AI_CHAT_UI.SETTINGS.VOICE.MODEL' | translate }}</span>
+								<span class="actions-col"></span>
+							</div>
+							@for (provider of voiceProviders(); track provider.id) {
+								<div class="row">
+									<span class="cell name">
+										<ng-container
+											[ngTemplateOutlet]="providerTile"
+											[ngTemplateOutletContext]="{ $implicit: provider }"
+										></ng-container>
+										<span class="label">
+											{{ provider.label }}
+											@if (defaultVoiceProviderId() === provider.id) {
+												<span class="default-chip voice">{{
+													'AI_CHAT_UI.SETTINGS.VOICE.DEFAULT' | translate
+												}}</span>
+											} @else {
+												<span class="fallback-chip">{{
+													'AI_CHAT_UI.SETTINGS.VOICE.FALLBACK' | translate
+												}}</span>
+											}
+											@if (provider.local) {
+												<span class="capability-chip local">{{
+													'AI_CHAT_UI.SETTINGS.BADGE.LOCAL' | translate
+												}}</span>
+											}
+										</span>
+									</span>
+									<span class="cell">
+										<nb-badge
+											class="static-badge"
+											[text]="getVoiceBadgeKey(provider) | translate"
+											[status]="getVoiceBadgeStatus(provider)"
+										></nb-badge>
+									</span>
+									<span class="cell speech-model">
+										{{ getCredential(provider.id)?.speechModel || provider.defaultSpeechModel || '—' }}
+									</span>
+									<span class="cell actions-col">
+										<button
+											nbButton
+											ghost
+											status="primary"
+											size="small"
+											(click)="showConfigure(provider.id)"
+										>
+											<nb-icon icon="settings-2-outline"></nb-icon>
+											{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.CONFIGURE' | translate }}
+										</button>
+									</span>
+								</div>
+							}
+						</div>
+					} @else {
+						<div class="voice-empty">
+							<nb-icon icon="mic-off-outline" status="warning"></nb-icon>
+							<div class="notice-text">
+								<span class="notice-title">{{ 'AI_CHAT_UI.SETTINGS.VOICE.EMPTY' | translate }}</span>
+								<span class="notice-hint">{{ 'AI_CHAT_UI.SETTINGS.VOICE.EMPTY_HINT' | translate }}</span>
+							</div>
+							<button nbButton size="small" status="success" class="notice-action" (click)="showVoiceCatalog()">
+								<nb-icon icon="plus-outline"></nb-icon>
+								{{ 'AI_CHAT_UI.SETTINGS.VOICE.ADD' | translate }}
+							</button>
+						</div>
+					}
+				</section>
+			}
 		</nb-card-body>
 	}
 
@@ -168,27 +270,54 @@
 						<nb-icon icon="arrow-back-outline"></nb-icon>
 						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.BACK' | translate }}
 					</button>
-					<h5>{{ 'AI_CHAT_UI.SETTINGS.CATALOG.TITLE' | translate }}</h5>
-					<p class="description">{{ 'AI_CHAT_UI.SETTINGS.CATALOG.DESCRIPTION' | translate }}</p>
+					@if (catalogFilter() === 'voice') {
+						<h5>{{ 'AI_CHAT_UI.SETTINGS.CATALOG.VOICE_TITLE' | translate }}</h5>
+						<p class="description">{{ 'AI_CHAT_UI.SETTINGS.CATALOG.VOICE_DESCRIPTION' | translate }}</p>
+					} @else {
+						<h5>{{ 'AI_CHAT_UI.SETTINGS.CATALOG.TITLE' | translate }}</h5>
+						<p class="description">{{ 'AI_CHAT_UI.SETTINGS.CATALOG.DESCRIPTION' | translate }}</p>
+					}
 				</div>
 			</div>
 		</nb-card-header>
 		<nb-card-body>
-			@if (!loading() && !providers().length) {
-				<p class="empty-state">{{ 'AI_CHAT_UI.SETTINGS.NO_PROVIDERS' | translate }}</p>
+			@if (!loading() && !catalogProviders().length) {
+				<p class="empty-state">
+					{{
+						(catalogFilter() === 'voice'
+							? 'AI_CHAT_UI.SETTINGS.CATALOG.NO_VOICE_PROVIDERS'
+							: 'AI_CHAT_UI.SETTINGS.NO_PROVIDERS'
+						) | translate
+					}}
+				</p>
 			}
 			<div class="catalog-grid">
-				@for (provider of providers(); track provider.id) {
+				@for (provider of catalogProviders(); track provider.id) {
 					<button type="button" class="catalog-card" (click)="showConfigure(provider.id)">
 						<ng-container
 							[ngTemplateOutlet]="providerTile"
 							[ngTemplateOutletContext]="{ $implicit: provider, large: true }"
 						></ng-container>
 						<span class="name">{{ provider.label }}</span>
-						@if (provider.configured) {
+						<!-- Capability chips: what this provider can do for the tenant. -->
+						<span class="capabilities">
+							@if (provider.chatCapable !== false) {
+								<span class="capability-chip chat">{{ 'AI_CHAT_UI.SETTINGS.BADGE.CHAT' | translate }}</span>
+							}
+							@if (provider.speechCapable) {
+								<span class="capability-chip speech">
+									<nb-icon icon="mic-outline"></nb-icon>
+									{{ 'AI_CHAT_UI.SETTINGS.BADGE.SPEECH' | translate }}
+								</span>
+							}
+							@if (provider.local) {
+								<span class="capability-chip local">{{ 'AI_CHAT_UI.SETTINGS.BADGE.LOCAL' | translate }}</span>
+							}
+						</span>
+						@if (catalogFilter() === 'voice' ? isVoiceConfigured(provider) : provider.configured) {
 							<span class="configured">
 								<nb-icon icon="checkmark-circle-2" status="success"></nb-icon>
-								{{ getBadgeKey(provider) | translate }}
+								{{ (catalogFilter() === 'voice' ? getVoiceBadgeKey(provider) : getBadgeKey(provider)) | translate }}
 							</span>
 						}
 						@if (provider.connectType) {
@@ -207,7 +336,7 @@
 		<nb-card-header>
 			<div class="page-header">
 				<div>
-					<button nbButton ghost size="small" class="back" (click)="showCatalog()">
+					<button nbButton ghost size="small" class="back" (click)="backFromConfigure(provider)">
 						<nb-icon icon="arrow-back-outline"></nb-icon>
 						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.BACK' | translate }}
 					</button>
@@ -219,10 +348,24 @@
 						<h5>{{ provider.label }}</h5>
 						<nb-badge
 							class="static-badge"
-							[text]="getBadgeKey(provider) | translate"
-							[status]="getBadgeStatus(provider)"
+							[text]="(isVoiceOnly(provider) ? getVoiceBadgeKey(provider) : getBadgeKey(provider)) | translate"
+							[status]="isVoiceOnly(provider) ? getVoiceBadgeStatus(provider) : getBadgeStatus(provider)"
 						></nb-badge>
+						<span class="capabilities">
+							@if (provider.speechCapable) {
+								<span class="capability-chip speech">
+									<nb-icon icon="mic-outline"></nb-icon>
+									{{ 'AI_CHAT_UI.SETTINGS.BADGE.SPEECH' | translate }}
+								</span>
+							}
+							@if (provider.local) {
+								<span class="capability-chip local">{{ 'AI_CHAT_UI.SETTINGS.BADGE.LOCAL' | translate }}</span>
+							}
+						</span>
 					</div>
+					@if (isVoiceOnly(provider)) {
+						<p class="platform-notice">{{ 'AI_CHAT_UI.SETTINGS.FORM.VOICE_ONLY_NOTICE' | translate }}</p>
+					}
 					@if (isOnPlatformKey(provider)) {
 						<!-- The badge alone would leave the user wondering why a provider they never
 						     configured is working. Say it plainly, and point at the way out. -->
@@ -250,7 +393,12 @@
 				<form [formGroup]="form" (ngSubmit)="save(provider)" class="config-form">
 					<div class="form-group">
 						<label class="label" [for]="'apiKey-' + provider.id">
-							{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY' | translate }}
+							{{
+								(provider.requiresApiKey === false
+									? 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_LABEL_OPTIONAL'
+									: 'AI_CHAT_UI.SETTINGS.FORM.API_KEY'
+								) | translate
+							}}
 							@if (provider.apiKeysUrl) {
 								<a
 									class="get-key"
@@ -293,7 +441,9 @@
 								></nb-icon>
 							</button>
 						</nb-form-field>
-						@if (getCredential(provider.id)) {
+						@if (provider.requiresApiKey === false) {
+							<span class="hint">{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_OPTIONAL' | translate }}</span>
+						} @else if (getCredential(provider.id)) {
 							<span class="hint">{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_KEEP' | translate }}</span>
 						}
 						@if (form.controls.apiKey.touched && form.controls.apiKey.hasError('required')) {
@@ -303,7 +453,12 @@
 
 					<div class="form-group">
 						<label class="label" [for]="'baseUrl-' + provider.id">
-							{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL' | translate }}
+							{{
+								(provider.requiresBaseUrl
+									? 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_REQUIRED_LABEL'
+									: 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL'
+								) | translate
+							}}
 						</label>
 						<input
 							nbInput
@@ -312,83 +467,158 @@
 							formControlName="baseUrl"
 							type="url"
 							autocomplete="off"
-							[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_PLACEHOLDER' | translate"
+							[placeholder]="baseUrlPlaceholder(provider)"
 						/>
+						@if (provider.requiresBaseUrl) {
+							<span class="hint">{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_GATEWAY_HINT' | translate }}</span>
+						} @else if (provider.local) {
+							<span class="hint">{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_LOCAL_HINT' | translate }}</span>
+						}
+						@if (form.controls.baseUrl.touched && form.controls.baseUrl.hasError('required')) {
+							<span class="error">{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_REQUIRED' | translate }}</span>
+						}
 						@if (form.controls.baseUrl.touched && form.controls.baseUrl.hasError('pattern')) {
 							<span class="error">{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_INVALID' | translate }}</span>
 						}
 					</div>
 
-					<div class="form-group">
-						<label class="label" [for]="'ai-chat-model-' + provider.id">
-							{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL' | translate }}
-						</label>
-						<ng-select
-							class="model-select"
-							[labelForId]="'ai-chat-model-' + provider.id"
-							formControlName="defaultModel"
-							bindValue="id"
-							bindLabel="label"
-							[items]="modelOptions(provider)"
-							[loading]="isLoadingModels(provider.id)"
-							[clearable]="true"
-							[searchable]="true"
-							[searchFn]="searchModel"
-							[virtualScroll]="true"
-							[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate"
-							[notFoundText]="'AI_CHAT_UI.SETTINGS.FORM.MODELS_NOT_FOUND' | translate"
-						>
-							<!--
-								Every row is two lines, including the "Custom model…" sentinel: ng-select's
-								virtual scroll measures one item and applies that height to all of them, so a
-								single short row would smear the scroll offset across a 250-entry list.
-							-->
-							<ng-template ng-option-tmp let-model="item">
-								<span class="model-label">{{ model.label }}</span>
-								<span class="model-id">
-									{{
-										model.id === CUSTOM_MODEL
-											? ('AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate)
-											: model.id
-									}}
+					<!-- ── Voice / speech-to-text (speech-capable providers) ── -->
+					@if (provider.speechCapable) {
+						<div class="form-group voice-group">
+							<label class="label" [for]="'ai-chat-speech-model-' + provider.id">
+								<span class="label-with-icon">
+									<nb-icon icon="mic-outline"></nb-icon>
+									{{ 'AI_CHAT_UI.SETTINGS.FORM.SPEECH_MODEL' | translate }}
 								</span>
-							</ng-template>
-						</ng-select>
-						@if (modelSourceKey(provider); as sourceKey) {
-							<span class="hint">{{ sourceKey | translate }}</span>
-						}
-						@if (form.controls.defaultModel.value === CUSTOM_MODEL) {
-							<input
-								nbInput
-								fullWidth
-								class="custom-model"
-								[id]="'ai-chat-custom-model-' + provider.id"
-								formControlName="customModel"
-								type="text"
-								autocomplete="off"
-								[attr.aria-label]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate"
-								[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate"
-							/>
-						}
-					</div>
+							</label>
+							<ng-select
+								class="model-select"
+								[labelForId]="'ai-chat-speech-model-' + provider.id"
+								formControlName="speechModel"
+								bindValue="id"
+								bindLabel="label"
+								[items]="speechModelOptions(provider)"
+								[clearable]="true"
+								[searchable]="true"
+								[searchFn]="searchModel"
+								[placeholder]="
+									provider.defaultSpeechModel || ('AI_CHAT_UI.SETTINGS.FORM.SPEECH_MODEL_NONE' | translate)
+								"
+								[notFoundText]="'AI_CHAT_UI.SETTINGS.FORM.MODELS_NOT_FOUND' | translate"
+							>
+								<ng-template ng-option-tmp let-model="item">
+									<span class="model-label">{{ model.label }}</span>
+									<span class="model-id">
+										{{
+											model.id === CUSTOM_MODEL
+												? ('AI_CHAT_UI.SETTINGS.FORM.CUSTOM_SPEECH_MODEL_PLACEHOLDER' | translate)
+												: model.id
+										}}
+									</span>
+								</ng-template>
+							</ng-select>
+							<span class="hint">{{ 'AI_CHAT_UI.SETTINGS.FORM.SPEECH_MODEL_HINT' | translate }}</span>
+							@if (form.controls.speechModel.value === CUSTOM_MODEL) {
+								<input
+									nbInput
+									fullWidth
+									class="custom-model"
+									[id]="'ai-chat-custom-speech-model-' + provider.id"
+									formControlName="customSpeechModel"
+									type="text"
+									autocomplete="off"
+									[attr.aria-label]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_SPEECH_MODEL_PLACEHOLDER' | translate"
+									[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_SPEECH_MODEL_PLACEHOLDER' | translate"
+								/>
+							}
+							<label class="voice-default-toggle">
+								<nb-toggle
+									status="primary"
+									[checked]="voiceDefaultControl.value === provider.id"
+									(checkedChange)="setVoiceDefault(provider, $event)"
+								>
+									{{ 'AI_CHAT_UI.SETTINGS.FORM.USE_AS_VOICE_DEFAULT' | translate }}
+								</nb-toggle>
+							</label>
+							<span class="hint">{{ 'AI_CHAT_UI.SETTINGS.FORM.USE_AS_VOICE_DEFAULT_HINT' | translate }}</span>
+						</div>
+					}
+
+					<!-- The chat model picker + chat default are meaningless for a voice-only provider. -->
+					@if (!isVoiceOnly(provider)) {
+						<div class="form-group">
+							<label class="label" [for]="'ai-chat-model-' + provider.id">
+								{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL' | translate }}
+							</label>
+							<ng-select
+								class="model-select"
+								[labelForId]="'ai-chat-model-' + provider.id"
+								formControlName="defaultModel"
+								bindValue="id"
+								bindLabel="label"
+								[items]="modelOptions(provider)"
+								[loading]="isLoadingModels(provider.id)"
+								[clearable]="true"
+								[searchable]="true"
+								[searchFn]="searchModel"
+								[virtualScroll]="true"
+								[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate"
+								[notFoundText]="'AI_CHAT_UI.SETTINGS.FORM.MODELS_NOT_FOUND' | translate"
+							>
+								<!--
+									Every row is two lines, including the "Custom model…" sentinel: ng-select's
+									virtual scroll measures one item and applies that height to all of them, so a
+									single short row would smear the scroll offset across a 250-entry list.
+								-->
+								<ng-template ng-option-tmp let-model="item">
+									<span class="model-label">{{ model.label }}</span>
+									<span class="model-id">
+										{{
+											model.id === CUSTOM_MODEL
+												? ('AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate)
+												: model.id
+										}}
+									</span>
+								</ng-template>
+							</ng-select>
+							@if (modelSourceKey(provider); as sourceKey) {
+								<span class="hint">{{ sourceKey | translate }}</span>
+							}
+							@if (form.controls.defaultModel.value === CUSTOM_MODEL) {
+								<input
+									nbInput
+									fullWidth
+									class="custom-model"
+									[id]="'ai-chat-custom-model-' + provider.id"
+									formControlName="customModel"
+									type="text"
+									autocomplete="off"
+									[attr.aria-label]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate"
+									[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate"
+								/>
+							}
+						</div>
+					}
 
 					<div class="form-group toggles">
 						<nb-toggle formControlName="enabled" status="primary">
 							{{ 'AI_CHAT_UI.SETTINGS.FORM.ENABLED' | translate }}
 						</nb-toggle>
-						<label class="default-radio">
-							<input
-								type="radio"
-								name="defaultProvider"
-								[value]="provider.id"
-								[checked]="defaultProviderControl.value === provider.id"
-								(change)="defaultProviderControl.setValue(provider.id)"
-								[attr.aria-label]="
-									('AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate) + ': ' + provider.label
-								"
-							/>
-							{{ 'AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate }}
-						</label>
+						@if (!isVoiceOnly(provider)) {
+							<label class="default-radio">
+								<input
+									type="radio"
+									name="defaultProvider"
+									[value]="provider.id"
+									[checked]="defaultProviderControl.value === provider.id"
+									(change)="defaultProviderControl.setValue(provider.id)"
+									[attr.aria-label]="
+										('AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate) + ': ' + provider.label
+									"
+								/>
+								{{ 'AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate }}
+							</label>
+						}
 					</div>
 
 					<div class="actions">

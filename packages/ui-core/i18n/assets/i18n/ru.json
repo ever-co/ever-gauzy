@@ -1164,6 +1164,21 @@
 		"START_SERVER": "Запустить сервер",
 		"STOP_SERVER": "Остановить сервер"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Пользовательский интерфейс",
+			"DESCRIPTION": "Выберите, какой интерфейс используют все пользователи этого тенанта для страниц, доступных в обоих вариантах.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (по умолчанию)",
+				"REACT": "React (новый)"
+			},
+			"HINT": "Действует для всего тенанта на любом устройстве. Сейчас панель учёта времени доступна в обоих интерфейсах; другие страницы появятся позже.",
+			"READ_ONLY": "Только администраторы тенанта могут изменить эту настройку.",
+			"SAVING": "Сохранение…",
+			"SAVED": "Предпочтение интерфейса сохранено",
+			"SAVE_ERROR": "Не удалось сохранить предпочтение интерфейса."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
 		"LIGHT": "Светлый",
@@ -1196,7 +1211,9 @@
 		"CARDS_GRID": "Сетка карт",
 		"SPRINT_VIEW": "Просмотр спринта",
 		"QUICK_SETTINGS": "Быстрые настройки",
-		"NO_LAYOUT": "Нет доступного макета данных"
+		"NO_LAYOUT": "Нет доступного макета данных",
+		"PREFERENCES": "Предпочтения",
+		"SUPPORT": "Поддержка"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Что нового?",
@@ -3339,7 +3356,11 @@
 		"STOP_TIMER": "Остановить таймер",
 		"TIME_LOG": "Журнал времени",
 		"VIEW_APPOINTMENTS": "Просмотреть встречи",
-		"VIEW_TIME_ACTIVITY": "Просмотреть активность по времени"
+		"VIEW_TIME_ACTIVITY": "Просмотреть активность по времени",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Новая страница",
+			"UPLOAD": "Загрузить"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Бухгалтерия",
@@ -3347,7 +3368,8 @@
 		"PROJECT_MANAGEMENT": "Управление проектами",
 		"JOBS": "Работа",
 		"CONTACTS": "Контакты",
-		"TIME_TRACKING": "Учет времени"
+		"TIME_TRACKING": "Учет времени",
+		"DOCUMENTS": "Документы"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Имя",
@@ -3661,7 +3683,9 @@
 		"SELECT_AN_ORGANIZATION": "Организация",
 		"SELECT_PROJECT": "Проект",
 		"SELECT_TEAM": "Команда",
-		"AI_CHAT": "ИИ-чат"
+		"AI_CHAT": "ИИ-чат",
+		"COLLAPSE_SIDEBAR": "Свернуть боковую панель",
+		"EXPAND_SIDEBAR": "Развернуть боковую панель"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "ИИ-ассистент",
@@ -3687,6 +3711,12 @@
 		"STOP": "Остановить генерацию",
 		"ERROR": "Что-то пошло не так.",
 		"RETRY": "Повторить",
+		"DICTATION_FAILED": "Не удалось расшифровать запись.",
+		"DICTATION_NOT_CONFIGURED": "Для диктовки нужен голосовой провайдер. Добавьте его на странице настроек «Провайдеры ИИ».",
+		"DICTATION_ASK_ADMIN": "Для диктовки нужен голосовой провайдер — попросите администратора добавить его в Настройки → Провайдеры ИИ.",
+		"DICTATION_KEY_REJECTED": "Голосовой провайдер отклонил API-ключ. Обновите его на странице настроек «Провайдеры ИИ».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Голосовой провайдер отклонил API-ключ — попросите администратора обновить его в Настройки → Провайдеры ИИ.",
+		"DICTATION_OPEN_SETTINGS": "Открыть Провайдеры ИИ",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
@@ -3702,6 +3732,21 @@
 		"REDIRECT_TO_HOME": "Вы будете перенаправлены на домашнюю страницу в ближайшее время"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Найдите документацию, получите ответы и свяжитесь с командой Gauzy.",
+		"DOCUMENTATION": "Документация",
+		"DOCUMENTATION_DESC": "Руководства и справочник по каждой функции Gauzy.",
+		"FAQ": "Частые вопросы",
+		"FAQ_DESC": "Ответы на самые частые вопросы.",
+		"SUPPORT_CHAT": "Чат поддержки",
+		"SUPPORT_CHAT_DESC": "Свяжитесь с нашей командой поддержки.",
+		"REPORT_ISSUE": "Сообщить о проблеме",
+		"REPORT_ISSUE_DESC": "Нашли ошибку? Создайте issue на GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Исходный код, релизы и обсуждения.",
+		"WEBSITE": "Сайт Gauzy",
+		"WEBSITE_DESC": "Узнайте больше о платформе Gauzy.",
+		"ABOUT_LINK": "О Gauzy",
+		"ABOUT_LINK_DESC": "Сведения о версии, лицензия и ссылки.",
 		"HELP": "Помогите",
 		"KNOWLEDGE_BASE": "База знаний",
 		"CHOSE_ICON": "Выберите значок для установки",
@@ -4006,6 +4051,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Все права защищены.",
+		"DESCRIPTION": "Ever® Gauzy™ — открытая платформа управления бизнесом для совместной экономики и экономики по требованию: ERP, CRM, HRM, ATS и управление проектами со встроенным учётом времени.",
+		"LICENSE": "Открытый исходный код, распространяется по лицензии",
+		"VERSION_DETAILS": "Сведения о версии",
+		"VERSION_MISMATCH": "Веб-приложение и API собраны из разных коммитов — возможно, идёт развёртывание.",
+		"WEB_APP": "Веб-приложение",
+		"API": "API",
+		"UNTAGGED": "сборка без тега",
+		"API_UNAVAILABLE": "Версия API недоступна",
+		"LEARN_MORE": "Подробнее",
 		"ABOUT": "О нас"
 	},
 	"FOOTER": {
@@ -5337,7 +5392,15 @@
 		"HOTKEYS": "Горячие клавиши",
 		"HELP": "Помогите",
 		"SIGN_OUT": "Выйти",
-		"PROFILE": "Профиль"
+		"PROFILE": "Профиль",
+		"ACCOUNT": "Аккаунт",
+		"PREFERENCES": "Предпочтения",
+		"DOWNLOAD_APPS": "Скачать приложения",
+		"DOWNLOAD_MACOS": "Скачать для macOS",
+		"DOWNLOAD_WINDOWS": "Скачать для Windows",
+		"DOWNLOAD_LINUX": "Скачать для Linux",
+		"DOWNLOAD_MOBILE": "Скачать мобильное приложение",
+		"DOWNLOAD_BROWSER_EXTENSION": "Скачать расширение для браузера"
 	},
 	"WORKSPACES": {
 		"MENUS": {

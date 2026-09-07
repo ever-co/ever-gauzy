@@ -19,6 +19,8 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+// cspell:ignore nodedir
+
 const nodeModulesPath = path.resolve('node_modules');
 const foundScripts = [];
 
@@ -155,6 +157,29 @@ function findNativeBinary(packagePath) {
 }
 
 /**
+ * Reuse the Node runtime headers already shipped in the official Docker image.
+ *
+ * Alpine has no prebuilt better-sqlite3 binary for every Node release, so
+ * node-gyp otherwise downloads the same headers from
+ * unofficial-builds.nodejs.org. A timeout there must not make the image build
+ * fail when /usr/local/include/node/node.h is already available locally.
+ */
+function getNativeBuildEnvironment({
+	execPath = process.execPath,
+	environment = process.env,
+	fileExists = fs.existsSync
+} = {}) {
+	const nodeRoot = path.resolve(path.dirname(execPath), '..');
+	const bundledHeader = path.join(nodeRoot, 'include', 'node', 'node.h');
+
+	if (!fileExists(bundledHeader)) {
+		return environment;
+	}
+
+	return { ...environment, npm_config_nodedir: nodeRoot };
+}
+
+/**
  * Builds the native packages that `--ignore-scripts` skipped, and FAILS if one of
  * them ends up without a binary.
  *
@@ -195,7 +220,10 @@ function handleNativePackages() {
 	console.log(`Rebuilding native packages: ${names.join(', ')}`);
 	try {
 		// Root cwd, not the package's own directory.
-		execSync(`npm rebuild ${names.join(' ')}`, { stdio: 'inherit' });
+		execSync(`npm rebuild ${names.join(' ')}`, {
+			stdio: 'inherit',
+			env: getNativeBuildEnvironment()
+		});
 	} catch (error) {
 		// Not fatal on its own — the verification below decides. A package that
 		// already carries a valid prebuilt binary can fail `npm rebuild` (no
@@ -229,15 +257,22 @@ function handleNativePackages() {
 	}
 }
 
-// Main execution
-findPostInstallScripts();
+function main() {
+	findPostInstallScripts();
 
-if (foundScripts.length > 0) {
-	console.log(`Found ${foundScripts.length} postinstall scripts. Executing them sequentially...`);
-	runScriptsSequentially();
-} else {
-	console.log('No postinstall scripts found.');
+	if (foundScripts.length > 0) {
+		console.log(`Found ${foundScripts.length} postinstall scripts. Executing them sequentially...`);
+		runScriptsSequentially();
+	} else {
+		console.log('No postinstall scripts found.');
+	}
+
+	// Always handle native packages after running postinstall scripts
+	handleNativePackages();
 }
 
-// Always handle native packages after running postinstall scripts
-handleNativePackages();
+if (require.main === module) {
+	main();
+}
+
+module.exports = { getNativeBuildEnvironment };

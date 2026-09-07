@@ -11,7 +11,7 @@
       <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
         <nb-card-body>
           <ga-single-statistic
-            [color]="'var(--color-info-default)'"
+            [color]="'var(--gauzy-action-info-text)'"
             [title]="'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate"
 						[value]="
 							aggregatedEmployeeStatistics?.total?.income || 0
@@ -24,7 +24,7 @@
       <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
         <nb-card-body>
           <ga-single-statistic
-            [color]="'var(--color-danger-default)'"
+            [color]="'var(--gauzy-action-danger-text)'"
             [title]="'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate"
 						[value]="
 							aggregatedEmployeeStatistics?.total?.expense || 0
@@ -39,8 +39,8 @@
           <ga-single-statistic
 						[color]="
 							aggregatedEmployeeStatistics?.total?.profit >= 0
-								? 'var(--color-warning-default)'
-								: '#ff7b00'
+								? 'var(--gauzy-text-color-1)'
+								: 'var(--gauzy-action-danger-text)'
 						"
             [title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
 						[value]="
@@ -55,7 +55,7 @@
         <nb-card [nbSpinner]="isLoading" nbSpinnerStatus="primary">
           <nb-card-body>
             <ga-single-statistic
-              [color]="'#089c17'"
+              [color]="'var(--gauzy-action-success-text)'"
               [title]="'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate"
 						[value]="
 							aggregatedEmployeeStatistics?.total?.bonus || 0

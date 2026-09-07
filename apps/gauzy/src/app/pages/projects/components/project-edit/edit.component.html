@@ -34,5 +34,19 @@
         <!-- Content to display if the user does not have 'canEditComponent' permission -->
       </div>
     </ng-template>
+
+    <!--
+      Record-side Documents panel (spec 00 §6.14 R-LNK-02). Outside the edit-permission
+      templates on purpose: reading a project's attachments is DOCS_READ, not
+      ORG_PROJECT_EDIT. The panel gates itself on DOCS_READ + FEATURE_DOCUMENTS.
+    -->
+    @if (project$ | async; as project) {
+      <gz-document-links-panel
+        class="project-documents"
+        [entity]="documentEntity"
+        [entityId]="project.id"
+        [entityLabel]="project.name"
+      ></gz-document-links-panel>
+    }
   </nb-card-body>
 </nb-card>

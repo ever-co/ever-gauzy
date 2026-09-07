@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import {
 	Injectable,
 	Logger,
+	BadRequestException,
 	ForbiddenException,
 	NotFoundException,
 	InternalServerErrorException
@@ -11,10 +12,20 @@ import { ID } from '@gauzy/contracts';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-orm-zapier-webhook-subscription.repository';
 import { ITimerZapierWebhookData } from './zapier.types';
+import { assertSafeZapierWebhookUrl, createSsrfSafeHttpsAgent } from './webhook-url.validator';
+
+/** Delivery timeout for a single webhook POST, in milliseconds. */
+const WEBHOOK_DELIVERY_TIMEOUT_MS = 10000;
 
 @Injectable()
 export class ZapierWebhookService {
 	private readonly logger = new Logger(ZapierWebhookService.name);
+
+	/**
+	 * Shared agent that re-checks the resolved IP of every outbound webhook connection.
+	 * Created once because each instance keeps its own connection pool.
+	 */
+	private readonly ssrfSafeHttpsAgent = createSsrfSafeHttpsAgent();
 
 	constructor(
 		private readonly zapierWebhookSubscriptionRepository: TypeOrmZapierWebhookSubscriptionRepository,
@@ -38,6 +49,11 @@ export class ZapierWebhookService {
 		try {
 			const { targetUrl, event, integrationId, tenantId, organizationId } = input;
 
+			// Re-assert the egress guard here rather than trusting the controller: this method is a
+			// public service API, and a caller that reaches it by another route must not be able to
+			// store an unsafe target (GHSA-6gg6-vv4f-2x74).
+			assertSafeZapierWebhookUrl(targetUrl);
+
 			// Check for an existing subscription to prevent duplicates
 			const existingSubscription = await this.zapierWebhookSubscriptionRepository.findOne({
 				where: {
@@ -57,6 +73,11 @@ export class ZapierWebhookService {
 			const newSubscription = this.zapierWebhookSubscriptionRepository.create(input);
 			return await this.zapierWebhookSubscriptionRepository.save(newSubscription);
 		} catch (error) {
+			// A rejected target URL is caller error, not server error — keep the 400 (and its reason)
+			// instead of flattening it into a 500.
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
 			this.logger.error('Failed to create webhook subscription', error);
 			throw new InternalServerErrorException('Failed to create webhook subscription');
 		}
@@ -135,21 +156,46 @@ export class ZapierWebhookService {
 
 		// 3) Send notifications in parallel
 		await Promise.all(
-			subscriptions.map((sub) =>
-				firstValueFrom(
+			subscriptions.map((sub) => {
+				// Re-validate at delivery time: rows stored before the egress guard existed have never
+				// been checked, and a literal-host check alone cannot catch a public hostname that
+				// resolves to an internal IP (GHSA-6gg6-vv4f-2x74).
+				try {
+					assertSafeZapierWebhookUrl(sub.targetUrl);
+				} catch (error) {
+					this.logger.warn(
+						`Skipping Zapier webhook ${sub.id} — unsafe target URL: ${
+							error instanceof Error ? error.message : error
+						}`
+					);
+					return Promise.resolve(null);
+				}
+
+				return firstValueFrom(
 					this._httpService
-						.post(sub.targetUrl, {
-							event: 'timer.status.changed',
-							data: timerData
-						})
+						.post(
+							sub.targetUrl,
+							{
+								event: 'timer.status.changed',
+								data: timerData
+							},
+							{
+								timeout: WEBHOOK_DELIVERY_TIMEOUT_MS,
+								headers: { 'Content-Type': 'application/json' },
+								// A 30x to an internal host would otherwise be followed by the default agent,
+								// stepping around both the URL check and the resolver guard.
+								maxRedirects: 0,
+								httpsAgent: this.ssrfSafeHttpsAgent
+							}
+						)
 						.pipe(
 							catchError((err) => {
 								this.logger.error(`Failed to notify webhook ${sub.id} at ${sub.targetUrl}`, err);
 								return of(null); // swallow error so other calls continue
 							})
 						)
-				)
-			)
+				);
+			})
 		);
 	}
 }

@@ -199,11 +199,14 @@
 					<div class="col-12">
 						<div class="form-group">
 							<label class="label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
-							<ckeditor
-								[config]="editorConfig"
+							<ga-rich-text-editor
 								class="description"
 								formControlName="description"
-							></ckeditor>
+								preset="standard"
+								outputFormat="html"
+								[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
+								minHeight="100%"
+							></ga-rich-text-editor>
 						</div>
 					</div>
 				</div>

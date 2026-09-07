@@ -2,10 +2,8 @@ import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { CKEditor4 } from 'ckeditor4-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IHelpCenterArticle, IEmployee, IHelpCenterAuthor, IOrganization } from '@gauzy/contracts';
-import { ckEditorConfig } from '@gauzy/ui-core/shared';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	EmployeesService,
@@ -55,10 +53,6 @@ export class AddArticleComponent extends TranslationBaseComponent implements OnI
 	selectedEmployeeIds = null;
 	employeeIds: string[] = [];
 	organization: IOrganization;
-	ckConfig: CKEditor4.Config = {
-		...ckEditorConfig,
-		height: '100'
-	};
 
 	ngOnInit() {
 		this.organization = this.store.selectedOrganization;

@@ -725,7 +725,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				title: () => this.getTranslation('SM_TABLE.EMAIL'),
 				type: 'text',
 				class: 'align-row',
-				width: '20%',
+				// Two points to the number columns below.
+				width: '18%',
 				isFilterable: true,
 				filter: {
 					type: 'custom',
@@ -742,7 +743,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				isFilterable: false,
 				isSortable: true,
 				class: 'text-center',
-				width: '5%',
+				// Was 5%: "Income" wrapped under its own sort arrow.
+				width: '8%',
 				renderComponent: EmployeeAverageIncomeComponent,
 				componentInitFunction: (instance: EmployeeAverageIncomeComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
@@ -757,7 +759,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				isFilterable: false,
 				isSortable: true,
 				class: 'text-center',
-				width: '5%',
+				// Was 5%: "Expenses" is the longest of the three labels.
+				width: '8%',
 				renderComponent: EmployeeAverageExpensesComponent,
 				componentInitFunction: (instance: EmployeeAverageExpensesComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
@@ -772,7 +775,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				isFilterable: false,
 				isSortable: true,
 				class: 'text-center',
-				width: '5%',
+				// Was 5%: matched to Income/Expenses so the three read as a set.
+				width: '8%',
 				renderComponent: EmployeeAverageBonusComponent,
 				componentInitFunction: (instance: EmployeeAverageBonusComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
@@ -787,7 +791,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				isFilterable: true,
 				isSortable: true,
 				class: 'text-center',
-				width: '5%',
+				// Was 5%: "Time Tracking" is two words and wrapped every header.
+				width: '9%',
 				filter: {
 					type: 'custom',
 					component: ToggleFilterComponent
@@ -804,7 +809,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				order: 6,
 				title: () => this.getTranslation('SM_TABLE.TAGS'),
 				type: 'custom',
-				width: '20%',
+				// Three points to the number columns above.
+				width: '17%',
 				isFilterable: true,
 				isSortable: false,
 				filter: {

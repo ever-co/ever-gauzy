@@ -44,6 +44,7 @@
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/scheduler": "^0.1.0",
 		"@gauzy/plugin-changelog": "^0.1.0",
+		"@gauzy/plugin-docs": "^0.1.0",
 		"@gauzy/plugin-integration-activepieces": "^0.1.0",
 		"@gauzy/plugin-integration-ai": "^0.1.0",
 		"@gauzy/plugin-integration-github": "^0.1.0",

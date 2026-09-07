@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, HttpException } from '@nestjs/common';
 import { Between, Brackets, Like, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
@@ -130,13 +130,24 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 	async updateTimeOffByAdmin(id: string, timeOffRequest: ITimeOffCreateInput) {
 		try {
-			// Verify the record belongs to the current tenant before updating
+			// Verify the record belongs to the current tenant before updating, and make the verified id
+			// the one that is saved: the body is not DTO-validated, so a body id spread after the path id
+			// used to re-point the save (TypeORM save() with an existing PK is an UPDATE of that row).
+			//
+			// `findOneByIdString` THROWS NotFoundException when nothing matches the tenant-scoped
+			// conditions, so this call is the check — an id belonging to another tenant, or to no row
+			// at all, never reaches `save()` (where it would INSERT under the caller's tenant).
 			await this.findOneByIdString(id);
 			return await this.save({
-				id,
-				...timeOffRequest
+				...timeOffRequest,
+				id
 			});
 		} catch (error) {
+			// Preserve intentional HTTP exceptions (the 404 above, and the ForbiddenException that
+			// `save()` raises for a cross-tenant row) instead of flattening them to 400.
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}

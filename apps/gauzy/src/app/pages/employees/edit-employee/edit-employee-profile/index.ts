@@ -1,4 +1,5 @@
 export * from './edit-employee-contact/edit-employee-contact.component';
+export * from './edit-employee-documents/edit-employee-documents.component';
 export * from './edit-employee-employment/edit-employee-employment.component';
 export * from './edit-employee-hiring/edit-employee-hiring.component';
 export * from './edit-employee-location/edit-employee-location.component';

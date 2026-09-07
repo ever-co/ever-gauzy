@@ -1,0 +1,24 @@
+<a
+	class="entry"
+	[class.linked]="entry.learnMoreUrl"
+	[attr.href]="entry.learnMoreUrl || null"
+	[attr.target]="entry.learnMoreUrl ? '_blank' : null"
+	[attr.rel]="entry.learnMoreUrl ? 'noopener noreferrer' : null"
+>
+	<div class="entry-headings-wrapper">
+		<nb-icon [icon]="entry.icon" class="icon"></nb-icon>
+		<div class="entry-headings">
+			<div class="entry-header">{{ entry.title }}</div>
+			<div class="entry-header-date">{{ entry.date | date }}</div>
+		</div>
+	</div>
+	<p class="paragraph">
+		{{ entry.content }}
+	</p>
+	@if (entry.imageUrl) {
+		<img class="entry-img" [src]="entry.imageUrl" [alt]="entry.title || ''" />
+	}
+	@if (entry.learnMoreUrl) {
+		<span class="learn-more-hint">{{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}</span>
+	}
+</a>

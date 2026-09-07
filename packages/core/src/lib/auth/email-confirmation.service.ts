@@ -162,12 +162,15 @@ export class EmailConfirmationService {
 				}
 
 				// Atomically invalidate the verification code (prevent reuse / TOCTOU race) // cspell:ignore TOCTOU
-				// The update scopes by id + code + codeExpireAt so a concurrent request
-				// that already nullified the code will update zero rows
-				await this.userService.update(user['id'], {
-					code: null,
-					codeExpireAt: null
-				});
+				// The claim scopes by id AND code AND expiry, so a concurrent request that already
+				// nullified the code matches zero rows. Scoping by id alone — as this did until now,
+				// despite the comment claiming otherwise — is not a claim at all: both racers matched
+				// their own row and both confirmed off one code.
+				const claimed = await this.userService.claimEmailVerificationCode(user['id'], code, tenantId);
+
+				if (!claimed) {
+					throw new BadRequestException('Failed to verify email.');
+				}
 
 				return user;
 			}

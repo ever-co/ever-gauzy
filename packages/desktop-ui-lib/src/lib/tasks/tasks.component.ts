@@ -32,13 +32,13 @@ import { ClientSelectorService } from '../shared/features/client-selector/+state
 import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
-import { CkEditorConfig, ColorAdapter } from '../utils';
+import { ColorAdapter } from '../utils';
 import { ClientSelectorComponent } from '../shared/features/client-selector/client-selector.component';
 import { ProjectSelectorComponent } from '../shared/features/project-selector/project-selector.component';
 import { TeamSelectorComponent } from '../shared/features/team-selector/team-selector.component';
 import { NgSelectComponent, NgOptionTemplateDirective, NgLabelTemplateDirective } from '@ng-select/ng-select';
 import { TaskBadgeViewComponent } from '../time-tracker/task-render/task-badge-view/task-badge-view.component';
-import { CKEditorModule } from 'ckeditor4-angular';
+import { RichTextEditorModule } from '@gauzy/ui-core/shared';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { AsyncPipe } from '@angular/common';
 
@@ -61,7 +61,7 @@ import { AsyncPipe } from '@angular/common';
 		NbInputModule,
 		NbBadgeModule,
 		NbDatepickerModule,
-		CKEditorModule,
+		RichTextEditorModule,
 		NbButtonModule,
 		SpinnerButtonDirective,
 		NbIconModule,
@@ -78,7 +78,6 @@ export class TasksComponent implements OnInit {
 		message: string;
 	}> = new EventEmitter();
 	public isSaving: boolean;
-	public editorConfig = CkEditorConfig.minimal();
 	public hasAddTagPermission$: Observable<boolean>;
 
 	form: UntypedFormGroup;
@@ -175,7 +174,6 @@ export class TasksComponent implements OnInit {
 
 	ngOnInit() {
 		const { organizationId, tenantId } = this.store;
-		this.editorConfig.editorplaceholder = this.translate.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.taskStatuses = this.store.statuses;
 		from(Promise.allSettled([this._tags(), this._employees(), this._sizes(), this._priorities()]))
 			.pipe(

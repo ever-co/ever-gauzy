@@ -1,7 +1,7 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { IsNull, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
-import { IEmailReset, IEmailResetFindInput, LanguagesEnum } from '@gauzy/contracts';
+import { IEmailReset, IEmailResetFindInput, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { generateAlphaNumericCode } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { UserService } from '../user/user.service';
@@ -66,11 +66,23 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				})
 			);
 
-			const employee = await this.employeeService.findOneByIdString(user.employeeId, {
-				relations: { organization: true }
-			});
-
-			const { organization } = employee;
+			// The mail is branded/sent through the user's organization. Users without an employee record
+			// (admins, other non-employee roles) have no employee to look up — an empty id must not be
+			// looked up (it used to match an arbitrary employee and borrow THAT organization's SMTP);
+			// fall back to the caller's current organization / tenant instead.
+			let organization: IOrganization | undefined;
+			if (user.employeeId) {
+				const employee = await this.employeeService.findOneByIdString(user.employeeId, {
+					relations: { organization: true }
+				});
+				organization = employee?.organization;
+			}
+			if (!organization) {
+				organization = {
+					id: RequestContext.currentOrganizationId() ?? undefined,
+					tenantId: user.tenantId
+				} as IOrganization;
+			}
 
 			this.emailService.emailReset(
 				{

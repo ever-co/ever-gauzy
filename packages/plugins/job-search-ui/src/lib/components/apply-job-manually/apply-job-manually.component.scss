@@ -96,7 +96,8 @@
 		}
 	}
 
-	::ng-deep .cke_reset {
+	::ng-deep ga-rich-text-editor .rich-text-editor__content {
 		height: calc(100vh - 40.5rem) !important;
+		overflow-y: auto;
 	}
 }

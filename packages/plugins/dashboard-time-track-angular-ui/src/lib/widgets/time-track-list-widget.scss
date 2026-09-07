@@ -34,6 +34,8 @@
   gap: 0.5rem;
   height: 100%;
   min-height: 0;
+  font-size: 12px;
+  line-height: 15px;
 }
 
 // Right-aligned "View report" / "View all" link, mirroring the legacy panels.
@@ -41,17 +43,20 @@
   display: flex;
   justify-content: flex-end;
   flex: 0 0 auto;
+
+  button {
+    font-size: 12px;
+    line-height: 15px;
+  }
 }
 
 .list-scroll {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  // Room for the scrollbar so it never sits on top of the last column.
-  padding-right: 0.25rem;
 }
 
 .list-head {
@@ -59,23 +64,37 @@
   top: 0;
   z-index: 1;
   // Opaque: the rows scroll underneath it.
-  background-color: nb-theme(gauzy-card-1);
+  background-color: nb-theme(gauzy-card-3);
   color: nb-theme(text-hint-color);
-  font-size: nb-theme(text-caption-font-size);
+  font-size: 12px;
+  line-height: 15px;
   font-weight: nb-theme(text-subtitle-2-font-weight);
   // Same horizontal padding AND the same gap as `.list-row`: a grid computes its
   // tracks per element, so a header with a different gap would print its labels
   // out of line with the columns underneath it.
   gap: 0.5rem;
-  padding: 0.25rem 0.5rem;
+  padding: nb-theme(gauzy-table-header-padding-y) nb-theme(gauzy-table-header-padding-x);
+  border-radius: nb-theme(gauzy-radius-sm);
+  margin-bottom: 2px;
 }
 
 .list-row {
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem;
-  border-radius: nb-theme(border-radius);
-  background-color: nb-theme(background-basic-color-2);
+  padding: 0.875rem nb-theme(gauzy-table-cell-padding-x);
+  color: var(--gauzy-text-color-1);
+  border-bottom: 1px solid var(--gauzy-border-default-color);
+  font-size: 12px;
+  line-height: 15px;
+  transition: background-color 0.15s ease-in-out;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint);
+  }
 }
 
 // Every textual cell truncates rather than wrapping: a wrapped project name
@@ -89,7 +108,8 @@
 
 .cell-muted {
   color: nb-theme(text-hint-color);
-  font-size: nb-theme(text-caption-font-size);
+  font-size: 12px;
+  line-height: 15px;
 }
 
 .cell-numeric {
@@ -114,7 +134,8 @@
   .progress-value {
     flex: 0 0 auto;
     color: nb-theme(text-hint-color);
-    font-size: nb-theme(text-caption-font-size);
+    font-size: 12px;
+    line-height: 15px;
     white-space: nowrap;
   }
 
@@ -129,7 +150,7 @@
 // The bars it targets are all inside `.cell-progress` above, i.e. descendants of
 // this widget's host element.
 :host ::ng-deep nb-progress-bar.size-tiny .progress-container {
-  height: 10px;
+  height: 5px;
 }
 
 /* ---------- Row templates ---------- */
@@ -162,7 +183,8 @@
   min-width: 0;
 
   .metric-duration {
-    font-size: nb-theme(text-caption-font-size);
+    font-size: 12px;
+    line-height: 15px;
     white-space: nowrap;
   }
 
@@ -210,7 +232,25 @@
 // an `nb-list-item`, so only the surrounding row chrome is supplied here.
 .activity-row {
   display: block;
-  padding: 0.25rem 0.5rem;
+  padding: 0.875rem nb-theme(gauzy-table-cell-padding-x);
+}
+
+// `ngx-activity-item` uses the larger report-page type scale by default. The
+// custom dashboard keeps these rows compact like the standard Time Tracking
+// dashboard.
+:host ::ng-deep ngx-activity-item {
+  .child,
+  .no-child {
+    font-size: 12px;
+    line-height: 15px;
+  }
+
+  .times,
+  .percentage-col,
+  .duration {
+    font-size: 12px;
+    line-height: 15px;
+  }
 }
 
 /* ---------- Narrow widget fallbacks ---------- */

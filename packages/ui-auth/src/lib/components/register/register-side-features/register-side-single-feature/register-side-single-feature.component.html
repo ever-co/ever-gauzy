@@ -1,5 +1,13 @@
 @if (feature) {
-  <div class="feature-wrapper">
+  <!-- A feature card with a learnMoreUrl is a whole-card link opening in a new
+       tab; without one the anchor has no href, so it stays inert. -->
+  <a
+    class="feature-wrapper"
+    [class.linked]="feature.learnMoreUrl"
+    [attr.href]="feature.learnMoreUrl || null"
+    [attr.target]="feature.learnMoreUrl ? '_blank' : null"
+    [attr.rel]="feature.learnMoreUrl ? 'noopener noreferrer' : null"
+  >
     <div class="headings-wrapper">
       <nb-icon [icon]="feature.icon"></nb-icon>
       <span class="heading">
@@ -8,9 +16,7 @@
     </div>
     <p class="description">{{ feature.content }}</p>
     @if (feature.imageUrl) {
-      <img [src]="feature.imageUrl" alt="feature" class="feature-img">
+      <img [src]="feature.imageUrl" [alt]="feature.title" class="feature-img">
     }
-  </div>
+  </a>
 }
-
-

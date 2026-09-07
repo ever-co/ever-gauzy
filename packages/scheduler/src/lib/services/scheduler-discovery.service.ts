@@ -111,6 +111,20 @@ export class SchedulerDiscoveryService implements OnModuleInit, OnApplicationBoo
 				continue;
 			}
 
+			/**
+			 * Well-formed but not schedulable here — today only "fans out to a queue, but this
+			 * process has no queueing". Warn rather than schedule it: the handler would run and
+			 * then die at enqueue on every tick. WARN, not debug, because the job silently not
+			 * running is a real behaviour change for whoever configured it.
+			 */
+			if (job.options.unschedulableReason) {
+				this.logger.warn(
+					`Scheduled job "${job.id}" NOT scheduled — it ${job.options.unschedulableReason}. ` +
+						`Enable queueing in this process (REDIS_ENABLED=true) to run it here, or run it in a process that has it.`
+				);
+				continue;
+			}
+
 			if (job.options.cron) {
 				this.registerCronJob(job);
 				continue;

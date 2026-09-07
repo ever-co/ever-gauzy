@@ -7,9 +7,17 @@
 
 // Design tokens
 export { theme } from './lib/theme';
+export { themeTokens, statusColor, type NbStatus } from './lib/themeTokens';
 
 // Utility functions
-export { formatDuration, currentWeekRange, todayRange } from './lib/helpers/index';
+export {
+	formatDuration,
+	currentWeekRange,
+	todayRange,
+	progressStatus,
+	ensureStyleTag,
+	useInjectedStyles
+} from './lib/helpers/index';
 
 // Components — Card (layout, compound component)
 export {
@@ -27,3 +35,16 @@ export { WidgetCard, type WidgetCardProps } from './lib/components/WidgetCard';
 
 export { Progress, type ProgressProps } from './lib/components/Progress';
 export { ColorDots, type ColorDotsProps } from './lib/components/ColorDots';
+
+// Components — theme-adaptive Nebular ports (paint with the active Gauzy theme's CSS variables)
+export {
+	CounterPoint,
+	computeCounterPoints,
+	counterPointBackground,
+	type CounterPointProps
+} from './lib/components/CounterPoint';
+export { ProgressBar, type ProgressBarProps, type ProgressBarSize } from './lib/components/ProgressBar';
+export { Badge, type BadgeProps } from './lib/components/Badge';
+export { Avatar, type AvatarProps, type AvatarSize } from './lib/components/Avatar';
+export { Spinner, type SpinnerProps, type SpinnerSize } from './lib/components/Spinner';
+export { Popover, computePopoverPosition, type PopoverProps, type PopoverPlacement } from './lib/components/Popover';

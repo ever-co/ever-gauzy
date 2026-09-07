@@ -13,6 +13,7 @@ import {
 	enterTextInIFrame,
 	clickElementIfVisible,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
@@ -67,7 +68,18 @@ export const iconDropdownVisible = async () => {
 };
 
 export const clickIconDropdown = async () => {
-	await clickButton(OrganizationHelpCenterPage.iconDropdownCss);
+	// This fires two lines after the LANGUAGE ng-select (appendTo="body") committed a value, and ROOT
+	// CAUSE 2 below already documents that its fading cdk-overlay-backdrop sits over this dialog — a
+	// coordinate click lands on the backdrop and is lost. The cost of losing it is higher here than
+	// elsewhere: the next call resolves `.option-list nb-option` at the 60s taskTimeout, not 24s.
+	//
+	// Confirming on the option list is safe because the preceding control is an ng-select, whose options
+	// are `div.ng-option` — never `.option-list nb-option` — so no leftover panel can satisfy the
+	// end-state pre-check and cause the click to be skipped.
+	await dispatchClickWhenSettled(
+		OrganizationHelpCenterPage.iconDropdownCss,
+		OrganizationHelpCenterPage.iconOptionCss
+	);
 };
 
 export const selectIconFromDropdown = async (index: number) => {

@@ -24,6 +24,7 @@
 @use './material/material-overrides' as *;
 @use './gauzy/gauzy-overrides' as *;
 @use './gauzy/gauzy-skeleton' as *; // "still loading", so no page claims "No Data" mid-request
+@use './gauzy/gauzy-table-filters' as *; // collapsed-by-default filter row + sort affordances
 
 @use './site-menu.scss' as *;
 

@@ -4,6 +4,7 @@ import { JobMatchingPlugin } from '@gauzy/plugin-job-matching-ui';
 import { JobProposalPlugin, JobProposalTemplatePlugin } from '@gauzy/plugin-job-proposal-ui';
 import { JobSearchPlugin } from '@gauzy/plugin-job-search-ui';
 import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
+import { DocsUiPlugin } from '@gauzy/plugin-docs-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
@@ -11,7 +12,6 @@ import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
 import { DashboardTimeTrackAngularUiPlugin } from '@gauzy/plugin-dashboard-time-track-angular-ui';
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
-import { environment } from '@gauzy/ui-config';
 
 /**
  * Application UI configuration.
@@ -71,6 +71,9 @@ export const uiPluginConfig: PluginUiConfig = {
 		// Angular Time Tracking Dashboard Plugin
 		DashboardTimeTrackAngularUiPlugin,
 
+		// Documents Plugin
+		DocsUiPlugin,
+
 		// Integration Plugins
 		IntegrationUpworkPlugin,
 		IntegrationPlanePlugin,
@@ -86,8 +89,10 @@ export const uiPluginConfig: PluginUiConfig = {
 			]
 		}),
 
-		// React UI Plugin (demo only)
-		...(environment.DEMO ? [DashboardTimeTrackReactUiPlugin] : []),
+		// React Time Tracking Dashboard Plugin — the React flavour of the tab above. Both
+		// register the same `/pages/dashboard/time-tracking` path behind `preferredUiCanMatch`
+		// guards; the tenant's Settings → General "Preferred UI" choice decides which renders.
+		DashboardTimeTrackReactUiPlugin,
 
 		// AI Chat — enabled in all builds; visibility is gated at runtime by the
 		// AI_CHAT_ACCESS permission and the backend configuration (/api/ai-chat/config).

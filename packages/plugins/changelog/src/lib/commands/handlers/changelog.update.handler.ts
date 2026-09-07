@@ -11,6 +11,6 @@ export class ChangelogUpdateHandler
 	public async execute(command: ChangelogUpdateCommand): Promise<IChangelog> {
 		const { input } = command;
 		const { id } = input;
-		return this.changelogService.create({ id, ...input });
+		return this.changelogService.create({ ...input, id });
 	}
 }

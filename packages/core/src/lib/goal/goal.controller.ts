@@ -72,17 +72,18 @@ export class GoalController extends CrudController<Goal> {
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateGoalDTO): Promise<IGoal> {
-		try {
-			//We are using create here because create calls the method save()
-			//We need save() to save ManyToMany relations
-			return await this.goalService.create({
-				id,
-				...entity
-			});
-		} catch (error) {
-			console.log(error);
-			return;
-		}
+		// This is an update-through-create, so an id that matches nothing would be INSERTed as a new
+		// row — and fail on a NOT NULL column, answering 400 with the raw SQL in the body.
+		// `findOneByIdString` throws NotFoundException when the row is not in the caller's tenant, so
+		// this call turns that into a clean 404.
+		await this.goalService.findOneByIdString(id);
+
+		//We are using create here because create calls the method save()
+		//We need save() to save ManyToMany relations
+		//
+		//Errors are NOT swallowed: `create()` now rejects a cross-tenant write with ForbiddenException,
+		//and returning `undefined` would answer a refused write with 202 and an empty body.
+		return await this.goalService.create({ ...entity, id });
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)

@@ -12,8 +12,10 @@ import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { JobsProposalsPage } from '../../../src/support/Base/pageobjects/JobsProposalsPageObject';
 
-// CKEditor wysiwyg iframe — content is entered into the editor body, not the <ckeditor> host.
-const ckeditorIframeCss = 'iframe[class="cke_wysiwyg_frame cke_reset"]';
+// Shared ga-rich-text-editor (TipTap v3) editable — a plain contenteditable div in the MAIN frame
+// (no iframe: the legacy editor's wysiwyg iframe is gone). Content is entered into the
+// .ProseMirror editable, not the <ga-rich-text-editor> host.
+const richTextEditorCss = 'ga-rich-text-editor .ProseMirror';
 
 export const addButtonVisible = async () => {
 	await verifyElementIsVisible(JobsProposalsPage.addButtonCss);
@@ -78,10 +80,13 @@ export const contentInputVisible = async () => {
 };
 
 export const enterContentInputData = async (data) => {
-	// Content is a CKEditor4 widget — the [formcontrolname="content"] host is not fillable.
-	// Type into the editor body inside its wysiwyg iframe (content is optional, so this never
-	// blocks Save, but we still populate it to mirror the intended flow).
-	await getPage().frameLocator(ckeditorIframeCss).first().locator('body').fill(String(data));
+	// Content is a ga-rich-text-editor — the [formcontrolname="content"] host is not fillable.
+	// Fill the .ProseMirror contenteditable instead (content is optional, so this never blocks
+	// Save, but we still populate it to mirror the intended flow). ProseMirror consumes the
+	// native input events, so the CVA syncs the bound form control.
+	const editable = getPage().locator(richTextEditorCss).first();
+	await editable.waitFor({ state: 'visible', timeout: 8000 });
+	await editable.fill(String(data));
 };
 
 export const saveButtonVisible = async () => {

@@ -5,7 +5,6 @@ import { switchMap, map, tap, filter, catchError } from 'rxjs/operators';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CKEditor4 } from 'ckeditor4-angular';
 import {
 	IEmployee,
 	ISkill,
@@ -26,7 +25,6 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,10 +43,6 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 	privacySettings: any[];
 	employeeAwards: IEmployeeAward[] = [];
 	showAddAward: boolean;
-	ckConfig: CKEditor4.Config = {
-		...ckEditorConfig,
-		height: '200'
-	};
 
 	constructor(
 		private readonly fb: UntypedFormBuilder,

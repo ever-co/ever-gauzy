@@ -18,7 +18,13 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { SmartDataViewLayoutModule, SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
+import {
+	RecordViewModule,
+	SmartDataViewLayoutModule,
+	SelectorsModule,
+	SharedModule,
+	TableComponentsModule
+} from '@gauzy/ui-core/shared';
 import { IntegrationZapierRoutes } from './integration-zapier.routes';
 import { ZapierAuthorizeComponent } from './components/zapier-authorize/zapier-authorize.component';
 import { IntegrationZapierLayoutComponent } from './integration-zapier.layout.component';
@@ -53,6 +59,7 @@ const NB_MODULES = [
 		...NB_MODULES,
 		TranslateModule.forChild(),
 		IntegrationZapierRoutes,
+		RecordViewModule,
 		SmartDataViewLayoutModule,
 		SelectorsModule,
 		SharedModule,

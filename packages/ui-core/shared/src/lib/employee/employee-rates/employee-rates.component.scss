@@ -1,40 +1,119 @@
 @use 'themes' as *;
+@use 'var' as v;
 
-.employee-form {
-  height: 100%;
-  width: 100%;
-}
+$radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
 
 :host {
-  height: 100%;
-}
-
-nb-card-body{
-	background-color: var(--gauzy-sidebar-background-2);
-	border-radius: var(--border-radius);
-}
-
-form{
-  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  min-height: 0;
+}
+
+// A grid, not a row of flex children: the submit footer is the last element of
+// the form — after every field that can invalidate it — and spans both columns.
+.rates {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: stretch;
   gap: 1rem;
-}
-
-.content {
-  height: 100%;
-  display: flex;
   padding: 1rem;
-  background-color: var(--gauzy-card-2);
-  border-radius: nb-theme(border-radius);
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
-.bill-rate {
+.rates__panel {
   display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
 }
 
-:host .currency-per-hour {
-  @include nb-ltr(margin-left, 1rem);
-  @include nb-rtl(margin-right, 1rem);
+.rates__legend {
+  padding: 0.875rem 1.25rem 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: nb-theme(text-hint-color);
+}
+
+.rates__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.25rem;
+  align-content: start;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.25rem;
+
+  > .form-group {
+    min-width: 0;
+    margin-bottom: 1.25rem;
+  }
+}
+
+.rates__fields--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+:host ::ng-deep ga-currency {
+  display: block;
+  min-width: 0;
+
+  .form-group {
+    display: block;
+    min-width: 0;
+    margin-bottom: 1.25rem;
+  }
+}
+
+.caption.status-danger {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.rates__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
+
+  button {
+    min-width: 7.5rem;
+  }
+}
+
+@media only screen and (max-width: v.$break-lg) {
+  .rates {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+}
+
+@media only screen and (max-width: v.$break-md) {
+  .rates {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .rates__fields {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem;
+  }
+
+  .rates__actions {
+    padding: 0.875rem 1rem;
+  }
 }

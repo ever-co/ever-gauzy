@@ -1,47 +1,341 @@
 @use 'themes' as *;
+@use 'var' as v;
 
 $radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
 
-.employee-optional-info {
-  	margin-top: 20px;
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow-y: auto;
+  background-color: var(--gauzy-card-2);
+  @include nb-ltr(border-radius, 0 $radius $radius $radius);
+  @include nb-rtl(border-radius, $radius 0 $radius $radius);
 }
 
-// `rgba(126, 126, 143, 0.1)` is the literal value this token carries on the
-// light themes; on `gauzy-dark` the token is a LIFTING white tint instead, so
-// reading it keeps the photo column one visible step off the tab surface there
-// rather than hoping a grey wash shows up on near-black.
-.organization-container {
-  background-color: var(--gauzy-sidebar-background-3);
+.account {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  padding: 1rem;
+  flex: 1 0 auto;
+  min-height: 0;
 }
 
-.organization-photo img {
-  width: 100px;
-  height: 100px;
-  // A 25 %-black drop shadow is invisible against the near-black canvas — this
-  // avatar had no edge at all on `gauzy-dark`. The token is the same hairline
-  // on the light themes and a 1px ring on the dark one.
-  box-shadow: var(--gauzy-shadow);
-  object-fit: cover;
+.account__panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
   border-radius: $radius;
 }
 
-.content {
-  padding: 20px;
+.account__panel--identity {
+  flex: 0 1 min(23rem, 36%);
+  align-items: stretch;
+  padding: 1.125rem 1.25rem;
+  text-align: start;
 }
 
-:host {
-  padding: 0;
-  overflow-y: auto;
-  max-height: calc(100vh - 20.5rem);
-  border-radius: 0 $radius $radius $radius;
+.account__panel--form {
+  flex: 1 1 auto;
+}
 
-  ::ng-deep .employee-form{
-    @include nb-ltr(padding-left, 1rem);
-    @include nb-rtl(padding-right, 1rem);
+.account__avatar {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  border-radius: $radius;
+  overflow: hidden;
+  border: 1px solid var(--gauzy-border-default-color);
+  background-color: var(--gauzy-sidebar-background-3);
+  cursor: pointer;
+}
+
+.account__avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  box-shadow: none;
+}
+
+.account__avatar-image--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: nb-theme(text-hint-color);
+
+  nb-icon {
+    font-size: 1.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+.account__avatar-scrim {
+  position: absolute;
+  inset: 0;
+  background-color: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.account__avatar-badge {
+  position: absolute;
+  bottom: 6px;
+  inset-inline-end: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: nb-theme(color-primary-500);
+  color: nb-theme(text-control-color);
+  opacity: 0.85;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+
+  nb-icon {
+    font-size: 0.8125rem;
+    width: 0.8125rem;
+    height: 0.8125rem;
+  }
+}
+
+.account__avatar--hover {
+  .account__avatar-scrim {
+    opacity: 0.25;
   }
 
-  .employee-form {
-    overflow: auto;
-    overflow-x: hidden;
+  .account__avatar-badge {
+    opacity: 1;
+  }
+}
+
+.account__head {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.account__identity {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: start;
+}
+
+.account__name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.375rem;
+}
+
+.account__name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: -0.01em;
+  color: var(--gauzy-text-color-1);
+  overflow-wrap: anywhere;
+}
+
+.account__role {
+  margin-top: 0.125rem;
+  font-size: 0.6875rem;
+  line-height: 0.9375rem;
+  color: nb-theme(text-hint-color);
+}
+
+.account__blurb {
+  margin: 0.25rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 0.9375rem;
+  color: nb-theme(text-hint-color);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.account__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+  &:not(:has(.account__chip)) {
+    display: none;
+  }
+}
+
+.account__chip {
+  display: inline-flex;
+  align-items: center;
+  height: 1rem;
+  padding: 0 0.375rem;
+  border-radius: 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.account__chip--success {
+  background-color: nb-theme(color-success-transparent-100);
+  color: nb-theme(text-success-color);
+}
+
+.account__chip--danger {
+  background-color: nb-theme(color-danger-transparent-100);
+  color: nb-theme(text-danger-color);
+}
+
+.account__chip--warning {
+  background-color: nb-theme(color-warning-transparent-100);
+  color: nb-theme(text-warning-color);
+}
+
+.account__chip--info {
+  background-color: nb-theme(color-info-transparent-100);
+  color: nb-theme(text-info-color);
+}
+
+.account__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: space-between;
+  gap: 0 1.25rem;
+  flex: 1 1 auto;
+  width: 100%;
+  margin-top: 1.125rem;
+  min-height: 0;
+  text-align: start;
+}
+
+.account__group,
+.account__stats {
+  display: contents;
+}
+
+.account__group-title {
+  grid-column: 1 / -1;
+  margin: 0.75rem 0 0.125rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 0.875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: nb-theme(text-disabled-color);
+}
+
+.account__group:first-child .account__group-title {
+  margin-top: 0;
+}
+
+.account__stat {
+  padding: 0.3125rem 0;
+  border-top: $hairline;
+  min-width: 0;
+
+  dt {
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+    font-weight: 400;
+    color: nb-theme(text-hint-color);
+    overflow-wrap: anywhere;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+    overflow-wrap: anywhere;
+  }
+}
+
+.account__form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.account__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.25rem;
+  align-content: start;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.25rem;
+
+  .form-group {
+    min-width: 0;
+    margin-bottom: 1.25rem;
+  }
+}
+
+.account__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+
+  button {
+    min-width: 7.5rem;
+  }
+}
+
+@media only screen and (max-width: v.$break-lg) {
+  .account {
+    flex-direction: column;
+  }
+
+  .account__panel--identity {
+    flex: 0 0 auto;
+  }
+
+  .account__facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-content: start;
+  }
+}
+
+@media only screen and (max-width: v.$break-md) {
+  .account {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .account__fields {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem;
+  }
+
+  .account__actions {
+    padding: 0.875rem 1rem;
+  }
+
+  .account__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

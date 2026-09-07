@@ -13,6 +13,17 @@ export const test = base.extend<{ _autoPage: void }>({
 	_autoPage: [
 		async ({ page }, use) => {
 			setPage(page);
+			// Smart-table filter rows are collapsed-by-default for users
+			// (SmartTableFilterToggleDirective); several page objects type straight
+			// into tr.angular2-smart-filters inputs, so specs opt into the
+			// always-open behavior via the directive's stored preference.
+			await page.addInitScript(() => {
+				try {
+					localStorage.setItem('gauzy.smartTable.filtersOpen', 'open');
+				} catch {
+					/* storage unavailable — the spec will surface it */
+				}
+			});
 			await use();
 		},
 		{ auto: true }

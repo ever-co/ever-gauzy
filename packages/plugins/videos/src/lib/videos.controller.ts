@@ -1,8 +1,11 @@
 import { FileStorageProviderEnum, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	assertNotMarkupContent,
 	FileStorage,
 	FileStorageFactory,
 	LazyFileInterceptor,
+	shouldScanForMarkup,
+	videoUploadFileFilter,
 	BaseQueryDTO,
 	PermissionGuard,
 	Permissions,
@@ -109,7 +112,11 @@ export class VideosController {
 		// Use LazyFileInterceptor for handling file uploads with custom storage settings
 		LazyFileInterceptor('file', {
 			// Define storage settings for uploaded files
-			storage: () => FileStorageFactory.create('videos')
+			storage: () => FileStorageFactory.create('videos'),
+			// Videos are served unauthenticated from `/public/<key>` with a Content-Type derived from the
+			// stored extension, so an `.svg`/`.html` upload claiming `video/mp4` would execute script in
+			// the app origin (GHSA-p334-cm7f-php5 class).
+			fileFilter: videoUploadFileFilter
 		})
 	)
 	@Post()
@@ -132,6 +139,22 @@ export class VideosController {
 				await provider.deleteFile(file.key);
 				// Throw a bad request exception with the validation errors
 				throw new BadRequestException(errors);
+			}
+
+			// The fileFilter and the DTO both judge the client-sent MIME type; re-check the stored
+			// bytes so markup can never survive on disk (GHSA-p334-cm7f-php5 class). Skipped for
+			// large uploads, which would have to be held in memory to read — see shouldScanForMarkup.
+			if (shouldScanForMarkup(file.size)) {
+				try {
+					assertNotMarkupContent(await provider.getFile(file.key));
+				} catch (error) {
+					try {
+						await provider.deleteFile(file.key);
+					} catch {
+						// Best-effort cleanup: a failed delete must not replace the rejection below.
+					}
+					throw error;
+				}
 			}
 
 			// Extract necessary properties from the request body

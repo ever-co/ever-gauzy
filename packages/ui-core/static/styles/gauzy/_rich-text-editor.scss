@@ -1,0 +1,124 @@
+/*
+ * Begin
+ * Rich-text editor (TipTap v3) — ga-rich-text-editor theme chrome.
+ *
+ * Master copy of the `rich-text-editor()` mixin (05-editor-spec.md §3.9). It is
+ * included from the `gauzy-overrides()` aggregate mixin in `_gauzy-overrides.scss`
+ * (the include point previously occupied by the legacy editor-chrome mixin — the
+ * five app copies of `_gauzy-overrides.scss` mirror this file when they are
+ * updated in their own removal slice, per 06-ckeditor-removal.md §6.6).
+ *
+ * All colors resolve Nebular/Gauzy CSS custom properties, so light/dark theming
+ * falls out of the `.nb-theme-gauzy-light` / `.nb-theme-gauzy-dark` variable
+ * values with no per-theme icon hacks.
+ */
+@mixin rich-text-editor() {
+  ga-rich-text-editor {
+    .rich-text-editor {
+      border: 1px solid var(--border-basic-color-3);
+      border-radius: var(--border-radius);
+      background: var(--background-basic-color-1);
+
+      &--focused {
+        border-color: var(--color-primary-default);
+        box-shadow: 0 0 0 1px var(--color-primary-default);
+      }
+
+      &--disabled {
+        background: var(--background-basic-color-2);
+        opacity: 0.75;
+      }
+    }
+
+    .rich-text-toolbar {
+      background: var(--background-basic-color-2);
+      border-bottom: 1px solid var(--border-basic-color-3);
+    }
+
+    .rich-text-editor__footer {
+      color: var(--text-hint-color);
+    }
+
+    .ProseMirror {
+      padding: 0.75rem 1rem;
+      color: var(--text-basic-color);
+      caret-color: var(--color-primary-default);
+      outline: none;
+
+      p.is-editor-empty:first-child::before,
+      p.is-empty:first-child::before {
+        content: attr(data-placeholder);
+        color: var(--text-hint-color);
+        float: left;
+        height: 0;
+        pointer-events: none;
+      }
+
+      a {
+        color: var(--color-primary-default);
+      }
+
+      blockquote {
+        border-left: 3px solid var(--color-primary-transparent-500);
+        color: var(--text-hint-color);
+      }
+
+      code {
+        background: var(--background-basic-color-3);
+      }
+
+      pre {
+        background: var(--background-basic-color-2);
+      }
+
+      hr {
+        border: none;
+        border-top: 1px solid var(--border-basic-color-3);
+      }
+
+      mark {
+        background: var(--color-warning-transparent-300);
+      }
+
+      table {
+        table-layout: fixed;
+        width: 100%;
+        border-collapse: collapse;
+
+        th,
+        td {
+          border: 1px solid var(--border-basic-color-3);
+        }
+
+        th {
+          background: var(--background-basic-color-2);
+        }
+
+        .selectedCell::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          background: var(--color-primary-transparent-200);
+          pointer-events: none;
+        }
+
+        .column-resize-handle {
+          background-color: var(--color-primary-default);
+        }
+      }
+
+      &.resize-cursor {
+        cursor: col-resize;
+      }
+
+      ul[data-type='taskList'] li > label input[type='checkbox'] {
+        accent-color: var(--color-primary-default);
+      }
+    }
+  }
+}
+
+/*
+* End
+*/

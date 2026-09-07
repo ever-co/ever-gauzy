@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { IRole, IUser, RolesEnum } from '@gauzy/contracts';
+import { IRole, IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { AuthRegisterCommand } from '../auth.register.command';
 import { AuthService } from '../../auth.service';
 import { getORMType, MultiORMEnum } from '../../../core/utils';
@@ -30,46 +30,77 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 		const { input, languageCode } = command;
 		let targetRoleName: string | null = null;
 
-		if (input.user?.roleId) {
+		// The target role may arrive as `roleId` or as a `role` object; resolve BOTH from the DATABASE.
+		// A client-supplied `role.name` must never feed the SUPER_ADMIN gate below (a role object with
+		// only an id, or a spoofed name, used to skip it), and checking only the first of the two is not
+		// enough either: the `role` RELATION wins over the flat `roleId` when the row is persisted
+		// (AuthService.register pins roleId = role.id), so a body pairing a harmless `roleId` with a
+		// privileged `role: { id }` would be validated as the harmless one and registered as the
+		// privileged one.
+		const targetRoleIds = [input.user?.roleId, input.user?.role?.id].filter((roleId) => !!roleId);
+		if (input.user?.role && !targetRoleIds.length) {
+			throw new BadRequestException('The specified role does not reference a valid role.');
+		}
+
+		if (targetRoleIds.length) {
 			// Get tenant id from request context
 			const tenantId = RequestContext.currentTenantId();
 
-			// Resolve role entity to get the name
-			try {
-				const whereCondition = {
-					id: input.user.roleId,
-					...(tenantId ? { tenantId } : {})
-				};
+			for (const targetRoleId of targetRoleIds) {
+				// Resolve role entity to get the name
+				try {
+					const whereCondition = {
+						id: targetRoleId,
+						...(tenantId ? { tenantId } : {})
+					};
 
-				const role: IRole =
-					getORMType() === MultiORMEnum.MikroORM
-						? await this.mikroOrmRoleRepository.findOneOrFail(whereCondition)
-						: await this.typeOrmRoleRepository.findOneByOrFail(whereCondition);
+					const role: IRole =
+						getORMType() === MultiORMEnum.MikroORM
+							? await this.mikroOrmRoleRepository.findOneOrFail(whereCondition)
+							: await this.typeOrmRoleRepository.findOneByOrFail(whereCondition);
 
-				targetRoleName = role.name;
-			} catch {
-				throw new BadRequestException('The specified roleId does not reference a valid role.');
+					// The strictest of the candidates decides: if ANY of them is SUPER_ADMIN, the creator
+					// check below must run.
+					if (role.name === RolesEnum.SUPER_ADMIN || !targetRoleName) {
+						targetRoleName = role.name;
+					}
+				} catch {
+					throw new BadRequestException('The specified roleId does not reference a valid role.');
+				}
 			}
-		} else if (input.user?.role?.name) {
-			// Role name provided directly via role object
-			targetRoleName = input.user.role.name;
 		}
 
-		// Check if the target role is SUPER_ADMIN and require 'createdByUserId' for verification
+		// Check if the target role is SUPER_ADMIN — only an AUTHENTICATED super admin may create one.
 		if (targetRoleName === RolesEnum.SUPER_ADMIN) {
-			if (!input.createdByUserId) {
-				throw new BadRequestException('Missing createdByUserId for SUPER_ADMIN registration.');
-			}
+			// `/auth/register` is a public route, and `createdByUserId` is a BODY field: checking only
+			// that the referenced user is a super admin authorized nobody — any anonymous caller could
+			// name a known super admin's id and register itself as SUPER_ADMIN. The creator must be the
+			// authenticated caller, and the caller must hold SUPER_ADMIN_EDIT.
+			const currentUserId = RequestContext.currentUserId();
 
-			const createdByUserId = input.createdByUserId;
-
-			// Fetch role details of the creator
-			const { role } = await this.userService.findOneByIdString(createdByUserId, { relations: { role: true } });
-
-			// Verify if the creator's role is SUPER_ADMIN
-			if (role.name !== RolesEnum.SUPER_ADMIN) {
+			if (!currentUserId) {
 				throw new UnauthorizedException('Only SUPER_ADMIN can register other SUPER_ADMIN users.');
 			}
+
+			// The UI sends the logged-in user's id here; anything else is an attempt to borrow identity.
+			if (input.createdByUserId && String(input.createdByUserId) !== String(currentUserId)) {
+				throw new UnauthorizedException('createdByUserId must reference the authenticated user.');
+			}
+
+			if (!RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
+				throw new UnauthorizedException('Only SUPER_ADMIN can register other SUPER_ADMIN users.');
+			}
+
+			// Fetch role details of the creator (the authenticated caller — never a body-supplied id)
+			const creator = await this.userService.findOneByIdString(currentUserId, { relations: { role: true } });
+
+			// Verify if the creator's role is SUPER_ADMIN
+			if (creator?.role?.name !== RolesEnum.SUPER_ADMIN) {
+				throw new UnauthorizedException('Only SUPER_ADMIN can register other SUPER_ADMIN users.');
+			}
+
+			// Pin the recorded creator to the caller so the persisted column cannot be spoofed either.
+			input.createdByUserId = currentUserId;
 		}
 
 		// Register the user using the AuthService

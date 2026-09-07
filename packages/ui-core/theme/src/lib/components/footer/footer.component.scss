@@ -9,7 +9,11 @@
   align-items: center;
   font-size: 12px;
   font-weight: 400;
-  line-height: 11px;
+  // A line box that is SHORTER than the font (the old 11px) hoists the glyphs above the
+  // row's centre line, so the copyright never looked vertically centred in the footer
+  // band even though every container says `align-items: center`. A normal line box
+  // centres them.
+  line-height: 1.25;
   letter-spacing: 0em;
   color: var(--gauzy-text-color-2);
   a {

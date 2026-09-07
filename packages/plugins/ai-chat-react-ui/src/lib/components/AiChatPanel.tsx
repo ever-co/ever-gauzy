@@ -15,16 +15,36 @@ import {
 } from 'ai';
 import { useInjector } from '@gauzy/ui-react';
 import { AgentPageBridgeService, ChatSidebarService, Store } from '@gauzy/ui-core/core';
-import { AI_CHAT_RATE_LIMIT_CODE, PermissionsEnum, type IAiChatRateLimitEnvelope } from '@gauzy/contracts';
+import {
+	AI_CHAT_RATE_LIMIT_CODE,
+	AI_CHAT_SETTINGS_PATH,
+	PermissionsEnum,
+	type IAiChatRateLimitEnvelope,
+	type IAiSpeechErrorBody
+} from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
 import { executeClientTool, isClientTool } from '../chat-client-tools';
 import { useAngularSignal } from '../use-angular-signal';
 import { useChatTranslate } from '../use-chat-translate';
 import { ChatMessageList } from './ChatMessageList';
-import { ChatInput } from './ChatInput';
+import { ChatInput, DictationError } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
+import { DocsAttachPicker } from './DocsAttachPicker';
+import { buildAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
 import { chatTheme } from '../chat-theme';
+import { chatMarkdownCss } from '../chat-markdown-css';
+
+/**
+ * What the docs upload endpoint answers with (the slice this panel reads).
+ * Mirrored rather than imported: `IDocumentUploadResponse` lives in the backend docs plugin,
+ * which must not be pulled into the browser bundle.
+ */
+interface IDocsUploadResponseSlice {
+	results?: { document?: { id?: string; name?: string; kind?: string } }[];
+	rejected?: { fileName?: string; message?: string }[];
+	message?: string;
+}
 
 /**
  * Client-generated conversation id (UUID v4, crypto-secure).
@@ -63,6 +83,14 @@ export function AiChatPanel() {
 	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
 	const [historyLoading, setHistoryLoading] = useState(false);
 
+	// Attachments staged for the NEXT message: a picked Documents entry carries its id (so
+	// `docs_read` can open exactly that one), an uploaded file only its name (the capture into
+	// Documents is asynchronous, so no id exists yet when the upload returns).
+	const [attachments, setAttachments] = useState<IStagedAttachment[]>([]);
+	const [showAttachPicker, setShowAttachPicker] = useState(false);
+	const [isAttaching, setIsAttaching] = useState(false);
+	const [attachmentError, setAttachmentError] = useState<string | null>(null);
+
 	// Docking / maximize state comes straight from the Angular
 	// ChatSidebarService signals — they also change outside this panel
 	// (e.g. collapsing clears maximized), so a live bridge is required.
@@ -78,6 +106,21 @@ export function AiChatPanel() {
 			Authorization: `Bearer ${store.token}`,
 			...(store.tenantId ? { 'Tenant-Id': store.tenantId } : {}),
 			...(store.organizationId ? { 'Organization-Id': store.organizationId } : {})
+		}),
+		[store]
+	);
+
+	/**
+	 * The tenant/organization scope the Documents endpoints require IN THE REQUEST ITSELF —
+	 * `where[organizationId]` on the list, an `organizationId` part in the upload body. The
+	 * Tenant-Id/Organization-Id HEADERS do not satisfy those DTO validators
+	 * (`TenantOrganizationBaseDTO`), which is exactly how the picker first shipped broken:
+	 * every request answered 400 and the UI misread it as "Documents unavailable".
+	 */
+	const attachScope = useCallback(
+		(): { organizationId?: string; tenantId?: string } => ({
+			...(store.organizationId ? { organizationId: store.organizationId } : {}),
+			...(store.tenantId ? { tenantId: store.tenantId } : {})
 		}),
 		[store]
 	);
@@ -102,6 +145,10 @@ export function AiChatPanel() {
 	 *
 	 * `FormData` deliberately WITHOUT a Content-Type header: the browser has to set it, because only
 	 * it knows the multipart boundary. Setting it by hand produces a body the server cannot parse.
+	 *
+	 * A failure throws a {@link DictationError} carrying the server's `code` and `settingsPath` (a
+	 * 503 body is `{ message, code, settingsPath }`), so the input can render an actionable,
+	 * translated message with a link to the AI Providers page instead of the raw server sentence.
 	 */
 	const transcribeAudio = useCallback(
 		async (audio: Blob): Promise<string> => {
@@ -114,17 +161,43 @@ export function AiChatPanel() {
 			});
 			if (!response.ok) {
 				// The server's message names the actual problem — no speech-capable provider, a
-				// rejected key — so it is worth more to the user than a status code.
-				const detail = await response
+				// rejected key — so it is worth more to the user than a status code; the code is what
+				// lets the UI say WHERE to fix it.
+				const body = await response
 					.json()
-					.then((body: { message?: string }) => body?.message)
-					.catch(() => undefined);
-				throw new Error(detail || `Transcription failed (HTTP ${response.status})`);
+					.then((parsed: Partial<IAiSpeechErrorBody> | null) => parsed ?? {})
+					.catch(() => ({}) as Partial<IAiSpeechErrorBody>);
+				const message =
+					typeof body.message === 'string' && body.message.trim()
+						? body.message
+						: `Transcription failed (HTTP ${response.status})`;
+				throw new DictationError(message, {
+					code: typeof body.code === 'string' ? body.code : undefined,
+					settingsPath: typeof body.settingsPath === 'string' ? body.settingsPath : undefined,
+					status: response.status
+				});
 			}
 			const body = (await response.json()) as { text?: string };
 			return body.text ?? '';
 		},
 		[authHeaders]
+	);
+
+	/**
+	 * Open the AI Providers settings page from a dictation error, when this user may.
+	 *
+	 * Passed to the input as `onOpenAiSettings` ONLY when the user holds `AI_CHAT_SETTINGS` — the
+	 * input then shows an "Open AI Providers" action; without it, the message tells the user to ask
+	 * an administrator instead of offering a link that would bounce them to the settings index.
+	 */
+	const openAiSettings = useCallback(
+		(settingsPath?: string) => {
+			void injector
+				.get(AgentPageBridgeService)
+				.openPage(settingsPath || AI_CHAT_SETTINGS_PATH)
+				.catch(() => undefined);
+		},
+		[injector]
 	);
 
 	const transport = useMemo(
@@ -267,9 +340,15 @@ export function AiChatPanel() {
 			const text = (override ?? input).trim();
 			if (!text || isBusy) return;
 			setInput('');
-			void sendMessage({ text });
+			// Attachments ride along as a plain preamble rather than as a hidden channel: the
+			// assistant's `docs_read` tool takes a document id, so naming the ids in the turn is
+			// what lets it actually open what the user attached. Cleared on send — an attachment
+			// belongs to the message it was attached to, not to the conversation.
+			const preamble = buildAttachmentPreamble(attachments);
+			setAttachments([]);
+			void sendMessage({ text: preamble ? `${preamble}\n\n${text}` : text });
 		},
-		[input, isBusy, sendMessage]
+		[attachments, input, isBusy, sendMessage]
 	);
 
 	const handleNewChat = useCallback(() => {
@@ -286,6 +365,147 @@ export function AiChatPanel() {
 		},
 		[addToolApprovalResponse]
 	);
+
+	/**
+	 * Open a Documents citation chip.
+	 *
+	 * Routed through `AgentPageBridgeService` (the same bridge the `open_page` canvas tool uses)
+	 * rather than through an `<a href>`: the citation url is an in-app path, so navigating with
+	 * the Angular router keeps the SPA — and this chat panel with its in-flight turn — alive.
+	 */
+	const handleOpenCitation = useCallback(
+		(citation: { url?: string }) => {
+			if (!citation?.url) return;
+			void injector
+				.get(AgentPageBridgeService)
+				.openPage(citation.url)
+				.catch(() => undefined);
+		},
+		[injector]
+	);
+
+	/**
+	 * Upload a file the user picked and attach it to this conversation — ID FIRST.
+	 *
+	 * The upload goes straight to the Documents feature (`source: CHAT`), which answers
+	 * synchronously with the created document — so the chip carries a `documentId` and the
+	 * assistant can `docs_read` the file in the very message it was attached to. The previous
+	 * design uploaded to chat-local storage and relied on the Documents plugin capturing an
+	 * event LATER: the chip was name-only, and the preamble sent the assistant to `docs_search`
+	 * — which can never find a chat capture (they are deliberately never auto-indexed), and a
+	 * file the sniffer rejected got a chip anyway while the capture silently dropped it.
+	 *
+	 * The chat-local endpoint remains as the FALLBACK for installs where Documents is absent,
+	 * disabled, or the user lacks `DOCS_CREATE` (403/404 from the docs route) — there the docs
+	 * tools do not exist either, so a name-only mention is the honest ceiling.
+	 *
+	 * `FormData` deliberately WITHOUT a Content-Type header — the browser has to set it, because
+	 * only it knows the multipart boundary (the same rule as dictation above).
+	 */
+	const handleAttachFile = useCallback(
+		async (file: File): Promise<void> => {
+			setIsAttaching(true);
+			setAttachmentError(null);
+			try {
+				const docsForm = new FormData();
+				docsForm.append('files', file, file.name);
+				docsForm.append('source', 'CHAT');
+				// Required by UploadDocumentsDTO (TenantOrganizationBaseDTO): the org must be in the
+				// BODY — headers alone fail validation with "organizationId must be a UUID".
+				const scope = attachScope();
+				if (scope.organizationId) docsForm.append('organizationId', scope.organizationId);
+				if (scope.tenantId) docsForm.append('tenantId', scope.tenantId);
+				const docsResponse = await fetch(`${environment.API_BASE_URL}/api/plugins/docs/documents/upload`, {
+					method: 'POST',
+					headers: authHeaders(),
+					body: docsForm
+				});
+
+				if (docsResponse.ok) {
+					const body = (await docsResponse.json().catch(() => null)) as IDocsUploadResponseSlice | null;
+					const document = body?.results?.[0]?.document;
+					if (document?.id) {
+						setAttachments((current) => [
+							...current,
+							{
+								documentId: document.id,
+								name: document.name || file.name,
+								...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+							}
+						]);
+						return;
+					}
+					// Three distinct 2xx outcomes, told apart so the user is never told "rejected"
+					// about a file the server may in fact have created:
+					// a genuine per-file rejection carries the server's reason; a body that did not
+					// parse, or one with no readable document id, is a response-shape problem — the
+					// document may exist, so point at the Documents page rather than blaming the file.
+					const rejection = body?.rejected?.[0];
+					if (rejection) {
+						throw new Error(
+							rejection.message || `${t('AI_ASSISTANT.ATTACH_REJECTED', 'The file was rejected')}: ${file.name}`
+						);
+					}
+					throw new Error(
+						`${t(
+							'AI_ASSISTANT.ATTACH_RESPONSE_UNREADABLE',
+							'The upload response could not be read — check the Documents page before retrying'
+						)}: ${file.name}`
+					);
+				}
+
+				// Not-found / forbidden = the Documents feature is not available to this user or
+				// install — fall back to chat-local storage. Anything else is a real failure.
+				if (docsResponse.status !== 403 && docsResponse.status !== 404) {
+					const detail = await docsResponse
+						.json()
+						.then((body: { message?: string }) => body?.message)
+						.catch(() => undefined);
+					throw new Error(detail || `Attachment failed (HTTP ${docsResponse.status})`);
+				}
+
+				const form = new FormData();
+				form.append('file', file, file.name);
+				if (conversationIdRef.current) {
+					form.append('conversationId', conversationIdRef.current);
+				}
+				const response = await fetch(`${environment.API_BASE_URL}/api/ai-chat/attachments`, {
+					method: 'POST',
+					headers: authHeaders(),
+					body: form
+				});
+				if (!response.ok) {
+					const detail = await response
+						.json()
+						.then((body: { message?: string }) => body?.message)
+						.catch(() => undefined);
+					throw new Error(detail || `Attachment failed (HTTP ${response.status})`);
+				}
+				const saved = (await response.json()) as { name?: string };
+				setAttachments((current) => [...current, { name: saved?.name || file.name }]);
+			} catch (attachError) {
+				setAttachmentError(attachError instanceof Error ? attachError.message : String(attachError));
+			} finally {
+				setIsAttaching(false);
+			}
+		},
+		[authHeaders, attachScope]
+	);
+
+	/** Attach an existing document by id — what makes `docs_read` able to open exactly that one. */
+	const handlePickDocument = useCallback((document: { id: string; name: string; kind?: string }) => {
+		setAttachments((current) => [
+			...current,
+			{
+				documentId: document.id,
+				name: document.name,
+				// Carried so the chip (and the one rebuilt from history) links a PAGE to its page
+				// editor route rather than the file browser.
+				...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+			}
+		]);
+		setShowAttachPicker(false);
+	}, []);
 
 	const handleCollapse = useCallback(() => chatSidebar.collapse(), [chatSidebar]);
 
@@ -395,12 +615,13 @@ export function AiChatPanel() {
 		display: 'flex',
 		alignItems: 'center',
 		gap: 8,
-		padding: '8px 10px 8px 12px',
+		padding: '10px 10px 10px 13px',
 		borderBottom: `1px solid ${chatTheme.border}`,
 		flexShrink: 0,
 		color: chatTheme.textPrimary,
 		fontSize: chatTheme.fontSizeBase,
-		fontWeight: 600,
+		fontWeight: chatTheme.fontWeightSemibold,
+		letterSpacing: '-0.005em',
 		// Drives the `@container` rule that drops the button words on a narrow
 		// panel — the labels are the point, but not at the cost of clipping.
 		containerType: 'inline-size'
@@ -421,7 +642,7 @@ export function AiChatPanel() {
 		justifyContent: 'center',
 		width: 26,
 		height: 26,
-		borderRadius: 6,
+		borderRadius: chatTheme.controlRadius,
 		border: 'none',
 		backgroundColor: 'transparent',
 		color: chatTheme.textSecondary,
@@ -435,11 +656,11 @@ export function AiChatPanel() {
 	const headerBtnLabelledStyle: CSSProperties = {
 		...headerBtnStyle,
 		width: 'auto',
-		gap: 4,
-		padding: '0 7px',
+		gap: 5,
+		padding: '0 8px',
 		fontFamily: 'inherit',
 		fontSize: '0.6875rem',
-		fontWeight: 600,
+		fontWeight: chatTheme.fontWeightMedium,
 		letterSpacing: '0.01em',
 		whiteSpace: 'nowrap'
 	};
@@ -449,7 +670,10 @@ export function AiChatPanel() {
 		display: 'flex',
 		flexDirection: 'column',
 		overflow: 'hidden',
-		minWidth: 0
+		minWidth: 0,
+		// The positioning context for the history and attach-picker overlays: `inset: 0` must
+		// resolve against the BODY, so an overlay can never cover the panel's own header row.
+		position: 'relative'
 	};
 
 	const resizeHandleStyle: CSSProperties = {
@@ -469,10 +693,10 @@ export function AiChatPanel() {
 
 	return (
 		<div ref={rootRef} style={containerStyle}>
-			{/* Inline keyframes + width containment for streamed markdown:
-			    wide content (code blocks, tables) must scroll inside its own
-			    box instead of stretching the narrow panel and squeezing the
-			    input row. */}
+			{/* Keyframes, the shared markdown sheet, and every state inline styles
+			    cannot express (hover, focus, ::placeholder). Wide streamed content
+			    (code blocks, tables) scrolls inside its own box here rather than
+			    stretching the narrow panel and squeezing the input row. */}
 			<style>{`
 				@keyframes fadeIn {
 					from { opacity: 0; transform: translateY(4px); }
@@ -482,17 +706,50 @@ export function AiChatPanel() {
 					0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
 					40% { transform: scale(1); opacity: 1; }
 				}
-				.gz-ai-chat-markdown { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
-				.gz-ai-chat-markdown pre {
-					max-width: 100%; overflow-x: auto; white-space: pre;
-					font-size: 0.75rem; border-radius: 8px;
+
+				${chatMarkdownCss}
+
+				/* Tool steps. The row is the expander, so the label carries the affordance:
+				   accent coloured, underlined on hover, like every other link here. */
+				.gz-ai-chat-tool-label { transition: color ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-tool-row:hover .gz-ai-chat-tool-label { text-decoration: underline; }
+				.gz-ai-chat-tool-row:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+					border-radius: 4px;
 				}
-				.gz-ai-chat-markdown code { overflow-wrap: anywhere; }
-				.gz-ai-chat-markdown table {
-					display: block; max-width: 100%; width: fit-content;
-					overflow-x: auto; font-size: 0.75rem;
+
+				/* Attachment chips on a user message. */
+				.gz-ai-chat-user-chip { transition: background-color ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-user-chip:hover { background-color: rgba(255, 255, 255, 0.26) !important; }
+
+				/* ── Composer ─────────────────────────────────────────────────────
+				   The placeholder tone and every hover/focus state live here: inline
+				   styles can express neither, so the composer read as flat and inert. */
+				.gz-ai-chat-textarea::placeholder {
+					color: ${chatTheme.inputPlaceholder};
+					opacity: 1;
 				}
-				.gz-ai-chat-markdown img, .gz-ai-chat-markdown video { max-width: 100%; height: auto; }
+				.gz-ai-chat-tool-btn {
+					transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-tool-btn:hover:not(:disabled):not([aria-disabled='true']):not([aria-pressed='true']) {
+					background-color: color-mix(in srgb, currentColor 10%, transparent) !important;
+					color: inherit !important;
+				}
+				.gz-ai-chat-tool-btn:focus-visible,
+				.gz-ai-chat-send-btn:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+				}
+				.gz-ai-chat-send-btn {
+					transition: background-color ${chatTheme.transitionSpeed} ease, transform ${chatTheme.transitionSpeed} ease,
+						filter ${chatTheme.transitionSpeed} ease, opacity ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-send-btn:hover:not(:disabled) { transform: scale(1.05); filter: brightness(1.08); }
+				.gz-ai-chat-send-btn:active:not(:disabled) { transform: scale(0.96); }
+				.gz-ai-chat-send-btn:disabled { cursor: default; }
+
 				/* Panel header controls. Inline styles cannot express :hover, so these
 				   buttons gave no feedback at all and read as decoration. */
 				.gz-ai-chat-head-btn:hover {
@@ -766,23 +1023,42 @@ export function AiChatPanel() {
 				</span>
 			</div>
 
-			{/* Conversation history overlay */}
-			{showHistory && (
-				<ChatHistoryPanel
-					items={history}
-					loading={historyLoading}
-					activeId={activeConversationId}
-					translate={t}
-					onSelect={handleSelectConversation}
-					onDelete={handleDeleteConversation}
-					onClose={() => setShowHistory(false)}
-				/>
-			)}
-
-			{/* Chat body — fills remaining height */}
+			{/* Chat body — fills remaining height. The overlays mount INSIDE it so they cover the
+			    conversation area only, never the panel's own header (which stays operable — the
+			    user can still collapse/detach while a picker is open). */}
 			<div style={bodyStyle}>
+				{/* Conversation history overlay */}
+				{showHistory && (
+					<ChatHistoryPanel
+						items={history}
+						loading={historyLoading}
+						activeId={activeConversationId}
+						translate={t}
+						onSelect={handleSelectConversation}
+						onDelete={handleDeleteConversation}
+						onClose={() => setShowHistory(false)}
+					/>
+				)}
+
+				{/* "Attach from Documents" overlay */}
+				{showAttachPicker && (
+					<DocsAttachPicker
+						apiBaseUrl={environment.API_BASE_URL}
+						headers={authHeaders}
+						scope={attachScope}
+						translate={t}
+						onPick={handlePickDocument}
+						onClose={() => setShowAttachPicker(false)}
+					/>
+				)}
 				{hasMessages ? (
-					<ChatMessageList messages={messages} status={status} onApprovalResponse={handleApprovalResponse} />
+					<ChatMessageList
+						messages={messages}
+						status={status}
+						onApprovalResponse={handleApprovalResponse}
+						onOpenCitation={handleOpenCitation}
+						translate={t}
+					/>
 				) : (
 					<ChatWelcome translate={t} />
 				)}
@@ -791,14 +1067,15 @@ export function AiChatPanel() {
 				{error && (
 					<div
 						style={{
-							padding: '6px 12px',
-							backgroundColor: 'rgba(255, 61, 113, 0.15)',
+							padding: '8px 12px',
+							backgroundColor: 'rgba(255, 61, 113, 0.12)',
 							color: chatTheme.red,
 							fontSize: chatTheme.fontSizeSmall,
+							lineHeight: 1.5,
 							borderTop: `1px solid ${chatTheme.border}`,
 							display: 'flex',
 							alignItems: 'center',
-							gap: 6
+							gap: 7
 						}}
 					>
 						<span>⚠</span>
@@ -813,6 +1090,8 @@ export function AiChatPanel() {
 								cursor: 'pointer',
 								textDecoration: 'underline',
 								fontSize: chatTheme.fontSizeSmall,
+								fontWeight: chatTheme.fontWeightMedium,
+								fontFamily: 'inherit',
 								padding: 0
 							}}
 						>
@@ -824,6 +1103,77 @@ export function AiChatPanel() {
 				{/* Input area. Escape closes the docked panel; in the detached window
 				    it must do nothing — collapse() persists the docked state for the
 				    next page load, and there is no panel here to close. */}
+				{/* Staged attachments — removable until the message is sent. */}
+				{(attachments.length > 0 || attachmentError) && (
+					<div
+						style={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							alignItems: 'center',
+							gap: 5,
+							padding: '10px 12px 0'
+						}}
+					>
+						{attachments.map((attachment, index) => (
+							<span
+								key={`${attachment.documentId ?? attachment.name}-${index}`}
+								style={{
+									display: 'inline-flex',
+									alignItems: 'center',
+									gap: 5,
+									maxWidth: '100%',
+									padding: '4px 9px',
+									borderRadius: 999,
+									border: `1px solid ${chatTheme.border}`,
+									backgroundColor: chatTheme.surface,
+									color: chatTheme.textPrimary,
+									fontSize: chatTheme.fontSizeMessage,
+									fontWeight: chatTheme.fontWeightMedium,
+									lineHeight: 1.5
+								}}
+							>
+								<span aria-hidden="true">📎</span>
+								<span
+									style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+									title={attachment.name}
+								>
+									{attachment.name}
+								</span>
+								<button
+									type="button"
+									onClick={() =>
+										setAttachments((current) =>
+											current.filter((_entry, entryIndex) => entryIndex !== index)
+										)
+									}
+									aria-label={`${t('AI_ASSISTANT.ATTACH_REMOVE', 'Remove attachment')}: ${attachment.name}`}
+									style={{
+										background: 'none',
+										border: 'none',
+										color: chatTheme.textSecondary,
+										cursor: 'pointer',
+										padding: 0,
+										lineHeight: 1
+									}}
+								>
+									×
+								</button>
+							</span>
+						))}
+						{attachmentError && (
+							<span
+								style={{
+									color: chatTheme.red,
+									fontSize: chatTheme.fontSizeSmall,
+									lineHeight: 1.5
+								}}
+							>
+								{attachmentError}
+							</span>
+						)}
+					</div>
+				)}
+
 				<ChatInput
 					value={input}
 					isBusy={isBusy}
@@ -833,6 +1183,13 @@ export function AiChatPanel() {
 					onStop={() => void stop()}
 					onEscape={isDetachedView ? undefined : handleCollapse}
 					onTranscribe={transcribeAudio}
+					onOpenAiSettings={canOpenAiSettings() ? openAiSettings : undefined}
+					onAttachFile={handleAttachFile}
+					onAttachFromDocuments={() => {
+						setAttachmentError(null);
+						setShowAttachPicker(true);
+					}}
+					isAttaching={isAttaching}
 					composingFor={activeConversationId}
 				/>
 			</div>

@@ -35,6 +35,10 @@ type GroupQuickActionsType = {
 		groupTitle: string;
 		items: NbMenuItem[];
 	};
+	documents: {
+		groupTitle: string;
+		items: NbMenuItem[];
+	};
 };
 
 const quickActionsCollection = {
@@ -79,7 +83,12 @@ const quickActionsCollection = {
 		'QUICK_ACTIONS_MENU.TIME_LOG',
 		'QUICK_ACTIONS_MENU.VIEW_APPOINTMENTS',
 		'QUICK_ACTIONS_MENU.VIEW_TIME_ACTIVITY'
-	]
+	],
+	// Documents hub (`@gauzy/plugin-docs-ui`, `01-ux-spec.md` §1). The labels live in
+	// CORE i18n rather than the plugin's `DOCS` namespace on purpose: grouping matches
+	// on the *translated* title, and the plugin merges its namespace on plugin bootstrap
+	// — a menu built before that merge would group by the raw key and show it as the label.
+	documents: ['QUICK_ACTIONS_MENU.DOCUMENTS.NEW_PAGE', 'QUICK_ACTIONS_MENU.DOCUMENTS.UPLOAD']
 };
 
 @Component({
@@ -168,6 +177,10 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 			organization: {
 				groupTitle: 'QUICK_ACTIONS_GROUP.ORGANIZATION',
 				items: []
+			},
+			documents: {
+				groupTitle: 'QUICK_ACTIONS_GROUP.DOCUMENTS',
+				items: []
 			}
 		};
 		items.map((item) => {
@@ -182,6 +195,7 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 			if (this.isBelongToGroup('pm', item.title)) groupedActions.pm.items.push(item);
 			if (this.isBelongToGroup('contacts', item.title)) groupedActions.contacts.items.push(item);
 			if (this.isBelongToGroup('organization', item.title)) groupedActions.organization.items.push(item);
+			if (this.isBelongToGroup('documents', item.title)) groupedActions.documents.items.push(item);
 			return item;
 		});
 		const finalData = Object.values(groupedActions).sort((a, b) => b.items?.length - a.items?.length);

@@ -1156,6 +1156,21 @@
 		"START_SERVER": "Start de server",
 		"STOP_SERVER": "Stop server"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Gebruikersinterface",
+			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (standaard)",
+				"REACT": "React (nieuw)"
+			},
+			"HINT": "Geldt voor de hele tenant, op elk apparaat. Vandaag is het tijdregistratie-dashboard in beide interfaces beschikbaar; meer pagina's volgen.",
+			"READ_ONLY": "Alleen tenantbeheerders kunnen deze instelling wijzigen.",
+			"SAVING": "Opslaan…",
+			"SAVED": "Interfacevoorkeur opgeslagen",
+			"SAVE_ERROR": "De interfacevoorkeur kon niet worden opgeslagen."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Thema's",
 		"LIGHT": "Licht",
@@ -1188,7 +1203,9 @@
 		"CARDS_GRID": "Kaartenraster",
 		"SPRINT_VIEW": "Sprintweergave",
 		"QUICK_SETTINGS": "Snelle instellingen",
-		"NO_LAYOUT": "Geen gegevenslay-out beschikbaar"
+		"NO_LAYOUT": "Geen gegevenslay-out beschikbaar",
+		"PREFERENCES": "Voorkeuren",
+		"SUPPORT": "Ondersteuning"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Wat is er nieuw?",
@@ -3315,7 +3332,11 @@
 		"STOP_TIMER": "Stop timer",
 		"TIME_LOG": "Tijdregistratie",
 		"VIEW_APPOINTMENTS": "Afspraken bekijken",
-		"VIEW_TIME_ACTIVITY": "Tijdactiviteit bekijken"
+		"VIEW_TIME_ACTIVITY": "Tijdactiviteit bekijken",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nieuwe pagina",
+			"UPLOAD": "Uploaden"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Boekhouding",
@@ -3323,7 +3344,8 @@
 		"PROJECT_MANAGEMENT": "Projectbeheer",
 		"JOBS": "Banen",
 		"CONTACTS": "Contacten",
-		"TIME_TRACKING": "Tijdregistratie"
+		"TIME_TRACKING": "Tijdregistratie",
+		"DOCUMENTS": "Documenten"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Voornaam",
@@ -3632,7 +3654,9 @@
 		"SELECT_AN_ORGANIZATION": "Organisatie",
 		"SELECT_PROJECT": "Project",
 		"SELECT_TEAM": "Team",
-		"AI_CHAT": "AI-chat"
+		"AI_CHAT": "AI-chat",
+		"COLLAPSE_SIDEBAR": "Zijbalk inklappen",
+		"EXPAND_SIDEBAR": "Zijbalk uitklappen"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI-assistent",
@@ -3658,6 +3682,12 @@
 		"STOP": "Genereren stoppen",
 		"ERROR": "Er is iets misgegaan.",
 		"RETRY": "Opnieuw proberen",
+		"DICTATION_FAILED": "De opname kon niet worden getranscribeerd.",
+		"DICTATION_NOT_CONFIGURED": "Dicteren vereist een spraakprovider. Voeg er een toe op de instellingenpagina 'AI-providers'.",
+		"DICTATION_ASK_ADMIN": "Dicteren vereist een spraakprovider — vraag een beheerder er een toe te voegen onder Instellingen → AI-providers.",
+		"DICTATION_KEY_REJECTED": "De spraakprovider heeft de API-sleutel geweigerd. Werk deze bij op de instellingenpagina 'AI-providers'.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "De spraakprovider heeft de API-sleutel geweigerd — vraag een beheerder deze bij te werken onder Instellingen → AI-providers.",
+		"DICTATION_OPEN_SETTINGS": "AI-providers openen",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
@@ -3673,6 +3703,21 @@
 		"REDIRECT_TO_HOME": "U wordt binnenkort doorgestuurd naar de startpagina"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Vind documentatie, krijg antwoorden en bereik het team achter Gauzy.",
+		"DOCUMENTATION": "Documentatie",
+		"DOCUMENTATION_DESC": "Handleidingen en referentie voor elke Gauzy-functie.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Antwoorden op de meest gestelde vragen.",
+		"SUPPORT_CHAT": "Supportchat",
+		"SUPPORT_CHAT_DESC": "Chat met ons supportteam.",
+		"REPORT_ISSUE": "Probleem melden",
+		"REPORT_ISSUE_DESC": "Bug gevonden? Open een issue op GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Broncode, releases en discussies.",
+		"WEBSITE": "Gauzy-website",
+		"WEBSITE_DESC": "Lees meer over het Gauzy-platform.",
+		"ABOUT_LINK": "Over Gauzy",
+		"ABOUT_LINK_DESC": "Versiedetails, licentie en links.",
 		"HELP": "Help",
 		"KNOWLEDGE_BASE": "Kennisbank",
 		"CHOSE_ICON": "Kies een pictogram om in te stellen.",
@@ -3983,6 +4028,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Alle rechten voorbehouden.",
+		"DESCRIPTION": "Ever® Gauzy™ is een open platform voor bedrijfsbeheer voor collaboratieve, on-demand en deeleconomieën — ERP, CRM, HRM, ATS en projectmanagement met geïntegreerde tijdregistratie.",
+		"LICENSE": "Open source, uitgebracht onder de licentie",
+		"VERSION_DETAILS": "Versiedetails",
+		"VERSION_MISMATCH": "De webapp en de API zijn gebouwd vanaf verschillende commits — mogelijk is er een deployment bezig.",
+		"WEB_APP": "Webapp",
+		"API": "API",
+		"UNTAGGED": "build zonder tag",
+		"API_UNAVAILABLE": "API-versie niet beschikbaar",
+		"LEARN_MORE": "Meer informatie",
 		"ABOUT": "Over"
 	},
 	"FOOTER": {
@@ -5340,7 +5395,15 @@
 		"HOTKEYS": "Sneltoetsen",
 		"HELP": "Help",
 		"SIGN_OUT": "Afmelden",
-		"PROFILE": "Profiel"
+		"PROFILE": "Profiel",
+		"ACCOUNT": "Account",
+		"PREFERENCES": "Voorkeuren",
+		"DOWNLOAD_APPS": "Apps downloaden",
+		"DOWNLOAD_MACOS": "Downloaden voor macOS",
+		"DOWNLOAD_WINDOWS": "Downloaden voor Windows",
+		"DOWNLOAD_LINUX": "Downloaden voor Linux",
+		"DOWNLOAD_MOBILE": "Mobiele app downloaden",
+		"DOWNLOAD_BROWSER_EXTENSION": "Browserextensie downloaden"
 	},
 	"WORKSPACES": {
 		"MENUS": {

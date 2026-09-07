@@ -22,7 +22,6 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { TagService } from '../services';
 import { ClientSelectorModule } from '../shared/features/client-selector/client-selector.module';
 import { ProjectSelectorModule } from '../shared/features/project-selector/project-selector.module';
@@ -54,7 +53,6 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 		ReactiveFormsModule,
 		NbBadgeModule,
 		TranslateModule,
-		CKEditorModule,
 		TaskRenderModule,
 		ClientSelectorModule,
 		TaskSelectorModule,

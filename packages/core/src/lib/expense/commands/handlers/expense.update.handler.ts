@@ -19,10 +19,7 @@ export class ExpenseUpdateHandler implements ICommandHandler<ExpenseUpdateComman
 		let { id, entity } = command;
 		try {
 			await this.expenseService.findOneByIdString(id);
-			const expense = await this.expenseService.create({
-				id,
-				...entity
-			});
+			const expense = await this.expenseService.create({ ...entity, id });
 			let averageExpense = 0;
 			if (isNotEmpty(expense.employeeId)) {
 				const { employeeId } = expense;

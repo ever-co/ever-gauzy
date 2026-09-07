@@ -110,9 +110,6 @@ export class AvailabilitySlotsController extends CrudController<AvailabilitySlot
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: IAvailabilitySlot
 	): Promise<IAvailabilitySlot> {
-		return this.availabilitySlotsService.create({
-			id,
-			...entity
-		});
+		return this.availabilitySlotsService.create({ ...entity, id });
 	}
 }

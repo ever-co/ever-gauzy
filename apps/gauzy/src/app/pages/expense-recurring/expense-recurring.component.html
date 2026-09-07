@@ -91,10 +91,10 @@
     <ng-template ngxPermissionsOnly="ORG_EXPENSES_VIEW">
       <button
         nbButton
+        (click)="viewOrganizationRecurringExpense()"
         class="action secondary"
         size="small"
         status="basic"
-        underConstruction
         >
         <nb-icon icon="eye-outline"></nb-icon>
         {{ 'BUTTONS.VIEW' | translate }}
@@ -138,3 +138,16 @@
     </ng-template>
   </div>
 </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each entry that is opened. -->
+<ngx-record-view-drawer
+  [open]="!!viewedRecurringExpense"
+  heading="ORGANIZATIONS_PAGE.RECURRING_EXPENSE"
+  [subtitle]="getCategoryName(viewedRecurringExpense?.categoryName)"
+  (closed)="closeView()"
+  >
+  @if (viewedRecurringExpense) {
+    <ngx-record-view [record]="viewedRecurringExpense" [sections]="viewSections"></ngx-record-view>
+  }
+</ngx-record-view-drawer>

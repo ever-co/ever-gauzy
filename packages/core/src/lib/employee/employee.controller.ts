@@ -2,6 +2,7 @@ import {
 	Body,
 	Controller,
 	Delete,
+	ForbiddenException,
 	Get,
 	Headers,
 	HttpCode,
@@ -295,12 +296,17 @@ export class EmployeeController extends CrudController<Employee> {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: FindOptionsQueryDTO<Employee>
 	): Promise<IEmployee> {
-		// Check permissions to determine the correct ID to retrieve
+		// Check permissions to determine the correct ID to retrieve. A caller without
+		// CHANGE_SELECTED_EMPLOYEE may only read their OWN employee record; a caller with no employee
+		// record has nothing to read (an empty id used to be dropped from the where and returned the
+		// first employee of the tenant).
+		const ownEmployeeId = RequestContext.currentEmployeeId();
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) && !ownEmployeeId) {
+			throw new ForbiddenException('You do not have permission to view this employee.');
+		}
 		const searchCriteria = {
 			where: {
-				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-					? { id }
-					: { id: RequestContext.currentEmployeeId() })
+				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ? { id } : { id: ownEmployeeId })
 			},
 			...(params.relations ? { relations: params.relations } : {}),
 			withDeleted: true

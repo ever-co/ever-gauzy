@@ -73,7 +73,7 @@
 							  | position : selectedOrganization?.currencyPosition)
 							: income || 0
 					}}"
-					color="#089c17"
+					color="var(--gauzy-action-success-text)"
 					(openInfo)="openHistoryDialog('INCOME')"
 				>
 					<!-- Expanded Accordion Income info block -->
@@ -87,7 +87,7 @@
 								  | position : selectedOrganization?.currencyPosition)
 								: nonBonusIncome
 						}}"
-						color="#089c17"
+						color="var(--gauzy-action-success-text)"
 						(openInfo)="openHistoryDialog('NON_BONUS_INCOME')"
 					>
 					</ga-info-block>
@@ -104,7 +104,7 @@
 								  | position : selectedOrganization?.currencyPosition)
 								: directIncomeBonus
 						}}"
-						color="#089c17"
+						color="var(--gauzy-action-success-text)"
 						(openInfo)="openHistoryDialog('BONUS_INCOME')"
 					>
 					</ga-info-block>
@@ -119,7 +119,7 @@
 							  | position : selectedOrganization?.currencyPosition)
 							: income || 0
 					}}"
-					color="#089c17"
+					color="var(--gauzy-action-success-text)"
 					(openInfo)="openHistoryDialog('INCOME')"
 				>
 				</ga-info-block>
@@ -135,7 +135,7 @@
 							  | position : selectedOrganization?.currencyPosition)
 							: expenseWithoutSalary || 0
 					}}"
-					color="#dbc300"
+					color="var(--gauzy-action-warning-text)"
 					(openInfo)="openHistoryDialog('EXPENSES_WITHOUT_SALARY')"
 				>
 				</ga-info-block>
@@ -150,7 +150,7 @@
 							  | position : selectedOrganization?.currencyPosition)
 							: expense || 0
 					}}"
-					color="#dbc300"
+					color="var(--gauzy-action-warning-text)"
 					(openInfo)="openHistoryDialog('EXPENSES')"
 				>
 				</ga-info-block>
@@ -180,7 +180,7 @@
 							  | position : selectedOrganization?.currencyPosition)
 							: profit || 0
 					}}"
-					color="{{ profit >= 0 ? '#089c17' : '#ff7b00' }}"
+					color="{{ profit >= 0 ? 'var(--gauzy-text-color-1)' : 'var(--gauzy-action-danger-text)' }}"
 					blockType="highlight"
 					(openInfo)="openProfitDialog()"
 				>
@@ -197,7 +197,7 @@
 							  | position : selectedOrganization?.currencyPosition)
 							: directIncomeBonus || 0
 					}}"
-					color="#66de0b"
+					color="var(--gauzy-action-info-text)"
 					(openInfo)="openHistoryDialog('BONUS_INCOME')"
 				>
 				</ga-info-block>
@@ -225,7 +225,7 @@
 							  | position : selectedOrganization?.currencyPosition)
 							: calculatedBonus || 0
 					}}"
-					color="{{ calculatedBonus >= 0 ? '#66de0b' : '#ff7b00' }}"
+					color="{{ calculatedBonus >= 0 ? 'var(--gauzy-action-info-text)' : 'var(--gauzy-action-danger-text)' }}"
 				>
 				</ga-info-block>
 				}
@@ -252,7 +252,7 @@
 							  | position : selectedOrganization?.currencyPosition)
 							: calculatedBonus || 0
 					}}"
-					color="{{ calculatedBonus >= 0 ? '#66de0b' : '#ff7b00' }}"
+					color="{{ calculatedBonus >= 0 ? 'var(--gauzy-action-info-text)' : 'var(--gauzy-action-danger-text)' }}"
 				>
 				</ga-info-block>
 				}

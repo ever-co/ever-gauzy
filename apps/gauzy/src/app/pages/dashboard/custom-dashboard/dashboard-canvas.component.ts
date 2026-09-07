@@ -46,7 +46,9 @@ export class DashboardCanvasComponent extends TranslationBaseComponent {
 	@Input()
 	public set tab(value: IDashboardTab | null) {
 		this._tab = value ?? null;
-		this.placements = this._readingOrder(value?.widgets ?? []);
+		this.placements = this._readingOrder(
+			(value?.widgets ?? []).map((placement) => this._normalizePlacementHeight(placement))
+		);
 	}
 	public get tab(): IDashboardTab | null {
 		return this._tab;
@@ -173,6 +175,16 @@ export class DashboardCanvasComponent extends TranslationBaseComponent {
 			return;
 		}
 		this._emit(resizePlacement(this.placements, placement.instanceId, size));
+	}
+
+	/** Keeps legacy single-row widgets compact when loading an older layout. */
+	private _normalizePlacementHeight(placement: IDashboardWidgetPlacement): IDashboardWidgetPlacement {
+		const widget = this._widgetRegistry.getWidget(placement.widgetId);
+		const minimumHeight = widget?.minSize?.h;
+		if (minimumHeight !== 1 || placement.h <= minimumHeight) {
+			return placement;
+		}
+		return { ...placement, h: minimumHeight };
 	}
 
 	/**

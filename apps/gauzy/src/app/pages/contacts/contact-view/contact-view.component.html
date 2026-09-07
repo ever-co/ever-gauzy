@@ -315,6 +315,24 @@
 							}
 						</div>
 					</nb-tab>
+
+					<!--
+						Record-side Documents panel (spec 00 §6.14 R-LNK-02). The panel gates
+						itself on DOCS_READ + FEATURE_DOCUMENTS and renders nothing when either
+						is missing — the tab is kept unconditional so the tabset does not have
+						to duplicate that check.
+					-->
+					<nb-tab [tabTitle]="'DOCS.LINKS.PANEL_TITLE' | translate">
+						<div class="pane pane-scroll">
+							@if (selectedContact) {
+								<gz-document-links-panel
+									[entity]="documentEntity"
+									[entityId]="selectedContact.id"
+									[entityLabel]="selectedContact.name"
+								></gz-document-links-panel>
+							}
+						</div>
+					</nb-tab>
 				</nb-tabset>
 			</section>
 		</div>

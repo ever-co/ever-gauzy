@@ -1,12 +1,11 @@
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, FormGroupDirective, Validators } from '@angular/forms';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
 import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
 	IEmployeeJobApplication,
@@ -23,7 +22,7 @@ import { environment } from '@gauzy/ui-config';
 import { API_PREFIX, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, JobService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { EmployeeSelectorComponent, FormHelpers, ckEditorConfig } from '@gauzy/ui-core/shared';
+import { EmployeeSelectorComponent, FormHelpers, RichTextEditorComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,30 +35,6 @@ import { EmployeeSelectorComponent, FormHelpers, ckEditorConfig } from '@gauzy/u
 export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
-	public ckConfig: CKEditor4.Config = {
-		...ckEditorConfig,
-		toolbar: [
-			{
-				name: 'basicstyles',
-				items: [
-					'Bold',
-					'Italic',
-					'Underline',
-					'Strike',
-					'Subscript',
-					'Superscript',
-					'-',
-					'CopyFormatting',
-					'RemoveFormat'
-				]
-			},
-			{
-				name: 'clipboard',
-				items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo']
-			}
-		],
-		height: '191px' // Set the desired height here
-	};
 	public organization: IOrganization;
 	public uploader: FileUploader;
 	public hasDropZoneOver: boolean = false;
@@ -101,8 +76,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	/** Form group directive */
 	@ViewChild('formDirective', { static: false }) formDirective: FormGroupDirective;
 
-	/** Ckeditor component */
-	@ViewChild('ckeditor') ckeditor: CKEditorComponent;
+	/** Cover-letter rich text editor component */
+	@ViewChild('proposalEditor') proposalEditor: RichTextEditorComponent;
 
 	/** Employee selector component */
 	@ViewChild('employeeSelector') employeeSelector: EmployeeSelectorComponent;
@@ -442,8 +417,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 									.replace(/\n\n/g, '<br/><br>')
 									.replace(/\n/g, '<br/>');
 
-								// Set ckeditor html content
-								this.ckeditor.instance.document.getBody().setHtml(proposal);
+								// Set editor html content (syncs the bound form control through the CVA)
+								this.proposalEditor?.setContent(proposal);
 
 								/** Patch proposal value inside form directive */
 								this.form.patchValue({
@@ -472,7 +447,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	 *
 	 */
 	getPlainText(): string {
-		const content: SafeHtml = this.ckeditor.instance.getData();
+		const content: string = this.proposalEditor?.getHTML() ?? '';
 		/**
 		 * Create temporary div element
 		 */
@@ -487,9 +462,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	}
 
 	/**
-	 * On editor change
+	 * On editor change — receives the current HTML content emitted by the rich text editor.
 	 */
-	onEditorChange(content: string): void {}
+	onEditorChange(content: string | object): void {}
 
 	/**
 	 * Close dialog
