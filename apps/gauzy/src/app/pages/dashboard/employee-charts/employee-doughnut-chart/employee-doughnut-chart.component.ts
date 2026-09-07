@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, OnChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, Input, OnChanges, ViewChild } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
@@ -13,20 +13,16 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
 import { Store } from '@gauzy/ui-core/core';
 import { IEmployeeChartPalette, resolveEmployeeChartPalette } from '../employee-chart-palette';
+import { employeeChartBase, employeeChartLegend, employeeChartTooltip } from '../employee-chart-options';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ga-employee-doughnut-chart',
     template: `
 		@if (employeeStatistics.length) {
-		  <!-- <span>{{ displayDate }}</span> -->
-		  <canvas
-		    style="height: 20rem; width: 100%;"
-		    baseChart
-		    [data]="data"
-		    [options]="chartOptions"
-		    [type]="chartType"
-		  ></canvas>
+		  <div class="chart">
+		    <canvas baseChart [data]="data" [options]="chartOptions" [type]="chartType"></canvas>
+		  </div>
 		} @else {
 		  <div class="title">
 		    <nb-icon icon="info-outline"></nb-icon>
@@ -39,10 +35,26 @@ import { IEmployeeChartPalette, resolveEmployeeChartPalette } from '../employee-
     styles: [
         `
 			:host {
+				display: flex;
+				flex-direction: column;
+				flex: 1 1 auto;
+				min-height: 0;
+				width: 100%;
+
+				.chart {
+					width: 100%;
+					flex: 1 1 auto;
+					min-height: 0;
+					display: block;
+				}
 				.title {
 					display: flex;
 					flex-direction: column;
 					align-items: center;
+					gap: 0.25rem;
+					margin: auto;
+					color: var(--gauzy-text-color-2);
+					font-size: 0.75rem;
 				}
 			}
 		`
@@ -52,8 +64,15 @@ import { IEmployeeChartPalette, resolveEmployeeChartPalette } from '../employee-
 })
 export class EmployeeDoughnutChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {
 	public chartType: ChartType = 'doughnut';
-	public chartOptions: ChartConfiguration['options'];
-	public data: ChartConfiguration['data'];
+
+	/*
+	 * Parameterised with 'doughnut'. Bare `ChartConfiguration` resolves to the
+	 * union over every registered chart type, whose options are only the ones
+	 * common to all of them — so arc-only settings like `cutout` are not "known
+	 * properties" there and the object literal is rejected.
+	 */
+	public chartOptions: ChartConfiguration<'doughnut'>['options'];
+	public data: ChartConfiguration<'doughnut'>['data'];
 
 	/** Slice colours for the active theme; see `employee-chart-palette.ts`. */
 	private palette: IEmployeeChartPalette = resolveEmployeeChartPalette({} as NbJSThemeOptions);
@@ -100,7 +119,8 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 		private readonly _themeService: NbThemeService,
 		private readonly _currencyPipe: CurrencyPipe,
 		private readonly _currencyPositionPipe: CurrencyPositionPipe,
-		private readonly _store: Store
+		private readonly _store: Store,
+		private readonly _elementRef: ElementRef<HTMLElement>
 	) {
 		super(translateService);
 	}
@@ -138,34 +158,58 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 	 * @param config - The configuration options for the Chart, including theme variables.
 	 */
 	private _initializeChart(config: NbJSThemeOptions) {
-		this.palette = resolveEmployeeChartPalette(config);
+		this.palette = resolveEmployeeChartPalette(config, this._elementRef.nativeElement);
 
-		// Step 2: Set the overall chart options
+		const legend = employeeChartLegend(this.palette, 'right');
+
 		this.chartOptions = {
-			responsive: true, // Makes the chart responsive
-			maintainAspectRatio: false, // Allows adjusting the aspect ratio
-			indexAxis: 'y',
-			// Elements options apply to all of the options unless overridden in a dataset
-			// In this case, we are setting the border of each horizontal bar to be 2px wide
-			elements: {
-				arc: {
-					borderWidth: 2
-				}
-			},
+			...employeeChartBase(),
+			// A doughnut rather than a pie: the hole keeps the four arcs thin, the
+			// same "thin marks" rule the bar charts follow.
+			cutout: '64%',
+			// A circle centres itself in whatever box it is given, so the only
+			// padding worth spending is a little breathing room around the ring.
+			layout: { padding: { top: 4, right: 4, bottom: 4, left: 4 } },
 			plugins: {
 				legend: {
-					position: 'top',
+					...legend,
+					// Caps how much of the box the legend may claim. Without it a long
+					// currency string lets the legend push the ring into a corner —
+					// the chart's own version of the wrapping problem this replaced.
+					maxWidth: 200,
 					labels: {
-						color: this.palette.textColor,
-						usePointStyle: false
+						...(legend.labels as Record<string, unknown>),
+						/*
+						 * The slice names stay SHORT in `data.labels` so the tooltip
+						 * reads cleanly; the amount is pasted on here instead, where a
+						 * right-hand legend has room for it. Before, the amount was
+						 * baked into the label itself, which made four long entries
+						 * wrap across the top of the chart and squeeze the ring.
+						 */
+						generateLabels: (chart: any) => {
+							const dataset = chart.data.datasets?.[0] ?? {};
+							const colors = (dataset.backgroundColor ?? []) as string[];
+							return ((chart.data.labels ?? []) as string[]).map((label, index) => ({
+								text: `${label}   ${this.formatCurrency(Number(dataset.data?.[index]) || 0)}`,
+								fillStyle: colors[index],
+								strokeStyle: colors[index],
+								lineWidth: 0,
+								pointStyle: 'circle',
+								hidden: false,
+								index
+							}));
+						}
 					}
 				},
 				tooltip: {
-					enabled: true,
-					// Define callback for tooltip labels
+					...employeeChartTooltip(this.palette, this.formatCurrency),
 					callbacks: {
 						title: () => '',
-						label: (tooltipItem: TooltipItem<ChartType>) => this.getTooltip(tooltipItem)
+						// A doughnut has one unnamed dataset, so the series name lives on
+						// the slice label rather than on `dataset.label` (which is what
+						// the shared callback reads).
+						label: (item: TooltipItem<ChartType>) =>
+							`${item.label}: ${this.formatCurrency(Number(item.parsed) || 0)}`
 					}
 				}
 			},
@@ -198,17 +242,15 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 	 * Initializes the chart dataset with appropriate colors and labels.
 	 */
 	private _initializeChartDataset(): void {
-		const income = this.formatCurrency(this.statistics.income);
-		const expense = this.formatCurrency(this.statistics.expense);
-		const bonus = this.formatCurrency(this.statistics.bonus);
-		const profit = this.formatCurrency(this.statistics.profit);
-
 		this.data = {
+			// Names only. The legend appends each amount itself (see `generateLabels`)
+			// and the tooltip formats its own, so baking the figure in here only made
+			// the labels long enough to wrap.
 			labels: [
-				`${this.getTranslation('DASHBOARD_PAGE.CHARTS.REVENUE')}: ${income}`,
-				`${this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES')}: ${expense}`,
-				`${this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS')}: ${bonus}`,
-				`${this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT')}: ${profit}`
+				this.getTranslation('DASHBOARD_PAGE.CHARTS.REVENUE'),
+				this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES'),
+				this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
+				this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT')
 			],
 			datasets: [
 				{
@@ -224,24 +266,15 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 						this.palette.bonus,
 						this.palette.profit
 					],
-					hoverBorderColor: 'rgba(0, 0, 0, 0)',
-					borderWidth: 1
+					// A gap in the surface colour, not a ring: a border drawn around
+					// each arc reads as chrome, a gap reads as separation.
+					borderColor: this.palette.surface,
+					borderWidth: 2,
+					hoverBorderColor: this.palette.surface,
+					hoverOffset: 4
 				}
 			]
 		};
-	}
-
-	/**
-	 * Customizes the tooltip content for a chart.
-	 * @param tooltipItem - The tooltip item containing information about the data point.
-	 * @returns The customized tooltip string.
-	 */
-	getTooltip(tooltipItem: TooltipItem<ChartType>) {
-		// Initialize the tooltip with the label from tooltipItem
-		let tooltip = tooltipItem.label;
-
-		// Return the customized tooltip
-		return tooltip;
 	}
 
 	/**
