@@ -344,7 +344,10 @@ $gauzy-chart-series-light: (
   gauzy-chart-negative: #dc2626,  // red-600
   // Chrome, one shade off the surface: a grid is a reading aid, not data.
   gauzy-chart-grid: rgba(126, 126, 143, 0.16),
-  gauzy-chart-label: rgba(126, 126, 143, 1)
+  // Deliberately darker than `gauzy-text-color-2`, which it started out as:
+  // that step is 3.99:1 on white, and axis ticks and legend entries are small
+  // TEXT, so they owe the 4.5:1 AA floor. This one measures 6.08:1.
+  gauzy-chart-label: rgba(97, 97, 112, 1)
 );
 
 $gauzy-chart-series-dark: (
@@ -354,7 +357,9 @@ $gauzy-chart-series-dark: (
   gauzy-chart-bonus: #c026d3,     // fuchsia-600
   gauzy-chart-negative: #ef4444,  // red-500
   gauzy-chart-grid: rgba(255, 255, 255, 0.1),
-  gauzy-chart-label: rgba(255, 255, 255, 0.55)
+  // Full white rather than the 55% step it was: axis ticks and legend entries
+  // are small text and were reading as grey against the dark canvas.
+  gauzy-chart-label: #ffffff
 );
 
 // What actually gets merged into a theme, last, so it wins over the per-theme
