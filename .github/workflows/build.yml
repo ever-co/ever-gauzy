@@ -243,6 +243,18 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
+    services:
+      postgres:
+        image: postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+        env:
+          POSTGRES_USER: migration_test
+          POSTGRES_PASSWORD: migration_test
+          POSTGRES_DB: migration_test
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U migration_test -d migration_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
     steps:
       - uses: actions/checkout@v4
 
@@ -294,6 +306,16 @@ jobs:
         # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
         # unavailable. One step, so there is no `if:` on a previous step's outcome to get wrong.
         run: .github/scripts/restore-node-modules.sh
+
+      - name: Test PostgreSQL migrations
+        # cspell:words PGHOST PGPORT PGDATABASE
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          PGUSER: migration_test
+          PGPASSWORD: migration_test
+          PGDATABASE: migration_test
+        run: yarn nx run core:test-postgres-migrations
 
       - name: Build API
         run: yarn build:api:prod:ci
