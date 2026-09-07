@@ -53,7 +53,15 @@ import {
 				 * 20rem, which took no account of the legend above the plot or the
 				 * tick band below it.
 				 */
+				/*
+				 * position: relative is not decoration. With
+				 * maintainAspectRatio disabled, Chart.js sizes the canvas from its
+				 * OFFSET PARENT, and without a positioned ancestor it measures
+				 * against something further up the tree and under-sizes the plot,
+				 * leaving it small in the middle of the panel.
+				 */
 				.chart {
+					position: relative;
 					width: 100%;
 					flex: 1 1 auto;
 					min-height: 0;
