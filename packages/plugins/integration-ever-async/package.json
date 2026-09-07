@@ -28,7 +28,8 @@
 	},
 	"peerDependencies": {
 		"@nestjs/common": "^11.1.26",
-		"@nestjs/core": "^11.1.26"
+		"@nestjs/core": "^11.1.26",
+		"express": "^5.2.1"
 	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
