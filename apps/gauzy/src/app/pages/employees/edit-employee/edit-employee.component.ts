@@ -31,6 +31,12 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 	selectedEmployee: IEmployee;
 	selectedEmployeeFromHeader: ISelectedEmployee;
 
+	avatarFailed = false;
+
+	get avatarUrl(): string | null {
+		return this.selectedEmployee?.user?.image?.fullUrl || this.selectedEmployee?.user?.imageUrl || null;
+	}
+
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
@@ -85,7 +91,10 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 						this.selectedEmployee = null;
 					}
 				}),
-				tap(([{ employee }, params]) => (this.selectedEmployee = employee)),
+				tap(([{ employee }, params]) => {
+					this.selectedEmployee = employee;
+					this.avatarFailed = false;
+				}),
 				tap(([{ employee }, params]) => {
 					try {
 						if (employee.startedWorkOn) {
@@ -119,6 +128,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 			if (image) {
 				// Update the image for the selected employee
 				this.selectedEmployee.user.image = image;
+				this.avatarFailed = false;
 
 				// Alternatively, update the selectedEmployee in the store with the new image URL
 				this.store.selectedEmployee = {

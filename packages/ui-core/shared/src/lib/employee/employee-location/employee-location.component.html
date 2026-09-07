@@ -1,35 +1,29 @@
-<nb-card>
-	<nb-card-body class="m-3">
-		<form [formGroup]="form">
-			<div class="container">
-				<div class="row">
-					<div class="col-4">
-						<ga-location-form
-							#locationFormDirective
-							[form]="form"
-							[showAutocompleteSearch]="true"
-							(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
-							(mapGeometryEmitter)="onGeometrySend($event)"
-						></ga-location-form>
-					</div>
-					<div class="col-8">
-						<ga-leaflet-map
-							#leafletTemplate
-							(mapClicked)="onMapClicked($event)"
-						></ga-leaflet-map>
-					</div>
-				</div>
-			</div>
-			<div class="actions">
-				<button
-					[disabled]="form.invalid"
-					(click)="submitForm()"
-					nbButton
-					status="success"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
-			</div>
-		</form>
-	</nb-card-body>
-</nb-card>
+<form class="location" [formGroup]="form">
+	<section class="location__panel location__panel--form">
+		<div class="location__fields">
+			<ga-location-form
+				#locationFormDirective
+				[form]="form"
+				[showAutocompleteSearch]="true"
+				(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
+				(mapGeometryEmitter)="onGeometrySend($event)"
+			></ga-location-form>
+		</div>
+
+		<footer class="location__actions">
+			<button
+				type="button"
+				nbButton
+				status="success"
+				[disabled]="form.invalid"
+				(click)="submitForm()"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</footer>
+	</section>
+
+	<section class="location__panel location__panel--map">
+		<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)"></ga-leaflet-map>
+	</section>
+</form>

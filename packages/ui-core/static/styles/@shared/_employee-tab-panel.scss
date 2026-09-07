@@ -1,0 +1,110 @@
+@forward 'themes';
+
+@use 'themes' as *;
+@use 'var' as v;
+
+$tab-radius: nb-theme(border-radius);
+$tab-hairline: 1px solid var(--gauzy-border-default-color);
+
+@mixin employee-tab-host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow-y: auto;
+  background-color: var(--gauzy-card-2);
+  @include nb-ltr(border-radius, 0 $tab-radius $tab-radius $tab-radius);
+  @include nb-rtl(border-radius, $tab-radius 0 $tab-radius $tab-radius);
+}
+
+@mixin employee-tab-panel {
+  .tab {
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .tab__panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    background-color: var(--gauzy-card-3);
+    border: $tab-hairline;
+    border-radius: $tab-radius;
+  }
+
+  // Every tab form wraps the same fields/actions pair, so the column that
+  // carries the scroll between them belongs here rather than in each tab.
+  .tab__form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .tab__legend {
+    margin: 0 0 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: nb-theme(text-hint-color);
+  }
+
+  .tab__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 1.25rem;
+    align-content: start;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1.25rem;
+
+    > .form-group,
+    > .tab__field {
+      min-width: 0;
+      margin-bottom: 1.25rem;
+    }
+
+    > .tab__field--wide {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .tab__actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    border-top: $tab-hairline;
+
+    button {
+      min-width: 7.5rem;
+    }
+  }
+
+  @media only screen and (max-width: v.$break-md) {
+    .tab {
+      padding: 0.75rem;
+      gap: 0.75rem;
+    }
+
+    .tab__fields {
+      grid-template-columns: minmax(0, 1fr);
+      padding: 1rem;
+    }
+
+    .tab__actions {
+      padding: 0.875rem 1rem;
+    }
+  }
+}

@@ -11,10 +11,7 @@ import { EmployeeStore, Store, UrlPatternValidator } from '@gauzy/ui-core/core';
 @Component({
     selector: 'ga-edit-employee-networks',
     templateUrl: './edit-employee-networks.component.html',
-    styleUrls: [
-        '../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
-        './edit-employee-networks.component.scss'
-    ],
+    styleUrls: ['./edit-employee-networks.component.scss'],
     standalone: false
 })
 export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {

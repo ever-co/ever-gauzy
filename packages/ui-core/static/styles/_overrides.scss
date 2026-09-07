@@ -366,7 +366,6 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     }
   }
 
-
   nb-layout .layout .layout-container nb-sidebar {
     &,
     .main-container-fixed {
@@ -703,6 +702,27 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
 
     // Row geometry is deliberately left to the block below, which sizes every
     // entity-select row the same way. Only the text changes here.
+  }
+
+  .ng-dropdown-panel.language-select {
+    .ng-dropdown-panel-items .ng-option {
+      display: flex !important;
+      align-items: center;
+      font-size: nb-theme(select-medium-text-font-size) !important;
+      line-height: 1.125rem !important;
+      font-weight: 400;
+      padding: 0.3125rem calc(1rem - 5px) !important;
+      min-height: 1.75rem;
+      min-width: 0;
+    }
+
+    .ng-dropdown-panel-items img {
+      flex: none;
+      width: 1.125rem;
+      height: 0.75rem;
+      border-radius: 2px;
+      object-fit: cover;
+    }
   }
 
   .ng-dropdown-panel.gauzy-entity-select {
@@ -1494,7 +1514,9 @@ angular2-smart-table {
 // note above the `.ng-dropdown-panel` block in `nb-overrides()` explains why the
 // rest of this file needs it too.
 @supports (max-width: max-content) {
-  html:not([dir='rtl']) > body > ng-dropdown-panel.ng-dropdown-panel {
+  html:not([dir='rtl'])
+    > body
+    > ng-dropdown-panel.ng-dropdown-panel:not(.language-select):not(.form-field-select) {
     width: auto !important;
     right: 1rem !important;
     max-width: max-content;
