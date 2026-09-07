@@ -2284,7 +2284,8 @@
 			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary",
 			"TOTAL_EXPENSES_WITHOUT_SALARY": "Total Expense without salary",
 			"TOTAL_EXPENSES_WITHOUT_SALARY_CALC": "Expense = Employee Expenses + Split Expenses + Recurring",
-			"TOTAL_BONUS_CALC": "Total Bonus = Direct Income Bonus {{ totalBonusIncome }} + Bonus {{ calculatedBonus }}"
+			"TOTAL_BONUS_CALC": "Total Bonus = Direct Income Bonus {{ totalBonusIncome }} + Bonus {{ calculatedBonus }}",
+			"BREAKDOWN": "Breakdown"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Developer",
