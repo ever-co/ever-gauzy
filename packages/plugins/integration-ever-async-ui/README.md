@@ -1,37 +1,15 @@
 # @gauzy/plugin-integration-ever-async-ui
 
-Angular UI plugin for the [Ever Async](https://github.com/ever-co/ever-async) integration —
-rendered under **Integrations → Ever Async** in the Gauzy web app.
+Angular configuration page for [Ever Async](https://async.ever.co), available at **Integrations → Ever Async** (`/pages/integrations/ever-async`). It uses the currently selected Gauzy organization.
 
-> **STATUS: structural draft scaffold.** This package mirrors the file topology and conventions of
-> `@gauzy/plugin-integration-plane-ui` but is not yet wired into the workspace builds. See the wiring
-> checklist in the pull request description and the `// scaffold:` comments in the sources.
+The page lets an authorized user select projects, map Slack or Discord identities to employees, enable or disable sharing, and generate or rotate a credential for that organization's read-only connector. Chat mappings include platform, workspace or server ID, and user ID so multiple connected workspaces remain distinct.
 
-## What it provides
+After saving, use the displayed integration details and one-time API credentials to add an Ever Gauzy connection in the chosen Ever Async tenant's **Connections** page. Select the Slack and Discord connections that should receive work context there. A self-hosted TOML example is also available.
 
-- `IntegrationEverAsyncPlugin` — a `PluginUiDefinition` registering the
-  `/pages/integrations/ever-async` route at the `integrations-sections` location.
-- **Connect wizard** (`EverAsyncConnectComponent`): form with the Ever Async server URL, a
-  write-only API token, and a **Test connection** button that pings the server's `/healthz` through
-  the Gauzy API (`POST /api/integration/ever-async/verify`).
-- `EverAsyncService` — package-local HTTP client for the
-  `@gauzy/plugin-integration-ever-async` backend endpoints.
+Organization changes clear settings, pending credentials, and form state before loading the new organization's data. The API independently verifies organization membership and integration permissions. Secrets are not returned by settings requests. The reachability check only verifies the Ever Async `/healthz` endpoint; it does not establish tenant pairing.
 
-Planned follow-ups per the
-[integration contract](https://github.com/ever-co/ever-async/blob/main/docs/integrations/gauzy.md):
-a settings page with the chat-user → employee mapping table and per-project enable toggles.
-
-## Building
-
-Run `yarn nx build plugin-integration-ever-async-ui` to build the library (after the wiring steps in
-the PR description are applied).
-
-## Installation
-
-Install the Integration Ever Async UI Plugin using your preferred package manager:
-
-```bash
-npm install @gauzy/plugin-integration-ever-async-ui
-# or
-yarn add @gauzy/plugin-integration-ever-async-ui
+```sh
+yarn nx build plugin-integration-ever-async-ui --configuration=production
 ```
+
+The package is included in the web application's plugin registration, TypeScript paths, workspace build scripts, and web Docker dependency manifests. See the [backend package](../integration-ever-async/README.md) for the API contract and SQL-backed verification command.

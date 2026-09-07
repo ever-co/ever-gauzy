@@ -1,9 +1,12 @@
-import { PartialType } from '@nestjs/swagger';
+import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { IsBoolean, ValidateIf } from 'class-validator';
 import { ConfigureEverAsyncIntegrationDto } from './configure-ever-async-integration.dto';
 
-/**
- * DTO for updating Ever Async integration settings.
- * All fields are optional (partial update). `apiToken`, when provided,
- * replaces the stored token (write-only — never returned).
- */
-export class UpdateEverAsyncSettingsDto extends PartialType(ConfigureEverAsyncIntegrationDto) {}
+export class UpdateEverAsyncSettingsDto extends PartialType(ConfigureEverAsyncIntegrationDto, {
+	skipNullProperties: false
+}) {
+	@ApiPropertyOptional()
+	@ValidateIf((_object, value) => value !== undefined)
+	@IsBoolean()
+	readonly isEnabled?: boolean;
+}

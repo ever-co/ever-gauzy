@@ -31,12 +31,20 @@
 		"lint": {
 			"executor": "@nx/eslint:lint"
 		},
+		"test-integration": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "node --test .scripts/ever-async-integration.test.cjs"
+			},
+			"cache": false
+		},
 		"test": {
-			"executor": "@nx/jest:jest",
+			"executor": "nx:run-commands",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/plugins/integration-ever-async/jest.config.ts"
-			}
+				"command": "node --test .scripts/ever-async-integration.test.cjs"
+			},
+			"cache": false
 		}
 	}
 }

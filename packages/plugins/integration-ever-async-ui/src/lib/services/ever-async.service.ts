@@ -1,118 +1,90 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { ID } from '@gauzy/contracts';
+import { Observable } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
-/**
- * HTTP client for the `@gauzy/plugin-integration-ever-async` backend
- * (`/api/integration/ever-async`).
- *
- * scaffold: kept package-local so this PR stays purely additive. When wiring,
- * consider promoting it to `packages/ui-core/core/src/lib/services/ever-async/`
- * (mirroring `PlaneService`) and exporting it from `@gauzy/ui-core/core`.
- */
-
 export interface IEverAsyncUserMapping {
+	channel: 'slack' | 'discord';
+	workspace: string;
 	chatUserId: string;
 	employeeId: ID;
 }
-
 export interface IEverAsyncSetupRequest {
 	serverUrl: string;
-	/** Write-only: stored by the backend, never returned by read endpoints. */
-	apiToken: string;
-	userMappings?: IEverAsyncUserMapping[];
+	userMappings: IEverAsyncUserMapping[];
+	projectIds: ID[];
 }
-
 export interface IEverAsyncSetupResponse {
 	integrationTenantId: ID;
+	tenantId: ID;
+	organizationId: ID;
+	apiKey: string;
+	apiSecret: string;
 }
-
-export interface IEverAsyncSettingsResponse {
+export interface IEverAsyncSettingsResponse extends IEverAsyncSetupRequest {
 	integrationTenantId: ID;
-	serverUrl: string;
-	userMappings: IEverAsyncUserMapping[];
+	tenantId: ID;
+	organizationId: ID;
 	isEnabled: boolean;
-	hasApiToken: boolean;
+	hasApiKey: boolean;
 }
-
 export interface IEverAsyncStatusResponse {
 	isEnabled: boolean;
 	integrationTenantId: ID | null;
 }
-
 export interface IEverAsyncUpdateResponse {
 	integrationTenantId: ID;
 	updated: boolean;
 }
-
 export interface IEverAsyncVerifyResponse {
 	ok: boolean;
 	serverUrl: string;
 }
+export interface IEverAsyncOptions {
+	employees: { id: ID; name: string }[];
+	projects: { id: ID; name: string }[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class EverAsyncService {
-	private readonly API_URL = `${API_PREFIX}/integration/ever-async`;
-
+	private readonly apiUrl = `${API_PREFIX}/integration/ever-async`;
 	constructor(private readonly http: HttpClient) {}
-
-	/**
-	 * Configure the Ever Async integration (server URL + write-only API token + mappings).
-	 */
-	setup(dto: IEverAsyncSetupRequest, organizationId?: string): Observable<IEverAsyncSetupResponse> {
-		let params = new HttpParams();
-		if (organizationId) {
-			params = params.set('organizationId', organizationId);
-		}
-		return this.http.post<IEverAsyncSetupResponse>(`${this.API_URL}/setup`, dto, { params });
+	private options(organizationId: ID) {
+		return { params: new HttpParams().set('organizationId', organizationId) };
 	}
-
-	/**
-	 * Get the current settings (the API token is never returned).
-	 */
-	getSettings(organizationId?: string): Observable<IEverAsyncSettingsResponse> {
-		let params = new HttpParams();
-		if (organizationId) {
-			params = params.set('organizationId', organizationId);
-		}
-		return this.http.get<IEverAsyncSettingsResponse>(`${this.API_URL}/settings`, { params });
+	setup(dto: IEverAsyncSetupRequest, organizationId: ID): Observable<IEverAsyncSetupResponse> {
+		return this.http.post<IEverAsyncSetupResponse>(`${this.apiUrl}/setup`, dto, this.options(organizationId));
 	}
-
-	/**
-	 * Partially update the settings.
-	 */
+	getSettings(organizationId: ID): Observable<IEverAsyncSettingsResponse> {
+		return this.http.get<IEverAsyncSettingsResponse>(`${this.apiUrl}/settings`, this.options(organizationId));
+	}
+	getOptions(organizationId: ID): Observable<IEverAsyncOptions> {
+		return this.http.get<IEverAsyncOptions>(`${this.apiUrl}/options`, this.options(organizationId));
+	}
 	updateSettings(
-		dto: Partial<IEverAsyncSetupRequest>,
-		organizationId?: string
+		dto: Partial<IEverAsyncSetupRequest> & { isEnabled?: boolean },
+		organizationId: ID
 	): Observable<IEverAsyncUpdateResponse> {
-		let params = new HttpParams();
-		if (organizationId) {
-			params = params.set('organizationId', organizationId);
-		}
-		return this.http.put<IEverAsyncUpdateResponse>(`${this.API_URL}/settings`, dto, { params });
+		return this.http.put<IEverAsyncUpdateResponse>(`${this.apiUrl}/settings`, dto, this.options(organizationId));
 	}
-
-	/**
-	 * Verify connectivity to an Ever Async server (`/healthz` ping).
-	 * Omit `serverUrl` to verify the stored configuration.
-	 */
-	verify(serverUrl?: string): Observable<IEverAsyncVerifyResponse> {
-		return this.http.post<IEverAsyncVerifyResponse>(`${this.API_URL}/verify`, serverUrl ? { serverUrl } : {});
+	rotateCredentials(organizationId: ID): Observable<IEverAsyncSetupResponse> {
+		return this.http.post<IEverAsyncSetupResponse>(
+			`${this.apiUrl}/credentials/rotate`,
+			{},
+			this.options(organizationId)
+		);
 	}
-
-	/**
-	 * Integration status for the current tenant.
-	 */
-	getStatus(): Observable<IEverAsyncStatusResponse> {
-		return this.http.get<IEverAsyncStatusResponse>(`${this.API_URL}/status`);
+	verify(serverUrl: string): Observable<IEverAsyncVerifyResponse> {
+		return this.http.post<IEverAsyncVerifyResponse>(`${this.apiUrl}/verify`, { serverUrl });
 	}
-
-	/**
-	 * Remove (soft-archive) the integration.
-	 */
-	remove(integrationTenantId: ID): Observable<{ success: boolean }> {
-		return this.http.delete<{ success: boolean }>(`${this.API_URL}/${integrationTenantId}`);
+	getStatus(organizationId: ID): Observable<IEverAsyncStatusResponse> {
+		return this.http.get<IEverAsyncStatusResponse>(`${this.apiUrl}/status`, this.options(organizationId));
+	}
+	remove(integrationTenantId: ID, organizationId: ID): Observable<{ success: boolean }> {
+		return this.http.delete<{ success: boolean }>(
+			`${this.apiUrl}/${integrationTenantId}`,
+			this.options(organizationId)
+		);
 	}
 }

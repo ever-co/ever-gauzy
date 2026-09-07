@@ -1,21 +1,80 @@
+:host {
+  display: block;
+}
+form,
+.connection-config {
+  max-width: 64rem;
+}
 .hint {
-  margin-bottom: 24px;
+  margin: 0.75rem 0;
+  color: var(--text-hint-color);
 }
-
-.actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-button {
-  box-shadow: var(--gauzy-shadow);
+fieldset,
+.connection-config {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--border-basic-color-3);
   border-radius: var(--border-radius);
 }
+legend {
+  width: auto;
+  font-size: 1rem;
+  padding: 0 0.4rem;
+}
+.mapping-row {
+  display: grid;
+  grid-template-columns: 0.7fr 1fr 1fr 1fr auto;
+  align-items: end;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.project-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+select {
+  width: 100%;
+  min-height: 2.7rem;
+  border: 1px solid var(--border-basic-color-3);
+  border-radius: var(--border-radius);
+  color: var(--text-basic-color);
+  background: var(--background-basic-color-1);
+  padding: 0.5rem;
+}
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.connection-config label {
+  display: block;
+  margin-top: 0.75rem;
+}
+.connection-config button {
+  margin-top: 0.75rem;
+}
+textarea {
+  font-family: monospace;
+  resize: vertical;
+}
+@media (max-width: 640px) {
+  .mapping-row {
+    grid-template-columns: 1fr;
+  }
+}
 
-:host {
-  nb-card,
-  nb-card-body {
-    background-color: var(--gauzy-card-2);
+.pairing-details dd {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1100px) {
+  .mapping-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .mapping-row {
+    grid-template-columns: 1fr;
   }
 }

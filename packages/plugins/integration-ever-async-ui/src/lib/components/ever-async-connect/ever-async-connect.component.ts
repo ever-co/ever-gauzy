@@ -1,27 +1,22 @@
 import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs';
-import { IOrganization } from '@gauzy/contracts';
+import { catchError, distinctUntilChanged, forkJoin, of, switchMap, tap, throwError } from 'rxjs';
+import { ID, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	EverAsyncService,
+	IEverAsyncOptions,
+	IEverAsyncSettingsResponse,
 	IEverAsyncSetupResponse,
-	IEverAsyncVerifyResponse
+	IEverAsyncUserMapping
 } from '../../services/ever-async.service';
 
-const URL_PATTERN = /^https?:\/\/.+/;
-
-/**
- * Connect wizard for the Ever Async integration:
- * paste the Ever Async server URL + API token, test the connection
- * (`/healthz` ping via the Gauzy API), then save.
- */
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-ever-async-connect',
@@ -31,111 +26,240 @@ const URL_PATTERN = /^https?:\/\/.+/;
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EverAsyncConnectComponent extends TranslationBaseComponent implements OnInit {
-	private readonly _location = inject(Location);
-	private readonly _router = inject(Router);
-	private readonly _store = inject(Store);
-	private readonly _everAsyncService = inject(EverAsyncService);
-	private readonly _toastrService = inject(ToastrService);
-	private readonly _errorHandlingService = inject(ErrorHandlingService);
-
+	private readonly store = inject(Store);
+	private readonly service = inject(EverAsyncService);
+	private readonly location = inject(Location);
+	private readonly errors = inject(ErrorHandlingService);
+	private readonly toastr = inject(ToastrService);
 	readonly organization = signal<IOrganization | null>(null);
-	readonly loading = signal<boolean>(false);
-	readonly verifying = signal<boolean>(false);
-	/** null = not tested yet; true/false = last test-connection outcome. */
+	readonly loading = signal(false);
+	readonly verifying = signal(false);
 	readonly connectionOk = signal<boolean | null>(null);
-
-	form = new FormGroup({
-		serverUrl: new FormControl('', [Validators.required, Validators.pattern(URL_PATTERN)]),
-		apiToken: new FormControl('', [Validators.required])
+	readonly settings = signal<IEverAsyncSettingsResponse | null>(null);
+	readonly credentials = signal<IEverAsyncSetupResponse | null>(null);
+	readonly options = signal<IEverAsyncOptions>({ employees: [], projects: [] });
+	readonly showSecret = signal(false);
+	readonly ready = signal(false);
+	readonly form = new FormGroup({
+		serverUrl: new FormControl('https://api-async.ever.co', {
+			nonNullable: true,
+			validators: [Validators.required, Validators.pattern(/^https:\/\/[^\s]+$/)]
+		}),
+		projectIds: new FormControl<ID[]>([], { nonNullable: true }),
+		isEnabled: new FormControl(true, { nonNullable: true }),
+		userMappings: new FormArray<
+			FormGroup<{
+				channel: FormControl<'slack' | 'discord'>;
+				workspace: FormControl<string>;
+				chatUserId: FormControl<string>;
+				employeeId: FormControl<string>;
+			}>
+		>([])
 	});
 
 	constructor(readonly translateService: TranslateService) {
 		super(translateService);
 	}
+	get canSave() {
+		return this.store.hasPermission(
+			this.settings() ? PermissionsEnum.INTEGRATION_EDIT : PermissionsEnum.INTEGRATION_ADD
+		);
+	}
+	get canRotate() {
+		return this.store.hasPermission(PermissionsEnum.INTEGRATION_EDIT);
+	}
 
 	ngOnInit(): void {
-		this._store.selectedOrganization$
+		this.store.selectedOrganization$
 			.pipe(
-				filter((org): org is IOrganization => !!org),
-				tap((org) => this.organization.set(org)),
+				distinctUntilChanged((a, b) => a?.id === b?.id),
+				tap((org) => {
+					this.organization.set(org ?? null);
+					this.settings.set(null);
+					this.credentials.set(null);
+					this.options.set({ employees: [], projects: [] });
+					this.ready.set(false);
+					this.loading.set(false);
+					this.connectionOk.set(null);
+					this.showSecret.set(false);
+					this.form.reset({ serverUrl: 'https://api-async.ever.co', projectIds: [], isEnabled: true });
+					this.form.controls.userMappings.clear();
+				}),
+				switchMap((org) =>
+					org?.id
+						? forkJoin({
+								options: this.service.getOptions(org.id),
+								settings: this.service
+									.getSettings(org.id)
+									.pipe(
+										catchError((error: HttpErrorResponse) =>
+											error.status === 404 ? of(null) : throwError(() => error)
+										)
+									)
+							}).pipe(
+								catchError((error) => {
+									this.errors.handleError(error);
+									return of(null);
+								})
+							)
+						: of(null)
+				),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe((result) => {
+				if (!result) return;
+				this.options.set(result.options);
+				this.settings.set(result.settings);
+				this.ready.set(true);
+				if (result.settings) {
+					this.form.patchValue(result.settings);
+					for (const mapping of result.settings.userMappings) this.addMapping(mapping);
+				}
+			});
+		this.form.controls.serverUrl.valueChanges
+			.pipe(untilDestroyed(this))
+			.subscribe(() => this.connectionOk.set(null));
 	}
 
-	goBack(): void {
-		this._location.back();
+	goBack() {
+		this.location.back();
+	}
+	addMapping(mapping?: IEverAsyncUserMapping) {
+		this.form.controls.userMappings.push(
+			new FormGroup({
+				channel: new FormControl<'slack' | 'discord'>(mapping?.channel ?? 'slack', {
+					nonNullable: true,
+					validators: [Validators.required]
+				}),
+				workspace: new FormControl(mapping?.workspace ?? '', {
+					nonNullable: true,
+					validators: [Validators.required, Validators.maxLength(200), Validators.pattern(/^\S+$/)]
+				}),
+				chatUserId: new FormControl(mapping?.chatUserId ?? '', {
+					nonNullable: true,
+					validators: [Validators.required, Validators.maxLength(200), Validators.pattern(/^\S+$/)]
+				}),
+				employeeId: new FormControl(mapping?.employeeId ?? '', {
+					nonNullable: true,
+					validators: [Validators.required]
+				})
+			})
+		);
+	}
+	removeMapping(index: number) {
+		this.form.controls.userMappings.removeAt(index);
+	}
+	toggleProject(id: ID) {
+		const ids = this.form.controls.projectIds.value;
+		this.form.controls.projectIds.setValue(ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id]);
 	}
 
-	/**
-	 * Ping the Ever Async server's /healthz endpoint (via the Gauzy API)
-	 * without saving anything.
-	 */
-	testConnection(): void {
-		if (this.verifying()) return;
-
-		const serverUrl = this.form.get('serverUrl')?.value?.trim() ?? '';
-		if (!serverUrl || !URL_PATTERN.test(serverUrl)) {
-			this.form.get('serverUrl')?.markAsTouched();
+	testConnection() {
+		const serverUrl = this.form.controls.serverUrl.value.trim();
+		if (this.verifying() || this.form.controls.serverUrl.invalid) {
+			this.form.controls.serverUrl.markAsTouched();
 			return;
 		}
-
 		this.verifying.set(true);
 		this.connectionOk.set(null);
-
-		this._everAsyncService
+		this.service
 			.verify(serverUrl)
 			.pipe(untilDestroyed(this))
 			.subscribe({
-				next: (result: IEverAsyncVerifyResponse) => {
+				next: (result) => {
 					this.verifying.set(false);
-					this.connectionOk.set(result.ok);
-					this._toastrService.success(this.getTranslation('INTEGRATIONS.EVER_ASYNC_PAGE.CONNECTION_OK'));
+					if (this.form.controls.serverUrl.value.trim() === serverUrl) this.connectionOk.set(result.ok);
 				},
-				error: (error: HttpErrorResponse) => {
+				error: (error) => {
 					this.verifying.set(false);
 					this.connectionOk.set(false);
-					this._toastrService.danger(this.getTranslation('INTEGRATIONS.EVER_ASYNC_PAGE.CONNECTION_FAILED'));
-					this._errorHandlingService.handleError(error);
+					this.errors.handleError(error);
 				}
 			});
 	}
 
-	/**
-	 * Save the connection: server URL + write-only API token.
-	 * User mappings are managed later from the settings page (scaffold: the
-	 * mapping table component is a follow-up, see the integration contract).
-	 */
-	connect(): void {
-		if (this.loading()) return;
-
+	connect() {
 		const organizationId = this.organization()?.id;
-		if (!organizationId) return;
-
-		const serverUrl = this.form.get('serverUrl')?.value?.trim() ?? '';
-		const apiToken = this.form.get('apiToken')?.value?.trim() ?? '';
-
-		this.form.patchValue({ serverUrl, apiToken });
+		if (!organizationId || !this.ready() || this.loading() || !this.canSave) return;
 		if (this.form.invalid) {
 			this.form.markAllAsTouched();
 			return;
 		}
-
+		const dto = this.form.getRawValue();
+		dto.serverUrl = dto.serverUrl.trim();
 		this.loading.set(true);
+		if (this.settings()) {
+			this.service
+				.updateSettings(dto, organizationId)
+				.pipe(untilDestroyed(this))
+				.subscribe({
+					next: () => {
+						if (this.organization()?.id !== organizationId) return;
+						this.loading.set(false);
+						this.settings.update((value) => (value ? { ...value, ...dto } : value));
+						this.saved();
+					},
+					error: (error) => this.failed(error, organizationId)
+				});
+		} else {
+			this.service
+				.setup(dto, organizationId)
+				.pipe(untilDestroyed(this))
+				.subscribe({
+					next: (result) => {
+						if (this.organization()?.id !== organizationId) return;
+						this.loading.set(false);
+						this.credentials.set(result);
+						this.settings.set({
+							...dto,
+							integrationTenantId: result.integrationTenantId,
+							tenantId: result.tenantId,
+							organizationId: result.organizationId,
+							hasApiKey: true
+						});
+						this.saved();
+					},
+					error: (error) => this.failed(error, organizationId)
+				});
+		}
+	}
 
-		this._everAsyncService
-			.setup({ serverUrl, apiToken }, organizationId)
+	rotateCredentials() {
+		const organizationId = this.organization()?.id;
+		if (!organizationId || !this.canRotate || this.loading()) return;
+		this.loading.set(true);
+		this.credentials.set(null);
+		this.showSecret.set(false);
+		this.service
+			.rotateCredentials(organizationId)
 			.pipe(untilDestroyed(this))
 			.subscribe({
-				next: (_result: IEverAsyncSetupResponse) => {
+				next: (result) => {
+					if (this.organization()?.id !== organizationId) return;
 					this.loading.set(false);
-					this._toastrService.success(this.getTranslation('INTEGRATIONS.EVER_ASYNC_PAGE.CONNECTED'));
-					this._router.navigate(['/pages/integrations']);
+					this.credentials.set(result);
 				},
-				error: (error: HttpErrorResponse) => {
-					this.loading.set(false);
-					this._errorHandlingService.handleError(error);
-				}
+				error: (error) => this.failed(error, organizationId)
 			});
+	}
+
+	private saved() {
+		this.toastr.success(this.getTranslation('INTEGRATIONS.EVER_ASYNC_PAGE.SAVED'));
+	}
+	private failed(error: HttpErrorResponse, organizationId: ID) {
+		if (this.organization()?.id !== organizationId) return;
+		this.loading.set(false);
+		this.errors.handleError(error);
+	}
+
+	get gauzyApiUrl(): string {
+		return new URL(API_PREFIX, window.location.origin).toString().replace(/\/api\/?$/, '');
+	}
+
+	get connectorConfig(): string {
+		const settings = this.settings();
+		if (!settings) return '';
+		const apiUrl = this.gauzyApiUrl;
+		return `[connectors.gauzy]\nbase_url = ${JSON.stringify(apiUrl)}\napp_base_url = ${JSON.stringify(window.location.origin)}\nintegration_id = ${JSON.stringify(settings.integrationTenantId)}\ntenant_id = ${JSON.stringify(settings.tenantId)}\norganization_id = ${JSON.stringify(settings.organizationId)}\napi_key_env = "GAUZY_ASYNC_API_KEY"\napi_secret_env = "GAUZY_ASYNC_API_SECRET"\nasync_tenant_id = "YOUR_ASYNC_TENANT"\nchannel = "slack"\nworkspace = "YOUR_CHAT_WORKSPACE"`;
 	}
 }

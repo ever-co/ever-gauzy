@@ -1,347 +1,467 @@
-import { HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+	BadGatewayException,
+	BadRequestException,
+	ConflictException,
+	ForbiddenException,
+	Injectable,
+	NotFoundException,
+	UnauthorizedException,
+	OnApplicationBootstrap
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'crypto';
+import { DataSource, EntityManager, In } from 'typeorm';
 import { firstValueFrom } from 'rxjs';
-import { ID, IntegrationEnum, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
-import { IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
-import { EverAsyncSettingName, EVER_ASYNC_INTEGRATION_NAME } from './ever-async-setting.enum';
-import { ConfigureEverAsyncIntegrationDto } from './dto/configure-ever-async-integration.dto';
-import { UpdateEverAsyncSettingsDto } from './dto/update-ever-async-settings.dto';
-import { EverAsyncUserMappingDto } from './dto/ever-async-user-mapping.dto';
+import { isUUID } from 'class-validator';
+import { ID, IntegrationEnum, IntegrationTypeEnum } from '@gauzy/contracts';
+import {
+	createSsrfSafeHttpsAgent,
+	Employee,
+	Integration,
+	IntegrationType,
+	IntegrationSetting,
+	IntegrationTenant,
+	OrganizationProject,
+	RequestContext,
+	Task,
+	UserOrganization
+} from '@gauzy/core';
+import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
+import { ConfigureEverAsyncIntegrationDto, UpdateEverAsyncSettingsDto } from './dto';
+import { EverAsyncSettingName as Setting } from './ever-async-setting.enum';
 
-/** Timeout (ms) for the /healthz connectivity check against the Ever Async server. */
-const HEALTHZ_TIMEOUT_MS = 5000;
+export interface EverAsyncConnectorScope {
+	integrationTenantId: ID;
+	tenantId: ID;
+	organizationId: ID;
+	projectIds: ID[];
+	userMappings: { channel: string; workspace: string; chatUserId: string; employeeId: ID }[];
+}
 
+/** Organization-scoped management and a separate, read-only connector boundary. */
 @Injectable()
-export class EverAsyncIntegrationService {
-	private readonly logger = new Logger(EverAsyncIntegrationService.name);
+export class EverAsyncIntegrationService implements OnApplicationBootstrap {
+	private readonly httpsAgent = createSsrfSafeHttpsAgent();
 
 	constructor(
-		private readonly integrationService: IntegrationService,
-		private readonly integrationTenantService: IntegrationTenantService,
+		private readonly dataSource: DataSource,
 		private readonly httpService: HttpService
 	) {}
 
-	/**
-	 * Configure the Ever Async integration for the current tenant.
-	 * Finds or creates the base Integration record and stores the server URL,
-	 * API token (write-only) and user mappings as integration settings.
-	 *
-	 * @param dto - Server URL, API token and optional user mappings
-	 * @param organizationId - Optional organization scope
-	 * @returns The created integration tenant ID
-	 */
-	async setupIntegration(
-		dto: ConfigureEverAsyncIntegrationDto,
-		organizationId?: string
-	): Promise<{ integrationTenantId: ID }> {
-		const tenantId = RequestContext.currentTenantId() ?? undefined;
-		organizationId = organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+	async onApplicationBootstrap() {
+		await this.ensureCatalog();
+	}
 
-		if (!tenantId) {
-			throw new HttpException(
-				'Tenant context is required to configure an Ever Async integration.',
-				HttpStatus.BAD_REQUEST
-			);
+	/** Make the plugin discoverable on existing installations as well as fresh seeds. */
+	private async ensureCatalog() {
+		return this.dataSource.transaction(async (manager) => {
+			if (manager.connection.options.type === 'postgres')
+				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', ['ever-async:catalog']);
+			let integration = await manager.findOne(Integration, {
+				where: { provider: IntegrationEnum.EVER_ASYNC },
+				relations: { integrationTypes: true }
+			});
+			const types = await manager.find(IntegrationType, {
+				where: { name: In([IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.PROJECT_MANAGEMENT]) }
+			});
+			if (!integration)
+				integration = manager.create(Integration, {
+					id: randomUUID(),
+					name: IntegrationEnum.EVER_ASYNC,
+					provider: IntegrationEnum.EVER_ASYNC,
+					imgSrc: 'integrations/ever-async.svg',
+					redirectUrl: 'ever-async',
+					isComingSoon: false,
+					isPaid: false,
+					order: 12,
+					integrationTypes: types
+				});
+			else {
+				const missing = types.filter(
+					(type) => !integration!.integrationTypes?.some((current) => current.id === type.id)
+				);
+				if (!missing.length) return integration;
+				integration.integrationTypes = [...(integration.integrationTypes ?? []), ...missing];
+			}
+			return manager.save(Integration, integration);
+		});
+	}
+
+	private async scope(organizationId?: ID) {
+		const tenantId = RequestContext.currentTenantId();
+		const userId = RequestContext.currentUserId();
+		organizationId ??= RequestContext.currentOrganizationId() ?? undefined;
+		if (!tenantId || !userId || !organizationId || !isUUID(organizationId)) {
+			throw new ForbiddenException('An authenticated organization context is required.');
 		}
-
-		// Check if an Ever Async integration already exists for this tenant
-		const existing = await this.findIntegrationTenant(tenantId);
-		if (existing) {
-			throw new HttpException(
-				'Ever Async integration is already configured for this tenant. Use the update endpoint to modify settings.',
-				HttpStatus.CONFLICT
-			);
-		}
-
-		// Find or create the base Integration record
-		const integration = await this.findOrCreateBaseIntegration();
-
-		// Build the integration settings array
-		const settings: Partial<IIntegrationSetting>[] = [
-			{ settingsName: EverAsyncSettingName.EVER_ASYNC_SERVER_URL, settingsValue: dto.serverUrl },
-			{ settingsName: EverAsyncSettingName.EVER_ASYNC_API_TOKEN, settingsValue: dto.apiToken },
-			{
-				settingsName: EverAsyncSettingName.EVER_ASYNC_USER_MAPPINGS,
-				settingsValue: JSON.stringify(dto.userMappings ?? [])
-			},
-			{ settingsName: EverAsyncSettingName.IS_ENABLED, settingsValue: 'true' }
-		];
-
-		// Create the IntegrationTenant record with cascaded settings
-		const integrationTenant = await this.integrationTenantService.create({
-			// scaffold: replace with `IntegrationEnum.EVER_ASYNC` once the enum
-			// member is added to @gauzy/contracts (see ever-async-setting.enum.ts)
-			name: EVER_ASYNC_INTEGRATION_NAME as IntegrationEnum,
-			integration: integration ?? undefined,
+		const membership = await this.dataSource.getRepository(UserOrganization).findOneBy({
 			tenantId,
 			organizationId,
-			settings: settings as IIntegrationSetting[]
+			userId,
+			isActive: true,
+			isArchived: false
 		});
-
-		this.logger.log(`Ever Async integration configured for tenant ${tenantId}`);
-
-		return { integrationTenantId: integrationTenant.id! };
+		if (!membership) throw new ForbiddenException('Access to this organization is required.');
+		return { tenantId, organizationId };
 	}
 
-	/**
-	 * Retrieve the current Ever Async integration settings for the tenant.
-	 * The API token is NOT returned (write-only credential) — only a
-	 * `hasApiToken` flag.
-	 */
-	async getSettings(_organizationId?: string): Promise<{
-		integrationTenantId: ID;
-		serverUrl: string;
-		userMappings: EverAsyncUserMappingDto[];
-		isEnabled: boolean;
-		hasApiToken: boolean;
-	}> {
-		const tenantId = RequestContext.currentTenantId() ?? undefined;
-		const integrationTenant = await this.findIntegrationTenantOrFail(tenantId);
-
-		const settingsMap = this.buildSettingsMap(integrationTenant.settings || []);
-
-		return {
-			integrationTenantId: integrationTenant.id!,
-			serverUrl: settingsMap[EverAsyncSettingName.EVER_ASYNC_SERVER_URL] || '',
-			userMappings: this.parseUserMappings(settingsMap[EverAsyncSettingName.EVER_ASYNC_USER_MAPPINGS]),
-			isEnabled: settingsMap[EverAsyncSettingName.IS_ENABLED] === 'true',
-			hasApiToken: !!settingsMap[EverAsyncSettingName.EVER_ASYNC_API_TOKEN]
-		};
-	}
-
-	/**
-	 * Update Ever Async settings for the current tenant.
-	 * Only the fields supplied in the DTO are patched; `apiToken` replaces the
-	 * stored token when provided.
-	 */
-	async updateSettings(
-		dto: UpdateEverAsyncSettingsDto,
-		organizationId?: string
-	): Promise<{ integrationTenantId: ID; updated: boolean }> {
-		const tenantId = RequestContext.currentTenantId() ?? undefined;
-		const integrationTenant = await this.findIntegrationTenantOrFail(tenantId);
-
-		const existingSettings = integrationTenant.settings || [];
-
-		// Build a map of setting name → setting object for easy update
-		const settingsIndex = new Map<string, IIntegrationSetting>();
-		for (const s of existingSettings) {
-			settingsIndex.set(s.settingsName, s);
-		}
-
-		const updates: Array<[string, string | undefined]> = [
-			[EverAsyncSettingName.EVER_ASYNC_SERVER_URL, dto.serverUrl],
-			[EverAsyncSettingName.EVER_ASYNC_API_TOKEN, dto.apiToken],
-			[
-				EverAsyncSettingName.EVER_ASYNC_USER_MAPPINGS,
-				dto.userMappings !== undefined ? JSON.stringify(dto.userMappings) : undefined
-			]
-		];
-
-		for (const [name, value] of updates) {
-			if (value !== undefined) {
-				const existing = settingsIndex.get(name);
-				if (existing) {
-					existing.settingsValue = value;
-				} else {
-					existingSettings.push({
-						settingsName: name,
-						settingsValue: value,
-						tenantId,
-						organizationId
-					} as IIntegrationSetting);
-				}
-			}
-		}
-
-		integrationTenant.settings = existingSettings;
-		await this.integrationTenantService.save(integrationTenant);
-
-		this.logger.log(`Ever Async integration settings updated for tenant ${tenantId}`);
-
-		return {
-			integrationTenantId: integrationTenant.id!,
-			updated: true
-		};
-	}
-
-	/**
-	 * Verify connectivity to the Ever Async server by pinging `GET {serverUrl}/healthz`.
-	 * Uses the provided URL (connect wizard) or falls back to the stored setting.
-	 */
-	async verifyConnection(serverUrl?: string): Promise<{ ok: boolean; serverUrl: string }> {
-		let targetUrl = serverUrl;
-
-		if (!targetUrl) {
-			const tenantId = RequestContext.currentTenantId() ?? undefined;
-			const integrationTenant = await this.findIntegrationTenantOrFail(tenantId);
-			const settingsMap = this.buildSettingsMap(integrationTenant.settings || []);
-			targetUrl = settingsMap[EverAsyncSettingName.EVER_ASYNC_SERVER_URL];
-		}
-
-		if (!targetUrl) {
-			throw new HttpException('No Ever Async server URL to verify.', HttpStatus.BAD_REQUEST);
-		}
-
-		const healthzUrl = `${targetUrl.replace(/\/+$/, '')}/healthz`;
-
-		try {
-			// The Ever Async server exposes an unauthenticated /healthz endpoint
-			// (see ever-co/ever-async docs/integrations/gauzy.md).
-			await firstValueFrom(this.httpService.get(healthzUrl, { timeout: HEALTHZ_TIMEOUT_MS }));
-			return { ok: true, serverUrl: targetUrl };
-		} catch (error: unknown) {
-			this.logger.warn(
-				`Ever Async healthz check failed for ${healthzUrl}: ${
-					error instanceof Error ? error.message : String(error)
-				}`
-			);
-			throw new HttpException(
-				`Ever Async server is not reachable at ${targetUrl}.`,
-				HttpStatus.BAD_GATEWAY
-			);
-		}
-	}
-
-	/**
-	 * Check if the Ever Async integration is enabled for the current tenant.
-	 */
-	async getStatus(): Promise<{ isEnabled: boolean; integrationTenantId: ID | null }> {
-		const tenantId = RequestContext.currentTenantId() ?? undefined;
-		const integrationTenant = tenantId ? await this.findIntegrationTenant(tenantId) : null;
-
-		if (!integrationTenant) {
-			return { isEnabled: false, integrationTenantId: null };
-		}
-
-		const settingsMap = this.buildSettingsMap(integrationTenant.settings || []);
-
-		return {
-			isEnabled: !!integrationTenant.isActive && settingsMap[EverAsyncSettingName.IS_ENABLED] === 'true',
-			integrationTenantId: integrationTenant.id ?? null
-		};
-	}
-
-	/**
-	 * Remove/archive the Ever Async integration for the tenant (soft delete).
-	 */
-	async removeIntegration(integrationTenantId: ID): Promise<{ success: boolean }> {
-		const tenantId = RequestContext.currentTenantId() ?? undefined;
-		const integrationTenant = await this.findIntegrationTenantOrFail(tenantId);
-
-		if (integrationTenant.id !== integrationTenantId) {
-			throw new HttpException('Integration tenant ID mismatch.', HttpStatus.BAD_REQUEST);
-		}
-
-		// Soft-delete by marking as archived and inactive
-		integrationTenant.isActive = false;
-		integrationTenant.isArchived = true;
-
-		// Disable the integration in settings
-		const settings = integrationTenant.settings || [];
-		const enabledSetting = settings.find((s) => s.settingsName === EverAsyncSettingName.IS_ENABLED);
-		if (enabledSetting) {
-			enabledSetting.settingsValue = 'false';
-		}
-
-		await this.integrationTenantService.save(integrationTenant);
-
-		this.logger.log(`Ever Async integration removed for tenant ${tenantId}`);
-
-		return { success: true };
-	}
-
-	/**
-	 * Find the Ever Async IntegrationTenant for the given tenant ID.
-	 */
-	private async findIntegrationTenant(tenantId: ID | undefined): Promise<IIntegrationTenant | null> {
-		if (!tenantId) {
-			return null;
-		}
-
-		try {
-			return await this.integrationTenantService.findOneByOptions({
-				where: {
-					tenantId,
-					name: EVER_ASYNC_INTEGRATION_NAME as IntegrationEnum,
-					isActive: true,
-					isArchived: false
-				},
-				relations: ['settings']
-			});
-		} catch (error: unknown) {
-			if (error instanceof NotFoundException) {
-				return null;
-			}
-			throw error;
-		}
-	}
-
-	/**
-	 * Find the Ever Async IntegrationTenant or throw a 404.
-	 */
-	private async findIntegrationTenantOrFail(tenantId: ID | undefined): Promise<IIntegrationTenant> {
-		const integrationTenant = await this.findIntegrationTenant(tenantId);
-		if (!integrationTenant) {
-			throw new HttpException('Ever Async integration is not configured for this tenant.', HttpStatus.NOT_FOUND);
-		}
-		return integrationTenant;
-	}
-
-	/**
-	 * Find or create the base Integration record for Ever Async.
-	 */
-	private async findOrCreateBaseIntegration() {
-		try {
-			const existing = await this.integrationService.findOneByOptions({
-				where: { provider: 'Ever_Async' }
-			});
-			if (existing) {
-				return existing;
-			}
-		} catch (error: unknown) {
-			if (!(error instanceof NotFoundException)) {
-				throw error;
-			}
-		}
-
-		return await this.integrationService.create({
-			name: 'Ever Async',
-			provider: 'Ever_Async',
-			// scaffold: add the `integrations/ever-async.svg` icon asset during
-			// wiring (same location as `integrations/plane.svg`)
-			imgSrc: 'integrations/ever-async.svg',
-			isComingSoon: false,
-			isPaid: false,
-			redirectUrl: 'ever-async',
-			order: 12
+	private async find(scope: { tenantId: ID; organizationId: ID }, manager = this.dataSource.manager) {
+		return manager.findOne(IntegrationTenant, {
+			where: { ...scope, name: IntegrationEnum.EVER_ASYNC, isActive: true, isArchived: false },
+			relations: { settings: true }
 		});
 	}
 
-	/**
-	 * Build a key-value map from an array of IntegrationSettings.
-	 */
-	private buildSettingsMap(settings: IIntegrationSetting[]): Record<string, string> {
-		const map: Record<string, string> = {};
-		for (const s of settings) {
-			map[s.settingsName] = s.settingsValue;
-		}
-		return map;
+	private async requireIntegration(organizationId?: ID) {
+		const scope = await this.scope(organizationId);
+		const integration = await this.find(scope);
+		if (!integration?.id || !integration.tenantId || !integration.organizationId)
+			throw new NotFoundException('Ever Async is not configured for this organization.');
+		return integration as IntegrationTenant & { id: ID; tenantId: ID; organizationId: ID };
 	}
 
-	/**
-	 * Parse the JSON-serialized user mappings setting, tolerating bad data.
-	 */
-	private parseUserMappings(raw: string | undefined): EverAsyncUserMappingDto[] {
-		if (!raw) {
-			return [];
-		}
+	private settings(integration: IntegrationTenant): Record<string, string> {
+		return Object.fromEntries((integration.settings ?? []).map((s) => [s.settingsName, s.settingsValue]));
+	}
+
+	private parseArray<T>(raw?: string): T[] {
+		if (!raw) return [];
 		try {
-			const parsed = JSON.parse(raw);
-			return Array.isArray(parsed) ? parsed : [];
+			const value: unknown = JSON.parse(raw);
+			return Array.isArray(value) ? (value as T[]) : [];
 		} catch {
-			this.logger.warn('Failed to parse stored Ever Async user mappings; returning empty list.');
 			return [];
 		}
+	}
+
+	private set(integration: IntegrationTenant, values: Record<string, string>, manager: EntityManager) {
+		integration.settings ??= [];
+		for (const [settingsName, settingsValue] of Object.entries(values)) {
+			const existing = integration.settings.find((s) => s.settingsName === settingsName);
+			if (existing) existing.settingsValue = settingsValue;
+			else
+				integration.settings.push(
+					manager.create(IntegrationSetting, {
+						id: randomUUID(),
+						tenantId: integration.tenantId,
+						organizationId: integration.organizationId,
+						settingsName,
+						settingsValue
+					})
+				);
+		}
+	}
+
+	private credentials() {
+		const apiKey = randomBytes(16).toString('hex');
+		const apiSecret = randomBytes(32).toString('hex');
+		return { apiKey, apiSecret, digest: createHash('sha256').update(apiSecret).digest('hex') };
+	}
+
+	private serverUrl(input: string) {
+		const reason = getUnsafeOutboundUrlReason(input);
+		if (reason) throw new BadRequestException(`Invalid Ever Async URL: ${reason}`);
+		const url = new URL(input);
+		if (url.search || url.hash)
+			throw new BadRequestException('Ever Async URL must not contain a query or fragment.');
+		return url.toString().replace(/\/+$/, '');
+	}
+
+	private async validateSelection(dto: UpdateEverAsyncSettingsDto, scope: { tenantId: ID; organizationId: ID }) {
+		if (dto.userMappings !== undefined) {
+			const mappings = dto.userMappings;
+			if (
+				new Set(mappings.map((m) => JSON.stringify([m.channel, m.workspace, m.chatUserId]))).size !==
+				mappings.length
+			) {
+				throw new BadRequestException(
+					'Each chat user can have only one employee mapping per channel and workspace.'
+				);
+			}
+			const ids = [...new Set(mappings.map((m) => m.employeeId))];
+			if (
+				ids.length &&
+				(await this.dataSource
+					.getRepository(Employee)
+					.countBy({ ...scope, id: In(ids), isActive: true, isArchived: false })) !== ids.length
+			) {
+				throw new BadRequestException('Every mapped employee must be active in this organization.');
+			}
+		}
+		if (dto.projectIds !== undefined) {
+			const ids = [...new Set(dto.projectIds)];
+			if (
+				ids.length &&
+				(await this.dataSource
+					.getRepository(OrganizationProject)
+					.countBy({ ...scope, id: In(ids), isActive: true, isArchived: false })) !== ids.length
+			) {
+				throw new BadRequestException('Every selected project must be active in this organization.');
+			}
+		}
+	}
+
+	async setupIntegration(dto: ConfigureEverAsyncIntegrationDto, organizationId?: ID) {
+		const scope = await this.scope(organizationId);
+		const serverUrl = this.serverUrl(dto.serverUrl);
+		await this.validateSelection(dto, scope);
+		const base = await this.ensureCatalog();
+		return this.dataSource.transaction(async (manager) => {
+			// Serialize setup across administrators of the same organization on PostgreSQL.
+			if (manager.connection.options.type === 'postgres') {
+				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
+					`ever-async:${scope.tenantId}:${scope.organizationId}`
+				]);
+			}
+			if (await this.find(scope, manager))
+				throw new ConflictException('Ever Async is already configured for this organization.');
+			const integration = manager.create(IntegrationTenant, {
+				id: randomUUID(),
+				...scope,
+				name: IntegrationEnum.EVER_ASYNC,
+				integrationId: base.id,
+				isActive: true,
+				isArchived: false
+			});
+			const key = this.credentials();
+			this.set(
+				integration,
+				{
+					[Setting.EVER_ASYNC_SERVER_URL]: serverUrl,
+					[Setting.EVER_ASYNC_USER_MAPPINGS]: JSON.stringify(dto.userMappings ?? []),
+					[Setting.EVER_ASYNC_PROJECT_IDS]: JSON.stringify(dto.projectIds ?? []),
+					[Setting.EVER_ASYNC_KEY_ID]: key.apiKey,
+					[Setting.EVER_ASYNC_SECRET_HASH]: key.digest,
+					[Setting.IS_ENABLED]: 'true'
+				},
+				manager
+			);
+			await manager.save(IntegrationTenant, integration);
+			return { integrationTenantId: integration.id, ...scope, apiKey: key.apiKey, apiSecret: key.apiSecret };
+		});
+	}
+
+	async getSettings(organizationId?: ID) {
+		const integration = await this.requireIntegration(organizationId);
+		const settings = this.settings(integration);
+		return {
+			integrationTenantId: integration.id,
+			tenantId: integration.tenantId,
+			organizationId: integration.organizationId,
+			serverUrl: settings[Setting.EVER_ASYNC_SERVER_URL] ?? '',
+			userMappings: this.parseArray<{ channel: string; workspace: string; chatUserId: string; employeeId: ID }>(
+				settings[Setting.EVER_ASYNC_USER_MAPPINGS]
+			),
+			projectIds: this.parseArray<ID>(settings[Setting.EVER_ASYNC_PROJECT_IDS]),
+			isEnabled: settings[Setting.IS_ENABLED] === 'true',
+			hasApiKey: !!settings[Setting.EVER_ASYNC_SECRET_HASH]
+		};
+	}
+
+	private async mutate<T>(
+		organizationId: ID | undefined,
+		change: (
+			integration: IntegrationTenant & { id: ID; tenantId: ID; organizationId: ID },
+			manager: EntityManager
+		) => Promise<T>
+	) {
+		const scope = await this.scope(organizationId);
+		return this.dataSource.transaction(async (manager) => {
+			if (['postgres', 'mysql', 'mariadb'].includes(manager.connection.options.type)) {
+				await manager.findOne(IntegrationTenant, {
+					where: { ...scope, name: IntegrationEnum.EVER_ASYNC, isActive: true, isArchived: false },
+					lock: { mode: 'pessimistic_write' }
+				});
+			}
+			const integration = await this.find(scope, manager);
+			if (!integration?.id || !integration.tenantId || !integration.organizationId)
+				throw new NotFoundException('Ever Async is not configured for this organization.');
+			return change(integration as IntegrationTenant & { id: ID; tenantId: ID; organizationId: ID }, manager);
+		});
+	}
+
+	async updateSettings(dto: UpdateEverAsyncSettingsDto, organizationId?: ID) {
+		return this.mutate(organizationId, async (integration, manager) => {
+			await this.validateSelection(dto, {
+				tenantId: integration.tenantId,
+				organizationId: integration.organizationId
+			});
+			const values: Record<string, string> = {};
+			if (dto.serverUrl !== undefined) values[Setting.EVER_ASYNC_SERVER_URL] = this.serverUrl(dto.serverUrl);
+			if (dto.userMappings !== undefined)
+				values[Setting.EVER_ASYNC_USER_MAPPINGS] = JSON.stringify(dto.userMappings);
+			if (dto.projectIds !== undefined)
+				values[Setting.EVER_ASYNC_PROJECT_IDS] = JSON.stringify([...new Set(dto.projectIds)]);
+			if (dto.isEnabled !== undefined) values[Setting.IS_ENABLED] = String(dto.isEnabled);
+			this.set(integration, values, manager);
+			await manager.save(IntegrationTenant, integration);
+			return { integrationTenantId: integration.id, updated: true };
+		});
+	}
+
+	async rotateCredentials(organizationId?: ID) {
+		return this.mutate(organizationId, async (integration, manager) => {
+			const key = this.credentials();
+			this.set(
+				integration,
+				{ [Setting.EVER_ASYNC_KEY_ID]: key.apiKey, [Setting.EVER_ASYNC_SECRET_HASH]: key.digest },
+				manager
+			);
+			await manager.save(IntegrationTenant, integration);
+			return {
+				integrationTenantId: integration.id,
+				tenantId: integration.tenantId,
+				organizationId: integration.organizationId,
+				apiKey: key.apiKey,
+				apiSecret: key.apiSecret
+			};
+		});
+	}
+
+	async getStatus(organizationId?: ID) {
+		const integration = await this.find(await this.scope(organizationId));
+		return {
+			isEnabled: !!integration && this.settings(integration)[Setting.IS_ENABLED] === 'true',
+			integrationTenantId: integration?.id ?? null
+		};
+	}
+
+	async removeIntegration(integrationTenantId: ID, organizationId?: ID) {
+		return this.mutate(organizationId, async (integration, manager) => {
+			if (integration.id !== integrationTenantId)
+				throw new NotFoundException('Ever Async integration not found.');
+			integration.isActive = false;
+			integration.isArchived = true;
+			this.set(integration, { [Setting.IS_ENABLED]: 'false' }, manager);
+			await manager.save(IntegrationTenant, integration);
+			return { success: true };
+		});
+	}
+
+	async verifyConnection(serverUrl: string) {
+		const target = this.serverUrl(serverUrl);
+		try {
+			const response = await firstValueFrom(
+				this.httpService.get(`${target}/healthz`, {
+					timeout: 5000,
+					maxRedirects: 0,
+					maxContentLength: 1024,
+					proxy: false,
+					httpsAgent: this.httpsAgent
+				})
+			);
+			if (typeof response.data !== 'string' || response.data.trim() !== 'ok')
+				throw new Error('Unexpected health response');
+			return { ok: true, serverUrl: target };
+		} catch {
+			throw new BadGatewayException('The Ever Async server did not return a valid health response.');
+		}
+	}
+
+	async getOptions(organizationId?: ID) {
+		const scope = await this.scope(organizationId);
+		const where = { ...scope, isActive: true, isArchived: false };
+		const [employees, projects] = await Promise.all([
+			this.dataSource.getRepository(Employee).find({ where, relations: { user: true } }),
+			this.dataSource.getRepository(OrganizationProject).find({ where, order: { name: 'ASC' } })
+		]);
+		return {
+			employees: employees.map((employee) => ({
+				id: employee.id,
+				name: [employee.user?.firstName, employee.user?.lastName].filter(Boolean).join(' ') || employee.id
+			})),
+			projects: projects.map((project) => ({ id: project.id, name: project.name }))
+		};
+	}
+
+	async authenticateConnector(
+		integrationTenantId: string,
+		apiKey: string,
+		apiSecret: string
+	): Promise<EverAsyncConnectorScope> {
+		if (!isUUID(integrationTenantId) || !apiKey || !apiSecret || apiSecret.length > 256)
+			throw new UnauthorizedException('Invalid connector credentials.');
+		const integration = await this.dataSource.getRepository(IntegrationTenant).findOne({
+			where: { id: integrationTenantId, name: IntegrationEnum.EVER_ASYNC, isActive: true, isArchived: false },
+			relations: { settings: true }
+		});
+		const settings = integration ? this.settings(integration) : {};
+		const stored = settings[Setting.EVER_ASYNC_SECRET_HASH] ?? '';
+		const digest = createHash('sha256').update(apiSecret).digest('hex');
+		if (
+			!integration?.id ||
+			!integration.tenantId ||
+			!integration.organizationId ||
+			settings[Setting.EVER_ASYNC_KEY_ID] !== apiKey ||
+			stored.length !== digest.length ||
+			!timingSafeEqual(Buffer.from(stored), Buffer.from(digest))
+		) {
+			throw new UnauthorizedException('Invalid connector credentials.');
+		}
+		if (settings[Setting.IS_ENABLED] !== 'true')
+			throw new ForbiddenException('Ever Async integration is disabled.');
+		return {
+			integrationTenantId: integration.id,
+			tenantId: integration.tenantId,
+			organizationId: integration.organizationId,
+			projectIds: this.parseArray<ID>(settings[Setting.EVER_ASYNC_PROJECT_IDS]),
+			userMappings: this.parseArray<{ channel: string; workspace: string; chatUserId: string; employeeId: ID }>(
+				settings[Setting.EVER_ASYNC_USER_MAPPINGS]
+			)
+		};
+	}
+
+	async getConnectorTasks(
+		scope: EverAsyncConnectorScope,
+		query: { channel?: string; workspace?: string; chatUserId?: string; taskId?: ID }
+	) {
+		if (!!query.chatUserId === !!query.taskId)
+			throw new BadRequestException('Supply exactly one chatUserId or taskId.');
+		if (query.taskId && !isUUID(query.taskId)) throw new BadRequestException('Invalid task ID.');
+		if (
+			query.chatUserId &&
+			(typeof query.chatUserId !== 'string' ||
+				query.chatUserId.length > 200 ||
+				!['slack', 'discord'].includes(query.channel ?? '') ||
+				typeof query.workspace !== 'string' ||
+				!/^[^\s]{1,200}$/.test(query.workspace))
+		)
+			throw new BadRequestException('Invalid chat user ID.');
+		const empty = { items: [], total: 0 };
+		if (!scope.projectIds.length) return empty;
+		const employeeId = query.chatUserId
+			? scope.userMappings.find(
+					(m) =>
+						m.channel === query.channel &&
+						m.workspace === query.workspace &&
+						m.chatUserId === query.chatUserId
+				)?.employeeId
+			: undefined;
+		if (query.chatUserId && !employeeId) return empty;
+		const active = {
+			tenantId: scope.tenantId,
+			organizationId: scope.organizationId,
+			isActive: true,
+			isArchived: false
+		};
+		const tasks = await this.dataSource.getRepository(Task).find({
+			where: {
+				...active,
+				...(query.taskId ? { id: query.taskId } : {}),
+				project: { ...active, id: In(scope.projectIds) },
+				...(employeeId ? { members: { ...active, id: employeeId } } : {})
+			},
+			order: { updatedAt: 'DESC', id: 'DESC' },
+			take: 10,
+			select: { id: true, title: true, status: true, number: true, projectId: true, updatedAt: true }
+		});
+		const items = tasks.map((task) => ({
+			id: task.id,
+			title: task.title,
+			status: task.status ?? null,
+			taskNumber: task.number ?? null,
+			projectId: task.projectId
+		}));
+		return { items, total: items.length };
 	}
 }

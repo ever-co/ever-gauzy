@@ -8,6 +8,7 @@ import {
 	PluginCommonModule,
 	RolePermissionModule
 } from '@gauzy/core';
+import { EverAsyncConnectorController, EverAsyncConnectorGuard } from './ever-async-connector.controller';
 import { EverAsyncController } from './ever-async.controller';
 import { EverAsyncIntegrationService } from './ever-async-integration.service';
 
@@ -21,8 +22,8 @@ import { EverAsyncIntegrationService } from './ever-async-integration.service';
 		PluginCommonModule,
 		RolePermissionModule
 	],
-	controllers: [EverAsyncController],
-	providers: [EverAsyncIntegrationService],
+	controllers: [EverAsyncController, EverAsyncConnectorController],
+	providers: [EverAsyncIntegrationService, EverAsyncConnectorGuard],
 	exports: [EverAsyncIntegrationService]
 })
 export class EverAsyncModule {}

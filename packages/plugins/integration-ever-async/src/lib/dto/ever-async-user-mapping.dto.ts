@@ -1,21 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsIn, IsNotEmpty, IsString, IsUUID, MaxLength, Matches } from 'class-validator';
 
-/**
- * A single chat-user → Gauzy employee mapping.
- *
- * Mirrors one entry of `[connectors.gauzy.user_map]` in the Ever Async
- * connector config (`everasync.toml`): the Ever Async connector maps the chat
- * message author's platform user id (Slack/Discord) to a Gauzy employee id
- * before querying that employee's tasks.
- */
+/** A workspace-scoped chat identity mapped to an employee in this Gauzy organization. */
 export class EverAsyncUserMappingDto {
+	@ApiProperty({ enum: ['slack', 'discord'] })
+	@IsIn(['slack', 'discord'])
+	readonly channel!: 'slack' | 'discord';
+
+	@ApiProperty({ description: 'Verified Slack workspace ID or Discord server ID from Ever Async Connections' })
+	@IsString()
+	@Matches(/^[^\s]{1,200}$/)
+	readonly workspace!: string;
+
 	@ApiProperty({
 		description: 'Chat platform user id (e.g. a Slack member id)',
 		example: 'U0123ABC'
 	})
 	@IsNotEmpty()
 	@IsString()
+	@MaxLength(200)
+	@Matches(/^[^\s]+$/)
 	readonly chatUserId!: string;
 
 	@ApiProperty({
