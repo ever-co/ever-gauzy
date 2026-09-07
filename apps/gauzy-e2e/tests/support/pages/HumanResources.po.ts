@@ -80,10 +80,11 @@ export const verifyChartOptionText = async (text: string) => {
 };
 
 export const clickCardByHeaderText = async (text: string) => {
-	// The (click)="handleClick()" handler sits on `.info-block`; clicking it emits openInfo, whose parent
-	// handler (openHistoryDialog/openProfitDialog) fetches records then opens an nb-dialog popup.
-	// .first() lands on the intended block (DOM order: Income, Expense-w/o-salary, Expenses, Profit;
-	// the Profit meta mentions the other titles but appears last).
+	// The (click) handler sits on the `.kpi` tile / `.stat-row` row itself (see `infoBlockCss`), calling
+	// openHistoryDialog/openProfitDialog, which fetch records then open an nb-dialog popup.
+	// .first() is unambiguous because each queried heading renders in exactly one card — the formulas
+	// that quote other headings live on tooltips, not in card bodies. See the note on `infoBlockCss`
+	// in HumanResourcesPageObject.ts.
 	//
 	// Round 4: a single dispatchEvent('click') was NOT reliably opening the dialog (failure DOM showed a
 	// clean HR dashboard, no popup), so open the dialog defensively: settle, then loop — try a real click
@@ -133,7 +134,7 @@ export const verifyPopupTableHeaderText = async (text: string) => {
 export const clickCardBody = async () => {
 	// Close the just-verified history popup before opening the next card. Press Escape (NbDialog
 	// closeOnEsc defaults to true) — more reliable than a backdrop coordinate click and it can't land on
-	// an info-block. Fall back to clicking outside, then wait for the popup AND its cdk-overlay backdrop
+	// another card. Fall back to clicking outside, then wait for the popup AND its cdk-overlay backdrop
 	// to detach so the next clickCardByHeaderText isn't intercepted by a fading backdrop.
 	await getPage().keyboard.press('Escape');
 	if (await getPage().locator(HumanResourcesPage.popupAnyCss).first().isVisible().catch(() => false)) {
