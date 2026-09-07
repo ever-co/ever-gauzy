@@ -181,24 +181,28 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 			plugins: {
 				legend: {
 					...legend,
-					// Caps how much of the box the legend may claim. Without it a long
-					// currency string lets the legend push the ring into a corner —
-					// the chart's own version of the wrapping problem this replaced.
-					maxWidth: 200,
+					/*
+					 * Caps how much of the box the legend may claim, so the ring keeps
+					 * the room it needs.
+					 */
+					maxWidth: 160,
 					labels: {
 						...(legend.labels as Record<string, unknown>),
 						/*
-						 * The slice names stay SHORT in `data.labels` so the tooltip
-						 * reads cleanly; the amount is pasted on here instead, where a
-						 * right-hand legend has room for it. Before, the amount was
-						 * baked into the label itself, which made four long entries
-						 * wrap across the top of the chart and squeeze the ring.
+						 * Series NAMES only.
+						 *
+						 * The amounts used to be appended here, which produced four
+						 * ragged "name + figure" rows whose numbers did not line up in
+						 * a column — a legend cannot lay out two columns. Every one of
+						 * those figures is already stated twice on this page, in the
+						 * KPI tile and again in the Breakdown panel, and the exact
+						 * value is one hover away.
 						 */
 						generateLabels: (chart: any) => {
 							const dataset = chart.data.datasets?.[0] ?? {};
 							const colors = (dataset.backgroundColor ?? []) as string[];
 							return ((chart.data.labels ?? []) as string[]).map((label, index) => ({
-								text: `${label}   ${this.formatCurrency(Number(dataset.data?.[index]) || 0)}`,
+								text: label,
 								fillStyle: colors[index],
 								strokeStyle: colors[index],
 								lineWidth: 0,
