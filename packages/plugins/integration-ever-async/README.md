@@ -113,9 +113,13 @@ For a self-hosted Ever Async server, the Gauzy page also provides an optional
 TOML example. Hosted connections are configured per tenant through the Ever
 Async dashboard.
 
-Connector endpoints enforce a per-client, per-process rate limit before
+Connector endpoints enforce a per-network-peer, per-process rate limit before
 credential lookup even when optional global throttling is disabled. The default
 is 600 requests per minute; operators can set
 `EVER_ASYNC_CONNECTOR_REQUESTS_PER_MINUTE` to a positive integer up to 50000 for
 larger installations. The limit covers status and task requests together, and
 excess requests return HTTP 429 with `Retry-After`.
+
+The peer is the socket address; forwarded IP headers cannot mint fresh limits.
+Connections through one reverse proxy share its budget. Size the configured
+limit for that deployment's total connector traffic.

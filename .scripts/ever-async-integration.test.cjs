@@ -376,13 +376,22 @@ test('actual HTTP guard rejects anonymous, wrong-integration and disabled connec
 });
 
 test('connector rate limits reject excess traffic and reopen after the window', (t) => {
+	const originalLimit = process.env['EVER_ASYNC_CONNECTOR_REQUESTS_PER_MINUTE'];
+	process.env['EVER_ASYNC_CONNECTOR_REQUESTS_PER_MINUTE'] = '3';
 	const guard = new EverAsyncRateLimitGuard();
+	if (originalLimit === undefined) delete process.env['EVER_ASYNC_CONNECTOR_REQUESTS_PER_MINUTE'];
+	else process.env['EVER_ASYNC_CONNECTOR_REQUESTS_PER_MINUTE'] = originalLimit;
 	let now = 100000;
 	t.mock.method(Date, 'now', () => now);
 	const headers = {};
+	let forwardedIp = 0;
 	const context = {
 		switchToHttp: () => ({
-			getRequest: () => ({ ip: '127.0.0.1', socket: {}, headers: { 'x-forwarded-for': 'attacker-controlled' } }),
+			getRequest: () => ({
+				ip: '192.0.2.' + forwardedIp++,
+				socket: { remoteAddress: '127.0.0.1' },
+				headers: { 'x-forwarded-for': 'attacker-controlled' }
+			}),
 			getResponse: () => ({
 				setHeader: (name, value) => {
 					headers[name] = value;
@@ -390,7 +399,7 @@ test('connector rate limits reject excess traffic and reopen after the window', 
 			})
 		})
 	};
-	for (let i = 0; i < 600; i++) assert.equal(guard.canActivate(context), true);
+	for (let i = 0; i < 3; i++) assert.equal(guard.canActivate(context), true);
 	assert.throws(
 		() => guard.canActivate(context),
 		(error) => error.getStatus() === 429
@@ -398,6 +407,19 @@ test('connector rate limits reject excess traffic and reopen after the window', 
 	assert.equal(headers['Retry-After'], 60);
 	now += 60000;
 	assert.equal(guard.canActivate(context), true);
+});
+
+test('connector rate limit admits new network peers when its bounded map is full', () => {
+	const guard = new EverAsyncRateLimitGuard();
+	for (let peer = 0; peer < 5001; peer++) {
+		const context = {
+			switchToHttp: () => ({
+				getRequest: () => ({ ip: 'peer-' + peer, socket: { remoteAddress: 'peer-' + peer } }),
+				getResponse: () => ({ setHeader() {} })
+			})
+		};
+		assert.equal(guard.canActivate(context), true);
+	}
 });
 
 test('DTOs reject null patches, unscoped chat identities and malformed project IDs', async () => {

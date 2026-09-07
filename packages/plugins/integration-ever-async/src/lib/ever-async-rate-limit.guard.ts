@@ -18,15 +18,19 @@ export class EverAsyncRateLimitGuard implements CanActivate {
 		const http = context.switchToHttp();
 		const request = http.getRequest<Request>();
 		const response = http.getResponse<Response>();
-		// Use Express's configured proxy trust policy; never trust a raw forwarding header here.
-		const client = request.ip || request.socket.remoteAddress || 'unknown';
+		// Gauzy trusts all forwarding headers, so only the socket peer is safe before authentication.
+		// Requests through the same reverse proxy share this configurable per-process budget.
+		const client = request.socket.remoteAddress || 'unknown';
 		const now = Date.now();
 		let bucket = this.clients.get(client);
 		if (!bucket || bucket.resetAt <= now) {
 			for (const [key, value] of this.clients) {
 				if (value.resetAt <= now) this.clients.delete(key);
 			}
-			if (this.clients.size >= this.capacity) return this.refuse(response, 60);
+			if (this.clients.size >= this.capacity) {
+				const oldestClient = this.clients.keys().next().value;
+				if (oldestClient !== undefined) this.clients.delete(oldestClient);
+			}
 			bucket = { resetAt: now + this.windowMs, remaining: this.limit };
 			this.clients.set(client, bucket);
 		}

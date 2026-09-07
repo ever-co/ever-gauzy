@@ -69,6 +69,7 @@ describe('EverAsyncConnectComponent request lifetime', () => {
 	let toastr: { success: jest.Mock };
 
 	beforeEach(() => {
+		environment.API_BASE_URL = 'https://api.gauzy.example';
 		organizations = new BehaviorSubject(orgA);
 		errors = { handleError: jest.fn() };
 		toastr = { success: jest.fn() };
