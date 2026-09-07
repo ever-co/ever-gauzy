@@ -1,6 +1,6 @@
 import { IntegrationEnum } from '@gauzy/contracts';
 
-/** Persisted names are stable; connector secrets are stored only as SHA-256 digests. */
+/** Persisted names are stable; connector secrets are stored only as salted scrypt digests. */
 export enum EverAsyncSettingName {
 	EVER_ASYNC_SERVER_URL = 'EVER_ASYNC_SERVER_URL',
 	/** Legacy scaffold setting; never used as a connector credential. */

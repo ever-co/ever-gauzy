@@ -9,6 +9,7 @@ import {
 	RolePermissionModule
 } from '@gauzy/core';
 import { EverAsyncConnectorController, EverAsyncConnectorGuard } from './ever-async-connector.controller';
+import { EverAsyncRateLimitGuard } from './ever-async-rate-limit.guard';
 import { EverAsyncController } from './ever-async.controller';
 import { EverAsyncIntegrationService } from './ever-async-integration.service';
 
@@ -23,7 +24,7 @@ import { EverAsyncIntegrationService } from './ever-async-integration.service';
 		RolePermissionModule
 	],
 	controllers: [EverAsyncController, EverAsyncConnectorController],
-	providers: [EverAsyncIntegrationService, EverAsyncConnectorGuard],
+	providers: [EverAsyncIntegrationService, EverAsyncConnectorGuard, EverAsyncRateLimitGuard],
 	exports: [EverAsyncIntegrationService]
 })
 export class EverAsyncModule {}

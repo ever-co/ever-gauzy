@@ -58,6 +58,7 @@
 		"@gauzy/plugin-dashboard-time-track-angular-ui": "^0.1.0",
 		"@gauzy/plugin-dashboard-time-track-react-ui": "^0.1.0",
 		"@gauzy/plugin-docs-ui": "^0.1.0",
+		"@gauzy/plugin-integration-ever-async-ui": "^0.1.0",
 		"@gauzy/plugin-job-employee-ui": "^0.1.0",
 		"@gauzy/plugin-jobs-ui": "^0.1.0",
 		"@gauzy/plugin-job-proposal-ui": "^0.1.0",

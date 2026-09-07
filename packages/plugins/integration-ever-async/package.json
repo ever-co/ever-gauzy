@@ -26,6 +26,10 @@
 		"lib:build:prod": "yarn nx build plugin-integration-ever-async",
 		"lib:watch": "yarn nx build plugin-integration-ever-async --watch"
 	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26"
+	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",

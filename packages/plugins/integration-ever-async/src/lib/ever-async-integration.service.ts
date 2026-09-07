@@ -1,3 +1,4 @@
+// cspell:ignore sqljs
 import {
 	BadGatewayException,
 	BadRequestException,
@@ -9,7 +10,8 @@ import {
 	OnApplicationBootstrap
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'crypto';
+import { randomBytes, randomUUID, scrypt, timingSafeEqual } from 'crypto';
+import { promisify } from 'util';
 import { DataSource, EntityManager, In } from 'typeorm';
 import { firstValueFrom } from 'rxjs';
 import { isUUID } from 'class-validator';
@@ -21,6 +23,7 @@ import {
 	IntegrationType,
 	IntegrationSetting,
 	IntegrationTenant,
+	Organization,
 	OrganizationProject,
 	RequestContext,
 	Task,
@@ -29,6 +32,8 @@ import {
 import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
 import { ConfigureEverAsyncIntegrationDto, UpdateEverAsyncSettingsDto } from './dto';
 import { EverAsyncSettingName as Setting } from './ever-async-setting.enum';
+
+const scryptAsync = promisify(scrypt);
 
 export interface EverAsyncConnectorScope {
 	integrationTenantId: ID;
@@ -42,11 +47,33 @@ export interface EverAsyncConnectorScope {
 @Injectable()
 export class EverAsyncIntegrationService implements OnApplicationBootstrap {
 	private readonly httpsAgent = createSsrfSafeHttpsAgent();
+	private static readonly sqliteTransactions = new WeakMap<DataSource, Promise<void>>();
 
 	constructor(
 		private readonly dataSource: DataSource,
 		private readonly httpService: HttpService
 	) {}
+
+	/** SQLite shares one connection; queue plugin transactions rather than nesting them. */
+	private async transaction<T>(work: (manager: EntityManager) => Promise<T>): Promise<T> {
+		if (!['sqlite', 'better-sqlite3', 'sqljs'].includes(this.dataSource.options.type)) {
+			return this.dataSource.transaction(work);
+		}
+		const queue = EverAsyncIntegrationService.sqliteTransactions;
+		const previous = queue.get(this.dataSource) ?? Promise.resolve();
+		let release!: () => void;
+		const current = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		queue.set(this.dataSource, current);
+		await previous;
+		try {
+			return await this.dataSource.transaction(work);
+		} finally {
+			release();
+			if (queue.get(this.dataSource) === current) queue.delete(this.dataSource);
+		}
+	}
 
 	async onApplicationBootstrap() {
 		await this.ensureCatalog();
@@ -54,18 +81,15 @@ export class EverAsyncIntegrationService implements OnApplicationBootstrap {
 
 	/** Make the plugin discoverable on existing installations as well as fresh seeds. */
 	private async ensureCatalog() {
-		return this.dataSource.transaction(async (manager) => {
+		return this.transaction(async (manager) => {
 			if (manager.connection.options.type === 'postgres')
 				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', ['ever-async:catalog']);
-			let integration = await manager.findOne(Integration, {
-				where: { provider: IntegrationEnum.EVER_ASYNC },
-				relations: { integrationTypes: true }
-			});
-			const types = await manager.find(IntegrationType, {
-				where: { name: In([IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.PROJECT_MANAGEMENT]) }
-			});
-			if (!integration)
-				integration = manager.create(Integration, {
+			// The unique catalog name makes first startup safe across all supported SQL drivers.
+			await manager
+				.createQueryBuilder()
+				.insert()
+				.into(Integration)
+				.values({
 					id: randomUUID(),
 					name: IntegrationEnum.EVER_ASYNC,
 					provider: IntegrationEnum.EVER_ASYNC,
@@ -73,16 +97,28 @@ export class EverAsyncIntegrationService implements OnApplicationBootstrap {
 					redirectUrl: 'ever-async',
 					isComingSoon: false,
 					isPaid: false,
-					order: 12,
-					integrationTypes: types
+					order: 12
+				})
+				.orIgnore()
+				.execute();
+			if (['postgres', 'mysql', 'mariadb'].includes(manager.connection.options.type)) {
+				await manager.findOneOrFail(Integration, {
+					where: { name: IntegrationEnum.EVER_ASYNC },
+					lock: { mode: 'pessimistic_write' }
 				});
-			else {
-				const missing = types.filter(
-					(type) => !integration!.integrationTypes?.some((current) => current.id === type.id)
-				);
-				if (!missing.length) return integration;
-				integration.integrationTypes = [...(integration.integrationTypes ?? []), ...missing];
 			}
+			const integration = await manager.findOneOrFail(Integration, {
+				where: { name: IntegrationEnum.EVER_ASYNC },
+				relations: { integrationTypes: true }
+			});
+			const types = await manager.find(IntegrationType, {
+				where: { name: In([IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.PROJECT_MANAGEMENT]) }
+			});
+			const missing = types.filter(
+				(type) => !integration.integrationTypes?.some((current) => current.id === type.id)
+			);
+			if (!missing.length) return integration;
+			integration.integrationTypes = [...(integration.integrationTypes ?? []), ...missing];
 			return manager.save(Integration, integration);
 		});
 	}
@@ -152,10 +188,11 @@ export class EverAsyncIntegrationService implements OnApplicationBootstrap {
 		}
 	}
 
-	private credentials() {
+	private async credentials() {
 		const apiKey = randomBytes(16).toString('hex');
 		const apiSecret = randomBytes(32).toString('hex');
-		return { apiKey, apiSecret, digest: createHash('sha256').update(apiSecret).digest('hex') };
+		const digest = ((await scryptAsync(apiSecret, apiKey, 64)) as Buffer).toString('hex');
+		return { apiKey, apiSecret, digest };
 	}
 
 	private serverUrl(input: string) {
@@ -206,12 +243,18 @@ export class EverAsyncIntegrationService implements OnApplicationBootstrap {
 		const serverUrl = this.serverUrl(dto.serverUrl);
 		await this.validateSelection(dto, scope);
 		const base = await this.ensureCatalog();
-		return this.dataSource.transaction(async (manager) => {
-			// Serialize setup across administrators of the same organization on PostgreSQL.
+		return this.transaction(async (manager) => {
+			// Serialize setup even before an IntegrationTenant row exists.
 			if (manager.connection.options.type === 'postgres') {
 				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
 					`ever-async:${scope.tenantId}:${scope.organizationId}`
 				]);
+			}
+			if (['mysql', 'mariadb'].includes(manager.connection.options.type)) {
+				await manager.findOneOrFail(Organization, {
+					where: { id: scope.organizationId, tenantId: scope.tenantId },
+					lock: { mode: 'pessimistic_write' }
+				});
 			}
 			if (await this.find(scope, manager))
 				throw new ConflictException('Ever Async is already configured for this organization.');
@@ -223,7 +266,7 @@ export class EverAsyncIntegrationService implements OnApplicationBootstrap {
 				isActive: true,
 				isArchived: false
 			});
-			const key = this.credentials();
+			const key = await this.credentials();
 			this.set(
 				integration,
 				{
@@ -266,7 +309,7 @@ export class EverAsyncIntegrationService implements OnApplicationBootstrap {
 		) => Promise<T>
 	) {
 		const scope = await this.scope(organizationId);
-		return this.dataSource.transaction(async (manager) => {
+		return this.transaction(async (manager) => {
 			if (['postgres', 'mysql', 'mariadb'].includes(manager.connection.options.type)) {
 				await manager.findOne(IntegrationTenant, {
 					where: { ...scope, name: IntegrationEnum.EVER_ASYNC, isActive: true, isArchived: false },
@@ -301,7 +344,7 @@ export class EverAsyncIntegrationService implements OnApplicationBootstrap {
 
 	async rotateCredentials(organizationId?: ID) {
 		return this.mutate(organizationId, async (integration, manager) => {
-			const key = this.credentials();
+			const key = await this.credentials();
 			this.set(
 				integration,
 				{ [Setting.EVER_ASYNC_KEY_ID]: key.apiKey, [Setting.EVER_ASYNC_SECRET_HASH]: key.digest },
@@ -379,7 +422,7 @@ export class EverAsyncIntegrationService implements OnApplicationBootstrap {
 		apiKey: string,
 		apiSecret: string
 	): Promise<EverAsyncConnectorScope> {
-		if (!isUUID(integrationTenantId) || !apiKey || !apiSecret || apiSecret.length > 256)
+		if (!isUUID(integrationTenantId) || !/^[a-f0-9]{32}$/.test(apiKey) || !/^[a-f0-9]{64}$/.test(apiSecret))
 			throw new UnauthorizedException('Invalid connector credentials.');
 		const integration = await this.dataSource.getRepository(IntegrationTenant).findOne({
 			where: { id: integrationTenantId, name: IntegrationEnum.EVER_ASYNC, isActive: true, isArchived: false },
@@ -387,7 +430,10 @@ export class EverAsyncIntegrationService implements OnApplicationBootstrap {
 		});
 		const settings = integration ? this.settings(integration) : {};
 		const stored = settings[Setting.EVER_ASYNC_SECRET_HASH] ?? '';
-		const digest = createHash('sha256').update(apiSecret).digest('hex');
+		if (settings[Setting.EVER_ASYNC_KEY_ID] !== apiKey || !/^[a-f0-9]{128}$/.test(stored)) {
+			throw new UnauthorizedException('Invalid connector credentials.');
+		}
+		const digest = ((await scryptAsync(apiSecret, apiKey, 64)) as Buffer).toString('hex');
 		if (
 			!integration?.id ||
 			!integration.tenantId ||

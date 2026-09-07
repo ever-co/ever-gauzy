@@ -12,6 +12,7 @@ import {
 import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { Public } from '@gauzy/common';
+import { EverAsyncRateLimitGuard } from './ever-async-rate-limit.guard';
 import { EverAsyncConnectorScope, EverAsyncIntegrationService } from './ever-async-integration.service';
 
 type ConnectorRequest = Request & { everAsyncScope: EverAsyncConnectorScope };
@@ -33,7 +34,7 @@ export class EverAsyncConnectorGuard implements CanActivate {
 
 /** Public bypasses the user JWT guard only; the dedicated credential guard is mandatory. */
 @Public()
-@UseGuards(EverAsyncConnectorGuard)
+@UseGuards(EverAsyncRateLimitGuard, EverAsyncConnectorGuard)
 @ApiTags('Ever Async Connector')
 @ApiHeader({ name: 'X-INTEGRATION-ID', required: true })
 @ApiHeader({ name: 'X-APP-ID', required: true })

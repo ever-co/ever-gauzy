@@ -25,6 +25,7 @@ const names = [
 	'IntegrationTenant',
 	'IntegrationSetting',
 	'UserOrganization',
+	'Organization',
 	'Employee',
 	'OrganizationProject',
 	'Task'
@@ -66,6 +67,9 @@ const {
 	EverAsyncConnectorController,
 	EverAsyncConnectorGuard
 } = require('../packages/plugins/integration-ever-async/src/lib/ever-async-connector.controller.ts');
+const {
+	EverAsyncRateLimitGuard
+} = require('../packages/plugins/integration-ever-async/src/lib/ever-async-rate-limit.guard.ts');
 const { AuthGuard } = require('../packages/core/src/lib/shared/guards/auth.guard.ts');
 const {
 	ConfigureEverAsyncIntegrationDto
@@ -89,7 +93,7 @@ const schemas = [
 	schema(
 		'Integration',
 		{
-			name: { type: String },
+			name: { type: String, unique: true },
 			provider: { type: String },
 			imgSrc: { type: String },
 			redirectUrl: { type: String },
@@ -110,6 +114,7 @@ const schemas = [
 		{ integration: { type: 'many-to-one', target: 'IntegrationTenant', joinColumn: true } }
 	),
 	schema('UserOrganization', { userId: { type: String } }),
+	schema('Organization', {}),
 	schema('Employee', {}),
 	schema('OrganizationProject', { name: { type: String } }),
 	schema(
@@ -130,7 +135,21 @@ const schemas = [
 let db, service, employeeId, projectId, foreignProjectId, foreignEmployeeId, taskId;
 const requests = [];
 before(async () => {
-	db = await new DataSource({ type: 'sqljs', entities: schemas, synchronize: true }).initialize();
+	const testUrl = process.env.GAUZY_ASYNC_TEST_DATABASE_URL;
+	if (testUrl) {
+		const target = new URL(testUrl);
+		if (!['localhost', '127.0.0.1', '[::1]'].includes(target.hostname) || !target.pathname.endsWith('_test')) {
+			throw new Error('Postgres integration tests require a loopback fixture database ending in _test.');
+		}
+	}
+	const testSchema = 'gauzy_async_' + randomUUID().replaceAll('-', '');
+	db = await new DataSource(
+		testUrl
+			? { type: 'postgres', url: testUrl, schema: testSchema, entities: schemas }
+			: { type: 'sqljs', entities: schemas }
+	).initialize();
+	if (testUrl) await db.query('CREATE SCHEMA "' + testSchema + '"');
+	await db.synchronize();
 	service = new EverAsyncIntegrationService(db, {
 		get: (url, options) => {
 			requests.push({ url, options });
@@ -143,6 +162,7 @@ before(async () => {
 	foreignEmployeeId = id();
 	taskId = id();
 	const scoped = { tenantId, organizationId, isActive: true, isArchived: false };
+	await db.getRepository(entities.Organization).save({ id: organizationId, tenantId });
 	await db.getRepository(entities.UserOrganization).save({ id: id(), ...scoped, userId });
 	await db.getRepository(entities.Employee).save([
 		{ id: employeeId, ...scoped },
@@ -306,6 +326,7 @@ test('actual HTTP guard rejects anonymous, wrong-integration and disabled connec
 		providers: [
 			{ provide: EverAsyncIntegrationService, useValue: service },
 			EverAsyncConnectorGuard,
+			EverAsyncRateLimitGuard,
 			{ provide: APP_GUARD, useClass: AuthGuard }
 		]
 	}).compile();
@@ -354,6 +375,31 @@ test('actual HTTP guard rejects anonymous, wrong-integration and disabled connec
 	}
 });
 
+test('connector rate limits reject excess traffic and reopen after the window', (t) => {
+	const guard = new EverAsyncRateLimitGuard();
+	let now = 100000;
+	t.mock.method(Date, 'now', () => now);
+	const headers = {};
+	const context = {
+		switchToHttp: () => ({
+			getRequest: () => ({ ip: '127.0.0.1', socket: {}, headers: { 'x-forwarded-for': 'attacker-controlled' } }),
+			getResponse: () => ({
+				setHeader: (name, value) => {
+					headers[name] = value;
+				}
+			})
+		})
+	};
+	for (let i = 0; i < 600; i++) assert.equal(guard.canActivate(context), true);
+	assert.throws(
+		() => guard.canActivate(context),
+		(error) => error.getStatus() === 429
+	);
+	assert.equal(headers['Retry-After'], 60);
+	now += 60000;
+	assert.equal(guard.canActivate(context), true);
+});
+
 test('DTOs reject null patches, unscoped chat identities and malformed project IDs', async () => {
 	const { plainToInstance } = require('class-transformer');
 	const { validate } = require('class-validator');
@@ -369,5 +415,28 @@ test('DTOs reject null patches, unscoped chat identities and malformed project I
 	assert.ok(
 		(await validate(plainToInstance(ConfigureEverAsyncIntegrationDto, { serverUrl: 'http://localhost' }))).length >
 			0
+	);
+});
+
+test('concurrent setup produces one catalog and one live organization credential', async () => {
+	const concurrentOrg = id();
+	await db.getRepository(entities.Organization).save({ id: concurrentOrg, tenantId });
+	await db
+		.getRepository(entities.UserOrganization)
+		.save({ id: id(), tenantId, organizationId: concurrentOrg, userId });
+	const secondService = new EverAsyncIntegrationService(db, { get: () => of({ data: 'ok' }) });
+	const results = await Promise.allSettled([
+		service.setupIntegration({ serverUrl: 'https://api-async.ever.co' }, concurrentOrg),
+		secondService.setupIntegration({ serverUrl: 'https://api-async.ever.co' }, concurrentOrg)
+	]);
+	assert.equal(results.filter((result) => result.status === 'fulfilled').length, 1);
+	const rejected = results.find((result) => result.status === 'rejected');
+	assert.equal(rejected.reason.getStatus(), 409);
+	assert.equal(await db.getRepository(entities.Integration).countBy({ name: 'Ever_Async' }), 1);
+	assert.equal(
+		await db
+			.getRepository(entities.IntegrationTenant)
+			.countBy({ tenantId, organizationId: concurrentOrg, isActive: true, isArchived: false }),
+		1
 	);
 });
