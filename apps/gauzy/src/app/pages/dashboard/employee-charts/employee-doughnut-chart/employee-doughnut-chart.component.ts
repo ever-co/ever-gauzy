@@ -177,7 +177,21 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap((organization: IOrganization) => {
+					this.organization = organization;
+					/*
+					 * The currency and its position come off the organization, and the
+					 * tooltip picks them up for free: its callback calls `formatCurrency`
+					 * at hover time. The legend does not — its amounts are strings built
+					 * once, the last time the dataset was. Rebuilding them here keeps the
+					 * two from disagreeing over the window between an organization change
+					 * and the new statistics arriving, during which the legend would
+					 * otherwise still be printing the previous organization's currency
+					 * beside a tooltip already using the new one.
+					 */
+					this._getChartStatistics();
+					this._initializeChartDataset();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
