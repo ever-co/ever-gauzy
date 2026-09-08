@@ -56,7 +56,9 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	 * Starts true: the employee / organization / date-range streams are debounced
 	 * by 300ms, so the first paint happens before anything is resolved. Starting
 	 * false would render the "no employee selected" empty state for that window
-	 * on every single visit.
+	 * on every single visit. Cleared once those streams settle — in `ngOnInit`
+	 * when they settle without an employee, and in `getEmployeeStatistics()`
+	 * when they settle with one.
 	 */
 	loading = true;
 
@@ -136,6 +138,20 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
+				/*
+				 * Before the filter, so it runs on the emission where there is no
+				 * employee too. `loading` is otherwise only cleared inside
+				 * `getEmployeeStatistics()`, which the filter below can never reach
+				 * without one — so with no employee ever selected the spinner ran
+				 * forever and the "no employee selected" state, gated on `!loading`,
+				 * was unreachable. Past the debounce the selectors have settled: if
+				 * there is still no employee the page is not waiting on anything.
+				 */
+				tap(([, , employee]) => {
+					if (!employee) {
+						this.loading = false;
+					}
+				}),
 				filter(([organization, dateRange, employee]) => !!organization && !!dateRange && !!employee),
 				tap(([organization, dateRange, employee]) => {
 					this.selectedOrganization = organization;

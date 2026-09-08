@@ -50,7 +50,14 @@
 					</span>
 					@if (employeeTraits.length) {
 					<span class="identity-traits">
-						@for (trait of employeeTraits; track trait) {
+						<!--
+							Tracked by position, not by value: the two traits are the
+							employee's short description and their level, and nothing stops
+							those being the same string ("Senior", say, in both fields).
+							`track trait` would then hand Angular two identical keys for one
+							list and it would throw NG0955 instead of rendering the chips.
+						-->
+						@for (trait of employeeTraits; track $index) {
 						<span class="trait-chip">{{ trait }}</span>
 						}
 					</span>
