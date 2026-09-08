@@ -654,10 +654,24 @@ $weight-normal: 400; // labels, captions, chips
  */
 .stat-row-meta,
 .kpi-meta {
-	font-size: 0.6875rem;
-	line-height: 1rem;
 	color: var(--gauzy-text-color-2);
 	overflow-wrap: anywhere;
+}
+
+.stat-row-meta {
+	font-size: 0.6875rem;
+	line-height: 1rem;
+}
+
+/*
+ * A step smaller than the breakdown's, at 10px: a tile carries the same sentence
+ * in a quarter of the width, so it wraps to three or four lines where a
+ * breakdown row takes one. The leading tightens with it — 1rem of it under a
+ * 10px face reads as separate paragraphs rather than one wrapped line.
+ */
+.kpi-meta {
+	font-size: 0.625rem;
+	line-height: 0.875rem;
 }
 
 .stat-row-value {
