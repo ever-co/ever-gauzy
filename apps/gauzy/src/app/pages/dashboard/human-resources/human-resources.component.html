@@ -95,11 +95,11 @@
 			The four totals the page exists to answer, each a button because each
 			opens the records behind it.
 
-			A tile carries a label and a number and nothing else. The formula
-			behind it lives on the tile's tooltip, not in always-visible body
-			text: four tiles each printing two clamped lines of grey arithmetic
-			is what made this row read as a wall rather than a summary — and the
-			Breakdown panel below already itemises every component in full.
+			A tile carries a label, its figure, and the arithmetic behind that
+			figure — the `meta` line `ga-info-block` printed under every title
+			before this page was rebuilt. It is body text, not a tooltip: these
+			are the numbers the page is read for, and a figure a reader has to
+			hover to find is a figure that has been taken away.
 
 			The section is deliberately unnamed. An `aria-label` here would
 			publish a second landmark called "Employee Statistics" alongside the
@@ -111,21 +111,13 @@
 				type="button"
 				class="kpi kpi--success"
 				(click)="openHistoryDialog('INCOME')"
-				nbTooltipTrigger="hover"
-				[nbTooltip]="
-					'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_CALC'
-						| translate
-							: {
-									totalNonBonusIncome: figures.nonBonusIncome,
-									totalBonusIncome: figures.directIncomeBonus
-							  }
-				"
 				[attr.aria-label]="('DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate) + ': ' + figures.income"
 			>
 				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="trending-up-outline"></nb-icon></span>
 				<span class="kpi-text">
 					<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}</span>
 					<span class="kpi-value">{{ figures.income }}</span>
+					<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_CALC' | translate : { totalNonBonusIncome: figures.nonBonusIncome, totalBonusIncome: figures.directIncomeBonus } }}</span>
 				</span>
 				<nb-icon class="kpi-affordance" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
 			</button>
@@ -134,8 +126,6 @@
 				type="button"
 				class="kpi kpi--warning"
 				(click)="openHistoryDialog('EXPENSES')"
-				nbTooltipTrigger="hover"
-				[nbTooltip]="'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSE_CALC' | translate"
 				[attr.aria-label]="
 					('DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate) + ': ' + figures.expense
 				"
@@ -144,6 +134,7 @@
 				<span class="kpi-text">
 					<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate }}</span>
 					<span class="kpi-value">{{ figures.expense }}</span>
+					<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSE_CALC' | translate }}</span>
 				</span>
 				<nb-icon class="kpi-affordance" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
 			</button>
@@ -153,17 +144,13 @@
 				class="kpi kpi--info"
 				[class.is-negative]="profit < 0"
 				(click)="openProfitDialog()"
-				nbTooltipTrigger="hover"
-				[nbTooltip]="
-					'DASHBOARD_PAGE.DEVELOPER.PROFIT_CALC'
-						| translate : { totalAllIncome: figures.income, totalExpense: figures.expense }
-				"
 				[attr.aria-label]="('DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate) + ': ' + figures.profit"
 			>
 				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="pie-chart-outline"></nb-icon></span>
 				<span class="kpi-text">
 					<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}</span>
 					<span class="kpi-value">{{ figures.profit }}</span>
+					<span class="kpi-meta">{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT_CALC' | translate : { totalAllIncome: figures.income, totalExpense: figures.expense } }}</span>
 				</span>
 				<nb-icon class="kpi-affordance" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
 			</button>
@@ -178,13 +165,12 @@
 			<div
 				class="kpi kpi--accent kpi--static"
 				[class.is-negative]="bonus < 0"
-				nbTooltipTrigger="hover"
-				[nbTooltip]="bonusFormula ? (bonusFormula.key | translate : bonusFormula.params) : ''"
 			>
 				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="award-outline"></nb-icon></span>
 				<span class="kpi-text">
 					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}</span>
 					<span class="kpi-value">{{ figures.bonus }}</span>
+					<span class="kpi-meta">{{ bonusFormula ? (bonusFormula.key | translate : bonusFormula.params) : '' }}</span>
 				</span>
 			</div>
 			}
@@ -195,10 +181,10 @@
 				What each KPI above is made of, grouped under section headings so
 				a row can be found by the question it answers.
 
-				Rows are single-line for the same reason the tiles are: the
-				per-row formula is on the row's tooltip rather than printed under
-				every label, which is what turned this column into a block of
-				grey text in the first pass.
+				Each row prints its own formula under its label, as the
+				info-block list this replaced did. Several of those lines carry
+				figures that appear nowhere else on the page — the bonus
+				percentage among them — so they cannot live on a tooltip.
 			-->
 			<section class="panel">
 				<header class="panel-header">
@@ -211,10 +197,11 @@
 						type="button"
 						class="stat-row"
 						(click)="openHistoryDialog('NON_BONUS_INCOME')"
-						nbTooltipTrigger="hover"
-						[nbTooltip]="'DASHBOARD_PAGE.BUILDER.WIDGETS.HR.INCOME.META' | translate"
 					>
-						<span class="stat-row-label">{{ 'INCOME_PAGE.INCOME' | translate }}</span>
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'INCOME_PAGE.INCOME' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.HR.INCOME.META' | translate }}</span>
+						</span>
 						<span class="stat-row-value">{{ figures.nonBonusIncome }}</span>
 						<nb-icon class="stat-row-chevron" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
 					</button>
@@ -224,11 +211,10 @@
 						type="button"
 						class="stat-row"
 						(click)="openHistoryDialog('BONUS_INCOME')"
-						nbTooltipTrigger="hover"
-						[nbTooltip]="'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME_INFO' | translate"
 					>
-						<span class="stat-row-label">
-							{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME' | translate }}
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME_INFO' | translate }}</span>
 						</span>
 						<span class="stat-row-value">{{ figures.directIncomeBonus }}</span>
 						<nb-icon class="stat-row-chevron" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
@@ -240,11 +226,10 @@
 						type="button"
 						class="stat-row"
 						(click)="openHistoryDialog('EXPENSES_WITHOUT_SALARY')"
-						nbTooltipTrigger="hover"
-						[nbTooltip]="'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY_CALC' | translate"
 					>
-						<span class="stat-row-label">
-							{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY' | translate }}
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY_CALC' | translate }}</span>
 						</span>
 						<span class="stat-row-value">{{ figures.expenseWithoutSalary }}</span>
 						<nb-icon class="stat-row-chevron" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
@@ -265,11 +250,10 @@
 						type="button"
 						class="stat-row"
 						(click)="openHistoryDialog('BONUS_INCOME')"
-						nbTooltipTrigger="hover"
-						[nbTooltip]="'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS_INFO' | translate"
 					>
-						<span class="stat-row-label">
-							{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS' | translate }}
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS_INFO' | translate }}</span>
 						</span>
 						<span class="stat-row-value">{{ figures.directIncomeBonus }}</span>
 						<nb-icon class="stat-row-chevron" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
@@ -280,14 +264,10 @@
 					<div
 						class="stat-row is-static"
 						[class.is-negative]="calculatedBonus < 0"
-						nbTooltipTrigger="hover"
-						[nbTooltip]="
-							'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS_INFO'
-								| translate : { bonusPercentage: bonusPercentage || 0, difference: figures.profit }
-						"
 					>
-						<span class="stat-row-label">
-							{{ 'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS' | translate }}
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS_INFO' | translate : { bonusPercentage: bonusPercentage || 0, difference: figures.profit } }}</span>
 						</span>
 						<span class="stat-row-value">{{ figures.calculatedBonus }}</span>
 					</div>
@@ -297,14 +277,10 @@
 					<div
 						class="stat-row is-static"
 						[class.is-negative]="calculatedBonus < 0"
-						nbTooltipTrigger="hover"
-						[nbTooltip]="
-							'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
-								| translate : { bonusPercentage: bonusPercentage || 0, totalIncome: figures.income }
-						"
 					>
-						<span class="stat-row-label">
-							{{ 'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS' | translate }}
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO' | translate : { bonusPercentage: bonusPercentage || 0, totalIncome: figures.income } }}</span>
 						</span>
 						<span class="stat-row-value">{{ figures.calculatedBonus }}</span>
 					</div>
