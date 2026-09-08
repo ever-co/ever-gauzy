@@ -82,9 +82,13 @@ export const verifyChartOptionText = async (text: string) => {
 export const clickCardByHeaderText = async (text: string) => {
 	// The (click) handler sits on the `.kpi` tile / `.stat-row` row itself (see `infoBlockCss`), calling
 	// openHistoryDialog/openProfitDialog, which fetch records then open an nb-dialog popup.
-	// .first() is unambiguous because each queried heading renders in exactly one card — the formulas
-	// that quote other headings live on tooltips, not in card bodies. See the note on `infoBlockCss`
-	// in HumanResourcesPageObject.ts.
+	//
+	// The text match is scoped to the card's LABEL span (`infoTextCss`), not run over the card whole:
+	// every card also prints its arithmetic as body text, and that arithmetic quotes other cards'
+	// headings — the Profit tile's line contains both "Total Income" and "Total Expenses", so a
+	// whole-card `hasText` matches it for two of the four queried headings and `.first()` would be
+	// picking between them on DOM order alone. Scoped to the label, each heading identifies one card.
+	// See the note on `infoBlockCss` in HumanResourcesPageObject.ts.
 	//
 	// Round 4: a single dispatchEvent('click') was NOT reliably opening the dialog (failure DOM showed a
 	// clean HR dashboard, no popup), so open the dialog defensively: settle, then loop — try a real click
@@ -93,7 +97,10 @@ export const clickCardByHeaderText = async (text: string) => {
 	// popup to attach. Retry the click if it didn't open instead of failing on the first miss.
 	await waitForSpinnerGone();
 	await getPage().waitForLoadState('networkidle').catch(() => {});
-	const block = getPage().locator(HumanResourcesPage.infoBlockCss).filter({ hasText: text }).first();
+	const block = getPage()
+		.locator(HumanResourcesPage.infoBlockCss)
+		.filter({ has: getPage().locator(HumanResourcesPage.infoTextCss, { hasText: text }) })
+		.first();
 	await block.waitFor({ state: 'visible', timeout: 24_000 });
 
 	const popup = getPage().locator(HumanResourcesPage.popupAnyCss).first();

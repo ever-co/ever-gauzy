@@ -22,13 +22,14 @@ export const HumanResourcesPage = {
 	// The clickable elements carrying the (click) handler that opens a history popup. Both are real
 	// <button>s now (the old .info-block was a click handler on a div).
 	//
-	// `clickCardByHeaderText` filters these by text and takes `.first()`, and Playwright's `hasText`
-	// is a CASE-INSENSITIVE SUBSTRING match — so it matters that a card's only rendered text is its
-	// own heading and its figure. The arithmetic ("Total Income = Income X + Direct Income Y", which
-	// quotes OTHER cards' headings) sits on each card's `nbTooltip`, i.e. in an attribute, and
-	// Playwright does not see attribute text. Each of the four queried headings therefore matches
-	// exactly one card. Keep it that way: printing a formula back into a card's body would make
-	// "Total Income" match the Profit card too, and the test would start depending on DOM order.
+	// A card's rendered text is NOT just its own heading and figure: each one also prints its
+	// arithmetic as body text in `.kpi-meta` / `.stat-row-meta`, and that arithmetic quotes OTHER
+	// cards' headings — PROFIT_CALC is "Profit (Net Income) = Total Income {x} - Total Expenses {y}".
+	// Since Playwright's `hasText` is a CASE-INSENSITIVE SUBSTRING match over an element's whole
+	// subtree, filtering these cards by "Total Income" or by "Total Expenses" matches the Profit tile
+	// as well as the intended one. `clickCardByHeaderText` therefore scopes its text match to
+	// `infoTextCss` (the label span) via `filter({ has: ... })` rather than matching the card whole —
+	// otherwise which card got clicked would come down to which one `.first()` found in DOM order.
 	// The Bonus tile is deliberately excluded: it is `.kpi--static` (a div) because there is no BONUS
 	// history type to open.
 	infoBlockCss: '.kpi:not(.kpi--static), .stat-row:not(.is-static)',
