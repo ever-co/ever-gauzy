@@ -33,8 +33,11 @@ export const HumanResourcesPage = {
 	// The Bonus tile is deliberately excluded: it is `.kpi--static` (a div) because there is no BONUS
 	// history type to open.
 	infoBlockCss: '.kpi:not(.kpi--static), .stat-row:not(.is-static)',
-	// Placeholder lost its "Select " prefix along with every other combobox placeholder.
-	chartDropdownCss: '[placeholder="Chart"]',
+	// The redesigned switcher carries no `placeholder` — the panel header already names the control,
+	// and what it does expose is a TRANSLATED `aria-label`, which would tie this locator to the active
+	// language. `.chart-switcher` is the class the header gives it, and it sits on the same `nb-select`
+	// host the placeholder attribute used to, so the click target is unchanged.
+	chartDropdownCss: 'nb-select.chart-switcher',
 	// nb-select options render into `.option-list nb-option`.
 	dropdownOptionCss: '.option-list nb-option',
 	// Records-history popup is `nb-card.records` with `<h5 class="title">` inside its header.
