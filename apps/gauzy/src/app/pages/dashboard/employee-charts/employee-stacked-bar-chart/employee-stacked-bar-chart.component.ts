@@ -15,10 +15,10 @@ import {
 	employeeChartBarDataset,
 	employeeChartBase,
 	employeeChartCategoryScale,
-	employeeChartLegend,
 	employeeChartTooltip,
 	employeeChartValueScale
 } from '../employee-chart-options';
+import { IEmployeeChartLegendItem } from '../employee-chart-legend/employee-chart-legend.component';
 
 @UntilDestroy()
 @Component({
@@ -33,7 +33,14 @@ import {
 		  </div>
 		} @else {
 		  <div class="chart">
-		    <canvas baseChart [type]="'bar'" [data]="data" [options]="options"></canvas>
+		    <ga-employee-chart-legend
+		      class="chart-legend"
+		      [items]="legendItems"
+		      [orientation]="'row'"
+		    ></ga-employee-chart-legend>
+		    <div class="chart-canvas">
+		      <canvas baseChart [type]="'bar'" [data]="data" [options]="options"></canvas>
+		    </div>
 		  </div>
 		}
 		`,
@@ -46,19 +53,37 @@ import {
 				min-height: 0;
 				width: 100%;
 
-				/*
-				 * position: relative is not decoration. With
-				 * maintainAspectRatio disabled, Chart.js sizes the canvas from its
-				 * OFFSET PARENT, and without a positioned ancestor it measures
-				 * against something further up the tree and under-sizes the plot,
-				 * leaving it small in the middle of the panel.
-				 */
+				/* The legend above, the bars filling everything left over. */
 				.chart {
-					position: relative;
+					display: flex;
+					flex-direction: column;
+					gap: 0.75rem;
 					width: 100%;
 					flex: 1 1 auto;
 					min-height: 0;
-					display: block;
+				}
+
+				.chart-legend {
+					flex: 0 0 auto;
+				}
+
+				/*
+				 * The plot's own box, and position: relative on it is not
+				 * decoration: with maintainAspectRatio disabled, Chart.js sizes the
+				 * canvas from its OFFSET PARENT, so without a positioned ancestor it
+				 * measures against something further up the tree and draws a plot
+				 * that does not match the space it was given.
+				 *
+				 * min-height: 0 is what actually holds the chart inside the panel:
+				 * a flex child will not shrink below its content without it, so a
+				 * canvas asked to draw a dozen month rows would otherwise push the
+				 * section taller than the height it was given.
+				 */
+				.chart-canvas {
+					position: relative;
+					flex: 1 1 auto;
+					min-height: 0;
+					width: 100%;
 				}
 				.title {
 					display: flex;
@@ -84,6 +109,15 @@ export class EmployeeStackedBarChartComponent extends TranslationBaseComponent i
 	bonusStatistics: number[] = [];
 	labels: string[] = [];
 	noData = false;
+
+	/**
+	 * The three series named above the bars.
+	 *
+	 * No amounts here, unlike the doughnut's legend: these bars are normalised so
+	 * each month's stack sums to that month's income, so a total printed beside a
+	 * series name would not be the quantity any bar is showing.
+	 */
+	legendItems: IEmployeeChartLegendItem[] = [];
 
 	/**
 	 * The unscaled figures behind the plotted ones, per dataset index
@@ -157,6 +191,12 @@ export class EmployeeStackedBarChartComponent extends TranslationBaseComponent i
 				const profitColors = this.profitStatistics.map((val) =>
 					val < 0 ? palette.negativeProfit : palette.profit
 				);
+				this.legendItems = [
+					{ label: this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES'), color: palette.expenses },
+					{ label: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'), color: palette.bonus },
+					{ label: this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT'), color: palette.profit }
+				];
+
 				this.data = {
 					labels: this.labels,
 					datasets: [
@@ -184,7 +224,13 @@ export class EmployeeStackedBarChartComponent extends TranslationBaseComponent i
 					...employeeChartBase(),
 					indexAxis: 'y',
 					plugins: {
-						legend: employeeChartLegend(palette),
+						/*
+						 * The legend is `ga-employee-chart-legend`, rendered in HTML
+						 * above the canvas. A canvas legend is measured out of the same
+						 * rectangle the chart draws in, so on a panel this short it was
+						 * taking its band of height directly off the plot.
+						 */
+						legend: { display: false },
 						tooltip: employeeChartTooltip(
 							palette,
 							this.formatCurrency,

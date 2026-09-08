@@ -13,7 +13,8 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
 import { Store } from '@gauzy/ui-core/core';
 import { IEmployeeChartPalette, resolveEmployeeChartPalette } from '../employee-chart-palette';
-import { employeeChartBase, employeeChartLegend, employeeChartTooltip } from '../employee-chart-options';
+import { employeeChartBase, employeeChartTooltip } from '../employee-chart-options';
+import { IEmployeeChartLegendItem } from '../employee-chart-legend/employee-chart-legend.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,7 +22,10 @@ import { employeeChartBase, employeeChartLegend, employeeChartTooltip } from '..
     template: `
 		@if (employeeStatistics.length) {
 		  <div class="chart">
-		    <canvas baseChart [data]="data" [options]="chartOptions" [type]="chartType"></canvas>
+		    <div class="chart-canvas">
+		      <canvas baseChart [data]="data" [options]="chartOptions" [type]="chartType"></canvas>
+		    </div>
+		    <ga-employee-chart-legend class="chart-legend" [items]="legendItems"></ga-employee-chart-legend>
 		  </div>
 		} @else {
 		  <div class="title">
@@ -41,19 +45,45 @@ import { employeeChartBase, employeeChartLegend, employeeChartTooltip } from '..
 				min-height: 0;
 				width: 100%;
 
-				/*
-				 * position: relative is not decoration. With
-				 * maintainAspectRatio disabled, Chart.js sizes the canvas from its
-				 * OFFSET PARENT, and without a positioned ancestor it measures
-				 * against something further up the tree and under-sizes the plot,
-				 * leaving it small in the middle of the panel.
-				 */
+				/* The ring on the left, the legend naming its arcs on the right. */
 				.chart {
-					position: relative;
+					display: flex;
+					align-items: center;
+					gap: 1rem;
 					width: 100%;
 					flex: 1 1 auto;
 					min-height: 0;
-					display: block;
+				}
+
+				/*
+				 * The ring's own box, and position: relative on it is not
+				 * decoration: with maintainAspectRatio disabled, Chart.js sizes the
+				 * canvas from its OFFSET PARENT, so without a positioned ancestor it
+				 * measures against something further up the tree and draws a plot
+				 * that does not match the space it was given.
+				 *
+				 * A doughnut inscribes itself in the SHORTER side of its box, so
+				 * handing it the panel's full height is what makes the ring as large
+				 * as the section allows and no larger.
+				 */
+				.chart-canvas {
+					position: relative;
+					flex: 1 1 auto;
+					min-width: 0;
+					height: 100%;
+				}
+
+				/*
+				 * Content-sized and capped: the legend asks for the width its longest
+				 * row needs, and past 45% of the panel the names ellipsize instead of
+				 * eating into the ring. This is the job the canvas legend's maxWidth
+				 * used to do, except the two now divide the panel in CSS rather than
+				 * competing for one canvas rectangle.
+				 */
+				.chart-legend {
+					flex: 0 1 auto;
+					min-width: 0;
+					max-width: 45%;
 				}
 				.title {
 					display: flex;
@@ -86,6 +116,14 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 	private palette: IEmployeeChartPalette = resolveEmployeeChartPalette({} as NbJSThemeOptions);
 
 	public organization: IOrganization;
+
+	/**
+	 * The series named beside the ring, each with its total.
+	 *
+	 * Built alongside the dataset in {@link _initializeChartDataset} so a swatch
+	 * cannot end up a different colour from the arc it stands for.
+	 */
+	public legendItems: IEmployeeChartLegendItem[] = [];
 	public labels: string[] = [];
 	public statistics = {
 		income: 0 as number,
@@ -168,8 +206,6 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 	private _initializeChart(config: NbJSThemeOptions) {
 		this.palette = resolveEmployeeChartPalette(config, this._elementRef.nativeElement);
 
-		const legend = employeeChartLegend(this.palette, 'right');
-
 		this.chartOptions = {
 			...employeeChartBase(),
 			// A doughnut rather than a pie: the hole keeps the four arcs thin, the
@@ -179,40 +215,13 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 			// padding worth spending is a little breathing room around the ring.
 			layout: { padding: { top: 4, right: 4, bottom: 4, left: 4 } },
 			plugins: {
-				legend: {
-					...legend,
-					/*
-					 * Caps how much of the box the legend may claim, so the ring keeps
-					 * the room it needs.
-					 */
-					maxWidth: 160,
-					labels: {
-						...(legend.labels as Record<string, unknown>),
-						/*
-						 * Series NAMES only.
-						 *
-						 * The amounts used to be appended here, which produced four
-						 * ragged "name + figure" rows whose numbers did not line up in
-						 * a column — a legend cannot lay out two columns. Every one of
-						 * those figures is already stated twice on this page, in the
-						 * KPI tile and again in the Breakdown panel, and the exact
-						 * value is one hover away.
-						 */
-						generateLabels: (chart: any) => {
-							const dataset = chart.data.datasets?.[0] ?? {};
-							const colors = (dataset.backgroundColor ?? []) as string[];
-							return ((chart.data.labels ?? []) as string[]).map((label, index) => ({
-								text: label,
-								fillStyle: colors[index],
-								strokeStyle: colors[index],
-								lineWidth: 0,
-								pointStyle: 'circle',
-								hidden: false,
-								index
-							}));
-						}
-					}
-				},
+				/*
+				 * The legend is `ga-employee-chart-legend`, rendered in HTML beside
+				 * the canvas. Chart.js cannot lay an entry out as two columns, so the
+				 * amounts it drew after each name never lined up; and whatever width
+				 * it claimed came out of the ring's own box.
+				 */
+				legend: { display: false },
 				tooltip: {
 					...employeeChartTooltip(this.palette, this.formatCurrency),
 					callbacks: {
@@ -254,30 +263,51 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 	 * Initializes the chart dataset with appropriate colors and labels.
 	 */
 	private _initializeChartDataset(): void {
+		/*
+		 * Name, value and colour as one row per series, rather than three parallel
+		 * arrays that only agree while every one of them is edited together — and
+		 * that the legend beside the ring would have had to be kept in step with as
+		 * a fourth.
+		 */
+		const series = [
+			{
+				label: this.getTranslation('DASHBOARD_PAGE.CHARTS.REVENUE'),
+				value: this.statistics.income,
+				color: this.palette.revenue
+			},
+			{
+				label: this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES'),
+				value: this.statistics.expense,
+				color: this.palette.expenses
+			},
+			{
+				label: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
+				value: this.statistics.bonus,
+				color: this.palette.bonus
+			},
+			{
+				label: this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT'),
+				value: this.statistics.profit,
+				color: this.palette.profit
+			}
+		];
+
+		// Each series' total, beside its name and in its own trailing column.
+		this.legendItems = series.map(({ label, value, color }) => ({
+			label,
+			color,
+			amount: this.formatCurrency(value)
+		}));
+
 		this.data = {
-			// Names only. The legend appends each amount itself (see `generateLabels`)
-			// and the tooltip formats its own, so baking the figure in here only made
-			// the labels long enough to wrap.
-			labels: [
-				this.getTranslation('DASHBOARD_PAGE.CHARTS.REVENUE'),
-				this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES'),
-				this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
-				this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT')
-			],
+			// Names only on the arcs: the amount is the legend's column and the
+			// tooltip formats its own, so baking the figure in here only made the
+			// slice labels long enough to wrap.
+			labels: series.map(({ label }) => label),
 			datasets: [
 				{
-					data: [
-						this.statistics.income,
-						this.statistics.expense,
-						this.statistics.bonus,
-						this.statistics.profit
-					],
-					backgroundColor: [
-						this.palette.revenue,
-						this.palette.expenses,
-						this.palette.bonus,
-						this.palette.profit
-					],
+					data: series.map(({ value }) => value),
+					backgroundColor: series.map(({ color }) => color),
 					// A gap in the surface colour, not a ring: a border drawn around
 					// each arc reads as chrome, a gap reads as separation.
 					borderColor: this.palette.surface,

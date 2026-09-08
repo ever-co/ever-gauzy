@@ -31,21 +31,16 @@ const BAR_GAP = 2;
  * palette's blue↔fuchsia pair sit in the validator's 6–8 CVD floor band. Do not
  * drop the legend without re-checking that palette.
  *
- * (Two of the three go further and put each series' total in its label as well.
- * The stacked chart deliberately does not: it plots normalised shares, so a
- * total printed there would not be the number the bar is showing.)
+ * Only the horizontal bar chart still draws its legend on the canvas, with each
+ * series' total appended to the dataset label. The other two render
+ * `ga-employee-chart-legend` in HTML instead — same swatch-plus-name contract, so
+ * the CVD note above still holds — because Chart.js cannot lay an entry out as
+ * two columns and a canvas legend takes its room out of the plot's own box.
  */
-export function employeeChartLegend(
-	palette: IEmployeeChartPalette,
-	/**
-	 * 'right' for the doughnut, which is a circle in a wide box and would
-	 * otherwise waste its flanks while a wrapping top legend ate its height.
-	 */
-	position: 'top' | 'right' = 'top'
-): ChartOptions<any>['plugins']['legend'] {
+export function employeeChartLegend(palette: IEmployeeChartPalette): ChartOptions<any>['plugins']['legend'] {
 	return {
 		display: true,
-		position,
+		position: 'top',
 		align: 'start',
 		labels: {
 			color: palette.textColor,
