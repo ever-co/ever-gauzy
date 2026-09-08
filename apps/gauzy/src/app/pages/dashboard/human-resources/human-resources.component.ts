@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
+import * as moment from 'moment';
 import { environment } from '@gauzy/ui-config';
 import {
 	BonusTypeEnum,
@@ -207,9 +208,13 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			this.salary = +(this.expense - this.expenseWithoutSalary).toFixed(2);
 			// The header has always had an "Average Monthly Bonus" row, but the field
 			// behind it was declared and never assigned, so the row could not render.
-			// The aggregation is per month, so the mean is the total over the number
-			// of months the API actually returned.
-			const months = this.employeeStatistics?.length ?? 0;
+			//
+			// The divisor is the length of the selected range, NOT `employeeStatistics.length`:
+			// the aggregation endpoint emits a row only for months that hold records, so
+			// dividing by the rows it returned averages over the ACTIVE months. A quarter
+			// with one idle month would then report a third more than the employee actually
+			// averaged over the period the picker asked for.
+			const months = HumanResourcesComponent.monthsInRange(this.selectedDateRange);
 			this.averageBonus = months ? +(this.bonus / months).toFixed(2) : 0;
 		} catch (error) {
 			console.error('Error while retrieving employee aggregated statistics', error);
@@ -298,6 +303,22 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			};
 		}
 		return null;
+	}
+
+	/**
+	 * How many calendar months the selected range covers, both ends included.
+	 *
+	 * Counted off month boundaries rather than from the day span: a range is a
+	 * whole number of months only by accident, and 15 Jan – 3 Feb is two months of
+	 * bonus to the aggregation behind this figure, not the 0.6 a day count gives.
+	 */
+	private static monthsInRange(range: IDateRangePicker): number {
+		const { startDate, endDate } = range ?? ({} as IDateRangePicker);
+		if (!startDate || !endDate) {
+			return 0;
+		}
+		const months = moment(endDate).startOf('month').diff(moment(startDate).startOf('month'), 'months') + 1;
+		return Math.max(0, months);
 	}
 
 	/** Placeholder figures used before the first response lands. */
