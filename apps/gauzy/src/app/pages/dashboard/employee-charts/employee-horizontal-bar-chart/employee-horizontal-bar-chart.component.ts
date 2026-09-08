@@ -1,7 +1,6 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, OnChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, Input, OnDestroy, OnInit, OnChanges, ViewChild } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BaseChartDirective } from 'ng2-charts';
@@ -129,15 +128,19 @@ export class EmployeeHorizontalBarChartComponent
 
 	@ViewChild(BaseChartDirective, { static: false }) baseChartDirective: BaseChartDirective;
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly _themeService: NbThemeService,
-		private readonly _currencyPipe: CurrencyPipe,
-		private readonly _currencyPositionPipe: CurrencyPositionPipe,
-		private readonly _store: Store,
-		private readonly _elementRef: ElementRef<HTMLElement>
-	) {
-		super(translateService);
+	private readonly _themeService = inject(NbThemeService);
+	private readonly _currencyPipe = inject(CurrencyPipe);
+	private readonly _currencyPositionPipe = inject(CurrencyPositionPipe);
+	private readonly _store = inject(Store);
+	private readonly _elementRef: ElementRef<HTMLElement> = inject(ElementRef);
+
+	/**
+	 * Declared rather than inherited: `TranslationBaseComponent` takes an optional
+	 * `TranslateService` and falls back to `inject()`, and a component that inherits
+	 * a constructor with parameters from an undecorated base does not compile.
+	 */
+	constructor() {
+		super();
 	}
 
 	ngOnInit() {

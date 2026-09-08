@@ -1,7 +1,6 @@
-import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, inject, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { NbThemeService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { environment } from '@gauzy/ui-config';
@@ -134,15 +133,19 @@ export class EmployeeStackedBarChartComponent extends TranslationBaseComponent i
 
 	public organization: IOrganization;
 
-	constructor(
-		private themeService: NbThemeService,
-		translateService: TranslateService,
-		private readonly _elementRef: ElementRef<HTMLElement>,
-		private readonly _currencyPipe: CurrencyPipe,
-		private readonly _currencyPositionPipe: CurrencyPositionPipe,
-		private readonly _store: Store
-	) {
-		super(translateService);
+	private readonly themeService = inject(NbThemeService);
+	private readonly _elementRef: ElementRef<HTMLElement> = inject(ElementRef);
+	private readonly _currencyPipe = inject(CurrencyPipe);
+	private readonly _currencyPositionPipe = inject(CurrencyPositionPipe);
+	private readonly _store = inject(Store);
+
+	/**
+	 * Declared rather than inherited: `TranslationBaseComponent` takes an optional
+	 * `TranslateService` and falls back to `inject()`, and a component that inherits
+	 * a constructor with parameters from an undecorated base does not compile.
+	 */
+	constructor() {
+		super();
 	}
 
 	/**
