@@ -85,6 +85,46 @@
   }
 }
 
+/// Compacts the buttons in a page-header action row: "+ Add", the selection
+/// strip (View / Edit / Delete / status actions), a page's own secondary button,
+/// and the grid-vs-list selector.
+///
+/// Include it on the block that HOLDS those buttons — `.gauzy-button-container`
+/// on most list pages, but a page with its own markup (Invoices) has its own
+/// container, so the caller names it.
+///
+/// Every one of those buttons is `[nbButton] size="small"`, which Nebular sizes
+/// entirely from theme tokens, so redefining the tokens is the whole change: no
+/// override of Nebular's rules, nothing to keep in step if that sheet moves, and
+/// custom properties cross the component boundary into `ngx-gauzy-button-action`
+/// and `ga-layout-selector` on their own.
+///
+/// The bulk was never the label. At `button-small-text-font-size: 0.75rem` the
+/// text already matches the table headers and the tab labels, so THAT is left
+/// alone — what made these read oversized against a 1rem table row was
+/// 0.375rem/0.875rem of padding around a 1rem icon. Padding and icon come down;
+/// the label stays legible.
+@mixin page-header-buttons() {
+  --button-small-icon-size: 0.875rem;
+  --button-small-icon-offset: 0.25rem;
+  // The stock -0.125rem exists to keep a 1rem icon from growing a 1rem line box.
+  // At 0.875rem the icon is already inside that box, so the pull-up would only
+  // drag it off the text's centre line.
+  --button-small-icon-vertical-margin: 0;
+
+  --button-filled-small-padding: 0.25rem 0.625rem;
+  --button-outline-small-padding: 0.25rem 0.625rem;
+  --button-ghost-small-padding: 0.25rem 0.625rem;
+
+  // The separate token Nebular switches to once a button holds nothing but an
+  // icon (`.icon-start.icon-end`): the Delete button and both layout-selector
+  // buttons take that path and would otherwise have kept their 0.5625rem box
+  // while everything beside them shrank.
+  --icon-button-filled-small-padding: 0.25rem;
+  --icon-button-outline-small-padding: 0.25rem;
+  --icon-button-ghost-small-padding: 0.25rem;
+}
+
 @mixin pager() {
   width: auto;
 
