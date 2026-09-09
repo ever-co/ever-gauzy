@@ -84,7 +84,39 @@
 :host {
   @include ga-hub.density-tokens();
 
+  // ── Filling the column ─────────────────────────────────────────────────────
+  // Without this the card stopped short of the page and left a band of dead
+  // space under it, because the height chain broke HERE.
+  //
+  // The page frame (styles/_overrides.scss) hands the column's height to
+  // `nb-layout-column > router-outlet + *`. On this route that element is
+  // `gz-proposal-layout`, not this component: proposals is a child route under
+  // `ProposalLayoutComponent`, whose whole template is a second
+  // `<router-outlet>`. This host is that outlet's sibling, and the only thing
+  // reaching it is `router-outlet + * { display: block }` from
+  // `pages.component.scss` — a block with an AUTO height. So the `height: 100%`
+  // that `nb-card-overrides` puts on `nb-card` resolved against an indefinite
+  // parent, i.e. to `auto`, and the card fell back to being exactly as tall as
+  // its own content.
+  //
+  // Passing the height through is the whole fix. `gz-proposal-layout` is a flex
+  // item with a resolved height and declares `height: 100%` itself, so the
+  // percentage here is definite; `nb-card` then fills this box, and the body —
+  // already `flex: 1 1 auto` from the same mixin — takes whatever the header
+  // leaves.
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  // Flex items refuse to shrink below their content by default, which would put
+  // the overflow back on the page instead of inside `.table-scroll-container`.
+  min-height: 0;
+
   nb-card-body {
+    // Now only a PREFERRED size, in the sense `$default-card-height` means it
+    // (gauzy/_gauzy-cards.scss): the body is a growing, shrinking flex child of
+    // a card that fills the column, so it ends up at the card's height minus the
+    // header whatever this number says. It stays as the fallback for any context
+    // where the chain above is not definite after all.
     height: calc(100vh - 21.5rem) !important;
   }
 }
