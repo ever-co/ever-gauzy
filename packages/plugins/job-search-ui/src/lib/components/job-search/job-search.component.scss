@@ -2,6 +2,7 @@
 @use 'gauzy/_gauzy-overrides' as *;
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/tabset-actions' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 :host {
   .form-group {
@@ -115,6 +116,9 @@
 }
 
 :host .gauzy-button-container {
+  // Buttons compacted to the table's scale (see the mixin).
+  @include ga-hub.page-header-buttons();
+
   // Sits on the tab strip. The mixin reproduces the tab link's box so the
   // buttons centre on the strip, and — critically — lets pointer events
   // through the empty part of the row: this container is globally
