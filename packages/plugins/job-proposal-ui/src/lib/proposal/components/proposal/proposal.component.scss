@@ -1,4 +1,6 @@
 @forward '@shared/_pg-card';
+@use 'themes' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 // Header-band statistics: three compact stat cards (big value over a muted
 // label). Theme tokens only, so the cards read in every light AND dark theme;
@@ -36,8 +38,152 @@
   }
 }
 
+// ── Density tokens ───────────────────────────────────────────────────────────
+// The canonical list-page block Payments, Invoices/Estimates, Pipelines, Tasks
+// and Employees carry, so Proposals reads as the same surface as the rest of the
+// app rather than a size larger than its neighbours.
+//
+// The tokens sit on `:host`, not on the table, and that placement is the point:
+// the renderers that consume them (`ga-status-badge`, `ga-notes-with-tags`,
+// `ngx-date-view`, the filter row, the loading skeleton) are separate
+// components, and custom properties are the only thing that crosses those
+// boundaries. The card-grid layout inherits the same scale for free, which is
+// wanted — a token is a proportion, so that layout stays coherent at its own
+// size.
+//
+// Hard-coded overrides for the two renderers that never joined the token system
+// are a different matter — a literal `18px` is not a proportion — and live under
+// `.table-scroll-container` below, never here.
 :host {
+  @include ga-hub.density-tokens();
+
   nb-card-body {
     height: calc(100vh - 21.5rem) !important;
+  }
+}
+
+:host .table-scroll-container {
+  @include ga-hub.surface();
+}
+
+:host ::ng-deep {
+  @include ga-hub.tag-stack-spacing();
+}
+
+// Colour, not size, so it is page-wide rather than table-scoped: the card-grid
+// layout renders the very same component.
+:host ::ng-deep ga-status-badge {
+  @include ga-hub.status-badge-tints();
+}
+
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+// The pager's `<nav><ul class="pagination"><li>`: the component's own sheet draws
+// 0.875rem numerals in a 0.75rem × 1.1rem box and 0.5rem-padded icon chips, i.e.
+// a control row taller than four table rows put together.
+//
+// SPECIFICITY: those rules nest under `:host`, so `li span` shims to
+// `[_nghost-pg] li[_ngcontent-pg] span[_ngcontent-pg]` — (0,3,2). Naming
+// `.pagination-container` (which lives in THIS component's template, so it
+// carries this component's content attribute) before `::ng-deep` buys two
+// attributes and a class, taking the block to (0,3,3).
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
+}
+
+// ── Everything scoped to the Smart Table ─────────────────────────────────────
+// Scoped through `.table-scroll-container` rather than through `:host ::ng-deep`
+// alone: the two cell renderers below carry their own emulated-encapsulation
+// rules, and that wrapper — this component's own element, so it carries this
+// component's content attribute — is worth one extra attribute and one class of
+// specificity, which is what these blocks need.
+//
+// Table-scoped and not page-wide, because `ga-card-grid` instantiates every
+// column's `renderComponent` itself (`card-grid-custom.component.ts`) and a card
+// has room for the full-size chip that a 1rem table row does not.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+
+  // ── Author cell ────────────────────────────────────────────────────────────
+  // The same renderer, and the same problem, as the Jobs → Employees table:
+  // `ngx-employee-links` pins an 18px avatar, an 8px gap, a 12px/15px name and a
+  // 5px/14px pill padding — a 28px chip in rows the density tokens build to a
+  // 1rem line box.
+  //
+  // Sized off the shared `gauzy-people-*` tokens, so Author and Contact share
+  // one avatar size, one gap and one name treatment.
+  ngx-employee-links {
+    a {
+      @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
+      @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
+    }
+
+    img {
+      width: var(--gauzy-people-avatar-size, 1rem);
+      height: var(--gauzy-people-avatar-size, 1rem);
+      @include nb-ltr(margin-right, var(--gauzy-people-gap, 0.375rem));
+      @include nb-rtl(margin-left, var(--gauzy-people-gap, 0.375rem));
+    }
+
+    // SPECIFICITY: the component nests this under `:host a`, which shims to
+    // `[_nghost-el] a[_ngc] .names-wrapper[_ngc]` — (0,4,1). The doubled class
+    // clears it.
+    .names-wrapper.names-wrapper {
+      // Truncates on WIDTH, never on a character count, so a short name renders
+      // in full and only a genuinely long one picks up an ellipsis.
+      max-width: var(--gauzy-people-name-max-width, 8rem);
+      font-size: var(--gauzy-people-font-size, 0.6875rem);
+      // Matched to the avatar, so the two share one line box.
+      line-height: var(--gauzy-people-avatar-size, 1rem);
+    }
+  }
+
+  // ── Contact cell ───────────────────────────────────────────────────────────
+  // `ngx-contact-links` is the same chip one size up: an 18px avatar — or an
+  // 18px initials square on the rows with no photo — an 8px gap, a 12px/15px
+  // name and the same 5px/14px pill.
+  //
+  // SPECIFICITY: its sheet (`@shared/_contact-links`) nests everything under
+  // `:host .contact-links-container`, so `.inner-wrapper` shims to
+  // `[_nghost-cl] .contact-links-container[_ngc] .inner-wrapper[_ngc]` — (0,5,0),
+  // and (0,7,0) again at the name, the link and the initials square. The doubled
+  // classes are what clear those.
+  //
+  // The avatar image is the exception: it lands at (0,8,1), which no readable
+  // combination of doubled classes here beats, so those two declarations are
+  // `!important` — the same call the Employees sheet makes for
+  // `ngx-avatar.report-table`.
+  ngx-contact-links .inner-wrapper.inner-wrapper {
+    gap: var(--gauzy-people-gap, 0.375rem);
+    @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
+    @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
+
+    .avatar img {
+      width: var(--gauzy-people-avatar-size, 1rem) !important;
+      height: var(--gauzy-people-avatar-size, 1rem) !important;
+    }
+
+    .names-wrapper.names-wrapper {
+      max-width: var(--gauzy-people-name-max-width, 8rem);
+    }
+
+    .link-text.link-text {
+      font-size: var(--gauzy-people-font-size, 0.6875rem);
+      line-height: var(--gauzy-people-avatar-size, 1rem);
+    }
+
+    // The initials fallback carries its own 18px box, a 4px/5px pad and a 10px
+    // flex gap on top — so a row without a photo cost more than a row with one.
+    // Sized to the avatar it stands in for.
+    .prefix.prefix {
+      width: var(--gauzy-people-avatar-size, 1rem);
+      height: var(--gauzy-people-avatar-size, 1rem);
+      padding: 0;
+      gap: 0;
+      font-size: var(--gauzy-people-initials-font-size, 0.5625rem);
+      line-height: var(--gauzy-people-avatar-size, 1rem);
+    }
   }
 }
