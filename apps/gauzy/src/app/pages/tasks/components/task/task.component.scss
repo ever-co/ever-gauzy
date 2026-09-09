@@ -196,3 +196,9 @@ nb-card-body {
     }
   }
 }
+
+// The page-header action row: "+ Add", the selection strip and the grid-vs-list
+// selector, compacted to the table's scale (see the mixin).
+:host .gauzy-button-container {
+  @include ga-hub.page-header-buttons();
+}
