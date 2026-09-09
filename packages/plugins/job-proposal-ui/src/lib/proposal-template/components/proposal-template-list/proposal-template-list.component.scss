@@ -1,82 +1,161 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/tabset-actions' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
+// ── Density tokens ───────────────────────────────────────────────────────────
+// The canonical list-page block Payments, Invoices/Estimates, Pipelines, Tasks,
+// Employees and the two Jobs tables carry, so this page reads as the same
+// surface as the rest of the app.
+//
+// The tokens sit on `:host`, not on the table, and that placement is the point:
+// the renderer that consumes them (`ngx-employee-links`) and the loading
+// skeleton are separate components, and custom properties are the only thing
+// that crosses those boundaries.
 :host {
+  @include ga-hub.density-tokens();
+
   height: 100%;
-  nb-tab.content-active {
-    padding: 1rem;
-    height: calc(100% - 3rem);
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-    overflow: unset;
-    display: flex;
-    flex-direction: column;
-    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
-    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
-    nb-accordion {
-      @include nb-ltr(margin-right, 0.625rem);
-      @include nb-rtl(margin-left, 0.625rem);
-    }
-  }
-  nb-tabset {
-    height: calc(100% - 1.5rem);
-  }
-  nb-card,
-  nb-tab.content-active {
+
+  nb-card {
+    height: 100%;
     background-color: var(--gauzy-card-2);
   }
+
+  // The card body is this page's one definite-height box; everything under it is
+  // a flex chain off that height, so the table takes exactly the room the card
+  // has and scrolls inside it.
   nb-card-body {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 13.5rem) !important;
     overflow: unset;
     background-color: unset;
   }
-  nb-card {
-    height: 100%;
+
+  // Unlike the Jobs → Employees page, this template declares the tabset ITSELF
+  // rather than going through `gz-dynamic-tabs`, so `nb-tabset` and `nb-tab`
+  // carry THIS component's content attribute and these selectors match without
+  // `::ng-deep`. (Only the tab links below need it — those come from Nebular's
+  // own template.)
+  nb-tabset {
+    // Replaces the hand-measured `calc(100% - 1.5rem)` / `calc(100% - 3rem)`
+    // pair this file used to carry: the strip takes what it needs and the tab
+    // body takes the rest, whatever either measures.
+    @include tabset-fills-height(100%);
+    flex: 1 1 auto;
+    min-height: 0;
+
+    nb-tab.content-active {
+      display: flex;
+      flex-direction: column;
+      overflow: unset;
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+      background-color: var(--gauzy-card-2);
+      @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+      @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+    }
+  }
+
+  .gauzy-button-container {
+    // Sits on the tab strip. The mixin reproduces the tab link's box so the
+    // buttons centre on the strip, and — critically — lets pointer events
+    // through the empty part of the row: this container is globally
+    // `width: 100%` (gauzy/_gauzy-table), so as a plain absolute overlay it
+    // swallowed every click on the tab labels underneath it.
+    //
+    // Its second precondition holds here without help: these two tabs are
+    // text-only, so the label is the tallest thing in `.tab-link` and the strip
+    // is exactly the box this row reproduces.
+    @include tabset-action-row(18px);
   }
 }
-:host .gauzy-button-container {
-  // Sits on the tab strip. The mixin reproduces the tab link's box so the
-  // buttons centre on the strip, and — critically — lets pointer events
-  // through the empty part of the row: this container is globally
-  // `width: 100%` (gauzy/_gauzy-table), so as a plain absolute overlay it
-  // swallowed every click on the tab labels underneath it.
-  @include tabset-action-row(18px);
-}
-nb-accordion-item-header ::ng-deep nb-icon {
-  border: 1px solid nb-theme(border-basic-color-4);
-  border-radius: nb-theme(input-rectangle-border-radius);
-  width: 1.75rem;
-  height: 1.75rem;
+
+// The tab labels were the app-wide 0.875rem while the table under them runs at
+// 0.75rem headers and 0.6875rem cells, so the strip read a size louder than
+// everything it introduces. Brought onto the table's own header size.
+//
+// FONT SIZE ONLY: `tabset-tab-text-line-height` is the strip's line box, and
+// `tabset-action-row` above centres the toolbar on it, so leaving that at 1rem
+// keeps the two in step — a smaller label, not a shorter strip with the buttons
+// knocked off its centre line.
+:host ::ng-deep nb-tabset .tab-link {
+  --tabset-tab-text-font-size: var(--gauzy-table-header-font-size, 0.75rem);
 }
 
-.grid {
-  overflow: auto;
-  height: 100%;
+// ── The table surface ────────────────────────────────────────────────────────
+:host .table-scroll-container {
+  @include ga-hub.surface();
+
+  // The tab body is a flex column now, so the table is a flex child that takes
+  // exactly the room it leaves. The global viewport cap
+  // (`max-height: calc(70vh - 132px)` in styles/_overrides.scss) is the
+  // last-resort path for cards that are NOT flex columns; here it would leave a
+  // gap under a short table and clip a long one.
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: unset;
 }
 
-:host nb-card-body {
-  height: calc(100vh - 13.5rem) !important;
-  ::ng-deep angular2-smart-table {
-    .angular2-smart-actions {
-      width: 5%;
-      a {
-        transform: scale(0.6);
-        border-radius: 0.5rem;
-      }
-      a:nth-child(1) {
-        background-color: #00d68f !important;
-        color: white;
-      }
-      a:nth-child(2) {
-        background-color: white !important;
-        color: #ff3d71;
-        box-shadow: var(--gauzy-shadow);
-      }
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+// The pager's `<nav><ul class="pagination"><li>`: the component's own sheet draws
+// 0.875rem numerals in a 0.75rem × 1.1rem box and 0.5rem-padded icon chips, i.e.
+// a control row taller than four table rows put together.
+//
+// SPECIFICITY: those rules nest under `:host`, so `li span` shims to
+// `[_nghost-pg] li[_ngcontent-pg] span[_ngcontent-pg]` — (0,3,2). Naming
+// `.pagination-container` (which lives in THIS component's template, so it
+// carries this component's content attribute) before `::ng-deep` buys two
+// attributes and a class, taking the block to (0,3,3).
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
+}
+
+// ── Everything scoped to the Smart Table ─────────────────────────────────────
+// Scoped through `.table-scroll-container` rather than through `:host ::ng-deep`
+// alone: the cell renderer below carries its own emulated-encapsulation rules,
+// and that wrapper — this component's own element, so it carries this
+// component's content attribute — is worth one extra attribute and one class of
+// specificity, which is what the block needs to win outright without
+// `!important`.
+//
+// What used to sit here instead was a `.angular2-smart-actions` block styling
+// the row action anchors. This table sets `actions: false`, so it renders no
+// action column at all and none of that could ever match.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+
+  // ── Employee cell ──────────────────────────────────────────────────────────
+  // The same renderer, and the same problem, as the Jobs → Employees and
+  // Proposals tables: `ngx-employee-links` pins an 18px avatar, an 8px gap, a
+  // 12px/15px name and a 5px/14px pill padding — a 28px chip in rows the density
+  // tokens build to a 1rem line box.
+  ngx-employee-links {
+    a {
+      @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
+      @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
     }
-    .angular2-smart-actions-title {
-      a {
-        background-color: #00d68f !important;
-        transform: scale(0.9);
-      }
+
+    img {
+      width: var(--gauzy-people-avatar-size, 1rem);
+      height: var(--gauzy-people-avatar-size, 1rem);
+      @include nb-ltr(margin-right, var(--gauzy-people-gap, 0.375rem));
+      @include nb-rtl(margin-left, var(--gauzy-people-gap, 0.375rem));
+    }
+
+    // SPECIFICITY: the component nests this under `:host a`, which shims to
+    // `[_nghost-el] a[_ngc] .names-wrapper[_ngc]` — (0,4,1). The doubled class
+    // clears it.
+    .names-wrapper.names-wrapper {
+      // Truncates on WIDTH, never on a character count, so a short name renders
+      // in full and only a genuinely long one picks up an ellipsis.
+      max-width: var(--gauzy-people-name-max-width, 8rem);
+      font-size: var(--gauzy-people-font-size, 0.6875rem);
+      // Matched to the avatar, so the two share one line box.
+      line-height: var(--gauzy-people-avatar-size, 1rem);
     }
   }
 }
