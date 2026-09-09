@@ -82,12 +82,23 @@
   // 1.5rem — half a rem taller than `tabset-tab-text-line-height` — which grew
   // the strip and left the buttons sitting 4px above its centre line. Sizing the
   // icon to the label's own line box folds it back into that box, which is also
-  // the leaner reading beside a 0.875rem label.
+  // the leaner reading beside a label this size.
   //
   // Done through Nebular's own `icon-*` tokens rather than by overriding its
   // rules, so there is no specificity to fight and nothing to keep in step if
   // that sheet changes.
   .tab-link {
+    // The label was the app-wide 0.875rem while the table under it runs at
+    // 0.75rem headers and 0.6875rem cells, so the strip read a size louder than
+    // everything it introduces. Brought onto the table's own header size, which
+    // is the nearest step down and already in the system.
+    //
+    // FONT SIZE ONLY: `tabset-tab-text-line-height` is the strip's line box, and
+    // `tabset-action-row` centres the toolbar on it while the rules below size
+    // the tab icons from it. Leaving it at 1rem keeps all three in step and the
+    // strip exactly as tall as it is now — a smaller label, not a shorter strip.
+    --tabset-tab-text-font-size: var(--gauzy-table-header-font-size, 0.75rem);
+
     --icon-font-size: #{nb-theme(tabset-tab-text-line-height)};
     --icon-line-height: #{nb-theme(tabset-tab-text-line-height)};
     --icon-width: #{nb-theme(tabset-tab-text-line-height)};
@@ -195,16 +206,25 @@
   }
 
   // ── Job Search Status switch ───────────────────────────────────────────────
-  // NOT sized here, deliberately. Nebular's stock toggle is 50×30, but
-  // `themes.scss` already re-tokenises it for `gauzy-light` and `gauzy-dark` —
-  // `toggle-width: 32px`, `toggle-height: 16px`, `toggle-border-width: 2px`,
-  // `toggle-switcher-size: 12px` — i.e. a 36×20 control that costs this row
-  // nothing it was not already paying (the employee chip beside it is 20px too).
-  // Shrinking it further only squeezed the knob: at 12px it would have filled the
-  // pill's whole interior and had 8px of travel instead of 16, so the switch read
-  // as a solid block rather than as something with an on and an off position.
+  // Nebular's stock toggle is 50×30, but `themes.scss` already re-tokenises it
+  // for `gauzy-light` and `gauzy-dark` — `toggle-width: 32px`,
+  // `toggle-height: 16px`, `toggle-border-width: 2px`,
+  // `toggle-switcher-size: 12px` — so the size to scale from is that 36×20
+  // control, not Nebular's.
   //
-  // What IS wrong here is the knob's colour, and it is wrong everywhere on the
+  // Scaled to three quarters, and the KNOB is scaled with the pill rather than
+  // left where it was: that is the whole difference between a smaller switch and
+  // a solid block. Stock seats a 12px knob in a 16px interior (0.75 of it); this
+  // seats a 9px knob in a 12px interior, the same 0.75, so the travel stays
+  // proportional and the two positions stay legible. The 2px border is an edge
+  // rather than a proportion and is left alone.
+  //
+  // 24×12 inside that border is a 28×16 control, and 16px is the row's 1rem line
+  // box to the pixel — the switch now costs the row exactly what a line of text
+  // in the cell beside it does. This column renders with `label = false`, so it
+  // owns that box outright instead of sharing it with a caption.
+  //
+  // The knob's colour is a second, separate fault, and it is wrong everywhere on the
   // dark themes. Nebular paints it from
   // `toggle-primary-checked-switcher-background-color`, which maps to
   // `background-basic-color-1` → `gauzy-card-1` → rgba(18, 18, 20, 1): a
@@ -221,6 +241,10 @@
   // `JobSearchStatusEditorComponent` renders that same component again on an
   // inline edit.
   ngx-toggle-switcher {
+    --toggle-width: 1.5rem;
+    --toggle-height: 0.75rem;
+    --toggle-switcher-size: 0.5625rem;
+
     --toggle-primary-checked-switcher-background-color: var(--text-hint-color);
 
     // SPECIFICITY: Nebular's `nb-toggle.status-primary .toggle-switcher` is
