@@ -121,6 +121,12 @@
   }
 }
 
+// The page-header action row: "Manage Templates", "+ Add", View / Mark as … /
+// Edit / Delete and the two layout-selector icons.
+:host .gauzy-button-container {
+  @include ga-hub.page-header-buttons();
+}
+
 :host .table-scroll-container {
   @include ga-hub.surface();
 }
