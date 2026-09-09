@@ -5,6 +5,13 @@
 // Header-band statistics: three compact stat cards (big value over a muted
 // label). Theme tokens only, so the cards read in every light AND dark theme;
 // paddings kept tight so the header band gains no height over the old strip.
+//
+// The fill used to be `--gauzy-card-2`, which is exactly what `@shared/_pg-card`
+// paints `nb-card` — and a plain `nb-card-header` declares no background of its
+// own, so it shows the card's. Every one of these cards was therefore drawn in
+// its own backdrop's colour: three numbers floating loose on the header band
+// with no panel around them, in both themes. They take the table's own surface
+// treatment now, so the strip and the table below it read as one material.
 .statistics {
   display: flex;
   // A card floor of 7rem cannot shrink — on a narrow page the row wraps
@@ -12,16 +19,25 @@
   flex-wrap: wrap;
   align-items: stretch;
   gap: 0.5rem;
-  margin-top: 1rem;
+  // Symmetric, and the same 0.5rem the cards are spaced from each other by, so
+  // the strip is inset from the band by exactly its own internal gap. The bottom
+  // half is not optional: this is the last child of a `card-custom-header` that
+  // sets `padding-bottom: 0`, so nothing else keeps the cards off the edge.
+  margin-block: 0.5rem;
 
   .stat-card {
+    @include ga-hub.surface();
+    // The one deviation from that mixin: these are control-scale boxes sitting
+    // in a header band, not full panels, so they take the smaller of the two
+    // shared radii. The table below keeps the 0.5rem one.
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+
     display: flex;
     flex-direction: column;
     justify-content: center;
+    gap: 0.125rem;
     min-width: 7rem;
-    padding: 0.3125rem 0.75rem;
-    background: var(--gauzy-card-2);
-    border-radius: var(--gauzy-radius-sm);
+    padding: 0.375rem 0.75rem;
   }
 
   .stat-value {
@@ -29,11 +45,22 @@
     font-weight: 600;
     line-height: 1.25rem;
     color: var(--text-basic-color);
+    // The three values sit in a row and are read against each other, so the
+    // digits are held to one width and a "11" lines up under a "9" instead of
+    // drifting as the counts change.
+    font-variant-numeric: tabular-nums;
   }
 
+  // The label is what tells you which number this is, so it is given the
+  // micro-label treatment rather than left reading as a caption that happens to
+  // sit under a number. A step smaller than before, because uppercase at the
+  // same size reads larger.
   .stat-label {
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
+    font-weight: 600;
     line-height: 0.875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: var(--text-hint-color);
   }
 }
