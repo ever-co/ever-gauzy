@@ -78,8 +78,14 @@ export type PageRouteLocationId =
  * - 'timesheet-page': The timesheet tab page.
  * - 'time-activity-page': The time and activity tab page.
  * - 'employee-edit-page': The employee edit tab page.
+ * - 'organization-edit-page': The organization edit tab page.
  */
-export type PageTabsetPageId = 'dashboard-page' | 'timesheet-page' | 'time-activity-page' | 'employee-edit-page';
+export type PageTabsetPageId =
+	| 'dashboard-page'
+	| 'timesheet-page'
+	| 'time-activity-page'
+	| 'employee-edit-page'
+	| 'organization-edit-page';
 
 /**
  * @description
