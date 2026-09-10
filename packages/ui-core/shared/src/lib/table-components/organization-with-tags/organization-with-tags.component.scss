@@ -9,18 +9,43 @@
         display: flex;
         justify-content: flex-start;
 
-        img {
+        // Sized on both the logo and the icon that stands in for a missing one, so
+        // a row without a logo keeps the same rhythm as the rows around it.
+        .organization-logo {
             width: 28px;
             height: 28px;
+            flex: 0 0 28px;
             border-radius: 6px;
             margin: 0 5px;
-            box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.25);
             object-fit: cover;
+            // Was a literal `0px 1px 1px rgba(0, 0, 0, 0.25)` — a black drop shadow,
+            // invisible against the dark themes' canvas. `gauzy-shadow` is the shared
+            // token for this hairline; the literal survives as its fallback for the
+            // themes that emit no token.
+            box-shadow: var(--gauzy-shadow, 0px 1px 1px 0px rgb(0 0 0 / 25%));
+        }
+
+        .organization-logo--empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--gauzy-sidebar-background-3);
+            color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+
+            nb-icon {
+                font-size: 0.875rem;
+                width: 0.875rem;
+                height: 0.875rem;
+            }
         }
 
         span .member {
-            font-size: 11px;
-            color: rgba(126, 126, 143, 0.75);
+            // Was `11px` and a literal `rgba(126, 126, 143, 0.75)`. The size is the
+            // shared table chip tier, and the colour is the app's muted ramp — the
+            // literal is that ramp at 75%, which reads as a third, dimmer grey next
+            // to every other muted label in the table.
+            font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+            color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
         }
     }
 

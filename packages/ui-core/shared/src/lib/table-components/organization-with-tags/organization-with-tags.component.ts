@@ -10,6 +10,22 @@ import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags
     standalone: false
 })
 export class OrganizationWithTagsComponent extends PictureNameTagsComponent {
+	/** Set when the row's logo URL is present but fails to load. */
+	logoFailed = false;
+
+	/**
+	 * The row's logo.
+	 *
+	 * `imageUrl` is the column; `image.fullUrl` is the uploaded asset the Main tab
+	 * writes to. The card header and the Main tab both resolve the asset first and
+	 * fall back to the column, and this cell now agrees with them — reading only
+	 * `imageUrl` left every organization whose logo came from an upload showing no
+	 * logo in the list.
+	 */
+	get logoUrl(): string {
+		return this.rowData?.image?.fullUrl || this.rowData?.imageUrl;
+	}
+
 	constructor(
 		protected readonly themeService: NbThemeService,
 		protected readonly translateService: TranslateService
