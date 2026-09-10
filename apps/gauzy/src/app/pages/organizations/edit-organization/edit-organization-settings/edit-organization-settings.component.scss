@@ -1,37 +1,42 @@
 @use 'var' as *;
-@use 'themes' as *;
 
-// This component's template is two elements — `.org-settings` wrapping an
-// `<nb-route-tabset>` — and a component stylesheet reaches nothing else. Angular
-// compiles a descendant selector with this component's content attribute on the
-// descendant, so a rule can match neither an ancestor (the parent's `nb-card-body`,
-// which this component is projected into) nor anything inside the routed tab
-// components below it. Everything removed here was in one of those two positions:
+// This page renders the SAME tab component as the employee edit page —
+// `<gz-dynamic-tabs class="tabset-container">` over the page tab registry — so the
+// rules below are a copy of `edit-employee-profile.component.scss`. Keep them in
+// step with it; the compiled CSS for the strip and its container chain is meant to
+// be byte-identical between the two files.
 //
-// - `@forward '@shared/_edit-profile-form'`, which emitted 28 rules into this
-//   sheet, every one of them rooted at `:host nb-card` or `:host nb-card-body` —
-//   an editing form's chrome, in a file that renders a tab strip. Nothing else came
-//   with it: the mixins it re-exports are unused here, and `var` and `themes` are
-//   already used directly above. About 4KB of CSS for no selector that can match.
-// - `nb-card-body { overflow-y: hidden }`, aimed at the parent's card body.
-// - `.form-group input`, `nb-tab`, `nb-tabset` and `.header`, none of which this
-//   template contains — the tabset element is `nb-route-tabset`, reached through
-//   `::ng-deep` below, which is why that block works and these did not.
-
-.org-settings {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  background-color: unset;
-}
+// Nothing here styles a tab link, on purpose. Everything a route tab needs already
+// arrives from three shared sheets, none of them page-specific:
+//
+//   * `styles/includes/_tabset.scss`  — the 10px icon gap, and the stacked
+//     icon-over-text layout below `dsk` (1532px).
+//   * `gauzy/_gauzy-overrides.scss`   — `nb-tabset-overrides()`: the tab link's
+//     flex box, the 0.875rem/400 type raised to 600 on the active tab, and the
+//     resting / hover / active colours.
+//   * `styles/_overrides.scss`        — `nb-overrides()`: the active tab's
+//     `--gauzy-card-2` fill and its 1px overlap onto the panel below.
+//
+// This file used to restate all of that locally, under `:host ::ng-deep`, where no
+// shared rule could reach it: a 7px/16px tab box against the theme's 0.75rem/1.25rem,
+// 15px icons with a 6px gap, an `!important` svg fill fighting the `currentColor`
+// chain, `letter-spacing: 0.02em` on `.tab-text`, its own copy of the active fill,
+// and a `display: flex !important` that suppressed the stacked layout at every
+// width. The result was a tab bar visibly smaller and tighter than every other tab
+// bar in the app. It is all gone, along with `fullWidth` on the tabset — which
+// switches Nebular's own `:host(.full-width) .route-tabset` to `space-around`, and
+// which a local `justify-content: flex-start !important` then had to undo — and
+// `flex-wrap: wrap` on the strip: the tabs scroll now, exactly as the employee
+// page's nine do.
+//
+// What remains is the flex chain that hands the routed tab its height, and the
+// strip's scroll port.
 
 // The height the card body hands down, passed on to the routed tab.
 //
 // `nb-route-tabset`'s template is `<ul class="route-tabset">` followed by a bare
 // `<router-outlet>`, so the routed tab component is a SIBLING of the strip inside
-// this host — which is why the chain can be closed here rather than in each tab.
+// that host — which is why the chain can be closed here rather than in each tab.
 // Every tab used to size itself with `height: calc(100vh - 19.25rem)`: three
 // copies of one estimate of this page's chrome, and wrong whenever the estimate
 // was (the demo-account banner alone puts the header band ~23px over the theme's
@@ -39,23 +44,57 @@
 :host {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1 1 auto;
   min-height: 0;
 }
 
-:host ::ng-deep {
-  nb-route-tabset {
+:host {
+  ::ng-deep .tabset-container .route-tabset {
+    // `auto`, not `scroll`: with three tabs the strip always fits, and `scroll`
+    // reserves a scrollbar gutter whether or not there is anything to scroll.
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    // `scrollbar-width` and `-ms-overflow-style` apply to the SCROLL CONTAINER,
+    // not to a `::-webkit-scrollbar` pseudo-element; nested inside that rule they
+    // match nothing, and Firefox then draws a real scrollbar across the bottom of
+    // the tab strip while Chrome hides it. They belong here.
+    /* Firefox */
+    scrollbar-width: none;
+    /* IE, Edge */
+    -ms-overflow-style: none;
+
+    /* Chrome, Safari, Opera */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    @include respond(xxl) {
+      li a.tab-link {
+        display: flex !important;
+
+        nb-icon {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}
+
+:host ::ng-deep .tabset-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  > nb-route-tabset {
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
 
-    ul.route-tabset {
+    > .route-tabset {
       flex: 0 0 auto;
-      padding: 0;
-      flex-wrap: wrap;
-      border-bottom: none;
-      margin-bottom: 0 !important;
     }
 
     // The outlet element is an anchor for the routed view, never a box of its
@@ -64,100 +103,14 @@
       display: none;
     }
 
-    > router-outlet + * {
+    > router-outlet ~ * {
       flex: 1 1 auto;
       min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      margin-inline-end: 0.5rem;
     }
-
-    li {
-      // Removed `&:last-of-type { margin-left: auto }`. The strip is a flex row, so
-      // an auto inline-start margin on the final item absorbs every spare pixel
-      // between it and the one before — with three route tabs that stranded
-      // "Settings" against the far edge of the card, reading as though it belonged
-      // to something other than "Main" and "Location". The tabs are one group and
-      // now sit together; `justify-content` on the strip decides where the group
-      // goes, which is what the `.full-width` rule below is already for.
-
-      // The resting tab icon. Was a literal `#7e7e8f` — a mid grey that reads as
-      // disabled on the dark themes and is off the ramp on the light ones. That
-      // literal IS `gauzy-text-color-2` on the gauzy themes, so it is the token
-      // this always meant; the fallback keeps it working on the themes that do
-      // not emit the custom property.
-      & svg {
-        fill: var(--gauzy-text-color-2, rgba(126, 126, 143, 1)) !important;
-      }
-      &.active {
-        & .tab-link {
-          background: nb-theme(gauzy-card-2);
-          transition: background 0.5s ease-in-out;
-        }
-      }
-      &.active,
-      &:hover {
-        svg {
-          fill: nb-theme(text-primary-color) !important;
-        }
-      }
-      & .tab-link {
-        display: flex !important;
-        justify-content: space-between;
-        align-items: center;
-        transition: background 0.5s ease-in-out;
-        // Padding used to be declared ONLY inside three nested max-width queries —
-        // `dsk` (<=1532px) at 20px, `1440px` at 25px and `xxl` (<=1280px) at 20px.
-        // Same specificity, so the later ones won where they overlapped and the
-        // horizontal padding ran 20 -> 25 -> 20 as the window got NARROWER, while
-        // anything above 1532px fell through to Nebular's own padding entirely.
-        // One base value, narrowed once on small screens.
-        //
-        // 10px/25px was sized around the 16px text below; at the strip's own type
-        // size the tab reads as a control rather than as a banner. The radius is
-        // the top half of the card's, so the active tab and the panel under it
-        // read as one folder rather than as a bar above a box.
-        padding: px2rem(7px) px2rem(16px);
-        border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-
-        &:before {
-          width: 0 !important;
-        }
-
-        @include respond(xxl) {
-          padding: px2rem(7px) px2rem(12px);
-        }
-
-        nb-icon {
-          margin: 0;
-          margin-right: 6px;
-          margin-left: 0;
-          width: 15px;
-          height: 15px;
-          font-size: 15px;
-        }
-      }
-    }
-
-    // Was 16px/600. The shared tab typography is `route-tabset-tab-text-font-size`
-    // (0.875rem) at weight 400, raised to 600 only on the ACTIVE tab — see
-    // `nb-tabset-overrides()` in `gauzy/_gauzy-overrides.scss`. This rule sits on
-    // the inner `<span class="tab-text">` rather than on the link, so it beat both
-    // of those and painted every tab on this page a size larger and a weight
-    // heavier than the tab bars everywhere else in the app, active or not. It now
-    // sets only what the shared rules do not: the strip's own tracking, and the
-    // reset of Nebular's `nb-icon + span` margin (the icon carries the gap).
-    .tab-text {
-      margin-left: 0 !important;
-      font-style: normal;
-      line-height: 1rem;
-      letter-spacing: 0.02em;
-    }
-  }
-}
-
-::ng-deep .full-width .route-tabset {
-  display: flex;
-  justify-content: flex-start !important;
-  @include respond(sm) {
-    justify-content: center !important;
   }
 }
 
@@ -169,15 +122,15 @@
 // stopped constraining them.
 @include respond(lg) {
   :host {
+    flex: 0 0 auto;
     height: auto;
     min-height: 0;
   }
 
-  .org-settings {
-    height: auto;
-  }
-
-  :host ::ng-deep nb-route-tabset {
+  :host ::ng-deep .tabset-container,
+  :host ::ng-deep .tabset-container > nb-route-tabset,
+  :host ::ng-deep .tabset-container > nb-route-tabset > router-outlet ~ * {
     flex: 0 0 auto;
+    overflow: visible;
   }
 }
