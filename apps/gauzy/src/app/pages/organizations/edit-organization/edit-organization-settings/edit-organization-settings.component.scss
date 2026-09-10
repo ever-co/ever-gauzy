@@ -38,12 +38,14 @@ nb-card-body {
     }
 
     li {
-      &:last-of-type {
-        margin-left: auto;
-        @include respond(sm) {
-          margin-left: 0;
-        }
-      }
+      // Removed `&:last-of-type { margin-left: auto }`. The strip is a flex row, so
+      // an auto inline-start margin on the final item absorbs every spare pixel
+      // between it and the one before — with three route tabs that stranded
+      // "Settings" against the far edge of the card, reading as though it belonged
+      // to something other than "Main" and "Location". The tabs are one group and
+      // now sit together; `justify-content` on the strip decides where the group
+      // goes, which is what the `.full-width` rule below is already for.
+
       // The resting tab icon. Was a literal `#7e7e8f` — a mid grey that reads as
       // disabled on the dark themes and is off the ramp on the light ones. That
       // literal IS `gauzy-text-color-2` on the gauzy themes, so it is the token
@@ -69,17 +71,16 @@ nb-card-body {
         justify-content: space-between;
         align-items: center;
         transition: background 0.5s ease-in-out;
+        // Padding used to be declared ONLY inside three nested max-width queries —
+        // `dsk` (<=1532px) at 20px, `1440px` at 25px and `xxl` (<=1280px) at 20px.
+        // Same specificity, so the later ones won where they overlapped and the
+        // horizontal padding ran 20 -> 25 -> 20 as the window got NARROWER, while
+        // anything above 1532px fell through to Nebular's own padding entirely.
+        // One base value, narrowed once on small screens.
+        padding: px2rem(10px) px2rem(25px);
 
         &:before {
           width: 0 !important;
-        }
-
-        @include respond(dsk) {
-          padding: px2rem(10px) px2rem(20px);
-        }
-
-        @include respond(1440px) {
-          padding: px2rem(10px) px2rem(25px);
         }
 
         @include respond(xxl) {
