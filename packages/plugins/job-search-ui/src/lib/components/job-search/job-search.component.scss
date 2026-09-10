@@ -2,6 +2,7 @@
 @use 'gauzy/_gauzy-overrides' as *;
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/tabset-actions' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 :host {
   .form-group {
@@ -114,7 +115,19 @@
   gap: 4px;
 }
 
+// The three nav buttons ("Employees", "Matchings", "Proposals Template") sit in
+// the card header, outside `.gauzy-button-container`, so the mixin below never
+// reached them and they stayed a size larger than the action strip they sit
+// above. Same split as Invoices, and handled the same way: the mixin goes on
+// both blocks that hold a button.
+:host nb-card-header {
+  @include ga-hub.page-header-buttons();
+}
+
 :host .gauzy-button-container {
+  // Buttons compacted to the table's scale (see the mixin).
+  @include ga-hub.page-header-buttons();
+
   // Sits on the tab strip. The mixin reproduces the tab link's box so the
   // buttons centre on the strip, and — critically — lets pointer events
   // through the empty part of the row: this container is globally

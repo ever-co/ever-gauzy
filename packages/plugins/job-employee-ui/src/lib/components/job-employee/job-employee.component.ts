@@ -6,6 +6,7 @@ import { BehaviorSubject, combineLatest, merge, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { NbIconLibraries } from '@nebular/theme';
 import { Cell } from 'angular2-smart-table';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { ID, IEmployee, IEmployeeJobsStatistics, IOrganization, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
@@ -91,6 +92,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	private readonly _i18nService = inject(I18nService);
 	private readonly _pageDataTableRegistryService = inject(PageDataTableRegistryService);
 	private readonly _pageTabRegistryService = inject(PageTabRegistryService);
+	private readonly _iconLibraries = inject(NbIconLibraries);
 
 	public readonly jobSearchTabsEnum = JobSearchTabsEnum;
 	public readonly employees$ = new Subject<boolean>();
@@ -462,20 +464,87 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			},
 			edit: {
 				// This is the real per-row action: it puts the row into inline edit of
-				// the two rate columns (plus the status toggle). The old
-				// '<i class="nb-edit">' markup relied on Nebular's long-removed icon
-				// font, so the anchor rendered as a bare green dot. FontAwesome is
-				// loaded globally; native `title` (not nbTooltip) because these strings
-				// are injected via [innerHTML], where directives never bind.
-				editButtonContent: `<i class="fas fa-edit" aria-hidden="true" title="${this.getTranslation('BUTTONS.EDIT')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.EDIT')}</span>`,
-				saveButtonContent: `<i class="fas fa-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
-				cancelButtonContent: `<i class="fas fa-times" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
+				// the two rate columns (plus the status toggle).
+				editButtonContent: this.renderActionIcon('edit-outline', this.getTranslation('BUTTONS.EDIT')),
+				saveButtonContent: this.renderActionIcon('checkmark-outline', this.getTranslation('BUTTONS.SAVE')),
+				cancelButtonContent: this.renderActionIcon('close-outline', this.getTranslation('BUTTONS.CANCEL')),
+				// `renderActionIcon` returns an inline `<svg>`, and Angular's HTML
+				// sanitizer allows no SVG element at all — without this the anchors
+				// render empty.
+				//
+				// `sanitizer` is the library's own supported opt-out, not an ad-hoc key:
+				// `EditAction.sanitizer?: SanitizerSettings` in angular2-smart-table, read
+				// as `settings.edit?.sanitizer?.bypassHtml` by both anchor rows (the edit
+				// button and the save/cancel pair) to pick the mode its `bypassSecurityTrust`
+				// pipe hands to `DomSanitizer.bypassSecurityTrustHtml` before the
+				// `[innerHTML]` binding. So this IS the DomSanitizer path — the library just
+				// owns the call.
+				//
+				// Safe here because every part of that string is ours: the glyph comes
+				// straight out of the registered icon pack and the label is an i18n string,
+				// escaped before it is interpolated.
+				sanitizer: { bypassHtml: true },
 				confirmSave: true
 			},
 			columns: {
 				...this._pageDataTableRegistryService.getPageDataTableColumns('job-employee-page')
 			}
 		};
+	}
+
+	/**
+	 * Builds the inner markup for one of the table's row-action anchors.
+	 *
+	 * `editButtonContent` and its siblings take a STRING, which the library injects
+	 * with `[innerHTML]`, so an `<nb-icon>` written in there is never instantiated —
+	 * which is why these three anchors used to carry FontAwesome glyphs while every
+	 * other icon on the page came from the app's own pack. Reading the SVG straight
+	 * out of that pack closes the gap: `edit-outline` here draws exactly what
+	 * `<nb-icon icon="edit-outline">` draws in the toolbar above the table, and it
+	 * keeps drawing the same thing if the pack is ever re-pointed (it already maps
+	 * the Eva names to Tabler icons — see `TablerIconsModule`).
+	 *
+	 * @param icon - Icon name in the registered `eva` pack.
+	 * @param label - Translated accessible name for the action.
+	 * @returns The anchor's inner markup, or the bare label if the pack is unavailable.
+	 */
+	private renderActionIcon(icon: string, label: string): string {
+		const safeLabel = this.escapeHtml(label);
+
+		let glyph = '';
+		try {
+			glyph = this._iconLibraries.getSvgIcon(icon, 'eva')?.icon?.getContent() ?? '';
+		} catch {
+			// `getSvgIcon` throws when the pack is not registered — outside the app
+			// shell, e.g. in an isolated test. The label alone is the library's own
+			// default content, so the button still works and still reads.
+			glyph = '';
+		}
+
+		if (!glyph) {
+			return safeLabel;
+		}
+
+		// Native `title` rather than `nbTooltip`: this is raw markup, where
+		// directives never bind. The label is repeated as visually hidden text so
+		// the action is not icon-only to a screen reader.
+		return `<span class="ga-action-glyph" title="${safeLabel}" aria-hidden="true">${glyph}</span><span class="sr-only">${safeLabel}</span>`;
+	}
+
+	/**
+	 * Escapes a translated label for interpolation into the raw action markup above,
+	 * which is rendered with the sanitizer bypassed.
+	 *
+	 * @param value - The label to escape.
+	 * @returns The label with HTML-significant characters replaced by entities.
+	 */
+	private escapeHtml(value: string): string {
+		return value
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
 	}
 
 	/**

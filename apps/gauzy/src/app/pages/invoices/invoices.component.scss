@@ -70,7 +70,19 @@
   width: 100%;
 }
 
+// This page keeps its own header markup rather than the shared
+// `.gauzy-button-container`, so the mixin goes on both blocks that hold a
+// button: the card header (the table-settings gear) and the action strip below
+// it. Without the first the gear stayed at its full size beside a strip that had
+// shrunk.
+:host nb-card-header {
+  @include ga-hub.page-header-buttons();
+}
+
 :host .actions-container {
+  // Buttons compacted to the table's scale (see the mixin).
+  @include ga-hub.page-header-buttons();
+
   display: flex;
   flex-wrap: nowrap;
   position: absolute;

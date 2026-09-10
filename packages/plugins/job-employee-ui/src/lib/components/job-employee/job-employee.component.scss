@@ -1,83 +1,428 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/tabset-actions' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
+// ── Density tokens ───────────────────────────────────────────────────────────
+// The canonical list-page block Payments, Invoices/Estimates, Pipelines, Tasks
+// and Employees carry, so this page reads as the same surface as the rest of the
+// app rather than as the one table still drawn a size larger than its
+// neighbours.
+//
+// The tokens sit on `:host`, not on the table, and that placement is the point:
+// the renderers that consume them (`ngx-employee-links`, `ngx-toggle-switcher`,
+// the editors the table swaps in on an inline edit, the loading skeleton) are
+// separate components, and custom properties are the only thing that crosses
+// those boundaries.
+//
+// Hard-coded overrides for the renderers that never joined the token system are
+// a different matter — a literal `1rem` is not a proportion — and live under
+// `.table-scroll-container` below, never here.
 :host {
+  @include ga-hub.density-tokens();
+
   height: 100%;
-  nb-tab.content-active {
-    padding: 1rem;
-    height: calc(100% - 3rem);
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-    overflow: unset;
-    display: flex;
-    flex-direction: column;
-    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
-    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
-    nb-accordion {
-      @include nb-ltr(margin-right, 0.625rem);
-      @include nb-rtl(margin-left, 0.625rem);
-    }
-  }
-  nb-tabset {
-    height: calc(100% - 1.5rem);
-  }
-  nb-card,
-  nb-tab.content-active {
+
+  nb-card {
+    height: 100%;
     background-color: var(--gauzy-card-2);
   }
+
+  // The card body is this page's one definite-height box. Everything below it is
+  // a flex chain off that height, so the table ends up taking exactly the room
+  // the card has and scrolling inside it instead of stretching the page.
   nb-card-body {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 13.5rem) !important;
     overflow: unset;
     background-color: unset;
   }
-  nb-card {
-    height: 100%;
+
+  // `gz-dynamic-tabs` is a bare wrapper with no styles of its own, so it has to
+  // be told to pass the card body's height through to the tabset inside it.
+  gz-dynamic-tabs {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .gauzy-button-container {
+    // Buttons compacted to the table's scale (see the mixin).
+    @include ga-hub.page-header-buttons();
+
+    // Sits on the tab strip. The mixin reproduces the tab link's box so the
+    // buttons centre on the strip, and — critically — lets pointer events
+    // through the empty part of the row: this container is globally
+    // `width: 100%` (gauzy/_gauzy-table), so as a plain absolute overlay it
+    // swallowed every click on the tab labels underneath it.
+    @include tabset-action-row(18px);
   }
 }
-:host .gauzy-button-container {
-  // Sits on the tab strip. The mixin reproduces the tab link's box so the
-  // buttons centre on the strip, and — critically — lets pointer events
-  // through the empty part of the row: this container is globally
-  // `width: 100%` (gauzy/_gauzy-table), so as a plain absolute overlay it
-  // swallowed every click on the tab labels underneath it.
-  @include tabset-action-row(18px);
-}
-nb-accordion-item-header ::ng-deep nb-icon {
-  border: 1px solid nb-theme(border-basic-color-4);
-  border-radius: nb-theme(input-rectangle-border-radius);
-  width: 1.75rem;
-  height: 1.75rem;
+
+// ── Tab strip and tab body ───────────────────────────────────────────────────
+// `nb-tabset`, `nb-tab` and the tab links are all rendered from
+// `gz-dynamic-tabs`' OWN template, so they carry its content attribute, not this
+// component's. A plain `:host nb-tabset` therefore shims to
+// `[_nghost-je] nb-tabset[_ngcontent-je]` and matches nothing — which is why the
+// hand-measured `calc(100% - 1.5rem)` / `calc(100% - 3rem)` heights this file
+// used to carry never had any effect at all. `::ng-deep` is what reaches them.
+:host ::ng-deep nb-tabset {
+  // Replaces those two magic numbers: the strip takes what it needs and the tab
+  // body takes the rest, whatever either measures.
+  @include tabset-fills-height(100%);
+  // The mixin's `height: 100%` needs its parent's height to be definite;
+  // `gz-dynamic-tabs` is a flex item, so it is — but claiming the room as a flex
+  // child too means the chain does not hang on that resolution.
+  flex: 1 1 auto;
+  min-height: 0;
+  background-color: var(--gauzy-card-2);
+
+  // `tabset-action-row` above reproduces the tab LABEL's line box, so the
+  // toolbar only stays centred on the strip while the label is the tallest thing
+  // in `.tab-link`. These three tabs carry icons, and `nb-icon` defaults to
+  // 1.5rem — half a rem taller than `tabset-tab-text-line-height` — which grew
+  // the strip and left the buttons sitting 4px above its centre line. Sizing the
+  // icon to the label's own line box folds it back into that box, which is also
+  // the leaner reading beside a label this size.
+  //
+  // Done through Nebular's own `icon-*` tokens rather than by overriding its
+  // rules, so there is no specificity to fight and nothing to keep in step if
+  // that sheet changes.
+  .tab-link {
+    // The label was the app-wide 0.875rem while the table under it runs at
+    // 0.75rem headers and 0.6875rem cells, so the strip read a size louder than
+    // everything it introduces. Brought onto the table's own header size, which
+    // is the nearest step down and already in the system.
+    //
+    // FONT SIZE ONLY: `tabset-tab-text-line-height` is the strip's line box, and
+    // `tabset-action-row` centres the toolbar on it while the rules below size
+    // the tab icons from it. Leaving it at 1rem keeps all three in step and the
+    // strip exactly as tall as it is now — a smaller label, not a shorter strip.
+    --tabset-tab-text-font-size: var(--gauzy-table-header-font-size, 0.75rem);
+
+    --icon-font-size: #{nb-theme(tabset-tab-text-line-height)};
+    --icon-line-height: #{nb-theme(tabset-tab-text-line-height)};
+    --icon-width: #{nb-theme(tabset-tab-text-line-height)};
+    --icon-height: #{nb-theme(tabset-tab-text-line-height)};
+
+    // Nebular's 0.5rem was spaced for the 1.5rem icon.
+    nb-icon + span {
+      @include nb-ltr(margin-left, 0.375rem);
+      @include nb-rtl(margin-right, 0.375rem);
+    }
+  }
+
+  nb-tab.content-active {
+    display: flex;
+    flex-direction: column;
+    overflow: unset;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    background-color: var(--gauzy-card-2);
+    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+  }
 }
 
-.grid {
-  overflow: auto;
-  height: 100%;
+// ── The table surface ────────────────────────────────────────────────────────
+:host .table-scroll-container {
+  @include ga-hub.surface();
+
+  // The tab body is a flex column now, so the table is a flex child that takes
+  // exactly the room it leaves. The global viewport cap
+  // (`max-height: calc(70vh - 132px)` in styles/_overrides.scss) is the
+  // last-resort path for cards that are NOT flex columns; here it would leave a
+  // gap under a short table and clip a long one.
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: unset;
 }
 
-:host nb-card-body {
-  height: calc(100vh - 13.5rem) !important;
-  ::ng-deep angular2-smart-table {
-    .angular2-smart-actions {
-      width: 5%;
-      a {
-        transform: scale(0.6);
-        border-radius: 0.5rem;
-      }
-      a:nth-child(1) {
-        background-color: #00d68f !important;
-        color: white;
-      }
-      a:nth-child(2) {
-        background-color: white !important;
-        color: #ff3d71;
-        box-shadow: var(--gauzy-shadow);
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+// The pager's `<nav><ul class="pagination"><li>`: the component's own sheet draws
+// 0.875rem numerals in a 0.75rem × 1.1rem box and 0.5rem-padded icon chips, i.e.
+// a control row taller than four table rows put together.
+//
+// SPECIFICITY: those rules nest under `:host`, so `li span` shims to
+// `[_nghost-pg] li[_ngcontent-pg] span[_ngcontent-pg]` — (0,3,2). Naming
+// `.pagination-container` (which lives in THIS component's template, so it
+// carries this component's content attribute) before `::ng-deep` buys two
+// attributes and a class, taking the block to (0,3,3).
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
+}
+
+// ── Everything scoped to the Smart Table ─────────────────────────────────────
+// Scoped through `.table-scroll-container` rather than through `:host ::ng-deep`
+// alone: the cell renderers below carry their own emulated-encapsulation rules,
+// and that wrapper — this component's own element, so it carries this
+// component's content attribute — is worth one extra attribute and one class of
+// specificity, which is what these blocks need to win outright without
+// `!important`.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+
+  // ── Employee cell ──────────────────────────────────────────────────────────
+  // `ngx-employee-links` pins an 18px avatar, an 8px gap, a 12px/15px name and a
+  // 5px/14px pill padding — a 28px chip in rows the density tokens build to a
+  // 1rem line box, and the single biggest reason a row here stood twice as tall
+  // as the same row on Employees or Payments.
+  //
+  // Sized off the shared `gauzy-people-*` tokens, so this column matches the
+  // people cells every other list page renders.
+  //
+  // `ng-component` is the second selector because the inline editor
+  // (`EmployeeLinkEditorComponent`) declares no selector of its own — the smart
+  // table instantiates it dynamically, so its host element is a bare
+  // `<ng-component>` — while reusing this very sheet. Without it the row jumps
+  // back to full height the moment it goes into edit.
+  ngx-employee-links,
+  ng-component {
+    a {
+      @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
+      @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
+    }
+
+    img {
+      width: var(--gauzy-people-avatar-size, 1rem);
+      height: var(--gauzy-people-avatar-size, 1rem);
+      @include nb-ltr(margin-right, var(--gauzy-people-gap, 0.375rem));
+      @include nb-rtl(margin-left, var(--gauzy-people-gap, 0.375rem));
+    }
+
+    // SPECIFICITY: the component nests this under `:host a`, which shims to
+    // `[_nghost-el] a[_ngcontent-el] .names-wrapper[_ngcontent-el]` — (0,4,1).
+    // The doubled class is what clears it, the same idiom the Employees and
+    // Tasks sheets use on their own people cells.
+    .names-wrapper.names-wrapper {
+      // Truncates on WIDTH, never on a character count, so a short name renders
+      // in full and only a genuinely long one picks up an ellipsis.
+      max-width: var(--gauzy-people-name-max-width, 8rem);
+      font-size: var(--gauzy-people-font-size, 0.6875rem);
+      // Matched to the avatar, so the two share one line box.
+      line-height: var(--gauzy-people-avatar-size, 1rem);
+    }
+  }
+
+  // ── Job Search Status switch ───────────────────────────────────────────────
+  // Nebular's stock toggle is 50×30, but `themes.scss` already re-tokenises it
+  // for `gauzy-light` and `gauzy-dark` — `toggle-width: 32px`,
+  // `toggle-height: 16px`, `toggle-border-width: 2px`,
+  // `toggle-switcher-size: 12px` — so the size to scale from is that 36×20
+  // control, not Nebular's.
+  //
+  // Scaled to three quarters, and the KNOB is scaled with the pill rather than
+  // left where it was: that is the whole difference between a smaller switch and
+  // a solid block. Stock seats a 12px knob in a 16px interior (0.75 of it); this
+  // seats a 9px knob in a 12px interior, the same 0.75, so the travel stays
+  // proportional and the two positions stay legible. The 2px border is an edge
+  // rather than a proportion and is left alone.
+  //
+  // 24×12 inside that border is a 28×16 control, and 16px is the row's 1rem line
+  // box to the pixel — the switch now costs the row exactly what a line of text
+  // in the cell beside it does. This column renders with `label = false`, so it
+  // owns that box outright instead of sharing it with a caption.
+  //
+  // The knob's colour is a second, separate fault, and it is wrong everywhere on the
+  // dark themes. Nebular paints it from
+  // `toggle-primary-checked-switcher-background-color`, which maps to
+  // `background-basic-color-1` → `gauzy-card-1` → rgba(18, 18, 20, 1): a
+  // near-black puck inside a pill whose unchecked fill is
+  // `color-primary-transparent-default` over a near-black row. The switch renders
+  // as an empty outline with no way to tell on from off.
+  //
+  // Nebular applies that one token to the knob in BOTH states, so the fix is a
+  // token for the unchecked pill plus one rule for the checked one — a mid-grey
+  // puck on the translucent pill, a light puck on the saturated one, which reads
+  // on the light canvas as well as the dark.
+  //
+  // Covers both states of the cell: `ToggleSwitcherComponent` renders the value,
+  // `JobSearchStatusEditorComponent` renders that same component again on an
+  // inline edit.
+  ngx-toggle-switcher {
+    --toggle-width: 1.5rem;
+    --toggle-height: 0.75rem;
+    --toggle-switcher-size: 0.5625rem;
+
+    --toggle-primary-checked-switcher-background-color: var(--text-hint-color);
+
+    // SPECIFICITY: Nebular's `nb-toggle.status-primary .toggle-switcher` is
+    // (0,2,1) in a global sheet; this selector reaches (0,6,2).
+    .toggle.checked .toggle-switcher {
+      background-color: var(--text-control-color);
+    }
+  }
+
+  // ── Inline editors ─────────────────────────────────────────────────────────
+  // The two rate columns edit through `NumberEditorComponent`, whose input is a
+  // bare Bootstrap `.form-control`: 1rem text in a 38px box, painted white with
+  // #495057 text and a #ced4da border. So a row put into edit jumped to more
+  // than twice the height of its neighbours AND turned into a light form control
+  // in the middle of a dark table.
+  //
+  // The cell gives up its own vertical padding and the input takes the row's
+  // whole box in exchange, so an edit row measures exactly what the rows around
+  // it do rather than stacking the input's padding on top of the cell's. The
+  // hairline ring and radius come from the shared `input` rule in
+  // `gauzy/_gauzy-table`; the `border: none` here is only clearing Bootstrap's,
+  // which would otherwise draw a second, differently coloured edge inside it.
+  //
+  input.form-control {
+    // Bootstrap makes every `.form-control` `width: 100%`, so these two editors
+    // stretched across the whole 10 % and 20 % their columns are given — a pair
+    // of boxes hundreds of pixels wide around a two-digit rate, which is what
+    // made an edit row read as two enormous panels rather than as two cells.
+    // A rate needs about ten characters at this size; `max-width` yields to the
+    // column on a narrow window rather than overflowing it.
+    width: 4.5rem;
+    max-width: 100%;
+    // The row's line box and nothing more. It was the cell's whole box before —
+    // flush with the row top and bottom, which is what made it read as a slab of
+    // padding around a two-digit number. At the line box it leaves the cell's own
+    // padding visible above and below, so the field sits in the row the way the
+    // text in the cells beside it does, and the row height does not move.
+    //
+    // FORCED, on this table only, and deliberately over-specified: the vertical
+    // box is pinned from three directions (`min-height`, `height`, `max-height`)
+    // and the padding is reset with the SHORTHAND rather than `padding-block`,
+    // so nothing — a longhand, a shorthand, or a `!important` from any sheet
+    // loaded later — can put height back into this field.
+    //
+    // Two sheets do reach these inputs and neither sets a box: Bootstrap's
+    // `.form-control` (0,1,0) and `pages.component.scss`, which paints
+    // `angular2-smart-table .form-control` with the theme's input colours at
+    // (0,2,2). This selector is (0,4,3).
+    // The row's line box plus 2px, so the fill clears the glyphs' ascenders and
+    // descenders instead of sitting exactly on them.
+    min-height: 0 !important;
+    height: calc(var(--gauzy-table-line-height, 1rem) + 2px) !important;
+    max-height: calc(var(--gauzy-table-line-height, 1rem) + 2px) !important;
+    padding: 0 var(--gauzy-table-cell-padding-x, 0.4375rem) !important;
+    line-height: 1 !important;
+    font-size: var(--gauzy-table-font-size, 0.6875rem);
+    color: var(--text-basic-color);
+    // The same fill the table's own filter inputs take in `_overrides.scss`, so
+    // an editor and a filter read as one control in either theme.
+    background-color: var(--gauzy-sidebar-background-3, var(--input-basic-background-color));
+    border: none;
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+
+    // The spin buttons are drawn at the browser's own scale, so on a field this
+    // short they fill nearly its whole height — and Chrome only reveals them on
+    // hover, which shifted the value sideways as the pointer crossed the cell.
+    // Typing is the real input here, and `[min]="0"` on the editor still guards
+    // the value.
+    -moz-appearance: textfield;
+    appearance: textfield;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      appearance: none;
+      margin: 0;
+    }
+
+    // Bootstrap's focus state is a 0.2rem blue glow — half the height of this
+    // field again, in a blue that belongs to no theme here. The hairline the
+    // shared `input` rule in `gauzy/_gauzy-table` draws is a `box-shadow`, so
+    // focus has to REPLACE that ring rather than draw a second edge beside it.
+    &:focus {
+      outline: none;
+      box-shadow: inset 0 0 0 1px var(--color-primary-default);
+    }
+  }
+
+  // ── Row actions ────────────────────────────────────────────────────────────
+  // Edit, and then Save / Cancel once the row is in edit. `_overrides.scss`
+  // paints every `a.angular2-smart-action` as a full-size filled primary button
+  // — `font-size: 1.75rem !important` plus a 0.375rem/0.5rem pad, i.e. a 40px
+  // control in a 1rem row. What used to be here answered that with
+  // `transform: scale(0.6)` and hard-coded `#00d68f` / `#ff3d71` fills, but a
+  // transform is paint-only: the 40px box stayed, so every row was still sized
+  // by an icon that merely LOOKED smaller, and the fills were the saturated
+  // colour blocks the rest of the app has moved away from (see `.action` in
+  // `gauzy/_gauzy-table`).
+  //
+  // Sizing the anchor for real is what actually reclaims the height; the accent
+  // then only has to say which action this is, which is the treatment the
+  // toolbar buttons above the table already use.
+  angular2-st-tbody-edit-delete,
+  angular2-st-tbody-save-cancel {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+  }
+
+  a.angular2-smart-action {
+    // `_overrides.scss` zeroes the action cell's vertical padding so an action
+    // row is never taller than a text row. That makes the anchor the only thing
+    // sizing this cell, so it is given the text row's WHOLE box — the line box
+    // plus the cell padding this cell does without — and the row height stays
+    // decided by the data columns.
+    width: calc(var(--gauzy-table-line-height, 1rem) + 2 * var(--gauzy-table-cell-padding-y, 0.1875rem));
+    height: calc(var(--gauzy-table-line-height, 1rem) + 2 * var(--gauzy-table-cell-padding-y, 0.1875rem));
+    padding: 0;
+    // Beats the global `!important` on specificity: this selector carries two
+    // extra attributes and a class over the global
+    // `angular2-smart-table a.angular2-smart-action`.
+    font-size: var(--gauzy-table-header-font-size, 0.75rem) !important;
+    line-height: 1;
+    border: none;
+    background-color: transparent;
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    color: var(--text-hint-color);
+
+    &:hover {
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    }
+
+    // The glyph is raw SVG injected as markup, not an `<nb-icon>`, so the global
+    // `nb-icon svg { width: 100%; height: 100% }` rule never reaches it — and an
+    // `<svg>` with only a `viewBox` falls back to the 300×150 default intrinsic
+    // size, which is what an unsized one would draw here. The span is the box;
+    // the SVG fills it.
+    // 14px in the 22px anchor box above: the same glyph-to-hit-area proportion
+    // the toolbar's own icon buttons carry.
+    .ga-action-glyph {
+      display: flex;
+      width: 0.875rem;
+      height: 0.875rem;
+
+      svg {
+        width: 100%;
+        height: 100%;
       }
     }
-    .angular2-smart-actions-title {
-      a {
-        background-color: #00d68f !important;
-        transform: scale(0.9);
-      }
-    }
+  }
+
+  // Keyed on the library's own semantic classes rather than on `:nth-child`, so
+  // the colours stay attached to their actions if the action set ever changes.
+  a.angular2-smart-action-edit-edit {
+    color: nb-theme(text-primary-color);
+  }
+
+  a.angular2-smart-action-edit-save {
+    color: nb-theme(gauzy-action-success-text);
+  }
+
+  a.angular2-smart-action-edit-cancel,
+  a.angular2-smart-action-delete-delete {
+    color: nb-theme(gauzy-action-danger-text);
+  }
+
+  // The action column has no data of its own to size it, so it took the 5 % it
+  // was given whatever the rest of the row needed. `width: 1%` + `nowrap` is the
+  // shrink-to-fit idiom for an `auto`-layout table: the column ends up exactly as
+  // wide as the translated "Actions" header and the space goes back to the data
+  // columns.
+  th.angular2-smart-actions,
+  td.angular2-smart-actions {
+    width: 1%;
+    white-space: nowrap;
   }
 }
 

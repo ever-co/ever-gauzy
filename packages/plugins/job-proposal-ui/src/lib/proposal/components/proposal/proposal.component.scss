@@ -1,8 +1,17 @@
 @forward '@shared/_pg-card';
+@use 'themes' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 // Header-band statistics: three compact stat cards (big value over a muted
 // label). Theme tokens only, so the cards read in every light AND dark theme;
 // paddings kept tight so the header band gains no height over the old strip.
+//
+// The fill used to be `--gauzy-card-2`, which is exactly what `@shared/_pg-card`
+// paints `nb-card` — and a plain `nb-card-header` declares no background of its
+// own, so it shows the card's. Every one of these cards was therefore drawn in
+// its own backdrop's colour: three numbers floating loose on the header band
+// with no panel around them, in both themes. They take the table's own surface
+// treatment now, so the strip and the table below it read as one material.
 .statistics {
   display: flex;
   // A card floor of 7rem cannot shrink — on a narrow page the row wraps
@@ -10,16 +19,25 @@
   flex-wrap: wrap;
   align-items: stretch;
   gap: 0.5rem;
-  margin-top: 1rem;
+  // Symmetric, and the same 0.5rem the cards are spaced from each other by, so
+  // the strip is inset from the band by exactly its own internal gap. The bottom
+  // half is not optional: this is the last child of a `card-custom-header` that
+  // sets `padding-bottom: 0`, so nothing else keeps the cards off the edge.
+  margin-block: 0.5rem;
 
   .stat-card {
+    @include ga-hub.surface();
+    // The one deviation from that mixin: these are control-scale boxes sitting
+    // in a header band, not full panels, so they take the smaller of the two
+    // shared radii. The table below keeps the 0.5rem one.
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+
     display: flex;
     flex-direction: column;
     justify-content: center;
+    gap: 0.125rem;
     min-width: 7rem;
-    padding: 0.3125rem 0.75rem;
-    background: var(--gauzy-card-2);
-    border-radius: var(--gauzy-radius-sm);
+    padding: 0.375rem 0.75rem;
   }
 
   .stat-value {
@@ -27,17 +45,210 @@
     font-weight: 600;
     line-height: 1.25rem;
     color: var(--text-basic-color);
+    // The three values sit in a row and are read against each other, so the
+    // digits are held to one width and a "11" lines up under a "9" instead of
+    // drifting as the counts change.
+    font-variant-numeric: tabular-nums;
   }
 
+  // The label is what tells you which number this is, so it is given the
+  // micro-label treatment rather than left reading as a caption that happens to
+  // sit under a number. A step smaller than before, because uppercase at the
+  // same size reads larger.
   .stat-label {
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
+    font-weight: 600;
     line-height: 0.875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: var(--text-hint-color);
   }
 }
 
+// ── Density tokens ───────────────────────────────────────────────────────────
+// The canonical list-page block Payments, Invoices/Estimates, Pipelines, Tasks
+// and Employees carry, so Proposals reads as the same surface as the rest of the
+// app rather than a size larger than its neighbours.
+//
+// The tokens sit on `:host`, not on the table, and that placement is the point:
+// the renderers that consume them (`ga-status-badge`, `ga-notes-with-tags`,
+// `ngx-date-view`, the filter row, the loading skeleton) are separate
+// components, and custom properties are the only thing that crosses those
+// boundaries. The card-grid layout inherits the same scale for free, which is
+// wanted — a token is a proportion, so that layout stays coherent at its own
+// size.
+//
+// Hard-coded overrides for the two renderers that never joined the token system
+// are a different matter — a literal `18px` is not a proportion — and live under
+// `.table-scroll-container` below, never here.
 :host {
+  @include ga-hub.density-tokens();
+
+  // ── Filling the column ─────────────────────────────────────────────────────
+  // Without this the card stopped short of the page and left a band of dead
+  // space under it, because the height chain broke HERE.
+  //
+  // The page frame (styles/_overrides.scss) hands the column's height to
+  // `nb-layout-column > router-outlet + *`. On this route that element is
+  // `gz-proposal-layout`, not this component: proposals is a child route under
+  // `ProposalLayoutComponent`, whose whole template is a second
+  // `<router-outlet>`. This host is that outlet's sibling, and the only thing
+  // reaching it is `router-outlet + * { display: block }` from
+  // `pages.component.scss` — a block with an AUTO height. So the `height: 100%`
+  // that `nb-card-overrides` puts on `nb-card` resolved against an indefinite
+  // parent, i.e. to `auto`, and the card fell back to being exactly as tall as
+  // its own content.
+  //
+  // Passing the height through is the whole fix. `gz-proposal-layout` is a flex
+  // item with a resolved height and declares `height: 100%` itself, so the
+  // percentage here is definite; `nb-card` then fills this box, and the body —
+  // already `flex: 1 1 auto` from the same mixin — takes whatever the header
+  // leaves.
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  // Flex items refuse to shrink below their content by default, which would put
+  // the overflow back on the page instead of inside `.table-scroll-container`.
+  min-height: 0;
+
   nb-card-body {
+    // Now only a PREFERRED size, in the sense `$default-card-height` means it
+    // (gauzy/_gauzy-cards.scss): the body is a growing, shrinking flex child of
+    // a card that fills the column, so it ends up at the card's height minus the
+    // header whatever this number says. It stays as the fallback for any context
+    // where the chain above is not definite after all.
     height: calc(100vh - 21.5rem) !important;
+  }
+}
+
+// The page-header action row: "Manage Templates", "+ Add", View / Mark as … /
+// Edit / Delete and the two layout-selector icons.
+:host .gauzy-button-container {
+  @include ga-hub.page-header-buttons();
+}
+
+:host .table-scroll-container {
+  @include ga-hub.surface();
+}
+
+:host ::ng-deep {
+  @include ga-hub.tag-stack-spacing();
+}
+
+// Colour, not size, so it is page-wide rather than table-scoped: the card-grid
+// layout renders the very same component.
+:host ::ng-deep ga-status-badge {
+  @include ga-hub.status-badge-tints();
+}
+
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+// The pager's `<nav><ul class="pagination"><li>`: the component's own sheet draws
+// 0.875rem numerals in a 0.75rem × 1.1rem box and 0.5rem-padded icon chips, i.e.
+// a control row taller than four table rows put together.
+//
+// SPECIFICITY: those rules nest under `:host`, so `li span` shims to
+// `[_nghost-pg] li[_ngcontent-pg] span[_ngcontent-pg]` — (0,3,2). Naming
+// `.pagination-container` (which lives in THIS component's template, so it
+// carries this component's content attribute) before `::ng-deep` buys two
+// attributes and a class, taking the block to (0,3,3).
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
+}
+
+// ── Everything scoped to the Smart Table ─────────────────────────────────────
+// Scoped through `.table-scroll-container` rather than through `:host ::ng-deep`
+// alone: the two cell renderers below carry their own emulated-encapsulation
+// rules, and that wrapper — this component's own element, so it carries this
+// component's content attribute — is worth one extra attribute and one class of
+// specificity, which is what these blocks need.
+//
+// Table-scoped and not page-wide, because `ga-card-grid` instantiates every
+// column's `renderComponent` itself (`card-grid-custom.component.ts`) and a card
+// has room for the full-size chip that a 1rem table row does not.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+
+  // ── Author cell ────────────────────────────────────────────────────────────
+  // The same renderer, and the same problem, as the Jobs → Employees table:
+  // `ngx-employee-links` pins an 18px avatar, an 8px gap, a 12px/15px name and a
+  // 5px/14px pill padding — a 28px chip in rows the density tokens build to a
+  // 1rem line box.
+  //
+  // Sized off the shared `gauzy-people-*` tokens, so Author and Contact share
+  // one avatar size, one gap and one name treatment.
+  ngx-employee-links {
+    a {
+      @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
+      @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
+    }
+
+    img {
+      width: var(--gauzy-people-avatar-size, 1rem);
+      height: var(--gauzy-people-avatar-size, 1rem);
+      @include nb-ltr(margin-right, var(--gauzy-people-gap, 0.375rem));
+      @include nb-rtl(margin-left, var(--gauzy-people-gap, 0.375rem));
+    }
+
+    // SPECIFICITY: the component nests this under `:host a`, which shims to
+    // `[_nghost-el] a[_ngc] .names-wrapper[_ngc]` — (0,4,1). The doubled class
+    // clears it.
+    .names-wrapper.names-wrapper {
+      // Truncates on WIDTH, never on a character count, so a short name renders
+      // in full and only a genuinely long one picks up an ellipsis.
+      max-width: var(--gauzy-people-name-max-width, 8rem);
+      font-size: var(--gauzy-people-font-size, 0.6875rem);
+      // Matched to the avatar, so the two share one line box.
+      line-height: var(--gauzy-people-avatar-size, 1rem);
+    }
+  }
+
+  // ── Contact cell ───────────────────────────────────────────────────────────
+  // `ngx-contact-links` is the same chip one size up: an 18px avatar — or an
+  // 18px initials square on the rows with no photo — an 8px gap, a 12px/15px
+  // name and the same 5px/14px pill.
+  //
+  // SPECIFICITY: its sheet (`@shared/_contact-links`) nests everything under
+  // `:host .contact-links-container`, so `.inner-wrapper` shims to
+  // `[_nghost-cl] .contact-links-container[_ngc] .inner-wrapper[_ngc]` — (0,5,0),
+  // and (0,7,0) again at the name, the link and the initials square. The doubled
+  // classes are what clear those.
+  //
+  // The avatar image is the exception: it lands at (0,8,1), which no readable
+  // combination of doubled classes here beats, so those two declarations are
+  // `!important` — the same call the Employees sheet makes for
+  // `ngx-avatar.report-table`.
+  ngx-contact-links .inner-wrapper.inner-wrapper {
+    gap: var(--gauzy-people-gap, 0.375rem);
+    @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
+    @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
+
+    .avatar img {
+      width: var(--gauzy-people-avatar-size, 1rem) !important;
+      height: var(--gauzy-people-avatar-size, 1rem) !important;
+    }
+
+    .names-wrapper.names-wrapper {
+      max-width: var(--gauzy-people-name-max-width, 8rem);
+    }
+
+    .link-text.link-text {
+      font-size: var(--gauzy-people-font-size, 0.6875rem);
+      line-height: var(--gauzy-people-avatar-size, 1rem);
+    }
+
+    // The initials fallback carries its own 18px box, a 4px/5px pad and a 10px
+    // flex gap on top — so a row without a photo cost more than a row with one.
+    // Sized to the avatar it stands in for.
+    .prefix.prefix {
+      width: var(--gauzy-people-avatar-size, 1rem);
+      height: var(--gauzy-people-avatar-size, 1rem);
+      padding: 0;
+      gap: 0;
+      font-size: var(--gauzy-people-initials-font-size, 0.5625rem);
+      line-height: var(--gauzy-people-avatar-size, 1rem);
+    }
   }
 }

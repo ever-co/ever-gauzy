@@ -1,16 +1,31 @@
 <nb-card>
 	<nb-card-header class="card-custom-header">
+		<!-- Title block: the heading only (the breadcrumb trail is parked under it
+		     at runtime by ngx-header-title). -->
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title>
 					{{ 'PROPOSALS_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
+		</div>
+
+		<!-- Statistics Template -->
+		<ng-container [ngTemplateOutlet]="statisticsTemplate"></ng-container>
+
+		<!-- Action side of the one-line page header (see `.ga-page-header` in
+		     ui-core/static/styles/_overrides.scss): the secondary "Manage Templates"
+		     sits with `+ Add`, the action strip and the view selector, so all of them
+		     are centred on the same axis as the title. It used to be a sibling of the
+		     <h4> inside the title block, where `.card-header-title`'s own
+		     `space-between` stranded it mid-header, on the title's line but attached
+		     to neither side of it. -->
+		<div class="gauzy-button-container">
 			<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
 				<button
 					nbButton
-					status="info"
-					class="action"
+					status="basic"
+					class="action primary soft"
 					[routerLink]="['/pages/jobs/proposal-template']"
 					size="small"
 				>
@@ -18,13 +33,6 @@
 					{{ 'BUTTONS.MANAGE_TEMPLATES' | translate | titlecase }}
 				</button>
 			</ng-template>
-		</div>
-
-		<!-- Statistics Template -->
-		<ng-container [ngTemplateOutlet]="statisticsTemplate"></ng-container>
-
-		<!-- Gauzy Button Template -->
-		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[buttonTemplateVisible]="visibleButton"
 				[isDisable]="disableButton"
