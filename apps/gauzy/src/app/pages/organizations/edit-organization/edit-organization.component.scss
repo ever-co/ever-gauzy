@@ -1,76 +1,158 @@
-@use 'var' as *;
+@use 'var' as v;
 @use 'themes' as *;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
 
+// NOTE: this stylesheet is not scoped to one template. `accounting.component.ts`
+// lists it in its own `styleUrls` alongside `accounting.component.scss`, so every
+// selector here is compiled a SECOND time carrying the Accounting template's
+// `_ngcontent` attribute. "Dead in edit-organization" therefore does not mean dead.
+//
+// Everything the header needs is nested under `.card-scroll`, a class the Accounting
+// card does not carry (its `nb-card` is `.card`), so the rewrite below cannot reach
+// that page. `.body-header` and `.sub-header` at the bottom are the two rules that
+// belong to Accounting rather than to this header — see the comment above them.
+
 :host .card-scroll {
-    background-color: nb-theme(gauzy-card-2);
+  background-color: nb-theme(gauzy-card-2);
 
-    & .header {
-        padding-left: 20px;
-        padding-right: 20px;
-        padding-top: 25px;
-        border-bottom: none;
+  & .header {
+    padding: 25px 20px 0;
+    border-bottom: none;
+  }
+
+  & .header-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .org-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .org-details {
+    min-width: 0;
+  }
+
+  img.org-image,
+  .org-image-placeholder {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    object-fit: cover;
+    border-radius: nb-theme(border-radius);
+    border: 1px solid var(--gauzy-border-default-color);
+  }
+
+  .org-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gauzy-sidebar-background-3);
+    color: nb-theme(text-hint-color);
+
+    nb-icon {
+      font-size: 1.375rem;
+      width: 1.375rem;
+      height: 1.375rem;
+    }
+  }
+
+  // Was 14px/600 — the same size as the supporting line beneath it, which left the
+  // organization's own name reading no louder than its metadata.
+  .org-name {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.375rem;
+    letter-spacing: -0.01em;
+    color: var(--gauzy-text-color-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // The headcount used to be the only thing under the name, on its own line at
+  // body weight. It is now one item in a row of muted supporting copy.
+  .org-meta {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 0.5rem;
+    margin-top: 0.125rem;
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    color: nb-theme(text-hint-color);
+    min-width: 0;
+  }
+
+  .org-meta__item {
+    min-width: 0;
+    overflow-wrap: anywhere;
+
+    & + .org-meta__item::before {
+      content: '·';
+      margin-inline-end: 0.5rem;
+      color: nb-theme(text-disabled-color);
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    margin-inline-start: auto;
+  }
+
+  // Was a `display: flex` span, so the control stretched the full width of the
+  // header and read as a banner rather than as an action. It is a real `<button>`
+  // now, with a hover state and a resting fill.
+  & .edit-public-page {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.375rem;
+    height: 2rem;
+    padding: 0 0.75rem;
+    box-sizing: border-box;
+    border-radius: nb-theme(button-rectangle-border-radius);
+    border: 1px solid nb-theme(color-primary-transparent-default);
+    background-color: nb-theme(color-primary-transparent-100);
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    color: nb-theme(text-primary-color);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+
+    &:hover {
+      background-color: nb-theme(color-primary-transparent-200);
+      border-color: nb-theme(color-primary-transparent-focus);
     }
 
-    & .header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    nb-icon {
+      font-size: 0.875rem;
+      width: 0.875rem;
+      height: 0.875rem;
     }
+  }
 
-    .org-image {
-        width: 48px;
-        height: 48px;
-        @include nb-ltr(margin-right, 17px !important);
-        @include nb-ltr(margin-left, 0px !important);
-        @include nb-rtl(margin-right, 0px !important);
-        @include nb-rtl(margin-left, 17px !important);
-    }
-    .org-name {
-        font-size: 14px !important;
-        font-style: normal;
-        font-weight: 600 !important;
-        line-height: 17px;
-        letter-spacing: 0em;
-        margin-bottom: 3px;
-    }
-    .org-position {
-        font-size: 12px !important;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 15px;
-        letter-spacing: 0em;
-    }
-
-    & .edit-public-page {
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        padding: 2px 12px;
-        box-sizing: border-box;
-        border-radius: nb-theme(button-rectangle-border-radius);
-        border: 2px solid nb-theme(color-primary-transparent-default);
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 11px;
-        letter-spacing: 0em;
-        text-align: left;
-        color: nb-theme(text-primary-color);
-        cursor: pointer;
-    }
-
-    & nb-card-body {
-        padding: 0;
-    }
+  & nb-card-body {
+    padding: 0;
+  }
 }
 
-// Removed most of a block of old styles — but NOT all of it, because this
-// stylesheet is not scoped to one template. `accounting.component.ts` lists it in
-// its own `styleUrls` alongside `accounting.component.scss`, so every selector
-// here is compiled a SECOND time carrying the Accounting template's `_ngcontent`
-// attribute. "Dead in edit-organization" therefore does not mean dead.
+// Removed a block of old styles — but NOT all of it, because of the Accounting
+// second compile described at the top of this file.
 //
 // Checked against both templates. Dead in each, and gone: `.edit-icon`,
 // `.setting-name`, `.transparent`, `.settings-body`, `.header-content` (with its
@@ -87,35 +169,39 @@
 // so dropping these would have silently pulled 35px out from under the Accounting
 // page header and dropped the bold from its section headings.
 .body-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 35px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
 }
 
 .sub-header {
-    margin-bottom: 20px;
-    font-weight: bold;
+  margin-bottom: 20px;
+  font-weight: bold;
 }
 
-@include respond(sm) {
-    .header .header-container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .org-image {
-        margin-bottom: 10px;
-    }
+// Wraps the action under the identity rather than stacking the avatar above the
+// name, which is what the old `flex-direction: column` on `.header-container` did.
+@media only screen and (max-width: v.$break-md) {
+  :host .card-scroll .header-container {
+    flex-wrap: wrap;
+  }
+
+  :host .card-scroll .header-actions {
+    margin-inline-start: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
-:host{
-    nb-card{
-        height: unset;
-    }
-    // `--gauzy-card-1` is not emitted by every registered theme, and a bare
-    // `var()` with no fallback drops the whole `background-color` declaration
-    // there, leaving every input on this page transparent. `--card-background-color`
-    // is a core Nebular token present in all of them, and it is exactly what
-    // `gauzy-card-1` is aliased to in most themes anyway.
-    @include ga-overrides.input-appearance(42px, var(--gauzy-card-1, var(--card-background-color)));
+:host {
+  nb-card {
+    height: unset;
+  }
+  // `--gauzy-card-1` is not emitted by every registered theme, and a bare
+  // `var()` with no fallback drops the whole `background-color` declaration
+  // there, leaving every input on this page transparent. `--card-background-color`
+  // is a core Nebular token present in all of them, and it is exactly what
+  // `gauzy-card-1` is aliased to in most themes anyway.
+  @include ga-overrides.input-appearance(42px, var(--gauzy-card-1, var(--card-background-color)));
 }
