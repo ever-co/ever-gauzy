@@ -26,17 +26,6 @@
 		</ul>
 	</aside>
 	<section class="fields-section">
-		<div class="actions">
-			<button
-				[disabled]="form.invalid"
-				(throttledClick)="updateOrganizationSettings()"
-				debounceClick
-				nbButton
-				status="success"
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</div>
 		<div class="accordion-section">
 			<nb-accordion #accordion>
 				<nb-accordion-item #general [expanded]="true">
@@ -1682,6 +1671,17 @@
 					</nb-accordion-item-body>
 				</nb-accordion-item>
 			</nb-accordion>
+		</div>
+		<div class="actions">
+			<button
+				[disabled]="form.invalid"
+				(throttledClick)="updateOrganizationSettings()"
+				debounceClick
+				nbButton
+				status="success"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
 		</div>
 	</section>
 </form>

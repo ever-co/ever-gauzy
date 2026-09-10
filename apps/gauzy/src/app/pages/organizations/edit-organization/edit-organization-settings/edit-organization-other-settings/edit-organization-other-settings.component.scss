@@ -12,15 +12,22 @@
   width: 100%;
   background-color: nb-theme(gauzy-card-2);
   display: flex;
-  justify-content: space-between;
+  align-items: stretch;
+  gap: 20px;
   padding: 20px;
   @include nb-ltr(padding-right, 8px);
   @include nb-rtl(padding-left, 8px);
-  overflow: hidden;
   height: calc(100vh - 19.25rem);
-  overflow-y: scroll;
+  min-height: 0;
+  // One scroll container, not two. This rule carried `overflow: hidden` and
+  // `overflow-y: scroll` three lines apart, so the form scrolled vertically while
+  // `.accordion-section` inside it scrolled as well — two nested scrollbars over
+  // the same content, and the section index scrolled away with the sections it
+  // points at. The accordion column keeps the scroll; the aside stays put.
+  overflow: hidden;
 }
 .aside-nav {
+  flex: 0 0 180px;
   width: 180px;
   background-color: nb-theme(gauzy-card-3);
   padding: 13px 18px;
@@ -102,15 +109,41 @@
     }
   }
 }
+// Save used to sit ABOVE the accordion, which put the button that commits the
+// page before any of the fields it commits, and left it to scroll away. It is the
+// foot of the column now, matching the Main tab, and stays put while the sections
+// scroll behind it.
 .actions {
-  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+  padding-top: 0.875rem;
+  @include nb-ltr(padding-right, 8px);
+  @include nb-rtl(padding-left, 8px);
+  border-top: 1px solid var(--gauzy-border-default-color);
+
+  button {
+    min-width: 7.5rem;
+  }
 }
+
+// Was `width: calc(100% - 230px)` beside a 180px aside inside a
+// `justify-content: space-between` row: three separate declarations of the same
+// measurement, disagreeing by 50px, which is where the gap between the index and
+// the sections came from. The aside is a fixed track, this takes what is left.
 .fields-section {
-  width: calc(100% - 230px);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
 }
 :host .accordion-section {
-  overflow: auto;
-  max-height: calc(100% - 3rem);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   @include nb-ltr(padding-right, 8px);
   @include nb-rtl(padding-left, 8px);
 }
@@ -120,10 +153,12 @@
 .form-group {
   margin-bottom: 0;
 }
+// `max-width: 49% !important` fought bootstrap's own `flex: 0 0 50%`, so every
+// pair of half-width fields came out 49% wide with a 2% hole between them that no
+// gutter accounted for. Let the 50% stand; the padding is the gutter.
 .col-6 {
   padding-left: 10px;
   padding-right: 10px;
-  max-width: 49% !important;
 }
 // Removed `.active { background: #ffffff; }`, which was NOT dead — it was the bug.
 //
@@ -437,6 +472,9 @@ nb-accordion {
     flex-direction: column;
   }
   .aside-nav {
+    // The form is a COLUMN here, so the 180px flex-basis that sets the aside's
+    // width on desktop would set its height instead. Back to content-sized.
+    flex: 0 0 auto;
     width: 100%;
     margin-bottom: 20px;
 
@@ -453,15 +491,19 @@ nb-accordion {
       width: auto;
     }
   }
+  // Stacked, the whole column scrolls as one — the aside is a wrapping row of ten
+  // buttons here, and pinning it while only the sections move would leave almost
+  // no room for the sections. `.actions` used to be lifted to the bottom with
+  // `order: 2`; it is last in the markup now, so it lands there on its own.
+  :host .main-form {
+    overflow-y: auto;
+  }
+  :host .accordion-section {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
   .fields-section {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .actions {
-    order: 2;
-    margin-bottom: 0;
   }
 }
 
