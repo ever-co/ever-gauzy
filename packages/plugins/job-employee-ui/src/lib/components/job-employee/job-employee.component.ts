@@ -470,9 +470,19 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				cancelButtonContent: this.renderActionIcon('close-outline', this.getTranslation('BUTTONS.CANCEL')),
 				// `renderActionIcon` returns an inline `<svg>`, and Angular's HTML
 				// sanitizer allows no SVG element at all — without this the anchors
-				// render empty. Safe here because every part of that string is ours:
-				// the glyph comes straight out of the registered icon pack and the
-				// label is an i18n string, escaped before it is interpolated.
+				// render empty.
+				//
+				// `sanitizer` is the library's own supported opt-out, not an ad-hoc key:
+				// `EditAction.sanitizer?: SanitizerSettings` in angular2-smart-table, read
+				// as `settings.edit?.sanitizer?.bypassHtml` by both anchor rows (the edit
+				// button and the save/cancel pair) to pick the mode its `bypassSecurityTrust`
+				// pipe hands to `DomSanitizer.bypassSecurityTrustHtml` before the
+				// `[innerHTML]` binding. So this IS the DomSanitizer path — the library just
+				// owns the call.
+				//
+				// Safe here because every part of that string is ours: the glyph comes
+				// straight out of the registered icon pack and the label is an i18n string,
+				// escaped before it is interpolated.
 				sanitizer: { bypassHtml: true },
 				confirmSave: true
 			},
