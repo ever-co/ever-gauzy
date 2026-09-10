@@ -2,24 +2,41 @@
   <nb-card-header class="header">
     @if (organization) {
       <div class="header-container">
+        <ngx-back-navigation></ngx-back-navigation>
+
         <div class="org-info">
-          <img class="org-image" [src]="organization?.image?.fullUrl || organization?.imageUrl" alt="Organization Avatar" />
+          @if (logoUrl && !logoFailed) {
+            <img class="org-image" [src]="logoUrl" alt="" (error)="logoFailed = true" />
+          } @else {
+            <div class="org-image-placeholder" aria-hidden="true">
+              <nb-icon icon="briefcase-outline"></nb-icon>
+            </div>
+          }
+
           <div class="org-details">
-            <span class="org-name">
-              {{ organization?.name }}
-            </span>
-            <div class="org-position">
-              {{ organization?.totalEmployees | json }}
-              {{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
+            <div class="org-name">{{ organization?.name }}</div>
+
+            <div class="org-meta">
+              <span class="org-meta__item">
+                {{ organization?.totalEmployees ?? 0 }}
+                {{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
+              </span>
+              @if (organization?.officialName; as officialName) {
+                <span class="org-meta__item">{{ officialName }}</span>
+              }
+              @if (organization?.currency; as currency) {
+                <span class="org-meta__item">{{ currency }}</span>
+              }
             </div>
           </div>
         </div>
-        <div>
+
+        <div class="header-actions">
           <ng-template ngxPermissionsOnly="PUBLIC_PAGE_EDIT">
-            <span class="edit-public-page" (click)="editPublicPage()">
-              <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+            <button type="button" class="edit-public-page" (click)="editPublicPage()">
+              <nb-icon icon="edit-outline"></nb-icon>
               {{ 'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE' | translate }}
-            </span>
+            </button>
           </ng-template>
         </div>
       </div>
