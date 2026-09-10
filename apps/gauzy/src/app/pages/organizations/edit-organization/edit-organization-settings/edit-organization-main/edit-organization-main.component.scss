@@ -1,207 +1,382 @@
-@use 'var' as *;
+@use 'var' as v;
+@use 'themes' as *;
+
+// This sheet is now this tab's alone. `edit-candidate-main.component.ts` used to
+// list it in its own `styleUrls`, so every selector here was compiled a second
+// time against a template with different markup; it has its own copy of the rules
+// it renders in `edit-candidate-main.component.scss`.
+
+$radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
 
 :host {
   height: 100%;
-  @include nb-ltr(border-radius, 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius));
-  @include nb-rtl(border-radius, nb-theme(border-radius) 0 nb-theme(border-radius) nb-theme(border-radius));
+  @include nb-ltr(border-radius, 0 $radius $radius $radius);
+  @include nb-rtl(border-radius, $radius 0 $radius $radius);
 }
 
+// The sibling Location and Settings tabs size themselves the same way, so the tab
+// keeps that height rather than converting the shared tabset to a flex chain. What
+// changes is what happens INSIDE it: the two panels are flex columns that scroll
+// their own overflow, where before the form simply ran past the bottom edge.
 :host .content {
   display: flex;
+  align-items: stretch;
+  gap: 1rem;
   height: 100%;
-  background-color: nb-theme(gauzy-card-2);
+  min-height: 0;
   padding: 1rem;
-  @include nb-ltr(border-radius, 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius));
-  @include nb-rtl(border-radius, nb-theme(border-radius) 0 nb-theme(border-radius) nb-theme(border-radius));
+  background-color: nb-theme(gauzy-card-2);
+  @include nb-ltr(border-radius, 0 $radius $radius $radius);
+  @include nb-rtl(border-radius, $radius 0 $radius $radius);
 
   &.main {
     height: calc(100vh - 19.25rem);
   }
 }
 
-:host .organization-container {
-  padding: 15px;
-  position: relative;
+.org__panel {
   display: flex;
-  align-items: flex-start;
   flex-direction: column;
-  transition: transform 150ms ease-in-out;
-  background-color: rgba(126, 126, 143, 0.1);
-  border-radius: nb-theme(border-radius);
-  // The 563px panel is the intended width, but the layout column loses up to
-  // 860px to the expanded AI chat: cap it at the space there is and let it
-  // shrink (it is a flex item of `.content`).
-  width: min(563px, 100%);
   min-width: 0;
-  height: 100%;
-
-  .organization-photo {
-    width: fit-content;
-    height: fit-content;
-    position: relative;
-    margin-left: 0 !important;
-
-    div {
-      pointer-events: none;
-      background: black;
-      position: absolute;
-      height: 100%;
-      width: 100%;
-      border-radius: nb-theme(border-radius);
-    }
-
-    img {
-      width: 100px;
-      height: 100px;
-      border-radius: nb-theme(border-radius);
-    }
-
-    input {
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      position: absolute;
-      z-index: 3;
-      cursor: pointer;
-    }
-
-    svg {
-      z-index: 2;
-      transition: opacity 0.2s ease-in;
-      opacity: 0.3;
-      position: absolute;
-      top: calc(50% - 68px / 2);
-      left: calc(50% - 68px / 2);
-    }
-  }
-
-  .employees-count-text {
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: 15px;
-    letter-spacing: 0em;
-    @include nb-ltr(margin-left, 1px);
-    @include nb-rtl(margin-right, 1px);
-  }
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
 }
 
-.main-form {
+.org__panel--identity {
+  flex: 0 1 min(23rem, 36%);
+  padding: 1.125rem 1.25rem;
+  overflow-y: auto;
+}
+
+.org__panel--form {
+  flex: 1 1 auto;
+}
+
+.org__head {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
   width: 100%;
-  padding-left: 20px;
-  padding-right: 20px;
+  min-width: 0;
+}
 
-  .actions {
-    margin-top: 60px;
+.org__avatar {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  border-radius: $radius;
+  overflow: hidden;
+  border: 1px solid var(--gauzy-border-default-color);
+  background-color: var(--gauzy-sidebar-background-3);
+  cursor: pointer;
+
+  // `ngx-image-uploader` renders the file input with inline width/opacity/z-index,
+  // and its own sheet forces the height. It only needs to be told to cover the box.
+  ::ng-deep input[type='file'] {
+    inset: 0;
   }
 }
 
-.row {
-  & .col {
-    max-width: 50%;
+.org__avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  box-shadow: none;
+}
+
+.org__avatar-image--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: nb-theme(text-hint-color);
+
+  nb-icon {
+    font-size: 1.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
   }
 }
 
-::ng-deep ga-currency .form-group {
+.org__avatar-scrim {
+  position: absolute;
+  inset: 0;
+  background-color: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.org__avatar-badge {
+  position: absolute;
+  bottom: 6px;
+  inset-inline-end: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: nb-theme(color-primary-500);
+  color: nb-theme(text-control-color);
+  opacity: 0.85;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+
+  nb-icon {
+    font-size: 0.8125rem;
+    width: 0.8125rem;
+    height: 0.8125rem;
+  }
+}
+
+.org__avatar--hover {
+  .org__avatar-scrim {
+    opacity: 0.25;
+  }
+
+  .org__avatar-badge {
+    opacity: 1;
+  }
+}
+
+.org__identity {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: start;
+}
+
+.org__name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: -0.01em;
+  color: var(--gauzy-text-color-1);
+  overflow-wrap: anywhere;
+}
+
+.org__legal-name {
+  margin-top: 0.125rem;
+  font-size: 0.6875rem;
+  line-height: 0.9375rem;
+  color: nb-theme(text-hint-color);
+  overflow-wrap: anywhere;
+}
+
+.org__blurb {
+  margin: 0.25rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 0.9375rem;
+  color: nb-theme(text-hint-color);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.org__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+
+  &:not(:has(.org__chip)) {
+    display: none;
+  }
+}
+
+.org__chip {
   display: inline-flex;
-  flex-direction: column;
-  min-width: 180px;
+  align-items: center;
+  height: 1rem;
+  padding: 0 0.375rem;
+  border-radius: 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.tax-form-group {
+.org__chip--success {
+  background-color: nb-theme(color-success-transparent-100);
+  color: nb-theme(text-success-color);
+}
+
+.org__chip--warning {
+  background-color: nb-theme(color-warning-transparent-100);
+  color: nb-theme(text-warning-color);
+}
+
+.org__chip--info {
+  background-color: nb-theme(color-info-transparent-100);
+  color: nb-theme(text-info-color);
+}
+
+.org__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 0 1.25rem;
+  width: 100%;
+  margin-top: 1.125rem;
+  text-align: start;
+}
+
+// The groups exist to bracket a heading with its rows; the rows themselves are the
+// grid items, so the wrappers hand their children straight through to the grid.
+.org__group,
+.org__stats {
+  display: contents;
+}
+
+.org__group-title {
+  grid-column: 1 / -1;
+  margin: 0.75rem 0 0.125rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 0.875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: nb-theme(text-disabled-color);
+}
+
+.org__stat {
+  padding: 0.3125rem 0;
+  border-top: $hairline;
+  min-width: 0;
+
+  dt {
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+    font-weight: 400;
+    color: nb-theme(text-hint-color);
+    overflow-wrap: anywhere;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+    overflow-wrap: anywhere;
+  }
+}
+
+.org__form {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
 
-  & #taxIdInput {
-    width: 80%;
+.org__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.25rem;
+  align-content: start;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.25rem;
+
+  > .form-group,
+  > .org__field {
+    min-width: 0;
+    margin-bottom: 1.25rem;
   }
-}
 
-.registration-form-group {
-  display: inline-flex;
-  flex-direction: column;
-}
-
-::ng-deep nb-select.shape-rectangle .select-button {
-  border-radius: nb-theme(border-radius);
-}
-
-@include respond(lg) {
-  .organization-container {
-    width: 350px;
+  > .org__field--wide {
+    grid-column: 1 / -1;
   }
 
-  .registration-form-group #registrationDate {
+  // Scoped to `nbInput`: `ga-tags-color-input` puts a bare search `<input>` inside
+  // its `ng-select`, and stretching that one to the full column breaks the control.
+  input[nbInput] {
     width: 100%;
   }
+}
 
-  .tax-form-group #taxIdInput {
-    width: 100%;
-  }
+// Both of these were bare `::ng-deep` at the top level, which drops the scoping
+// attribute and makes the rule global — it applied to every `ga-currency` and
+// `nb-select` in the app, not just this tab's. `:host` keeps them here.
+//
+// `ga-currency` brings its own label and `.form-group`, so it sits in the grid as
+// a field in its own right. It used to be `inline-flex` with a 180px floor, which
+// made the currency column visibly narrower than every other field beside it.
+:host ::ng-deep ga-currency {
+  display: block;
 
-  ::ng-deep ga-currency .form-group {
+  .form-group {
     display: flex;
     flex-direction: column;
-    //min-width: 180px;
+    min-width: 0;
+    margin-bottom: 0;
   }
 }
 
-@include respond(md) {
+:host ::ng-deep nb-select.shape-rectangle .select-button {
+  border-radius: $radius;
+}
+
+.org__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+
+  button {
+    min-width: 7.5rem;
+  }
+}
+
+@media only screen and (max-width: v.$break-lg) {
+  :host .content,
+  :host .content.main {
+    flex-direction: column;
+    height: auto;
+  }
+
   :host {
     height: auto;
   }
 
-  .content {
-    flex-direction: column;
+  .org__panel--identity {
+    flex: 0 0 auto;
+    overflow-y: visible;
   }
 
-  .organization-container,
-  .main-form {
-    width: 100%;
+  .org__facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media only screen and (max-width: v.$break-md) {
+  :host .content {
+    padding: 0.75rem;
+    gap: 0.75rem;
   }
 
-  .main-form {
-    padding: 0;
-    margin-top: 20px;
+  .org__fields {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem;
   }
 
-  .row {
-    flex-direction: column;
-    max-width: 100%;
-    margin-left: 0;
-
-    & .col {
-      max-width: 100%;
-      padding: 0;
-    }
+  .org__actions {
+    padding: 0.875rem 1rem;
   }
 
-  .form-group {
-    width: 100% !important;
-  }
-
-  .tax-form-group {
-    & #taxIdInput {
-      width: 100%;
-    }
-  }
-
-  .registration-form-group {
-    & #registrationDate {
-      width: 100%;
-    }
-  }
-
-  ::ng-deep ga-currency .form-group {
-    display: flex;
-  }
-
-  .col-6 {
-    max-width: 100%;
-    padding: 0 !important;
-  }
-
-  .main-form .actions {
-    margin-top: 20px;
+  .org__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
