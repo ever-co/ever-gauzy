@@ -181,7 +181,33 @@ img.employee-image,
 
 :host {
   @include nb-card_overrides(hidden, calc($default-card-height + 3.5rem), $default-radius);
-  @include ga-overrides.input-appearance(42px, var(--gauzy-card-1));
+  // The field surface and the field height, both taken off the shared scale rather
+  // than pinned here — the same pair `edit-organization.component.scss` now passes,
+  // for the same two reasons.
+  //
+  // `gauzy-card-1` is the CARD's surface, the bottom of the elevation ramp, and no
+  // field on this page sits there: every one of the nine tabs puts its fields on a
+  // `.tab__panel`, which is `gauzy-card-3` (`@shared/_employee-tab-panel`), two
+  // steps up (card-1 -> the `gauzy-card-2` tab body -> the card-3 panel). On the
+  // light themes the difference is invisible; on `gauzy-dark` card-1 is an opaque
+  // `rgba(18, 18, 20, 1)` against a panel that composites to about #202022, so each
+  // field read as a hole punched through its panel. `gauzy-card-4` is the next step
+  // up from the panel, which is what a control resting on card-3 should be.
+  //
+  // `$default-height` replaces the hardcoded `42px`: it is
+  // `calc(select-medium-text-line-height + input-medium-padding-y * 2)`, i.e. the
+  // height `nb-select` computes for ITSELF out of the density tokens (2.375rem at
+  // the current preset). The literal was propping every field 4px above the box its
+  // own control had already worked out, and would drift again the next time the
+  // density tokens move.
+  //
+  // This stylesheet is this component's alone — `edit-employee.component.ts` is its
+  // only `styleUrls` entry — so unlike the organization card there is no second
+  // template to scope around.
+  @include ga-overrides.input-appearance(
+    ga-overrides.$default-height,
+    var(--gauzy-card-4, var(--gauzy-card-1, var(--card-background-color)))
+  );
 }
 
 :host nb-card-body {

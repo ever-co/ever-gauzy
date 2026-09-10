@@ -269,5 +269,55 @@
   // there, leaving every input on this page transparent. `--card-background-color`
   // is a core Nebular token present in all of them, and it is exactly what
   // `gauzy-card-1` is aliased to in most themes anyway.
+  //
+  // This call is ACCOUNTING's — see the note at the top of this file: that
+  // component lists this stylesheet in its own `styleUrls`, so everything here is
+  // compiled a second time against its template. Its fields sit directly on the
+  // card, so the card surface is the right fill for them and this stays as it is.
+  // The organization editor overrides it below.
   @include ga-overrides.input-appearance(42px, var(--gauzy-card-1, var(--card-background-color)));
+}
+
+// ── The organization editor's own field surface ──────────────────────────────
+//
+// `gauzy-card-1` is the CARD's surface — the bottom of the elevation ramp. It is
+// the right fill for a field that sits on the card, which is what the call above
+// assumes. But none of this page's fields do: all three tabs put their fields on a
+// `gauzy-card-3` panel, which is two steps up that ramp (card-1 -> the `gauzy-card-2`
+// tab body -> the card-3 panel). So every input, select and `ng-select` on this
+// page was being painted two steps BELOW the surface it sits on.
+//
+// On the light themes that is invisible — card-1 is white and card-3 composites to
+// #fcfcfc, three values apart. On `gauzy-dark` it is the whole problem: card-1 is
+// an opaque `rgba(18, 18, 20, 1)` while the panel composites to about #202022, so
+// each field read as a black hole punched through its panel rather than as a
+// control resting on it.
+//
+// `gauzy-card-4` is the next step up from the panel, which is exactly what a
+// control resting on a card-3 surface should be — 6 % white over the panel's 4 % on
+// `gauzy-dark`, 75 % white over 50 % on the light themes, and it is already the
+// choice `job-search.component.scss` makes for the same situation. The old value
+// stays as the fallback for any theme that does not emit card-4.
+//
+// Scoped to `.card-scroll` deliberately: that class is on this page's `nb-card` and
+// NOT on Accounting's (which is `.card`), so this is the hook the rest of this file
+// already uses to say "the organization editor only". At (0,2,2) against the
+// (0,1,1) above it, this wins both arguments and leaves every other declaration the
+// mixin emits identical.
+//
+// The height is `$default-height` rather than the `42px` above, and that is a
+// reduction with a reason rather than a smaller number picked by eye. That variable
+// is `calc(select-medium-text-line-height + input-medium-padding-y * 2)` — one line
+// box plus both block insets, i.e. exactly the height `nb-select` computes for
+// ITSELF out of the density tokens, which is 2.375rem (38px) at the current preset.
+// `42px` is a hardcoded pixel from before that preset existed, so the mixin's
+// `min-height: … !important` was propping every field on this page 4px above the
+// box its own control had already worked out, and the two would drift further apart
+// the next time the density tokens move. Passing the shared value means the floor
+// and the natural height are the same number, and the fields follow the scale.
+:host .card-scroll {
+  @include ga-overrides.input-appearance(
+    ga-overrides.$default-height,
+    var(--gauzy-card-4, var(--gauzy-card-1, var(--card-background-color)))
+  );
 }
