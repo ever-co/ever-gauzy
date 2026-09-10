@@ -2,8 +2,6 @@
   <nb-card-header class="header">
     @if (organization) {
       <div class="header-container">
-        <ngx-back-navigation></ngx-back-navigation>
-
         <div class="org-info">
           @if (logoUrl && !logoFailed) {
             <img class="org-image" [src]="logoUrl" alt="" (error)="logoFailed = true" />

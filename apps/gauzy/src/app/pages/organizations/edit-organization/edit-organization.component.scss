@@ -26,8 +26,16 @@
 // sits in, which is the empty band between the card and the footer. The chain is
 // continuous now — column -> host -> card -> body -> tabset -> tab — and every
 // step below sizes off its parent rather than off the viewport.
+//
+// No `background-color` of its own, deliberately. This used to paint the card
+// `gauzy-card-2` — the exact colour the shared `nb-overrides()` paints the ACTIVE
+// route tab (`styles/_overrides.scss`), so the selected tab was the same colour as
+// the strip it sat in and the only thing marking it was its text weight. The
+// employee edit card takes the theme's own `card-background-color` (`gauzy-card-1`),
+// which is what makes the active tab there read as a folder tab lifted off the
+// header. This card does the same now; the `gauzy-card-2` tint still appears where
+// it belongs, painted by each tab on its own panel.
 :host .card-scroll {
-  background-color: nb-theme(gauzy-card-2);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -167,15 +175,24 @@
     }
   }
 
-  // The tabs own the scrolling: each one has its own scroll port over its own
-  // fields, so nothing should ever overflow here. Nebular's `overflow: auto` is
-  // left as it is rather than clamped to `hidden` — if the chain above ever does
-  // come up short, a second scrollbar is a far better failure than a Save button
-  // silently clipped off the bottom of the card.
+  // `hidden`, matching the employee edit card (`nb-card_overrides(hidden, ...)` in
+  // `edit-employee.component.scss`). The tabs own the scrolling — each one has a
+  // scroll port over its own fields — so the card body has nothing to scroll, and
+  // Nebular's default `overflow: auto` here only ever produced a SECOND scrollbar:
+  // one down the full height of the card body, running alongside the tab strip, on
+  // top of the real one inside the panel. Which is the difference the employee page
+  // does not have. Below `lg` the media query at the bottom of this file hands the
+  // overflow back, so a stacked tab still cannot be clipped.
+  //
+  // `display: flex` so the settings component below can take its height from this
+  // box as a flex item, the way `ngx-edit-employee-profile` does.
   & nb-card-body {
     padding: 0;
+    display: flex;
+    flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
+    overflow: hidden;
   }
 }
 
