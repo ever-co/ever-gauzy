@@ -158,20 +158,22 @@
 								</div>
 								<div class="col-6">
 									<div class="form-group">
-										<label class="label">{{ 'FORM.LABELS.DEFAULT' | translate }}</label>
-										<button
-											nbButton
-											status="info"
-											size="small"
-											ghost
-											[nbTooltip]="
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_TO_SET_DEFAULT_ORGANIZATION'
-													| translate
-											"
-											class="p-0"
-										>
-											<nb-icon icon="info"></nb-icon>
-										</button>
+										<label class="label">
+											{{ 'FORM.LABELS.DEFAULT' | translate }}
+											<button
+												nbButton
+												status="info"
+												size="small"
+												ghost
+												[nbTooltip]="
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_TO_SET_DEFAULT_ORGANIZATION'
+														| translate
+												"
+												class="p-0"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</label>
 										<nb-select
 											class="d-block"
 											size="medium"
@@ -783,20 +785,20 @@
 															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
 																| translate
 														}}
+														<button
+															[nbTooltip]="
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT_INFO'
+																	| translate
+															"
+															ghost
+															nbButton
+															size="small"
+															status="info"
+															class="p-0"
+														>
+															<nb-icon icon="info"></nb-icon>
+														</button>
 													</label>
-													<button
-														[nbTooltip]="
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT_INFO'
-																| translate
-														"
-														ghost
-														nbButton
-														size="small"
-														status="info"
-														class="p-0"
-													>
-														<nb-icon icon="info"></nb-icon>
-													</button>
 													<nb-select
 														[placeholder]="
 															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
@@ -819,20 +821,20 @@
 															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
 																| translate
 														}}
+														<button
+															[nbTooltip]="
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION_INFO'
+																	| translate
+															"
+															ghost
+															nbButton
+															size="small"
+															status="info"
+															class="p-0"
+														>
+															<nb-icon icon="info"></nb-icon>
+														</button>
 													</label>
-													<button
-														[nbTooltip]="
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION_INFO'
-																| translate
-														"
-														ghost
-														nbButton
-														size="small"
-														status="info"
-														class="p-0"
-													>
-														<nb-icon icon="info"></nb-icon>
-													</button>
 													<nb-select
 														[placeholder]="
 															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
@@ -940,20 +942,20 @@
 															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREENSHOT_FREQUENCY'
 																| translate
 														}}
+														<button
+															[nbTooltip]="
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREENSHOT_FREQUENCY_INFO'
+																	| translate
+															"
+															class="p-0"
+															ghost
+															nbButton
+															size="small"
+															status="info"
+														>
+															<nb-icon icon="info"></nb-icon>
+														</button>
 													</label>
-													<button
-														[nbTooltip]="
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREENSHOT_FREQUENCY_INFO'
-																| translate
-														"
-														class="p-0"
-														ghost
-														nbButton
-														size="small"
-														status="info"
-													>
-														<nb-icon icon="info"></nb-icon>
-													</button>
 													<nb-select
 														[placeholder]="
 															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
@@ -978,39 +980,37 @@
 								</div>
 								<!-- Standard Work Hours Per Day -->
 								<div class="col-xl-6 col-12 pt-2">
-									<div class="col-6">
-										<div class="form-group">
-											<label class="label">
-												{{ 'FORM.LABELS.STANDARD_WORK_HOURS_PER_DAY' | translate }}
-												<button
-													[nbTooltip]="
-														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.STANDARD_WORK_HOURS_PER_DAY'
-															| translate
-													"
-													class="p-0"
-													ghost
-													nbButton
-													size="small"
-													status="info"
-												>
-													<nb-icon icon="info"></nb-icon>
-												</button>
-											</label>
-											<nb-select
-												[placeholder]="
-													'FORM.PLACEHOLDERS.STANDARD_WORK_HOURS_PER_DAY' | translate
+									<div class="form-group">
+										<label class="label">
+											{{ 'FORM.LABELS.STANDARD_WORK_HOURS_PER_DAY' | translate }}
+											<button
+												[nbTooltip]="
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.STANDARD_WORK_HOURS_PER_DAY'
+														| translate
 												"
-												formControlName="standardWorkHoursPerDay"
-												fullWidth
-												size="medium"
+												class="p-0"
+												ghost
+												nbButton
+												size="small"
+												status="info"
 											>
-												@for (hour of standardWorkHoursPerDayOptions; track hour) {
-												<nb-option [value]="hour">
-													{{ hour }}
-												</nb-option>
-												}
-											</nb-select>
-										</div>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</label>
+										<nb-select
+											[placeholder]="
+												'FORM.PLACEHOLDERS.STANDARD_WORK_HOURS_PER_DAY' | translate
+											"
+											formControlName="standardWorkHoursPerDay"
+											fullWidth
+											size="medium"
+										>
+											@for (hour of standardWorkHoursPerDayOptions; track hour) {
+											<nb-option [value]="hour">
+												{{ hour }}
+											</nb-option>
+											}
+										</nb-select>
 									</div>
 								</div>
 								<div class="col-xl-6 col-12 pt-2">

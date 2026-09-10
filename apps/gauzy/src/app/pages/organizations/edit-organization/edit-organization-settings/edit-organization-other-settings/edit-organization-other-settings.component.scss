@@ -84,7 +84,9 @@
     border: none;
     border-radius: nb-theme(button-rectangle-border-radius);
     cursor: pointer;
-    transition: background 0.15s ease-in-out;
+    transition:
+      background 0.15s ease-in-out,
+      color 0.15s ease-in-out;
     // Was a literal `0px 1px 1px rgba(0, 0, 0, 0.15)` — a black drop shadow,
     // which against a near-black canvas is no edge at all. `gauzy-shadow` is
     // the shared token for this hairline, so the row follows whatever the
@@ -110,9 +112,15 @@
       outline-offset: 1px;
     }
 
+    // The index is the only thing on the page that says which section you are
+    // looking at, and resting and active used to differ by a background tint
+    // alone — a distinction that all but disappears on the light themes. The
+    // colour and the weight say it twice more.
     &.active {
       background: nb-theme(background-basic-color-1);
       box-shadow: var(--gauzy-shadow, 0px 1px 1px 0px rgb(0 0 0 / 15%)) inset;
+      color: nb-theme(text-primary-color);
+      font-weight: 600;
     }
   }
 }
@@ -156,26 +164,167 @@
 }
 // end of main sections.
 
-// misc
-.form-group {
+// ── The field grid ───────────────────────────────────────────────────────────
+//
+// Every section here lays its fields out on the bootstrap grid, and until now each
+// one also decided its own measure on top of it: General's fields were 75% of the
+// section body, its Time Format select 30% of its own half and its two time pickers
+// 60% of theirs; Design was a pair of 140px selects; Accounting's fiscal years a
+// 400px row of 170px pickers and its toggles a 500px column; Date limit a 50% row.
+// Nine different widths down one column of a single form, so no two sections began
+// or ended at the same x and almost nothing lined up with the field above it.
+//
+// One measure now — the section body — divided by the `col-*` classes the markup
+// already carries. What varies between sections is how many fields sit on a row,
+// which is the only thing the grid was ever meant to say.
+.fields {
+  width: 100%;
+}
+
+// The gutter, both halves of it, declared together so they cannot drift apart
+// again. Bootstrap's is 30px (`.row { margin: 0 -15px }` against
+// `.col-* { padding: 0 15px }`) and this file used to narrow only the COLUMN half,
+// to 10px, leaving 5px of negative margin on each side unaccounted for — so every
+// row of fields began and ended 5px outside the panel holding it, in every section
+// and at every width.
+.fields .row {
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+  // General's rows were `align-items: center`, which centres a short field against
+  // a tall one and takes its label out of line with the label beside it. `stretch`
+  // is both the default and what a row of fields actually wants, in two ways at
+  // once: the column boxes come out equal height, so two toggles side by side match
+  // instead of one sitting proud of the other, while the label/control stack inside
+  // each column still starts at the top, so the labels line up.
+  align-items: stretch;
+}
+
+.fields .row > * {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  min-width: 0;
+  // The rhythm between rows OF FIELDS. A `.row` wraps, so one row in the markup is
+  // usually two or three on screen; with `.form-group { margin-bottom: 0 }` below
+  // and nothing else saying otherwise, those wrapped rows sat flush together.
+  margin-bottom: 1rem;
+}
+
+// ...except under the last row of a section, where it is a gap against the section's
+// own bottom padding rather than against another row.
+.fields .row:last-child > * {
   margin-bottom: 0;
 }
-// `max-width: 49% !important` fought bootstrap's own `flex: 0 0 50%`, so every
-// pair of half-width fields came out 49% wide with a 2% hole between them that no
-// gutter accounted for. Let the 50% stand; the padding is the gutter.
-.col-6 {
-  padding-left: 10px;
-  padding-right: 10px;
+
+// One gap under every label, so two controls on a row start at the same y even when
+// one label wraps and its neighbour does not. `display: flex` is for the info
+// buttons a few labels carry: as an inline sibling of the text, one sits on the
+// text's baseline and drags the whole line box down with it.
+//
+// `::ng-deep`, because not every label on this page is written in this template:
+// `ga-timezone-selector` renders its own, and a rule scoped to this component
+// cannot reach it. Time Zone shares its row with Start Week On, so a label rule
+// that reached only one of the two is worse than none.
+:host ::ng-deep .fields .label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.375rem;
+  // A label carrying an info button is one line box taller than a label that is
+  // only text, which put the control under it a few pixels below the control
+  // beside it. One floor for both. (Four of those buttons were also OUTSIDE their
+  // label, between it and the control, where each pushed its own field a whole
+  // button-height down the row; they are inside the label in the markup now.)
+  min-height: 1rem;
 }
+
+// Those info buttons. `nbButton` brings a control-sized box with it — a fixed
+// height and a min-width — which inside a 13px line of label text is what made the
+// labels that have one taller than the labels that do not.
+:host ::ng-deep .fields .label button[nbButton] {
+  height: 1rem;
+  min-width: 0;
+  padding: 0 !important;
+  margin: 0;
+  border: none;
+  background: transparent;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+// The spacing between fields belongs to the grid above, not to the field. Also
+// `::ng-deep`: `ga-timezone-selector` wraps its own control in a `.form-group` of
+// its own, which kept bootstrap's 1rem bottom margin on top of the row's — the
+// second reason the Time Zone field sat below the one beside it.
+:host ::ng-deep .fields .form-group {
+  margin-bottom: 0;
+}
+
+// `.col-6` used to carry `max-width: 49% !important`, which fought bootstrap's own
+// `flex: 0 0 50%` and left every pair of half-width fields 49% wide with a 2% hole
+// between them that no gutter accounted for. The 50% stands; the padding above is
+// the gutter.
+
+// Four fields do not use grid columns at all: Design's pair of selects sits in a
+// `.select-wrapper`, Accounting's fiscal years in `.year-pick`s, and both
+// Accounting's three toggles and Date limit's single one are bare `.form-group`s
+// dropped straight into a `.row`. They keep their wrappers — the form bindings hang
+// off this markup — but they take the grid's halves: instead of the fixed 140px,
+// 170px and 500px the first three were given, and instead of no basis at all for
+// the last, which sized each toggle box to its own longest line of description.
+.select-wrapper {
+  flex: 0 0 100%;
+  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  // Cancels the padding this wrapper takes as a row child, so the two selects
+  // inside it line up with the fields in the rows above and below it.
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
+
+.select-wrapper > .design-select,
+.row.fiscal-years > .year-pick,
+.fields .row > .form-group:not([class*='col-']) {
+  flex: 0 0 50%;
+  max-width: 50%;
+  width: auto;
+  min-width: 0;
+  margin-right: 0;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+// A toggle's height is decided by how long its description happens to be, so two
+// side by side come out ragged unless they are told to match. The row stretches the
+// columns (above), this fills the column, and the `nb-toggle` rule further down
+// fills this — so the bordered boxes on a row are one height whatever they say.
+.form-group.toggle-switch,
+.form-group.invite-toggle {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// `pt-2` on every column of the two timer sections is bootstrap's own
+// `padding-top: .5rem !important`, added back when nothing gave those rows any
+// rhythm of their own. The grid does now and the two stack, which put 1.5rem
+// between the timer rows against 1rem everywhere else on the page.
+.time-tracker .row > [class*='pt-'] {
+  padding-top: 0 !important;
+}
+
 // Removed `.active { background: #ffffff; }`, which was NOT dead — it was the bug.
 //
-// `active` is bound here in two ways. The visible one is the aside-nav `<li>`
-// items (`[class.active]="general?.expanded"` and nine siblings), which
-// `.aside-nav ul li.active` above already paints with
-// `nb-theme(background-basic-color-1)` at higher specificity. The one that is
-// easy to miss is that this template also holds 19 `<nb-option>` elements, and
-// Nebular host-binds `class.active` onto them at RUNTIME as the keyboard manager
-// moves — nothing a grep of the template can see.
+// `active` is bound here in two ways. The visible one is the aside-nav items,
+// which `.aside-nav .aside-nav__item.active` above already paints at higher
+// specificity. The one that is easy to miss is that this template also holds 19
+// `<nb-option>` elements, and Nebular host-binds `class.active` onto them at
+// RUNTIME as the keyboard manager moves — nothing a grep of the template can see.
 //
 // Those options are authored here, so they carry this component's `_ngcontent`
 // attribute even after `nb-select` portals them into the CDK overlay, and the
@@ -218,8 +367,13 @@ nb-accordion {
     padding-right: 15px;
   }
 
-  // separate accordion styles for each one because of input fields colors, layouts, etc.
-  // some media queries here,... too much useless nesting otherwise
+  // Ten sections, one shape. What used to stand here instead was a run of
+  // `:first-of-type` / `:nth-of-type(2,3,5,6,7,8)` blocks, each setting the widths
+  // its own section's fields should take — the nine measures the field grid above
+  // now replaces. They also addressed sections by POSITION, which had already gone
+  // stale: an `#agent` section was added at index 8 and every rule from there down
+  // slid onto the wrong section, so the pair meant for Task settings landed on
+  // Agent and Integrations lost its own. Nothing here counts sections any more.
   nb-accordion-item {
     border-radius: 0.5rem;
     margin-bottom: 20px;
@@ -227,148 +381,16 @@ nb-accordion {
     & .item-body {
       padding: 15px;
     }
-    &:first-of-type {
-      ::ng-deep .select-button,
-      ::ng-deep .ng-select-container {
-        background-color: nb-theme(background-basic-color-1) !important;
-      }
-      ::ng-deep .date-picker-form ng-select {
-        width: 60%;
-      }
-      .fields {
-        width: 75%;
-        @include respond(md) {
-          width: 100%;
-        }
-      }
-      .time-format-select {
-        width: 30%;
-      }
-      .row {
-        align-items: center;
-      }
-    }
-    &:nth-of-type(2) {
-      .select-wrapper {
-        display: flex;
-      }
-      .label {
-        white-space: nowrap;
-      }
-      .design-select {
-        width: 140px;
-        margin-right: 15px;
-      }
-      @include respond(md) {
-        .color-pick {
-          width: 100%;
-        }
-      }
-    }
-    &:nth-of-type(3) {
-      .row {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
 
-        &.fiscal-years {
-          width: 400px;
-          display: flex;
-          justify-content: space-between;
-          margin-left: -5px;
-          margin-right: -5px;
-
-          @include respond(lg) {
-            margin: 0;
-          }
-          @include respond(md) {
-            width: 100%;
-          }
-          & .year-pick {
-            width: 170px;
-            @include respond(md) {
-              width: 49%;
-            }
-          }
-        }
-        &.toggles {
-          // The 500px block is the intended width; the cap keeps it from
-          // overflowing a layout column narrowed by the AI chat (a viewport
-          // breakpoint below cannot see that — the window did not change).
-          width: min(500px, 100%);
-          display: flex;
-          flex-direction: column;
-          margin-left: -5px;
-          margin-right: -5px;
-
-          @include respond(lg) {
-            margin: 0;
-          }
-          @include respond(md) {
-            width: 100%;
-          }
-          & .toggle-switch {
-            margin-bottom: 5px;
-          }
-        }
-        &.half-width-inputs {
-          display: flex;
-          align-items: flex-end;
-          margin-bottom: 10px;
-          padding-left: 0;
-          padding-right: 0;
-          @include respond(sm) {
-            flex-direction: column;
-          }
-        }
-      }
-    }
-    &:nth-of-type(5) {
-      .row {
-        & input {
-          padding: 10px;
-        }
-      }
-    }
-    &:nth-of-type(6) {
-      .row {
-        width: 50%;
-        @include respond(md) {
-          width: 100%;
-        }
-      }
-      .form-group {
-        width: 100%;
-        padding-left: 10px;
-        padding-right: 10px;
-        @include respond(lg) {
-          padding-right: 0;
-          padding-left: 0;
-        }
-      }
-    }
-    &:nth-of-type(7) {
-      .col-6 {
-        margin-bottom: 12px;
-      }
-      @include respond(sm) {
-        .row {
-          width: 100%;
-        }
-      }
-    }
-    &:nth-of-type(8) {
-      .col-6 {
-        margin-bottom: 12px;
-      }
-      .col-12 {
-        padding: 0;
-        margin: 0;
-      }
-      @include respond(sm) {
-        .row {
-          width: 100%;
-        }
-      }
+    // The last field row on the page whose halves could still come out different
+    // widths: several sections put an `nb-select` or an `ng-select` beside a plain
+    // input, and those are painted by different stylesheets — the select brought
+    // its own intrinsic width while the input took the column. Said once here
+    // rather than in six per-section blocks.
+    ::ng-deep .ng-select,
+    ::ng-deep nb-select,
+    ::ng-deep .select-button {
+      width: 100%;
     }
   }
 }
@@ -393,6 +415,14 @@ nb-accordion {
   & > label {
     margin-bottom: 0;
   }
+}
+// The bordered box fills whatever height its column was stretched to, so a row of
+// two toggles reads as one row rather than as two boxes of different sizes.
+:host ::ng-deep .form-group.toggle-switch nb-toggle,
+:host ::ng-deep .form-group.invite-toggle nb-toggle {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
 }
 :host ::ng-deep .toggle {
   // The unchecked toggle track. Both were a literal `#7e7e8f`, i.e. one fixed
@@ -421,60 +451,27 @@ nb-accordion {
 :host ::ng-deep .select-button {
   margin: 0;
 }
+// Removed the General section's own input fill — `:first-of-type` forced
+// `background-basic-color-1` onto its `.select-button`s and `.ng-select-container`s
+// with an `!important`, so the ten selects in the first section were a different
+// colour from the same controls in the other nine, which take the card shell's
+// `input-appearance(42px, …)`. They all come from the shell now.
 //end of ::ng-deep
 
 //media queries
 @include respond(lg) {
-  .row {
-    display: flex;
-    justify-content: space-between;
-    margin-left: 0;
-    margin-right: 0;
-  }
-  .col-6 {
-    padding-right: 0;
+  // The section body gives up its own side padding to buy the fields some width.
+  // The GUTTER between the halves stays: `col-6` is 50% at every width (the markup
+  // uses `col-6`, not `col-md-6`), so the two fields on a row are still two fields
+  // on a row here. Zeroing the column padding at this breakpoint — which is what
+  // this block used to do — simply pushed them into each other.
+  nb-accordion nb-accordion-item-body {
     padding-left: 0;
-  }
-  nb-accordion {
-    nb-accordion-item-body {
-      padding-left: 0;
-      padding-right: 0;
-    }
-    nb-accordion-item {
-      &:first-of-type {
-        ::ng-deep .date-picker-form ng-select {
-          width: 100%;
-        }
-        .fields {
-          width: 100%;
-        }
-        .time-format-select {
-          width: 100%;
-        }
-      }
-      &:nth-of-type(2) {
-        .color-pick {
-          max-width: 100%;
-          min-width: 100%;
-        }
-        .select-wrapper {
-          width: 100%;
-          display: flex;
-          justify-content: space-between;
-        }
-        .design-select {
-          width: 49%;
-          margin-right: 0;
-        }
-      }
-    }
+    padding-right: 0;
   }
 }
 
 @include respond(md) {
-  .col-6 {
-    padding-right: 0;
-  }
   .main-form {
     flex-direction: column;
   }
@@ -516,14 +513,23 @@ nb-accordion {
 }
 
 @include respond(sm) {
-  .col-6 {
+  // One field per row: the halves have no room left in which to be halves. With
+  // nothing beside it, a field takes the full body width and the gutter goes.
+  .fields .row > [class*='col-'],
+  .select-wrapper > .design-select,
+  .row.fiscal-years > .year-pick,
+  .fields .row > .form-group:not([class*='col-']) {
+    flex: 0 0 100%;
     max-width: 100%;
     width: 100%;
-    min-width: 100%;
-    margin-bottom: 5px;
+    padding-left: 0;
+    padding-right: 0;
   }
-  .row {
-    width: 100%;
+
+  .fields .row,
+  .select-wrapper {
+    margin-left: 0;
+    margin-right: 0;
   }
 }
 
@@ -559,15 +565,3 @@ nb-accordion {
 // against a template that renders no card at all. Worth naming rather than just
 // deleting: the card body is now the page frame's last flexible step, so a rule that
 // looks like it loosens the frame is exactly the sort of thing to trip over next.
-
-.time-tracker {
-  .row {
-    margin-left: -0.5rem;
-    margin-right: -0.5rem;
-  }
-  .col-xl-6,
-  .col-12 {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-}
