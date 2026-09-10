@@ -1,99 +1,203 @@
-@use 'var' as *;
 @use 'themes' as *;
+@use 'var' as v;
 
+$radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
+
+// Was `:host.ng-star-inserted`. `ng-star-inserted` is Angular's own marker for a
+// node created by an embedded view, not an API — a routed component is only
+// carrying it incidentally, and hanging the tab's height off it makes the layout
+// depend on a framework implementation detail. The sibling tabs use plain `:host`.
 :host {
-    &.ng-star-inserted {
-        min-height: 100%;
-        height: 100%;
-    }
-    ::ng-deep input {
-        background-color: nb-theme(background-basic-color-1) !important;
-    }
+  height: 100%;
 }
 
-.main-form {
-    width: 100%;
+// Sized like the Main and Settings tabs, so the three agree.
+.location {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  width: 100%;
+  height: calc(100vh - 19.25rem);
+  min-height: 0;
+  padding: 1rem;
+  background-color: nb-theme(gauzy-card-2);
+  @include nb-ltr(border-radius, 0 $radius $radius $radius);
+  @include nb-rtl(border-radius, $radius 0 $radius $radius);
+}
+
+.location__panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
+}
+
+// Was a bare 40%/60% split with `justify-content: space-between` holding the two
+// apart. A fixed pair of percentages cannot give the address fields a floor, so on
+// a layout column narrowed by the AI chat the form half kept shrinking with them.
+.location__panel--form {
+  flex: 0 1 min(22rem, 40%);
+}
+
+.location__panel--map {
+  flex: 1 1 auto;
+  overflow: hidden;
+  min-height: 22rem;
+}
+
+// The fields scroll; Save does not. Before, the wrapper pushed the button down
+// with `justify-content: space-between` and nothing scrolled, so a form taller
+// than the tab simply ran past the bottom edge with the button beyond it.
+.location__fields {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.location__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+
+  button {
+    min-width: 7.5rem;
+  }
+}
+
+// `ga-location-form` lays its fields out on the bootstrap grid at widths chosen
+// for a full-width form: col-11 for the search and both address lines, col-8 for
+// country and city, col-6 for the postcode. Dropped into a panel this narrow they
+// read as five different field widths rather than one column, so every field takes
+// the panel's width and the grid gutters go with them.
+:host ::ng-deep ga-location-form {
+  display: block;
+
+  .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  [class^='col-'],
+  [class*=' col-'] {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  // Latitude and longitude are a pair and stay one.
+  .row[formgroupname] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 0.75rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  nb-checkbox {
+    display: inline-flex;
+    margin-bottom: 1rem;
+  }
+
+  // "Find address" searches for the values the fields below it receive, so it is
+  // ruled off from them. Addressed through `.fields`, which is the wrapper the
+  // component actually renders around its rows.
+  .fields > .row:first-child {
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.25rem;
+    border-bottom: $hairline;
+  }
+}
+
+// `leaflet.component.scss` pins the map to `calc(100vh - 30rem)` with an
+// `!important`, measured against the viewport rather than the box it sits in — in
+// a panel it either left a gap below itself or pushed past the bottom. Let it fill
+// the panel instead, and drop the corner radius it draws inside one.
+:host ::ng-deep ga-leaflet-map {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  > .row {
     display: flex;
-    justify-content: space-between;
-    padding: 20px;
-    background-color: nb-theme(gauzy-card-2);
-    height: calc(100vh - 19.25rem);
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
 
-    & .location-form-wrapper {
-        width: 40%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+    > .col-12 {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 0;
+    }
+  }
 
-        ::ng-deep nb-select.shape-rectangle .select-button {
-            border-radius: 8px;
-            background-color: nb-theme(background-basic-color-1);
-        }
-        ::ng-deep .form-group {
-            margin-bottom: 6px;
-        }
-     }
-    ga-leaflet-map {
-        width: 60%;
-        ::ng-deep & .row {
-            height: 100%;
-            margin: 0 !important;
-        }
-        ::ng-deep & .col-12 {
-            height: 100%;
-            padding: 0;
-        }
-        ::ng-deep & .leaflet-container {
-            height: 100% !important;
-            border-radius: 6px;
-        }
-    }
-
-    ::ng-deep .col-sm-12 {
-        margin-top: 10px;
-        margin-bottom: 5px;
-    }
-    .actions {
-        margin-top: 15px;
-    }
+  .leaflet-container {
+    flex: 1 1 auto;
+    height: auto !important;
+    border-radius: 0 !important;
+  }
 }
 
-.content {
-    display: flex;
-    padding: 50px 0px;
+// Removed `.content { display: flex; padding: 50px 0px; }` — this template renders
+// no `.content`, and a component stylesheet reaches nothing but its own template.
+//
+// Removed `:host ::ng-deep input { background-color: background-basic-color-1 }`
+// too. The card shell already paints every input on the page through
+// `input-appearance(42px, var(--gauzy-card-1, …))`, which is what the Main tab's
+// fields use; this rule was injected later and won, so the Location tab's inputs
+// were the one set on the page that did not match the others.
+
+@media only screen and (max-width: v.$break-lg) {
+  :host {
+    height: auto;
+  }
+
+  .location {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .location__panel--form {
+    flex: 0 0 auto;
+  }
+
+  // Was `order: 1` on the map against a form left at the default `order: 0` —
+  // the two were already in that order in the markup, so it moved nothing.
+  .location__panel--map {
+    flex: 0 0 22rem;
+  }
 }
 
-@include respond(md) {
-    :host.ng-star-inserted {
-        height: auto;
-    }
-    .main-form {
-        flex-direction: column;
-        justify-content: flex-start;
+@media only screen and (max-width: v.$break-sm) {
+  .location {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
 
-        .location-form-wrapper, ga-leaflet-map {
-            width: 100%;
-        }
-        & .location-form-wrapper {
-            ::ng-deep .row .col-4 {
-                width: 100% ;
-            }
-        }
-        & ga-leaflet-map {
-            order: 1;
-            margin-top: 30px;
-            height: 500px;
-        }
-        ::ng-deep .col-sm-12 {
-            margin-bottom: 15px;
-        }
-    }
-}
+  .location__fields {
+    padding: 1rem;
+  }
 
-@include respond(sm) {
-    .main-form {
-        & ga-leaflet-map {
-            height: 350px;
-        }
-    }
+  .location__actions {
+    padding: 0.875rem 1rem;
+  }
+
+  .location__panel--map {
+    flex: 0 0 18rem;
+    min-height: 18rem;
+  }
 }

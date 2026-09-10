@@ -1,15 +1,24 @@
-<form class="main-form" [formGroup]="form">
-	<div class="location-form-wrapper">
-		<ga-location-form
-			#locationFormDirective
-			[form]="form"
-			[showAutocompleteSearch]="true"
-			(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
-			(mapGeometryEmitter)="onGeometrySend($event)"
-		></ga-location-form>
-		<div class="actions">
+<form class="location" [formGroup]="form">
+	<section class="location__panel location__panel--form">
+		<div class="location__fields">
+			<ga-location-form
+				#locationFormDirective
+				[form]="form"
+				[showAutocompleteSearch]="true"
+				(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
+				(mapGeometryEmitter)="onGeometrySend($event)"
+			></ga-location-form>
+		</div>
+
+		<!--
+			Stays a `div.actions`: the Main and Settings tabs use the same wrapper, and
+			ManageOrganizationPageObject drives all three through the one
+			`div.actions > button[status="success"]` selector.
+		-->
+		<div class="actions location__actions">
 			<button
-				[disabled]="this.form.invalid"
+				type="button"
+				[disabled]="form.invalid"
 				(click)="updateOrganizationSettings()"
 				nbButton
 				status="success"
@@ -17,9 +26,9 @@
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</div>
-	</div>
-	<ga-leaflet-map
-		#leafletTemplate
-		(mapClicked)="onMapClicked($event)"
-	></ga-leaflet-map>
+	</section>
+
+	<section class="location__panel location__panel--map">
+		<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)"></ga-leaflet-map>
+	</section>
 </form>
