@@ -9,30 +9,30 @@
 $radius: nb-theme(border-radius);
 $hairline: 1px solid var(--gauzy-border-default-color);
 
+// The tabset hands this tab its height (see `edit-organization-settings.component.scss`),
+// so the tab passes it on rather than measuring the viewport itself.
 :host {
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   @include nb-ltr(border-radius, 0 $radius $radius $radius);
   @include nb-rtl(border-radius, $radius 0 $radius $radius);
 }
 
-// The sibling Location and Settings tabs size themselves the same way, so the tab
-// keeps that height rather than converting the shared tabset to a flex chain. What
-// changes is what happens INSIDE it: the two panels are flex columns that scroll
-// their own overflow, where before the form simply ran past the bottom edge.
+// Was `height: calc(100vh - 19.25rem)` on `.main`, one of three copies of the same
+// estimate of this page's chrome — and an estimate that could not be right in both
+// states, since the demo-account banner changes the header band's height under it.
+// The card is a real frame now and this simply fills it.
 :host .content {
   display: flex;
   align-items: stretch;
   gap: 1rem;
-  height: 100%;
+  flex: 1 1 auto;
   min-height: 0;
   padding: 1rem;
   background-color: nb-theme(gauzy-card-2);
   @include nb-ltr(border-radius, 0 $radius $radius $radius);
   @include nb-rtl(border-radius, $radius 0 $radius $radius);
-
-  &.main {
-    height: calc(100vh - 19.25rem);
-  }
 }
 
 .org__panel {
@@ -341,9 +341,9 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 }
 
 @media only screen and (max-width: v.$break-lg) {
-  :host .content,
-  :host .content.main {
+  :host .content {
     flex-direction: column;
+    flex: 0 0 auto;
     height: auto;
   }
 

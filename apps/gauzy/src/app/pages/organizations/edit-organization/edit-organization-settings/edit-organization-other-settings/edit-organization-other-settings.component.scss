@@ -1,8 +1,12 @@
 @use 'themes' as *;
 @use 'var' as *;
 
+// The tabset hands this tab its height (see `edit-organization-settings.component.scss`),
+// so the tab passes it on rather than measuring the viewport itself.
 :host {
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 // !important exclusively for overriding Bootstrap and Nebular styles, which cannot be touched otherwise.
@@ -17,7 +21,10 @@
   padding: 20px;
   @include nb-ltr(padding-right, 8px);
   @include nb-rtl(padding-left, 8px);
-  height: calc(100vh - 19.25rem);
+  // Was `height: calc(100vh - 19.25rem)` — one of three copies of an estimate of
+  // this page's chrome, wrong by the height of the demo-account banner whenever
+  // that is shown. The card is a real frame now and this fills it.
+  flex: 1 1 auto;
   min-height: 0;
   // One scroll container, not two. This rule carried `overflow: hidden` and
   // `overflow-y: scroll` three lines apart, so the form scrolled vertically while
@@ -496,6 +503,7 @@ nb-accordion {
   // no room for the sections. `.actions` used to be lifted to the bottom with
   // `order: 2`; it is last in the markup now, so it lands there on its own.
   :host .main-form {
+    flex: 0 0 auto;
     overflow-y: auto;
   }
   :host .accordion-section {
@@ -545,11 +553,12 @@ nb-accordion {
 // component stylesheet can only reach its own template, so the id never
 // existed to style.
 
-:host {
-  nb-card-body {
-    overflow: visible;
-  }
-}
+// Removed `:host { nb-card-body { overflow: visible } }`. The card body belongs to
+// `edit-organization.component.html`, two components up, and a component stylesheet
+// cannot match an ancestor — this compiled to `[_nghost-x] nb-card-body[_ngcontent-x]`
+// against a template that renders no card at all. Worth naming rather than just
+// deleting: the card body is now the page frame's last flexible step, so a rule that
+// looks like it loosens the frame is exactly the sort of thing to trip over next.
 
 .time-tracker {
   .row {

@@ -9,16 +9,21 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 // carrying it incidentally, and hanging the tab's height off it makes the layout
 // depend on a framework implementation detail. The sibling tabs use plain `:host`.
 :host {
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
-// Sized like the Main and Settings tabs, so the three agree.
+// Sized like the Main and Settings tabs, so the three agree: the tabset hands the
+// tab its height (see `edit-organization-settings.component.scss`) and this fills
+// it. Was `calc(100vh - 19.25rem)`, one of three copies of an estimate of the
+// page's chrome that the demo-account banner alone put out by ~23px.
 .location {
   display: flex;
   align-items: stretch;
   gap: 1rem;
   width: 100%;
-  height: calc(100vh - 19.25rem);
+  flex: 1 1 auto;
   min-height: 0;
   padding: 1rem;
   background-color: nb-theme(gauzy-card-2);
@@ -168,6 +173,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 
   .location {
     flex-direction: column;
+    flex: 0 0 auto;
     height: auto;
   }
 
