@@ -294,9 +294,11 @@ $hairline: 1px solid var(--gauzy-border-default-color);
     margin-bottom: 1.25rem;
   }
 
-  > .org__field--wide {
-    grid-column: 1 / -1;
-  }
+  // Removed `> .org__field--wide { grid-column: 1 / -1 }`, the only user of which
+  // was the tags field. Spanning both columns left Registration Date alone on its
+  // row with a column of empty space beside it, then gave Tags a row of its own —
+  // two half-empty rows for two fields that pair. They are one row now: eight
+  // fields, four rows, no holes.
 
   // Scoped to `nbInput`: `ga-tags-color-input` puts a bare search `<input>` inside
   // its `ng-select`, and stretching that one to the full column breaks the control.
@@ -321,6 +323,34 @@ $hairline: 1px solid var(--gauzy-border-default-color);
     min-width: 0;
     margin-bottom: 0;
   }
+}
+
+// Same reasoning for the tags control, which shares the last row with Registration
+// Date: it renders its own `<label>` and `ng-select` inside a plain `<div>` rather
+// than a `.form-group`, so nothing the grid says about a field reaches it.
+:host ::ng-deep ga-tags-color-input {
+  display: block;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  ng-select {
+    width: 100%;
+  }
+}
+
+// One label rhythm for the whole grid. Every field on a row has to put its control
+// at the same y, and the eight do not agree on their own: two of them bring their
+// label from a child component (`ga-currency` and, now that it shares the last row
+// with Registration Date, `ga-tags-color-input`) while the other six declare it
+// inline, so the gap under the label was whatever each one happened to inherit.
+:host .org__fields ::ng-deep .label,
+:host .org__fields label.label {
+  display: block;
+  margin-bottom: 0.375rem;
 }
 
 :host ::ng-deep nb-select.shape-rectangle .select-button {
