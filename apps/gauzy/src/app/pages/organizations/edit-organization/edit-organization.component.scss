@@ -12,12 +12,33 @@
 // that page. `.body-header` and `.sub-header` at the bottom are the two rules that
 // belong to Accounting rather than to this header — see the comment above them.
 
+// The shell already hands this page the right box: `styles/_overrides.scss` makes
+// `nb-layout-column` a flex column and gives `> router-outlet + *` — the routed
+// page component, i.e. this `:host` — `flex: 1 1 auto; min-height: 0`. So the host
+// is exactly the viewport less the header band, the footer and the column padding,
+// and nothing here needs to re-derive that from `100vh`.
+//
+// What it was NOT doing is passing that height on. `:host nb-card { height: unset }`
+// at the bottom of this file compiles to (0,2,1) and beat the global
+// `.card-scroll { height: calc(...) }` (0,1,0), so the card sized to its CONTENT:
+// header + tab strip + a tab body that measured ITSELF off `100vh` (see the three
+// tab stylesheets). The card therefore always came out shorter than the column it
+// sits in, which is the empty band between the card and the footer. The chain is
+// continuous now — column -> host -> card -> body -> tabset -> tab — and every
+// step below sizes off its parent rather than off the viewport.
 :host .card-scroll {
   background-color: nb-theme(gauzy-card-2);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 
   & .header {
-    padding: 25px 20px 0;
+    // Was `25px 20px 0`. The band above the tab strip was the single largest
+    // block of empty space on the page and it is chrome, not content.
+    padding: 1rem 1.25rem 0.75rem;
     border-bottom: none;
+    flex: 0 0 auto;
   }
 
   & .header-container {
@@ -146,8 +167,15 @@
     }
   }
 
+  // The tabs own the scrolling: each one has its own scroll port over its own
+  // fields, so nothing should ever overflow here. Nebular's `overflow: auto` is
+  // left as it is rather than clamped to `hidden` — if the chain above ever does
+  // come up short, a second scrollbar is a far better failure than a Save button
+  // silently clipped off the bottom of the card.
   & nb-card-body {
     padding: 0;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 }
 
@@ -180,6 +208,20 @@
   font-weight: bold;
 }
 
+// The tabs stack their panels below `lg` and grow past the viewport, so the card
+// stops being a fixed frame and the layout column scrolls it — `nb-layout-column`
+// is already a scroll port (`styles/_overrides.scss`).
+@media only screen and (max-width: v.$break-lg) {
+  :host .card-scroll {
+    height: auto;
+    min-height: 100%;
+  }
+
+  :host .card-scroll nb-card-body {
+    overflow: visible;
+  }
+}
+
 // Wraps the action under the identity rather than stacking the avatar above the
 // name, which is what the old `flex-direction: column` on `.header-container` did.
 @media only screen and (max-width: v.$break-md) {
@@ -195,7 +237,14 @@
 }
 
 :host {
-  nb-card {
+  // Accounting's cards — the outer `.card` and the statistic cards nested inside
+  // it — still need this; that page has no flex chain to inherit a height from.
+  // The exclusion is what lets the page frame reach the card above: with a bare
+  // `nb-card` this rule is (0,2,1) and silently outranks `.card-scroll`'s own
+  // height. (Both selectors carry a content attribute, so each compile only ever
+  // sees the cards in its OWN template — Accounting's are untouched by the
+  // `.card-scroll` block, and this page has exactly one card, the excluded one.)
+  nb-card:not(.card-scroll) {
     height: unset;
   }
   // `--gauzy-card-1` is not emitted by every registered theme, and a bare
