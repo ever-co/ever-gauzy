@@ -1,28 +1,27 @@
 @use 'var' as *;
 @use 'themes' as *;
-@forward '@shared/_edit-profile-form';
 
-.form-group input {
-  width: 100%;
-}
+// This component's template is two elements — `.org-settings` wrapping an
+// `<nb-route-tabset>` — and a component stylesheet reaches nothing else. Angular
+// compiles a descendant selector with this component's content attribute on the
+// descendant, so a rule can match neither an ancestor (the parent's `nb-card-body`,
+// which this component is projected into) nor anything inside the routed tab
+// components below it. Everything removed here was in one of those two positions:
+//
+// - `@forward '@shared/_edit-profile-form'`, which emitted 28 rules into this
+//   sheet, every one of them rooted at `:host nb-card` or `:host nb-card-body` —
+//   an editing form's chrome, in a file that renders a tab strip. Nothing else came
+//   with it: the mixins it re-exports are unused here, and `var` and `themes` are
+//   already used directly above. About 4KB of CSS for no selector that can match.
+// - `nb-card-body { overflow-y: hidden }`, aimed at the parent's card body.
+// - `.form-group input`, `nb-tab`, `nb-tabset` and `.header`, none of which this
+//   template contains — the tabset element is `nb-route-tabset`, reached through
+//   `::ng-deep` below, which is why that block works and these did not.
 
 .org-settings {
   width: 100%;
   height: 100%;
   background-color: unset;
-}
-
-nb-tab,
-nb-tabset {
-  height: 100%;
-}
-
-nb-card-body {
-  overflow-y: hidden; //prevent extra scroll bar
-}
-
-.header {
-  display: flex;
 }
 
 :host ::ng-deep {
