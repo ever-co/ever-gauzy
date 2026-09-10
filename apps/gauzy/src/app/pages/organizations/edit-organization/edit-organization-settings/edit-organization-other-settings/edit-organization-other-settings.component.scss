@@ -12,15 +12,28 @@
 // !important exclusively for overriding Bootstrap and Nebular styles, which cannot be touched otherwise.
 
 // main sections
+$panel-radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
+
 :host .main-form {
   width: 100%;
   background-color: nb-theme(gauzy-card-2);
+  // The panel the active tab opens onto, so it takes the same folder radius as the
+  // Main and Location tabs and as every employee tab: square where the tab meets
+  // it, rounded on the other three corners. This was the one tab on the page whose
+  // panel had four square corners under a tab with two rounded ones.
+  @include nb-ltr(border-radius, 0 $panel-radius $panel-radius $panel-radius);
+  @include nb-rtl(border-radius, $panel-radius 0 $panel-radius $panel-radius);
   display: flex;
   align-items: stretch;
-  gap: 20px;
-  padding: 20px;
-  @include nb-ltr(padding-right, 8px);
-  @include nb-rtl(padding-left, 8px);
+  // Was `gap: 20px; padding: 20px` with the trailing side cut to 8px. The Main and
+  // Location tabs — and every employee tab, through `@shared/_employee-tab-panel` —
+  // frame their panels with `1rem` on all four sides, so this tab was the only one
+  // on the page whose content started at a different x. The trailing 8px is not
+  // needed for the scrollbar either: the scroll port is `.accordion-section` below,
+  // which keeps its own gutter.
+  gap: 1rem;
+  padding: 1rem;
   // Was `height: calc(100vh - 19.25rem)` — one of three copies of an estimate of
   // this page's chrome, wrong by the height of the demo-account banner whenever
   // that is shown. The card is a real frame now and this fills it.
@@ -33,29 +46,47 @@
   // points at. The accordion column keeps the scroll; the aside stays put.
   overflow: hidden;
 }
+// The section index, given the same panel treatment as the Main tab's identity
+// column (`.org__panel--identity`) and the employee tabs' `.tab__panel`: a card-3
+// surface with the shared hairline, the shared radius and `1.125rem 1.25rem` of
+// padding. It had the fill and the radius but no edge, and `13px 18px` of padding
+// on a page where every other panel uses the rem scale.
+//
+// `height: fit-content` is gone with it. Every sibling panel on this page and the
+// next two takes the full height of the row and scrolls its own overflow; this one
+// stopped at its last item, so the index and the sections beside it ended at
+// different y.
 .aside-nav {
   flex: 0 0 180px;
   width: 180px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
   background-color: nb-theme(gauzy-card-3);
-  padding: 13px 18px;
-  border-radius: nb-theme(border-radius);
-  height: fit-content;
+  border: $hairline;
+  padding: 1.125rem 1.25rem;
+  border-radius: $panel-radius;
   & .settings-section-header {
-    font-size: 14px;
-    font-style: normal;
+    // The shared panel legend: `.tab__legend` in `@shared/_employee-tab-panel` and
+    // `.org__group-title` on the Main tab. Was 14px/600 at the paragraph size, i.e.
+    // the same size as the items under it, so the heading and the list it heads
+    // read as one undifferentiated column.
+    margin: 0 0 1rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    line-height: 17px;
-    letter-spacing: 0em;
+    line-height: 1rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     text-align: left;
-    margin-bottom: 18px;
+    color: nb-theme(text-hint-color);
   }
   ul {
     padding: 0;
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    height: fit-content;
+    gap: 0.5rem;
     list-style: none;
   }
 
@@ -71,12 +102,12 @@
   .aside-nav__item {
     display: block;
     width: 100%;
-    padding: 10px 15px;
+    padding: 0.5rem 0.75rem;
     font-family: inherit;
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-style: normal;
     font-weight: 400;
-    line-height: 16px;
+    line-height: 1.125rem;
     letter-spacing: 0em;
     text-align: start;
     color: inherit;
@@ -135,9 +166,9 @@
   gap: 0.75rem;
   flex: 0 0 auto;
   padding-top: 0.875rem;
-  @include nb-ltr(padding-right, 8px);
-  @include nb-rtl(padding-left, 8px);
-  border-top: 1px solid var(--gauzy-border-default-color);
+  @include nb-ltr(padding-right, 0.5rem);
+  @include nb-rtl(padding-left, 0.5rem);
+  border-top: $hairline;
 
   button {
     min-width: 7.5rem;
@@ -159,8 +190,10 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  @include nb-ltr(padding-right, 8px);
-  @include nb-rtl(padding-left, 8px);
+  // The scrollbar's own gutter, the same 0.5rem the tabset gives every tab panel
+  // on its trailing edge (`edit-organization-settings.component.scss`).
+  @include nb-ltr(padding-right, 0.5rem);
+  @include nb-rtl(padding-left, 0.5rem);
 }
 // end of main sections.
 
@@ -340,9 +373,11 @@ nb-accordion {
 
   & nb-accordion-item-header {
     border-bottom: none;
-    border-radius: 0.5rem;
-    padding-left: 20px;
-    padding-right: 20px;
+    border-radius: $panel-radius;
+    // `1.25rem`, the panel padding `.org__fields` and `.tab__fields` use, so a
+    // section's title starts at the same x as the fields it opens onto.
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
 
     & ::ng-deep nb-icon {
       border-radius: 6px;
@@ -362,9 +397,13 @@ nb-accordion {
   nb-accordion-item {
     background-color: nb-theme(gauzy-card-3);
   }
+  // Nebular renders `<div class="item-body">` INSIDE `nb-accordion-item-body`, and
+  // both used to carry 15px of horizontal padding — 30px in total, against the
+  // 1.25rem (20px) every other panel on these three tabs uses. The host is the
+  // wrapper; the padding belongs to the box that holds the fields, below.
   & nb-accordion-item-body {
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 0;
+    padding-right: 0;
   }
 
   // Ten sections, one shape. What used to stand here instead was a run of
@@ -374,12 +413,17 @@ nb-accordion {
   // stale: an `#agent` section was added at index 8 and every rule from there down
   // slid onto the wrong section, so the pair meant for Task settings landed on
   // Agent and Integrations lost its own. Nothing here counts sections any more.
+  // A section IS this tab's panel — the counterpart of `.org__panel` on Main and
+  // `.tab__panel` on the employee tabs — so it takes their edge and their radius.
+  // It had the card-3 fill and a literal `0.5rem` radius but no hairline, which is
+  // what let ten stacked sections read as one undivided block.
   nb-accordion-item {
-    border-radius: 0.5rem;
-    margin-bottom: 20px;
+    border: $hairline;
+    border-radius: $panel-radius;
+    margin-bottom: 1rem;
 
     & .item-body {
-      padding: 15px;
+      padding: 1.25rem;
     }
 
     // The last field row on the page whose halves could still come out different
@@ -460,34 +504,41 @@ nb-accordion {
 
 //media queries
 @include respond(lg) {
-  // The section body gives up its own side padding to buy the fields some width.
+  // The section body gives up some of its side padding to buy the fields width.
   // The GUTTER between the halves stays: `col-6` is 50% at every width (the markup
   // uses `col-6`, not `col-md-6`), so the two fields on a row are still two fields
   // on a row here. Zeroing the column padding at this breakpoint — which is what
   // this block used to do — simply pushed them into each other.
-  nb-accordion nb-accordion-item-body {
-    padding-left: 0;
-    padding-right: 0;
+  //
+  // Aimed at `.item-body`, which is where the padding now lives; it used to target
+  // the `nb-accordion-item-body` host, and that half is 0 at every width.
+  nb-accordion nb-accordion-item .item-body {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 }
 
 @include respond(md) {
   .main-form {
     flex-direction: column;
+    // The same step Main, Location and the employee tabs take at this width.
+    padding: 0.75rem;
+    gap: 0.75rem;
   }
   .aside-nav {
     // The form is a COLUMN here, so the 180px flex-basis that sets the aside's
     // width on desktop would set its height instead. Back to content-sized.
     flex: 0 0 auto;
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 1rem;
+    overflow-y: visible;
 
     // `display: inline` on a `<ul>` with `margin-right` on the items was doing the
     // job of a wrapping row by accident. Say it: the sections run across and wrap.
     ul {
       flex-direction: row;
       flex-wrap: wrap;
-      gap: 7px;
+      gap: 0.5rem;
       height: auto;
     }
 
