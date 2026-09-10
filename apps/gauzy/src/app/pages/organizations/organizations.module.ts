@@ -38,7 +38,6 @@ import { OrganizationsComponent } from './organizations.component';
 import {
 	OrganizationsCurrencyComponent,
 	OrganizationTotalEmployeesCountComponent,
-	OrganizationsFullnameComponent,
 	OrganizationsStatusComponent
 } from './table-components';
 
@@ -78,7 +77,6 @@ import {
 	],
 	declarations: [
 		OrganizationsComponent,
-		OrganizationsFullnameComponent,
 		OrganizationsStatusComponent,
 		OrganizationTotalEmployeesCountComponent,
 		OrganizationsCurrencyComponent
