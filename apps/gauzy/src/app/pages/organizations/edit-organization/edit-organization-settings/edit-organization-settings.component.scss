@@ -19,21 +19,54 @@
 //   `::ng-deep` below, which is why that block works and these did not.
 
 .org-settings {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
+  min-height: 0;
   background-color: unset;
+}
+
+// The height the card body hands down, passed on to the routed tab.
+//
+// `nb-route-tabset`'s template is `<ul class="route-tabset">` followed by a bare
+// `<router-outlet>`, so the routed tab component is a SIBLING of the strip inside
+// this host — which is why the chain can be closed here rather than in each tab.
+// Every tab used to size itself with `height: calc(100vh - 19.25rem)`: three
+// copies of one estimate of this page's chrome, and wrong whenever the estimate
+// was (the demo-account banner alone puts the header band ~23px over the theme's
+// `header-height`). They take this box now, and it is measured, not guessed.
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 :host ::ng-deep {
   nb-route-tabset {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
     ul.route-tabset {
+      flex: 0 0 auto;
       padding: 0;
       flex-wrap: wrap;
       border-bottom: none;
       margin-bottom: 0 !important;
-      // @include respond(dsk) {
-      //   flex-wrap: wrap;
-      // }
+    }
+
+    // The outlet element is an anchor for the routed view, never a box of its
+    // own; without this it takes a share of the column as a flex item.
+    > router-outlet {
+      display: none;
+    }
+
+    > router-outlet + * {
+      flex: 1 1 auto;
+      min-height: 0;
     }
 
     li {
@@ -76,33 +109,46 @@
         // horizontal padding ran 20 -> 25 -> 20 as the window got NARROWER, while
         // anything above 1532px fell through to Nebular's own padding entirely.
         // One base value, narrowed once on small screens.
-        padding: px2rem(10px) px2rem(25px);
+        //
+        // 10px/25px was sized around the 16px text below; at the strip's own type
+        // size the tab reads as a control rather than as a banner. The radius is
+        // the top half of the card's, so the active tab and the panel under it
+        // read as one folder rather than as a bar above a box.
+        padding: px2rem(7px) px2rem(16px);
+        border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
 
         &:before {
           width: 0 !important;
         }
 
         @include respond(xxl) {
-          padding: px2rem(10px) px2rem(20px);
+          padding: px2rem(7px) px2rem(12px);
         }
 
         nb-icon {
           margin: 0;
-          margin-right: 5px;
-          margin-left: -5px;
-          width: 18px;
-          height: 19px;
+          margin-right: 6px;
+          margin-left: 0;
+          width: 15px;
+          height: 15px;
+          font-size: 15px;
         }
       }
     }
 
+    // Was 16px/600. The shared tab typography is `route-tabset-tab-text-font-size`
+    // (0.875rem) at weight 400, raised to 600 only on the ACTIVE tab — see
+    // `nb-tabset-overrides()` in `gauzy/_gauzy-overrides.scss`. This rule sits on
+    // the inner `<span class="tab-text">` rather than on the link, so it beat both
+    // of those and painted every tab on this page a size larger and a weight
+    // heavier than the tab bars everywhere else in the app, active or not. It now
+    // sets only what the shared rules do not: the strip's own tracking, and the
+    // reset of Nebular's `nb-icon + span` margin (the icon carries the gap).
     .tab-text {
       margin-left: 0 !important;
-      font-size: 16px;
       font-style: normal;
-      font-weight: 600;
-      line-height: 16px;
-      letter-spacing: 0em;
+      line-height: 1rem;
+      letter-spacing: 0.02em;
     }
   }
 }
@@ -115,8 +161,23 @@
   }
 }
 
-@include respond(sm) {
+// Below `lg` the three tabs all stack their panels and grow past the viewport
+// (see each tab's own `$break-lg` query), so the chain is released here too and
+// the page scrolls in the layout column instead of being clipped by the card.
+// This used to key off `sm` (480px) while the tabs switched at `lg` (991px),
+// which left a 500px-wide band where the tabs had stacked but nothing had
+// stopped constraining them.
+@include respond(lg) {
+  :host {
+    height: auto;
+    min-height: 0;
+  }
+
   .org-settings {
     height: auto;
+  }
+
+  :host ::ng-deep nb-route-tabset {
+    flex: 0 0 auto;
   }
 }
