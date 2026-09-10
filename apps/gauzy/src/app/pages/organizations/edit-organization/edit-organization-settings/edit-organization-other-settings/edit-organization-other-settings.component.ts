@@ -1,5 +1,15 @@
 import { formatDate } from '@angular/common';
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	ElementRef,
+	OnDestroy,
+	OnInit,
+	QueryList,
+	ViewChild,
+	ViewChildren
+} from '@angular/core';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, tap, debounceTime, map } from 'rxjs/operators';
@@ -169,20 +179,6 @@ export class EditOrganizationOtherSettingsComponent
 	public taskSettingForm: UntypedFormGroup = EditOrganizationOtherSettingsComponent.buildTaskSettingForm(this._fb);
 
 	/**
-	 * Nebular Accordion Item Components
-	 */
-	@ViewChild('general') general: NbAccordionItemComponent;
-	@ViewChild('design') design: NbAccordionItemComponent;
-	@ViewChild('accounting') accounting: NbAccordionItemComponent;
-	@ViewChild('bonus') bonus: NbAccordionItemComponent;
-	@ViewChild('invites') invites: NbAccordionItemComponent;
-	@ViewChild('dateLimit') dateLimit: NbAccordionItemComponent;
-	@ViewChild('agent') agent: NbAccordionItemComponent;
-	@ViewChild('timer') timer: NbAccordionItemComponent;
-	@ViewChild('integrations') integrations: NbAccordionItemComponent;
-	@ViewChild('taskSetting') taskSetting: NbAccordionItemComponent;
-
-	/**
 	 * Nebular Accordion Main Component
 	 */
 	accordion: NbAccordionComponent;
@@ -191,6 +187,64 @@ export class EditOrganizationOtherSettingsComponent
 			this.accordion = content;
 			this._cdr.detectChanges();
 		}
+	}
+
+	/**
+	 * The aside index, in the same order as the accordion items it points at. The
+	 * two lists are matched by position, so a section added to the accordion has to
+	 * be added here at the same index.
+	 */
+	readonly settingsSections: { key: string; label: string }[] = [
+		{ key: 'general', label: 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' },
+		{ key: 'design', label: 'ORGANIZATIONS_PAGE.EDIT.DESIGN' },
+		{ key: 'accounting', label: 'ORGANIZATIONS_PAGE.EDIT.ACCOUNTING' },
+		{ key: 'bonus', label: 'ORGANIZATIONS_PAGE.EDIT.BONUS' },
+		{ key: 'invites', label: 'ORGANIZATIONS_PAGE.EDIT.INVITE' },
+		{ key: 'dateLimit', label: 'ORGANIZATIONS_PAGE.EDIT.DATE_LIMIT' },
+		{ key: 'timer', label: 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' },
+		{ key: 'agent', label: 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' },
+		{ key: 'taskSetting', label: 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING' },
+		{ key: 'integrations', label: 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' }
+	];
+
+	@ViewChildren(NbAccordionItemComponent) private accordionItems: QueryList<NbAccordionItemComponent>;
+
+	@ViewChildren(NbAccordionItemComponent, { read: ElementRef })
+	private accordionItemElements: QueryList<ElementRef<HTMLElement>>;
+
+	/**
+	 * Whether the section at this position is the one currently open.
+	 *
+	 * @param index position in `settingsSections`
+	 */
+	isSectionExpanded(index: number): boolean {
+		return !!this.accordionItems?.get(index)?.expanded;
+	}
+
+	/**
+	 * Reveal a settings section from the aside.
+	 *
+	 * The aside used to call `toggle()` on the accordion item and stop there, which
+	 * had two consequences. Clicking the section you were already reading closed it,
+	 * and — because the accordion is a single scrolling column roughly two thousand
+	 * lines long — opening anything below the fold moved nothing into view, so the
+	 * lower entries looked inert. This is an index into the page, so it opens rather
+	 * than toggles, and brings the section it opened with it.
+	 *
+	 * @param index position in `settingsSections`
+	 */
+	openSection(index: number): void {
+		const item = this.accordionItems?.get(index);
+		if (!item) {
+			return;
+		}
+		if (!item.expanded) {
+			item.open();
+		}
+		this.accordionItemElements?.get(index)?.nativeElement?.scrollIntoView({
+			behavior: 'smooth',
+			block: 'start'
+		});
 	}
 
 	static buildTaskSettingForm(fb: UntypedFormBuilder): UntypedFormGroup {

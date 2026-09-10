@@ -1,59 +1,28 @@
 <form class="main-form" [formGroup]="form">
 	<aside class="aside-nav">
-		<h4 class="settings-section-header">
+		<h4 class="settings-section-header" id="settingsSectionsHeading">
 			{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS_SECTION' | translate }}
 		</h4>
-		<ul>
-			<span (click)="general.toggle()">
-				<li [class.active]="general?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' | translate }}
-				</li>
-			</span>
-			<span (click)="design.toggle()">
-				<li [class.active]="design?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.DESIGN' | translate }}
-				</li>
-			</span>
-			<span (click)="accounting.toggle()">
-				<li [class.active]="accounting?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.ACCOUNTING' | translate }}
-				</li>
-			</span>
-			<span (click)="bonus.toggle()">
-				<li [class.active]="bonus?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.BONUS' | translate }}
-				</li>
-			</span>
-			<span (click)="invites.toggle()">
-				<li [class.active]="invites?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.INVITE' | translate }}
-				</li>
-			</span>
-			<span (click)="dateLimit.toggle()">
-				<li [class.active]="dateLimit?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.DATE_LIMIT' | translate }}
-				</li>
-			</span>
-			<span (click)="timer.toggle()">
-				<li [class.active]="timer?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
-				</li>
-			</span>
-			<span (click)="agent.toggle()">
-				<li [class.active]="agent?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
-				</li>
-			</span>
-			<span (click)="taskSetting.toggle()">
-				<li [class.active]="taskSetting?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING' | translate }}
-				</li>
-			</span>
-			<span (click)="integrations.toggle()">
-				<li [class.active]="integrations?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' | translate }}
-				</li>
-			</span>
+		<!--
+			Each entry was a `<span (click)>` WRAPPING its `<li>`, which is not a legal
+			child of `<ul>` and, with no button, role or tabindex, could not be reached
+			or fired from the keyboard at all. The list items are the list items now,
+			and the control inside each is a real button.
+		-->
+		<ul aria-labelledby="settingsSectionsHeading">
+			@for (section of settingsSections; track section.key) {
+			<li>
+				<button
+					type="button"
+					class="aside-nav__item"
+					[class.active]="isSectionExpanded($index)"
+					[attr.aria-expanded]="isSectionExpanded($index)"
+					(click)="openSection($index)"
+				>
+					{{ section.label | translate }}
+				</button>
+			</li>
+			}
 		</ul>
 	</aside>
 	<section class="fields-section">
