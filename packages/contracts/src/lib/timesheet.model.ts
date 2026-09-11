@@ -35,6 +35,9 @@ export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	isBilled?: boolean;
 	status: TimesheetStatus;
 	isEdited?: boolean;
+	// Project change request fields
+	projectChangeRequestId?: ID;
+	projectChangeRequest?: ITimesheetProjectChangeRequest;
 }
 
 export interface ITimesheetCreateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -71,6 +74,53 @@ export enum TimesheetStatus {
 	IN_REVIEW = 'IN REVIEW',
 	DENIED = 'DENIED',
 	APPROVED = 'APPROVED'
+}
+
+/**
+ * Enum for the status of a timesheet project change request
+ */
+export enum TimesheetProjectChangeStatus {
+	PENDING = 'PENDING',
+	APPROVED = 'APPROVED',
+	REJECTED = 'REJECTED'
+}
+
+/**
+ * Interface for a timesheet project change request
+ */
+export interface ITimesheetProjectChangeRequest extends IBasePerTenantAndOrganizationEntityModel {
+	timesheetId: ID;
+	timesheet?: ITimesheet;
+	requestedProjectId: ID;
+	requestedProject?: IOrganizationProject;
+	previousProjectId?: ID;
+	previousProject?: IOrganizationProject;
+	reason: string;
+	status: TimesheetProjectChangeStatus;
+	reviewedById?: ID;
+	reviewedBy?: IUser;
+	reviewedAt?: Date;
+	reviewNote?: string;
+}
+
+/**
+ * Input interface to request a timesheet project change
+ */
+export interface IRequestTimesheetProjectChange {
+	timesheetId: ID;
+	requestedProjectId: ID;
+	reason: string;
+	organizationId: ID;
+}
+
+/**
+ * Input interface to update a timesheet project change request status (approve/reject)
+ */
+export interface IUpdateTimesheetProjectChangeStatus {
+	changeRequestId: ID;
+	status: TimesheetProjectChangeStatus;
+	reviewNote?: string;
+	organizationId: ID;
 }
 
 export interface IUpdateTimesheetStatusInput extends IBasePerTenantAndOrganizationEntityModel {
