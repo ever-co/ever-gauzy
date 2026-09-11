@@ -4,10 +4,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags.component';
 
 @Component({
-    selector: 'gauzy-organization-with-tags',
-    templateUrl: './organization-with-tags.component.html',
-    styleUrls: ['./organization-with-tags.component.scss'],
-    standalone: false
+	selector: 'gauzy-organization-with-tags',
+	templateUrl: './organization-with-tags.component.html',
+	styleUrls: ['./organization-with-tags.component.scss'],
+	standalone: false
 })
 export class OrganizationWithTagsComponent extends PictureNameTagsComponent implements OnChanges {
 	/** Set when the row's logo URL is present but fails to load. */

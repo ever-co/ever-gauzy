@@ -246,9 +246,9 @@ export class EditOrganizationOtherSettingsComponent
 				behavior: 'smooth',
 				block: 'start'
 			});
-			const header = this.accordionItemElements?.get(index)?.nativeElement?.querySelector(
-				'nb-accordion-item-header'
-			) as HTMLElement | null;
+			const header = this.accordionItemElements
+				?.get(index)
+				?.nativeElement?.querySelector('nb-accordion-item-header') as HTMLElement | null;
 			header?.focus();
 		}, 0);
 	}
