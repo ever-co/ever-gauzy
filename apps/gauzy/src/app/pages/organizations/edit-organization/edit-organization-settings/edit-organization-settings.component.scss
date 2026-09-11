@@ -69,15 +69,6 @@
       display: none;
     }
 
-    @include respond(xxl) {
-      li a.tab-link {
-        display: flex !important;
-
-        nb-icon {
-          margin-bottom: 0;
-        }
-      }
-    }
   }
 }
 

@@ -46,10 +46,10 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	@ViewChild('timer') timer: NbAccordionItemComponent;
 	@ViewChild('agent') agent: NbAccordionItemComponent;
 
-	@ViewChildren(NbAccordionItemComponent) private accordionItems: QueryList<NbAccordionItemComponent>;
+	@ViewChildren(NbAccordionItemComponent) private readonly accordionItems: QueryList<NbAccordionItemComponent>;
 
 	@ViewChildren(NbAccordionItemComponent, { read: ElementRef })
-	private accordionItemElements: QueryList<ElementRef<HTMLElement>>;
+	private readonly accordionItemElements: QueryList<ElementRef<HTMLElement>>;
 
 	/**
 	 * Reveal a settings section from the rail.
@@ -78,10 +78,12 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		if (index < 0) {
 			return;
 		}
-		this.accordionItemElements?.get(index)?.nativeElement?.scrollIntoView({
-			behavior: 'smooth',
-			block: 'start'
-		});
+		setTimeout(() => {
+			this.accordionItemElements?.get(index)?.nativeElement?.scrollIntoView({
+				behavior: 'smooth',
+				block: 'start'
+			});
+		}, 0);
 	}
 
 	/**

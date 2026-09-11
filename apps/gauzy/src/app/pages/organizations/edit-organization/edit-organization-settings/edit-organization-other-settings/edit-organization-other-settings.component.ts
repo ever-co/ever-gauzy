@@ -241,10 +241,16 @@ export class EditOrganizationOtherSettingsComponent
 		if (!item.expanded) {
 			item.open();
 		}
-		this.accordionItemElements?.get(index)?.nativeElement?.scrollIntoView({
-			behavior: 'smooth',
-			block: 'start'
-		});
+		setTimeout(() => {
+			this.accordionItemElements?.get(index)?.nativeElement?.scrollIntoView({
+				behavior: 'smooth',
+				block: 'start'
+			});
+			const header = this.accordionItemElements?.get(index)?.nativeElement?.querySelector(
+				'nb-accordion-item-header'
+			) as HTMLElement | null;
+			header?.focus();
+		}, 0);
 	}
 
 	static buildTaskSettingForm(fb: UntypedFormBuilder): UntypedFormGroup {

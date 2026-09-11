@@ -45,7 +45,7 @@
 							{{ 'ORGANIZATIONS_PAGE.ACTIVE' | translate }}
 						</span>
 					}
-					@if (organization?.isArchived) {
+					@if (organization?.isArchived || organization?.isActive === false) {
 						<span class="org__chip org__chip--warning">
 							{{ 'ORGANIZATIONS_PAGE.ARCHIVED' | translate }}
 						</span>
@@ -101,7 +101,7 @@
 							@if (organization.bonusType; as bonusType) {
 								<div class="org__stat">
 									<dt>{{ 'FORM.LABELS.TYPE_OF_BONUS' | translate }}</dt>
-									<dd>{{ bonusType | replace : '_' : ' ' | titlecase }}</dd>
+									<dd>{{ bonusType | replace: '_' : ' ' | titlecase }}</dd>
 								</div>
 							}
 							@if (organization.bonusPercentage != null) {

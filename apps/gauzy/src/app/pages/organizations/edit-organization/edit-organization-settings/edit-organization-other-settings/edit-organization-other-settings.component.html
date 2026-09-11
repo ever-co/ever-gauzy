@@ -17,6 +17,8 @@
 					class="aside-nav__item"
 					[class.active]="isSectionExpanded($index)"
 					[attr.aria-expanded]="isSectionExpanded($index)"
+					[attr.aria-controls]="'settings-section-' + section.key"
+					[attr.aria-current]="isSectionExpanded($index) ? 'true' : null"
 					(click)="openSection($index)"
 				>
 					{{ section.label | translate }}
@@ -28,8 +30,8 @@
 	<section class="fields-section">
 		<div class="accordion-section">
 			<nb-accordion #accordion>
-				<nb-accordion-item #general [expanded]="true">
-					<nb-accordion-item-header>
+				<nb-accordion-item #general id="settings-section-general" [expanded]="true">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #generalBody [hidden]="generalBody?.state === 'collapsed'">
@@ -193,8 +195,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #design>
-					<nb-accordion-item-header>
+				<nb-accordion-item #design id="settings-section-design">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.DESIGN' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #designBody [hidden]="designBody?.state === 'collapsed'">
@@ -277,8 +279,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #accounting>
-					<nb-accordion-item-header>
+				<nb-accordion-item #accounting id="settings-section-accounting">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.ACCOUNTING' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #accountingBody [hidden]="accountingBody?.state === 'collapsed'">
@@ -444,8 +446,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #bonus>
-					<nb-accordion-item-header>
+				<nb-accordion-item #bonus id="settings-section-bonus">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.BONUS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #bonusBody [hidden]="bonusBody?.state === 'collapsed'">
@@ -495,8 +497,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #invites>
-					<nb-accordion-item-header>
+				<nb-accordion-item #invites id="settings-section-invites">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.INVITE' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #invitesBody [hidden]="invitesBody?.state === 'collapsed'">
@@ -538,8 +540,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #dateLimit>
-					<nb-accordion-item-header>
+				<nb-accordion-item #dateLimit id="settings-section-dateLimit">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.DATE_LIMIT' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #dateLimitBody [hidden]="dateLimitBody?.state === 'collapsed'">
@@ -562,8 +564,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #timer>
-					<nb-accordion-item-header>
+				<nb-accordion-item #timer id="settings-section-timer">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #timerBody [hidden]="timerBody?.state === 'collapsed'">
@@ -1068,8 +1070,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #agent>
-					<nb-accordion-item-header>
+				<nb-accordion-item #agent id="settings-section-agent">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #agentBody [hidden]="agentBody?.state === 'collapsed'">
@@ -1627,8 +1629,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #integrations>
-					<nb-accordion-item-header>
+				<nb-accordion-item #integrations id="settings-section-integrations">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #integrationsBody [hidden]="integrationsBody?.state === 'collapsed'">
@@ -1674,6 +1676,7 @@
 		</div>
 		<div class="actions">
 			<button
+				type="button"
 				[disabled]="form.invalid"
 				(throttledClick)="updateOrganizationSettings()"
 				debounceClick

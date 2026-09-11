@@ -14,6 +14,7 @@ import { Store } from '@gauzy/ui-core/core';
 		<input
 			type="file"
 			accept="image/*"
+			aria-label="Upload image"
 			(change)="imageUploadHandler()"
 			(mouseenter)="changeHoverState.emit(true)"
 			(mouseleave)="changeHoverState.emit(false)"

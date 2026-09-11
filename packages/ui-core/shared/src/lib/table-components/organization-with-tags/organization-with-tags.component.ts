@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags.component';
@@ -9,9 +9,15 @@ import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags
     styleUrls: ['./organization-with-tags.component.scss'],
     standalone: false
 })
-export class OrganizationWithTagsComponent extends PictureNameTagsComponent {
+export class OrganizationWithTagsComponent extends PictureNameTagsComponent implements OnChanges {
 	/** Set when the row's logo URL is present but fails to load. */
 	logoFailed = false;
+
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['rowData']) {
+			this.logoFailed = false;
+		}
+	}
 
 	/**
 	 * The row's logo.
