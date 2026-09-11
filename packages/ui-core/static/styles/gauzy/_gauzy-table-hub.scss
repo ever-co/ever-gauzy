@@ -291,6 +291,150 @@
   }
 }
 
+/// The same contract as `list-page()`, for the pages that build their table BY
+/// HAND instead of rendering `angular2-smart-table`: a stack of
+/// `nb-card > nb-card-body.custom-table` rows inside a `.table-scroll-container`.
+///
+/// Five pages under `/pages/organization` are built that way — Vendors,
+/// Positions, Employee levels and Documents share one stylesheet, Employment
+/// types has its own — and every selector in `list-page()` that matters is
+/// anchored on the smart-table element, so none of it ever reached them. What
+/// that looked like: full-size toolbar buttons beside compacted ones on
+/// Departments and Teams, rows better than twice the height, and a stack of
+/// separately floating cards where the rest of the section has one bounded
+/// surface with rows on it.
+///
+/// So this takes the three pieces of `list-page()` that are NOT anchored on the
+/// smart table — the density tokens, the toolbar scale and the table surface —
+/// and adds the one thing those rows need that a `<tr>` never did: they arrive
+/// as cards, carrying a card's background, radius, ring and bottom margin.
+///
+/// MUST be included AFTER any `@forward` of a sheet that paints `.custom-table`
+/// (all five forward `expense-categories`, which paints it `gauzy-card-1`): the
+/// row rule below is deliberately at the same specificity as that one, so it is
+/// source order that settles it — see the note on the rule.
+///
+/// @param {String} $actions - the block holding the page's action buttons, as a
+///   selector relative to `:host`. `nb-card-header` for a page whose toolbar is
+///   on the title line; Employment types puts its row in the card BODY over a
+///   tabset and passes its own selector. `null` for a page with no action row.
+/// @param {Length} $row-padding-x - the row's own gutter. The default suits a
+///   row that holds one value across its width. A page whose row markup
+///   is a Bootstrap `.row` needs at least the 15px that grid bleeds past its
+///   container with negative margins, or the first cell hangs off the surface —
+///   Vendors passes 1.125rem for exactly that.
+@mixin card-list-page($actions: 'nb-card-header', $row-padding-x: 0.75rem) {
+  :host {
+    @include density-tokens();
+  }
+
+  @if $actions {
+    :host #{$actions} {
+      @include page-header-buttons();
+    }
+  }
+
+  :host .table-scroll-container {
+    @include surface();
+    // The surface is the TABLE, so it is the size of the space the table was
+    // given — not the size of the rows that happen to be in it. Four employment
+    // types in a container that hugs its content is a small bordered box
+    // floating in a tall empty card, which is not what any page in this section
+    // looks like: `@shared/_pg-card` fills the body on all the smart-table
+    // pages, and the rows there simply stop part-way down a full-height surface.
+    //
+    // `min-height` rather than `flex: 1 1 auto`, which is how the smart-table
+    // pages do it: two of the five put this container in a card BODY, which is
+    // not a flex column, so a flex declaration would be quietly ignored there —
+    // and making it one would relayout the card-grid branch of four pages that
+    // nobody asked about. Both parents have a definite height already, so a
+    // percentage resolves in either.
+    min-height: 100%;
+  }
+
+  // The row's wrapper. Flattened onto the surface above — left alone it would be
+  // a card on a card.
+  :host .table-scroll-container nb-card {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    margin-bottom: 0;
+  }
+
+  // Paint and box for the row itself.
+  //
+  // SPECIFICITY: deliberately `:host .custom-table`, the same selector
+  // `expense-categories` paints it with, rather than something stronger. The
+  // hover and selection rules these pages inherit are `:host .custom-table:hover`
+  // / `.selected`, one pseudo-class ABOVE this — reaching for
+  // `.table-scroll-container nb-card-body` here would out-rank them and paint
+  // every row transparent under the pointer.
+  :host .custom-table {
+    background: transparent;
+    border-radius: 0;
+    // `:host nb-card-body` on these pages sets the PAGE body's padding and
+    // matches the row bodies too, which is where ~60px rows came from.
+    padding-block: 0.5rem;
+    padding-inline: $row-padding-x;
+    // The app's control text size, NOT the 0.6875rem a smart-table cell takes.
+    // That step is what buys a twelve-column table its density; three of these
+    // five pages put a single value in the row (Positions, Employee levels and
+    // Employment types render one `ga-notes-with-tags` and nothing else), and a
+    // single column set at cell size reads as a page that has been zoomed out.
+    font-size: 0.8125rem;
+    line-height: var(--gauzy-table-line-height, 1.25rem);
+    // A smart table separates its rows with nothing, and is right to: twelve
+    // columns of aligned values are their own grid, and the hover tint says
+    // which row you are on. A single-column list has neither — flattening the
+    // cards off these rows without putting a rule back left four names in a box
+    // with no structure at all. One hairline, drawn INSIDE the row's box so
+    // nothing moves and the selected row's 6px rail is unaffected.
+    box-shadow: inset 0 -1px 0 0 var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  }
+
+  // The rule under the last row would be a second edge just inside the surface's
+  // own.
+  :host .table-scroll-container nb-card:last-of-type .custom-table {
+    box-shadow: none;
+  }
+
+  /*
+   * Row hover and selection, for all five pages rather than the four that share
+   * the Vendors sheet — Employment types forwards only `expense-categories`, and
+   * so had neither.
+   *
+   * `expense-categories` gives BOTH states the same `rgba(50, 50, 50, 0.03)`
+   * fill, so hovering a row looked exactly like selecting one, and 3% of black
+   * over a near-black card is nothing at all — on the four dark themes there was
+   * no visible selection. Selection also arrived as a 6px border that exists
+   * only when the row is selected, so the whole row jumped 6px sideways on
+   * click.
+   *
+   * Now: the neutral tints (they darken a light surface and lighten a dark one,
+   * so one value works in all eight themes), selection carried by the primary
+   * colour on the leading edge, and a transparent edge of the same width at rest
+   * so nothing moves.
+   *
+   * Logical properties, which also settles the cascade: the rules these replace
+   * are `[dir=ltr]` / `[dir=rtl]` pairs, and naming `.table-scroll-container`
+   * buys back the specificity that prefix carries.
+   */
+  :host .table-scroll-container .custom-table {
+    border-inline-start: 3px solid transparent;
+  }
+
+  // `:not(.selected)` so hovering a selected row does not repaint it as merely
+  // hovered.
+  :host .table-scroll-container .custom-table:hover:not(.selected) {
+    background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  }
+
+  :host .table-scroll-container .custom-table.selected {
+    background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+    border-inline-start-color: var(--color-primary-default);
+  }
+}
+
 /// Cell padding for a table that carries a picture column.
 ///
 /// `density-tokens()` runs the list-page family at 0.1875rem / 0.4375rem, which
