@@ -33,7 +33,10 @@
   > div:last-child {
     flex: 0 0 auto;
     color: var(--gauzy-text-color-2, var(--text-hint-color));
-    font-size: nb-theme(text-caption-font-size);
+    // A step under the row's own size (the shared card-list block sets that),
+    // rather than `text-caption-font-size`, which is a step ABOVE it — the
+    // timestamp was rendering larger than the file name it is secondary to.
+    font-size: var(--gauzy-table-font-size, 0.8125rem);
   }
 
   // `min-width: 0` as well as on the wrapper: a flex item's default
