@@ -1,6 +1,24 @@
+// `@shared/_pg-card` is loaded for its CSS, not for a member: it emits the page
+// frame (the card chain, the scroll-container flex rules) and loading it FIRST is
+// what puts that frame ahead of everything below, so the two blocks in this file
+// are resolving a cascade they can see rather than one they hope for. The
+// `product-types` forward brings the shared inventory-table treatment, which five
+// tables take from one place.
 @use '@shared/_pg-card' as *;
 @forward '../manage-product-types/product-types.component';
 
-:host nb-card-body {
-  height: calc($card-height - 0.5rem) !important;
-}
+// ── Fitting the column ───────────────────────────────────────────────────────
+// REMOVED from here: `:host nb-card-body { height: calc($card-height - 0.5rem)
+// !important }`.
+//
+// `gauzy/_gauzy-cards` already gives the body that same chrome estimate, but as a
+// FLEX BASIS — `flex: 1 1 auto` then grows or shrinks it to whatever the card
+// actually has, so the estimate being a guess never mattered. Restating it at
+// page level with `!important` turned a starting point into a floor and a
+// ceiling. `/pages/tasks/dashboard`, which fits, pins that height only on its
+// `.project` variant; with none selected its body is a plain flex child, and that
+// is the whole difference.
+//
+// The other half of the fit is not in this file: see `inventory.component.ts`'s
+// own note for the height chain that has to reach this page before `nb-card
+// { height: 100% }` can resolve at all.
