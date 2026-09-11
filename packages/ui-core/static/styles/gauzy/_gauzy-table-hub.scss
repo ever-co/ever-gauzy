@@ -18,6 +18,11 @@
   --gauzy-table-chip-block-gap: 0.5rem;
   --gauzy-people-avatar-size: 1rem;
   --gauzy-people-font-size: 0.6875rem;
+
+  // Thumbnail columns (Image / Logo / Icon) are deliberately left out of this block.
+  // Every metric above is text or a chip and scales with the row's 1rem line box;
+  // a picture does not, and the renderers' own 74x60 / 70x64 / 35px boxes are
+  // left exactly as they are — see `thumbnail-row-padding()` below.
 }
 
 @mixin surface() {
@@ -202,4 +207,115 @@
     border-radius: var(--gauzy-radius-sm, 0.375rem);
     font-size: 0.75rem;
   }
+}
+
+/// The whole list-page contract in one include: density tokens, the table
+/// surface, row hover/selection, the tag-chip stack, the status pills, the pager
+/// and the page-header action row.
+///
+/// WHY A BUNDLE, when Payments, Invoices, Pipelines, Tasks, Employees and Job
+/// Employees each spell the same seven blocks out by hand: those pages interleave
+/// page-specific rules between them (a toggle given its own tokens here, an
+/// avatar chip resized there), and reading them as one list is how those
+/// exceptions stay visible. The tables under `/pages/organization` have no such
+/// exceptions to interleave — they are the same card, the same
+/// `.table-scroll-container`, the same `.pagination-container` and the same
+/// toolbar, a dozen and a half times over — so restating the block once per page
+/// would only create a dozen and a half places for it to drift.
+///
+/// MUST be included at the top level of a COMPONENT stylesheet: every selector
+/// below is anchored at `:host`, and `::ng-deep` is only stripped (rather than
+/// left in the output as an unmatchable pseudo-element) where a real
+/// encapsulation attribute precedes it.
+///
+/// @param {String} $actions - what holds the page's action buttons, as a selector
+///   relative to `:host`. The default is the CARD HEADER rather than
+///   `.gauzy-button-container`, and that is the point: several of these pages put
+///   a second row of buttons beside the title — Inventory's Merchants /
+///   Warehouses / Product categories / Product types, Equipment's "Equipment
+///   Sharing" — outside the toolbar container entirely. Naming only the container
+///   left those at full size next to a compacted "+ Add", which is the one thing
+///   in the header that then read as oversized. Every token the row needs is a
+///   CUSTOM PROPERTY, so one declaration on the header reaches all of them,
+///   `ngx-gauzy-button-action`'s own template included.
+///
+///   A page whose buttons sit in the card BODY passes its own selector; pass
+///   `null` for a table with no action row at all.
+@mixin list-page($actions: 'nb-card-header') {
+  // The tokens sit on `:host`, not on the table, and that placement is the
+  // point: the renderers that consume them (`ngx-people-list`, `ga-only-tags`,
+  // `ga-notes-with-tags`, `ngx-created-by-user`, the loading skeleton) are
+  // separate components, and custom properties are the only thing that crosses
+  // those boundaries.
+  :host {
+    @include density-tokens();
+  }
+
+  :host .table-scroll-container {
+    @include surface();
+  }
+
+  :host ::ng-deep angular2-smart-table {
+    @include rows();
+  }
+
+  :host ::ng-deep {
+    @include tag-stack-spacing();
+  }
+
+  :host ::ng-deep ga-status-badge {
+    @include status-badge-tints();
+  }
+
+  :host .pagination-container {
+    @include pager-container();
+  }
+
+  // The pager's `<nav><ul class="pagination"><li>`: its own sheet draws 0.875rem
+  // numerals in a 0.75rem x 1.1rem box and 0.5rem-padded icon chips, i.e. a
+  // control row taller than four table rows put together.
+  //
+  // SPECIFICITY: those rules nest under `:host`, so `li span` shims to
+  // `[_nghost-pg] li[_ngcontent-pg] span[_ngcontent-pg]` — (0,3,2). Naming
+  // `.pagination-container` (which lives in the CALLING component's template, so
+  // it carries that component's content attribute) before `::ng-deep` buys two
+  // attributes and a class, taking the block to (0,3,3).
+  :host .pagination-container ::ng-deep ngx-pagination {
+    @include pager();
+  }
+
+  @if $actions {
+    :host #{$actions} {
+      @include page-header-buttons();
+    }
+  }
+}
+
+/// Cell padding for a table that carries a picture column.
+///
+/// `density-tokens()` runs the list-page family at 0.1875rem / 0.4375rem, which
+/// is right for a row whose tallest thing is a line of text. A thumbnail row is
+/// not that row: `ImageRowComponent` (74x60), `ItemImgTagsComponent` (70x64) and
+/// `IconRowComponent` (a 35px disc) are several line boxes tall whatever the
+/// text around them does, so the tighter box buys no height here — it only
+/// presses the picture against the rule above and below it.
+///
+/// The pictures themselves are left alone. Shrinking them to the row's scale was
+/// tried and is wrong twice over: the photo stops carrying information, and
+/// `ga-no-image` — which is what most of these cells actually render — clips its
+/// "Image not available" caption mid-word, so a missing image reads as a broken
+/// one. So these tables keep the picture they had and the padding they had; what
+/// they take from the density pass is the type scale, the surface, the row
+/// treatment and the pager.
+///
+/// Set on `angular2-smart-table` rather than on the cells: the density rules in
+/// `_overrides.scss` read these as custom properties from the `td`, and a custom
+/// property set on the table inherits down to every cell in it — so this needs no
+/// specificity at all against a `:root`-prefixed block it could not otherwise
+/// out-rank. Values are the app-wide defaults from `$gauzy-density` (themes.scss).
+@mixin thumbnail-row-padding() {
+  --gauzy-table-cell-padding-y: 0.375rem;
+  --gauzy-table-cell-padding-x: 0.625rem;
+  --gauzy-table-header-padding-y: 0.5rem;
+  --gauzy-table-header-padding-x: 0.625rem;
 }
