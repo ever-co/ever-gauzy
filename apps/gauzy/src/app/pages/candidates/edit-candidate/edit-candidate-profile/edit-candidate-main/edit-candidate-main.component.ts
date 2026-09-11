@@ -15,9 +15,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 @Component({
     selector: 'ga-edit-candidate-main',
     templateUrl: './edit-candidate-main.component.html',
-    styleUrls: [
-        '../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss'
-    ],
+    styleUrls: ['./edit-candidate-main.component.scss'],
     styles: [
         `
 			:host {

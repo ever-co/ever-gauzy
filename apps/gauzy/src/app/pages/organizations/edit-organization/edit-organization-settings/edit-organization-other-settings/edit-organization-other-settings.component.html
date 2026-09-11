@@ -1,77 +1,37 @@
 <form class="main-form" [formGroup]="form">
 	<aside class="aside-nav">
-		<h4 class="settings-section-header">
+		<h4 class="settings-section-header" id="settingsSectionsHeading">
 			{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS_SECTION' | translate }}
 		</h4>
-		<ul>
-			<span (click)="general.toggle()">
-				<li [class.active]="general?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' | translate }}
+		<!--
+			Each entry was a `<span (click)>` WRAPPING its `<li>`, which is not a legal
+			child of `<ul>` and, with no button, role or tabindex, could not be reached
+			or fired from the keyboard at all. The list items are the list items now,
+			and the control inside each is a real button.
+		-->
+		<ul aria-labelledby="settingsSectionsHeading">
+			@for (section of settingsSections; track section.key) {
+				<li>
+					<button
+						type="button"
+						class="aside-nav__item"
+						[class.active]="isSectionExpanded($index)"
+						[attr.aria-expanded]="isSectionExpanded($index)"
+						[attr.aria-controls]="'settings-section-' + section.key"
+						[attr.aria-current]="isSectionExpanded($index) ? 'true' : null"
+						(click)="openSection($index)"
+					>
+						{{ section.label | translate }}
+					</button>
 				</li>
-			</span>
-			<span (click)="design.toggle()">
-				<li [class.active]="design?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.DESIGN' | translate }}
-				</li>
-			</span>
-			<span (click)="accounting.toggle()">
-				<li [class.active]="accounting?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.ACCOUNTING' | translate }}
-				</li>
-			</span>
-			<span (click)="bonus.toggle()">
-				<li [class.active]="bonus?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.BONUS' | translate }}
-				</li>
-			</span>
-			<span (click)="invites.toggle()">
-				<li [class.active]="invites?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.INVITE' | translate }}
-				</li>
-			</span>
-			<span (click)="dateLimit.toggle()">
-				<li [class.active]="dateLimit?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.DATE_LIMIT' | translate }}
-				</li>
-			</span>
-			<span (click)="timer.toggle()">
-				<li [class.active]="timer?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
-				</li>
-			</span>
-			<span (click)="agent.toggle()">
-				<li [class.active]="agent?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
-				</li>
-			</span>
-			<span (click)="taskSetting.toggle()">
-				<li [class.active]="taskSetting?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING' | translate }}
-				</li>
-			</span>
-			<span (click)="integrations.toggle()">
-				<li [class.active]="integrations?.expanded">
-					{{ 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' | translate }}
-				</li>
-			</span>
+			}
 		</ul>
 	</aside>
 	<section class="fields-section">
-		<div class="actions">
-			<button
-				[disabled]="form.invalid"
-				(throttledClick)="updateOrganizationSettings()"
-				debounceClick
-				nbButton
-				status="success"
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</div>
 		<div class="accordion-section">
 			<nb-accordion #accordion>
-				<nb-accordion-item #general [expanded]="true">
-					<nb-accordion-item-header>
+				<nb-accordion-item #general id="settings-section-general" [expanded]="true">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #generalBody [hidden]="generalBody?.state === 'collapsed'">
@@ -94,9 +54,9 @@
 											fullWidth="true"
 										>
 											@for (weekday of weekdays; track weekday) {
-											<nb-option [value]="weekday">
-												{{ 'SM_TABLE.' + weekday | translate }}
-											</nb-option>
+												<nb-option [value]="weekday">
+													{{ 'SM_TABLE.' + weekday | translate }}
+												</nb-option>
 											}
 										</nb-select>
 									</div>
@@ -122,9 +82,9 @@
 											fullWidth
 										>
 											@for (type of defaultValueDateTypes; track type) {
-											<nb-option [value]="type">
-												{{ 'SM_TABLE.' + type | translate }}
-											</nb-option>
+												<nb-option [value]="type">
+													{{ 'SM_TABLE.' + type | translate }}
+												</nb-option>
 											}
 										</nb-select>
 									</div>
@@ -140,9 +100,9 @@
 											fullWidth
 										>
 											@for (code of regionCodes; track code) {
-											<nb-option [value]="code">
-												{{ 'SM_TABLE.REGION.' + code | translate }}
-											</nb-option>
+												<nb-option [value]="code">
+													{{ 'SM_TABLE.REGION.' + code | translate }}
+												</nb-option>
 											}
 										</nb-select>
 									</div>
@@ -158,9 +118,9 @@
 											fullWidth
 										>
 											@for (numFormat of numberFormats; track numFormat) {
-											<nb-option [value]="numFormat">
-												{{ numberFormatPreview(numFormat) }}
-											</nb-option>
+												<nb-option [value]="numFormat">
+													{{ numberFormatPreview(numFormat) }}
+												</nb-option>
 											}
 										</nb-select>
 									</div>
@@ -178,9 +138,9 @@
 											fullWidth
 										>
 											@for (format of listOfDateFormats; track format) {
-											<nb-option [value]="format">
-												{{ dateFormatPreview(format) }}
-											</nb-option>
+												<nb-option [value]="format">
+													{{ dateFormatPreview(format) }}
+												</nb-option>
 											}
 										</nb-select>
 									</div>
@@ -200,20 +160,22 @@
 								</div>
 								<div class="col-6">
 									<div class="form-group">
-										<label class="label">{{ 'FORM.LABELS.DEFAULT' | translate }}</label>
-										<button
-											nbButton
-											status="info"
-											size="small"
-											ghost
-											[nbTooltip]="
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_TO_SET_DEFAULT_ORGANIZATION'
-													| translate
-											"
-											class="p-0"
-										>
-											<nb-icon icon="info"></nb-icon>
-										</button>
+										<label class="label">
+											{{ 'FORM.LABELS.DEFAULT' | translate }}
+											<button
+												nbButton
+												status="info"
+												size="small"
+												ghost
+												[nbTooltip]="
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_TO_SET_DEFAULT_ORGANIZATION'
+														| translate
+												"
+												class="p-0"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</label>
 										<nb-select
 											class="d-block"
 											size="medium"
@@ -222,9 +184,9 @@
 											fullWidth
 										>
 											@for (item of defaultOrganizationSelection; track item) {
-											<nb-option [value]="item.value">
-												{{ item?.key }}
-											</nb-option>
+												<nb-option [value]="item.value">
+													{{ item?.key }}
+												</nb-option>
 											}
 										</nb-select>
 									</div>
@@ -233,8 +195,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #design>
-					<nb-accordion-item-header>
+				<nb-accordion-item #design id="settings-section-design">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.DESIGN' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #designBody [hidden]="designBody?.state === 'collapsed'">
@@ -288,9 +250,9 @@
 											fullWidth
 										>
 											@for (type of defaultAlignmentTypes; track type) {
-											<nb-option [value]="type.toUpperCase()">
-												{{ type }}
-											</nb-option>
+												<nb-option [value]="type.toUpperCase()">
+													{{ type }}
+												</nb-option>
 											}
 										</nb-select>
 									</div>
@@ -306,9 +268,9 @@
 											fullWidth
 										>
 											@for (pos of defaultCurrencyPosition; track pos) {
-											<nb-option [value]="pos.toUpperCase()">
-												{{ pos }}
-											</nb-option>
+												<nb-option [value]="pos.toUpperCase()">
+													{{ pos }}
+												</nb-option>
 											}
 										</nb-select>
 									</div>
@@ -317,8 +279,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #accounting>
-					<nb-accordion-item-header>
+				<nb-accordion-item #accounting id="settings-section-accounting">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.ACCOUNTING' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #accountingBody [hidden]="accountingBody?.state === 'collapsed'">
@@ -417,26 +379,27 @@
 									</div>
 								</div>
 								@if (invoiceTemplates) {
-								<div class="col-6">
-									<label class="label">
-										{{ 'FORM.LABELS.DEFAULT_INVOICE_TEMPLATE' | translate }}
-									</label>
-									<nb-select
-										size="medium"
-										[placeholder]="'FORM.PLACEHOLDERS.INVOICE_TEMPLATE' | translate"
-										fullWidth
-										(selectedChange)="selectTemplate($event)"
-										formControlName="invoiceTemplate"
-									>
-										@for (template of invoiceTemplates; track template) {
-										<nb-option [value]="template.id">
-											{{
-												'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' + template.name | translate
-											}}
-										</nb-option>
-										}
-									</nb-select>
-								</div>
+									<div class="col-6">
+										<label class="label">
+											{{ 'FORM.LABELS.DEFAULT_INVOICE_TEMPLATE' | translate }}
+										</label>
+										<nb-select
+											size="medium"
+											[placeholder]="'FORM.PLACEHOLDERS.INVOICE_TEMPLATE' | translate"
+											fullWidth
+											(selectedChange)="selectTemplate($event)"
+											formControlName="invoiceTemplate"
+										>
+											@for (template of invoiceTemplates; track template) {
+												<nb-option [value]="template.id">
+													{{
+														'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' + template.name
+															| translate
+													}}
+												</nb-option>
+											}
+										</nb-select>
+									</div>
 								}
 							</div>
 							<div class="row half-width-inputs">
@@ -452,11 +415,12 @@
 										(selectedChange)="selectTemplate($event)"
 									>
 										@for (template of estimateTemplates; track template) {
-										<nb-option [value]="template.id">
-											{{
-												'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' + template.name | translate
-											}}
-										</nb-option>
+											<nb-option [value]="template.id">
+												{{
+													'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' + template.name
+														| translate
+												}}
+											</nb-option>
 										}
 									</nb-select>
 								</div>
@@ -472,11 +436,12 @@
 										(selectedChange)="selectTemplate($event)"
 									>
 										@for (template of receiptTemplates; track template) {
-										<nb-option [value]="template.id">
-											{{
-												'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' + template.name | translate
-											}}
-										</nb-option>
+											<nb-option [value]="template.id">
+												{{
+													'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' + template.name
+														| translate
+												}}
+											</nb-option>
 										}
 									</nb-select>
 								</div>
@@ -484,8 +449,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #bonus>
-					<nb-accordion-item-header>
+				<nb-accordion-item #bonus id="settings-section-bonus">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.BONUS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #bonusBody [hidden]="bonusBody?.state === 'collapsed'">
@@ -507,9 +472,9 @@
 												{{ 'SM_TABLE.NONE' | translate }}
 											</nb-option>
 											@for (type of defaultBonusTypes; track type) {
-											<nb-option [value]="type">
-												{{ 'SM_TABLE.' + type | translate }}
-											</nb-option>
+												<nb-option [value]="type">
+													{{ 'SM_TABLE.' + type | translate }}
+												</nb-option>
 											}
 										</nb-select>
 									</div>
@@ -535,8 +500,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #invites>
-					<nb-accordion-item-header>
+				<nb-accordion-item #invites id="settings-section-invites">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.INVITE' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #invitesBody [hidden]="invitesBody?.state === 'collapsed'">
@@ -578,8 +543,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #dateLimit>
-					<nb-accordion-item-header>
+				<nb-accordion-item #dateLimit id="settings-section-dateLimit">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.DATE_LIMIT' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #dateLimitBody [hidden]="dateLimitBody?.state === 'collapsed'">
@@ -602,8 +567,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #timer>
-					<nb-accordion-item-header>
+				<nb-accordion-item #timer id="settings-section-timer">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #timerBody [hidden]="timerBody?.state === 'collapsed'">
@@ -818,80 +783,83 @@
 												</div>
 											</div>
 											@if (isTrackInactivity) {
-											<div class="row">
-												<div class="col-xl-6 col-12">
-													<label class="label">
-														{{
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
-																| translate
-														}}
-													</label>
-													<button
-														[nbTooltip]="
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT_INFO'
-																| translate
-														"
-														ghost
-														nbButton
-														size="small"
-														status="info"
-														class="p-0"
-													>
-														<nb-icon icon="info"></nb-icon>
-													</button>
-													<nb-select
-														[placeholder]="
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
-																| translate
-														"
-														formControlName="inactivityTimeLimit"
-														fullWidth
-														size="medium"
-													>
-														@for (inactivity of listOfInactivityLimits; track inactivity) {
-														<nb-option [value]="inactivity">
-															{{ inactivity }}
-														</nb-option>
-														}
-													</nb-select>
+												<div class="row">
+													<div class="col-xl-6 col-12">
+														<label class="label">
+															{{
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
+																	| translate
+															}}
+															<button
+																[nbTooltip]="
+																	'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT_INFO'
+																		| translate
+																"
+																ghost
+																nbButton
+																size="small"
+																status="info"
+																class="p-0"
+															>
+																<nb-icon icon="info"></nb-icon>
+															</button>
+														</label>
+														<nb-select
+															[placeholder]="
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
+																	| translate
+															"
+															formControlName="inactivityTimeLimit"
+															fullWidth
+															size="medium"
+														>
+															@for (
+																inactivity of listOfInactivityLimits;
+																track inactivity
+															) {
+																<nb-option [value]="inactivity">
+																	{{ inactivity }}
+																</nb-option>
+															}
+														</nb-select>
+													</div>
+													<div class="col-xl-6 col-12">
+														<label class="label">
+															{{
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
+																	| translate
+															}}
+															<button
+																[nbTooltip]="
+																	'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION_INFO'
+																		| translate
+																"
+																ghost
+																nbButton
+																size="small"
+																status="info"
+																class="p-0"
+															>
+																<nb-icon icon="info"></nb-icon>
+															</button>
+														</label>
+														<nb-select
+															[placeholder]="
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
+																	| translate
+															"
+															formControlName="activityProofDuration"
+															fullWidth
+															size="medium"
+														>
+															@for (proof of listOfActivityProofDuration; track proof) {
+																<nb-option [value]="proof">
+																	{{ proof }}
+																</nb-option>
+															}
+														</nb-select>
+													</div>
 												</div>
-												<div class="col-xl-6 col-12">
-													<label class="label">
-														{{
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
-																| translate
-														}}
-													</label>
-													<button
-														[nbTooltip]="
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION_INFO'
-																| translate
-														"
-														ghost
-														nbButton
-														size="small"
-														status="info"
-														class="p-0"
-													>
-														<nb-icon icon="info"></nb-icon>
-													</button>
-													<nb-select
-														[placeholder]="
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
-																| translate
-														"
-														formControlName="activityProofDuration"
-														fullWidth
-														size="medium"
-													>
-														@for (proof of listOfActivityProofDuration; track proof) {
-														<nb-option [value]="proof">
-															{{ proof }}
-														</nb-option>
-														}
-													</nb-select>
-												</div>
-											</div>
 											}
 										</nb-toggle>
 									</div>
@@ -923,136 +891,134 @@
 												</div>
 											</div>
 											@if (isEnforced) {
-											<div class="row">
-												<div class="col-12 mt-2">
-													<nb-toggle
-														class="d-block"
-														formControlName="randomScreenshot"
-														labelPosition="start"
-														status="primary"
-													>
-														{{
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.RANDOM_SCREENSHOT'
-																| translate
-														}}
-														<button
-															[nbTooltip]="
-																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.RANDOM_SCREENSHOT_INFO'
+												<div class="row">
+													<div class="col-12 mt-2 form-group invite-toggle">
+														<nb-toggle
+															class="d-block"
+															formControlName="randomScreenshot"
+															labelPosition="start"
+															status="primary"
+														>
+															{{
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.RANDOM_SCREENSHOT'
+																	| translate
+															}}
+															<button
+																[nbTooltip]="
+																	'ORGANIZATIONS_PAGE.EDIT.SETTINGS.RANDOM_SCREENSHOT_INFO'
+																		| translate
+																"
+																class="p-0"
+																ghost
+																nbButton
+																size="small"
+																status="info"
+															>
+																<nb-icon icon="info"></nb-icon>
+															</button>
+														</nb-toggle>
+													</div>
+													<div class="col-12 mt-2 form-group invite-toggle">
+														<nb-toggle
+															class="d-block"
+															formControlName="trackOnSleep"
+															labelPosition="start"
+															status="primary"
+														>
+															{{
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ON_SLEEP'
+																	| translate
+															}}
+															<button
+																[nbTooltip]="
+																	'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ON_SLEEP_INFO'
+																		| translate
+																"
+																class="p-0"
+																ghost
+																nbButton
+																size="small"
+																status="info"
+															>
+																<nb-icon icon="info"></nb-icon>
+															</button>
+														</nb-toggle>
+													</div>
+													<div class="col-6 mt-2">
+														<label class="label">
+															{{
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREENSHOT_FREQUENCY'
+																	| translate
+															}}
+															<button
+																[nbTooltip]="
+																	'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREENSHOT_FREQUENCY_INFO'
+																		| translate
+																"
+																class="p-0"
+																ghost
+																nbButton
+																size="small"
+																status="info"
+															>
+																<nb-icon icon="info"></nb-icon>
+															</button>
+														</label>
+														<nb-select
+															[placeholder]="
+																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
 																	| translate
 															"
-															class="p-0"
-															ghost
-															nbButton
-															size="small"
-															status="info"
+															formControlName="screenshotFrequency"
+															fullWidth
+															size="medium"
 														>
-															<nb-icon icon="info"></nb-icon>
-														</button>
-													</nb-toggle>
+															@for (
+																screenshotFrequency of screenshotFrequencyOptions;
+																track screenshotFrequency
+															) {
+																<nb-option [value]="screenshotFrequency">
+																	{{ screenshotFrequency }}
+																</nb-option>
+															}
+														</nb-select>
+													</div>
 												</div>
-												<div class="col-12 mt-2">
-													<nb-toggle
-														class="d-block"
-														formControlName="trackOnSleep"
-														labelPosition="start"
-														status="primary"
-													>
-														{{
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ON_SLEEP'
-																| translate
-														}}
-														<button
-															[nbTooltip]="
-																'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ON_SLEEP_INFO'
-																	| translate
-															"
-															class="p-0"
-															ghost
-															nbButton
-															size="small"
-															status="info"
-														>
-															<nb-icon icon="info"></nb-icon>
-														</button>
-													</nb-toggle>
-												</div>
-												<div class="col-6 mt-2">
-													<label class="label">
-														{{
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREENSHOT_FREQUENCY'
-																| translate
-														}}
-													</label>
-													<button
-														[nbTooltip]="
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREENSHOT_FREQUENCY_INFO'
-																| translate
-														"
-														class="p-0"
-														ghost
-														nbButton
-														size="small"
-														status="info"
-													>
-														<nb-icon icon="info"></nb-icon>
-													</button>
-													<nb-select
-														[placeholder]="
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
-																| translate
-														"
-														formControlName="screenshotFrequency"
-														fullWidth
-														size="medium"
-													>
-														@for ( screenshotFrequency of screenshotFrequencyOptions ; track
-														screenshotFrequency) {
-														<nb-option [value]="screenshotFrequency">
-															{{ screenshotFrequency }}
-														</nb-option>
-														}
-													</nb-select>
-												</div>
-											</div>
 											}
 										</nb-toggle>
 									</div>
 								</div>
 								<!-- Standard Work Hours Per Day -->
 								<div class="col-xl-6 col-12 pt-2">
-									<div class="col-6">
-										<div class="form-group">
-											<label class="label">
-												{{ 'FORM.LABELS.STANDARD_WORK_HOURS_PER_DAY' | translate }}
-												<button
-													[nbTooltip]="
-														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.STANDARD_WORK_HOURS_PER_DAY'
-															| translate
-													"
-													class="p-0"
-													ghost
-													nbButton
-													size="small"
-													status="info"
-												>
-													<nb-icon icon="info"></nb-icon>
-												</button>
-											</label>
-											<nb-select
-												[placeholder]="
-													'FORM.PLACEHOLDERS.STANDARD_WORK_HOURS_PER_DAY' | translate
+									<div class="form-group">
+										<label class="label">
+											{{ 'FORM.LABELS.STANDARD_WORK_HOURS_PER_DAY' | translate }}
+											<button
+												[nbTooltip]="
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.STANDARD_WORK_HOURS_PER_DAY'
+														| translate
 												"
-												formControlName="standardWorkHoursPerDay"
-												fullWidth
-												size="medium"
+												class="p-0"
+												ghost
+												nbButton
+												size="small"
+												status="info"
 											>
-												@for (hour of standardWorkHoursPerDayOptions; track hour) {
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</label>
+										<nb-select
+											[placeholder]="'FORM.PLACEHOLDERS.STANDARD_WORK_HOURS_PER_DAY' | translate"
+											formControlName="standardWorkHoursPerDay"
+											fullWidth
+											size="medium"
+										>
+											@for (hour of standardWorkHoursPerDayOptions; track hour) {
 												<nb-option [value]="hour">
 													{{ hour }}
 												</nb-option>
-												}
-											</nb-select>
-										</div>
+											}
+										</nb-select>
 									</div>
 								</div>
 								<div class="col-xl-6 col-12 pt-2">
@@ -1110,8 +1076,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #agent>
-					<nb-accordion-item-header>
+				<nb-accordion-item #agent id="settings-section-agent">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #agentBody [hidden]="agentBody?.state === 'collapsed'">
@@ -1172,7 +1138,7 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #taskSetting [formGroup]="taskSettingForm">
+				<nb-accordion-item #taskSetting id="settings-section-taskSetting" [formGroup]="taskSettingForm">
 					<nb-accordion-item-header>
 						{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING' | translate }}
 					</nb-accordion-item-header>
@@ -1373,12 +1339,12 @@
 												}}
 											</nb-option>
 											@for (type of defaultTaskProofOfCompletionTypes; track type) {
-											<nb-option [value]="type">
-												{{
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE_DROPDOWN.' +
-														type | translate
-												}}
-											</nb-option>
+												<nb-option [value]="type">
+													{{
+														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE_DROPDOWN.' +
+															type | translate
+													}}
+												</nb-option>
 											}
 										</nb-select>
 									</div>
@@ -1669,8 +1635,8 @@
 						</div>
 					</nb-accordion-item-body>
 				</nb-accordion-item>
-				<nb-accordion-item #integrations>
-					<nb-accordion-item-header>
+				<nb-accordion-item #integrations id="settings-section-integrations">
+					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #integrationsBody [hidden]="integrationsBody?.state === 'collapsed'">
@@ -1713,6 +1679,18 @@
 					</nb-accordion-item-body>
 				</nb-accordion-item>
 			</nb-accordion>
+		</div>
+		<div class="actions">
+			<button
+				type="button"
+				[disabled]="form.invalid"
+				(throttledClick)="updateOrganizationSettings()"
+				debounceClick
+				nbButton
+				status="success"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
 		</div>
 	</section>
 </form>

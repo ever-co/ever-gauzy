@@ -18,6 +18,11 @@ import { Store } from '@gauzy/ui-core/core';
 })
 export class EditOrganizationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;
+	public logoFailed = false;
+
+	get logoUrl(): string {
+		return this.organization?.image?.fullUrl || this.organization?.imageUrl;
+	}
 
 	constructor(
 		private readonly router: Router,
@@ -37,7 +42,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent implemen
 				distinctUntilChange(),
 				filter((data: Data) => !!data && !!data.organization),
 				map(({ organization }) => organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap((organization: IOrganization) => this.setOrganization(organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -45,7 +50,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent implemen
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap((organization: IOrganization) => this.setOrganization(organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -67,6 +72,18 @@ export class EditOrganizationComponent extends TranslationBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Adopt an organization and give its logo a fresh chance at loading — otherwise
+	 * one broken image would leave the placeholder in place for every organization
+	 * selected afterwards.
+	 *
+	 * @param organization
+	 */
+	private setOrganization(organization: IOrganization): void {
+		this.organization = organization;
+		this.logoFailed = false;
 	}
 
 	/**

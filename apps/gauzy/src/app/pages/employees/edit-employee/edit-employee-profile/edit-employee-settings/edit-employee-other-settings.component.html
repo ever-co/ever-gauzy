@@ -9,7 +9,7 @@
 					type="button"
 					[class.is-active]="general?.expanded"
 					[attr.aria-expanded]="!!general?.expanded"
-					(click)="general.toggle()"
+					(click)="openSection(general)"
 				>
 					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.GENERAL_SETTINGS' | translate }}
 				</button>
@@ -19,7 +19,7 @@
 					type="button"
 					[class.is-active]="timer?.expanded"
 					[attr.aria-expanded]="!!timer?.expanded"
-					(click)="timer.toggle()"
+					(click)="openSection(timer)"
 				>
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
 				</button>
@@ -29,7 +29,7 @@
 					type="button"
 					[class.is-active]="agent?.expanded"
 					[attr.aria-expanded]="!!agent?.expanded"
-					(click)="agent.toggle()"
+					(click)="openSection(agent)"
 				>
 					{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' | translate }}
 				</button>
@@ -39,7 +39,7 @@
 					type="button"
 					[class.is-active]="integrations?.expanded"
 					[attr.aria-expanded]="!!integrations?.expanded"
-					(click)="integrations.toggle()"
+					(click)="openSection(integrations)"
 				>
 					{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.INTEGRATIONS' | translate }}
 				</button>

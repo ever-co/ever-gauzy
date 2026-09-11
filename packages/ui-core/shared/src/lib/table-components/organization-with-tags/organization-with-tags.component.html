@@ -1,38 +1,57 @@
 @if (rowData) {
   <div class="organization-render-container">
     <div class="organization-render">
-      @if (rowData) {
-        <img src="{{ rowData.imageUrl }}" [alt]="rowData?.name || 'Organization logo'" />
+      <!--
+        Guarded, and resolving the logo the way the rest of the app does. This was
+        a bare `<img src="{{ rowData.imageUrl }}">`, so an organization with no
+        logo drew the browser's broken-image glyph in its row, and one whose logo
+        came from an image asset drew nothing at all — `imageUrl` alone misses
+        `image.fullUrl`, which is what the card header and the Main tab read.
+      -->
+      @if (logoUrl && !logoFailed) {
+        <img class="organization-logo" [src]="logoUrl" alt="" (error)="logoFailed = true" />
+      } @else {
+        <span class="organization-logo organization-logo--empty" aria-hidden="true">
+          <nb-icon icon="briefcase-outline"></nb-icon>
+        </span>
       }
       <span>
         <div>{{ rowData?.name }}</div>
         @if (rowData?.totalEmployees) {
-          <div class="member">Members count {{ rowData?.totalEmployees }}</div>
+          <div class="member">
+            {{ rowData.totalEmployees }} {{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
+          </div>
         }
       </span>
     </div>
     @if (rowData?.isDefault) {
       <div class="tags">
+        <!--
+          Both halves read `brandColor` now. The fill was computed from
+          `rowData.color`, which `IOrganization` does not define, while the text
+          colour was contrast-matched against `brandColor` — so the badge was
+          painted one colour and lettered for another.
+        -->
         <nb-badge
           class="color"
           position="centered"
-          [style.background]="background(rowData?.color)"
+          [style.background]="background(rowData?.brandColor)"
           [style.color]="backgroundContrast(rowData?.brandColor)"
-          text="Default"
-          >
+          [text]="'FORM.LABELS.DEFAULT' | translate"
+        >
         </nb-badge>
       </div>
     }
-    @if (rowData.tags.length > 0) {
+    @if (rowData?.tags?.length) {
       <div class="tags">
         @for (tag of rowData.tags; track tag) {
           <nb-badge
             class="color"
             position="centered"
             [style.background]="background(tag.color)"
-            text="{{ tag.name }}"
+            [text]="tag.name"
             [style.color]="backgroundContrast(tag.color)"
-            >
+          >
           </nb-badge>
         }
       </div>
