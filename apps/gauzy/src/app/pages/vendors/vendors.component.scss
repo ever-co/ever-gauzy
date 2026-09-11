@@ -1,4 +1,5 @@
 @use 'gauzy/_gauzy-cards' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 @forward '../expenses/expense-categories/expense-categories.component';
 
 .editable {
@@ -56,38 +57,6 @@
   }
 }
 
-/*
- * Row hover / selection, also restated after the forward.
- *
- * `expense-categories` gives BOTH states the same `rgba(50, 50, 50, 0.03)` fill,
- * so hovering a row looked exactly like selecting one, and 3 % of black over a
- * near-black card is nothing at all — on the four dark themes there was no
- * visible selection. Selection also arrived as a 6px border that only exists
- * when the row is selected, so the whole row jumped 6px sideways on click.
- *
- * Now: the neutral tints (they darken a light surface and lighten a dark one, so
- * one value works in all eight themes), selection carried by the primary colour
- * on the leading edge, and a transparent edge of the same width at rest so
- * nothing moves.
- */
-:host .custom-table {
-  @include nb-ltr(border-left, 3px solid transparent);
-  @include nb-rtl(border-right, 3px solid transparent);
-
-  // `:not(.selected)` because this rule is declared after `.selected` at the same
-  // specificity — without it, hovering a selected row would repaint it as merely
-  // hovered.
-  &:hover:not(.selected) {
-    background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
-  }
-
-  &.selected {
-    background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
-    @include nb-ltr(border-left, 3px solid var(--color-primary-default));
-    @include nb-rtl(border-right, 3px solid var(--color-primary-default));
-  }
-}
-
 :host nb-card-body {
   @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
   @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
@@ -101,22 +70,53 @@
   }
 }
 
-.columns-header {
-  // Same story as `.editable` above: `nb-theme(gauzy-card-2)` is a bare
-  // `var(--gauzy-card-2)` and that key is missing from the two material themes,
-  // where the column-title band therefore had no background and merged into the
-  // card behind it.
-  background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
-  border-radius: 8px;
-  margin-bottom: 10px;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  // Logical, so the title band still indents from the reading edge under RTL —
-  // the row of `col-md-*` cells it labels is mirrored, but `padding-left` was not.
-  padding-inline-start: 12px;
-  font-size: 12px;
-  font-style: normal;
+// ── The list-page contract, for a table built by hand ────────────────────────
+//
+// Four pages share this sheet — Vendors, Positions, Employee levels and
+// Documents all `@forward` it — and all four build their table as a stack of
+// `nb-card` rows rather than rendering the `angular2-smart-table` every other
+// page under `/pages/organization` does, so the shared `list-page()` block never
+// reached them. `card-list-page()` is the part of that contract which does not
+// depend on the smart table: the density tokens, the toolbar scale, the table
+// surface, and rows that read as rows instead of as floating cards.
+//
+// The gutter: a row here is a Bootstrap `.row`, which bleeds 15px past its
+// container through negative margins, so the row's own padding has to cover that
+// before it can inset anything — at the default 0.4375rem the first cell would
+// hang 8px off the left edge of the surface. 1.125rem lands the cells 6px inside
+// it, and the head below is boxed to match.
+@include ga-hub.card-list-page($row-padding-x: 1.125rem);
+
+// ── The head ─────────────────────────────────────────────────────────────────
+//
+// Vendors is the only page of the four with column titles, and they used to be a
+// filled card-2 band in the CARD HEADER, floating 10px above the rows with its
+// own rounded corners — a second surface, and one that could not line up with
+// the values it titles: it sat in a container with 1rem of padding while the
+// rows sat in one with 18px, and the first title carried a `pl-3` to paper over
+// the difference.
+//
+// It is now the first child of the scroll container and boxed exactly like a
+// row (same padding, same 3px selection rail reserved on the leading edge), so
+// the titles sit over their columns by construction rather than by nudging. The
+// treatment is the one `list-page()` gives a smart table's `thead`: no fill, the
+// muted heading colour, one hairline underneath.
+:host .columns-header {
+  padding: var(--gauzy-table-header-padding-y, 0.5rem) 1.125rem;
+  // The same 3px rail the rows reserve for the selection edge, so the titles sit
+  // over their columns. Logical, as theirs is.
+  border-inline-start: 3px solid transparent;
+  border-bottom: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  font-size: var(--gauzy-table-header-font-size, 0.75rem);
   font-weight: 600;
-  line-height: 15px;
+  line-height: var(--gauzy-table-header-line-height, 0.9375rem);
   letter-spacing: 0em;
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
+  // Pinned while the rows scroll under it, which is what the global sheet does
+  // for a smart table's own `thead` (`_overrides.scss`) — and why the fill has to
+  // be the opaque surface colour rather than none.
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
 }

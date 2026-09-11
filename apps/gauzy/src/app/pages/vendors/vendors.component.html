@@ -16,29 +16,36 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
-		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
-		<div class="columns-header row align-items-center">
-			<div class="col-md-2 pl-3 float-left text-truncate">
-				{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
-			</div>
-			<div class="col-md-2 p-0 float-left text-truncate">
-				{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}
-			</div>
-			<div class="col-md-2 p-0 float-left text-truncate">
-				{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}
-			</div>
-			<div class="col-md-3 p-0 float-left text-truncate">
-				{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}
-			</div>
-			<div class="col-md-3 p-0 float-left text-truncate">
-				{{ 'ORGANIZATIONS_PAGE.TAGS' | translate }}
-			</div>
-		</div>
-		}
 	</nb-card-header>
 	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 		<div class="table-scroll-container" infiniteScroll [scrollWindow]="false" (scrolled)="onScroll()">
+			<!--
+				The column titles are the first child of the scroll container, boxed like
+				a row and pinned with `position: sticky` — the same place and the same
+				behaviour as a smart table's own `thead` on every other page in this
+				section. They used to sit in the card header above it, in a container with
+				different padding, which is what the `pl-3` on the first title was for.
+			-->
+			<div class="columns-header">
+				<div class="row align-items-center">
+					<div class="col-md-2 p-0 text-truncate">
+						{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
+					</div>
+					<div class="col-md-2 p-0 text-truncate">
+						{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}
+					</div>
+					<div class="col-md-2 p-0 text-truncate">
+						{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}
+					</div>
+					<div class="col-md-3 p-0 text-truncate">
+						{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}
+					</div>
+					<div class="col-md-3 p-0 text-truncate">
+						{{ 'ORGANIZATIONS_PAGE.TAGS' | translate }}
+					</div>
+				</div>
+			</div>
 			@for (vendor of vendors; track vendor.id) {
 			<nb-card class="p-0">
 				<nb-card-body
@@ -141,7 +148,7 @@
 </ng-template>
 <ng-template #visibleButton>
 	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
-		<button nbButton status="success" size="small" (click)="openDialog(addEditTemplate, false)">
+		<button nbButton class="action" status="success" size="small" (click)="openDialog(addEditTemplate, false)">
 			<nb-icon icon="plus-outline"> </nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
