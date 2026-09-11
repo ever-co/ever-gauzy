@@ -59,6 +59,7 @@ import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
 import {
+	EmployeeChartLegendComponent,
 	EmployeeChartsComponent,
 	EmployeeDoughnutChartComponent,
 	EmployeeHorizontalBarChartComponent,
@@ -116,6 +117,7 @@ const COMPONENTS = [
 	ProjectManagementComponent,
 	ProjectManagementDetailsComponent,
 	EmployeeChartsComponent,
+	EmployeeChartLegendComponent,
 	EmployeeHorizontalBarChartComponent,
 	EmployeeStackedBarChartComponent,
 	EmployeeDoughnutChartComponent,

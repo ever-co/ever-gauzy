@@ -1,13 +1,15 @@
-@if (selectedEmployee && selectedEmployee.id) {
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
-	<nb-card-header class="header">
-		<h4>
-			<ngx-header-title>
-				{{ 'DASHBOARD_PAGE.HUMAN_RESOURCES' | translate }}
-			</ngx-header-title>
-		</h4>
+	<nb-card-header class="hr-header">
+		<div class="hr-title-row">
+			<h4>
+				<ngx-header-title>
+					{{ 'DASHBOARD_PAGE.HUMAN_RESOURCES' | translate }}
+				</ngx-header-title>
+			</h4>
+		</div>
+
 		@if (incomePermissionsError || expensePermissionError) {
-		<nb-alert outline="danger">
+		<nb-alert outline="danger" class="hr-alert">
 			{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.INSUFFICIENT' | translate }}
 			@if (incomePermissionsError) {
 			<span>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.ORG_INCOMES_VIEW' | translate }}</span>
@@ -16,344 +18,334 @@
 			}
 		</nb-alert>
 		}
-		<div class="header-container">
-			<div class="employee-info">
-				<img class="employee-image" [src]="selectedEmployee.imageUrl" alt="Employee Avatar" />
-				<div class="employee-details">
-					<span class="employee-name">
-						{{ selectedEmployee.fullName | truncate : 22 }}
-						<nb-icon class="mr-1 edit-icon" icon="edit-outline" (click)="edit()"></nb-icon
-					></span>
-					<div class="employee-position" [innerText]="employeePosition"></div>
-				</div>
-			</div>
-			<div>
-				@if (salary !== 0) {
-				<div class="employee-details employee-salary">
-					{{ 'DASHBOARD_PAGE.TITLE.SALARY' | translate }}:
-					{{ salary | currency : defaultCurrency | position : selectedOrganization?.currencyPosition }}
-				</div>
-				} @if (selectedOrganization?.bonusType && averageBonus) {
-				<div class="employee-details">
-					{{ 'DASHBOARD_PAGE.DEVELOPER.AVERAGE_BONUS' | translate }}:
-					{{ averageBonus | currency : defaultCurrency | position : selectedOrganization?.currencyPosition }}
-				</div>
-				}
-			</div>
-		</div>
-	</nb-card-header>
-	<nb-card-body class="body">
-		<div class="half-content">
-			<div>
-				<!-- Total Income block with non zero income -->
-				@if (directIncomeBonus !== 0) {
-				<ga-info-block
-					accordion="true"
-					title="{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}"
-					meta="{{
-						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_CALC'
-							| translate
-								: {
-										totalNonBonusIncome: defaultCurrency
-											? (nonBonusIncome || 0
-											  | currency : defaultCurrency
-											  | position : selectedOrganization?.currencyPosition)
-											: nonBonusIncome || 0,
-										totalBonusIncome: defaultCurrency
-											? (directIncomeBonus || 0
-											  | currency : defaultCurrency
-											  | position : selectedOrganization?.currencyPosition)
-											: directIncomeBonus || 0
-								  }
-					}}"
-					value="{{
-						defaultCurrency
-							? (income || 0
-							  | currency : defaultCurrency
-							  | position : selectedOrganization?.currencyPosition)
-							: income || 0
-					}}"
-					color="var(--gauzy-action-success-text)"
-					(openInfo)="openHistoryDialog('INCOME')"
-				>
-					<!-- Expanded Accordion Income info block -->
-					<ga-info-block
-						listItem="true"
-						title="{{ 'INCOME_PAGE.INCOME' | translate }}"
-						value="{{
-							defaultCurrency
-								? (nonBonusIncome
-								  | currency : defaultCurrency
-								  | position : selectedOrganization?.currencyPosition)
-								: nonBonusIncome
-						}}"
-						color="var(--gauzy-action-success-text)"
-						(openInfo)="openHistoryDialog('NON_BONUS_INCOME')"
-					>
-					</ga-info-block>
 
-					<!-- Expanded Accordion Direct Income info block -->
-					<ga-info-block
-						listItem="true"
-						title="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME' | translate }}"
-						meta="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME_INFO' | translate }}"
-						value="{{
-							defaultCurrency
-								? (directIncomeBonus
-								  | currency : defaultCurrency
-								  | position : selectedOrganization?.currencyPosition)
-								: directIncomeBonus
-						}}"
-						color="var(--gauzy-action-success-text)"
-						(openInfo)="openHistoryDialog('BONUS_INCOME')"
-					>
-					</ga-info-block>
-				</ga-info-block>
-				} @else {
-				<ga-info-block
-					title="{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}"
-					value="{{
-						defaultCurrency
-							? (income || 0
-							  | currency : defaultCurrency
-							  | position : selectedOrganization?.currencyPosition)
-							: income || 0
-					}}"
-					color="var(--gauzy-action-success-text)"
-					(openInfo)="openHistoryDialog('INCOME')"
-				>
-				</ga-info-block>
-				}
-				<!-- Expenses without salary block  -->
-				<ga-info-block
-					title="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY' | translate }}"
-					meta="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY_CALC' | translate }}"
-					value="{{
-						defaultCurrency
-							? (expenseWithoutSalary || 0
-							  | currency : defaultCurrency
-							  | position : selectedOrganization?.currencyPosition)
-							: expenseWithoutSalary || 0
-					}}"
-					color="var(--gauzy-action-warning-text)"
-					(openInfo)="openHistoryDialog('EXPENSES_WITHOUT_SALARY')"
-				>
-				</ga-info-block>
-				<!-- Total Expenses block -->
-				<ga-info-block
-					title="{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate }}"
-					meta="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSE_CALC' | translate }}"
-					value="{{
-						defaultCurrency
-							? (expense || 0
-							  | currency : defaultCurrency
-							  | position : selectedOrganization?.currencyPosition)
-							: expense || 0
-					}}"
-					color="var(--gauzy-action-warning-text)"
-					(openInfo)="openHistoryDialog('EXPENSES')"
-				>
-				</ga-info-block>
-				<!-- Profit block -->
-				<ga-info-block
-					title="{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}"
-					meta="{{
-						'DASHBOARD_PAGE.DEVELOPER.PROFIT_CALC'
-							| translate
-								: {
-										totalAllIncome: defaultCurrency
-											? (income || 0
-											  | currency : defaultCurrency
-											  | position : selectedOrganization?.currencyPosition)
-											: income || 0,
-										totalExpense: defaultCurrency
-											? (expense || 0
-											  | currency : defaultCurrency
-											  | position : selectedOrganization?.currencyPosition)
-											: expense || 0
-								  }
-					}}"
-					value="{{
-						defaultCurrency
-							? (profit || 0
-							  | currency : defaultCurrency
-							  | position : selectedOrganization?.currencyPosition)
-							: profit || 0
-					}}"
-					color="{{ profit >= 0 ? 'var(--gauzy-text-color-1)' : 'var(--gauzy-action-danger-text)' }}"
-					blockType="highlight"
-					(openInfo)="openProfitDialog()"
-				>
-				</ga-info-block>
-				<!-- Direct Income Bonus block -->
-				@if ( selectedOrganization?.bonusType && directIncomeBonus !== 0 ) {
-				<ga-info-block
-					title="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS' | translate }}"
-					meta="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS_INFO' | translate }}"
-					value="{{
-						defaultCurrency
-							? (directIncomeBonus || 0
-							  | currency : defaultCurrency
-							  | position : selectedOrganization?.currencyPosition)
-							: directIncomeBonus || 0
-					}}"
-					color="var(--gauzy-action-info-text)"
-					(openInfo)="openHistoryDialog('BONUS_INCOME')"
-				>
-				</ga-info-block>
-				}
-				<!-- Bonus block: Profit Based Bonus  -->
-				@if ( bonusType === 'PROFIT_BASED_BONUS' && calculatedBonus !== 0 ) {
-				<ga-info-block
-					title="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS' | translate }}"
-					meta="{{
-						'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS_INFO'
-							| translate
-								: {
-										bonusPercentage: bonusPercentage || 0,
-										difference: defaultCurrency
-											? (profit || 0
-											  | currency : defaultCurrency
-											  | position : selectedOrganization?.currencyPosition)
-											: profit || 0
-								  }
-					}}"
-					value="{{
-						defaultCurrency
-							? (calculatedBonus || 0
-							  | currency : defaultCurrency
-							  | position : selectedOrganization?.currencyPosition)
-							: calculatedBonus || 0
-					}}"
-					color="{{ calculatedBonus >= 0 ? 'var(--gauzy-action-info-text)' : 'var(--gauzy-action-danger-text)' }}"
-				>
-				</ga-info-block>
-				}
-				<!-- Bonus block: Revenue Based Bonus  -->
-				@if ( bonusType === 'REVENUE_BASED_BONUS' && calculatedBonus !== 0 ) {
-				<ga-info-block
-					title="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS' | translate }}"
-					meta="{{
-						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
-							| translate
-								: {
-										bonusPercentage: bonusPercentage || 0,
-										totalIncome: defaultCurrency
-											? (income || 0
-											  | currency : defaultCurrency
-											  | position : selectedOrganization?.currencyPosition)
-											: income || 0
-								  }
-					}}"
-					value="{{
-						defaultCurrency
-							? (calculatedBonus || 0
-							  | currency : defaultCurrency
-							  | position : selectedOrganization?.currencyPosition)
-							: calculatedBonus || 0
-					}}"
-					color="{{ calculatedBonus >= 0 ? 'var(--gauzy-action-info-text)' : 'var(--gauzy-action-danger-text)' }}"
-				>
-				</ga-info-block>
-				}
-				<!-- End of info blocks -->
-				@if (selectedOrganization?.bonusType) {
-				<div class="bonus">
-					<div class="bonus-value">
-						<!-- CASE: Total Bonus calculation breakup with non zero income bonus -->
-						@if (directIncomeBonus !== 0) {
-						<div>
-							{{
-								'DASHBOARD_PAGE.TITLE.TOTAL_BONUS_CALC'
-									| translate
-										: {
-												totalBonusIncome: defaultCurrency
-													? (directIncomeBonus
-													  | currency : defaultCurrency
-													  | position : selectedOrganization?.currencyPosition)
-													: directIncomeBonus,
-												calculatedBonus: defaultCurrency
-													? (calculatedBonus || 0
-													  | currency : defaultCurrency
-													  | position : selectedOrganization?.currencyPosition)
-													: calculatedBonus || 0
-										  }
-							}}
-						</div>
-						}
-						<!-- CASE: Total Bonus calculation breakup with zero income bonus -->
-						@if ( directIncomeBonus === 0 && bonusType === 'REVENUE_BASED_BONUS' ) {
-						<div>
-							<!-- Revenue based bonus  -->
-							{{
-								'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
-									| translate
-										: {
-												bonusPercentage: bonusPercentage || 0,
-												totalIncome: defaultCurrency
-													? (income || 0
-													  | currency : defaultCurrency
-													  | position : selectedOrganization?.currencyPosition)
-													: income || 0
-										  }
-							}}
-						</div>
-						} @else if ( bonusType === 'PROFIT_BASED_BONUS' && directIncomeBonus === 0 ) {
-						<div>
-							<!-- Profit based bonus  -->
-							{{
-								'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS_INFO'
-									| translate
-										: {
-												bonusPercentage: bonusPercentage || 0,
-												difference: defaultCurrency
-													? (profit || 0
-													  | currency : defaultCurrency
-													  | position : selectedOrganization?.currencyPosition)
-													: profit || 0
-										  }
-							}}
-						</div>
-						} @if (defaultCurrency) {
-						<div [class.negative-bonus-color]="bonus < 0">
-							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
-							:
-							{{
-								bonus || 0
-									| currency : defaultCurrency
-									| position : selectedOrganization?.currencyPosition
-							}}
-						</div>
-
+		@if (selectedEmployee?.id) {
+		<!--
+			Identity bar: who the figures below belong to, and the two contract
+			numbers that frame them. Rendered inside the header so it stays with
+			the page title rather than competing with the KPI row for attention.
+		-->
+		<div class="identity-bar">
+			<div class="identity">
+				<span class="identity-avatar">
+					@if (selectedEmployee.imageUrl) {
+					<img [src]="selectedEmployee.imageUrl" [alt]="selectedEmployee.fullName" />
+					} @else {
+					<span class="identity-initials" aria-hidden="true">{{ employeeInitials }}</span>
+					}
+				</span>
+				<span class="identity-text">
+					<span class="identity-name">
+						{{ selectedEmployee.fullName | truncate : 28 }}
+						<button
+							type="button"
+							class="identity-edit"
+							(click)="edit()"
+							[attr.aria-label]="'BUTTONS.EDIT' | translate"
+							[nbTooltip]="'BUTTONS.EDIT' | translate"
+							nbTooltipTrigger="hover"
+						>
+							<nb-icon icon="edit-outline"></nb-icon>
+						</button>
+					</span>
+					@if (employeeTraits.length) {
+					<span class="identity-traits">
 						<!--
-      TODO: handle non-defaultCurrency case differently.
-      currently same thing is rendered in both cases
-      -->
-						} @else {
-						<div [class.negative-bonus-color]="bonus < 0">
-							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
-							:
-							{{
-								bonus || 0
-									| currency : defaultCurrency
-									| position : selectedOrganization?.currencyPosition
-							}}
-						</div>
+							Tracked by position, not by value: the two traits are the
+							employee's short description and their level, and nothing stops
+							those being the same string ("Senior", say, in both fields).
+							`track trait` would then hand Angular two identical keys for one
+							list and it would throw NG0955 instead of rendering the chips.
+						-->
+						@for (trait of employeeTraits; track $index) {
+						<span class="trait-chip">{{ trait }}</span>
 						}
-					</div>
-					<!-- Note for negative total bonus -->
-					@if (bonus < 0) {
-					<div class="bonus-disclaimer">
-						{{ 'DASHBOARD_PAGE.DEVELOPER.NOTE' | translate }}
+					</span>
+					}
+				</span>
+			</div>
+
+			<dl class="identity-facts">
+				@if (salary) {
+				<div class="fact">
+					<dt>{{ 'DASHBOARD_PAGE.TITLE.SALARY' | translate }}</dt>
+					<dd>{{ figures.salary }}</dd>
+				</div>
+				} @if (hasBonus && averageBonus) {
+				<div class="fact">
+					<dt>{{ 'DASHBOARD_PAGE.DEVELOPER.AVERAGE_BONUS' | translate }}</dt>
+					<dd>{{ figures.averageBonus }}</dd>
+				</div>
+				}
+			</dl>
+		</div>
+		}
+	</nb-card-header>
+
+	<nb-card-body class="hr-body">
+		@if (!selectedEmployee?.id) {
+		<!--
+			Gated on `loading` (which starts true) rather than on the employee
+			alone: the selector streams are debounced, so on the very first paint
+			nothing is resolved yet and claiming "no employee selected" there
+			would flash on every visit.
+		-->
+		@if (!loading) {
+		<div class="hr-state">
+			<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
+			<p class="state-title">{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.HR.NO_EMPLOYEE' | translate }}</p>
+			<p class="state-hint">{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.HR.NO_EMPLOYEE_HINT' | translate }}</p>
+		</div>
+		}
+		} @else {
+		<!-- ── KPI row ──────────────────────────────────────────────────────
+			The four totals the page exists to answer, each a button because each
+			opens the records behind it.
+
+			A tile carries a label, its figure, and the arithmetic behind that
+			figure — the `meta` line `ga-info-block` printed under every title
+			before this page was rebuilt. It is body text, not a tooltip: these
+			are the numbers the page is read for, and a figure a reader has to
+			hover to find is a figure that has been taken away.
+
+			The section is deliberately unnamed. An `aria-label` here would
+			publish a second landmark called "Employee Statistics" alongside the
+			chart panel that already carries that title, and each tile names
+			itself through its own `aria-label`.
+		-->
+		<section class="kpi-row">
+			<button
+				type="button"
+				class="kpi kpi--success"
+				(click)="openHistoryDialog('INCOME')"
+				[attr.aria-label]="('DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate) + ': ' + figures.income"
+			>
+				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="trending-up-outline"></nb-icon></span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}</span>
+					<span class="kpi-value">{{ figures.income }}</span>
+					<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_CALC' | translate : { totalNonBonusIncome: figures.nonBonusIncome, totalBonusIncome: figures.directIncomeBonus } }}</span>
+				</span>
+				<nb-icon class="kpi-affordance" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+			</button>
+
+			<button
+				type="button"
+				class="kpi kpi--warning"
+				(click)="openHistoryDialog('EXPENSES')"
+				[attr.aria-label]="
+					('DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate) + ': ' + figures.expense
+				"
+			>
+				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="trending-down-outline"></nb-icon></span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate }}</span>
+					<span class="kpi-value">{{ figures.expense }}</span>
+					<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSE_CALC' | translate }}</span>
+				</span>
+				<nb-icon class="kpi-affordance" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+			</button>
+
+			<button
+				type="button"
+				class="kpi kpi--info"
+				[class.is-negative]="profit < 0"
+				(click)="openProfitDialog()"
+				[attr.aria-label]="('DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate) + ': ' + figures.profit"
+			>
+				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="pie-chart-outline"></nb-icon></span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}</span>
+					<span class="kpi-value">{{ figures.profit }}</span>
+					<span class="kpi-meta">{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT_CALC' | translate : { totalAllIncome: figures.income, totalExpense: figures.expense } }}</span>
+				</span>
+				<nb-icon class="kpi-affordance" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+			</button>
+
+			@if (hasBonus) {
+			<!--
+				Static, not a button: there is no `BONUS` history type on
+				`EmployeeStatisticsHistoryEnum`, so this tile has nothing to open.
+				The two components it is made of are drilled into from the
+				breakdown panel below instead.
+			-->
+			<div
+				class="kpi kpi--accent kpi--static"
+				[class.is-negative]="bonus < 0"
+			>
+				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="award-outline"></nb-icon></span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}</span>
+					<span class="kpi-value">{{ figures.bonus }}</span>
+					<span class="kpi-meta">{{ bonusFormula ? (bonusFormula.key | translate : bonusFormula.params) : '' }}</span>
+				</span>
+			</div>
+			}
+		</section>
+
+		<div class="hr-panels">
+			<!-- ── Breakdown ────────────────────────────────────────────────
+				What each KPI above is made of, grouped under section headings so
+				a row can be found by the question it answers.
+
+				Each row prints its own formula under its label, as the
+				info-block list this replaced did. Several of those lines carry
+				figures that appear nowhere else on the page — the bonus
+				percentage among them — so they cannot live on a tooltip.
+			-->
+			<section class="panel">
+				<header class="panel-header">
+					<h5 class="panel-title">{{ 'DASHBOARD_PAGE.TITLE.BREAKDOWN' | translate }}</h5>
+				</header>
+
+				<div class="panel-body">
+					<h6 class="group-title">{{ 'INCOME_PAGE.INCOME' | translate }}</h6>
+					<button
+						type="button"
+						class="stat-row"
+						(click)="openHistoryDialog('NON_BONUS_INCOME')"
+					>
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'INCOME_PAGE.INCOME' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.HR.INCOME.META' | translate }}</span>
+						</span>
+						<span class="stat-row-value">{{ figures.nonBonusIncome }}</span>
+						<nb-icon class="stat-row-chevron" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+					</button>
+
+					@if (directIncomeBonus !== 0) {
+					<button
+						type="button"
+						class="stat-row"
+						(click)="openHistoryDialog('BONUS_INCOME')"
+					>
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME_INFO' | translate }}</span>
+						</span>
+						<span class="stat-row-value">{{ figures.directIncomeBonus }}</span>
+						<nb-icon class="stat-row-chevron" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+					</button>
+					}
+
+					<h6 class="group-title">{{ 'EXPENSES_PAGE.EXPENSES' | translate }}</h6>
+					<button
+						type="button"
+						class="stat-row"
+						(click)="openHistoryDialog('EXPENSES_WITHOUT_SALARY')"
+					>
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY_CALC' | translate }}</span>
+						</span>
+						<span class="stat-row-value">{{ figures.expenseWithoutSalary }}</span>
+						<nb-icon class="stat-row-chevron" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+					</button>
+
+					@if (salary) {
+					<div class="stat-row is-static">
+						<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.SALARY' | translate }}</span>
+						<span class="stat-row-value">{{ figures.salary }}</span>
 					</div>
 					}
+
+					@if (hasBonus) {
+					<h6 class="group-title">{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}</h6>
+
+					@if (directIncomeBonus !== 0) {
+					<button
+						type="button"
+						class="stat-row"
+						(click)="openHistoryDialog('BONUS_INCOME')"
+					>
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS_INFO' | translate }}</span>
+						</span>
+						<span class="stat-row-value">{{ figures.directIncomeBonus }}</span>
+						<nb-icon class="stat-row-chevron" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+					</button>
+					}
+
+					@if (bonusType === 'PROFIT_BASED_BONUS' && calculatedBonus !== 0) {
+					<div
+						class="stat-row is-static"
+						[class.is-negative]="calculatedBonus < 0"
+					>
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS_INFO' | translate : { bonusPercentage: bonusPercentage || 0, difference: figures.profit } }}</span>
+						</span>
+						<span class="stat-row-value">{{ figures.calculatedBonus }}</span>
+					</div>
+					}
+
+					@if (bonusType === 'REVENUE_BASED_BONUS' && calculatedBonus !== 0) {
+					<div
+						class="stat-row is-static"
+						[class.is-negative]="calculatedBonus < 0"
+					>
+						<span class="stat-row-text">
+							<span class="stat-row-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS' | translate }}</span>
+							<span class="stat-row-meta">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO' | translate : { bonusPercentage: bonusPercentage || 0, totalIncome: figures.income } }}</span>
+						</span>
+						<span class="stat-row-value">{{ figures.calculatedBonus }}</span>
+					</div>
+					}
+
+					@if (bonus < 0) {
+					<p class="panel-note" role="note">
+						<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
+						<span>{{ 'DASHBOARD_PAGE.DEVELOPER.NOTE' | translate }}</span>
+					</p>
+					} }
 				</div>
-				}
-			</div>
+			</section>
+
+			<!-- ── Employee statistics ──────────────────────────────────────
+				The same figures over time.
+
+				The chart-type switcher sits in the panel header, on the title's
+				line — `ga-employee-charts` used to render it right-aligned above
+				its own canvas, which produced a second, unanchored header row
+				directly beneath this one.
+
+				`ga-employee-charts` is rendered UNCONDITIONALLY, exactly as it
+				was before this page was redesigned. Each chart inside it already
+				draws its own "no month data" state off `employeeStatistics`, so
+				gating this on the totals being non-zero (as an earlier pass did)
+				only managed to hide the charts outright whenever a period summed
+				to zero — which is every period on a freshly seeded organization.
+			-->
+			<section class="panel panel--chart">
+				<header class="panel-header">
+					<h5 class="panel-title">{{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}</h5>
+					<nb-select
+						class="chart-switcher"
+						size="small"
+						status="basic"
+						[(selected)]="selectedChart"
+						[attr.aria-label]="'DASHBOARD_PAGE.CHARTS.CHART_TYPE' | translate"
+					>
+						<nb-option [value]="EmployeeChartEnum.BAR">
+							{{ 'DASHBOARD_PAGE.CHARTS.BAR' | translate }}
+						</nb-option>
+						<nb-option [value]="EmployeeChartEnum.DOUGHNUT">
+							{{ 'DASHBOARD_PAGE.CHARTS.DOUGHNUT' | translate }}
+						</nb-option>
+						<nb-option [value]="EmployeeChartEnum.STACKED_BAR">
+							{{ 'DASHBOARD_PAGE.CHARTS.STACKED_BAR' | translate }}
+						</nb-option>
+					</nb-select>
+				</header>
+				<div class="panel-body">
+					<ga-employee-charts
+						[employeeStatistics]="employeeStatistics"
+						[selectedChart]="selectedChart"
+					></ga-employee-charts>
+				</div>
+			</section>
 		</div>
-		<div class="half-content">
-			<ga-employee-charts [employeeStatistics]="employeeStatistics"></ga-employee-charts>
-		</div>
+		}
 	</nb-card-body>
 </nb-card>
-}

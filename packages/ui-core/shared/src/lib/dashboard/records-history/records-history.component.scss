@@ -1,6 +1,18 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-dialogs' as ga-dialogs;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// The dialog's table is the same object as every other data table in the app
+// (documents, employees, invoices, payments, pipelines, tasks), so it takes its
+// density, surface and pager from the shared hub instead of growing a second set
+// of metrics that drift. See `gauzy/_gauzy-table-hub.scss`.
+//
+// `profit-history.component.scss` @forwards this file, so everything below lands
+// on the profit dialog too — both are opened from the HR dashboard KPI tiles.
+:host {
+  @include ga-hub.density-tokens();
+}
 
 :host nb-card {
   border-radius: nb-theme(border-radius);
@@ -21,11 +33,28 @@
     background-color: var(--gauzy-card-2);
     padding: 1rem 11px;
     .table-scroll-container {
-      padding: 0 11px;
+      // Edge-to-edge inside the ring. The cells carry their own horizontal
+      // padding (`--gauzy-table-cell-padding-x`), and the card body above
+      // already supplies the gutter — the 11px that used to be here left the
+      // surface outline floating a column-width off the table it outlines.
+      padding: 0;
+      @include ga-hub.surface();
     }
   }
   h5 {
     font-weight: 600;
     font-size: 18px;
   }
+}
+
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+}
+
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
 }

@@ -309,16 +309,75 @@ $gauzy-menu-scrollbar-dark: (
   gauzy-menu-scrollbar-thumb-hover: rgba(0, 0, 0, 0.9)
 );
 
+// ── Chart series ────────────────────────────────────────────────────────────
+// The four monthly employee-statistics series (revenue / expenses / profit /
+// bonus), plus the step a profit or bonus bar flips to when it goes negative.
+//
+// These are NOT aliases of `gauzy-action-*-text`, and the difference is the
+// point. Those tokens are tuned for TEXT on a surface; a chart mark is a large
+// fill, judged on a different band, and the two jobs only coincide in light
+// mode (where the first three values here are in fact identical to the action
+// steps). In dark mode the action steps are deliberately light — emerald-400 et
+// al, so they read as text — and used as fills they blow out.
+//
+// Every value below was produced by snapping the theme's own ramp to a step
+// that passes all six checks of the categorical-palette validator against the
+// surface the charts actually sit on (`gauzy-card-1`): the OKLCH lightness band
+// for the mode, the chroma floor, all-pairs CVD separation, the normal-vision
+// floor, and 3:1 contrast. Re-run that validator before changing any of them.
+//
+// Danger is reserved for the negative state, so it cannot double as the fourth
+// categorical hue — hence fuchsia, which is the step that clears blue under
+// deuteranopia/protanopia. Blue↔violet and blue↔indigo both FAIL outright
+// (ΔE 0.3 and 3.0 deutan); do not "simplify" this back to a purple.
+//
+// Both palettes carry a CVD WARN on the blue↔fuchsia pair (ΔE 7.4 light / 6.1
+// dark, inside the 6–8 floor band), which is legal only because identity never
+// rests on hue alone here: every chart ships a legend naming each series in text
+// beside its swatch, and the marks are separated by a surface gap. Keep that
+// legend if you keep these colours.
+$gauzy-chart-series-light: (
+  gauzy-chart-revenue: #047857,   // emerald-700
+  gauzy-chart-expenses: #b45309,  // amber-700
+  gauzy-chart-profit: #1d4ed8,    // blue-700
+  gauzy-chart-bonus: #a21caf,     // fuchsia-700
+  gauzy-chart-negative: #dc2626,  // red-600
+  // Chrome, one shade off the surface: a grid is a reading aid, not data.
+  gauzy-chart-grid: rgba(126, 126, 143, 0.16),
+  // Deliberately darker than `gauzy-text-color-2`, which it started out as:
+  // that step is 3.99:1 on white, and axis ticks and legend entries are small
+  // TEXT, so they owe the 4.5:1 AA floor. This one measures 6.08:1.
+  gauzy-chart-label: rgba(97, 97, 112, 1)
+);
+
+$gauzy-chart-series-dark: (
+  gauzy-chart-revenue: #059669,   // emerald-600
+  gauzy-chart-expenses: #d97706,  // amber-600
+  gauzy-chart-profit: #3b82f6,    // blue-500
+  gauzy-chart-bonus: #c026d3,     // fuchsia-600
+  gauzy-chart-negative: #ef4444,  // red-500
+  gauzy-chart-grid: rgba(255, 255, 255, 0.1),
+  // Full white rather than the 55% step it was: axis ticks and legend entries
+  // are small text and were reading as grey against the dark canvas.
+  gauzy-chart-label: #ffffff
+);
+
 // What actually gets merged into a theme, last, so it wins over the per-theme
 // map — same contract `$gauzy-density` has always had. Themes take the light or
 // the dark accent set depending on the canvas they paint.
 $gauzy-shared-light: map.merge(
-  map.merge(map.merge($gauzy-density, $gauzy-action-accents-light), gauzy-action-buttons()),
-  $gauzy-menu-scrollbar-light
+  map.merge(
+    map.merge(map.merge($gauzy-density, $gauzy-action-accents-light), gauzy-action-buttons()),
+    $gauzy-menu-scrollbar-light
+  ),
+  $gauzy-chart-series-light
 );
 $gauzy-shared-dark: map.merge(
-  map.merge(map.merge($gauzy-density, $gauzy-action-accents-dark), gauzy-action-buttons()),
-  $gauzy-menu-scrollbar-dark
+  map.merge(
+    map.merge(map.merge($gauzy-density, $gauzy-action-accents-dark), gauzy-action-buttons()),
+    $gauzy-menu-scrollbar-dark
+  ),
+  $gauzy-chart-series-dark
 );
 
 // ── Canvas token sets for themes that do not define their own ───────────────
