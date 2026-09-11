@@ -54,9 +54,11 @@
               style="cursor: pointer"
             ></angular2-smart-table>
           </div>
-          @if (smartTableSource) {
-            <ngx-pagination [source]="smartTableSource"></ngx-pagination>
-          }
+          <div class="pagination-container">
+            @if (smartTableSource) {
+              <ngx-pagination [source]="smartTableSource"></ngx-pagination>
+            }
+          </div>
         } @else {
           <ga-card-grid
             [loading]="loading"

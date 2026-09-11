@@ -1,5 +1,6 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-table' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 /*
  * Every `var(--gauzy-…)` below carries a fallback. `material-light` and
@@ -149,4 +150,22 @@
   .row {
     margin: 0 -10px;
   }
+}
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the pager's `<nav><ul><li>` and the toolbar scale — the same block Job
+// Employees and the rest of the list pages carry.
+//
+// The action row defaults to the whole card header, which covers this page's
+// `.gauzy-action` toolbar — it lays its header out itself, beside the tag-type
+// rail, and never adopted the shared container class.
+@include ga-hub.list-page();
+
+// The pager is a flex child of a flex-column card body, so it must not be
+// stretched by the table beside it — `.table-scroll-container` above takes
+// `flex-grow: 10`, which would otherwise leave the pager fighting for the
+// remainder.
+:host .pagination-container {
+  flex: 0 0 auto;
 }
