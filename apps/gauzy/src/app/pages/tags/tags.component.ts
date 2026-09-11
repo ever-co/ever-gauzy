@@ -238,12 +238,15 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
+			// The four widths are a RATIO the library hands to the `<th>`s, so they
+			// have to add up to the table: 20/20/70/10 came to 120%, which is why
+			// Description alone took better than half the row and the other three
+			// were squeezed into what was left.
 			columns: {
 				name: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_NAME'),
 					type: 'custom',
-					width: '20%',
-					class: 'text-center',
+					width: '22%',
 					renderComponent: TagsColorComponent,
 					componentInitFunction: (instance: TagsColorComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -253,26 +256,42 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 				tagTypeName: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_TYPE'),
 					type: 'string',
-					width: '20%',
-					isFilterable: false
+					width: '18%',
+					isFilterable: false,
+					// `classContent` is the library's own per-column class hook and
+					// lands on the div the cell renders into (`class`, which the Name
+					// column used to pass, is not one of its settings and was dropped
+					// on the floor). What the class does is in `tags.component.scss`.
+					classContent: 'ga-secondary-cell',
+					valuePrepareFunction: (value: string) => value || '—'
 				},
 				description: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
 					type: 'string',
-					width: '70%',
-					isFilterable: false
+					width: '45%',
+					isFilterable: false,
+					// Most tags carry no description, and a column of blank cells reads
+					// as a table that failed to load rather than as one with nothing to
+					// say.
+					valuePrepareFunction: (value: string) => value || '—'
 				},
 				counter: {
 					title: this.getTranslation('Counter'),
 					type: 'string',
-					width: '10%',
+					width: '15%',
 					isFilterable: false,
+					// Right-aligned, tabular figures — see `tags.component.scss`.
+					classHeader: 'ga-numeric-cell',
+					classContent: 'ga-numeric-cell',
 					valuePrepareFunction: (_: any, cell: Cell) => {
-						if (cell instanceof Cell) {
-							const data = cell.getRow().getData();
-							return this.getCounter(data);
-						}
-						return this.getCounter(cell);
+						// Two callers, two shapes: the table passes a `Cell`, the card
+						// grid passes the row itself (`CardGridComponent.getValue`).
+						const data = cell instanceof Cell ? cell.getRow().getData() : cell;
+						const count = this.getCounter(data);
+						// Six-figure usage counts are common here (1890000) and unreadable
+						// unseparated; the grouping follows the browser locale, so it reads
+						// the way the viewer expects rather than the way en-US does.
+						return Number.isFinite(count) ? count.toLocaleString() : '—';
 					}
 				}
 			}

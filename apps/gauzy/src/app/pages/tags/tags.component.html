@@ -11,8 +11,13 @@
             @for (option of filterOptions; track option) {
               <nb-list-item
                 class="filter-item"
+                role="button"
+                tabindex="0"
+                [attr.aria-pressed]="selectedFilterValue === option.value"
                 [class.selected]="selectedFilterValue === option.value"
                 (click)="selectedFilterOption(option.value)"
+                (keydown.enter)="selectedFilterOption(option.value)"
+                (keydown.space)="$event.preventDefault(); selectedFilterOption(option.value)"
                 >
                 {{ option.displayName }}
               </nb-list-item>
