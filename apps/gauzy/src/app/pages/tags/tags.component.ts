@@ -259,9 +259,12 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 					width: '18%',
 					isFilterable: false,
 					// `classContent` is the library's own per-column class hook and
-					// lands on the div the cell renders into (`class`, which the Name
-					// column used to pass, is not one of its settings and was dropped
-					// on the floor). What the class does is in `tags.component.scss`.
+					// lands on the div the cell renders into. Note it is NOT `class`,
+					// which the Name column used to pass: `class` is declared on the
+					// library's `IColumn` (so it type-checks, which is why a dozen
+					// tables in this repo still pass it) but its `Column` class never
+					// reads it, so it reaches no element. What the class does is in
+					// `tags.component.scss`.
 					classContent: 'ga-secondary-cell',
 					valuePrepareFunction: (value: string) => value || '—'
 				},
@@ -289,8 +292,9 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 						const data = cell instanceof Cell ? cell.getRow().getData() : cell;
 						const count = this.getCounter(data);
 						// Six-figure usage counts are common here (1890000) and unreadable
-						// unseparated; the grouping follows the browser locale, so it reads
-						// the way the viewer expects rather than the way en-US does.
+						// without digit grouping; the grouping follows the browser locale,
+						// so it reads the way the viewer expects rather than the way en-US
+						// does.
 						return Number.isFinite(count) ? count.toLocaleString() : '—';
 					}
 				}
@@ -448,6 +452,56 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 
 	private get _isGridLayout() {
 		return this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle;
+	}
+
+	/**
+	 * Arrow-key navigation for the tag-type rail.
+	 *
+	 * The rail is a RADIOGROUP, not a row of toggle buttons: the options are
+	 * mutually exclusive, so picking one clears the last. A radiogroup is one
+	 * tab stop with the arrows moving between (and selecting) the options —
+	 * which is also why the template gives only the checked option
+	 * `tabindex="0"`. Tab therefore enters the rail on the active filter and
+	 * leaves it again, instead of stepping through every tag type.
+	 *
+	 * Home/End go to the ends, as the pattern expects.
+	 *
+	 * @param event the originating keydown, whose target is the focused option
+	 * @param index position of that option in `filterOptions`
+	 */
+	onFilterKeydown(event: KeyboardEvent, index: number) {
+		const count = this.filterOptions.length;
+		if (!count) {
+			return;
+		}
+		let next: number;
+		switch (event.key) {
+			case 'ArrowDown':
+			case 'ArrowRight':
+				next = (index + 1) % count;
+				break;
+			case 'ArrowUp':
+			case 'ArrowLeft':
+				next = (index - 1 + count) % count;
+				break;
+			case 'Home':
+				next = 0;
+				break;
+			case 'End':
+				next = count - 1;
+				break;
+			default:
+				return;
+		}
+		// The rail scrolls, so the browser would page it under us on Arrow/Home/End.
+		event.preventDefault();
+		this.selectedFilterOption(this.filterOptions[next].value);
+		// Selection and focus move together in a radiogroup. Queried off the group
+		// rather than off a sibling list, so the lookup survives whatever wrapper
+		// `nb-list` renders around the items.
+		const option = event.currentTarget as HTMLElement;
+		const options = option.closest('[role="radiogroup"]')?.querySelectorAll<HTMLElement>('[role="radio"]');
+		options?.item(next)?.focus();
 	}
 
 	/**

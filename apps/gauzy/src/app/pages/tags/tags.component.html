@@ -7,17 +7,24 @@
       </nb-card-header>
       @if (filterOptions.length) {
         <div class="list">
-          <nb-list>
-            @for (option of filterOptions; track option) {
+          <!-- These options filter the table by ONE tag type at a time: picking
+               one clears the last. `role="button"` + `aria-pressed` announced
+               them as independent toggles, so a screen reader user was never
+               told that the previous choice had been turned off. A radiogroup
+               says exactly that, and carries the single-tab-stop + arrow-key
+               behaviour such a user expects from it (`onFilterKeydown`). -->
+          <nb-list role="radiogroup" [attr.aria-label]="'TAGS_PAGE.TAGS_TYPE' | translate">
+            @for (option of filterOptions; track option; let i = $index) {
               <nb-list-item
                 class="filter-item"
-                role="button"
-                tabindex="0"
-                [attr.aria-pressed]="selectedFilterValue === option.value"
+                role="radio"
+                [attr.aria-checked]="selectedFilterValue === option.value"
+                [attr.tabindex]="selectedFilterValue === option.value ? 0 : -1"
                 [class.selected]="selectedFilterValue === option.value"
                 (click)="selectedFilterOption(option.value)"
                 (keydown.enter)="selectedFilterOption(option.value)"
                 (keydown.space)="$event.preventDefault(); selectedFilterOption(option.value)"
+                (keydown)="onFilterKeydown($event, i)"
                 >
                 {{ option.displayName }}
               </nb-list-item>

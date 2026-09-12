@@ -31,8 +31,10 @@
       outline-offset: -2px;
     }
 
+    // Shared with `tabset-action-row()`, which has to match the block value to
+    // stay as tall as this strip — see the note on the tokens in `var.scss`.
     @include respond(dsk) {
-      padding: px2rem(16px) px2rem(16px);
+      padding: $tabset-dsk-tab-padding-block $tabset-dsk-tab-padding-inline;
     }
 
     nb-icon {

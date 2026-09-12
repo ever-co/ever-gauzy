@@ -58,11 +58,13 @@
   padding-inline: 0;
   height: nb-theme(tabset-tab-text-line-height);
 
-  // Below `dsk` the strip takes the 16px box from `styles/includes/_tabset.scss`
-  // — both families do, since that sheet stopped naming only the route one — so
-  // this row has to follow it there or it is no longer the strip's own row.
+  // Below `dsk` the strip swaps the theme token for a fixed box in
+  // `styles/includes/_tabset.scss` — both families do, since that sheet stopped
+  // naming only the route one — so this row has to follow it there or it is no
+  // longer the strip's own row. Read from the shared token rather than copied,
+  // so the strip cannot be retuned without this row coming with it.
   @include respond(dsk) {
-    padding: px2rem(16px) px2rem(16px);
+    padding-block: $tabset-dsk-tab-padding-block;
     padding-inline: 0;
   }
 
