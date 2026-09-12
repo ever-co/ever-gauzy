@@ -325,7 +325,13 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 		return counter;
 	};
 
-	async getTagTypes() {
+	/**
+	 * @param generation the refresh this load belongs to — see `loadTagsThenTypes()`.
+	 *   A load whose generation has been superseded while its request was in flight
+	 *   drops the response instead of rebuilding the rail from it. Defaults to the
+	 *   current refresh, which is what a standalone call wants.
+	 */
+	async getTagTypes(generation: number = this.loadGeneration) {
 		this.loading = true;
 
 		try {
@@ -336,6 +342,14 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 				tenantId,
 				organizationId
 			});
+
+			// Superseded while the request was out. Two requests for the same
+			// resource can settle in either order, so this response may describe the
+			// organization the user has already left — and the rail it would rebuild
+			// is one the newer pass has already built correctly.
+			if (generation !== this.loadGeneration) {
+				return;
+			}
 
 			this.tagTypes = items;
 
@@ -357,15 +371,26 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 				})
 			];
 		} catch (error) {
+			// Logged whatever its generation — a failure is worth seeing in the
+			// console even once the pass that caused it has been superseded.
 			console.error('Error while retrieving tag types', error);
+			if (generation !== this.loadGeneration) {
+				return;
+			}
 			this.toastrService.danger('TAGS_PAGE.TAGS_FETCH_FAILED', 'Error fetching tag types');
 			// A failed fetch may be a failed ORGANIZATION SWITCH, and the types still
 			// on screen would then be the previous organization's. "All" alone is the
 			// honest rail, and the reconcile below moves the selection onto it.
 			this.filterOptions = [{ value: '', displayName: 'All' }];
 		} finally {
-			this.reconcileSelectedFilter();
-			this.loading = false;
+			// `finally` runs on the stale returns above as well, and neither of these
+			// belongs to a superseded pass: the reconcile would judge the newer rail
+			// against this one's `allTags`, and the spinner is the newer pass's to
+			// clear when its own request comes home.
+			if (generation === this.loadGeneration) {
+				this.reconcileSelectedFilter();
+				this.loading = false;
+			}
 		}
 	}
 
@@ -400,23 +425,35 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	 * against `allTags`, which `getTags()` is what refreshes; un-awaited they raced and
 	 * the reconcile could run against the previous organization's tags.
 	 *
-	 * The generation check drops the second half of a pass that a newer refresh has
-	 * already superseded — a pagination, search or organization change arriving while
-	 * the first request is still in flight. It does not abort the in-flight HTTP call
-	 * (these are promises, not cancellable observables), and overlapping refreshes
-	 * were possible before this too, since both loads were fired un-awaited; this
-	 * closes the specific window the reconcile depends on.
+	 * GENERATIONS. A pagination, search or organization change can arrive while the
+	 * first request is still in flight, so every refresh takes a number and both
+	 * loads carry it. The number is checked twice: here, before the second load is
+	 * started at all, and again inside each load when its own request comes home.
+	 *
+	 * The second check is what overlapping passes actually need. Starting a load is
+	 * not the same as finishing one — two requests for the same resource can settle
+	 * in either order — so a `getTagTypes()` that was current when it started can
+	 * still be answered after a newer one, and without the check it would rebuild
+	 * the filter rail from the organization the user has already left and then
+	 * reconcile the selection against it.
+	 *
+	 * None of this aborts the in-flight call (these are promises, not cancellable
+	 * observables): a superseded response is fetched and then dropped on arrival.
 	 */
 	private async loadTagsThenTypes(): Promise<void> {
 		const generation = ++this.loadGeneration;
-		await this.getTags();
+		await this.getTags(generation);
 		if (generation !== this.loadGeneration) {
 			return;
 		}
-		await this.getTagTypes();
+		await this.getTagTypes(generation);
 	}
 
-	async getTags() {
+	/**
+	 * @param generation the refresh this load belongs to — see `loadTagsThenTypes()`.
+	 *   Defaults to the current refresh, which is what a standalone call wants.
+	 */
+	async getTags(generation: number = this.loadGeneration) {
 		this.allTags = [];
 
 		try {
@@ -430,6 +467,13 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 				},
 				['tagType']
 			);
+
+			// Superseded while the request was out, as in `getTagTypes()`: these rows
+			// and the pagination they total would be the previous organization's, and
+			// `allTags` is what the reconcile reads.
+			if (generation !== this.loadGeneration) {
+				return;
+			}
 
 			const { activePage, itemsPerPage } = this.getPagination();
 
@@ -448,9 +492,16 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 			});
 		} catch (error) {
 			console.error('Error while retrieving tags', error);
+			if (generation !== this.loadGeneration) {
+				return;
+			}
 			this.toastrService.danger(error);
 		} finally {
-			this.loading = false;
+			// The spinner belongs to whichever pass is current; a superseded one
+			// leaves it up for the pass that replaced it.
+			if (generation === this.loadGeneration) {
+				this.loading = false;
+			}
 		}
 	}
 
