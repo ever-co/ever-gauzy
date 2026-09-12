@@ -192,7 +192,44 @@
   align-items: center;
 }
 
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the pager's `<nav><ul><li>` and the toolbar scale — the same block Job
+// Employees and the rest of the list pages carry.
+//
+// The action row defaults to the whole card header, which covers this page's
+// `.gauzy-action` toolbar — it lays its header out itself, beside the tag-type
+// rail, and never adopted the shared container class.
+//
+// ABOVE the block below rather than beneath it: that block reopens `:host` to
+// widen two of the density tokens this one sets there, and a custom property is
+// won by whichever declaration the cascade reads last.
+@include ga-hub.list-page();
+
 :host {
+  // ── Row breathing room ─────────────────────────────────────────────────────
+  //
+  // `density-tokens()` sizes a row for a line of TEXT: 1rem of line box plus
+  // 0.1875rem above and below, i.e. ~22px. That is the right box when the cell's
+  // tallest thing is its text, and it is what the tables that carry a wrapping
+  // note or a two-line address want.
+  //
+  // This table is four short single-line values and a chip, so nothing ever
+  // pushes a row past the minimum and every row came out at that floor — a block
+  // of ten rows with no air between them, where the eye has nothing to track
+  // along. The cells take the app-wide default instead (0.375rem, the same value
+  // `thumbnail-row-padding()` hands the picture tables), which puts the rows back
+  // at ~28px.
+  //
+  // Scoped to this page rather than pushed into `density-tokens()`: the shared
+  // value is what the rest of the list pages are drawn at, and widening it there
+  // would reflow two dozen tables that nobody has asked about.
+  --gauzy-table-cell-padding-y: 0.375rem;
+  // And the heading row with them, or the header ends up the shortest row in a
+  // table it is supposed to head (0.8125rem of label in a 23px box against 28px
+  // rows).
+  --gauzy-table-header-padding-y: 0.4375rem;
+
   nb-card.tags-component,
   nb-card.tags-component nb-card-body {
     background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
@@ -226,41 +263,6 @@
   .row {
     margin: 0 -10px;
   }
-}
-
-// ── The canonical list-page block ────────────────────────────────────────────
-// Density tokens, the table surface, row hover/selection, the tag-chip stack,
-// the pager's `<nav><ul><li>` and the toolbar scale — the same block Job
-// Employees and the rest of the list pages carry.
-//
-// The action row defaults to the whole card header, which covers this page's
-// `.gauzy-action` toolbar — it lays its header out itself, beside the tag-type
-// rail, and never adopted the shared container class.
-@include ga-hub.list-page();
-
-// ── Row breathing room ───────────────────────────────────────────────────────
-//
-// `density-tokens()` sizes a row for a line of TEXT: 1rem of line box plus
-// 0.1875rem above and below, i.e. ~22px. That is the right box when the cell's
-// tallest thing is its text, and it is what the tables that carry a wrapping
-// note or a two-line address want.
-//
-// This table is four short single-line values and a chip, so nothing ever pushes
-// a row past the minimum and every row came out at that floor — a block of ten
-// rows with no air between them, where the eye has nothing to track along. The
-// cells take the app-wide default instead (0.375rem, the same value
-// `thumbnail-row-padding()` hands the picture tables), which puts the rows back
-// at ~28px.
-//
-// Scoped to this page rather than pushed into `density-tokens()`: the shared
-// value is what the rest of the list pages are drawn at, and widening it there
-// would reflow two dozen tables that nobody has asked about.
-:host {
-  --gauzy-table-cell-padding-y: 0.375rem;
-  // And the heading row with them, or the header ends up the shortest row in a
-  // table it is supposed to head (0.8125rem of label in a 23px box against 28px
-  // rows).
-  --gauzy-table-header-padding-y: 0.4375rem;
 }
 
 // ── Column treatments ────────────────────────────────────────────────────────

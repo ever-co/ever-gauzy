@@ -36,6 +36,12 @@
 	// `display` here: see the note above.
 	min-height: 0;
 	min-width: 0;
+
+	// The routed page's card scrolls in its own table container, so the body must
+	// not clip what that container hangs outside it (the sticky head, a dropdown).
+	nb-card nb-card-body {
+		overflow: unset;
+	}
 }
 
 :host ::ng-deep router-outlet {
@@ -49,12 +55,4 @@
 	min-height: 0;
 	min-width: 0;
 	max-width: 100%;
-}
-
-:host {
-	nb-card {
-		nb-card-body {
-			overflow: unset;
-		}
-	}
 }

@@ -39,10 +39,16 @@ export class CompanyLogoComponent {
 	 * element a generic glyph — see `--fa` there.
 	 */
 	private static toIconClass(name: unknown): string {
-		const slug = String(name ?? '')
+		// A name that is not a primitive is no name: `String()` would hand back
+		// `[object Object]` and that slugs to a class of its very own.
+		const raw = typeof name === 'string' || typeof name === 'number' ? `${name}` : '';
+		const slug = raw
 			.toLowerCase()
 			.replace(/[^a-z0-9]+/g, '-')
-			.replace(/^-+|-+$/g, '');
+			// One hyphen at either end is all there can be — the replace above has
+			// already collapsed every run of non-alphanumerics into a single one — so
+			// this needs no quantifier, and without one there is nothing to backtrack.
+			.replace(/^-|-$/g, '');
 		return slug ? `fab fa-${slug}` : 'fab';
 	}
 }

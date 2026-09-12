@@ -142,6 +142,13 @@
 
 :host .columns-header {
   padding: var(--gauzy-table-header-padding-y, 0.5rem) 1.125rem;
+  // The head follows the rows (see `.custom-table:has(.vendor-row)` below), or it
+  // ends up the shortest band in a table it is supposed to head:
+  // `--gauzy-table-header-padding-y` is 0.3125rem, which put a 25px header over
+  // 44px rows. Still one step under the rows, which is the convention — a heading
+  // is not a row. The block axis only: the shorthand above keeps the 1.125rem
+  // inline gutter the row cells are drawn to.
+  padding-block: 0.625rem;
   // The same 3px rail the rows reserve for the selection edge, so the titles sit
   // over their columns. Logical, as theirs is.
   border-inline-start: 3px solid transparent;
@@ -296,12 +303,4 @@
 // the shared 0.5rem is the right box for them.
 :host .custom-table:has(.vendor-row) {
   padding-block: 0.75rem;
-}
-
-// The head follows the rows, or it ends up the shortest band in a table it is
-// supposed to head: `--gauzy-table-header-padding-y` is 0.3125rem, which put a
-// 25px header over 44px rows. Still one step under the rows, which is the
-// convention — a heading is not a row.
-:host .columns-header {
-  padding-block: 0.625rem;
 }

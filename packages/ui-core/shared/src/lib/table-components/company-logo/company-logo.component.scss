@@ -23,7 +23,11 @@ i {
   // The brands file first, the free faces behind it: a real logo is rendered
   // from the brands file, and the fallback above — which the brands file does
   // not contain — falls through to the free face that does.
-  font-family: 'Font Awesome 7 Brands', 'Font Awesome 7 Free';
+  // ...and a generic behind both, which is the last resort every font stack owes
+  // the browser: neither FA face is a web-safe name, and if a build ships without
+  // them the glyph falls back to a face that exists rather than to whatever the
+  // browser happens to default to.
+  font-family: 'Font Awesome 7 Brands', 'Font Awesome 7 Free', sans-serif;
   // ...which is the solid face, where that glyph lives. Harmless to the brands
   // file, which ships one weight (400) and is matched whatever is asked of it,
   // and FA sets `font-synthesis: none`, so nothing is emboldened to fit.
