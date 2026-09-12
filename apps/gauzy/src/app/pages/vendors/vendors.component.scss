@@ -1,4 +1,5 @@
 @use 'gauzy/_gauzy-cards' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 @forward '../expenses/expense-categories/expense-categories.component';
 
 .editable {
@@ -57,38 +58,23 @@
 }
 
 /*
- * Row hover / selection, also restated after the forward.
+ * The PAGE body — and nothing else.
  *
- * `expense-categories` gives BOTH states the same `rgba(50, 50, 50, 0.03)` fill,
- * so hovering a row looked exactly like selecting one, and 3 % of black over a
- * near-black card is nothing at all — on the four dark themes there was no
- * visible selection. Selection also arrived as a 6px border that only exists
- * when the row is selected, so the whole row jumped 6px sideways on click.
+ * `:not(.custom-table)` is the whole point of this rule, because `nb-ltr()`
+ * prepends its selector: what this compiles to is
+ * `[dir=ltr] [_nghost] nb-card-body[_ngcontent]`, i.e. (0,3,1), and the row
+ * padding in `card-list-page()` below is `:host .custom-table` — (0,3,0). A row
+ * IS an `nb-card-body`, so it matched both, and the one that won was this one:
+ * every row on all four pages that share this sheet was drawn with the PAGE
+ * body's 1rem/18px box rather than the 0.5rem/1.125rem one meant for it. That is
+ * where ~60px rows came from, which is the exact thing `card-list-page()`'s own
+ * comment says it fixes — the fix has simply never applied.
  *
- * Now: the neutral tints (they darken a light surface and lighten a dark one, so
- * one value works in all eight themes), selection carried by the primary colour
- * on the leading edge, and a transparent edge of the same width at rest so
- * nothing moves.
+ * Excluding the rows here rather than out-specifying them there: the rows' own
+ * padding is then settled in one place, by the shared contract, at the
+ * specificity it was written for.
  */
-:host .custom-table {
-  @include nb-ltr(border-left, 3px solid transparent);
-  @include nb-rtl(border-right, 3px solid transparent);
-
-  // `:not(.selected)` because this rule is declared after `.selected` at the same
-  // specificity — without it, hovering a selected row would repaint it as merely
-  // hovered.
-  &:hover:not(.selected) {
-    background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
-  }
-
-  &.selected {
-    background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
-    @include nb-ltr(border-left, 3px solid var(--color-primary-default));
-    @include nb-rtl(border-right, 3px solid var(--color-primary-default));
-  }
-}
-
-:host nb-card-body {
+:host nb-card-body:not(.custom-table) {
   @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
   @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
   .no-data {
@@ -101,22 +87,229 @@
   }
 }
 
-.columns-header {
-  // Same story as `.editable` above: `nb-theme(gauzy-card-2)` is a bare
-  // `var(--gauzy-card-2)` and that key is missing from the two material themes,
-  // where the column-title band therefore had no background and merged into the
-  // card behind it.
-  background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
-  border-radius: 8px;
-  margin-bottom: 10px;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  // Logical, so the title band still indents from the reading edge under RTL —
-  // the row of `col-md-*` cells it labels is mirrored, but `padding-left` was not.
-  padding-inline-start: 12px;
-  font-size: 12px;
-  font-style: normal;
+// ── The list-page contract, for a table built by hand ────────────────────────
+//
+// Four pages share this sheet — Vendors, Positions, Employee levels and
+// Documents all `@forward` it — and all four build their table as a stack of
+// `nb-card` rows rather than rendering the `angular2-smart-table` every other
+// page under `/pages/organization` does, so the shared `list-page()` block never
+// reached them. `card-list-page()` is the part of that contract which does not
+// depend on the smart table: the density tokens, the toolbar scale, the table
+// surface, and rows that read as rows instead of as floating cards.
+//
+// The gutter: a row here is a Bootstrap `.row`, which bleeds 15px past its
+// container through negative margins, so the row's own padding has to cover that
+// before it can inset anything — at the default 0.4375rem the first cell would
+// hang 8px off the left edge of the surface. 1.125rem lands the cells 6px inside
+// it, and the head below is boxed to match.
+@include ga-hub.card-list-page($row-padding-x: 1.125rem);
+
+// ── The head ─────────────────────────────────────────────────────────────────
+//
+// Vendors is the only page of the four with column titles, and they used to be a
+// filled card-2 band in the CARD HEADER, floating 10px above the rows with its
+// own rounded corners — a second surface, and one that could not line up with
+// the values it titles: it sat in a container with 1rem of padding while the
+// rows sat in one with 18px, and the first title carried a `pl-3` to paper over
+// the difference.
+//
+// It is now the first child of the scroll container and boxed exactly like a
+// row (same padding, same 3px selection rail reserved on the leading edge), so
+// the titles sit over their columns by construction rather than by nudging. The
+// treatment is the one `list-page()` gives a smart table's `thead`: no fill, the
+// muted heading colour, one hairline underneath.
+// The surface's outline has to survive the sticky head below.
+//
+// `surface()` draws it with `box-shadow: inset 0 0 0 1px`, which is part of THIS
+// element's background layer — every in-flow child paints on top of it. The head
+// is an opaque child pinned to this box's inner top edge, so it erased the top
+// line outright and the leading edge for its own height, and the boxed surface
+// read as open at the top: the first line under the card was the head's own
+// bottom hairline, a few pixels down.
+//
+// A real border is GEOMETRY rather than paint. It sizes the content box the head
+// is laid out in, so the head cannot reach the outline at all — no per-edge
+// patching, and it mirrors under RTL on its own. Same 1px, same colour, same
+// outer size: the app-wide reset is `border-box`, so nothing moves but the
+// content, which comes in by 1px.
+//
+// SPECIFICITY: `card-list-page()` paints the surface at this same
+// `:host .table-scroll-container`, so this must stay BELOW the include above.
+:host .table-scroll-container {
+  box-shadow: none;
+  border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+}
+
+:host .columns-header {
+  padding: var(--gauzy-table-header-padding-y, 0.5rem) 1.125rem;
+  // The head follows the rows (see `.custom-table:has(.vendor-row)` below), or it
+  // ends up the shortest band in a table it is supposed to head:
+  // `--gauzy-table-header-padding-y` is 0.3125rem, which put a 25px header over
+  // 44px rows. Still one step under the rows, which is the convention — a heading
+  // is not a row. The block axis only: the shorthand above keeps the 1.125rem
+  // inline gutter the row cells are drawn to.
+  padding-block: 0.625rem;
+  // The same 3px rail the rows reserve for the selection edge, so the titles sit
+  // over their columns. Logical, as theirs is.
+  border-inline-start: 3px solid transparent;
+  border-bottom: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  font-size: var(--gauzy-table-header-font-size, 0.75rem);
   font-weight: 600;
-  line-height: 15px;
+  line-height: var(--gauzy-table-header-line-height, 0.9375rem);
   letter-spacing: 0em;
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
+  // Pinned while the rows scroll under it, which is what the global sheet does
+  // for a smart table's own `thead` (`_overrides.scss`) — and why the fill has to
+  // be the opaque surface colour rather than none. That opacity is also why the
+  // container above trades its inset outline for a real border: an opaque child
+  // pinned to the inner top edge would otherwise paint straight over it.
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+}
+
+// ── The row grid ─────────────────────────────────────────────────────────────
+//
+// EVERYTHING BELOW IS ANCHORED ON `.vendor-row`, and deliberately so: Positions,
+// Employee levels and Documents all `@forward` this sheet, and none of the three
+// lays its row out in columns. A bare `.row` here would have redesigned three
+// pages that were not asked about.
+//
+// THE CELL GUTTER, and why it is declared here rather than in the template.
+//
+// The cells used to carry Bootstrap's `p-0`. Every Bootstrap utility is
+// `!important` — `.p-0 { padding: 0 !important }` — so no gutter could be added
+// to these columns from a stylesheet at ANY specificity, and the grid had none:
+// the website's ellipsis ended one pixel before the first tag chip began, and
+// "Phone" and "Email" were two headings with nothing between them. The template
+// drops `p-0`; this replaces it, which is what makes a per-edge value possible.
+//
+// Zero leading, 1rem trailing. A Bootstrap `.row` bleeds 15px past its container
+// through negative margins, and the row's own 1.125rem gutter is sized to cover
+// exactly that (see the `card-list-page()` call above) — so a leading pad would
+// push the first cell off the edge that establishes, and the last column needs
+// no trailing edge of its own. 1rem matches what a smart-table cell gets from
+// `--gauzy-table-cell-padding-x` on either side of its border.
+:host .vendor-row > [class*='col-'] {
+  padding-inline: 0 1rem;
+}
+
+:host .vendor-row > [class*='col-']:last-child {
+  padding-inline-end: 0;
+}
+
+// The name is the row's identity: it is the only value every vendor has, the
+// one the list is scanned by, and the one the row is selected by. At the same
+// weight and colour as a phone number, five columns of equal-weight text left
+// nothing for the eye to anchor on.
+:host .vendor-row .ga-name-cell {
+  font-weight: 600;
+  color: var(--text-basic-color);
+}
+
+// A missing value, in the muted colour the column headings take — the same
+// treatment the Tags table gives its empty cells. It has to read as "this vendor
+// has no phone number", which a blank cell does not.
+:host .vendor-row .ga-empty-cell {
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
+}
+
+:host .vendor-row ::ng-deep {
+  // The brand glyph is DECORATION next to the name it sits on, so it drops to
+  // the muted colour rather than sharing the name's full contrast. `ga-company-logo`
+  // paints it `--gauzy-text-color-1`, one of the keys the two material themes
+  // never register, so this restates it with a fallback they can resolve.
+  ga-company-logo i {
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+  }
+
+  /*
+   * The two links.
+   *
+   * Both components paint themselves a literal `rgba(0, 136, 254, 1)` with a
+   * permanent underline. That blue is in none of the eight themes, and an
+   * always-underlined full URL was the highest-contrast, busiest thing in a row
+   * whose actual subject is the vendor's name. The theme's own link colour says
+   * "clickable" on its own; the underline is what a pointer is for.
+   *
+   * SPECIFICITY: their sheets are `a[_ngcontent-x]`, i.e. (0,1,1). Through
+   * `::ng-deep` this reads `[_nghost-v] .vendor-row[_ngcontent-v] gauzy-email a`
+   * — (0,3,2) — so no `!important` is needed to settle it.
+   */
+  gauzy-email a,
+  gauzy-external-link a {
+    color: var(--text-primary-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  /*
+   * The chips.
+   *
+   * `ga-only-tags` renders its chips UNDER a name/level block it also renders,
+   * and reserves `--gauzy-table-chip-block-gap` above them for it. This page
+   * binds only `[rowData]`, never `[value]`, so that block never appears and the
+   * gap was 0.5rem of top margin under nothing — paid by every row, since the
+   * component emitted the stack whether the vendor had tags or not. The template
+   * now withholds the component entirely when there are none; this settles the
+   * margin for the rows that do.
+   *
+   * `!important` mirrors the declaration it overrides: the component's own rule
+   * carries one, because it is outbidding Bootstrap's `.mt-2`.
+   */
+  ga-only-tags {
+    // A custom element is `display: inline` by default, and this one's children
+    // are blocks — so its own box said nothing about the height of what was in
+    // it, and the row had to centre an inline box around a flex stack.
+    display: block;
+
+    .tags {
+      margin-top: 0 !important;
+      // Centred, not `flex-start`. The chips are ~16px in a cell whose
+      // neighbours are a 1.25rem line of text, so left at the top of the box
+      // they sat a couple of pixels above the line every other value in the row
+      // is on — and a row WITHOUT tags renders an em dash, which is that line
+      // exactly. The `min-height` is what gives the centring something to work
+      // against: it makes a chip cell the same height as a text cell, so the
+      // two kinds of row centre identically.
+      align-items: center;
+      min-height: var(--gauzy-table-line-height, 1.25rem);
+    }
+
+    // A tag name is a label, not a sentence: it breaks the chip rather than the
+    // column. The cell above dropped `text-truncate`, which is where the chips
+    // were inheriting `white-space: nowrap` from.
+    nb-badge.color {
+      white-space: nowrap;
+      // ...but a label can be longer than the two columns this cell is given,
+      // and one that may not wrap would then carry the chip straight out
+      // through the side of the table. Ellipsis at the cell's edge instead: the
+      // chips are flex items, so `max-width` also lifts the automatic minimum
+      // size that would otherwise hold a flex item open at its content width.
+      // `max-width`, not `width` — a tag that fits is still sized by its text.
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+// ── Row rhythm ───────────────────────────────────────────────────────────────
+//
+// `card-list-page()` sets a row 0.5rem of block padding, which suits the pages
+// that put ONE value in a row (Positions, Employee levels, Documents). This one
+// is a five-column table: the columns already separate the values horizontally,
+// so what tells one row from the next is the air above and below it, and at
+// 0.5rem five columns of text ran together into a block.
+//
+// 0.75rem puts a row at ~44px against a 1.25rem line box. Scoped with
+// `:has(.vendor-row)` rather than by `.custom-table` alone, which the three
+// pages that `@forward` this sheet also use — they are single-value lists and
+// the shared 0.5rem is the right box for them.
+:host .custom-table:has(.vendor-row) {
+  padding-block: 0.75rem;
 }

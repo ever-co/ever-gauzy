@@ -16,29 +16,58 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
-		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
-		<div class="columns-header row align-items-center">
-			<div class="col-md-2 pl-3 float-left text-truncate">
-				{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
-			</div>
-			<div class="col-md-2 p-0 float-left text-truncate">
-				{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}
-			</div>
-			<div class="col-md-2 p-0 float-left text-truncate">
-				{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}
-			</div>
-			<div class="col-md-3 p-0 float-left text-truncate">
-				{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}
-			</div>
-			<div class="col-md-3 p-0 float-left text-truncate">
-				{{ 'ORGANIZATIONS_PAGE.TAGS' | translate }}
-			</div>
-		</div>
-		}
 	</nb-card-header>
 	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 		<div class="table-scroll-container" infiniteScroll [scrollWindow]="false" (scrolled)="onScroll()">
+			<!--
+				The column titles are the first child of the scroll container, boxed like
+				a row and pinned with `position: sticky` — the same place and the same
+				behaviour as a smart table's own `thead` on every other page in this
+				section. They used to sit in the card header above it, in a container with
+				different padding, which is what the `pl-3` on the first title was for.
+			-->
+			<div class="columns-header">
+				<!--
+					`vendor-row` is what every rule for this grid is anchored on. Three
+					other pages `@forward` this component's stylesheet (Positions,
+					Employee levels, Documents) and not one of them lays its row out in
+					columns, so a bare `.row` would have carried the column treatment
+					onto three pages that never asked for it.
+
+					The ratio: 3/2/3/2/2. It was 2/2/2/3/3, which spent a quarter of the
+					table on a URL that is ellipsised at any width and gave the vendor's
+					NAME — the only value every row has, and the one the row is found by
+					— the same room as its phone number. The name and the email are the
+					two full values here, so they take the width; the website keeps
+					enough to show its host, which is the part of a URL anyone reads.
+
+					`p-0` is gone from all ten cells, titles and values alike. It is
+					Bootstrap's utility for it, and every Bootstrap utility is
+					`!important` — `padding: 0 !important` — so no gutter could be added
+					to these columns from a stylesheet at any specificity, which is why
+					the website's ellipsis ran straight into the first tag chip. The
+					cell gutter is set in `vendors.component.scss` instead, where it can
+					be trailing-only and can exempt the last column.
+				-->
+				<div class="row align-items-center vendor-row">
+					<div class="col-md-3 text-truncate">
+						{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
+					</div>
+					<div class="col-md-2 text-truncate">
+						{{ 'ORGANIZATIONS_PAGE.PHONE' | translate }}
+					</div>
+					<div class="col-md-3 text-truncate">
+						{{ 'ORGANIZATIONS_PAGE.EMAIL' | translate }}
+					</div>
+					<div class="col-md-2 text-truncate">
+						{{ 'ORGANIZATIONS_PAGE.WEBSITE' | translate }}
+					</div>
+					<div class="col-md-2 text-truncate">
+						{{ 'ORGANIZATIONS_PAGE.TAGS' | translate }}
+					</div>
+				</div>
+			</div>
 			@for (vendor of vendors; track vendor.id) {
 			<nb-card class="p-0">
 				<nb-card-body
@@ -46,22 +75,61 @@
 					[class.selected]="selected?.state && vendor === selected?.vendor"
 					(click)="selectVendor(vendor)"
 				>
-					<div class="row align-items-center">
-						<div class="col-md-2 p-0 float-left text-truncate">
+					<!--
+						`float-left` is gone from all five cells: a `.row` is
+						`display: flex`, and a float on a flex item is ignored outright.
+
+						Every optional value is now guarded, and falls back to an em dash
+						where it is missing — the treatment the Tags table takes. Four of
+						this page's five columns are optional and most vendors fill none
+						of them, so a row of blanks read as a table that had failed to
+						load rather than as a vendor with nothing but a name.
+
+						The guards are not only cosmetic. `gauzy-email` renders
+						`<a href="mailto:{{email}}">` and `gauzy-external-link` renders
+						`<a href="{{website}}">` unconditionally, so every vendor without
+						one carried a live link to `mailto:undefined` / `undefined` with
+						no text to click — invisible, but real, and the external one
+						opened a tab.
+					-->
+					<div class="row align-items-center vendor-row">
+						<div class="col-md-3 text-truncate ga-name-cell">
 							<ga-company-logo [rowData]="vendor"></ga-company-logo>
 							{{ vendor.name }}
 						</div>
-						<div class="col-md-2 p-0 float-left text-truncate">
+						<div class="col-md-2 text-truncate">
+							@if (vendor.phone) {
 							{{ vendor.phone }}
+							} @else {
+							<span class="ga-empty-cell">&mdash;</span>
+							}
 						</div>
-						<div class="col-md-2 p-0 float-left text-truncate">
+						<div class="col-md-3 text-truncate">
+							@if (vendor.email) {
 							<gauzy-email [rowData]="vendor"></gauzy-email>
+							} @else {
+							<span class="ga-empty-cell">&mdash;</span>
+							}
 						</div>
-						<div class="col-md-3 p-0 float-left text-truncate">
+						<div class="col-md-2 text-truncate">
+							@if (vendor.website) {
 							<gauzy-external-link [rowData]="vendor"></gauzy-external-link>
+							} @else {
+							<span class="ga-empty-cell">&mdash;</span>
+							}
 						</div>
-						<div class="col-md-3 float-left p-0 text-truncate">
+						<!--
+							No `text-truncate` on the chips: it is `overflow: hidden` plus
+							`text-overflow`, and neither does anything useful to a wrapping
+							flex row — it cannot draw an ellipsis for a chip, it can only
+							cut one in half.
+						-->
+						<div class="col-md-2">
+							@if (vendor.tags?.length) {
 							<ga-only-tags [rowData]="vendor"></ga-only-tags>
+							} @else {
+							<span class="ga-empty-cell">&mdash;</span>
+							}
 						</div>
 					</div>
 				</nb-card-body>
@@ -141,7 +209,7 @@
 </ng-template>
 <ng-template #visibleButton>
 	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT']">
-		<button nbButton status="success" size="small" (click)="openDialog(addEditTemplate, false)">
+		<button nbButton class="action" status="success" size="small" (click)="openDialog(addEditTemplate, false)">
 			<nb-icon icon="plus-outline"> </nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>

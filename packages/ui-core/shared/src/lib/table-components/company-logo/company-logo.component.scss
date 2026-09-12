@@ -1,10 +1,44 @@
+/*
+ * The brand glyph in a company row.
+ *
+ * Font Awesome only ships a logo for companies that ARE brands, and the table
+ * this renders in lists a tenant's own vendors — so for most rows `fa-<name>`
+ * matched nothing at all and the cell drew a blank: FA gives every icon element
+ * a fixed `--fa-width` box (1.25em), so the column still paid for an icon it
+ * never showed, and the rows that did match a brand were the only ones with
+ * anything on their leading edge.
+ *
+ * FA 7 draws its glyph from a custom property (`content: var(--fa)`, set by the
+ * `fa-<name>` class), and custom properties inherit — so a value declared on the
+ * HOST is what an `<i>` gets when no `fa-<name>` class set one of its own, and is
+ * overridden by the class whenever one did. No branch in the template, and no
+ * need to know which names Font Awesome has a logo for.
+ */
+:host {
+  // A generic building, for a company Font Awesome has never heard of.
+  --fa: '\f1ad';
+}
+
 i {
-    font-family: Font Awesome 7 Brands;
-    font-size: 18px;
-    font-weight: 400;
-    line-height: 21px;
-    letter-spacing: 0em;
-    text-align: left;
-    color: var(--gauzy-text-color-1);
-    padding: 0.75rem;
+  // The brands file first, the free faces behind it: a real logo is rendered
+  // from the brands file, and the fallback above — which the brands file does
+  // not contain — falls through to the free face that does.
+  // ...and a generic behind both, which is the last resort every font stack owes
+  // the browser: neither FA face is a web-safe name, and if a build ships without
+  // them the glyph falls back to a face that exists rather than to whatever the
+  // browser happens to default to.
+  font-family: 'Font Awesome 7 Brands', 'Font Awesome 7 Free', sans-serif;
+  // ...which is the solid face, where that glyph lives. Harmless to the brands
+  // file, which ships one weight (400) and is matched whatever is asked of it,
+  // and FA sets `font-synthesis: none`, so nothing is emboldened to fit.
+  font-weight: 900;
+  // Sized and spaced by the row it sits in rather than by a fixed 18px/21px.
+  font-size: 1em;
+  line-height: inherit;
+  color: var(--gauzy-text-color-1);
+  // Was 0.75rem on all four sides — the better part of a centimetre around a
+  // one-em glyph, and for every row without a brand logo it was all there was.
+  // The gap to the company name is the only spacing an icon column needs.
+  padding: 0;
+  margin-inline-end: 0.375rem;
 }

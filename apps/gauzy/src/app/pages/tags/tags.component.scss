@@ -1,5 +1,6 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-table' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 /*
  * Every `var(--gauzy-…)` below carries a fallback. `material-light` and
@@ -12,26 +13,41 @@
  */
 
 :host .search {
-  margin: 20px 0 0 0;
+  // 20px of air under a 17px heading was the widest gap on the page, in the
+  // narrowest column on it.
+  margin: 0.5rem 0 0;
   align-items: center;
   display: flex;
   background-color: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
-  border-radius: 8px;
-  height: 32px;
-  padding: 0 8px;
+  // The radius scale (themes.scss) has one step for things that read as a
+  // CONTROL — buttons, selects, tags, badges — and this field, the chips below
+  // it and the buttons in the page header are all of them.
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  height: 1.75rem;
+  padding: 0 0.5rem;
 
   ::ng-deep {
     i.control-icon::before {
-      font-size: 13px;
+      font-size: 12px;
       margin: 0;
     }
 
     input {
       width: 100%;
-      height: 32px;
+      height: 1.75rem;
       background-color: transparent;
       box-shadow: unset;
       margin: 0 2px;
+      // `text-inputs-overrides` puts a `min-height: $default-height` (~2.375rem)
+      // floor on every bare `input` in the app, so this field was drawn some
+      // 10px taller than the pill around it — invisible only because the field is
+      // transparent and borderless, but the click target and the caret were both
+      // outside the box. The floor is a floor for FORM fields; this is a filter
+      // affordance in a rail, so it opts out and takes the pill's height.
+      min-height: 0;
+      // One step under the app's control text size: the rail is a filter, and
+      // nothing in it should read larger than the table it filters.
+      font-size: 0.75rem;
     }
   }
 }
@@ -50,15 +66,47 @@
  * its own `:hover`.
  */
 .filter-item {
-  padding: 10px 15px;
+  // A chip is a control, so it takes the control step of the radius scale
+  // (themes.scss: 0.375rem for buttons, selects, tags, badges, menu rows)
+  // rather than the 20px stadium it was drawn at. That scale exists because a
+  // near-full pill on a ~32px box is the one shape that never matches anything
+  // around it: the search field above these chips, the "+ Add" button in the
+  // header and the colour badges in the table are now all the same corner.
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
   box-shadow: var(--gauzy-shadow, 0 1px 1px 0 rgba(0, 0, 0, 0.15));
   background: var(--gauzy-card-3, rgba(126, 126, 143, 0.05));
-  border-radius: 20px;
-  height: 36px;
   // `nb-list-item` draws a `list-item-divider` along its bottom edge — right for
-  // a stacked list, wrong for pills in a wrapping row, where it left a hairline
-  // hanging under each chip.
+  // a stacked list, wrong for chips in a wrapping row, where it left a hairline
+  // hanging under each one.
   border: none;
+
+  // A tag type is free text, and "Organization Department" is one of the types
+  // Gauzy ships: a chip that can neither wrap nor shrink is simply wider than
+  // the rail it sits in, so its label was cut off by the card edge and the list
+  // grew a horizontal scrollbar. Capped at the rail's width, a long label wraps
+  // INSIDE the chip, which a wrapping row has room for — the column has 230px
+  // across and the whole page down.
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  // 1.75rem is the app compact control height (`gauzy-header-control-height`,
+  // and the size the pager draws its own buttons at); `min-height` rather than
+  // `height` because a two-line label has to be allowed past it.
+  min-height: 1.75rem;
+  padding: 0.25rem 0.5rem;
+  // Two steps down from the 14px it inherited. These are filter controls, not
+  // body copy: at 12px the rail is set at the same size as the table headings
+  // beside it instead of out-typing the rows it filters, and it fits more chips
+  // per row, which is what keeps a twelve-type rail from needing a scroll.
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  // Last resort for a single unbroken word, which has no space to wrap at.
+  overflow-wrap: anywhere;
+  transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 // Underlining the label was the only hover feedback a chip had, which reads as a
@@ -67,6 +115,15 @@
 .filter-item:hover {
   cursor: pointer;
   background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+}
+
+// These chips are the page's only filter control and they are plain
+// `nb-list-item`s, so nothing draws a focus ring for them by default. The
+// template makes them reachable (`role` / `tabindex` / Enter / Space); this is
+// what makes the reached one visible.
+.filter-item:focus-visible {
+  outline: 2px solid var(--color-primary-500, #6e49e8);
+  outline-offset: 1px;
 }
 
 // Which type is currently filtering the table. Selecting one used to change the
@@ -78,6 +135,12 @@
   background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
   color: nb-theme(text-basic-color);
   font-weight: 600;
+  // The tint alone is one step off hover, and the resting chip already carries a
+  // neutral hairline of its own (`gauzy-shadow`), so a second neutral ring would
+  // have changed nothing: which of a dozen chips is filtering the table has to be
+  // findable from across the page. The accent ring is the one thing in the rail
+  // that is not grey, and it marks the chip without filling it in as a block.
+  box-shadow: inset 0 0 0 1px var(--color-primary-500, #6e49e8);
 }
 
 :host nb-card.filter {
@@ -87,14 +150,25 @@
   @include nb-rtl(padding-left, 4px);
   .list {
     max-height: calc(100vh - 15.8rem);
-    overflow: auto;
+    // Vertical only. The chips are capped at the rail's width now, so there is
+    // nothing left to scroll across — and a horizontal bar under a wrapping list
+    // was never the answer to a label that did not fit.
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
+  // "Tags type" is a section label over a rail of filters, not a page title: at
+  // 0.75rem/600 it is set exactly like the column headings in the table beside
+  // it, which is the same job. It was the largest type on this half of the page
+  // and sat over the smallest controls on it.
   nb-card-header {
-    font-size: 14px;
+    font-size: 0.75rem;
     font-weight: 600;
-    line-height: 17px;
+    line-height: 1rem;
     letter-spacing: 0em;
+    // The default card-header padding (0.875rem 1rem) is sized for a card title
+    // with nothing under it; this one carries the search field too.
+    padding: 0.75rem 0.75rem 0.625rem;
     @include nb-ltr(padding-left, 12px);
     @include nb-rtl(padding-right, 12px);
   }
@@ -103,10 +177,13 @@
 :host nb-list {
   flex-direction: row;
   flex-wrap: wrap;
+  // Each chip keeps its own height: a two-line one would otherwise stretch the
+  // single-line chips beside it into tall half-empty boxes.
+  align-items: flex-start;
   @include nb-ltr(padding-left, 10px);
   @include nb-rtl(padding-right, 10px);
-  padding-bottom: 21px;
-  gap: 10px;
+  padding-bottom: 1rem;
+  gap: 0.5rem;
 }
 
 .gauzy-action {
@@ -115,7 +192,44 @@
   align-items: center;
 }
 
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the pager's `<nav><ul><li>` and the toolbar scale — the same block Job
+// Employees and the rest of the list pages carry.
+//
+// The action row defaults to the whole card header, which covers this page's
+// `.gauzy-action` toolbar — it lays its header out itself, beside the tag-type
+// rail, and never adopted the shared container class.
+//
+// ABOVE the block below rather than beneath it: that block reopens `:host` to
+// widen two of the density tokens this one sets there, and a custom property is
+// won by whichever declaration the cascade reads last.
+@include ga-hub.list-page();
+
 :host {
+  // ── Row breathing room ─────────────────────────────────────────────────────
+  //
+  // `density-tokens()` sizes a row for a line of TEXT: 1rem of line box plus
+  // 0.1875rem above and below, i.e. ~22px. That is the right box when the cell's
+  // tallest thing is its text, and it is what the tables that carry a wrapping
+  // note or a two-line address want.
+  //
+  // This table is four short single-line values and a chip, so nothing ever
+  // pushes a row past the minimum and every row came out at that floor — a block
+  // of ten rows with no air between them, where the eye has nothing to track
+  // along. The cells take the app-wide default instead (0.375rem, the same value
+  // `thumbnail-row-padding()` hands the picture tables), which puts the rows back
+  // at ~28px.
+  //
+  // Scoped to this page rather than pushed into `density-tokens()`: the shared
+  // value is what the rest of the list pages are drawn at, and widening it there
+  // would reflow two dozen tables that nobody has asked about.
+  --gauzy-table-cell-padding-y: 0.375rem;
+  // And the heading row with them, or the header ends up the shortest row in a
+  // table it is supposed to head (0.8125rem of label in a 23px box against 28px
+  // rows).
+  --gauzy-table-header-padding-y: 0.4375rem;
+
   nb-card.tags-component,
   nb-card.tags-component nb-card-body {
     background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
@@ -149,4 +263,83 @@
   .row {
     margin: 0 -10px;
   }
+}
+
+// ── Column treatments ────────────────────────────────────────────────────────
+//
+// `classHeader` and `classContent` are angular2-smart-table's own per-column
+// class hooks: the first lands on the `th`, the second on the div a cell renders
+// its value into. (They are NOT the `class` key several tables in this repo
+// pass: `class` is declared on the library's `IColumn`, so it type-checks, but
+// its `Column` class never reads it and it reaches no element — which is why the
+// Name column's `text-center` never did anything.) Both land inside the
+// library's own template, so these rules have to cross that boundary.
+
+// A count belongs on its units digit: left-aligned, "3990" and "1890000" start
+// in the same place and say nothing about which is larger. `tabular-nums` fixes
+// the digit advance too — Inter's default figures are proportional, so a column
+// of them wanders by a pixel or two per row.
+:host ::ng-deep angular2-smart-table table td .ga-numeric-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+// …and the heading over those numbers, on the same edge.
+//
+// `a.sort` is laid out `row-reverse` (that is how the sort caret ends up BEFORE
+// the label — see `_overrides.scss`), so the END of its main axis is the LEFT
+// edge: `flex-start` is what pins it right. `text-align` does nothing at all to
+// a flex box, which is why this names the flex property instead.
+//
+// SPECIFICITY: the global rule is `angular2-smart-table table
+// tr.angular2-smart-titles th a.sort` — (0,2,4). The host attribute that
+// `::ng-deep` leaves in front, plus `.ga-numeric-cell`, take this to (0,3,4).
+:host ::ng-deep angular2-smart-table table th.ga-numeric-cell {
+  a.sort {
+    justify-content: flex-start;
+  }
+
+  // The same column with sorting turned off renders a plain span instead.
+  .angular2-smart-sort {
+    display: block;
+    text-align: right;
+  }
+}
+
+// RTL: the heading has to keep following the digits.
+//
+// The cells align on the units digit, and a number's units digit is its
+// rightmost one in every script — so `text-align: right` above is deliberately
+// PHYSICAL and the column stays right-aligned under RTL. The plain-span heading
+// is physical for the same reason and needs nothing here.
+//
+// `a.sort` is the one that drifts, because `justify-content` is resolved against
+// the flex container's own direction rather than against the page: in RTL the
+// `row-reverse` main axis runs left-to-right, so the `flex-start` above swings
+// the label to the LEFT while its column stays right. `flex-end` is the same
+// physical edge under RTL that `flex-start` is under LTR.
+//
+// `:host-context()` and not `nb-rtl()`: that mixin expands to `[dir=rtl] &`,
+// which here would ask for a `:host` nested inside `[dir=rtl]` and match nothing
+// — the same trap documented over `.ga-has-filter-toggle` in
+// `_gauzy-table-filters.scss`.
+:host-context([dir='rtl']) ::ng-deep angular2-smart-table table th.ga-numeric-cell a.sort {
+  justify-content: flex-end;
+}
+
+// The tag type is the row's SECONDARY fact — the coloured name chip beside it is
+// the primary one, and the description is what the row is actually read for. In
+// the table's muted text colour (the one its own headings use) the three stop
+// competing at equal weight, and the em dash a tag with no type falls back to
+// reads as "deliberately empty" rather than as content.
+:host ::ng-deep angular2-smart-table table td .ga-secondary-cell {
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
+}
+
+// The pager is a flex child of a flex-column card body, so it must not be
+// stretched by the table beside it — `.table-scroll-container` above takes
+// `flex-grow: 10`, which would otherwise leave the pager fighting for the
+// remainder.
+:host .pagination-container {
+  flex: 0 0 auto;
 }

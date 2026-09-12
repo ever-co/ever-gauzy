@@ -1,9 +1,15 @@
 <div>
+	<!--
+		The tag's own colour is handed to the stylesheet as a TOKEN rather than as a
+		finished `background` / `color` pair, because the chip now derives three
+		values from it (a wash, an edge and a label) and an inline style would win
+		over every one of them. `background()` normalises whatever the record holds
+		into a valid hex, so the token is always a colour the stylesheet can mix.
+	-->
 	<nb-badge
 		class="color"
 		position="relative"
-		[style.background]="background(rowData.color)"
-		[style.color]="backgroundContrast(rowData.color)"
+		[style.--tag-color]="background(rowData.color)"
 		[text]="rowData.name"
 	></nb-badge>
 </div>

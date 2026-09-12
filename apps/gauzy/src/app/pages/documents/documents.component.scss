@@ -33,7 +33,18 @@
   > div:last-child {
     flex: 0 0 auto;
     color: var(--gauzy-text-color-2, var(--text-hint-color));
-    font-size: nb-theme(text-caption-font-size);
+    // The row is 0.8125rem (`card-list-page()` sets that on `.custom-table`),
+    // and this is the row's secondary value, so it wants to sit a step under the
+    // file name rather than level with it. `text-caption-font-size` is a fixed
+    // 0.75rem that does not move with the page's density tokens; the table token
+    // does, and lands at 0.6875rem here — a visible step down that stays one if
+    // the density scale is ever retuned.
+    //
+    // The fallback has to stay BELOW the row's 0.8125rem: set to that same
+    // 0.8125rem it would render the timestamp at exactly the file name's size
+    // the moment the token went missing, which is the one outcome this rule
+    // exists to prevent.
+    font-size: var(--gauzy-table-font-size, 0.75rem);
   }
 
   // `min-width: 0` as well as on the wrapper: a flex item's default

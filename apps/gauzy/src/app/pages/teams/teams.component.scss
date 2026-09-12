@@ -1,1 +1,69 @@
 @forward '@shared/_pg-card';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the status pills, the pager's `<nav><ul><li>` and the toolbar scale — the same
+// block Job Employees, Payments, Invoices, Pipelines, Tasks and Employees carry,
+// so this table reads as the same surface as the rest of the app rather than as
+// one still drawn a size larger than its neighbours.
+@include ga-hub.list-page();
+
+// ── Row breathing room ───────────────────────────────────────────────────────
+//
+// `density-tokens()` sizes a row for a line of TEXT: 1rem of line box plus
+// 0.1875rem above and below. Text is the right thing to size that box around
+// because a glyph only ever fills about two thirds of its line box, so the row
+// still reads as padded while sitting at the floor.
+//
+// Half of this table's columns are people — Managers and Members, the two
+// widest — and a person renders as an AVATAR, which fills its line box edge to
+// edge: 1rem of disc in a 1rem box. At the shared floor those discs came within
+// 3px of the rule above and the rule below them, in ten consecutive rows, which
+// is what made a page of people read as one solid block with no rhythm for the
+// eye to track along.
+//
+// 0.4375rem instead, which is the same ~30px row the rest of the section lands
+// on once its text cells are padded (Tags runs 0.375rem around a 1rem line box)
+// — the extra 1px a side here is the avatar being taller than the text it sits
+// beside, not this page choosing a different scale.
+//
+// The gutter comes up to the app-wide 0.625rem with it: at 0.4375rem the Name
+// column's first character sat against the surface's own ring, and the Tags
+// column — the one the header's filter funnel hangs over — had less clear space
+// than the chips inside it.
+//
+// Scoped to this page rather than pushed into `density-tokens()`: the shared
+// values are what two dozen other tables are drawn at, and the avatar columns
+// are what justifies the step.
+:host {
+  --gauzy-table-cell-padding-y: 0.4375rem;
+  --gauzy-table-cell-padding-x: 0.625rem;
+  // The heading row with them, or the header ends up shorter than the rows it
+  // heads.
+  --gauzy-table-header-padding-y: 0.4375rem;
+  --gauzy-table-header-padding-x: 0.625rem;
+}
+
+// ── The Tags cell ────────────────────────────────────────────────────────────
+//
+// `ga-only-tags` is built for a cell that renders a VALUE with its chips
+// underneath, so it pushes the chip row down by `--gauzy-table-chip-block-gap`
+// (0.5rem on a list page) to keep the chips from riding up into the text.
+//
+// This column has no text above its chips — it is chips and nothing else — so
+// that gap had nothing to separate: it dropped the chip off the row's centre
+// line and made the one row carrying a tag ~8px taller than the nine that do
+// not, which reads as a hitch in the row rhythm rather than as a tagged row.
+//
+// SPECIFICITY: the renderer's own `margin-top` is `!important` (it is resolving
+// a tug-of-war with Bootstrap's `.mt-2` utility in the template, which is
+// `!important` too), so the only way past it is a more specific `!important` —
+// `.tags[_ngcontent]` is (0,2,0) — a class and an attribute — and the block
+// below is (0,2,4): `::ng-deep` leaves no content attribute behind it, so what
+// counts is the host attribute and `.tags` over the four element names between
+// them.
+:host ::ng-deep angular2-smart-table table td ga-only-tags .tags {
+  margin-top: 0 !important;
+  align-items: center;
+}

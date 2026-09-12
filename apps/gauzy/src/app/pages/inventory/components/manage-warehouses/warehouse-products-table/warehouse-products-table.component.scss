@@ -1,5 +1,6 @@
 @use "gauzy/gauzy-overrides" as *;
 @use "gauzy/gauzy-table" as *;
+@use "gauzy/_gauzy-table-hub" as ga-hub;
 
 :host {
 	@include input-appearance(2rem, var(--gauzy-sidebar-background-3));
@@ -27,4 +28,28 @@
 		display: flex;
 		align-items: center;
 	}
+}
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The warehouse's own product table is the same surface as every other list
+// page, so it takes the same density tokens, table surface, row hover/selection,
+// pager `<nav><ul><li>` and toolbar scale.
+//
+// The action row is named explicitly rather than left at the default: this
+// template has no `nb-card-header` at all — it IS a card body — and puts its
+// toolbar in a bare `<div class="d-flex justify-content-end">`. The button
+// component itself is the one stable handle, and every token the row needs is a
+// custom property, so they inherit into its own template from there.
+@include ga-hub.list-page('::ng-deep ngx-gauzy-button-action');
+
+// The pager sits beside a table that takes `flex-grow: 10` above, so it has to
+// opt out of the growth rather than fight it for the remainder.
+:host .pagination-container {
+	flex: 0 0 auto;
+}
+
+// The Image column is `ImageRowComponent`, a 74x60 photo that keeps its size;
+// only the cell padding around it goes back to the pre-density default.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+	@include ga-hub.thumbnail-row-padding();
 }

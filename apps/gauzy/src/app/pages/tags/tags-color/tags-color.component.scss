@@ -2,35 +2,91 @@
  * The tag-name cell of the Tags table: an `nb-badge` painted with the tag's own
  * colour.
  *
- * `nb-badge` sets `position: absolute` on its own host, so it contributes no
- * height at all — the wrapper below has to state one, and the chip's own numbers
- * have to add up to it or the chip spills out of the box that is supposed to
- * hold it. They did not: 12.5px of padding around a 17px line is a 42px chip in
- * a 32px frame, and the 19px margins above and below were what kept the overflow
- * from colliding with the rows either side. That cost every row ~70px, in a
- * table the density pass had just brought down to ~34px.
+ * The chip is sized by its LABEL, not by the column. It used to be
+ * `width: 100%`, which drew every tag as a full-bleed colour bar of identical
+ * length — ten saturated blocks stacked down the left edge of the table, all the
+ * same size whether the label was "VIP" or "dependencies". Sized to its text it
+ * reads as what it is (a tag), the colour returns to being an accent rather than
+ * the loudest thing on the page, and the names line up on their left edge under
+ * the "Name" heading instead of floating in the middle of the column.
  *
- * Both boxes now come from the shared in-cell badge tokens and are the same
- * height, so the chip fills its frame instead of bursting it and this column
- * costs a row no more than any other chip in the app. The tokens live in
- * `$gauzy-density` (themes.scss), which is merged into all eight themes; the
- * fallbacks are their current values, for the two material themes that register
- * against Nebular's own themes rather than the gauzy default.
+ * `nb-badge` sets `position: absolute` on its own host (badge.component.scss) —
+ * it is built to be pinned to a corner of something. That is what forced the
+ * wrapper below to state a height for a chip that contributed none, and an
+ * absolutely-positioned box cannot take part in the wrapper's flex layout. One
+ * `position: relative` puts it back in flow, so the wrapper aligns it like any
+ * other child and the two boxes can no longer disagree about their height.
+ *
+ * Both boxes come from the shared in-cell badge tokens and are the same height,
+ * so this column costs a row no more than any other chip in the app. The tokens
+ * live in `$gauzy-density` (themes.scss), which is merged into all eight themes;
+ * the fallbacks are their current values, for the two material themes that
+ * register against Nebular's own themes rather than the gauzy default.
+ *
+ * COLOUR: the chip is a WASH of the tag's colour, not a block of it. The tag
+ * palette is user data and most of it is fully saturated — pure red, pure yellow,
+ * pure green — so ten flat chips down the left edge were the highest-chroma thing
+ * on a page whose every other surface is a near-neutral grey, and the first
+ * column out-shouted the description the row is actually read for. At 18% the
+ * hue still names the tag from across the table while the row reads as a row.
+ *
+ * All three values below are mixed from one token, `--tag-color`, which the
+ * template sets from the record (see the note there). Mixing with `transparent`
+ * in srgb is premultiplied, so the wash is the tag's own hue at 18% alpha — NOT
+ * the hue darkened toward black, which is what a naive `rgba()` over an unknown
+ * surface would have given on the light themes.
  */
 .color {
-  width: 100%;
+  // Back into normal flow — see the note above.
+  position: relative;
+  // A flex item, so this computes to `block`: a block container is what
+  // `text-overflow` needs, which an `inline-flex` chip would not give it.
+  display: inline-block;
+  // Never wider than its cell; a long name is truncated with an ellipsis
+  // instead of forcing the column open. `min-width` because a flex item's `auto` minimum is its
+  // min-content width — with `nowrap` that is the whole label, i.e. the cap
+  // above would never be reached.
+  max-width: 100%;
+  min-width: 0;
   // Exactly one line box, matching the wrapper, with the line height doing the
   // vertical centering.
   height: var(--gauzy-table-badge-height, 1.25rem);
   padding: 0 var(--gauzy-table-chip-padding-x, 0.375rem);
-  border-radius: 4px;
+  // The control step of the radius scale (themes.scss) — the step tags, badges
+  // and buttons share, including the filter chips in the rail beside this table.
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  // An 18% wash of the tag's colour. The surface under it is the row, so the chip
+  // tints whatever it lands on and needs no per-theme value of its own.
+  background: color-mix(in srgb, var(--tag-color, transparent) 18%, transparent);
+  // The edge is what keeps a washed chip a CHIP: at 18% a three-letter label like
+  // "VIP" is a smudge with no shape to it, and two chips in adjacent rows have no
+  // boundary between them. `inset` rather than a `border` so the ring costs the
+  // box no width — the chip is sized to a fixed line box below.
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tag-color, transparent) 40%, transparent);
   // The tag name is this column's primary value, so it stays at the table's own
   // cell size rather than dropping to the smaller secondary-chip step.
   font-size: var(--gauzy-table-font-size, 0.8125rem);
   font-weight: 600;
   line-height: var(--gauzy-table-badge-height, 1.25rem);
   letter-spacing: 0em;
-  text-align: center;
+  /*
+   * The LABEL keeps the tag's hue, but pulled toward the theme's own text
+   * colour — the one lever that flips with the theme: dark text darkens the label
+   * on the light surfaces, light text lightens it on the dark ones, so a single
+   * declaration covers all eight themes with no `:host-context` branch. (The
+   * dashboard switcher's default-star is mixed the same way, for the same
+   * reason.)
+   *
+   * The white/black pick this replaces cannot survive the wash: it was computed
+   * against the FLAT tag colour, and a flat black chip and an 18% black wash want
+   * OPPOSITE labels — white text on the wash is unreadable on the light themes.
+   *
+   * 45% is sized for the pathological tags, the ones whose colour IS the surface
+   * colour: a black tag on a dark theme and a white tag on a light one both land
+   * near 4.7:1, and every tag that is actually a colour sits far above it (a blue
+   * tag on a light theme is ~11:1). 55% takes yellow-on-light down to 3.5:1.
+   */
+  color: color-mix(in srgb, var(--tag-color, currentColor) 45%, var(--text-basic-color));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -42,7 +98,9 @@ div {
   // Was `height: 100%` immediately followed by `height: 32px` — the first never
   // applied. One height now, and it is the height the chip above is drawn at.
   height: var(--gauzy-table-badge-height, 1.25rem);
-  justify-content: center;
+  // Under the "Name" heading, which is left-aligned like every other heading in
+  // the table. Centring only ever looked deliberate while the chip was as wide
+  // as the column and there was nothing left to centre.
+  justify-content: flex-start;
   align-items: center;
-  position: relative;
 }
