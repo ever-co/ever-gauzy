@@ -285,6 +285,15 @@
     // were inheriting `white-space: nowrap` from.
     nb-badge.color {
       white-space: nowrap;
+      // ...but a label can be longer than the two columns this cell is given,
+      // and one that may not wrap would then carry the chip straight out
+      // through the side of the table. Ellipsis at the cell's edge instead: the
+      // chips are flex items, so `max-width` also lifts the automatic minimum
+      // size that would otherwise hold a flex item open at its content width.
+      // `max-width`, not `width` — a tag that fits is still sized by its text.
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }

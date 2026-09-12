@@ -339,17 +339,30 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 
 			this.tagTypes = items;
 
-			this.filterOptions.push(
+			// Assigned whole rather than pushed onto a list `getTags()` has emptied.
+			// The rail is a RADIOGROUP whose tab stop is the checked option, so an
+			// interval where it holds only "All" while `selectedFilterValue` still
+			// names a type is one where the checked option does not exist: the
+			// focused radio is re-rendered away under a keyboard user mid-request,
+			// and — before `filterTabStopIndex` — nothing was left to Tab back into.
+			// Building the new list here and swapping it in one statement means the
+			// rail never renders a state the selection does not match.
+			this.filterOptions = [
+				{ value: '', displayName: 'All' },
 				...this.tagTypes.map((tagType) => {
 					return {
 						value: tagType.id,
 						displayName: tagType.type
 					};
 				})
-			);
+			];
 		} catch (error) {
 			console.error('Error while retrieving tag types', error);
 			this.toastrService.danger('TAGS_PAGE.TAGS_FETCH_FAILED', 'Error fetching tag types');
+			// A failed fetch may be a failed ORGANIZATION SWITCH, and the types still
+			// on screen would then be the previous organization's. "All" alone is the
+			// honest rail, and the reconcile below moves the selection onto it.
+			this.filterOptions = [{ value: '', displayName: 'All' }];
 		} finally {
 			this.reconcileSelectedFilter();
 			this.loading = false;
@@ -359,10 +372,10 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	/**
 	 * Drops a filter selection that no longer exists.
 	 *
-	 * `getTags()` resets `filterOptions` to just "All" and this method refills it from
-	 * the current organization's tag types, so a chip that was selected a moment ago can
-	 * simply be gone — switching organization is the usual way. Left alone, the rail then
-	 * highlights nothing at all, not even "All".
+	 * `getTagTypes()` rebuilds `filterOptions` from the current organization's tag
+	 * types, so a chip that was selected a moment ago can simply be gone — switching
+	 * organization is the usual way. Left alone, the rail then highlights nothing at
+	 * all, not even "All".
 	 *
 	 * The table needs the same treatment. `getTags()` runs BEFORE this method and skips
 	 * reloading while `_isFiltered` is still set, so it will have kept the previous
@@ -405,7 +418,6 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 
 	async getTags() {
 		this.allTags = [];
-		this.filterOptions = [{ value: '', displayName: 'All' }];
 
 		try {
 			const { tenantId } = this.store.user;
@@ -455,14 +467,35 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	}
 
 	/**
+	 * Which option of the rail carries its single tab stop.
+	 *
+	 * A radiogroup owes the keyboard exactly one, and the CHECKED option is
+	 * normally it (see `onFilterKeydown`). When nothing is checked the group still
+	 * needs one, or it cannot be reached by Tab at all — the pattern's answer is
+	 * the first option, which is what the `-1` branch below returns.
+	 *
+	 * That is not a hypothetical here: `filterOptions` is rebuilt on every refresh
+	 * while `selectedFilterValue` still names the type the last list carried, and a
+	 * type that has genuinely gone (an organization switch, a failed fetch) leaves
+	 * the selection matching nothing until `reconcileSelectedFilter()` clears it.
+	 * Tying the tab stop to the selection alone made every radio `tabindex="-1"`
+	 * for those windows, with the focused one re-rendered away underneath whoever
+	 * was using it.
+	 */
+	get filterTabStopIndex(): number {
+		const checked = this.filterOptions.findIndex((option) => option.value === this.selectedFilterValue);
+		return checked === -1 ? 0 : checked;
+	}
+
+	/**
 	 * Arrow-key navigation for the tag-type rail.
 	 *
 	 * The rail is a RADIOGROUP, not a row of toggle buttons: the options are
 	 * mutually exclusive, so picking one clears the last. A radiogroup is one
 	 * tab stop with the arrows moving between (and selecting) the options —
-	 * which is also why the template gives only the checked option
-	 * `tabindex="0"`. Tab therefore enters the rail on the active filter and
-	 * leaves it again, instead of stepping through every tag type.
+	 * which is also why the template gives `tabindex="0"` to one option only
+	 * (`filterTabStopIndex`). Tab therefore enters the rail on the active filter
+	 * and leaves it again, instead of stepping through every tag type.
 	 *
 	 * Home/End go to the ends, as the pattern expects.
 	 *

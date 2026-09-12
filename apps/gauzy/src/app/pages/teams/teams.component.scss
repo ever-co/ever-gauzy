@@ -59,7 +59,10 @@
 // SPECIFICITY: the renderer's own `margin-top` is `!important` (it is resolving
 // a tug-of-war with Bootstrap's `.mt-2` utility in the template, which is
 // `!important` too), so the only way past it is a more specific `!important` —
-// `.tags[_ngcontent]` is (0,2,0), the block below is (0,2,5).
+// `.tags[_ngcontent]` is (0,2,0) — a class and an attribute — and the block
+// below is (0,2,4): `::ng-deep` leaves no content attribute behind it, so what
+// counts is the host attribute and `.tags` over the four element names between
+// them.
 :host ::ng-deep angular2-smart-table table td ga-only-tags .tags {
   margin-top: 0 !important;
   align-items: center;
