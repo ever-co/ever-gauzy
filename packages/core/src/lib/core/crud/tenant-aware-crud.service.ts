@@ -28,15 +28,6 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		super(typeOrmRepository, mikroOrmRepository);
 	}
 
-	/**
-	 * Builds the request-context key holding the bypass depth for this service.
-	 *
-	 * The key is derived from the entity this service manages, so opening a bypass in one
-	 * service never disables the employee filter of another service running in the same request.
-	 *
-	 * Entity metadata is only available once the data source is initialized, so the resolved key
-	 * is memoized and the class-name fallback is not, to avoid pinning a key built too early.
-	 */
 	private getSkipEmployeeFilterKey(): string {
 		if (this.skipEmployeeFilterKey) {
 			return this.skipEmployeeFilterKey;
@@ -44,6 +35,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 
 		const entityName = this.typeOrmRepository.metadata?.name;
 
+		// Not memoized: entity metadata is only available once the data source is initialized.
 		if (!entityName) {
 			return `${TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY_PREFIX}:${this.constructor.name}`;
 		}
@@ -79,9 +71,6 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		}
 	}
 
-	/**
-	 * Whether the automatic employee filter is currently bypassed for this service.
-	 */
 	private getSkipEmployeeFilter(): boolean {
 		return this.getSkipEmployeeFilterDepth() > 0;
 	}
@@ -120,11 +109,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * This is useful when you need to implement custom access control logic.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions between concurrent requests.
 	 *
-	 * The bypass applies to this service only, and is reference counted, so nested or concurrent
-	 * blocks restore correctly whatever their completion order.
-	 *
-	 * Keep the callback down to a single repository read. Authorization must be checked before the
-	 * mutation, and the mutation itself must stay outside the bypass.
+	 * The bypass applies to this service only, and is reference counted.
 	 *
 	 * @param callback - The async function to execute without employee filtering
 	 * @returns The result of the callback
