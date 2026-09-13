@@ -1,4 +1,5 @@
 @use '@shared/_pg-card' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 nb-radio-group {
   display: flex;
@@ -46,3 +47,15 @@ nb-radio-group {
   margin-right: 16px;
   border-radius: nb-theme(border-radius);
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The same block Invoices carries: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills, the pager and the
+// toolbar scale. The header holds `ngx-gauzy-button-action` plus this page's own
+// filter strip and archive toggle, and the default `$actions` selector takes all
+// of them together.
+//
+// The pager needed the `.pagination-container` wrapper the sibling list pages
+// already had — the template rendered a bare `<ngx-pagination>` into the card
+// body, so it was neither right-aligned nor compacted.
+@include ga-hub.list-page();
