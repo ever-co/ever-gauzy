@@ -1,5 +1,6 @@
 import '../entities/internal';
 
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { TenantAwareCrudService } from './tenant-aware-crud.service';
@@ -8,6 +9,10 @@ const EMPLOYEE_ID = '1c2ba0be-6f33-4e1c-9cd0-6ed99d21c3ee';
 const EMPLOYEE_FILTER = { employee: { id: EMPLOYEE_ID }, employeeId: EMPLOYEE_ID };
 
 const tick = () => new Promise((resolve) => setImmediate(resolve));
+
+/** Stands in for nestjs-cls, which stores values per async context rather than per process. */
+const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
+const inRequest = <R>(callback: () => Promise<R>): Promise<R> => requestStorage.run(new Map(), callback);
 
 abstract class TestCrudService extends TenantAwareCrudService<TenantBaseEntity> {
 	constructor() {
@@ -32,10 +37,9 @@ describe('TenantAwareCrudService.withoutEmployeeFilter', () => {
 	let serviceB: ServiceB;
 
 	beforeEach(() => {
-		const store = new Map<string, unknown>();
 		RequestContext['clsService'] = {
-			get: (key: string) => store.get(key),
-			set: (key: string, value: unknown) => store.set(key, value)
+			get: (key: string) => requestStorage.getStore()?.get(key),
+			set: (key: string, value: unknown) => requestStorage.getStore()?.set(key, value)
 		} as any;
 
 		serviceA = new ServiceA();
@@ -51,48 +55,75 @@ describe('TenantAwareCrudService.withoutEmployeeFilter', () => {
 	});
 
 	it('leaves other services filtered while a bypass is open', async () => {
-		await serviceA.bypass(async () => {
-			expect(serviceA.employeeConditions()).toEqual({});
-			expect(serviceB.employeeConditions()).toEqual(EMPLOYEE_FILTER);
-		});
+		await inRequest(async () => {
+			await serviceA.bypass(async () => {
+				expect(serviceA.employeeConditions()).toEqual({});
+				expect(serviceB.employeeConditions()).toEqual(EMPLOYEE_FILTER);
+			});
 
-		expect(serviceA.employeeConditions()).toEqual(EMPLOYEE_FILTER);
+			expect(serviceA.employeeConditions()).toEqual(EMPLOYEE_FILTER);
+		});
 	});
 
 	it('keeps the bypass open until the outermost block completes', async () => {
-		await serviceA.bypass(async () => {
-			await serviceA.bypass(async () => undefined);
-			expect(serviceA.employeeConditions()).toEqual({});
-		});
+		await inRequest(async () => {
+			await serviceA.bypass(async () => {
+				await serviceA.bypass(async () => undefined);
+				expect(serviceA.employeeConditions()).toEqual({});
+			});
 
-		expect(serviceA.employeeConditions()).toEqual(EMPLOYEE_FILTER);
+			expect(serviceA.employeeConditions()).toEqual(EMPLOYEE_FILTER);
+		});
 	});
 
 	it('keeps the bypass while a concurrent block on the same service is still running', async () => {
-		let conditionsInsideLongBlock: unknown;
+		await inRequest(async () => {
+			let conditionsInsideLongBlock: unknown;
+
+			await Promise.all([
+				serviceA.bypass(async () => {
+					await tick();
+				}),
+				serviceA.bypass(async () => {
+					await tick();
+					await tick();
+					conditionsInsideLongBlock = serviceA.employeeConditions();
+				})
+			]);
+
+			expect(conditionsInsideLongBlock).toEqual({});
+			expect(serviceA.employeeConditions()).toEqual(EMPLOYEE_FILTER);
+		});
+	});
+
+	it('does not leak the bypass into a concurrent request', async () => {
+		let conditionsInOtherRequest: unknown;
 
 		await Promise.all([
-			serviceA.bypass(async () => {
-				await tick();
+			inRequest(async () => {
+				await serviceA.bypass(async () => {
+					await tick();
+					await tick();
+				});
 			}),
-			serviceA.bypass(async () => {
+			inRequest(async () => {
 				await tick();
-				await tick();
-				conditionsInsideLongBlock = serviceA.employeeConditions();
+				conditionsInOtherRequest = serviceA.employeeConditions();
 			})
 		]);
 
-		expect(conditionsInsideLongBlock).toEqual({});
-		expect(serviceA.employeeConditions()).toEqual(EMPLOYEE_FILTER);
+		expect(conditionsInOtherRequest).toEqual(EMPLOYEE_FILTER);
 	});
 
 	it('restores the filter when the callback rejects', async () => {
-		await expect(
-			serviceA.bypass(async () => {
-				throw new Error('failed');
-			})
-		).rejects.toThrow('failed');
+		await inRequest(async () => {
+			await expect(
+				serviceA.bypass(async () => {
+					throw new Error('failed');
+				})
+			).rejects.toThrow('failed');
 
-		expect(serviceA.employeeConditions()).toEqual(EMPLOYEE_FILTER);
+			expect(serviceA.employeeConditions()).toEqual(EMPLOYEE_FILTER);
+		});
 	});
 });
