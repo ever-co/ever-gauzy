@@ -22,6 +22,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 {
 	private static readonly SKIP_EMPLOYEE_FILTER_KEY_PREFIX = 'skipEmployeeFilter';
 
+	private skipEmployeeFilterKey?: string;
+
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
 	}
@@ -31,10 +33,24 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 *
 	 * The key is derived from the entity this service manages, so opening a bypass in one
 	 * service never disables the employee filter of another service running in the same request.
+	 *
+	 * Entity metadata is only available once the data source is initialized, so the resolved key
+	 * is memoized and the class-name fallback is not, to avoid pinning a key built too early.
 	 */
 	private getSkipEmployeeFilterKey(): string {
-		const scope = this.typeOrmRepository?.metadata?.name ?? this.constructor.name;
-		return `${TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY_PREFIX}:${scope}`;
+		if (this.skipEmployeeFilterKey) {
+			return this.skipEmployeeFilterKey;
+		}
+
+		const entityName = this.typeOrmRepository.metadata?.name;
+
+		if (!entityName) {
+			return `${TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY_PREFIX}:${this.constructor.name}`;
+		}
+
+		this.skipEmployeeFilterKey = `${TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY_PREFIX}:${entityName}`;
+
+		return this.skipEmployeeFilterKey;
 	}
 
 	/**
