@@ -34,56 +34,96 @@ describe('ManagedEmployeeService.canManageEmployee without a team context', () =
 		jest.restoreAllMocks();
 	});
 
-	it('allows a manager whose managed team contains the target employee', async () => {
+	it('allows a manager whose managed team, in the given organization, contains the target employee', async () => {
 		teamEmployeeRepository.find.mockResolvedValue([{ organizationTeamId: TEAM_ID }]);
 		teamEmployeeRepository.existsBy.mockResolvedValue(true);
 
-		await expect(service.canManageEmployee(TARGET_ID)).resolves.toBe(true);
+		await expect(service.canManageEmployee(TARGET_ID, undefined, ORGANIZATION_ID)).resolves.toBe(true);
 
-		expect(teamEmployeeRepository.find).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ employeeId: ACTOR_ID, isManager: true, tenantId: TENANT_ID })
-			})
-		);
-		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledWith(
-			expect.objectContaining({
-				employeeId: TARGET_ID,
-				organizationTeamId: In([TEAM_ID]),
-				tenantId: TENANT_ID
-			})
-		);
+		// The full predicate is asserted on purpose: dropping isActive/isArchived or the organization
+		// anchor would silently widen the fallback, and objectContaining would not notice.
+		expect(teamEmployeeRepository.find).toHaveBeenCalledTimes(1);
+		expect(teamEmployeeRepository.find.mock.calls[0][0].where).toEqual({
+			employeeId: ACTOR_ID,
+			isManager: true,
+			isActive: true,
+			isArchived: false,
+			tenantId: TENANT_ID,
+			organizationTeam: { organizationId: ORGANIZATION_ID }
+		});
+		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledTimes(1);
+		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledWith({
+			employeeId: TARGET_ID,
+			organizationTeamId: In([TEAM_ID]),
+			isActive: true,
+			isArchived: false,
+			tenantId: TENANT_ID
+		});
 	});
 
 	it('denies when the target employee belongs to no team the caller manages', async () => {
 		teamEmployeeRepository.find.mockResolvedValue([{ organizationTeamId: OTHER_TEAM_ID }]);
 		teamEmployeeRepository.existsBy.mockResolvedValue(false);
 
-		await expect(service.canManageEmployee(TARGET_ID)).resolves.toBe(false);
+		await expect(service.canManageEmployee(TARGET_ID, undefined, ORGANIZATION_ID)).resolves.toBe(false);
 
 		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledWith(
 			expect.objectContaining({ organizationTeamId: In([OTHER_TEAM_ID]) })
 		);
 	});
 
-	it('restricts the managed teams to the organization when the caller provides one', async () => {
-		teamEmployeeRepository.find.mockResolvedValue([{ organizationTeamId: TEAM_ID }]);
-		teamEmployeeRepository.existsBy.mockResolvedValue(true);
-
-		await expect(service.canManageEmployee(TARGET_ID, undefined, ORGANIZATION_ID)).resolves.toBe(true);
-
-		expect(teamEmployeeRepository.find).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ organizationTeam: { organizationId: ORGANIZATION_ID } })
-			})
-		);
-	});
-
 	it('denies without a membership query when the caller manages no team', async () => {
 		teamEmployeeRepository.find.mockResolvedValue([]);
 
-		await expect(service.canManageEmployee(TARGET_ID)).resolves.toBe(false);
+		await expect(service.canManageEmployee(TARGET_ID, undefined, ORGANIZATION_ID)).resolves.toBe(false);
 
 		expect(teamEmployeeRepository.existsBy).not.toHaveBeenCalled();
+	});
+
+	it('denies without any query when no organization is supplied', async () => {
+		// Without an organization the fallback has no anchor: an undefined where key is dropped from
+		// the query, so the check would span every organization of the tenant. It must fail closed.
+		teamEmployeeRepository.find.mockResolvedValue([{ organizationTeamId: TEAM_ID }]);
+		teamEmployeeRepository.existsBy.mockResolvedValue(true);
+
+		await expect(service.canManageEmployee(TARGET_ID)).resolves.toBe(false);
+
+		expect(teamEmployeeRepository.find).not.toHaveBeenCalled();
+		expect(teamEmployeeRepository.existsBy).not.toHaveBeenCalled();
+	});
+
+	it('denies a missing target employee before querying', async () => {
+		await expect(service.canManageEmployee(undefined as any, undefined, ORGANIZATION_ID)).resolves.toBe(false);
+		await expect(service.canManageEmployee(undefined as any, TEAM_ID, ORGANIZATION_ID)).resolves.toBe(false);
+
+		expect(teamEmployeeRepository.find).not.toHaveBeenCalled();
+		expect(teamEmployeeRepository.existsBy).not.toHaveBeenCalled();
+	});
+
+	it('does not fall back to other teams when a team is supplied and the caller does not manage it', async () => {
+		// The caller manages TEAM_ID, where the target is a member, but the record belongs to OTHER_TEAM_ID.
+		teamEmployeeRepository.find.mockResolvedValue([{ organizationTeamId: TEAM_ID }]);
+		teamEmployeeRepository.existsBy.mockResolvedValue(false);
+
+		await expect(service.canManageEmployee(TARGET_ID, OTHER_TEAM_ID, ORGANIZATION_ID)).resolves.toBe(false);
+
+		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledTimes(1);
+		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledWith(
+			expect.objectContaining({ employeeId: ACTOR_ID, organizationTeamId: OTHER_TEAM_ID, isManager: true })
+		);
+		expect(teamEmployeeRepository.find).not.toHaveBeenCalled();
+	});
+
+	it('checks the supplied team only when the caller manages it', async () => {
+		teamEmployeeRepository.existsBy.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+
+		await expect(service.canManageEmployee(TARGET_ID, TEAM_ID, ORGANIZATION_ID)).resolves.toBe(true);
+
+		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledTimes(2);
+		expect(teamEmployeeRepository.existsBy).toHaveBeenLastCalledWith(
+			expect.objectContaining({ employeeId: TARGET_ID, organizationTeamId: TEAM_ID })
+		);
+		expect(teamEmployeeRepository.find).not.toHaveBeenCalled();
 	});
 
 	it('keeps the self-access and global permission short circuits', async () => {
@@ -95,5 +135,6 @@ describe('ManagedEmployeeService.canManageEmployee without a team context', () =
 		await expect(service.canManageEmployee(TARGET_ID)).resolves.toBe(true);
 
 		expect(teamEmployeeRepository.find).not.toHaveBeenCalled();
+		expect(teamEmployeeRepository.existsBy).not.toHaveBeenCalled();
 	});
 });

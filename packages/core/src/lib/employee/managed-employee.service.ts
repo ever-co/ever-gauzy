@@ -145,11 +145,12 @@ export class ManagedEmployeeService {
 	 * 1. Global permissions (CHANGE_SELECTED_EMPLOYEE)
 	 * 2. Self-access (currentEmployeeId === targetEmployeeId)
 	 * 3. Manager status in the specified team (if organizationTeamId provided)
-	 * 4. Otherwise, manager status in any team the target employee belongs to
+	 * 4. Otherwise, manager status in any team of the record's organization that the target
+	 *    employee belongs to. This fallback needs `organizationId` and denies without it.
 	 *
 	 * @param targetEmployeeId - The employee ID to check access for
 	 * @param organizationTeamId - Optional team ID to check manager status
-	 * @param organizationId - Optional organization the record belongs to, used to scope the fallback
+	 * @param organizationId - The organization the record belongs to; anchors the no-team fallback
 	 * @returns true if the current employee can manage the target employee
 	 */
 	async canManageEmployee(targetEmployeeId: ID, organizationTeamId?: ID, organizationId?: ID): Promise<boolean> {
@@ -161,8 +162,10 @@ export class ManagedEmployeeService {
 			return true;
 		}
 
-		// Case 2: No employeeId (user not logged in as employee)
-		if (!currentEmployeeId) {
+		// Case 2: No employee identity on either side (user not logged in as employee, or no target).
+		// Fail closed: an undefined target would be dropped from the membership queries below and
+		// match any member of the team.
+		if (!currentEmployeeId || !targetEmployeeId) {
 			return false;
 		}
 
@@ -205,8 +208,15 @@ export class ManagedEmployeeService {
 			return isTargetMemberOfTeam;
 		}
 
-		// Case 5: Daily plans and time logs carry a nullable organizationTeamId,
-		// so callers cannot always supply one.
+		// Case 5: Records such as daily plans carry a nullable organizationTeamId, so callers cannot
+		// always supply one. Fall back to "is there a team I manage that this employee belongs to",
+		// restricted to the record's organization. That organization is the only anchor this branch
+		// has: without it the check fails closed instead of spanning every organization of the tenant
+		// (an undefined where key is dropped from the query in this codebase).
+		if (!organizationId) {
+			return false;
+		}
+
 		return await this.canManageEmployeeInAnyTeam(targetEmployeeId, organizationId);
 	}
 
@@ -356,7 +366,9 @@ export class ManagedEmployeeService {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 		const tenantId = RequestContext.currentTenantId();
 
-		if (!currentEmployeeId || !tenantId) {
+		// Fail closed on a missing target as well: an undefined key is dropped from the membership
+		// query, which would otherwise match any member of a managed team.
+		if (!currentEmployeeId || !targetEmployeeId || !tenantId) {
 			return false;
 		}
 
