@@ -1,5 +1,6 @@
 import '../core/entities/internal';
 
+import { In } from 'typeorm';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { ManagedEmployeeService } from './managed-employee.service';
@@ -44,7 +45,11 @@ describe('ManagedEmployeeService.canManageEmployee without a team context', () =
 			})
 		);
 		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledWith(
-			expect.objectContaining({ employeeId: TARGET_ID, tenantId: TENANT_ID })
+			expect.objectContaining({
+				employeeId: TARGET_ID,
+				organizationTeamId: In([TEAM_ID]),
+				tenantId: TENANT_ID
+			})
 		);
 	});
 
@@ -53,6 +58,10 @@ describe('ManagedEmployeeService.canManageEmployee without a team context', () =
 		teamEmployeeRepository.existsBy.mockResolvedValue(false);
 
 		await expect(service.canManageEmployee(TARGET_ID)).resolves.toBe(false);
+
+		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledWith(
+			expect.objectContaining({ organizationTeamId: In([OTHER_TEAM_ID]) })
+		);
 	});
 
 	it('denies without a membership query when the caller manages no team', async () => {
