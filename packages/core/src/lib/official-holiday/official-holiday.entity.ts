@@ -1,70 +1,57 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDate, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
-import { Type } from 'class-transformer';
-import { Column, Entity, Index } from 'typeorm';
+import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 import { IOfficialHoliday } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOfficialHolidayRepository } from './repository/mikro-orm-official-holiday.repository';
 
 /**
- * Stores nationally/officially recognized holidays per country.
-  *
-   * These records are used in the Time-Off module to pre-populate
-    * the "Add Holidays" dialog with correct from/to dates when an admin
-     * selects a known holiday name.
-      *
-       * Issue: https://github.com/ever-co/ever-gauzy/issues/314
-        */
-        @Entity('official_holiday')
-        export class OfficialHoliday
-        	extends TenantOrganizationBaseEntity
-          	implements IOfficialHoliday {
+ * A publicly recognised holiday for a country, kept per organization.
+ *
+ * Issue #314 asks for an `OfficialHolidays` table so the "Add Holidays" dialog can offer a
+ * predefined list of national holidays and pre-fill the From/To dates once one is picked,
+ * filtered by the organization's country setting.
+ *
+ * Dates are stored as `date`, not as timestamps: a public holiday is a calendar day, and storing
+ * it with a time component makes it land on the wrong day for anybody in another timezone.
+ */
+@ColumnIndex('IDX_official_holiday_unique', ['tenantId', 'organizationId', 'countryCode', 'date', 'name'], {
+	unique: true
+})
+@MultiORMEntity('official_holiday', { mikroOrmRepository: () => MikroOrmOfficialHolidayRepository })
+export class OfficialHoliday extends TenantOrganizationBaseEntity implements IOfficialHoliday {
+	@ApiProperty({ type: () => String, description: 'Display name of the holiday, e.g. "Christmas Day"' })
+	@IsNotEmpty()
+	@IsString()
+	@Length(2, 200)
+	@ColumnIndex()
+	@MultiORMColumn()
+	name: string;
 
-            	// ─── Name ─────────────────────────────────────────────────────────────────
+	@ApiProperty({ type: () => String, description: 'ISO 3166-1 alpha-2 country code, e.g. "US", "DE"' })
+	@IsNotEmpty()
+	@IsString()
+	@Length(2, 2)
+	@ColumnIndex()
+	@MultiORMColumn({ length: 2 })
+	countryCode: string;
 
-              	@ApiProperty({ type: () => String, description: 'Display name of the holiday, e.g. "Christmas Day"' })
-                	@IsNotEmpty()
-                  	@IsString()
-                    	@Length(2, 200)
-                      	@Index()
-                        	@Column()
-                          	name: string;
+	@ApiProperty({ type: () => Date, description: 'The holiday date, or the first day of a multi-day holiday' })
+	@IsNotEmpty()
+	@IsDateString()
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'date' })
+	date: Date;
 
-                            	// ─── Country Code ─────────────────────────────────────────────────────────
+	@ApiPropertyOptional({ type: () => Date, description: 'Last day of a multi-day holiday' })
+	@IsOptional()
+	@IsDateString()
+	@MultiORMColumn({ type: 'date', nullable: true })
+	endDate?: Date;
 
-                              	@ApiProperty({ type: () => String, description: 'ISO 3166-1 alpha-2 country code (e.g. "US", "DE")' })
-                                	@IsNotEmpty()
-                                  	@IsString()
-                                    	@Length(2, 2)
-                                      	@Index()
-                                        	@Column({ length: 2 })
-                                          	countryCode: string;
-
-                                            	// ─── Date ─────────────────────────────────────────────────────────────────
-
-                                              	@ApiProperty({ type: () => Date, description: 'Holiday date or start date for multi-day holidays' })
-                                                	@IsNotEmpty()
-                                                  	@IsDate()
-				@Type(() => Date)
-                                                    	@Column()
-                                                      	date: Date;
-
-                                                        	// ─── End Date ─────────────────────────────────────────────────────────────
-
-                                                          	@ApiPropertyOptional({ type: () => Date, description: 'End date for multi-day holidays' })
-                                                            	@IsOptional()
-                                                              	@IsDate()
-				@Type(() => Date)
-                                                                	@Column({ nullable: true })
-                                                                  	endDate?: Date;
-
-                                                                    	// ─── Recurring ────────────────────────────────────────────────────────────
-
-                                                                      	@ApiPropertyOptional({
-                                                                        		type: () => Boolean,
-                                                                            		description: 'Whether this holiday recurs every year on the same date'
-                                                                                	})
-                                                                                  	@IsOptional()
-                                                                                    	@IsBoolean()
-                                                                                      	@Column({ default: true })
-                                                                                        	isRecurring?: boolean;
-                                                                                          }
+	@ApiPropertyOptional({ type: () => Boolean, description: 'Whether the holiday falls on the same date every year' })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: true })
+	isRecurring?: boolean;
+}

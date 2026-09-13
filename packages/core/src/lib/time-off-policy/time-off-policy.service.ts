@@ -38,6 +38,13 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.tenantId = tenantId;
 			policy.requiresApproval = entity.requiresApproval;
 			policy.paid = entity.paid;
+			policy.leaveType = entity.leaveType;
+			policy.maxDaysPerYear = entity.maxDaysPerYear;
+			policy.allowCarryForward = entity.allowCarryForward;
+			policy.maxCarryForwardDays = entity.maxCarryForwardDays;
+			policy.accrualRate = entity.accrualRate;
+			policy.accrualFrequency = entity.accrualFrequency;
+			policy.isDefault = entity.isDefault;
 
 			// Find employees
 			let employees;
@@ -76,26 +83,29 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 		try {
 			const tenantId = RequestContext.currentTenantId() || entity.tenantId;
 			const organizationId = entity.organizationId;
-			// The body is not DTO-validated: an empty organizationId would scope the delete / employee
-			// lookups below to nothing (null -> IS NULL) and then re-create the policy as a duplicate;
-			// previously it was silently dropped instead. Require it.
+			// The body is not DTO-validated: an empty organizationId would scope the employee lookup
+			// below to nothing (null -> IS NULL). Require it.
 			if (!organizationId) {
 				throw new HttpException('organizationId is required', HttpStatus.BAD_REQUEST);
 			}
 
-			// Delete the policy
-			await this.delete({
-				id,
-				tenantId,
-				organizationId
-			} as any);
+			// Edit the existing row rather than deleting it and inserting a replacement. The old
+			// implementation issued a real DELETE and then saved a NEW policy with a NEW id, which
+			// (a) detached every `time_off_request` that pointed at the policy — `policyId` is
+			// `ON DELETE SET NULL` — and (b) would now cascade-delete the policy's whole
+			// `time_off_balance` ledger. It also handed callers back an id they never asked for.
+			const policy = await this.findOneByWhereOptions({ id, tenantId, organizationId });
 
-			const policy = new TimeOffPolicy();
 			policy.name = entity.name;
-			policy.organizationId = organizationId;
-			policy.tenantId = tenantId;
 			policy.requiresApproval = entity.requiresApproval;
 			policy.paid = entity.paid;
+			policy.leaveType = entity.leaveType;
+			policy.maxDaysPerYear = entity.maxDaysPerYear;
+			policy.allowCarryForward = entity.allowCarryForward;
+			policy.maxCarryForwardDays = entity.maxCarryForwardDays;
+			policy.accrualRate = entity.accrualRate;
+			policy.accrualFrequency = entity.accrualFrequency;
+			policy.isDefault = entity.isDefault;
 
 			let employees;
 			switch (this.ormType) {
