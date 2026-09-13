@@ -8,43 +8,8 @@ import {
 } from '../decorators/sensitive-relations.decorator';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../context';
-
-/**
- * Returns the required permission for a given relation path by traversing the config tree.
- * Supports nested relations (e.g. 'organization.employees.user').
- *
- * @param config - The sensitive relations config object (nested structure)
- * @param relationPath - The relation path requested (dot notation)
- * @returns The required permission as a PermissionsEnum, or null if none is required
- */
-function getRequiredPermissionForRelation(
-	config: SensitiveRelationConfig,
-	relationPath: string
-): PermissionsEnum | null {
-	const pathParts = relationPath.split('.');
-	let current: SensitiveRelationConfig | PermissionsEnum | null = config;
-
-	for (const part of pathParts) {
-		if (!current || typeof current !== 'object') return null;
-		const value = current[part];
-
-		if (typeof value === 'object' && value !== null) {
-			if ('_self' in value && value._self) {
-				return value._self as PermissionsEnum;
-			}
-			current = value as SensitiveRelationConfig;
-		} else if (isValidPermission(value)) {
-			return value as PermissionsEnum;
-		} else {
-			return null;
-		}
-	}
-	return null;
-}
-
-function isValidPermission(value: any): value is PermissionsEnum {
-	return typeof value === 'string' && Object.values(PermissionsEnum).includes(value as PermissionsEnum);
-}
+import { normalizeRelationsToPaths } from '../utils';
+import { getRequiredPermissionForRelation } from '../util/sensitive-relations.helper';
 
 /**
  * Interceptor to protect sensitive entity relations based on user permissions.
@@ -90,23 +55,20 @@ export class SensitiveRelationsInterceptor implements NestInterceptor {
 
 		// Extract requested relations from the query or body
 		const request = context.switchToHttp().getRequest();
-		let relations = request.query?.relations || request.body?.relations || [];
+		const relations = request.query?.relations || request.body?.relations || [];
 
-		// Sanitize relations input
-		if (typeof relations === 'string') {
-			relations = relations.trim();
-		}
-		// Support both array and comma-separated string
-		const relationsArray = Array.isArray(relations)
-			? relations
-			: typeof relations === 'string'
-			? relations.split(',')
-			: [];
-
-		// Filter out invalid relations
-		const validRelations = relationsArray
-			.map((rel) => (typeof rel === 'string' ? rel.trim() : ''))
-			.filter((rel) => rel.length > 0);
+		// Canonicalize EVERY representation of `relations` into dot-notated paths: a comma-separated
+		// string, the legacy string array the Angular clients send as `relations[0]=…`, TypeORM v1's
+		// nested object form — which Express's extended query parser builds from
+		// `?relations[organization][payments][invoice]=x` — and any mixture of them.
+		//
+		// Reading only the array and string forms is what made this interceptor a no-op against the
+		// object form (GHSA-c3cj-m3xm-7j5h): the ternary chain that used to live here fell through to
+		// an empty array, so the loop below ran zero times while TypeORM happily joined and selected
+		// the protected rows. The canonicalizing walk also emits every intermediate prefix, so the
+		// config is consulted at each depth, and it fails closed on odd leaf values and on
+		// prototype-polluting keys.
+		const validRelations = normalizeRelationsToPaths(relations);
 
 		for (const rel of validRelations) {
 			let requiredPermission: PermissionsEnum | null = null;
