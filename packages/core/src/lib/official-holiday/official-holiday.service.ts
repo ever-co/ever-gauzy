@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Between } from 'typeorm';
 import { IOfficialHoliday, IOfficialHolidayFindInput, IPagination } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
@@ -31,6 +31,15 @@ export class OfficialHolidayService extends TenantAwareCrudService<OfficialHolid
 	async findAllByFilter(input: IOfficialHolidayFindInput): Promise<IPagination<IOfficialHoliday>> {
 		const { countryCode, year, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
+		// This reads through the raw repository, so the organization is not injected for us, and an
+		// undefined key is DROPPED from a TypeORM where object rather than matching nothing — the
+		// listing would silently widen to every organization of the tenant. The query DTO does not
+		// close this on its own: `sentTo` suppresses the conditional `organizationId` validation it
+		// inherits. Fail closed instead.
+		if (!organizationId) {
+			throw new BadRequestException('organizationId is required');
+		}
 
 		const base: Record<string, unknown> = { tenantId, organizationId };
 
