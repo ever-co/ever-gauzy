@@ -108,6 +108,8 @@ export * from '../../organization-vendor/organization-vendor.entity';
 export * from '../../organization/organization.entity';
 export * from '../../password-reset/password-reset.entity';
 export * from '../../payment/payment.entity';
+export * from '../../payroll-run/payroll-run.entity';
+export * from '../../payroll-item/payroll-item.entity';
 export * from '../../pipeline-stage/pipeline-stage.entity';
 export * from '../../pipeline/pipeline.entity';
 export * from '../../product-category/product-category-translation.entity';

@@ -1,10 +1,14 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
+import { IUser } from './user.model';
 import { IPaginationInput } from './core.model';
 
 /**
- * Enum representing the status of a payroll run
-  */
+ * Lifecycle of a payroll run.
+ *
+ * `DRAFT -> PENDING_APPROVAL -> APPROVED -> PROCESSING -> PAID`, with `CANCELLED` reachable from
+ * any state before `PAID`. `PAID` is terminal: money has left the building.
+ */
 export enum PayrollRunStatusEnum {
 	DRAFT = 'DRAFT',
 	PENDING_APPROVAL = 'PENDING_APPROVAL',
@@ -15,8 +19,8 @@ export enum PayrollRunStatusEnum {
 }
 
 /**
- * Enum representing the frequency of payroll
-  */
+ * How often a payroll run recurs.
+ */
 export enum PayrollFrequencyEnum {
 	WEEKLY = 'WEEKLY',
 	BI_WEEKLY = 'BI_WEEKLY',
@@ -27,8 +31,8 @@ export enum PayrollFrequencyEnum {
 }
 
 /**
- * Enum representing the type of a payroll item/component
-  */
+ * What a payroll line item represents.
+ */
 export enum PayrollItemTypeEnum {
 	BASIC_SALARY = 'BASIC_SALARY',
 	ALLOWANCE = 'ALLOWANCE',
@@ -46,33 +50,40 @@ export enum PayrollItemTypeEnum {
 }
 
 /**
- * Enum indicating whether a payroll item adds or deducts from net pay
-  */
+ * Whether a line item adds to or subtracts from net pay.
+ */
 export enum PayrollItemCategoryEnum {
 	EARNING = 'EARNING',
 	DEDUCTION = 'DEDUCTION'
 }
 
 /**
- * Interface representing a single Payroll Run (pay period)
-  */
+ * One payroll run — a single pay period for an organization.
+ *
+ * The totals are derived from the run's items and are recomputed by the server when the run is
+ * processed; they are never accepted from a client.
+ */
 export interface IPayrollRun extends IBasePerTenantAndOrganizationEntityModel {
 	periodStart: Date;
 	periodEnd: Date;
 	payDate: Date;
 	frequency: PayrollFrequencyEnum;
 	status: PayrollRunStatusEnum;
+	/** ISO 4217 currency code. */
 	currency: string;
 	totalGross: number;
 	totalDeductions: number;
 	totalNet: number;
 	notes?: string;
+	/** When the run was approved, and by whom. */
+	approvedAt?: Date;
+	approvedByUserId?: ID;
+	approvedBy?: IUser;
+	/** When the run was marked paid. */
+	paidAt?: Date;
 	items?: IPayrollItem[];
 }
 
-/**
- * Interface for creating a new Payroll Run
-  */
 export interface IPayrollRunCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	periodStart: Date;
 	periodEnd: Date;
@@ -83,50 +94,45 @@ export interface IPayrollRunCreateInput extends IBasePerTenantAndOrganizationEnt
 }
 
 /**
- * Interface for updating an existing Payroll Run
-  */
-export interface IPayrollRunUpdateInput extends Partial<IPayrollRunCreateInput> {
-	id: ID;
-	status?: PayrollRunStatusEnum;
-	totalGross?: number;
-	totalDeductions?: number;
-	totalNet?: number;
-}
+ * Editable fields of a payroll run.
+ *
+ * `status` and the three totals are deliberately absent: the status only moves through the
+ * workflow endpoints, and the totals are derived. Accepting either here would let a caller mark a
+ * run `PAID`, or write any total they liked, with a plain update.
+ */
+export type IPayrollRunUpdateInput = Partial<Omit<IPayrollRunCreateInput, 'tenantId'>>;
 
-/**
- * Interface for finding/filtering Payroll Runs
-  */
 export interface IPayrollRunFindInput extends IPaginationInput {
 	organizationId?: ID;
 	tenantId?: ID;
 	status?: PayrollRunStatusEnum;
 	frequency?: PayrollFrequencyEnum;
+	/** Lower bound of the `periodStart` range to search. */
 	periodStart?: Date;
+	/** Upper bound of the `periodStart` range to search. */
 	periodEnd?: Date;
 }
 
 /**
- * Interface representing a single line item within a Payroll Run
-  */
+ * One earning or deduction line within a payroll run.
+ */
 export interface IPayrollItem extends IBasePerTenantAndOrganizationEntityModel {
 	payrollRunId: ID;
 	payrollRun?: IPayrollRun;
-    employeeId?: ID;
+	/** Nullable so a line item survives the deletion of the employee it was paid to. */
+	employeeId?: ID;
 	employee?: IEmployee;
 	type: PayrollItemTypeEnum;
 	category: PayrollItemCategoryEnum;
 	description?: string;
+	/** Always a positive amount; `category` decides whether it adds or subtracts. */
 	amount: number;
 	quantity?: number;
 	unitPrice?: number;
 	taxable: boolean;
 }
 
-/**
- * Interface for creating a Payroll Item
-  */
 export interface IPayrollItemCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	payrollRunId: ID;
 	employeeId: ID;
 	type: PayrollItemTypeEnum;
 	category: PayrollItemCategoryEnum;
@@ -137,9 +143,6 @@ export interface IPayrollItemCreateInput extends IBasePerTenantAndOrganizationEn
 	taxable?: boolean;
 }
 
-/**
- * Interface for finding/filtering Payroll Items
-  */
 export interface IPayrollItemFindInput extends IPaginationInput {
 	payrollRunId?: ID;
 	employeeId?: ID;
@@ -148,8 +151,8 @@ export interface IPayrollItemFindInput extends IPaginationInput {
 }
 
 /**
- * Interface for payroll summary statistics per employee
-  */
+ * What one employee earned, was deducted and takes home in one payroll run.
+ */
 export interface IPayrollSummary {
 	employeeId: ID;
 	employee?: IEmployee;
@@ -162,8 +165,11 @@ export interface IPayrollSummary {
 }
 
 /**
- * Interface for overall payroll statistics
-  */
+ * Totals across every paid payroll run of an organization, per currency.
+ *
+ * Runs are grouped by currency because summing amounts in different currencies produces a number
+ * that means nothing.
+ */
 export interface IPayrollStatistics {
 	totalRuns: number;
 	totalEmployeesPaid: number;

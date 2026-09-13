@@ -118,6 +118,7 @@ export * from './lib/organization-vendors.model';
 export * from './lib/organization.model';
 export * from './lib/password-reset.model';
 export * from './lib/payment.model';
+export * from './lib/payroll.model';
 export * from './lib/pipeline-stage.model';
 export * from './lib/pipeline.model';
 export * from './lib/plain-object.model';

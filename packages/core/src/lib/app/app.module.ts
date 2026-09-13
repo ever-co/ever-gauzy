@@ -125,6 +125,7 @@ import { OrganizationVendorModule } from '../organization-vendor/organization-ve
 import { OrganizationModule } from '../organization/organization.module';
 import { PasswordHashModule } from '../password-hash/password-hash.module';
 import { PaymentModule } from '../payment/payment.module';
+import { PayrollRunModule } from '../payroll-run/payroll-run.module';
 import { StageModule } from '../pipeline-stage/pipeline-stage.module';
 import { PipelineModule } from '../pipeline/pipeline.module';
 import { ProductCategoryModule } from '../product-category/product-category.module';
@@ -461,6 +462,7 @@ if (environment.THROTTLE_ENABLED) {
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,
+		PayrollRunModule,
 		EstimateEmailModule,
 		GoalModule,
 		GoalTimeFrameModule,
