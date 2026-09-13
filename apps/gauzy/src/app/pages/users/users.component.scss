@@ -1,4 +1,5 @@
 @use '@shared/_pg-card' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 :host {
   nb-card-body {
@@ -23,3 +24,10 @@
     width: 100%;
   }
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the status pills, the pager's `<nav><ul><li>` and the toolbar scale — the same
+// block Invoices carries. The toolbar is `ngx-gauzy-button-action` in
+// `nb-card-header`, which the default `$actions` selector covers.
+@include ga-hub.list-page();
