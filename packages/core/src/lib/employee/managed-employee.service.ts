@@ -145,9 +145,11 @@ export class ManagedEmployeeService {
 	 * 1. Global permissions (CHANGE_SELECTED_EMPLOYEE)
 	 * 2. Self-access (currentEmployeeId === targetEmployeeId)
 	 * 3. Manager status in the specified team (if organizationTeamId provided)
+	 * 4. Otherwise, manager status in any team the target employee belongs to
 	 *
 	 * @param targetEmployeeId - The employee ID to check access for
-	 * @param organizationTeamId - Optional team ID to check manager status
+	 * @param organizationTeamId - Optional team ID to check manager status. When omitted, every team
+	 *                             managed by the caller is considered.
 	 * @returns true if the current employee can manage the target employee
 	 */
 	async canManageEmployee(targetEmployeeId: ID, organizationTeamId?: ID): Promise<boolean> {
@@ -203,8 +205,11 @@ export class ManagedEmployeeService {
 			return isTargetMemberOfTeam;
 		}
 
-		// Case 5: No team context provided → No access
-		return false;
+		// Case 5: No team context provided → fall back to the teams the caller actually manages.
+		// Records such as daily plans and time logs carry a nullable organizationTeamId, so callers
+		// cannot always supply one. Answering "is there a team I manage that this employee belongs to"
+		// keeps the check strictly team scoped instead of denying a legitimate manager outright.
+		return await this.canManageEmployeeInAnyTeam(targetEmployeeId);
 	}
 
 	/**
