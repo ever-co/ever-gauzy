@@ -20,11 +20,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	extends CrudService<T>
 	implements ICrudService<T>
 {
-	private static readonly SKIP_EMPLOYEE_FILTER_KEY_PREFIX = 'skipEmployeeFilter';
+	private static skipEmployeeFilterSequence = 0;
 
-	private readonly skipEmployeeFilterKey = `${TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY_PREFIX}:${
-		this.constructor.name
-	}`;
+	/** The sequence keeps the key unique even when two services share a runtime class name. */
+	private readonly skipEmployeeFilterKey = `skipEmployeeFilter:${this.constructor.name}:${++TenantAwareCrudService.skipEmployeeFilterSequence}`;
 
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
