@@ -38,62 +38,38 @@
 // attributes and a class before anything else, which clears that outright — no
 // `!important` anywhere below.
 :host .table-scroll-container ::ng-deep angular2-smart-table {
-  // ── Project cell ───────────────────────────────────────────────────────────
-  // `gauzy-project-organization` draws a 28px logo beside a 14px/17px name and an
-  // 11px/13px caption, i.e. a 28px chip in rows the density tokens build to a
-  // 1rem line box — the single biggest reason a row here stood taller than the
-  // same row on Employees or Payments. Sized off the shared `gauzy-people-*`
-  // tokens, so the project chip matches the people cells beside it.
+  // ── Project and Contact cells ──────────────────────────────────────────────
+  // Two blocks used to sit here, shrinking `gauzy-project-organization`'s logo
+  // to 1rem and `ngx-contact-links`' avatar and pill to about 20px of chip, so
+  // that each cost the row a single 1rem line box.
+  //
+  // Both are gone. `ngx-contact-links` is the very renderer the Invoices Contact
+  // column draws — an 18px avatar and a 12px/15px name in a pill padded 5px, a
+  // 28px chip — so overriding it here was this page setting itself BELOW the
+  // table it is meant to match, using the identical component. Left alone it is
+  // now exact by construction.
+  //
+  // The project logo comes back to the `gauzy-people-*` scale rather than to its
+  // own 28px: those tokens are the restored 1.25rem/0.75rem, which puts the logo
+  // and the name on the same line box as the people chip in the next column.
   .project-render {
-    gap: var(--gauzy-people-gap, 0.375rem);
+    gap: var(--gauzy-people-gap, 0.5rem);
 
     img {
-      width: var(--gauzy-people-avatar-size, 1rem);
-      height: var(--gauzy-people-avatar-size, 1rem);
-      // A 35 %-black drop shadow under a 16px thumbnail is a smudge, not a lift.
+      width: var(--gauzy-people-avatar-size, 1.25rem);
+      height: var(--gauzy-people-avatar-size, 1.25rem);
+      // A 35 %-black drop shadow under a small thumbnail is a smudge, not a lift.
       box-shadow: none;
     }
 
     .name {
-      font-size: var(--gauzy-people-font-size, 0.6875rem);
-      line-height: var(--gauzy-people-avatar-size, 1rem);
+      font-size: var(--gauzy-people-font-size, 0.75rem);
+      line-height: var(--gauzy-people-avatar-size, 1.25rem);
     }
 
     span .member {
       font-size: var(--gauzy-table-chip-font-size, 0.625rem);
       line-height: var(--gauzy-table-chip-line-height, 0.75rem);
-    }
-  }
-
-  // ── Contact cell ───────────────────────────────────────────────────────────
-  // `ngx-contact-links` draws an 18px avatar and 12px/15px text inside a pill
-  // padded 5px/14px — a 28px control in a 1rem row. Same scale-down as the
-  // people chips, and the pill keeps its tint so the cell still reads as a link
-  // rather than as plain text.
-  ngx-contact-links .inner-wrapper {
-    gap: var(--gauzy-people-gap, 0.375rem);
-    @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
-    @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
-
-    .names-wrapper {
-      max-width: var(--gauzy-people-name-max-width, 8rem);
-    }
-
-    .link-text {
-      font-size: var(--gauzy-people-font-size, 0.6875rem);
-      line-height: var(--gauzy-people-avatar-size, 1rem);
-    }
-
-    .avatar img,
-    .prefix {
-      width: var(--gauzy-people-avatar-size, 1rem);
-      height: var(--gauzy-people-avatar-size, 1rem);
-    }
-
-    .prefix {
-      padding: 0;
-      font-size: var(--gauzy-people-initials-font-size, 0.5rem);
-      line-height: var(--gauzy-people-avatar-size, 1rem);
     }
   }
 

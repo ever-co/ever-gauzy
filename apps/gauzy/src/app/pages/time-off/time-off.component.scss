@@ -59,3 +59,17 @@ nb-radio-group {
 // already had — the template rendered a bare `<ngx-pagination>` into the card
 // body, so it was neither right-aligned nor compacted.
 @include ga-hub.list-page();
+
+// ── The Employee cell ───────────────────────────────────────────────────────
+// `ga-picture-name-tags` renders `<ngx-avatar class="report-table">`, which pins
+// a 20px image inside a pill padded 3px: 26px of chip, 2px short of the 28px
+// `ngx-contact-links` costs the Invoices Contact column, and so 2px short of the
+// Invoices row. Only that inset is restated — the image and the name stay the
+// renderer's own 20px/12px — which takes the chip to the same 28px and the row
+// to the same height.
+//
+// Table-scoped: `ga-card-grid` instantiates the same `renderComponent` for the
+// card layout, which is not paying for a table row.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  @include ga-hub.avatar-chip();
+}
