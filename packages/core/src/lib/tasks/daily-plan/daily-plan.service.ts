@@ -323,7 +323,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			// to avoid leaking information about which plan IDs exist in the system
 			const canManage =
 				planTeamInfo &&
-				(await this._managedEmployeeService.canManageEmployee(employeeId, planTeamInfo.organizationTeamId));
+				(await this._managedEmployeeService.canManageEmployee(
+					employeeId,
+					planTeamInfo.organizationTeamId,
+					organizationId
+				));
 
 			if (!planTeamInfo || !canManage) {
 				throw new NotFoundException('Daily plan not found or you do not have permission to access it');

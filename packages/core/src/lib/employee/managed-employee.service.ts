@@ -149,9 +149,10 @@ export class ManagedEmployeeService {
 	 *
 	 * @param targetEmployeeId - The employee ID to check access for
 	 * @param organizationTeamId - Optional team ID to check manager status
+	 * @param organizationId - Optional organization the record belongs to, used to scope the fallback
 	 * @returns true if the current employee can manage the target employee
 	 */
-	async canManageEmployee(targetEmployeeId: ID, organizationTeamId?: ID): Promise<boolean> {
+	async canManageEmployee(targetEmployeeId: ID, organizationTeamId?: ID, organizationId?: ID): Promise<boolean> {
 		const user = RequestContext.currentUser();
 		const currentEmployeeId = user?.employeeId;
 
@@ -206,7 +207,7 @@ export class ManagedEmployeeService {
 
 		// Case 5: Daily plans and time logs carry a nullable organizationTeamId,
 		// so callers cannot always supply one.
-		return await this.canManageEmployeeInAnyTeam(targetEmployeeId);
+		return await this.canManageEmployeeInAnyTeam(targetEmployeeId, organizationId);
 	}
 
 	/**
@@ -348,9 +349,10 @@ export class ManagedEmployeeService {
 	 * Checks if the current employee can manage a target employee in ANY team.
 	 *
 	 * @param targetEmployeeId - The employee ID to check access for
+	 * @param organizationId - Optional organization to restrict the managed teams to
 	 * @returns true if the current employee manages the target employee in at least one team
 	 */
-	private async canManageEmployeeInAnyTeam(targetEmployeeId: ID): Promise<boolean> {
+	private async canManageEmployeeInAnyTeam(targetEmployeeId: ID, organizationId?: ID): Promise<boolean> {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 		const tenantId = RequestContext.currentTenantId();
 
@@ -365,7 +367,10 @@ export class ManagedEmployeeService {
 				isManager: true,
 				isActive: true,
 				isArchived: false,
-				tenantId
+				tenantId,
+				// Scoped through the team, whose organizationId is authoritative,
+				// rather than through the membership row where it may be null.
+				...(organizationId ? { organizationTeam: { organizationId } } : {})
 			},
 			select: {
                 organizationTeamId: true

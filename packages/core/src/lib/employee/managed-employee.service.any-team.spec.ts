@@ -6,6 +6,7 @@ import { RequestContext } from '../core/context';
 import { ManagedEmployeeService } from './managed-employee.service';
 
 const TENANT_ID = '9d347c5c-5b96-4ef3-9799-b5fa0ca09111';
+const ORGANIZATION_ID = '3c6bdbd4-4e3f-4d8b-8a0e-8cf2c50ee2d1';
 const TEAM_ID = '66ba5d6e-a3c6-4be8-b74d-fb8aece4bd58';
 const OTHER_TEAM_ID = 'c5fc5345-c47b-4b08-b63c-f17c88679aca';
 const ACTOR_ID = '7f0d2585-296f-49cc-a229-210f5f11e372';
@@ -61,6 +62,19 @@ describe('ManagedEmployeeService.canManageEmployee without a team context', () =
 
 		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledWith(
 			expect.objectContaining({ organizationTeamId: In([OTHER_TEAM_ID]) })
+		);
+	});
+
+	it('restricts the managed teams to the organization when the caller provides one', async () => {
+		teamEmployeeRepository.find.mockResolvedValue([{ organizationTeamId: TEAM_ID }]);
+		teamEmployeeRepository.existsBy.mockResolvedValue(true);
+
+		await expect(service.canManageEmployee(TARGET_ID, undefined, ORGANIZATION_ID)).resolves.toBe(true);
+
+		expect(teamEmployeeRepository.find).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ organizationTeam: { organizationId: ORGANIZATION_ID } })
+			})
 		);
 	});
 
