@@ -20,36 +20,54 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	extends CrudService<T>
 	implements ICrudService<T>
 {
-	private static readonly SKIP_EMPLOYEE_FILTER_KEY = 'skipEmployeeFilter';
+	private static readonly SKIP_EMPLOYEE_FILTER_KEY_PREFIX = 'skipEmployeeFilter';
 
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
 	}
 
 	/**
-	 * Gets the current skipEmployeeFilter flag from request context.
+	 * Builds the request-context key holding the bypass depth for this service.
+	 *
+	 * The key is derived from the entity this service manages, so opening a bypass in one
+	 * service never disables the employee filter of another service running in the same request.
+	 */
+	private getSkipEmployeeFilterKey(): string {
+		const scope = this.typeOrmRepository?.metadata?.name ?? this.constructor.name;
+		return `${TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY_PREFIX}:${scope}`;
+	}
+
+	/**
+	 * Reads how many bypass blocks are currently open for this service.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions.
 	 */
-	private getSkipEmployeeFilter(): boolean {
+	private getSkipEmployeeFilterDepth(): number {
 		try {
 			const context = RequestContext['clsService'];
-			return context?.get(TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY) ?? false;
+			return context?.get(this.getSkipEmployeeFilterKey()) ?? 0;
 		} catch {
-			return false;
+			return 0;
 		}
 	}
 
 	/**
-	 * Sets the skipEmployeeFilter flag in request context.
+	 * Stores how many bypass blocks are currently open for this service.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions.
 	 */
-	private setSkipEmployeeFilter(value: boolean): void {
+	private setSkipEmployeeFilterDepth(depth: number): void {
 		try {
 			const context = RequestContext['clsService'];
-			context?.set(TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY, value);
+			context?.set(this.getSkipEmployeeFilterKey(), depth);
 		} catch {
 			// Silently fail if context is not available
 		}
+	}
+
+	/**
+	 * Whether the automatic employee filter is currently bypassed for this service.
+	 */
+	private getSkipEmployeeFilter(): boolean {
+		return this.getSkipEmployeeFilterDepth() > 0;
 	}
 
 	/**
@@ -86,6 +104,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * This is useful when you need to implement custom access control logic.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions between concurrent requests.
 	 *
+	 * The bypass applies to this service only, and is reference counted, so nested or concurrent
+	 * blocks restore correctly whatever their completion order.
+	 *
+	 * Keep the callback down to a single repository read. Authorization must be checked before the
+	 * mutation, and the mutation itself must stay outside the bypass.
+	 *
 	 * @param callback - The async function to execute without employee filtering
 	 * @returns The result of the callback
 	 *
@@ -97,12 +121,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * ```
 	 */
 	protected async withoutEmployeeFilter<R>(callback: () => Promise<R>): Promise<R> {
-		const originalValue = this.getSkipEmployeeFilter();
-		this.setSkipEmployeeFilter(true);
+		this.setSkipEmployeeFilterDepth(this.getSkipEmployeeFilterDepth() + 1);
 		try {
 			return await callback();
 		} finally {
-			this.setSkipEmployeeFilter(originalValue);
+			this.setSkipEmployeeFilterDepth(Math.max(0, this.getSkipEmployeeFilterDepth() - 1));
 		}
 	}
 
