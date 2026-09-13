@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ID, IOrganization, IPagination, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
-import { Employee } from '../core/entities/internal';
+import { Employee, User } from '../core/entities/internal';
 import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmOrganizationRepository } from '../organization/repository/type-orm-organization.repository';
 import { UserOrganization } from './user-organization.entity';
@@ -58,16 +58,29 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 					}
 				});
 
-				// Merge employee details into each user organization object
+				// Merge employee details into each user organization.
+				//
+				// SECURITY: never rebuild a LOADED entity with an object spread here. `User.hash`,
+				// `refreshToken`, `code`, `codeExpireAt` and `emailToken` are redacted only by
+				// class-transformer's `@Exclude({ toPlainOnly: true })`, whose metadata is reached
+				// through the class prototype. A spread produces a prototype-less plain object, so
+				// the global `TransformInterceptor` (`instanceToPlain`) would serialize those
+				// credential columns verbatim to any caller that asked for `relations[]=user`.
+				// Mutate the entity in place and re-wrap the user in a `User` instance — the same
+				// pattern as `UserService.findMeUser` — so the prototype, and with it the
+				// redaction, survives the addition of `employee`.
 				const itemsWithEmployees = items.map((organization: UserOrganization) => {
 					// If user ID is available, fetch employee details
-					if (organization.userId) {
+					if (organization.userId && organization.user) {
 						// Fetch employee details using the user ID
 						const employee = employeeMap.get(organization.userId);
-						return { ...organization, user: { ...organization.user, employee } };
+						organization.user = new User({
+							...organization.user,
+							...(employee && { employee })
+						});
 					}
-					// If user ID is not available, return the original organization object
-					return { ...organization };
+					// Return the entity itself (prototype intact), never a copy of it
+					return organization;
 				});
 
 				// Return paginated result with employee details
