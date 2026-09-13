@@ -65,6 +65,17 @@ describe('TenantAwareCrudService.withoutEmployeeFilter', () => {
 		});
 	});
 
+	it('leaves another instance of the same class filtered while a bypass is open', async () => {
+		const otherInstance = new ServiceA();
+
+		await inRequest(async () => {
+			await serviceA.bypass(async () => {
+				expect(serviceA.employeeConditions()).toEqual({});
+				expect(otherInstance.employeeConditions()).toEqual(EMPLOYEE_FILTER);
+			});
+		});
+	});
+
 	it('keeps the bypass open until the outermost block completes', async () => {
 		await inRequest(async () => {
 			await serviceA.bypass(async () => {
