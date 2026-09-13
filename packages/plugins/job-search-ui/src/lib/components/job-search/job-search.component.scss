@@ -177,3 +177,50 @@ nb-tabset {
     }
   }
 }
+
+// ── The rest of the list-page contract ───────────────────────────────────────
+// This sheet already compacted the page-header buttons (twice, for the two
+// groups that hold them), and stopped there — so Jobs > Browse was the one list
+// page in the app with a converted TOOLBAR sitting over an unconverted TABLE:
+// a 0.25rem action strip above rows still drawn at the `_overrides.scss`
+// fallbacks, 0.8125rem cells on 0.375rem/0.625rem padding, on an unbounded
+// scroll container with no ring, and a full-size pager under it.
+//
+// The six remaining blocks, spelled out rather than taken as `list-page()`,
+// because that bundle also emits the toolbar block against a single `$actions`
+// selector and this page deliberately names two.
+
+// The tokens sit on `:host`, not on the table: the cell renderers that consume
+// them are separate components, and custom properties are the only thing that
+// crosses those boundaries.
+:host {
+  @include ga-hub.density-tokens();
+}
+
+:host .table-scroll-container {
+  @include ga-hub.surface();
+}
+
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+}
+
+:host ::ng-deep {
+  @include ga-hub.tag-stack-spacing();
+}
+
+:host ::ng-deep ga-status-badge {
+  @include ga-hub.status-badge-tints();
+}
+
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+// SPECIFICITY: the pager's own rules nest under its `:host`, so `li span` shims
+// to (0,3,2). Naming `.pagination-container` — which lives in THIS component's
+// template, so it carries this component's content attribute — before
+// `::ng-deep` buys two attributes and a class, taking the block to (0,3,3).
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
+}
