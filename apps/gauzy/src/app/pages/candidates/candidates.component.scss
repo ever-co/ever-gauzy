@@ -1,6 +1,7 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-cards' as *;
 @use '@shared/_pg-card' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 .manage-btn {
   display: flex;
@@ -41,3 +42,15 @@
     }
   }
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The same block Invoices carries: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills, the pager and the
+// toolbar scale.
+//
+// The pager needed the `.pagination-container` wrapper every sibling list page
+// already had — this template rendered a bare `<ngx-pagination>` straight into
+// the card body, so it took neither the shared right-alignment nor the compact
+// `<nav><ul><li>` sizing, and sat left-aligned at full size under a table that
+// had just been brought down to the shared density.
+@include ga-hub.list-page();
