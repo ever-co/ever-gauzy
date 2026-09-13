@@ -205,10 +205,9 @@ export class ManagedEmployeeService {
 			return isTargetMemberOfTeam;
 		}
 
-		// Case 5: No team context provided → fall back to the teams the caller actually manages.
-		// Records such as daily plans and time logs carry a nullable organizationTeamId, so callers
-		// cannot always supply one. Answering "is there a team I manage that this employee belongs to"
-		// keeps the check strictly team scoped instead of denying a legitimate manager outright.
+		// Case 5: No team context provided → check every team the caller manages.
+		// Daily plans and time logs carry a nullable organizationTeamId, so callers cannot always
+		// supply one, and denying outright would lock out a manager who does manage the target.
 		return await this.canManageEmployeeInAnyTeam(targetEmployeeId);
 	}
 
