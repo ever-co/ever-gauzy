@@ -95,7 +95,7 @@ export class PayrollRunController {
 	/**
 	 * Break a run down into what each employee earns, is deducted and takes home.
 	 *
-	 * @param id the run to summarise
+	 * @param id the run to summarize
 	 * @param organizationId the organization the run belongs to
 	 * @returns one summary per employee
 	 */

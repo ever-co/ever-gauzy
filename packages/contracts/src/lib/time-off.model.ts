@@ -135,7 +135,7 @@ export enum StatusTypesMapRequestApprovalEnum {
 }
 
 /**
- * A publicly recognised holiday for a country, kept per organization.
+ * A publicly recognized holiday for a country, kept per organization.
  *
  * Issue #314 asks for an `OfficialHolidays` table so the "Add Holidays" dialog can offer a
  * predefined list and pre-fill the From/To dates once a holiday is picked, filtered by the

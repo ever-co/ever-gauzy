@@ -6,7 +6,7 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorator
 import { MikroOrmOfficialHolidayRepository } from './repository/mikro-orm-official-holiday.repository';
 
 /**
- * A publicly recognised holiday for a country, kept per organization.
+ * A publicly recognized holiday for a country, kept per organization.
  *
  * Issue #314 asks for an `OfficialHolidays` table so the "Add Holidays" dialog can offer a
  * predefined list of national holidays and pre-fill the From/To dates once one is picked,
