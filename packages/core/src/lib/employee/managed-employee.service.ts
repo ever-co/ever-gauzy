@@ -148,8 +148,7 @@ export class ManagedEmployeeService {
 	 * 4. Otherwise, manager status in any team the target employee belongs to
 	 *
 	 * @param targetEmployeeId - The employee ID to check access for
-	 * @param organizationTeamId - Optional team ID to check manager status. When omitted, every team
-	 *                             managed by the caller is considered.
+	 * @param organizationTeamId - Optional team ID to check manager status
 	 * @returns true if the current employee can manage the target employee
 	 */
 	async canManageEmployee(targetEmployeeId: ID, organizationTeamId?: ID): Promise<boolean> {
@@ -205,9 +204,8 @@ export class ManagedEmployeeService {
 			return isTargetMemberOfTeam;
 		}
 
-		// Case 5: No team context provided → check every team the caller manages.
-		// Daily plans and time logs carry a nullable organizationTeamId, so callers cannot always
-		// supply one, and denying outright would lock out a manager who does manage the target.
+		// Case 5: Daily plans and time logs carry a nullable organizationTeamId,
+		// so callers cannot always supply one.
 		return await this.canManageEmployeeInAnyTeam(targetEmployeeId);
 	}
 
