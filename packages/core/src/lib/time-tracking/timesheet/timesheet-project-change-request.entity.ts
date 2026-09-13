@@ -1,75 +1,138 @@
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ITimesheetProjectChangeRequest, TimesheetProjectChangeStatus } from '@gauzy/contracts';
-import { OrganizationProject } from '../../organization-project/organization-project.entity';
-import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
-import { Timesheet } from './timesheet.entity';
-import { User } from '../../user/user.entity';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+	ID,
+	IOrganizationProject,
+	ITimesheet,
+	ITimesheetProjectChangeRequest,
+	IUser,
+	TimesheetProjectChangeStatus
+} from '@gauzy/contracts';
+import { OrganizationProject, TenantOrganizationBaseEntity, User } from './../../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
+import { Timesheet } from './timesheet.entity';
+import { MikroOrmTimesheetProjectChangeRequestRepository } from './repository/mikro-orm-timesheet-project-change-request.repository';
 
-@MultiORMEntity('timesheet_project_change_request', { mikroOrmRepository: () => require('./repository/mikro-orm-timesheet-project-change-request.repository').MikroOrmTimesheetProjectChangeRequestRepository })
-export class TimesheetProjectChangeRequest extends TenantOrganizationBaseEntity implements ITimesheetProjectChangeRequest {
+/**
+ * A request, raised by the owner of a timesheet, to move the time logged against one
+ * project over to another project (issue #9516).
+ *
+ * A timesheet is a per-employee, per-period container of `TimeLog` rows and the project
+ * lives on the *log*, not on the timesheet — one timesheet routinely holds logs for
+ * several projects. Every request therefore records BOTH endpoints of the move:
+ * `previousProjectId` (where the time is booked now) and `requestedProjectId` (where it
+ * should go). Approving a request only ever touches logs currently on
+ * `previousProjectId`, so correctly-booked time in the same timesheet is left alone.
+ */
+@MultiORMEntity('timesheet_project_change_request', {
+	mikroOrmRepository: () => MikroOrmTimesheetProjectChangeRequestRepository
+})
+export class TimesheetProjectChangeRequest
+	extends TenantOrganizationBaseEntity
+	implements ITimesheetProjectChangeRequest
+{
+	/** Why the employee is asking for the change. Mandatory, per issue #9516. */
 	@ApiProperty({ type: () => String })
-  	@IsNotEmpty()
-    	@IsUUID()
-      	@ColumnIndex()
-        	@MultiORMColumn()
-          	timesheetId: string;
+	@IsNotEmpty()
+	@IsString()
+	@MaxLength(500)
+	@MultiORMColumn({ length: 500 })
+	reason: string;
 
-            	@ApiProperty({ type: () => String })
-              	@IsNotEmpty()
-                	@IsUUID()
-                  	@ColumnIndex()
-                    	@MultiORMColumn()
-                      	requestedProjectId: string;
+	@ApiProperty({ enum: TimesheetProjectChangeStatus })
+	@IsEnum(TimesheetProjectChangeStatus)
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'varchar', default: TimesheetProjectChangeStatus.PENDING })
+	status: TimesheetProjectChangeStatus;
 
-                        	@ApiPropertyOptional({ type: () => String })
-                          	@IsOptional()
-                            	@IsUUID()
-                              	@ColumnIndex()
-                                	@MultiORMColumn({ nullable: true })
-                                  	previousProjectId?: string;
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
+	reviewedAt?: Date;
 
-                                    	@ApiProperty({ type: () => String })
-                                      	@IsNotEmpty()
-                                        	@IsString()
-                                          	@MultiORMColumn()
-                                            	reason: string;
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MaxLength(500)
+	@MultiORMColumn({ length: 500, nullable: true })
+	reviewNote?: string;
 
-                                              	@ApiProperty({ enum: TimesheetProjectChangeStatus })
-                                                	@IsEnum(TimesheetProjectChangeStatus)
-                                                  	@ColumnIndex()
-                                                    	@MultiORMColumn({ type: 'varchar', default: TimesheetProjectChangeStatus.PENDING })
-                                                      	status: TimesheetProjectChangeStatus;
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
-                                                        	@ApiPropertyOptional({ type: () => String })
-                                                          	@IsOptional()
-                                                            	@IsUUID()
-                                                              	@ColumnIndex()
-                                                                	@MultiORMColumn({ nullable: true })
-                                                                  	reviewedById?: string;
+	/**
+	 * Timesheet the request was raised against.
+	 */
+	@MultiORMManyToOne(() => Timesheet, {
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	timesheet?: ITimesheet;
 
-                                                                    	@ApiPropertyOptional({ type: () => Date })
-                                                                      	@IsOptional()
-                                                                        	@MultiORMColumn({ type: 'datetime', nullable: true })
-                                                                          	reviewedAt?: Date;
+	@ApiProperty({ type: () => String })
+	@IsUUID()
+	@RelationId((it: TimesheetProjectChangeRequest) => it.timesheet)
+	@ColumnIndex()
+	@MultiORMColumn({ relationId: true })
+	timesheetId: ID;
 
-                                                                            	@ApiPropertyOptional({ type: () => String })
-                                                                              	@IsOptional()
-                                                                                	@IsString()
-                                                                                  	@MultiORMColumn({ nullable: true })
-                                                                                    	reviewNote?: string;
+	/**
+	 * Project the affected time logs should be moved TO.
+	 */
+	@MultiORMManyToOne(() => OrganizationProject, {
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	requestedProject?: IOrganizationProject;
 
-                                                                                      	// @ManyToOne Relations
-                                                                                        	@MultiORMManyToOne(() => Timesheet, { onDelete: 'CASCADE' })
-                                                                                          	timesheet?: Timesheet;
+	@ApiProperty({ type: () => String })
+	@IsUUID()
+	@RelationId((it: TimesheetProjectChangeRequest) => it.requestedProject)
+	@ColumnIndex()
+	@MultiORMColumn({ relationId: true })
+	requestedProjectId: ID;
 
-                                                                                            	@MultiORMManyToOne(() => OrganizationProject, { nullable: true })
-                                                                                              	requestedProject?: OrganizationProject;
+	/**
+	 * Project the affected time logs are booked to at the time the request is raised.
+	 */
+	@MultiORMManyToOne(() => OrganizationProject, {
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	previousProject?: IOrganizationProject;
 
-                                                                                                	@MultiORMManyToOne(() => OrganizationProject, { nullable: true })
-                                                                                                  	previousProject?: OrganizationProject;
-                                                                                                    
-                                                                                                    	@MultiORMManyToOne(() => User, { nullable: true })
-                                                                                                      	reviewedBy?: User;
-                                                                                                        }
+	@ApiProperty({ type: () => String })
+	@IsUUID()
+	@RelationId((it: TimesheetProjectChangeRequest) => it.previousProject)
+	@ColumnIndex()
+	@MultiORMColumn({ relationId: true })
+	previousProjectId: ID;
+
+	/**
+	 * User who approved or rejected the request.
+	 */
+	@MultiORMManyToOne(() => User, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	reviewedBy?: IUser;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: TimesheetProjectChangeRequest) => it.reviewedBy)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	reviewedById?: ID;
+}

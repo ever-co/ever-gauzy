@@ -35,9 +35,8 @@ export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	isBilled?: boolean;
 	status: TimesheetStatus;
 	isEdited?: boolean;
-	// Project change request fields
-	projectChangeRequestId?: ID;
-	projectChangeRequest?: ITimesheetProjectChangeRequest;
+	/** Project change requests raised against this timesheet (newest first). */
+	projectChangeRequests?: ITimesheetProjectChangeRequest[];
 }
 
 export interface ITimesheetCreateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -77,7 +76,7 @@ export enum TimesheetStatus {
 }
 
 /**
- * Enum for the status of a timesheet project change request
+ * Status of a timesheet project change request.
  */
 export enum TimesheetProjectChangeStatus {
 	PENDING = 'PENDING',
@@ -86,15 +85,25 @@ export enum TimesheetProjectChangeStatus {
 }
 
 /**
- * Interface for a timesheet project change request
+ * A request, raised by the owner of a timesheet, to move the time that was logged
+ * against one project over to another project.
+ *
+ * Time logs belong to a `TimeLog`, not to the `Timesheet` itself, and a single
+ * timesheet can hold logs for many different projects. A request therefore always
+ * names BOTH the project the time is currently booked to (`previousProjectId`) and
+ * the project it should move to (`requestedProjectId`), so approving one can never
+ * touch time that was logged correctly.
  */
 export interface ITimesheetProjectChangeRequest extends IBasePerTenantAndOrganizationEntityModel {
 	timesheetId: ID;
 	timesheet?: ITimesheet;
+	/** Project the affected time logs should be moved TO. */
 	requestedProjectId: ID;
 	requestedProject?: IOrganizationProject;
-	previousProjectId?: ID;
+	/** Project the affected time logs are currently booked to. */
+	previousProjectId: ID;
 	previousProject?: IOrganizationProject;
+	/** Why the employee is asking for the change. Required. */
 	reason: string;
 	status: TimesheetProjectChangeStatus;
 	reviewedById?: ID;
@@ -104,23 +113,21 @@ export interface ITimesheetProjectChangeRequest extends IBasePerTenantAndOrganiz
 }
 
 /**
- * Input interface to request a timesheet project change
+ * Input used by an employee to request a timesheet project change.
  */
-export interface IRequestTimesheetProjectChange {
+export interface IRequestTimesheetProjectChange extends IBasePerTenantAndOrganizationEntityModel {
 	timesheetId: ID;
 	requestedProjectId: ID;
+	previousProjectId: ID;
 	reason: string;
-	organizationId: ID;
 }
 
 /**
- * Input interface to update a timesheet project change request status (approve/reject)
+ * Input used by an approver to approve or reject a pending project change request.
  */
-export interface IUpdateTimesheetProjectChangeStatus {
-	changeRequestId: ID;
-	status: TimesheetProjectChangeStatus;
+export interface IUpdateTimesheetProjectChangeStatus extends IBasePerTenantAndOrganizationEntityModel {
+	status: TimesheetProjectChangeStatus.APPROVED | TimesheetProjectChangeStatus.REJECTED;
 	reviewNote?: string;
-	organizationId: ID;
 }
 
 export interface IUpdateTimesheetStatusInput extends IBasePerTenantAndOrganizationEntityModel {
