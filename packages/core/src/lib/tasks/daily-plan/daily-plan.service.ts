@@ -307,29 +307,38 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				relations: { tasks: true }
 			});
 		} else {
-			// User is potentially a manager → Check access first
-			// Step 1: Fetch minimal data to get organizationTeamId
-			const planTeamInfo = await this.findOneByOptions({
-				where: {
-					id: planId,
-					employeeId,
-					tenantId,
-					organizationId
-				}
-			});
+			// User is potentially a manager → Check access first.
+			// Step 1: Fetch minimal data to get the plan's owner, team and organization.
+			// This read must run without the automatic employee filter: for a caller without
+			// CHANGE_SELECTED_EMPLOYEE that filter overrides `employeeId` with the caller's own id, so a
+			// plan owned by anyone else would never be found and the manager check below could never run.
+			// The bypass covers this single read only; access is decided before anything is returned.
+			const { success, record: planTeamInfo } = await this.withoutEmployeeFilter(() =>
+				this.findOneOrFailByOptions({
+					where: {
+						id: planId,
+						employeeId,
+						tenantId,
+						organizationId
+					}
+				})
+			);
 
-			// Step 2: Check if current user can manage this employee in this team
+			// Step 2: Check if current user can manage the plan's owner in the plan's team.
+			// The owner and the organization come from the stored plan, not from the request body, so
+			// the check stays anchored to the record itself.
 			// Note: We throw the same generic error whether the plan doesn't exist or the user lacks permission
 			// to avoid leaking information about which plan IDs exist in the system
 			const canManage =
-				planTeamInfo &&
+				success &&
+				!!planTeamInfo &&
 				(await this._managedEmployeeService.canManageEmployee(
-					employeeId,
+					planTeamInfo.employeeId ?? employeeId,
 					planTeamInfo.organizationTeamId,
-					organizationId
+					planTeamInfo.organizationId ?? organizationId
 				));
 
-			if (!planTeamInfo || !canManage) {
+			if (!canManage) {
 				throw new NotFoundException('Daily plan not found or you do not have permission to access it');
 			}
 
