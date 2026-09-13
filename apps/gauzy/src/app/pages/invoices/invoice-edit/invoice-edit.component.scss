@@ -1,5 +1,6 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-dialogs' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 // Row actions of the invoice-item grid. These were painted with literals: the
 // add/save pill as `#00d68f` and — the visible one — the cancel/delete pill as a
@@ -187,3 +188,19 @@ div.button-action {
     }
   }
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The invoice-items grid, brought onto the same footing as the Invoices list
+// this form is opened from: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills and the pager. Emitted
+// into invoice-add's sheet too, through the `@forward` at the top of that file —
+// Add and Edit render the same grid.
+//
+// The density tokens only reach cell type and padding and the FILTER row's
+// controls (see `--gauzy-table-control-height` in `_overrides.scss`); the inline
+// row editors this grid is built on keep their own control sizing.
+//
+// `$actions: null`: there is no page-header action row here. This form's buttons
+// are full-size `nb-card-header` form actions (Save, Send, …), not the compact
+// list toolbar the mixin's button block is written for.
+@include ga-hub.list-page(null);
