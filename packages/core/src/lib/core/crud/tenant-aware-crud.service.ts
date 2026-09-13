@@ -22,27 +22,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 {
 	private static readonly SKIP_EMPLOYEE_FILTER_KEY_PREFIX = 'skipEmployeeFilter';
 
-	private skipEmployeeFilterKey?: string;
+	private readonly skipEmployeeFilterKey = `${TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY_PREFIX}:${
+		this.constructor.name
+	}`;
 
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
-	}
-
-	private getSkipEmployeeFilterKey(): string {
-		if (this.skipEmployeeFilterKey) {
-			return this.skipEmployeeFilterKey;
-		}
-
-		const entityName = this.typeOrmRepository.metadata?.name;
-
-		// Not memoized: entity metadata is only available once the data source is initialized.
-		if (!entityName) {
-			return `${TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY_PREFIX}:${this.constructor.name}`;
-		}
-
-		this.skipEmployeeFilterKey = `${TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY_PREFIX}:${entityName}`;
-
-		return this.skipEmployeeFilterKey;
 	}
 
 	/**
@@ -52,7 +37,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	private getSkipEmployeeFilterDepth(): number {
 		try {
 			const context = RequestContext['clsService'];
-			return context?.get(this.getSkipEmployeeFilterKey()) ?? 0;
+			return context?.get(this.skipEmployeeFilterKey) ?? 0;
 		} catch {
 			return 0;
 		}
@@ -65,7 +50,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	private setSkipEmployeeFilterDepth(depth: number): void {
 		try {
 			const context = RequestContext['clsService'];
-			context?.set(this.getSkipEmployeeFilterKey(), depth);
+			context?.set(this.skipEmployeeFilterKey, depth);
 		} catch {
 			// Silently fail if context is not available
 		}
