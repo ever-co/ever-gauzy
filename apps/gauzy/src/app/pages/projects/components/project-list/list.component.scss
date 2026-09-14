@@ -64,7 +64,14 @@
 
     .name {
       font-size: var(--gauzy-people-font-size, 0.75rem);
-      line-height: var(--gauzy-people-avatar-size, 1.25rem);
+      // The TABLE line box, not the avatar size. The name is one line of a stack,
+      // not a line box that has to clear an avatar beside it: a project with a
+      // member count puts this over `.member`, so a 1.25rem name and a 0.75rem
+      // caption add up to 2rem of cell — taller than the 28px `ngx-contact-links`
+      // chip in the next column, which is the row height this page is being
+      // brought to. At 1rem the pair comes to exactly that 28px, and the logo
+      // beside them still gets its own 1.25rem box.
+      line-height: var(--gauzy-table-line-height, 1rem);
     }
 
     span .member {

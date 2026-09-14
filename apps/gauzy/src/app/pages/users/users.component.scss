@@ -31,3 +31,18 @@
 // block Invoices carries. The toolbar is `ngx-gauzy-button-action` in
 // `nb-card-header`, which the default `$actions` selector covers.
 @include ga-hub.list-page();
+
+// The one renderer `list-page()` does not reach: the People column renders
+// `PictureNameTagsComponent`, i.e. `<ngx-avatar class="report-table">`, whose own
+// sheet pins a 20px image inside a pill padded 3px — 26px of chip, 2px short of
+// the 28px `ngx-contact-links` costs the Invoices Contact column, and so 2px
+// short of the Invoices row. `avatar-chip()` restates only that inset; the image
+// and the name stay the renderer's own. Every other people table in the app
+// (Employees, Candidates, Approvals, Time Off, Recurring Expenses) carries this
+// include — Users was the table left 2px shorter than the contract it shares.
+//
+// Table-scoped: `ga-card-grid` instantiates the same `renderComponent` for the
+// card layout, which is not paying for a table row.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  @include ga-hub.avatar-chip();
+}

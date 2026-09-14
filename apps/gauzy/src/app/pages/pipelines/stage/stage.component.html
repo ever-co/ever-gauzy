@@ -1,6 +1,14 @@
 @for (stage of pipelineStages; track stage) {
   <div>
     <div>{{stage.name}}</div>
-    <div>{{stage.description}}</div>
+    <!--
+      Only when there is one. Most stages carry no description, and an element
+      emitted unconditionally is an empty flex item holding the chip's gap open on
+      its trailing edge — a chip wider than its own text. Dropping the node is what
+      the stylesheet's `:nth-child(2)` description rule expects; see the note there.
+    -->
+    @if (stage.description) {
+      <div>{{stage.description}}</div>
+    }
   </div>
 }

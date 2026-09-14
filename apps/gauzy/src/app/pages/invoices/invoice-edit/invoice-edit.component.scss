@@ -278,7 +278,8 @@ $chip-height: $chip-line-height + $chip-padding-y * 2;
     display: block;
     // The chip above is a flex box, and a flex item will not shrink below its own
     // content unless it is told it may — without this `text-overflow` never
-    // engages and a long project name widens the chip instead of ellipsizing.
+    // engages and a long project name widens the chip instead of picking up an
+    // ellipsis.
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;

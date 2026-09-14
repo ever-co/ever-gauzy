@@ -217,17 +217,69 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 		}
 		const selectedContainer = this.el.nativeElement.querySelector('.ng-value-container');
 		const containerWidth = selectedContainer.offsetWidth;
-		this.noOfTagsFits = 0;
 
-		const totalTagWidth = selectedTags.reduce((acc, tag, currentIndex) => {
-			const totalWidth = this.getTagWidth(tag.name) + acc;
+		// The row ends with a "+N" chip, so the space it needs has to be held back
+		// before any tag is allowed to claim it. That used to be a flat 30px, which
+		// is about what a single-digit "+9" measures — at ten or more hidden tags
+		// the chip is wider than the room kept for it and the value container clips
+		// it. Measured instead, against `selectedTags.length`: the count shown can
+		// never exceed the total, so the total's width is an upper bound for it,
+		// and taking the bound rather than the count is what keeps this from
+		// depending on the `noOfTagsFits` it is being used to work out. Never below
+		// the old 30px, which was also doing duty as general slack.
+		let usedWidth = Math.max(this.getOverflowLabelWidth(selectedTags.length), 30);
 
-			if (totalWidth >= containerWidth && this.noOfTagsFits === 0) this.noOfTagsFits = currentIndex;
+		// A plain loop rather than the `reduce` that was here, which counted by
+		// assigning `noOfTagsFits` the first index that did NOT fit while the value
+		// still read 0 — so a first tag wider than the whole trigger left the count
+		// at 0 on that pass and then picked up index 1 on the next, reporting one
+		// fitting tag in the one case where none do.
+		let fittingTags = 0;
+		for (const tag of selectedTags) {
+			usedWidth += this.getTagWidth(tag.name);
 
-			return totalWidth;
-		}, 30); // 30px is the additional buffer
+			if (usedWidth >= containerWidth) {
+				break;
+			}
+			fittingTags++;
+		}
 
-		this.selectedTagsOverflow = totalTagWidth >= containerWidth;
+		this.selectedTagsOverflow = fittingTags < selectedTags.length;
+		// At least one chip whenever anything is hidden. With none fitting, the
+		// honest count is 0, but a trigger showing "+3" and no tag at all says less
+		// than one truncated tag and "+2" does — and `.tag-label` already caps at
+		// the trigger width and ellipsizes, so the one chip cannot overflow it.
+		this.noOfTagsFits = this.selectedTagsOverflow ? Math.max(fittingTags, 1) : selectedTags.length;
+	}
+
+	/**
+	 * Width of the trailing "+N" chip, measured with the classes it actually renders with.
+	 *
+	 * @param count the largest number the chip could have to show
+	 */
+	private getOverflowLabelWidth(count: number): number {
+		const container = this.el.nativeElement;
+		const testLabel = this.renderer.createElement('span');
+
+		// Same element and same classes as the template's overflow chip, so the
+		// padding, weight and caption font size it is drawn at are the ones being
+		// measured rather than a guess at them.
+		this.renderer.setProperty(testLabel, 'innerHTML', `+${count}`);
+		['ng-value-label', 'tag-overflow'].forEach((labelClass) => {
+			this.renderer.addClass(testLabel, labelClass);
+		});
+
+		// Appended to the host, not to the value container: an inline-block's width
+		// is its content either way, and this keeps the probe out of the row being
+		// measured. Same approach as `getTagWidth`.
+		this.renderer.appendChild(container, testLabel);
+
+		// The 10px `getTagWidth` also adds: the chips are spaced by a `margin-right`
+		// on their `.ng-value` wrapper, which no single element's width reports.
+		const labelWidth = testLabel.offsetWidth + 10;
+
+		this.renderer.removeChild(container, testLabel);
+		return labelWidth;
 	}
 
 	private getTagWidth(badgeText: string) {

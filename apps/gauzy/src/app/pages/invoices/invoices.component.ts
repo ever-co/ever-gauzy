@@ -847,11 +847,17 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	 * `selectInvoice`, not as an ISO string, so it goes through `new Date` first
 	 * rather than moment's (deprecated) free-form string parser.
 	 *
+	 * A record with no usable date renders nothing rather than moment's literal
+	 * "Invalid date": the line is a subtitle beside the author's name, and a blank
+	 * one reads as "no timestamp" while that string reads as a broken comment. The
+	 * tooltip beside it is already empty in the same case.
+	 *
 	 * @param createdAt - the history record's creation date
-	 * @returns a humanised, locale-aware distance from now
+	 * @returns a humanized, locale-aware distance from now, or an empty string
 	 */
 	commentTimeAgo(createdAt: string | Date): string {
-		return moment(new Date(createdAt)).fromNow();
+		const parsed = new Date(createdAt);
+		return isNaN(parsed.getTime()) ? '' : moment(parsed).fromNow();
 	}
 
 	/**

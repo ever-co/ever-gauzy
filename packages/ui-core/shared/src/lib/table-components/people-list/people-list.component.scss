@@ -39,7 +39,15 @@
 	//
 	// Padding only: the "no box" treatment this file is built around is
 	// untouched, and the cell simply costs the row what a chip costs it.
-	padding-block: var(--gauzy-people-chip-padding-y, 0.25rem);
+	//
+	// TABLE GROUPS ONLY. The inset exists to make a cell cost a table row exactly
+	// what a chip cell beside it costs — there is no such row to match in a member
+	// CARD, where `[wrap]="true"` puts this group on several lines inside content
+	// that is already padded, and the 0.5rem would only be blank space added to
+	// the card.
+	&:not(.is-wrapped) {
+		padding-block: var(--gauzy-people-chip-padding-y, 0.25rem);
+	}
 
 	// Cards have room for several lines; grid cells do not.
 	&.is-wrapped {
@@ -109,7 +117,16 @@
 	// a photo, an initials bubble and the `+N` chip below all carry comparable
 	// weight. It is a registered token in every theme and adapts with each.
 	background-color: nb-theme(color-primary-transparent-100);
-	color: nb-theme(text-primary-color);
+	// The LETTERS are basic text, not `text-primary-color`. The fill is the brand
+	// colour at 8-10% alpha, so a brand-coloured glyph on it is that colour on
+	// very nearly the card behind it: in material-dark that is #e91d63 on #1f1f1f,
+	// about 3.8:1, and these initials are the smallest type in the component
+	// (`gauzy-people-initials-font-size`, 9px) — the one place in the cell that
+	// can least afford it. `text-basic-color` is the highest-contrast text token
+	// every theme registers and is what the names beside these bubbles already
+	// use, so it clears 4.5:1 at both ends of the range. The tint still does the
+	// identifying; it never had to do the reading as well.
+	color: nb-theme(text-basic-color);
 	text-decoration: none;
 
 	img {
@@ -153,7 +170,10 @@
 	// the group, the loudest. Still distinguishable, because it is a count and
 	// not a person.
 	background-color: nb-theme(color-primary-transparent-200);
-	color: nb-theme(text-primary-color);
+	// Basic text for the same reason as the initials above, and at the same 9px:
+	// one step more fill does not buy a brand-coloured glyph the contrast it is
+	// short of. What separates this chip from a person is still the stronger tint.
+	color: nb-theme(text-basic-color);
 	font-size: nb-theme(gauzy-people-initials-font-size);
 	font-weight: 600;
 	cursor: default;

@@ -27,8 +27,14 @@
   margin-bottom: 0;
   // Transparent, not `gauzy-card-1`: that is the page surface's own fill, and
   // painting it again per row is what made each expense read as a separate card.
-  // The `!important` went with it — nothing competes for this any more.
-  background-color: transparent;
+  //
+  // `!important` STAYS, and not for the reason the old `gauzy-card-1` carried it.
+  // `nb-overrides()` paints `.setting-block` `background-basic-color-2` with
+  // `!important` of its own (_overrides.scss), and that rule is global — no
+  // encapsulation attribute to out-rank, and `!important` beats any specificity
+  // this component can reach from inside. Drop it here and every row goes back to
+  // being a filled card, which is the whole thing this block undoes.
+  background-color: transparent !important;
 
   .setting-row {
     display: flex;

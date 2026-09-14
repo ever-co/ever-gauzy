@@ -26,7 +26,29 @@ div {
   // text instead of framing it. As a floor it still guarantees a uniform pill
   // down the column when a status string is unusually short.
   min-height: var(--gauzy-table-badge-height, 1.25rem);
-  padding-block: var(--gauzy-table-badge-padding-y, 0.1875rem);
+  // The inset is what the box has LEFT after the text, not a figure of its own —
+  // and that is the whole point. `--gauzy-table-badge-height` is the contract
+  // ("a status pill costs a row exactly one line box and no more"), but
+  // `min-height` is a floor and cannot hold a ceiling: a flat
+  // `--gauzy-table-badge-padding-y` on top of the line below added up to more
+  // than the token on every page that sets `density-tokens()` — 0.8125rem of line
+  // plus 2 × 0.1875rem came to 19px inside a 16px contract, so a status column
+  // stood ~3px taller than the plain-text columns next to it and set the height
+  // of the row.
+  //
+  // Derived, so the pill lands ON the contract in both worlds instead of near it:
+  // 16px on a density page, 20px on the app-wide defaults, text centred in either
+  // by the `align-items` above. Should a caller ever set a line TALLER than the
+  // box, the difference goes negative and CSS clamps a negative `calc()` on
+  // `padding` to zero, so the pill simply grows off `min-height` instead.
+  //
+  // `--gauzy-table-badge-padding-y` is deliberately NOT read here. It stays for
+  // the badge-shaped boxes that pin no height of their own (Tasks, Help Center,
+  // the pipeline stage chips), which is where a free-standing inset still means
+  // something; this component is the one the height contract is written for.
+  padding-block: calc(
+    (var(--gauzy-table-badge-height, 1.25rem) - var(--gauzy-table-header-line-height, 0.9375rem)) / 2
+  );
   // The horizontal inset is the chips' own, so a status pill and a tag chip in
   // adjacent columns hold their text at the same distance from the edge. It only
   // shows when a cell is narrow enough for the pill to hug its text — the

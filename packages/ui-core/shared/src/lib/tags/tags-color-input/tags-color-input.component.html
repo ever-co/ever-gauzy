@@ -30,7 +30,13 @@
       </div>
     </ng-template>
     <ng-template ng-multi-label-tmp let-tags="selectedTags" let-clear="clear">
-      @if (!!noOfTagsFits) {
+      <!--
+        `selectedTagsOverflow`, not `noOfTagsFits`. The count is 0 both before the
+        first measurement and when nothing fits, and those two want opposite
+        branches: unmeasured means "render them all", nothing-fits means "render
+        one and say how many are hidden". Only the overflow flag tells them apart.
+      -->
+      @if (selectedTagsOverflow) {
         @for (
           item of selectedTags
           | slice : 0 : noOfTagsFits || selectedTags.length

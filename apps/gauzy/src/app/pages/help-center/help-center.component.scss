@@ -400,7 +400,16 @@ h6 {
 // The author avatars, at the people scale the rest of the app's rows use. Same
 // selector as the block higher up in this file (which pinned 24px), so it is
 // source order that settles it.
+//
+// `.image-container` AND the image: the container is what RESERVES the space, and
+// avatar.component.scss sizes it on its own (`size="sm"` in the template, so a
+// 32px box). Shrinking only the picture left each author sitting in a 32px slot
+// holding a 20px image — 12px of empty gutter before the name, on every avatar in
+// the row. `!important` for the same reason the image line carries it: the rules
+// being overridden nest under the avatar's `:host`, which shims to (0,4,0), and
+// this block reaches them from outside at (0,2,1).
 :host ::ng-deep ngx-avatar {
+  .image-container,
   img {
     height: var(--gauzy-people-avatar-size, 1rem) !important;
     width: var(--gauzy-people-avatar-size, 1rem) !important;

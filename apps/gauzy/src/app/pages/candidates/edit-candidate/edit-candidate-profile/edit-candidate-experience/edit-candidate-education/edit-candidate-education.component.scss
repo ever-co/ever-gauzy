@@ -63,7 +63,14 @@ form {
 // Candidates list it is opened from: density tokens, the table surface, row
 // hover/selection, the tag-chip stack, the status pills and the pager.
 //
-// `$actions: null`: the buttons on this tab belong to its FORM (Save, Cancel)
-// and are full-size by design — the mixin's button block is written for the
-// compact list toolbar, which this tab does not have.
-@include ga-hub.list-page(null);
+// The default `$actions` (`nb-card-header`), where this used to pass `null` on
+// the grounds that the tab had no compact toolbar. It has one: the header holds
+// `ngx-gauzy-button-action` unconditionally — Add, the layout selector, and the
+// Edit / Delete group in table mode — every button of it `size="small"`, which is
+// the exact row the mixin's button block is written for. `null` left that row at
+// full size over rows that had just been compacted.
+//
+// The add FORM is in this header too, but its Save and Cancel take no `size`, so
+// they are medium; `page-header-buttons()` only redefines the small-button and
+// icon-button-small tokens, and reaches neither.
+@include ga-hub.list-page();

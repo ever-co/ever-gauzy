@@ -79,10 +79,6 @@
   ::ng-deep .table-scroll-container {
     flex-grow: 10;
     max-height: unset;
-    angular2-smart-table table tr td {
-      vertical-align: top !important;
-      //border-bottom: 20px solid var(--gauzy-border-table);
-    }
   }
 }
 
@@ -203,6 +199,22 @@ nb-tabset {
 
 :host ::ng-deep angular2-smart-table {
   @include ga-hub.rows();
+}
+
+// The one place this page departs from the contract, stated once instead of
+// fought over. `rows()` centres body cells, which is right for a table of
+// one-line values; this one has two columns at 15 % / 85 %, and the wide one
+// renders `JobTitleDescriptionDetailsComponent` — a title, a description and a
+// meta line, several times the height of the employee chip beside it. Centred,
+// that chip floats halfway down an otherwise empty column.
+//
+// This used to live at the top of the file as `table tr td { vertical-align: top
+// !important }`, which silently beat the mixin: the include read as if the
+// density contract governed here and the declaration it emits was dead on
+// arrival. Same selector as the mixin's now, emitted after it, so source order
+// settles it and the `!important` is gone.
+:host ::ng-deep angular2-smart-table tbody tr > td {
+  vertical-align: top;
 }
 
 :host ::ng-deep {

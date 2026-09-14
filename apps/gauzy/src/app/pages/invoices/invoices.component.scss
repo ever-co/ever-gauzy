@@ -1252,6 +1252,36 @@ a.comment-author {
     padding-inline: 0;
   }
 
+  // ── The one control that did not obey that ─────────────────────────────────
+  // `_overrides.scss` floors every `nb-select` trigger at `--select-min-width`
+  // (6rem) with an `!important`, globally. A column only gets that wide once the
+  // row has ~830px to spend (8 x 6rem + 7 x 0.5rem), and the row does not wrap
+  // until 768px — so from 768px to about 850px the Status trigger held a 96px
+  // floor inside an ~80px column and hung out past the accordion, taking the
+  // fields beside it with it.
+  //
+  // Unset rather than lowered: the premise of the row is that the eight columns
+  // divide the line evenly and shrink together, and a floor on one of them is the
+  // one thing that cannot hold. This is the same treatment `_overrides.scss`
+  // itself applies to selects inside `.card-scroll`; `!important` plus the
+  // specificity this block already carries is what reaches past the global rule.
+  ::ng-deep nb-select .select-button {
+    min-width: 0 !important;
+
+    // Nebular gives the button `text-overflow: ellipsis`, but `[nbButton]` is an
+    // `inline-flex` container, so that applies to nothing — the label is a child
+    // `<span>`, and a flex item will not shrink below its content unless it is
+    // told it may. Without the pair, a status name at an eighth of the card is
+    // cut off mid-glyph by the button's own `overflow: hidden`. Same treatment
+    // the `ng-select` triggers in this row get below.
+    > span {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
   // ── The labels, so the controls under them start at one height ─────────────
   // Every label in the row is pinned to the same type size, line box and bottom
   // margin. Two of the eight are drawn by child components (`ga-currency`,

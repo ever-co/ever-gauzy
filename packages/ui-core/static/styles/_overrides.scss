@@ -1298,20 +1298,33 @@ nb-card-body {
     }
   }
 
+  // The body box's four corners, logical for the same reason its four edges are:
+  // `td:first-child` is the table's RIGHT edge under `dir=rtl`, so a physical
+  // `border-top-left-radius` there rounds the corner opposite the border it is
+  // meant to finish — a rounded corner with no edge on one side of the table and
+  // a square corner with two edges meeting on the other.
+  //
+  // The mapping is the one the edges already use: block-start/-end for the first
+  // and last row, inline-start/-end for the first and last cell. In LTR these
+  // resolve to exactly the four physical corners that were here before.
+  //
+  // (The header's radii above are a `border-radius` SHORTHAND, which has no
+  // logical form, and its edges are still physical — the pair is at least
+  // consistent with itself, and is left alone here rather than half-fixed.)
   tr:first-child td:first-child {
-    border-top-left-radius: var(--border-radius);
+    border-start-start-radius: var(--border-radius);
   }
 
   tr:first-child td:last-child {
-    border-top-right-radius: var(--border-radius);
+    border-start-end-radius: var(--border-radius);
   }
 
   tr:last-child td:first-child {
-    border-bottom-left-radius: var(--border-radius);
+    border-end-start-radius: var(--border-radius);
   }
 
   tr:last-child td:last-child {
-    border-bottom-right-radius: var(--border-radius);
+    border-end-end-radius: var(--border-radius);
   }
 
   tbody:before {

@@ -66,16 +66,16 @@
   font-weight: 600;
 }
 
-:host > div > div:last-child {
+// `:nth-child(2)`, not `:last-child`. The template now emits the description
+// element only when the stage has one (a `display: none` on `:empty` used to do
+// that job, which leant on a zero-length interpolation text node still counting
+// as empty and did nothing at all for a whitespace-only description). With the
+// node genuinely absent, the NAME is both first and last child, and a
+// `:last-child` rule at this same specificity would come after the `:first-child`
+// one above and paint every description-less stage muted and unbolded.
+:host > div > div:nth-child(2) {
   flex: 1 1 auto;
   max-width: 12rem;
   font-weight: 400;
   color: var(--gauzy-text-color-2, var(--text-hint-color));
-}
-
-// Most stages carry no description, and the template emits the element anyway.
-// Left visible it is an empty flex item holding the chip's 0.25rem gap open on
-// its trailing edge, so a chip with no description sat wider than its text.
-:host > div > div:empty {
-  display: none;
 }

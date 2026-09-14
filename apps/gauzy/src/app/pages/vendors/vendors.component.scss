@@ -181,7 +181,12 @@
 // gutter could be added to these columns from a stylesheet at ANY specificity:
 // the website's ellipsis ended one pixel before the first tag chip began, and
 // "Phone" and "Email" were two headings with nothing between them. The template
-// drops `p-0`, which is what lets the grid's own `--bs-gutter-x` apply.
+// drops `p-0`, which is what lets the grid's own COLUMN PADDING apply: on
+// Bootstrap 4.6 (this app's version) a `.col-*` carries a fixed 15px either side
+// and the `.row` pulls the outer pair back with a -15px margin. There is no
+// gutter custom property to reach for here — `--bs-gutter-x` is Bootstrap 5 — so
+// the value is the framework's and is changed by overriding the padding, not by
+// setting a variable.
 //
 // A hand-written `padding-inline: 0 1rem` pair used to sit here in its place. It
 // is gone: a literal that had to be kept in step by eye with the row's own
