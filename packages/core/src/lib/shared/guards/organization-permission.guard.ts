@@ -4,7 +4,6 @@ import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
-import { verify } from 'jsonwebtoken';
 import camelcase from 'camelcase';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
@@ -47,14 +46,21 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 		let isAuthorized: boolean = false;
 
-		// Check user authorization
-		const token = RequestContext.currentToken();
+		// Authorize from the request's DB-fresh user, not from the bearer token's claims. The `role`
+		// claim is frozen at issuance, so decoding it here meant a user demoted TO employee kept taking
+		// the permissive non-employee branch below (and a demoted super admin kept the short-circuit)
+		// for the token's whole lifetime. `employeeId` is the claim JwtStrategy already validated
+		// against the database before attaching it.
+		const user = RequestContext.currentUser();
 
-		const { id, role, employeeId } = verify(token, env.JWT_SECRET) as {
-			id: string;
-			role: string;
-			employeeId: string;
-		};
+		// No authenticated caller means no verdict can be reached: deny.
+		if (!user) {
+			return false;
+		}
+
+		const id = user.id;
+		const role = RequestContext.currentRoleName();
+		const employeeId = user.employeeId;
 
 		// Check if super admin role is allowed from the .env file
 		if (env.allowSuperAdminRole && RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])) {

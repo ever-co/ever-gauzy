@@ -70,7 +70,7 @@ export { CreateEntitySubscriptionEvent } from './lib/entity-subscription/events/
 export { FeatureModule } from './lib/feature/feature.module';
 export { FeatureService } from './lib/feature/feature.service';
 export { FeatureOrganizationService } from './lib/feature/feature-organization.service';
-export { RoleModule, RoleService } from './lib/role';
+export { RoleAuthorizationService, RoleModule, RoleService } from './lib/role';
 export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
 export * from './lib/tenant';
 export { UserModule, UserService } from './lib/user';
