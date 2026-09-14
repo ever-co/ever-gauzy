@@ -95,7 +95,7 @@ describe('JwtStrategy.validate', () => {
 	});
 
 	/**
-	 * GHSA-3cgp-wmrg-4fqg — deactivating or archiving an account is an offboarding control and must
+	 * GHSA-3cgp-wmrg-4fqg — deactivating or archiving an account is an off-boarding control and must
 	 * end the session on the next request, not whenever the token happens to expire.
 	 */
 	describe('deactivated and archived accounts (GHSA-3cgp-wmrg-4fqg)', () => {

@@ -52,7 +52,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			const user: IAuthenticatedUser = await this._authService.getAuthenticatedUser(id, thirdPartyId);
 
 			// A token outlives the account it was issued for. Deactivating or archiving a user is an
-			// offboarding / incident-response control, and it has to end the session on the NEXT request
+			// an off-boarding or incident-response control, and it has to end the session on the NEXT request
 			// rather than whenever the token happens to expire (up to JWT_TOKEN_EXPIRATION_TIME, 24h by
 			// default). These are the predicates `login()` and `getJwtAccessToken()` already apply at
 			// issuance, so no one who holds a token today is locked out by them.
