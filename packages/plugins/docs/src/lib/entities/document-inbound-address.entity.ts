@@ -136,6 +136,7 @@ export class DocumentInboundAddress extends TenantOrganizationBaseEntity impleme
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	webhookSecretHash?: string | null;
 
