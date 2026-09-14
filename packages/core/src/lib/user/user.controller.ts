@@ -19,6 +19,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { ID, IPagination, IUser, IUserUiPreferences, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
+import { RequestContext } from './../core/context';
 import { UUIDValidationPipe, ParseJsonPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
@@ -85,7 +86,16 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('/email/:email')
 	async findByEmail(@Param('email') email: string): Promise<IUser | null> {
-		return await this._userService.getUserByEmail(email);
+		// Scope the lookup to the CALLER'S tenant. ORG_USERS_VIEW authorizes reading the users of
+		// your own tenant, not of every tenant on the installation — the unscoped lookup that used
+		// to sit here answered for any address in the database and leaked a foreign tenant's user
+		// profile (id, tenantId, names, phone, username, avatar, last login) to anyone who could
+		// guess an email address.
+		//
+		// The contract is deliberately unchanged: a miss still resolves to `null` with a 200, which
+		// is what the invite-contact form's async validator in the Angular UI checks for. Within the
+		// tenant the endpoint behaves exactly as before.
+		return await this._userService.getUserByEmailInTenant(email, RequestContext.currentTenantId());
 	}
 
 	/**

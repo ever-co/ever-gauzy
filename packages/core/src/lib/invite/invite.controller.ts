@@ -1,6 +1,5 @@
 import {
 	ICreateEmailInvitesOutput,
-	IInviteAcceptInput,
 	PermissionsEnum,
 	LanguagesEnum,
 	IOrganizationContactAcceptInviteInput,
@@ -46,6 +45,7 @@ import {
 	InviteResendCommand
 } from './commands';
 import {
+	AcceptInviteDTO,
 	CreateInviteDTO,
 	RejectInviteDTO,
 	ResendInviteDTO,
@@ -199,8 +199,13 @@ export class InviteController {
 	})
 	@Public()
 	@Post('/accept')
+	// This route is unauthenticated and its body reaches `AuthService.register()` — the shared
+	// user-creation sink — so the whitelist is what decides which columns an invitee can write.
+	// Its `/validate` and `/validate-by-code` siblings have always done this; `/accept`, the one
+	// that actually creates rows, was the route left without a pipe.
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async acceptInvitation(
-		@Body() entity: IInviteAcceptInput,
+		@Body() entity: AcceptInviteDTO,
 		@Headers('origin') origin: string,
 		@I18nLang() languageCode: LanguagesEnum
 	) {

@@ -42,6 +42,7 @@ import { wrap } from '@mikro-orm/core';
 import { HttpService } from '@nestjs/axios';
 import {
 	BadRequestException,
+	ForbiddenException,
 	Inject,
 	Injectable,
 	InternalServerErrorException,
@@ -55,7 +56,7 @@ import { Cache } from 'cache-manager';
 import { CommandBus } from '@nestjs/cqrs';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as moment from 'moment';
-import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
+import { DeepPartial, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
 import { AccessTokenService } from '../access-token/access-token.service';
 import { IAccessTokenMetadata } from '../access-token/type.token';
@@ -1188,6 +1189,62 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Builds the Employee row that `featureAsEmployee` asks for, from fields this function OWNS.
+	 *
+	 * The registration input used to be spread wholesale (`create({ ...input, user, tenant… })`).
+	 * `register()` is the shared sink for three public routes, so on the invite paths `input` IS the
+	 * request body — and TypeORM's `repository.create()` copies every non-virtual column it finds on
+	 * a plain object, the PRIMARY KEY included. A body of
+	 * `{ featureAsEmployee: true, id: "<a victim's employee uuid>" }` therefore produced an entity
+	 * carrying that id, and `save()` with a primary key present is an UPDATE: the victim's employee
+	 * row was re-pointed at the attacker's brand-new user (and at the invite's tenant and
+	 * organization), after which the issued JWT carried the victim's `employeeId`. The repository is
+	 * a plain `Repository<Employee>`, so none of the tenant-aware create guards applied.
+	 *
+	 * Listing the fields costs nothing on the legitimate path: `RegisterUserDTO` whitelists
+	 * `/auth/register` down to user / password / confirmPassword / organizationId / createdByUserId
+	 * / featureAsEmployee / terms, and `createdByUserId` is the only one of those that is an
+	 * Employee column at all.
+	 *
+	 * @param input The registration input.
+	 * @param user The user row that was just created — the employee is always attached to THAT user.
+	 * @param tenantId The trusted tenant.
+	 * @param organizationId The trusted organization.
+	 * @returns A payload that can only ever describe a new employee row.
+	 */
+	private buildEmployeeRegistrationPayload(
+		input: IUserRegistrationInput,
+		user: IUser,
+		tenantId: ID,
+		organizationId: ID
+	): DeepPartial<Employee> {
+		return {
+			user,
+			tenantId,
+			tenant: { id: tenantId },
+			organizationId,
+			organization: { id: organizationId },
+			// Already reduced to the authenticated caller (or deleted) in step 1.
+			...(input.createdByUserId ? { createdByUserId: input.createdByUserId } : {})
+		};
+	}
+
+	/**
+	 * Refuses an employee entity that already names an existing row.
+	 *
+	 * Registration only ever CREATES. `save()` on an entity that carries a primary key is an UPDATE,
+	 * so an id reaching this point means either a bug or a body field that found its way back into
+	 * the payload — neither is something to silently write over somebody else's record.
+	 *
+	 * @param employee The entity about to be persisted.
+	 */
+	private assertEmployeeRowIsNew(employee: { id?: ID }): void {
+		if (employee?.id) {
+			throw new ForbiddenException('Registration cannot modify an existing employee record');
+		}
+	}
+
+	/**
 	 * Shared method involved in
 	 * 1. Sign up
 	 * 2. Addition of new user to organization
@@ -1269,6 +1326,18 @@ export class AuthService extends SocialAuthService {
 			input.user.tenantId = tenant.id;
 		}
 
+		// 1.1 Decide whether this registration is allowed to mint an Employee profile at all.
+		//
+		// `featureAsEmployee` is a PRIVILEGED field: on `/auth/register` it requires an
+		// ADMIN/SUPER_ADMIN JWT (RegisterAuthorizationGuard). The invite routes reach this same
+		// function through the command bus, so that guard never runs for them — and they do not need
+		// the flag either: `InviteAcceptEmployeeHandler` and `InviteAcceptCandidateHandler` create
+		// the employee/candidate row themselves, from the invitation. Honouring a body-supplied flag
+		// here let an invitee of ANY role self-provision an employee profile with attacker-chosen
+		// `allowManualTime` / `allowModifyTime` / `allowDeleteTime` / `billRateValue` /
+		// `isTrackingEnabled`.
+		const featureAsEmployee = !!input.featureAsEmployee && !input.inviteId;
+
 		// 2. Register new user
 		let user: User;
 
@@ -1283,15 +1352,11 @@ export class AuthService extends SocialAuthService {
 				user = this.serialize(userEntity);
 
 				// 3. Create employee for specific user
-				if (input.featureAsEmployee) {
-					const empEntity = this.mikroOrmEmployeeRepository.create({
-						...input,
-						user: userEntity,
-						tenantId: tenant.id,
-						tenant: { id: tenant.id },
-						organizationId,
-						organization: { id: organizationId }
-					});
+				if (featureAsEmployee) {
+					const empEntity = this.mikroOrmEmployeeRepository.create(
+						this.buildEmployeeRegistrationPayload(input, userEntity, tenant.id, organizationId) as any
+					);
+					this.assertEmployeeRowIsNew(empEntity);
 					await this.mikroOrmEmployeeRepository.persistAndFlush(empEntity);
 				}
 
@@ -1319,17 +1384,12 @@ export class AuthService extends SocialAuthService {
 				user = await this.typeOrmUserRepository.save(entity);
 
 				// 3. Create employee for specific user
-				if (input.featureAsEmployee) {
-					await this.typeOrmEmployeeRepository.save(
-						this.typeOrmEmployeeRepository.create({
-							...input,
-							user,
-							tenantId: tenant.id,
-							tenant: { id: tenant.id },
-							organizationId,
-							organization: { id: organizationId }
-						})
+				if (featureAsEmployee) {
+					const employee = this.typeOrmEmployeeRepository.create(
+						this.buildEmployeeRegistrationPayload(input, user, tenant.id, organizationId)
 					);
+					this.assertEmployeeRowIsNew(employee);
+					await this.typeOrmEmployeeRepository.save(employee);
 				}
 
 				// 4. Email is automatically verified after accepting an invitation
