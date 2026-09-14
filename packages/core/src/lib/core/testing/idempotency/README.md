@@ -34,59 +34,70 @@ exactly the kind of side effect (row creation, outbound webhook) this task is ab
    `CleanupExpiredTokensHandler`/`CleanupInactiveTokensHandler` are idempotent by construction (both
    are conditional bulk `UPDATE`s scoped to `status = ACTIVE`), so a retried/redelivered cleanup job
    converges to the same end state and a retry affects zero additional rows.
-2. **Negative control / found gap** — `packages/core/src/lib/employee-notification/events/handlers/employee-notification.idempotency.spec.ts`:
-   `EmployeeCreateNotificationEventHandler` has **no** dedup guard at all. Redelivering the same
-   event creates a duplicate `EmployeeNotification` row every time. The spec documents this actual,
-   current behavior (a passing test asserting reality) rather than asserting the desired one — it
-   does **not** fix it.
+2. **Found gap, fixed** — `packages/core/src/lib/employee-notification/events/handlers/employee-notification.idempotency.spec.ts`:
+   `EmployeeCreateNotificationEventHandler` had **no** dedup guard at all; redelivering the same
+   event created a duplicate `EmployeeNotification` row every time. Fixed in
+   `EmployeeNotificationService.create()` — before creating, it looks up an existing notification
+   for the same `(receiverEmployeeId, entity, entityId, type)` and returns that instead of inserting
+   again (mirrors the existing-subscription check already used in
+   `ZapierWebhookService.createSubscription`). A second test confirms this doesn't over-dedupe: a
+   later event about a *different* entity still creates its own notification.
+3. **Found gap, fixed** — `packages/plugins/integration-zapier/src/lib/handlers/zapier-timer-started.handler.idempotency.spec.ts`:
+   `ZapierWebhookService.notifyTimerStatusChanged` had the identical shape of gap as (2), but the
+   side effect is an **outbound HTTP POST to a third-party system** rather than an internal DB row —
+   a higher-consequence version of the same bug, since a duplicate delivery is visible to, and can be
+   acted on twice by, something outside this codebase's control. Fixed with an in-process,
+   time-windowed delivery-dedup cache keyed on `(subscription.id, action, timeLog.id)`, checked
+   before each POST and only marked once a delivery actually succeeds (a failed attempt is never
+   suppressed — it must stay free to retry). See the spec/service files for why this is
+   intentionally in-process-only (protects against the redelivery scenario that's actually reachable
+   today — an in-process CQRS event — not a distributed queue's at-least-once delivery).
 
-## Found but NOT covered by an automated test in this PR: Zapier/Make.com/Sim webhook duplication
+Getting (3) into a committed spec at all required unblocking a separate, pre-existing testability
+gap: `packages/plugins/integration-zapier` had **no working path to unit-test anything that imports
+`@gauzy/core`**. That package's `tsconfig.json` sets `strict: true,
+noPropertyAccessFromIndexSignature: true` (stricter than `packages/core`'s own settings, and
+stricter than other plugins with existing `@gauzy/core`-importing specs, e.g.
+`packages/plugins/ai-chat`, `packages/plugins/docs`, both `strict: false`). Under ts-jest, importing
+anything that transitively reaches `packages/core/src/lib/bootstrap/index.ts` (which every
+`@gauzy/core` barrel import does) re-type-checked that file under the CONSUMING package's stricter
+settings and failed on ~5 plain `process.env.X` accesses unrelated to this task. Fixed at the
+test-tooling layer only (`packages/plugins/integration-zapier/jest.config.ts` +
+`tsconfig.spec.json`): `isolatedModules: true` on the ts-jest transform (transpile per-file instead
+of type-checking the whole program — the same reason `@gauzy/core`'s own bootstrap doesn't need to
+satisfy a downstream consumer's stricter flags) plus the same `transformIgnorePatterns` +
+`allowJs: true` `packages/core/jest.config.ts`/`tsconfig.spec.json` already needed for the ESM-only
+deps (`uuid`, ...) reached through `@gauzy/core`'s entity graph. No production code touched by this
+part of the fix.
 
-`ZapierTimerStartedHandler` → `ZapierWebhookService.notifyTimerStatusChanged`
-(`packages/plugins/integration-zapier/src/lib/handlers/zapier-timer-started.handler.ts`) has the
-identical shape of gap as (2) above, but the side effect is an **outbound HTTP POST to a
-third-party system** rather than an internal DB row — a higher-consequence version of the same
-bug, since a duplicate delivery is visible to, and can be acted on twice by, something outside this
-codebase's control. The structurally identical `integration-make-com` and `integration-sim` timer
-handlers share the same gap.
-
-This was NOT turned into a committed spec because **`packages/plugins/integration-zapier` currently
-has no working path to unit-test anything that imports `@gauzy/core`**: that package's
-`tsconfig.json` sets `strict: true, noPropertyAccessFromIndexSignature: true` (stricter than
-`packages/core`'s own settings, and stricter than other plugins with existing `@gauzy/core`-importing
-specs, e.g. `packages/plugins/ai-chat`, `packages/plugins/docs`, both `strict: false`). Under
-ts-jest, importing anything that transitively reaches `packages/core/src/lib/bootstrap/index.ts`
-(which every `@gauzy/core` barrel import does) re-type-checks that file under the CONSUMING
-package's stricter settings and fails on ~5 plain `process.env.X` accesses that violate
-`noPropertyAccessFromIndexSignature` — unrelated to anything this task changed, and not confidently
-scoped to "just those 5 lines" without checking the rest of that module's large transitive import
-graph (`AppModule`, `BootstrapModule`, the full Nest app wiring) for the same issue. Fixing the
-zapier package's testability (either relaxing its test-time tsconfig or auditing/fixing
-`bootstrap/index.ts` for index-signature safety) is real, valuable, and separately scoped — not
-folded into this test-only task.
+The structurally identical `integration-make-com` and `integration-sim` timer handlers share the
+same webhook-duplication gap and are **not** fixed here — see Known gaps below.
 
 ## Verification
 
 - `token-cleanup.idempotency.spec.ts`: 3/3 passing (a converge test + an explicit "retry affects
   zero rows" test per handler).
-- `employee-notification.idempotency.spec.ts`: 1/1 passing, confirming (via a real duplicate
-  `EmployeeCreateNotificationEventHandler.handle()` call) that two identical rows are created for
-  one logical event.
+- `employee-notification.idempotency.spec.ts`: 2/2 passing — a redelivered event creates exactly one
+  row, and a later event about a different entity still creates its own.
+- `zapier-timer-started.handler.idempotency.spec.ts`: 2/2 passing — a redelivered event sends
+  exactly one webhook, and a different timeLog's event still gets its own delivery. (This test
+  failed with 2 calls before the fix, confirming it actually catches the gap.)
 - `idempotency.assertions.spec.ts`: 4/4 passing, proving both helpers detect a genuinely
   non-idempotent job (not just a job that happens to converge trivially).
-- Full `core` suite re-run after these additions: no regressions.
+- Full `core` suite (679/679) and the `integration-zapier` plugin suite re-run after these changes:
+  no regressions.
 
 ## Known gaps / follow-ups
 
-- Fix the two found gaps: add a dedup guard to `EmployeeCreateNotificationEventHandler` (e.g. a
-  unique constraint or an "already notified for this input" lookup) and to the Zapier/Make.com/Sim
-  webhook handlers (e.g. a delivery-dedup key derived from `(subscription.id, timeLog.id, action)`
-  checked before each POST). Neither fix is in this PR — see the notes above.
-- Resolve `integration-zapier`'s testability blocker so the Zapier case above can get a real,
-  committed regression test.
+- `integration-make-com` and `integration-sim` have the identical webhook-duplication shape as the
+  Zapier case and are not fixed — same delivery-dedup pattern should be applied there.
 - This is an in-process-only first slice. A real BullMQ/Redis queue-redelivery scenario (the
   `docs-processing` pipeline, `TokenCleanupWorker`'s BullMQ wrapper itself) is deferred — those
   already have partial self-built idempotency (deterministic `jobId`s, chained-id suffixes) and
   would need either real Redis or a fairly involved BullMQ-internals mock to genuinely exercise
   "the queue redelivers this job," which is exactly the extra infrastructure cost this first slice
   was scoped to avoid.
+- The Zapier webhook dedup cache is in-process/in-memory only (see the service's own comment): it
+  does not survive a restart and is not shared across horizontally-scaled instances. Good enough for
+  the reachable-today redelivery scenario (an in-process CQRS event), not a substitute for a
+  persistent delivery-log if this ever moves onto a real retryable queue.
