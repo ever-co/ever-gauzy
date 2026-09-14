@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EntityMetadata } from 'typeorm';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../context';
@@ -151,6 +151,18 @@ describe('assertSensitiveRelationsAllowed', () => {
 			(RequestContext.currentRequestContext as unknown as jest.SpyInstance).mockReturnValue(undefined);
 
 			expect(() => assertSensitiveRelationsAllowed(TAG(), ['organization.payments'])).not.toThrow();
+		});
+
+		it('does not let a structure nested past the depth bound smuggle a relation past the walk', () => {
+			// `Organization.tags` ↔ `Tag.organization` is a real cycle, so an attacker can chain hops
+			// until the canonicalization gives up and hang `payments` off the far end. Giving up must
+			// refuse the read, not wave the deeper hops through while the ORM joins them.
+			let relations: unknown = { payments: { invoice: 'x' } };
+			for (let i = 21; i > 0; i--) {
+				relations = { [i % 2 === 1 ? 'organization' : 'tags']: relations };
+			}
+
+			expect(() => assertSensitiveRelationsAllowed(TAG(), relations)).toThrow(BadRequestException);
 		});
 
 		it('does not let a prototype-polluting key smuggle a relation past the walk', () => {

@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { canonicalizeFindOptionsRelations, normalizeRelationsToPaths } from './utils';
 
 /**
@@ -104,14 +105,35 @@ describe('normalizeRelationsToPaths', () => {
 			expect(normalizeRelationsToPaths([])).toEqual([]);
 		});
 
-		it('does not blow the stack on a pathologically nested payload', () => {
+		it('refuses a pathologically nested payload instead of blowing the stack', () => {
 			let payload: any = true;
 			for (let i = 0; i < 5000; i++) {
 				payload = { organization: payload };
 			}
 
-			expect(() => normalizeRelationsToPaths(payload)).not.toThrow();
-			expect(normalizeRelationsToPaths(payload)[0]).toBe('organization');
+			expect(() => normalizeRelationsToPaths(payload)).toThrow(BadRequestException);
+		});
+
+		it('refuses — rather than truncates — a structure nested past the depth bound', () => {
+			// Truncating fails OPEN: the paths past the bound are dropped from the check while TypeORM
+			// still joins the structure it was handed. `organization` and the back-relation every
+			// `TenantOrganizationBaseEntity` carries form a cycle, so an attacker can chain real hops
+			// (`organization.tags.organization.tags…`) until the bound is reached and hang `payments`
+			// off the far end. A depth the canonicalization cannot walk must be a refusal.
+			const deep = (hops: number): unknown => {
+				let node: unknown = { payments: { invoice: 'x' } };
+				for (let i = hops; i > 0; i--) {
+					node = { [i % 2 === 1 ? 'organization' : 'tags']: node };
+				}
+				return node;
+			};
+
+			// Within the bound the protected leaf is still offered to the check.
+			expect(normalizeRelationsToPaths(deep(3))).toContain('organization.tags.organization.payments');
+
+			// Past it, the whole structure is refused rather than silently shortened.
+			expect(() => normalizeRelationsToPaths(deep(21))).toThrow(BadRequestException);
+			expect(() => canonicalizeFindOptionsRelations(deep(21))).toThrow(BadRequestException);
 		});
 	});
 });

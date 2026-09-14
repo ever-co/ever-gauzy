@@ -138,8 +138,15 @@ function isOrganizationEntity(metadata: EntityMetadata | undefined): boolean {
  * is mounted on 5 of the ~83 controllers that accept a client-supplied `relations` option — while
  * every entity extending `TenantOrganizationBaseEntity` exposes an `organization` relation. A single
  * unguarded controller is therefore enough to reach the very rows the table protects
- * (`GET /api/tags?relations[0]=organization.payments`), in the plain array form, with no bypass trick
- * at all. This function closes that at the sink so it cannot recur as controllers are added.
+ * (`GET /api/equipment/pagination?relations[0]=organization.payments` — no `@Permissions`, no
+ * interceptor, plain array form, no bypass trick at all). This function closes that at the sink so it
+ * cannot recur as controllers are added.
+ *
+ * NOTE the boundary: this covers the reads that go through `CrudService`. A service that builds its
+ * own `createQueryBuilder(...).setFindOptions({ relations })` — `TagService.findTags` (behind
+ * `GET /api/tags`), `CandidateService.pagination`, `OrganizationTeamService.findAll` and a handful of
+ * others — never reaches this function, and is protected only if its controller mounts the
+ * interceptor. Those call sites still need auditing; see GHSA-c3cj-m3xm-7j5h follow-ups.
  *
  * The walk advances over the entity graph rather than over the shape of the requested string, so a
  * relation is gated by WHICH entity it is loaded from: `Organization.payments` needs

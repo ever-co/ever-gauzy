@@ -484,6 +484,14 @@ const UNSAFE_FIND_OPTION_SEGMENTS = new Set(['__proto__', 'prototype', 'construc
  * The bound exists only to keep a hostile payload (a body nested thousands of levels deep) from
  * exhausting the stack; no real entity graph — and no entry in a sensitive-relation config — comes
  * anywhere near it, and TypeORM itself rejects a path whose hops do not exist.
+ *
+ * Exceeding it is REFUSED rather than truncated. Truncating would hand the caller the paths collected
+ * so far while the ORM still joined the whole structure it was given — the relations past the bound
+ * would be loaded without ever being offered to a permission check. Since `organization` and the
+ * back-relation every `TenantOrganizationBaseEntity` carries form a cycle
+ * (`organization.tags.organization.tags…`), an attacker can chain real hops until the bound is
+ * reached and hang a protected relation off the far end, so "too deep to check" must mean "refused",
+ * not "allowed".
  */
 const MAX_RELATION_PATH_DEPTH = 20;
 
@@ -523,9 +531,18 @@ function appendRelationPath(prefix: string, fragment: string, paths: Set<string>
  * @param prefix - The canonicalized path of the parent key (`''` at the root).
  * @param paths - The accumulator every emitted path is added to.
  * @param depth - The current recursion depth.
+ * @throws BadRequestException when the structure nests deeper than {@link MAX_RELATION_PATH_DEPTH}.
  */
 function collectRelationPaths(value: unknown, prefix: string, paths: Set<string>, depth: number): void {
-	if (value === null || value === undefined || depth > MAX_RELATION_PATH_DEPTH) {
+	// Fail closed: see MAX_RELATION_PATH_DEPTH. Returning the paths gathered so far would authorize a
+	// prefix of the request while the ORM joined all of it.
+	if (depth > MAX_RELATION_PATH_DEPTH) {
+		throw new BadRequestException(
+			`The 'relations' option may not nest deeper than ${MAX_RELATION_PATH_DEPTH} levels.`
+		);
+	}
+
+	if (value === null || value === undefined) {
 		return;
 	}
 
@@ -592,6 +609,8 @@ function collectRelationPaths(value: unknown, prefix: string, paths: Set<string>
  *
  * @param relations - The `relations` value in any of the shapes above.
  * @returns The de-duplicated dot-notated relation paths, including every prefix.
+ * @throws BadRequestException when the structure nests deeper than {@link MAX_RELATION_PATH_DEPTH};
+ *         a structure too deep to canonicalize is refused, never partially accepted.
  */
 export function normalizeRelationsToPaths(relations: unknown): string[] {
 	const paths = new Set<string>();
@@ -665,6 +684,7 @@ export function stringArrayToFindOptionsObject(paths: readonly string[]): Record
  *
  * @param relations - The `relations` value in any representation.
  * @returns The canonical object form, or `undefined` when no `relations` value was supplied.
+ * @throws BadRequestException when the structure nests deeper than {@link MAX_RELATION_PATH_DEPTH}.
  */
 export function canonicalizeFindOptionsRelations<T = unknown>(relations: unknown): FindOptionsRelations<T> | undefined {
 	if (relations === null || relations === undefined) {
