@@ -1,33 +1,96 @@
+import { ID } from './base-entity.model';
+
 export interface IAccessTokenDto {
 	requestToken: string;
 	requestTokenSecret?: string;
 	verifier: string;
 }
 
+/**
+ * Result of exchanging an OAuth 1.0a request token for an Upwork access token.
+ *
+ * The minted `accessToken` / `accessTokenSecret` pair is persisted as integration settings and is
+ * deliberately NOT part of this payload: the browser has no use for it, and returning it put live
+ * Upwork credentials into the Angular app's memory and into any log along the way
+ * (GHSA-3rqg-gpm9-gx84). Callers that need to talk to Upwork resolve the credentials server-side
+ * from `integrationId`.
+ */
 export interface IAccessToken {
-	integrationId: string;
-	accessToken: string;
-	accessTokenSecret: string;
+	integrationId: ID;
 }
 
+/**
+ * Result of starting the Upwork OAuth 1.0a handshake.
+ *
+ * `requestTokenSecret` is stored server-side and is never returned: it signs the access-token
+ * exchange, so it is credential material and has no client-side consumer (GHSA-3rqg-gpm9-gx84).
+ */
 export interface IAccessTokenSecretPair {
-	integrationId?: string;
-	organizationId?: string;
+	integrationId?: ID;
+	organizationId?: ID;
 	url: string;
 	requestToken: string;
-	requestTokenSecret?: string;
 	accessTokenSecret?: string;
 	accessToken?: string;
 }
 
+/**
+ * Non-secret view of an Upwork integration's stored API credentials.
+ *
+ * `GET /integrations/upwork/config/:integrationId` used to answer with the cleartext
+ * `accessToken` / `consumerKey` / `consumerSecret` / `accessSecret` quadruple, bypassing the
+ * `IntegrationSetting` masking that every other read of those settings goes through. The route now
+ * answers with this shape instead: enough for the UI to know the integration is usable, with the
+ * only remaining credential-derived field masked (GHSA-3rqg-gpm9-gx84).
+ */
+export interface IUpworkApiConfigStatus {
+	/** The integration whose credentials were resolved. */
+	integrationId: ID;
+	/** Whether a usable Upwork access token / secret pair is stored for this integration. */
+	hasAccessToken: boolean;
+	/** The stored consumer key, masked — an operator hint only, never usable as a credential. */
+	consumerKey?: string;
+}
+
+/**
+ * Query parameters for `GET /integrations/upwork/work-diary`.
+ *
+ * Carries the integration to read from, never the credentials to read it with: the server resolves
+ * those from `integrationId` within the caller's tenant and organization.
+ */
 export interface IGetWorkDiaryDto {
-	config: IUpworkApiConfig;
+	integrationId: ID;
+	organizationId: ID;
 	contractId: string;
 	forDate: Date;
 }
 
+/**
+ * Query parameters for `GET /integrations/upwork/freelancer-contracts`.
+ *
+ * Carries the integration to read from, never the credentials to read it with: the server resolves
+ * those from `integrationId` within the caller's tenant and organization.
+ */
 export interface IGetContractsDto {
-	config: IUpworkApiConfig;
+	integrationId: ID;
+	organizationId: ID;
+}
+
+/**
+ * Body of `POST /integrations/upwork/sync-contracts-related-data`.
+ *
+ * This used to carry the caller's `IUpworkApiConfig`, which meant the Angular app had to hold live
+ * Upwork credentials in memory and post them back to the API. The credentials are now resolved
+ * server-side from `integrationId` (GHSA-3rqg-gpm9-gx84).
+ */
+export interface IUpworkSyncContractsRelatedDataDto {
+	integrationId: ID;
+	organizationId: ID;
+	contracts: IEngagement[];
+	entitiesToSync: any[];
+	employeeId?: ID;
+	providerId?: string;
+	providerReferenceId?: string;
 }
 
 export interface IEngagement {
@@ -56,6 +119,13 @@ export interface IEngagement {
 	hourly_charge_rate: string;
 }
 
+/**
+ * The credential quadruple the Upwork SDK needs to sign an API call.
+ *
+ * 🛑 Server-internal only. It must never be accepted from, nor returned to, an API client — the
+ * server resolves it from the integration id inside the caller's tenant and organization. Use
+ * {@link IUpworkApiConfigStatus} for anything that crosses the wire.
+ */
 export interface IUpworkApiConfig extends IUpworkClientSecretPair {
 	accessToken: string;
 	accessSecret: string;
