@@ -174,6 +174,7 @@ export {
 	exportRedacted,
 	getExportRedactedProperties,
 	redactForExport,
+	ExportEntityClass,
 	IExportRedactOptions
 } from './lib/export-import/export-redact.decorator';
 export { ExpenseCreateCommand, ExpenseModule, ExpenseService } from './lib/expense';

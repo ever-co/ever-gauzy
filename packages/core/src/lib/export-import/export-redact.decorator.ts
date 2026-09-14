@@ -7,6 +7,14 @@ import { maskSecret } from '../core/decorators/is-secret';
 export const EXPORT_REDACT_METADATA = 'exportRedact';
 
 /**
+ * A class the export redaction marks can be read from.
+ *
+ * Spelled as a constructor type rather than `Function` so callers do not have to reach for the
+ * unsafe built-in when they narrow a value to the class it belongs to.
+ */
+export type ExportEntityClass = abstract new (...args: any[]) => unknown;
+
+/**
  * How a marked column is treated when a row is written into an export archive.
  */
 export interface IExportRedactOptions<T = any> {
@@ -80,7 +88,7 @@ export function ExportRedacted<T = any>(options: IExportRedactOptions<T> = {}): 
 			return;
 		}
 		// Property decorators on instance members receive the PROTOTYPE; the marks belong to the class.
-		defineExportRedactMark(target.constructor, propertyKey, options);
+		defineExportRedactMark(target.constructor as ExportEntityClass, propertyKey, options);
 	};
 }
 
@@ -95,7 +103,7 @@ export function ExportRedacted<T = any>(options: IExportRedactOptions<T> = {}): 
  * @param options - Redaction options, see {@link IExportRedactOptions}.
  */
 export function exportRedacted<T = any>(
-	entity: Function,
+	entity: ExportEntityClass,
 	property: string,
 	options: IExportRedactOptions<T> = {}
 ): void {
@@ -107,7 +115,7 @@ export function exportRedacted<T = any>(
 /**
  * Stores (or replaces) one mark in the entity class's OWN metadata.
  */
-function defineExportRedactMark(entity: Function, property: string, options: IExportRedactOptions): void {
+function defineExportRedactMark(entity: ExportEntityClass, property: string, options: IExportRedactOptions): void {
 	const own: IExportRedactMark[] = Reflect.getOwnMetadata(EXPORT_REDACT_METADATA, entity) ?? [];
 	const marks = [...own.filter((mark) => mark.property !== property), { ...options, property }];
 	Reflect.defineMetadata(EXPORT_REDACT_METADATA, marks, entity);
@@ -127,7 +135,7 @@ function defineExportRedactMark(entity: Function, property: string, options: IEx
  * @param entity - The entity class to inspect.
  * @returns The marks keyed by property name; empty when the entity carries none.
  */
-export function getExportRedactedProperties(entity: Function): Map<string, IExportRedactOptions> {
+export function getExportRedactedProperties(entity: ExportEntityClass): Map<string, IExportRedactOptions> {
 	const marks = new Map<string, IExportRedactOptions>();
 
 	if (!isFunction(entity)) {
@@ -135,7 +143,7 @@ export function getExportRedactedProperties(entity: Function): Map<string, IExpo
 	}
 
 	// Walk the constructor chain base-first so a subclass's mark overwrites the base's.
-	const chain: Function[] = [];
+	const chain: ExportEntityClass[] = [];
 	for (let cursor: any = entity; isFunction(cursor); cursor = Object.getPrototypeOf(cursor)) {
 		chain.unshift(cursor);
 	}
@@ -186,7 +194,7 @@ function isSecretValue(mark: IExportRedactOptions, row: unknown): boolean {
  * @param columns - Property names of the persisted columns. Omit to keep every own property.
  * @returns A plain object safe to hand to `csv-writer`.
  */
-export function redactForExport(entity: Function, row: object, columns?: Iterable<string>): Record<string, unknown> {
+export function redactForExport(entity: ExportEntityClass, row: object, columns?: Iterable<string>): Record<string, unknown> {
 	if (!isFunction(entity)) {
 		// Fail closed: an unknown entity class means unknown secrets, so refuse to write the row
 		// rather than write it in cleartext.

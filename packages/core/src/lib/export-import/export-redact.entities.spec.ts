@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { getMetadataArgsStorage } from 'typeorm';
 import { coreEntities } from '../core/entities';
 import { CustomSmtp, EmailReset, IntegrationSetting, Invite, TenantSetting, User } from '../core/entities/internal';
-import { getExportRedactedProperties, redactForExport } from './export-redact.decorator';
+import { ExportEntityClass, getExportRedactedProperties, redactForExport } from './export-redact.decorator';
 import { isExportSkipped } from './skip-export.decorator';
 
 /**
@@ -185,7 +185,7 @@ describe('export redaction of the real entity graph', () => {
 			// Every class reachable from the export graph, base classes included: a column declared
 			// on a base class carries `target` = that base class.
 			const reachable = new Set<Function>();
-			for (const entity of coreEntities as unknown as Function[]) {
+			for (const entity of coreEntities as unknown as ExportEntityClass[]) {
 				if (isExportSkipped(entity)) {
 					continue;
 				}
@@ -197,7 +197,7 @@ describe('export redaction of the real entity graph', () => {
 			const unmarked: string[] = [];
 
 			for (const column of getMetadataArgsStorage().columns) {
-				const target = column.target as Function;
+				const target = column.target as ExportEntityClass;
 				if (typeof target !== 'function' || !reachable.has(target)) {
 					continue;
 				}

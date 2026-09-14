@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import {
 	EXPORT_REDACT_METADATA,
+	ExportEntityClass,
 	ExportRedacted,
 	exportRedacted,
 	getExportRedactedProperties,
@@ -183,6 +184,6 @@ describe('ExportRedacted', () => {
 
 	it('refuses to project a row whose entity class is unknown', () => {
 		// Fail closed: not knowing which columns are secret must stop the write, not permit it.
-		expect(() => redactForExport(undefined as unknown as Function, { password: 'hunter2' })).toThrow(TypeError);
+		expect(() => redactForExport(undefined as unknown as ExportEntityClass, { password: 'hunter2' })).toThrow(TypeError);
 	});
 });

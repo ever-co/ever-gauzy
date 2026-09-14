@@ -10,7 +10,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { isFunction, isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
-import { redactForExport } from '../export-redact.decorator';
+import { ExportEntityClass, redactForExport } from '../export-redact.decorator';
 
 import { IColumnRelationMetadata, IRepositoryModel, RepositoriesService } from '../repositories/repositories.service';
 
@@ -247,7 +247,7 @@ export class ExportService {
 			);
 		}
 
-		return rows.map((row) => redactForExport(entity as Function, row as object, columns));
+		return rows.map((row) => redactForExport(entity as ExportEntityClass, row as object, columns));
 	}
 
 	/**
