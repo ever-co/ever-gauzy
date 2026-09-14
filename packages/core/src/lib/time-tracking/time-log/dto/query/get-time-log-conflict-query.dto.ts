@@ -40,12 +40,21 @@ export function toUtcDate({ value }: TransformFnParams): Date | undefined {
 /**
  * Normalises `ignoreId` into an array; the UI sends it as `ignoreId[0]=<uuid>`, other callers as a
  * bare value.
+ *
+ * An EMPTY result is reported as `undefined`, never as `[]`. `GetConflictTimeLogHandler` guards the
+ * exclusion with a plain `if (input.ignoreId)`, and an empty array is truthy: it would reach
+ * `NOT IN (:...id)`, which the drivers expand by joining the values — an empty list leaves
+ * `NOT IN ()` and the database rejects the statement. `?ignoreId=` used to be a falsy `''` that the
+ * handler simply skipped, so anything but `undefined` here would turn a harmless query into a 500.
  */
-export function toIdArray({ value }: TransformFnParams): ID[] {
+export function toIdArray({ value }: TransformFnParams): ID[] | undefined {
 	if (value === undefined || value === null || value === '') {
-		return [];
+		return undefined;
 	}
-	return (Array.isArray(value) ? value : [value]).filter((it) => it !== undefined && it !== null && it !== '');
+	const ids = (Array.isArray(value) ? value : [value]).filter(
+		(it) => it !== undefined && it !== null && it !== ''
+	);
+	return ids.length > 0 ? ids : undefined;
 }
 
 /**

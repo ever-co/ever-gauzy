@@ -84,6 +84,21 @@ describe('GET /timesheet/time-log/conflict is scoped and validated (GHSA-6qvm-3w
 			const result: any = await run(conflictQuery({ ignoreId: LOG_ID }));
 			expect(result.ignoreId).toEqual([LOG_ID]);
 		});
+
+		it.each([
+			['an empty ignoreId', ''],
+			['an ignoreId array with nothing usable in it', ['']]
+		])('leaves ignoreId UNDEFINED for %s, never an empty array', async (_label, ignoreId) => {
+			// `GetConflictTimeLogHandler` guards the exclusion with `if (input.ignoreId)`, and `[]`
+			// is truthy — it would reach `NOT IN (:...id)`, which the drivers expand by joining the
+			// values, leaving `NOT IN ()` for the database to reject. `?ignoreId=` used to be a
+			// falsy `''` the handler skipped, so an empty array here turns a harmless query into a
+			// 500.
+			const result: any = await run(conflictQuery({ ignoreId }));
+
+			expect(result.ignoreId).toBeUndefined();
+			expect(!!result.ignoreId).toBe(false);
+		});
 	});
 
 	describe('TimeLogService.getConflictTimeLogs', () => {

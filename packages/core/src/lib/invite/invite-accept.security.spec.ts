@@ -166,6 +166,16 @@ describe('POST /invite/accept cannot carry privileged fields into the sink (GHSA
 		])('rejects %s', async (_label, body) => {
 			await expect(run(body)).rejects.toMatchObject({ status: 400 });
 		});
+
+		it.each([
+			['firstName', { email: INVITED_EMAIL, token: 't', user: { firstName: { $ne: null } } }],
+			['lastName', { email: INVITED_EMAIL, token: 't', user: { lastName: [1, 2] } }]
+		])('rejects a non-string %s with a 400, not a 500 from inside the pipe', async (_label, body) => {
+			// A `@Transform` runs BEFORE any validator, so a trim that assumes a string turns a
+			// malformed field on this @Public() route into a raw TypeError — which leaves the pipe
+			// as a 500 with a stack trace instead of a validation error.
+			await expect(run(body)).rejects.toMatchObject({ status: 400 });
+		});
 	});
 
 	describe('InviteController route binding', () => {

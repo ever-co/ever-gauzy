@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, TransformFnParams, Type } from 'class-transformer';
 import {
 	ArrayNotEmpty,
 	IsArray,
@@ -13,8 +13,19 @@ import {
 	ValidateNested
 } from 'class-validator';
 import { IInviteAcceptInput, IUser, LanguagesEnum } from '@gauzy/contracts';
-import { Trimmed } from './../../shared/decorators/trim.decorator';
 import { TermsAcceptanceClaimDTO } from './../../terms-acceptance/dto';
+
+/**
+ * Null-safe counterpart of the shared `@Trimmed()` decorator, for an UNAUTHENTICATED route.
+ *
+ * `@Trimmed()` calls `.trim()` on whatever it is handed, and a `@Transform` runs inside the pipe
+ * BEFORE any validator does — so `{ "firstName": {} }` on this `@Public()` endpoint raised a raw
+ * `TypeError` and came back as a 500 with a stack trace rather than a 400. Non-strings are passed
+ * through untouched here so that `@IsString()` can reject them properly.
+ */
+export function trimOrNull({ value }: TransformFnParams): unknown {
+	return typeof value === 'string' ? value.trim() || null : value;
+}
 
 /**
  * The profile fields an invitee may set on the account the invitation creates.
@@ -33,12 +44,14 @@ import { TermsAcceptanceClaimDTO } from './../../terms-acceptance/dto';
 export class AcceptInviteUserDTO {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Trimmed()
+	@IsString()
+	@Transform(trimOrNull)
 	readonly firstName?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Trimmed()
+	@IsString()
+	@Transform(trimOrNull)
 	readonly lastName?: string;
 
 	@ApiPropertyOptional({ type: () => String })
