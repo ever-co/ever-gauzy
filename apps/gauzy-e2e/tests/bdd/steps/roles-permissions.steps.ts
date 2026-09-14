@@ -8,7 +8,9 @@ import * as rolesPermissionsPage from '../../support/pages/RolesPermissions.po';
 // re-exports ~167 modules, some of which pull in @gauzy/constants, and it only resolves once the
 // package has been compiled in place — neither is a precondition of running the e2e suite.
 // `role-permission.model.ts` has type-only imports, so it costs nothing at runtime.
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
+// eslint-disable-next-line @nx/enforce-module-boundaries -- stale `@nrwl/nx` rule id fixed (TASK 8):
+// the flat config (eslint.config.js) registers this rule as `@nx`, so the old id was silently not
+// suppressing anything.
 import { PermissionGroups, PermissionsEnum } from '../../../../../packages/contracts/src/lib/role-permission.model';
 
 /**
