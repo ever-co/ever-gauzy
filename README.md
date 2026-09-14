@@ -120,7 +120,7 @@ Ever Gauzy Platform Demo at <https://demo.gauzy.co>.
 
 Notes:
 
--   Default super-admin user login is `admin@ever.co` and the password is `admin`
+-   Default super-admin user login is `admin@ever.co` and the password is `admin`. These are DEMO / local-development credentials only: a production install must set `DEMO_SUPER_ADMIN_PASSWORD`, `DEMO_ADMIN_PASSWORD` and `DEMO_EMPLOYEE_PASSWORD` before its first boot, and the API refuses to seed without them.
 -   Content of demo DB resets on each deployment to the demo environment (usually daily)
 -   Demo environment deployed using CI/CD from the `develop` branch
 
@@ -207,9 +207,14 @@ Note: it's currently in Alpha version/testing mode, please use it cautiously!
 -   Login with email `employee@ever.co` and password: `12345678` for Employee user.
 -   Enjoy!
 
+Note: those credentials exist only because this stack runs with `DEMO=true`. They are NOT available in a production deployment — see below.
+
 #### Production
 
 -   Edit `.env.compose`: you **must** set `JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET` and `EXPRESS_SESSION_SECRET` to strong, unique values (e.g. `openssl rand -hex 64`). The API refuses to start on the shipped blank/default secrets — shared defaults let anyone forge authentication tokens and sessions. Adjust any other settings (e.g. DB type) there too.
+-   You **must** also set `DEMO_SUPER_ADMIN_PASSWORD`, `DEMO_ADMIN_PASSWORD` and `DEMO_EMPLOYEE_PASSWORD` (and optionally the matching `*_EMAIL` variables). The first boot against an empty database seeds a Super Admin, an Admin and an Employee from those variables, and their shipped defaults are documented right here in this README — so the API refuses to seed while they are unset or left at the defaults.
+-   Set `TRUST_PROXY` to the number of proxy hops in front of the API (`1` behind a single nginx/ingress) or to your trusted proxy CIDRs, so the login rate limiter counts against the real client address. Set `THROTTLE_TRUST_CF_CONNECTING_IP=true` only if every request reaches the API through Cloudflare.
+-   Set `REDIS_ENABLED=true` (with `REDIS_URL`, or `REDIS_HOST`/`REDIS_PORT`) when you run more than one API replica: rate-limit buckets are otherwise per-process, so the effective limit is multiplied by the replica count.
 -   Run `docker-compose up -d`, if you want to run the platform in minimal production configuration using our prebuilt Docker images. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 
 Note: we recommend using Kubernetes for production workloads instead of Docker Compose!
@@ -258,7 +263,7 @@ Together with Gauzy, the Docker Compose commands described above for Production 
 Notes:
 
 -   during the first API start, DB will be automatically seeded with a minimum set of initial data if no users are found.
--   you can run seed any moment manually (e.g. if you changed entities schemas) with the `yarn seed` command to re-initialize DB (warning: unsafe for production!).
+-   you can run seed any moment manually (e.g. if you changed entities schemas) with the `yarn seed` command to re-initialize DB (warning: unsafe for production!). The same default-credential check applies: with `NODE_ENV=production` and `DEMO != true` the seed refuses to run unless `DEMO_SUPER_ADMIN_PASSWORD` / `DEMO_ADMIN_PASSWORD` / `DEMO_EMPLOYEE_PASSWORD` are set to non-default values.
 -   it is possible to run generation of extremely large amounts of fake data for demo purposes/testing with `yarn seed:all` (warning: takes ~10 min to complete)
 
 #### Optional / Recommended for Production

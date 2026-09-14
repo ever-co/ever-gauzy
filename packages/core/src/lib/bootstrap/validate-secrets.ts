@@ -70,3 +70,108 @@ export function validateApplicationSecrets(): void {
 		);
 	}
 }
+
+/**
+ * Seeded accounts whose passwords ship with a publicly documented default value.
+ *
+ * `seedBasicDefaultData()` creates all three on the FIRST boot against an empty database,
+ * regardless of `DEMO` — so a deployment that followed the README's production instructions ended
+ * up with a fully privileged Super Admin (plus an Admin and an Employee) whose passwords are
+ * printed in that same README (GHSA-4r2r-mv32-3468).
+ */
+const KNOWN_DEFAULT_SEED_CREDENTIALS: ReadonlyArray<{ key: string; value: string; account: string }> = [
+	{ key: 'DEMO_SUPER_ADMIN_PASSWORD', value: 'admin', account: 'admin@ever.co (SUPER_ADMIN)' },
+	{ key: 'DEMO_ADMIN_PASSWORD', value: 'admin', account: 'local.admin@ever.co (ADMIN)' },
+	{ key: 'DEMO_EMPLOYEE_PASSWORD', value: '12345678', account: 'employee@ever.co (EMPLOYEE)' }
+];
+
+/**
+ * Resolves the password the seeder would actually use for one of the default accounts.
+ *
+ * Reads the live `environment.demoCredentialConfig` first — that is the object
+ * `DEFAULT_SUPER_ADMINS` / `DEFAULT_ADMINS` / `DEFAULT_EMPLOYEES` are built from, so it is the
+ * value that would really be hashed into the database — and falls back to `process.env` so a test
+ * or a tool that mutates the environment after the config module was evaluated still gets a
+ * truthful answer.
+ *
+ * @param key - The environment variable backing the account's password.
+ * @returns The effective password, trimmed.
+ */
+function resolveSeedPassword(key: string): string {
+	const credentials = (environment.demoCredentialConfig ?? {}) as Record<string, string | undefined>;
+	const fromConfig: Record<string, string | undefined> = {
+		DEMO_SUPER_ADMIN_PASSWORD: credentials.superAdminPassword,
+		DEMO_ADMIN_PASSWORD: credentials.adminPassword,
+		DEMO_EMPLOYEE_PASSWORD: credentials.employeePassword
+	};
+
+	return String(process.env[key] ?? fromConfig[key] ?? '').trim();
+}
+
+/**
+ * Validates that the accounts created by the default seed do not use their shipped passwords.
+ *
+ * Mirrors {@link validateApplicationSecrets} exactly:
+ * - always logs a prominent warning when a default is still in place (any environment);
+ * - additionally refuses to seed in a real production deployment (`NODE_ENV=production` and
+ *   `DEMO !== 'true'`), unless the operator opts out via `ALLOW_INSECURE_SEED_CREDENTIALS=true`.
+ *
+ * Exemptions, and why they are safe:
+ * - `DEMO=true` — the daily-reset demo is meant to be logged into with the documented credentials;
+ * - `IS_ELECTRON` — the desktop Gauzy Server spawns this API locally against a private database,
+ *   and the desktop README tells the user to sign in as `admin@ever.co`. Refusing to boot there
+ *   would break the desktop product without closing any network-reachable hole.
+ *
+ * Call this BEFORE the seeder touches the database: `runDefaultSeed()` truncates every table before
+ * it inserts, so an abort has to happen first to be harmless.
+ *
+ * @throws Error in production (non-demo, non-Electron) when a default seed password is detected.
+ */
+export function validateSeedCredentials(): void {
+	const weak = KNOWN_DEFAULT_SEED_CREDENTIALS.filter(({ key, value }) => {
+		const current = resolveSeedPassword(key);
+		// Empty counts as weak: an unset variable is exactly how the shipped default is reached.
+		return !current || current === value;
+	});
+
+	if (weak.length === 0) {
+		return;
+	}
+
+	const keys = weak.map(({ key }) => key);
+	const accounts = weak.map(({ account }) => account);
+	const guidance =
+		`Set ${keys.join(', ')} to strong, unique values before seeding a new deployment. ` +
+		'These variables decide the passwords of the accounts created on the first boot against an ' +
+		'empty database, and their defaults are published in this repository, so leaving them unset ' +
+		'hands anyone who can reach the login page full control of the new instance.';
+
+	// eslint-disable-next-line no-console
+	console.error(chalk.bgRed.whiteBright.bold(` INSECURE SEED CREDENTIALS: ${keys.join(', ')} `));
+	// eslint-disable-next-line no-console
+	console.error(chalk.red(`Affected accounts: ${accounts.join(', ')}. ${guidance}`));
+
+	// Use the RUNTIME NODE_ENV (not only the build-time `environment.production` flag), so a
+	// deployment that runs a non-prod build with NODE_ENV=production is still protected.
+	const isProduction = process.env.NODE_ENV === 'production' || environment.production === true;
+	const isDemo = process.env.DEMO === 'true' || environment.demo === true;
+	const isElectron = process.env.IS_ELECTRON === 'true' || environment.isElectron === true;
+
+	if (isProduction && !isDemo && !isElectron) {
+		if (process.env.ALLOW_INSECURE_SEED_CREDENTIALS === 'true') {
+			// eslint-disable-next-line no-console
+			console.error(
+				chalk.red(
+					'Continuing despite insecure seed credentials because ALLOW_INSECURE_SEED_CREDENTIALS=true. ' +
+						'This is STRONGLY discouraged — rotate these accounts immediately after the seed.'
+				)
+			);
+			return;
+		}
+		throw new Error(
+			`Refusing to seed: ${keys.join(', ')} ${keys.length === 1 ? 'is' : 'are'} unset or use the ` +
+				`well-known default value in a production deployment. ${guidance} ` +
+				'(To override temporarily, set ALLOW_INSECURE_SEED_CREDENTIALS=true — not recommended.)'
+		);
+	}
+}

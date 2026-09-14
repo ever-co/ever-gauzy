@@ -150,14 +150,19 @@ if (!isDocker) {
 
 		DEMO: ${env.DEMO},
 
+		// The seeded-account passwords are only ever used by the demo login prefill
+		// (login.component.ts guards on environment.DEMO), but they used to be written into the
+		// PUBLIC web bundle unconditionally. An operator who points one .env at both the API and the
+		// web build would therefore have shipped the real Super Admin password in JavaScript
+		// (GHSA-4r2r-mv32-3468). Emit them only on a demo build.
 		DEMO_SUPER_ADMIN_EMAIL: '${env.DEMO_SUPER_ADMIN_EMAIL}',
-		DEMO_SUPER_ADMIN_PASSWORD: '${env.DEMO_SUPER_ADMIN_PASSWORD}',
+		DEMO_SUPER_ADMIN_PASSWORD: '${env.DEMO ? env.DEMO_SUPER_ADMIN_PASSWORD : ''}',
 
 		DEMO_ADMIN_EMAIL: '${env.DEMO_ADMIN_EMAIL}',
-		DEMO_ADMIN_PASSWORD: '${env.DEMO_ADMIN_PASSWORD}',
+		DEMO_ADMIN_PASSWORD: '${env.DEMO ? env.DEMO_ADMIN_PASSWORD : ''}',
 
 		DEMO_EMPLOYEE_EMAIL: '${env.DEMO_EMPLOYEE_EMAIL}',
-		DEMO_EMPLOYEE_PASSWORD: '${env.DEMO_EMPLOYEE_PASSWORD}',
+		DEMO_EMPLOYEE_PASSWORD: '${env.DEMO ? env.DEMO_EMPLOYEE_PASSWORD : ''}',
 
 		CHATWOOT_SDK_TOKEN: '${env.CHATWOOT_SDK_TOKEN}',
 		CHAT_MESSAGE_GOOGLE_MAP: '${env.CHAT_MESSAGE_GOOGLE_MAP}',

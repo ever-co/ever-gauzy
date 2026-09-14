@@ -9,7 +9,7 @@ dotenv.config({ quiet: true });
 
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { IEnvironment, IGauzyFeatures } from './ienvironment';
-import { isFeatureEnabled } from './environment.helper';
+import { isEnvFlagEnabled, isFeatureEnabled, parseNonNegativeInt } from './environment.helper';
 
 if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
 	require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
@@ -61,6 +61,22 @@ export const environment: IEnvironment = {
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60 * 1000,
 	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 60000,
 	THROTTLE_ENABLED: process.env.THROTTLE_ENABLED == 'true',
+
+	/**
+	 * Honour Cloudflare's `CF-Connecting-IP` header when deriving the rate-limit bucket.
+	 *
+	 * MUST stay off unless every request provably transits Cloudflare before reaching this process:
+	 * the header is just a request header, so on any other deployment shape a client can set it to a
+	 * fresh value per request and never share a bucket with itself (GHSA-86mw-2crg-vmhc).
+	 * `CLOUDFLARE_PROXY_ENABLED` is accepted as an alias.
+	 */
+	THROTTLE_TRUST_CF_CONNECTING_IP: isEnvFlagEnabled('THROTTLE_TRUST_CF_CONNECTING_IP', 'CLOUDFLARE_PROXY_ENABLED'),
+
+	/**
+	 * Identifier-scoped brute-force control (0 disables it).
+	 */
+	AUTH_MAX_FAILED_ATTEMPTS: parseNonNegativeInt(process.env.AUTH_MAX_FAILED_ATTEMPTS, 10),
+	AUTH_LOCKOUT_SECONDS: parseNonNegativeInt(process.env.AUTH_LOCKOUT_SECONDS, 900),
 
 	/**
 	 * Jitsu Server Configuration

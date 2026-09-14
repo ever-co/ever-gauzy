@@ -99,6 +99,7 @@ import { OAuthClientService } from './oauth-client/oauth-client.service';
 import { OAuthClient } from './oauth-client/oauth-client.entity';
 import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
 import { passwordResetConsumeWhere } from '../shared/single-use/claim-criteria';
+import { LoginAttemptScope, LoginAttemptService } from './login-attempt.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -142,7 +143,8 @@ export class AuthService extends SocialAuthService {
 		private readonly typeOrmPasswordResetRepository: TypeOrmPasswordResetRepository,
 		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository,
 		private readonly oauthClientService: OAuthClientService,
-		private readonly termsAcceptanceService: TermsAcceptanceService
+		private readonly termsAcceptanceService: TermsAcceptanceService,
+		private readonly loginAttemptService: LoginAttemptService
 	) {
 		super();
 	}
@@ -455,6 +457,12 @@ export class AuthService extends SocialAuthService {
 	 * @returns A Promise that resolves to the authentication response or null
 	 */
 	async login({ email, password }: IUserLoginInput): Promise<IAuthResponse | null> {
+		// Per-ACCOUNT brute-force control, checked before any credential work and OUTSIDE the catch
+		// below (which rewrites every failure into a 401 — a lockout has to surface as a 429).
+		// The @Throttle on the route is keyed on the client address; this counter is not, so
+		// changing address between attempts no longer buys a fresh allowance.
+		await this.loginAttemptService.assertNotLockedOut(LoginAttemptScope.PASSWORD, email);
+
 		try {
 			// Find ALL users by email
 			const users = await this.userService.find({
@@ -556,6 +564,9 @@ export class AuthService extends SocialAuthService {
 				this.userService.setUserLastLoginTimestamp(selectedUser.id)
 			]);
 
+			// Credentials were good: forget the streak that preceded them.
+			await this.loginAttemptService.reset(LoginAttemptScope.PASSWORD, email);
+
 			return {
 				user: new User({
 					...selectedUser,
@@ -567,6 +578,9 @@ export class AuthService extends SocialAuthService {
 		} catch (error) {
 			// Log the error with a timestamp and the error message for debugging
 			this.logger.error(`Login failed at ${new Date().toISOString()}: ${error.message}`);
+			// Every path out of here is a 401 to the caller, so every path out of here counts as a
+			// failed attempt against this email.
+			await this.loginAttemptService.recordFailure(LoginAttemptScope.PASSWORD, email);
 			throw new UnauthorizedException();
 		}
 	}
@@ -637,6 +651,9 @@ export class AuthService extends SocialAuthService {
 	): Promise<IUserSigninWorkspaceResponse> {
 		const { email, password } = input;
 
+		// Same per-account control as `login()`: this route verifies the very same password.
+		await this.loginAttemptService.assertNotLockedOut(LoginAttemptScope.PASSWORD, email);
+
 		/** Fetching users matching the query */
 		const allUsers = await this.userService.find({
 			where: [
@@ -678,8 +695,11 @@ export class AuthService extends SocialAuthService {
 		let users = validatedUsers;
 
 		if (users.length === 0) {
+			await this.loginAttemptService.recordFailure(LoginAttemptScope.PASSWORD, email);
 			throw new UnauthorizedException();
 		}
+
+		await this.loginAttemptService.reset(LoginAttemptScope.PASSWORD, email);
 
 		const code = generateAlphaNumericCode();
 		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
@@ -2009,6 +2029,11 @@ export class AuthService extends SocialAuthService {
 		payload: IUserEmailInput & IUserCodeInput,
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
+		// The magic code is six alphanumeric characters, so the per-account counter is the control
+		// that actually bounds guessing here. Checked outside the catch, which turns everything
+		// into a 401.
+		await this.loginAttemptService.assertNotLockedOut(LoginAttemptScope.MAGIC_CODE, payload?.email);
+
 		try {
 			const { email, code } = payload;
 
@@ -2068,11 +2093,14 @@ export class AuthService extends SocialAuthService {
 					throw new UnauthorizedException();
 				}
 
+				await this.loginAttemptService.reset(LoginAttemptScope.MAGIC_CODE, email);
+
 				return response;
 			}
 
 			throw new UnauthorizedException();
 		} catch (error) {
+			await this.loginAttemptService.recordFailure(LoginAttemptScope.MAGIC_CODE, payload?.email);
 			throw new UnauthorizedException();
 		}
 	}

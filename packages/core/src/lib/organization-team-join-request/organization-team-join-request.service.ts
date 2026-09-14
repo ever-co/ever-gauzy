@@ -29,6 +29,7 @@ import { TypeOrmOrganizationTeamJoinRequestRepository } from './repository/type-
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { LoginAttemptScope, LoginAttemptService } from '../auth/login-attempt.service';
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
@@ -41,7 +42,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		private readonly _organizationTeamService: OrganizationTeamService,
 		private readonly _emailService: EmailService,
 		private readonly _inviteService: InviteService,
-		private readonly _roleService: RoleService
+		private readonly _roleService: RoleService,
+		private readonly _loginAttemptService: LoginAttemptService
 	) {
 		super(typeOrmOrganizationTeamJoinRequestRepository, mikroOrmOrganizationTeamJoinRequestRepository);
 	}
@@ -157,6 +159,12 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		options: IOrganizationTeamJoinRequestValidateInput
 	): Promise<IOrganizationTeamJoinRequest> {
 		const { email, token, code, organizationTeamId } = options;
+
+		// The confirmation code is six alphanumeric characters — roughly 2^31 possibilities — so a
+		// per-address rate limit alone leaves it guessable by anything distributed. Count failures
+		// against the email instead, outside the catch that turns everything into a 400.
+		await this._loginAttemptService.assertNotLockedOut(LoginAttemptScope.TEAM_JOIN_CODE, email);
+
 		try {
 			let record: IOrganizationTeamJoinRequest;
 
@@ -207,8 +215,12 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
 			});
 			delete record.id;
+
+			await this._loginAttemptService.reset(LoginAttemptScope.TEAM_JOIN_CODE, email);
+
 			return record;
 		} catch (error) {
+			await this._loginAttemptService.recordFailure(LoginAttemptScope.TEAM_JOIN_CODE, email);
 			throw new BadRequestException();
 		}
 	}
