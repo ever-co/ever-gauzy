@@ -31,10 +31,21 @@ import { RequestContext } from '@gauzy/core';
 import { DocumentProcessingService } from './document-processing.service';
 
 describe('DocumentProcessingService.snapshotOf — correlation id propagation', () => {
-	function buildService(): DocumentProcessingService {
-		// snapshotOf() touches none of these five collaborators.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return new DocumentProcessingService({} as any, {} as any, {} as any, {} as any, {} as any);
+	function buildService(docsQueueService?: { enqueue: jest.Mock }): DocumentProcessingService {
+		// snapshotOf() touches none of these five collaborators; enqueueExtract() additionally needs
+		// the queue service (3rd param) when a test drives it instead of snapshotOf() directly.
+		return new DocumentProcessingService(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{} as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{} as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(docsQueueService ?? {}) as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{} as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{} as any
+		);
 	}
 
 	const document = { id: 'doc-1', tenantId: 'tenant-1', organizationId: 'org-1' } as IDocument;
@@ -76,5 +87,24 @@ describe('DocumentProcessingService.snapshotOf — correlation id propagation', 
 
 		expect(snapshot.correlationId).toBeUndefined();
 		expect(snapshot.documentId).toBe('doc-1');
+	});
+
+	// Review finding on this PR: the tests above only proved `snapshotOf()` stamps a correlationId
+	// onto the object it returns — none of them proved that id actually reaches a QUEUED job payload,
+	// which is the only place it does any good (`DocsPipelineService.baseOf()`, fixed separately on
+	// this same PR, is the id's next hop). `enqueueExtract()` is the real entry point that does
+	// `snapshotOf()` + `docsQueueService.enqueue()`; drive that instead of `snapshotOf()` alone.
+	it('reaches the queued docs.extract payload via enqueueExtract()', async () => {
+		(RequestContext.currentCorrelationId as jest.Mock).mockReturnValue('correlation-abc');
+		(RequestContext.currentUserId as jest.Mock).mockReturnValue('user-1');
+		const enqueue = jest.fn().mockResolvedValue(true);
+
+		await buildService({ enqueue }).enqueueExtract(document, 'upload');
+
+		expect(enqueue).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({ correlationId: 'correlation-abc' }),
+			expect.anything()
+		);
 	});
 });

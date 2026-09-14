@@ -5,10 +5,10 @@ background job must not create duplicate side effects — "same logical job → 
 `idempotency.assertions.ts` for the two shapes of job and the corresponding assertion:
 
 - **Idempotent by construction** (a conditional bulk operation, e.g.
-  `UPDATE ... WHERE status = 'ACTIVE'`) → {@link assertConvergesUnderRepeatedExecution}: run it N
+  `UPDATE ... WHERE status = 'ACTIVE'`) → `assertConvergesUnderRepeatedExecution`: run it N
   times, assert the state after all N equals the state after just the first.
 - **One-shot side effect with no natural "already done" condition** (create a row, send a webhook)
-  → {@link assertSideEffectFiresExactly}: run it N times, assert the side effect fired an explicit
+  → `assertSideEffectFiresExactly`: run it N times, assert the side effect fired an explicit
   expected number of times — which may be `1` (a guard exists and works) or `N` (no guard exists —
   used here to document a found gap, not to endorse it).
 

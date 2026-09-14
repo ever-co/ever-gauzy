@@ -49,7 +49,10 @@ console.log('NODE_ENV: %s', process.env.NODE_ENV);
 const dbORM: MultiORM = getORMType();
 console.log('DB ORM: %s', dbORM);
 
-const dbType = process.env.DB_TYPE || DatabaseTypeEnum.betterSqlite3;
+// `??`, not `||`: an explicitly-set `DB_TYPE=''` must still reach assertValidDatabaseType() and be
+// rejected, not silently substitute the default — `||` treats '' the same as unset and a real
+// review finding on this PR caught that gap.
+const dbType = process.env.DB_TYPE ?? DatabaseTypeEnum.betterSqlite3;
 // Fail fast on a typo'd/unsupported DB_TYPE instead of letting the switch below fall through
 // silently and leave every connection config `undefined` (TASK 5 finding).
 assertValidDatabaseType(dbType);

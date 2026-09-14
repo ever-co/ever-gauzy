@@ -37,7 +37,11 @@ describe(`Persistence invariants (DB_ORM=${getORMType()})`, () => {
 	});
 
 	afterAll(async () => {
-		await harness.close();
+		// Optional chaining, not a bare `harness.close()`: if `beforeAll` itself threw (e.g. the test
+		// database failed to come up), `harness` is still `undefined` here, and Jest still runs
+		// `afterAll` — a bare call would throw `Cannot read properties of undefined`, masking the
+		// real `beforeAll` failure behind a confusing secondary one (a real review finding on this PR).
+		await harness?.close();
 	});
 
 	beforeEach(async () => {

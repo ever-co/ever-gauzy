@@ -32,6 +32,13 @@ export async function assertConvergesUnderRepeatedExecution(params: {
 }): Promise<void> {
 	const { run, snapshot, times = 3 } = params;
 
+	// A review finding on this PR: `times` below 2 makes the whole assertion vacuous — there is no
+	// second run to converge, so it would pass for a job with NO idempotency guard at all just as
+	// readily as for one that's genuinely correct. Fail loudly instead of silently asserting nothing.
+	if (times < 2) {
+		throw new Error(`assertConvergesUnderRepeatedExecution: times must be >= 2 to prove convergence, got ${times}.`);
+	}
+
 	await run();
 	const afterFirstRun = snapshot();
 
@@ -66,6 +73,12 @@ export async function assertSideEffectFiresExactly(params: {
 	times?: number;
 }): Promise<void> {
 	const { run, sideEffect, expectedCalls, times = 2 } = params;
+
+	// Same reasoning as `assertConvergesUnderRepeatedExecution`: `times < 1` would run the job zero
+	// times and trivially "prove" `expectedCalls === 0` regardless of whether a dedup guard exists.
+	if (times < 1) {
+		throw new Error(`assertSideEffectFiresExactly: times must be >= 1, got ${times}.`);
+	}
 
 	for (let attempt = 0; attempt < times; attempt++) {
 		await run();
