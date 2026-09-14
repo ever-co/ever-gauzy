@@ -18,9 +18,9 @@
     [placeholder]="'MENU.TAGS' | translate"
     >
     <ng-template ng-option-tmp let-tag="item" let-tag$="item$">
-      <div class="d-flex align-items-center">
+      <div class="tag-option">
         @if (multiple) {
-          <input type="checkbox" [ngModel]="tag$.selected" />
+          <input type="checkbox" class="tag-option-check" [ngModel]="tag$.selected" />
         }
         <nb-badge
           [style.background]="background(tag.color)"
@@ -43,7 +43,13 @@
         }
         @if (selectedTags && selectedTags.length > noOfTagsFits) {
           <div class="ng-value">
-            <span class="ng-value-label">...</span>
+            <!--
+              The overflow indicator. It was a literal "…", which says only that
+              something is hidden; the count says how much, which is the one thing
+              the row cannot show. `noOfTagsFits` is the number rendered above it,
+              so the difference is exactly what is not on screen.
+            -->
+            <span class="ng-value-label tag-overflow">+{{ selectedTags.length - noOfTagsFits }}</span>
           </div>
         }
       } @else {
