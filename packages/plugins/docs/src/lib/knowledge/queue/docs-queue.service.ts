@@ -122,7 +122,8 @@ export class DocsQueueService implements OnModuleInit {
 				}
 			});
 			this.logger.log(
-				`Enqueued ${jobName} for document ${payload.documentId} (tenant ${payload.tenantId}, reason ${payload.reason})`
+				`Enqueued ${jobName} for document ${payload.documentId} (tenant ${payload.tenantId}, reason ${payload.reason}` +
+					`${payload.correlationId ? `, correlationId ${payload.correlationId}` : ''})`
 			);
 			return true;
 		} catch (error) {
@@ -203,6 +204,7 @@ export class DocsQueueService implements OnModuleInit {
 		this.logger.log(
 			`Dispatching ${jobName} inline for document ${payload?.documentId ?? 'n/a'} ` +
 				`(tenant ${payload?.tenantId}, reason ${payload?.reason}` +
+				`${payload?.correlationId ? `, correlationId ${payload.correlationId}` : ''}` +
 				`${delayMs > 0 ? `, delayed ${delayMs}ms` : ''})`
 		);
 
