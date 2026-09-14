@@ -30,7 +30,7 @@ export interface IGithubWebhookRequest {
 	rawBody?: Buffer;
 }
 
-/** First value of a header, or `undefined` when absent/empty/repeated as an array. */
+/** First value of a header, or `undefined` when it is absent or empty. */
 const headerValue = (request: IGithubWebhookRequest, name: string): string | undefined => {
 	const value = request?.headers?.[name];
 	const single = Array.isArray(value) ? value[0] : value;
@@ -238,7 +238,15 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	 * body, and `issues.*` creates or overwrites Tasks and Tags in that tenant. The HMAC signature is
 	 * therefore the ONLY boundary between the open internet and every tenant's integration state, so
 	 * it is verified here before anything is parsed or dispatched, and there is no bypass for local
-	 * development (smee forwards GitHub's signature headers unchanged).
+	 * development.
+	 *
+	 * A note for whoever wires up the smee proxy: `webhookProxy` is never populated by
+	 * `GithubModule` today, so {@link ProbotDiscovery.onApplicationBootstrap} never starts a
+	 * `SmeeClient`. If it is ever wired, be aware that smee-client re-POSTs `JSON.parse`d payloads
+	 * (`superagent.send(data.body)`), so although it forwards the signature header unchanged, the
+	 * BYTES it delivers are a re-serialization and will not always hash to it. Proxying a signed
+	 * delivery is therefore not a supported development path; redeliver from the GitHub App's Recent
+	 * Deliveries view, or point the App at a tunnel that forwards the body verbatim.
 	 *
 	 * Fails CLOSED: an unconfigured receiver, a missing header, a body the body-parser did not stash
 	 * and a bad signature all answer 403 rather than the old unconditional 201.
