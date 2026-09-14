@@ -244,7 +244,7 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	 * `GithubModule` today, so {@link ProbotDiscovery.onApplicationBootstrap} never starts a
 	 * `SmeeClient`. If it is ever wired, be aware that smee-client re-POSTs `JSON.parse`d payloads
 	 * (`superagent.send(data.body)`), so although it forwards the signature header unchanged, the
-	 * BYTES it delivers are a re-serialization and will not always hash to it. Proxying a signed
+	 * BYTES it delivers are a re-serialization and will not always hash to it. Forwarding a signed
 	 * delivery is therefore not a supported development path; redeliver from the GitHub App's Recent
 	 * Deliveries view, or point the App at a tunnel that forwards the body verbatim.
 	 *
