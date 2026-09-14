@@ -45,6 +45,17 @@ const CACHE_PREFIX = 'auth:fail:';
 export class LoginAttemptService {
 	private readonly logger = new Logger(LoginAttemptService.name);
 
+	/**
+	 * In-flight `recordFailure` chain per cache key.
+	 *
+	 * The cache offers no atomic increment, so `recordFailure` is a read-modify-write. Without
+	 * ordering, a burst of concurrent guesses all read the SAME count and all write
+	 * `count + 1` — the counter advances once per burst instead of once per guess, which is
+	 * exactly how an automated attacker sends traffic, and the lockout never trips. Chaining the
+	 * writes per key makes the count exact within this process.
+	 */
+	private readonly pending = new Map<string, Promise<void>>();
+
 	constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
 
 	/**
@@ -135,15 +146,46 @@ export class LoginAttemptService {
 		}
 
 		const key = this.buildKey(scope, identifier);
-		const current = await this.read(key);
-		const now = Date.now();
 
-		// An expired block starts a fresh streak rather than resuming the old one.
-		const carried = current && (!current.blockedUntil || current.blockedUntil > now) ? current.failures : 0;
-		const failures = carried + 1;
-		const blockedUntil = failures >= this.maxFailures ? now + this.lockoutMs : null;
+		await this.serialize(key, async () => {
+			const current = await this.read(key);
+			const now = Date.now();
 
-		await this.write(key, { failures, blockedUntil });
+			// An expired block starts a fresh streak rather than resuming the old one.
+			const carried = current && (!current.blockedUntil || current.blockedUntil > now) ? current.failures : 0;
+			const failures = carried + 1;
+			const blockedUntil = failures >= this.maxFailures ? now + this.lockoutMs : null;
+
+			await this.write(key, { failures, blockedUntil });
+		});
+	}
+
+	/**
+	 * Runs `task` after every earlier task queued for the same key, so the read-modify-write in
+	 * {@link recordFailure} cannot interleave with itself.
+	 *
+	 * Note what this does and does not buy: the count becomes exact within ONE process, which is the
+	 * whole story for a single-instance deployment. Across replicas the cache is still the only
+	 * coordination point, so a burst spread over N replicas can still cost up to N increments' worth
+	 * of guesses before the block lands — bounded, where it was previously unbounded.
+	 *
+	 * @param key - The cache key being mutated.
+	 * @param task - The read-modify-write to run exclusively for that key.
+	 */
+	private async serialize(key: string, task: () => Promise<void>): Promise<void> {
+		const previous = this.pending.get(key) ?? Promise.resolve();
+		// `then(task, task)` so a rejected predecessor still lets this one run.
+		const next = previous.then(task, task).catch(() => undefined);
+		this.pending.set(key, next);
+
+		try {
+			await next;
+		} finally {
+			// Only the tail of the chain clears the entry, so the map cannot grow without bound.
+			if (this.pending.get(key) === next) {
+				this.pending.delete(key);
+			}
+		}
 	}
 
 	/**

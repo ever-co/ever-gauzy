@@ -163,6 +163,33 @@ describe('LoginAttemptService', () => {
 		await expect(service.assertNotLockedOut(LoginAttemptScope.PASSWORD, EMAIL)).resolves.toBeUndefined();
 	});
 
+	it('counts every guess in a concurrent burst, not one per burst', async () => {
+		// A brute-forcer does not wait for each 401 before sending the next guess. The counter is a
+		// read-modify-write over a cache with no atomic increment, so without ordering all the
+		// requests in a burst read the same count and all write count+1: the streak advances once per
+		// BURST and the lockout never lands. 200 guesses fired 50 at a time must still trip it.
+		let allowed = 0;
+
+		for (let round = 0; round < 4; round++) {
+			const outcomes = await Promise.all(
+				Array.from({ length: 50 }, async () => {
+					try {
+						await service.assertNotLockedOut(LoginAttemptScope.PASSWORD, EMAIL);
+					} catch {
+						return false;
+					}
+					await service.recordFailure(LoginAttemptScope.PASSWORD, EMAIL);
+					return true;
+				})
+			);
+			allowed += outcomes.filter(Boolean).length;
+		}
+
+		// Only the first burst can get through — its checks all ran before any failure was recorded.
+		expect(allowed).toBeLessThanOrEqual(50);
+		expect(await attempt()).toBe(HttpStatus.TOO_MANY_REQUESTS);
+	});
+
 	it('ignores an empty identifier rather than pooling every anonymous failure into one lockout', async () => {
 		for (let i = 0; i < 20; i++) {
 			await service.recordFailure(LoginAttemptScope.PASSWORD, '');

@@ -114,6 +114,28 @@ describe('RedisThrottlerStorage', () => {
 		expect(record.totalHits).toBe(1);
 		expect(record.isBlocked).toBe(false);
 	});
+
+	it('does not wait forever when Redis never answers', async () => {
+		// node-redis does not REJECT a command issued while the socket is down: it parks it in the
+		// offline queue, so the promise simply never settles. This store runs behind the GLOBAL
+		// throttler guard, so an unbounded await there stalls every request on the API. The deadline
+		// has to turn that into the documented in-memory fallback.
+		const client = {
+			pTTL: jest.fn(() => new Promise<number>(() => undefined)),
+			multi: () => {
+				throw new Error('should never be reached');
+			}
+		};
+		jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+		const storage = new RedisThrottlerStorage(client as any);
+		const started = Date.now();
+		const record = await storage.increment('key', 60_000, 5, 60_000, 'default');
+
+		expect(Date.now() - started).toBeLessThan(5_000);
+		expect(record.totalHits).toBe(1);
+		expect(record.isBlocked).toBe(false);
+	});
 });
 
 describe('createThrottlerStorage', () => {
