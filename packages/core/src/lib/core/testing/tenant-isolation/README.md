@@ -44,6 +44,16 @@ column, or a one-level `{ relation: { id } }` shorthand) — it is not a general
 
 ## Known gaps (left for later tasks per the improvement roadmap)
 
+- `InMemoryTenantRepository` only implements the TypeORM-shaped `Repository` surface — it is passed
+  as the `typeOrmRepository` constructor argument, with an inert `{}` standing in for
+  `mikroOrmRepository`. Since `CrudService`/`TenantAwareCrudService` pick a repository based on the
+  process-wide `ormType` (see `packages/core/src/lib/core/testing/orm-conformance/README.md` for why
+  that's a whole-process setting), these specs only exercise — and only pass under — the default
+  `DB_ORM=typeorm` path. Running the full `core` suite with `DB_ORM=mikro-orm` set will fail exactly
+  these tenant-isolation specs (`this.mikroOrmRepository.findAndCount is not a function` and
+  similar) while every other spec, including the ORM conformance suite, is unaffected — confirmed by
+  running the full suite under both values. A MikroORM-shaped counterpart (or a dual-mode fake) is
+  follow-up work, naturally paired with `TASK 2`/`TASK 3`.
 - No real-SQL confirmation that generated queries are correct at the ORM/SQL level (that is
   `TASK 2` — TypeORM/MikroORM conformance testing — and the eventual unified persistence-invariant
   framework in `TASK 3`).
