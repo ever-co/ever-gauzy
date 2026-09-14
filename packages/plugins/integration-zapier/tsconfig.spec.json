@@ -3,6 +3,10 @@
 	"compilerOptions": {
 		"outDir": "../../../dist/out-tsc",
 		"module": "commonjs",
+		// Required for the `transformIgnorePatterns` exception in `jest.config.ts` to do anything —
+		// see `packages/core/tsconfig.spec.json`, which this mirrors for the same reason: importing
+		// `@gauzy/core` (e.g. `TimerStartedEvent`) reaches ESM-only deps like `uuid`.
+		"allowJs": true,
 		"types": ["jest", "node"]
 	},
 	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]

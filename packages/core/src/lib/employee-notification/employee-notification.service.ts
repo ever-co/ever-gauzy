@@ -81,6 +81,33 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 				return undefined; // Do nothing if notification is not allowed
 			}
 
+			// Idempotency guard: a redelivered/duplicated EmployeeCreateNotificationEvent for the same
+			// (receiver, source entity, type) must not create a second notification row. `entity` +
+			// `entityId` identify the specific source record the notification is about (e.g. one
+			// comment, one task assignment), so this only dedupes true redeliveries of the same
+			// logical event, not a new, later notification about a different entity of the same type.
+			// Mirrors the existing-subscription check in ZapierWebhookService.createSubscription.
+			if (input.entity && input.entityId) {
+				let existingNotification: IEmployeeNotification | undefined;
+				try {
+					existingNotification = await this.findOneByWhereOptions({
+						receiverEmployeeId: employeeId,
+						entity: input.entity,
+						entityId: input.entityId,
+						type: input.type,
+						tenantId,
+						organizationId
+					} as Partial<IEmployeeNotification>);
+				} catch (error) {
+					if (!(error instanceof NotFoundException)) {
+						throw error;
+					}
+				}
+				if (existingNotification) {
+					return existingNotification;
+				}
+			}
+
 			// Create the notification entry using the provided input along with the tenantId and return the created notification
 			return await super.create({ ...input, tenantId });
 		} catch (error) {
