@@ -74,7 +74,7 @@ export class ExportService {
 	 *
 	 * 🛑 The scratch root is `os.tmpdir()`, deliberately NOT `assetOptions.assetPublicPath`. That
 	 * directory is mounted by `ServeStaticModule` at `/public/` with no authentication, so every
-	 * intermediate CSV and the finished ZIP used to be fetchable over HTTP for as long as they
+	 * intermediate CSV and the finished ZIP used to be downloadable over HTTP for as long as they
 	 * existed — and forever when a request failed before the delete step.
 	 *
 	 * @returns The job handle to thread through the rest of the export.
