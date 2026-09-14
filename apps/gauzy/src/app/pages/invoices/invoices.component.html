@@ -240,30 +240,20 @@
 												</div>
 											</div>
 										</div>
-										<div class="row">
-											<div>
-												<button
-													type="submit"
-													status="success"
-													class="ml-3"
-													size="small"
-													nbButton
-												>
-													{{ 'BUTTONS.SEARCH' | translate }}
-												</button>
-											</div>
-											<div>
-												<button
-													type="reset"
-													status="basic"
-													outline
-													size="small"
-													nbButton
-													(click)="reset()"
-												>
-													{{ 'BUTTONS.RESET' | translate }}
-												</button>
-											</div>
+										<div class="row search-actions">
+											<button type="submit" status="success" size="small" nbButton>
+												{{ 'BUTTONS.SEARCH' | translate }}
+											</button>
+											<button
+												type="reset"
+												status="basic"
+												outline
+												size="small"
+												nbButton
+												(click)="reset()"
+											>
+												{{ 'BUTTONS.RESET' | translate }}
+											</button>
 										</div>
 									</form>
 								</nb-accordion-item-body>
@@ -532,7 +522,7 @@
 				<nb-select
 					filled
 					status="basic"
-					class="action select-nb mr-2 ml-1"
+					class="action select-nb"
 					[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate | titlecase"
 					[(selected)]="status"
 					[disabled]="disableButton"
@@ -550,7 +540,7 @@
 				<nb-select
 					filled
 					status="basic"
-					class="action select-nb mr-2"
+					class="action select-nb"
 					[placeholder]="'INVOICES_PAGE.SET_STATUS' | translate | titlecase"
 					[(selected)]="status"
 					[disabled]="disableButton"
