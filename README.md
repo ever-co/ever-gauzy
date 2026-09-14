@@ -316,7 +316,7 @@ Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/d
 
 Ever® Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!
 Ever® Gauzy™ is provided AS IS without any warranty. Use at your own risk!
-See more details in the [LICENSE](LICENSE.md).
+See more details in the [LICENSE](LICENSES.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
 
@@ -328,13 +328,13 @@ We support the open-source community. If you're building awesome non-profit/open
 
 This software is available under the following licenses:
 
--   [Ever® Gauzy™ Platform Community Edition](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-community-edition-license)
--   [Ever® Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
--   [Ever® Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
+-   [Ever® Gauzy™ Platform Community Edition](https://github.com/ever-co/ever-gauzy/blob/develop/LICENSES.md#ever-gauzy-platform-community-edition-license)
+-   [Ever® Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/develop/LICENSES.md#ever-gauzy-platform-small-business-license)
+-   [Ever® Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/develop/LICENSES.md#ever-gauzy-platform-enterprise-license)
 
 #### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License
 
-#### Please see [LICENSE](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare)
+#### Please see [LICENSES.md](LICENSES.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare)
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_large)
 
