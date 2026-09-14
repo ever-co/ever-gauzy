@@ -7,6 +7,7 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { IsSecret } from './../core/decorators';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCustomSmtpRepository } from './repository/mikro-orm-custom-smtp.repository';
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 
 @MultiORMEntity('custom_smtp', { mikroOrmRepository: () => MikroOrmCustomSmtpRepository })
 export class CustomSmtp extends TenantOrganizationBaseEntity implements ICustomSmtp {
@@ -30,10 +31,13 @@ export class CustomSmtp extends TenantOrganizationBaseEntity implements ICustomS
 	@MultiORMColumn()
 	secure: boolean;
 
+	/** SMTP credentials are stored in cleartext; keep them out of export archives entirely. */
+	@ExportRedacted()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn()
 	username: string;
 
+	@ExportRedacted()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn()
 	password: string;

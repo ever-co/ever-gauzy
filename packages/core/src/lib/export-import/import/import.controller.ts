@@ -1,4 +1,4 @@
-import { Controller, HttpStatus, Post, Body, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, UseGuards, UseInterceptors, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { ImportStatusEnum, ImportTypeEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
@@ -16,6 +16,8 @@ import * as path from 'node:path';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.IMPORT_ADD)
 @Controller('/import')
 export class ImportController {
+	private readonly logger = new Logger(ImportController.name);
+
 	constructor(private readonly _importService: ImportService, private readonly _commandBus: CommandBus) {}
 
 	/**
@@ -54,13 +56,21 @@ export class ImportController {
 			tenantId: RequestContext.currentTenantId()
 		};
 
+		/**
+		 * 🛑 The extraction directory belongs to THIS request and is removed in the `finally`.
+		 *
+		 * It used to be a field on the singleton `ImportService`, always resolving to the same
+		 * `<assetPublicPath>/import/csv` path: concurrent imports read one another's CSVs, and the
+		 * cleanup sat inside the `try` so a failed import left a full tenant dump readable at
+		 * `GET /public/import/csv/<table>.csv` with no authentication at all (GHSA-g235-c4fm-4fc7).
+		 */
+		let extractPath: string;
+
 		try {
-			/** */
-			await this._importService.registerAllRepositories();
-			await this._importService.unzipAndParse(key, importType === ImportTypeEnum.CLEAN);
-			await this._importService.addCurrentUserToImportedOrganizations();
-			this._importService.removeExtractedFiles();
-			/** */
+			extractPath = await this._importService.createExtractDirectory();
+			await this._importService.unzipAndParse(extractPath, key, importType === ImportTypeEnum.CLEAN);
+			await this._importService.addCurrentUserToImportedOrganizations(extractPath);
+
 			return await this._commandBus.execute(
 				new ImportHistoryCreateCommand({
 					...history,
@@ -68,14 +78,16 @@ export class ImportController {
 				})
 			);
 		} catch (error) {
-			/** */
-			console.log('Error while creating import history', error);
+			this.logger.error('Error while importing tenant data', error?.stack ?? String(error));
 			return await this._commandBus.execute(
 				new ImportHistoryCreateCommand({
 					...history,
 					status: ImportStatusEnum.FAILED
 				})
 			);
+		} finally {
+			await this._importService.removeExtractedFiles(extractPath);
+			await this._importService.removeUploadedArchive(key);
 		}
 	}
 }
