@@ -1558,10 +1558,25 @@ angular2-smart-table {
 // `!important` on the two properties that have to beat an INLINE style; the
 // note above the `.ng-dropdown-panel` block in `nb-overrides()` explains why the
 // rest of this file needs it too.
+//
+// THE OPT-OUT LIST. A panel that names itself here keeps ng-select's inline
+// `width` and is therefore exactly as wide as its trigger. It is for the
+// selectors whose OPTIONS are reliably longer than the field they sit in —
+// a country, a language, a currency ("United States Dollar (USD)" against a
+// half-column input) — where "as wide as the widest option" is not a panel that
+// fits the row, it is a panel that hangs out of the form and past the control it
+// belongs to. Those read their own overflow with an ellipsis instead (ng-select
+// gives every `.ng-option` `white-space: nowrap; text-overflow: ellipsis`), which
+// is the trade this list is making: alignment over full option text.
+//
+// Each class here is the one the component puts on its own `<ng-select>`;
+// ng-select copies a select's classes onto the panel when it is appended
+// (`[class]="appendToValue ? … : classes"` in its template), which is the only
+// reason a body-level selector can tell these panels apart at all.
 @supports (max-width: max-content) {
   html:not([dir='rtl'])
     > body
-    > ng-dropdown-panel.ng-dropdown-panel:not(.language-select):not(.form-field-select) {
+    > ng-dropdown-panel.ng-dropdown-panel:not(.language-select):not(.form-field-select):not(.currency-selector) {
     width: auto !important;
     right: 1rem !important;
     max-width: max-content;
