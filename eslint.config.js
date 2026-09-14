@@ -70,7 +70,22 @@ module.exports = [
 				{
 					enforceBuildableLibDependency: true,
 					allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
-					depConstraints: [{ sourceTag: '*', onlyDependOnLibsWithTags: ['*'] }]
+					depConstraints: [
+						// TASK 6 (improvement roadmap) — Plugin/Core Boundary Enforcement. `packages/core`
+						// (`type:core`) may depend on itself and the foundational shared libs it actually
+						// uses (`type:shared`: auth/common/config/constants/contracts/plugin/utils), but
+						// never on a specific integration (`type:plugin`, every package under
+						// `packages/plugins/*`). Core already depends on plugins only through `@gauzy/plugin`'s
+						// neutral contract (`GauzyCorePlugin`/`IOnPluginBootstrap`), never a concrete plugin
+						// package by name — this rule makes that direction structurally impossible to
+						// regress, rather than relying on it staying true by convention.
+						//
+						// Every `enforce-module-boundaries` constraint whose `sourceTag` matches a project
+						// applies (AND, not first-match/OR) — so this entry narrows `type:core` alongside the
+						// wildcard fallback below without needing to remove or reorder it.
+						{ sourceTag: 'type:core', onlyDependOnLibsWithTags: ['type:core', 'type:shared'] },
+						{ sourceTag: '*', onlyDependOnLibsWithTags: ['*'] }
+					]
 				}
 			],
 

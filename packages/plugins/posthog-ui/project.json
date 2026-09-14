@@ -4,7 +4,7 @@
 	"sourceRoot": "packages/plugins/posthog-ui/src",
 	"prefix": "lib",
 	"projectType": "library",
-	"tags": ["analytics", "tracking", "posthog"],
+	"tags": ["type:plugin", "analytics", "tracking", "posthog"],
 	"implicitDependencies": ["ui-core", "ui-config"],
 	"targets": {
 		"build": {
