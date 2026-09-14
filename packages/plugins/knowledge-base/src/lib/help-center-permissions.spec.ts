@@ -129,6 +129,13 @@ jest.mock('./help-center-article/dto', () => ({
 	UpdateHelpCenterArticleDTO: class UpdateHelpCenterArticleDTO {}
 }));
 
+jest.mock('./help-center-article/help-center-article-version.entity', () => ({
+	HelpCenterArticleVersion: class HelpCenterArticleVersion {}
+}));
+jest.mock('./help-center-article/help-center-article-version.service', () => ({
+	HelpCenterArticleVersionService: class HelpCenterArticleVersionService {}
+}));
+
 jest.mock('./help-center-author/help-center-author.entity', () => ({
 	HelpCenterAuthor: class HelpCenterAuthor {}
 }));
@@ -149,6 +156,7 @@ import { CrudController, PermissionGuard } from '@gauzy/core';
 import { HelpCenterController } from './help-center/help-center.controller';
 import { HelpCenterArticleController } from './help-center-article/help-center-article.controller';
 import { HelpCenterAuthorController } from './help-center-author/help-center-author.controller';
+import { HelpCenterArticleVersionController } from './help-center-article/help-center-article-version.controller';
 
 const MUTATING_METHODS = new Set<RequestMethod>([
 	RequestMethod.POST,
@@ -302,6 +310,38 @@ describe('Knowledge Base controllers', () => {
 	describe('HelpCenterAuthorController', () => {
 		it('gates every mutating route on ORG_HELP_CENTER_EDIT, inherited ones included', () => {
 			expectAllGatedOnHelpCenterEdit(HelpCenterAuthorController);
+		});
+	});
+
+	describe('HelpCenterArticleVersionController', () => {
+		// This controller overrode only the two read routes, so it inherited all five bare mutating
+		// routes from `CrudController`. `POST :id/restore` copies a stored version back into the
+		// article, which makes an un-gated `PUT :id` on a version a write to the article's published
+		// content by another name, and an un-gated `DELETE :id` a way to destroy its history.
+		it('gates every mutating route on ORG_HELP_CENTER_EDIT, inherited ones included', () => {
+			expectAllGatedOnHelpCenterEdit(HelpCenterArticleVersionController);
+		});
+
+		it('overrides each inherited CrudController mutating route on the controller itself', () => {
+			const routes = mutatingRoutes(HelpCenterArticleVersionController);
+
+			for (const name of ['create', 'update', 'delete', 'softRemove', 'softRecover']) {
+				const route = routes.find((candidate) => candidate.name === name);
+
+				expect(route).toBeDefined();
+				expect(route?.declaredOn).toBe(HelpCenterArticleVersionController);
+			}
+		});
+
+		it('keeps the pre-existing gate on the restore route', () => {
+			const route = mutatingRoutes(HelpCenterArticleVersionController).find(
+				(candidate) => candidate.path === ':id/restore'
+			);
+
+			expect(route?.method).toBe(RequestMethod.POST);
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, route?.handler)).toEqual([
+				PermissionsEnum.ORG_HELP_CENTER_EDIT
+			]);
 		});
 	});
 });
