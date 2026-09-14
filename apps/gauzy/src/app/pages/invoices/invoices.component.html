@@ -303,80 +303,167 @@
 									</div>
 								</nb-accordion-item-header>
 								<nb-accordion-item-body>
-									<div class="row comments-container">
-										<div class="col-6">
+									<div class="comments-container">
+										<section class="comment-panel comment-composer">
+											<header class="comment-panel-header">
+												<nb-icon icon="edit-2-outline" pack="eva"></nb-icon>
+												<span class="comment-panel-title">
+													{{ 'BUTTONS.ADD_COMMENT' | translate }}
+												</span>
+											</header>
 											@if (selectedInvoice) {
-												{{ 'INVOICES_PAGE.COMMENT' | translate }}
 												<form
+													class="comment-form"
 													[formGroup]="historyForm"
 													#historyFormDirective="ngForm"
 													(ngSubmit)="addComment(historyFormDirective)"
 												>
-													<div class="col-8 mt-3 px-0">
-														<input
-															nbInput
-															type="text"
-															placeholder="{{ 'INVOICES_PAGE.TITLE' | translate }}"
-															fullWidth
-															formControlName="title"
-														/>
-													</div>
-													<div class="col px-0 mt-3">
-														<textarea
-															nbInput
-															placeholder="{{ 'INVOICES_PAGE.COMMENT' | translate }}"
-															fullWidth
-															formControlName="comment"
-														></textarea>
-													</div>
-													<div class="mt-3">
-														<button
-															type="submit"
-															class="mx-0"
-															nbButton
-															status="info"
-															[disabled]="historyForm.invalid"
-														>
-															{{ 'BUTTONS.ADD_COMMENT' | translate }}
-														</button>
+													<div class="comment-form-row">
+														<span class="comment-avatar" aria-hidden="true">
+															@if (currentUser?.imageUrl) {
+																<img [src]="currentUser.imageUrl" alt="" />
+															} @else {
+																{{ authorInitials(currentUser?.name) }}
+															}
+														</span>
+														<div class="comment-form-fields">
+															<input
+																nbInput
+																type="text"
+																fullWidth
+																fieldSize="small"
+																class="comment-form-title"
+																formControlName="title"
+																placeholder="{{
+																	'FORM.PLACEHOLDERS.TITLE' | translate
+																}}"
+															/>
+															<div class="comment-form-box">
+																<textarea
+																	nbInput
+																	fullWidth
+																	fieldSize="small"
+																	rows="3"
+																	formControlName="comment"
+																	placeholder="{{
+																		'INVOICES_PAGE.COMMENT_PLACEHOLDER' | translate
+																	}}"
+																></textarea>
+																<div class="comment-form-actions">
+																	<button
+																		type="button"
+																		nbButton
+																		ghost
+																		size="tiny"
+																		status="basic"
+																		[disabled]="historyForm.pristine"
+																		(click)="resetComment(historyFormDirective)"
+																	>
+																		{{ 'BUTTONS.RESET' | translate }}
+																	</button>
+																	<button
+																		type="submit"
+																		nbButton
+																		size="tiny"
+																		status="primary"
+																		[disabled]="historyForm.invalid"
+																	>
+																		<nb-icon
+																			icon="paper-plane-outline"
+																			pack="eva"
+																		></nb-icon>
+																		{{ 'BUTTONS.ADD_COMMENT' | translate }}
+																	</button>
+																</div>
+															</div>
+														</div>
 													</div>
 												</form>
-											}
-										</div>
-										@if (!disableButton) {
-											<div class="col-6">
-												{{ 'INVOICES_PAGE.COMMENTS' | translate }}
-												<div class="comments w-100">
-													<nb-list class="history-list">
-														@for (history of histories; track history) {
-															<nb-list-item
-																class="history-list-item"
-																style="align-items: baseline"
-															>
-																<div class="d-flex">
-																	<div>
-																		<ngx-avatar
-																			[src]="history.user.imageUrl"
-																			[name]="history.user.name"
-																			[value]="history.user"
-																		></ngx-avatar>
-																		<div class="history-date history-item">
-																			{{ history.createdAt | dateTimeFormat }}
-																		</div>
-																		<div class="history-item history-title">
-																			<span>{{ history.title }}</span>
-																		</div>
-																		<div class="history-item history-comment">
-																			<span>{{ history.action }}</span>
-																		</div>
-																	</div>
-																</div>
-															</nb-list-item>
-														}
-													</nb-list>
+											} @else {
+												<div class="comment-empty">
+													<nb-icon icon="file-text-outline" pack="eva"></nb-icon>
+													<span>
+														{{
+															(!isEstimate
+																? 'INVOICES_PAGE.SELECT_INVOICE_TO_VIEW_HISTORY'
+																: 'INVOICES_PAGE.ESTIMATES.SELECT_ESTIMATE_TO_VIEW_HISTORY'
+															) | translate
+														}}
+													</span>
 												</div>
+											}
+										</section>
+										<section class="comment-panel comment-thread">
+											<header class="comment-panel-header">
+												<nb-icon icon="message-square-outline" pack="eva"></nb-icon>
+												<span class="comment-panel-title">
+													{{ 'INVOICES_PAGE.COMMENTS' | translate }}
+												</span>
+												@if (selectedInvoice && histories.length) {
+													<span class="comment-count">{{ histories.length }}</span>
+												}
+											</header>
+											<div class="comments">
+												@if (selectedInvoice && histories.length) {
+													<ul class="comment-list">
+														@for (history of histories; track history.id) {
+															<li class="comment-item">
+																<span class="comment-avatar" aria-hidden="true">
+																	@if (history.user?.imageUrl) {
+																		<img [src]="history.user.imageUrl" alt="" />
+																	} @else {
+																		{{ authorInitials(history.user?.name) }}
+																	}
+																</span>
+																<div class="comment-body">
+																	<div class="comment-byline">
+																		@if (canOpenUserProfile && history.user?.id) {
+																			<a
+																				class="comment-author"
+																				[routerLink]="[
+																					'/pages/users/edit',
+																					history.user.id
+																				]"
+																			>
+																				{{ history.user?.name }}
+																			</a>
+																		} @else {
+																			<span class="comment-author">
+																				{{ history.user?.name }}
+																			</span>
+																		}
+																		<span
+																			class="comment-time"
+																			[nbTooltip]="
+																				history.createdAt | dateTimeFormat
+																			"
+																		>
+																			{{ commentTimeAgo(history.createdAt) }}
+																		</span>
+																	</div>
+																	@if (history.title) {
+																		<div class="comment-subject">
+																			{{ history.title }}
+																		</div>
+																	}
+																	<p class="comment-text">{{ history.action }}</p>
+																</div>
+															</li>
+														}
+													</ul>
+												} @else {
+													<div class="comment-empty">
+														<nb-icon icon="message-square-outline" pack="eva"></nb-icon>
+														<span class="comment-empty-title">
+															{{ 'INVOICES_PAGE.NO_COMMENTS' | translate }}
+														</span>
+														<span class="comment-empty-hint">
+															{{ 'INVOICES_PAGE.NO_COMMENTS_HINT' | translate }}
+														</span>
+													</div>
+												}
 											</div>
-										}
+										</section>
 									</div>
 								</nb-accordion-item-body>
 							</nb-accordion-item>
