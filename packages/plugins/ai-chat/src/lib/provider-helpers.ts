@@ -17,3 +17,7 @@
  */
 export * from './model-catalogue';
 export * from './speech';
+// The SSRF egress guard the catalogue and speech requests go through. Pure predicates plus a Node
+// `dns` pre-flight — no plugin, module, `@gauzy/core` or `ai` SDK import, so it stays loadable under
+// the provider-plugin jest mapping described above.
+export * from './ssrf';

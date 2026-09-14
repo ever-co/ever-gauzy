@@ -12,6 +12,7 @@
 
 import type { IAiChatModel } from '@gauzy/contracts';
 import type { IAiChatModelList, IAiProviderCredentials } from './provider.types';
+import { ssrfSafeFetch } from './ssrf';
 
 /** How long a fetched catalogue stays fresh. Model lists change on the order of weeks. */
 const DEFAULT_TTL_MS = 30 * 60 * 1000;
@@ -161,12 +162,25 @@ export function credentialCacheKey(credentials: IAiProviderCredentials | null): 
  *
  * Throws on any non-2xx. Callers are expected to catch and fall back to a curated list — a catalogue
  * is a convenience, never a gate.
+ *
+ * The request goes through the SSRF egress guard because for the self-hosted providers this URL is
+ * built from a TENANT-SUPPLIED base URL: loopback/private/link-local targets are refused, the host
+ * is re-checked after DNS resolution, and redirects are not followed (GHSA-w3mx-m5cr-3gxp). A
+ * deployment that genuinely runs its model server on a private address opts in with
+ * `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS=true`.
  */
-export async function fetchCatalogueJson<T>(url: string, init?: { headers?: Record<string, string> }): Promise<T> {
-	const response = await fetch(url, {
-		headers: { accept: 'application/json', ...(init?.headers ?? {}) },
-		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
-	});
+export async function fetchCatalogueJson<T>(
+	url: string,
+	init?: { headers?: Record<string, string>; allowPrivateHost?: boolean }
+): Promise<T> {
+	const response = await ssrfSafeFetch(
+		url,
+		{
+			headers: { accept: 'application/json', ...(init?.headers ?? {}) },
+			signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
+		},
+		{ allowPrivateHost: init?.allowPrivateHost }
+	);
 	if (!response.ok) {
 		// Deliberately does NOT include the response body: these endpoints are called with a
 		// credential, and error bodies have been known to echo request context back.

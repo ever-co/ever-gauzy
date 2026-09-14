@@ -71,6 +71,19 @@ export type { ICatalogueCache, ICatalogueResult } from './lib/model-catalogue';
 export { RATE_LIMIT_CODE, isRateLimitError, rateLimitRetryAfter, buildRateLimitEnvelope } from './lib/rate-limit';
 export type { IAiChatRateLimitEnvelope } from './lib/rate-limit';
 
+// SSRF egress guard for tenant-supplied provider endpoints (base-URL validation + guarded fetch).
+export {
+	ALLOW_PRIVATE_BASE_URLS_ENV,
+	SsrfBlockedError,
+	getUnsafeAiOutboundUrlReason,
+	getUnsafeAiProviderBaseUrlReason,
+	isPrivateAiProviderBaseUrlAllowed,
+	isSafeAiProviderBaseUrl,
+	isSsrfBlockedError,
+	ssrfSafeFetch
+} from './lib/ssrf';
+export { IsSafeAiProviderBaseUrl, assertSafeAiProviderBaseUrl } from './lib/credentials/base-url.validator';
+
 // BYOK credentials
 export { AiProviderCredential } from './lib/credentials/ai-provider-credential.entity';
 export { AiProviderCredentialService } from './lib/credentials/ai-provider-credential.service';

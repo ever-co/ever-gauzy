@@ -2,6 +2,7 @@ export { SpeechProviderError, isSpeechProviderError } from './speech-provider-er
 export type { SpeechProviderErrorKind } from './speech-provider-error';
 export {
 	MAX_ERROR_DETAIL_BYTES,
+	MAX_TRANSCRIPT_CHARS,
 	TRANSCRIBE_TIMEOUT_MS,
 	classifySpeechHttpFailure,
 	readBounded,

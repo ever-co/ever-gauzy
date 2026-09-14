@@ -7,8 +7,14 @@ import { whisperCppProviderDefinition } from './ai-provider-whisper-cpp.provider
  */
 describe('whisperCppProviderDefinition', () => {
 	const realFetch = global.fetch;
+	const realAllowPrivate = process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS;
 	afterEach(() => {
 		global.fetch = realFetch;
+		if (realAllowPrivate === undefined) {
+			delete process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS;
+		} else {
+			process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS = realAllowPrivate;
+		}
 		jest.restoreAllMocks();
 	});
 
@@ -52,6 +58,10 @@ describe('whisperCppProviderDefinition', () => {
 	});
 
 	it('falls back to the conventional local address and forwards a key as bearer when one is set', async () => {
+		// The conventional address is loopback, which the SSRF egress guard refuses by default since
+		// GHSA-w3mx-m5cr-3gxp — a deployment that actually runs whisper.cpp locally opts in with this
+		// flag (documented in .env.sample).
+		process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS = 'true';
 		const fetchMock = capture({ text: 'ok' });
 		await whisperCppProviderDefinition.transcribe!(Buffer.from('audio'), 'audio/mp4', {
 			apiKey: 'proxy-token',
