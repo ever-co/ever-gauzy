@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { delay, of, throwError } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ITimeLog } from '@gauzy/contracts';
 import { TimerStartedEvent } from '@gauzy/core';
@@ -27,10 +27,16 @@ import { TypeOrmZapierWebhookSubscriptionRepository } from '../repository/type-o
  * gap and are not fixed here — see this package's follow-up note.
  */
 describe('ZapierTimerStartedHandler idempotency', () => {
-	function buildService() {
+	// A generic, non-Zapier-specific target: `hooks.zapier.com/hooks/catch/<id>/<token>` matches
+	// GitGuardian's "Zapier Webhook URL" detector by URL SHAPE alone, regardless of whether the
+	// digits are real — flagged (as a false positive) on this file precisely because of that
+	// pattern. `example.com` (RFC 2606, reserved for documentation/examples) still satisfies
+	// `assertSafeZapierWebhookUrl` (a real, public, non-loopback HTTPS host) without looking like a
+	// live credential to a scanner.
+	function buildService(postResult: unknown = { data: {}, status: 200 }) {
 		const subscription = {
 			id: 'subscription-1',
-			targetUrl: 'https://hooks.zapier.com/hooks/catch/12345/abcdef',
+			targetUrl: 'https://example.com/webhook-test',
 			event: 'timer.status.changed',
 			tenantId: 'tenant-1',
 			organizationId: 'org-1'
@@ -39,7 +45,7 @@ describe('ZapierTimerStartedHandler idempotency', () => {
 			find: jest.fn().mockResolvedValue([subscription])
 		} as unknown as TypeOrmZapierWebhookSubscriptionRepository;
 
-		const post = jest.fn().mockReturnValue(of({ data: {}, status: 200 }));
+		const post = jest.fn().mockReturnValue(of(postResult));
 		const httpService = { post } as unknown as HttpService;
 
 		return { service: new ZapierWebhookService(repository, httpService), post };
@@ -70,5 +76,41 @@ describe('ZapierTimerStartedHandler idempotency', () => {
 		);
 
 		expect(post).toHaveBeenCalledTimes(2);
+	});
+
+	it('does NOT suppress a retry after a failed delivery (only a CONFIRMED delivery is deduped)', async () => {
+		// The dedup guard must only remember a delivery that actually succeeded — a failed attempt
+		// (network error, subscriber 5xx) has to stay free to retry, exactly like a message a queue
+		// would legitimately redeliver. If `markDelivered()` were ever called before/regardless of
+		// the outcome, this would incorrectly drop the retry on the floor.
+		const { service, post } = buildService();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(post as jest.Mock).mockReturnValueOnce(throwError(() => new Error('ECONNREFUSED')) as any);
+		const handler = new ZapierTimerStartedHandler(service);
+		const timeLog = { id: 'time-log-1', tenantId: 'tenant-1', organizationId: 'org-1' } as unknown as ITimeLog;
+
+		await handler.handle(new TimerStartedEvent(timeLog)); // fails
+		await handler.handle(new TimerStartedEvent(timeLog)); // retry must still go out
+
+		expect(post).toHaveBeenCalledTimes(2);
+	});
+
+	it('does not double-send when two redeliveries race CONCURRENTLY, not just sequentially', async () => {
+		// The other tests `await` each `handle()` in turn, so the first call's dedup entry is always
+		// already written before the second starts — real review finding on this PR: that never
+		// exercises the actual race (two redeliveries in flight at once, neither confirmed yet). A
+		// deliberate delay on the mocked POST keeps both calls "in flight" simultaneously past the
+		// point where the (synchronous, no-`await`-in-between) check-and-reserve step runs.
+		const { service, post } = buildService();
+		(post as jest.Mock).mockReturnValue(of({ data: {}, status: 200 }).pipe(delay(5)));
+		const handler = new ZapierTimerStartedHandler(service);
+		const timeLog = { id: 'time-log-1', tenantId: 'tenant-1', organizationId: 'org-1' } as unknown as ITimeLog;
+
+		await Promise.all([
+			handler.handle(new TimerStartedEvent(timeLog)),
+			handler.handle(new TimerStartedEvent(timeLog))
+		]);
+
+		expect(post).toHaveBeenCalledTimes(1);
 	});
 });

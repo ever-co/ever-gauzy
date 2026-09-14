@@ -436,7 +436,13 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 			tenantId: payload.tenantId,
 			organizationId: payload.organizationId,
 			reason: payload.reason,
-			initiatedByUserId: payload.initiatedByUserId
+			initiatedByUserId: payload.initiatedByUserId,
+			// Review finding on this PR: without this, correlationId (set once by
+			// DocumentProcessingService.snapshotOf() on the request thread that kicked off the run)
+			// was dropped at the first chain hop — every later stage (classify, chunk, embed, index,
+			// thumbnail) and every requeue lost the id that ties its logs back to the originating
+			// request, defeating the propagation this same task set out to add.
+			correlationId: payload.correlationId
 		};
 	}
 

@@ -51,6 +51,17 @@ describe('parsePositiveIntEnv', () => {
 	it.each(['0', '-5'])('rejects a non-positive value (%s)', (value) => {
 		expect(() => parsePositiveIntEnv('DB_POOL_SIZE', value, 40)).toThrow(/Invalid DB_POOL_SIZE/);
 	});
+
+	// Real review findings on this PR: `Number.parseInt` parses only a leading numeric PREFIX, so
+	// both of these silently produced a DIFFERENT positive integer than what was written, defeating
+	// fail-fast validation instead of triggering it.
+	it('rejects a fractional value instead of silently truncating it', () => {
+		expect(() => parsePositiveIntEnv('DB_POOL_SIZE', '2.5', 40)).toThrow(/Invalid DB_POOL_SIZE "2.5"/);
+	});
+
+	it('rejects a numeric-prefixed value with trailing garbage instead of silently truncating it', () => {
+		expect(() => parsePositiveIntEnv('DB_PORT', '5432junk', 5432)).toThrow(/Invalid DB_PORT "5432junk"/);
+	});
 });
 
 describe('database.ts fails fast at import time on an unrecognized DB_TYPE', () => {
@@ -71,6 +82,17 @@ describe('database.ts fails fast at import time on an unrecognized DB_TYPE', () 
 		process.env.DB_TYPE = 'mongodb';
 		jest.isolateModules(() => {
 			expect(() => require('./database')).toThrow(/mongodb is not supported yet/);
+		});
+	});
+
+	// Real review finding on this PR: `process.env.DB_TYPE || DatabaseTypeEnum.betterSqlite3` treated
+	// an explicitly-set empty string the same as unset and silently substituted the default,
+	// bypassing assertValidDatabaseType() entirely — an operator who accidentally set `DB_TYPE=`
+	// would get SQLite instead of a clear error. Fixed with `??`.
+	it('throws for an explicitly empty DB_TYPE rather than silently defaulting to SQLite', () => {
+		process.env.DB_TYPE = '';
+		jest.isolateModules(() => {
+			expect(() => require('./database')).toThrow(/Invalid DB_TYPE ""/);
 		});
 	});
 });

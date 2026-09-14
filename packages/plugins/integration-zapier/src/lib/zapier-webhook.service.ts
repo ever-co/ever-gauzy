@@ -42,6 +42,14 @@ export class ZapierWebhookService {
 	/** Dedup key -> the time it expires from this cache. See `WEBHOOK_DELIVERY_DEDUP_WINDOW_MS`. */
 	private readonly recentlyDelivered = new Map<string, number>();
 
+	/**
+	 * Delivery keys currently mid-flight (reserved, not yet confirmed) — closes the concurrent-
+	 * duplicate window `recentlyDelivered` alone cannot: two redeliveries arriving close enough
+	 * together that neither has reached `markDelivered()` yet would otherwise both pass
+	 * `hasRecentlyDelivered()` and both send.
+	 */
+	private readonly inFlight = new Set<string>();
+
 	constructor(
 		private readonly zapierWebhookSubscriptionRepository: TypeOrmZapierWebhookSubscriptionRepository,
 		private readonly _httpService: HttpService
@@ -189,44 +197,58 @@ export class ZapierWebhookService {
 				// Idempotency guard (TASK 4 finding): a redelivered/duplicated event for the same
 				// (subscriber, action, source timeLog) must not resend a webhook that already went out
 				// — the receiving Zapier/Make.com zap has no dedup of its own on this payload.
+				//
+				// The check AND the reservation (`inFlight.add`) below happen with no `await` between
+				// them — a real review finding on this PR: two concurrent redeliveries could otherwise
+				// both pass `hasRecentlyDelivered()` before either reached `markDelivered()`, and both
+				// send. Since JS is single-threaded, two such calls' synchronous check-and-reserve
+				// prefixes can never interleave with EACH OTHER (only around an `await`), so whichever
+				// one's microtask runs first wins the reservation and the other sees it immediately.
 				const deliveryKey = this.deliveryDedupKey(sub.id, timerData);
-				if (this.hasRecentlyDelivered(deliveryKey)) {
-					this.logger.debug(`Skipping duplicate webhook delivery ${deliveryKey} — already sent recently.`);
+				if (this.hasRecentlyDelivered(deliveryKey) || this.inFlight.has(deliveryKey)) {
+					this.logger.debug(`Skipping duplicate webhook delivery ${deliveryKey} — already sent/in flight.`);
 					return null;
 				}
+				this.inFlight.add(deliveryKey);
 
-				const result = await firstValueFrom(
-					this._httpService
-						.post(
-							sub.targetUrl,
-							{
-								event: 'timer.status.changed',
-								data: timerData
-							},
-							{
-								timeout: WEBHOOK_DELIVERY_TIMEOUT_MS,
-								headers: { 'Content-Type': 'application/json' },
-								// A 30x to an internal host would otherwise be followed by the default agent,
-								// stepping around both the URL check and the resolver guard.
-								maxRedirects: 0,
-								httpsAgent: this.ssrfSafeHttpsAgent
-							}
-						)
-						.pipe(
-							catchError((err) => {
-								this.logger.error(`Failed to notify webhook ${sub.id} at ${sub.targetUrl}`, err);
-								return of(null); // swallow error so other calls continue
-							})
-						)
-				);
+				try {
+					const result = await firstValueFrom(
+						this._httpService
+							.post(
+								sub.targetUrl,
+								{
+									event: 'timer.status.changed',
+									data: timerData
+								},
+								{
+									timeout: WEBHOOK_DELIVERY_TIMEOUT_MS,
+									headers: { 'Content-Type': 'application/json' },
+									// A 30x to an internal host would otherwise be followed by the default
+									// agent, stepping around both the URL check and the resolver guard.
+									maxRedirects: 0,
+									httpsAgent: this.ssrfSafeHttpsAgent
+								}
+							)
+							.pipe(
+								catchError((err) => {
+									this.logger.error(`Failed to notify webhook ${sub.id} at ${sub.targetUrl}`, err);
+									return of(null); // swallow error so other calls continue
+								})
+							)
+					);
 
-				// Only remember a CONFIRMED delivery — `result` is `null` for both an unsafe-URL skip
-				// (returned above) and a caught delivery failure (from `catchError` just above), and a
-				// failed attempt must still be free to retry, not get suppressed as "already delivered."
-				if (result !== null) {
-					this.markDelivered(deliveryKey);
+					// Only remember a CONFIRMED delivery — `result` is `null` for a caught delivery
+					// failure (from `catchError` just above), and a failed attempt must still be free to
+					// retry, not get suppressed as "already delivered."
+					if (result !== null) {
+						this.markDelivered(deliveryKey);
+					}
+					return result;
+				} finally {
+					// Release the reservation whether the delivery succeeded (now covered by
+					// `recentlyDelivered` instead) or failed (must be free to retry).
+					this.inFlight.delete(deliveryKey);
 				}
-				return result;
 			})
 		);
 	}
@@ -242,6 +264,11 @@ export class ZapierWebhookService {
 	}
 
 	private markDelivered(key: string): void {
+		// Also on the write path (not just on read, via hasRecentlyDelivered): a service that
+		// delivers a batch and then goes idle would otherwise leave those entries in
+		// `recentlyDelivered` indefinitely, since nothing would call hasRecentlyDelivered() again to
+		// trigger a prune. Bounded either way by how many distinct subscribers exist, but tidier.
+		this.pruneExpiredDeliveries();
 		this.recentlyDelivered.set(key, Date.now() + WEBHOOK_DELIVERY_DEDUP_WINDOW_MS);
 	}
 

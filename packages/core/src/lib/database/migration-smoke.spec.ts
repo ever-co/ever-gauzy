@@ -65,7 +65,16 @@ describe('TypeORM migrations: fresh SQLite database smoke test', () => {
 		'runs the entire migration chain from an empty database without throwing',
 		async () => {
 			const applied = await dataSource.runMigrations({ transaction: 'each' });
-			expect(applied.length).toBeGreaterThan(250); // loosely bounds "did anything actually run"
+			// Review finding on this PR: a loose `> 250` bound would silently tolerate dozens of
+			// migrations quietly failing to register (e.g. a glob/import regression) as long as
+			// enough still ran anyway. Assert the exact migration-file count instead — computed here,
+			// not hardcoded, so this test fails loudly (a real diff, not a silent pass) the day the
+			// chain's actual length and the files on disk disagree, without needing to hand-update a
+			// magic number every time a migration is added.
+			const migrationFileCount = fs
+				.readdirSync(path.join(__dirname, 'migrations'))
+				.filter((file) => file.endsWith('.ts')).length;
+			expect(applied.length).toBe(migrationFileCount);
 		},
 		10 * 60 * 1000
 	);

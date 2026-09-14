@@ -85,8 +85,15 @@ export function parsePositiveIntEnv(name: string, rawValue: string | undefined, 
 	if (rawValue === undefined || rawValue === '') {
 		return defaultValue;
 	}
+	// `Number.parseInt` parses only a leading numeric PREFIX — "2.5" silently becomes 2 and
+	// "5432junk" silently becomes 5432, defeating the whole point of failing fast on a
+	// misconfigured value. Require the entire string to be digits (a real review finding on this
+	// PR — see database-config-validation.spec.ts's dedicated tests for both cases).
+	if (!/^\d+$/.test(rawValue.trim())) {
+		throw new Error(`Invalid ${name} "${rawValue}": expected a positive integer.`);
+	}
 	const parsed = Number.parseInt(rawValue, 10);
-	if (!Number.isFinite(parsed) || parsed <= 0) {
+	if (!Number.isSafeInteger(parsed) || parsed <= 0) {
 		throw new Error(`Invalid ${name} "${rawValue}": expected a positive integer.`);
 	}
 	return parsed;
