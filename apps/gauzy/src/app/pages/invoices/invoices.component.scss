@@ -738,13 +738,133 @@ nb-tab {
   padding: 0.375rem 0.5rem;
 }
 
-// ── Search form: controls sized to their content ─────────────────────────────
-// The fields are laid out on a Bootstrap grid (`col-sm-4` / `-3` / `-2`) and every
-// control carries `fullWidth`, so each one stretched to a third or a quarter of
-// the card — a number field nearly 500px wide for a 6-digit estimate number.
-// Capping the COLUMN rather than the control keeps the grid's wrapping and order
-// intact (the cap only bites where the percentage is the larger of the two) and
-// carries the label above the field with it.
-:host .search-tab nb-accordion .row > [class*='col-'] {
-  max-width: 14rem;
+// ── Search form: all eight filters on one line ───────────────────────────────
+// The fields used to sit on two Bootstrap rows (`col-sm-4` / `-3` / `-2`) with
+// every control carrying `fullWidth`, so each stretched to a third or a quarter
+// of the card — a number field nearly 500px wide for a 6-digit estimate number —
+// and the form stood two field-rows tall above a table that is already short on
+// height. They are now one `.search-filters` row: equal-width flex columns that
+// are allowed to shrink, which is what fits all eight on a single line instead of
+// letting Bootstrap's percentage widths wrap them.
+:host .search-tab nb-accordion .search-filters {
+  flex-wrap: nowrap;
+  // Tops aligned, so the labels — and therefore the controls under them — share
+  // one baseline across the row.
+  align-items: flex-start;
+  margin-inline: 0;
+  // Replaces the columns' own 0.75rem gutters, halved: eight fields on one line
+  // are better off spending that width on the controls.
+  gap: 0.5rem;
+
+  > .search-filter-col {
+    // `flex-basis: 0`, not `auto`, so the eight share the line evenly rather than
+    // each claiming its content width.
+    flex: 1 1 0;
+    // A flex item's floor is `min-content` by default, and for a number input or
+    // a select that is wider than an eighth of the card — without this the row
+    // overflows the accordion instead of shrinking.
+    min-width: 0;
+    max-width: none;
+    padding-inline: 0;
+  }
+
+  // ── The labels, so the controls under them start at one height ─────────────
+  // Every label in the row is pinned to the same type size, line box and bottom
+  // margin. Two of the eight are drawn by child components (`ga-currency`,
+  // `ga-tags-color-input`), which the `.label` rule higher up in this file —
+  // scoped, no `::ng-deep` — never reached: those two kept Nebular's default
+  // 0.5rem gap under the label while the six from this template had 0.1875rem,
+  // so their inputs sat several pixels lower than the rest. That, and not the
+  // grid, is what stopped the fields lining up.
+  //
+  // The single-line clamp is the other half: the labels differ a lot in length
+  // ("Currency" against "Organization contact"), and at an eighth of the card the
+  // long ones wrapped to a second line and pushed their input a whole line down.
+  ::ng-deep .label {
+    display: block;
+    margin-bottom: 0.1875rem;
+    font-size: nb-theme(text-label-font-size);
+    line-height: 0.8125rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  // Same reach: `ga-currency` renders its own `.form-group` wrapper.
+  ::ng-deep .form-group {
+    margin-bottom: 0.25rem;
+  }
+
+  // ── One type size across the row ───────────────────────────────────────────
+  // The eight filters are four different widgets — a plain `nbInput`, two
+  // datepicker inputs, three `ng-select`s (contact, currency, tags) and the
+  // `nb-select` for status — and each arrives with its own size: `ng-select`
+  // reads `select-medium-text-font-size` from `ng-select-overrides`, a selected
+  // tag is an `nb-badge` at `text-caption-font-size`, and a bare input inherits
+  // the paragraph size. On two rows that was easy to miss; on one line it reads
+  // as four different fields.
+  //
+  // Status is the one that was already right (`#inputStatus .select-button`
+  // higher up in this file), so its 0.75rem is the row's size. Set on each text
+  // surface rather than left to inherit, because the library sheets put a size
+  // on the descendants themselves.
+  ::ng-deep {
+    input,
+    input::placeholder,
+    .ng-select,
+    .ng-select .ng-select-container,
+    .ng-select .ng-value-container,
+    .ng-select .ng-value,
+    .ng-select .ng-value-label,
+    .ng-select .ng-placeholder,
+    .ng-select .ng-input > input,
+    nb-select .select-button,
+    nb-select .select-button.placeholder,
+    nb-tag-list input,
+    .tag-label,
+    .tag-overflow {
+      font-size: 0.75rem;
+    }
+
+    // At an eighth of the card a contact or currency name is routinely longer
+    // than its trigger. `ng-select`'s own container clips it, which cuts the text
+    // mid-glyph; a flex item will not shrink below its content unless told it
+    // may, so both halves are needed for an ellipsis to engage instead.
+    .ng-select.ng-select-single .ng-select-container .ng-value-container {
+      min-width: 0;
+    }
+
+    .ng-select.ng-select-single .ng-select-container .ng-value {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  // The two date fields park a calendar glyph inside the control (`.input-icon
+  // .icon`). At full width the placeholder never reached it; at an eighth of the
+  // card it runs underneath, so the glyph is pulled in tight against the edge and
+  // the text gets the room that buys.
+  .input-date {
+    padding-inline-end: 1.5rem;
+  }
+
+  .input-icon .icon {
+    @include nb-ltr(right, 0.5rem);
+    @include nb-rtl(left, 0.5rem);
+  }
+}
+
+// One line is the point of the row, so it holds for every desktop width — the
+// columns shrink instead of wrapping. Below the tablet breakpoint eight controls
+// on a line stop being controls at all, so there the row wraps in the same order,
+// a few filters per line.
+@media (max-width: 767.98px) {
+  :host .search-tab nb-accordion .search-filters {
+    flex-wrap: wrap;
+
+    > .search-filter-col {
+      flex: 1 1 9rem;
+    }
+  }
 }

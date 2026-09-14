@@ -75,8 +75,8 @@
 								</nb-accordion-item-header>
 								<nb-accordion-item-body>
 									<form [formGroup]="searchForm" (ngSubmit)="search()">
-										<div class="row w-100">
-											<div class="col-sm-4">
+										<div class="row w-100 search-filters">
+											<div class="col search-filter-col">
 												<div class="form-group">
 													<label for="inputInvoiceNumber" class="label">
 														<span>
@@ -103,7 +103,7 @@
 													/>
 												</div>
 											</div>
-											<div class="col-sm-3">
+											<div class="col search-filter-col">
 												<div class="form-group">
 													<label for="inputInvoiceDate" class="label">
 														<span>
@@ -137,7 +137,7 @@
 													</div>
 												</div>
 											</div>
-											<div class="col-sm-3">
+											<div class="col search-filter-col">
 												<div class="form-group">
 													<label for="inputDueDate" class="label">{{
 														'INVOICES_PAGE.DUE_DATE' | translate
@@ -157,9 +157,7 @@
 													</div>
 												</div>
 											</div>
-										</div>
-										<div class="row">
-											<div class="col-sm-3">
+											<div class="col search-filter-col">
 												<div class="form-group">
 													<label for="inputOrganizationContact" class="label">
 														<span>{{ 'INVOICES_PAGE.CONTACT' | translate }}</span>
@@ -171,7 +169,7 @@
 													></ga-contact-select>
 												</div>
 											</div>
-											<div class="col-sm-2">
+											<div class="col search-filter-col">
 												<div class="form-group">
 													<label for="inputTotalValue" class="label">
 														{{ 'INVOICES_PAGE.TOTAL_VALUE' | translate }}
@@ -186,7 +184,7 @@
 													/>
 												</div>
 											</div>
-											<div class="col-sm-2">
+											<div class="col search-filter-col">
 												<div class="form-group">
 													<ga-currency
 														formControlName="currency"
@@ -196,15 +194,17 @@
 													</ga-currency>
 												</div>
 											</div>
-											<div class="col-sm-2">
-												<ga-tags-color-input
-													[selectedTags]="searchForm.get('tags').value"
-													(selectedTagsEvent)="selectedTagsEvent($event)"
-													[isOrgLevel]="true"
-												>
-												</ga-tags-color-input>
+											<div class="col search-filter-col">
+												<div class="form-group">
+													<ga-tags-color-input
+														[selectedTags]="searchForm.get('tags').value"
+														(selectedTagsEvent)="selectedTagsEvent($event)"
+														[isOrgLevel]="true"
+													>
+													</ga-tags-color-input>
+												</div>
 											</div>
-											<div class="col-sm-2">
+											<div class="col search-filter-col">
 												<div class="form-group">
 													<label for="inputStatus" class="label">
 														{{ 'INVOICES_PAGE.STATUS' | translate }}
