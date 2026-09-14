@@ -29,6 +29,13 @@ export class RequestContextMiddleware implements NestMiddleware {
 			const correlationId = req.headers['x-correlation-id'] as ID; // Retrieve the correlation ID from the request headers
 			const id = correlationId ?? uuidv4(); // If no correlation ID is provided, generate a new one
 
+			// Echo it back (TASK 9 — Unified Observability and Correlation IDs): previously this id
+			// was only ever readable server-side (via RequestContext.getContextId(), now also
+			// RequestContext.currentCorrelationId()). Without this header, a caller that did NOT send
+			// its own `x-correlation-id` had no way to learn the one the server generated, so it could
+			// never hand that id to support/logs to correlate its own request with server-side logs.
+			res.setHeader('x-correlation-id', String(id));
+
 			const context = new RequestContext({ id, req, res });
 			this.clsService.set(RequestContext.name, context);
 

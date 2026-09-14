@@ -10,7 +10,7 @@
 			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
-	"tags": [],
+	"tags": ["type:shared"],
 	"implicitDependencies": ["config", "utils"],
 	"targets": {
 		"build": {

@@ -10,8 +10,8 @@
 			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
-	"tags": [],
-	"implicitDependencies": ["auth", "common", "config", "constants", "contracts", "plugin", "utils"],
+	"tags": ["type:core"],
+	"implicitDependencies": ["auth", "common", "config", "constants", "contracts", "plugin", "scheduler", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
