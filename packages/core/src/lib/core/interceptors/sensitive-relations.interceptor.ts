@@ -65,7 +65,7 @@ export class SensitiveRelationsInterceptor implements NestInterceptor {
 		// Reading only the array and string forms is what made this interceptor a no-op against the
 		// object form (GHSA-c3cj-m3xm-7j5h): the ternary chain that used to live here fell through to
 		// an empty array, so the loop below ran zero times while TypeORM happily joined and selected
-		// the protected rows. The canonicalizing walk also emits every intermediate prefix, so the
+		// the protected rows. The canonicalization also emits every intermediate prefix, so the
 		// config is consulted at each depth, and it fails closed on odd leaf values and on
 		// prototype-polluting keys.
 		const validRelations = normalizeRelationsToPaths(relations);

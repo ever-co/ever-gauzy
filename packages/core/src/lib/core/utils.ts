@@ -479,7 +479,7 @@ export type LegacyFindOneOptions<T> = Omit<FindOneOptions<T>, 'relations' | 'sel
 const UNSAFE_FIND_OPTION_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
 
 /**
- * Maximum nesting depth walked when canonicalizing a client-supplied `relations` structure.
+ * Maximum nesting depth walked when a client-supplied `relations` structure is canonicalized.
  *
  * The bound exists only to keep a hostile payload (a body nested thousands of levels deep) from
  * exhausting the stack; no real entity graph — and no entry in a sensitive-relation config — comes
