@@ -29,7 +29,14 @@ import { UserOrganizationService } from './user-organization.services';
  */
 describe('UserOrganizationService.findUserOrganizations — credential redaction', () => {
 	/** Every @Exclude({ toPlainOnly: true }) column of the User entity. */
-	const CREDENTIAL_KEYS = ['hash', 'refreshToken', 'code', 'codeExpireAt', 'emailToken'] as const;
+	const CREDENTIAL_KEYS = [
+		'hash',
+		'refreshToken',
+		'code',
+		'codeExpireAt',
+		'emailVerifiedAt',
+		'emailToken'
+	] as const;
 
 	const USER_ID = '11111111-1111-1111-1111-111111111111';
 	const TENANT_ID = '22222222-2222-2222-2222-222222222222';
@@ -51,6 +58,7 @@ describe('UserOrganizationService.findUserOrganizations — credential redaction
 			refreshToken: ['$2b$10$', 'b'.repeat(53)].join(''),
 			code: '123456',
 			codeExpireAt: new Date('2030-01-01T00:00:00.000Z'),
+			emailVerifiedAt: new Date('2029-01-01T00:00:00.000Z'),
 			emailToken: ['$2b$10$', 'c'.repeat(53)].join('')
 		});
 	}
