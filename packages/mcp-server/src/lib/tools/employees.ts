@@ -10,6 +10,31 @@ import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils'
 import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('EmployeeTools');
 
+const workingEmployeesForRangeSchema = z
+	.object({
+		startDate: z.string().datetime({ offset: true }).optional().describe('Start date in ISO format'),
+		endDate: z.string().datetime({ offset: true }).optional().describe('End date in ISO format')
+	})
+	.optional()
+	.describe('Date range for filtering');
+
+type WorkingEmployeesForRange = z.infer<typeof workingEmployeesForRangeSchema>;
+
+async function fetchWorkingEmployees(path: '/api/employee/working' | '/api/employee/working/count', forRange?: WorkingEmployeesForRange) {
+	const defaultParams = validateOrganizationContext();
+	const data = {
+		findInput: {
+			organizationId: defaultParams.organizationId,
+			...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
+			...(forRange && { forRange })
+		}
+	};
+
+	return apiClient.get(path, {
+		params: { data: JSON.stringify(data) }
+	});
+}
+
 /**
  * Helper function to convert date fields in employee data to Date objects
  */
@@ -171,37 +196,11 @@ export const registerEmployeeTools = (server: McpServer) => {
 		'get_working_employees',
 		"Get all working employees in the authenticated user's organization",
 		{
-			forRange: z
-				.object({
-					startDate: z
-						.string()
-						.datetime({ offset: true })
-						.optional()
-						.describe('Start date in ISO format'),
-					endDate: z
-						.string()
-						.datetime({ offset: true })
-						.optional()
-						.describe('End date in ISO format')
-				})
-				.optional()
-				.describe('Date range for filtering')
+			forRange: workingEmployeesForRangeSchema
 		},
 		async ({ forRange }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const data = {
-					findInput: {
-						organizationId: defaultParams.organizationId,
-						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-						...(forRange && { forRange })
-					}
-				};
-
-				const response = await apiClient.get('/api/employee/working', {
-					params: { data: JSON.stringify(data) }
-				});
+				const response = await fetchWorkingEmployees('/api/employee/working', forRange);
 
 				return {
 					content: [
@@ -224,37 +223,11 @@ export const registerEmployeeTools = (server: McpServer) => {
 		'get_working_employees_count',
 		"Get working employees count in the authenticated user's organization",
 		{
-			forRange: z
-				.object({
-					startDate: z
-						.string()
-						.datetime({ offset: true })
-						.optional()
-						.describe('Start date in ISO format'),
-					endDate: z
-						.string()
-						.datetime({ offset: true })
-						.optional()
-						.describe('End date in ISO format')
-				})
-				.optional()
-				.describe('Date range for filtering')
+			forRange: workingEmployeesForRangeSchema
 		},
 		async ({ forRange }) => {
 			try {
-				const defaultParams = validateOrganizationContext();
-
-				const data = {
-					findInput: {
-						organizationId: defaultParams.organizationId,
-						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-						...(forRange && { forRange })
-					}
-				};
-
-				const response = await apiClient.get('/api/employee/working/count', {
-					params: { data: JSON.stringify(data) }
-				});
+				const response = await fetchWorkingEmployees('/api/employee/working/count', forRange);
 
 				return {
 					content: [

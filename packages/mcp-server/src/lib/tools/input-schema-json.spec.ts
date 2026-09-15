@@ -20,22 +20,24 @@ type CapturedTool = {
 	inputSchema?: z.ZodTypeAny;
 };
 
+type ForRangeDateFields = {
+	properties?: {
+		forRange?: {
+			properties?: {
+				startDate?: { type?: string; format?: string };
+				endDate?: { type?: string; format?: string };
+			};
+		};
+	};
+};
+
 type JsonRpcResponse = {
 	jsonrpc: '2.0';
 	id?: number | string;
 	result?: {
 		tools?: Array<{
 			name: string;
-			inputSchema?: {
-				properties?: {
-					forRange?: {
-						properties?: {
-							startDate?: { type?: string; format?: string };
-							endDate?: { type?: string; format?: string };
-						};
-					};
-				};
-			};
+			inputSchema?: ForRangeDateFields;
 		}>;
 		serverInfo?: { name?: string };
 	};
@@ -44,6 +46,13 @@ type JsonRpcResponse = {
 
 function isZodShape(value: unknown): value is Record<string, z.ZodTypeAny> {
 	return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function expectForRangeIsoDateTime(schema: ForRangeDateFields | undefined) {
+	expect(schema?.properties?.forRange?.properties?.startDate?.type).toBe('string');
+	expect(schema?.properties?.forRange?.properties?.endDate?.type).toBe('string');
+	expect(schema?.properties?.forRange?.properties?.startDate?.format).toBe('date-time');
+	expect(schema?.properties?.forRange?.properties?.endDate?.format).toBe('date-time');
 }
 
 function createCapturingServer(): { server: McpServer; tools: CapturedTool[] } {
@@ -155,21 +164,8 @@ describe('MCP tool input schemas JSON Schema conversion', () => {
 		const countTool = tools.find((t) => t.name === 'get_working_employees_count');
 		expect(countTool?.inputSchema).toBeDefined();
 
-		const jsonSchema = z.toJSONSchema(countTool!.inputSchema!, { io: 'input' }) as {
-			properties?: {
-				forRange?: {
-					properties?: {
-						startDate?: { type?: string; format?: string };
-						endDate?: { type?: string; format?: string };
-					};
-				};
-			};
-		};
-
-		expect(jsonSchema.properties?.forRange?.properties?.startDate?.type).toBe('string');
-		expect(jsonSchema.properties?.forRange?.properties?.endDate?.type).toBe('string');
-		expect(jsonSchema.properties?.forRange?.properties?.startDate?.format).toBe('date-time');
-		expect(jsonSchema.properties?.forRange?.properties?.endDate?.format).toBe('date-time');
+		const jsonSchema = z.toJSONSchema(countTool!.inputSchema!, { io: 'input' }) as ForRangeDateFields;
+		expectForRangeIsoDateTime(jsonSchema);
 
 		const offsetRange = {
 			forRange: {
@@ -229,10 +225,7 @@ describe('MCP tool input schemas JSON Schema conversion', () => {
 				(tool) => tool.name === 'get_working_employees_count'
 			);
 			expect(countTool).toBeDefined();
-			expect(countTool?.inputSchema?.properties?.forRange?.properties?.startDate?.type).toBe('string');
-			expect(countTool?.inputSchema?.properties?.forRange?.properties?.endDate?.type).toBe('string');
-			expect(countTool?.inputSchema?.properties?.forRange?.properties?.startDate?.format).toBe('date-time');
-			expect(countTool?.inputSchema?.properties?.forRange?.properties?.endDate?.format).toBe('date-time');
+			expectForRangeIsoDateTime(countTool?.inputSchema);
 		} finally {
 			await clientTransport.close();
 			await server.close();
