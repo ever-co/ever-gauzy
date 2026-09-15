@@ -140,15 +140,27 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
-	@MultiORMColumn({ nullable: true })
+	@Transform((params: TransformFnParams) => parseFloat(parseFloat(params.value || 0).toFixed(2)))
+	@MultiORMColumn({
+		nullable: true,
+		type: 'numeric',
+		precision: 10,
+		scale: 2,
+		transformer: new ColumnNumericTransformerPipe()
+	})
 	billRateValue?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
-	@MultiORMColumn({ nullable: true })
+	@Transform((params: TransformFnParams) => parseFloat(parseFloat(params.value || 0).toFixed(2)))
+	@MultiORMColumn({
+		nullable: true,
+		type: 'numeric',
+		precision: 10,
+		scale: 2,
+		transformer: new ColumnNumericTransformerPipe()
+	})
 	minimumBillingRate?: number;
 
 	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum, example: CurrenciesEnum.USD })
