@@ -19,8 +19,9 @@ $scroll-max-height: 32rem;
 $viewport-gutter: 100px;
 
 // Card width, named so the window-control cluster below can be derived from it
-// instead of re-guessed. Was 328px — see `.timer-card`.
-$card-width: 360px;
+// instead of re-guessed. The panel's original width, kept deliberately: the
+// popup is navbar chrome and should not read as a dialog.
+$card-width: 328px;
 // `nb-card-body`'s own inset — the `card-padding: 1rem` token in
 // `_gauzy-theme-maps.scss`. Named so the scroll box can reach back across it.
 $body-padding: 16px;
@@ -47,12 +48,15 @@ $body-inset: 20px + $body-padding;
     // link it was just 36px of trailing space. Zeroed here so the body's own
     // inset is the only one, which is the gap the last row actually needs.
     padding-bottom: 0;
-    // Was 328px. The content box that leaves (card padding + `nb-card-body`'s
-    // own) was too narrow for a two-up time range, which is why the start/end
-    // pickers clipped their value to `06:00:0…` and why the textarea and the
-    // range row had each been pinned to a hard pixel width WIDER than their
-    // parent to claw the space back. 360px fits both halves at the theme's
-    // control metrics, so those overrides are gone below.
+    // 328px, as it always was. What this width could NOT previously hold was a
+    // two-up time range: the content box left after the card's inset and
+    // `nb-card-body`'s own is narrow, so the start/end pickers clipped to
+    // `06:00:0…`, and the textarea (`282.79px`) and the range row (`128.5%`)
+    // had each been pinned WIDER than their own parent to claw the space back.
+    //
+    // Those two overrides are gone rather than re-tuned — both are on `100%`
+    // now — and the row's Bootstrap gutters are zeroed, which is what gives the
+    // two halves their width back inside this same 328px.
     width: $card-width;
     font-size: 14px;
     position: relative;
@@ -429,7 +433,9 @@ $body-inset: 20px + $body-padding;
     }
     .row.range {
       display: flex;
-      gap: 0.75rem;
+      // Narrower than the panel's usual step: this gap is subtracted from the
+      // two time values, which are the tightest text in the card.
+      gap: 0.5rem;
     }
     .col-12,
     .col-6 {
@@ -473,6 +479,20 @@ $body-inset: 20px + $body-padding;
   label,
   .label {
     font-size: 0.625rem;
+  }
+
+  // Start / End share one row inside a 328px card, so each trigger gets roughly
+  // half what a full-width selector gets — and the clear and chevron take their
+  // bite out of that half, not out of the full width. The theme's 16px text
+  // inset is sized for the full-width case; here it is 16 of the ~66px the value
+  // actually has, which is what clipped "08:00:00 PM" to `06:00:0…` before.
+  //
+  // Trimmed for these two only, so every full-width selector in the panel keeps
+  // the standard inset and they all still share a left edge with each other.
+  // `!important` because `ng-select-overrides()` sets this one with `!important`
+  // of its own (ng-select's own sheet loads after ours).
+  .row.range .ng-select .ng-select-container .ng-value-container {
+    padding-inline-start: 0.5rem !important;
   }
 
   .input {
