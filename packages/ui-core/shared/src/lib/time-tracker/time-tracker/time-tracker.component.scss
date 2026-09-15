@@ -70,9 +70,135 @@ $body-inset: 36px;
     width: $card-width - $body-inset + 8px;
     top: 0px;
   }
+
+  // Title + mode switch. `space-between` is what puts the switch AFTER the
+  // title rather than beside it in a column of its own.
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    // Clears the absolutely positioned window controls above.
+    margin: 0.5rem 0 $panel-gap;
+
+    .panel-title {
+      color: nb-theme(text-primary-color);
+      margin: 0;
+    }
+  }
+
+  // A selected-but-disabled control (the mode switch and the billable toggle
+  // both lock while the timer runs) keeps reading as selected. Lifted out of
+  // `.timer-container`, which is no longer an ancestor of the mode switch once
+  // the switch moved onto the title row.
+  [nbButton].appearance-filled.status-primary[disabled] {
+    background-color: nb-theme(text-primary-active-color);
+    border-color: nb-theme(text-primary-active-color);
+    color: #ffffff;
+    opacity: 0.4;
+  }
+
+  // Segmented timer / manual toggle: ONE track holding two flush halves, rather
+  // than two free-standing buttons that each drew their own block and shadow —
+  // which is what made a two-state toggle read as two unrelated controls, and
+  // made it as tall as a real form button.
+  //
+  // A row in every state. The collapsed widget used to stack it into a column,
+  // so the same two options changed shape depending on the panel's size.
+  .mode-switch {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    flex: 0 0 auto;
+    padding: 2px;
+    border-radius: var(--border-radius);
+    background-color: var(--gauzy-sidebar-background-4);
+    box-shadow: $control-hairline;
+
+    // `span` is the tooltip host the disabled manual button needs (a disabled
+    // button swallows the pointer events the tooltip listens for).
+    > span {
+      display: inline-flex;
+    }
+
+    button.switch {
+      // Square, so the two sit as one control pair instead of as two pills of
+      // different widths — the stopwatch is an `fa-icon`, the list an
+      // `nb-icon`, and their intrinsic boxes do not match. 1.5rem against the
+      // title's 1rem line box, so the toggle sits inside the row rather than
+      // setting its height.
+      width: 1.5rem;
+      height: 1.5rem;
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      // Nested one step inside the track's corner, so the filled half follows
+      // the curve instead of cutting across it.
+      border-radius: calc(var(--border-radius) - 2px);
+      // The track carries the edge now; a shadow under each half drew a second
+      // one inside it.
+      box-shadow: none;
+
+      // The unselected half is the track showing through, not a grey block of
+      // its own. Nebular's filled `status-basic` paints a background, which is
+      // what gave the pair two competing surfaces instead of one.
+      &.status-basic {
+        background-color: transparent;
+        // It also keeps its own full-strength foreground, so the unselected
+        // icon sat at the same weight as the selected one and the pair read as
+        // two active options. This is the muted token the form labels use: an
+        // unselected option drops back to label weight and the filled half is
+        // the only thing that reads as chosen.
+        color: var(--gauzy-text-color-2);
+
+        nb-icon,
+        svg {
+          color: inherit;
+          fill: currentColor;
+        }
+
+        &:hover:not([disabled]) {
+          background-color: nb-theme(background-basic-color-3);
+          color: nb-theme(text-basic-color);
+        }
+      }
+
+      svg {
+        width: 11px;
+        margin: 0;
+      }
+      nb-icon {
+        height: 13px;
+        width: 13px;
+      }
+      &.status-primary nb-icon {
+        color: #fff;
+      }
+    }
+  }
+
   .timer-container {
     display: flex;
-    align-items: flex-start;
+    // Minimized is the only state where this row holds more than one thing —
+    // the timer and the mode switch beside it. `flex-start` pinned the switch to
+    // the top of a row whose other half centres its own contents, so the two
+    // sat on different lines. Centring aligns the whole widget on one axis.
+    //
+    // Safe in the expanded states too: there the row has a single `width: 100%`
+    // child, which defines the row's height and so cannot move within it.
+    align-items: center;
+
+    // Only the collapsed widget renders the switch in here (expanded puts it on
+    // the title row), so this is its gap from the timer beside it — what the
+    // dropped `.vertical` modifier used to carry.
+    .mode-switch {
+      margin-left: 0.625rem;
+    }
 
     .time-tracker {
       width: 100%;
@@ -147,22 +273,12 @@ $body-inset: 36px;
       }
     }
 
-    [nbButton].appearance-filled.status-primary[disabled] {
-      background-color: nb-theme(text-primary-active-color);
-      border-color: nb-theme(text-primary-active-color);
-      color: #ffffff;
-      opacity: 0.4;
-    }
     .timer,
     .time-manual {
       display: flex;
       flex-direction: column;
       width: 100%;
-    }
-
-    h6 {
-      color: nb-theme(text-primary-color);
-      margin-bottom: 2rem;
+      gap: $panel-gap;
     }
   }
   ::ng-deep {

@@ -1,6 +1,7 @@
 @if (isOpen) {
 <nb-card
 	class="timer-card card"
+	[class.collapsed]="!isExpanded"
 	[style.padding-bottom]="isExpanded ? '' : '0px'"
 	[class.background-basic-color-1]="theme === 'default' || theme === 'corporate' || theme === 'gauzy-light'"
 	[class.background-basic-color-2]="!(theme === 'default' || theme === 'corporate' || theme === 'gauzy-light')"
@@ -29,14 +30,26 @@
 			</button>
 		</div>
 		<form #form="ngForm">
+			<!--
+				Title and mode switch share one row. The switch used to be a third column of
+				`.timer-container`, stacked vertically and pushed down by a `margin-top: 3.4rem`
+				that had to be re-guessed whenever the body beside it changed height — which is
+				what left it floating next to the heading instead of sitting on its baseline.
+			-->
+			@if (isExpanded) {
+			<div class="panel-header">
+				<h6 class="panel-title">
+					{{
+						((trackType$ | async) == timeLogType.MANUAL ? 'TIMER_TRACKER.ADD_TIME' : 'TIMER_TRACKER.TIMER')
+							| translate
+					}}
+				</h6>
+				<ng-container [ngTemplateOutlet]="modeSwitch"></ng-container>
+			</div>
+			}
 			<div [style.margin]="isExpanded ? '' : '0px'" class="timer-container form-group">
 				@if ((trackType$ | async) == timeLogType.TRACKED) {
 				<div class="timer">
-					@if (isExpanded) {
-					<h6>
-						{{ 'TIMER_TRACKER.TIMER' | translate }}
-					</h6>
-					}
 					<div class="row">
 						<div class="col">
 							<div class="time-tracker">
@@ -89,7 +102,6 @@
 				</div>
 				} @if ((trackType$ | async) == timeLogType.MANUAL) {
 				<div class="time-manual">
-					<h6>{{ 'TIMER_TRACKER.ADD_TIME' | translate }}</h6>
 					<div class="row">
 						<div class="col-12">
 							<ngx-timer-range-picker
@@ -109,38 +121,10 @@
 					</div>
 				</div>
 				}
-				<div [class.mode]="isExpanded" [class.expanded]="isExpanded" [class.mode]="!isExpanded">
-					<button
-						nbButton
-						type="button"
-						(click)="$event.stopPropagation(); setTimeType(timeLogType.TRACKED)"
-						size="tiny"
-						[status]="(trackType$ | async) == timeLogType.TRACKED ? 'primary' : 'basic'"
-						class="button switch"
-						[nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
-						[disabled]="running"
-					>
-						<fa-icon [icon]="stopwatch"></fa-icon>
-					</button>
-					<span
-						[nbTooltip]="
-							(organization?.allowManualTime ? 'TIMER_TRACKER.MANUAL' : 'TIMER_TRACKER.MANUAL_NOT_ALLOW')
-								| translate
-						"
-					>
-						<button
-							nbButton
-							type="button"
-							(click)="$event.stopPropagation(); setTimeType(timeLogType.MANUAL); isExpanded = true"
-							size="tiny"
-							[status]="(trackType$ | async) == timeLogType.MANUAL ? 'primary' : 'basic'"
-							class="button switch"
-							[disabled]="running || !organization?.allowManualTime"
-						>
-							<nb-icon icon="menu-outline"></nb-icon>
-						</button>
-					</span>
-				</div>
+				<!-- Collapsed has no title row to hang the switch off, so it sits beside the timer. -->
+				@if (!isExpanded) {
+				<ng-container [ngTemplateOutlet]="modeSwitch"></ng-container>
+				}
 			</div>
 			@if (isExpanded) {
 			<div>
@@ -326,3 +310,42 @@
 	</nb-card-footer>
 </nb-card>
 }
+
+<!--
+	Declared at the top level of the template so both call sites above can reach it:
+	a reference is visible to the views nested inside the one that declares it, and
+	the expanded / collapsed branches are two such nested views.
+-->
+<ng-template #modeSwitch>
+	<div class="mode-switch">
+		<button
+			nbButton
+			type="button"
+			(click)="$event.stopPropagation(); setTimeType(timeLogType.TRACKED)"
+			size="tiny"
+			[status]="(trackType$ | async) == timeLogType.TRACKED ? 'primary' : 'basic'"
+			class="switch"
+			[nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
+			[disabled]="running"
+		>
+			<fa-icon [icon]="stopwatch"></fa-icon>
+		</button>
+		<span
+			[nbTooltip]="
+				(organization?.allowManualTime ? 'TIMER_TRACKER.MANUAL' : 'TIMER_TRACKER.MANUAL_NOT_ALLOW') | translate
+			"
+		>
+			<button
+				nbButton
+				type="button"
+				(click)="$event.stopPropagation(); setTimeType(timeLogType.MANUAL); isExpanded = true"
+				size="tiny"
+				[status]="(trackType$ | async) == timeLogType.MANUAL ? 'primary' : 'basic'"
+				class="switch"
+				[disabled]="running || !organization?.allowManualTime"
+			>
+				<nb-icon icon="menu-outline"></nb-icon>
+			</button>
+		</span>
+	</div>
+</ng-template>
