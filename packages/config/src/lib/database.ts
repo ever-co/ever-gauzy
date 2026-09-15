@@ -10,10 +10,12 @@ import { KnexModuleOptions } from 'nest-knexjs';
 import * as path from 'path';
 import * as chalk from 'chalk';
 import {
+	assertValidDatabaseType,
 	DatabaseTypeEnum,
 	getLoggingMikroOptions,
 	getLoggingOptions,
 	getTlsOptions,
+	parsePositiveIntEnv,
 	TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
 } from './database-helpers';
 
@@ -47,7 +49,13 @@ console.log('NODE_ENV: %s', process.env.NODE_ENV);
 const dbORM: MultiORM = getORMType();
 console.log('DB ORM: %s', dbORM);
 
-const dbType = process.env.DB_TYPE || DatabaseTypeEnum.betterSqlite3;
+// `??`, not `||`: an explicitly-set `DB_TYPE=''` must still reach assertValidDatabaseType() and be
+// rejected, not silently substitute the default — `||` treats '' the same as unset and a real
+// review finding on this PR caught that gap.
+const dbType = process.env.DB_TYPE ?? DatabaseTypeEnum.betterSqlite3;
+// Fail fast on a typo'd/unsupported DB_TYPE instead of letting the switch below fall through
+// silently and leave every connection config `undefined` (TASK 5 finding).
+assertValidDatabaseType(dbType);
 
 console.log(`Selected DB Type (DB_TYPE env var): ${dbType}`);
 console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
@@ -57,23 +65,27 @@ let mikroOrmConnectionConfig: MikroOrmModuleOptions;
 let knexConnectionConfig: KnexModuleOptions;
 
 // We set default pool size as 40. Usually PG has 100 connections max by default.
-const dbPoolSize = process.env.DB_POOL_SIZE ? Number.parseInt(process.env.DB_POOL_SIZE) : 40;
+const dbPoolSize = parsePositiveIntEnv('DB_POOL_SIZE', process.env.DB_POOL_SIZE, 40);
 
 // For now we limit Knex to 10 connections max because it's only used in few places and we don't want to overload the DB.
-const dbPoolSizeKnex = process.env.DB_POOL_SIZE_KNEX ? Number.parseInt(process.env.DB_POOL_SIZE_KNEX) : 10;
+const dbPoolSizeKnex = parsePositiveIntEnv('DB_POOL_SIZE_KNEX', process.env.DB_POOL_SIZE_KNEX, 10);
 
 // Reduce connection timeout in development to fail faster and avoid long startup delays
 const defaultDbConnectionTimeout = process.env.NODE_ENV === 'production' ? 5000 : 2000; // 2 seconds for dev, 5 seconds for prod
 
-const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT
-	? Number.parseInt(process.env.DB_CONNECTION_TIMEOUT)
-	: defaultDbConnectionTimeout;
+const dbConnectionTimeout = parsePositiveIntEnv(
+	'DB_CONNECTION_TIMEOUT',
+	process.env.DB_CONNECTION_TIMEOUT,
+	defaultDbConnectionTimeout
+);
 
-const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? Number.parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
+const idleTimeoutMillis = parsePositiveIntEnv('DB_IDLE_TIMEOUT', process.env.DB_IDLE_TIMEOUT, 10000); // 10 seconds
 
-const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-	? Number.parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-	: 10000; // 10 seconds default
+const dbSlowQueryLoggingTimeout = parsePositiveIntEnv(
+	'DB_SLOW_QUERY_LOGGING_TIMEOUT',
+	process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT,
+	10000 // 10 seconds default
+);
 
 const dbSslMode = process.env.DB_SSL_MODE === 'true';
 
@@ -88,14 +100,16 @@ console.log('DB SSL MODE ENABLE: ' + dbSslMode);
 
 switch (dbType) {
 	case DatabaseTypeEnum.mongodb:
-		throw 'MongoDB not supported yet';
+		// A real Error, not a bare string: `throw`ing a string loses the stack trace and fails
+		// `instanceof Error` checks anywhere upstream that might otherwise handle this gracefully.
+		throw new Error('DB_TYPE=mongodb is not supported yet.');
 
 	case DatabaseTypeEnum.mysql:
 		// MikroORM DB Config (MySQL)
 		const mikroOrmMySqlOptions: MikroOrmMySqlOptions = {
 			driver: MySqlDriver,
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 3306,
+			port: parsePositiveIntEnv('DB_PORT', process.env.DB_PORT, 3306),
 			dbName: process.env.DB_NAME || 'mysql',
 			user: process.env.DB_USER || 'root',
 			password: process.env.DB_PASS || 'root',
@@ -126,7 +140,7 @@ switch (dbType) {
 			invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR,
 			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 3306,
+			port: parsePositiveIntEnv('DB_PORT', process.env.DB_PORT, 3306),
 			database: process.env.DB_NAME || 'mysql',
 			username: process.env.DB_USER || 'root',
 			password: process.env.DB_PASS || 'root',
@@ -158,7 +172,7 @@ switch (dbType) {
 						? { ca: tlsMySqlOptions.ca, rejectUnauthorized: tlsMySqlOptions.rejectUnauthorized }
 						: false,
 					host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
-					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306, // Database port (default: 3306)
+					port: parsePositiveIntEnv('DB_PORT', process.env.DB_PORT, 3306), // Database port (default: 3306)
 					database: process.env.DB_NAME || 'mysql', // Database name (default: mysql)
 					user: process.env.DB_USER || 'root', // Database username (default: mysql)
 					password: process.env.DB_PASS || 'root' // Database password (default: root)
@@ -187,7 +201,7 @@ switch (dbType) {
 		const mikroOrmPostgresOptions: MikroOrmPostgreSqlOptions = {
 			driver: PostgreSqlDriver,
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 5432,
+			port: parsePositiveIntEnv('DB_PORT', process.env.DB_PORT, 5432),
 			dbName: process.env.DB_NAME || 'postgres',
 			user: process.env.DB_USER || 'postgres',
 			password: process.env.DB_PASS || 'root',
@@ -223,7 +237,7 @@ switch (dbType) {
 			invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR,
 			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 5432,
+			port: parsePositiveIntEnv('DB_PORT', process.env.DB_PORT, 5432),
 			database: process.env.DB_NAME || 'postgres',
 			username: process.env.DB_USER || 'postgres',
 			password: process.env.DB_PASS || 'root',
@@ -264,7 +278,7 @@ switch (dbType) {
 						? { ca: tlsPostgresOptions.ca, rejectUnauthorized: tlsPostgresOptions.rejectUnauthorized }
 						: false,
 					host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
-					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432, // Database port (default: 5432)
+					port: parsePositiveIntEnv('DB_PORT', process.env.DB_PORT, 5432), // Database port (default: 5432)
 					database: process.env.DB_NAME || 'postgres', // Database name (default: postgres)
 					user: process.env.DB_USER || 'postgres', // Database username (default: postgres)
 					password: process.env.DB_PASS || 'root' // Database password (default: root)

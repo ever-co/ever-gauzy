@@ -168,8 +168,19 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			'Content-Language',
 			'Accept',
 			'Accept-Language',
-			'Observe'
-		].join(', ')
+			'Observe',
+			// TASK 9 (improvement roadmap) — Unified Observability and Correlation IDs: lets a
+			// cross-origin browser client send its own correlation id (`RequestContextMiddleware`
+			// already trusted it server-side; this only affects whether the BROWSER is allowed to
+			// set the header on the request).
+			'X-Correlation-Id'
+		].join(', '),
+		// A response header is invisible to browser JS unless explicitly exposed (CORS's own
+		// default allowlist is a handful of simple headers, and this isn't one) — without this, a
+		// cross-origin caller that did NOT send its own `x-correlation-id` had a value written to the
+		// response but no way to read it back via `fetch`/`XMLHttpRequest`, defeating the same-origin
+		// case's fix (review finding on this PR).
+		exposedHeaders: ['X-Correlation-Id']
 	});
 
 	// TODO: enable csurf is not good idea because it was deprecated.

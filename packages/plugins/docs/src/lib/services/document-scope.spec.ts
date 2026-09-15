@@ -48,7 +48,18 @@ jest.mock(
 			}
 		},
 		prepareSQLQuery: (sql: string) => sql,
-		sanitizeRichHtml: (html: string) => sanitizeRichHtmlMock(html)
+		sanitizeRichHtml: (html: string) => sanitizeRichHtmlMock(html),
+		// Mock drift, found while working on TASK 9 of the improvement roadmap: `document.service.ts`
+		// calls the real `parseFindOptionsRelations` (converts the legacy string-array `relations`
+		// form TypeORM >= 1.0 rejects into its object form — see the big comment on
+		// `findOneWithinScope`), but this hand-written `@gauzy/core` mock never grew that export, so
+		// EVERY call to `findOneScoped(id, ['parent' | 'children'])` threw `... is not a function`
+		// before reaching the fake repository — the three "joined relations are scoped too" tests
+		// below never actually ran the scoping logic they exist to pin. This is a simplified replica
+		// (flat names only, no dot-path nesting) matching what the fake `findOne` below actually
+		// receives; the real function's full behavior is covered separately in `packages/core`.
+		parseFindOptionsRelations: (relations: string[] = []) =>
+			Object.fromEntries(relations.map((relation) => [relation, true]))
 	}),
 	{ virtual: true }
 );

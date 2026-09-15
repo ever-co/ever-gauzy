@@ -161,6 +161,28 @@ export class RequestContext {
 	}
 
 	/**
+	 * Retrieves the current request's correlation id — TASK 9 (improvement roadmap, Unified
+	 * Observability and Correlation IDs).
+	 *
+	 * This is the SAME value as {@link getContextId} (`RequestContextMiddleware` already sets it
+	 * from an inbound `x-correlation-id` header, falling back to a generated UUID, and passes it
+	 * as `RequestContext`'s own `id` — which the constructor also stores under this same CLS key).
+	 * `currentCorrelationId()` exists so call sites that want "the id that ties this operation
+	 * together across logs/queue jobs" don't need to know that `getContextId()`/`setContextId()`
+	 * are the underlying storage — matching the naming of every other `current*` accessor here.
+	 *
+	 * `null` outside a request (e.g. on a queue worker thread, which never gets a `RequestContext`
+	 * — see `packages/plugins/docs/src/lib/knowledge/queue/docs-job.types.ts`'s documented hard
+	 * rule) rather than throwing, so a call site can use `?? undefined` unconditionally instead of
+	 * a try/catch.
+	 *
+	 * @returns The current correlation id, or `null` if there is no active request context.
+	 */
+	static currentCorrelationId(): ID | null {
+		return RequestContext.getContextId() ?? null;
+	}
+
+	/**
 	 * Retrieves the current tenant ID associated with the user in the RequestContext.
 	 * Returns the tenant ID if available, otherwise returns null.
 	 *

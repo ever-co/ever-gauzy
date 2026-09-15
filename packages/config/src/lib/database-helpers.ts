@@ -46,6 +46,59 @@ export const isBetterSqlite3 = (): boolean => isBetterSqlite3Value;
 export const isPostgres = (): boolean => isPostgresValue;
 export const isMongodb = (): boolean => isMongodbValue;
 
+const DATABASE_TYPE_VALUES: readonly string[] = Object.values(DatabaseTypeEnum);
+
+/**
+ * Validates that a `DB_TYPE` value is one of the values `DatabaseTypeEnum` supports — TASK 5
+ * (Configuration Schema and Startup Validation) of the improvement roadmap.
+ *
+ * Before this existed, `database.ts`'s `switch (dbType)` had no `default` case: an unrecognized
+ * value (a typo, an unsupported engine) fell through silently, leaving `dbTypeOrmConnectionConfig`/
+ * `dbMikroOrmConnectionConfig`/`dbKnexConnectionConfig` all `undefined` — a startup misconfiguration
+ * that would only surface later as an opaque "Cannot read properties of undefined" deep inside
+ * `TypeOrmModule.forRootAsync`, rather than a clear error at the moment the bad config is read.
+ *
+ * @param dbType - The `DB_TYPE` value to validate (already defaulted by the caller when unset —
+ *   this only rejects a value that was actually SET to something unrecognized).
+ * @throws {Error} if `dbType` is not one of `DatabaseTypeEnum`'s values.
+ */
+export function assertValidDatabaseType(dbType: string): asserts dbType is DatabaseTypeEnum {
+	if (!DATABASE_TYPE_VALUES.includes(dbType)) {
+		throw new Error(
+			`Invalid DB_TYPE "${dbType}". Supported values: ${DATABASE_TYPE_VALUES.join(', ')}.`
+		);
+	}
+}
+
+/**
+ * Parses a positive-integer environment variable, failing fast with a descriptive error instead of
+ * silently producing `NaN` — which every downstream pool/timeout option in `database.ts` previously
+ * accepted without complaint until it broke a connection much later, deep inside a driver.
+ *
+ * @param name - The environment variable's name, used only for the error message.
+ * @param rawValue - `process.env[name]`.
+ * @param defaultValue - Used when `rawValue` is unset or empty; never itself validated, since it is
+ *   a literal in `database.ts`, not user input.
+ * @throws {Error} if `rawValue` is set but does not parse to a positive integer.
+ */
+export function parsePositiveIntEnv(name: string, rawValue: string | undefined, defaultValue: number): number {
+	if (rawValue === undefined || rawValue === '') {
+		return defaultValue;
+	}
+	// `Number.parseInt` parses only a leading numeric PREFIX — "2.5" silently becomes 2 and
+	// "5432junk" silently becomes 5432, defeating the whole point of failing fast on a
+	// misconfigured value. Require the entire string to be digits (a real review finding on this
+	// PR — see database-config-validation.spec.ts's dedicated tests for both cases).
+	if (!/^\d+$/.test(rawValue.trim())) {
+		throw new Error(`Invalid ${name} "${rawValue}": expected a positive integer.`);
+	}
+	const parsed = Number.parseInt(rawValue, 10);
+	if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+		throw new Error(`Invalid ${name} "${rawValue}": expected a positive integer.`);
+	}
+	return parsed;
+}
+
 /**
  * Gets TLS options for a database connection based on the provided SSL mode.
  *

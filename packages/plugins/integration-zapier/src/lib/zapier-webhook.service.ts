@@ -17,6 +17,18 @@ import { assertSafeZapierWebhookUrl, createSsrfSafeHttpsAgent } from './webhook-
 /** Delivery timeout for a single webhook POST, in milliseconds. */
 const WEBHOOK_DELIVERY_TIMEOUT_MS = 10000;
 
+/**
+ * How long a successfully-delivered webhook's dedup key is remembered, to suppress an exact
+ * redelivery of the same logical event (a duplicate `eventBus.publish()`, a CQRS-level retry) —
+ * found via the TASK 4 idempotency investigation (see
+ * `packages/core/src/lib/core/testing/idempotency/README.md`). In-process only: this does not
+ * survive a restart and is not shared across horizontally-scaled instances, so it protects against
+ * the redelivery scenario that's actually reachable today (an in-process CQRS event), not a
+ * distributed queue's at-least-once delivery — see `ZapierTimerStartedHandler`'s own class comment.
+ * A generous window relative to how quickly an in-process redelivery would actually happen.
+ */
+const WEBHOOK_DELIVERY_DEDUP_WINDOW_MS = 5 * 60 * 1000;
+
 @Injectable()
 export class ZapierWebhookService {
 	private readonly logger = new Logger(ZapierWebhookService.name);
@@ -26,6 +38,17 @@ export class ZapierWebhookService {
 	 * Created once because each instance keeps its own connection pool.
 	 */
 	private readonly ssrfSafeHttpsAgent = createSsrfSafeHttpsAgent();
+
+	/** Dedup key -> the time it expires from this cache. See `WEBHOOK_DELIVERY_DEDUP_WINDOW_MS`. */
+	private readonly recentlyDelivered = new Map<string, number>();
+
+	/**
+	 * Delivery keys currently mid-flight (reserved, not yet confirmed) — closes the concurrent-
+	 * duplicate window `recentlyDelivered` alone cannot: two redeliveries arriving close enough
+	 * together that neither has reached `markDelivered()` yet would otherwise both pass
+	 * `hasRecentlyDelivered()` and both send.
+	 */
+	private readonly inFlight = new Set<string>();
 
 	constructor(
 		private readonly zapierWebhookSubscriptionRepository: TypeOrmZapierWebhookSubscriptionRepository,
@@ -156,7 +179,7 @@ export class ZapierWebhookService {
 
 		// 3) Send notifications in parallel
 		await Promise.all(
-			subscriptions.map((sub) => {
+			subscriptions.map(async (sub) => {
 				// Re-validate at delivery time: rows stored before the egress guard existed have never
 				// been checked, and a literal-host check alone cannot catch a public hostname that
 				// resolves to an internal IP (GHSA-6gg6-vv4f-2x74).
@@ -168,34 +191,93 @@ export class ZapierWebhookService {
 							error instanceof Error ? error.message : error
 						}`
 					);
-					return Promise.resolve(null);
+					return null;
 				}
 
-				return firstValueFrom(
-					this._httpService
-						.post(
-							sub.targetUrl,
-							{
-								event: 'timer.status.changed',
-								data: timerData
-							},
-							{
-								timeout: WEBHOOK_DELIVERY_TIMEOUT_MS,
-								headers: { 'Content-Type': 'application/json' },
-								// A 30x to an internal host would otherwise be followed by the default agent,
-								// stepping around both the URL check and the resolver guard.
-								maxRedirects: 0,
-								httpsAgent: this.ssrfSafeHttpsAgent
-							}
-						)
-						.pipe(
-							catchError((err) => {
-								this.logger.error(`Failed to notify webhook ${sub.id} at ${sub.targetUrl}`, err);
-								return of(null); // swallow error so other calls continue
-							})
-						)
-				);
+				// Idempotency guard (TASK 4 finding): a redelivered/duplicated event for the same
+				// (subscriber, action, source timeLog) must not resend a webhook that already went out
+				// — the receiving Zapier/Make.com zap has no dedup of its own on this payload.
+				//
+				// The check AND the reservation (`inFlight.add`) below happen with no `await` between
+				// them — a real review finding on this PR: two concurrent redeliveries could otherwise
+				// both pass `hasRecentlyDelivered()` before either reached `markDelivered()`, and both
+				// send. Since JS is single-threaded, two such calls' synchronous check-and-reserve
+				// prefixes can never interleave with EACH OTHER (only around an `await`), so whichever
+				// one's microtask runs first wins the reservation and the other sees it immediately.
+				const deliveryKey = this.deliveryDedupKey(sub.id, timerData);
+				if (this.hasRecentlyDelivered(deliveryKey) || this.inFlight.has(deliveryKey)) {
+					this.logger.debug(`Skipping duplicate webhook delivery ${deliveryKey} — already sent/in flight.`);
+					return null;
+				}
+				this.inFlight.add(deliveryKey);
+
+				try {
+					const result = await firstValueFrom(
+						this._httpService
+							.post(
+								sub.targetUrl,
+								{
+									event: 'timer.status.changed',
+									data: timerData
+								},
+								{
+									timeout: WEBHOOK_DELIVERY_TIMEOUT_MS,
+									headers: { 'Content-Type': 'application/json' },
+									// A 30x to an internal host would otherwise be followed by the default
+									// agent, stepping around both the URL check and the resolver guard.
+									maxRedirects: 0,
+									httpsAgent: this.ssrfSafeHttpsAgent
+								}
+							)
+							.pipe(
+								catchError((err) => {
+									this.logger.error(`Failed to notify webhook ${sub.id} at ${sub.targetUrl}`, err);
+									return of(null); // swallow error so other calls continue
+								})
+							)
+					);
+
+					// Only remember a CONFIRMED delivery — `result` is `null` for a caught delivery
+					// failure (from `catchError` just above), and a failed attempt must still be free to
+					// retry, not get suppressed as "already delivered."
+					if (result !== null) {
+						this.markDelivered(deliveryKey);
+					}
+					return result;
+				} finally {
+					// Release the reservation whether the delivery succeeded (now covered by
+					// `recentlyDelivered` instead) or failed (must be free to retry).
+					this.inFlight.delete(deliveryKey);
+				}
 			})
 		);
+	}
+
+	/** Identifies one logical webhook delivery: this subscriber, this action, this source timeLog. */
+	private deliveryDedupKey(subscriptionId: ID, timerData: ITimerZapierWebhookData): string {
+		return [subscriptionId, timerData.action, timerData.data?.id ?? ''].join(':');
+	}
+
+	private hasRecentlyDelivered(key: string): boolean {
+		this.pruneExpiredDeliveries();
+		return this.recentlyDelivered.has(key);
+	}
+
+	private markDelivered(key: string): void {
+		// Also on the write path (not just on read, via hasRecentlyDelivered): a service that
+		// delivers a batch and then goes idle would otherwise leave those entries in
+		// `recentlyDelivered` indefinitely, since nothing would call hasRecentlyDelivered() again to
+		// trigger a prune. Bounded either way by how many distinct subscribers exist, but tidier.
+		this.pruneExpiredDeliveries();
+		this.recentlyDelivered.set(key, Date.now() + WEBHOOK_DELIVERY_DEDUP_WINDOW_MS);
+	}
+
+	private pruneExpiredDeliveries(): void {
+		const now = Date.now();
+		for (const [key, expiresAt] of this.recentlyDelivered) {
+			if (expiresAt <= now) {
+				this.recentlyDelivered.delete(key);
+			}
+		}
 	}
 }
