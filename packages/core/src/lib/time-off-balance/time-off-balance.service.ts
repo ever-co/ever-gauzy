@@ -53,6 +53,14 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 		const employeeId = this.resolveVisibleEmployeeId(input.employeeId);
 
+		// Raw repository read: nothing injects the organization, and an undefined key is DROPPED from
+		// a TypeORM where object instead of matching nothing, so a missing organization would widen
+		// the listing to every organization of the tenant. `sentTo` on the query DTO suppresses the
+		// conditional `organizationId` validation, so the DTO cannot be relied on here. Fail closed.
+		if (!organizationId) {
+			throw new BadRequestException('organizationId is required');
+		}
+
 		const where: Record<string, unknown> = { tenantId, organizationId };
 
 		if (employeeId) {
