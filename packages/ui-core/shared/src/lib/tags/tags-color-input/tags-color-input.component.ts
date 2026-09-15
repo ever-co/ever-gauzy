@@ -238,7 +238,11 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 		for (const tag of selectedTags) {
 			usedWidth += this.getTagWidth(tag.name);
 
-			if (usedWidth >= containerWidth) {
+			// `>`, not `>=`: a tag that brings the row to exactly the container's
+			// width is on screen. Counting it out was what produced a "+1" for a
+			// tag that is right there in the trigger, in the case where the set
+			// happens to fill the row precisely.
+			if (usedWidth > containerWidth) {
 				break;
 			}
 			fittingTags++;

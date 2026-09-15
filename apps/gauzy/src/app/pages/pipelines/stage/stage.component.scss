@@ -67,10 +67,10 @@
 }
 
 // `:nth-child(2)`, not `:last-child`. The template now emits the description
-// element only when the stage has one (a `display: none` on `:empty` used to do
-// that job, which leant on a zero-length interpolation text node still counting
-// as empty and did nothing at all for a whitespace-only description). With the
-// node genuinely absent, the NAME is both first and last child, and a
+// element only when the stage has a non-blank one (a `display: none` on `:empty`
+// used to do that job, which leant on a zero-length interpolation text node still
+// counting as empty and could not catch a whitespace-only description at all).
+// With the node genuinely absent, the NAME is both first and last child, and a
 // `:last-child` rule at this same specificity would come after the `:first-child`
 // one above and paint every description-less stage muted and unbolded.
 :host > div > div:nth-child(2) {

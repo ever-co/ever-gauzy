@@ -316,11 +316,14 @@ ga-pagination {
       align-items: center;
       justify-content: center;
       gap: nb-theme(button-small-icon-offset);
-      // `select-min-width` is 13rem. `themes.scss` registers eight themes and
-      // six restate it as 6rem; `gauzy-light` and `gauzy-dark` — the two the
-      // app ships on — are the two that never did, so this trigger alone kept
-      // the stock value. Nothing replaces it: the box hugs its label, the way
-      // every button on the strip does.
+      // Nebular's stock `select-min-width` is 13rem, and the app does not take
+      // it: of the eight themes `themes.scss` registers, six restate the token
+      // as 6rem, and the two that do not — `gauzy-light` and `gauzy-dark`, the
+      // two the app ships on — extend `default` and `dark`, which are among the
+      // six. `nb-register-theme` flattens a parent's map into the child at
+      // registration, so both inherit 6rem rather than falling back to the stock
+      // value. Either way this trigger takes none of it: the box hugs its label,
+      // the way every button on the strip does.
       min-width: 0;
       width: auto;
       padding: nb-theme(button-filled-small-padding);
@@ -1253,18 +1256,22 @@ a.comment-author {
   }
 
   // ── The one control that did not obey that ─────────────────────────────────
-  // `_overrides.scss` floors every `nb-select` trigger at `--select-min-width`
-  // (6rem) with an `!important`, globally. A column only gets that wide once the
-  // row has ~830px to spend (8 x 6rem + 7 x 0.5rem), and the row does not wrap
-  // until 768px — so from 768px to about 850px the Status trigger held a 96px
-  // floor inside an ~80px column and hung out past the accordion, taking the
-  // fields beside it with it.
+  // Nebular's own `nb-select-theme()` floors every trigger at
+  // `nb-theme(select-min-width)`, which resolves to 6rem in all eight registered
+  // themes (see the note on `.select-nb` higher up for why that includes the two
+  // the app ships on). Eight of those side by side need 8 x 6rem + 7 x 0.5rem =
+  // 824px of ROW before a column is wide enough to hold one — well past the point
+  // where the card itself is 824px wide, and far past the 768px at which this row
+  // is allowed to wrap. Between the two, the Status trigger kept a floor its
+  // column could not give it and hung out past the accordion, taking the fields
+  // beside it with it.
   //
   // Unset rather than lowered: the premise of the row is that the eight columns
   // divide the line evenly and shrink together, and a floor on one of them is the
   // one thing that cannot hold. This is the same treatment `_overrides.scss`
-  // itself applies to selects inside `.card-scroll`; `!important` plus the
-  // specificity this block already carries is what reaches past the global rule.
+  // applies to selects inside `.card-scroll`. `!important` because that same file
+  // restates the floor with one of its own under `.nb-theme-default`; under every
+  // other theme the specificity here would have been enough on its own.
   ::ng-deep nb-select .select-button {
     min-width: 0 !important;
 

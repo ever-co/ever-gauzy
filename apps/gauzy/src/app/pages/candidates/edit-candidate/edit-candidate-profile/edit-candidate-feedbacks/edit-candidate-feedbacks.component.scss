@@ -295,13 +295,17 @@
 // Candidates list it is opened from: density tokens, the table surface, row
 // hover/selection, the tag-chip stack, the status pills and the pager.
 //
-// `$actions: '.main-btn'`, not the default `nb-card-header` and not `null`. This
-// tab puts TWO different things in its header, on an `@if (!showAddCard)` /
-// `@else`: the list state renders `.main-btn`, which is exactly the compact
-// toolbar the mixin's button block is written for (`ngx-gauzy-button-action` —
-// Add, plus View / Edit / Delete), and the form state renders `.add-card`, whose
-// Save and Cancel are full-size by design. Naming `.main-btn` compacts the
-// toolbar alongside the table it sits over and leaves the form branch alone;
-// `null` left the toolbar at full size above a compacted table, and the default
-// would have shrunk the form's buttons too.
+// `$actions: '.main-btn'`, not `null`. This tab puts TWO different things in its
+// header, on an `@if (!showAddCard)` / `@else`: the list state renders
+// `.main-btn`, which is exactly the compact toolbar the mixin's button block is
+// written for (`ngx-gauzy-button-action` — Add, plus View / Edit / Delete), and
+// the form state renders `.add-card`. `null` left that toolbar at full size above
+// a table that had just been compacted.
+//
+// The default `nb-card-header` would have worked too — `page-header-buttons()`
+// only defines the `--button-*-small-*` and `--icon-button-*-small-*` tokens, and
+// the form's Save and Cancel take no `size`, so they are medium and no container
+// named here reaches them. `.main-btn` is the narrower statement of the same
+// thing: it names the row the tokens are FOR, rather than the header that happens
+// to contain it.
 @include ga-hub.list-page('.main-btn');
