@@ -267,6 +267,40 @@ describe('fetchCatalogueJson', () => {
 		global.fetch = realFetch;
 	});
 
+	it.each([
+		'http://169.254.169.254/latest/meta-data/',
+		'http://localhost:8080/v1/models',
+		'http://10.0.0.5/v1/models',
+		'http://[::1]:8000/v1/models'
+	])('refuses the internal target %s without making a request', async (url) => {
+		// The blind half of GHSA-w3mx-m5cr-3gxp: `GET {baseUrl}/models` for the self-hosted providers is
+		// built from a tenant-supplied base URL and had no host check at all.
+		const fetchMock = jest.fn().mockResolvedValue(streamed(['{"data":[]}']));
+		global.fetch = fetchMock as unknown as typeof fetch;
+
+		await expect(fetchCatalogueJson(url)).rejects.toThrow(/not allowed/i);
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('refuses to follow a redirect, which would otherwise hop to an internal host', async () => {
+		const fetchMock = jest.fn().mockResolvedValue(streamed(['{"data":[]}']));
+		global.fetch = fetchMock as unknown as typeof fetch;
+
+		await fetchCatalogueJson('https://example.test/models');
+
+		expect(fetchMock.mock.calls[0][1].redirect).toBe('error');
+	});
+
+	it('fetches an internal target once the deployment opts in', async () => {
+		const fetchMock = jest.fn().mockResolvedValue(streamed(['{"data":[{"id":"a"}]}']));
+		global.fetch = fetchMock as unknown as typeof fetch;
+
+		await expect(
+			fetchCatalogueJson('http://localhost:8080/v1/models', { allowPrivateHost: true })
+		).resolves.toEqual({ data: [{ id: 'a' }] });
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
 	it('parses a chunked response that declares no length', async () => {
 		global.fetch = jest.fn().mockResolvedValue(streamed(['{"data":[{"id":"a"}', ',{"id":"b"}]}']));
 

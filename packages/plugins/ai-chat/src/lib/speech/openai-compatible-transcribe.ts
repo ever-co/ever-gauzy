@@ -10,6 +10,7 @@
  */
 
 import { SpeechProviderError, SpeechProviderErrorKind } from './speech-provider-error';
+import { isSsrfBlockedError, ssrfSafeFetch } from '../ssrf';
 
 /**
  * Upstream budget for a transcription.
@@ -134,8 +135,22 @@ export const trimTrailingSlash = (url: string): string => {
 	return url.slice(0, end);
 };
 
+/**
+ * Upper bound on a transcript relayed back to the caller.
+ *
+ * A 2xx body's `text` was returned verbatim with no cap, so a tenant-configured endpoint answering
+ * `{"text": "<megabytes>"}` was an unbounded read reflected straight into the chat panel. Generous
+ * next to any real dictation (roughly 10k words of speech) and small enough not to matter.
+ */
+export const MAX_TRANSCRIPT_CHARS = 64 * 1024;
+
 /** Base arguments shared by every speech request helper. */
 export interface ISpeechRequestBase {
+	/**
+	 * Permit a loopback/private/link-local endpoint for THIS request. Defaults to the deployment's
+	 * `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS` flag; provider plugins should leave it unset.
+	 */
+	allowPrivateHost?: boolean;
 	/** Human-readable provider name used in error messages ("OpenAI transcription failed: …"). */
 	providerLabel: string;
 	/** Registry id, attached to the thrown {@link SpeechProviderError}. */
@@ -170,8 +185,26 @@ export async function speechRequest(args: ISpeechRequestArgs): Promise<string> {
 
 	let response: globalThis.Response;
 	try {
-		response = await fetch(url, { ...args.init, signal: args.init.signal ?? AbortSignal.timeout(timeoutMs) });
+		// Through the SSRF egress guard, because `url` is built from a TENANT-SUPPLIED base URL for
+		// every self-hosted and proxy provider: loopback/private/link-local targets are refused, the
+		// host is re-checked after DNS resolution and redirects are not followed
+		// (GHSA-w3mx-m5cr-3gxp).
+		response = await ssrfSafeFetch(
+			url,
+			{ ...args.init, signal: args.init.signal ?? AbortSignal.timeout(timeoutMs) },
+			{ allowPrivateHost: args.allowPrivateHost }
+		);
 	} catch (error) {
+		// A refused target is a configuration problem, not a flaky network, and its message must carry
+		// nothing about what was (or was not) reachable — that oracle is half of what a blind SSRF is
+		// worth. Relayed verbatim from the guard, which is already written to say nothing specific.
+		if (isSsrfBlockedError(error)) {
+			throw new SpeechProviderError(
+				`${providerLabel} transcription failed: ${error instanceof Error ? error.message : 'the endpoint is not allowed'}`,
+				'network',
+				providerId
+			);
+		}
 		// No HTTP answer at all: DNS, connection refused (a local server that is not running is the
 		// common case), TLS, or the timeout above. The message names the failure — a self-hoster needs
 		// to know their container is down — but is redacted and bounded like everything else.
@@ -221,7 +254,7 @@ export async function speechRequest(args: ISpeechRequestArgs): Promise<string> {
 		if (typeof text !== 'string') {
 			throw new Error('the response carries no transcript text');
 		}
-		return text.trim();
+		return text.trim().slice(0, MAX_TRANSCRIPT_CHARS);
 	} catch (error) {
 		throw new SpeechProviderError(
 			`${providerLabel} transcription failed: ${redactSecret(
@@ -273,6 +306,7 @@ export async function transcribeMultipart(args: ITranscribeMultipartArgs): Promi
 		providerId: args.providerId,
 		apiKey: args.apiKey,
 		timeoutMs: args.timeoutMs,
+		allowPrivateHost: args.allowPrivateHost,
 		parse: args.parse
 	});
 }
@@ -319,6 +353,7 @@ export async function transcribeViaOpenAiCompatible(args: ITranscribeViaOpenAiCo
 		providerLabel: args.providerLabel,
 		providerId: args.providerId,
 		apiKey: args.apiKey,
-		timeoutMs: args.timeoutMs
+		timeoutMs: args.timeoutMs,
+		allowPrivateHost: args.allowPrivateHost
 	});
 }

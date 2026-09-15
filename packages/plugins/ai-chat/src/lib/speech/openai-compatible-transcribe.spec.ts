@@ -1,4 +1,5 @@
 import {
+	MAX_TRANSCRIPT_CHARS,
 	classifySpeechHttpFailure,
 	redactSecret,
 	resolveAudioExtension,
@@ -83,7 +84,10 @@ describe('speech helpers', () => {
 			const fetchMock = capture({ text: 'ok' });
 			await call({
 				path: '/v1/audio/transcriptions',
+				// A LAN/loopback server needs the deployment opt-in since the SSRF egress guard went in
+				// (GHSA-w3mx-m5cr-3gxp); this test is about the request shape, not about the guard.
 				baseUrl: 'http://localhost:8080',
+				allowPrivateHost: true,
 				language: 'de',
 				fields: { response_format: 'json' },
 				headers: { 'x-custom': '1' }
@@ -136,10 +140,46 @@ describe('speech helpers', () => {
 
 		it('wraps a network failure (server down) as a `network` error naming the provider', async () => {
 			global.fetch = jest.fn().mockRejectedValue(new TypeError('fetch failed')) as unknown as typeof fetch;
-			const error = await call({ baseUrl: 'http://localhost:8000/v1' }).catch((e: unknown) => e);
+			// The self-hosted case this message exists for: a local container that is not running. Needs
+			// the private-endpoint opt-in now that the SSRF egress guard refuses loopback by default.
+			const error = await call({ baseUrl: 'http://localhost:8000/v1', allowPrivateHost: true }).catch(
+				(e: unknown) => e
+			);
 			expect((error as SpeechProviderError).kind).toBe('network');
 			expect((error as SpeechProviderError).message).toMatch(/could not be reached/);
 			expect((error as SpeechProviderError).message).toMatch(/^Example transcription failed/);
+		});
+
+		it.each([
+			'http://169.254.169.254/latest/meta-data/',
+			'http://localhost:8000/v1',
+			'http://10.0.0.5/v1',
+			'http://[::1]:8000/v1'
+		])('refuses the internal endpoint %s without making a request', async (baseUrl) => {
+			// The reflected half of GHSA-w3mx-m5cr-3gxp: this path relays a bounded slice of the
+			// upstream body and distinguishes timeout / refused / HTTP, so an unguarded fetch here was
+			// both an SSRF and a host-discovery oracle.
+			const fetchMock = capture({ text: 'ok' });
+			const error = await call({ baseUrl }).catch((e: unknown) => e);
+
+			expect(isSpeechProviderError(error)).toBe(true);
+			expect((error as SpeechProviderError).kind).toBe('network');
+			expect((error as SpeechProviderError).message).toMatch(/not allowed/i);
+			expect(fetchMock).not.toHaveBeenCalled();
+		});
+
+		it('says nothing about the refused endpoint that a probe could read', async () => {
+			capture({ text: 'ok' });
+			const error = (await call({ baseUrl: 'http://10.11.12.13:9000/v1' }).catch((e: unknown) => e)) as Error;
+
+			expect(error.message).not.toContain('10.11.12.13');
+			expect(error.message).not.toContain('9000');
+		});
+
+		it('caps the transcript a tenant-configured endpoint can reflect back', async () => {
+			capture({ text: 'x'.repeat(MAX_TRANSCRIPT_CHARS + 5_000) });
+
+			await expect(call()).resolves.toHaveLength(MAX_TRANSCRIPT_CHARS);
 		});
 
 		it('wraps a timeout as a `network` error that says so', async () => {
