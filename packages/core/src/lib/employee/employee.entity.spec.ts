@@ -30,6 +30,12 @@ describe('Employee billing rate transforms', () => {
 		expect(employee.billRateValue).toBe(10.5);
 	});
 
+	it('rounds half-cents up instead of using binary toFixed', () => {
+		const employee = plainToInstance(Employee, { billRateValue: 1.005 });
+
+		expect(employee.billRateValue).toBe(1.01);
+	});
+
 	it('still parses reWeeklyLimit as whole hours', () => {
 		const employee = plainToInstance(Employee, { reWeeklyLimit: '37.9' });
 
