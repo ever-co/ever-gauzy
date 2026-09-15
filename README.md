@@ -292,6 +292,10 @@ Notes:
 
 ### 🚗 Other self-hosting options
 
+#### Deploy on Hostinger
+
+[![Deploy on Hostinger](https://assets.hostinger.com/vps/deploy.svg)](https://www.hostg.xyz/aff_c?offer_id=815&aff_id=244060&url_id=6822)
+
 #### Deploy on RepoCloud
 
 Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/details/Ever%20Gauzy/).
