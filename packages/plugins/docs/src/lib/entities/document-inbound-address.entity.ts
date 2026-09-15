@@ -5,7 +5,13 @@ import {
 	DocumentInboundDomainStatusEnum,
 	IDocumentInboundAddress
 } from '@gauzy/contracts';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import {
+	ColumnIndex,
+	ExportRedacted,
+	MultiORMColumn,
+	MultiORMEntity,
+	TenantOrganizationBaseEntity
+} from '@gauzy/core';
 import { MikroOrmDocumentInboundAddressRepository } from '../repositories/mikro-orm-document-inbound-address.repository';
 
 /**
@@ -60,6 +66,7 @@ export class DocumentInboundAddress extends TenantOrganizationBaseEntity impleme
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@ExportRedacted()
 	@ColumnIndex('IDX_document_inbound_address_token')
 	@MultiORMColumn({ type: 'varchar', length: 128, nullable: true })
 	token?: string | null;
@@ -129,6 +136,7 @@ export class DocumentInboundAddress extends TenantOrganizationBaseEntity impleme
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true })
 	webhookSecretHash?: string | null;
 

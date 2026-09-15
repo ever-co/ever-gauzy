@@ -8,6 +8,7 @@ import { IsSecret } from '../core/decorators/is-secret';
 import { TenantBaseEntity } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from '../core/decorators/entity';
 import { MikroOrmTenantApiKeyRepository } from './repository/mikro-orm-tenant-api-key.repository';
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 
 @MultiORMEntity('tenant_api_key', { mikroOrmRepository: () => MikroOrmTenantApiKeyRepository })
 export class TenantApiKey extends TenantBaseEntity implements ITenantApiKey {
@@ -46,6 +47,7 @@ export class TenantApiKey extends TenantBaseEntity implements ITenantApiKey {
 		type: () => String,
 		description: 'The API Key for authentication.'
 	})
+	@ExportRedacted()
 	@IsNotEmpty()
 	@IsString()
 	@IsSecret()
@@ -66,6 +68,7 @@ export class TenantApiKey extends TenantBaseEntity implements ITenantApiKey {
 		type: () => String,
 		description: 'The API Secret for secure authentication.'
 	})
+	@ExportRedacted()
 	@IsNotEmpty()
 	@IsString()
 	@IsSecret()

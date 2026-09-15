@@ -165,6 +165,18 @@ export * from './lib/database/database.module';
 // entity is registered for export automatically, which is right for authored records and wrong for
 // tables the platform rebuilds after an import.
 export { isExportSkipped, SKIP_EXPORT_METADATA, SkipExport, skipExport } from './lib/export-import/skip-export.decorator';
+// Column-level counterpart: mark a credential column so the CSV export writes it masked. Public for
+// the same reason — plugin entities carry credentials too, and `csv-writer` reads properties
+// directly, so class-transformer's `@Exclude` does not reach them (GHSA-j5h5-r956-rxc3).
+export {
+	EXPORT_REDACT_METADATA,
+	ExportRedacted,
+	exportRedacted,
+	getExportRedactedProperties,
+	redactForExport,
+	ExportEntityClass,
+	IExportRedactOptions
+} from './lib/export-import/export-redact.decorator';
 export { ExpenseCreateCommand, ExpenseModule, ExpenseService } from './lib/expense';
 export {
 	ExpenseCategoriesModule,
