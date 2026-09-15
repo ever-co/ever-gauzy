@@ -4432,6 +4432,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Kunde auswählen",
+			"SELECT_PROJECT": "Projekt auswählen",
+			"SELECT_TEAM": "Team auswählen",
+			"SELECT_TASK": "Aufgabe auswählen",
+			"DESCRIPTION": "Beschreibung hinzufügen"
+		},
 		"IS_BILLABLE": "Ist abzurechnen.",
 		"STOP_TIMER": "Stoppuhr",
 		"START_TIMER": "Starten Sie den Timer",
