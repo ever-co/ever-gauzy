@@ -50,52 +50,49 @@
 			<div [style.margin]="isExpanded ? '' : '0px'" class="timer-container form-group">
 				@if ((trackType$ | async) == timeLogType.TRACKED) {
 				<div class="timer">
-					<div class="row">
-						<div class="col">
-							<div class="time-tracker">
-								<div class="is_billable">
-									<button
-										nbButton
-										type="button"
-										(click)="$event.stopPropagation(); isBillable = !isBillable"
-										size="small"
-										[status]="isBillable ? 'primary' : 'basic'"
-										[nbTooltip]="'TIMER_TRACKER.IS_BILLABLE' | translate"
-										[disabled]="running"
-									>
-										$
-									</button>
-								</div>
-								<div class="time-count">
-									<span class="current-session">
-										{{ currentSessionTime }}
-									</span>
-									<span class="today-time mt-2">
-										{{ 'TIMER_TRACKER.TODAY' | translate }}
-										{{ todaySessionTime }}
-									</span>
-									<ga-time-tracker-status class="status"></ga-time-tracker-status>
-								</div>
-								<div class="actions">
-									<div class="toggle">
-										<button
-											nbButton
-											type="submit"
-											[status]="running ? 'danger' : 'success'"
-											[class.button]="!running"
-											[class.success]="!running"
-											shape="round"
-											[nbTooltip]="
-												(running ? 'TIMER_TRACKER.STOP_TIMER' : 'TIMER_TRACKER.START_TIMER')
-													| translate
-											"
-											(click)="toggleTimer(true)"
-											[disabled]="isDisable"
-										>
-											<fa-icon [icon]="!running ? play : pause"></fa-icon>
-										</button>
-									</div>
-								</div>
+					<div class="time-tracker">
+						<div class="is_billable">
+							<button
+								nbButton
+								type="button"
+								(click)="$event.stopPropagation(); isBillable = !isBillable"
+								size="small"
+								[status]="isBillable ? 'primary' : 'basic'"
+								[nbTooltip]="'TIMER_TRACKER.IS_BILLABLE' | translate"
+								[disabled]="running"
+							>
+								$
+							</button>
+						</div>
+						<div class="time-count">
+							<div class="session">
+								<span class="current-session">
+									{{ currentSessionTime }}
+								</span>
+								<ga-time-tracker-status class="status"></ga-time-tracker-status>
+							</div>
+							<span class="today-time">
+								{{ 'TIMER_TRACKER.TODAY' | translate }}
+								{{ todaySessionTime }}
+							</span>
+						</div>
+						<div class="actions">
+							<div class="toggle">
+								<button
+									nbButton
+									type="submit"
+									[status]="running ? 'danger' : 'success'"
+									[class.button]="!running"
+									[class.success]="!running"
+									shape="round"
+									[nbTooltip]="
+										(running ? 'TIMER_TRACKER.STOP_TIMER' : 'TIMER_TRACKER.START_TIMER') | translate
+									"
+									(click)="toggleTimer(true)"
+									[disabled]="isDisable"
+								>
+									<fa-icon [icon]="!running ? play : pause"></fa-icon>
+								</button>
 							</div>
 						</div>
 					</div>

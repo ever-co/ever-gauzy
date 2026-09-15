@@ -17,11 +17,6 @@ $body-inset: 36px;
   z-index: 999;
   right: 20px;
   top: 80px;
-  .status {
-	position: absolute;
-    left: 9.5rem;
-    top: 0;
-  }
   nb-card {
     border: none;
   }
@@ -203,7 +198,7 @@ $body-inset: 36px;
     .time-tracker {
       width: 100%;
       display: flex;
-      align-items: flex-start;
+      align-items: center;
     }
     .is_billable {
       button {
@@ -223,53 +218,58 @@ $body-inset: 36px;
       text-align: left;
       display: flex;
       flex-direction: column;
+      // The status icon used to be positioned `absolute; left: 9.5rem` against
+      // the CARD, so it landed on a fixed x that had nothing to do with the
+      // time it annotates and collided with anything else near the top edge.
+      // It belongs next to the running session, so it sits next to it.
+      .session {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        font-size: 1rem;
+        line-height: 1;
+      }
       .today-time {
         font-size: 0.6em;
         line-height: 1;
+        margin-top: 0.5rem;
       }
       .current-session {
         font-weight: 400;
       }
     }
     .toggle {
-      [nbButton].appearance-filled.size-medium {
-        padding: 8px 7px 10px 7px;
-      }
+      // `shape="round"` can only round the box it is given, and that box was
+      // never square: the start state ran `padding: 8px 7px 10px 7px` and the
+      // stop state `8px`, over an `fa-icon` carrying another `0 3px 0 4px`.
+      // Four different insets on four sides, and two different boxes depending
+      // on whether the timer was running — so it drew a lopsided blob that
+      // changed shape on click.
+      //
+      // An explicit square with zero padding and a 50% radius is a circle in
+      // both states, whatever the glyph inside measures. The selector keeps the
+      // old specificity because it still has to beat Nebular's own
+      // `[nbButton].appearance-filled.size-medium` padding.
+      [nbButton].appearance-filled.size-medium,
       [nbButton].appearance-filled.status-danger {
-        padding: 8px;
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
       }
       fa-icon {
-        border: 1px dashed transparent !important;
         margin: 0;
-        border-radius: 50px;
-        padding: 0px 3px 0px 4px;
-      }
-    }
-    .mode {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding-left: 10px;
-      &.expanded {
-        margin-top: 3.4rem;
-      }
-      button {
-        margin: 4px;
-        padding: 4px 2px 4px 2px;
-        svg {
-          border-radius: 2rem;
-          width: 12px;
-          margin: 0;
-        }
-        &.status-primary {
-          nb-icon {
-            color: #fff;
-          }
-        }
-        nb-icon {
-          height: 16px;
-          width: 16px;
-        }
+        padding: 0;
+        display: inline-flex;
+        line-height: 1;
       }
     }
 
