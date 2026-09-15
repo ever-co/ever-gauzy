@@ -3,13 +3,30 @@
 // One vertical rhythm for the whole panel, so a field, the title row and the
 // footer cluster cannot each pick their own gap.
 $panel-gap: 1rem;
+// The step between one label+field pair and the next. Shared by the field stack
+// and by the date / start-time rows inside the range picker, which is what makes
+// "Date → Start Time" read as the same interval as "Client → Project".
+$field-gap: calc(#{$panel-gap} - 5px);
+
+// How tall the scrolling region is allowed to get. Sized so the TIMER view — the
+// shorter of the two — renders whole and never shows a scrollbar, while the
+// manual view (which adds the date row and the start/end row) scrolls inside the
+// same box instead of making the card taller. THIS IS THE KNOB: raise it if the
+// timer view scrolls, lower it if the manual card still stands taller.
+$scroll-max-height: 32rem;
+// `:host` pins the card 80px from the top; leave the same again beneath it so a
+// short window cannot push the card off the bottom edge.
+$viewport-gutter: 100px;
 
 // Card width, named so the window-control cluster below can be derived from it
 // instead of re-guessed. Was 328px — see `.timer-card`.
 $card-width: 360px;
-// `.timer-card`'s own padding plus `nb-card-body`'s (the `card-padding: 1rem`
-// token in `_gauzy-theme-maps.scss`): where a child's static position starts.
-$body-inset: 36px;
+// `nb-card-body`'s own inset — the `card-padding: 1rem` token in
+// `_gauzy-theme-maps.scss`. Named so the scroll box can reach back across it.
+$body-padding: 16px;
+// `.timer-card`'s own padding plus `nb-card-body`'s: where a child's static
+// position starts.
+$body-inset: 20px + $body-padding;
 
 :host {
   position: fixed;
@@ -64,6 +81,17 @@ $body-inset: 36px;
     // card) so resizing the card carries the buttons with it.
     width: $card-width - $body-inset + 8px;
     top: 0px;
+
+    // Nebular sizes a `size="small"` button's glyph from `button-small-icon-size`
+    // (1rem), the same step it gives an icon button anywhere in a form. These two
+    // are window chrome rather than actions on the record, so they sit one step
+    // under that. Only the glyph shrinks — the button keeps its padding, so the
+    // hit target does not get smaller with it.
+    nb-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+      font-size: 0.875rem;
+    }
   }
 
   // Title + mode switch. `space-between` is what puts the switch AFTER the
@@ -73,8 +101,11 @@ $body-inset: 36px;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    // Clears the absolutely positioned window controls above.
-    margin: 0.5rem 0 $panel-gap;
+    // No top margin. This row starts at the body's content edge, which already
+    // sits below the absolutely positioned window controls — they are pinned to
+    // the card's own top, outside the body's inset — so the extra step was
+    // clearing something that was already clear.
+    margin: 0 0 $panel-gap;
 
     .panel-title {
       color: nb-theme(text-primary-color);
@@ -290,21 +321,67 @@ $body-inset: 36px;
   }
 
   .form-group {
-    // 5px under the panel's shared gap. Stated as a step off `$panel-gap` rather
-    // than as a flat 11px so the field stack still moves with the rest of the
-    // panel's rhythm if that gap is retuned. `calc()` because the gap is in rem
-    // and the step is in px — Sass cannot fold those two units together, and
-    // the rem half has to stay relative to the root font size anyway.
-    margin-bottom: calc(#{$panel-gap} - 5px);
+    margin-bottom: $field-gap;
+  }
+
+  // Only the fields scroll. The window controls and the title row sit outside
+  // this box, so they stay put instead of sliding away under the pointer — and
+  // `.header` keeps its containing block, so nothing about its position moves.
+  .panel-scroll {
+    max-height: min(#{$scroll-max-height}, calc(100vh - #{$viewport-gutter}));
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    // The bar is drawn on the right edge of THIS box, which used to stop at the
+    // fields — so it ran up the middle of the card's right inset. The negative
+    // margin lets the box reach out across `nb-card-body`'s own padding to the
+    // card's content edge, and the matching padding puts the fields back exactly
+    // where they were, so only the bar moves. Stopping at the body's padding
+    // rather than the card's keeps it off the rounded corner.
+    margin-right: -$body-padding;
+    padding-right: $body-padding;
+
+    // Same thin thumb the rest of the app draws, rather than the platform's
+    // default bar cutting into a 360px card.
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--gauzy-scrollbar);
+      border-radius: 1rem;
+    }
+    scrollbar-width: thin;
+  }
+
+  // Minimized is a compact widget, not a form: there is nothing in it that could
+  // need scrolling, so it should not be a scroll container at all. Left as one it
+  // still reserves and can paint a bar over a row two controls tall, and the
+  // outset above pushes that bar into the card's inset for no reason.
+  .timer-card.collapsed .panel-scroll {
+    max-height: none;
+    overflow: visible;
+    margin-right: 0;
+    padding-right: 0;
   }
 }
 
 .custom {
   textarea {
-    background: rgba(126, 126, 143, 0.05);
     color: nb-theme(text-basic-color);
-    border-color: nb-theme(background-basic-color-3);
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
+    // The edge every other control in the panel draws: the same
+    // `$control-hairline` `ng-select-overrides()` gives the dropdown triggers,
+    // and the same one the global `textarea` rule already wanted before this
+    // block overrode it.
+    //
+    // Was `rgba(0, 0, 0, 0.1) 0 1px 0 0 inset` — a single black hairline along
+    // the TOP edge only, at 10% alpha. On a dark canvas that is invisible, so
+    // the field had no edge at all and read as a hole in the card rather than
+    // as a control. The `border-color` that sat next to it did nothing either:
+    // `input-appearance()` sets `border: none` on every textarea in the dialog.
+    box-shadow: $control-hairline;
     resize: none;
     // Was a hard `282.79px`, which is both wider than the content box it sits
     // in and immune to the card resize above.
@@ -318,15 +395,17 @@ $body-inset: 36px;
     font-size: nb-theme(select-medium-text-font-size);
     line-height: 1.5;
     font-family: inherit;
-    &:hover {
-      border-color: nb-theme(color-primary-hover);
+    // `ng-select` holds the same hairline through hover and focus rather than
+    // swapping edges, so this does too.
+    //
+    // What was here — `border-color` on hover, and a `background` on
+    // `:hover:focus` and on `:active` — could never render: the border is
+    // removed by `input-appearance()`, and the background is set by that same
+    // mixin with `!important`, which these plain declarations cannot outrank.
+    &:hover,
+    &:focus {
+      box-shadow: $control-hairline;
       color: nb-theme(text-basic-color);
-      &:focus {
-        background: rgba(126, 126, 143, 0.05);
-      }
-    }
-    &:active {
-      background-color: nb-theme(background-basic-color-1);
     }
   }
 }
@@ -362,6 +441,13 @@ $body-inset: 36px;
     .form-group {
       margin-bottom: 0;
     }
+    // The picker is two stacked `.row`s (date, then start/end). Without this the
+    // start-time labels sat almost on the date field, so the interval inside the
+    // picker was visibly tighter than the one between the selectors below it.
+    // Same `$field-gap` the field stack uses, so all of them read alike.
+    .row + .row {
+      margin-top: $field-gap;
+    }
   }
 }
 
@@ -378,6 +464,17 @@ $body-inset: 36px;
 // date field could come out 90% wide and 42px tall anyway. Prefixing `:host`
 // adds this component's own host attribute and takes the rule one step clear.
 :host .custom-range-picker ::ng-deep {
+  // "Date" / "Start Time" / "End Time". These resolve `text-label-font-size`
+  // (0.75rem) through the `dialog()` mixin like every other label in the panel;
+  // this takes the picker's three down one step, to 0.625rem — exactly 2px.
+  //
+  // The line box is deliberately left where it was, so the rows keep their
+  // heights and only the type changes.
+  label,
+  .label {
+    font-size: 0.625rem;
+  }
+
   .input {
     // Was 90% — a tenth of the row left empty to the right of the date, so it
     // stopped short of every field above and below it.
@@ -397,6 +494,13 @@ $body-inset: 36px;
     // Was `0 10px`, which started the date 6px to the left of every selector
     // value below it. The right inset clears the calendar icon.
     padding: 0 2rem 0 $control-padding-x;
+    // A `<input>` does not inherit type from its ancestors — browsers reset form
+    // controls to their own face and size — and the app's global `input` rules
+    // set the radius, shadow, height and background but never a font-size. So
+    // the date rendered in the UA's ~13.3px Arial while every `ng-select` beside
+    // it resolved this token: a different size AND a different typeface.
+    font-size: nb-theme(select-medium-text-font-size);
+    font-family: inherit;
     border-radius: var(--border-radius);
     // The same hairline `ng-select-overrides()` gives the selectors, instead of
     // the `--gauzy-shadow` drop shadow the picker still draws — the edge the

@@ -47,7 +47,14 @@
 				<ng-container [ngTemplateOutlet]="modeSwitch"></ng-container>
 			</div>
 			}
-			<div [style.margin]="isExpanded ? '' : '0px'" class="timer-container form-group">
+			<!--
+				Only the fields scroll. The window controls and the title row stay
+				outside this box so they hold still, and the manual view — which adds
+				the date and start/end rows — scrolls inside it rather than making the
+				whole card taller than the timer view.
+			-->
+			<div class="panel-scroll">
+				<div [style.margin]="isExpanded ? '' : '0px'" class="timer-container form-group">
 				@if ((trackType$ | async) == timeLogType.TRACKED) {
 				<div class="timer">
 					<div class="time-tracker">
@@ -268,6 +275,7 @@
 				}
 			</div>
 			}
+			</div>
 		</form>
 	</nb-card-body>
 	<nb-card-footer [style.visibility]="hideAlert ? 'hidden' : 'visible'">
