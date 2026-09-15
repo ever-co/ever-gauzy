@@ -170,6 +170,17 @@ describe('MCP tool input schemas JSON Schema conversion', () => {
 		expect(jsonSchema.properties?.forRange?.properties?.endDate?.type).toBe('string');
 		expect(jsonSchema.properties?.forRange?.properties?.startDate?.format).toBe('date-time');
 		expect(jsonSchema.properties?.forRange?.properties?.endDate?.format).toBe('date-time');
+
+		const offsetRange = {
+			forRange: {
+				startDate: '2026-01-01T00:00:00+05:30',
+				endDate: '2026-01-31T23:59:59+05:30'
+			}
+		};
+		expect(countTool!.inputSchema!.safeParse(offsetRange).success).toBe(true);
+
+		const listTool = tools.find((t) => t.name === 'get_working_employees');
+		expect(listTool?.inputSchema!.safeParse(offsetRange).success).toBe(true);
 	});
 
 	it('lists tools through the production MCP initialize → tools/list protocol path', async () => {
