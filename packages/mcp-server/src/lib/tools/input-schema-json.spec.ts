@@ -6,39 +6,21 @@
  */
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { registerAuthTools } from './auth';
-import { registerTimerTools } from './timer';
-import { registerProjectTools } from './projects';
-import { registerTaskTools } from './tasks';
 import { registerEmployeeTools } from './employees';
-import { registerDailyPlanTools } from './daily-plan';
-import { registerOrganizationContactTools } from './organization-contact';
-import { registerTestTools } from './test-connection';
-import { registerProductTools } from './products';
-import { registerProductCategoryTools } from './product-categories';
-import { registerInvoiceTools } from './invoices';
-import { registerExpenseTools } from './expenses';
-import { registerGoalTools } from './goals';
-import { registerKeyResultTools } from './key-results';
-import { registerDealTools } from './deals';
-import { registerCandidateTools } from './candidates';
-import { registerPaymentTools } from './payments';
-import { registerMerchantTools } from './merchants';
-import { registerIncomeTools } from './incomes';
-import { registerEquipmentTools } from './equipment';
-import { registerCommentTools } from './comments';
-import { registerReportTools } from './reports';
-import { registerTimeOffTools } from './time-off';
-import { registerEmployeeAwardTools } from './employee-awards';
-import { registerActivityLogTools } from './activity-logs';
-import { registerWarehouseTools } from './warehouses';
-import { registerPipelineTools } from './pipelines';
-import { registerSkillTools } from './skills';
+import { registerAllMcpTools } from './register-all-tools';
+
+/** Floor based on current production tool surface; bump if modules are removed intentionally. */
+const MIN_REGISTERED_TOOLS = 300;
+const MIN_TOOLS_WITH_INPUT_SCHEMA = 280;
 
 type CapturedTool = {
 	name: string;
 	inputSchema?: z.ZodTypeAny;
 };
+
+function isZodShape(value: unknown): value is Record<string, z.ZodTypeAny> {
+	return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
 
 function createCapturingServer(): { server: McpServer; tools: CapturedTool[] } {
 	const tools: CapturedTool[] = [];
@@ -51,75 +33,59 @@ function createCapturingServer(): { server: McpServer; tools: CapturedTool[] } {
 		registerTool: (name: string, config: { inputSchema?: z.ZodTypeAny }) => {
 			capture(name, config?.inputSchema);
 		},
-		// Legacy SDK API still used by some modules (e.g. tasks.ts)
+		/**
+		 * Legacy SDK API still used by some modules (e.g. tasks.ts).
+		 * Supported:
+		 * - tool(name, description, callback) — no input schema
+		 * - tool(name, description, paramsShape, callback) — Zod shape object
+		 * Anything else throws so schemas cannot be dropped silently.
+		 */
 		tool: (...args: unknown[]) => {
-			const name = args[0] as string;
-			const schemaOrHandler = args[2];
-			const maybeHandler = args[3];
+			const name = String(args[0] ?? '<unknown>');
+			const description = args[1];
+			const third = args[2];
+			const fourth = args[3];
 
-			if (
-				schemaOrHandler &&
-				typeof schemaOrHandler === 'object' &&
-				typeof maybeHandler === 'function'
-			) {
-				capture(name, z.object(schemaOrHandler as Record<string, z.ZodTypeAny>));
+			if (typeof description !== 'string') {
+				throw new Error(`Unrecognized server.tool() signature for "${name}": expected description string`);
+			}
+
+			if (typeof third === 'function' && fourth === undefined) {
+				capture(name);
 				return;
 			}
 
-			capture(name);
+			if (isZodShape(third) && typeof fourth === 'function') {
+				capture(name, z.object(third));
+				return;
+			}
+
+			throw new Error(
+				`Unrecognized server.tool() signature for "${name}" (argCount=${args.length}). ` +
+					'Update the capturing mock — do not silently skip schemas.'
+			);
 		}
 	} as unknown as McpServer;
 
 	return { server, tools };
 }
 
-function registerAllTools(server: McpServer): void {
-	registerAuthTools(server);
-	registerTimerTools(server);
-	registerProjectTools(server);
-	registerTaskTools(server);
-	registerEmployeeTools(server);
-	registerDailyPlanTools(server);
-	registerOrganizationContactTools(server);
-	registerTestTools(server);
-	registerProductTools(server);
-	registerProductCategoryTools(server);
-	registerInvoiceTools(server);
-	registerExpenseTools(server);
-	registerGoalTools(server);
-	registerKeyResultTools(server);
-	registerDealTools(server);
-	registerCandidateTools(server);
-	registerPaymentTools(server);
-	registerMerchantTools(server);
-	registerIncomeTools(server);
-	registerEquipmentTools(server);
-	registerCommentTools(server);
-	registerReportTools(server);
-	registerTimeOffTools(server);
-	registerEmployeeAwardTools(server);
-	registerActivityLogTools(server);
-	registerWarehouseTools(server);
-	registerPipelineTools(server);
-	registerSkillTools(server);
-}
-
 describe('MCP tool input schemas JSON Schema conversion', () => {
 	it('converts every registered tool inputSchema via z.toJSONSchema (tools/list path)', () => {
 		const { server, tools } = createCapturingServer();
-		registerAllTools(server);
+		registerAllMcpTools(server);
 
-		expect(tools.length).toBeGreaterThan(0);
+		expect(tools.length).toBeGreaterThanOrEqual(MIN_REGISTERED_TOOLS);
+		expect(new Set(tools.map((tool) => tool.name)).size).toBe(tools.length);
+
+		const withSchema = tools.filter((tool) => tool.inputSchema);
+		expect(withSchema.length).toBeGreaterThanOrEqual(MIN_TOOLS_WITH_INPUT_SCHEMA);
 
 		const failures: string[] = [];
 
-		for (const tool of tools) {
-			if (!tool.inputSchema) {
-				continue;
-			}
-
+		for (const tool of withSchema) {
 			try {
-				z.toJSONSchema(tool.inputSchema, { io: 'input' });
+				z.toJSONSchema(tool.inputSchema!, { io: 'input' });
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
 				failures.push(`${tool.name}: ${message}`);
