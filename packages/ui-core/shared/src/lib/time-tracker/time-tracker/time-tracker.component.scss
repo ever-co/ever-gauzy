@@ -18,6 +18,11 @@ $scroll-max-height: 32rem;
 // short window cannot push the card off the bottom edge.
 $viewport-gutter: 100px;
 
+// The line box of the running session (22px type). Shared by that line and by
+// the `$` toggle beside it, which is what lets the two centre on each other
+// rather than merely share a top edge.
+$session-line: 1.625rem;
+
 // Card width, named so the window-control cluster below can be derived from it
 // instead of re-guessed. The panel's original width, kept deliberately: the
 // popup is navbar chrome and should not read as a dialog.
@@ -236,9 +241,24 @@ $body-inset: 20px + $body-padding;
       align-items: center;
     }
     .is_billable {
+      // The `$` toggle qualifies the RUNNING session, so it belongs on that
+      // line. The row centres its items, which floated the button against the
+      // two-line block as a whole and left it sitting between the two numbers.
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      height: $session-line;
+
       button {
         font-size: 12px;
-        padding: 5px 9px;
+        // Height comes from the line box above rather than from vertical
+        // padding, so the button cannot drift off that line when the type
+        // around it changes. Inline padding is the 9px it always had.
+        padding: 0 9px;
+        height: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
     }
     .actions {
@@ -261,6 +281,7 @@ $body-inset: 20px + $body-padding;
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        min-height: $session-line;
       }
       .status {
         display: inline-flex;
@@ -272,9 +293,17 @@ $body-inset: 20px + $body-padding;
         font-size: 0.6em;
         line-height: 1;
         margin-top: 0.5rem;
+        // Context for the reading above, not a second reading. It used to
+        // inherit the card's body colour, so both lines carried the same weight
+        // of attention and the eye had nothing to land on first. The theme's
+        // muted tier — its own name for exactly this tier, the one the form
+        // labels in this panel already use — demotes it a step and lets the
+        // session time lead.
+        color: var(--gauzy-text-color-2);
       }
       .current-session {
         font-weight: 400;
+        line-height: $session-line;
       }
     }
     .toggle {
