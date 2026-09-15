@@ -12,7 +12,6 @@ import {
 	ActivityLogSortByEnum,
 	ActivityLogRelationsSchema
 } from '../input-schemas';
-import { ActivityLogSchema } from '../schema';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
@@ -189,11 +188,19 @@ export const registerActivityLogTools = (server: McpServer) => {
 		'create_activity_log',
 		"Create a new activity log entry in the authenticated user's organization",
 		{
-			log_data: ActivityLogSchema.partial()
-				.required({
-					entity: true,
-					entityId: true,
-					action: true
+			// Dedicated MCP input schema (ISO/JSON-safe). Do not reuse ActivityLogSchema:
+			// nested entity refs still contain z.date() fields that break tools/list.
+			log_data: z
+				.object({
+					entity: ActivityLogEntityEnum,
+					entityId: z.string().uuid(),
+					action: ActivityLogActionEnum,
+					data: z.record(z.string(), z.any()).optional(),
+					previousValues: z.record(z.string(), z.any()).optional(),
+					updatedFields: z.array(z.string()).optional(),
+					actorType: ActorTypeEnum.optional(),
+					createdByUserId: z.string().uuid().optional(),
+					employeeId: z.string().uuid().optional()
 				})
 				.describe('The data for creating the activity log')
 		},
