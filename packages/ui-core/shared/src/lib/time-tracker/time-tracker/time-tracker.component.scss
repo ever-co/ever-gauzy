@@ -1,5 +1,16 @@
 @use 'gauzy/_gauzy-overrides' as *;
 
+// One vertical rhythm for the whole panel, so a field, the title row and the
+// footer cluster cannot each pick their own gap.
+$panel-gap: 1rem;
+
+// Card width, named so the window-control cluster below can be derived from it
+// instead of re-guessed. Was 328px — see `.timer-card`.
+$card-width: 360px;
+// `.timer-card`'s own padding plus `nb-card-body`'s (the `card-padding: 1rem`
+// token in `_gauzy-theme-maps.scss`): where a child's static position starts.
+$body-inset: 36px;
+
 :host {
   position: fixed;
   height: 0;
@@ -17,7 +28,20 @@
   .timer-card {
     display: block;
     padding: 20px;
-    width: 328px;
+    // The bottom is the one edge this card pays for TWICE: `nb-card-body` lays
+    // its own `card-padding` (1rem) under the last row, on top of the card's
+    // 20px. The other three edges each earn theirs — the window controls sit
+    // against the top, the fields against the sides — but under the timesheet
+    // link it was just 36px of trailing space. Zeroed here so the body's own
+    // inset is the only one, which is the gap the last row actually needs.
+    padding-bottom: 0;
+    // Was 328px. The content box that leaves (card padding + `nb-card-body`'s
+    // own) was too narrow for a two-up time range, which is why the start/end
+    // pickers clipped their value to `06:00:0…` and why the textarea and the
+    // range row had each been pinned to a hard pixel width WIDER than their
+    // parent to claw the space back. 360px fits both halves at the theme's
+    // control metrics, so those overrides are gone below.
+    width: $card-width;
     font-size: 14px;
     position: relative;
     box-shadow: 0px 6px 30px 0px rgba(0, 0, 0, 0.2);
@@ -33,7 +57,17 @@
     position: absolute;
     display: flex;
     justify-content: flex-end;
-    width: 300px;
+    // The cluster is placed by WIDTH from its static position — the body's
+    // content-box left edge — and pushed to the far end of that box by
+    // `flex-end`. Anchoring it with `right` instead leaves `width` to
+    // shrink-to-fit, and `flex-end` then lays the buttons out from a box that
+    // no longer spans the card, which is what threw them off the corner.
+    //
+    // The `+ 8px` carries the right end just past the card edge, where the
+    // ghost buttons' own padding turns it into the inset the cluster has always
+    // had. Derived from `$card-width` (it was a hard 300px against a 328px
+    // card) so resizing the card carries the buttons with it.
+    width: $card-width - $body-inset + 8px;
     top: 0px;
   }
   .timer-container {
