@@ -4421,6 +4421,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "اختر العميل",
+			"SELECT_PROJECT": "اختر المشروع",
+			"SELECT_TEAM": "اختر الفريق",
+			"SELECT_TASK": "اختر المهمة",
+			"DESCRIPTION": "أضف وصفًا"
+		},
 		"IS_BILLABLE": "هل يمكن تفريض رسوم؟",
 		"STOP_TIMER": "أوقف المؤقت",
 		"START_TIMER": "بدء المؤقت",

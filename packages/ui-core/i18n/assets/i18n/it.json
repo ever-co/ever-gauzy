@@ -4436,6 +4436,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Seleziona cliente",
+			"SELECT_PROJECT": "Seleziona progetto",
+			"SELECT_TEAM": "Seleziona squadra",
+			"SELECT_TASK": "Seleziona attività",
+			"DESCRIPTION": "Aggiungi una descrizione"
+		},
 		"IS_BILLABLE": "È fatturabile",
 		"STOP_TIMER": "Fermare il timer",
 		"START_TIMER": "Avvia cronometro",

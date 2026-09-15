@@ -4435,6 +4435,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Wybierz klienta",
+			"SELECT_PROJECT": "Wybierz projekt",
+			"SELECT_TEAM": "Wybierz zespół",
+			"SELECT_TASK": "Wybierz zadanie",
+			"DESCRIPTION": "Dodaj opis"
+		},
 		"IS_BILLABLE": "Jest płatne",
 		"STOP_TIMER": "Zatrzymaj czasomierz",
 		"START_TIMER": "Rozpocznij odliczanie czasu",

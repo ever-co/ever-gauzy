@@ -4436,6 +4436,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "选择客户",
+			"SELECT_PROJECT": "选择项目",
+			"SELECT_TEAM": "选择团队",
+			"SELECT_TASK": "选择任务",
+			"DESCRIPTION": "添加描述"
+		},
 		"IS_BILLABLE": "可收费",
 		"STOP_TIMER": "停止计时器",
 		"START_TIMER": "开始计时器",

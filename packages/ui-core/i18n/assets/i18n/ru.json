@@ -4455,6 +4455,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Выберите клиента",
+			"SELECT_PROJECT": "Выберите проект",
+			"SELECT_TEAM": "Выберите команду",
+			"SELECT_TASK": "Выберите задачу",
+			"DESCRIPTION": "Добавьте описание"
+		},
 		"IS_BILLABLE": "Оплачивается",
 		"STOP_TIMER": "Остановить таймер",
 		"START_TIMER": "Запустить таймер",
