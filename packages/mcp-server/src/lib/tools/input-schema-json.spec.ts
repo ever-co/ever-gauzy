@@ -6,8 +6,10 @@
  */
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { registerEmployeeTools } from './employees';
 import { registerAllMcpTools } from './register-all-tools';
+import { createMcpServer } from '../mcp-server';
 
 /** Floor based on current production tool surface; bump if modules are removed intentionally. */
 const MIN_REGISTERED_TOOLS = 300;
@@ -16,6 +18,28 @@ const MIN_TOOLS_WITH_INPUT_SCHEMA = 280;
 type CapturedTool = {
 	name: string;
 	inputSchema?: z.ZodTypeAny;
+};
+
+type JsonRpcResponse = {
+	jsonrpc: '2.0';
+	id?: number | string;
+	result?: {
+		tools?: Array<{
+			name: string;
+			inputSchema?: {
+				properties?: {
+					forRange?: {
+						properties?: {
+							startDate?: { type?: string; format?: string };
+							endDate?: { type?: string; format?: string };
+						};
+					};
+				};
+			};
+		}>;
+		serverInfo?: { name?: string };
+	};
+	error?: { code: number; message: string; data?: unknown };
 };
 
 function isZodShape(value: unknown): value is Record<string, z.ZodTypeAny> {
@@ -70,6 +94,32 @@ function createCapturingServer(): { server: McpServer; tools: CapturedTool[] } {
 	return { server, tools };
 }
 
+async function waitForJsonRpcResponse(
+	transport: InMemoryTransport,
+	id: number,
+	timeoutMs = 30000
+): Promise<JsonRpcResponse> {
+	return await new Promise<JsonRpcResponse>((resolve, reject) => {
+		const timer = setTimeout(() => {
+			reject(new Error(`Timed out waiting for JSON-RPC response id=${id}`));
+		}, timeoutMs);
+
+		const previous = transport.onmessage;
+		transport.onmessage = (message, extra) => {
+			if (typeof previous === 'function') {
+				previous(message, extra);
+			}
+
+			const response = message as JsonRpcResponse;
+			if (response?.id === id) {
+				clearTimeout(timer);
+				transport.onmessage = previous;
+				resolve(response);
+			}
+		};
+	});
+}
+
 describe('MCP tool input schemas JSON Schema conversion', () => {
 	it('converts every registered tool inputSchema via z.toJSONSchema (tools/list path)', () => {
 		const { server, tools } = createCapturingServer();
@@ -106,8 +156,8 @@ describe('MCP tool input schemas JSON Schema conversion', () => {
 			properties?: {
 				forRange?: {
 					properties?: {
-						startDate?: { type?: string };
-						endDate?: { type?: string };
+						startDate?: { type?: string; format?: string };
+						endDate?: { type?: string; format?: string };
 					};
 				};
 			};
@@ -115,5 +165,63 @@ describe('MCP tool input schemas JSON Schema conversion', () => {
 
 		expect(jsonSchema.properties?.forRange?.properties?.startDate?.type).toBe('string');
 		expect(jsonSchema.properties?.forRange?.properties?.endDate?.type).toBe('string');
+		expect(jsonSchema.properties?.forRange?.properties?.startDate?.format).toBe('date-time');
+		expect(jsonSchema.properties?.forRange?.properties?.endDate?.format).toBe('date-time');
+	});
+
+	it('lists tools through the production MCP initialize → tools/list protocol path', async () => {
+		const { server } = createMcpServer();
+		const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+		await server.connect(serverTransport);
+		await clientTransport.start();
+
+		try {
+			const initializeWait = waitForJsonRpcResponse(clientTransport, 1);
+			await clientTransport.send({
+				jsonrpc: '2.0',
+				id: 1,
+				method: 'initialize',
+				params: {
+					protocolVersion: '2025-06-18',
+					capabilities: {},
+					clientInfo: { name: 'schema-repro', version: '1' }
+				}
+			});
+			const initializeResponse = await initializeWait;
+			expect(initializeResponse.error).toBeUndefined();
+
+			await clientTransport.send({
+				jsonrpc: '2.0',
+				method: 'notifications/initialized'
+			});
+
+			const listWait = waitForJsonRpcResponse(clientTransport, 2);
+			await clientTransport.send({
+				jsonrpc: '2.0',
+				id: 2,
+				method: 'tools/list',
+				params: {}
+			});
+			const listResponse = await listWait;
+
+			expect(listResponse.error).toBeUndefined();
+			expect(listResponse.result?.tools?.length ?? 0).toBeGreaterThanOrEqual(MIN_REGISTERED_TOOLS);
+
+			const toolNames = (listResponse.result?.tools ?? []).map((tool) => tool.name);
+			expect(new Set(toolNames).size).toBe(toolNames.length);
+
+			const countTool = (listResponse.result?.tools ?? []).find(
+				(tool) => tool.name === 'get_working_employees_count'
+			);
+			expect(countTool).toBeDefined();
+			expect(countTool?.inputSchema?.properties?.forRange?.properties?.startDate?.type).toBe('string');
+			expect(countTool?.inputSchema?.properties?.forRange?.properties?.endDate?.type).toBe('string');
+			expect(countTool?.inputSchema?.properties?.forRange?.properties?.startDate?.format).toBe('date-time');
+			expect(countTool?.inputSchema?.properties?.forRange?.properties?.endDate?.format).toBe('date-time');
+		} finally {
+			await clientTransport.close();
+			await server.close();
+		}
 	});
 });
