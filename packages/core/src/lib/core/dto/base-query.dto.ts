@@ -4,6 +4,7 @@ import { plainToClass, Transform, TransformFnParams, Type } from 'class-transfor
 import { IsNotEmpty, IsOptional, Max, Min, ValidateNested } from 'class-validator';
 import { PlainObject } from '@gauzy/contracts';
 import { parseObject, parseToBoolean } from '@gauzy/utils';
+import { canonicalizeFindOptionsRelations } from '../utils';
 import { TenantOrganizationBaseDTO } from './tenant-organization-base.dto';
 
 /**
@@ -20,8 +21,19 @@ export class FindSelectQueryDTO<T = any> {
  * Base DTO for 'relations' to load (joined entities).
  */
 export class FindRelationsQueryDTO<T = any> extends FindSelectQueryDTO<T> {
+	/**
+	 * Canonicalized on the way in, so the service — and the authorization checks around it — always
+	 * see ONE representation of `relations` no matter which the client used: a comma-separated
+	 * string, the legacy string array the Angular clients send as `relations[0]=…`, or the nested
+	 * object form Express's extended query parser builds from `?relations[organization][payments]=x`.
+	 *
+	 * That divergence is what let an object-form `relations` slip past `SensitiveRelationsInterceptor`
+	 * while TypeORM still joined the protected rows (GHSA-c3cj-m3xm-7j5h). The transform never widens
+	 * a query: it rebuilds the object from exactly the paths the payload named.
+	 */
 	@ApiPropertyOptional({ type: Object })
 	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => canonicalizeFindOptionsRelations(value))
 	readonly relations?: FindOptionsRelations<T>;
 }
 

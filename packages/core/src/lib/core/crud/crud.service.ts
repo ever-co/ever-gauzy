@@ -34,6 +34,7 @@ import {
 } from './../../core/utils';
 import { parseTypeORMFindCountOptions } from './utils';
 import { assertCriteriaHasPredicate } from './criteria.helper';
+import { assertSensitiveRelationsAllowed } from '../util/sensitive-relations.helper';
 import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
 import {
 	ICountByOptions,
@@ -97,6 +98,32 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
+	 * Enforces the sensitive-relation permission table on a read whose `relations` option may have
+	 * come from the client.
+	 *
+	 * `SensitiveRelationsInterceptor` declares this protection per controller, but it is mounted on a
+	 * handful of the controllers that accept `relations` — and every tenant-scoped entity exposes an
+	 * `organization` relation, so one unguarded controller is enough to reach the protected rows
+	 * (GHSA-c3cj-m3xm-7j5h). Asserting it here, on the path every read goes through, makes the table
+	 * hold for entities and controllers that never opted in, present and future.
+	 *
+	 * @param options - The find-options about to be issued; ignored when it carries no `relations`.
+	 * @throws ForbiddenException when a requested relation requires a permission the caller lacks.
+	 */
+	protected assertRelationsPermitted(options?: unknown): void {
+		if (!options || typeof options !== 'object') {
+			return;
+		}
+		// `relations` is carried by both the TypeORM and the MikroORM option shapes; the union itself
+		// does not declare it, hence the read through a widened type.
+		const relations = (options as { relations?: unknown }).relations;
+		if (!relations) {
+			return;
+		}
+		assertSensitiveRelationsAllowed(this.typeOrmRepository?.metadata, relations);
+	}
+
+	/**
 	 * Count the number of entities based on the provided options.
 	 *
 	 * @param options - Options for counting entities.
@@ -144,6 +171,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findAll(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
+		this.assertRelationsPermitted(options);
+
 		let total: number;
 		let items: T[];
 
@@ -172,6 +201,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
+		this.assertRelationsPermitted(options);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
@@ -193,6 +224,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async paginate(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
+		this.assertRelationsPermitted(options);
+
 		try {
 			let total: number;
 			let items: T[];
@@ -249,6 +282,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneOrFailByIdString(id: string, options?: IFindOneOptions<T>): Promise<ITryRequest<T>> {
+		// Asserted outside the try: the catch below turns any throw into `{ success: false }`, which
+		// would swallow the ForbiddenException instead of refusing the read.
+		this.assertRelationsPermitted(options);
+
 		try {
 			// A lookup "by id" with no id must not become a lookup for ANY row: TypeORM omits an
 			// undefined where value (and used to omit null), so `where: { id }` degraded to
@@ -302,6 +339,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneOrFailByOptions(options: IFindOneOptions<T>): Promise<ITryRequest<T>> {
+		// See findOneOrFailByIdString: the catch below would swallow the ForbiddenException.
+		this.assertRelationsPermitted(options);
+
 		try {
 			let record: T;
 			switch (this.ormType) {
@@ -376,6 +416,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneByIdString(id: ID, options?: IFindOneOptions<T>): Promise<T> {
+		this.assertRelationsPermitted(options);
+
 		// See findOneOrFailByIdString: an empty id must fail closed, never match an arbitrary row.
 		if (!id) {
 			throw new NotFoundException(`The requested record was not found`);
@@ -421,6 +463,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneByOptions(options: IFindOneOptions<T>): Promise<T | null> {
+		this.assertRelationsPermitted(options);
+
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
