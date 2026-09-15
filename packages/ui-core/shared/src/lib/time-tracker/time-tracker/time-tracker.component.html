@@ -99,23 +99,17 @@
 				</div>
 				} @if ((trackType$ | async) == timeLogType.MANUAL) {
 				<div class="time-manual">
-					<div class="row">
-						<div class="col-12">
-							<ngx-timer-range-picker
-								class="custom-range-picker"
-								name="selectedRange"
-								[maxDate]="allowFutureDate ? null : today"
-								[(ngModel)]="selectedRange"
-							></ngx-timer-range-picker>
-						</div>
-						<div class="col-12 mb-5">
-							<nb-checkbox [(ngModel)]="isBillable" name="isBillable" status="primary">
-								<span [class.primary]="isBillable">
-									{{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
-								</span>
-							</nb-checkbox>
-						</div>
-					</div>
+					<ngx-timer-range-picker
+						class="custom-range-picker"
+						name="selectedRange"
+						[maxDate]="allowFutureDate ? null : today"
+						[(ngModel)]="selectedRange"
+					></ngx-timer-range-picker>
+					<nb-checkbox class="billable-check" [(ngModel)]="isBillable" name="isBillable" status="primary">
+						<span [class.primary]="isBillable">
+							{{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
+						</span>
+					</nb-checkbox>
 				</div>
 				}
 				<!-- Collapsed has no title row to hang the switch off, so it sits beside the timer. -->

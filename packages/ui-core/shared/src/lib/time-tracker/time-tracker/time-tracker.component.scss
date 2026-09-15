@@ -288,6 +288,15 @@ $body-inset: 36px;
       }
     }
   }
+
+  .form-group {
+    // 5px under the panel's shared gap. Stated as a step off `$panel-gap` rather
+    // than as a flat 11px so the field stack still moves with the rest of the
+    // panel's rhythm if that gap is retuned. `calc()` because the gap is in rem
+    // and the step is in px — Sass cannot fold those two units together, and
+    // the rem half has to stay relative to the root font size anyway.
+    margin-bottom: calc(#{$panel-gap} - 5px);
+  }
 }
 
 .custom {
@@ -297,10 +306,18 @@ $body-inset: 36px;
     border-color: nb-theme(background-basic-color-3);
     box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
     resize: none;
-    width: 282.79px;
+    // Was a hard `282.79px`, which is both wider than the content box it sits
+    // in and immune to the card resize above.
+    width: 100%;
     height: 84px;
     border-radius: var(--border-radius);
-    margin-bottom: 30px;
+    // A `<textarea>` does not inherit type from its ancestors — browsers reset
+    // form controls to their own default face and size — so this one rendered
+    // its text a size off every `ng-select` stacked above it. Same token those
+    // selectors resolve in `ng-select-overrides()`.
+    font-size: nb-theme(select-medium-text-font-size);
+    line-height: 1.5;
+    font-family: inherit;
     &:hover {
       border-color: nb-theme(color-primary-hover);
       color: nb-theme(text-basic-color);
@@ -318,8 +335,81 @@ $body-inset: 36px;
   color: nb-theme(text-primary-color);
 }
 
-.custom-range-picker::ng-deep .range {
-  width: 128.5%;
+// The date / start / end rows are Bootstrap grid rows inside a 360px card: the
+// grid's own ±15px gutters push the row wider than the card and then eat the
+// width back as column padding, which is what the old `width: 128.5%` on
+// `.range` was compensating for. Dropping both gutters and spacing the two
+// halves with a `gap` keeps the fields inside the card AND full-bleed.
+.custom-range-picker {
+  display: block;
+
+  ::ng-deep {
+    .row {
+      margin-left: 0;
+      margin-right: 0;
+    }
+    .row.range {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .col-12,
+    .col-6 {
+      flex: 1;
+      max-width: none;
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .form-group {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// The date field is a wrapper div (it needs one, to hold the calendar icon
+// absolutely) around a bare `<input>`, and the picker styles BOTH — so it drew
+// two nested edges, at a flat 42px, over a box only 90% as wide as its column,
+// while every selector under it resolves the theme's own control metrics.
+//
+// Restated here under `:host` so the specificity is SETTLED rather than left to
+// stylesheet order. The picker's own rules are `:host .input` / `:host input`,
+// which emulated encapsulation writes as `[_nghost-picker] .input` — exactly the
+// same weight as a plain `.custom-range-picker ::ng-deep .input` from this file.
+// A tie is broken by whichever component's styles load last, which is why the
+// date field could come out 90% wide and 42px tall anyway. Prefixing `:host`
+// adds this component's own host attribute and takes the rule one step clear.
+:host .custom-range-picker ::ng-deep {
+  .input {
+    // Was 90% — a tenth of the row left empty to the right of the date, so it
+    // stopped short of every field above and below it.
+    width: 100%;
+    // Was a flat 42px: the height every control in the app carried BEFORE the
+    // density pass moved them onto `$default-height`.
+    height: $default-height;
+    // The wrapper is a positioning context for the calendar icon, nothing more.
+    // The `<input>` inside it is the control and carries the surface, so a
+    // second shadow out here only doubled the edge.
+    box-shadow: none;
+  }
+
+  input {
+    width: 100%;
+    height: 100%;
+    // Was `0 10px`, which started the date 6px to the left of every selector
+    // value below it. The right inset clears the calendar icon.
+    padding: 0 2rem 0 $control-padding-x;
+    border-radius: var(--border-radius);
+    // The same hairline `ng-select-overrides()` gives the selectors, instead of
+    // the `--gauzy-shadow` drop shadow the picker still draws — the edge the
+    // design system replaced precisely because it disappears on a dark canvas
+    // and smudges on a light one.
+    box-shadow: $control-hairline;
+  }
+}
+
+// Checkbox copy is body text, not a form label, so it reads at the same size as
+// the values in the fields around it.
+.billable-check ::ng-deep .text {
+  font-size: nb-theme(select-medium-text-font-size);
 }
 
 .view-log-button {
