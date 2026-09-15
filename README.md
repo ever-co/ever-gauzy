@@ -316,7 +316,7 @@ Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/d
 
 Ever® Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!
 Ever® Gauzy™ is provided AS IS without any warranty. Use at your own risk!
-See more details in the [LICENSE](LICENSES.md).
+See more details in the [LICENSES.md](LICENSES.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
 
