@@ -200,7 +200,9 @@ export const registerActivityLogTools = (server: McpServer) => {
 					updatedFields: z.array(z.string()).optional(),
 					actorType: ActorTypeEnum.optional(),
 					createdByUserId: z.string().uuid().optional(),
-					employeeId: z.string().uuid().optional()
+					employeeId: z.string().uuid().optional(),
+					// JSON-safe employee payload (do not reuse EmployeeSchema — it contains z.date())
+					employee: z.record(z.string(), z.any()).optional()
 				})
 				.describe('The data for creating the activity log')
 		},

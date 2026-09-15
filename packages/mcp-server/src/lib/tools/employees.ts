@@ -173,8 +173,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 		{
 			forRange: z
 				.object({
-					start: z.string().datetime().optional().describe('Start date in ISO format'),
-					end: z.string().datetime().optional().describe('End date in ISO format')
+					startDate: z.string().datetime().optional().describe('Start date in ISO format'),
+					endDate: z.string().datetime().optional().describe('End date in ISO format')
 				})
 				.optional()
 				.describe('Date range for filtering')
@@ -218,8 +218,8 @@ export const registerEmployeeTools = (server: McpServer) => {
 		{
 			forRange: z
 				.object({
-					start: z.string().datetime().optional().describe('Start date in ISO format'),
-					end: z.string().datetime().optional().describe('End date in ISO format')
+					startDate: z.string().datetime().optional().describe('Start date in ISO format'),
+					endDate: z.string().datetime().optional().describe('End date in ISO format')
 				})
 				.optional()
 				.describe('Date range for filtering')

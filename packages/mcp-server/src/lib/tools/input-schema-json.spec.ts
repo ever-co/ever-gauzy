@@ -23,7 +23,7 @@ function isZodShape(value: unknown): value is Record<string, z.ZodTypeAny> {
 }
 
 function createCapturingServer(): { server: McpServer; tools: CapturedTool[] } {
-	const tools: CapturedTool[] = [];
+	let tools: CapturedTool[] = [];
 
 	const capture = (name: string, inputSchema?: z.ZodTypeAny) => {
 		tools.push({ name, inputSchema });
@@ -81,7 +81,7 @@ describe('MCP tool input schemas JSON Schema conversion', () => {
 		const withSchema = tools.filter((tool) => tool.inputSchema);
 		expect(withSchema.length).toBeGreaterThanOrEqual(MIN_TOOLS_WITH_INPUT_SCHEMA);
 
-		const failures: string[] = [];
+		let failures: string[] = [];
 
 		for (const tool of withSchema) {
 			try {
@@ -106,14 +106,14 @@ describe('MCP tool input schemas JSON Schema conversion', () => {
 			properties?: {
 				forRange?: {
 					properties?: {
-						start?: { type?: string };
-						end?: { type?: string };
+						startDate?: { type?: string };
+						endDate?: { type?: string };
 					};
 				};
 			};
 		};
 
-		expect(jsonSchema.properties?.forRange?.properties?.start?.type).toBe('string');
-		expect(jsonSchema.properties?.forRange?.properties?.end?.type).toBe('string');
+		expect(jsonSchema.properties?.forRange?.properties?.startDate?.type).toBe('string');
+		expect(jsonSchema.properties?.forRange?.properties?.endDate?.type).toBe('string');
 	});
 });
