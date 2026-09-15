@@ -97,14 +97,17 @@ function createCapturingServer(): { server: McpServer; tools: CapturedTool[] } {
 async function waitForJsonRpcResponse(
 	transport: InMemoryTransport,
 	id: number,
-	timeoutMs = 30000
+	// Below Jest's default 5s test timeout (@nx/jest/preset) so this message wins on hang.
+	timeoutMs = 4000
 ): Promise<JsonRpcResponse> {
 	return await new Promise<JsonRpcResponse>((resolve, reject) => {
+		const previous = transport.onmessage;
+
 		const timer = setTimeout(() => {
+			transport.onmessage = previous;
 			reject(new Error(`Timed out waiting for JSON-RPC response id=${id}`));
 		}, timeoutMs);
 
-		const previous = transport.onmessage;
 		transport.onmessage = (message, extra) => {
 			if (typeof previous === 'function') {
 				previous(message, extra);
