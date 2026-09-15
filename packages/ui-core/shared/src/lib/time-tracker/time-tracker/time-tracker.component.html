@@ -237,7 +237,7 @@
 					}
 				</div>
 				@if (user?.employee?.id) {
-				<div class="view-log-button mt-2">
+				<div class="view-log-button">
 					<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
 						<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MANUAL_TIME">
 							@if ((trackType$ | async) == timeLogType.MANUAL) {
@@ -255,32 +255,13 @@
 							}
 						</ng-template>
 					</ng-template>
-					@if ((trackType$ | async) == timeLogType.TRACKED) {
-					<div>
-						<button
-							nbButton
-							status="success"
-							[class.button]="running"
-							[class.disabled]="running"
-							[class.button]="!running"
-							[class.success]="!running"
-							[class.start]="!running"
-							size="medium"
-							[disabled]="running"
-							(click)="toggleTimer(true)"
-						>
-							{{ 'TIMER_TRACKER.START_TIMER' | translate }}
-						</button>
-					</div>
-					}
-					<a
-						nbButton
-						ghost
-						outline
-						class="button timesheet"
-						[routerLink]="['/pages/employees/timesheets']"
-						size="medium"
-					>
+					<!--
+						The tracked-mode "Start timer" button that sat here is gone: it did
+						the same `toggleTimer(true)` as the round play control in the timer
+						row above, so the panel was spending a full button row on a second
+						copy of a control it already shows.
+					-->
+					<a class="timesheet-link" [routerLink]="['/pages/employees/timesheets']">
 						{{ 'TIMER_TRACKER.VIEW_TIMESHEET' | translate }}
 					</a>
 				</div>

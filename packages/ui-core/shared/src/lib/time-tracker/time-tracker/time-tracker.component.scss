@@ -416,57 +416,59 @@ $body-inset: 36px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
+  margin-top: $panel-gap;
+
+  // Scoped to this row on purpose. These metrics used to sit on the bare
+  // `.button` class, which the round play/pause control also carries
+  // (`[class.button]="!running"`) — so a 36px tall, 20px-padded box was being
+  // handed to a button whose whole shape is a circle.
+  .button.success.add {
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    // Was `9px 20px 18px 20px` — a 9px bottom overhang that pushed the label
+    // off the button's own centre line.
+    padding: 0 20px;
+    // Was also `box-shadow: 0px 10px 13px -7px #25b869` — a green glow cast
+    // under a solid green block. `status="success"` buttons are now
+    // outline/text (see `$gauzy-action-accents-*` in
+    // `packages/ui-core/static/styles/themes.scss`), and a coloured glow under
+    // a transparent button reads as a smudge sitting below it, not elevation.
+    font-size: 14px;
+    flex: 0 0 auto;
+    width: 120px;
+  }
 }
 
-::ng-deep .ng-select .ng-select-container {
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
-  border-radius: var(--border-radius);
-  min-height: 42px;
-}
+// Was an `<a nbButton ghost outline>` — a full-height button box for something
+// that only navigates. As a text link it states the same thing in a line of
+// type instead of a row of chrome, which is the bottom margin this panel gets
+// back.
+.timesheet-link {
+  color: nb-theme(text-primary-color);
+  font-size: nb-theme(select-medium-text-font-size);
+  font-weight: 600;
+  text-decoration: underline;
+  white-space: nowrap;
+  cursor: pointer;
 
-::ng-deep .ng-select.ng-select-single .ng-select-container {
-  height: 42px;
+  &:hover,
+  &:focus-visible {
+    color: nb-theme(text-primary-hover-color);
+    text-decoration: underline;
+  }
 }
 
 .button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  &.timesheet {
-    background-color: transparent;
-    font-weight: normal;
-    height: 36px;
-    padding: 9px 20px 18px 20px;
-    margin: 0;
-    width: 150px;
-  }
-  &.disabled {
-    height: 36px;
-    width: 120px;
-  }
-  &.success {
-    // Was `box-shadow: 0px 10px 13px -7px #25b869` — a green glow cast under a
-    // solid green block. `status="success"` buttons are now outline/text (see
-    // `$gauzy-action-accents-*` in `packages/ui-core/static/styles/themes.scss`),
-    // and a coloured glow under a transparent button reads as a smudge sitting
-    // below it rather than as elevation.
-    &.start,
-    &.add {
-      height: 36px;
-      font-size: 14px;
-      height: 36px;
-      padding: 9px 20px 18px 20px;
-      width: 120px;
-    }
-  }
-  &.switch {
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.25);
-  }
 }
 
 .button,
 h6 {
-  display: inline-block;
   text-transform: lowercase;
   &:first-letter {
     text-transform: uppercase;
