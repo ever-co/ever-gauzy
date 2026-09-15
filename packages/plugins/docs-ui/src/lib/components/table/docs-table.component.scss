@@ -1,27 +1,20 @@
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
 :host {
   display: block;
   min-width: 0;
 }
 .docs-table {
-  --gauzy-table-font-size: 0.6875rem;
-  --gauzy-table-line-height: 1rem;
-  --gauzy-table-cell-padding-y: 0.1875rem;
-  --gauzy-table-cell-padding-x: 0.4375rem;
-  --gauzy-table-header-font-size: 0.75rem;
-  --gauzy-table-header-line-height: 0.8125rem;
-  --gauzy-table-header-padding-y: 0.3125rem;
-  --gauzy-table-header-padding-x: 0.4375rem;
-  --gauzy-table-filter-padding-y: 0.1875rem;
-  --gauzy-table-control-height: 1.5rem;
-  --gauzy-table-badge-height: 1rem;
-  --gauzy-table-chip-font-size: 0.625rem;
-  --gauzy-table-chip-line-height: 0.75rem;
-  --gauzy-table-chip-padding-y: 0;
-  --gauzy-table-chip-padding-x: 0.3125rem;
-  --gauzy-table-chip-gap: 0.125rem;
+  // The app-wide table density, from the one place that defines it, instead of
+  // the hand-copied list that used to sit here. Every value in that copy already
+  // matched `density-tokens()` character for character except the chip gap below
+  // — so the copy bought nothing and was a second place for the scale to drift
+  // from the list pages this table is meant to read like.
+  @include ga-hub.density-tokens();
+
+  // The one deliberate departure: a docs row stacks its chips tighter than a
+  // list-page row does.
   --gauzy-table-chip-block-gap: 0.1875rem;
-  --gauzy-people-avatar-size: 1rem;
-  --gauzy-people-font-size: 0.6875rem;
 
   --docs-updated-cell-width: 9.5rem;
 
