@@ -20,8 +20,9 @@ import {
 	IGetWorkDiaryDto,
 	IGetContractsDto,
 	IEngagement,
-	IUpworkApiConfig,
+	IUpworkApiConfigStatus,
 	IUpworkClientSecretPair,
+	IUpworkSyncContractsRelatedDataDto,
 	IPagination,
 	PermissionsEnum,
 	IIntegrationMap
@@ -123,9 +124,10 @@ export class UpworkController {
 	}
 
 	/**
-	 * Retrieves the work diary for the specified data.
+	 * Retrieves the work diary for the specified integration and contract.
 	 *
-	 * @param data - The DTO containing the query parameters for the work diary.
+	 * @param data - The integration, organization, contract and date to read. It carries no
+	 *               credentials: the server resolves those from the integration id.
 	 * @returns A promise that resolves with the work diary data.
 	 */
 	@ApiOperation({ summary: 'Get Work Diary' })
@@ -147,9 +149,10 @@ export class UpworkController {
 	}
 
 	/**
-	 * Retrieves the contracts for the specified data.
+	 * Retrieves the freelancer contracts for the specified integration.
 	 *
-	 * @param data - The DTO containing the query parameters for the contracts.
+	 * @param data - The integration and organization to read the contracts for. It carries no
+	 *               credentials: the server resolves those from the integration id.
 	 * @returns A promise that resolves with the list of engagements.
 	 */
 	@ApiOperation({ summary: 'Get Contracts' })
@@ -171,11 +174,15 @@ export class UpworkController {
 	}
 
 	/**
-	 * Retrieves the configuration for the specified integration ID.
+	 * Retrieves the non-secret configuration state of the specified Upwork integration.
+	 *
+	 * 🛑 This route must never answer with credential material. It reports whether the integration
+	 * is connected and usable; anything credential-derived that stays visible is masked
+	 * (GHSA-3rqg-gpm9-gx84).
 	 *
 	 * @param integrationId - The UUID of the integration.
-	 * @param data - The query parameters, parsed as JSON.
-	 * @returns A promise that resolves with the configuration data.
+	 * @param data - The query parameters, parsed as JSON. Only `filter.organizationId` is read.
+	 * @returns A promise that resolves with the secret-free configuration state.
 	 */
 	@ApiOperation({ summary: 'Get Config' })
 	@ApiResponse({
@@ -194,9 +201,9 @@ export class UpworkController {
 	async getConfig(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IUpworkApiConfig> {
-		const { filter } = data;
-		return await this._upworkService.getConfig(integrationId, filter);
+	): Promise<IUpworkApiConfigStatus> {
+		const { filter } = data ?? {};
+		return await this._upworkService.getConfig(integrationId, filter?.organizationId);
 	}
 
 	/**
@@ -226,7 +233,8 @@ export class UpworkController {
 	/**
 	 * Syncs contracts related data with the provided data transfer object.
 	 *
-	 * @param dto - The data transfer object containing details for contracts related data synchronization.
+	 * @param dto - The integration, organization, contracts and entities to sync. It carries no
+	 *              credentials: the server resolves those from the integration id.
 	 * @returns A promise that resolves with the result of the synchronization process.
 	 */
 	@ApiOperation({ summary: 'Sync Contracts Related Data' })
@@ -243,7 +251,7 @@ export class UpworkController {
 		description: 'The request is invalid.'
 	})
 	@Post('/sync-contracts-related-data')
-	async syncContractsRelatedData(@Body() dto: any): Promise<any> {
+	async syncContractsRelatedData(@Body() dto: IUpworkSyncContractsRelatedDataDto): Promise<any> {
 		return await this._upworkService.syncContractsRelatedData(dto);
 	}
 

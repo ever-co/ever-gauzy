@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { In, Between } from 'typeorm';
 import * as UpworkApi from 'upwork-api';
@@ -14,11 +14,14 @@ import {
 	IAccessTokenSecretPair,
 	IAccessToken,
 	IAccessTokenDto,
+	ID,
 	IntegrationEnum,
 	IGetContractsDto,
 	IGetWorkDiaryDto,
 	IEngagement,
 	IUpworkApiConfig,
+	IUpworkApiConfigStatus,
+	IUpworkSyncContractsRelatedDataDto,
 	IIntegrationMap,
 	CurrenciesEnum,
 	ProjectBillingEnum,
@@ -39,7 +42,13 @@ import {
 	ITimeLog,
 	IIntegrationSetting
 } from '@gauzy/contracts';
-import { RequestContext, mergeOverlappingDateRanges, parseFindOptionsRelations, unixTimestampToDate } from '@gauzy/core';
+import {
+	RequestContext,
+	maskSecret,
+	mergeOverlappingDateRanges,
+	parseFindOptionsRelations,
+	unixTimestampToDate
+} from '@gauzy/core';
 import {
 	ExpenseService,
 	IncomeService,
@@ -76,6 +85,20 @@ import { UpworkReportService } from './upwork-report.service';
 import { UpworkJobService } from './upwork-job.service';
 import { UpworkOffersService } from './upwork-offers.service';
 
+/**
+ * The scope an Upwork integration is resolved within.
+ *
+ * Both halves are mandatory: a lookup missing either one would widen to "any integration in the
+ * tenant" (TypeORM drops `undefined` conditions), which is exactly the failure mode a credential
+ * resolver must not have.
+ */
+interface IUpworkIntegrationScope {
+	/** The organization that owns the integration. */
+	organizationId: ID;
+	/** The tenant that owns the integration. Always taken from the request context, never from input. */
+	tenantId: ID;
+}
+
 @Injectable()
 export class UpworkService {
 	private _upworkApi: UpworkApi;
@@ -94,7 +117,23 @@ export class UpworkService {
 		private readonly _commandBus: CommandBus
 	) {}
 
-	private async _consumerHasAccessToken(config: IUpworkClientSecretPair, organizationId: string) {
+	/**
+	 * Checks whether the Upwork app identified by `config.consumerKey` has already completed the
+	 * OAuth handshake for this organization.
+	 *
+	 * Returns the integration id only. It used to spread the whole settings map — consumer secret,
+	 * access token and access token secret included — into its result, so a caller one refactor away
+	 * from returning it would have leaked live credentials (GHSA-3rqg-gpm9-gx84). Callers only ever
+	 * needed "is it already authorized, and which integration is it".
+	 *
+	 * @param config - The Upwork client key/secret pair being authorized.
+	 * @param organizationId - The organization the integration belongs to.
+	 * @returns The owning integration id when an access token pair is already stored, otherwise `false`.
+	 */
+	private async _consumerHasAccessToken(
+		config: IUpworkClientSecretPair,
+		organizationId: string
+	): Promise<{ integrationId: ID } | false> {
 		const integrationSetting = await this._commandBus.execute(
 			new IntegrationSettingGetCommand({
 				where: {
@@ -123,10 +162,7 @@ export class UpworkService {
 		const integrationSettingMap = arrayToObject(integrationSettings, 'settingsName', 'settingsValue');
 
 		if (integrationSettingMap.accessToken && integrationSettingMap.accessTokenSecret) {
-			return {
-				integrationId: integrationSetting.integration.id,
-				...integrationSettingMap
-			};
+			return { integrationId: integrationSetting.integration.id };
 		}
 
 		return false;
@@ -198,16 +234,30 @@ export class UpworkService {
 						}
 					)
 				);
+				// `requestTokenSecret` is deliberately left out of the response: it signs the
+				// access-token exchange, it is already stored as an integration setting, and no
+				// client reads it (GHSA-3rqg-gpm9-gx84).
 				return resolve({
 					url,
 					requestToken,
-					requestTokenSecret,
 					organizationId
 				});
 			});
 		});
 	}
 
+	/**
+	 * Completes the Upwork OAuth 1.0a handshake and stores the minted access token pair.
+	 *
+	 * The freshly minted `accessToken` / `accessTokenSecret` are persisted as integration settings
+	 * and are no longer echoed back to the caller: the browser only ever used `integrationId` to
+	 * navigate, while the credentials it received sat in the Angular app's memory
+	 * (GHSA-3rqg-gpm9-gx84).
+	 *
+	 * @param accessTokenDto - The OAuth request token and verifier returned by Upwork.
+	 * @param organizationId - The organization the integration belongs to.
+	 * @returns The id of the integration that now holds the access token.
+	 */
 	getAccessToken({ requestToken, verifier }: IAccessTokenDto, organizationId: string): Promise<IAccessToken> {
 		return new Promise(async (resolve, reject) => {
 			const { integration } = await this._commandBus.execute(
@@ -255,18 +305,56 @@ export class UpworkService {
 						})
 					);
 
-					resolve({
-						integrationId: integration.id,
-						accessToken,
-						accessTokenSecret
-					});
+					// Only the integration id leaves the server; the credentials stay in the
+					// integration settings where the masking subscriber governs every read.
+					resolve({ integrationId: integration.id });
 				}
 			);
 		});
 	}
 
-	async getConfig(integrationId: string, filter): Promise<IUpworkApiConfig> {
-		const { organizationId, tenantId } = filter;
+	/**
+	 * Builds the scope an integration is resolved within for the current request.
+	 *
+	 * The tenant always comes from the request context, never from the request payload, so a caller
+	 * cannot name somebody else's tenant. The organization still comes from the request — as it did
+	 * before — but is now mandatory, because an absent organization would have widened the lookup to
+	 * the whole tenant.
+	 *
+	 * @param organizationId - The organization named by the request.
+	 * @returns The resolved `{ organizationId, tenantId }` scope.
+	 * @throws BadRequestException when either half of the scope is missing.
+	 */
+	private _currentScope(organizationId: ID): IUpworkIntegrationScope {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!organizationId || !tenantId) {
+			throw new BadRequestException('Upwork integration lookup requires both an organization and a tenant');
+		}
+
+		return { organizationId, tenantId };
+	}
+
+	/**
+	 * Loads an integration's settings as a `settingsName -> settingsValue` map, scoped to the caller.
+	 *
+	 * The map holds cleartext credentials and must never leave the server as-is.
+	 *
+	 * @param integrationId - The Upwork integration to read.
+	 * @param scope - The organization and tenant the integration must belong to.
+	 * @returns The integration's settings keyed by setting name.
+	 * @throws BadRequestException when the integration id is missing.
+	 * @throws NotFoundException when no such integration exists inside the caller's scope.
+	 */
+	private async _findIntegrationSettings(
+		integrationId: ID,
+		scope: IUpworkIntegrationScope
+	): Promise<Record<string, string>> {
+		if (!integrationId) {
+			throw new BadRequestException('An Upwork integration id is required');
+		}
+
+		const { organizationId, tenantId } = scope;
 		const integration = await this._commandBus.execute(
 			new IntegrationTenantGetCommand({
 				where: {
@@ -278,6 +366,13 @@ export class UpworkService {
 				}
 			})
 		);
+
+		// Fail closed: without this an out-of-scope id fell through to a settings lookup on an
+		// `undefined` integration instead of being refused.
+		if (!integration) {
+			throw new NotFoundException(`Upwork integration was not found: ${integrationId}`);
+		}
+
 		const integrationSettings: IIntegrationSetting[] = await this._commandBus.execute(
 			new IntegrationSettingGetManyCommand({
 				where: {
@@ -286,25 +381,93 @@ export class UpworkService {
 				}
 			})
 		);
+
+		return arrayToObject(integrationSettings, 'settingsName', 'settingsValue');
+	}
+
+	/**
+	 * Resolves the credentials the Upwork SDK needs, server-side, from an integration id.
+	 *
+	 * This is the single place Upwork credentials are assembled. Every route that talks to the
+	 * Upwork API goes through it, so no endpoint has to accept an {@link IUpworkApiConfig} from a
+	 * client and none has to hand one back (GHSA-3rqg-gpm9-gx84).
+	 *
+	 * @param integrationId - The Upwork integration to resolve credentials for.
+	 * @param scope - The organization and tenant the integration must belong to.
+	 * @returns The credential quadruple for the Upwork SDK.
+	 * @throws NotFoundException when the integration is outside the caller's tenant or organization.
+	 * @throws BadRequestException when the integration exists but is not fully authorized.
+	 */
+	private async resolveApiConfig(integrationId: ID, scope: IUpworkIntegrationScope): Promise<IUpworkApiConfig> {
 		const {
 			accessToken,
 			consumerKey,
 			consumerSecret,
 			accessTokenSecret: accessSecret
-		} = arrayToObject(integrationSettings, 'settingsName', 'settingsValue');
+		} = await this._findIntegrationSettings(integrationId, scope);
+
+		// Fail closed: a half-authorized integration used to yield a config full of `undefined`,
+		// which the Upwork SDK then signed requests with.
+		if (!accessToken || !accessSecret || !consumerKey || !consumerSecret) {
+			throw new BadRequestException(`Upwork integration is not authorized: ${integrationId}`);
+		}
 
 		return { accessToken, consumerKey, consumerSecret, accessSecret };
 	}
 
-	// engagement has access to contract ID, this is a project in gauzy
-	async getContractsForFreelancer(getEngagementsDto: IGetContractsDto): Promise<IEngagement[]> {
-		// console.log(`Call Upwork API using accessToken: ${getEngagementsDto.config.accessToken}, accessSecret: ${getEngagementsDto.config.accessSecret}`);
+	/**
+	 * Returns the non-secret view of an Upwork integration's configuration.
+	 *
+	 * 🛑 This route used to answer with the cleartext `accessToken`, `consumerKey`, `consumerSecret`
+	 * and `accessSecret` to anybody holding an integration permission in the tenant, because it
+	 * read `settingsValue` into a plain object and so never went through the `IntegrationSetting`
+	 * masking subscriber. It now answers with the connected/usable state only, and masks the one
+	 * credential-derived field it still shows with the platform's {@link maskSecret}
+	 * (GHSA-3rqg-gpm9-gx84).
+	 *
+	 * @param integrationId - The Upwork integration to describe.
+	 * @param organizationId - The organization the integration belongs to.
+	 * @returns A secret-free description of the integration's configuration.
+	 */
+	async getConfig(integrationId: ID, organizationId: ID): Promise<IUpworkApiConfigStatus> {
+		const scope = this._currentScope(organizationId);
+		const { accessToken, accessTokenSecret, consumerKey } = await this._findIntegrationSettings(
+			integrationId,
+			scope
+		);
 
-		const api = new UpworkApi(getEngagementsDto.config);
+		return {
+			integrationId,
+			hasAccessToken: !!accessToken && !!accessTokenSecret,
+			...(consumerKey ? { consumerKey: maskSecret(consumerKey) } : {})
+		};
+	}
+
+	/**
+	 * Lists the freelancer's Upwork engagements (a contract here is a project in Gauzy).
+	 *
+	 * @param getEngagementsDto - The integration and organization to read the engagements for.
+	 * @returns The engagements reported by Upwork.
+	 */
+	async getContractsForFreelancer(getEngagementsDto: IGetContractsDto): Promise<IEngagement[]> {
+		const { integrationId, organizationId } = getEngagementsDto ?? ({} as IGetContractsDto);
+		const config = await this.resolveApiConfig(integrationId, this._currentScope(organizationId));
+
+		return await this._getContractsForFreelancer(config);
+	}
+
+	/**
+	 * Calls the Upwork engagements API with already-resolved credentials.
+	 *
+	 * @param config - Server-resolved Upwork API credentials.
+	 * @returns The engagements reported by Upwork.
+	 */
+	private async _getContractsForFreelancer(config: IUpworkApiConfig): Promise<IEngagement[]> {
+		const api = new UpworkApi(config);
 		const engagements = new Engagements(api);
 		const params = {};
 		return new Promise((resolve, reject) => {
-			api.setAccessToken(getEngagementsDto.config.accessToken, getEngagementsDto.config.accessSecret, () => {
+			api.setAccessToken(config.accessToken, config.accessSecret, () => {
 				engagements.getList(params, (error, data) => {
 					if (error) {
 						reject(error);
@@ -405,20 +568,37 @@ export class UpworkService {
 		);
 	}
 
-	// work diary holds information for time slots and time logs
+	/**
+	 * Reads an Upwork work diary — the source of the time slots and time logs Gauzy syncs.
+	 *
+	 * @param getWorkDiaryDto - The integration, organization, contract and date to read.
+	 * @returns The work diary payload reported by Upwork.
+	 */
 	async getWorkDiary(getWorkDiaryDto: IGetWorkDiaryDto): Promise<any> {
-		const api = new UpworkApi(getWorkDiaryDto.config);
+		const { integrationId, organizationId, contractId, forDate } = getWorkDiaryDto ?? ({} as IGetWorkDiaryDto);
+		const config = await this.resolveApiConfig(integrationId, this._currentScope(organizationId));
+
+		return await this._getWorkDiary(config, contractId, forDate);
+	}
+
+	/**
+	 * Calls the Upwork work diary API with already-resolved credentials.
+	 *
+	 * @param config - Server-resolved Upwork API credentials.
+	 * @param contractId - The Upwork contract whose diary is read.
+	 * @param forDate - The day to read the diary for.
+	 * @returns The work diary payload reported by Upwork.
+	 */
+	private async _getWorkDiary(config: IUpworkApiConfig, contractId: string, forDate: Date): Promise<any> {
+		const api = new UpworkApi(config);
 		const workdiary = new Workdiary(api);
 		const params = {
 			offset: 0
 		};
 		return new Promise((resolve, reject) => {
-			api.setAccessToken(getWorkDiaryDto.config.accessToken, getWorkDiaryDto.config.accessSecret, () => {
-				workdiary.getByContract(
-					getWorkDiaryDto.contractId,
-					moment(getWorkDiaryDto.forDate).format('YYYYMMDD'),
-					params,
-					(err, data) => (err ? reject(err) : resolve(data))
+			api.setAccessToken(config.accessToken, config.accessSecret, () => {
+				workdiary.getByContract(contractId, moment(forDate).format('YYYYMMDD'), params, (err, data) =>
+					err ? reject(err) : resolve(data)
 				);
 			});
 		});
@@ -500,11 +680,7 @@ export class UpworkService {
 	) {
 		const workDiaries = await Promise.all(
 			syncedContracts.map(async (contract) => {
-				const wd = await this.getWorkDiary({
-					contractId: contract.sourceId,
-					config,
-					forDate
-				})
+				const wd = await this._getWorkDiary(config, contract.sourceId, forDate)
 					.then((response) => response)
 					.catch((error) => error);
 
@@ -621,16 +797,33 @@ export class UpworkService {
 		return timeLogs;
 	}
 
+	/**
+	 * Syncs everything hanging off a set of Upwork contracts: work diaries, reports and proposals.
+	 *
+	 * The Upwork credentials used for the sync are resolved server-side from `integrationId`; the
+	 * request body used to carry them, which meant the Angular app held live credentials in memory
+	 * and posted them back on every sync (GHSA-3rqg-gpm9-gx84).
+	 *
+	 * @param integrationId - The Upwork integration to resolve credentials from.
+	 * @param organizationId - The organization the integration belongs to.
+	 * @param contracts - The Upwork contracts to sync.
+	 * @param employeeId - The Gauzy employee the synced data belongs to, when already known.
+	 * @param entitiesToSync - The entity kinds to sync (work diary, report, proposal).
+	 * @param providerReferenceId - The Upwork provider reference used to resolve the employee.
+	 * @param providerId - The Upwork provider id used by the report sync.
+	 * @returns One result per synced entity kind.
+	 */
 	async syncContractsRelatedData({
 		integrationId,
 		organizationId,
 		contracts,
 		employeeId,
-		config,
 		entitiesToSync,
 		providerReferenceId,
 		providerId
-	}) {
+	}: IUpworkSyncContractsRelatedDataDto) {
+		const config = await this.resolveApiConfig(integrationId, this._currentScope(organizationId));
+
 		const syncedContracts = await this.syncContracts({
 			contracts,
 			integrationId,
@@ -859,7 +1052,7 @@ export class UpworkService {
 					integrationId,
 					organizationId,
 					config
-			  });
+				});
 	}
 
 	async syncEmployee({ integrationId, user, organizationId }) {
