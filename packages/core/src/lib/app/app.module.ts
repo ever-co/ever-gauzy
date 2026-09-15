@@ -8,9 +8,10 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { createClient as createRedisClient } from 'redis';
 import { Cacheable, CacheableMemory } from 'cacheable';
 import * as chalk from 'chalk';
-import { RedisModule } from '../redis/redis.module';
+import { EVER_REDIS_CLIENT, RedisModule } from '../redis/redis.module';
 import { Keyv } from 'keyv';
 import * as moment from 'moment';
 import { ClsModule, ClsService } from 'nestjs-cls';
@@ -169,6 +170,7 @@ import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { BillingModule } from '../shared/billing';
+import { createThrottlerStorage } from '../throttler/redis-throttler.storage';
 import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.guard';
 import { OfficialHolidayModule } from '../official-holiday/official-holiday.module';
 import { TimeOffBalanceModule } from '../time-off-balance/time-off-balance.module';
@@ -375,14 +377,24 @@ if (environment.THROTTLE_ENABLED) {
 		...(environment.THROTTLE_ENABLED
 			? [
 					ThrottlerModule.forRootAsync({
-						inject: [ConfigService],
-						useFactory: () => {
-							return [
-								{
-									ttl: environment.THROTTLE_TTL,
-									limit: environment.THROTTLE_LIMIT
-								}
-							];
+						imports: [RedisModule],
+						inject: [EVER_REDIS_CLIENT],
+						// Buckets live in Redis when one is configured, so the configured limit holds
+						// across every API replica instead of being multiplied by the replica count and
+						// reset by every rollout. Without Redis this resolves to `undefined` and the
+						// module keeps its own per-process store.
+						useFactory: (redisClient: ReturnType<typeof createRedisClient> | null) => {
+							const storage = createThrottlerStorage(redisClient);
+
+							return {
+								throttlers: [
+									{
+										ttl: environment.THROTTLE_TTL,
+										limit: environment.THROTTLE_LIMIT
+									}
+								],
+								...(storage ? { storage } : {})
+							};
 						}
 					})
 			  ]
