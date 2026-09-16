@@ -2,8 +2,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
-export class AllowEmployeeToSeeTrackedData1726425000000 implements MigrationInterface {
-	name = 'AllowEmployeeToSeeTrackedData1726425000000';
+export class AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000 implements MigrationInterface {
+	name = 'AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000';
 
 	private static readonly DIALECTS = {
 		postgres: {
@@ -34,10 +34,12 @@ export class AllowEmployeeToSeeTrackedData1726425000000 implements MigrationInte
 
 	private dialectFor(queryRunner: QueryRunner) {
 		const type = queryRunner.connection.options.type as DatabaseTypeEnum;
-		if (type === DatabaseTypeEnum.postgres) return AllowEmployeeToSeeTrackedData1726425000000.DIALECTS.postgres;
-		if (type === DatabaseTypeEnum.mysql) return AllowEmployeeToSeeTrackedData1726425000000.DIALECTS.mysql;
+		if (type === DatabaseTypeEnum.postgres)
+			return AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000.DIALECTS.postgres;
+		if (type === DatabaseTypeEnum.mysql)
+			return AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000.DIALECTS.mysql;
 		if (type === DatabaseTypeEnum.sqlite || type === DatabaseTypeEnum.betterSqlite3) {
-			return AllowEmployeeToSeeTrackedData1726425000000.DIALECTS.sqlite;
+			return AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000.DIALECTS.sqlite;
 		}
 		throw new Error(`Unsupported database: ${type}`);
 	}

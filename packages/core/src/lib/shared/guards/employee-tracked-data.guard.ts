@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, ForbiddenException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { RequestContext } from '../../context';
+import { RequestContext } from '../../core/context';
 import { PermissionsEnum } from '@gauzy/contracts';
 
 /**
@@ -18,13 +18,17 @@ export class EmployeeTrackedDataGuard implements CanActivate {
 		}
 
 		const request = context.switchToHttp().getRequest();
-		const organizationId = request.query.organizationId || request.body.organizationId || request.params.organizationId;
+		const organizationId =
+			request.query?.organizationId ||
+			request.body?.organizationId ||
+			request.params?.organizationId ||
+			RequestContext.currentOrganizationId();
 
 		if (organizationId) {
 			const organizationRepo = this.dataSource.getRepository('Organization');
 			const organization = await organizationRepo.findOne({
 				where: { id: organizationId },
-				select: ['allowEmployeeToSeeTrackedData']
+				select: { id: true, allowEmployeeToSeeTrackedData: true }
 			});
 
 			if (organization && organization['allowEmployeeToSeeTrackedData'] === false) {
