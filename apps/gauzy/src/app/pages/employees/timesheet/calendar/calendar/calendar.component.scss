@@ -50,6 +50,21 @@
   full-calendar ::ng-deep *:not(.fc-icon) {
     font-size: 12px;
   }
+
+  // The day-header row is sticky: the grid scrolls underneath it. The shared
+  // overrides unset its background, and every colour behind it is translucent,
+  // so the hour rows showed through it mid-scroll. It now paints, as one opaque
+  // background, the same stack it is seen against at rest — the three `card-2`
+  // layers (timesheet card, this card, its body) over the layout background — so
+  // it looks as before but covers what passes under it. The day cells keep their
+  // own translucent tint, now laid over an opaque row.
+  full-calendar ::ng-deep .fc-scrollgrid-section-sticky > * {
+    background:
+      linear-gradient(var(--gauzy-card-2), var(--gauzy-card-2)),
+      linear-gradient(var(--gauzy-card-2), var(--gauzy-card-2)),
+      linear-gradient(var(--gauzy-card-2), var(--gauzy-card-2)),
+      var(--layout-background-color) !important;
+  }
 }
 
 // The filter row that is the whole card header on the Calendar, Weekly and Daily
