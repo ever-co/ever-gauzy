@@ -1,5 +1,5 @@
 /**
- * Regression: MCP tools/list converts every tool inputSchema with Zod's toJSONSchema.
+ * Regression: MCP tools/list converts every tool inputSchema with the Zod toJSONSchema helper.
  * z.date() throws "Date cannot be represented in JSON Schema" and fails the whole list.
  *
  * Env for mcp-server module load is set in packages/mcp-server/jest.config.ts.
