@@ -144,6 +144,7 @@ import { RequestApprovalModule } from '../request-approval/request-approval.modu
 import { ResourceLinkModule } from '../resource-link/resource-link.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { PluginContributionModule } from '../plugin-contributions/plugin-contribution.module';
+import { SequenceModule } from '../sequence/sequence.module';
 import { RoleModule } from '../role/role.module';
 import { SharedEntityModule } from '../shared-entity/shared-entity.module';
 import { ApiKeyAuthGuard } from '../shared/guards/api-key-auth.guard';
@@ -452,6 +453,7 @@ if (environment.THROTTLE_ENABLED) {
 		RequestApprovalModule,
 		RolePermissionModule,
 		PluginContributionModule,
+		SequenceModule,
 		TenantModule,
 		TenantSettingModule,
 		// In-product billing pages. Every route inside 404s unless STRIPE_SECRET_KEY is set, so a
