@@ -4,6 +4,13 @@ import { getConfig } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { PLUGIN_METADATA } from './plugin-metadata';
 import { PluginLifecycleMethods } from './plugin.interface';
+import {
+	PluginFeatureContribution,
+	PluginPermissionContribution,
+	PluginSettingContribution,
+	RegisteredMigration,
+	readMigrationTimestamp
+} from './plugin-contributions';
 
 /**
  * Get plugin classes from an array of plugins by reflecting metadata.
@@ -65,6 +72,222 @@ export function getPluginConfigurations(plugins: (Type<any> | DynamicModule)[] =
 	return plugins.flatMap(
 		(plugin: Type<any> | DynamicModule) => reflectMetadata(plugin, PLUGIN_METADATA.CONFIGURATION) || []
 	);
+}
+
+/**
+ * Resolves a metadata value that may be declared either as a literal array or as a function
+ * returning one.
+ *
+ * Plugin metadata is evaluated when the module is imported, so a plugin whose contributions depend
+ * on other imports declares them as a thunk. Both forms are accepted everywhere.
+ *
+ * @param value The declared metadata value.
+ * @returns The resolved array.
+ */
+function resolveContribution<T>(value: Array<T> | (() => Array<T>) | undefined): Array<T> {
+	if (!value) {
+		return [];
+	}
+
+	if (typeof value === 'function') {
+		const resolved = (value as () => Array<T>)();
+		return Array.isArray(resolved) ? resolved : [];
+	}
+
+	return Array.isArray(value) ? value : [];
+}
+
+/**
+ * Collects a declared contribution list from every plugin.
+ *
+ * @param plugins The plugin list.
+ * @param metadataKey One of the contribution metadata keys.
+ * @returns Every declared contribution, in plugin order.
+ */
+function getContributionsFromPlugins<T>(plugins: Array<Type<any> | DynamicModule>, metadataKey: string): Array<T> {
+	if (!plugins) {
+		return [];
+	}
+
+	return plugins.flatMap((plugin: Type<any> | DynamicModule) => {
+		const declared = reflectMetadata(plugin, metadataKey) as Array<T> | (() => Array<T>) | undefined;
+		return resolveContribution<T>(declared);
+	});
+}
+
+/**
+ * Get the migrations owned by a set of plugins.
+ *
+ * @param plugins An array of plugins containing migration metadata.
+ * @returns Every declared migration class.
+ */
+export function getMigrationsFromPlugins(plugins?: Array<Type<any> | DynamicModule>): Array<Type<any>> {
+	return getContributionsFromPlugins<Type<any>>(plugins ?? [], PLUGIN_METADATA.MIGRATIONS);
+}
+
+/**
+ * Get the permissions contributed by a set of plugins.
+ *
+ * @param plugins An array of plugins containing permission metadata.
+ * @returns Every declared permission contribution.
+ */
+export function getPermissionsFromPlugins(
+	plugins?: Array<Type<any> | DynamicModule>
+): Array<PluginPermissionContribution> {
+	return getContributionsFromPlugins<PluginPermissionContribution>(plugins ?? [], PLUGIN_METADATA.PERMISSIONS);
+}
+
+/**
+ * Get the feature flags contributed by a set of plugins.
+ *
+ * @param plugins An array of plugins containing feature metadata.
+ * @returns Every declared feature contribution.
+ */
+export function getFeaturesFromPlugins(
+	plugins?: Array<Type<any> | DynamicModule>
+): Array<PluginFeatureContribution> {
+	return getContributionsFromPlugins<PluginFeatureContribution>(plugins ?? [], PLUGIN_METADATA.FEATURES);
+}
+
+/**
+ * Get the settings declared by a set of plugins.
+ *
+ * @param plugins An array of plugins containing setting metadata.
+ * @returns Every declared setting contribution.
+ */
+export function getSettingsFromPlugins(
+	plugins?: Array<Type<any> | DynamicModule>
+): Array<PluginSettingContribution> {
+	return getContributionsFromPlugins<PluginSettingContribution>(plugins ?? [], PLUGIN_METADATA.SETTINGS);
+}
+
+/**
+ * Get the plugin classes a given plugin declares as prerequisites.
+ *
+ * @param plugin The plugin to inspect.
+ * @returns The declared prerequisite plugin classes.
+ */
+export function getPluginDependencies(plugin: Type<any> | DynamicModule): Array<Type<any>> {
+	const declared = reflectMetadata(plugin, PLUGIN_METADATA.DEPENDS_ON) as
+		| Array<Type<any>>
+		| (() => Array<Type<any>>)
+		| undefined;
+
+	return resolveContribution<Type<any>>(declared);
+}
+
+/**
+ * Orders a plugin list so that every declared prerequisite is loaded before the plugin that
+ * requires it.
+ *
+ * The sort is stable: plugins that declare no dependency keep their configured order, so enabling a
+ * dependency never reshuffles unrelated plugins.
+ *
+ * @param plugins The configured plugin list.
+ * @returns The same plugins in dependency order.
+ * @throws When a dependency is missing, or when the declared dependencies contain a cycle.
+ */
+export function resolvePluginLoadOrder(plugins: Array<Type<any> | DynamicModule>): Array<Type<any> | DynamicModule> {
+	if (!plugins || plugins.length === 0) {
+		return [];
+	}
+
+	const identityOf = (plugin: Type<any> | DynamicModule): Type<any> =>
+		isDynamicModule(plugin) ? plugin.module : plugin;
+
+	const configured = new Set<Type<any>>(plugins.map(identityOf));
+	const ordered: Array<Type<any> | DynamicModule> = [];
+	const visiting = new Set<Type<any>>();
+	const visited = new Set<Type<any>>();
+
+	const visit = (plugin: Type<any> | DynamicModule, path: string[]): void => {
+		const identity = identityOf(plugin);
+
+		if (visited.has(identity)) {
+			return;
+		}
+
+		if (visiting.has(identity)) {
+			throw new Error(
+				`Plugin dependency cycle detected: ${[...path, identity.name].join(' -> ')}. ` +
+					'A plugin load order cannot be resolved while the declared dependencies form a cycle.'
+			);
+		}
+
+		visiting.add(identity);
+
+		for (const dependency of getPluginDependencies(plugin)) {
+			if (!configured.has(dependency)) {
+				throw new Error(
+					`Plugin ${identity.name} requires ${dependency?.name ?? 'an unnamed plugin'}, ` +
+						'which is not present in the configured plugin list.'
+				);
+			}
+
+			visit(dependency, [...path, identity.name]);
+		}
+
+		visiting.delete(identity);
+		visited.add(identity);
+		ordered.push(plugin);
+	};
+
+	for (const plugin of plugins) {
+		visit(plugin, []);
+	}
+
+	return ordered;
+}
+
+/**
+ * Validates the migrations declared across a plugin list.
+ *
+ * Two migrations sharing a timestamp would make the applied order depend on the file system, so the
+ * installation is refused instead. A migration whose class name carries no timestamp cannot be
+ * ordered at all and is refused for the same reason.
+ *
+ * @param migrations The declared migration classes.
+ * @param ownerOf Resolves the package name that declared a migration, for diagnostics.
+ * @returns The migrations with their resolved timestamps, in ascending order.
+ * @throws When a timestamp is missing or duplicated.
+ */
+export function orderPluginMigrations(
+	migrations: Array<Type<any>>,
+	ownerOf: (migration: Type<any>) => string = () => 'unknown'
+): Array<RegisteredMigration> {
+	const seen = new Map<number, RegisteredMigration>();
+	const ordered: Array<RegisteredMigration> = [];
+
+	for (const migration of migrations) {
+		const timestamp = readMigrationTimestamp(migration);
+
+		if (timestamp === null) {
+			throw new Error(
+				`Migration ${migration?.name ?? 'unknown'} does not carry a timestamp in its class name. ` +
+					'Plugin migrations must follow the <Name><timestamp> convention so they can be ordered.'
+			);
+		}
+
+		const existing = seen.get(timestamp);
+		if (existing) {
+			throw new Error(
+				`Two migrations claim the same timestamp ${timestamp}: ` +
+					`${existing.name} (${existing.owner}) and ${migration?.name ?? 'unknown'} (${ownerOf(migration)}).`
+			);
+		}
+
+		const entry: RegisteredMigration = {
+			migration,
+			timestamp,
+			name: migration?.name ?? String(timestamp),
+			owner: ownerOf(migration)
+		};
+
+		seen.set(timestamp, entry);
+		ordered.push(entry);
+	}
+
+	return ordered.sort((left, right) => left.timestamp - right.timestamp);
 }
 
 /**

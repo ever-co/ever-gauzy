@@ -42,7 +42,14 @@ import { IncomingMessage } from 'node:http';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, defineConfig, environment } from '@gauzy/config';
-import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
+import {
+	getEntitiesFromPlugins,
+	getMigrationsFromPlugins,
+	getPluginConfigurations,
+	getSubscribersFromPlugins,
+	isDynamicModule,
+	orderPluginMigrations
+} from '@gauzy/plugin';
 import { MultiORMEnum, getORMType } from '../core/utils';
 import { DatabaseErrorFilter } from '../core/errors';
 import { coreEntities } from '../core/entities';
@@ -423,16 +430,18 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 		await defineConfig(applicationConfig);
 	}
 
-	// Register core and plugin entities and subscribers in parallel
-	const [entities, subscribers] = await Promise.all([
+	// Register core and plugin entities, subscribers and migrations in parallel
+	const [entities, subscribers, migrations] = await Promise.all([
 		preBootstrapRegisterEntities(applicationConfig),
-		preBootstrapRegisterSubscribers(applicationConfig)
+		preBootstrapRegisterSubscribers(applicationConfig),
+		preBootstrapRegisterMigrations(applicationConfig)
 	]);
 
 	// Update configuration with migrations, registered entities and subscribers
 	await defineConfig({
 		dbConnectionOptions: {
 			...getMigrationsConfig(),
+			migrations,
 			entities: entities as Array<Type<any>>, // Core and plugin entities
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>> // Core and plugin subscribers
 		},
@@ -483,6 +492,73 @@ async function preBootstrapPluginConfigurations(config: ApplicationPluginConfig)
 
 	// Return the modified configuration
 	return config;
+}
+
+/**
+ * Registers the database migrations of the application.
+ *
+ * The platform's own migrations are discovered from a directory glob; a plugin instead ships the
+ * migration classes for the tables it owns and declares them on its metadata. Both are merged into
+ * one list here, before the connection is created, so that a plugin's schema travels with the
+ * plugin rather than being added to the platform's shared migration folder.
+ *
+ * Ordering is decided by each migration's own timestamp, never by the order plugins are listed in,
+ * and an installation whose declared migrations cannot be ordered is refused at boot rather than
+ * applied in file-system order.
+ *
+ * @param config - The application configuration that may contain plugin migrations.
+ * @returns A promise that resolves to the merged list of migration paths and classes.
+ * @throws Error when a plugin migration carries no timestamp or two migrations share one.
+ */
+export async function preBootstrapRegisterMigrations(
+	config: Partial<ApplicationPluginConfig>
+): Promise<Array<Function | string>> {
+	try {
+		console.time(chalk.yellow('✔ Pre Bootstrap Register Migrations Time'));
+
+		// The platform's own migrations remain a directory glob.
+		const { migrations: platformMigrationPaths } = getMigrationsConfig();
+
+		// Collect every migration declared by a plugin, remembering which plugin declared it so a
+		// conflicting timestamp can be reported against a package rather than against a class name.
+		const ownerByMigration = new Map<Type<any>, string>();
+		for (const plugin of config.plugins ?? []) {
+			const identity = isDynamicModule(plugin) ? plugin.module : plugin;
+			for (const migration of getMigrationsFromPlugins([plugin])) {
+				if (!ownerByMigration.has(migration)) {
+					ownerByMigration.set(migration, identity?.name ?? 'unnamed plugin');
+				}
+			}
+		}
+
+		const declaredMigrations = getMigrationsFromPlugins(config.plugins);
+		const orderedMigrations = orderPluginMigrations(
+			declaredMigrations,
+			(migration) => ownerByMigration.get(migration) ?? 'unknown plugin'
+		);
+
+		if (orderedMigrations.length > 0) {
+			console.log(
+				chalk.green(
+					`Plugin migrations registered: ${orderedMigrations.length} ` +
+						`(oldest ${orderedMigrations[0].timestamp}, newest ${
+							orderedMigrations[orderedMigrations.length - 1].timestamp
+						})`
+				)
+			);
+		}
+
+		const registeredMigrations: Array<Function | string> = [
+			...(platformMigrationPaths as Array<string>),
+			...orderedMigrations.map((entry) => entry.migration as Function)
+		];
+
+		console.timeEnd(chalk.yellow('✔ Pre Bootstrap Register Migrations Time'));
+		return registeredMigrations;
+	} catch (error) {
+		console.log(chalk.red('Error registering migrations:'), error);
+		throw error;
+	}
 }
 
 /**

@@ -143,6 +143,7 @@ import { RequestApprovalTeamModule } from '../request-approval-team/request-appr
 import { RequestApprovalModule } from '../request-approval/request-approval.module';
 import { ResourceLinkModule } from '../resource-link/resource-link.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { PluginContributionModule } from '../plugin-contributions/plugin-contribution.module';
 import { RoleModule } from '../role/role.module';
 import { SharedEntityModule } from '../shared-entity/shared-entity.module';
 import { ApiKeyAuthGuard } from '../shared/guards/api-key-auth.guard';
@@ -450,6 +451,7 @@ if (environment.THROTTLE_ENABLED) {
 		EquipmentSharingPolicyModule,
 		RequestApprovalModule,
 		RolePermissionModule,
+		PluginContributionModule,
 		TenantModule,
 		TenantSettingModule,
 		// In-product billing pages. Every route inside 404s unless STRIPE_SECRET_KEY is set, so a

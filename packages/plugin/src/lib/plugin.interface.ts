@@ -1,5 +1,10 @@
 import { ModuleMetadata, Type } from '@nestjs/common';
 import { ExtensionConfigurationOptions, ApplicationPluginConfigurationFn } from '@gauzy/common';
+import {
+	PluginFeatureContribution,
+	PluginPermissionContribution,
+	PluginSettingContribution
+} from './plugin-contributions';
 
 /**
  * Metadata definition for a plugin in NestJS.
@@ -24,6 +29,38 @@ export interface PluginMetadata extends ModuleMetadata {
 	 * Returns a configuration callback function for the plugin.
 	 */
 	configuration?: ApplicationPluginConfigurationFn;
+
+	/**
+	 * Database migrations owned by the plugin.
+	 *
+	 * A plugin ships the migrations for the tables it owns. The platform merges every declared
+	 * migration into the connection's migration list before the connection is created, so ordering
+	 * follows each migration's own timestamp rather than the order plugins are listed in.
+	 */
+	migrations?: Array<Type<any>> | (() => Array<Type<any>>);
+
+	/**
+	 * Permissions the plugin contributes to the platform role model.
+	 */
+	permissions?: Array<PluginPermissionContribution> | (() => Array<PluginPermissionContribution>);
+
+	/**
+	 * Feature flags the plugin contributes.
+	 */
+	features?: Array<PluginFeatureContribution> | (() => Array<PluginFeatureContribution>);
+
+	/**
+	 * Settings the plugin reads.
+	 */
+	settings?: Array<PluginSettingContribution> | (() => Array<PluginSettingContribution>);
+
+	/**
+	 * Plugins that must be loaded before this one.
+	 *
+	 * Declaring a dependency makes the load order deterministic and lets the platform refuse an
+	 * installation where a required plugin is missing instead of failing at request time.
+	 */
+	dependsOn?: Array<Type<any>>;
 }
 
 /**
