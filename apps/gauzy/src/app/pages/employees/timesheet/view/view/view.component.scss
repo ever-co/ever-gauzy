@@ -1,15 +1,18 @@
 @use 'themes' as *;
 
 // This page renders the same day/log rows as Daily, Weekly and Timesheet
-// Approvals, but its stylesheet imported none of theirs and re-declared none of
-// the classes the markup uses — so `.custom-header`, `.custom-body`, `.content`
-// and `.log` were all unstyled here, and `.border-bottom` fell through to
-// Bootstrap's own `1px solid #dee2e6`: a fixed light hairline under every row,
-// which is a bright line on the near-black canvas.
+// Approvals. It does not `@forward` their chain here, but it does not need to:
+// the component's `styleUrls` already loads `daily.component.scss`, which
+// forwards weekly and calendar. So `.content`, `.selected` and
+// `.custom-header-container` are all styled on this page — the markup simply
+// was not using them.
 //
-// The rules are spelled out here rather than pulled in with a `@forward` of the
-// daily/weekly chain: that chain also carries `@shared/_pg-card` and a set of
-// card-height overrides this page does not want.
+// What this file is for is the handful of places where this page's structure
+// differs from Daily's and the shared rules land wrong. Those overrides are
+// nested under `.custom-card-body` so they out-rank the forwarded chain, whose
+// own selectors (`nb-card-body .custom-body`) are more specific than a bare
+// `:host .custom-body` and would otherwise win no matter what order they load
+// in.
 :host {
     nb-card {
         height: calc(100vh - 13rem);
@@ -19,46 +22,58 @@
                 background: unset;
             }
         }
+    }
 
-        .custom-card-body {
-            overflow: auto;
-            background-color: var(--gauzy-card-2);
+    .custom-card-body {
+        overflow: auto;
+        background-color: var(--gauzy-card-2);
+
+        // Column labels above each day's rows — same muted strip as Daily/Weekly.
+        .custom-header {
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 15px;
+            letter-spacing: 0em;
+            text-align: left;
+            color: nb-theme(gauzy-text-color-2);
+            background: var(--gauzy-card-4);
+            border-radius: nb-theme(border-radius);
+            padding: 10px 10px 10px 12px;
+            flex-wrap: nowrap;
         }
-    }
 
-    // Column labels above each day's rows — same muted strip as Daily/Weekly.
-    .custom-header {
-        font-size: 12px;
-        font-weight: 600;
-        line-height: 15px;
-        letter-spacing: 0em;
-        text-align: left;
-        color: nb-theme(gauzy-text-color-2);
-        background: var(--gauzy-card-4);
-        border-radius: nb-theme(border-radius);
-        padding: 10px 10px 10px 12px;
-        flex-wrap: nowrap;
-    }
-
-    // No `overflow`/`height` here on purpose: the card body above is already the
-    // scroll container, and one `.custom-body` is rendered per DAY, so making
-    // each of them scroll would put a second scrollbar inside the page's own.
-    .custom-body {
-        border-radius: nb-theme(border-radius);
-        margin-top: 6px;
-        @include nb-ltr(padding-right, 0.5rem);
-        @include nb-rtl(padding-left, 0.5rem);
-
-        .content {
+        // Daily and Weekly split this in two: `.custom-body` is the scroll
+        // container and `.content` inside it is the surface the rows sit on.
+        // This page has no scroll container of its own — the card body above is
+        // already scrolling, and one `.custom-body` is rendered per DAY, so
+        // making each of them scroll would put a second scrollbar inside the
+        // page's own. That leaves `.custom-body` playing the `.content` part,
+        // so it carries the panel's background and its 12px text inset; without
+        // them the rows sat transparent on the card and started 12px to the
+        // left of the header labels above them.
+        //
+        // No right-hand gutter either: that exists on Daily/Weekly to clear
+        // their scrollbar, and there is no scrollbar here to clear.
+        .custom-body {
+            overflow: visible;
+            height: auto;
             background-color: var(--gauzy-card-3);
             border-radius: var(--border-radius);
+            margin-top: 6px;
             @include nb-ltr(padding-left, 12px);
             @include nb-rtl(padding-right, 12px);
-        }
 
-        // Out-ranks Bootstrap's `.border-bottom` utility, which is `!important`.
-        .border-bottom {
-            border-bottom: 1px solid var(--gauzy-border-default-color) !important;
+            // Out-ranks Bootstrap's `.border-bottom` utility, which is `!important`.
+            .border-bottom {
+                border-bottom: 1px solid var(--gauzy-border-default-color) !important;
+            }
+
+            // Daily and Weekly drop the divider under the row that is marked
+            // selected, so the marker bar reads as one block. That rule is not
+            // `!important`, so it would lose to the one above; restate it here.
+            .selected.border-bottom {
+                border-bottom: none !important;
+            }
         }
     }
 
