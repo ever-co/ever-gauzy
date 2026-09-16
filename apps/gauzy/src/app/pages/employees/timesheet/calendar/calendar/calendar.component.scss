@@ -23,6 +23,35 @@
   }
 }
 
+// Calendar tab only: every piece of text in the tab, the filter bar and the
+// calendar alike, at exactly 12px. Scoped to `.calendar-card` (set in this
+// component's template) because Weekly and Daily forward this sheet.
+:host .calendar-card {
+  font-size: 12px;
+
+  // The filter controls take their size from the table-header and select tokens
+  // (0.75rem, 0.8125rem once a value is picked), set by rules up to (0,4,1)
+  // inside the filter component — pinned here at a higher specificity instead.
+  // Named one by one rather than `*`, which would also shrink their chevrons.
+  ngx-gauzy-filters ::ng-deep {
+    .select-button,
+    .select-button.placeholder,
+    .activity-level-filter,
+    .popover-button[nbButton],
+    .clear-filters [nbButton] {
+      font-size: 12px;
+    }
+  }
+
+  // FullCalendar sizes its own text in `em` (a 1.75em title, events at .85em)
+  // and the shared overrides add a 1rem title, so nothing inherits one size.
+  // Every element is pinned instead, except the icon glyphs, which are sized
+  // off their font-size.
+  full-calendar ::ng-deep *:not(.fc-icon) {
+    font-size: 12px;
+  }
+}
+
 // The filter row that is the whole card header on the Calendar, Weekly and Daily
 // tabs (Weekly forwards this sheet, Daily forwards Weekly). Its height is this
 // padding plus one line of 2rem controls — no margin anywhere inside it adds to
