@@ -10,12 +10,13 @@ import { RequestContext } from './request-context';
  * lines (this middleware's own, and `packages/plugins/docs`'s queue logs) — an unvalidated value
  * is a log-injection vector (CWE-117: a client-supplied `\n` could forge additional log lines) and
  * a header-injection one (a raw CR/LF could smuggle extra response headers). Correlation ids this
- * app generates are UUIDv4, so a generous but bounded allowlist (word characters and hyphens,
- * capped well above a UUID's 36 characters for interop with whatever format an upstream
- * proxy/load balancer already uses) rejects control characters and unbounded input while still
- * accepting any realistic legitimate value.
+ * app generates are UUIDv4, so a generous but bounded allowlist (visible ASCII only — no space,
+ * tab, CR/LF or other control/non-ASCII bytes — capped well above a UUID's 36 characters for
+ * interop with whatever format an upstream proxy/load balancer already uses, e.g. dotted,
+ * colon-separated, base64 or braced-GUID ids) rejects control characters and unbounded input
+ * while still accepting any realistic legitimate value.
  */
-const SAFE_CORRELATION_ID = /^[A-Za-z0-9_-]{1,128}$/;
+const SAFE_CORRELATION_ID = /^[\x21-\x7E]{1,128}$/;
 
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {

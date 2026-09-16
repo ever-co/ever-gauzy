@@ -148,7 +148,32 @@ describe('RequestContextMiddleware — correlation id propagation', () => {
 		expect(responseHeaders['x-correlation-id']).toBe('load-balancer-req-id_123');
 	});
 
-	it('does not leak the correlation id outside the request\'s own run() scope', () => {
+	it.each(['svc:orders.42', '{3F2504E0-4F89-11D3-9A0C-0305E82C3301}', 'YWJjZGVm+/==', 'uuid#7'])(
+		'keeps upstream ids with visible punctuation (%s)',
+		(inbound) => {
+			const cls = buildClsService();
+			RequestContext.setClsService(cls);
+			const middleware = new RequestContextMiddleware(cls);
+			const { req, res, responseHeaders } = buildReqRes({ 'x-correlation-id': inbound });
+
+			middleware.use(req, res, jest.fn());
+
+			expect(responseHeaders['x-correlation-id']).toBe(inbound);
+		}
+	);
+
+	it('still replaces ids containing a space or tab', () => {
+		const cls = buildClsService();
+		RequestContext.setClsService(cls);
+		const middleware = new RequestContextMiddleware(cls);
+		const { req, res, responseHeaders } = buildReqRes({ 'x-correlation-id': 'a b	c' });
+
+		middleware.use(req, res, jest.fn());
+
+		expect(responseHeaders['x-correlation-id']).toHaveLength(36);
+	});
+
+	it("does not leak the correlation id outside the request's own run() scope", () => {
 		const cls = buildClsService();
 		RequestContext.setClsService(cls);
 		const middleware = new RequestContextMiddleware(cls);

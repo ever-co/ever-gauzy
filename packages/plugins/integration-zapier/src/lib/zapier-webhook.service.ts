@@ -204,7 +204,7 @@ export class ZapierWebhookService {
 				// send. Since JS is single-threaded, two such calls' synchronous check-and-reserve
 				// prefixes can never interleave with EACH OTHER (only around an `await`), so whichever
 				// one's microtask runs first wins the reservation and the other sees it immediately.
-				const deliveryKey = this.deliveryDedupKey(sub.id, timerData);
+				const deliveryKey = this.deliveryDedupKey(sub.id as ID, timerData);
 				if (this.hasRecentlyDelivered(deliveryKey) || this.inFlight.has(deliveryKey)) {
 					this.logger.debug(`Skipping duplicate webhook delivery ${deliveryKey} — already sent/in flight.`);
 					return null;

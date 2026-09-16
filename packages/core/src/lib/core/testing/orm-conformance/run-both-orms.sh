@@ -12,9 +12,9 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 echo "== ORM conformance: TypeORM =="
-DB_ORM=typeorm npx nx test core --testFile=orm-conformance.spec.ts --skip-nx-cache
+DB_ORM=typeorm yarn nx test core --testFile=orm-conformance.spec.ts --skip-nx-cache
 
 echo "== ORM conformance: MikroORM =="
-DB_ORM=mikro-orm npx nx test core --testFile=orm-conformance.spec.ts --skip-nx-cache
+DB_ORM=mikro-orm yarn nx test core --testFile=orm-conformance.spec.ts --skip-nx-cache
 
 echo "Both ORMs conform."

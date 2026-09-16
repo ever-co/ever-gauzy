@@ -10,9 +10,9 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 echo "== Persistence invariants: TypeORM =="
-DB_ORM=typeorm npx nx test core --testFile=persistence-invariant.spec.ts --skip-nx-cache
+DB_ORM=typeorm yarn nx test core --testFile=persistence-invariant.spec.ts --skip-nx-cache
 
 echo "== Persistence invariants: MikroORM =="
-DB_ORM=mikro-orm npx nx test core --testFile=persistence-invariant.spec.ts --skip-nx-cache
+DB_ORM=mikro-orm yarn nx test core --testFile=persistence-invariant.spec.ts --skip-nx-cache
 
 echo "Tenant isolation holds under both ORMs."
