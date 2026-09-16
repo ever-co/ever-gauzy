@@ -3,9 +3,6 @@
 
 :host nb-card {
   background-color: var(--gauzy-card-2);
-  ngx-gauzy-filters {
-    margin: 0 -2rem;
-  }
   nb-card-body {
     height: calc(100vh - 21.75rem);
   }
@@ -23,5 +20,53 @@
     background-color: var(--gauzy-card-2);
     padding: 6px 8px;
     border-radius: nb-theme(button-rectangle-border-radius);
+  }
+}
+
+// The filter row that is the whole card header on the Calendar, Weekly and Daily
+// tabs (Weekly forwards this sheet, Daily forwards Weekly). Its height is this
+// padding plus one line of 2rem controls — no margin anywhere inside it adds to
+// that. The inline 1rem ends the controls on the same inset as `+ Add Time`.
+:host .filters {
+  margin: 0;
+  padding: 0.5rem 1rem;
+
+  ngx-gauzy-filters {
+    display: block;
+    margin: 0;
+  }
+
+  // The filter bar is authored as nested Bootstrap rows and columns, whose
+  // gutters are negative margins cancelled by padding, plus a 5px bottom margin
+  // on every filter. All of it is reset here and the spacing is a flex gap
+  // instead.
+  ngx-gauzy-filters ::ng-deep {
+    .main-wrapper {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      justify-content: flex-end;
+    }
+
+    .main-wrapper > .col-auto {
+      margin: 0 !important;
+      padding: 0;
+    }
+
+    // `align-items-end` is a Bootstrap utility (`!important`). Centred instead, so
+    // every control in the row — including Daily's selection actions — shares
+    // one axis.
+    .filter-item-list {
+      margin: 0;
+      align-items: center !important;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .filter-item-list > .col-auto,
+    .single-filter-wrapper {
+      margin: 0;
+      padding: 0 !important;
+    }
   }
 }
