@@ -56,7 +56,7 @@ function expectForRangeIsoDateTime(schema: ForRangeDateFields | undefined) {
 }
 
 function createCapturingServer(): { server: McpServer; tools: CapturedTool[] } {
-	let tools: CapturedTool[] = [];
+	const tools: CapturedTool[] = [];
 
 	const capture = (name: string, inputSchema?: z.ZodTypeAny) => {
 		tools.push({ name, inputSchema });
@@ -143,7 +143,7 @@ describe('MCP tool input schemas JSON Schema conversion', () => {
 		const withSchema = tools.filter((tool) => tool.inputSchema);
 		expect(withSchema.length).toBeGreaterThanOrEqual(MIN_TOOLS_WITH_INPUT_SCHEMA);
 
-		let failures: string[] = [];
+		const failures: string[] = [];
 
 		for (const tool of withSchema) {
 			try {
