@@ -7,6 +7,24 @@ import { IRole, ITenant, IRolePermission, PermissionsEnum } from '@gauzy/contrac
 import { environment } from '@gauzy/config';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 import { RolePermission } from './role-permission.entity';
+import { getDeclaredPermissionValues, getDeclaredPermissions } from '../plugin-contributions/plugin-declarations';
+
+/**
+ * The complete permission catalogue for a fresh installation.
+ *
+ * The platform's own permissions are compiled into an enum; a permission declared by a plugin is a
+ * string. A role is provisioned with both, because a plugin that is loaded but grants no role its
+ * permission would expose a capability nobody can reach. A declared permission is granted only to a
+ * role the declaration names, so loading a plugin never widens an existing role on its own.
+ *
+ * @returns Every permission value a role may be provisioned with.
+ */
+const getPermissionCatalogue = (): string[] => {
+	const builtIn = Object.values(PermissionsEnum) as string[];
+	const declared = getDeclaredPermissionValues();
+
+	return [...new Set([...builtIn, ...declared])];
+};
 
 /**
  * Creates role permissions for each tenant and role.
@@ -34,8 +52,15 @@ export const createRolePermissions = async (
 			if (role) {
 				// Filter permissions, excluding denied permissions in DEMO mode
 				const permissions = environment.demo
-					? Object.values(PermissionsEnum).filter((permission) => !deniedPermissions.has(permission))
-					: Object.values(PermissionsEnum);
+					? getPermissionCatalogue().filter((permission) => !deniedPermissions.has(permission as PermissionsEnum))
+					: getPermissionCatalogue();
+
+				// A permission a plugin declared for this role is granted the same way a built-in one
+				// is; nothing else about the role changes, so loading a plugin cannot widen a role
+				// that the declaration did not name.
+				const declaredForRole = getDeclaredPermissions()
+					.filter((declaration) => (declaration.defaultFor ?? []).includes(roleEnum))
+					.map((declaration) => declaration.value);
 
 				// Create RolePermission objects and add them to the array
 				rolePermissions.push(
@@ -43,7 +68,8 @@ export const createRolePermissions = async (
 						const rolePermission = new RolePermission();
 						rolePermission.role = role;
 						rolePermission.permission = permission;
-						rolePermission.enabled = defaultEnabledPermissions.includes(permission);
+						rolePermission.enabled =
+							defaultEnabledPermissions.includes(permission) || declaredForRole.includes(permission);
 						rolePermission.tenant = tenant;
 						return rolePermission;
 					})
