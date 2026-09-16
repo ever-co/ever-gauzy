@@ -23,10 +23,11 @@
   }
 }
 
-// Calendar tab only: every piece of text in the tab, the filter bar and the
-// calendar alike, at exactly 12px. Scoped to `.calendar-card` (set in this
-// component's template) because Weekly and Daily forward this sheet.
-:host .calendar-card {
+// Calendar and Weekly tabs: no text above 12px. Scoped to `.calendar-card` and
+// `.weekly-card` (set in each component's template) because this sheet is
+// forwarded into Weekly and from there into Daily, which keeps its own sizes.
+:host .calendar-card,
+:host .weekly-card {
   font-size: 12px;
 
   // The filter controls take their size from the table-header and select tokens
@@ -42,7 +43,10 @@
       font-size: 12px;
     }
   }
+}
 
+// Calendar tab only: every piece of text in the calendar itself at exactly 12px.
+:host .calendar-card {
   // FullCalendar sizes its own text in `em` (a 1.75em title, events at .85em)
   // and the shared overrides add a 1rem title, so nothing inherits one size.
   // Every element is pinned instead, except the icon glyphs, which are sized
