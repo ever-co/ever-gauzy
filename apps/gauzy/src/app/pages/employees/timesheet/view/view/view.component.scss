@@ -62,6 +62,17 @@
         }
     }
 
+    // The heading and its back arrow share a line.
+    .title-row {
+        display: flex;
+    }
+
+    // Holds the header strip's first column open so its labels line up with the
+    // rows' checkbox column below.
+    .checkbox-spacer {
+        visibility: hidden;
+    }
+
     .project-name {
         flex: 0 0 20%;
         max-width: 20%;

@@ -3,7 +3,7 @@
     <!-- `d-flex`, not `flex`: Bootstrap has no `.flex` utility, so the column
          direction was being applied to a block. -->
     <nb-card-header class="d-flex flex-column">
-      <div style="display: flex">
+      <div class="title-row">
         <ngx-back-navigation></ngx-back-navigation>
         <h4>
           <!-- Every other page in this area routes its title through
@@ -39,7 +39,7 @@
             <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
               <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
                 <div class="col-auto">
-                  <nb-checkbox status="basic" style="visibility: hidden"></nb-checkbox>
+                  <nb-checkbox status="basic" class="checkbox-spacer"></nb-checkbox>
                 </div>
               </ng-template>
             </ng-template>
