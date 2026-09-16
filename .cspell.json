@@ -83,6 +83,7 @@
 		"idempotency",
 		"msgbox",
 		"nocookie",
+		"nocheck",
 		"nofollow",
 		"opped",
 		"regexes",
