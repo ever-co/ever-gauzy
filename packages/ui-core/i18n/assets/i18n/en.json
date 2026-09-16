@@ -2947,6 +2947,8 @@
 				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
 				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
 				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Screenshot Frequency",
 				"SCREENSHOT_FREQUENCY_INFO": "Specify the update frequency or time intervals synchronization.",
 				"RANDOM_SCREENSHOT": "Random Screenshot",
