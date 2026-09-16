@@ -12,6 +12,41 @@
     align-content: center;
     justify-content: flex-end;
   }
+
+  // The filter row's own sizing (padding, no margins, centred flex gap) comes
+  // from the Calendar sheet at the base of this chain, shared with Weekly.
+
+  // View / Edit / Delete (and Bulk action), projected into the filter row ahead
+  // of the filter controls. Collapsed, `ngx-gauzy-button-action` takes no width,
+  // so the filters do not move until a row is selected; the gap to the first
+  // filter is the filter list's own flex gap.
+  .selection-actions {
+    display: flex;
+    align-items: center;
+
+    // Its standalone-row padding would push the header back open.
+    ::ng-deep .actions-container {
+      padding: 0;
+    }
+
+    // No pill behind the strip here, and no 5px button margins from the shared
+    // table partial: the buttons stand in the row at the filter controls' height.
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 !important;
+      background: none;
+    }
+
+    .actions button {
+      margin: 0;
+      height: 2rem;
+      min-height: 2rem;
+      padding-block: 0;
+    }
+  }
+
   .log-container {
     height: calc(100% - 50px);
   }
