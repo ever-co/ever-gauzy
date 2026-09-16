@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute, QueryParamsHandling } from '@angular/router';
+import { ActivatedRoute, Router, QueryParamsHandling } from '@angular/router';
 import { tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -19,6 +19,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly _route: ActivatedRoute,
+		private readonly _router: Router,
 		private readonly _cdr: ChangeDetectorRef,
 		private readonly _routeUtil: RouteUtil,
 		private readonly _pageTabRegistryService: PageTabRegistryService,
@@ -26,6 +27,15 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
+		const canViewActivity =
+			this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
+			this._store.selectedOrganization?.allowEmployeeToSeeTrackedData !== false;
+
+		if (!canViewActivity) {
+			this._router.navigate(['/pages/dashboard']);
+			return;
+		}
+
 		// Register the page tabs
 		this.registerPageTabs();
 

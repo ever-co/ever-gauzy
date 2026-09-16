@@ -4,14 +4,14 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../../shared/decorators';
-import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard, EmployeeTrackedDataGuard } from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
 import { TimeSlotService } from './time-slot.service';
 import { DeleteTimeSlotDTO, TimeSlotQueryDTO } from './dto';
 
 @ApiTags('TimeSlot')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, EmployeeTrackedDataGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller('/timesheet/time-slot')
 export class TimeSlotController {

@@ -1,7 +1,7 @@
 import { Controller, UseGuards, HttpStatus, Get, Query, Post, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IGetActivitiesInput, ReportGroupFilterEnum, PermissionsEnum, IActivity } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { PermissionGuard, TenantPermissionGuard, EmployeeTrackedDataGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { ActivityService } from './activity.service';
@@ -10,7 +10,7 @@ import { BulkActivityInputDTO } from './dto/bulk-activities-input.dto';
 import { ActivityQueryDTO } from './dto';
 
 @ApiTags('Activity')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, EmployeeTrackedDataGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
 @Controller('/timesheet/activity')
 export class ActivityController {

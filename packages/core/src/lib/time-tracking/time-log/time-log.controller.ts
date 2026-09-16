@@ -17,7 +17,7 @@ import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput, ID } from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
-import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
+import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard, EmployeeTrackedDataGuard } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
@@ -25,7 +25,7 @@ import { TimeLogBodyTransformPipe } from './pipes';
 import { IGetConflictTimeLogCommand } from './commands';
 
 @ApiTags('TimeLog')
-@UseGuards(TenantBaseGuard, PermissionGuard)
+@UseGuards(TenantBaseGuard, PermissionGuard, EmployeeTrackedDataGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller('/timesheet/time-log')
 export class TimeLogController {
