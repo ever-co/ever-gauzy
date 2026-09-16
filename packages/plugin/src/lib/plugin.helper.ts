@@ -60,6 +60,46 @@ export function getPluginExtensions(plugins: Array<Type<any> | DynamicModule>) {
 }
 
 /**
+ * Get the GraphQL resolver classes a set of plugins contributes.
+ *
+ * A plugin declares its resolvers alongside its schema extension. Both halves are needed for the
+ * contribution to be usable: the schema fragment declares the fields, and the resolver supplies
+ * their behaviour and the guards that protect them.
+ *
+ * @param plugins An array of plugins that may declare resolvers.
+ * @returns Every declared resolver class, in plugin order.
+ */
+export function getResolversFromPlugins(plugins: Array<Type<any> | DynamicModule>): Array<Type<any>> {
+	return getPluginExtensions(plugins).flatMap((extension: any) => {
+		const declared = extension?.resolvers;
+		if (!declared) {
+			return [];
+		}
+
+		const resolved = typeof declared === 'function' ? declared() : declared;
+		return Array.isArray(resolved) ? resolved : [];
+	});
+}
+
+/**
+ * Get the GraphQL scalar classes a set of plugins contributes.
+ *
+ * @param plugins An array of plugins that may declare scalars.
+ * @returns A map of scalar name to scalar definition.
+ */
+export function getScalarsFromPlugins(plugins: Array<Type<any> | DynamicModule>): Record<string, any> {
+	return getPluginExtensions(plugins).reduce((scalars: Record<string, any>, extension: any) => {
+		const declared = extension?.scalars;
+		if (!declared) {
+			return scalars;
+		}
+
+		const resolved = typeof declared === 'function' ? declared() : declared;
+		return { ...scalars, ...(resolved ?? {}) };
+	}, {});
+}
+
+/**
  * Get plugin configuration from an array of plugins by reflecting metadata.
  * @param plugins An array of plugins containing configuration metadata.
  * @returns An array of configurations obtained from the provided plugins.

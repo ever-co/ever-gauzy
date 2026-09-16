@@ -175,7 +175,15 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			'Content-Language',
 			'Accept',
 			'Accept-Language',
-			'Observe'
+			'Observe',
+			// A machine caller authenticates with a key pair rather than a bearer token, and a caller
+			// that works on behalf of one sales surface states which.
+			'X-APP-ID',
+			'X-API-KEY',
+			'X-Channel-Id',
+			// Retry-safe writes and conditional updates.
+			'Idempotency-Key',
+			'If-Match'
 		].join(', ')
 	});
 

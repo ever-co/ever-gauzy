@@ -48,7 +48,16 @@ export async function createGraphqlModuleOptions(
 				'Content-Language',
 				'Accept',
 				'Accept-Language',
-				'Observe'
+				'Observe',
+				// A machine caller authenticates with a key pair rather than a bearer token, and a
+				// caller that works on behalf of one sales surface states which. Both are needed
+				// here as well as on the REST surface, or a browser client cannot preflight.
+				'X-APP-ID',
+				'X-API-KEY',
+				'X-Channel-Id',
+				// Retry-safe writes and conditional updates.
+				'Idempotency-Key',
+				'If-Match'
 			].join(', ')
 		},
 		include: [options.resolverModule]

@@ -16,7 +16,7 @@ import { DatabaseModule } from '../database/database.module';
 @Module({
 	imports: [
 		DatabaseModule,
-		GraphqlApiModule,
+		GraphqlApiModule.withPlugins(),
 		GraphqlModule.registerAsync((configService: ConfigService) => ({
 			path: configService.graphqlConfigOptions.path,
 			playground: configService.graphqlConfigOptions.playground,
@@ -45,7 +45,12 @@ import { DatabaseModule } from '../database/database.module';
 					'Content-Language',
 					'Accept',
 					'Accept-Language',
-					'Observe'
+					'Observe',
+					'X-APP-ID',
+					'X-API-KEY',
+					'X-Channel-Id',
+					'Idempotency-Key',
+					'If-Match'
 				].join(', ')
 			},
 			typePaths: [
