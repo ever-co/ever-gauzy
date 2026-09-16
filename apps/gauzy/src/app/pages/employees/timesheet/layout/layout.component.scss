@@ -5,3 +5,15 @@
     background-color: var(--gauzy-card-2);
   }
 }
+
+// Page title and breadcrumb at 12px, the size of every other piece of text on
+// the timesheet tabs. The title reads `--gauzy-page-title-font-size` in both
+// `ngx-header-title` and the global card-header heading rule, so the token is
+// overridden for this header only; the breadcrumb sets its own 0.6875rem (11px).
+:host > nb-card > nb-card-header {
+  --gauzy-page-title-font-size: 12px;
+
+  ::ng-deep .ga-breadcrumb-item {
+    font-size: 12px;
+  }
+}
