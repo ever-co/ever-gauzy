@@ -4,8 +4,8 @@ import { DatabaseTypeEnum } from '@gauzy/config';
 
 /**
  * Employee bill/pay rates (`billRateValue`, `minimumBillingRate`) were stored as integers, so a
- * rate like `10.49` was truncated to `10` (issue #10199). Money columns become `numeric(10,2)` /
- * `decimal(10,2)` so cents survive. Weekly hour limit (`reWeeklyLimit`) is left as integer.
+ * rate like `10.49` was truncated to `10` (issue #10199). Money columns become `numeric(14,2)` /
+ * `decimal(14,2)` so cents survive. Weekly hour limit (`reWeeklyLimit`) is left as integer.
  *
  * SQLite cannot `ALTER COLUMN … TYPE`. Rebuilds that restated the full `employee` DDL have
  * silently dropped columns before, so this uses ADD / UPDATE / DROP / RENAME instead (SQLite ≥
@@ -72,7 +72,7 @@ export class AlterEmployeeBillingRateColumnsToNumeric1790000014000 implements Mi
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		for (const column of this.moneyColumns) {
 			await queryRunner.query(
-				`ALTER TABLE "employee" ALTER COLUMN "${column}" TYPE numeric(10,2) USING "${column}"::numeric(10,2)`
+				`ALTER TABLE "employee" ALTER COLUMN "${column}" TYPE numeric(14,2) USING "${column}"::numeric(14,2)`
 			);
 		}
 	}
@@ -97,7 +97,7 @@ export class AlterEmployeeBillingRateColumnsToNumeric1790000014000 implements Mi
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		for (const column of this.moneyColumns) {
-			await this.sqliteRewriteColumn(queryRunner, column, 'numeric(10,2)');
+			await this.sqliteRewriteColumn(queryRunner, column, 'numeric(14,2)');
 		}
 	}
 
@@ -119,7 +119,7 @@ export class AlterEmployeeBillingRateColumnsToNumeric1790000014000 implements Mi
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		for (const column of this.moneyColumns) {
-			await queryRunner.query(`ALTER TABLE \`employee\` MODIFY \`${column}\` decimal(10,2) NULL`);
+			await queryRunner.query(`ALTER TABLE \`employee\` MODIFY \`${column}\` decimal(14,2) NULL`);
 		}
 	}
 
@@ -138,14 +138,9 @@ export class AlterEmployeeBillingRateColumnsToNumeric1790000014000 implements Mi
 	 * SQLite has no `ALTER COLUMN TYPE`. Copy through a temporary column instead of restating the
 	 * full `employee` table (a stale rebuild would drop later-added columns).
 	 */
-	private async sqliteRewriteColumn(
-		queryRunner: QueryRunner,
-		column: string,
-		declaredType: string
-	): Promise<void> {
+	private async sqliteRewriteColumn(queryRunner: QueryRunner, column: string, declaredType: string): Promise<void> {
 		const temporary = `${column}__tmp`;
-		const copyExpression =
-			declaredType === 'integer' ? `CAST(ROUND("${column}") AS INTEGER)` : `"${column}"`;
+		const copyExpression = declaredType === 'integer' ? `CAST(ROUND("${column}") AS INTEGER)` : `"${column}"`;
 		await queryRunner.query(`ALTER TABLE "employee" ADD COLUMN "${temporary}" ${declaredType}`);
 		await queryRunner.query(`UPDATE "employee" SET "${temporary}" = ${copyExpression}`);
 		await queryRunner.query(`ALTER TABLE "employee" DROP COLUMN "${column}"`);

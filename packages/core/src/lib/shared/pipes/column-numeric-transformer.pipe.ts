@@ -9,7 +9,9 @@ export function roundToScale(value: unknown, scale = 2): number {
 	if (!Number.isFinite(n)) {
 		return 0;
 	}
-	return Number(Math.round(Number(`${n}e${scale}`)) + `e-${scale}`);
+	const shifted = Number(Math.round(Number(`${n}e${scale}`)) + `e-${scale}`);
+	// `${n}e${scale}` is not a number when `n` itself prints in exponent form (e.g. 1e-7).
+	return Number.isFinite(shifted) ? shifted : Math.round(n * 10 ** scale) / 10 ** scale;
 }
 
 /**

@@ -102,12 +102,19 @@ import { OrganizationProjectModuleEmployee } from '../organization-project-modul
 const billingRateColumn = () => ({
 	nullable: true,
 	type: 'numeric' as const,
-	precision: 10,
+	precision: 14,
 	scale: 2,
 	transformer: new ColumnNumericTransformerPipe(2)
 });
 
-const toBillingRate = (params: TransformFnParams) => roundToScale(params.value ?? 0);
+/**
+ * Keeps cents, but leaves non-numeric input as NaN so `@IsNumber()` still rejects it (as the
+ * previous `parseInt` transform did) instead of silently storing 0.
+ */
+const toBillingRate = ({ value }: TransformFnParams) => {
+	const n = typeof value === 'number' ? value : parseFloat(value || 0);
+	return Number.isFinite(n) ? roundToScale(n) : NaN;
+};
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, Taggable, HasCustomFields {

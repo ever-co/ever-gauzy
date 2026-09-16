@@ -28,26 +28,26 @@ describe('AlterEmployeeBillingRateColumnsToNumeric1790000014000', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('widens postgres money columns to numeric(10,2) and leaves weekly hours alone', async () => {
+	it('widens postgres money columns to numeric(14,2) and leaves weekly hours alone', async () => {
 		const { queryRunner, executed } = createQueryRunner(DatabaseTypeEnum.postgres);
 
 		await migration.up(queryRunner);
 
 		expect(executed.map(({ sql }) => sql)).toEqual([
-			'ALTER TABLE "employee" ALTER COLUMN "billRateValue" TYPE numeric(10,2) USING "billRateValue"::numeric(10,2)',
-			'ALTER TABLE "employee" ALTER COLUMN "minimumBillingRate" TYPE numeric(10,2) USING "minimumBillingRate"::numeric(10,2)'
+			'ALTER TABLE "employee" ALTER COLUMN "billRateValue" TYPE numeric(14,2) USING "billRateValue"::numeric(14,2)',
+			'ALTER TABLE "employee" ALTER COLUMN "minimumBillingRate" TYPE numeric(14,2) USING "minimumBillingRate"::numeric(14,2)'
 		]);
 		expect(executed.some(({ sql }) => /reWeeklyLimit/.test(sql))).toBe(false);
 	});
 
-	it('widens mysql money columns to decimal(10,2)', async () => {
+	it('widens mysql money columns to decimal(14,2)', async () => {
 		const { queryRunner, executed } = createQueryRunner(DatabaseTypeEnum.mysql);
 
 		await migration.up(queryRunner);
 
 		expect(executed.map(({ sql }) => sql)).toEqual([
-			'ALTER TABLE `employee` MODIFY `billRateValue` decimal(10,2) NULL',
-			'ALTER TABLE `employee` MODIFY `minimumBillingRate` decimal(10,2) NULL'
+			'ALTER TABLE `employee` MODIFY `billRateValue` decimal(14,2) NULL',
+			'ALTER TABLE `employee` MODIFY `minimumBillingRate` decimal(14,2) NULL'
 		]);
 	});
 
@@ -60,11 +60,11 @@ describe('AlterEmployeeBillingRateColumnsToNumeric1790000014000', () => {
 
 			const sql = executed.map(({ sql }) => sql);
 			expect(sql).toEqual([
-				'ALTER TABLE "employee" ADD COLUMN "billRateValue__tmp" numeric(10,2)',
+				'ALTER TABLE "employee" ADD COLUMN "billRateValue__tmp" numeric(14,2)',
 				'UPDATE "employee" SET "billRateValue__tmp" = "billRateValue"',
 				'ALTER TABLE "employee" DROP COLUMN "billRateValue"',
 				'ALTER TABLE "employee" RENAME COLUMN "billRateValue__tmp" TO "billRateValue"',
-				'ALTER TABLE "employee" ADD COLUMN "minimumBillingRate__tmp" numeric(10,2)',
+				'ALTER TABLE "employee" ADD COLUMN "minimumBillingRate__tmp" numeric(14,2)',
 				'UPDATE "employee" SET "minimumBillingRate__tmp" = "minimumBillingRate"',
 				'ALTER TABLE "employee" DROP COLUMN "minimumBillingRate"',
 				'ALTER TABLE "employee" RENAME COLUMN "minimumBillingRate__tmp" TO "minimumBillingRate"'

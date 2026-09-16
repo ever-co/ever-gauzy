@@ -13,6 +13,10 @@ describe('roundToScale', () => {
 		expect((1.005).toFixed(2)).toBe('1.00');
 		expect(roundToScale(1.005)).toBe(1.01);
 	});
+
+	it('does not return NaN for exponent-notation input', () => {
+		expect(roundToScale(1e-7)).toBe(0);
+	});
 });
 
 describe('ColumnNumericTransformerPipe scale-aware persistence', () => {

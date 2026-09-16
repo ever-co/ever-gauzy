@@ -36,6 +36,26 @@ describe('Employee billing rate transforms', () => {
 		expect(employee.billRateValue).toBe(1.01);
 	});
 
+	it('leaves non-numeric rates as NaN so @IsNumber rejects them, and keeps leading-number parsing', () => {
+		const employee = plainToInstance(Employee, { billRateValue: 'abc', minimumBillingRate: '10,50' });
+
+		expect(employee.billRateValue).toBeNaN();
+		expect(employee.minimumBillingRate).toBe(10);
+	});
+
+	it('stores empty rates as 0, as before', () => {
+		const employee = plainToInstance(Employee, { billRateValue: '', minimumBillingRate: null });
+
+		expect(employee.billRateValue).toBe(0);
+		expect(employee.minimumBillingRate).toBe(0);
+	});
+
+	it('keeps rates above the old numeric(10,2) ceiling', () => {
+		const employee = plainToInstance(Employee, { billRateValue: 2147483647 });
+
+		expect(employee.billRateValue).toBe(2147483647);
+	});
+
 	it('still parses reWeeklyLimit as whole hours', () => {
 		const employee = plainToInstance(Employee, { reWeeklyLimit: '37.9' });
 
