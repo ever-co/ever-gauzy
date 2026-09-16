@@ -34,11 +34,9 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 						this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
 						organization?.allowEmployeeToSeeTrackedData !== false;
 
+					this.registerPageTabs(canViewActivity);
 					if (!canViewActivity) {
 						this._router.navigate(['/pages/dashboard']);
-					} else {
-						// Register the page tabs
-						this.registerPageTabs(canViewActivity);
 					}
 				}),
 				untilDestroyed(this)
