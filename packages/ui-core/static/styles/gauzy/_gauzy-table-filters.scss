@@ -169,10 +169,27 @@ angular2-smart-table thead tr.angular2-smart-titles a.angular2-smart-sort-link:n
 // ── The funnel toggle ────────────────────────────────────────────────────────
 // Injected into the title row's LAST header cell; the cell reserves room so a
 // long column title cannot run under the button.
-angular2-smart-table thead th.ga-has-filter-toggle {
+//
+// SPECIFICITY: that reservation was being thrown away. The density block in
+// `_overrides.scss` sets this very cell's `padding` SHORTHAND from
+// `:root angular2-smart-table table tr.angular2-smart-titles th` — (0,2,4),
+// against the (0,2,3) this rule used to carry — so all four sides were reset and
+// the title ran under the button on every table with a filter row. Leading with
+// `:root` and doubling the class takes it to (0,3,3), the same idiom (and the
+// same adversary) as the widget block at the top of this file.
+//
+// The reservation is spelled with a LOGICAL property rather than the
+// `nb-ltr`/`nb-rtl` pair it used to use, because those prefix the selector:
+// `[dir=ltr] :root` asks for a `:root` INSIDE another element and matches
+// nothing at all. `padding-inline-end` needs no prefix and mirrors itself.
+// 2.5rem, not the 2.25rem this carried before: the button is 1.75rem wide and
+// sits 0.375rem in, so its leading edge is 2.125rem from the cell's end — and
+// 2.25rem of reservation left the title 0.125rem clear of it, which is a
+// collision that happens to miss rather than a gap. 2.5rem leaves 0.375rem, the
+// same inset the button keeps on its own side.
+:root angular2-smart-table thead th.ga-has-filter-toggle.ga-has-filter-toggle {
   position: relative;
-  @include nb-ltr(padding-right, 2.25rem);
-  @include nb-rtl(padding-left, 2.25rem);
+  padding-inline-end: 2.5rem;
 }
 
 angular2-smart-table button.ga-table-filter-toggle {

@@ -78,7 +78,7 @@
 </ng-template>
 <ng-template #visibleButton>
 	<ng-template ngxPermissionsOnly="ALL_ORG_EDIT">
-		<button nbButton status="success" size="small" (click)="openDialog(addTemplate, false)">
+		<button nbButton class="action" status="success" size="small" (click)="openDialog(addTemplate, false)">
 			<nb-icon icon="plus-outline"> </nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>

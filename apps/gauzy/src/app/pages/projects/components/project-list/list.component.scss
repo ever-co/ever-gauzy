@@ -1,9 +1,109 @@
 @forward '@shared/_pg-card';
+@use '@shared/_pg-card' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 :host {
   .custom-body-content {
     background-color: unset;
     padding-bottom: 0;
     height: calc(100vh - 15.25rem) !important;
+  }
+}
+
+// NOTE ON FITTING THE COLUMN: this page is reached through a routing shell
+// (`ngx-project-layout`), so the rule that hands the content column's height to
+// the routed page — `nb-layout-column > router-outlet + *` in
+// `styles/_overrides.scss`, a DIRECT-child selector — never reached it, and
+// `nb-card { height: 100% }` had nothing to resolve against. That is repaired in
+// the shell's own stylesheet, which is the only place it can be; this file needs
+// nothing for it.
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the pager's `<nav><ul><li>` and the toolbar scale — the same block Job
+// Employees and the rest of the list pages carry.
+//
+// The action row defaults to the whole card header, which this page needs: its
+// toolbar sits in a bare `<div class="d-flex justify-content-end">` with no
+// container class of its own.
+@include ga-hub.list-page();
+
+// ── Cells that hard-code a box ───────────────────────────────────────────────
+// Table-scoped, not page-wide: `ga-card-grid` renders the very same components
+// for the card layout, where the full-size treatment belongs.
+//
+// SPECIFICITY: each renderer nests its rules under its own `:host` or under a
+// class carrying its own content attribute, so the tightest of them reaches
+// (0,3,1). The `:host .table-scroll-container ::ng-deep` prefix here carries two
+// attributes and a class before anything else, which clears that outright — no
+// `!important` anywhere below.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  // ── Project and Contact cells ──────────────────────────────────────────────
+  // Two blocks used to sit here, shrinking `gauzy-project-organization`'s logo
+  // to 1rem and `ngx-contact-links`' avatar and pill to about 20px of chip, so
+  // that each cost the row a single 1rem line box.
+  //
+  // Both are gone. `ngx-contact-links` is the very renderer the Invoices Contact
+  // column draws — an 18px avatar and a 12px/15px name in a pill padded 5px, a
+  // 28px chip — so overriding it here was this page setting itself BELOW the
+  // table it is meant to match, using the identical component. Left alone it is
+  // now exact by construction.
+  //
+  // The project logo comes back to the `gauzy-people-*` scale rather than to its
+  // own 28px: those tokens are the restored 1.25rem/0.75rem, which puts the logo
+  // and the name on the same line box as the people chip in the next column.
+  .project-render {
+    gap: var(--gauzy-people-gap, 0.5rem);
+
+    img {
+      width: var(--gauzy-people-avatar-size, 1.25rem);
+      height: var(--gauzy-people-avatar-size, 1.25rem);
+      // A 35 %-black drop shadow under a small thumbnail is a smudge, not a lift.
+      box-shadow: none;
+    }
+
+    .name {
+      font-size: var(--gauzy-people-font-size, 0.75rem);
+      // The TABLE line box, not the avatar size. The name is one line of a stack,
+      // not a line box that has to clear an avatar beside it: a project with a
+      // member count puts this over `.member`, so a 1.25rem name and a 0.75rem
+      // caption add up to 2rem of cell — taller than the 28px `ngx-contact-links`
+      // chip in the next column, which is the row height this page is being
+      // brought to. At 1rem the pair comes to exactly that 28px, and the logo
+      // beside them still gets its own 1.25rem box.
+      line-height: var(--gauzy-table-line-height, 1rem);
+    }
+
+    span .member {
+      font-size: var(--gauzy-table-chip-font-size, 0.625rem);
+      line-height: var(--gauzy-table-chip-line-height, 0.75rem);
+    }
+  }
+
+  // ── Public / Private cell ──────────────────────────────────────────────────
+  // The cell is an `nb-toggle`, which Nebular sizes entirely from theme tokens:
+  // a 50x30 switch with a 28px knob and a 0.8125rem label on a 1.5rem line — the
+  // line height alone is half again the row's whole 1rem line box, and the
+  // switch is twice it.
+  //
+  // Because every one of those is `nb-theme(...)` — i.e. `var(--toggle-*)` under
+  // `$nb-enable-css-custom-properties` — redefining the tokens is the entire
+  // fix: no override of Nebular's own rules, so no specificity to fight and
+  // nothing to keep in step if that sheet changes. The knob follows the switch,
+  // which Nebular positions with `calc(100% - switcher - border - border)` plus
+  // a 1px margin.
+  //
+  // 20x12 keeps Nebular's own 1.667 width:height proportion, so it reads as the
+  // same control drawn smaller rather than a squashed one — the same numbers
+  // the Employees page gives its Screen Capture column.
+  gauzy-visibility {
+    --toggle-height: 0.75rem;
+    --toggle-width: 1.25rem;
+    // `height - 2px`: the knob carries a 1px margin, so this is what centres it
+    // and leaves the same 1px inset at each end the stock proportions give.
+    --toggle-switcher-size: 0.625rem;
+    --toggle-switcher-icon-size: 0.375rem;
+    --toggle-text-font-size: var(--gauzy-table-header-font-size, 0.75rem);
+    --toggle-text-line-height: var(--gauzy-table-badge-height, 1rem);
   }
 }

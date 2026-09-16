@@ -187,6 +187,17 @@ export class DynamicTabsComponent implements OnInit, AfterViewInit, OnDestroy {
 				...(tab.tabIcon && { icon: tab.tabIcon }),
 				...(tab.responsive && { responsive: tab.responsive }),
 				...(tab.activeLinkOptions && { activeLinkOptions: tab.activeLinkOptions }),
+				// The router-link inputs `nb-route-tabset` binds on each tab link. These used to
+				// be dropped here, so a registered tab that asked for `queryParamsHandling: 'merge'`
+				// silently navigated with `undefined` and lost the page's query parameters on
+				// every tab switch.
+				...(tab.queryParams && { queryParams: tab.queryParams }),
+				...(tab.queryParamsHandling && { queryParamsHandling: tab.queryParamsHandling }),
+				...(tab.fragment && { fragment: tab.fragment }),
+				...(tab.preserveFragment && { preserveFragment: tab.preserveFragment }),
+				...(tab.skipLocationChange && { skipLocationChange: tab.skipLocationChange }),
+				...(tab.replaceUrl && { replaceUrl: tab.replaceUrl }),
+				...(tab.state && { state: tab.state }),
 				disabled: !!tab.disabled,
 				active: !!tab.active
 			};

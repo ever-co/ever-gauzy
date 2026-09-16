@@ -1,4 +1,5 @@
 @forward '@shared/_pg-card';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 // Everything else this sheet used to hold was a hand-rolled card grid
 // (`.flex-container` / `.flex-item` / `.info-line` / `.card-footer`) and six
@@ -14,3 +15,13 @@
 // The `badge-*` names that the e2e page objects do select (`div.badge-success`
 // and friends, in the Invoices / Estimates / Proposals / Candidates specs) are
 // painted by those pages, not by this component-scoped sheet.
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the status pills, the
+// pager and the toolbar scale — the same block Job Employees and the rest of the
+// list pages carry, so this table reads as the same surface as its neighbours
+// rather than as one drawn a size larger.
+//
+// The Status column here already routes through `ga-status-badge` (see
+// `statusMapper()`), which is exactly what the block's tint rules address.
+@include ga-hub.list-page();

@@ -1,4 +1,5 @@
 @use 'themes' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 .table {
   margin-top: 20px;
@@ -29,4 +30,24 @@
 :host {
   display: block;
   padding: 25px clamp(1rem, 6vw, 100px) 0;
+}
+
+// ── Table density, without the list-page surface ─────────────────────────────
+// The item grid on an invoice was drawn at the smart table's loose defaults
+// (0.8125rem cells on 0.375rem/0.625rem padding — the fallbacks in the `:root`
+// block of `_overrides.scss`), so it read a size larger than the Invoices list
+// it is opened from and a size larger than the same grid in the Add/Edit form.
+//
+// Only `density-tokens()` and `rows()`, NOT the `list-page()` bundle every list
+// page takes. This component is a DOCUMENT — it renders the invoice body on the
+// invoice view page and again behind a public share link — so the two pieces of
+// that bundle which say "this is a list" are deliberately left off: the
+// `surface()` ring and `gauzy-card-1` fill (the `.table` block above keeps its
+// own `gauzy-card-2` panel) and the toolbar scale (there is no toolbar here).
+:host {
+  @include ga-hub.density-tokens();
+}
+
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
 }

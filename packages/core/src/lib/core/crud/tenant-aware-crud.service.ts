@@ -20,36 +20,43 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	extends CrudService<T>
 	implements ICrudService<T>
 {
-	private static readonly SKIP_EMPLOYEE_FILTER_KEY = 'skipEmployeeFilter';
+	private static skipEmployeeFilterSequence = 0;
+
+	/** The sequence keeps the key unique even when two services share a runtime class name. */
+	private readonly skipEmployeeFilterKey = `skipEmployeeFilter:${this.constructor.name}:${++TenantAwareCrudService.skipEmployeeFilterSequence}`;
 
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
 	}
 
 	/**
-	 * Gets the current skipEmployeeFilter flag from request context.
+	 * Reads how many bypass blocks are currently open for this service.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions.
 	 */
-	private getSkipEmployeeFilter(): boolean {
+	private getSkipEmployeeFilterDepth(): number {
 		try {
 			const context = RequestContext['clsService'];
-			return context?.get(TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY) ?? false;
+			return context?.get(this.skipEmployeeFilterKey) ?? 0;
 		} catch {
-			return false;
+			return 0;
 		}
 	}
 
 	/**
-	 * Sets the skipEmployeeFilter flag in request context.
+	 * Stores how many bypass blocks are currently open for this service.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions.
 	 */
-	private setSkipEmployeeFilter(value: boolean): void {
+	private setSkipEmployeeFilterDepth(depth: number): void {
 		try {
 			const context = RequestContext['clsService'];
-			context?.set(TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY, value);
+			context?.set(this.skipEmployeeFilterKey, depth);
 		} catch {
 			// Silently fail if context is not available
 		}
+	}
+
+	private getSkipEmployeeFilter(): boolean {
+		return this.getSkipEmployeeFilterDepth() > 0;
 	}
 
 	/**
@@ -86,6 +93,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * This is useful when you need to implement custom access control logic.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions between concurrent requests.
 	 *
+	 * The bypass applies to this service only, and is reference counted.
+	 *
 	 * @param callback - The async function to execute without employee filtering
 	 * @returns The result of the callback
 	 *
@@ -97,12 +106,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * ```
 	 */
 	protected async withoutEmployeeFilter<R>(callback: () => Promise<R>): Promise<R> {
-		const originalValue = this.getSkipEmployeeFilter();
-		this.setSkipEmployeeFilter(true);
+		this.setSkipEmployeeFilterDepth(this.getSkipEmployeeFilterDepth() + 1);
 		try {
 			return await callback();
 		} finally {
-			this.setSkipEmployeeFilter(originalValue);
+			this.setSkipEmployeeFilterDepth(Math.max(0, this.getSkipEmployeeFilterDepth() - 1));
 		}
 	}
 

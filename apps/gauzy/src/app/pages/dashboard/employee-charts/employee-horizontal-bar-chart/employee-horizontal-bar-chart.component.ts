@@ -1,7 +1,6 @@
-import { Component, Input, OnDestroy, OnInit, OnChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, Input, OnDestroy, OnInit, OnChanges, ViewChild } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BaseChartDirective } from 'ng2-charts';
@@ -13,6 +12,14 @@ import { Store, months } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
 import { IEmployeeChartPalette, resolveEmployeeChartPalette } from '../employee-chart-palette';
+import {
+	employeeChartBarDataset,
+	employeeChartBase,
+	employeeChartCategoryScale,
+	employeeChartLegend,
+	employeeChartTooltip,
+	employeeChartValueScale
+} from '../employee-chart-options';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,15 +41,39 @@ import { IEmployeeChartPalette, resolveEmployeeChartPalette } from '../employee-
     styles: [
         `
 			:host {
+				display: flex;
+				flex-direction: column;
+				flex: 1 1 auto;
+				min-height: 0;
+				width: 100%;
+
+				/*
+				 * Fills the height the panel gives it rather than the old fixed
+				 * 20rem, which took no account of the legend above the plot or the
+				 * tick band below it.
+				 */
+				/*
+				 * position: relative is not decoration. With
+				 * maintainAspectRatio disabled, Chart.js sizes the canvas from its
+				 * OFFSET PARENT, and without a positioned ancestor it measures
+				 * against something further up the tree and under-sizes the plot,
+				 * leaving it small in the middle of the panel.
+				 */
 				.chart {
+					position: relative;
 					width: 100%;
-					height: 20rem;
+					flex: 1 1 auto;
+					min-height: 0;
 					display: block;
 				}
 				.title {
 					display: flex;
 					flex-direction: column;
 					align-items: center;
+					gap: 0.25rem;
+					margin: auto;
+					color: var(--gauzy-text-color-2);
+					font-size: 0.75rem;
 				}
 			}
 		`
@@ -97,14 +128,19 @@ export class EmployeeHorizontalBarChartComponent
 
 	@ViewChild(BaseChartDirective, { static: false }) baseChartDirective: BaseChartDirective;
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly _themeService: NbThemeService,
-		private readonly _currencyPipe: CurrencyPipe,
-		private readonly _currencyPositionPipe: CurrencyPositionPipe,
-		private readonly _store: Store
-	) {
-		super(translateService);
+	private readonly _themeService = inject(NbThemeService);
+	private readonly _currencyPipe = inject(CurrencyPipe);
+	private readonly _currencyPositionPipe = inject(CurrencyPositionPipe);
+	private readonly _store = inject(Store);
+	private readonly _elementRef: ElementRef<HTMLElement> = inject(ElementRef);
+
+	/**
+	 * Declared rather than inherited: `TranslationBaseComponent` takes an optional
+	 * `TranslateService` and falls back to `inject()`, and a component that inherits
+	 * a constructor with parameters from an undecorated base does not compile.
+	 */
+	constructor() {
+		super();
 	}
 
 	ngOnInit() {
@@ -140,57 +176,19 @@ export class EmployeeHorizontalBarChartComponent
 	 * @param config - The configuration options for the Chart, including theme variables.
 	 */
 	private _initializeChart(config: NbJSThemeOptions) {
-		this.palette = resolveEmployeeChartPalette(config);
+		this.palette = resolveEmployeeChartPalette(config, this._elementRef.nativeElement);
 
-		// Step 2: Set the overall chart options
 		this.chartOptions = {
-			responsive: true, // Makes the chart responsive
-			maintainAspectRatio: false, // Allows adjusting the aspect ratio
+			...employeeChartBase(),
 			indexAxis: 'y',
-			// Elements options apply to all of the options unless overridden in a dataset
-			// In this case, we are setting the border of each horizontal bar to be 2px wide
-			elements: {
-				bar: {
-					borderWidth: 2
-				}
-			},
 			plugins: {
-				legend: {
-					position: 'top',
-					labels: {
-						color: this.palette.textColor,
-						usePointStyle: false
-					}
-				},
-				tooltip: {
-					enabled: true,
-					// Define callback for tooltip labels
-					callbacks: {
-						title: () => ''
-					}
-				}
+				legend: employeeChartLegend(this.palette),
+				tooltip: employeeChartTooltip(this.palette, this.formatCurrency)
 			},
 			scales: {
-				// Configure x-axis scale
-				x: {
-					grid: {
-						display: true,
-						color: this.palette.axisLineColor
-					},
-					ticks: {
-						color: this.palette.textColor
-					}
-				},
-				// Configure y-axis scale
-				y: {
-					grid: {
-						display: true,
-						color: this.palette.axisLineColor
-					},
-					ticks: {
-						color: this.palette.textColor
-					}
-				}
+				// Horizontal bars: x carries the money, y carries the months.
+				x: employeeChartValueScale(this.palette),
+				y: employeeChartCategoryScale(this.palette)
 			}
 		};
 
@@ -270,8 +268,8 @@ export class EmployeeHorizontalBarChartComponent
 					data: this.statistics.bonus // Data values for the bonus dataset
 				}
 			].map((dataset) => ({
-				...dataset,
-				borderWidth: 0 // Set the border width for each dataset to 0
+				...employeeChartBarDataset(this.palette),
+				...dataset
 			}))
 		};
 	}

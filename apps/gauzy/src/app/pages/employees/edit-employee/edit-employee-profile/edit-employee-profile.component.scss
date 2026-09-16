@@ -1,4 +1,5 @@
 @forward '@shared/_edit-profile-form';
+@use 'themes' as *;
 
 :host {
   ::ng-deep .tabset-container .route-tabset {
@@ -31,4 +32,39 @@
       }
     }
   }
+}
+
+:host ::ng-deep .tabset-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  > nb-route-tabset {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    > .route-tabset {
+      flex: 0 0 auto;
+    }
+
+    > router-outlet {
+      display: none;
+    }
+
+    > router-outlet ~ * {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      margin-inline-end: 0.5rem;
+    }
+  }
+}
+
+:host ::ng-deep [nbInput] {
+  font-weight: nb-theme(text-paragraph-font-weight);
 }

@@ -1,32 +1,24 @@
-.charts {
+/*
+ * Fills the panel it is dropped into rather than shrinking to its content.
+ *
+ * `align-items: center` used to sit here, and in a flex COLUMN that is the
+ * cross axis — so the chart shrank to its own intrinsic width and floated in
+ * the middle of the panel instead of spanning it. Stretch is what makes the
+ * canvas actually fit the section.
+ */
+:host {
 	display: flex;
-	justify-content: flex-end;
-	align-items: center;
-	gap: 0.5rem;
-	margin-bottom: 0.75rem;
-
-	label {
-		margin: 0;
-	}
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+	width: 100%;
 }
 
-.chart-select-label {
-	font-size: var(--text-label-font-size, 0.75rem);
-	font-weight: 500;
-	color: var(--gauzy-text-color-2);
-}
 .chart-wrap {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
+	align-items: stretch;
+	flex: 1 1 auto;
+	min-height: 0;
 	width: 100%;
-}
-.select-charts {
-	cursor: pointer;
-	font-size: var(--text-button-medium-font-size, 0.8125rem);
-	min-width: 9.5rem;
-	width: fit-content;
-}
-.chart-option {
-	margin-left: 5px;
 }

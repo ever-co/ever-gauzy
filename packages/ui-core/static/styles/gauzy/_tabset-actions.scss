@@ -58,6 +58,16 @@
   padding-inline: 0;
   height: nb-theme(tabset-tab-text-line-height);
 
+  // Below `dsk` the strip swaps the theme token for a fixed box in
+  // `styles/includes/_tabset.scss` — both families do, since that sheet stopped
+  // naming only the route one — so this row has to follow it there or it is no
+  // longer the strip's own row. Read from the shared token rather than copied,
+  // so the strip cannot be retuned without this row coming with it.
+  @include respond(dsk) {
+    padding-block: $tabset-dsk-tab-padding-block;
+    padding-inline: 0;
+  }
+
   // Centre on that line. The buttons are taller than a tab label, so they
   // overhang the line box symmetrically, which is what keeps them centred on
   // the strip instead of hanging below it.

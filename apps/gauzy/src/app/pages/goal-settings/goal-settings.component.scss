@@ -1,5 +1,6 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/tabset-actions' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 :host {
   nb-tabset {
@@ -62,3 +63,14 @@
 :host .gauzy-button-container {
   @include tabset-action-row(1rem);
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The same block Invoices carries: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills, the pager and the
+// toolbar scale. One `#tableLayout` template serves all three record tabs (time
+// frames, KPIs, goal general settings), so the block reaches every one of them.
+//
+// `$actions` is the toolbar, not `nb-card-header`: this page's header holds only
+// the title, and the action row rides the tab strip inside the card BODY (see
+// `tabset-action-row()` above).
+@include ga-hub.list-page('.gauzy-button-container');

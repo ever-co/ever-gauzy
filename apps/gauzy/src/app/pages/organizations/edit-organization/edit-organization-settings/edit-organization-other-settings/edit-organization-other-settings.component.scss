@@ -1,112 +1,474 @@
 @use 'themes' as *;
 @use 'var' as *;
+// For `$control-hairline`, the shared 1px inset ring every input, select and
+// `ng-select` trigger in the app is drawn with. The toggle boxes below are cells of
+// the same field grid, so they take the same edge rather than inventing one.
+@use 'gauzy/_gauzy-overrides' as ga-overrides;
 
+// The tabset hands this tab its height (see `edit-organization-settings.component.scss`),
+// so the tab passes it on rather than measuring the viewport itself.
 :host {
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 // !important exclusively for overriding Bootstrap and Nebular styles, which cannot be touched otherwise.
 
 // main sections
+$panel-radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
+
 :host .main-form {
   width: 100%;
   background-color: nb-theme(gauzy-card-2);
+  // The panel the active tab opens onto, so it takes the same folder radius as the
+  // Main and Location tabs and as every employee tab: square where the tab meets
+  // it, rounded on the other three corners. This was the one tab on the page whose
+  // panel had four square corners under a tab with two rounded ones.
+  @include nb-ltr(border-radius, 0 $panel-radius $panel-radius $panel-radius);
+  @include nb-rtl(border-radius, $panel-radius 0 $panel-radius $panel-radius);
   display: flex;
-  justify-content: space-between;
-  padding: 20px;
-  @include nb-ltr(padding-right, 8px);
-  @include nb-rtl(padding-left, 8px);
+  align-items: stretch;
+  // Was `gap: 20px; padding: 20px` with the trailing side cut to 8px. The Main and
+  // Location tabs — and every employee tab, through `@shared/_employee-tab-panel` —
+  // frame their panels with `1rem` on all four sides, so this tab was the only one
+  // on the page whose content started at a different x. The trailing 8px is not
+  // needed for the scrollbar either: the scroll port is `.accordion-section` below,
+  // which keeps its own gutter.
+  gap: 1rem;
+  padding: 1rem;
+  // Was `height: calc(100vh - 19.25rem)` — one of three copies of an estimate of
+  // this page's chrome, wrong by the height of the demo-account banner whenever
+  // that is shown. The card is a real frame now and this fills it.
+  flex: 1 1 auto;
+  min-height: 0;
+  // One scroll container, not two. This rule carried `overflow: hidden` and
+  // `overflow-y: scroll` three lines apart, so the form scrolled vertically while
+  // `.accordion-section` inside it scrolled as well — two nested scrollbars over
+  // the same content, and the section index scrolled away with the sections it
+  // points at. The accordion column keeps the scroll; the aside stays put.
   overflow: hidden;
-  height: calc(100vh - 19.25rem);
-  overflow-y: scroll;
 }
+// The section index: this page's own navigation, so it is built from the shared
+// flat-chrome tokens every other list-of-links in the app uses — `gauzy-radius-sm`
+// for the row, `gauzy-hover-tint` for hover, and `gauzy-active-tint` plus a primary
+// rail for the row you are on (the same pair `expense-categories` marks a selected
+// category with). The panel around them keeps the treatment the Main tab gives its
+// identity column (`.org__panel--identity`) and the employee tabs give `.tab__panel`:
+// a card-3 surface, the shared hairline and the shared radius.
+//
+// It used to be ten raised chips — each row a `gauzy-sidebar-background-3` fill (a
+// SIDEBAR token, inside a card) under `var(--gauzy-shadow)`, which resolves to a
+// black drop shadow on six of the eight themes — stacked 0.5rem apart inside
+// 1.125rem/1.25rem of panel padding, in a 180px track. Ten boxes, each with its own
+// edge and its own shadow, is the heaviest block on the page, and it is an index,
+// not content. Its two states were also told apart by exactly one thing: hover and
+// active both painted `background-basic-color-1`, so the row you were on and the row
+// under the pointer were the same colour.
+//
+// The panel ends where the list ends. `.main-form` is an `align-items: stretch`
+// row, so this took the full height of the column beside it: ten rows of index —
+// about 330px of content — inside a panel drawn down the whole viewport, which on
+// anything but a short window is a tall empty box with a border round it.
+//
+// That stretch was deliberate once, and the reason is worth keeping written down:
+// this used to be `height: fit-content` next to sections that were TEN separate
+// panels, and an index that stopped at its last item while the cards beside it ran
+// on was the more obvious mismatch of the two. The sections are one panel now, so
+// there is nothing left for the index to end level with — the panel beside it is a
+// frame, not a column of boxes — and a content-sized index reads as the label on a
+// frame rather than as a second, emptier one.
+//
+// `max-height` with the scroll kept, because content-sized is not the same as
+// unbounded: a narrow window (or a longer index, if a section is ever added) still
+// has to stay inside the row rather than push the form past it.
 .aside-nav {
-  width: 180px;
+  // Was 180px. A ten-item index does not need to be as wide as a field.
+  flex: 0 0 10.5rem;
+  width: 10.5rem;
+  align-self: flex-start;
+  max-height: 100%;
+  // Holds its place while the sections move past it.
+  //
+  // Above `lg` this is inert and deliberately so: `.main-form` is a fixed frame
+  // there, the scrolling happens inside `.accordion-section` beside this panel,
+  // and nothing this element could stick to ever moves. It starts doing work at
+  // the width where the tabset hands its height back and the whole page begins
+  // scrolling in the layout column — see the `lg` block at the bottom of this
+  // file, which also has to take `overflow: hidden` off `.main-form`, since a
+  // sticky element sticks to its nearest scrolling ancestor and a clipped
+  // overflow makes one out of a box that never scrolls.
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
   background-color: nb-theme(gauzy-card-3);
-  padding: 13px 18px;
-  border-radius: nb-theme(border-radius);
-  height: fit-content;
+  border: $hairline;
+  padding: 0.75rem 0.625rem;
+  border-radius: $panel-radius;
+
   & .settings-section-header {
-    font-size: 14px;
-    font-style: normal;
+    // The shared panel legend, at the step the Main tab's `.org__group-title` uses
+    // — this heads a list of links rather than a panel of fields, and it is the
+    // smaller of the two legends the system defines. Indented by the row padding so
+    // it starts at the same x as the section names under it. Was 14px/600 at the
+    // paragraph size, i.e. the same size as the items under it, so the heading and
+    // the list it heads read as one undifferentiated column.
+    margin: 0 0 0.375rem;
+    padding: 0 0.5rem;
+    font-size: 0.625rem;
     font-weight: 600;
-    line-height: 17px;
-    letter-spacing: 0em;
+    line-height: 0.875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     text-align: left;
-    margin-bottom: 18px;
+    color: nb-theme(text-disabled-color);
   }
+
   ul {
-    padding-left: 0;
-    padding-right: 0;
-    display: inline-flex;
+    padding: 0;
+    margin: 0;
+    display: flex;
     flex-direction: column;
-    height: fit-content;
-    & li {
-      display: inline-flex;
-      padding: 10px 15px;
-      margin-bottom: 10px;
-      font-size: 13px;
-      font-style: normal;
-      font-weight: 400;
-      line-height: 16px;
-      letter-spacing: 0em;
-      text-align: left;
-      background: nb-theme(gauzy-sidebar-background-3);
-      border-radius: nb-theme(button-rectangle-border-radius);
-      list-style: none;
-      cursor: pointer;
-      // Was a literal `0px 1px 1px rgba(0, 0, 0, 0.15)` — a black drop shadow,
-      // which against a near-black canvas is no edge at all. `gauzy-shadow` is
-      // the shared token for this hairline, so the row follows whatever the
-      // active theme decides an edge should be.
-      //
-      // Note it is NOT a ring everywhere: of the five themes that define it,
-      // only `gauzy-dark` resolves to `0 0 0 1px var(--gauzy-overlay-border-color)`.
-      // The others keep a black drop shadow (15% on the light pair, 35% on the
-      // dark pair), so `cosmic`, `dark` and `material-dark` still get a shadow
-      // rather than a ring. That is the shared token's problem to fix, in
-      // themes.scss, not this file's to work around. The fallback is the old
-      // literal, for the themes that emit no token at all.
-      box-shadow: var(--gauzy-shadow, 0px 1px 1px 0px rgb(0 0 0 / 15%));
-      &.active {
-        background: nb-theme(background-basic-color-1);
-        box-shadow: var(--gauzy-shadow, 0px 1px 1px 0px rgb(0 0 0 / 15%)) inset;
+    // Was 0.5rem. With no fill and no shadow on a resting row there is nothing left
+    // to hold apart: the rows read as a list, and the hover fill is what draws the
+    // box around the one you are pointing at.
+    gap: 0.0625rem;
+    list-style: none;
+  }
+
+  li {
+    display: block;
+    min-width: 0;
+  }
+
+  // The row styling lives on the control rather than on the `<li>`, now that the
+  // control is a real `<button>` instead of a `<span>` wrapped around the item.
+  // A button brings its own font, colour, border and centred text, so each of
+  // those has to be handed back explicitly.
+  .aside-nav__item {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 1rem;
+    letter-spacing: 0em;
+    text-align: start;
+    // The muted ramp, so the row you are on is the only one at full strength.
+    color: var(--gauzy-text-color-2);
+    background: none;
+    border: none;
+    // NOT the card radius: `gauzy-radius-sm` exists precisely because a 10px pill on
+    // a 20px row reads as a block (see the token's own note in `_gauzy-theme-maps`).
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    box-shadow: none;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease-in-out,
+      color 0.15s ease-in-out;
+
+    &:hover {
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+      color: var(--gauzy-text-color-1);
+    }
+
+    // The list was unreachable by keyboard before, so it never needed a focus
+    // ring. It is reachable now, and needs one.
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-transparent-focus);
+      outline-offset: 1px;
+    }
+
+    // The index is the only thing on the page that says which section you are
+    // looking at, so the current row says it four ways: the active tint, the
+    // primary text colour, the weight, and a rail down its leading edge.
+    &.active {
+      background-color: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+      color: nb-theme(text-primary-color);
+      font-weight: 600;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset-block: 0.25rem;
+        inset-inline-start: 0;
+        width: 2px;
+        border-radius: 1px;
+        background-color: nb-theme(color-primary-default);
       }
     }
   }
 }
-.actions {
-  margin-bottom: 20px;
-}
+// ONE panel, not ten. This is the counterpart of `.org__panel--form` on the Main
+// tab and `.tab__panel` on the employee tabs, and it is now built the same way:
+// panel -> scroll port -> foot.
+//
+// Every section used to be a card of its own — a `gauzy-card-3` fill, a hairline
+// and the card radius, ten of them stacked 0.75rem apart on the `gauzy-card-2`
+// field of `.main-form`. On the light themes those two surfaces are
+// `rgba(255,255,255,0.5)` over `rgba(50,50,50,0.03)` over the card's own white:
+// #fcfcfc boxes on a #f9f9f9 ground, three values apart out of 255. So the frames
+// did not read as frames — the right-hand column was a ladder of ten faint,
+// near-identical bars with nine redundant edges down it, while the index beside it
+// was a single solid panel. The two columns of the same form were built out of
+// different things.
+//
+// The sections are rows of one panel now, divided by a hairline the way rows are
+// divided everywhere else, and the panel is the surface — declared once, at the
+// step the sibling tabs use.
+//
+// Was also `width: calc(100% - 230px)` beside a 180px aside inside a
+// `justify-content: space-between` row: three separate declarations of the same
+// measurement, disagreeing by 50px, which is where the gap between the index and
+// the sections came from. The aside is a fixed track, this takes what is left.
 .fields-section {
-  width: calc(100% - 230px);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  background-color: nb-theme(gauzy-card-3);
+  border: $hairline;
+  border-radius: $panel-radius;
+  // So the first section's header and the last row of the scroll port are cut by
+  // the panel's own corners instead of squaring them off.
+  overflow: hidden;
 }
+
+// The scroll port, between the panel's edge and its foot.
 :host .accordion-section {
-  overflow: auto;
-  max-height: calc(100% - 3rem);
-  @include nb-ltr(padding-right, 8px);
-  @include nb-rtl(padding-left, 8px);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  // No trailing gutter any more. That 0.5rem existed to keep the scrollbar off the
+  // right-hand edge of a column that had no edge of its own; the scrollbar rides
+  // inside the panel now, which is where a panel's own scrollbar belongs.
+}
+
+// Save used to sit ABOVE the accordion, which put the button that commits the
+// page before any of the fields it commits, and left it to scroll away. It is the
+// panel's foot now — `0.875rem 1.25rem` over a hairline, the same box
+// `.org__actions` and `.tab__actions` are — and stays put while the sections
+// scroll behind it. It used to be a bare row on the card-2 field with a rule
+// across the top of nothing.
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+
+  button {
+    min-width: 7.5rem;
+  }
 }
 // end of main sections.
 
-// misc
-.form-group {
+// ── The field grid ───────────────────────────────────────────────────────────
+//
+// Every section here lays its fields out on the bootstrap grid, and until now each
+// one also decided its own measure on top of it: General's fields were 75% of the
+// section body, its Time Format select 30% of its own half and its two time pickers
+// 60% of theirs; Design was a pair of 140px selects; Accounting's fiscal years a
+// 400px row of 170px pickers and its toggles a 500px column; Date limit a 50% row.
+// Nine different widths down one column of a single form, so no two sections began
+// or ended at the same x and almost nothing lined up with the field above it.
+//
+// One measure now — the section body — divided by the `col-*` classes the markup
+// already carries. What varies between sections is how many fields sit on a row,
+// which is the only thing the grid was ever meant to say.
+.fields {
+  width: 100%;
+}
+
+// The gutter, both halves of it, declared together so they cannot drift apart
+// again. Bootstrap's is 30px (`.row { margin: 0 -15px }` against
+// `.col-* { padding: 0 15px }`) and this file used to narrow only the COLUMN half,
+// to 10px, leaving 5px of negative margin on each side unaccounted for — so every
+// row of fields began and ended 5px outside the panel holding it, in every section
+// and at every width.
+.fields .row {
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+  // General's rows were `align-items: center`, which centres a short field against
+  // a tall one and takes its label out of line with the label beside it. `stretch`
+  // is both the default and what a row of fields actually wants, in two ways at
+  // once: the column boxes come out equal height, so two toggles side by side match
+  // instead of one sitting proud of the other, while the label/control stack inside
+  // each column still starts at the top, so the labels line up.
+  align-items: stretch;
+}
+
+.fields .row > * {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  min-width: 0;
+  // The rhythm between rows OF FIELDS. A `.row` wraps, so one row in the markup is
+  // usually two or three on screen; with `.form-group { margin-bottom: 0 }` below
+  // and nothing else saying otherwise, those wrapped rows sat flush together.
+  margin-bottom: 1rem;
+}
+
+// ...except under the last row of a section, where it is a gap against the section's
+// own bottom padding rather than against another row.
+.fields .row:last-child > * {
   margin-bottom: 0;
 }
-.col-6 {
-  padding-left: 10px;
-  padding-right: 10px;
-  max-width: 49% !important;
+
+// One gap under every label, so two controls on a row start at the same y even when
+// one label wraps and its neighbour does not. `display: flex` is for the info
+// buttons a few labels carry: as an inline sibling of the text, one sits on the
+// text's baseline and drags the whole line box down with it.
+//
+// `::ng-deep`, because not every label on this page is written in this template:
+// `ga-timezone-selector` renders its own, and a rule scoped to this component
+// cannot reach it. Time Zone shares its row with Start Week On, so a label rule
+// that reached only one of the two is worse than none.
+:host ::ng-deep .fields .label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.375rem;
+  // A label carrying an info button is one line box taller than a label that is
+  // only text, which put the control under it a few pixels below the control
+  // beside it. One floor for both. (Four of those buttons were also OUTSIDE their
+  // label, between it and the control, where each pushed its own field a whole
+  // button-height down the row; they are inside the label in the markup now.)
+  min-height: 1rem;
 }
+
+// Those info buttons. `nbButton` brings a control-sized box with it — a fixed
+// height and a min-width — which inside a 13px line of label text is what made the
+// labels that have one taller than the labels that do not.
+//
+// The same applies to the ones inside a TOGGLE's label, which is most of them:
+// twenty-eight of this page's thirty-eight toggles carry one, and it was the tallest
+// thing in the box — taller than the 24px text line and much taller than the 16px
+// switch — so a toggle that has one stood a good half-centimetre higher than the
+// toggle beside it that does not. That is the whole Timer section, in pairs.
+:host ::ng-deep .fields .label button[nbButton],
+:host ::ng-deep .fields nb-toggle button[nbButton] {
+  height: 1rem;
+  min-width: 0;
+  padding: 0 !important;
+  margin: 0;
+  border: none;
+  background: transparent;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+// The spacing between fields belongs to the grid above, not to the field. Also
+// `::ng-deep`: `ga-timezone-selector` wraps its own control in a `.form-group` of
+// its own, which kept bootstrap's 1rem bottom margin on top of the row's — the
+// second reason the Time Zone field sat below the one beside it.
+:host ::ng-deep .fields .form-group {
+  margin-bottom: 0;
+}
+
+// `.col-6` used to carry `max-width: 49% !important`, which fought bootstrap's own
+// `flex: 0 0 50%` and left every pair of half-width fields 49% wide with a 2% hole
+// between them that no gutter accounted for. The 50% stands; the padding above is
+// the gutter.
+
+// Four fields do not use grid columns at all: Design's pair of selects sits in a
+// `.select-wrapper`, Accounting's fiscal years in `.year-pick`s, and both
+// Accounting's three toggles and Date limit's single one are bare `.form-group`s
+// dropped straight into a `.row`. They keep their wrappers — the form bindings hang
+// off this markup — but they take the grid's halves: instead of the fixed 140px,
+// 170px and 500px the first three were given, and instead of no basis at all for
+// the last, which sized each toggle box to its own longest line of description.
+.select-wrapper {
+  flex: 0 0 100%;
+  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  // This is a layout wrapper, not a field: the two selects INSIDE it each take the
+  // row rhythm below, so the wrapper taking it as well from `.fields .row > *` put
+  // 2rem under the pair against the 1rem under every other row on the page.
+  margin-bottom: 0;
+  // Cancels the padding this wrapper takes as a row child, so the two selects
+  // inside it line up with the fields in the rows above and below it.
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
+
+.select-wrapper > .design-select,
+.row.fiscal-years > .year-pick,
+.fields .row > .form-group:not([class*='col-']) {
+  flex: 0 0 50%;
+  max-width: 50%;
+  width: auto;
+  min-width: 0;
+  margin-right: 0;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+// ...and the same release under the last row that `.fields .row:last-child > *`
+// gives the plain columns. It could not reach these three: `.design-select` is a
+// GRANDCHILD of the row, and the other two are matched by rules of equal
+// specificity written after it, so `margin-bottom: 1rem` won on the last row too.
+//
+// That 1rem then stacked on top of the section body's own 1.25rem of padding, so
+// those sections closed with a 2.25rem gutter against every other section's
+// 1.25rem. It is the whole of the Design section, which is one `.select-wrapper` in
+// one row — every field in it is one of these — so that section simply ended with a
+// band of empty panel under it.
+.fields .row:last-child > .select-wrapper > .design-select,
+.fields .row:last-child > .year-pick,
+.fields .row:last-child > .form-group:not([class*='col-']) {
+  margin-bottom: 0;
+}
+
+// A toggle's height is decided by how long its description happens to be, so two
+// side by side come out ragged unless they are told to match. The row stretches the
+// columns (above), this fills the column, and the `nb-toggle` rule further down
+// fills this — so the bordered boxes on a row are one height whatever they say.
+.form-group.toggle-switch,
+.form-group.invite-toggle {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// `pt-2` on seventeen columns and `mt-2` on three more are bootstrap's own
+// `padding-top: .5rem !important` / `margin-top: .5rem`, added back when nothing
+// gave those rows any rhythm of their own. The grid does now and the two stack,
+// which put 1.5rem between those rows against the 1rem everywhere else on the
+// page — and it is exactly the rows of the longest section, so the drift showed up
+// as the Timer settings running looser than the nine sections around it.
+//
+// Widened from `.time-tracker .row > [class*='pt-']`: the `mt-2` half was never
+// covered, and both spacings appear outside `.time-tracker` too. The grid owns the
+// rhythm between field rows, wherever the row is.
+.fields .row > [class*='pt-'],
+.fields .row > [class*='mt-'] {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
 // Removed `.active { background: #ffffff; }`, which was NOT dead — it was the bug.
 //
-// `active` is bound here in two ways. The visible one is the aside-nav `<li>`
-// items (`[class.active]="general?.expanded"` and nine siblings), which
-// `.aside-nav ul li.active` above already paints with
-// `nb-theme(background-basic-color-1)` at higher specificity. The one that is
-// easy to miss is that this template also holds 19 `<nb-option>` elements, and
-// Nebular host-binds `class.active` onto them at RUNTIME as the keyboard manager
-// moves — nothing a grep of the template can see.
+// `active` is bound here in two ways. The visible one is the aside-nav items,
+// which `.aside-nav .aside-nav__item.active` above already paints at higher
+// specificity. The one that is easy to miss is that this template also holds 19
+// `<nb-option>` elements, and Nebular host-binds `class.active` onto them at
+// RUNTIME as the keyboard manager moves — nothing a grep of the template can see.
 //
 // Those options are authored here, so they carry this component's `_ngcontent`
 // attribute even after `nb-select` portals them into the CDK overlay, and the
@@ -117,223 +479,274 @@
 // styling back to Nebular, which resolves per theme.
 
 // start of nb-overrides
+//
+// The accordion is no longer a stack of cards; it is the list of rows inside
+// `.fields-section`, which is the panel. So nothing here paints a surface, draws a
+// box or reserves a gap — the panel does all three once, and a section is told
+// apart from the section above it by a hairline, the way rows are everywhere else
+// in this system.
 nb-accordion {
   box-shadow: none;
+  background-color: transparent;
+
+  // Nebular's default theme paints an accordion item with a literal `#fbfbfb`
+  // (`accordion-item-background-color`), and `gauzy-dark` with a sidebar token, so
+  // these three cannot simply be left alone — they have to be told to let the
+  // panel's own surface through. They used to be forced to `gauzy-card-3`, which
+  // is where the ten near-identical near-white boxes came from.
+  & nb-accordion-item,
+  & nb-accordion-item-header,
+  & nb-accordion-item-body {
+    background-color: transparent;
+  }
 
   & nb-accordion-item-header {
-    border-bottom: none;
-    border-radius: 0.5rem;
-    padding-left: 20px;
-    padding-right: 20px;
+    // `border-bottom: none` was not enough on its own. Nebular also gives the
+    // header that FOLLOWS an expanded section a top border of its own —
+    // `nb-accordion-item:not(.collapsed) + nb-accordion-item nb-accordion-item-header`
+    // in `_accordion.component.theme.scss` — which is a second rule on top of the
+    // one the item itself now draws. The divider belongs to the row, not to the
+    // header inside it.
+    border: none;
+    border-radius: 0;
+    // `1.25rem` on the sides, the panel padding `.org__fields` and `.tab__fields`
+    // use, so a section's title starts at the same x as the fields it opens onto.
+    // The vertical half was arriving from a global rule in `styles/_overrides.scss`
+    // while the sides were set locally, so half of this box's padding was one
+    // file's decision and half was another's. `0.75rem` rather than Nebular's
+    // `0.625rem`: these are the rows of a list now and they carry the click target.
+    padding: 0.75rem 1.25rem;
+    // Was `text-subtitle` (0.9375rem/600), which put these ten section titles a
+    // step ABOVE the labels of the tab strip that contains them and only two
+    // points under the organization's own name in the card header. A section title
+    // is the smallest title on the page; all it has to out-rank is the 0.75rem
+    // field labels it opens onto.
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    letter-spacing: -0.01em;
+    // Said here rather than inherited from Nebular's
+    // `accordion-header-text-font-weight`, so rest and open differ by colour and
+    // fill only — and so this page's type does not move if that token does.
+    font-weight: 600;
+    // Muted at rest, full strength when open — so the index and the section list
+    // agree about which one you are on.
+    color: var(--gauzy-text-color-2);
+    transition:
+      background-color 0.15s ease-in-out,
+      color 0.15s ease-in-out;
+
+    // This header IS the control that opens its section — Nebular host-binds the
+    // click, space and enter handlers onto it — and it was the only interactive
+    // row on the page with no hover state at all. The shared tint, so it reads
+    // the same as a row of the section index beside it.
+    &:hover {
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+      color: var(--gauzy-text-color-1);
+    }
+
+    // Nebular host-binds `tabindex` onto the header and then strips the ring
+    // back off with its own `:host:focus { outline: 0 }`, so tabbing through the
+    // ten sections moved a selection nothing on screen showed. `-2px` so the
+    // ring sits inside the panel's edge instead of on top of it.
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-transparent-focus);
+      outline-offset: -2px;
+    }
 
     & ::ng-deep nb-icon {
-      border-radius: 6px;
-      width: 23px;
-      height: 23px;
-      // Was `rgba(66, 66, 66, 0.2)` — a dark grey ring around the accordion
-      // chevron, which disappears against the dark themes' panels. The shared
-      // border token is light-on-dark and dark-on-light. Spelled out as a
-      // custom property with a fallback rather than `nb-theme()`, which emits a
-      // bare `var()` and would drop the border entirely on a theme that does
-      // not carry the token.
-      border: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.1));
+      // Was a 23px box with a 6px radius and a hairline around it: a ring drawn
+      // around the chevron of every row, ten of them down the right-hand edge, and
+      // the only thing on the page that framed an icon. The chevron is an
+      // indicator — it says open or closed, and it already says it by rotating.
+      width: 1rem;
+      height: 1rem;
+      font-size: 1rem;
+      color: nb-theme(text-hint-color);
+      // Nebular pins the chevron at `right: 1rem`, which is ITS `accordion-padding`
+      // and not the 1.25rem this file gives the header — so it ended 4px outside
+      // the x the section title starts at, on all ten rows.
+      @include nb-ltr(right, 1.25rem);
+      @include nb-rtl(left, 1.25rem);
     }
   }
-  & nb-accordion-item-header,
-  nb-accordion-item-body,
-  nb-accordion-item {
-    background-color: nb-theme(gauzy-card-3);
+
+  // Every section but the first is separated from the one above it by a hairline.
+  // Written on the row rather than as a `border-bottom`, so the last section never
+  // draws a rule against the panel's own foot.
+  & nb-accordion-item + nb-accordion-item {
+    border-top: $hairline;
   }
+
+  // An open section and a closed one used to be the same box with more inside it.
+  // Open is a state, so it is painted like one: the row you have opened takes the
+  // shared hover tint at rest — the same fill the index gives the entry that points
+  // at it — its title comes up to full strength, and a hairline separates it from
+  // the fields it opened onto, which is how a panel's legend is separated from its
+  // fields everywhere else here.
+  & nb-accordion-item.expanded > nb-accordion-item-header {
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    border-bottom: $hairline;
+    color: var(--gauzy-text-color-1);
+
+    // Still has to answer the pointer: at rest it is already sitting at the hover
+    // fill, so hovering it steps up rather than doing nothing.
+    &:hover {
+      background-color: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+    }
+
+    & ::ng-deep nb-icon {
+      color: nb-theme(text-primary-color);
+    }
+  }
+
+  // Nebular renders `<div class="item-body">` INSIDE `nb-accordion-item-body`, and
+  // both used to carry 15px of horizontal padding — 30px in total, against the
+  // 1.25rem (20px) every other panel on these three tabs uses. The host is the
+  // wrapper; the padding belongs to the box that holds the fields, below.
   & nb-accordion-item-body {
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 0;
+    padding-right: 0;
   }
 
-  // separate accordion styles for each one because of input fields colors, layouts, etc.
-  // some media queries here,... too much useless nesting otherwise
+  // Ten sections, one shape. What used to stand here instead was a run of
+  // `:first-of-type` / `:nth-of-type(2,3,5,6,7,8)` blocks, each setting the widths
+  // its own section's fields should take — the nine measures the field grid above
+  // now replaces. They also addressed sections by POSITION, which had already gone
+  // stale: an `#agent` section was added at index 8 and every rule from there down
+  // slid onto the wrong section, so the pair meant for Task settings landed on
+  // Agent and Integrations lost its own. Nothing here counts sections any more.
   nb-accordion-item {
-    border-radius: 0.5rem;
-    margin-bottom: 20px;
+    // `::ng-deep`, and that is the whole rule working or not working. `.item-body`
+    // is a `<div>` inside NEBULAR's `nb-accordion-item-body` template, so it
+    // carries Nebular's content attribute and never this component's — and Angular
+    // stamps this component's onto every compound selector in this sheet that is
+    // not behind `::ng-deep`. Written as `& .item-body` it compiled to
+    // `.item-body[_ngcontent-ours]` and matched nothing, so the fields fell back to
+    // Nebular's own `accordion-padding` (0.625rem) while the header above them sat
+    // at 1.25rem: every section's fields started 10px to the left of the section
+    // title they belong to. `edit-employee-other-settings.component.scss` has
+    // always reached it correctly, from inside a `:host ::ng-deep` block.
+    & ::ng-deep .item-body {
+      // The field inset, the same `1.25rem` `.org__fields` and `.tab__fields` use.
+      padding: 1.25rem;
+    }
 
-    & .item-body {
-      padding: 15px;
-    }
-    &:first-of-type {
-      ::ng-deep .select-button,
-      ::ng-deep .ng-select-container {
-        background-color: nb-theme(background-basic-color-1) !important;
-      }
-      ::ng-deep .date-picker-form ng-select {
-        width: 60%;
-      }
-      .fields {
-        width: 75%;
-        @include respond(md) {
-          width: 100%;
-        }
-      }
-      .time-format-select {
-        width: 30%;
-      }
-      .row {
-        align-items: center;
-      }
-    }
-    &:nth-of-type(2) {
-      .select-wrapper {
-        display: flex;
-      }
-      .label {
-        white-space: nowrap;
-      }
-      .design-select {
-        width: 140px;
-        margin-right: 15px;
-      }
-      @include respond(md) {
-        .color-pick {
-          width: 100%;
-        }
-      }
-    }
-    &:nth-of-type(3) {
-      .row {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-
-        &.fiscal-years {
-          width: 400px;
-          display: flex;
-          justify-content: space-between;
-          margin-left: -5px;
-          margin-right: -5px;
-
-          @include respond(lg) {
-            margin: 0;
-          }
-          @include respond(md) {
-            width: 100%;
-          }
-          & .year-pick {
-            width: 170px;
-            @include respond(md) {
-              width: 49%;
-            }
-          }
-        }
-        &.toggles {
-          // The 500px block is the intended width; the cap keeps it from
-          // overflowing a layout column narrowed by the AI chat (a viewport
-          // breakpoint below cannot see that — the window did not change).
-          width: min(500px, 100%);
-          display: flex;
-          flex-direction: column;
-          margin-left: -5px;
-          margin-right: -5px;
-
-          @include respond(lg) {
-            margin: 0;
-          }
-          @include respond(md) {
-            width: 100%;
-          }
-          & .toggle-switch {
-            margin-bottom: 5px;
-          }
-        }
-        &.half-width-inputs {
-          display: flex;
-          align-items: flex-end;
-          margin-bottom: 10px;
-          padding-left: 0;
-          padding-right: 0;
-          @include respond(sm) {
-            flex-direction: column;
-          }
-        }
-      }
-    }
-    &:nth-of-type(5) {
-      .row {
-        & input {
-          padding: 10px;
-        }
-      }
-    }
-    &:nth-of-type(6) {
-      .row {
-        width: 50%;
-        @include respond(md) {
-          width: 100%;
-        }
-      }
-      .form-group {
-        width: 100%;
-        padding-left: 10px;
-        padding-right: 10px;
-        @include respond(lg) {
-          padding-right: 0;
-          padding-left: 0;
-        }
-      }
-    }
-    &:nth-of-type(7) {
-      .col-6 {
-        margin-bottom: 12px;
-      }
-      @include respond(sm) {
-        .row {
-          width: 100%;
-        }
-      }
-    }
-    &:nth-of-type(8) {
-      .col-6 {
-        margin-bottom: 12px;
-      }
-      .col-12 {
-        padding: 0;
-        margin: 0;
-      }
-      @include respond(sm) {
-        .row {
-          width: 100%;
-        }
-      }
+    // The last field row on the page whose halves could still come out different
+    // widths: several sections put an `nb-select` or an `ng-select` beside a plain
+    // input, and those are painted by different stylesheets — the select brought
+    // its own intrinsic width while the input took the column. Said once here
+    // rather than in six per-section blocks.
+    ::ng-deep .ng-select,
+    ::ng-deep nb-select,
+    ::ng-deep .select-button {
+      width: 100%;
     }
   }
 }
 //end of nb-overrides
 
 //start of ::ng-deep selectors for selecting nested nebular stuff.
+// `:host` on the second half as well. A bare `::ng-deep` at the START of a
+// selector drops the scoping attribute, so this pair was one page-scoped rule and
+// one GLOBAL `.ng-value { z-index: 2 }` — every selected value in every `ng-select`
+// in the app lifted a stacking context above its own trigger, from a stylesheet
+// belonging to one tab of the organization editor. The same slip the Main tab's
+// sheet records at `ga-currency` / `nb-select`.
 :host ::ng-deep .ng-placeholder,
-::ng-deep .ng-value {
+:host ::ng-deep .ng-value {
   z-index: 2;
 }
-:host ::ng-deep nb-select {
-  & ::ng-deep button {
-    margin-right: 10px;
-    background-color: nb-theme(background-basic-color-1) !important;
-    border-radius: nb-theme(border-radius) !important;
-  }
+// The select trigger's shape, said the way the Main tab says it
+// (`edit-organization-main.component.scss`) rather than as an `!important` on
+// every `button` inside every `nb-select` on the page.
+//
+// What stood here also forced `background-color: background-basic-color-1` onto
+// those triggers, which is the LAST fill on this page still being declared
+// locally — the card shell hands every input, `ng-select` and select trigger
+// under it one fill through `input-appearance(42px, var(--gauzy-card-1, …))`
+// (`edit-organization.component.scss`), and the comment further down this file
+// already records the General section's copy of that same override being removed
+// for the same reason.
+//
+// And a `margin-right: 10px`, on a `.select-button` that the rule above sets to
+// `width: 100%` inside an `nb-select` that is itself 100% of its column: the
+// trigger therefore ran 10px past its own field, so every select on the page was
+// the one control on its row that did not end where its neighbour did.
+:host ::ng-deep nb-select.shape-rectangle .select-button {
+  border-radius: $panel-radius;
 }
+// A toggle occupies a cell of the field grid, exactly as an input or a select
+// does — so it is drawn as a control, on the control surface, with the control's
+// own edge and the control's own floor. Between the Timer, Agent and Task Settings
+// sections this is roughly forty of the boxes on the page, which is why it is the
+// single thing that decides what a section's body looks like.
+//
+// It used to be a transparent box outlined in `gauzy-border-default-color` — a 10%
+// neutral, i.e. the hairline meant for dividing a panel from the page, not for
+// drawing a control — with a literal `10px` of padding. On the light themes that
+// is a #f0f0f2 line around nothing, on a #fcfcfc panel: forty invisible boxes, and
+// forty edges that did not match the eighteen-percent inset ring every input and
+// select beside them is drawn with.
+//
+// `$control-hairline` is that ring, straight out of `gauzy/_gauzy-overrides` —
+// `inset`, so it costs no layout box and the control cannot end up a pixel taller
+// than the input next to it. The fill is the same chain the card shell hands its
+// inputs (`input-appearance(42px, var(--gauzy-card-4, …))` on `.card-scroll` in
+// `edit-organization.component.scss`) — card-4 because these sit on the card-3
+// panel, one step below them, and the fallbacks because not every registered theme
+// emits every step of that ramp. Written out rather than shared through a variable
+// so that if the shell's surface ever moves, the toggles show up in a grep for it.
 :host ::ng-deep nb-toggle {
-  padding: 10px;
-  border: 1px solid nb-theme(gauzy-border-default-color);
-  border-radius: nb-theme(border-radius);
+  // The same floor `input-appearance` gives an input on this page, so a row that
+  // pairs a toggle with a field comes out as one row of one height. Taken from the
+  // shared variable rather than repeated as a literal — the card shell passes the
+  // same one (`edit-organization.component.scss`), so the two cannot drift.
+  display: flex;
+  align-items: center;
+  min-height: ga-overrides.$default-height;
+  // The field's own block inset — `$control-padding-y` is the vertical half of
+  // `input-medium-padding`, which is what `$default-height` above is derived from.
+  // So the box lands on exactly the input height around a one-line label instead of
+  // being propped past it: at `0.625rem` it cleared the floor on its own and every
+  // toggle came out ~6px taller than the select next to it on the same row.
+  padding: ga-overrides.$control-padding-y 0.75rem;
+  background-color: var(--gauzy-card-4, var(--gauzy-card-1, var(--card-background-color)));
+  border: none;
+  box-shadow: ga-overrides.$control-hairline;
+  border-radius: $panel-radius;
+
+  // The centring used to be handed out by the two wrapper classes below, which 37
+  // of the 39 toggles on this page happen to carry. The two in the Timer section
+  // that do not (`randomScreenshot` and `trackOnSleep`, behind `@if (isEnforced)`)
+  // therefore sat their label against the top of the box while every toggle around
+  // them centred it. It belongs to the control, not to the wrapper.
   & > label {
+    flex: 1 1 auto;
+    min-width: 0;
     margin-bottom: 0;
   }
 }
+// ...and the box fills whatever height its column was stretched to, so a row of
+// two toggles reads as one row rather than as two boxes of different sizes. That
+// part IS the wrapper's, since it is the grid cell that gets stretched.
+:host ::ng-deep .form-group.toggle-switch nb-toggle,
+:host ::ng-deep .form-group.invite-toggle nb-toggle {
+  flex: 1 1 auto;
+}
 :host ::ng-deep .toggle {
-  // The unchecked toggle track. Both were a literal `#7e7e8f`, i.e. one fixed
-  // mid grey in all eight themes — a dark bar on the dark canvases, where the
-  // rest of the muted chrome is light. `gauzy-text-color-2` is the app's muted
-  // ramp and is `rgba(126, 126, 143, 1)` (exactly the old literal) on the
-  // themes that inherit the default palette, so those are unchanged; the
-  // fallback covers the themes that do not emit the custom property.
-  border: 1px solid var(--gauzy-text-color-2, rgba(126, 126, 143, 1)) !important;
-  background-color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1)) !important;
+  // The unchecked toggle track. It was a literal `#7e7e8f`, then this file's own
+  // muted-text token — both of which paint a SOLID mid grey bar, which at a glance
+  // reads as a toggle that is on. `toggle-basic-background-color` is the token
+  // Nebular resolves an unchecked track from (`color-basic-transparent-default`),
+  // it is what the same override in `add-article.component.scss` was already
+  // rewritten to, and it is translucent, so an unchecked toggle sits back on all
+  // eight themes instead of competing with the twenty-odd checked ones beside it.
+  //
+  // The edge takes `toggle-basic-border-color`, not the fill token: a translucent
+  // track outlined in its own fill has no edge at all, which is the one thing the
+  // solid grey it replaces did get right.
+  border: 1px solid var(--toggle-basic-border-color) !important;
+  background-color: var(--toggle-basic-background-color) !important;
   &.checked {
     background-color: nb-theme(text-primary-color) !important;
     border: 1px solid nb-theme(text-primary-color) !important;
@@ -352,96 +765,149 @@ nb-accordion {
 :host ::ng-deep .select-button {
   margin: 0;
 }
+// Removed the General section's own input fill — `:first-of-type` forced
+// `background-basic-color-1` onto its `.select-button`s and `.ng-select-container`s
+// with an `!important`, so the ten selects in the first section were a different
+// colour from the same controls in the other nine, which take the card shell's
+// `input-appearance(42px, …)`. They all come from the shell now.
 //end of ::ng-deep
 
 //media queries
 @include respond(lg) {
-  .row {
-    display: flex;
-    justify-content: space-between;
-    margin-left: 0;
-    margin-right: 0;
+  // The section body gives up some of its side padding to buy the fields width.
+  // The GUTTER between the halves stays: `col-6` is 50% at every width (the markup
+  // uses `col-6`, not `col-md-6`), so the two fields on a row are still two fields
+  // on a row here. Zeroing the column padding at this breakpoint — which is what
+  // this block used to do — simply pushed them into each other.
+  //
+  // Aimed at `.item-body`, which is where the padding now lives; it used to target
+  // the `nb-accordion-item-body` host, and that half is 0 at every width. Behind
+  // `::ng-deep` for the same reason as the base rule — that div is Nebular's, not
+  // this component's.
+  nb-accordion nb-accordion-item ::ng-deep .item-body {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
-  .col-6 {
-    padding-right: 0;
-    padding-left: 0;
+
+  // From here down the tabset gives its height back and the page scrolls in the
+  // layout column (`edit-organization-settings.component.scss`, and `nb-card-body`
+  // in `edit-organization.component.scss`, both release their overflow at this
+  // same width). This is the last clip left in the chain between `.aside-nav` and
+  // that scroll port, and `overflow: hidden` counts as a scroll container — so
+  // without this the index would stick to a box that never scrolls, i.e. scroll
+  // away with everything else.
+  //
+  // Safe to drop here because it clips nothing at this width: `.main-form` is
+  // `flex: 1 1 auto` inside a column that is now auto-height, so it is already
+  // exactly as tall as its content. The base rule's reason for it — one scroll
+  // container on this tab, not two — only applies while the form is a fixed frame.
+  :host .main-form {
+    overflow: visible;
   }
-  nb-accordion {
-    nb-accordion-item-body {
-      padding-left: 0;
-      padding-right: 0;
-    }
-    nb-accordion-item {
-      &:first-of-type {
-        ::ng-deep .date-picker-form ng-select {
-          width: 100%;
-        }
-        .fields {
-          width: 100%;
-        }
-        .time-format-select {
-          width: 100%;
-        }
-      }
-      &:nth-of-type(2) {
-        .color-pick {
-          max-width: 100%;
-          min-width: 100%;
-        }
-        .select-wrapper {
-          width: 100%;
-          display: flex;
-          justify-content: space-between;
-        }
-        .design-select {
-          width: 49%;
-          margin-right: 0;
-        }
-      }
-    }
+
+  // The index is still a COLUMN beside the sections at this width, not a row above
+  // them, so pinning it covers nothing: it holds the leading track while the
+  // sections scroll past in the track next to it.
+  .aside-nav {
+    position: sticky;
+    top: 0;
   }
 }
 
 @include respond(md) {
-  .col-6 {
-    padding-right: 0;
-  }
   .main-form {
     flex-direction: column;
+    // The same step Main, Location and the employee tabs take at this width.
+    padding: 0.75rem;
+    gap: 0.75rem;
   }
   .aside-nav {
+    // The form is a COLUMN here, so the flex-basis that sets the aside's width on
+    // desktop would set its height instead. Back to content-sized.
+    flex: 0 0 auto;
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 1rem;
+    overflow-y: visible;
+    // Both of these change axis with the column, so both have to be handed back:
+    // `align-self: flex-start` would size the aside to its widest chip instead of
+    // to the form, and `max-height: 100%` resolves against an auto-height parent
+    // here, i.e. against nothing.
+    align-self: stretch;
+    max-height: none;
+    // And un-stuck. Here the index is a wrapping row of ten chips ABOVE the
+    // sections rather than a column beside them, so sticking it would park that
+    // block over the fields — and `gauzy-card-3` is a half-alpha fill in every
+    // theme, so the rows would show through it as they passed underneath.
+    position: static;
 
+    // `display: inline` on a `<ul>` with `margin-right` on the items was doing the
+    // job of a wrapping row by accident. Say it: the sections run across and wrap.
     ul {
-      display: inline;
+      flex-direction: row;
+      flex-wrap: wrap;
+      // The stacked list's 1px hairline gap is a list rhythm; a wrapping row of
+      // chips needs a real one back.
+      gap: 0.375rem;
       height: auto;
-      & li {
-        margin-right: 7px;
+    }
+
+    .aside-nav__item {
+      width: auto;
+
+      // A rail down the leading edge marks a row in a column. Along a row these
+      // are chips, and the tint, the colour and the weight say it on their own.
+      &.active::before {
+        content: none;
       }
     }
   }
+  // Stacked, the whole column scrolls as one — the aside is a wrapping row of ten
+  // buttons here, and pinning it while only the sections move would leave almost
+  // no room for the sections. `.actions` used to be lifted to the bottom with
+  // `order: 2`; it is last in the markup now, so it lands there on its own.
+  //
+  // `overflow-x` said explicitly: the `lg` block above sets `overflow: visible`,
+  // and a box with one axis `auto` cannot keep `visible` on the other — it
+  // computes to `auto`, which is a horizontal scrollbar under every one of these
+  // forms. This is the pair the base rule always resolved to.
+  :host .main-form {
+    flex: 0 0 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  :host .accordion-section {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
   .fields-section {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
   }
+  // The step `.org__actions` and `.tab__actions` take at this width, so the
+  // panel's foot stays in line with the field inset the `lg` block above gives
+  // `.item-body`.
   .actions {
-    order: 2;
-    margin-bottom: 0;
+    padding: 0.875rem 1rem;
   }
 }
 
 @include respond(sm) {
-  .col-6 {
+  // One field per row: the halves have no room left in which to be halves. With
+  // nothing beside it, a field takes the full body width and the gutter goes.
+  .fields .row > [class*='col-'],
+  .select-wrapper > .design-select,
+  .row.fiscal-years > .year-pick,
+  .fields .row > .form-group:not([class*='col-']) {
+    flex: 0 0 100%;
     max-width: 100%;
     width: 100%;
-    min-width: 100%;
-    margin-bottom: 5px;
+    padding-left: 0;
+    padding-right: 0;
   }
-  .row {
-    width: 100%;
+
+  .fields .row,
+  .select-wrapper {
+    margin-left: 0;
+    margin-right: 0;
   }
 }
 
@@ -471,20 +937,9 @@ nb-accordion {
 // component stylesheet can only reach its own template, so the id never
 // existed to style.
 
-:host {
-  nb-card-body {
-    overflow: visible;
-  }
-}
-
-.time-tracker {
-  .row {
-    margin-left: -0.5rem;
-    margin-right: -0.5rem;
-  }
-  .col-xl-6,
-  .col-12 {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-}
+// Removed `:host { nb-card-body { overflow: visible } }`. The card body belongs to
+// `edit-organization.component.html`, two components up, and a component stylesheet
+// cannot match an ancestor — this compiled to `[_nghost-x] nb-card-body[_ngcontent-x]`
+// against a template that renders no card at all. Worth naming rather than just
+// deleting: the card body is now the page frame's last flexible step, so a rule that
+// looks like it loosens the frame is exactly the sort of thing to trip over next.

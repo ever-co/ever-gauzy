@@ -125,6 +125,7 @@ import { OrganizationVendorModule } from '../organization-vendor/organization-ve
 import { OrganizationModule } from '../organization/organization.module';
 import { PasswordHashModule } from '../password-hash/password-hash.module';
 import { PaymentModule } from '../payment/payment.module';
+import { PayrollRunModule } from '../payroll-run/payroll-run.module';
 import { StageModule } from '../pipeline-stage/pipeline-stage.module';
 import { PipelineModule } from '../pipeline/pipeline.module';
 import { ProductCategoryModule } from '../product-category/product-category.module';
@@ -169,6 +170,8 @@ import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.mod
 import { TenantModule } from '../tenant/tenant.module';
 import { BillingModule } from '../shared/billing';
 import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.guard';
+import { OfficialHolidayModule } from '../official-holiday/official-holiday.module';
+import { TimeOffBalanceModule } from '../time-off-balance/time-off-balance.module';
 import { TimeOffPolicyModule } from '../time-off-policy/time-off-policy.module';
 import { TimeOffRequestModule } from '../time-off-request/time-off-request.module';
 import { TimeTrackingModule } from '../time-tracking/time-tracking.module';
@@ -439,6 +442,8 @@ if (environment.THROTTLE_ENABLED) {
 		CountryModule,
 		CurrencyModule,
 		InviteModule,
+		OfficialHolidayModule,
+		TimeOffBalanceModule,
 		TimeOffPolicyModule,
 		TimeOffRequestModule,
 		ApprovalPolicyModule,
@@ -457,6 +462,7 @@ if (environment.THROTTLE_ENABLED) {
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,
+		PayrollRunModule,
 		EstimateEmailModule,
 		GoalModule,
 		GoalTimeFrameModule,

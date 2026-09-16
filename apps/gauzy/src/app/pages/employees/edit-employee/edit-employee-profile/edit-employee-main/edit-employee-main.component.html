@@ -1,172 +1,271 @@
-<div class="content">
-	<div class="organization-container w-25 d-flex flex-column">
-		<div class="organization-photo">
-			<ngx-image-uploader
-				(changeHoverState)="hoverState = $event"
-				(uploadedImageAsset)="updateImageAsset($event)"
-				(uploadImageAssetError)="handleImageUploadError($event)"
-			></ngx-image-uploader>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				xmlns:xlink="http://www.w3.org/1999/xlink"
-				width="68"
-				height="68"
-				viewBox="0 0 68 68"
-				[style.opacity]="hoverState ? '1' : '0.3'"
-			>
-				<defs>
-					<path
-						id="a"
-						d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+<div class="account">
+	<section class="account__panel account__panel--identity">
+		<header class="account__head">
+			<div class="account__avatar" [class.account__avatar--hover]="hoverState">
+				<ngx-image-uploader
+					(changeHoverState)="hoverState = $event"
+					(uploadedImageAsset)="updateImageAsset($event)"
+					(uploadImageAssetError)="handleImageUploadError($event)"
+				></ngx-image-uploader>
+
+				@if (form?.get('imageUrl')?.value && !avatarFailed) {
+					<img
+						class="account__avatar-image"
+						[src]="form.get('imageUrl').value"
+						alt="Profile Photo"
+						(error)="avatarFailed = true"
 					/>
-				</defs>
-				<g fill="none" fill-rule="evenodd">
-					<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
-					<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
-					<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
-				</g>
-			</svg>
-			<div [style.opacity]="hoverState ? '0.2' : '0'"></div>
-			@if (form) {
-			<img
-				[src]="form.get('imageUrl')?.value"
-				alt="Profile Photo"
-				(mouseenter)="hoverState = true"
-				(mouseleave)="hoverState = false"
-			/>
-			}
-		</div>
-		@if (selectedEmployee?.isVetted) {
-		<nb-badge
-			status="success"
-			style="position: relative; margin-top: 20px"
-			[text]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.VETTED' | translate"
-			position="bottom-left"
-		>
-		</nb-badge>
-		} @if (selectedEmployee) {
-		<div>
-			@if (selectedEmployee?.jobSuccess) {
-			<div class="employee-optional-info">
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.JOB_SUCCESS' | translate }}: {{ selectedEmployee.jobSuccess }}%
+				} @else {
+					<div class="account__avatar-image account__avatar-image--empty">
+						<nb-icon icon="person-outline"></nb-icon>
+					</div>
+				}
+
+				<span class="account__avatar-scrim" aria-hidden="true"></span>
+				<span class="account__avatar-badge" aria-hidden="true">
+					<nb-icon icon="camera-outline"></nb-icon>
+				</span>
 			</div>
-			} @if (selectedEmployee?.totalJobs) {
-			<div class="employee-optional-info">
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_JOBS' | translate }}:
-				{{ selectedEmployee.totalJobs }}
+
+			<div class="account__identity">
+				<div class="account__name-row">
+					<span class="account__name">{{ selectedEmployee?.user?.name }}</span>
+				</div>
+
+				@if (selectedEmployee?.organizationPosition?.name; as position) {
+					<div class="account__role">{{ position }}</div>
+				}
+
+				@if (selectedEmployee?.short_description; as blurb) {
+					<p class="account__blurb">{{ blurb }}</p>
+				}
+
+				<div class="account__chips">
+					@switch (workState) {
+						@case ('active') {
+							<span class="account__chip account__chip--success">
+								{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
+							</span>
+						}
+						@case ('ended') {
+							<span class="account__chip account__chip--danger">
+								{{ 'EMPLOYEES_PAGE.WORK_ENDED' | translate }}
+							</span>
+						}
+						@case ('not-started') {
+							<span class="account__chip account__chip--warning">
+								{{ 'EMPLOYEES_PAGE.NOT_STARTED' | translate }}
+							</span>
+						}
+					}
+					@if (selectedEmployee?.isVetted) {
+						<span class="account__chip account__chip--success">
+							{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.VETTED' | translate }}
+						</span>
+					}
+					@if (selectedEmployee?.isJobSearchActive) {
+						<span class="account__chip account__chip--info">
+							{{ 'JOBS.JOB_SEARCH' | translate }}
+						</span>
+					}
+				</div>
 			</div>
-			} @if (selectedEmployee?.totalWorkHours) {
-			<div class="employee-optional-info">
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_HOURS' | translate }}:
-				{{ selectedEmployee.totalWorkHours }}
+		</header>
+
+		@if (selectedEmployee) {
+			<div class="account__facts">
+				@if (hasEmploymentFacts) {
+					<section class="account__group">
+						<dl class="account__stats">
+							@if (selectedEmployee.employeeLevel; as level) {
+								<div class="account__stat">
+									<dt>{{ 'FORM.LABELS.EMPLOYEE_LEVEL' | translate }}</dt>
+									<dd>{{ level }}</dd>
+								</div>
+							}
+							@if (selectedEmployee.startedWorkOn; as startedOn) {
+								<div class="account__stat">
+									<dt>{{ 'FORM.LABELS.DATE_START' | translate }}</dt>
+									<dd>{{ startedOn | dateFormat }}</dd>
+								</div>
+							}
+							@if (selectedEmployee.endWork; as endedOn) {
+								<div class="account__stat">
+									<dt>{{ 'EMPLOYEES_PAGE.END_WORK' | translate }}</dt>
+									<dd>{{ endedOn | dateFormat }}</dd>
+								</div>
+							}
+						</dl>
+					</section>
+				}
+
+				@if (hasRateFacts) {
+					<section class="account__group">
+						<h6 class="account__group-title">
+							{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES' | translate }}
+						</h6>
+						<dl class="account__stats">
+							@if (selectedEmployee.payPeriod; as payPeriod) {
+								<div class="account__stat">
+									<dt>{{ 'FORM.LABELS.PAY_PERIOD' | translate }}</dt>
+									<dd>{{ payPeriod | replace : '_' : ' ' | titlecase }}</dd>
+								</div>
+							}
+							@if (selectedEmployee.billRateCurrency && selectedEmployee.billRateValue != null) {
+								<div class="account__stat">
+									<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATE' | translate }}</dt>
+									<dd>
+										{{ selectedEmployee.billRateCurrency }}
+										{{ selectedEmployee.billRateValue }} /
+										{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HR' | translate }}
+									</dd>
+								</div>
+							}
+							@if (selectedEmployee.reWeeklyLimit != null) {
+								<div class="account__stat">
+									<dt>{{ 'FORM.LABELS.RECURRING_WEEKLY_LIMIT' | translate }}</dt>
+									<dd>{{ selectedEmployee.reWeeklyLimit }}</dd>
+								</div>
+							}
+						</dl>
+					</section>
+				}
+
+				<section class="account__group">
+					<dl class="account__stats">
+						<div class="account__stat">
+							<dt>{{ 'SM_TABLE.TIME_TRACKING' | translate }}</dt>
+							<dd>
+								{{
+									(selectedEmployee.isTrackingEnabled
+										? 'EMPLOYEES_PAGE.ENABLED'
+										: 'EMPLOYEES_PAGE.DISABLED'
+									) | translate
+								}}
+							</dd>
+						</div>
+						@if (selectedEmployee.totalWorkHours != null) {
+							<div class="account__stat">
+								<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_HOURS' | translate }}</dt>
+								<dd>{{ selectedEmployee.totalWorkHours }}</dd>
+							</div>
+						}
+						@if (selectedEmployee.user?.timeFormat; as timeFormat) {
+							<div class="account__stat">
+								<dt>{{ 'FORM.LABELS.TIME_FORMAT' | translate }}</dt>
+								<dd>{{ timeFormat }}</dd>
+							</div>
+						}
+					</dl>
+				</section>
+
+				@if (hasJobFacts) {
+					<section class="account__group">
+						<h6 class="account__group-title">{{ 'MENU.JOBS' | translate }}</h6>
+						<dl class="account__stats">
+							@if (selectedEmployee.jobSuccess != null) {
+								<div class="account__stat">
+									<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.JOB_SUCCESS' | translate }}</dt>
+									<dd>{{ selectedEmployee.jobSuccess }}%</dd>
+								</div>
+							}
+							@if (selectedEmployee.totalJobs != null) {
+								<div class="account__stat">
+									<dt>{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_JOBS' | translate }}</dt>
+									<dd>{{ selectedEmployee.totalJobs }}</dd>
+								</div>
+							}
+						</dl>
+					</section>
+				}
 			</div>
-			} @if ( selectedEmployee?.billRateCurrency && selectedEmployee?.billRateValue ) {
-			<div class="employee-optional-info">
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATE' | translate }}:
-				{{ selectedEmployee.billRateCurrency }}
-				{{ selectedEmployee.billRateValue }} /
-				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HR' | translate }}
-			</div>
-			}
-		</div>
 		}
-	</div>
+	</section>
 
-	<div class="employee-form w-75">
-		<form [formGroup]="form">
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label class="label" for="usernameInput">{{ 'FORM.USERNAME' | translate }}</label>
-						<input
-							fullWidth
-							id="usernameInput"
-							type="text"
-							nbInput
-							formControlName="username"
-							placeholder="{{ 'FORM.USERNAME' | translate }}"
-						/>
-					</div>
+	<section class="account__panel account__panel--form">
+		<form class="account__form" [formGroup]="form">
+			<div class="account__fields">
+				<div class="form-group">
+					<label class="label" for="usernameInput">{{ 'FORM.USERNAME' | translate }}</label>
+					<input
+						fullWidth
+						id="usernameInput"
+						type="text"
+						nbInput
+						formControlName="username"
+						placeholder="{{ 'FORM.USERNAME' | translate }}"
+					/>
 				</div>
-				<div class="col">
-					<div class="form-group">
-						<label for="emailInput" class="label">{{ 'FORM.EMAIL' | translate }}</label>
-						<input
-							fullWidth
-							id="emailInput"
-							type="email"
-							nbInput
-							formControlName="email"
-							placeholder="{{ 'FORM.EMAIL' | translate }}"
-						/>
-					</div>
+
+				<div class="form-group">
+					<label for="emailInput" class="label">{{ 'FORM.EMAIL' | translate }}</label>
+					<input
+						fullWidth
+						id="emailInput"
+						type="email"
+						nbInput
+						formControlName="email"
+						placeholder="{{ 'FORM.EMAIL' | translate }}"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label class="label" for="firstNameInput">{{ 'FORM.LABELS.FIRST_NAME' | translate }}</label>
+					<input
+						fullWidth
+						id="firstNameInput"
+						type="text"
+						nbInput
+						formControlName="firstName"
+						placeholder="{{ 'FORM.PLACEHOLDERS.FIRST_NAME' | translate }}"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label for="lastNameInput" class="label">{{ 'FORM.LABELS.LAST_NAME' | translate }}</label>
+					<input
+						fullWidth
+						id="lastNameInput"
+						type="text"
+						nbInput
+						formControlName="lastName"
+						placeholder="{{ 'FORM.PLACEHOLDERS.LAST_NAME' | translate }}"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label for="preferredLanguage" class="label">
+						{{ 'FORM.LABELS.PREFERRED_LANGUAGE' | translate }}
+					</label>
+					<ngx-language-selector
+						[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE' | translate"
+						class="d-block"
+						labelForId="preferredLanguage"
+						selectBy="object"
+						[template]="'ng-select'"
+						formControlName="preferredLanguage"
+					>
+					</ngx-language-selector>
+				</div>
+
+				<div class="form-group">
+					<label for="profileLinkInput" class="label">{{ 'FORM.LABELS.PROFILE_LINK' | translate }}</label>
+					<input
+						fullWidth
+						id="profileLinkInput"
+						type="text"
+						nbInput
+						formControlName="profile_link"
+						placeholder="{{ 'FORM.PLACEHOLDERS.PROFILE_LINK' | translate }}"
+					/>
 				</div>
 			</div>
 
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label class="label" for="firstNameInput">{{ 'FORM.LABELS.FIRST_NAME' | translate }}</label>
-						<input
-							fullWidth
-							id="firstNameInput"
-							type="text"
-							nbInput
-							formControlName="firstName"
-							placeholder="{{ 'FORM.PLACEHOLDERS.FIRST_NAME' | translate }}"
-						/>
-					</div>
-				</div>
-				<div class="col">
-					<div class="form-group">
-						<label for="lastNameInput" class="label">{{ 'FORM.LABELS.LAST_NAME' | translate }}</label>
-						<input
-							fullWidth
-							id="lastNameInput"
-							type="text"
-							nbInput
-							formControlName="lastName"
-							placeholder="{{ 'FORM.PLACEHOLDERS.LAST_NAME' | translate }}"
-						/>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="preferredLanguage" class="label">{{
-							'FORM.LABELS.PREFERRED_LANGUAGE' | translate
-						}}</label>
-						<ngx-language-selector
-							[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE' | translate"
-							class="d-block"
-							selectBy="object"
-							[template]="'ng-select'"
-							formControlName="preferredLanguage"
-						>
-						</ngx-language-selector>
-					</div>
-				</div>
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="profileLinkInput" class="label">{{ 'FORM.LABELS.PROFILE_LINK' | translate }}</label>
-						<input
-							fullWidth
-							id="profileLinkInput"
-							type="text"
-							nbInput
-							formControlName="profile_link"
-							placeholder="{{ 'FORM.PLACEHOLDERS.PROFILE_LINK' | translate }}"
-						/>
-					</div>
-				</div>
-			</div>
-
-			<div class="actions">
-				<button [disabled]="form.invalid" (click)="submitForm()" nbButton status="success">
+			<footer class="account__actions">
+				<button type="button" [disabled]="form.invalid" (click)="submitForm()" nbButton status="success">
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
-			</div>
+			</footer>
 		</form>
-	</div>
+	</section>
 </div>

@@ -33,6 +33,7 @@ import {
 import {
 	SmartDataViewLayoutModule,
 	CurrencyModule,
+	DynamicTabsModule,
 	EmployeeMultiSelectModule,
 	EntityWithMembersModule,
 	FileUploaderModule,
@@ -79,6 +80,7 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 		NbListModule,
 		NbTabsetModule,
 		NbRouteTabsetModule,
+		DynamicTabsModule,
 		NbDatepickerModule,
 		NbToggleModule,
 		EntityWithMembersModule,
