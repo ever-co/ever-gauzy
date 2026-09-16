@@ -1,6 +1,6 @@
 # Ever Gauzy Platform
 
-<a href="https://trendshift.io/repositories/1775" target="_blank"><img src="https://trendshift.io/api/badge/repositories/1775" alt="ever-co%2Fever-gauzy | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+<a href="https://trendshift.io/repositories/1775" target="_blank"><img src="https://trendshift.io/api/badge/repositories/1775" alt="ever-co%2Fever-gauzy | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a> <a href="https://trendshift.io/repositories/1775?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-1775" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/1775/daily?language=TypeScript" alt="ever-co%2Fever-gauzy | Trendshift" width="250" height="55"/></a>
 
 [uri_gauzy]: https://gauzy.co
 [uri_license]: https://www.gnu.org/licenses/agpl-3.0.html
