@@ -21,8 +21,13 @@ export class EmployeeTrackedDataGuard implements CanActivate {
 		const organizationId = request.query.organizationId || request.body.organizationId || request.params.organizationId;
 
 		if (organizationId) {
-			const result = await this.dataSource.query(`SELECT "allowEmployeeToSeeTrackedData" FROM "organization" WHERE "id" = $1`, [organizationId]);
-			if (result && result.length > 0 && result[0].allowEmployeeToSeeTrackedData === false) {
+			const organizationRepo = this.dataSource.getRepository('Organization');
+			const organization = await organizationRepo.findOne({
+				where: { id: organizationId },
+				select: ['allowEmployeeToSeeTrackedData']
+			});
+
+			if (organization && organization['allowEmployeeToSeeTrackedData'] === false) {
 				throw new ForbiddenException('Employees are not allowed to view tracked data in this organization');
 			}
 		}

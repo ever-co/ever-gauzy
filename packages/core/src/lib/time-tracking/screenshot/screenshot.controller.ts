@@ -30,14 +30,14 @@ import {
 import { tempFile } from '../../core/utils';
 import { LazyFileInterceptor } from './../../core/interceptors';
 import { Permissions } from './../../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard, EmployeeTrackedDataGuard } from './../../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { DeleteScreenshotDTO } from './dto/delete-screenshot.dto';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
 
 @ApiTags('Screenshot')
-@UseGuards(TenantPermissionGuard, PermissionGuard, EmployeeTrackedDataGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller('/timesheet/screenshot')
 export class ScreenshotController {

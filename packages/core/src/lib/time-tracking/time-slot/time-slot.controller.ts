@@ -11,7 +11,7 @@ import { TimeSlotService } from './time-slot.service';
 import { DeleteTimeSlotDTO, TimeSlotQueryDTO } from './dto';
 
 @ApiTags('TimeSlot')
-@UseGuards(TenantPermissionGuard, PermissionGuard, EmployeeTrackedDataGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller('/timesheet/time-slot')
 export class TimeSlotController {
@@ -32,6 +32,7 @@ export class TimeSlotController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async findAll(@Query() options: TimeSlotQueryDTO): Promise<ITimeSlot[]> {
@@ -55,6 +56,7 @@ export class TimeSlotController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/:id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() options: FindOneOptions): Promise<ITimeSlot> {
 		return await this._timeSlotService.findOneByIdString(id, options);

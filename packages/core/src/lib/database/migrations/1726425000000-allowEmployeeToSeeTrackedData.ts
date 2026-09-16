@@ -86,7 +86,7 @@ export class AllowEmployeeToSeeTrackedData1726425000000 implements MigrationInte
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`ALTER TABLE "organization" ADD COLUMN "allowEmployeeToSeeTrackedData" boolean NOT NULL DEFAULT (1)`
+			`ALTER TABLE "organization" ADD COLUMN "allowEmployeeToSeeTrackedData" boolean NOT NULL DEFAULT 1`
 		);
 	}
 

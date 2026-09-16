@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { ActivatedRoute, Router, QueryParamsHandling } from '@angular/router';
 import { tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -16,10 +16,10 @@ import { PageTabRegistryService, PageTabsetPageId, RouteUtil, Store } from '@gau
 export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	public title: string;
 	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	private readonly _router = inject(Router);
 
 	constructor(
 		private readonly _route: ActivatedRoute,
-		private readonly _router: Router,
 		private readonly _cdr: ChangeDetectorRef,
 		private readonly _routeUtil: RouteUtil,
 		private readonly _pageTabRegistryService: PageTabRegistryService,
@@ -27,17 +27,23 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
-		const canViewActivity =
-			this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
-			this._store.selectedOrganization?.allowEmployeeToSeeTrackedData !== false;
+		this._store.selectedOrganization$
+			.pipe(
+				tap((organization) => {
+					const canViewActivity =
+						this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
+						organization?.allowEmployeeToSeeTrackedData !== false;
 
-		if (!canViewActivity) {
-			this._router.navigate(['/pages/dashboard']);
-			return;
-		}
-
-		// Register the page tabs
-		this.registerPageTabs();
+					if (!canViewActivity) {
+						this._router.navigate(['/pages/dashboard']);
+					} else {
+						// Register the page tabs
+						this.registerPageTabs(canViewActivity);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		this._routeUtil.data$
 			.pipe(
@@ -57,11 +63,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	 *
 	 * @returns {void}
 	 */
-	registerPageTabs(): void {
-		const canViewActivity =
-			this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
-			this._store.selectedOrganization?.allowEmployeeToSeeTrackedData !== false;
-
+	registerPageTabs(canViewActivity: boolean): void {
 		// Register the time-activity tab
 		this._pageTabRegistryService.registerPageTab({
 			tabsetId: this.tabsetId, // The identifier for the tabset

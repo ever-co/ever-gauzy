@@ -25,7 +25,7 @@ import { TimeLogBodyTransformPipe } from './pipes';
 import { IGetConflictTimeLogCommand } from './commands';
 
 @ApiTags('TimeLog')
-@UseGuards(TenantBaseGuard, PermissionGuard, EmployeeTrackedDataGuard)
+@UseGuards(TenantBaseGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller('/timesheet/time-log')
 export class TimeLogController {
@@ -46,6 +46,7 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('conflict')
 	async getConflict(@Query() request: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
 		return await this._commandBus.execute(new IGetConflictTimeLogCommand(request));
@@ -65,6 +66,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found for the provided options'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/daily')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getDailyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
@@ -85,6 +87,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found for the provided options'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/daily-chart')
 	@UseValidationPipe({ whitelist: true })
 	async getDailyReportChartData(@Query() options: TimeLogQueryDTO): Promise<any | null> {
@@ -105,6 +108,7 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/owed-report')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getOwedAmountReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
@@ -125,6 +129,7 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/owed-charts')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getOwedAmountReportChartData(@Query() options: TimeLogQueryDTO): Promise<any | null> {
@@ -145,6 +150,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found for the specified options'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/weekly')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getWeeklyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
@@ -165,6 +171,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found for the specified options'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('time-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getTimeLimitReport(@Query() options: TimeLogLimitQueryDTO): Promise<any | null> {
@@ -185,6 +192,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Project budget limit not found.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('project-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getProjectBudgetLimit(@Query() options: TimeLogQueryDTO) {
@@ -205,6 +213,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Client budget limit not found.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('client-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async clientBudgetLimit(@Query() options: TimeLogQueryDTO) {
@@ -226,6 +235,7 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get()
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getLogs(@Query() options: TimeLogQueryDTO): Promise<ITimeLog[]> {
@@ -238,6 +248,7 @@ export class TimeLogController {
 	 * @param options Additional options for finding the time log.
 	 * @returns The found time log.
 	 */
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get(':id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() options: FindOneOptions): Promise<ITimeLog> {
 		return await this._timeLogService.findOneByIdString(id, options);
