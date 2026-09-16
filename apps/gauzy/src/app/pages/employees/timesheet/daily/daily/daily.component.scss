@@ -47,6 +47,21 @@
     }
   }
 
+  // Row text at 12px, the same size as the column labels above it.
+  nb-card-body .custom-body .content {
+    font-size: 12px;
+
+    // `.small` would take the To-do line down to ~10px.
+    .small {
+      font-size: inherit;
+    }
+
+    ngx-project ::ng-deep .project-render .name {
+      font-size: 12px;
+      line-height: 15px;
+    }
+  }
+
   .log-container {
     height: calc(100% - 50px);
   }
