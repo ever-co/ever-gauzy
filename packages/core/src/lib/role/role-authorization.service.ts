@@ -125,9 +125,14 @@ export class RoleAuthorizationService {
 
 		if (state) {
 			user.role = state.role;
+			user.permissions = state.permissions;
+		} else {
+			// Do not leave behind a role the caller brought with them (an eagerly loaded relation, or a
+			// value set earlier in the request): `RequestContext.hasRoles()` reads `user.role`, so a role
+			// kept here would still authorize a user whose role no longer resolves.
+			delete user.role;
+			user.permissions = [];
 		}
-
-		user.permissions = state?.permissions ?? [];
 
 		return user;
 	}

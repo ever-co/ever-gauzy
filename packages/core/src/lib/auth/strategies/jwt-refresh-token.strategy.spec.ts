@@ -47,6 +47,8 @@ describe('JwtRefreshTokenStrategy.validate', () => {
 		['a deactivated user', { ...activeUser, isActive: false }],
 		['an archived user', { ...activeUser, isArchived: true }],
 		['a user whose isActive is unknown', { ...activeUser, isActive: undefined }],
+		['a user whose isArchived is unknown', { ...activeUser, isArchived: undefined }],
+		['a user whose isArchived is null', { ...activeUser, isArchived: null }],
 		['a missing user', null]
 	])('rejects %s', async (_label, user) => {
 		const { strategy } = build(user);

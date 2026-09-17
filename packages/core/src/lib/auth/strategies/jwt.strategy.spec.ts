@@ -103,7 +103,9 @@ describe('JwtStrategy.validate', () => {
 			['a deactivated user', { ...activeUser, isActive: false }],
 			['an archived user', { ...activeUser, isArchived: true }],
 			['a user whose isActive is unknown', { ...activeUser, isActive: undefined }],
-			['a user whose isActive is null', { ...activeUser, isActive: null }]
+			['a user whose isActive is null', { ...activeUser, isActive: null }],
+			['a user whose isArchived is unknown', { ...activeUser, isArchived: undefined }],
+			['a user whose isArchived is null', { ...activeUser, isArchived: null }]
 		])('rejects %s holding a still-valid token', async (_label, user) => {
 			const { strategy, roleAuthorizationService } = build(user);
 			const { err, user: authenticated } = await run(strategy, { id: 'first-user', tenantId: 'tenant' });
@@ -116,8 +118,9 @@ describe('JwtStrategy.validate', () => {
 		it.each([
 			['deactivated', { id: 'emp-1', userId: 'first-user', isActive: false, isArchived: false }],
 			['archived', { id: 'emp-1', userId: 'first-user', isActive: true, isArchived: true }],
-			['of unknown status', { id: 'emp-1', userId: 'first-user' }]
-		])('rejects a token carrying a %s employee', async (_label, employee) => {
+			['with an unknown status', { id: 'emp-1', userId: 'first-user' }],
+			['with a null archive status', { id: 'emp-1', userId: 'first-user', isActive: true, isArchived: null }]
+		])('rejects a token carrying an employee that is %s', async (_label, employee) => {
 			const { strategy, employeeService } = build();
 			employeeService.findOneByIdString.mockResolvedValue(employee);
 
@@ -165,7 +168,7 @@ describe('JwtStrategy.validate', () => {
 			expect(user).toMatchObject({ role: { name: 'EMPLOYEE' }, permissions: ['ORG_TEAM_VIEW'] });
 		});
 
-		it('refuses the request when the role state cannot be resolved', async () => {
+		it('refuses the request when the role lookup fails (throws)', async () => {
 			const { strategy, roleAuthorizationService } = build();
 			roleAuthorizationService.attachAuthorizationState.mockRejectedValue(new Error('database is down'));
 
@@ -173,6 +176,23 @@ describe('JwtStrategy.validate', () => {
 
 			expect(err).toBeInstanceOf(UnauthorizedException);
 			expect(user).toBe(false);
+		});
+
+		it('authenticates with no role and no permissions when the role does not resolve (returns null)', async () => {
+			// The other fail-closed shape: the lookup succeeds but finds nothing (roleId NULL, role row
+			// gone). The request is still authenticated — authorization is what fails, downstream.
+			const { strategy, roleAuthorizationService } = build({ ...activeUser, roleId: null });
+			roleAuthorizationService.attachAuthorizationState.mockImplementation(async (u: any) => {
+				delete u.role;
+				u.permissions = [];
+				return u;
+			});
+
+			const { err, user } = await run(strategy, { id: 'first-user', tenantId: 'tenant', role: 'SUPER_ADMIN' });
+
+			expect(err).toBeNull();
+			expect((user as any).role).toBeUndefined();
+			expect((user as any).permissions).toEqual([]);
 		});
 	});
 });

@@ -325,7 +325,9 @@ export class RequestContext {
 	 * Checks if the current request context has the specified permissions.
 	 *
 	 * @param permissions - An array of permissions to check.
-	 * @param throwError - Whether to throw an error if permissions are not found.
+	 * @param throwError - Whether to throw an HTTP 401 instead of returning `false`. This fires whenever the
+	 *                     check fails — for an authenticated caller who simply lacks it, not only when no
+	 *                     user is attached (the token-decoding implementation returned early for the former).
 	 * @returns True if the required permissions are found, otherwise false.
 	 */
 	static hasPermissions(permissions: PermissionsEnum[], throwError?: boolean): boolean {
@@ -352,7 +354,9 @@ export class RequestContext {
 	 * Checks if the current request context has any of the specified permissions.
 	 *
 	 * @param permissions - An array of permissions to check.
-	 * @param throwError - Whether to throw an error if no permissions are found.
+	 * @param throwError - Whether to throw an HTTP 401 instead of returning `false`. This fires whenever the
+	 *                     check fails — for an authenticated caller who simply lacks it, not only when no
+	 *                     user is attached (the token-decoding implementation returned early for the former).
 	 * @returns True if any of the required permissions are found, otherwise false.
 	 */
 	static hasAnyPermission(permissions: PermissionsEnum[], throwError?: boolean): boolean {
@@ -410,7 +414,9 @@ export class RequestContext {
 	 * Checks if the current request context has any of the specified roles.
 	 *
 	 * @param roles - An array of roles to check.
-	 * @param throwError - Whether to throw an error if no roles are found.
+	 * @param throwError - Whether to throw an HTTP 401 instead of returning `false`. This fires whenever the
+	 *                     check fails — for an authenticated caller who simply lacks it, not only when no
+	 *                     user is attached (the token-decoding implementation returned early for the former).
 	 * @returns True if any of the required roles are found, otherwise false.
 	 */
 	static hasRoles(roles: RolesEnum[], throwError?: boolean): boolean {

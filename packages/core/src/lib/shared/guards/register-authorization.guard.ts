@@ -166,7 +166,8 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		// creating users with assigned roles for the token's whole lifetime.
 		const caller = await this.findCaller(callerUserId);
 
-		if (!caller || caller.isActive !== true || caller.isArchived === true) {
+		// Same exact predicates as JwtStrategy and token issuance: an unknown (NULL) status is refused.
+		if (!caller || caller.isActive !== true || caller.isArchived !== false) {
 			throw new ForbiddenException('Invalid or expired authentication token.');
 		}
 

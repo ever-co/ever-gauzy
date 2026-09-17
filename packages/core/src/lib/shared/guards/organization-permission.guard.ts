@@ -62,6 +62,16 @@ export class OrganizationPermissionGuard implements CanActivate {
 		const role = RequestContext.currentRoleName();
 		const employeeId = user.employeeId;
 
+		// No resolvable role (the user's roleId is NULL, the role row is gone, or its lookup returned
+		// nothing) means no verdict can be reached. Without this, `null !== EMPLOYEE` sent the request
+		// into the permissive non-employee branch below.
+		if (!role) {
+			console.log(
+				`Unauthorized access blocked: User ID: ${id}, Role: unresolved, Permissions Checked: ${permissions.join(', ')}`
+			);
+			return false;
+		}
+
 		// Check if super admin role is allowed from the .env file
 		if (env.allowSuperAdminRole && RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])) {
 			return true;

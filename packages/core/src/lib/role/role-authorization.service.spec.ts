@@ -70,13 +70,13 @@ describe('RoleAuthorizationService', () => {
 	});
 
 	it.each([
-		['disabled', { enabled: false }],
-		['deactivated', { isActive: false }],
-		['archived', { isArchived: true }],
-		['of unknown enabled state', { enabled: undefined }],
-		['of unknown active state', { isActive: null }],
-		['of unknown archived state', { isArchived: null }]
-	])('drops a %s role permission', async (_label, overrides) => {
+		['a disabled role permission', { enabled: false }],
+		['a deactivated role permission', { isActive: false }],
+		['an archived role permission', { isArchived: true }],
+		['a role permission whose enabled state is unknown', { enabled: undefined }],
+		['a role permission whose active state is unknown', { isActive: null }],
+		['a role permission whose archived state is unknown', { isArchived: null }]
+	])('drops %s', async (_label, overrides) => {
 		const { service } = build({
 			id: 'role-1',
 			name: RolesEnum.EMPLOYEE,
@@ -157,6 +157,23 @@ describe('RoleAuthorizationService', () => {
 
 			expect(user.permissions).toEqual([]);
 			expect(user.role).toBeUndefined();
+		});
+
+		it('removes a role the user already carried when the current role cannot be resolved', async () => {
+			const { service } = build(null);
+			// A role object already on the user (an eager relation, or one set earlier in the request),
+			// while the roleId it now points at no longer resolves.
+			const user: any = {
+				id: 'user-1',
+				roleId: 'role-gone',
+				role: { id: 'role-sa', name: RolesEnum.SUPER_ADMIN },
+				permissions: [PermissionsEnum.SUPER_ADMIN_EDIT]
+			};
+
+			await service.attachAuthorizationState(user);
+
+			expect(user.role).toBeUndefined();
+			expect(user.permissions).toEqual([]);
 		});
 	});
 });

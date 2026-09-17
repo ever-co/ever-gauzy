@@ -128,7 +128,11 @@ describe('RegisterAuthorizationGuard', () => {
 
 	it('authorizes a caller who is still a super admin, and publishes their DB state on the request', async () => {
 		const { guard, roleAuthorizationService } = build(activeSuperAdmin, superAdminState);
-		const { request, executionContext } = context({ user: { email: 'new@ever.co', roleId: 'role-target' } });
+		// A spoofed createdByUserId in the body must be overwritten with the authenticated caller.
+		const { request, executionContext } = context({
+			user: { email: 'new@ever.co', roleId: 'role-target' },
+			createdByUserId: 'attacker-id'
+		});
 
 		await expect(guard.canActivate(executionContext)).resolves.toBe(true);
 		expect(roleAuthorizationService.getAuthorizationState).toHaveBeenCalledWith('role-sa');
@@ -153,8 +157,11 @@ describe('RegisterAuthorizationGuard', () => {
 	it.each([
 		['deactivated', { ...activeSuperAdmin, isActive: false }],
 		['archived', { ...activeSuperAdmin, isArchived: true }],
-		['deleted', null]
-	])('refuses a %s caller holding a still-valid token', async (_label, caller) => {
+		['with a null archive status', { ...activeSuperAdmin, isArchived: null }],
+		['with an undefined archive status', { ...activeSuperAdmin, isArchived: undefined }],
+		// The repository answers null for a missing row, and for a soft-deleted one (@DeleteDateColumn).
+		['missing', null]
+	])('refuses a caller that is %s, holding a still-valid token', async (_label, caller) => {
 		const { guard, roleAuthorizationService } = build(caller, superAdminState);
 		const { executionContext } = context({ user: { email: 'new@ever.co', roleId: 'role-target' } });
 
