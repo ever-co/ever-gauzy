@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { EventBusModule, RolePermissionModule } from '@gauzy/core';
+import { EventBusModule, Product, ProductTranslation, ProductVariant, ProductVariantSetting, RolePermissionModule } from '@gauzy/core';
+import { CatalogItemService } from './catalog-item/catalog-item.service';
+import { ProductVariantSaleService } from './product-variant-sale/product-variant-sale.service';
 import { Collection } from './collection/collection.entity';
 import { CollectionController } from './collection/collection.controller';
 import { CollectionService } from './collection/collection.service';
@@ -55,6 +57,11 @@ import { TypeOrmTagProductVariantRepository } from './tag-product-variant/reposi
  * Both ORM registrations are declared for every entity, so the same module boots under either ORM.
  * `EventBusModule` is imported because the services publish their domain events through the platform
  * bus rather than through a private one, which is what lets a subscriber outside this plugin hear them.
+ *
+ * The product, its translations, its variants and a variant's settings are the platform's own tables
+ * and stay in the domain that owns them; they are registered here because two reads of this package
+ * answer about them — which variant a product is offered as, and what a referenced product or variant
+ * is — and a package that answers about a row reads it rather than keeping a copy of it.
  */
 @Module({
 	controllers: [
@@ -80,7 +87,11 @@ import { TypeOrmTagProductVariantRepository } from './tag-product-variant/reposi
 			ProductVariantChannel,
 			ProductRelation,
 			ProductVariantMedia,
-			TagProductVariant
+			TagProductVariant,
+			Product,
+			ProductTranslation,
+			ProductVariant,
+			ProductVariantSetting
 		]),
 		MikroOrmModule.forFeature([
 			Collection,
@@ -91,7 +102,11 @@ import { TypeOrmTagProductVariantRepository } from './tag-product-variant/reposi
 			ProductVariantChannel,
 			ProductRelation,
 			ProductVariantMedia,
-			TagProductVariant
+			TagProductVariant,
+			Product,
+			ProductTranslation,
+			ProductVariant,
+			ProductVariantSetting
 		]),
 		EventBusModule
 	],
@@ -105,6 +120,8 @@ import { TypeOrmTagProductVariantRepository } from './tag-product-variant/reposi
 		ProductRelationService,
 		ProductVariantMediaService,
 		TagProductVariantService,
+		CatalogItemService,
+		ProductVariantSaleService,
 		TypeOrmCollectionRepository,
 		MikroOrmCollectionRepository,
 		TypeOrmCollectionProductRepository,
@@ -134,7 +151,9 @@ import { TypeOrmTagProductVariantRepository } from './tag-product-variant/reposi
 		ProductVariantChannelService,
 		ProductRelationService,
 		ProductVariantMediaService,
-		TagProductVariantService
+		TagProductVariantService,
+		CatalogItemService,
+		ProductVariantSaleService
 	]
 })
 export class CatalogModule {}

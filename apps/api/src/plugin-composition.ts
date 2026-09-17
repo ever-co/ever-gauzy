@@ -1,9 +1,11 @@
 import { Global, Module } from '@nestjs/common';
+import { CatalogItemService, CatalogModule, ProductVariantSaleService } from '@gauzy/plugin-catalog';
 import { OrderLineFulfillmentService, OrderLineService, OrderModule } from '@gauzy/plugin-order';
 import { PricingModule, RecurringPriceService } from '@gauzy/plugin-pricing';
 import { PAYMENT_ORDER_LINE_REFUND } from '@gauzy/plugin-payment';
+import { ENTITLEMENT_CATALOG_PORT } from '@gauzy/plugin-entitlement';
 import { RETURNS_ORDER_FULFILLMENT } from '@gauzy/plugin-returns';
-import { SUBSCRIPTION_PRICING } from '@gauzy/plugin-subscription';
+import { SUBSCRIPTION_CATALOG, SUBSCRIPTION_PRICING } from '@gauzy/plugin-subscription';
 
 /**
  * This installation's composition point.
@@ -41,6 +43,9 @@ import { SUBSCRIPTION_PRICING } from '@gauzy/plugin-subscription';
 @Global()
 @Module({
 	imports: [
+		// The catalogue owns what a product and a variant are, which is what a plan is attached to and
+		// what a right is granted over.
+		CatalogModule,
 		// The order package owns the line's refund register, and its module already exports the service
 		// that moves it. It also answers how much of a line has been fulfilled, which is what a return
 		// is measured against.
@@ -56,8 +61,21 @@ import { SUBSCRIPTION_PRICING } from '@gauzy/plugin-subscription';
 		{ provide: RETURNS_ORDER_FULFILLMENT, useExisting: OrderLineFulfillmentService },
 		// A billing period is priced by the pricing package, so a subscription asks it rather than
 		// reading a price table of its own.
-		{ provide: SUBSCRIPTION_PRICING, useExisting: RecurringPriceService }
+		{ provide: SUBSCRIPTION_PRICING, useExisting: RecurringPriceService },
+		// Whether a variant may be sold on recurring terms, and which variant stands for a product, are
+		// both settings the catalogue already records; the subscription domain asks for them rather
+		// than reading another package's columns.
+		{ provide: SUBSCRIPTION_CATALOG, useExisting: ProductVariantSaleService },
+		// An entitlement names the product and the variant it is over, and only the catalogue can say
+		// what those identifiers name.
+		{ provide: ENTITLEMENT_CATALOG_PORT, useExisting: CatalogItemService }
 	],
-	exports: [PAYMENT_ORDER_LINE_REFUND, RETURNS_ORDER_FULFILLMENT, SUBSCRIPTION_PRICING]
+	exports: [
+		PAYMENT_ORDER_LINE_REFUND,
+		RETURNS_ORDER_FULFILLMENT,
+		SUBSCRIPTION_PRICING,
+		SUBSCRIPTION_CATALOG,
+		ENTITLEMENT_CATALOG_PORT
+	]
 })
 export class PluginCompositionModule {}

@@ -73,3 +73,6 @@ export * from './lib/tag-product-variant/tag-product-variant.controller';
 export * from './lib/tag-product-variant/dto';
 export * from './lib/tag-product-variant/repository/type-orm-tag-product-variant.repository';
 export * from './lib/tag-product-variant/repository/mikro-orm-tag-product-variant.repository';
+
+export * from './lib/catalog-item/catalog-item.service';
+export * from './lib/product-variant-sale/product-variant-sale.service';

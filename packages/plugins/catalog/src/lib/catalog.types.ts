@@ -7,6 +7,8 @@
  * one imports it from here rather than declaring a look-alike of its own.
  */
 
+import { ID } from '@gauzy/contracts';
+
 /**
  * Lifecycle gate of a product or a product category.
  *
@@ -66,4 +68,30 @@ export enum ProductRelationType {
 	ACCESSORY = 'ACCESSORY',
 	/** A consumable or replacement part for the source product. */
 	SPARE_PART = 'SPARE_PART'
+}
+
+/**
+ * One catalogue item as a caller that does not own the catalogue reads it.
+ *
+ * A domain that references a product or a variant by identifier — a right granted over one, a plan
+ * that delivers one — needs to be able to say what the identifier names, and the catalogue is the
+ * only package that knows. The two members below are what such a caller asks for; the service that
+ * answers returns the catalogue's own row beside them, so a caller reading the object over the
+ * platform's GraphQL surface finds the fields the catalogue's own types declare rather than a
+ * reduced projection of them.
+ *
+ * `sku` is carried because a caller may ask for it, and is reported as absent: nothing in this
+ * catalogue stores a stock-keeping unit. The operator's own reference for a variant is its
+ * `internalReference`, and the product's operator-facing identity is its `code`.
+ */
+export interface ICatalogItem {
+	/** The product or variant. */
+	readonly id: ID;
+	/**
+	 * The product's name, in the language the caller asked for. A variant has no name of its own:
+	 * nothing in the catalogue names one, so this member is absent for a variant.
+	 */
+	readonly name?: string;
+	/** Reported as absent: no stock-keeping unit is recorded for a product or a variant. */
+	readonly sku?: string;
 }

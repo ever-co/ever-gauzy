@@ -80,10 +80,6 @@ const AWAITING_PROVIDER = {
 		owner: '@gauzy/plugin-purchasing',
 		needs: 'A facade over the kernel approval service, so a purchase order above its threshold is routed rather than confirmed.'
 	},
-	SUBSCRIPTION_CATALOG: {
-		owner: '@gauzy/plugin-catalog',
-		needs: 'A read of which products and variants may be subscribed to, which the catalogue does not currently record.'
-	},
 	SUBSCRIPTION_ORDER_GATEWAY: {
 		owner: '@gauzy/plugin-order',
 		needs: 'Raising the order a billing period produces, and the proration order a mid-period change produces.'
@@ -91,11 +87,6 @@ const AWAITING_PROVIDER = {
 	SUBSCRIPTION_INSTRUMENTS: {
 		owner: '@gauzy/plugin-payment',
 		needs: 'Which stored instrument may be charged, which the payment package does not currently store.'
-	},
-	ENTITLEMENT_CATALOG_PORT: {
-		owner: '@gauzy/plugin-catalog',
-		needs:
-			'Reading the product or variant an entitlement is about, so a right can be granted against a catalogue item rather than a free-text key.'
 	},
 	SELLER_MEMBERSHIP_RESOLVER: {
 		owner: 'the installation',
