@@ -1,0 +1,44 @@
+{
+	"name": "plugin-payment",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/payment/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+		}
+	},
+	"tags": [],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "utils", "plugin-order"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/payment",
+				"tsConfig": "packages/plugins/payment/tsconfig.lib.json",
+				"packageJson": "packages/plugins/payment/package.json",
+				"main": "packages/plugins/payment/src/index.ts",
+				"assets": ["packages/plugins/payment/*.md"]
+			},
+			"dependsOn": ["^build"]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/payment/jest.config.ts"
+			}
+		}
+	}
+}
