@@ -6,6 +6,7 @@ import { environment as env } from '@gauzy/config';
 import { ID, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { trace } from '@opentelemetry/api';
 import { Request, Response } from 'express';
 import { JsonWebTokenError, verify } from 'jsonwebtoken';
 import { CLS_ID, ClsService } from 'nestjs-cls';
@@ -95,6 +96,28 @@ export class RequestContext {
 		if (RequestContext.clsService) {
 			return RequestContext.clsService.get(CLS_ID);
 		}
+	}
+
+	/**
+	 * The id an operator quotes when a caller reports a failure.
+	 *
+	 * Tracing deployments already have a trace id, and it is the better answer there because it
+	 * joins this request to every span it produced. Everything else has the correlation id: the
+	 * middleware puts `x-correlation-id` — or a generated one — into the context for every request,
+	 * and the log lines for that request carry it. Either way the value returned here is the one
+	 * that appears in the log, which is the whole point: a support ticket naming this id must lead
+	 * to a log record.
+	 *
+	 * No new state is introduced. When neither exists — a script, a unit test, a background job
+	 * that never entered a request — the answer is `undefined` and the envelope renders an empty
+	 * string rather than inventing an id that maps to nothing.
+	 *
+	 * @returns The active trace id, the correlation id, or undefined.
+	 */
+	public static currentTraceId(): string | undefined {
+		const span = trace.getActiveSpan();
+		const traceId = span?.spanContext().traceId;
+		return traceId ?? RequestContext.getContextId() ?? undefined;
 	}
 
 	/**

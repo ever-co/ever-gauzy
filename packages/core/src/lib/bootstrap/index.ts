@@ -51,7 +51,7 @@ import {
 	orderPluginMigrations
 } from '@gauzy/plugin';
 import { MultiORMEnum, getORMType } from '../core/utils';
-import { DatabaseErrorFilter } from '../core/errors';
+import { ApiExceptionFilter, DatabaseErrorFilter } from '../core/errors';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
@@ -230,6 +230,19 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// which only runs under DI. Constructed with `new`, it would have none, and super.catch() would
 	// throw while handling every ordinary HttpException.
 	app.useGlobalFilters(new DatabaseErrorFilter(app.getHttpAdapter()));
+
+	// The error envelope. It is registered SECOND on purpose, and that order is load-bearing:
+	// Nest reverses the global filter list before it selects the first match
+	// (`RouterExceptionFilters.create` → `setCustomFilters(filters.reverse())`, then
+	// `selectExceptionFilterMetadata` → `Array.find`), so the LAST filter registered globally is
+	// the FIRST one consulted. Both filters are declared `@Catch(HttpException)`; registered the
+	// other way round, the database filter would answer first and no response would ever carry a
+	// code.
+	//
+	// The database filter's line above is NOT removed and must not be: it is the net that keeps
+	// database internals out of responses if this filter is ever reverted, and the envelope filter
+	// delegates to that same filter's own `catch` for every exception it does not own.
+	app.useGlobalFilters(new ApiExceptionFilter(app.getHttpAdapter()));
 
 	// Get the AppService
 	const appService = app.select(AppModule).get(AppService);
