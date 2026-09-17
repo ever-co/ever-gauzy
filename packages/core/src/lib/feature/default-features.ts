@@ -1,7 +1,36 @@
 import { gauzyToggleFeatures } from '@gauzy/config';
 import { FeatureEnum, IFeatureCreateInput } from '@gauzy/contracts';
+import { COMMERCE_CATALOGUE } from './commerce-feature-catalogue';
 
 const features = gauzyToggleFeatures;
+
+/**
+ * The commerce catalogue, in the shape the fresh-install seed reads.
+ *
+ * Derived from the one definition in `commerce-feature-catalogue.ts` rather than restated here, so
+ * this list and the `feature` rows written by `1791000000510-SeedCoreFeatures` cannot drift: the
+ * seed path that runs on a database with no users *deletes* every `feature` and `feature_organization`
+ * row and recreates only what this array holds, so a code stated twice is a code that can be dropped
+ * by one path and kept by the other.
+ *
+ * `isEnabled` is the catalogue's `defaultEnabled`, which is the appendix B §4 default: `true` for a
+ * code marked *on* (enabled toggle row), `false` for a code marked *off* (the seed writes the toggle
+ * row disabled, and the guard resolves it exactly as it resolves the migration's absent row).
+ *
+ * `code` is asserted to `FeatureEnum` because the compiled enum is the platform's own list of codes
+ * and these codes are registered by the catalogue, not by an edit to the enum — the same reason the
+ * migration writes them as text, which is what the `varchar` column holds and what the guard compares.
+ */
+const commerceFeatures: IFeatureCreateInput[] = COMMERCE_CATALOGUE.map((feature) => ({
+	name: feature.name,
+	code: feature.code as FeatureEnum,
+	description: feature.description,
+	image: feature.image as string,
+	link: feature.link,
+	status: feature.status,
+	icon: feature.icon,
+	isEnabled: feature.defaultEnabled
+}));
 
 export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
@@ -617,5 +646,6 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		isEnabled: features.FEATURE_DOCUMENTS,
 		icon: 'fas fa-book',
 		status: 'info'
-	}
+	},
+	...commerceFeatures
 ];
