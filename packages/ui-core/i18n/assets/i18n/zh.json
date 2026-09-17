@@ -4912,7 +4912,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "截图",
 			"OF": "关于/关于/的/的",
-			"TIME_LOG": "时间日志"
+			"TIME_LOG": "时间日志",
+			"TAKEN_AT": "截图拍摄于 {{ time }}",
+			"POSITION": "第 {{ position }} 张截图，共 {{ total }} 张"
 		},
 		"RUNNING_TIMER_WARNING": "警告。计时器正在运行，只有在停止计时器或在计时器应用程序内才能删除屏幕截图。",
 		"DELETE_CONFIRM": "你确定要删除这些截图和时间记录吗？",

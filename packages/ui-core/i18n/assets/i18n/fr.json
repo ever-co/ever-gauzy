@@ -4903,7 +4903,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Captures d'écran",
 			"OF": "du",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Capture d’écran prise à {{ time }}",
+			"POSITION": "Capture d’écran {{ position }} sur {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Avertissement. Le compte à rebours est en marche, vous ne pouvez supprimer les captures d'écran que si vous arrêtez le minuteur ou depuis l'application Timer.",
 		"DELETE_CONFIRM": "Êtes-vous certain de vouloir supprimer ces captures d'écran et ce journal des temps ?",

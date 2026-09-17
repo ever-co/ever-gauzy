@@ -4912,7 +4912,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Screenshots",
 			"OF": "van",
-			"TIME_LOG": "Tijdregistratie"
+			"TIME_LOG": "Tijdregistratie",
+			"TAKEN_AT": "Screenshot gemaakt om {{ time }}",
+			"POSITION": "Screenshot {{ position }} van {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Waarschuwing. De timer loopt, je kunt alleen schermafbeeldingen verwijderen als je de timer stopt of de Inside Timer-app gebruikt.",
 		"DELETE_CONFIRM": "Weet u zeker dat u deze screenshots en tijdsregistratie wilt verwijderen?",

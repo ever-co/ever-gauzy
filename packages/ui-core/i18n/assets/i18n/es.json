@@ -4914,7 +4914,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Capturas de pantalla",
 			"OF": "de",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Captura de pantalla tomada a las {{ time }}",
+			"POSITION": "Captura de pantalla {{ position }} de {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Advertencia. El temporizador está en marcha, solo puedes eliminar capturas de pantalla si detienes el temporizador o dentro de la aplicación Timer.",
 		"DELETE_CONFIRM": "¿Estás seguro de borrar estas capturas de pantalla y el registro de tiempo?",
