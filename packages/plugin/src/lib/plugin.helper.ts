@@ -339,6 +339,14 @@ export function resolvePluginLoadOrder(plugins: Array<Type<any> | DynamicModule>
 	for (const plugin of plugins) {
 		const identity = identityOf(plugin);
 		originalOf.set(identity, plugin);
+		// The class itself is an answer, not only its names. `dependsOn` accepts either — a plugin
+		// that imports its prerequisite writes the class, one that must not import it writes the
+		// package name — and indexing only the names makes the first spelling unresolvable: the
+		// declaration is legal, the plugin list is complete, and the boot is refused with a message
+		// naming a prerequisite that is right there in the list.
+		if (!configured.has(identity)) {
+			configured.set(identity, identity);
+		}
 		for (const name of pluginNamesOf(plugin)) {
 			if (!configured.has(name)) {
 				configured.set(name, identity);

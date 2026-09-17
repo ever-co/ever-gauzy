@@ -21,7 +21,7 @@ import {
 	TenantOrganizationBaseEntity,
 	Warehouse
 } from '@gauzy/core';
-import { IWarehouseBin, WarehouseBinType } from '../warehouse.types';
+import { IWarehouseBin, IWarehouseZone, WarehouseBinType } from '../warehouse.types';
 import { WarehouseZone } from '../warehouse-zone/warehouse-zone.entity';
 import { MikroOrmWarehouseBinRepository } from './repository/mikro-orm-warehouse-bin.repository';
 
@@ -200,7 +200,7 @@ export class WarehouseBin extends TenantOrganizationBaseEntity implements IWareh
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	zone?: WarehouseZone;
+	zone?: IWarehouseZone;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

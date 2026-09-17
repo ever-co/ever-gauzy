@@ -22,7 +22,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '@gauzy/core';
-import { IPickList, IPickListLine, PickListLineStatus } from '../warehouse.types';
+import { IPackSlip, IPickList, IPickListLine, IWarehouseBin, IWarehouseZone, PickListLineStatus } from '../warehouse.types';
 import { PackSlip } from '../pack-slip/pack-slip.entity';
 import { PickList } from '../pick-list/pick-list.entity';
 import { WarehouseBin } from '../warehouse-bin/warehouse-bin.entity';
@@ -224,7 +224,7 @@ export class PickListLine extends TenantOrganizationBaseEntity implements IPickL
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	bin?: WarehouseBin;
+	bin?: IWarehouseBin;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -245,7 +245,7 @@ export class PickListLine extends TenantOrganizationBaseEntity implements IPickL
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	zone?: WarehouseZone;
+	zone?: IWarehouseZone;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -266,7 +266,7 @@ export class PickListLine extends TenantOrganizationBaseEntity implements IPickL
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	packSlip?: PackSlip;
+	packSlip?: IPackSlip;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

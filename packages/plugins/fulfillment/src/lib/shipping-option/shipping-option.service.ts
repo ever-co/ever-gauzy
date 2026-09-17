@@ -198,13 +198,21 @@ export class ShippingOptionService extends TenantAwareCrudService<ShippingOption
 	 * @param entity The option.
 	 */
 	private assertPriceShape(entity: DeepPartial<ShippingOption>): void {
-		switch (entity.priceType) {
+		// The price type is read through the text a caller can actually carry rather than through the
+		// entity's declaration. The column is an enumerated one with a default, so `ShippingOption`
+		// types it as always one of the three known values and the two cases this guard exists for —
+		// no price type at all, and one this platform does not price — are not expressible in it. Both
+		// reach here at runtime: the GraphQL mutation asserts the input's type instead of checking it,
+		// and a service call is not obliged to come through the REST DTO's validation.
+		const priceType: string | undefined = entity.priceType;
+
+		switch (priceType) {
 			case ShippingPriceType.FLAT:
 				if (entity.amount === null || entity.amount === undefined || !entity.currency) {
 					throw new BadRequestException({
 						message: 'A flat shipping option needs an amount and a currency.',
 						code: 'SHIPPING_OPTION_INVALID',
-						details: { priceType: entity.priceType }
+						details: { priceType }
 					});
 				}
 				break;
@@ -213,7 +221,7 @@ export class ShippingOptionService extends TenantAwareCrudService<ShippingOption
 					throw new BadRequestException({
 						message: 'A calculated shipping option needs the provider strategy that prices it.',
 						code: 'SHIPPING_OPTION_INVALID',
-						details: { priceType: entity.priceType }
+						details: { priceType }
 					});
 				}
 				break;
@@ -223,7 +231,7 @@ export class ShippingOptionService extends TenantAwareCrudService<ShippingOption
 				throw new BadRequestException({
 					message: 'A shipping option needs a price type.',
 					code: 'SHIPPING_OPTION_INVALID',
-					details: { priceType: entity.priceType }
+					details: { priceType }
 				});
 		}
 

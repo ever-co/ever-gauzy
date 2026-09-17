@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EventBusModule, RolePermissionModule } from '@gauzy/core';
 import { resolvers } from './graphql/resolvers';
-import { ALL_PROMOTION_ENTITIES } from './promotion.plugin';
+import { ALL_PROMOTION_ENTITIES } from './promotion.entities';
 import { Campaign } from './campaign/campaign.entity';
 import { CampaignBudget } from './campaign-budget/campaign-budget.entity';
 import { CampaignBudgetUsage } from './campaign-budget-usage/campaign-budget-usage.entity';

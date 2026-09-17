@@ -1,5 +1,6 @@
 import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
+import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
 import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { Fulfillment } from '../fulfillment/fulfillment.entity';
@@ -7,6 +8,12 @@ import { FulfillmentService } from '../fulfillment/fulfillment.service';
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
 import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
+import {
+	FULFILLMENT_DIRECTIONS,
+	FULFILLMENT_STATUS_DETAILS,
+	isFulfillmentDirection,
+	isFulfillmentStatusDetail
+} from './filters';
 import { IFulfillmentConnection } from './types';
 
 /**
@@ -31,6 +38,7 @@ export class FulfillmentResolver {
 	 *
 	 * @param filter The filter arguments.
 	 * @returns A page of fulfilments.
+	 * @throws BadRequestException when a status or a direction is given that a fulfilment does not have.
 	 */
 	@Query(() => Object, { name: 'fulfillments' })
 	async fulfillments(
@@ -39,12 +47,36 @@ export class FulfillmentResolver {
 		@Args('warehouseId', { type: () => ID, nullable: true }) warehouseId?: string,
 		@Args('direction', { type: () => String, nullable: true }) direction?: string
 	): Promise<IFulfillmentConnection> {
-		const where = {
-			...(orderId ? { orderId } : {}),
-			...(status ? { status } : {}),
-			...(warehouseId ? { warehouseId } : {}),
-			...(direction ? { direction } : {})
-		};
+		const where: FindOptionsWhere<Fulfillment> = {};
+
+		if (orderId) {
+			where.orderId = orderId;
+		}
+
+		if (status) {
+			if (!isFulfillmentStatusDetail(status)) {
+				throw new BadRequestException(
+					`The fulfilment status "${status}" is not one of: ${FULFILLMENT_STATUS_DETAILS.join(', ')}.`
+				);
+			}
+
+			where.status = status;
+		}
+
+		if (warehouseId) {
+			where.warehouseId = warehouseId;
+		}
+
+		if (direction) {
+			if (!isFulfillmentDirection(direction)) {
+				throw new BadRequestException(
+					`The fulfilment direction "${direction}" is not one of: ${FULFILLMENT_DIRECTIONS.join(', ')}.`
+				);
+			}
+
+			where.direction = direction;
+		}
+
 		const page = (await this.fulfillmentService.findAll({ where })) as IPagination<Fulfillment>;
 
 		return { items: page.items, total: page.total };

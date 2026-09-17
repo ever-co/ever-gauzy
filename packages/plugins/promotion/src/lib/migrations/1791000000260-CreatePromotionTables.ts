@@ -357,7 +357,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		const i = this.inheritedSqlite;
 
 		await queryRunner.query(
-			`CREATE TABLE "campaign" (${i}, "identifier" varchar(64) NOT NULL, "name" varchar(255) NOT NULL, "description" text, "status" varchar(16) NOT NULL DEFAULT ('DRAFT'), "startsAt" datetime, "endsAt" datetime, "metadata" text, CONSTRAINT "PK_campaign_id" PRIMARY KEY ("id"))`
+			`CREATE TABLE "campaign" (${i}, "identifier" varchar(64) NOT NULL, "name" varchar(255) NOT NULL, "description" text, "status" varchar(16) NOT NULL DEFAULT ('DRAFT'), "startsAt" datetime, "endsAt" datetime, "metadata" text)`
 		);
 		await this.baseIndexes(queryRunner, 'campaign');
 		await queryRunner.query(
@@ -368,7 +368,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE "campaign_budget" (${i}, "campaignId" varchar NOT NULL, "type" varchar(32) NOT NULL DEFAULT ('SPEND'), "limit" numeric(20,6) NOT NULL, "used" numeric(20,6) NOT NULL DEFAULT (0), "attribute" varchar(128), "currency" varchar(3), CONSTRAINT "FK_campaign_budget_campaign" FOREIGN KEY ("campaignId") REFERENCES "campaign" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "PK_campaign_budget_id" PRIMARY KEY ("id"))`
+			`CREATE TABLE "campaign_budget" (${i}, "campaignId" varchar NOT NULL, "type" varchar(32) NOT NULL DEFAULT ('SPEND'), "limit" numeric(20,6) NOT NULL, "used" numeric(20,6) NOT NULL DEFAULT (0), "attribute" varchar(128), "currency" varchar(3), CONSTRAINT "FK_campaign_budget_campaign" FOREIGN KEY ("campaignId") REFERENCES "campaign" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await this.baseIndexes(queryRunner, 'campaign_budget');
 		await queryRunner.query(
@@ -379,7 +379,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE "campaign_budget_usage" (${i}, "budgetId" varchar NOT NULL, "attributeValue" varchar(191) NOT NULL, "used" numeric(20,6) NOT NULL DEFAULT (0), CONSTRAINT "FK_campaign_budget_usage_budget" FOREIGN KEY ("budgetId") REFERENCES "campaign_budget" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "PK_campaign_budget_usage_id" PRIMARY KEY ("id"))`
+			`CREATE TABLE "campaign_budget_usage" (${i}, "budgetId" varchar NOT NULL, "attributeValue" varchar(191) NOT NULL, "used" numeric(20,6) NOT NULL DEFAULT (0), CONSTRAINT "FK_campaign_budget_usage_budget" FOREIGN KEY ("budgetId") REFERENCES "campaign_budget" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await this.baseIndexes(queryRunner, 'campaign_budget_usage');
 		await queryRunner.query(
@@ -390,7 +390,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE "promotion" (${i}, "code" varchar(64), "title" varchar(255) NOT NULL, "description" text, "type" varchar(16) NOT NULL DEFAULT ('STANDARD'), "status" varchar(16) NOT NULL DEFAULT ('DRAFT'), "isAutomatic" boolean NOT NULL DEFAULT (0), "isCombinable" boolean NOT NULL DEFAULT (1), "stackingGroup" varchar(64), "priority" integer NOT NULL DEFAULT (0), "campaignId" varchar, "channelId" varchar, "currency" varchar(3), "customerGroupId" varchar, "startsAt" datetime, "endsAt" datetime, "usageLimit" integer, "usageCount" integer NOT NULL DEFAULT (0), "perCustomerUsageLimit" integer, "budgetAmount" numeric(20,6), "budgetSpent" numeric(20,6) NOT NULL DEFAULT (0), "isTaxInclusive" boolean NOT NULL DEFAULT (0), "metadata" text, CONSTRAINT "FK_promotion_campaign" FOREIGN KEY ("campaignId") REFERENCES "campaign" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_promotion_channel" FOREIGN KEY ("channelId") REFERENCES "channel" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_promotion_customer_group" FOREIGN KEY ("customerGroupId") REFERENCES "contact_group" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "PK_promotion_id" PRIMARY KEY ("id"))`
+			`CREATE TABLE "promotion" (${i}, "code" varchar(64), "title" varchar(255) NOT NULL, "description" text, "type" varchar(16) NOT NULL DEFAULT ('STANDARD'), "status" varchar(16) NOT NULL DEFAULT ('DRAFT'), "isAutomatic" boolean NOT NULL DEFAULT (0), "isCombinable" boolean NOT NULL DEFAULT (1), "stackingGroup" varchar(64), "priority" integer NOT NULL DEFAULT (0), "campaignId" varchar, "channelId" varchar, "currency" varchar(3), "customerGroupId" varchar, "startsAt" datetime, "endsAt" datetime, "usageLimit" integer, "usageCount" integer NOT NULL DEFAULT (0), "perCustomerUsageLimit" integer, "budgetAmount" numeric(20,6), "budgetSpent" numeric(20,6) NOT NULL DEFAULT (0), "isTaxInclusive" boolean NOT NULL DEFAULT (0), "metadata" text, CONSTRAINT "FK_promotion_campaign" FOREIGN KEY ("campaignId") REFERENCES "campaign" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_promotion_channel" FOREIGN KEY ("channelId") REFERENCES "channel" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_promotion_customer_group" FOREIGN KEY ("customerGroupId") REFERENCES "contact_group" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
 		);
 		await this.baseIndexes(queryRunner, 'promotion');
 		await queryRunner.query(
@@ -410,7 +410,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE "promotion_action" (${i}, "promotionId" varchar NOT NULL, "type" varchar(32) NOT NULL, "targetType" varchar(16) NOT NULL DEFAULT ('ORDER'), "allocation" varchar(16) NOT NULL DEFAULT ('ACROSS'), "value" numeric(20,6) NOT NULL, "currency" varchar(3), "maxQuantity" numeric(20,6), "applyToQuantity" numeric(20,6), "buyRulesMinQuantity" numeric(20,6), "isTaxInclusive" boolean NOT NULL DEFAULT (0), "position" integer NOT NULL DEFAULT (0), "metadata" text, CONSTRAINT "FK_promotion_action_promotion" FOREIGN KEY ("promotionId") REFERENCES "promotion" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "PK_promotion_action_id" PRIMARY KEY ("id"))`
+			`CREATE TABLE "promotion_action" (${i}, "promotionId" varchar NOT NULL, "type" varchar(32) NOT NULL, "targetType" varchar(16) NOT NULL DEFAULT ('ORDER'), "allocation" varchar(16) NOT NULL DEFAULT ('ACROSS'), "value" numeric(20,6) NOT NULL, "currency" varchar(3), "maxQuantity" numeric(20,6), "applyToQuantity" numeric(20,6), "buyRulesMinQuantity" numeric(20,6), "isTaxInclusive" boolean NOT NULL DEFAULT (0), "position" integer NOT NULL DEFAULT (0), "metadata" text, CONSTRAINT "FK_promotion_action_promotion" FOREIGN KEY ("promotionId") REFERENCES "promotion" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await this.baseIndexes(queryRunner, 'promotion_action');
 		await queryRunner.query(
@@ -421,7 +421,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE "coupon" (${i}, "code" varchar(64) NOT NULL, "promotionId" varchar, "batchId" varchar(64), "usageLimit" integer, "usageCount" integer NOT NULL DEFAULT (0), "perCustomerLimit" integer, "startsAt" datetime, "endsAt" datetime, "metadata" text, CONSTRAINT "FK_coupon_promotion" FOREIGN KEY ("promotionId") REFERENCES "promotion" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "PK_coupon_id" PRIMARY KEY ("id"))`
+			`CREATE TABLE "coupon" (${i}, "code" varchar(64) NOT NULL, "promotionId" varchar, "batchId" varchar(64), "usageLimit" integer, "usageCount" integer NOT NULL DEFAULT (0), "perCustomerLimit" integer, "startsAt" datetime, "endsAt" datetime, "metadata" text, CONSTRAINT "FK_coupon_promotion" FOREIGN KEY ("promotionId") REFERENCES "promotion" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await this.baseIndexes(queryRunner, 'coupon');
 		await queryRunner.query(
@@ -438,7 +438,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE "promotion_usage" (${i}, "promotionId" varchar NOT NULL, "couponId" varchar, "orderId" varchar, "cartId" varchar, "customerId" varchar, "code" varchar(64), "amount" numeric(20,6) NOT NULL, "currency" varchar(3) NOT NULL, "usedAt" datetime NOT NULL DEFAULT (datetime('now')), "status" varchar(16) NOT NULL DEFAULT ('RESERVED'), CONSTRAINT "FK_promotion_usage_promotion" FOREIGN KEY ("promotionId") REFERENCES "promotion" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_promotion_usage_coupon" FOREIGN KEY ("couponId") REFERENCES "coupon" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_promotion_usage_customer" FOREIGN KEY ("customerId") REFERENCES "organization_contact" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "PK_promotion_usage_id" PRIMARY KEY ("id"))`
+			`CREATE TABLE "promotion_usage" (${i}, "promotionId" varchar NOT NULL, "couponId" varchar, "orderId" varchar, "cartId" varchar, "customerId" varchar, "code" varchar(64), "amount" numeric(20,6) NOT NULL, "currency" varchar(3) NOT NULL, "usedAt" datetime NOT NULL DEFAULT (datetime('now')), "status" varchar(16) NOT NULL DEFAULT ('RESERVED'), CONSTRAINT "FK_promotion_usage_promotion" FOREIGN KEY ("promotionId") REFERENCES "promotion" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_promotion_usage_coupon" FOREIGN KEY ("couponId") REFERENCES "coupon" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_promotion_usage_customer" FOREIGN KEY ("customerId") REFERENCES "organization_contact" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
 		);
 		await this.baseIndexes(queryRunner, 'promotion_usage');
 		await queryRunner.query(
@@ -458,7 +458,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE "gift_card" (${i}, "code" varchar(64) NOT NULL, "initialAmount" numeric(20,6) NOT NULL, "balance" numeric(20,6) NOT NULL DEFAULT (0), "currency" varchar(3) NOT NULL, "status" varchar(16) NOT NULL DEFAULT ('ACTIVE'), "customerId" varchar, "orderId" varchar, "expiresAt" datetime, "pin" varchar(255), "metadata" text, CONSTRAINT "FK_gift_card_customer" FOREIGN KEY ("customerId") REFERENCES "organization_contact" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "PK_gift_card_id" PRIMARY KEY ("id"))`
+			`CREATE TABLE "gift_card" (${i}, "code" varchar(64) NOT NULL, "initialAmount" numeric(20,6) NOT NULL, "balance" numeric(20,6) NOT NULL DEFAULT (0), "currency" varchar(3) NOT NULL, "status" varchar(16) NOT NULL DEFAULT ('ACTIVE'), "customerId" varchar, "orderId" varchar, "expiresAt" datetime, "pin" varchar(255), "metadata" text, CONSTRAINT "FK_gift_card_customer" FOREIGN KEY ("customerId") REFERENCES "organization_contact" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
 		);
 		await this.baseIndexes(queryRunner, 'gift_card');
 		await queryRunner.query(
@@ -472,7 +472,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE "gift_card_transaction" (${i}, "giftCardId" varchar NOT NULL, "orderId" varchar, "amount" numeric(20,6) NOT NULL, "balanceAfter" numeric(20,6) NOT NULL, "type" varchar(16) NOT NULL, "note" text, "occurredAt" datetime NOT NULL DEFAULT (datetime('now')), CONSTRAINT "FK_gift_card_transaction_card" FOREIGN KEY ("giftCardId") REFERENCES "gift_card" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "PK_gift_card_transaction_id" PRIMARY KEY ("id"))`
+			`CREATE TABLE "gift_card_transaction" (${i}, "giftCardId" varchar NOT NULL, "orderId" varchar, "amount" numeric(20,6) NOT NULL, "balanceAfter" numeric(20,6) NOT NULL, "type" varchar(16) NOT NULL, "note" text, "occurredAt" datetime NOT NULL DEFAULT (datetime('now')), CONSTRAINT "FK_gift_card_transaction_card" FOREIGN KEY ("giftCardId") REFERENCES "gift_card" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await this.baseIndexes(queryRunner, 'gift_card_transaction');
 		await queryRunner.query(

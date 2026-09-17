@@ -110,12 +110,18 @@ function serviceUnderTest(cards: IGiftCardRow[]) {
 	const repository = {
 		find: async (options?: { where?: Record<string, unknown> }) =>
 			cards.filter((row) => matches(row, options?.where)),
-		findOne: async (options?: { where?: Record<string, unknown>; select?: string[] }) => {
+		findOne: async (options?: { where?: Record<string, unknown>; select?: Record<string, boolean> }) => {
 			const row = cards.filter((one) => matches(one, options?.where))[0] ?? null;
 
-			return row && options?.select
-				? (Object.fromEntries(options.select.map((key) => [key, (row as never)[key]])) as never)
-				: row;
+			if (!row || !options?.select) {
+				return row;
+			}
+
+			// A projection reaches the repository as a column map — `{ pin: true }`, not `['pin']` —
+			// so the double keeps the columns the map names and drops the rest, as the projection does.
+			const keys = Object.keys(options.select).filter((key) => options.select?.[key]);
+
+			return Object.fromEntries(keys.map((key) => [key, (row as never)[key]])) as never;
 		},
 		findOneBy: async (where?: Record<string, unknown>) => cards.filter((row) => matches(row, where))[0] ?? null,
 		create: (partial: IGiftCardRow) => ({ id: `card-${cards.length + 1}`, ...partial }),

@@ -285,7 +285,11 @@ export class GiftCardService extends CrudService<GiftCard> {
 	async balanceByCode(code: string, pin?: string): Promise<{ balance: string; currency: string; status: GiftCardStatus }> {
 		const card = await this.typeOrmGiftCardRepository.findOne({
 			where: { code: (code ?? '').trim().toUpperCase(), ...this.scope },
-			select: ['id', 'balance', 'currency', 'status', 'pin']
+			// A projection is a column map: the columns this lookup reads, and nothing else. `pin` is
+			// named although it is the digest the comparison only needs in memory, because the column
+			// is declared `select: false` — a lookup that left it out would refuse every card that
+			// carries a second factor.
+			select: { id: true, balance: true, currency: true, status: true, pin: true }
 		});
 
 		if (!card) {

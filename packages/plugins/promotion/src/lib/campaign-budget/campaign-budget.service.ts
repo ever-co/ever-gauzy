@@ -419,6 +419,12 @@ export class CampaignBudgetService extends CrudService<CampaignBudget> {
 	/**
 	 * Executes a statement through whichever ORM is active.
 	 *
+	 * The two ORMs are handed the parameters in the form each one binds: TypeORM's raw query takes the
+	 * values positionally, and so does the MikroORM connection, whose `execute` substitutes one
+	 * placeholder per element of the array it is given. The statements are written with named
+	 * parameters because two of them bind the same value twice, so the MikroORM branch first resolves
+	 * the names into that positional form.
+	 *
 	 * @param sql The statement, with named parameters.
 	 * @param parameters The parameter values.
 	 * @returns The number of affected rows.
@@ -426,11 +432,35 @@ export class CampaignBudgetService extends CrudService<CampaignBudget> {
 	private async execute(sql: string, parameters: Record<string, unknown>): Promise<number> {
 		if (this.ormType === MultiORMEnum.MikroORM) {
 			const connection = this.mikroOrmCampaignBudgetRepository.getEntityManager().getConnection();
-			return Number(await connection.execute(sql, parameters, 'run'));
+			const { sql: positional, values } = this.toPositional(sql, parameters);
+
+			return Number(await connection.execute(positional, values, 'run'));
 		}
 
 		const result = await this.typeOrmCampaignBudgetRepository.query(sql, Object.values(parameters));
 		return Array.isArray(result) ? Number(result[1] ?? 0) : Number(result ?? 0);
+	}
+
+	/**
+	 * Rewrites a statement's named parameters into the positional form the MikroORM connection binds.
+	 *
+	 * A name used more than once is bound once per occurrence, in the order the occurrences appear:
+	 * `conditionalIncrement` compares `used + :amount` against the ceiling and adds the same `:amount`
+	 * to the column, so the single named value is two placeholders carrying the same figure.
+	 *
+	 * @param sql The statement, with named parameters.
+	 * @param parameters The parameter values.
+	 * @returns The statement in positional form, with its values in matching order.
+	 */
+	private toPositional(sql: string, parameters: Record<string, unknown>): { sql: string; values: unknown[] } {
+		const values: unknown[] = [];
+		const positional = sql.replace(/:(\w+)/g, (_match: string, name: string) => {
+			values.push(parameters[name]);
+
+			return '?';
+		});
+
+		return { sql: positional, values };
 	}
 
 	/**

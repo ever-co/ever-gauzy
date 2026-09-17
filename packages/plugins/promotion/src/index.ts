@@ -7,6 +7,7 @@
  */
 export * from './lib/promotion.plugin';
 export * from './lib/promotion.module';
+export * from './lib/promotion.entities';
 export * from './lib/promotion.types';
 export * from './lib/promotion.permissions';
 export * from './lib/promotion.features';

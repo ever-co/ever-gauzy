@@ -266,10 +266,18 @@ export class CouponService extends CrudService<Coupon> {
 	 * @returns True when a use was returned.
 	 */
 	async revert(couponId: ID): Promise<boolean> {
-		await this.createQueryBuilder()
+		// The counter is decremented through the TypeORM repository's own query builder. The platform's
+		// `createQueryBuilder()` is the read-side builder — it exposes selects, joins and aggregates and
+		// no UPDATE — so a statement that writes has to be built by the builder of the ORM it is written
+		// for, exactly as the conditional statement in `redeem` is. The column is quoted for the active
+		// dialect, which is what lets the one statement run on Postgres, MySQL and SQLite alike.
+		const usageCount = isMySQL() ? '`usageCount`' : '"usageCount"';
+
+		await this.typeOrmCouponRepository
+			.createQueryBuilder()
 			.update(Coupon)
-			.set({ usageCount: () => '"usageCount" - 1' } as never)
-			.where('"usageCount" > 0')
+			.set({ usageCount: () => `${usageCount} - 1` })
+			.where(`${usageCount} > 0`)
 			.andWhere('id = :couponId', { couponId })
 			.execute();
 

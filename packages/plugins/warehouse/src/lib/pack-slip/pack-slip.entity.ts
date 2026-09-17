@@ -23,7 +23,7 @@ import {
 	User,
 	Warehouse
 } from '@gauzy/core';
-import { IPackSlip, IPickListLine, PackSlipStatus } from '../warehouse.types';
+import { IPackSlip, IPickList, IPickListLine, PackSlipStatus } from '../warehouse.types';
 import { PickListLine } from '../pick-list-line/pick-list-line.entity';
 import { PickList } from '../pick-list/pick-list.entity';
 import { MikroOrmPackSlipRepository } from './repository/mikro-orm-pack-slip.repository';
@@ -183,7 +183,7 @@ export class PackSlip extends TenantOrganizationBaseEntity implements IPackSlip 
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	pickList?: PickList;
+	pickList?: IPickList;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

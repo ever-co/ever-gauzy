@@ -12,7 +12,7 @@ import {
 	User,
 	Warehouse
 } from '@gauzy/core';
-import { IPickList, IPickListLine, PickListStatus } from '../warehouse.types';
+import { IPickList, IPickListLine, IPickWave, IWarehouseZone, PickListStatus } from '../warehouse.types';
 import { PickListLine } from '../pick-list-line/pick-list-line.entity';
 import { PickWave } from '../pick-wave/pick-wave.entity';
 import { WarehouseZone } from '../warehouse-zone/warehouse-zone.entity';
@@ -163,7 +163,7 @@ export class PickList extends TenantOrganizationBaseEntity implements IPickList 
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	wave?: PickWave;
+	wave?: IPickWave;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -197,7 +197,7 @@ export class PickList extends TenantOrganizationBaseEntity implements IPickList 
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	zone?: WarehouseZone;
+	zone?: IWarehouseZone;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

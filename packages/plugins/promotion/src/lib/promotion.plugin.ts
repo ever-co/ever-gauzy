@@ -7,23 +7,8 @@ import { PROMOTION_SETTINGS } from './promotion.settings';
 import { schemaExtensions } from './graphql/schema-extensions';
 import { resolvers } from './graphql/resolvers';
 import { CreatePromotionTables1791000000260 } from './migrations/1791000000260-CreatePromotionTables';
-import { Campaign } from './campaign/campaign.entity';
-import { CampaignBudget } from './campaign-budget/campaign-budget.entity';
-import { CampaignBudgetUsage } from './campaign-budget-usage/campaign-budget-usage.entity';
-import { Promotion } from './promotion/promotion.entity';
-import { PromotionAction } from './promotion-action/promotion-action.entity';
-import { Coupon } from './coupon/coupon.entity';
-import { PromotionUsage } from './promotion-usage/promotion-usage.entity';
-import { GiftCard } from './gift-card/gift-card.entity';
-import { GiftCardTransaction } from './gift-card-transaction/gift-card-transaction.entity';
+import { ALL_PROMOTION_ENTITIES } from './promotion.entities';
 
-/**
- * Every table this plugin owns, declared once.
- *
- * The array is the single source of the plugin's entity list and of the module's ORM registration,
- * because two lists are how an entity comes to be mapped by one ORM and not the other and the
- * application fails to boot with a metadata error that names neither.
- */
 /**
  * The declared prerequisite list, in the shape the published plugin metadata declares today.
  *
@@ -32,18 +17,6 @@ import { GiftCardTransaction } from './gift-card-transaction/gift-card-transacti
  * is narrowed through this alias so the values stay the package names the load order is resolved by.
  */
 type PluginDependencies = NonNullable<Parameters<typeof Plugin>[0]['dependsOn']>;
-
-export const ALL_PROMOTION_ENTITIES = [
-	Campaign,
-	CampaignBudget,
-	CampaignBudgetUsage,
-	Promotion,
-	PromotionAction,
-	Coupon,
-	PromotionUsage,
-	GiftCard,
-	GiftCardTransaction
-];
 
 /**
  * The promotion domain.

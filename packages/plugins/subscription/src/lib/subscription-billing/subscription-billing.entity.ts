@@ -9,7 +9,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { ISubscriptionBilling, SubscriptionBillingStatus } from '../subscription.types';
+import { ISubscription, ISubscriptionBilling, SubscriptionBillingStatus } from '../subscription.types';
 import { Subscription } from '../subscription/subscription.entity';
 import { MikroOrmSubscriptionBillingRepository } from './repository/mikro-orm-subscription-billing.repository';
 
@@ -146,7 +146,7 @@ export class SubscriptionBilling extends TenantOrganizationBaseEntity implements
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	subscription?: Subscription;
+	subscription?: ISubscription;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
