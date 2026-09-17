@@ -8,7 +8,6 @@ jest.mock('@gauzy/core', () => ({
 	// The CRUD base the service calls through `super.create` / `super.update`; each delegates to an
 	// instance spy the test installs, so a refused write is observable as "never reached the base".
 	TenantAwareCrudService: class {
-		constructor(..._repositories: unknown[]) {}
 		async create(payload: unknown) {
 			return (this as any).__create(payload);
 		}

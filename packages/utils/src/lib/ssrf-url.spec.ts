@@ -29,8 +29,35 @@ describe('isPrivateOrLoopbackHost', () => {
 		['NAT64 of a public address', '64:ff9b::5db8:d70e'],
 		['6to4 of a public address', '2002:5db8:d70e::1'],
 		['a public IPv6 address', '2606:4700:4700::1111'],
-		['a prefix that only looks like NAT64 (local-use 64:ff9b:1::/48 is not the /96)', '64:ff9b:1::7f00:1'],
+		['NAT64 local-use prefix embedding a public address', '64:ff9b:1::5db8:d70e'],
 		['malformed IPv6 with two compressions', '2002::7f00::1']
+	])('does not refuse %s (%s)', (_label, host) => {
+		expect(isPrivateOrLoopbackHost(host)).toBe(false);
+	});
+
+	// Special-purpose ranges that are never public destinations but are used for internal networks.
+	it.each([
+		['benchmarking space, a common cluster CIDR', '198.18.0.1'],
+		['benchmarking space, upper half', '198.19.255.254'],
+		['IETF protocol assignments', '192.0.0.8'],
+		['documentation TEST-NET-1', '192.0.2.1'],
+		['documentation TEST-NET-2', '198.51.100.7'],
+		['documentation TEST-NET-3', '203.0.113.9'],
+		['multicast', '224.0.0.251'],
+		['reserved 240.0.0.0/4', '240.0.0.1'],
+		['limited broadcast', '255.255.255.255'],
+		['deprecated site-local IPv6', 'fec0::1'],
+		['NAT64 local-use prefix embedding loopback', '64:ff9b:1::7f00:1'],
+		['deprecated IPv4-compatible loopback', '[::7f00:1]'],
+		['deprecated IPv4-compatible metadata address', '::a9fe:a9fe']
+	])('refuses %s (%s)', (_label, host) => {
+		expect(isPrivateOrLoopbackHost(host)).toBe(true);
+	});
+
+	it.each([
+		['an address next to the benchmarking range', '198.20.0.1'],
+		['an address that only starts like TEST-NET-2', '198.51.1.1'],
+		['the last unicast /8 before multicast', '223.255.255.254']
 	])('does not refuse %s (%s)', (_label, host) => {
 		expect(isPrivateOrLoopbackHost(host)).toBe(false);
 	});

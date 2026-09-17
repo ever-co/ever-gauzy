@@ -210,30 +210,37 @@ export function createSsrfSafeLookup(allowPrivateHost: boolean, resolver?: Hostn
 			address?: string | LookupAddress[],
 			family?: number
 		) => void;
-		resolveForConnection(hostname, options, resolver).then(
-			(entries) => {
-				if (!allowPrivateHost && entries.some((entry) => isPrivateOrLoopbackHost(entry.address))) {
-					return done(blockedError());
+		resolveForConnection(hostname, options, resolver)
+			.then(
+				(entries) => {
+					if (!allowPrivateHost && entries.some((entry) => isPrivateOrLoopbackHost(entry.address))) {
+						return done(blockedError());
+					}
+					const family = requestedFamily(options.family);
+					const usable = family ? entries.filter((entry) => entry.family === family) : entries;
+					if (usable.length === 0) {
+						return done(
+							Object.assign(new Error(`getaddrinfo ENOTFOUND ${hostname}`), {
+								code: 'ENOTFOUND',
+								syscall: 'getaddrinfo',
+								hostname
+							})
+						);
+					}
+					if (options.all) return done(null, usable);
+					return done(null, usable[0].address, usable[0].family);
+				},
+				(error) => {
+					if (allowPrivateHost || isNonExistentHostError(error)) return done(error);
+					return done(unverifiableError());
 				}
-				const family = requestedFamily(options.family);
-				const usable = family ? entries.filter((entry) => entry.family === family) : entries;
-				if (usable.length === 0) {
-					return done(
-						Object.assign(new Error(`getaddrinfo ENOTFOUND ${hostname}`), {
-							code: 'ENOTFOUND',
-							syscall: 'getaddrinfo',
-							hostname
-						})
-					);
-				}
-				if (options.all) return done(null, usable);
-				return done(null, usable[0].address, usable[0].family);
-			},
-			(error) => {
-				if (allowPrivateHost || isNonExistentHostError(error)) return done(error);
-				return done(unverifiableError());
-			}
-		);
+			)
+			.catch(() => {
+				// `done` is Node's own connect callback. Should it ever throw synchronously, the throw would
+				// otherwise surface as an unhandled rejection, which terminates the process on Node 24: for an
+				// API pod that is an outage triggered by one request. The connection attempt is abandoned
+				// instead, and the request fails through its own timeout or abort.
+			});
 	};
 }
 
