@@ -340,7 +340,11 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 	check(`${at}: exposes GraphQL resolvers`, tsFiles.some((f) => /\.resolver\.ts$/.test(f)), 'no .resolver.ts');
 
 	// --- migrations -------------------------------------------------------------------------
-	const migrationFiles = tsFiles.filter((f) => /migrations?[\\/]/.test(f) || /UpQueryRunner/.test(read(f)));
+	// A barrel that re-exports the migrations sits in the same directory as they do, so the
+	// directory match alone would demand three SQL dialects from a file that contains none.
+	const migrationFiles = tsFiles.filter(
+		(f) => !/index\.ts$/.test(f) && (/migrations?[\\/]/.test(f) || /UpQueryRunner/.test(read(f)))
+	);
 	const migrationSource = migrationFiles.map(read).join('\n');
 	if (check(`${at}: owns at least one migration`, migrationFiles.length > 0, 'no migration file')) {
 		for (const file of migrationFiles) {
