@@ -1,0 +1,44 @@
+# The image asset domain's object type.
+#
+# Every image the platform stores is a row here, whichever domain uploaded it: a product cover, a
+# variant image, a gallery item, an employee avatar. The commerce packages therefore reference this
+# type instead of carrying URLs of their own, which is what lets one storage-provider change move
+# every image at once.
+#
+# `size` is a numeric column and is exposed as a `Float`, which is correct for a byte count and
+# wrong for money; no money is ever read from this type.
+
+"""
+A stored image.
+"""
+type ImageAsset {
+	id: ID!
+	"The original file name, kept so an operator can recognise the asset."
+	name: String
+	"The path the asset is served from."
+	url: String!
+	"The smaller rendition's path, when one was generated."
+	thumb: String
+	"The pixel width, when the asset was measured."
+	width: Int
+	"The pixel height, when the asset was measured."
+	height: Int
+	"The size in bytes, when the storage provider reported it."
+	size: Float
+	"Whether an operator marked the asset as featured in its gallery."
+	isFeatured: Boolean
+	"The identifier the storage provider knows the asset by."
+	externalProviderId: String
+	"Which provider currently holds the bytes."
+	storageProvider: String
+	"The absolute URL, resolved against the configured host."
+	fullUrl: String
+	"The absolute thumbnail URL, resolved against the configured host."
+	thumbUrl: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}

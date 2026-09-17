@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RolePermissionModule, SequenceModule } from '@gauzy/core';
+import { FeatureModule, RolePermissionModule, SequenceModule } from '@gauzy/core';
 import { resolvers } from './graphql/resolvers';
 import { OrderClaimLine } from './order-claim-line/order-claim-line.entity';
 import { OrderClaimLineController } from './order-claim-line/order-claim-line.controller';
@@ -76,6 +76,9 @@ export const ALL_RETURNS_ENTITIES = [
 	imports: [
 		TypeOrmModule.forFeature(ALL_RETURNS_ENTITIES),
 		MikroOrmModule.forFeature(ALL_RETURNS_ENTITIES),
+		// Every controller here is `@UseGuards(..., FeatureFlagGuard)`: the guard is a provider of
+		// this module, so this module is what has to import the feature service it reads.
+		FeatureModule,
 		RolePermissionModule,
 		SequenceModule
 	],

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
@@ -45,6 +45,9 @@ export class OrderReturnReasonController extends CrudController<OrderReturnReaso
 	@ApiOperation({ summary: 'List return reasons' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The reasons were listed.' })
 	@Permissions(ReturnsPermissions.RETURNS_VIEW)
+	// The route the CRUD base maps for this method. An override replaces the inherited
+	// method *and* its decorators, so the overriding controller restates it.
+	@Get()
 	async findAll(@Query() options: BaseQueryDTO<OrderReturnReason>): Promise<IPagination<OrderReturnReason>> {
 		return await this.orderReturnReasonService.findTree(options);
 	}

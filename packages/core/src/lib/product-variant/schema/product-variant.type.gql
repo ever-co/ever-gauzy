@@ -1,0 +1,44 @@
+# The product variant's object type.
+#
+# A variant is the thing a cart line, a stock level, a price and an order line all point at: the
+# product is what a person browses, the variant is what they buy. It stays in the domain that owns
+# the entity, and the commerce packages refer to it.
+#
+# `price` and `setting` are one-to-one rows of their own. They are deliberately not fields here:
+# what a variant costs is the pricing domain's answer, and the variant's own price row is the
+# platform's legacy list price, which the pricing package supersedes once it is installed. Exposing
+# both under one name would make the schema say two different things depending on configuration.
+
+"""
+One buyable configuration of a product.
+"""
+type ProductVariant {
+	id: ID!
+	"Free-text notes for the operator."
+	notes: String
+	"How many units this variant represents, when it is sold as a bundle."
+	quantity: Int!
+	"The tax rate applied to this variant, as a percentage."
+	taxes: Float!
+	"""
+	Whether an invoice is raised when the variant is ordered or when it is fulfilled. Stored as the
+	platform's own enumeration value so a client can round-trip it.
+	"""
+	billingInvoicingPolicy: String!
+	"The operator's own reference, used on purchase orders and in the warehouse."
+	internalReference: String
+	"Whether the variant may be sold. A disabled variant is readable and cannot be ordered."
+	enabled: Boolean!
+	"The product this variant belongs to."
+	productId: ID
+	product: Product
+	"The image shown for this variant, which overrides the product's cover."
+	imageId: ID
+	image: ImageAsset
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}

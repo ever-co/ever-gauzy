@@ -3,6 +3,7 @@ import { getConfig } from '@gauzy/config';
 import { getDynamicPluginsModules, getResolversFromPlugins } from '@gauzy/plugin';
 import { RoleEntityResolver } from './../role/role-entity.resolver';
 import { RoleModule } from './../role/role.module';
+import { RolePermissionModule } from './../role-permission/role-permission.module';
 
 /**
  * Resolvers the platform itself ships.
@@ -20,8 +21,13 @@ const CORE_RESOLVERS: Array<Type<any>> = [RoleEntityResolver];
  * Importing them is what makes their services injectable by the resolvers above: without this the
  * resolver graph would resolve, but the first resolver that asked for a domain service would fail
  * the boot with an unresolved dependency.
+ *
+ * `RolePermissionModule` is imported for the guards rather than for a resolver. A guard is a
+ * provider of whichever module hosts the handler it protects, so the permission guard that every
+ * resolver here carries resolves its permission lookup from *this* module — exporting the service
+ * from the module that happens to own it is not enough, the module has to be imported.
  */
-const CORE_RESOLVER_MODULES: Array<Type<any>> = [RoleModule];
+const CORE_RESOLVER_MODULES: Array<Type<any>> = [RoleModule, RolePermissionModule];
 
 /**
  * Hosts the GraphQL resolvers.

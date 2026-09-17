@@ -1,0 +1,48 @@
+# The product domain's object types.
+#
+# `Product` is the platform's own sellable thing: it already exists as a table, is already served
+# over REST, and is referenced by the catalogue, pricing, inventory and order tables. The commerce
+# packages describe *how* it is sold, so the type that says *what* it is stays here, in the domain
+# that owns the entity, and a package that relates to a product refers to this type rather than
+# declaring a second one.
+#
+# `name` and `description` are the translated members. They live on `ProductTranslation` rows and the
+# product service merges the row for the requested language onto the product before it is returned,
+# so a resolver reads them off the object exactly as the REST surface does. They are nullable
+# because a product with no translation for the requested language genuinely has neither.
+
+"""
+A sellable thing, in one language.
+"""
+type Product {
+	id: ID!
+	"The operator-facing code. Unique within the organization and stable across renames."
+	code: String!
+	"Whether the product may be sold. A disabled product stays readable and cannot be ordered."
+	enabled: Boolean!
+	"A denormalised thumbnail URL, kept for lists that must not join the asset table."
+	imageUrl: String
+	"The asset the storefront shows as the product's cover."
+	featuredImageId: ID
+	featuredImage: ImageAsset
+	"The operator's classification of the product."
+	productTypeId: ID
+	"The merchandising grouping the product belongs to."
+	productCategoryId: ID
+	"The product's name in the requested language, merged from its translation."
+	name: String
+	"The product's description in the requested language, merged from its translation."
+	description: String
+	"The facets attached to the product. The same `tag` rows the rest of the platform uses."
+	tags: [Tag!]
+	"The extra images of the product, in the order the gallery declares."
+	gallery: [ImageAsset!]
+	"The variants the product is sold as. A product with no variant cannot be added to a cart."
+	variants: [ProductVariant!]
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}

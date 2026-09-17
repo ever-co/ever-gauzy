@@ -1,3 +1,12 @@
+<!--
+Superseded. This file began as the kernel schema document and was split into the documents that are
+now loaded: common.type.gql (root operation types, scalars, the event envelope, the operation
+types), ilter.type.gql (the shared filter inputs), pagination.type.gql (the page input) and
+../role/schema/role.type.gql with ../role/schema/role.api.gql (the role domain). It is kept as a
+readable record of the whole kernel surface in one place, and it is deliberately NOT a .gql file:
+two documents declaring one type cannot both survive uildSchema, and ProductReview belongs to
+the reviews plugin rather than to the kernel. The loaded documents are the source of truth.
+-->
 scalar DateTime
 
 scalar Decimal

@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
@@ -171,6 +171,9 @@ export class OrderExchangeController extends CrudController<OrderExchange> {
 	@ApiOperation({ summary: 'Find an exchange with its lines and difference' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The exchange was found.' })
 	@Permissions(ReturnsPermissions.EXCHANGES_VIEW)
+	// The route the CRUD base maps for this method. An override replaces the inherited
+	// method *and* its decorators, so the overriding controller restates it.
+	@Get(':id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<OrderExchange> {
 		return await this.orderExchangeService.findOneDetailed(id);
 	}
@@ -184,6 +187,9 @@ export class OrderExchangeController extends CrudController<OrderExchange> {
 	@ApiOperation({ summary: 'List exchanges' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The exchanges were listed.' })
 	@Permissions(ReturnsPermissions.EXCHANGES_VIEW)
+	// The route the CRUD base maps for this method. An override replaces the inherited
+	// method *and* its decorators, so the overriding controller restates it.
+	@Get()
 	async findAll(@Query() options: BaseQueryDTO<OrderExchange>): Promise<IPagination<OrderExchange>> {
 		return await this.orderExchangeService.findAll(options);
 	}

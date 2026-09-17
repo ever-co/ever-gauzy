@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
@@ -227,6 +227,9 @@ export class OrderReturnController extends CrudController<OrderReturn> {
 	@ApiOperation({ summary: 'Find a return with its lines' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The return was found.' })
 	@Permissions(ReturnsPermissions.RETURNS_VIEW)
+	// The route the CRUD base maps for this method. An override replaces the inherited
+	// method *and* its decorators, so the overriding controller restates it.
+	@Get(':id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<OrderReturn> {
 		return await this.orderReturnService.findOneDetailed(id);
 	}
@@ -240,6 +243,9 @@ export class OrderReturnController extends CrudController<OrderReturn> {
 	@ApiOperation({ summary: 'List returns' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The returns were listed.' })
 	@Permissions(ReturnsPermissions.RETURNS_VIEW)
+	// The route the CRUD base maps for this method. An override replaces the inherited
+	// method *and* its decorators, so the overriding controller restates it.
+	@Get()
 	async findAll(@Query() options: BaseQueryDTO<OrderReturn>): Promise<IPagination<OrderReturn>> {
 		return await this.orderReturnService.findAll(options);
 	}

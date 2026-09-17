@@ -1,0 +1,36 @@
+# The tag domain's object type.
+#
+# One `tag` table serves the whole platform: the same rows label tasks, issues, employees,
+# equipment, event types, candidates and products. The commerce packages attach facets to a
+# catalogue variant with the product-variant pivot the catalogue owns and never introduce a second
+# labelling table, which is what keeps "the facets of a product" and "the labels of a task" one
+# vocabulary and one administration screen.
+
+"""
+A label the platform can attach to many kinds of record.
+"""
+type Tag {
+	id: ID!
+	"The label text."
+	name: String!
+	"The chip's background colour, as the platform's colour string."
+	color: String!
+	"The chip's text colour, when the background needs one."
+	textColor: String
+	"What the label means, for the operator."
+	description: String
+	"An icon name the clients resolve."
+	icon: String
+	"Whether the tag is maintained by the platform rather than by an operator."
+	isSystem: Boolean
+	"The icon resolved to a URL, for clients that render it directly."
+	fullIconUrl: String
+	"The tag's grouping, when it has one."
+	tagTypeId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
