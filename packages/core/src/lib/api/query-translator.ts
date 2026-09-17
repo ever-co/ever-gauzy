@@ -16,13 +16,14 @@ import {
 	API_QUERY_LIMITS,
 	ApiQuery,
 	ApiQueryError,
-	CursorPayload,
 	FieldSelection,
 	FilterNode,
 	FilterOperator,
 	SortKey
 } from './query-ast';
+import type { CursorPayload } from './cursor';
 import type { ApiQuerySchema } from './query-schema';
+import { toSkip } from './query-parser';
 
 /**
  * The one place a query becomes storage options.
@@ -340,20 +341,6 @@ function toOrderObject(sort: readonly SortKey[]): Record<string, unknown> {
 		setPath(order, key.field.split('.').filter((segment) => segment.length > 0), key.direction);
 	}
 	return order;
-}
-
-/**
- * The number of rows an offset page skips.
- *
- * @param query The normalised query.
- * @returns `(number − 1) × limit` for an offset page, and zero for a cursor page — a cursor names a
- *   position in the order, so there is nothing to skip.
- */
-export function toSkip(query: ApiQuery): number {
-	if (query.page.mode !== 'OFFSET') {
-		return 0;
-	}
-	return (query.page.number - 1) * query.page.limit;
 }
 
 /**

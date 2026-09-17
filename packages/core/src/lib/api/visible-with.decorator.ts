@@ -3,8 +3,9 @@
 // compiles this module on its own.
 import 'reflect-metadata';
 
-import { VISIBLE_WITH_METADATA } from '@gauzy/constants';
+import { VISIBLE_WITH_FIELDS_METADATA, VISIBLE_WITH_METADATA } from '@gauzy/constants';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { VisibleWithField } from './visibility-metadata';
 
 /**
  * Declares the permission a caller must hold to read — or to write — one property.
@@ -44,9 +45,33 @@ import { PermissionsEnum } from '@gauzy/contracts';
  */
 export function VisibleWith(permission: PermissionsEnum): PropertyDecorator {
 	return (target: object, propertyKey: string | symbol): void => {
-		// Written per property on the prototype, which is where the projection and the write check
-		// read it. `SetMetadata` cannot be used here: applied to a property it records the value on
-		// the class itself, and a resource with two gated fields would keep only the last one.
+		// The requirement is recorded twice, and both records are needed. Per property, so anything
+		// that already knows the field's name can ask about that field alone. And in the class's own
+		// declaration list, because a field cannot be *discovered* by enumerating the class: an
+		// instance property is not on the prototype, so a projection that scanned the prototype would
+		// find an accessor and miss every stored column.
 		Reflect.defineMetadata(VISIBLE_WITH_METADATA, permission, target, propertyKey);
+		declareVisibleWithField(target, String(propertyKey), permission);
 	};
+}
+
+/**
+ * Appends one declaration to the class's list of gated properties.
+ *
+ * A class's properties are decorated one by one, at class-definition time, against the same
+ * prototype — so the list is read, extended and written back per property, and a property that is
+ * declared twice keeps the declaration that ran last while the field itself stays unique.
+ *
+ * @param prototype The class prototype the property was declared on.
+ * @param property The property name.
+ * @param permission The permission the property requires.
+ */
+function declareVisibleWithField(prototype: object, property: string, permission: PermissionsEnum): void {
+	const declared = (Reflect.getOwnMetadata(VISIBLE_WITH_FIELDS_METADATA, prototype) as VisibleWithField[] | undefined) ?? [];
+
+	if (declared.some((field) => field.property === property)) {
+		return;
+	}
+
+	Reflect.defineMetadata(VISIBLE_WITH_FIELDS_METADATA, [...declared, { property, permission }], prototype);
 }

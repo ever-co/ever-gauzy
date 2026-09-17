@@ -6,11 +6,13 @@
  * the filter tree, the sort keys, the page request, the sparse fieldset, the protocol's caps, and
  * the error a caller gets when a query steps outside them.
  *
- * This module imports nothing. The parsers that build these shapes are pure functions, so the
- * request pipe, the build-time input generator and a test all run the same code with no container
- * and no database behind it. That is not a stylistic preference: a query grammar whose behaviour
- * can only be observed through an HTTP request is a grammar nobody can regression-test.
+ * This module imports nothing at runtime. The parsers that build these shapes are pure functions, so
+ * the request pipe, the build-time input generator and a test all run the same code with no
+ * container and no database behind it. That is not a stylistic preference: a query grammar whose
+ * behaviour can only be observed through an HTTP request is a grammar nobody can regression-test.
  */
+
+import type { ApiErrorCode } from '../core/errors/api-error-codes';
 
 /** Every operator the query protocol understands. */
 export type FilterOperator =
@@ -155,12 +157,13 @@ export const API_QUERY_LIMITS = {
 /**
  * The catalogue codes the query protocol can raise.
  *
- * The values are the platform's own catalogue codes, spelled identically to the ones the error
- * catalogue publishes, so a client branches on `code` the same way on every surface. The catalogue
- * owns the full list; this union is the subset a query can produce, and keeping the two in step is
- * what lets one filter map them.
+ * The catalogue is the platform's single list of codes, and this is the subset a query can produce.
+ * Deriving it rather than retyping it is what keeps the two in step: a code the catalogue renames
+ * stops compiling here, and a code invented here cannot exist at all. The import is type-only, so
+ * the grammar still runs without loading anything.
  */
-export type ApiQueryErrorCode =
+export type ApiQueryErrorCode = Extract<
+	ApiErrorCode,
 	| 'VALIDATION_FAILED'
 	| 'VALIDATION_INVALID_ENUM'
 	| 'VALIDATION_INVALID_DATE_RANGE'
@@ -180,15 +183,17 @@ export type ApiQueryErrorCode =
 	| 'QUERY_LEGACY_DATA_PARAM_INVALID'
 	| 'QUERY_LEGACY_DATA_PARAM_CONFLICT'
 	| 'PERMISSION_DENIED'
-	| 'TENANT_MISMATCH';
+	| 'TENANT_MISMATCH'
+>;
 
 /**
  * The status each query code answers with.
  *
  * A code decides its own status so that no call site can pick a different one for the same
- * violation. Two codes are not 400s: a query string over the byte cap is a 414 because the
- * request was refused before it was read, and the authorisation codes are 403s because the caller
- * is understood and refused rather than misunderstood.
+ * violation. Two codes are not 400s: a query string over the byte cap is a 414 because the request
+ * was refused before it was read, and the authorisation codes are 403s because the caller is
+ * understood and refused rather than misunderstood. The catalogue's own status-to-code table is the
+ * fallback for an exception that named no code; this table is the query protocol's own answer.
  */
 export const API_QUERY_ERROR_STATUS: Readonly<Record<ApiQueryErrorCode, number>> = {
 	VALIDATION_FAILED: 400,

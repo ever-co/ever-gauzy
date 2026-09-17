@@ -300,6 +300,17 @@ export class BulkExecutor {
 class BulkRollbackSignal extends Error {}
 
 /**
+ * What an item's failure is read from: the catalogue code, the message the throw site chose, and the
+ * structured detail. Nothing else about the exception reaches the result, which is what keeps an
+ * item's reported failure identical to the one the same item would have produced alone.
+ */
+interface IBulkItemFailure {
+	readonly code: ApiErrorCode;
+	readonly message?: string;
+	readonly details?: Record<string, unknown>;
+}
+
+/**
  * Turns a caught error into the item's failure.
  *
  * An item that throws an `ApiException` reports exactly the code, message and details the same item
@@ -319,7 +330,9 @@ function toBulkFailure(error: unknown, index: number, item: BulkItemRequest<unkn
 	const id = typeof declaredId === 'string' ? declaredId : undefined;
 
 	if (error instanceof ApiException) {
-		return { index, id, code: error.code, message: error.message, details: error.details };
+		const { code, message, details }: IBulkItemFailure = error;
+
+		return { index, id, code, message, details };
 	}
 
 	return {

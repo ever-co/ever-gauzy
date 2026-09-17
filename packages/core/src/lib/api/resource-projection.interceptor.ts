@@ -1,4 +1,12 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor, Type, UseInterceptors } from '@nestjs/common';
+import {
+	CallHandler,
+	ExecutionContext,
+	Injectable,
+	NestInterceptor,
+	Optional,
+	Type,
+	UseInterceptors
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FieldVisibility } from './field-visibility.service';
@@ -27,7 +35,13 @@ import { collectVisibleWithFields, findWithheldField, readRequestedFields } from
  */
 @Injectable()
 export class ResourceProjectionInterceptor implements NestInterceptor {
-	constructor(private readonly visibility: FieldVisibility) {}
+	/**
+	 * @param visibility The decision service. A module that provides one gets it injected; a route
+	 * that mounts this interceptor through a decorator gets a default instance, because mounting the
+	 * projection must not require its controller's module to declare a provider — the service holds no
+	 * state of its own, it reads the caller's grants from the request context.
+	 */
+	constructor(@Optional() private readonly visibility: FieldVisibility = new FieldVisibility()) {}
 
 	/**
 	 * Refuses a gated write, then projects the response.

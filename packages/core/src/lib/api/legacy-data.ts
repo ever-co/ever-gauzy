@@ -10,7 +10,7 @@ import {
 	resolveDefaultPageSize
 } from './query-ast';
 import { parseFilter } from './filter-parser';
-import { parseSortFromLegacyOrder } from './sort-parser';
+import { parseSortFromLegacyOrder, resolveEffectiveSort } from './sort-parser';
 import { flattenSelectObject } from './field-selection';
 import type { ApiQuerySchema } from './query-schema';
 
@@ -343,7 +343,10 @@ export class ApiLegacyDataAdapter {
 		}
 
 		const filter = this.toFilter(findInput, claimed, droppedFields);
-		const sort = parseSortFromLegacyOrder(findInput.order, schema);
+		// The resource's declared default sort applies here exactly as it does on the new grammar, so
+		// that a caller who migrates from `?data=` to `?sort=` (or to neither) gets the same page in
+		// the same order. The legacy payload's own `order` still wins when it carries one.
+		const sort = resolveEffectiveSort(parseSortFromLegacyOrder(findInput.order, schema), schema);
 		const page = this.toPage(findInput, pageLimit);
 		const expand = this.toExpand(findInput.relations, droppedRelations);
 		const fields = this.toFields(findInput.select, droppedFields);
@@ -370,10 +373,16 @@ export class ApiLegacyDataAdapter {
 		claimed: ApiLegacyScope,
 		dropped: string[]
 	): FilterNode | undefined {
-		const where = isPlainObject(findInput.where) ? { ...findInput.where } : undefined;
-		if (!where) {
+		if (findInput.where === undefined || findInput.where === null) {
 			return undefined;
 		}
+		if (!isPlainObject(findInput.where)) {
+			// A `where` clause that is not an object is a shape the grammar cannot express, and
+			// ignoring it would answer with every row the caller may read — a page that looks like a
+			// successful query for a filter that was never applied.
+			throw new ApiQueryError('QUERY_LEGACY_DATA_PARAM_INVALID', 'The where clause of the data parameter must be an object.');
+		}
+		const where = { ...findInput.where };
 		// The scope keys belong to the guard chain, not to the filter: they are compared above and
 		// never turned into a condition of their own.
 		for (const key of ['tenantId', 'organizationId']) {

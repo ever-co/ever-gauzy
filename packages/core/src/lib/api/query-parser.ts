@@ -219,11 +219,33 @@ export function toApiQuery(params: ApiQueryParams, schema?: ApiQuerySchema): Api
 }
 
 /**
+ * The number of rows an offset page skips.
+ *
+ * This is the one place a page number becomes an offset. The list service it feeds has always
+ * computed `take × (skip − 1)` on one ORM branch and passed the page number straight through on the
+ * other, which is how the same `?skip=2&take=10` came to mean two different pages; a route that
+ * adopted the protocol gets its offset here, before either branch sees it, so the divergence cannot
+ * reappear on that route.
+ *
+ * @param query The normalised query.
+ * @returns `(number − 1) × limit` for an offset page, and zero for a cursor page — a cursor names a
+ *   position in the order, so there is nothing to skip.
+ */
+export function toSkip(query: ApiQuery): number {
+	if (query.page.mode !== 'OFFSET') {
+		return 0;
+	}
+	return (query.page.number - 1) * query.page.limit;
+}
+
+/**
  * Converts an offset into the page number the protocol pages by.
  *
  * GraphQL clients page by offset and REST clients page by number; both are the same page, and this
  * is the one place the conversion is made, so a connection and a list route cannot disagree about
- * where page two starts.
+ * where page two starts. A resolver that accepts `offset` must call this before {@link parsePage}:
+ * the protocol's page object carries a page number, and an offset handed to it unchanged would be
+ * read as a page number and answer the wrong page.
  *
  * @param offset The number of rows to skip.
  * @param limit The page size.

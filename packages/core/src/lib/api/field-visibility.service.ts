@@ -87,9 +87,15 @@ export class FieldVisibility {
 			return true;
 		}
 
-		const granted = (RequestContext.currentUser() as { permissions?: PermissionsEnum[] } | null)?.permissions;
+		try {
+			const granted = (RequestContext.currentUser() as { permissions?: PermissionsEnum[] } | null)?.permissions;
 
-		return Array.isArray(granted) && granted.includes(permission);
+			return Array.isArray(granted) && granted.includes(permission);
+		} catch {
+			// Reading the caller's grants must never turn a response into a 500. Failing to read them
+			// is the same answer as not holding the permission, which is the safe direction for a gate.
+			return false;
+		}
 	}
 
 	/**

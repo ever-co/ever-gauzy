@@ -57,14 +57,24 @@ const valid: Line[] = Array.from({ length: 8 }, (_unused, index) => ({
 	price: '10.000000'
 }));
 
+/**
+ * The HTTP view of a thrown error: the accessor every `HttpException` carries.
+ *
+ * It is described here so the assertion reads the status the response really has, without the spec
+ * depending on how the exception's base class is spelled.
+ */
+interface IHttpFailure {
+	getStatus?(): number;
+}
+
 /** The status a rejected batch answered with, so the statuses the contract fixes are asserted too. */
-const statusOf = async (promise: Promise<unknown>): Promise<number> => {
+const statusOf = async (promise: Promise<unknown>): Promise<number | undefined> => {
 	try {
 		await promise;
 
-		return 0;
+		return undefined;
 	} catch (error) {
-		return (error as ApiException).getStatus();
+		return (error as IHttpFailure).getStatus?.();
 	}
 };
 

@@ -3,7 +3,7 @@
 // makes the module work whatever loaded it, instead of depending on the application's entry point.
 import 'reflect-metadata';
 
-import { VISIBLE_WITH_METADATA } from '@gauzy/constants';
+import { VISIBLE_WITH_FIELDS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum } from '@gauzy/contracts';
 
 /**
@@ -47,11 +47,14 @@ const visibleFieldsByType = new WeakMap<object, readonly VisibleWithField[]>();
 /**
  * The gated properties of a resource, read once per class.
  *
- * The declaration lives on the entity (or on the DTO that carries a gated write field), so the walk
- * starts at the prototype and moves up: a field declared on a base entity — an audited `unitCost`
- * on a shared parent, say — is found by the same scan as one declared on the resource itself. The
- * result is memoised per class and frozen, which is what makes the projection a property delete
- * against a precomputed set rather than a reflection pass per row.
+ * The declaration is written by `@VisibleWith` on the property itself, which also appends it to the
+ * class's own declaration list — the list is what is read here, because a property cannot be
+ * discovered by enumerating a class: an instance field is not on the prototype, so a scan of
+ * prototype names would find a computed field and miss every stored column. The walk starts at the
+ * prototype and moves up, so a field declared on a base entity is found by the same scan as one
+ * declared on the resource itself, and the most derived declaration of a name wins. The result is
+ * memoised per class and frozen, which is what makes the projection a property delete against a
+ * precomputed set rather than a reflection pass per row.
  *
  * @param entityType The class to inspect: an entity, or the DTO a write body was validated as.
  * @returns The gated properties, in declaration order from the most derived class upwards.
@@ -76,19 +79,19 @@ export function collectVisibleWithFields(entityType: unknown): readonly VisibleW
 		let level: object | null = prototype;
 
 		while (level && level !== Object.prototype) {
-			for (const property of Object.getOwnPropertyNames(level)) {
-				if (seen.has(property)) {
+			const declared = Reflect.getOwnMetadata(VISIBLE_WITH_FIELDS_METADATA, level) as
+				| readonly VisibleWithField[]
+				| undefined;
+
+			for (const field of declared ?? []) {
+				if (seen.has(field.property)) {
 					// A subclass that re-declares a gated property keeps the most derived declaration;
 					// the base class's is the same field and is not a second gate.
 					continue;
 				}
 
-				const permission = Reflect.getOwnMetadata(VISIBLE_WITH_METADATA, level, property);
-
-				if (permission) {
-					seen.add(property);
-					fields.push({ property, permission: permission as PermissionsEnum });
-				}
+				seen.add(field.property);
+				fields.push({ property: field.property, permission: field.permission });
 			}
 
 			level = Object.getPrototypeOf(level);

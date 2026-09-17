@@ -151,7 +151,30 @@ function assertOperatorAllowed(op: string, path: string, kind: ApiQueryFieldKind
 const DECIMAL_PATTERN = /^-?\d+(\.\d+)?$/;
 
 /** An ISO-8601 instant carrying an offset or a `Z`, which is what a date filter must be. */
-const ISO_INSTANT_PATTERN = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/;
+const ISO_INSTANT_PATTERN = /^(\d{4})-(\d{2})-(\d{2})(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/;
+
+/**
+ * Whether a well-shaped date names a day that exists.
+ *
+ * `2026-02-31` has the shape of a date and is not one; a parser that only checked the shape would
+ * hand it on, and the driver would roll it forward to the third of March — silently moving the end
+ * of a range. The check reconstructs the instant from the text and compares the day back, which is
+ * the only way to see the rollover.
+ */
+function isRealCalendarDate(text: string): boolean {
+	const match = ISO_INSTANT_PATTERN.exec(text);
+	if (!match) {
+		return false;
+	}
+	const [, year, month, day] = match;
+	const constructed = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+	return (
+		!Number.isNaN(constructed.getTime()) &&
+		constructed.getUTCFullYear() === Number(year) &&
+		constructed.getUTCMonth() === Number(month) - 1 &&
+		constructed.getUTCDate() === Number(day)
+	);
+}
 
 /** Reads the values of a list operator, from a JSON array or the comma-separated wire form. */
 function toList(value: unknown, path: string, op: FilterOperator): unknown[] {
@@ -283,7 +306,9 @@ function coerceScalar(value: unknown, kind: ApiQueryFieldKind | undefined, path:
 		}
 		case 'DATE': {
 			const text = String(value).trim();
-			if (!ISO_INSTANT_PATTERN.test(text)) {
+			// Both halves matter: the shape check keeps a locale format out, and the calendar check
+			// keeps a well-shaped day that does not exist from becoming a range whose ends move.
+			if (!isRealCalendarDate(text) || Number.isNaN(Date.parse(text))) {
 				throw new ApiQueryError('VALIDATION_INVALID_DATE_RANGE', `The "${op}" filter for "${path}" needs an ISO-8601 date.`, {
 					field: path,
 					value
@@ -296,15 +321,23 @@ function coerceScalar(value: unknown, kind: ApiQueryFieldKind | undefined, path:
 		case 'ID':
 		case 'STRING':
 		case 'ENUM':
-		default:
 			return typeof value === 'string' ? value : String(value);
+		default:
+			// No declared kind: the value is passed through as it arrived. Guessing that a number is
+			// text would change what the resource is asked for on a route whose declaration says
+			// nothing about the field.
+			return value;
 	}
 }
 
 /** Parses one `{ op: value }` object — or a bare scalar, which is shorthand for `eq`. */
-function parseConditionObject(path: string, value: unknown, kind: ApiQueryFieldKind | undefined): FilterNode[] {
-	const segments = parsePath(path);
-	const normalisedPath = segments.join('.');
+function parseConditionObject(
+	segments: readonly string[],
+	path: string,
+	value: unknown,
+	kind: ApiQueryFieldKind | undefined
+): FilterNode[] {
+	const normalisedPath = path;
 
 	// A bare scalar, or an array, is the shorthand form: `filter[status]=DRAFT` and
 	// `filter[status][]=A&filter[status][]=B` both mean what a client would expect them to mean.
@@ -385,8 +418,12 @@ function parseFilterObject(raw: Record<string, unknown>, schema: ApiQuerySchema 
 			conditions.push(parseGroup(key as GroupKey, raw[key], schema, depth));
 			continue;
 		}
+		// The path's depth is checked before the allow-list. A path of three segments is malformed
+		// whatever the resource declares — a schema cannot even name one — so reporting it as an
+		// unknown field would send the caller looking for a field name instead of a wrong query shape.
+		const segments = parsePath(key);
 		const kind = assertFilterable(key, schema);
-		conditions.push(...parseConditionObject(key, raw[key], kind));
+		conditions.push(...parseConditionObject(segments, key, raw[key], kind));
 	}
 
 	if (conditions.length === 0) {

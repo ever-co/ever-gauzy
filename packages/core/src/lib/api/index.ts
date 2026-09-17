@@ -42,7 +42,7 @@ export * from './accepted.decorator';
  * it re-exports for callers that look for it there — `toApiQuery`, `parsePage` — is already
  * exported above, and two wildcards claiming one name is an ambiguity rather than a convenience.
  */
-export { cursorToFilterNode, toFindManyOptions, toMikroOrmFindOptions, toMikroOrmWhere, toSkip, toWhereClause } from './query-translator';
+export { cursorToFilterNode, toFindManyOptions, toMikroOrmFindOptions, toMikroOrmWhere, toWhereClause } from './query-translator';
 export type { ApiFindOptions, ApiMikroOrmFindOptions } from './query-translator';
 /** The wire contract of the protocol, which a controller names as the type of its `@Query()`. */
 export type { ApiPageDTO, ApiQueryDTO } from '../core/dto/api-query.dto';

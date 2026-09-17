@@ -1,5 +1,6 @@
 import { Type, UseInterceptors, UsePipes } from '@nestjs/common';
 import { DeprecationHeadersInterceptor } from './deprecation-headers.interceptor';
+import { ResourceProjectionInterceptor } from './resource-projection.interceptor';
 import { ApiQueryPipe, ApiQueryPipeOptions } from '../shared/pipes/api-query.pipe';
 import type { ApiQuerySchema } from './query-schema';
 
@@ -29,6 +30,12 @@ import type { ApiQuerySchema } from './query-schema';
  * nothing about the legacy parameter it translated, and the interceptor without the pipe writes
  * headers no request ever recorded.
  *
+ * Adopting the protocol is also what turns field-level visibility on for a route: the projection is
+ * mounted here beside the pipe, so a resource declares a gated field once on its entity and the
+ * routes that speak the protocol project it. A route that has not adopted the protocol returns
+ * exactly what it returned before — that is deliberate, and it is what lets the declaration land
+ * one resource at a time.
+ *
  * @param schema The resource's declaration. When omitted, the decorator still mounts the pipe and
  *   the pipe is a pass-through, which is what lets a route opt in before its declaration lands.
  * @returns The piped and intercepted route.
@@ -50,10 +57,10 @@ export function ApiQueryWith(options: ApiQueryPipeOptions): MethodDecorator & Cl
 	return applyApiQuery(options);
 }
 
-/** Applies the pipe and the interceptor in one step. */
+/** Applies the pipe and the interceptors in one step. */
 function applyApiQuery(options: ApiQueryPipeOptions): MethodDecorator & ClassDecorator {
 	const pipe = UsePipes(new ApiQueryPipe(options));
-	const interceptor = UseInterceptors(DeprecationHeadersInterceptor);
+	const interceptor = UseInterceptors(DeprecationHeadersInterceptor, ResourceProjectionInterceptor);
 	const composite = (target: object, key?: string | symbol, descriptor?: TypedPropertyDescriptor<unknown>) => {
 		if (descriptor) {
 			pipe(target, key as string | symbol, descriptor);

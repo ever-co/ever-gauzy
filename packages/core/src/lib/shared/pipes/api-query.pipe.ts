@@ -1,7 +1,9 @@
-import { ArgumentMetadata, HttpException, Injectable, Optional, PipeTransform } from '@nestjs/common';
+import { ArgumentMetadata, Injectable, Optional, PipeTransform } from '@nestjs/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { ApiQuery, ApiQueryError, isApiQueryError, validateQueryStringLength } from '../../api/query-ast';
 import { toApiQuery } from '../../api/query-parser';
+import { ApiException } from '../../core/errors/api-exception';
+import { ApiErrorCode } from '../../core/errors/api-error-codes';
 import {
 	ApiLegacyDataAdapter,
 	DEPRECATED_FIELD_HEADER,
@@ -55,13 +57,6 @@ export interface ApiQueryPipeOptions {
 	 */
 	readonly withDeletedPermission?: PermissionsEnum;
 }
-
-/** The reason phrase Nest itself uses for the statuses the protocol can answer with. */
-const REASON_PHRASE_BY_STATUS: Readonly<Record<number, string>> = {
-	400: 'Bad Request',
-	403: 'Forbidden',
-	414: 'URI Too Long'
-};
 
 /**
  * The property a request carries its compiled query under.
@@ -153,7 +148,7 @@ export class ApiQueryPipe implements PipeTransform<ApiQueryDTO | undefined, ApiQ
 			return query;
 		} catch (error) {
 			if (isApiQueryError(error)) {
-				throw toHttpException(error);
+				throw toApiException(error);
 			}
 			throw error;
 		}
@@ -262,25 +257,21 @@ function readRawQueryString(request: unknown): string | undefined {
 }
 
 /**
- * Turns a protocol error into the response the client sees.
+ * Turns a protocol violation into the exception the platform's error contract answers with.
  *
- * The body keeps the three keys every existing error body has — `statusCode`, `error`, `message` —
- * and adds the two the catalogue defines: `code`, and `details` when the violation has some. It is
- * built here rather than thrown raw so that the pure grammar never has to know what a response is.
+ * The grammar raises a plain `Error` because it must run without a framework; this is the one place
+ * that becomes an HTTP error, and it becomes the platform's own `ApiException` rather than a
+ * hand-built body. That is what puts the query protocol's codes on the same footing as every other
+ * code in the catalogue: the same filter renders them, the same envelope carries them, and the
+ * GraphQL surface can map them without knowing anything about queries.
+ *
+ * The status comes from the code, never from the call site, so one violation cannot answer 400 on
+ * one route and 422 on another.
  *
  * @param error The violation.
- * @returns The HTTP exception to throw.
+ * @returns The exception to throw.
  */
-export function toHttpException(error: ApiQueryError): HttpException {
-	const status = error.status;
-	const body: Record<string, unknown> = {
-		statusCode: status,
-		error: REASON_PHRASE_BY_STATUS[status] ?? 'Request Failed',
-		message: error.wireMessage,
-		code: error.code
-	};
-	if (error.details && Object.keys(error.details).length > 0) {
-		body.details = error.details;
-	}
-	return new HttpException(body, status);
+export function toApiException(error: ApiQueryError): ApiException {
+	const details = error.details && Object.keys(error.details).length > 0 ? { ...error.details } : undefined;
+	return new ApiException(error.status, error.code as ApiErrorCode, error.wireMessage, details);
 }
