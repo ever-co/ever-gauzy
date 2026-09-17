@@ -178,6 +178,16 @@ const KERNEL_MODULES = [
 	'webhook'
 ];
 
+/**
+ * Modules in core that own tables but whose behaviour is delivered by a plugin.
+ *
+ * Search is the case: the index tables serve every domain, so they belong in core, while the
+ * pipeline, the providers, the reindex job and the endpoints are the search plugin's. Only the
+ * entity, migration and registration checks apply here — there is no service or module to expect in
+ * core.
+ */
+const CORE_ENTITY_MODULES = ['search'];
+
 /* ------------------------------------------------------------------------------------------------
  * Harness
  * ---------------------------------------------------------------------------------------------- */
@@ -308,10 +318,11 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 	}
 
 	// --- controllers ------------------------------------------------------------------------
+	// Every concept on the platform is reachable over both protocols, so every package exposes a
+	// REST controller as well as resolvers. This is not conditional on the package owning a table:
+	// a package that owns behaviour behind core tables still has concepts to expose.
 	const controllers = tsFiles.filter((f) => f.endsWith('.controller.ts'));
-	if (tables.length > 0) {
-		check(`${at}: exposes at least one controller`, controllers.length > 0, 'no .controller.ts');
-	}
+	check(`${at}: exposes at least one controller`, controllers.length > 0, 'no .controller.ts');
 	for (const file of controllers) {
 		const source = read(file);
 		const where = rel(file);
@@ -399,15 +410,23 @@ const coreMigrations = existsSync(coreMigrationsDir)
 			.map((f) => ({ file: join(coreMigrationsDir, f), source: read(join(coreMigrationsDir, f)) }))
 	: [];
 
-for (const name of KERNEL_MODULES) {
+for (const { name, runtime } of [
+	...KERNEL_MODULES.map((name) => ({ name, runtime: true })),
+	...CORE_ENTITY_MODULES.map((name) => ({ name, runtime: false }))
+]) {
 	const dir = join(coreDir, name);
-	const at = `kernel ${name}`;
+	const at = `${runtime ? 'kernel' : 'core'} ${name}`;
 	if (!check(`${at}: module directory exists`, existsSync(dir), rel(dir))) continue;
 
 	const files = walk(dir).filter((f) => f.endsWith('.ts'));
-	check(`${at}: has a service`, files.some((f) => /\.service\.ts$/.test(f)), 'no *.service.ts');
-	check(`${at}: has a module`, files.some((f) => /\.module\.ts$/.test(f)), 'no *.module.ts');
-	check(`${at}: has a barrel`, existsSync(join(dir, 'index.ts')), 'no index.ts');
+
+	// A module whose behaviour lives in a plugin has no service, module or barrel to expect in core
+	// — core owns its tables and its entities, the plugin owns what is done with them.
+	if (runtime) {
+		check(`${at}: has a service`, files.some((f) => /\.service\.ts$/.test(f)), 'no *.service.ts');
+		check(`${at}: has a module`, files.some((f) => /\.module\.ts$/.test(f)), 'no *.module.ts');
+		check(`${at}: has a barrel`, existsSync(join(dir, 'index.ts')), 'no index.ts');
+	}
 
 	// Money is pure arithmetic over exact values and owns no table, so it is the one kernel module
 	// with nothing to persist. Every other kernel module must ship an entity, a migration to create
