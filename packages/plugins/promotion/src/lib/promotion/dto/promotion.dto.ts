@@ -165,7 +165,7 @@ export class PromotionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly budgetAmount?: DecimalString | number;
+	readonly budgetAmount?: DecimalString;
 
 	/**
 	 * Consumption of the inline budget.
@@ -173,7 +173,7 @@ export class PromotionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly budgetSpent?: DecimalString | number;
+	readonly budgetSpent?: DecimalString;
 
 	/**
 	 * Whether the discount is computed on the tax-inclusive amount.

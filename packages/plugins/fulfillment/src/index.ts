@@ -11,7 +11,19 @@ export * from './lib/database/migrations/1791000000240-CreateFulfillmentTables';
 export * from './lib/database/migrations/1791000000250-AddCartShippingOptionForeignKey';
 export * from './lib/graphql';
 export * from './lib/graphql/schema-extensions';
-export * from './lib/graphql/types';
+// The GraphQL type module is exported by name rather than wholesale. Two of its members already
+// exist elsewhere in this barrel — the aliases `Fulfillment`, `FulfillmentLine`, `ShippingOption`,
+// `ShippingProfile` and `ShippingProfileVariant` name the entities `./lib/entities` exports, and
+// `IShippingOptionEligibility` is also declared by the shipping-option service — and a `export *`
+// of both makes every one of them ambiguous, which the compiler reports as an error rather than
+// picking a winner. What is genuinely this module's own — the connection and rate shapes a client
+// reads — is named here.
+export {
+	IFulfillmentConnection,
+	IShippingOptionConnection,
+	IShippingProfileConnection,
+	IShippingRate
+} from './lib/graphql/types';
 
 export * from './lib/fulfillment/fulfillment.entity';
 export * from './lib/fulfillment/fulfillment.service';

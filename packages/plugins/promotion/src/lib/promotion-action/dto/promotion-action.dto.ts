@@ -47,7 +47,7 @@ export class PromotionActionDTO extends TenantOrganizationBaseDTO {
 	 */
 	@ApiProperty({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsDecimalAmount()
-	readonly value: DecimalString | number;
+	readonly value: DecimalString;
 
 	/**
 	 * Required for a fixed-amount action.
@@ -64,7 +64,7 @@ export class PromotionActionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly maxQuantity?: DecimalString | number;
+	readonly maxQuantity?: DecimalString;
 
 	/**
 	 * Overrides the eligible target quantity before maxQuantity is applied.
@@ -72,7 +72,7 @@ export class PromotionActionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly applyToQuantity?: DecimalString | number;
+	readonly applyToQuantity?: DecimalString;
 
 	/**
 	 * The buy quantity that triggers a buy-and-get action.
@@ -80,7 +80,7 @@ export class PromotionActionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly buyRulesMinQuantity?: DecimalString | number;
+	readonly buyRulesMinQuantity?: DecimalString;
 
 	/**
 	 * Whether the produced adjustment is expressed on the gross basis.

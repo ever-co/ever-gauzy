@@ -32,5 +32,5 @@ export class CampaignBudgetUsageDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly used?: DecimalString | number;
+	readonly used?: DecimalString;
 }

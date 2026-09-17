@@ -26,7 +26,7 @@ export class GiftCardDTO extends TenantOrganizationBaseDTO {
 	 */
 	@ApiProperty({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsDecimalAmount()
-	readonly initialAmount: DecimalString | number;
+	readonly initialAmount: DecimalString;
 
 	/**
 	 * Current balance; the ledger is the authority and this column is the cache of it.
@@ -34,7 +34,7 @@ export class GiftCardDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly balance?: DecimalString | number;
+	readonly balance?: DecimalString;
 
 	/**
 	 * The card currency. A card is only redeemable against an order in it.

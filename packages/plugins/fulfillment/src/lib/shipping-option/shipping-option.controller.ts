@@ -1,6 +1,8 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IPagination } from '@gauzy/contracts';
 import {
+	BaseQueryDTO,
 	CrudController,
 	Permissions,
 	PermissionGuard,
@@ -84,8 +86,8 @@ export class ShippingOptionController extends CrudController<ShippingOption> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Shipping options found' })
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() options: Record<string, unknown>) {
-		return this.shippingOptionService.findAll(options as any);
+	async findAll(@Query() options: BaseQueryDTO<ShippingOption>): Promise<IPagination<ShippingOption>> {
+		return this.shippingOptionService.findAll(options);
 	}
 
 	/**

@@ -33,7 +33,7 @@ export class PaymentCollectionDTO extends TenantOrganizationBaseDTO {
 	 */
 	@ApiProperty({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsDecimalAmount()
-	readonly amount: DecimalString | number;
+	readonly amount: DecimalString;
 
 	/**
 	 * Currency of the collection.
@@ -57,7 +57,7 @@ export class PaymentCollectionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly authorizedAmount: DecimalString | number = 0;
+	readonly authorizedAmount: DecimalString = '0';
 
 	/**
 	 * Sum of captures.
@@ -65,7 +65,7 @@ export class PaymentCollectionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly capturedAmount: DecimalString | number = 0;
+	readonly capturedAmount: DecimalString = '0';
 
 	/**
 	 * Sum of succeeded refunds.
@@ -73,7 +73,7 @@ export class PaymentCollectionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly refundedAmount: DecimalString | number = 0;
+	readonly refundedAmount: DecimalString = '0';
 
 	/**
 	 * Sum of voided authorisations.
@@ -81,7 +81,7 @@ export class PaymentCollectionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly canceledAmount: DecimalString | number = 0;
+	readonly canceledAmount: DecimalString = '0';
 
 	/**
 	 * Currency the collection is expected to settle in, when it differs from the presentment currency.
@@ -98,7 +98,7 @@ export class PaymentCollectionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly settlementAmount?: DecimalString | number;
+	readonly settlementAmount?: DecimalString;
 
 	/**
 	 * Rate used to derive the expected settlement.
@@ -106,7 +106,7 @@ export class PaymentCollectionDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly fxRate?: DecimalString | number;
+	readonly fxRate?: DecimalString;
 
 	/**
 	 * The exchange-rate row the rate was read from; a snapshot reference with no foreign key.

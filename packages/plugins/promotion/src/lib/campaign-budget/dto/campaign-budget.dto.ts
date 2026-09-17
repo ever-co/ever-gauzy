@@ -32,7 +32,7 @@ export class CampaignBudgetDTO extends TenantOrganizationBaseDTO {
 	 */
 	@ApiProperty({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsDecimalAmount()
-	readonly limit: DecimalString | number;
+	readonly limit: DecimalString;
 
 	/**
 	 * Consumption so far, including reservations. Maintained by the conditional update, never set by hand.
@@ -40,7 +40,7 @@ export class CampaignBudgetDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsOptional()
 	@IsDecimalAmount()
-	readonly used?: DecimalString | number;
+	readonly used?: DecimalString;
 
 	/**
 	 * Context attribute path the budget is split by. Required for the *_BY_ATTRIBUTE types.

@@ -23,7 +23,7 @@ export class PaymentCaptureDTO extends TenantOrganizationBaseDTO {
 	 */
 	@ApiProperty({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsDecimalAmount()
-	readonly amount: DecimalString | number;
+	readonly amount: DecimalString;
 
 	/**
 	 * Currency of the capture.
