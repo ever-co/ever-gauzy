@@ -136,7 +136,10 @@ describe('CrudService sensitive-relation enforcement', () => {
 		it.each([
 			['naming the protected relation', { relations: ['payments'] }],
 			['for every relation', true],
-			['for every relation, with options', { disableMixedMap: true }]
+			['for every relation, with options', { disableMixedMap: true }],
+			['with a null relation list, which TypeORM reads as every relation', { relations: null }],
+			// TypeORM matches with `relations.indexOf(propertyPath)`, so a string is a substring match.
+			['with a string whose substring is the protected relation', { relations: 'all-payments-list' }]
 		])('refuses loadRelationIds %s', async (_label: string, loadRelationIds: unknown) => {
 			await expect(service.findAll({ loadRelationIds } as any)).rejects.toThrow(ForbiddenException);
 			expect(repository.findAndCount).not.toHaveBeenCalled();

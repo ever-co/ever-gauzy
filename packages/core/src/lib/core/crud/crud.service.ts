@@ -132,10 +132,13 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		if (loadRelationIds) {
 			const named =
 				typeof loadRelationIds === 'object' ? (loadRelationIds as { relations?: unknown }).relations : undefined;
-			// `{ relations: [...] }` names its relations; any other truthy value loads the ids of all of them.
+			// Only a real array names its relations exactly: TypeORM filters with `relations.indexOf(propertyPath)`,
+			// so a STRING (`?loadRelationIds[relations]=all-payments-list`) matches every relation whose name is a
+			// substring of it, and a missing or null list loads them all. Anything but an array is therefore
+			// checked as a request for the ids of every relation.
 			assertSensitiveRelationsAllowed(
 				metadata,
-				named ?? (metadata?.relations ?? []).map((relation) => relation.propertyPath)
+				Array.isArray(named) ? named : (metadata?.relations ?? []).map((relation) => relation.propertyPath)
 			);
 		}
 	}
