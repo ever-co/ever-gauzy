@@ -124,7 +124,10 @@ export type GoodsReceiptPosting = GoodsReceipt & {
  * authoritative relation is the receipt line's own order line. What the header column cannot state the
  * service checks: when it is set, every line has to belong to that order (`RECEIPT_ORDER_MISMATCH`),
  * and the location has to be the location of every order the lines belong to, because receiving
- * elsewhere is a transfer rather than a receipt.
+ * elsewhere is a transfer rather than a receipt. Both of those questions are asked of the orders the
+ * lines belong to, so a line the caller cannot resolve is refused as a line before either of them —
+ * with no order behind it, neither question has an answer, and reporting one of them would name the
+ * consequence rather than the line that is actually missing.
  *
  * Put-away is the same seam as the movement: a line that carries a bin asks the capability to walk the
  * units from the receiving area into that bin, linked to the movement the line produced.
@@ -166,7 +169,7 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 	 * @throws ConflictException when an order cannot be received against, when a location differs, when
 	 * a line would exceed its allowance, or when no inventory capability is registered and there are
 	 * units to move.
-	 * @throws NotFoundException when a line does not belong to the order it is received against.
+	 * @throws NotFoundException when a line the delivery names is not one the caller may receive against.
 	 * @throws BadRequestException when a line carries no quantity at all.
 	 */
 	public async receive(input: IGoodsReceiptInput): Promise<GoodsReceiptPosting> {
@@ -177,6 +180,12 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		const orderLines = await this.purchaseOrderLineService.findIndexedByIds(
 			input.lines.map((line) => line.purchaseOrderLineId)
 		);
+
+		// The lines are settled first: every order this delivery touches, and so the location an anchored
+		// delivery inherits rather than states, is discovered through them, and a name that resolves to
+		// nothing has no order behind it for either question to be answered from.
+		this.resolveNamedLines(input.lines, orderLines);
+
 		const orders = await this.resolveOrders(input, orderLines);
 		const warehouseId = this.resolveWarehouse(input, orderLines, orders);
 		const resolved = await this.resolveLines(input.lines, orderLines, orders, input.overReceiptTolerance);
@@ -245,6 +254,11 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		}
 
 		const orderLines = await this.purchaseOrderLineService.findIndexedByIds([input.purchaseOrderLineId]);
+
+		// The line is settled before the anchor is: the order a line belongs to is discovered through the
+		// line, so a name that resolves to nothing would otherwise be answered as a line of another order.
+		this.resolveNamedLines([input], orderLines);
+
 		const orders = new Map<ID, PurchaseOrder>();
 
 		for (const orderLine of orderLines.values()) {
@@ -509,6 +523,40 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 	}
 
 	/**
+	 * Reads the order line each named line resolves to, refusing a delivery that names one it cannot
+	 * receive against.
+	 *
+	 * This is asked before anything else is decided from the lines, because everything else is derived
+	 * from them: the orders a delivery touches are the orders of its order lines, and an anchored
+	 * delivery's location is inherited from its order rather than stated. A name that resolves to
+	 * nothing therefore leaves both questions without a premise, and answering either of them first
+	 * names a consequence — a location nobody stated, an order the line does not appear to belong to —
+	 * instead of the line that could not be resolved, sending the operator to fix something that is not
+	 * wrong. The line is what is missing, so the line is what is named.
+	 *
+	 * @param inputs The lines the caller named.
+	 * @param orderLines The order lines those names resolved to.
+	 * @returns The order lines, in the order the caller named them.
+	 * @throws NotFoundException when a named line is not one the caller may receive against.
+	 */
+	private resolveNamedLines(
+		inputs: IGoodsReceiptLineInput[],
+		orderLines: Map<ID, PurchaseOrderLine>
+	): PurchaseOrderLine[] {
+		return inputs.map((input) => {
+			const orderLine = orderLines.get(input.purchaseOrderLineId);
+
+			if (!orderLine) {
+				throw new NotFoundException(
+					`PURCHASE_ORDER_LINE_NOT_FOUND: order line '${input.purchaseOrderLineId}' could not be found in this organization.`
+				);
+			}
+
+			return orderLine;
+		});
+	}
+
+	/**
 	 * Resolves and validates the requested lines against the order lines they name.
 	 *
 	 * @param inputs The requested lines.
@@ -526,16 +574,11 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		orders: Map<ID, PurchaseOrder>,
 		stated?: DecimalString | number
 	): Promise<IResolvedReceiptLine[]> {
+		const named = this.resolveNamedLines(inputs, orderLines);
 		const resolved: IResolvedReceiptLine[] = [];
 
-		for (const input of inputs) {
-			const orderLine = orderLines.get(input.purchaseOrderLineId);
-
-			if (!orderLine) {
-				throw new NotFoundException(
-					`PURCHASE_ORDER_LINE_NOT_FOUND: order line '${input.purchaseOrderLineId}' could not be found in this organization.`
-				);
-			}
+		for (const [index, input] of inputs.entries()) {
+			const orderLine = named[index];
 
 			if (!orderLine.variantId) {
 				throw new ConflictException(

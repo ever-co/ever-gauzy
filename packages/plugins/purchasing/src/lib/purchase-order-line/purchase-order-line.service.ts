@@ -466,10 +466,13 @@ export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrd
 	 * Resolves the pricing of one line as the caller stated it.
 	 *
 	 * A caller that states a cost has priced the line by hand and keeps whatever provenance it states
-	 * with it, so a line set rewritten as a unit does not lose the term its price came from. A caller
-	 * that states none is priced by the agreement, which is the whole reason the terms are standing rows.
-	 * Without a supplier and a currency there is no agreement to resolve against, and the line has to
-	 * state its own price rather than be written at zero.
+	 * with it, so a line set rewritten as a unit does not lose the term its price came from. That holds
+	 * whichever branch prices the line: the resolution that takes a stated figure reports no winning row
+	 * to offer as provenance, so the caller's own is carried through onto the line rather than being
+	 * left behind at the delegation. A caller that states none is priced by the agreement, which is the
+	 * whole reason the terms are standing rows, and the winner the resolution found is what the line
+	 * then records. Without a supplier and a currency there is no agreement to resolve against, and the
+	 * line has to state its own price rather than be written at zero.
 	 *
 	 * @param input The line as the caller supplied it.
 	 * @param context The supplier and currency to resolve against, when known.
@@ -498,7 +501,7 @@ export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrd
 			};
 		}
 
-		return await this.vendorProductTermService.priceLine(
+		const pricing = await this.vendorProductTermService.priceLine(
 			{
 				vendorId: context.vendorId,
 				variantId: input.variantId,
@@ -509,6 +512,11 @@ export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrd
 			},
 			currency
 		);
+
+		// A line the caller priced by hand has no winning row behind it, so the only provenance there is
+		// to record is the one the caller stated with the price (`IPurchaseOrderLineInput.vendorTermId`).
+		// A line the agreement priced keeps the winner the resolution itself answered with.
+		return pricing.source === 'MANUAL' ? { ...pricing, vendorTermId: input.vendorTermId } : pricing;
 	}
 
 	/**
