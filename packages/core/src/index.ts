@@ -175,3 +175,34 @@ export { IncomeCreateCommand, IncomeModule, IncomeService } from './lib/income';
 export { TagTypeModule, TagTypeService } from './lib/tag-type';
 export { AutomationLabelSyncCommand, RelationalTagDTO, Taggable, TagModule, TagService } from './lib/tags';
 export * from './lib/token';
+
+// Retry safety and optimistic concurrency are conventions a controller adopts with a decorator, and
+// the controllers that adopt them live in this package and in plugins alike — a decorator that is
+// not part of the public surface cannot be applied from a plugin at all.
+export {
+	IdempotencyInterceptor,
+	IdempotencyModule,
+	IdempotencyService,
+	Idempotent,
+	IDEMPOTENT_METADATA_KEY
+} from './lib/idempotency';
+export {
+	Versioned,
+	VersionGuard,
+	VersionInterceptor,
+	VersionedColumn,
+	commitVersionedUpdate,
+	parseIfMatch,
+	formatEntityTag,
+	versionExpectationOf
+} from './lib/concurrency';
+/**
+ * The API conventions a resource adopts: the query protocol, field-level visibility, bulk
+ * application and the accepted-operation handle.
+ *
+ * Exported because a plugin package has to be able to implement the same conventions as a resource
+ * built into core. Without this a plugin can expose a list endpoint but cannot declare what may be
+ * filtered, sorted or selected on it, cannot withhold a field from a caller who may not read it, and
+ * cannot accept a long-running request — so it would either invent its own or go without.
+ */
+export * from './lib/api';

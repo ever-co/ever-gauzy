@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
+import { DecimalString } from './money.model';
 
 /**
  * The kind of value an indexed field holds.
@@ -59,8 +60,14 @@ export interface ISearchIndexDefinition extends IBasePerTenantAndOrganizationEnt
 	engineKey?: string;
 	/** The indexed field list. */
 	fields: ISearchIndexField[];
-	/** Weight applied to a field that declares none. */
-	defaultWeight: number;
+	/**
+	 * Weight applied to a field that declares none.
+	 *
+	 * An exact decimal, not a number: the column is a numeric and the driver returns it as a string,
+	 * so declaring it as a number here would promise a type the row never carries. The same reason
+	 * every other exact value on this platform is a decimal string.
+	 */
+	defaultWeight: DecimalString;
 	/** Template producing the document title, for example `{{name}} — {{code}}`. */
 	titleTemplate?: string;
 	/** Template producing the document body; null joins the remaining searchable fields. */
@@ -69,8 +76,13 @@ export interface ISearchIndexDefinition extends IBasePerTenantAndOrganizationEnt
 	keywordFields?: string[];
 	/** The column whose value is copied into the document's `sourceUpdatedAt`. */
 	sourceUpdatedAtField: string;
-	/** An inactive definition is neither indexed nor queried; its documents are retained. */
-	isActive: boolean;
+	/**
+	 * An inactive definition is neither indexed nor queried; its documents are retained.
+	 *
+	 * Optional because the base entity every row extends declares it optional, with a database
+	 * default of true — a definition that does not state it is active.
+	 */
+	isActive?: boolean;
 	/** A seeded definition: its weights may be edited but it may not be deleted. */
 	isSystem: boolean;
 	/** Bumped whenever the fields or a template change, so stale documents are rebuilt. */
