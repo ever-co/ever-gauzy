@@ -46,10 +46,16 @@ export const isBetterSqlite3 = (): boolean => isBetterSqlite3Value;
 export const isPostgres = (): boolean => isPostgresValue;
 export const isMongodb = (): boolean => isMongodbValue;
 
+/** Every `DB_TYPE` value `database.ts` recognizes, including `mongodb`, which it rejects on its own. */
 const DATABASE_TYPE_VALUES: readonly string[] = Object.values(DatabaseTypeEnum);
 
+/** The `DB_TYPE` values `database.ts` can actually run (`mongodb` is recognized but not supported yet). */
+const SUPPORTED_DATABASE_TYPE_VALUES: readonly string[] = DATABASE_TYPE_VALUES.filter(
+	(value) => value !== DatabaseTypeEnum.mongodb
+);
+
 /**
- * Validates that a `DB_TYPE` value is one of the values `DatabaseTypeEnum` supports — TASK 5
+ * Validates that a `DB_TYPE` value is one of the values `DatabaseTypeEnum` recognizes — TASK 5
  * (Configuration Schema and Startup Validation) of the improvement roadmap.
  *
  * Before this existed, `database.ts`'s `switch (dbType)` had no `default` case: an unrecognized
@@ -58,43 +64,81 @@ const DATABASE_TYPE_VALUES: readonly string[] = Object.values(DatabaseTypeEnum);
  * that would only surface later as an opaque "Cannot read properties of undefined" deep inside
  * `TypeOrmModule.forRootAsync`, rather than a clear error at the moment the bad config is read.
  *
- * @param dbType - The `DB_TYPE` value to validate (already defaulted by the caller when unset —
- *   this only rejects a value that was actually SET to something unrecognized).
+ * `mongodb` passes this check on purpose: `database.ts` rejects it with its own, more specific
+ * "not supported yet" error. It is therefore also left out of the supported values listed here.
+ *
+ * @param dbType - The `DB_TYPE` value to validate. The caller has already replaced an unset or empty
+ *   `DB_TYPE` with the default (better-sqlite3), so this only rejects a value that was actually set
+ *   to something unrecognized.
  * @throws {Error} if `dbType` is not one of `DatabaseTypeEnum`'s values.
  */
 export function assertValidDatabaseType(dbType: string): asserts dbType is DatabaseTypeEnum {
 	if (!DATABASE_TYPE_VALUES.includes(dbType)) {
-		throw new Error(
-			`Invalid DB_TYPE "${dbType}". Supported values: ${DATABASE_TYPE_VALUES.join(', ')}.`
-		);
+		throw new Error(`Invalid DB_TYPE "${dbType}". Supported values: ${SUPPORTED_DATABASE_TYPE_VALUES.join(', ')}.`);
 	}
 }
 
 /**
- * Parses a positive-integer environment variable, failing fast with a descriptive error instead of
- * silently producing `NaN` — which every downstream pool/timeout option in `database.ts` previously
- * accepted without complaint until it broke a connection much later, deep inside a driver.
+ * Options for {@link parseIntEnv}.
+ */
+export interface IntEnvOptions {
+	/**
+	 * Smallest accepted value (inclusive). Defaults to 0: every numeric database setting is a size,
+	 * a port or a duration, where a negative number never meant anything.
+	 */
+	min?: number;
+	/**
+	 * Passed straight to `Number.parseInt`. Leave it out for the settings `database.ts` always parsed
+	 * without a radix (a "0x" prefix then reads as hexadecimal, exactly as before); pass 10 for the
+	 * ones it always parsed with radix 10 (`DB_PORT`).
+	 */
+	radix?: number;
+	/**
+	 * What to do with a value that does not parse or is below `min`. `'throw'` (the default) is for
+	 * settings where such a value already broke startup before this check existed, so failing fast only
+	 * makes the error readable. `'warn'` is for settings the drivers tolerated (an unparsable `DB_PORT`
+	 * fell back to the default port, an unparsable `DB_SLOW_QUERY_LOGGING_TIMEOUT` switched the warning
+	 * off): it logs a warning and returns the value `Number.parseInt` produced, exactly as before, so a
+	 * deployment that starts today keeps starting.
+	 */
+	onInvalid?: 'throw' | 'warn';
+}
+
+/**
+ * Parses an integer environment variable with the same `Number.parseInt` semantics `database.ts`
+ * has always used, failing fast with an error naming the variable and the bad value when the result
+ * is not a usable number.
+ *
+ * Every value that parsed before still parses to the same number: surrounding whitespace, an
+ * explicit sign and trailing text are tolerated ("+5" is 5, "5000ms" is 5000, "2.5" is 2), and an
+ * unset or empty variable still yields the default (compose / k8s templates render an unset
+ * variable as ''). What now throws at startup is a value that parsed to `NaN` ("abc", " ") — which
+ * the pool/timeout options previously passed on without complaint until a driver broke much later
+ * — and a value below `min`.
  *
  * @param name - The environment variable's name, used only for the error message.
  * @param rawValue - `process.env[name]`.
  * @param defaultValue - Used when `rawValue` is unset or empty; never itself validated, since it is
  *   a literal in `database.ts`, not user input.
- * @throws {Error} if `rawValue` is set but does not parse to a positive integer.
+ * @param options - See {@link IntEnvOptions}.
+ * @throws {Error} if `rawValue` is set but parses to `NaN` or to a number below `min`.
  */
-export function parsePositiveIntEnv(name: string, rawValue: string | undefined, defaultValue: number): number {
+export function parseIntEnv(
+	name: string,
+	rawValue: string | undefined,
+	defaultValue: number,
+	{ min = 0, radix, onInvalid = 'throw' }: IntEnvOptions = {}
+): number {
 	if (rawValue === undefined || rawValue === '') {
 		return defaultValue;
 	}
-	// `Number.parseInt` parses only a leading numeric PREFIX — "2.5" silently becomes 2 and
-	// "5432junk" silently becomes 5432, defeating the whole point of failing fast on a
-	// misconfigured value. Require the entire string to be digits (a real review finding on this
-	// PR — see database-config-validation.spec.ts's dedicated tests for both cases).
-	if (!/^\d+$/.test(rawValue.trim())) {
-		throw new Error(`Invalid ${name} "${rawValue}": expected a positive integer.`);
-	}
-	const parsed = Number.parseInt(rawValue, 10);
-	if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-		throw new Error(`Invalid ${name} "${rawValue}": expected a positive integer.`);
+	const parsed = Number.parseInt(rawValue, radix);
+	if (Number.isNaN(parsed) || parsed < min) {
+		const message = `Invalid ${name} "${rawValue}": expected an integer >= ${min}.`;
+		if (onInvalid === 'throw') {
+			throw new Error(message);
+		}
+		console.warn(`${message} Using it as before; fix the value, since it may be rejected in the future.`);
 	}
 	return parsed;
 }
