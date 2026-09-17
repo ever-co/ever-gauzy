@@ -167,46 +167,21 @@
   @include ga-hub.rows();
 
   // ── Employee cell ──────────────────────────────────────────────────────────
-  // `ngx-employee-links` pins an 18px avatar, an 8px gap, a 12px/15px name and a
-  // 5px/14px pill padding — a 28px chip in rows the density tokens build to a
-  // 1rem line box, and the single biggest reason a row here stood twice as tall
-  // as the same row on Employees or Payments.
+  // A block used to sit here shrinking `ngx-employee-links` — a 1rem avatar and
+  // a 0.6875rem name inside a 2px-inset pill — so that a person cost the row the
+  // same 1rem line box a glyph does.
   //
-  // Sized off the shared `gauzy-people-*` tokens, so this column matches the
-  // people cells every other list page renders.
+  // It is gone, and deliberately not replaced with anything. Left alone the
+  // renderer draws an 18px `<img>` (a template attribute, not CSS) and a
+  // 12px/15px name inside a pill padded 5px: a 28px chip, which is to the pixel
+  // what `ngx-contact-links` costs the Invoices Contact column. This page's
+  // Employee cell is now exact by construction rather than by a second set of
+  // numbers kept in step with that one by hand.
   //
-  // `ng-component` is the second selector because the inline editor
-  // (`EmployeeLinkEditorComponent`) declares no selector of its own — the smart
-  // table instantiates it dynamically, so its host element is a bare
-  // `<ng-component>` — while reusing this very sheet. Without it the row jumps
-  // back to full height the moment it goes into edit.
-  ngx-employee-links,
-  ng-component {
-    a {
-      @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
-      @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
-    }
-
-    img {
-      width: var(--gauzy-people-avatar-size, 1rem);
-      height: var(--gauzy-people-avatar-size, 1rem);
-      @include nb-ltr(margin-right, var(--gauzy-people-gap, 0.375rem));
-      @include nb-rtl(margin-left, var(--gauzy-people-gap, 0.375rem));
-    }
-
-    // SPECIFICITY: the component nests this under `:host a`, which shims to
-    // `[_nghost-el] a[_ngcontent-el] .names-wrapper[_ngcontent-el]` — (0,4,1).
-    // The doubled class is what clears it, the same idiom the Employees and
-    // Tasks sheets use on their own people cells.
-    .names-wrapper.names-wrapper {
-      // Truncates on WIDTH, never on a character count, so a short name renders
-      // in full and only a genuinely long one picks up an ellipsis.
-      max-width: var(--gauzy-people-name-max-width, 8rem);
-      font-size: var(--gauzy-people-font-size, 0.6875rem);
-      // Matched to the avatar, so the two share one line box.
-      line-height: var(--gauzy-people-avatar-size, 1rem);
-    }
-  }
+  // The inline editor (`EmployeeLinkEditorComponent`) reuses that same sheet and
+  // comes back with it; the old block had to name `ng-component` separately to
+  // keep a row from jumping height on entering edit, and there is now nothing
+  // for it to jump from.
 
   // ── Job Search Status switch ───────────────────────────────────────────────
   // Nebular's stock toggle is 50×30, but `themes.scss` already re-tokenises it

@@ -3914,6 +3914,9 @@
 		"BROWSE": "Browse",
 		"COMMENT": "Comment",
 		"COMMENTS": "Comments",
+		"COMMENT_PLACEHOLDER": "Write a comment…",
+		"NO_COMMENTS": "No comments yet",
+		"NO_COMMENTS_HINT": "Comments appear here, newest first.",
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
 		"ESTIMATE_NUMBER": "Estimate Number",
@@ -4998,6 +5001,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Select Client",
+			"SELECT_PROJECT": "Select Project",
+			"SELECT_TEAM": "Select Team",
+			"SELECT_TASK": "Select Task",
+			"DESCRIPTION": "Add a description"
+		},
 		"IS_BILLABLE": "Is Billable",
 		"STOP_TIMER": "Stop Timer",
 		"START_TIMER": "Start Timer",
