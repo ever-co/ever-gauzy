@@ -36,6 +36,10 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 * @returns A list of time slots matching the specified criteria.
 	 */
 	async getTimeSlots(request: IGetTimeSlotInput) {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(request);
+
 		// Extract parameters from the request object with default values
 		let {
 			organizationId,

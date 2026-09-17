@@ -13,6 +13,10 @@ export const sensitiveSecretKeys = ['apiKey', 'apiSecret', 'openAiSecretKey', 'o
  */
 export const nonSecretSettingKeys = [
 	'isEnabled',
+	// the same on/off flag under the spellings individual integrations persist it as
+	'is_enabled',
+	'IS_ENABLED',
+	'make_webhook_enabled',
 	'sync',
 	'autoSync',
 	'syncTag',

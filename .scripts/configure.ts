@@ -17,6 +17,29 @@ const isProd = environment === 'prod';
 const safeAppVersion = (env.GAUZY_APP_VERSION || '').replace(/[^\w.\-/]/g, '');
 const safeAppCommit = (env.GAUZY_APP_COMMIT || '').replace(/[^\w.\-/]/g, '');
 
+/**
+ * The seeded-account passwords as shipped in `.scripts/env.ts` — published in this repository and
+ * therefore not secrets.
+ */
+const PUBLISHED_SEED_PASSWORDS: ReadonlyArray<string> = ['admin', '12345678'];
+
+/**
+ * Decides whether a seeded-account password may be written into the PUBLIC web bundle.
+ *
+ * The only reader is the demo login prefill (login.component.ts guards on `environment.DEMO`). An
+ * operator who points one `.env` at both the API and the web build must not ship the real Super Admin
+ * password in JavaScript (GHSA-4r2r-mv32-3468). A demo build may carry whatever it was given. Any
+ * other build carries the value only when it is one of the published defaults, which covers the
+ * Docker image: its `DEMO` flag is substituted at container START (`DOCKER_DEMO`), so a build-time
+ * `DEMO` gate alone would blank the prefill of a demo container built from a non-demo image — while
+ * the image CI publishes is built without these variables and so only ever holds the defaults.
+ *
+ * @param password - The configured password.
+ * @returns The password to embed, or an empty string.
+ */
+const publicSeedPassword = (password: string | undefined): string =>
+	env.DEMO || PUBLISHED_SEED_PASSWORDS.includes(String(password ?? '')) ? String(password ?? '') : '';
+
 let envFileContent = `// NOTE: Auto-generated file
 // The file contents for the current environment will overwrite these during build.
 // The build system defaults to the dev environment which uses 'environment.ts', but if you do
@@ -150,14 +173,16 @@ if (!isDocker) {
 
 		DEMO: ${env.DEMO},
 
+		// Seeded-account passwords reach this PUBLIC bundle only on a demo build or when they are the
+		// published defaults - see publicSeedPassword() (GHSA-4r2r-mv32-3468).
 		DEMO_SUPER_ADMIN_EMAIL: '${env.DEMO_SUPER_ADMIN_EMAIL}',
-		DEMO_SUPER_ADMIN_PASSWORD: '${env.DEMO_SUPER_ADMIN_PASSWORD}',
+		DEMO_SUPER_ADMIN_PASSWORD: '${publicSeedPassword(env.DEMO_SUPER_ADMIN_PASSWORD)}',
 
 		DEMO_ADMIN_EMAIL: '${env.DEMO_ADMIN_EMAIL}',
-		DEMO_ADMIN_PASSWORD: '${env.DEMO_ADMIN_PASSWORD}',
+		DEMO_ADMIN_PASSWORD: '${publicSeedPassword(env.DEMO_ADMIN_PASSWORD)}',
 
 		DEMO_EMPLOYEE_EMAIL: '${env.DEMO_EMPLOYEE_EMAIL}',
-		DEMO_EMPLOYEE_PASSWORD: '${env.DEMO_EMPLOYEE_PASSWORD}',
+		DEMO_EMPLOYEE_PASSWORD: '${publicSeedPassword(env.DEMO_EMPLOYEE_PASSWORD)}',
 
 		CHATWOOT_SDK_TOKEN: '${env.CHATWOOT_SDK_TOKEN}',
 		CHAT_MESSAGE_GOOGLE_MAP: '${env.CHAT_MESSAGE_GOOGLE_MAP}',
@@ -320,14 +345,16 @@ if (!isDocker) {
 		// @ts-ignore
 		DEMO: String('DOCKER_DEMO').toLowerCase() === 'true',
 
+		// Seeded-account passwords reach this PUBLIC bundle only on a demo build or when they are the
+		// published defaults - see publicSeedPassword() (GHSA-4r2r-mv32-3468).
 		DEMO_SUPER_ADMIN_EMAIL: '${env.DEMO_SUPER_ADMIN_EMAIL}',
-		DEMO_SUPER_ADMIN_PASSWORD: '${env.DEMO_SUPER_ADMIN_PASSWORD}',
+		DEMO_SUPER_ADMIN_PASSWORD: '${publicSeedPassword(env.DEMO_SUPER_ADMIN_PASSWORD)}',
 
 		DEMO_ADMIN_EMAIL: '${env.DEMO_ADMIN_EMAIL}',
-		DEMO_ADMIN_PASSWORD: '${env.DEMO_ADMIN_PASSWORD}',
+		DEMO_ADMIN_PASSWORD: '${publicSeedPassword(env.DEMO_ADMIN_PASSWORD)}',
 
 		DEMO_EMPLOYEE_EMAIL: '${env.DEMO_EMPLOYEE_EMAIL}',
-		DEMO_EMPLOYEE_PASSWORD: '${env.DEMO_EMPLOYEE_PASSWORD}',
+		DEMO_EMPLOYEE_PASSWORD: '${publicSeedPassword(env.DEMO_EMPLOYEE_PASSWORD)}',
 
 		CHATWOOT_SDK_TOKEN: 'DOCKER_CHATWOOT_SDK_TOKEN',
 		CHAT_MESSAGE_GOOGLE_MAP: 'DOCKER_CHAT_MESSAGE_GOOGLE_MAP',

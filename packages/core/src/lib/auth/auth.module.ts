@@ -29,6 +29,7 @@ import { AuthService } from './auth.service';
 import { CommandHandlers } from './commands/handlers';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
+import { LoginAttemptModule } from './login-attempt.module';
 import { SocialAccountModule } from './social-account/social-account.module';
 import { OAuthClientModule } from './oauth-client/oauth-client.module';
 import { TermsAcceptanceModule } from '../terms-acceptance/terms-acceptance.module';
@@ -68,7 +69,8 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 				AccessTokenModule,
 				RefreshTokenModule,
 				OAuthClientModule,
-				TermsAcceptanceModule
+				TermsAcceptanceModule,
+				LoginAttemptModule
 			],
 			useClass: AuthService
 		}),
@@ -88,7 +90,8 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		AccessTokenModule,
 		RefreshTokenModule,
 		OAuthClientModule,
-		TermsAcceptanceModule
+		TermsAcceptanceModule,
+		LoginAttemptModule
 	],
 	controllers: [AuthController, EmailVerificationController],
 	providers: [...providers, ...CommandHandlers, ...strategies],

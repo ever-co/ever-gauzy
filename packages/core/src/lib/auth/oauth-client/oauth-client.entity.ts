@@ -26,6 +26,7 @@ import { ArrayNotEmpty, IsArray, IsBoolean, IsEnum, IsInt, IsOptional, IsString,
 import { IOAuthClient, OAuthClientType, OAuthGrantType } from '@gauzy/contracts';
 import { ColumnIndex, JsonColumn, MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
 import { TenantBaseEntity } from '../../core/entities/internal';
+import { ExportRedacted } from '../../export-import/export-redact.decorator';
 
 @MultiORMEntity('oauth_clients')
 export class OAuthClient extends TenantBaseEntity implements IOAuthClient {
@@ -46,6 +47,7 @@ export class OAuthClient extends TenantBaseEntity implements IOAuthClient {
 	 * The plaintext is returned EXACTLY ONCE on creation / rotation
 	 * and is never persisted in plaintext or returned by any read endpoint.
 	 */
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true, select: false })
 	clientSecretHash: string | null;
 
@@ -54,6 +56,7 @@ export class OAuthClient extends TenantBaseEntity implements IOAuthClient {
 	 * (`v1.<payload>.<sig>` format). Stored per-client so revoking one
 	 * third party cannot forge codes for another. Never returned by the API.
 	 */
+	@ExportRedacted()
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: false, select: false })
 	codeSecret: string;
 

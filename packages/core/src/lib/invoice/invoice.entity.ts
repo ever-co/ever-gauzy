@@ -38,6 +38,7 @@ import {
 } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 
 @MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @Unique(['invoiceNumber'])
@@ -194,6 +195,8 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@MultiORMColumn({ type: Boolean, nullable: true })
 	hasRemainingAmountInvoiced?: boolean;
 
+	/** Bearer token for the public invoice view. */
+	@ExportRedacted()
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()

@@ -419,6 +419,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns A promise that resolves with a list of projects assigned to the employee.
 	 */
 	async findByEmployee(employeeId: ID, input: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(input);
+
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId; // Use the current tenant ID or fallback to input tenantId
 		const { organizationId, organizationContactId, organizationTeamId, relations = [] } = input;
 
