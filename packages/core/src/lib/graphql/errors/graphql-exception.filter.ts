@@ -1,4 +1,4 @@
-import { Catch, HttpException } from '@nestjs/common';
+import { Catch, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { GqlExceptionFilter } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { RequestContext } from '../../core/context/request-context';
@@ -32,6 +32,9 @@ import { toSafeHttpException } from '../../core/interceptors/safe-http-exception
  */
 @Catch()
 export class GraphqlExceptionFilter implements GqlExceptionFilter {
+	/** Where an internal failure is recorded, since the client is told nothing about it. */
+	private readonly logger = new Logger(GraphqlExceptionFilter.name);
+
 	/**
 	 * @param exception - Whatever the resolver threw.
 	 * @returns The error the response's `errors` array carries.
@@ -45,6 +48,21 @@ export class GraphqlExceptionFilter implements GqlExceptionFilter {
 		// described message over REST and a 400 VALIDATION_FAILED here.
 		const driver = api ? undefined : resolveDriverPayload(exception instanceof HttpException ? exception.getResponse() : exception);
 		const traceId = RequestContext.currentTraceId();
+
+		// A failure the caller cannot act on is the server's problem, and the caller is told only
+		// that it failed: the message is scrubbed, the details are dropped and no stack is sent. That
+		// is right, and it leaves the operator with nothing — an `INTERNAL_ERROR` in a client's report
+		// has no counterpart anywhere in the server's output, so the only way to find the cause is to
+		// reproduce it. Log it here, where the original is still in hand, and keep what the client
+		// receives exactly as it was: the two sides of that trade are the point of the contract.
+		if (!api && !driver && http.getStatus() >= HttpStatus.INTERNAL_SERVER_ERROR) {
+			this.logger.error(
+				`GraphQL operation failed (${http.getStatus()})${traceId ? ` traceId=${traceId}` : ''}: ${
+					exception instanceof Error ? exception.message : String(exception)
+				}`,
+				exception instanceof Error ? exception.stack : undefined
+			);
+		}
 
 		return new GraphQLError(driver ? describeDatabaseError(driver) : safeMessageFor(exception, http), {
 			extensions: {

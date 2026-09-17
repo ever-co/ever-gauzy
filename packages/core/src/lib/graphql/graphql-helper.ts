@@ -4,7 +4,7 @@ import { buildSchema, extendSchema, printSchema } from 'graphql';
 import * as path from 'path';
 import { GraphQLApiConfigurationOptions } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
-import { getPluginExtensions } from '@gauzy/plugin';
+import { getPluginExtensions, isDynamicModule, reflectDynamicModuleMetadata } from '@gauzy/plugin';
 import { isNotEmpty } from '@gauzy/utils';
 import { assertComposition, assertExtendable } from './graphql-composition';
 import { createGraphqlRequestContext } from './graphql-context';
@@ -47,6 +47,25 @@ export async function createGraphqlModuleOptions(
 	for (const warning of policy.warnings) {
 		console.warn(`[GraphQL] ${warning}`);
 	}
+
+	// The modules Apollo scans for resolvers.
+	//
+	// A resolver is an ordinary provider, and Apollo finds one by scanning a module for it — so a
+	// module that declares resolvers but is never scanned contributes nothing, silently: the schema
+	// still carries every field the plugin's SDL declared, and each one resolves to null with no error
+	// anywhere. Each plugin's own module already declares its resolvers as providers, which is what
+	// lets them inject the same services the REST controllers do, so listing those modules here is what
+	// binds them.
+	//
+	// The list is built from the configuration the application is *running* with — this helper is
+	// evaluated while the container is being assembled, after the configuration has been installed —
+	// rather than from the configuration's defaults, which is what the resolver host module itself sees
+	// when its decorator runs at import time. An installation that configures plugins therefore gets
+	// their resolvers, and one that does not gets none, both without a second code path.
+	const pluginResolverModules = configService.plugins.flatMap((plugin) => {
+		const identity = isDynamicModule(plugin) ? plugin.module : plugin;
+		return reflectDynamicModuleMetadata(identity).imports as Function[];
+	});
 
 	// The deployment's own attach point. Until it was read here, `apolloServerPlugins` was declared
 	// on the configuration, defaulted to an empty array in all three shipped configurations and
@@ -104,7 +123,8 @@ export async function createGraphqlModuleOptions(
 				'If-None-Match'
 			].join(', ')
 		},
-		include: [options.resolverModule],
+		// Every plugin module as well as the host, so the resolvers those modules declare are found.
+		include: [options.resolverModule, ...pluginResolverModules],
 		// The context is the request scope: every resolver in one operation shares it, and the loader
 		// registry inside it is what makes a nested relation one query per relation rather than one
 		// per parent row.
