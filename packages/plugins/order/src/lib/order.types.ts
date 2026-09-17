@@ -1,4 +1,5 @@
 import { DeepPartial } from 'typeorm';
+import { DecimalString, ID } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '@gauzy/core';
 
 /**
@@ -55,6 +56,36 @@ export enum OrderLineInvoiceDirection {
 	INVOICE = 'INVOICE',
 	/** A negative credit-note item that credits part of the line. */
 	CREDIT = 'CREDIT'
+}
+
+/**
+ * What one order line reports to a caller that does not own the order.
+ *
+ * A post-purchase flow — taking goods back, claiming about them, sending a replacement — happens
+ * after the order was placed, in a package that owns none of the order's columns. It needs two
+ * facts about a line and neither of them is its own: how much of the line actually left the
+ * building, which is the ceiling such a flow is measured against, and the price the line was sold
+ * at, which is what the flow values the goods at. The second is the line's **snapshot**, not
+ * today's catalogue price: a customer who paid one price is not credited at another.
+ *
+ * Both are exact decimals rather than numbers, because the caller compares quantities against the
+ * ceiling and multiplies the price into an amount, and a floating-point comparison near the ceiling
+ * is exactly where a wrong answer costs money.
+ *
+ * **A line with nothing fulfilled on it is not reported at all.** The report is the set of lines a
+ * post-purchase flow may act on, so the absence of a line is the answer to "may this be returned or
+ * claimed about?" — a flow that asked about a line which never shipped is told that no such
+ * fulfilled line exists, rather than being handed a zero it would have to interpret.
+ */
+export interface IOrderLineFulfillment {
+	/** The order line. */
+	readonly orderLineId: ID;
+	/** Variant the line is for, when the line names one. */
+	readonly variantId?: ID;
+	/** Quantity fulfilled and not cancelled: the sum of the line's fulfilment rows that stand. */
+	readonly fulfilledQuantity: DecimalString;
+	/** Price one unit was sold at, exact. */
+	readonly unitPrice?: DecimalString;
 }
 
 /**

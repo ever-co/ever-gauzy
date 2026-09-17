@@ -26,6 +26,8 @@ export * from './lib/order-line/order-line.controller';
 export * from './lib/order-line/repository/type-orm-order-line.repository';
 export * from './lib/order-line/repository/mikro-orm-order-line.repository';
 
+export * from './lib/order-line-fulfillment/order-line-fulfillment.service';
+
 export * from './lib/order-line-invoice/order-line-invoice.entity';
 export * from './lib/order-line-invoice/order-line-invoice.service';
 export * from './lib/order-line-invoice/order-line-invoice.controller';

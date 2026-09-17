@@ -14,6 +14,7 @@ import { PricePreferenceService } from './price-preference/price-preference.serv
 import { ProductPrice } from './product-price/product-price.entity';
 import { ProductPriceController } from './product-price/product-price.controller';
 import { ProductPriceService } from './product-price/product-price.service';
+import { RecurringPriceService } from './recurring-price/recurring-price.service';
 import { resolvers } from './graphql/resolvers';
 import { MikroOrmExchangeRateRepository } from './exchange-rate/repository/mikro-orm-exchange-rate.repository';
 import { TypeOrmExchangeRateRepository } from './exchange-rate/repository/type-orm-exchange-rate.repository';
@@ -51,6 +52,7 @@ import { TypeOrmProductPriceRepository } from './product-price/repository/type-o
 		ProductPriceService,
 		PricePreferenceService,
 		ExchangeRateService,
+		RecurringPriceService,
 		TypeOrmPriceListRepository,
 		MikroOrmPriceListRepository,
 		TypeOrmProductPriceRepository,
@@ -61,6 +63,6 @@ import { TypeOrmProductPriceRepository } from './product-price/repository/type-o
 		MikroOrmExchangeRateRepository,
 		...resolvers
 	],
-	exports: [PriceListService, ProductPriceService, PricePreferenceService, ExchangeRateService]
+	exports: [PriceListService, ProductPriceService, PricePreferenceService, ExchangeRateService, RecurringPriceService]
 })
 export class PricingModule {}

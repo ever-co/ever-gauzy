@@ -19,5 +19,6 @@ export * from './lib/price-preference/price-preference.entity';
 export * from './lib/price-preference/price-preference.service';
 export * from './lib/exchange-rate/exchange-rate.entity';
 export * from './lib/exchange-rate/exchange-rate.service';
+export * from './lib/recurring-price/recurring-price.service';
 export * from './lib/database/migrations';
 export * from './lib/graphql';

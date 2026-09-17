@@ -280,3 +280,46 @@ export enum PriceBulkMode {
 	/** Also retire the rows of the mentioned `(variant, priceList)` pairs that were not supplied. */
 	REPLACE = 'REPLACE'
 }
+
+/*
+|--------------------------------------------------------------------------
+| The price of one period
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * One request for the price of a single period.
+ *
+ * Pricing answers what one unit of a variant costs for a context; a caller that bills the same line
+ * again on a schedule asks that same question and needs the answer in the currency it bills in. The
+ * two interfaces below are that question stated as one call, so such a caller neither reads a price
+ * row nor re-derives the precedence between a default price, a sale and an override list: it states
+ * the variant, the customer and the currency, and receives the amount and the list it came from.
+ */
+export interface IRecurringPriceRequest {
+	/** Variant being priced. */
+	readonly variantId: ID;
+	/** Customer the price is resolved for, when a customer-specific price list exists. */
+	readonly customerId?: ID;
+	/** Currency the price must be expressed in. An amount in another currency is never returned. */
+	readonly currency: CurrencyCode;
+	/**
+	 * What the previous period billed, when the caller knows it.
+	 *
+	 * It is carried by the request so a caller can state what it last charged, and it deliberately
+	 * does not influence the resolution: a price list that changed since the last period must be
+	 * honoured, so the answer is always the price in force now and the comparison between the two is
+	 * the caller's own.
+	 */
+	readonly previousAmount?: DecimalString;
+}
+
+/** What one period's price resolves to. */
+export interface IRecurringPriceResult {
+	/** Unit price for one period, exact. */
+	readonly unitPrice: DecimalString;
+	/** Currency of the price. */
+	readonly currency: CurrencyCode;
+	/** Price list the price came from, when a list matched rather than the default price. */
+	readonly priceListId?: ID;
+}

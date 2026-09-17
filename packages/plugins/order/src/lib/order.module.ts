@@ -12,6 +12,7 @@ import { OrderLineController } from './order-line/order-line.controller';
 import { OrderLineService } from './order-line/order-line.service';
 import { TypeOrmOrderLineRepository } from './order-line/repository/type-orm-order-line.repository';
 import { MikroOrmOrderLineRepository } from './order-line/repository/mikro-orm-order-line.repository';
+import { OrderLineFulfillmentService } from './order-line-fulfillment/order-line-fulfillment.service';
 import { OrderLineInvoiceController } from './order-line-invoice/order-line-invoice.controller';
 import { OrderLineInvoiceService } from './order-line-invoice/order-line-invoice.service';
 import { TypeOrmOrderLineInvoiceRepository } from './order-line-invoice/repository/type-orm-order-line-invoice.repository';
@@ -97,6 +98,7 @@ import { OrderTotalsService } from './order-totals/order-totals.service';
 		OrderLineService,
 		TypeOrmOrderLineRepository,
 		MikroOrmOrderLineRepository,
+		OrderLineFulfillmentService,
 		OrderLineInvoiceService,
 		TypeOrmOrderLineInvoiceRepository,
 		MikroOrmOrderLineInvoiceRepository,
@@ -130,6 +132,7 @@ import { OrderTotalsService } from './order-totals/order-totals.service';
 		OrderTotalsService,
 		OrderChangeService,
 		OrderLineService,
+		OrderLineFulfillmentService,
 		OrderLineInvoiceService,
 		OrderAddressService,
 		OrderShippingMethodService,
