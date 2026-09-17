@@ -182,6 +182,13 @@ export * from '../../user/user.entity';
 export * from '../../warehouse/warehouse-product-variant.entity';
 export * from '../../warehouse/warehouse-product.entity';
 export * from '../../warehouse/warehouse.entity';
+export * from '../../event-outbox/event-delivery.entity';
+export * from '../../event-outbox/event-outbox.entity';
+export * from '../../idempotency/idempotency-key.entity';
+export * from '../../operation/operation-step.entity';
+export * from '../../operation/operation.entity';
+export * from '../../webhook/webhook-delivery.entity';
+export * from '../../webhook/webhook-subscription.entity';
 
 //core subscribers
 export * from '../../activity-log/activity-log.subscriber';

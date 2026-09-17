@@ -148,6 +148,10 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { PluginContributionModule } from '../plugin-contributions/plugin-contribution.module';
 import { RuleModule } from '../rule/rule.module';
 import { SequenceModule } from '../sequence/sequence.module';
+import { IdempotencyModule } from '../idempotency/idempotency.module';
+import { EventOutboxModule } from '../event-outbox/event-outbox.module';
+import { OperationModule } from '../operation/operation.module';
+import { WebhookModule } from '../webhook/webhook.module';
 import { RoleModule } from '../role/role.module';
 import { SharedEntityModule } from '../shared-entity/shared-entity.module';
 import { ApiKeyAuthGuard } from '../shared/guards/api-key-auth.guard';
@@ -464,6 +468,12 @@ if (environment.THROTTLE_ENABLED) {
 		AdjustmentModule,
 		TaxLineModule,
 		MoneyModule,
+		// The event kernel: retryable requests, the transactional outbox, the durable-operation runtime
+		// and outbound delivery. Each is read by any domain that changes state and emits a fact.
+		IdempotencyModule,
+		EventOutboxModule,
+		OperationModule,
+		WebhookModule,
 		TenantModule,
 		TenantSettingModule,
 		// In-product billing pages. Every route inside 404s unless STRIPE_SECRET_KEY is set, so a
