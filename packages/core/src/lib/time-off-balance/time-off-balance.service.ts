@@ -14,6 +14,7 @@ import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee, TimeOffPolicy } from './../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { assertCurrentUserBelongsToOrganization } from './../user-organization/assert-organization-membership';
 import { TimeOffBalance } from './time-off-balance.entity';
 import { MikroOrmTimeOffBalanceRepository } from './repository/mikro-orm-time-off-balance.repository';
 import { TypeOrmTimeOffBalanceRepository } from './repository/type-orm-time-off-balance.repository';
@@ -56,10 +57,9 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 		// Raw repository read: nothing injects the organization, and an undefined key is DROPPED from
 		// a TypeORM where object instead of matching nothing, so a missing organization would widen
 		// the listing to every organization of the tenant. `sentTo` on the query DTO suppresses the
-		// conditional `organizationId` validation, so the DTO cannot be relied on here. Fail closed.
-		if (!organizationId) {
-			throw new BadRequestException('organizationId is required');
-		}
+		// conditional `organizationId` presence AND membership validation, so the DTO cannot be relied
+		// on for either. Fail closed.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
 
 		const where: Record<string, unknown> = { tenantId, organizationId };
 

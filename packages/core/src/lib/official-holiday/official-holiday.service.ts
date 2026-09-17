@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Between } from 'typeorm';
 import { IOfficialHoliday, IOfficialHolidayFindInput, IPagination } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
+import { assertCurrentUserBelongsToOrganization } from './../user-organization/assert-organization-membership';
 import { OfficialHoliday } from './official-holiday.entity';
 import { MikroOrmOfficialHolidayRepository } from './repository/mikro-orm-official-holiday.repository';
 import { TypeOrmOfficialHolidayRepository } from './repository/type-orm-official-holiday.repository';
@@ -35,11 +36,9 @@ export class OfficialHolidayService extends TenantAwareCrudService<OfficialHolid
 		// This reads through the raw repository, so the organization is not injected for us, and an
 		// undefined key is DROPPED from a TypeORM where object rather than matching nothing — the
 		// listing would silently widen to every organization of the tenant. The query DTO does not
-		// close this on its own: `sentTo` suppresses the conditional `organizationId` validation it
-		// inherits. Fail closed instead.
-		if (!organizationId) {
-			throw new BadRequestException('organizationId is required');
-		}
+		// close this on its own: `sentTo` suppresses the conditional `organizationId` presence AND
+		// membership validation it inherits, so both are enforced here. Fail closed.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
 
 		const base: Record<string, unknown> = { tenantId, organizationId };
 
