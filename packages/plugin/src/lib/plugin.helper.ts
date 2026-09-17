@@ -257,18 +257,21 @@ export function getApiQuerySchemasFromPlugins(
 }
 
 /**
- * Get the plugin classes a given plugin declares as prerequisites.
+ * Get the prerequisites a given plugin declares.
+ *
+ * An entry is either the prerequisite's class or its package name; the loader resolves both, and
+ * the return type says so, so a caller does not have to cast a declaration that is perfectly valid.
  *
  * @param plugin The plugin to inspect.
- * @returns The declared prerequisite plugin classes.
+ * @returns The declared prerequisites, as written.
  */
-export function getPluginDependencies(plugin: Type<any> | DynamicModule): Array<Type<any>> {
+export function getPluginDependencies(plugin: Type<any> | DynamicModule): Array<Type<any> | string> {
 	const declared = reflectMetadata(plugin, PLUGIN_METADATA.DEPENDS_ON) as
-		| Array<Type<any>>
-		| (() => Array<Type<any>>)
+		| Array<Type<any> | string>
+		| (() => Array<Type<any> | string>)
 		| undefined;
 
-	return resolveContribution<Type<any>>(declared);
+	return resolveContribution<Type<any> | string>(declared);
 }
 
 /**
@@ -358,9 +361,8 @@ export function resolvePluginLoadOrder(plugins: Array<Type<any> | DynamicModule>
 
 		visiting.add(identity);
 
-		// `dependsOn` is typed as classes, but a package name is a supported declaration and the
-		// metadata is read at runtime, so each entry is treated as either.
-		for (const dependency of getPluginDependencies(plugin) as Array<Type<any> | string>) {
+		// An entry may be a prerequisite's class or its package name; both are resolved below.
+		for (const dependency of getPluginDependencies(plugin)) {
 			const resolved = configured.get(dependency);
 
 			if (!resolved) {

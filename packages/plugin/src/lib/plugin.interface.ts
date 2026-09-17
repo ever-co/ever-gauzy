@@ -59,8 +59,13 @@ export interface PluginMetadata extends ModuleMetadata {
 	 *
 	 * Declaring a dependency makes the load order deterministic and lets the platform refuse an
 	 * installation where a required plugin is missing instead of failing at request time.
+	 *
+	 * A prerequisite may be named by its class or by its package name. The class form gets checked
+	 * by the compiler; the package form lets a plugin declare what it must load after without
+	 * importing that package, which is the only way to express a prerequisite on a package that is
+	 * not independently importable. Both are resolved by the loader.
 	 */
-	dependsOn?: Array<Type<any>>;
+	dependsOn?: Array<Type<any> | string>;
 }
 
 /**

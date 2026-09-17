@@ -11,7 +11,7 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": ["auth", "common", "config", "constants", "contracts", "plugin", "utils"],
+	"implicitDependencies": ["auth", "common", "config", "constants", "contracts", "plugin", "scheduler", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -52,6 +52,24 @@
 			"cache": false,
 			"options": {
 				"command": "node --test .scripts/tenant-stripe-customer.postgres.test.cjs"
+			}
+		},
+		"graphql-inputs": {
+			"executor": "nx:run-commands",
+			"cache": false,
+			"outputs": ["{workspaceRoot}/packages/core/src/lib/graphql/schema"],
+			"options": {
+				"command": "node -r ts-node/register -r tsconfig-paths/register packages/core/src/lib/graphql/codegen/filter-inputs.ts",
+				"cwd": "."
+			}
+		},
+		"graphql-snapshot": {
+			"executor": "nx:run-commands",
+			"cache": false,
+			"outputs": ["{workspaceRoot}/packages/core/src/lib/graphql/schema/schema.graphql"],
+			"options": {
+				"command": "node -r ts-node/register -r tsconfig-paths/register packages/core/src/lib/graphql/schema-snapshot.ts --write",
+				"cwd": "."
 			}
 		},
 		"test": {
