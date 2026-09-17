@@ -72,6 +72,7 @@
 			</div>
 			<div class="screenshot-grid">
 				@for (image of screenshots; track image.id) {
+				@let recordedTime = image?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false;
 				<figure class="screenshot" [class.not-work-related]="image?.isWorkRelated === false">
 					<!-- The frame opens the full-size gallery; its buttons stop the click. -->
 					<div
@@ -81,7 +82,11 @@
 						[item]="image"
 						[employeeId]="timeSlot?.employee?.id"
 					>
-						<img draggable="false" [src]="image?.thumbUrl" />
+						<img
+							draggable="false"
+							[src]="image?.thumbUrl"
+							[alt]="image?.description || ('TIMESHEET.SCREENSHOTS.TAKEN_AT' | translate : { time: recordedTime })"
+						/>
 						<div class="screenshot-actions">
 							@if (image?.description) {
 							<button
@@ -92,6 +97,7 @@
 								type="button"
 								class="icon-button"
 								[nbTooltip]="image?.description"
+								[attr.aria-label]="'REPORT_PAGE.DESCRIPTION' | translate"
 								(click)="$event.stopPropagation()"
 							>
 								<nb-icon icon="info-outline"></nb-icon>
@@ -112,9 +118,7 @@
 							</button>
 						</div>
 					</div>
-					<figcaption class="screenshot-time">
-						{{ image?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false }}
-					</figcaption>
+					<figcaption class="screenshot-time">{{ recordedTime }}</figcaption>
 				</figure>
 				}
 			</div>
