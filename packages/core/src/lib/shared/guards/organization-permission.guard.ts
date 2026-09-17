@@ -4,7 +4,6 @@ import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Brackets, EntityTarget, WhereExpressionBuilder } from 'typeorm';
-import { verify } from 'jsonwebtoken';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { ID, IOrganization, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty, isNotEmpty } from '@gauzy/utils';
@@ -93,26 +92,34 @@ export class OrganizationPermissionGuard implements CanActivate {
 			columns.push(column);
 		}
 
+		// Authorize from the request's DB-fresh user, not from the bearer token's claims. The `role`
+		// claim is frozen at issuance, so decoding it here meant a demoted user kept their former role
+		// for the token's whole lifetime (GHSA-m8xc-8pwr-89fj). `employeeId` is the claim JwtStrategy
+		// already validated against the database before attaching the user.
+		const user = RequestContext.currentUser();
+
+		// No authenticated caller means no verdict can be reached: deny.
+		if (!user) {
+			console.log('OrganizationPermissionGuard: no authenticated user on the request, access denied');
+			return false;
+		}
+
+		const id: string | undefined = user.id;
+		const role: string | null = RequestContext.currentRoleName();
+		const employeeId: string | undefined = user.employeeId ?? undefined;
+
+		// No resolvable role (the user's roleId is NULL, the role row is gone, or its lookup returned
+		// nothing) means no verdict can be reached either.
+		if (!role) {
+			console.log(
+				`Unauthorized access blocked: User ID: ${id}, Role: unresolved, Permissions Checked: ${permissions.join(', ')}`
+			);
+			return false;
+		}
+
 		// Check if super admin role is allowed from the .env file
 		if (env.allowSuperAdminRole && RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])) {
 			return true;
-		}
-
-		// Read the verified JWT. A request that arrives without a usable token cannot be authorized.
-		let role: string | undefined;
-		let employeeId: string | undefined;
-		let id: string | undefined;
-
-		try {
-			const token = RequestContext.currentToken();
-			({ id, role, employeeId } = verify(token, env.JWT_SECRET) as {
-				id: string;
-				role: string;
-				employeeId: string;
-			});
-		} catch (error) {
-			console.log('OrganizationPermissionGuard: unable to verify the request token, access denied');
-			return false;
 		}
 
 		const tenantId = RequestContext.currentTenantId();

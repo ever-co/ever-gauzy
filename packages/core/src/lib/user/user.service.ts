@@ -56,6 +56,17 @@ import {
 	magicCodeClaimWhere
 } from '../shared/single-use/claim-criteria';
 
+/**
+ * The account-status predicate every authentication path applies.
+ *
+ * `login()` and `getJwtAccessToken()` filter on it at issuance and, since GHSA-3cgp-wmrg-4fqg,
+ * `JwtStrategy.validate()` re-applies it on every request. `checkIfExists` / `checkIfExistsThirdParty`
+ * back `GET /auth/authenticated`, which is the call the web and desktop clients use to decide whether a
+ * session is still good — without the predicate that endpoint kept answering `true` for a deactivated or
+ * archived account while every other endpoint answered 401.
+ */
+const ACTIVE_ACCOUNT = { isActive: true, isArchived: false } as const;
+
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
 	constructor(
@@ -280,9 +291,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return !!(await this.mikroOrmRepository.findOne({ id } as any));
+				return !!(await this.mikroOrmRepository.findOne({ id, ...ACTIVE_ACCOUNT } as any));
 			case MultiORMEnum.TypeORM:
-				return !!(await this.typeOrmRepository.findOneBy({ id }));
+				return !!(await this.typeOrmRepository.findOneBy({ id, ...ACTIVE_ACCOUNT }));
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -299,9 +310,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return !!(await this.mikroOrmRepository.findOne({ thirdPartyId } as any));
+				return !!(await this.mikroOrmRepository.findOne({ thirdPartyId, ...ACTIVE_ACCOUNT } as any));
 			case MultiORMEnum.TypeORM:
-				return !!(await this.typeOrmRepository.findOneBy({ thirdPartyId }));
+				return !!(await this.typeOrmRepository.findOneBy({ thirdPartyId, ...ACTIVE_ACCOUNT }));
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}

@@ -1,7 +1,6 @@
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Brackets } from 'typeorm';
-import { sign } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
@@ -188,13 +187,6 @@ function createContext(
 	} as unknown as ExecutionContext;
 }
 
-function signToken(payload: { role: string; employeeId?: string | null; id?: string }): string {
-	return sign(
-		{ id: payload.id ?? 'user-1', role: payload.role, employeeId: payload.employeeId ?? null },
-		env.JWT_SECRET
-	);
-}
-
 /**
  * Points `RequestContext` at a caller without needing a real HTTP request in flight.
  */
@@ -205,9 +197,14 @@ function asCaller(options: {
 	organizationId?: string | null;
 	isSuperAdmin?: boolean;
 }) {
-	jest.spyOn(RequestContext, 'currentToken').mockReturnValue(
-		signToken({ role: options.role, employeeId: options.employeeId })
-	);
+	// The guard reads the DB-fresh user JwtStrategy attaches to the request, never the token's claims.
+	jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+		id: 'user-1',
+		tenantId: options.tenantId === undefined ? TENANT_ID : options.tenantId,
+		employeeId: options.employeeId ?? null,
+		role: { name: options.role }
+	} as any);
+	jest.spyOn(RequestContext, 'currentRoleName').mockReturnValue(options.role as RolesEnum);
 	jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(
 		options.tenantId === undefined ? TENANT_ID : (options.tenantId as any)
 	);
@@ -506,16 +503,50 @@ describe('OrganizationPermissionGuard', () => {
 			await expect(guard.canActivate(context)).resolves.toBe(false);
 		});
 
-		it('denies when the request carries no usable token', async () => {
-			const { guard } = createGuard();
+		it('denies an unauthenticated request', async () => {
+			const { guard, createQueryBuilder } = createGuard();
 			asCaller({ role: RolesEnum.ADMIN, employeeId: null, organizationId: 'org-allow' });
-			jest.spyOn(RequestContext, 'currentToken').mockReturnValue('not-a-jwt');
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue(null);
 
 			const context = createContext([PermissionsEnum.ALLOW_MANUAL_TIME], {
 				body: { organizationId: 'org-allow' }
 			});
 
 			await expect(guard.canActivate(context)).resolves.toBe(false);
+			expect(createQueryBuilder).not.toHaveBeenCalled();
+		});
+
+		// GHSA-m8xc-8pwr-89fj: the role comes from the database. When it cannot be resolved — the
+		// user's roleId is NULL, the role row is gone, or it carries no name — no verdict can be
+		// reached, and the guard must deny rather than guess, even for a permissive organization.
+		it.each([
+			['a user whose role no longer resolves', null],
+			['a user whose role carries no name', undefined]
+		])('denies %s', async (_label, resolvedRole) => {
+			const { guard, createQueryBuilder } = createGuard();
+			asCaller({ role: RolesEnum.ADMIN, employeeId: null, organizationId: 'org-allow' });
+			jest.spyOn(RequestContext, 'currentRoleName').mockReturnValue(resolvedRole as any);
+
+			const context = createContext([PermissionsEnum.ALLOW_MANUAL_TIME], {
+				body: { organizationId: 'org-allow' }
+			});
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+			expect(createQueryBuilder).not.toHaveBeenCalled();
+		});
+
+		it('decides from the role the user holds now, not the one their token was issued with', async () => {
+			// A former admin demoted to employee, still carrying an admin-era token, no longer takes the
+			// no-employee path: the employee record's organization is what gets checked.
+			const { guard, findOne } = createGuard();
+			asCaller({ role: RolesEnum.EMPLOYEE, employeeId: 'employee-in-deny', organizationId: 'org-allow' });
+
+			const context = createContext([PermissionsEnum.ALLOW_MANUAL_TIME], {
+				body: { organizationId: 'org-allow' }
+			});
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+			expect(findOne).toHaveBeenCalled();
 		});
 
 		it('denies when the request has no tenant', async () => {

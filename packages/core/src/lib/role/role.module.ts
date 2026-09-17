@@ -4,6 +4,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Role } from './role.entity';
 import { RoleService } from './role.service';
+import { RoleAuthorizationService } from './role-authorization.service';
 import { RoleController } from './role.controller';
 import { RolePermissionModule } from './../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
@@ -18,7 +19,7 @@ import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
 		forwardRef(() => RolePermissionModule)
 	],
 	controllers: [RoleController],
-	providers: [RoleService, TypeOrmRoleRepository, MikroOrmRoleRepository, ...CommandHandlers],
-	exports: [RoleService, TypeOrmRoleRepository, MikroOrmRoleRepository]
+	providers: [RoleService, RoleAuthorizationService, TypeOrmRoleRepository, MikroOrmRoleRepository, ...CommandHandlers],
+	exports: [RoleService, RoleAuthorizationService, TypeOrmRoleRepository, MikroOrmRoleRepository]
 })
 export class RoleModule {}
