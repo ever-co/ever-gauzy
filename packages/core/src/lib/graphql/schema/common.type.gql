@@ -1,0 +1,189 @@
+# The kernel of the GraphQL schema.
+#
+# The three root operation types are declared here and nowhere else. A domain contributes fields to
+# them with `extend type Query` / `extend type Mutation` / `extend type Subscription` from its own
+# `<domain>.api.gql`, so a domain never declares a root type of its own. Two declarations of one root
+# type cannot both survive `buildSchema`, which is why the composition pass treats a redeclaration as
+# a boot failure with a readable message rather than leaving it to the schema builder.
+#
+# Scalars. `DateTime` is RFC 3339 with an offset, always UTC, which is the format the REST surface
+# emits. `Decimal` is an exact decimal serialised as a string with six fractional digits, matching
+# the wire format of a numeric(20,6) column: a money value read here and the same value read over
+# REST are string-identical, and money is never a `Float` because a binary fraction cannot hold a
+# cent exactly. `JSON` carries a document column through unchanged.
+#
+# Entity shape. Every object type carries `id: ID!`; a versioned aggregate also carries
+# `version: Int!` and `updatedAt: DateTime!`, which is what a client cache keys and invalidates on.
+# That is a convention over fields rather than a shared interface, deliberately: an interface would
+# have to be implemented by every type in every domain, and `Node` is a reserved name here.
+
+scalar DateTime
+
+scalar Decimal
+
+scalar JSON
+
+type Query
+
+type Mutation
+
+# `Subscription` is declared with the platform event stream as its one kernel field. A root
+# operation type with no field at all is not a valid schema, so the kernel has to own the first
+# subscription field the same way it owns the root declarations; a domain then adds its own
+# concept-shaped field (`orderPlaced`) on top with `extend type Subscription`.
+type Subscription {
+	"""
+	A stream of the platform's events, selected by name. One event is delivered per message, so a
+	payload never merges unrelated facts. A subscription is a notification and never a system of
+	record: an event produced while a client is disconnected is not replayed, and a client that must
+	not miss one registers a webhook.
+	"""
+	events(
+		"""
+		The event names to receive, exactly as the platform names them (`order.placed`) or as a
+		one-segment prefix pattern (`order.*`). At least one name is required, and a selection that
+		matches no known event is refused at subscribe time so a typo is visible immediately.
+		"""
+		names: [String!]!
+		"Narrows the stream to one aggregate. It can only narrow what the credential may read."
+		aggregateId: ID
+		"Narrows the stream to one channel of the credential's own scope."
+		channelId: ID
+	): EventEnvelope
+}
+
+"""
+One event of the platform catalogue, as a subscriber receives it.
+"""
+type EventEnvelope {
+	"The event identity: stable, and the idempotency key a consumer applies its effects under."
+	eventId: ID!
+	"The event name, `<aggregate>.<action>`."
+	eventName: String!
+	"When the fact happened, as opposed to when it was dispatched."
+	occurredAt: DateTime!
+	"The aggregate that changed."
+	aggregate: EventAggregate!
+	"""
+	Monotonic within the tenant. It correlates an event with the delivery ledger; it is not a cursor,
+	because a subscription does not resume.
+	"""
+	sequence: Int
+	"The event body: the catalogued payload of that event, never an entity dump."
+	data: JSON!
+}
+
+"""
+The aggregate an event belongs to.
+"""
+type EventAggregate {
+	"The aggregate type in PascalCase, for example `Order`."
+	type: String!
+	"The aggregate instance."
+	id: ID!
+}
+
+"""
+The boundary of a page.
+
+One shared type, so a client learns the shape once and a cursor means the same thing on every
+connection. `startCursor` and `endCursor` are opaque: they are produced and consumed by the same
+codec the REST surface uses, so a cursor obtained over one surface resumes on the other.
+"""
+type PageInfo {
+	hasNextPage: Boolean!
+	hasPreviousPage: Boolean!
+	startCursor: String
+	endCursor: String
+}
+
+"""
+An expected, caller-correctable outcome of a mutation.
+
+This is a payload member, not an error transport: a business rejection is reported here with the
+operation succeeding, and only a request the caller could not have made correctly becomes a GraphQL
+error. `path` names the input member the outcome belongs to, as a field path.
+"""
+type UserError {
+	"The stable platform error code, the same string the REST surface returns for the condition."
+	code: String!
+	"A message written for the caller."
+	message: String!
+	"The input members this outcome belongs to, as a field path."
+	path: [String!]
+	"Structured detail: which values were refused and why."
+	details: JSON
+}
+
+"""
+How far a durable multi-step operation has come.
+"""
+enum OperationStatus {
+	PENDING
+	RUNNING
+	COMPLETED
+	FAILED
+	COMPENSATING
+	COMPENSATED
+	CANCELED
+}
+
+"""
+How far one step of a durable operation has come.
+"""
+enum OperationStepStatus {
+	PENDING
+	RUNNING
+	COMPLETED
+	FAILED
+	SKIPPED
+	COMPENSATING
+	COMPENSATED
+	COMPENSATION_FAILED
+}
+
+"""
+A durable multi-step operation: a write that spans more than one step, whose progress survives a
+restart and whose partial effects are undone when a later step fails.
+"""
+type Operation {
+	id: ID!
+	"""
+	The operation type, for example `CHECKOUT_COMPLETE`. Declared as a string rather than an enum
+	because an operation type is registered by the package that owns the workflow, and a closed enum
+	would make a new workflow a schema change.
+	"""
+	type: String!
+	status: OperationStatus!
+	"The aggregate type the operation acts on."
+	aggregateType: String!
+	"The aggregate instance the operation acts on."
+	aggregateId: ID!
+	"Completion in the range 0 to 1."
+	progress: Float!
+	steps: [OperationStep!]!
+	startedAt: DateTime
+	finishedAt: DateTime
+	"When the operation is abandoned if it has not finished."
+	deadlineAt: DateTime
+	"Why it failed, when it did."
+	failureReason: String
+}
+
+"""
+One step of a durable operation.
+"""
+type OperationStep {
+	id: ID!
+	"The step name from the operation definition."
+	name: String!
+	status: OperationStepStatus!
+	"How many times this step has been attempted."
+	attempt: Int!
+	startedAt: DateTime
+	finishedAt: DateTime
+	"""
+	The state of this step's compensating action, when the operation had to undo its work.
+	"""
+	compensationStatus: OperationStepStatus
+}

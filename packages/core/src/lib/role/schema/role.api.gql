@@ -1,9 +1,16 @@
-type Query {
+# The role domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own. The field
+# signatures are unchanged, including `roles: Role!` — retyping an existing field is a breaking
+# schema change and belongs to a separate, reviewed decision.
+
+extend type Query {
 	roles: Role!
 	role(id: ID!): Role
 }
 
-type Mutation {
+extend type Mutation {
 	createRole(input: CreateRoleInput!): Role!
 	updateRole(input: UpdateRoleInput!): Role!
 }

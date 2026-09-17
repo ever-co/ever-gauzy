@@ -6,6 +6,9 @@ import { GraphQLApiConfigurationOptions } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import { getPluginExtensions } from '@gauzy/plugin';
 import { isNotEmpty } from '@gauzy/utils';
+import { assertComposition, assertExtendable } from './graphql-composition';
+import { createGraphqlRequestContext } from './graphql-context';
+import { subscriptionTransportOptions } from './subscriptions/subscription-transport';
 
 /**
  * Creates and configures the GraphQL module options for Apollo Server in a NestJS application.
@@ -60,7 +63,14 @@ export async function createGraphqlModuleOptions(
 				'If-Match'
 			].join(', ')
 		},
-		include: [options.resolverModule]
+		include: [options.resolverModule],
+		// The context is the request scope: every resolver in one operation shares it, and the loader
+		// registry inside it is what makes a nested relation one query per relation rather than one
+		// per parent row.
+		context: ({ req }) => createGraphqlRequestContext({ req }),
+		// Subscriptions ride the same path and the same authorisation. The key is added only when the
+		// transport package is installed, so an installation without it boots as it does today.
+		...subscriptionTransportOptions()
 	} as GqlModuleOptions;
 }
 
@@ -95,7 +105,20 @@ async function createTypeDefs(
 	getPluginExtensions(configService.plugins)
 		.map((extension) => (typeof extension.schema === 'function' ? extension.schema() : extension.schema))
 		.filter(isNotEmpty)
-		.forEach((documentNode) => (schema = extendSchema(schema, documentNode)));
+		.forEach((documentNode) => {
+			// A plugin may add types and root fields and may never redefine one. Checking before the
+			// extension is applied is what turns a schema-builder error into a message naming the
+			// contribution that caused it.
+			assertExtendable(schema, documentNode);
+			schema = extendSchema(schema, documentNode);
+		});
+
+	// The composition pass runs over the assembled schema, before it is printed for the driver: a
+	// redeclared kernel type, a root field two sources both claim, a reserved name or a deprecation
+	// with no reason fails the boot here, with the type or the field named, rather than at the first
+	// request that happens to select it. In a test run it reports instead, because the assertion
+	// itself is what is under test there.
+	assertComposition(schema, { reportOnly: process.env.NODE_ENV === 'test' });
 
 	// Convert the final schema into a printable string format
 	return printSchema(schema);
