@@ -42,10 +42,18 @@ import { CatalogPlugin } from '@gauzy/plugin-catalog';
 import { PricingPlugin } from '@gauzy/plugin-pricing';
 import { TaxPlugin } from '@gauzy/plugin-tax';
 import { InventoryPlugin } from '@gauzy/plugin-inventory';
+import { WarehousePlugin } from '@gauzy/plugin-warehouse';
 import { CartPlugin } from '@gauzy/plugin-cart';
 import { OrderPlugin } from '@gauzy/plugin-order';
+import { PaymentPlugin } from '@gauzy/plugin-payment';
+import { PromotionPlugin } from '@gauzy/plugin-promotion';
+import { FulfillmentPlugin } from '@gauzy/plugin-fulfillment';
 import { ReturnsPlugin } from '@gauzy/plugin-returns';
+import { SubscriptionPlugin } from '@gauzy/plugin-subscription';
+import { PurchasingPlugin } from '@gauzy/plugin-purchasing';
+import { EntitlementPlugin } from '@gauzy/plugin-entitlement';
 import { MarketplacePlugin } from '@gauzy/plugin-marketplace';
+import { SearchPlugin } from '@gauzy/plugin-search';
 
 import { SentryTracing as SentryPlugin } from './sentry';
 import { PosthogAnalytics as PosthogPlugin } from './posthog';
@@ -139,16 +147,34 @@ export const plugins = [
 
 	// The commerce domains. Each owns its own tables, migrations, permissions and feature flags.
 	// Their migrations are merged into the connection before it is opened and ORDERED BY THE
-	// PLATFORM, so their position here does not affect them. Their load order is this list's order:
-	// each declares its prerequisites in `dependsOn`, that declaration is what keeps this list
-	// correct, and it is kept topologically sorted by hand until every declared prerequisite is
-	// itself registered here.
+	// PLATFORM, so their position here does not affect them. Their mount order is resolved from
+	// `dependsOn` by `resolvePluginLoadOrder`, which is applied to this list where it is installed —
+	// so this order is a readable default rather than the contract, and the declaration each plugin
+	// makes is what actually decides. A prerequisite that is not in this list is refused at boot,
+	// naming the plugin and the dependency, rather than surfacing later as a missing provider.
+	//
+	// The order below is the dependency order for a full installation:
+	//   catalog, pricing, tax        — the sellable thing, what it costs, what it is taxed
+	//   inventory, warehouse         — the stock ledger, then the inside of the building
+	//   cart, order, payment         — the cart, the order it becomes, the money that settles it
+	//   promotion, fulfillment       — what discounts an order, how it reaches the buyer
+	//   returns, subscription        — post-purchase flows, and the recurring ones
+	//   purchasing, entitlement      — procuring stock, and the rights a purchase grants
+	//   marketplace, search          — third-party selling, and the global index over all of it
 	CatalogPlugin,
 	PricingPlugin,
 	TaxPlugin,
 	InventoryPlugin,
+	WarehousePlugin,
 	CartPlugin,
 	OrderPlugin,
+	PaymentPlugin,
+	PromotionPlugin,
+	FulfillmentPlugin,
 	ReturnsPlugin,
-	MarketplacePlugin
+	SubscriptionPlugin,
+	PurchasingPlugin,
+	EntitlementPlugin,
+	MarketplacePlugin,
+	SearchPlugin
 ];

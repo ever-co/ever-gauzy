@@ -11,6 +11,7 @@ import { createGraphqlRequestContext } from './graphql-context';
 import { createBatchLimitPlugin, createGraphqlLimitRules } from './graphql-limits';
 import { mergeLimitSettings, resolveGraphqlPolicy } from './graphql-policy';
 import { subscriptionTransportOptions } from './subscriptions/subscription-transport';
+import { GraphqlExceptionFilter } from './errors/graphql-exception.filter';
 
 /**
  * Creates and configures the GraphQL module options for Apollo Server in a NestJS application.
@@ -108,6 +109,14 @@ export async function createGraphqlModuleOptions(
 		// registry inside it is what makes a nested relation one query per relation rather than one
 		// per parent row.
 		context: ({ req }) => createGraphqlRequestContext({ req }),
+		// The error contract. The platform's global filters render HTTP replies, so they step aside
+		// for a context that has no HTTP response and let the exception reach graphql-js; this is
+		// where it is given the shape the contract declares — the same stable `code`, the status the
+		// REST route for the same operation would have answered, the structured `details` and the
+		// `traceId` that joins a report to the logs. Without it the response would carry graphql-js's
+		// own formatting and a caller switching on `extensions.code` would need a second table for
+		// the GraphQL surface.
+		formatError: (error) => new GraphqlExceptionFilter().catch(error),
 		// Subscriptions ride the same path and the same authorisation. The key is added only when the
 		// transport package is installed, so an installation without it boots as it does today.
 		...subscriptionTransportOptions()

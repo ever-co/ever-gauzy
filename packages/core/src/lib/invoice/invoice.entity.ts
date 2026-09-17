@@ -23,7 +23,8 @@ import {
 	IInvoiceItem,
 	IOrganizationContact,
 	IOrganization,
-	ITag
+	ITag,
+	ID
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
@@ -39,6 +40,18 @@ import {
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 
+/**
+ * The finance document.
+ *
+ * The two extensions are deliberately the only ones: everything else the order side needs from an
+ * invoice is read-only, and a vendor bill is an ordinary invoice whose issuing party is a supplier.
+ * Both columns are carried **without** their foreign keys, because the term table and the supplier
+ * master are extended or created by the sets that own them.
+ */
+@ColumnIndex('IDX_invoice_payment_term', ['paymentTermId'], { where: '"paymentTermId" IS NOT NULL' })
+@ColumnIndex('IDX_invoice_vendor', ['vendorId', 'status'], {
+	where: '"vendorId" IS NOT NULL AND "deletedAt" IS NULL'
+})
 @MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
@@ -202,6 +215,30 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 		...(isMySQL() ? { type: "text" } : {})
 	})
 	token?: string;
+
+	/**
+	 * The schedule this document is settled against. Its instalments are derived from the term and the
+	 * document's own date, so `dueDate` becomes the last instalment's date rather than a fixed offset,
+	 * and the schedule is served by the API rather than stored. The constraint is added by the kernel
+	 * migration that creates the term tables.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	paymentTermId?: ID;
+
+	/**
+	 * The supplier this document bills **from**, when it is a vendor bill rather than a sales invoice.
+	 * Nullable, so every existing sales invoice is unaffected: the issuing organization is a different
+	 * row from the supplier master, and the invoice could not name its own vendor at all before this
+	 * column. The constraint is added by the purchasing package's set.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	vendorId?: ID;
 
 
 	/*

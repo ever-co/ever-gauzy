@@ -172,8 +172,21 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 		return this.typeOrmEventOutboxRepository.manager.transaction(async (manager) => {
 			const query = manager
 				.createQueryBuilder(EventOutbox, 'outbox')
-				.where('outbox.status = :status', { status: EventOutboxStatus.PENDING })
-				.andWhere('outbox.availableAt <= :now', { now })
+				// Every non-terminal row is a candidate, including one that is not yet due. Both
+				// statuses belong here: `PENDING` is an event nobody has attempted, and `FAILED` is one
+				// whose attempt failed and whose next attempt the backoff scheduled — the status means
+				// "waiting for its turn again", not "give up". Claiming only `PENDING` stranded every
+				// failed event, because nothing returned a `FAILED` row to `PENDING`.
+				//
+				// Due-ness is deliberately NOT part of this filter, and that is the whole point of
+				// reading the partition's first row rather than its first due row. A head waiting out a
+				// backoff is still the head: if the query dropped it, the next event of the same
+				// aggregate would appear to be the head and would be claimed while its predecessor is
+				// still unpublished — the ordering promise this service makes. So the head is chosen
+				// first and the due check is applied to the choice, below.
+				.where('outbox.status IN (:...statuses)', {
+					statuses: [EventOutboxStatus.PENDING, EventOutboxStatus.FAILED]
+				})
 				.orderBy('outbox.partitionKey', 'ASC')
 				.addOrderBy('outbox.sequence', 'ASC')
 				.limit(Math.max(batchSize * 4, batchSize));
@@ -187,13 +200,30 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 					  await query.getMany();
 
 			// Candidates arrive partition-major, so the first row seen for a partition is its lowest
-			// sequence and every later row of that partition is behind it in line.
+			// sequence: that row is the partition's head whether or not it is claimable yet, and every
+			// later row of that partition is behind it in line.
 			const heads = new Map<string, EventOutbox>();
+			const heldBack = new Set<string>();
 
 			for (const candidate of candidates) {
 				const key = candidate.partitionKey ?? (candidate.id as string);
 
-				if (!heads.has(key) && heads.size < batchSize) {
+				if (heads.has(key) || heldBack.has(key)) {
+					continue;
+				}
+
+				// The partition's turn has come only when its head is due. A head inside its backoff
+				// therefore holds the whole partition back: skipping it without recording the block
+				// would let the *next* row of the same partition be chosen as a head and claimed while
+				// its predecessor is still unpublished — which is the ordering promise this service
+				// makes, and the consumer-side order gate would otherwise have to reject and redeliver
+				// the event that overtook it.
+				if ((candidate.availableAt?.getTime() ?? 0) > now.getTime()) {
+					heldBack.add(key);
+					continue;
+				}
+
+				if (heads.size < batchSize) {
 					heads.set(key, candidate);
 				}
 			}

@@ -75,6 +75,7 @@ export * from './lib/event-type.model';
 export * from './lib/expense-category.model';
 export * from './lib/expense.model';
 export * from './lib/favorite.model';
+export * from './lib/fulfillment.model';
 export * from './lib/feature.model';
 export * from './lib/file-provider';
 export * from './lib/geo-location.model';

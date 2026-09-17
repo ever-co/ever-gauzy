@@ -560,6 +560,21 @@ if (existsSync(pluginsDir)) {
 			const body = createTableBody(packageSource, table);
 			if (body === undefined) continue; // the table's absence is already reported above
 
+			// The `CREATE TABLE` body is not the whole definition once a later migration adds to an
+			// existing table: a revision extends the entity and ships an `ALTER TABLE … ADD COLUMN`,
+			// and a check that reads only the creation statement reports every such column as missing.
+			// That is a false positive on correct work, and it hides real ones — an entity column with
+			// no migration anywhere is what this check is for. So the table's own alterations are read
+			// too, from every migration the package ships.
+			const alterations = [
+				...packageSource.matchAll(
+					new RegExp(`alter\\s+table\\s+(?:if\\s+exists\\s+)?["'\`]?${table}["'\`]?[^;]*`, 'gi')
+				)
+			]
+				.map((match) => match[0])
+				.join('\n');
+			const definition = `${body}\n${alterations}`;
+
 			// Walk the declarations line by line: find each column decorator, find where its
 			// argument list ends by tracking parenthesis depth, then take the next declaration
 			// after it. A single regex spanning lines cannot do this — it cannot tell a property
@@ -602,7 +617,7 @@ if (existsSync(pluginsDir)) {
 				columnChecks++;
 				check(
 					`${table}.${column} exists in its migration (from ${basename(file)})`,
-					new RegExp(`\\b${column}\\b`).test(body),
+					new RegExp(`\\b${column}\\b`).test(definition),
 					`the entity declares the column but no migration creates it`
 				);
 			}

@@ -1,11 +1,23 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
-import { IAllocatedNumber, ID, ISequence, SequenceResetPolicy } from '@gauzy/contracts';
+import { IAllocatedNumber, ID, ISequence, IdempotencyOutcome, JsonData, SequenceResetPolicy } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { IdempotencyService } from '../idempotency/idempotency.service';
+import { stableStringify } from '../idempotency/idempotency.policy';
 import { Sequence } from './sequence.entity';
 import { TypeOrmSequenceRepository } from './repository/type-orm-sequence.repository';
 import { MikroOrmSequenceRepository } from './repository/mikro-orm-sequence.repository';
+
+/**
+ * The idempotency namespace an allocation claims the caller's key under.
+ *
+ * One namespace is enough: what makes two allocations the same allocation is the series and the
+ * channel, and those are carried in the request hash, so a key presented for a second series is
+ * refused as a reused key rather than answered with another series' number.
+ */
+const ALLOCATION_SCOPE = 'sequence.allocate';
 
 /**
  * Allocates human-facing document numbers from a series.
@@ -14,12 +26,17 @@ import { MikroOrmSequenceRepository } from './repository/mikro-orm-sequence.repo
  * handed the same value. Where the dialect supports row locks the read takes one; on the embedded
  * dialect, which serializes writers at the file level, the read-then-update pair inside a
  * transaction is already exclusive.
+ *
+ * An allocation may also be claimed under an idempotency key, which is what makes a retried request
+ * cost the series nothing: the retry is answered with the number the first attempt allocated instead
+ * of consuming a second one.
  */
 @Injectable()
 export class SequenceService extends CrudService<Sequence> {
 	constructor(
 		readonly typeOrmSequenceRepository: TypeOrmSequenceRepository,
-		readonly mikroOrmSequenceRepository: MikroOrmSequenceRepository
+		readonly mikroOrmSequenceRepository: MikroOrmSequenceRepository,
+		readonly idempotencyService: IdempotencyService
 	) {
 		super(typeOrmSequenceRepository, mikroOrmSequenceRepository);
 	}
@@ -69,12 +86,67 @@ export class SequenceService extends CrudService<Sequence> {
 	 * @param options.channelId Channel the document belongs to.
 	 * @param options.at Moment the number is allocated at; defaults to now. Supplied by tests and by
 	 * imports that replay historical documents.
+	 * @param options.idempotencyKey Key the caller retries under, when it has one. A second allocation
+	 * presented under the same key is answered with the number the first one allocated and costs the
+	 * series nothing, which is what keeps one logical document from being numbered twice.
 	 * @returns The allocated number, formatted and raw.
+	 * @throws ConflictException when the key is held by an allocation still in flight, was presented
+	 * for a different request, or settled without a number to replay.
+	 *
+	 * An allocation that throws leaves its claim in progress rather than settling it as failed: what
+	 * fails here is usually the database rather than the request, and a claim whose lock goes stale is
+	 * taken over by the retry, where a settled failure would be replayed for the whole retention
+	 * window.
 	 */
-	async allocate(key: string, options: { channelId?: ID; at?: Date } = {}): Promise<IAllocatedNumber> {
+	async allocate(
+		key: string,
+		options: { channelId?: ID; at?: Date; idempotencyKey?: string } = {}
+	): Promise<IAllocatedNumber> {
 		const at = options.at ?? new Date();
+		const idempotencyKey = options.idempotencyKey?.trim();
 
-		return this.typeOrmSequenceRepository.manager.transaction(async (manager) => {
+		// The claim is taken before the series is locked, so a retry that arrives while the first
+		// attempt is still allocating is told to come back rather than handed a second number.
+		const claim = idempotencyKey
+			? await this.idempotencyService.claim({
+					scope: ALLOCATION_SCOPE,
+					key: idempotencyKey,
+					requestHash: this.requestHash(key, options.channelId),
+					resourceType: 'sequence'
+			  })
+			: undefined;
+
+		if (claim?.outcome === IdempotencyOutcome.REPLAYED) {
+			const replayed = claim.response?.body as unknown as IAllocatedNumber | undefined;
+
+			if (!replayed) {
+				// A key that settled without a response — a failure recorded with nothing to replay.
+				// Allocating afresh would number the document twice, which is the outcome the key
+				// exists to prevent, so the caller is refused instead.
+				throw new ConflictException(
+					`IDEMPOTENCY_FAILED_PREVIOUSLY: the allocation claimed under "${idempotencyKey}" ` +
+						`settled without a number to replay.`
+				);
+			}
+
+			return replayed;
+		}
+
+		if (claim?.outcome === IdempotencyOutcome.REUSED_KEY) {
+			throw new ConflictException(
+				`IDEMPOTENCY_KEY_REUSED: "${idempotencyKey}" was already presented for another allocation.`
+			);
+		}
+
+		if (claim?.outcome === IdempotencyOutcome.IN_FLIGHT) {
+			throw new ConflictException(
+				`IDEMPOTENCY_IN_PROGRESS: another request holds "${idempotencyKey}" and is still allocating.`
+			);
+		}
+
+		let seriesId: ID | undefined;
+
+		const allocated = await this.typeOrmSequenceRepository.manager.transaction(async (manager) => {
 			const tenantId = RequestContext.currentTenantId();
 			const organizationId = RequestContext.currentOrganizationId();
 
@@ -110,12 +182,27 @@ export class SequenceService extends CrudService<Sequence> {
 				await manager.save(Sequence, series);
 			}
 
+			seriesId = series.id;
+
 			return {
 				formatted: this.format(series, allocatedValue),
 				value: allocatedValue,
 				key: series.key
 			};
 		});
+
+		if (claim) {
+			// Recorded once the number is committed, so an allocation that failed leaves the key
+			// claimable rather than replaying a number that was never handed out.
+			await this.idempotencyService.complete(claim.record, {
+				responseStatus: 200,
+				responseBody: allocated as unknown as JsonData,
+				resourceType: 'sequence',
+				...(seriesId ? { resourceId: seriesId } : {})
+			});
+		}
+
+		return allocated;
 	}
 
 	/**
@@ -128,8 +215,13 @@ export class SequenceService extends CrudService<Sequence> {
 	 * @returns The existing or newly created series.
 	 */
 	async ensure(input: Partial<ISequence> & { key: string }): Promise<ISequence> {
-		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.currentOrganizationId();
+		// The scope the caller states wins over the request's. A seed run, a migration and a test
+		// execute outside a request, where the context carries no scope at all, and a series created
+		// attached to nobody is a series no scoped allocation can ever find — so the two are resolved
+		// once here and used for both the lookup and the insert, which is what keeps `ensure`
+		// idempotent in the scope the caller named.
+		const tenantId = input.tenantId ?? RequestContext.currentTenantId();
+		const organizationId = input.organizationId ?? RequestContext.currentOrganizationId();
 
 		const existing = await this.typeOrmSequenceRepository.findOne({
 			where: {
@@ -146,8 +238,8 @@ export class SequenceService extends CrudService<Sequence> {
 
 		const created = this.typeOrmSequenceRepository.create({
 			...input,
-			tenantId,
-			organizationId,
+			...(tenantId ? { tenantId } : {}),
+			...(organizationId ? { organizationId } : {}),
 			padding: input.padding ?? 6,
 			step: input.step ?? 1,
 			nextValue: input.nextValue ?? 1,
@@ -155,6 +247,23 @@ export class SequenceService extends CrudService<Sequence> {
 		} as Partial<Sequence>);
 
 		return this.typeOrmSequenceRepository.save(created);
+	}
+
+	/**
+	 * Hashes what makes two allocation requests the same request.
+	 *
+	 * The series and the channel identify the allocation; the moment does not, because a retry sends
+	 * a fresh `at` of its own and has to be recognised as the same request all the same. The same key
+	 * presented for another series is therefore a reused key rather than a replay.
+	 *
+	 * @param key The series key.
+	 * @param channelId The channel the document belongs to, when the caller stated one.
+	 * @returns The hex sha-256 of the canonicalised request.
+	 */
+	private requestHash(key: string, channelId?: ID): string {
+		return createHash('sha256')
+			.update(stableStringify({ series: key, channelId: channelId ?? null }))
+			.digest('hex');
 	}
 
 	/**

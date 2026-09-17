@@ -300,6 +300,11 @@ function pluginNamesOf(plugin: Type<any> | DynamicModule): string[] {
 		if (stem) {
 			const kebab = stem.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 			names.push(`@gauzy/plugin-${kebab}`);
+			// The bare stem as well, because a dependency is written the way an author says it out
+			// loud: "promotion needs pricing" declares `dependsOn: ['pricing']` while the package is
+			// `@gauzy/plugin-pricing`. Both are the same plugin, and a declaration that resolves only
+			// under one spelling turns a correct declaration into a boot failure.
+			names.push(kebab);
 		}
 	}
 

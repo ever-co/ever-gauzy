@@ -101,6 +101,10 @@
 			"@gauzy/plugin-returns": ["./packages/plugins/returns/src/index.ts"],
 			"@gauzy/plugin-search": ["./packages/plugins/search/src/index.ts"],
 			"@gauzy/plugin-tax": ["./packages/plugins/tax/src/index.ts"],
+			"@gauzy/plugin-warehouse": ["./packages/plugins/warehouse/src/index.ts"],
+			"@gauzy/plugin-subscription": ["./packages/plugins/subscription/src/index.ts"],
+			"@gauzy/plugin-purchasing": ["./packages/plugins/purchasing/src/index.ts"],
+			"@gauzy/plugin-entitlement": ["./packages/plugins/entitlement/src/index.ts"],
 			"@gauzy/plugin-dashboard-time-track-angular-ui": [
 				"./packages/plugins/dashboard-time-track-angular-ui/src/index.ts"
 			],

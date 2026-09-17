@@ -7,6 +7,7 @@ import { toApiErrorBody } from './api-error-body';
 import { ApiException } from './api-exception';
 import { describeDatabaseError, isDatabaseErrorPayload } from './database-error';
 import { DatabaseErrorFilter } from './database-error.filter';
+import { isHttpHost } from './execution-host';
 
 /**
  * Renders the platform's error envelope, and delegates everything it does not own.
@@ -56,6 +57,17 @@ export class ApiExceptionFilter extends BaseExceptionFilter {
 	 * @param host - The arguments host for the current context.
 	 */
 	catch(exception: unknown, host: ArgumentsHost): void {
+		// This filter renders an HTTP reply, so it owns the HTTP surface only. A global filter is
+		// consulted for every context, and a GraphQL request has no HTTP response to write to: the
+		// host's response object there is the GraphQL context, `response.status` does not exist, and
+		// reaching for it turns the caller's real error into `response.status is not a function` —
+		// an error about the error handler, with the original failure lost behind it. Rethrowing
+		// hands the exception to graphql-js, which reports it in the response's `errors` array, and
+		// the Apollo `formatError` handler gives it the code and status the contract declares.
+		if (isHttpHost(host) === false) {
+			throw exception;
+		}
+
 		if (exception instanceof ApiException) {
 			this.writeEnvelope(exception, host);
 			return;

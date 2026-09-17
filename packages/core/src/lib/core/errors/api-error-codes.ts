@@ -179,6 +179,17 @@ export const ApiErrorCode = {
 	SEARCH_FIELD_UNKNOWN: 'SEARCH_FIELD_UNKNOWN',
 
 	/* ------------------------------------------------------------------ *
+	 * Tax — a breakdown the ledger cannot describe
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * One owner's tax lines mix an inclusive and an exclusive line of the same rate: the group cannot
+	 * be described by one basis, and a totals writer told "inclusive" would add the exclusive half a
+	 * second time. Documented in `docs/06-api-specification.md`, which assigns it `409`.
+	 */
+	TAX_INCLUSIVE_MISMATCH: 'TAX_INCLUSIVE_MISMATCH',
+
+	/* ------------------------------------------------------------------ *
 	 * Platform — the floor every route falls back to
 	 * ------------------------------------------------------------------ */
 

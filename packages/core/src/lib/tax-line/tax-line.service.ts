@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import {
 	CurrencyCode,
 	DecimalString,
@@ -10,6 +10,8 @@ import {
 } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { ApiException } from '../core/errors/api-exception';
+import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { Money } from '../money/money';
 import { compareDecimalStrings, formatDecimalUnits, normalizeDecimalString } from '../money/decimal';
 import { TaxLine } from './tax-line.entity';
@@ -43,6 +45,8 @@ export class TaxLineService extends CrudService<TaxLine> {
 	 * @param input The line to write.
 	 * @returns The stored row.
 	 * @throws BadRequestException when a required field is missing or an amount is not an exact decimal.
+	 * @throws ApiException `TAX_INCLUSIVE_MISMATCH` (409) when the line would give one owner two bases
+	 * under one rate.
 	 */
 	async append(input: ITaxLineCreateInput): Promise<TaxLine> {
 		if (!input?.ownerId) {
@@ -59,6 +63,7 @@ export class TaxLineService extends CrudService<TaxLine> {
 		const baseAmount = this.readDecimal(input.baseAmount ?? '0', 'taxable base');
 		const amount = this.readDecimal(input.amount, 'tax amount');
 		const currency = this.readCurrency(input.currency);
+		const isInclusive = input.isInclusive ?? false;
 
 		// The rate is a fraction of the base. A negative one is not a rate — an exemption is a zero-rate
 		// line with a reason in its metadata — and letting it through would silently reduce a document's
@@ -66,6 +71,8 @@ export class TaxLineService extends CrudService<TaxLine> {
 		if (compareDecimalStrings(rate, '0') < 0) {
 			throw new BadRequestException('TAX_LINE_RATE_INVALID: a tax rate cannot be negative.');
 		}
+
+		await this.assertOneBasisPerRate(input.ownerType, input.ownerId, input.code, rate, isInclusive);
 
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
@@ -76,12 +83,85 @@ export class TaxLineService extends CrudService<TaxLine> {
 			amount,
 			currency,
 			isCompound: input.isCompound ?? false,
-			isInclusive: input.isInclusive ?? false,
+			isInclusive,
 			...(tenantId ? { tenantId } : {}),
 			...(organizationId ? { organizationId } : {})
 		} as Partial<TaxLine>);
 
 		return this.typeOrmTaxLineRepository.save(created);
+	}
+
+	/**
+	 * Refuses a line that would give one owner two bases under one rate.
+	 *
+	 * `groupByRate` collapses the lines of one `(code, rate)` into a single entry and describes that
+	 * entry from the first row it read. A group holding both an inclusive and an exclusive line would
+	 * therefore be reported as whichever of the two happened to be written first, and the two cannot
+	 * be totalled together either: an inclusive line's amount is already inside the price and an
+	 * exclusive line's is not, so a totals writer told "inclusive" adds the exclusive half a second
+	 * time. The combination is refused here because a write is the only place it can be refused — the
+	 * rows of one rate are written one at a time and read as a group.
+	 *
+	 * @param ownerType The owner type.
+	 * @param ownerId The owning row.
+	 * @param code The rate code of the line being written.
+	 * @param rate The rate of the line being written, in canonical form.
+	 * @param isInclusive Whether the line being written is already inside the price.
+	 * @throws ApiException with `TAX_INCLUSIVE_MISMATCH`, the code `docs/06-api-specification.md`
+	 * documents for an inclusive setting that disagrees with the line, when a stored line of the same
+	 * owner shares the code and the rate and states the other basis. No row is written.
+	 */
+	private async assertOneBasisPerRate(
+		ownerType: TaxLineOwnerType,
+		ownerId: ID,
+		code: string | undefined,
+		rate: DecimalString,
+		isInclusive: boolean
+	): Promise<void> {
+		const siblings = await this.findByOwner(ownerType, ownerId);
+
+		for (const row of siblings) {
+			// The code and the rate together identify the group, exactly as they do when the group is
+			// read back, so a mix under one rate of another jurisdiction is a different group and is
+			// left alone.
+			if ((row.code ?? '') !== (code ?? '') || !this.isSameRate(row.rate, rate)) {
+				continue;
+			}
+
+			if ((row.isInclusive === true) === isInclusive) {
+				continue;
+			}
+
+			throw new ApiException(
+				HttpStatus.CONFLICT,
+				ApiErrorCode.TAX_INCLUSIVE_MISMATCH,
+				`The tax lines of one owner cannot mix an inclusive and an exclusive line of one rate; ` +
+					`"${code ?? ''}" at ${rate} is already recorded as ` +
+					`${row.isInclusive === true ? 'inclusive' : 'exclusive'}.`,
+				{
+					code: code ?? '',
+					rate,
+					recordedIsInclusive: row.isInclusive === true,
+					refusedIsInclusive: isInclusive
+				}
+			);
+		}
+	}
+
+	/**
+	 * @param left One rate.
+	 * @param right The other rate.
+	 * @returns True when the two spellings are one rate, compared as the exact decimals they are so
+	 * that `0.05` and `0.050000` are the same rate and not two.
+	 */
+	private isSameRate(left: DecimalString, right: DecimalString): boolean {
+		try {
+			return compareDecimalStrings(left, right) === 0;
+		} catch {
+			// A stored value that is not an exact decimal cannot be called equal to anything; comparing
+			// it as it stands at least keeps the refusal from firing on a value it cannot interpret.
+			return String(left) === String(right);
+		}
 	}
 
 	/**

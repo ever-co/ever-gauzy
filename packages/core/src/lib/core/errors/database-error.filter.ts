@@ -6,6 +6,7 @@ import {
 	redactDatabaseError,
 	safeMessageForDatabaseText
 } from './database-error';
+import { isHttpHost } from './execution-host';
 
 /**
  * Keeps database internals out of HTTP responses.
@@ -41,6 +42,14 @@ export class DatabaseErrorFilter extends BaseExceptionFilter {
 	 * @param host - The arguments host for the current context.
 	 */
 	catch(exception: HttpException, host: ArgumentsHost): void {
+		// This filter rewrites an HTTP reply, so a context without one is not its business. It is
+		// consulted for every context because it is registered globally, and reaching for
+		// `switchToHttp().getResponse()` on a GraphQL operation throws `response.status is not a
+		// function` — replacing the caller's own failure with a failure of the error path.
+		if (isHttpHost(host) === false) {
+			throw exception;
+		}
+
 		const payload = exception.getResponse();
 		const safeMessage = this.resolveSafeMessage(payload);
 
