@@ -893,7 +893,7 @@ describe('SearchService — how filters compose (doc 05 §3.18, §3.17)', () => 
 	// is a real aggregation over the documents the same predicate selects."
 	// (`database-search.provider.ts`, the `for (const entity of context.entities)` loop in `computeFacets`
 	// around its `countKeywordFacet` / `countAttributeFacet` calls.)
-	it.failing('[DEFECT] counts each facet value once however many declarations answer the facet', async () => {
+	it('counts each facet value once however many declarations answer the facet', async () => {
 		const fixture = searchFixture();
 
 		await indexAll(fixture);

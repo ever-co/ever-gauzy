@@ -804,6 +804,13 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	 * request names but no definition declares, or one whose declaration does not mark it facetable, is
 	 * skipped — an empty facet list is a statement that nothing was counted, never a fabricated zero.
 	 *
+	 * The facet is counted once per declaration that declares it, and each of those counts is taken over
+	 * that declaration's own entity type: a declaration that answers a facet is answering for the rows
+	 * it describes, and a count taken over the whole scope would report every value once per declaration
+	 * that declares the field rather than once per document. The declarations in scope remain the only
+	 * thing that decides whether the facet exists at all, so a field one entity declares and another does
+	 * not is still the first entity's facet.
+	 *
 	 * @param context The query context.
 	 * @returns The facets, merged across entity types by attribute name.
 	 */
@@ -827,7 +834,7 @@ export class DatabaseSearchProvider implements ISearchProvider {
 				}
 
 				if (this.isPromoted(definition, field)) {
-					await this.countKeywordFacet(context, name, counts);
+					await this.countKeywordFacet(context, entity, name, counts);
 					continue;
 				}
 
@@ -837,7 +844,7 @@ export class DatabaseSearchProvider implements ISearchProvider {
 					continue;
 				}
 
-				await this.countAttributeFacet(context, name, counts);
+				await this.countAttributeFacet(context, entity, name, counts);
 			}
 		}
 
@@ -854,17 +861,20 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	 * Counts the values of a field promoted into the documents' keywords.
 	 *
 	 * @param context The query context.
+	 * @param entity The entity type whose declaration is being counted.
 	 * @param attribute The declared field name.
 	 * @param counts The accumulator.
 	 */
 	private async countKeywordFacet(
 		context: ISearchQueryContext,
+		entity: string,
 		attribute: string,
 		counts: Map<string, Map<string, number>>
 	): Promise<void> {
 		const params: Record<string, unknown> = {};
 		const query = this.buildQuery(context, false, params);
 
+		query.andWhere(`doc.entity = :${this.addParam(params, 'facetEntity', entity)}`, params);
 		query.andWhere(
 			`LOWER(doc.keywords) LIKE :${this.addParam(params, 'facetToken', `%${attribute.toLowerCase()}:%`)}`,
 			params
@@ -896,17 +906,21 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	 * Counts the values of a field that lives in the attribute map.
 	 *
 	 * @param context The query context.
+	 * @param entity The entity type whose declaration is being counted.
 	 * @param attribute The declared field name.
 	 * @param counts The accumulator.
 	 */
 	private async countAttributeFacet(
 		context: ISearchQueryContext,
+		entity: string,
 		attribute: string,
 		counts: Map<string, Map<string, number>>
 	): Promise<void> {
 		const expression = this.attributeExpression(attribute);
-		const query = this.buildQuery(context, false);
+		const params: Record<string, unknown> = {};
+		const query = this.buildQuery(context, false, params);
 
+		query.andWhere(`doc.entity = :${this.addParam(params, 'facetEntity', entity)}`, params);
 		query.andWhere(`${expression} IS NOT NULL`);
 		query.select(expression, 'bucket');
 		query.addSelect('COUNT(*)', 'count');

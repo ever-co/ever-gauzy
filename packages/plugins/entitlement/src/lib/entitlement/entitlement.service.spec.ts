@@ -799,7 +799,7 @@ describe('EntitlementService — putting a purchased right into force (doc 05 §
 	// operator's expiry takes — one implementation, one event, one set of closed activations").
 	// (`entitlement.service.ts`, the `manager.update(Entitlement, …, { status: EXPIRED })` inside
 	// `activateGranted`.)
-	it.failing('[DEFECT] lapses a late-settling right the way the ordinary expiry path does', async () => {
+	it('lapses a late-settling right the way the ordinary expiry path does', async () => {
 		const fixture = entitlementFixture({
 			rights: [
 				rightRow('late', {

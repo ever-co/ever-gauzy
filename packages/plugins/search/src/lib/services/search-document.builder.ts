@@ -119,36 +119,77 @@ export function toSearchText(value: unknown): string {
 	return String(value);
 }
 
+/** The separator run a template may join two placeholders with, at the start of some literal text. */
+const LEADING_SEPARATOR = /^(?:\s*[—–\-|,;:])+\s*/;
+
+/** The separator run a template may join two placeholders with, at the end of some literal text. */
+const TRAILING_SEPARATOR = /\s*(?:[—–\-|,;:]\s*)+$/;
+
 /**
  * Fills a `{{path}}` template from a source row.
  *
  * The templates are how a title reads the way a person would say it — `{{name}} — {{code}}` — without
- * the declaration having to name a single field as *the* title. A placeholder whose path carries
- * nothing is removed along with the separator that was there for it, so a row missing its code does
- * not produce a title that trails a dash.
+ * the declaration having to name a single field as *the* title. The punctuation between two
+ * placeholders is part of what the declaration asked for and survives whenever both of them carried a
+ * value; a separator that stood beside a placeholder whose path carried nothing is removed with it, so
+ * a row missing its code does not produce a title that trails a dash.
+ *
+ * Each separator is therefore judged against the placeholder next to it rather than against the
+ * rendered string as a whole: the same dash is kept in one row and dropped in the next, which is the
+ * difference between a title a person reads and the joining punctuation of a template.
  *
  * @param template The template.
  * @param row The source row.
  * @returns The rendered title, or an empty string when nothing was filled.
  */
 export function renderTemplate(template: string, row: SearchSourceRow): string {
-	const rendered = String(template ?? '').replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_match, path: string) => {
-		return toSearchText(readPath(row, path));
+	const source = String(template ?? '');
+	/** The literal text and the placeholder values, in the order the template states them. */
+	const pieces: Array<{ text: string; placeholder: boolean }> = [];
+	let cursor = 0;
+
+	for (const match of source.matchAll(/\{\{\s*([^}]+?)\s*\}\}/g)) {
+		const at = match.index ?? 0;
+
+		pieces.push({ text: source.slice(cursor, at), placeholder: false });
+		pieces.push({ text: toSearchText(readPath(row, match[1])), placeholder: true });
+		cursor = at + match[0].length;
+	}
+
+	pieces.push({ text: source.slice(cursor), placeholder: false });
+
+	/** Which placeholders rendered nothing, which is what a separator beside them is judged against. */
+	const emptied = pieces.map((piece) => piece.placeholder && !piece.text);
+
+	const rendered = pieces.map((piece, index) => {
+		if (piece.placeholder) {
+			return piece.text;
+		}
+
+		let text = piece.text;
+
+		if (emptied[index - 1]) {
+			text = text.replace(LEADING_SEPARATOR, ' ');
+		}
+
+		if (emptied[index + 1]) {
+			text = text.replace(TRAILING_SEPARATOR, ' ');
+		}
+
+		return text;
 	});
 
-	return tidy(rendered);
+	return tidy(rendered.join(''));
 }
 
 /**
- * Collapses the whitespace and the empty separators a template leaves behind.
+ * Collapses the whitespace a template leaves behind.
  *
  * @param text The rendered text.
  * @returns The tidied text.
  */
 function tidy(text: string): string {
 	return String(text ?? '')
-		.replace(/\s+/g, ' ')
-		.replace(/(^|\s)[—–\-|,;:](\s|$)/g, ' ')
 		.replace(/\s+/g, ' ')
 		.trim();
 }

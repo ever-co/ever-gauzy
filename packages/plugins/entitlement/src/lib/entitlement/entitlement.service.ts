@@ -222,6 +222,11 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 * Idempotent: a right that is already `ACTIVE` is skipped rather than re-announced, so a replayed
 	 * event changes nothing and emits nothing.
 	 *
+	 * A right whose term ran out while the money was settling is not put into force and does not wait
+	 * for the sweep either: it lapses here, through the one expiry write, so a late settlement leaves a
+	 * right that is `EXPIRED` with its event emitted, its keys withdrawn and its activations closed
+	 * rather than a row that only looks closed.
+	 *
 	 * @param filter Which rights to put into force: the order they came from, or the subscription.
 	 * @param scope The tenant and organization the event belongs to.
 	 * @returns The ids of the rights that were put into force.
@@ -249,12 +254,16 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 			});
 
 			const ids: ID[] = [];
+			const lapsed: ID[] = [];
 
 			for (const entitlement of pending) {
 				// A right whose term already ran out is expired rather than activated: a payment that
-				// settles late must not create a period nobody paid for.
+				// settles late must not create a period nobody paid for. It lapses the way every other
+				// lapse does — through the one expiry write — because a right that ends here ends with the
+				// same status, the same event and the same withdrawn credentials as one the sweep reaches.
 				if (isDueForExpiry({ ...entitlement, status: EntitlementStatus.ACTIVE }, now)) {
-					await manager.update(Entitlement, { id: entitlement.id } as any, { status: EntitlementStatus.EXPIRED } as any);
+					await this.applyExpiry(manager, entitlement, 'TERM_ENDED', now);
+					lapsed.push(entitlement.id);
 					continue;
 				}
 
@@ -282,16 +291,16 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 				ids.push(entitlement.id);
 			}
 
-			return ids;
+			return { ids, lapsed };
 		});
 
-		for (const id of activated) {
+		for (const id of [...activated.ids, ...activated.lapsed]) {
 			const entitlement = await this.findOneScoped(id, scope);
 
 			await this.eventBus.publish(EntitlementChangedEvent.from(entitlement));
 		}
 
-		return activated;
+		return activated.ids;
 	}
 
 	/**
@@ -646,32 +655,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 				return { entitlement, alreadyClosed: true };
 			}
 
-			await this.entitlementActivationService.closeAllForEntitlement(
-				manager,
-				entitlement.id,
-				EntitlementActivationStatus.EXPIRED,
-				reason
-			);
-
-			await this.entitlementKeyService.revokeForEntitlement(manager, entitlement.id, reason);
-
-			await manager.update(Entitlement, { id: entitlement.id } as any, { status: EntitlementStatus.EXPIRED } as any);
-
-			await recountEntitlementOccupancy(manager, entitlement.id);
-
-			await this.outbox.append(manager, {
-				name: EntitlementEventName.EXPIRED,
-				aggregateType: 'ENTITLEMENT',
-				aggregateId: entitlement.id as ID,
-				data: {
-					entitlementId: entitlement.id,
-					customerId: entitlement.customerId ?? null,
-					expiredAt: now,
-					reason
-				},
-				tenantId: entitlement.tenantId,
-				organizationId: entitlement.organizationId
-			});
+			await this.applyExpiry(manager, entitlement, reason, now);
 
 			return {
 				entitlement: (await manager.findOne(Entitlement, { where: { id: entitlement.id } as any })) as Entitlement,
@@ -684,6 +668,60 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		}
 
 		return outcome.entitlement;
+	}
+
+	/**
+	 * Writes one lapse, in the caller's transaction.
+	 *
+	 * Everything a lapse means is written here and nowhere else: the right becomes `EXPIRED`, its
+	 * activations are closed, its keys are withdrawn, the counters are re-derived from the rows that
+	 * remain, and one `entitlement.expired` row is appended to the outbox. Every path that ends a right
+	 * by lapse comes through it — the expiry sweep and an operator's own expiry, and a settlement that
+	 * arrives after the term has run out — so "it lapsed" means the same three things wherever it
+	 * happens, and a credential can never outlive the right it was issued against (§19.3).
+	 *
+	 * Taking the caller's manager rather than opening a transaction is what keeps the lapse one
+	 * transaction with whatever else the caller is writing, and it is why the closing writes are issued
+	 * through the two child services rather than through their own terminal operations.
+	 *
+	 * @param manager The caller's transaction manager.
+	 * @param entitlement The right that lapsed.
+	 * @param reason Why it lapsed.
+	 * @param now The instant of the lapse.
+	 * @returns Nothing.
+	 */
+	private async applyExpiry(
+		manager: EntityManager,
+		entitlement: Entitlement,
+		reason: string,
+		now: Date
+	): Promise<void> {
+		await this.entitlementActivationService.closeAllForEntitlement(
+			manager,
+			entitlement.id,
+			EntitlementActivationStatus.EXPIRED,
+			reason
+		);
+
+		await this.entitlementKeyService.revokeForEntitlement(manager, entitlement.id, reason);
+
+		await manager.update(Entitlement, { id: entitlement.id } as any, { status: EntitlementStatus.EXPIRED } as any);
+
+		await recountEntitlementOccupancy(manager, entitlement.id);
+
+		await this.outbox.append(manager, {
+			name: EntitlementEventName.EXPIRED,
+			aggregateType: 'ENTITLEMENT',
+			aggregateId: entitlement.id as ID,
+			data: {
+				entitlementId: entitlement.id,
+				customerId: entitlement.customerId ?? null,
+				expiredAt: now,
+				reason
+			},
+			tenantId: entitlement.tenantId,
+			organizationId: entitlement.organizationId
+		});
 	}
 
 	/**

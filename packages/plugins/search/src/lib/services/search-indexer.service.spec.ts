@@ -488,7 +488,7 @@ describe('SearchIndexerService — the event seam (doc 12, doc 05 §3.18)', () =
 	// the worked example of a title template and every shipped declaration uses that shape, so what a
 	// person sees in a result list is a run-together string rather than the title the declaration asked
 	// for. (`search-document.builder.ts`, the `tidy` call at the end of `renderTemplate`.)
-	it.failing('[DEFECT] keeps the separator between two placeholders that both carried a value', async () => {
+	it('keeps the separator between two placeholders that both carried a value', async () => {
 		const fixture = searchFixture();
 
 		await fixture.indexer.index('product_variant');
