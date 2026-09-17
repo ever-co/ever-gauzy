@@ -202,7 +202,7 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	 */
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
-		status: HttpStatus.NO_CONTENT,
+		status: HttpStatus.ACCEPTED,
 		description: 'The record has been successfully deleted'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)

@@ -6,7 +6,16 @@ import { environment as env } from '@gauzy/config';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
+import { ORGANIZATION_POLICY_TARGET_METADATA } from '../decorators/organization-policy-target.decorator';
 import { OrganizationPermissionGuard, ORGANIZATION_POLICY_COLUMNS } from './organization-permission.guard';
+
+// The guard picks its ORM branch once, at import time, from `DB_ORM`. The doubles below model the
+// TypeORM repositories, so pin that branch rather than let a developer's `DB_ORM=mikro-orm` flip every
+// verdict of this suite to the fail-closed path.
+jest.mock('../../core/utils', () => ({
+	...jest.requireActual('../../core/utils'),
+	getORMType: () => 'typeorm'
+}));
 
 /**
  * GHSA-rmq9-85v7-f365 — `OrganizationPermissionGuard` only enforced the organization's
@@ -46,6 +55,15 @@ const ORGANIZATIONS = [
 		allowModifyTime: true,
 		allowDeleteTime: true
 	}
+];
+
+/** Records a route can address by id; `TimeLogStub` stands in for the entity class the route declares. */
+class TimeLogStub {}
+
+const TIME_LOGS = [
+	{ id: 'log-in-deny', tenantId: TENANT_ID, organizationId: 'org-deny' },
+	{ id: 'log-in-allow', tenantId: TENANT_ID, organizationId: 'org-allow' },
+	{ id: 'log-foreign', tenantId: OTHER_TENANT_ID, organizationId: 'org-foreign' }
 ];
 
 const EMPLOYEES = [
@@ -102,6 +120,7 @@ interface GuardHarness {
 	cache: Map<string, boolean>;
 	findOne: jest.Mock;
 	createQueryBuilder: jest.Mock;
+	findTarget: jest.Mock;
 }
 
 function createGuard(): GuardHarness {
@@ -120,16 +139,23 @@ function createGuard(): GuardHarness {
 
 	const createQueryBuilder = jest.fn(() => createOrganizationQueryBuilderDouble());
 
+	const findTarget = jest.fn(async (entity: unknown, { where }: any) => {
+		if (entity !== TimeLogStub) {
+			return null;
+		}
+		return TIME_LOGS.find((log) => log.id === where.id && log.tenantId === where.tenantId) ?? null;
+	});
+
 	const guard = new OrganizationPermissionGuard(
 		cacheManager,
 		new Reflector(),
 		{ findOne } as any,
 		{} as any,
-		{ createQueryBuilder } as any,
+		{ createQueryBuilder, manager: { findOne: findTarget } } as any,
 		{} as any
 	);
 
-	return { guard, cache, findOne, createQueryBuilder };
+	return { guard, cache, findOne, createQueryBuilder, findTarget };
 }
 
 /**
@@ -138,7 +164,8 @@ function createGuard(): GuardHarness {
  */
 function createContext(
 	permissions: PermissionsEnum[] | undefined,
-	request: { body?: any; query?: any; params?: any } = {}
+	request: { body?: any; query?: any; params?: any } = {},
+	target?: { entity: unknown; param: string }
 ): ExecutionContext {
 	const handler = function handlerStub() {
 		/* route handler */
@@ -148,6 +175,10 @@ function createContext(
 
 	if (permissions) {
 		Reflect.defineMetadata(PERMISSIONS_METADATA, permissions, handler);
+	}
+
+	if (target) {
+		Reflect.defineMetadata(ORGANIZATION_POLICY_TARGET_METADATA, target, handler);
 	}
 
 	return {
@@ -358,6 +389,95 @@ describe('OrganizationPermissionGuard', () => {
 		});
 	});
 
+	describe('routes that mutate a record addressed by id', () => {
+		// PUT /timesheet/time-log/:id and PUT /timesheet/time-slot/:id load their target by id alone, so
+		// the organization named by the request is not necessarily the one the write lands in.
+		const target = { entity: TimeLogStub, param: 'id' };
+
+		it('denies a caller with no employee record who names a permissive organization for a record of a denied one', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.ADMIN, employeeId: null });
+
+			const context = createContext(
+				[PermissionsEnum.ALLOW_MODIFY_TIME],
+				{ params: { id: 'log-in-deny' }, body: { organizationId: 'org-allow' } },
+				target
+			);
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+		});
+
+		it('denies when the request names no organization and the record lives in a denied one', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.ADMIN, employeeId: null, organizationId: 'org-allow' });
+
+			const context = createContext(
+				[PermissionsEnum.ALLOW_MODIFY_TIME],
+				{ params: { id: 'log-in-deny' }, body: {} },
+				target
+			);
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+		});
+
+		it('allows when the record and the named organization both allow the action', async () => {
+			const { guard, findTarget } = createGuard();
+			asCaller({ role: RolesEnum.ADMIN, employeeId: null });
+
+			const context = createContext(
+				[PermissionsEnum.ALLOW_MODIFY_TIME],
+				{ params: { id: 'log-in-allow' }, body: { organizationId: 'org-allow' } },
+				target
+			);
+
+			await expect(guard.canActivate(context)).resolves.toBe(true);
+			expect(findTarget).toHaveBeenCalledWith(TimeLogStub, {
+				where: { id: 'log-in-allow', tenantId: TENANT_ID },
+				select: { id: true, organizationId: true }
+			});
+		});
+
+		it('denies a record of another tenant, even though its organization is permissive', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.ADMIN, employeeId: null });
+
+			const context = createContext(
+				[PermissionsEnum.ALLOW_MODIFY_TIME],
+				{ params: { id: 'log-foreign' }, body: { organizationId: 'org-allow' } },
+				target
+			);
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+		});
+
+		it('denies when the route param carrying the record id is missing', async () => {
+			const { guard, createQueryBuilder } = createGuard();
+			asCaller({ role: RolesEnum.ADMIN, employeeId: null });
+
+			const context = createContext(
+				[PermissionsEnum.ALLOW_MODIFY_TIME],
+				{ params: {}, body: { organizationId: 'org-allow' } },
+				target
+			);
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+			expect(createQueryBuilder).not.toHaveBeenCalled();
+		});
+
+		it('denies an EMPLOYEE editing a record of a denied organization from their permissive one', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.EMPLOYEE, employeeId: 'employee-in-allow' });
+
+			const context = createContext(
+				[PermissionsEnum.ALLOW_MODIFY_TIME],
+				{ params: { id: 'log-in-deny' }, body: { organizationId: 'org-allow' } },
+				target
+			);
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+		});
+	});
+
 	describe('fail-closed contract', () => {
 		it('denies a route that applies the guard without declaring a permission', async () => {
 			const { guard } = createGuard();
@@ -412,16 +532,21 @@ describe('OrganizationPermissionGuard', () => {
 
 	describe('super admin exemption', () => {
 		it('exempts SUPER_ADMIN while allowSuperAdminRole is on', async () => {
+			const previous = (env as any).allowSuperAdminRole;
 			const { guard, createQueryBuilder } = createGuard();
 			asCaller({ role: RolesEnum.SUPER_ADMIN, employeeId: null, isSuperAdmin: true });
 			(env as any).allowSuperAdminRole = true;
 
-			const context = createContext([PermissionsEnum.ALLOW_MANUAL_TIME], {
-				body: { organizationId: 'org-deny' }
-			});
+			try {
+				const context = createContext([PermissionsEnum.ALLOW_MANUAL_TIME], {
+					body: { organizationId: 'org-deny' }
+				});
 
-			await expect(guard.canActivate(context)).resolves.toBe(true);
-			expect(createQueryBuilder).not.toHaveBeenCalled();
+				await expect(guard.canActivate(context)).resolves.toBe(true);
+				expect(createQueryBuilder).not.toHaveBeenCalled();
+			} finally {
+				(env as any).allowSuperAdminRole = previous;
+			}
 		});
 
 		it('enforces the policy for SUPER_ADMIN when allowSuperAdminRole is off', async () => {

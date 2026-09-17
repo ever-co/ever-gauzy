@@ -21,7 +21,10 @@ import { OrganizationPositionController } from '../../organization-position/orga
 import { OrganizationVendorController } from '../../organization-vendor/organization-vendor.controller';
 import { TimeLogController } from '../../time-tracking/time-log/time-log.controller';
 import { TimeSlotController } from '../../time-tracking/time-slot/time-slot.controller';
+import { TimeLog } from '../../time-tracking/time-log/time-log.entity';
+import { TimeSlot } from '../../time-tracking/time-slot/time-slot.entity';
 import { TimerController } from '../../time-tracking/timer/timer.controller';
+import { ORGANIZATION_POLICY_TARGET_METADATA } from '../decorators/organization-policy-target.decorator';
 import { OrganizationPermissionGuard } from './organization-permission.guard';
 import { PermissionGuard } from './permission.guard';
 
@@ -135,7 +138,9 @@ describe('CrudController inherited mutating routes', () => {
 
 /**
  * Asserts that every mutating route of a controller — inherited routes included — is behind
- * `PermissionGuard` and declares at least one of the expected permissions.
+ * `PermissionGuard` and declares exactly the expected permissions, in the declared order. The match is
+ * deliberately strict: a route that silently drops one of the permissions, or gains an unrelated one,
+ * changes who can reach it and has to be a visible change to this suite.
  */
 function expectFullyGated(controller: Function, expected: PermissionsEnum[], exemptions: string[] = []): void {
 	const routes = mutatingRoutes(controller).filter((route) => !exemptions.includes(route.name));
@@ -249,6 +254,18 @@ describe('OrganizationPermissionGuard placement', () => {
 		expect(organizationGuardedRoutes(TimeSlotController)).toEqual({
 			update: [PermissionsEnum.ALLOW_MODIFY_TIME],
 			deleteTimeSlot: [PermissionsEnum.ALLOW_DELETE_TIME]
+		});
+	});
+
+	it('evaluates the policy of the record itself on the routes that address a time log or slot by id', () => {
+		// Without the target, a caller with no employee record could name a permissive organization in
+		// the body while the handler loads and rewrites a record of an organization whose policy is off.
+		expect(
+			Reflect.getMetadata(ORGANIZATION_POLICY_TARGET_METADATA, TimeLogController.prototype.updateManualTime)
+		).toEqual({ entity: TimeLog, param: 'id' });
+		expect(Reflect.getMetadata(ORGANIZATION_POLICY_TARGET_METADATA, TimeSlotController.prototype.update)).toEqual({
+			entity: TimeSlot,
+			param: 'id'
 		});
 	});
 

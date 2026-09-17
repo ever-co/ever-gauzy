@@ -146,7 +146,7 @@ export class HelpCenterArticleVersionController extends CrudController<HelpCente
 	 * Overrides the inherited `CrudController.delete()` route only to attach the permission gate.
 	 */
 	@ApiOperation({ summary: 'Delete record' })
-	@ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'The record has been successfully deleted' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully deleted' })
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)

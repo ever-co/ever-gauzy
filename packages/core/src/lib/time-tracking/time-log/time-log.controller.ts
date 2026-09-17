@@ -15,8 +15,9 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput, ID } from '@gauzy/contracts';
+import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
-import { Permissions } from './../../shared/decorators';
+import { OrganizationPolicyTarget, Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
@@ -284,6 +285,7 @@ export class TimeLogController {
 	@Put(':id')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
+	@OrganizationPolicyTarget(TimeLog)
 	async updateManualTime(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: UpdateManualTimeLogDTO

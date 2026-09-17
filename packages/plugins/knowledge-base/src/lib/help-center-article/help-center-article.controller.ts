@@ -234,7 +234,7 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	 * the route the Angular Help Center uses to delete an article.
 	 */
 	@ApiOperation({ summary: 'Delete record' })
-	@ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'The record has been successfully deleted' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully deleted' })
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)

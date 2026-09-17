@@ -3,12 +3,16 @@ import { CanActivate, ExecutionContext, Inject, Injectable, Type } from '@nestjs
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { Brackets, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, EntityTarget, WhereExpressionBuilder } from 'typeorm';
 import { verify } from 'jsonwebtoken';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { ID, IOrganization, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty, isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
+import {
+	IOrganizationPolicyTarget,
+	ORGANIZATION_POLICY_TARGET_METADATA
+} from '../decorators/organization-policy-target.decorator';
 import { MultiORMEnum, getORMType } from '../../core/utils';
 import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -189,6 +193,25 @@ export class OrganizationPermissionGuard implements CanActivate {
 			return null;
 		}
 
+		// The organization of the record the route mutates, when the route declares one. The request
+		// cannot name that organization for us: a caller with no employee record could otherwise name a
+		// permissive organization while addressing a record of an organization whose policy is off.
+		const target = this._reflector.get<IOrganizationPolicyTarget | undefined>(
+			ORGANIZATION_POLICY_TARGET_METADATA,
+			context.getHandler()
+		);
+
+		if (target) {
+			const targetOrganizationId = await this.findTargetOrganizationId(context, tenantId, target);
+
+			if (!targetOrganizationId) {
+				// The record does not exist in the caller's tenant (or the id is missing).
+				return null;
+			}
+
+			organizationIds.add(targetOrganizationId);
+		}
+
 		// The organization the request itself targets. It is validated against the caller's tenant
 		// by the policy query below, which only counts rows of this tenant.
 		const requestOrganizationId = this.extractRequestOrganizationId(context);
@@ -237,6 +260,55 @@ export class OrganizationPermissionGuard implements CanActivate {
 		}
 
 		return undefined;
+	}
+
+	/**
+	 * Finds the organization of the record a route addresses by id, scoped to the caller's tenant.
+	 *
+	 * @param context The execution context, used to read the route param carrying the record id.
+	 * @param tenantId The caller's tenant.
+	 * @param target The entity and route param declared with `@OrganizationPolicyTarget()`.
+	 * @returns The record's organization id, or undefined when the id is missing or the record is not
+	 * in this tenant.
+	 */
+	private async findTargetOrganizationId(
+		context: ExecutionContext,
+		tenantId: ID,
+		target: IOrganizationPolicyTarget
+	): Promise<ID | undefined> {
+		try {
+			const id = context.switchToHttp().getRequest()?.params?.[target.param];
+
+			if (typeof id !== 'string' || id.trim().length === 0) {
+				return undefined;
+			}
+
+			switch (ormType) {
+				case MultiORMEnum.MikroORM: {
+					const record: any = await this._mikroOrmOrganizationRepository
+						.getEntityManager()
+						.findOne(target.entity as any, { id, tenantId }, { fields: ['id', 'organizationId'] as any });
+
+					return record?.organizationId ?? undefined;
+				}
+				case MultiORMEnum.TypeORM: {
+					const record = await this._typeOrmOrganizationRepository.manager.findOne(
+						target.entity as EntityTarget<{ id: ID; tenantId: ID; organizationId: ID }>,
+						{
+							where: { id, tenantId },
+							select: { id: true, organizationId: true }
+						}
+					);
+
+					return record?.organizationId ?? undefined;
+				}
+				default:
+					return undefined;
+			}
+		} catch (error) {
+			console.log('Error occurred while resolving the organization of the target record:', error);
+			return undefined;
+		}
 	}
 
 	/**
