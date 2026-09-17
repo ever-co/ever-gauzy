@@ -7,6 +7,7 @@ import {
 	HttpStatus,
 	Param,
 	Post,
+	Put,
 	Query,
 	UseGuards
 } from '@nestjs/common';
@@ -26,7 +27,7 @@ import { FeatureFlag } from '@gauzy/common';
 import { parseIfMatch } from '../purchasing.http';
 import { PurchasingFeatures } from '../purchasing.features';
 import { PurchasingPermissions } from '../purchasing.permissions';
-import { CancelGoodsReceiptDTO, CreateGoodsReceiptDTO } from './dto';
+import { CancelGoodsReceiptDTO, CreateGoodsReceiptDTO, UpdateGoodsReceiptDTO } from './dto';
 import { GoodsReceipt } from './goods-receipt.entity';
 import { GoodsReceiptService } from './goods-receipt.service';
 
@@ -35,9 +36,10 @@ import { GoodsReceiptService } from './goods-receipt.service';
  *
  * A receipt is a record of something that happened, so this surface is deliberately small: a delivery
  * is recorded, read back with its lines and the movements they produced, and reversed when it was
- * wrong. There is no edit route, because editing a receipt would leave movements in the ledger that no
- * document explains — reversing it writes the compensating movements and leaves both versions
- * readable.
+ * wrong. There is no edit route of its own, because editing a receipt would leave movements in the
+ * ledger that no document explains — reversing it writes the compensating movements and leaves both
+ * versions readable. The edit route the CRUD base maps is nevertheless declared below, so that the
+ * body it accepts is validated rather than written as it arrives.
  */
 @ApiTags('GoodsReceipt')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -71,6 +73,32 @@ export class GoodsReceiptController extends CrudController<GoodsReceipt> {
 			...entity,
 			expectedVersion: parseIfMatch(ifMatch)
 		} as any);
+	}
+
+	/**
+	 * Corrects the recorded fields of a receipt, and never the quantities it moved.
+	 *
+	 * The route the CRUD base maps for `PUT /goods-receipts/:id` is declared here rather than
+	 * inherited: a body is validated from the type the handler names, and the base class names the
+	 * entity's shape as a generic, whose reflected type is `Object` — a parameter the validation pipe
+	 * cannot name a class for is skipped, so an inherited route accepts any body at all and writes it.
+	 * Reversing a receipt is still what corrects a delivery that was wrong, because the compensating
+	 * movements are what keep the ledger explicable; this is the repair surface for the document's own
+	 * fields, which is why it carries the receiving grant.
+	 *
+	 * @param id The receipt to change.
+	 * @param entity The fields to change.
+	 * @returns The result of the update.
+	 */
+	@ApiOperation({ summary: 'Update a goods receipt' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The receipt was updated.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'The receipt does not exist.' })
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateGoodsReceiptDTO) {
+		return await this.goodsReceiptService.update(id, entity as any);
 	}
 
 	/**

@@ -32,14 +32,19 @@ export class GiftCardTransactionDTO extends TenantOrganizationBaseDTO {
 	 */
 	@ApiProperty({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsDecimalAmount()
-	readonly amount: DecimalString | number;
+	// `DecimalString`, not `DecimalString | number`: the column is an exact decimal, the validator
+	// already refuses a value that is not one, and the wider type said a caller could send a float —
+	// which the money rules forbid and which the entity's own type does not accept. It also made this
+	// DTO wider than the entity it describes, so the controller that names it could not be a narrowing
+	// of the CRUD base and did not type-check.
+	readonly amount: DecimalString;
 
 	/**
 	 * The card balance after this movement.
 	 */
 	@ApiProperty({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsDecimalAmount()
-	readonly balanceAfter: DecimalString | number;
+	readonly balanceAfter: DecimalString;
 
 	/**
 	 * Issue, redeem, refund, adjust or expire.

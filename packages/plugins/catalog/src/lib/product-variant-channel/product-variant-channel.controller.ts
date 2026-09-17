@@ -1,9 +1,17 @@
-import { Body, Controller, Get, HttpStatus, Param, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID } from '@gauzy/contracts';
-import { CrudController, PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import {
+	CrudController,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	UUIDValidationPipe,
+	UseValidationPipe
+} from '@gauzy/core';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../catalog.permissions';
 import { PublicationStatus } from '../catalog.types';
+import { CreateProductVariantChannelDTO, UpdateProductVariantChannelDTO } from './dto';
 import { ProductVariantChannel } from './product-variant-channel.entity';
 import { ProductVariantChannelService } from './product-variant-channel.service';
 
@@ -17,6 +25,40 @@ import { ProductVariantChannelService } from './product-variant-channel.service'
 export class ProductVariantChannelController extends CrudController<ProductVariantChannel> {
 	constructor(private readonly productVariantChannelService: ProductVariantChannelService) {
 		super(productVariantChannelService);
+	}
+
+	/**
+	 * Creates one variant's presence on one channel.
+	 *
+	 * Declared rather than inherited: a request body is validated from the type the handler names, and the
+	 * base class names the entity's shape, whose reflected type is `Object` — a parameter the validation
+	 * pipe skips. The DTO is what makes the body validated and the route documented.
+	 */
+	@ApiOperation({ summary: 'Create a variant publication' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'The publication was created', type: ProductVariantChannel })
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
+	@Post()
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateProductVariantChannelDTO): Promise<ProductVariantChannel> {
+		return this.productVariantChannelService.create(entity as any);
+	}
+
+	/**
+	 * Updates one publication: its status, and the moment it took effect.
+	 *
+	 * The return is the platform's own: the service's `update` answers either the row or the result of a
+	 * partial update, which is why the CRUD base declares `Promise<any>` on this route too.
+	 */
+	@ApiOperation({ summary: 'Update a variant publication' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The publication was updated', type: ProductVariantChannel })
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
+	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateProductVariantChannelDTO
+	): Promise<any> {
+		return this.productVariantChannelService.update(id, entity as any);
 	}
 
 	/**

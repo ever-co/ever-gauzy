@@ -1,8 +1,16 @@
-import { Body, Controller, Get, HttpStatus, Param, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID } from '@gauzy/contracts';
-import { CrudController, PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import {
+	CrudController,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	UUIDValidationPipe,
+	UseValidationPipe
+} from '@gauzy/core';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../catalog.permissions';
+import { CreateProductVariantMediaDTO, UpdateProductVariantMediaDTO } from './dto';
 import { ProductVariantMedia } from './product-variant-media.entity';
 import { ProductVariantMediaService } from './product-variant-media.service';
 
@@ -13,6 +21,40 @@ import { ProductVariantMediaService } from './product-variant-media.service';
 export class ProductVariantMediaController extends CrudController<ProductVariantMedia> {
 	constructor(private readonly productVariantMediaService: ProductVariantMediaService) {
 		super(productVariantMediaService);
+	}
+
+	/**
+	 * Creates one gallery row of a variant.
+	 *
+	 * Declared rather than inherited: a request body is validated from the type the handler names, and the
+	 * base class names the entity's shape, whose reflected type is `Object` — a parameter the validation
+	 * pipe skips. The DTO is what makes the body validated and the route documented.
+	 */
+	@ApiOperation({ summary: 'Create a gallery row of a variant' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'The gallery row was created', type: ProductVariantMedia })
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
+	@Post()
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateProductVariantMediaDTO): Promise<ProductVariantMedia> {
+		return this.productVariantMediaService.create(entity as any);
+	}
+
+	/**
+	 * Updates one gallery row: its position, and whether it is the variant's thumbnail.
+	 *
+	 * The return is the platform's own: the service's `update` answers either the row or the result of a
+	 * partial update, which is why the CRUD base declares `Promise<any>` on this route too.
+	 */
+	@ApiOperation({ summary: 'Update a gallery row of a variant' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The gallery row was updated', type: ProductVariantMedia })
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
+	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateProductVariantMediaDTO
+	): Promise<any> {
+		return this.productVariantMediaService.update(id, entity as any);
 	}
 
 	/**

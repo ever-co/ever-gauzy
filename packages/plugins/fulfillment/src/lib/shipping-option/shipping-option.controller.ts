@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
 import {
@@ -13,7 +13,7 @@ import {
 import { ShippingOption } from './shipping-option.entity';
 import { IShippingEligibilityContext, ShippingOptionService } from './shipping-option.service';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
-import { CreateShippingOptionDTO } from './dto';
+import { CreateShippingOptionDTO, UpdateShippingOptionDTO } from './dto';
 
 /**
  * The shipping-option resource.
@@ -44,6 +44,31 @@ export class ShippingOptionController extends CrudController<ShippingOption> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateShippingOptionDTO): Promise<ShippingOption> {
 		return this.shippingOptionService.create(entity as any);
+	}
+
+	/**
+	 * Changes an option: its price, its window, its zone or its priority.
+	 *
+	 * The route is declared here rather than inherited: a body is validated from the type the handler
+	 * names, and the base class names the entity's shape as a generic, whose reflected type is
+	 * `Object` — a parameter the validation pipe cannot name a class for is skipped, so an inherited
+	 * route accepts any body at all and writes it. The service keeps the two invariants of an edit —
+	 * the price shape its type allows and a code that is still free — and bumps the option's
+	 * optimistic lock.
+	 *
+	 * @param id The option to change.
+	 * @param entity The fields to change.
+	 * @returns The result of the update.
+	 */
+	@ApiOperation({ summary: 'Update a shipping option' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Shipping option updated' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Shipping option not found' })
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateShippingOptionDTO) {
+		return this.shippingOptionService.update(id, entity as any);
 	}
 
 	/**

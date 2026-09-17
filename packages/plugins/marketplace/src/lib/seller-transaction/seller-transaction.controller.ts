@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	MethodNotAllowedException,
+	Param,
+	Post,
+	Put,
+	Query,
+	Req,
+	UseGuards
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	ID,
@@ -18,15 +29,26 @@ import {
 } from '@gauzy/core';
 import { SellerTransaction } from './seller-transaction.entity';
 import { SellerTransactionService } from './seller-transaction.service';
+import { CreateSellerTransactionDTO, UpdateSellerTransactionDTO } from './dto';
 import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 import { ISellerScope } from '../seller-scope/seller-scope';
+
+/** What the create route answers with, because a caller never authors a ledger row. */
+const A_LEDGER_ROW_IS_WRITTEN_BY_THE_ORDER_SPLIT =
+	'A ledger row is written by the order split inside the order transaction; a caller never authors one.';
+
+/** What the update route answers with, because a caller never moves a ledger amount. */
+const A_LEDGER_ROW_MOVES_THROUGH_ITS_OWN_ENDPOINTS =
+	'A ledger row is advanced by its settle and hold endpoints; its amounts are append only.';
 
 /**
  * The seller ledger surface.
  *
  * A ledger row is written by the order split and never by a caller, so this controller exposes reads and
- * two lifecycle acts — settling a row into a payout and holding one out of it. There is no create
- * route, because a route that could create a ledger row would be a route that could invent money.
+ * two lifecycle acts — settling a row into a payout and holding one out of it. Its create and update
+ * routes are declared and refuse: a route that could create or re-amount a ledger row would be a route
+ * that could invent money, and declaring them is what keeps the endpoint addressable and validated
+ * instead of inheriting an unvalidated one from the CRUD base.
  */
 @ApiTags('SellerTransaction')
 @UseGuards(TenantPermissionGuard, PermissionGuard, SellerAccessGuard)
@@ -92,6 +114,47 @@ export class SellerTransactionController extends CrudController<SellerTransactio
 	@Get('/:id')
 	async findById(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<SellerTransaction> {
 		return this.sellerTransactionService.getTransaction(id, this.scope(request));
+	}
+
+	/**
+	 * Refuses a caller-authored ledger row.
+	 *
+	 * Declared rather than inherited: an inherited `create` names the entity's shape, a type that reflects
+	 * as `Object`, which the validation pipe skips — so any body at all would reach the service. The body
+	 * is named as a DTO so that the request is validated, and the route then refuses it.
+	 *
+	 * @param entity The row a caller tried to author.
+	 * @returns Nothing: the route always throws.
+	 */
+	@ApiOperation({ summary: 'Refuse a caller-authored ledger row' })
+	@ApiResponse({ status: 405, description: 'A ledger row is written by the order split, not by a caller' })
+	@Permissions(PermissionsEnum.SELLER_TRANSACTIONS_SETTLE)
+	@Post('/')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateSellerTransactionDTO): Promise<SellerTransaction> {
+		throw new MethodNotAllowedException(A_LEDGER_ROW_IS_WRITTEN_BY_THE_ORDER_SPLIT);
+	}
+
+	/**
+	 * Refuses a caller-authored edit of a ledger row.
+	 *
+	 * What a row may move is its status and its hold reason, and both move through the settle and hold
+	 * endpoints, which is where the rule that no amount is writable is enforced.
+	 *
+	 * @param id The row id.
+	 * @param entity The fields a caller tried to change.
+	 * @returns Nothing: the route always throws.
+	 */
+	@ApiOperation({ summary: 'Refuse a caller-authored edit of a ledger row' })
+	@ApiResponse({ status: 405, description: 'A ledger row is advanced by its own endpoints, not by an update' })
+	@Permissions(PermissionsEnum.SELLER_TRANSACTIONS_SETTLE)
+	@Put('/:id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateSellerTransactionDTO
+	): Promise<SellerTransaction> {
+		throw new MethodNotAllowedException(A_LEDGER_ROW_MOVES_THROUGH_ITS_OWN_ENDPOINTS);
 	}
 
 	/**

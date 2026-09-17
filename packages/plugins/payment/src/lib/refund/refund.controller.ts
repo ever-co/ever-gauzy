@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
@@ -19,12 +19,12 @@ import { PaymentPermission } from '../payment.permissions';
 /**
  * Money given back.
  *
- * Three routes, and the split between them is the point. **Creating** a refund records an intention
- * to give money back — a row in `PENDING` that can still be refused. **Approving** it is the act that
- * moves the money: the payment's `refundedAmount` rises, its status becomes `PARTIALLY_REFUNDED` or
- * `REFUNDED`, the collection follows, and the negative ledger movement belongs to the operation step
- * that performed it. **Cancelling** withdraws the intention before anything moved, and writes nothing
- * back because nothing was written.
+ * Three deliberate routes sit on this controller, and the split between them is the point. **Creating**
+ * a refund records an intention to give money back — a row in `PENDING` that can still be refused.
+ * **Approving** it is the act that moves the money: the payment's `refundedAmount` rises, its status
+ * becomes `PARTIALLY_REFUNDED` or `REFUNDED`, the collection follows, and the negative ledger movement
+ * belongs to the operation step that performed it. **Cancelling** withdraws the intention before
+ * anything moved, and writes nothing back because nothing was written.
  *
  * Creating and cancelling carry `REFUNDS_CREATE`; approving carries `REFUNDS_APPROVE`, which is how a
  * refund above an agent's limit becomes somebody else's decision by construction rather than by
@@ -90,6 +90,32 @@ export class RefundController extends CrudController<Refund> {
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async create(@Body() entity: CreateRefundDTO): Promise<IRefund> {
 		return this.refundService.createRefund(entity as never);
+	}
+
+	/**
+	 * Corrects the recorded fields of a refund that has not settled.
+	 *
+	 * The route is declared here rather than inherited: a body is validated from the type the handler
+	 * names, and the base class names the entity's shape as a generic, whose reflected type is
+	 * `Object` — a parameter the validation pipe cannot name a class for is skipped, so an inherited
+	 * route accepts any body at all and writes it. Recording a refund, approving it and withdrawing it
+	 * remain the three verbs above and below, each with the checks the money it moves requires; this is
+	 * the repair surface for a row's own fields, which is why it carries `REFUNDS_CREATE` — the grant
+	 * that already covers creating and cancelling a pending refund — and never `REFUNDS_APPROVE`.
+	 *
+	 * @param id The refund to change.
+	 * @param entity The fields to change.
+	 * @returns The result of the update.
+	 */
+	@ApiOperation({ summary: 'Update a refund' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Refund updated' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Refund not found' })
+	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateRefundDTO) {
+		return this.refundService.update(id, entity as never);
 	}
 
 	/**

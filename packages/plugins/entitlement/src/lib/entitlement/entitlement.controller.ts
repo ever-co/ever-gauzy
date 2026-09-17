@@ -1,10 +1,8 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { QueryDeepPartialEntity } from 'typeorm';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import { FeatureFlag } from '@gauzy/common';
 import {
-	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
@@ -25,7 +23,6 @@ import { EntitlementFeatures } from '../entitlement.features';
 import { EntitlementPermissions } from '../entitlement.permissions';
 import { IEntitlementCheckResult, IEntitlementKeyIssueResult } from '../entitlement.types';
 import { CreateEntitlementDTO, UpdateEntitlementDTO } from './dto';
-import { EntitlementConditionDTO } from './dto/entitlement.dto';
 import {
 	ExtendEntitlementDTO,
 	ReduceEntitlementDTO,
@@ -113,26 +110,28 @@ export class EntitlementController extends CrudController<Entitlement> {
 	/**
 	 * Edits a right: its term, its ceiling, its activation limit, its extras and its conditions.
 	 *
-	 * The body is validated against `UpdateEntitlementDTO` and documented as such through explicit
-	 * decorators, because the inherited handler this route overrides declares the entity's own partial
-	 * type as its parameter and a body may not write the provenance, the number or the state.
+	 * The body is named as `UpdateEntitlementDTO` on the parameter itself rather than through a
+	 * separate pipe target, because a request body is validated from the *type the handler names*: the
+	 * inherited handler this route overrides declares the entity's own partial type as its parameter,
+	 * whose reflected type is `Object`, which Nest's pipe cannot name a class for and therefore skips
+	 * — an inherited update accepts any body at all and writes it. A body may not write the
+	 * provenance, the number or the state: the service ignores those if a caller invents them.
 	 *
 	 * @param id The right.
 	 * @param entity The fields to change.
 	 * @returns The updated right.
 	 */
 	@ApiOperation({ summary: 'Update an entitlement' })
-	@ApiBody({ type: UpdateEntitlementDTO })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The entitlement was updated.' })
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body(new AbstractValidationPipe({ transform: true, whitelist: true }, { body: UpdateEntitlementDTO }))
-		entity: QueryDeepPartialEntity<Entitlement>
+		@Body() entity: UpdateEntitlementDTO
 	): Promise<Entitlement> {
-		const { conditions, ...changes } = entity as UpdateEntitlementDTO & { conditions?: EntitlementConditionDTO[] };
+		const { conditions, ...changes } = entity;
 
 		if (Object.keys(changes).length) {
 			await this.entitlementService.update(id, changes as any);

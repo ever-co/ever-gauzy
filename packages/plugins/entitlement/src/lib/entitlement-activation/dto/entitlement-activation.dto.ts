@@ -10,7 +10,7 @@ import {
 	MaxLength,
 	Min
 } from 'class-validator';
-import { ID } from '@gauzy/contracts';
+import { ID, JsonData } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 import { EntitlementActivationStatus } from '../../entitlement.enums';
 
@@ -93,7 +93,7 @@ export class EntitlementActivationDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	readonly metadata?: Record<string, unknown>;
+	readonly metadata?: JsonData;
 }
 
 /**

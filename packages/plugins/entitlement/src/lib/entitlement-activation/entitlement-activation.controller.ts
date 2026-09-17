@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import { FeatureFlag } from '@gauzy/common';
@@ -17,7 +17,7 @@ import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementActivationService } from './entitlement-activation.service';
 import { EntitlementFeatures } from '../entitlement.features';
 import { EntitlementPermissions } from '../entitlement.permissions';
-import { CreateEntitlementActivationDTO } from './dto';
+import { CreateEntitlementActivationDTO, UpdateEntitlementActivationDTO } from './dto';
 import {
 	ReleaseEntitlementActivationDTO,
 	RevokeEntitlementActivationDTO
@@ -70,6 +70,35 @@ export class EntitlementActivationController extends CrudController<EntitlementA
 			created: result.created,
 			remainingQuantity: result.remainingQuantity
 		};
+	}
+
+	/**
+	 * Corrects the recorded fields of a slot, without giving it back and without taking it away.
+	 *
+	 * The route is declared here rather than inherited: a body is validated from the type the handler
+	 * names, and the base class names the entity's shape as a generic, whose reflected type is
+	 * `Object` — a parameter the validation pipe cannot name a class for is skipped, so an inherited
+	 * route accepts any body at all and writes it. Occupying a slot, releasing it and revoking it stay
+	 * the three routes above and below, each with the checks the right's ceiling and term require; this
+	 * is the repair surface for a row's own fields, and it carries the grant that already covers
+	 * releasing and revoking rather than the granting one.
+	 *
+	 * @param id The activation to change.
+	 * @param entity The fields to change.
+	 * @returns The result of the update.
+	 */
+	@ApiOperation({ summary: 'Update an activation' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The activation was updated.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'The activation was not found.' })
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateEntitlementActivationDTO
+	) {
+		return await this.entitlementActivationService.update(id, entity as any);
 	}
 
 	/**

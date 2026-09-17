@@ -13,7 +13,7 @@ import {
 import { ShippingProfile } from './shipping-profile.entity';
 import { ShippingProfileService } from './shipping-profile.service';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
-import { CreateShippingProfileDTO } from './dto';
+import { CreateShippingProfileDTO, UpdateShippingProfileDTO } from './dto';
 
 /**
  * The shipping-profile resource.
@@ -44,6 +44,30 @@ export class ShippingProfileController extends CrudController<ShippingProfile> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateShippingProfileDTO): Promise<ShippingProfile> {
 		return this.shippingProfileService.create(entity as any);
+	}
+
+	/**
+	 * Changes a profile: its code, its carrier, its zones or its default flag.
+	 *
+	 * The route is declared here rather than inherited: a body is validated from the type the handler
+	 * names, and the base class names the entity's shape as a generic, whose reflected type is
+	 * `Object` — a parameter the validation pipe cannot name a class for is skipped, so an inherited
+	 * route accepts any body at all and writes it. The service keeps the two invariants of an edit —
+	 * a code that is still free and one default profile per organization.
+	 *
+	 * @param id The profile to change.
+	 * @param entity The fields to change.
+	 * @returns The result of the update.
+	 */
+	@ApiOperation({ summary: 'Update a shipping profile' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Shipping profile updated' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Shipping profile not found' })
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateShippingProfileDTO) {
+		return this.shippingProfileService.update(id, entity as any);
 	}
 
 	/**

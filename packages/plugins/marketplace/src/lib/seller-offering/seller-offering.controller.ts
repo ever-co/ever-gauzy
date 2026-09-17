@@ -12,6 +12,7 @@ import {
 } from '@gauzy/core';
 import { SellerOffering } from './seller-offering.entity';
 import { SellerOfferingService } from './seller-offering.service';
+import { CreateSellerOfferingDTO, UpdateSellerOfferingDTO } from './dto';
 import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 import { ISellerScope } from '../seller-scope/seller-scope';
 
@@ -47,26 +48,34 @@ export class SellerOfferingController extends CrudController<SellerOffering> {
 		return this.sellerOfferingService.getOffering(id, this.scope(request));
 	}
 
-	/** Offers a variant. */
+	/**
+	 * Offers a variant.
+	 *
+	 * Declared rather than inherited: a request body is validated from the type the handler names, and the
+	 * base class names the entity's shape, whose reflected type is `Object` — a parameter the validation
+	 * pipe skips, so an inherited `create` would write any body at all.
+	 */
 	@ApiOperation({ summary: 'Offer a variant' })
+	@ApiResponse({ status: 201, description: 'Offering created successfully', type: SellerOffering })
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
 	@Post('/')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(@Req() request: any, @Body() entity: any): Promise<SellerOffering> {
-		return this.sellerOfferingService.createOffering(entity, this.scope(request));
+	async create(@Req() request: any, @Body() entity: CreateSellerOfferingDTO): Promise<SellerOffering> {
+		return this.sellerOfferingService.createOffering(entity as Partial<SellerOffering>, this.scope(request));
 	}
 
 	/** Updates an offering. */
 	@ApiOperation({ summary: 'Update an offering' })
+	@ApiResponse({ status: 200, description: 'Offering updated successfully', type: SellerOffering })
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
 	@Put('/:id')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: any,
+		@Body() entity: UpdateSellerOfferingDTO,
 		@Req() request: any
 	): Promise<SellerOffering> {
-		return this.sellerOfferingService.updateOffering(id, entity, this.scope(request));
+		return this.sellerOfferingService.updateOffering(id, entity as Partial<SellerOffering>, this.scope(request));
 	}
 
 	/** Submits an offering for moderation. */

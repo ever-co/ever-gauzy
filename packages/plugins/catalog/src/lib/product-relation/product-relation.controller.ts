@@ -1,8 +1,17 @@
-import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController, PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import { ID } from '@gauzy/contracts';
+import {
+	CrudController,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	UUIDValidationPipe,
+	UseValidationPipe
+} from '@gauzy/core';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../catalog.permissions';
 import { ProductRelationType } from '../catalog.types';
+import { CreateProductRelationDTO, UpdateProductRelationDTO } from './dto';
 import { ProductRelation } from './product-relation.entity';
 import { ProductRelationService } from './product-relation.service';
 
@@ -13,6 +22,37 @@ import { ProductRelationService } from './product-relation.service';
 export class ProductRelationController extends CrudController<ProductRelation> {
 	constructor(private readonly productRelationService: ProductRelationService) {
 		super(productRelationService);
+	}
+
+	/**
+	 * Creates one relation a product declares to another.
+	 *
+	 * Declared rather than inherited: a request body is validated from the type the handler names, and the
+	 * base class names the entity's shape, whose reflected type is `Object` — a parameter the validation
+	 * pipe skips. The DTO is what makes the body validated and the route documented.
+	 */
+	@ApiOperation({ summary: 'Create a product relation' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'The relation was created', type: ProductRelation })
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
+	@Post()
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateProductRelationDTO): Promise<ProductRelation> {
+		return this.productRelationService.create(entity as any);
+	}
+
+	/**
+	 * Updates one relation, which is how its type, rank or window is corrected.
+	 */
+	@ApiOperation({ summary: 'Update a product relation' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The relation was updated', type: ProductRelation })
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
+	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateProductRelationDTO
+	): Promise<ProductRelation> {
+		return this.productRelationService.update(id, entity as any);
 	}
 
 	/**

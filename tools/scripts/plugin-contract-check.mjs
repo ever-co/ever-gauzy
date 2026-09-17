@@ -849,9 +849,36 @@ for (const plugin of Object.keys(PLUGINS)) {
 			);
 		}
 
-		// A resource a client can only write is not a resource; the read routes have to exist. A
-		// controller that leaves `findAll` and `findById` to the CRUD base inherits the routes, so
-		// the source only has to declare the ones it overrides — which is checked just above.
+		// A write route must be declared by the controller that serves it, with a DTO the validation
+		// pipe can name. A request body is validated from the *type the handler names*: the CRUD base
+		// takes the entity's shape as a generic, whose reflected type is `Object`, and Nest's pipe
+		// skips a parameter it cannot name a class for. An inherited `create` or `update` therefore
+		// accepts any body at all — an unknown enumeration member, a missing required field, a property
+		// the resource does not have — and writes it. The route is also undocumented, because the same
+		// type is what the API description publishes.
+		if (/extends\s+(CrudController|TenantAwareCrudController)/.test(source)) {
+			for (const method of ['create', 'update']) {
+				const declared = new RegExp(`^\\t(?:public\\s+|async\\s+)*${method}\\s*\\(`, 'm').exec(source);
+				check(
+					`${at}: ${className} declares ${method} with a DTO`,
+					!!declared,
+					`an inherited ${method} is not validated — the base parameter reflects as Object, so the pipe is skipped and any body is written`
+				);
+				if (!declared) continue;
+				// The declared method must take the body as a class, not as the entity's shape: the
+				// shape is what reflects as `Object` and what makes the pipe skip it again.
+				const signature = source.slice(declared.index, declared.index + 400);
+				const body = /@Body\([^)]*\)\s*[A-Za-z_$][\w$]*\s*:\s*([A-Za-z_$][\w$]*)/.exec(signature);
+				check(
+					`${at}: ${className}.${method}() types its body as a named class`,
+					!!body && !['Object', 'DeepPartial', 'any', 'unknown'].includes(body[1]),
+					body
+						? `the body is typed \`${body[1]}\`, which the validation pipe cannot use unless it is a class`
+						: 'no `@Body()` parameter with a named type'
+				);
+			}
+		}
+
 		if (/extends\s+(CrudController|TenantAwareCrudController)/.test(source)) {
 			// `@Get()` and `@Get('/')` are the same route: Nest joins the controller path and the
 			// method path, and a leading slash on the method path does not change the result.

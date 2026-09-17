@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
@@ -12,6 +12,7 @@ import {
 } from '@gauzy/core';
 import { SellerSettlement } from './seller-settlement.entity';
 import { SellerSettlementService } from './seller-settlement.service';
+import { CreateSellerSettlementDTO, UpdateSellerSettlementDTO } from './dto';
 import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 import { ISellerScope } from '../seller-scope/seller-scope';
 
@@ -50,13 +51,39 @@ export class SellerSettlementController extends CrudController<SellerSettlement>
 		return this.sellerSettlementService.getSettlement(id, this.scope(request));
 	}
 
-	/** Records a settlement reported by a provider. */
+	/**
+	 * Records a settlement reported by a provider.
+	 *
+	 * This is the resource's create route, and it is declared rather than inherited: the CRUD base takes
+	 * the entity's shape, whose reflected type is `Object`, so the validation pipe is skipped and an
+	 * inherited `create` would write any body at all. The service call is the recorder's, which is what
+	 * this route has always done.
+	 */
 	@ApiOperation({ summary: 'Record a settlement reported by a provider' })
+	@ApiResponse({ status: 201, description: 'Settlement recorded successfully', type: SellerSettlement })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
 	@Post('/')
-	@UseValidationPipe({ transform: true })
-	async record(@Body() entity: any): Promise<SellerSettlement> {
-		return this.sellerSettlementService.record(entity);
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateSellerSettlementDTO): Promise<SellerSettlement> {
+		return this.sellerSettlementService.record(entity as Partial<SellerSettlement>);
+	}
+
+	/**
+	 * Updates the fields a settlement may still move: its status and what reconciliation found.
+	 *
+	 * The return is the platform's own: the service's `update` answers either the row or the result of a
+	 * partial update, which is why the CRUD base declares `Promise<any>` on this route too.
+	 */
+	@ApiOperation({ summary: 'Update a settlement' })
+	@ApiResponse({ status: 200, description: 'Settlement updated successfully', type: SellerSettlement })
+	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
+	@Put('/:id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateSellerSettlementDTO
+	): Promise<any> {
+		return this.sellerSettlementService.update(id, entity as any);
 	}
 
 	/** Reconciles a settlement against the platform's lines for its period. */

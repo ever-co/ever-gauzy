@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination, ISellerPayoutRunResult, PermissionsEnum } from '@gauzy/contracts';
 import {
@@ -12,6 +12,7 @@ import {
 } from '@gauzy/core';
 import { SellerPayout } from './seller-payout.entity';
 import { SellerPayoutService } from './seller-payout.service';
+import { CreateSellerPayoutDTO, UpdateSellerPayoutDTO } from './dto';
 import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 import { ISellerScope } from '../seller-scope/seller-scope';
 
@@ -62,27 +63,20 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	/**
 	 * Creates a payout from settleable transactions.
 	 *
+	 * Declared rather than inherited: a request body is validated from the type the handler names, and the
+	 * base class names the entity's shape, whose reflected type is `Object` — a parameter the validation
+	 * pipe skips, so an inherited `create` would write any body at all.
+	 *
 	 * @param request The request.
 	 * @param body What to pay.
 	 * @returns The created payout.
 	 */
 	@ApiOperation({ summary: 'Create a payout from settleable transactions' })
+	@ApiResponse({ status: 201, description: 'Payout created successfully', type: SellerPayout })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
 	@Post('/')
-	@UseValidationPipe({ transform: true })
-	async create(
-		@Req() request: any,
-		@Body()
-		body: {
-			sellerId: ID;
-			currency: string;
-			transactionIds?: ID[];
-			periodStart?: string;
-			periodEnd?: string;
-			note?: string;
-			isFinal?: boolean;
-		}
-	): Promise<SellerPayout> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Req() request: any, @Body() body: CreateSellerPayoutDTO): Promise<SellerPayout> {
 		return this.sellerPayoutService.createPayout(
 			{
 				sellerId: body.sellerId,
@@ -95,6 +89,31 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 			},
 			this.scope(request)
 		);
+	}
+
+	/**
+	 * Updates what a payout states about itself: its note and the provider references.
+	 *
+	 * The amounts are not writable — they are the sum of the transactions the payout covers — and the
+	 * lifecycle moves through the approve, pay, cancel and retry routes rather than through a body.
+	 *
+	 * The return is the platform's own: the service's `update` answers either the row or the result of a
+	 * partial update, which is why the CRUD base declares `Promise<any>` on this route too.
+	 *
+	 * @param id The payout id.
+	 * @param entity The fields to change.
+	 * @returns The updated payout.
+	 */
+	@ApiOperation({ summary: 'Update a payout' })
+	@ApiResponse({ status: 200, description: 'Payout updated successfully', type: SellerPayout })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
+	@Put('/:id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateSellerPayoutDTO
+	): Promise<any> {
+		return this.sellerPayoutService.update(id, entity as any);
 	}
 
 	/**

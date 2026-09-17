@@ -1,10 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ID } from '@gauzy/contracts';
 import { CrudController, Permissions, PermissionGuard, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { CommerceCheckoutSession } from './commerce-checkout-session.entity';
 import { CommerceCheckoutSessionService } from './commerce-checkout-session.service';
 import { CART_PERMISSIONS } from '../cart.permissions';
-import { CreateCommerceCheckoutSessionDTO } from './dto';
+import { CreateCommerceCheckoutSessionDTO, UpdateCommerceCheckoutSessionDTO } from './dto';
 
 /**
  * The checkout-session resource.
@@ -43,6 +44,40 @@ export class CommerceCheckoutSessionController extends CrudController<CommerceCh
 		}
 
 		return this.commerceCheckoutSessionService.create(entity as any);
+	}
+
+	/**
+	 * Updates a checkout session.
+	 *
+	 * The write routes are declared here rather than inherited, because a request body is validated
+	 * from the *type* the handler names: the base class takes the entity's shape as a generic, whose
+	 * reflected type is `Object`, and Nest's validation pipe skips a parameter it cannot name a class
+	 * for. An inherited `update` therefore accepts any body at all — an unknown enumeration member, a
+	 * missing required field, a property the resource does not have. Declaring the DTO is what makes
+	 * the request validated, and it is also what gives the route a documented body.
+	 *
+	 * The return type is the base class's own: the inherited service answers `update` with the ORM's
+	 * update result as readily as with the row, so narrowing it to the entity would be untrue.
+	 *
+	 * @param id The session.
+	 * @param entity The fields to change.
+	 * @returns The updated session.
+	 */
+	@ApiOperation({ summary: 'Update a checkout session' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'The checkout session was updated',
+		type: CommerceCheckoutSession
+	})
+	@Permissions(CART_PERMISSIONS.CARTS_CHECKOUT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateCommerceCheckoutSessionDTO
+	): Promise<any> {
+		return this.commerceCheckoutSessionService.update(id, entity as any);
 	}
 
 	/**

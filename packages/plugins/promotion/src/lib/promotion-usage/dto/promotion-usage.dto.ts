@@ -65,7 +65,9 @@ export class PromotionUsageDTO extends TenantOrganizationBaseDTO {
 	 */
 	@ApiProperty({ type: () => String, description: 'Exact decimal: send the decimal digits, never a rounded float.' })
 	@IsDecimalAmount()
-	readonly amount: DecimalString | number;
+	// An exact decimal, as the column and the validator both already say. The wider type offered a
+	// caller a float the money rules forbid, and it made this DTO wider than the entity it describes.
+	readonly amount: DecimalString;
 
 	/**
 	 * Currency of the discount.

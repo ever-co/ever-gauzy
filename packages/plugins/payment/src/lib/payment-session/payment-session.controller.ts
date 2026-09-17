@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
@@ -82,6 +82,32 @@ export class PaymentSessionController extends CrudController<PaymentSession> {
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async create(@Body() entity: CreatePaymentSessionDTO): Promise<IPaymentSession> {
 		return this.paymentSessionService.openSession(entity as never);
+	}
+
+	/**
+	 * Corrects the recorded fields of an attempt, without running any of its four verbs.
+	 *
+	 * The route is declared here rather than inherited: a body is validated from the type the handler
+	 * names, and the base class names the entity's shape as a generic, whose reflected type is
+	 * `Object` — a parameter the validation pipe cannot name a class for is skipped, so an inherited
+	 * route accepts any body at all and writes it. Opening, authorising, refreshing and voiding remain
+	 * the routes that run the operations the domain owns, each with the checks it performs; this one
+	 * is the repair surface for a row's own fields, which is why it carries the authorising grant
+	 * rather than the reading one.
+	 *
+	 * @param id The session to change.
+	 * @param entity The fields to change.
+	 * @returns The result of the update.
+	 */
+	@ApiOperation({ summary: 'Update a payment session' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Session updated' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Session not found' })
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdatePaymentSessionDTO) {
+		return this.paymentSessionService.update(id, entity as never);
 	}
 
 	/**
