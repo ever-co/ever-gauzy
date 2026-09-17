@@ -1,6 +1,21 @@
 import type { IAiProviderCredentials } from '@gauzy/plugin-ai-chat';
 import { groqProviderDefinition } from './ai-provider-groq.provider';
 
+// The SSRF egress guard resolves the provider host before the mocked `fetch` answers. Answer that
+// lookup with a fixed public address, so no case waits on — or depends on — real DNS.
+jest.mock('dns', () => ({
+	...jest.requireActual('dns'),
+	lookup: (_hostname: string, _options: unknown, callback: (error: null, addresses: unknown) => void) =>
+		callback(null, [{ address: '93.184.215.14', family: 4 }])
+}));
+
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('../../../ai-chat/src/lib/ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
+
 /**
  * Groq's speech path is the shared OpenAI-compatible helper pointed at Groq's host: what matters is
  * the URL, the bearer header, the model field and that the definition advertises its speech

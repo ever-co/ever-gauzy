@@ -4,9 +4,11 @@ import {
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	IAiTranscribeOptions,
+	createAiProviderSdkFetch,
 	createCatalogueCache,
 	fetchCatalogueJson,
 	importEsm,
+	isPrivateAiProviderEndpointAllowed,
 	keyedCatalogue,
 	mergeCatalogue,
 	prettifyModelId,
@@ -93,7 +95,8 @@ const transcribeAudio = async (
 		model: options?.model || DEFAULT_SPEECH_MODEL,
 		language: options?.language,
 		providerLabel: 'Groq',
-		providerId: PROVIDER_ID
+		providerId: PROVIDER_ID,
+		allowPrivateHost: isPrivateAiProviderEndpointAllowed(credentials)
 	});
 
 /**
@@ -131,6 +134,8 @@ export const groqProviderDefinition: IAiChatProviderDefinition = {
 		const provider = createOpenAICompatible({
 			name: PROVIDER_ID,
 			baseURL: credentials.baseUrl || DEFAULT_BASE_URL,
+			// A tenant base URL gets the SSRF egress guard on chat traffic too (GHSA-w3mx-m5cr-3gxp).
+			fetch: createAiProviderSdkFetch(credentials),
 			apiKey: credentials.apiKey
 		});
 		return provider.chatModel(modelId);

@@ -1,14 +1,35 @@
 import type { IAiProviderCredentials } from '@gauzy/plugin-ai-chat';
 import { whisperCppProviderDefinition } from './ai-provider-whisper-cpp.provider';
 
+// The SSRF egress guard resolves the provider host before the mocked `fetch` answers. Answer that
+// lookup with a fixed public address, so no case waits on — or depends on — real DNS.
+jest.mock('dns', () => ({
+	...jest.requireActual('dns'),
+	lookup: (_hostname: string, _options: unknown, callback: (error: null, addresses: unknown) => void) =>
+		callback(null, [{ address: '93.184.215.14', family: 4 }])
+}));
+
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('../../../ai-chat/src/lib/ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
+
 /**
  * whisper.cpp is the LOCAL, key-less shape: no Authorization header when there is no key, the
  * `/inference` path (not OpenAI's), `response_format=json`, and the conventional default address.
  */
 describe('whisperCppProviderDefinition', () => {
 	const realFetch = global.fetch;
+	const realAllowPrivate = process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS;
 	afterEach(() => {
 		global.fetch = realFetch;
+		if (realAllowPrivate === undefined) {
+			delete process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS;
+		} else {
+			process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS = realAllowPrivate;
+		}
 		jest.restoreAllMocks();
 	});
 
@@ -52,6 +73,9 @@ describe('whisperCppProviderDefinition', () => {
 	});
 
 	it('falls back to the conventional local address and forwards a key as bearer when one is set', async () => {
+		// The conventional address is loopback. It is the provider's OWN default, not tenant input, so
+		// the SSRF egress guard lets it through without GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS.
+		delete process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS;
 		const fetchMock = capture({ text: 'ok' });
 		await whisperCppProviderDefinition.transcribe!(Buffer.from('audio'), 'audio/mp4', {
 			apiKey: 'proxy-token',
@@ -60,6 +84,64 @@ describe('whisperCppProviderDefinition', () => {
 		const [url, options] = fetchMock.mock.calls[0];
 		expect(String(url)).toBe('http://localhost:8080/inference');
 		expect((options.headers as Record<string, string>).authorization).toBe('Bearer proxy-token');
+	});
+
+	describe('private endpoints — who chose the address decides (GHSA-w3mx-m5cr-3gxp)', () => {
+		beforeEach(() => {
+			delete process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS;
+		});
+
+		it('refuses a TENANT-entered loopback base URL without making a request', async () => {
+			const fetchMock = capture({ text: 'ok' });
+			const tenant: IAiProviderCredentials = { apiKey: '', baseUrl: 'http://127.0.0.1:8080', source: 'tenant' };
+
+			const error = (await whisperCppProviderDefinition
+				.transcribe!(Buffer.from('audio'), 'audio/webm', tenant)
+				.catch((e: unknown) => e)) as Error & { kind?: string };
+
+			expect(error.kind).toBe('network');
+			expect(error.message).toMatch(/not allowed/);
+			expect(fetchMock).not.toHaveBeenCalled();
+		});
+
+		it('allows the same tenant-entered address once the deployment opts in', async () => {
+			process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS = 'true';
+			const fetchMock = capture({ text: 'ok' });
+
+			await expect(
+				whisperCppProviderDefinition.transcribe!(Buffer.from('audio'), 'audio/webm', {
+					apiKey: '',
+					baseUrl: 'http://127.0.0.1:8080',
+					source: 'tenant'
+				})
+			).resolves.toBe('ok');
+			expect(String(fetchMock.mock.calls[0][0])).toBe('http://127.0.0.1:8080/inference');
+		});
+
+		it("allows an operator's own private WHISPER_CPP_BASE_URL (environment source) without the opt-in", async () => {
+			const fetchMock = capture({ text: 'ok' });
+
+			await expect(
+				whisperCppProviderDefinition.transcribe!(Buffer.from('audio'), 'audio/webm', {
+					apiKey: '',
+					baseUrl: 'http://10.0.0.7:8080',
+					source: 'environment'
+				})
+			).resolves.toBe('ok');
+			expect(String(fetchMock.mock.calls[0][0])).toBe('http://10.0.0.7:8080/inference');
+		});
+
+		it('allows the built-in default for a tenant row that carries no base URL', async () => {
+			const fetchMock = capture({ text: 'ok' });
+
+			await expect(
+				whisperCppProviderDefinition.transcribe!(Buffer.from('audio'), 'audio/webm', {
+					apiKey: '',
+					source: 'tenant'
+				})
+			).resolves.toBe('ok');
+			expect(String(fetchMock.mock.calls[0][0])).toBe('http://localhost:8080/inference');
+		});
 	});
 
 	it('reports a server that is not running as a network failure naming the provider', async () => {

@@ -10,6 +10,8 @@
  */
 
 import { SpeechProviderError, SpeechProviderErrorKind } from './speech-provider-error';
+import { isSsrfBlockedError, ssrfSafeFetch } from '../ssrf';
+import type { HostnameResolver } from '../ssrf';
 
 /**
  * Upstream budget for a transcription.
@@ -134,8 +136,81 @@ export const trimTrailingSlash = (url: string): string => {
 	return url.slice(0, end);
 };
 
+/**
+ * Upper bound on a transcript relayed back to the caller.
+ *
+ * A 2xx body's `text` was returned verbatim with no cap, so a tenant-configured endpoint answering
+ * `{"text": "<megabytes>"}` was an unbounded read reflected straight into the chat panel. Generous
+ * next to any real dictation (roughly 10k words of speech) and small enough not to matter.
+ */
+export const MAX_TRANSCRIPT_CHARS = 64 * 1024;
+
+/**
+ * Upper bound on a SUCCESSFUL transcription response read off the wire.
+ *
+ * {@link MAX_TRANSCRIPT_CHARS} caps what is relayed, but `response.json()` would already have buffered
+ * whatever a tenant-configured endpoint chose to send before that slice ran. This bound is applied
+ * while reading. Sized for the verbose shapes (Deepgram's per-word timings for a long dictation run to
+ * a megabyte or two), not for the transcript alone.
+ */
+export const MAX_TRANSCRIPTION_RESPONSE_BYTES = 4 * 1024 * 1024;
+
+/** Thrown by {@link readJsonBounded} when a body exceeds its byte budget. */
+class ResponseTooLargeError extends Error {}
+
+/**
+ * Read and parse a JSON response body, refusing to buffer more than `maxBytes` of it.
+ *
+ * A declared `content-length` over budget is refused before a byte is read; since chunked and HTTP/2
+ * responses declare none, the bytes actually received are counted too and the stream is cancelled the
+ * moment they pass the budget.
+ *
+ * @param response - A 2xx response whose body is JSON.
+ * @param maxBytes - The most bytes to buffer.
+ * @returns The parsed body.
+ * @throws ResponseTooLargeError when the body is over budget; a `SyntaxError` when it is not JSON.
+ */
+const readJsonBounded = async (response: globalThis.Response, maxBytes: number): Promise<unknown> => {
+	const declared = Number(response.headers.get('content-length') ?? 0);
+	if (declared > maxBytes) {
+		await response.body?.cancel().catch(() => undefined);
+		throw new ResponseTooLargeError();
+	}
+	const reader = response.body?.getReader();
+	if (!reader) {
+		throw new SyntaxError('the response has no body');
+	}
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+	for (;;) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		total += value.byteLength;
+		if (total > maxBytes) {
+			await reader.cancel().catch(() => undefined);
+			throw new ResponseTooLargeError();
+		}
+		chunks.push(value);
+	}
+	const merged = new Uint8Array(total);
+	let offset = 0;
+	for (const chunk of chunks) {
+		merged.set(chunk, offset);
+		offset += chunk.byteLength;
+	}
+	return JSON.parse(new TextDecoder().decode(merged));
+};
+
 /** Base arguments shared by every speech request helper. */
 export interface ISpeechRequestBase {
+	/**
+	 * Permit a loopback/private/link-local endpoint for THIS request. Defaults to the deployment's
+	 * `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS` flag. Provider plugins pass
+	 * `isPrivateAiProviderEndpointAllowed(credentials)`, never a value derived from tenant input.
+	 */
+	allowPrivateHost?: boolean;
+	/** DNS resolver for the SSRF egress pre-flight; `dns.lookup` when unset. A seam for tests. */
+	resolver?: HostnameResolver;
 	/** Human-readable provider name used in error messages ("OpenAI transcription failed: …"). */
 	providerLabel: string;
 	/** Registry id, attached to the thrown {@link SpeechProviderError}. */
@@ -170,13 +245,33 @@ export async function speechRequest(args: ISpeechRequestArgs): Promise<string> {
 
 	let response: globalThis.Response;
 	try {
-		response = await fetch(url, { ...args.init, signal: args.init.signal ?? AbortSignal.timeout(timeoutMs) });
+		// Through the SSRF egress guard, because `url` is built from a TENANT-SUPPLIED base URL for
+		// every self-hosted and proxy provider: loopback/private/link-local targets are refused, the
+		// host is re-checked after DNS resolution and redirects are not followed
+		// (GHSA-w3mx-m5cr-3gxp).
+		response = await ssrfSafeFetch(
+			url,
+			{ ...args.init, signal: args.init.signal ?? AbortSignal.timeout(timeoutMs) },
+			{ allowPrivateHost: args.allowPrivateHost, resolver: args.resolver }
+		);
 	} catch (error) {
+		// A refused target is a configuration problem, not a flaky network, and its message must carry
+		// nothing about what was (or was not) reachable — that oracle is half of what a blind SSRF is
+		// worth. Relayed verbatim from the guard, which is already written to say nothing specific.
+		if (isSsrfBlockedError(error)) {
+			throw new SpeechProviderError(
+				`${providerLabel} transcription failed: ${error instanceof Error ? error.message : 'the endpoint is not allowed'}`,
+				'network',
+				providerId
+			);
+		}
 		// No HTTP answer at all: DNS, connection refused (a local server that is not running is the
 		// common case), TLS, or the timeout above. The message names the failure — a self-hoster needs
 		// to know their container is down — but is redacted and bounded like everything else.
 		const detail = redactSecret(error instanceof Error ? error.message : String(error), apiKey);
-		const timedOut = error instanceof Error && error.name === 'TimeoutError';
+		// Duck-typed: `AbortSignal.timeout` rejects with a `DOMException`, which is not an `Error` of
+		// every realm (it is not under jest's VM context, for one).
+		const timedOut = (error as { name?: unknown } | null)?.name === 'TimeoutError';
 		throw new SpeechProviderError(
 			`${providerLabel} transcription failed: ${
 				timedOut ? `no answer within ${Math.round(timeoutMs / 1000)}s` : 'the server could not be reached'
@@ -207,8 +302,16 @@ export async function speechRequest(args: ISpeechRequestArgs): Promise<string> {
 
 	let body: unknown;
 	try {
-		body = await response.json();
+		body = await readJsonBounded(response, MAX_TRANSCRIPTION_RESPONSE_BYTES);
 	} catch (error) {
+		if (error instanceof ResponseTooLargeError) {
+			throw new SpeechProviderError(
+				`${providerLabel} transcription failed: the server returned an oversized response`,
+				'response',
+				providerId,
+				response.status
+			);
+		}
 		throw new SpeechProviderError(
 			`${providerLabel} transcription failed: the server returned an unreadable response`,
 			'response',
@@ -221,7 +324,7 @@ export async function speechRequest(args: ISpeechRequestArgs): Promise<string> {
 		if (typeof text !== 'string') {
 			throw new Error('the response carries no transcript text');
 		}
-		return text.trim();
+		return text.trim().slice(0, MAX_TRANSCRIPT_CHARS);
 	} catch (error) {
 		throw new SpeechProviderError(
 			`${providerLabel} transcription failed: ${redactSecret(
@@ -273,6 +376,8 @@ export async function transcribeMultipart(args: ITranscribeMultipartArgs): Promi
 		providerId: args.providerId,
 		apiKey: args.apiKey,
 		timeoutMs: args.timeoutMs,
+		allowPrivateHost: args.allowPrivateHost,
+		resolver: args.resolver,
 		parse: args.parse
 	});
 }
@@ -319,6 +424,8 @@ export async function transcribeViaOpenAiCompatible(args: ITranscribeViaOpenAiCo
 		providerLabel: args.providerLabel,
 		providerId: args.providerId,
 		apiKey: args.apiKey,
-		timeoutMs: args.timeoutMs
+		timeoutMs: args.timeoutMs,
+		allowPrivateHost: args.allowPrivateHost,
+		resolver: args.resolver
 	});
 }
