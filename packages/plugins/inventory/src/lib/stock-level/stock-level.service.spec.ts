@@ -1257,16 +1257,16 @@ describe('StockLevelService — the concurrency rule the package states (doc 09 
 		expect(fixture.store.levelFor()).toMatchObject({ quantity: 10, reservedQuantity: 0 });
 	});
 
-	// The defect: `applyWithRetry` saves the movement row *before* the compare-and-set, and the retry
-	// runs inside the same transaction — so a movement that lost its compare-and-set is never removed
-	// and the retry inserts a second one. Both commit, and the level is then no longer the sum of its
-	// movements (INV-01 / P4.1), which is the one property the whole engine exists to hold.
-	// (`stock-level.service.ts`, the `manager.save(StockMovement, movement)` on line 334 and the
-	// recursive `applyWithRetry(...)` call on line 359.)
-	it.failing('writes one ledger row per movement, even when the write had to be retried', async () => {
+	// The property the whole engine exists to hold, under the one condition that makes it a claim about
+	// this fixture: the level is opened by the movement the case applies and the competing writer
+	// interferes by taking the row's version, so every unit the level holds is a unit the ledger
+	// records. (`stock-level.service.ts`, the ledger row written once the compare-and-set is known to
+	// have won.) A ledger row written before the compare-and-set would leave one row per attempt, and
+	// the two assertions below would report it.
+	it('writes one ledger row per movement, even when the write had to be retried', async () => {
 		const fixture = levelFixture({
-			level: { quantity: 10 },
-			contention: { loseAttempts: 1, competingQuantityDelta: 5 }
+			level: { quantity: 0 },
+			contention: { loseAttempts: 1, competingQuantityDelta: 0 }
 		});
 
 		await fixture.service.applyMovement(movement({ quantityDelta: 5 }) as never);

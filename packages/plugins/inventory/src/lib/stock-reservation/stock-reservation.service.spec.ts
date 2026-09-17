@@ -753,19 +753,24 @@ describe('StockReservationService — holding stock (doc 09 §5, INV-03)', () =>
 		expect(fixture.store.ledger()).toEqual([]);
 	});
 
-	// The defect: `reserve` saves the hold and only then asks the ledger engine to move the level, and
-	// the two writes are **not** in one transaction (`stock-reservation.service.ts`, the
-	// `typeOrmStockReservationRepository.save(reservation)` on line 112 and the `applyMovement` call on
-	// line 117). When the engine refuses — here because the engine evaluates the level's own
-	// `allowBackorder` and the caller's override cannot reach it — the hold stays committed while no
-	// ledger row and no level change exist, which breaks INV-03 (`reservedQuantity = Σ ACTIVE holds`)
-	// and leaves a phantom hold for the expiry sweep to trip over.
-	it.failing('leaves no hold behind when the ledger refuses the write', async () => {
-		const fixture = reservationFixture({ quantity: 10, allowBackorder: false });
+	// The hold row and the movement that explains it are one write: `reserve` creates the reservation
+	// inside the transaction that moves the level (`stock-reservation.service.ts`, the
+	// `manager.transaction(...)` that wraps the `manager.save(StockReservation, reservation)` and the
+	// `applyMovement` call), so a ledger refusal takes the hold back with it. Here the level is
+	// contended: a competing writer won the row between the availability read and the write, four
+	// compare-and-set attempts were overtaken, and the engine refuses with `STOCK_CONFLICT`. The hold
+	// must not survive that — a hold no movement accounts for breaks INV-03
+	// (`reservedQuantity = Σ ACTIVE holds`) and leaves a phantom for the expiry sweep to trip over.
+	it('leaves no hold behind when the ledger refuses the write', async () => {
+		const fixture = reservationFixture({
+			quantity: 10,
+			allowBackorder: false,
+			contention: { loseAttempts: 4, competingQuantityDelta: 0 }
+		});
 
-		await expect(
-			fixture.service.reserve(hold({ quantity: 12, allowBackorder: true }) as never)
-		).rejects.toMatchObject({ response: { code: 'STOCK_INVARIANT_VIOLATION' } });
+		await expect(fixture.service.reserve(hold({ quantity: 2 }) as never)).rejects.toMatchObject({
+			response: { code: 'STOCK_CONFLICT' }
+		});
 
 		expect(fixture.store.reservations()).toEqual([]);
 		expect(fixture.store.level()).toMatchObject({ reservedQuantity: 0 });
@@ -773,9 +778,9 @@ describe('StockReservationService — holding stock (doc 09 §5, INV-03)', () =>
 
 	// The same seam, seen from the caller's side: doc 09 §5.2 states `allowBackorder` as an override of
 	// the level policy *for this call*, and a hold beyond the on-hand quantity is exactly the call it
-	// exists for. The service's own availability guard honours the override; the ledger engine it then
-	// calls reads the level row instead, so the override can never take effect where it matters.
-	it.failing('honours the caller’s backorder override for a hold past the on-hand quantity', async () => {
+	// exists for. Both guards read it — the service's availability check and the ledger engine's hold
+	// rule — so the override reaches the place where the hold is actually taken.
+	it('honours the caller’s backorder override for a hold past the on-hand quantity', async () => {
 		const fixture = reservationFixture({ quantity: 10, allowBackorder: false });
 
 		const accepted = await fixture.service.reserve(hold({ quantity: 12, allowBackorder: true }) as never);

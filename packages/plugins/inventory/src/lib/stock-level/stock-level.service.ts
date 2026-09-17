@@ -36,6 +36,17 @@ const RESERVATION_ONLY_TYPES: StockMovementType[] = [
 ];
 
 /**
+ * The movement input as the engine reads it.
+ *
+ * The movement contract carries the change, its cause and the document that cites it. A caller may
+ * state one thing more: the backorder policy it wants applied to *this* call, which is how the
+ * reservation contract’s per-call override reaches the rule that evaluates a hold. It is read from
+ * the input rather than declared on it because it qualifies the caller’s intent for one movement and
+ * not the movement itself, and it is honoured in place of the level’s column only when stated.
+ */
+type TStockMovementInput = IStockMovementInput & { allowBackorder?: boolean };
+
+/**
  * The single write path into stock.
  *
  * The atomicity this engine owes the domain — one ledger row, one level update and one aggregate
@@ -58,27 +69,28 @@ export class StockLevelService {
 	 * @returns the persisted movement and the level state it produced.
 	 */
 	public async applyMovement(input: IStockMovementInput): Promise<IAppliedMovement> {
-		const quantityDelta = Number(input.quantityDelta ?? 0);
-		const reservedDelta = Number(input.reservedDelta ?? 0);
+		const movement = input as TStockMovementInput;
+		const quantityDelta = Number(movement.quantityDelta ?? 0);
+		const reservedDelta = Number(movement.reservedDelta ?? 0);
 
 		if (!Number.isFinite(quantityDelta) || !Number.isFinite(reservedDelta)) {
 			throw inventoryError(InventoryErrorCode.INVARIANT_VIOLATION, 'A movement delta must be a finite number.', {
 				badRequest: true
 			});
 		}
-		if (!input.referenceType || !input.referenceId) {
+		if (!movement.referenceType || !movement.referenceId) {
 			throw invariantViolation(
 				'INV-12',
 				'Every quantity change must name the document that caused it.',
-				{ referenceType: input.referenceType, referenceId: input.referenceId }
+				{ referenceType: movement.referenceType, referenceId: movement.referenceId }
 			);
 		}
 
 		return await this.dataSource.transaction(async (transactional: EntityManager) => {
-			const level = await this.resolveLevel(transactional, input);
-			await this.lockLevelRow(transactional, level.id, input.lockTimeoutMs);
+			const level = await this.resolveLevel(transactional, movement);
+			await this.lockLevelRow(transactional, level.id, movement.lockTimeoutMs);
 
-			return await this.applyWithRetry(transactional, level.id, input, quantityDelta, reservedDelta);
+			return await this.applyWithRetry(transactional, level.id, movement, quantityDelta, reservedDelta);
 		});
 	}
 
@@ -172,10 +184,21 @@ export class StockLevelService {
 	/**
 	 * Resolves the level row of a `(location, variant)` pair, creating it with the documented defaults
 	 * when the variant has never been stocked at that location.
+	 *
+	 * A level row is addressed by `(location, variant)` — the pair the movement always carries — and
+	 * that pair is resolved first. The row standing there is the ordinary case, and it is the level's
+	 * own product that the movement is recorded against, so a caller that cares only about the variant
+	 * does not have to state a product at all. A product the caller *does* state is a claim about which
+	 * product's level the movement belongs to; a claim the level contradicts is a real conflict and is
+	 * refused rather than written against a row of another product.
+	 *
+	 * A product is genuinely required for the one case that has nothing to take it from: a level that
+	 * does not exist yet has to be created, and the product-level aggregate row it hangs from is what
+	 * names it, so a movement that stocks a variant for the first time must say which product it is.
 	 */
 	private async resolveLevel(
 		manager: EntityManager,
-		input: IStockMovementInput
+		input: TStockMovementInput
 	): Promise<WarehouseProductVariant> {
 		if (input.levelId) {
 			const byId = await manager.findOne(WarehouseProductVariant, { where: { id: input.levelId } });
@@ -186,16 +209,17 @@ export class StockLevelService {
 					{ notFound: true, details: { levelId: input.levelId } }
 				);
 			}
+			await this.assertLevelHoldsProduct(manager, byId, input.productId);
 			return byId;
 		}
 
-		const aggregate = await this.resolveAggregate(manager, input.warehouseId, input.productId);
-		const existing = await manager.findOne(WarehouseProductVariant, {
-			where: { warehouseProductId: aggregate.id, variantId: input.variantId, tenantId: input['tenantId'] }
-		});
+		const existing = await this.findLevelRow(manager, input.warehouseId, input.variantId);
 		if (existing) {
+			await this.assertLevelHoldsProduct(manager, existing, input.productId);
 			return existing;
 		}
+
+		const aggregate = await this.resolveAggregate(manager, input.warehouseId, input.productId);
 
 		// A level row is created with the documented defaults, never with a caller-supplied quantity:
 		// the opening quantity arrives as the movement that is being applied right now.
@@ -214,7 +238,71 @@ export class StockLevelService {
 		return await manager.save(WarehouseProductVariant, created);
 	}
 
-	/** Resolves the product-level aggregate row that owns the level row. */
+	/**
+	 * Reads the level row standing at a location for a variant.
+	 *
+	 * The location is a property of the product-level aggregate the level row belongs to, so the read
+	 * joins through it rather than filtering a column the level table does not have — the same read the
+	 * public availability lookups use.
+	 */
+	private async findLevelRow(
+		manager: EntityManager,
+		warehouseId: ID,
+		variantId: ID
+	): Promise<WarehouseProductVariant | null> {
+		return await manager
+			.createQueryBuilder(WarehouseProductVariant, 'level')
+			.innerJoin('level.warehouseProduct', 'aggregate')
+			.where('aggregate.warehouseId = :warehouseId', { warehouseId })
+			.andWhere('level.variantId = :variantId', { variantId })
+			.getOne();
+	}
+
+	/**
+	 * Refuses a movement whose stated product is not the product the level belongs to.
+	 *
+	 * The check is skipped when the caller stated no product, because the movement is then addressed
+	 * by the level it resolved and there is nothing to disagree with. A caller that stated one is
+	 * answered with the conflict rather than with a write against a row it did not mean: the two
+	 * readings name two different levels, and picking one of them silently is how a quantity lands on
+	 * the wrong product.
+	 */
+	private async assertLevelHoldsProduct(
+		manager: EntityManager,
+		level: WarehouseProductVariant,
+		productId?: ID
+	): Promise<void> {
+		if (!productId || !level.warehouseProductId) {
+			return;
+		}
+
+		const aggregate = await manager.findOne(WarehouseProduct, { where: { id: level.warehouseProductId } });
+		if (aggregate && aggregate.productId && String(aggregate.productId) !== String(productId)) {
+			throw invariantViolation(
+				'INV-01',
+				'The level at this location holds another product, so the movement cannot be recorded against the product it names.',
+				{
+					warehouseId: aggregate.warehouseId,
+					level: {
+						id: level.id,
+						variantId: level.variantId,
+						productId: aggregate.productId,
+						statedProductId: productId
+					}
+				}
+			);
+		}
+	}
+
+	/**
+	 * Resolves the product-level aggregate row that owns the level row of a first-time stock, creating
+	 * it when the product has never been stocked at that location.
+	 *
+	 * This runs only for a level that does not exist yet, which is why the product has to be named
+	 * here: the aggregate row is what gives the new level its product, and a movement that stocks a
+	 * variant at a location for the first time is the one movement that cannot be addressed by the
+	 * level it is about.
+	 */
 	private async resolveAggregate(
 		manager: EntityManager,
 		warehouseId: ID,
@@ -286,11 +374,18 @@ export class StockLevelService {
 	/**
 	 * Applies one movement against an already-locked level row, retrying the compare-and-set when a
 	 * competing writer won the row between the read and the update.
+	 *
+	 * The order inside one attempt is the property the ledger rests on: the level is read, the state it
+	 * would reach is computed and validated, the level is written **under a compare-and-set**, and the
+	 * ledger row that records the change is written only once that write is known to have won. An
+	 * attempt that loses the row therefore leaves nothing behind at all — the movement it computed is
+	 * discarded with the attempt — so however many retries a contended write takes, the ledger holds
+	 * exactly one row per logical movement and the level stays the sum of its movements.
 	 */
 	private async applyWithRetry(
 		manager: EntityManager,
 		levelId: ID,
-		input: IStockMovementInput,
+		input: TStockMovementInput,
 		quantityDelta: number,
 		reservedDelta: number,
 		attempt = 0
@@ -308,30 +403,9 @@ export class StockLevelService {
 		const quantityAfter = quantityBefore + quantityDelta;
 		const reservedAfter = reservedBefore + reservedDelta;
 
-		this.assertInvariants(input.type, level, quantityAfter, reservedAfter);
+		this.assertInvariants(input.type, level, quantityAfter, reservedAfter, input.allowBackorder);
 
 		const binId = await this.resolveBin(manager, input);
-
-		const movement = manager.create(StockMovement, {
-			warehouseId: input.warehouseId,
-			warehouseProductVariantId: level.id,
-			warehouseProductId: level.warehouseProductId,
-			variantId: input.variantId,
-			binId,
-			type: input.type,
-			quantity: quantityDelta,
-			quantityBefore,
-			quantityAfter,
-			reservedBefore,
-			reservedAfter,
-			referenceType: input.referenceType,
-			referenceId: input.referenceId,
-			reason: input.reason,
-			note: input.note,
-			occurredAt: input.occurredAt ?? new Date(),
-			createdByUserId: input['createdByUserId']
-		} as any);
-		const persisted = await manager.save(StockMovement, movement);
 
 		const version = Number(level.version ?? 1);
 		const update = await manager
@@ -359,8 +433,30 @@ export class StockLevelService {
 			return await this.applyWithRetry(manager, levelId, input, quantityDelta, reservedDelta, attempt + 1);
 		}
 
-		// The rollback of this transaction removes the ledger row, so a failed level write can never
-		// leave the ledger claiming a change the level did not receive.
+		// The level is this writer's. Only now is the ledger row that explains it written, inside the
+		// same transaction, so the two are never apart: an attempt that lost the compare-and-set never
+		// reaches this line, and an attempt that won it always records its movement exactly once.
+		const movement = manager.create(StockMovement, {
+			warehouseId: input.warehouseId,
+			warehouseProductVariantId: level.id,
+			warehouseProductId: level.warehouseProductId,
+			variantId: input.variantId,
+			binId,
+			type: input.type,
+			quantity: quantityDelta,
+			quantityBefore,
+			quantityAfter,
+			reservedBefore,
+			reservedAfter,
+			referenceType: input.referenceType,
+			referenceId: input.referenceId,
+			reason: input.reason,
+			note: input.note,
+			occurredAt: input.occurredAt ?? new Date(),
+			createdByUserId: input['createdByUserId']
+		} as any);
+		const persisted = await manager.save(StockMovement, movement);
+
 		await this.applyAggregateDelta(manager, level, quantityDelta, reservedDelta);
 
 		return {
@@ -383,14 +479,21 @@ export class StockLevelService {
 	 * and skipping it there would be skipping it where it matters most. The engine exists to make
 	 * overselling impossible, so the check is unconditional and reads the values it took under the
 	 * row lock.
+	 *
+	 * The backorder policy is the level’s own unless the caller stated one for this call, in which case
+	 * that is what the hold is measured against — the override exists so a caller that has decided a
+	 * demand may be backordered is not refused by the column it is overriding. The limit the policy
+	 * states still comes from the level, because a per-call override loosens the policy, it does not
+	 * grant a policy the level never configured.
 	 */
 	private assertInvariants(
 		type: StockMovementType,
 		level: WarehouseProductVariant,
 		quantityAfter: number,
-		reservedAfter: number
+		reservedAfter: number,
+		allowBackorderOverride?: boolean
 	): void {
-		const allowBackorder = !!level.allowBackorder;
+		const allowBackorder = allowBackorderOverride ?? !!level.allowBackorder;
 		const isUnlimited = !!level.isUnlimited;
 		const levelDetail = { id: level.id, type, quantityAfter, reservedAfter };
 

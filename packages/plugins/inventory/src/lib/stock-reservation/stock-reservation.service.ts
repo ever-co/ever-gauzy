@@ -5,6 +5,7 @@ import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from 
 import { StockMovementType, StockMovementReferenceType, StockReservationReferenceType, StockReservationStatus } from './../inventory.enums';
 import { InventoryErrorCode, invariantViolation, inventoryError } from './../inventory.errors';
 import { StockLevelService } from './../stock-level/stock-level.service';
+import { IStockMovementInput } from './../stock-level/stock-level.types';
 import { StockReservation } from './stock-reservation.entity';
 import { TypeOrmStockReservationRepository } from './repository/type-orm-stock-reservation.repository';
 import { MikroOrmStockReservationRepository } from './repository/mikro-orm-stock-reservation.repository';
@@ -66,7 +67,14 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	 * concurrent allocation safe: two carts competing for the last unit are serialised on the row,
 	 * the second one sees the first one’s reservation, and it is refused rather than oversold.
 	 *
-	 * @param input the quantity to hold and the document it belongs to.
+	 * The hold row and the movement that explains it are **one write**: the reservation is created
+	 * inside the transaction that moves the level, so a refusal from the engine — a hold the level may
+	 * not carry, a contended row, a movement that cannot be written — rolls the hold back with it. A
+	 * hold left behind by a refused write would understate the level’s availability for as long as it
+	 * existed and would be counted by a reconciliation that expects every `ACTIVE` row to be a held
+	 * unit, which is what INV-03 forbids.
+	 *
+	 * @param input the quantity to hold, the policy for this call and the document it belongs to.
 	 * @returns the persisted hold, with the level row it was counted against.
 	 */
 	public async reserve(input: {
@@ -94,40 +102,45 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 		const level = await this.findLevel(input.warehouseId, input.variantId);
 		this.assertAvailable(level, quantity, input.allowBackorder);
 
-		const reservation = this.typeOrmStockReservationRepository.create({
-			variantId: input.variantId,
-			warehouseId: input.warehouseId,
-			warehouseProductVariantId: level?.id,
-			quantity,
-			status: StockReservationStatus.ACTIVE,
-			referenceType: input.referenceType,
-			referenceId: input.referenceId,
-			lineId: input.lineId,
-			expiresAt: input.expiresAt ?? this.resolveExpiry(input.referenceType),
-			isBackorder: !!input.isBackorder,
-			expectedAt: input.expectedAt,
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		} as Partial<StockReservation>);
-		const persisted = await this.typeOrmStockReservationRepository.save(reservation);
+		return await this.typeOrmStockReservationRepository.manager.transaction(async (manager) => {
+			const reservation = manager.create(StockReservation, {
+				variantId: input.variantId,
+				warehouseId: input.warehouseId,
+				warehouseProductVariantId: level?.id,
+				quantity,
+				status: StockReservationStatus.ACTIVE,
+				referenceType: input.referenceType,
+				referenceId: input.referenceId,
+				lineId: input.lineId,
+				expiresAt: input.expiresAt ?? this.resolveExpiry(input.referenceType),
+				isBackorder: !!input.isBackorder,
+				expectedAt: input.expectedAt,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			} as Partial<StockReservation>);
+			const persisted = await manager.save(StockReservation, reservation);
 
-		// The ledger row and the level update are written in the same transaction as the hold; a
-		// failure of either rolls the hold back, so the level can never hold a reservation no row
-		// explains.
-		await this.stockLevelService.applyMovement({
-			warehouseId: input.warehouseId,
-			variantId: input.variantId,
-			productId: input.productId,
-			binId: input.binId,
-			type: StockMovementType.RESERVATION,
-			quantityDelta: 0,
-			reservedDelta: quantity,
-			referenceType: toMovementReference(input.referenceType),
-			referenceId: input.referenceId,
-			levelId: level?.id
+			await this.stockLevelService.applyMovement({
+				warehouseId: input.warehouseId,
+				variantId: input.variantId,
+				productId: input.productId,
+				binId: input.binId,
+				type: StockMovementType.RESERVATION,
+				quantityDelta: 0,
+				reservedDelta: quantity,
+				referenceType: toMovementReference(input.referenceType),
+				referenceId: input.referenceId,
+				levelId: level?.id,
+				// The caller's policy for this call travels with the movement. The level's own column is
+				// what the hold rule reads when the caller states nothing; when the caller states the
+				// policy the demand is allowed under, that is what the rule measures it against — which is
+				// the whole point of the per-call override, and the case it exists for is a demand past
+				// what the level currently holds.
+				...(input.allowBackorder === undefined ? {} : { allowBackorder: input.allowBackorder })
+			} as IStockMovementInput);
+
+			return persisted;
 		});
-
-		return persisted;
 	}
 
 	/**

@@ -583,14 +583,11 @@ describe('Collection — the window a shelf is live in (doc 05 §4.3, §4.6)', (
 });
 
 /**
- * The platform's `update` answers with TypeORM's `UpdateResult` for the TypeORM branch, and both
- * `update` and `move` cast that answer to a `Collection` before announcing it. The two cases below
- * pin the difference the cast makes: the change *is* written, and what a subscriber is told about it
- * is not the change.
- *
- * The first is what the domain requires and passes today; the second names a defect and is kept
- * green with `it.failing` so that fixing the service turns it red and it can be promoted to an
- * ordinary case.
+ * The platform's `update` answers with TypeORM's `UpdateResult` for the TypeORM branch, which names
+ * no row at all: `{ affected, raw, generatedMaps }`. Both `update` and `move` therefore read the row
+ * the write produced and announce *that*, which is what the two cases below pin — the change is
+ * written, and what a subscriber is told about it is the change, with the identity a cached listing
+ * is invalidated by.
  */
 describe('CollectionService — what a change is announced with (doc 12)', () => {
 	beforeEach(() => {
@@ -608,12 +605,10 @@ describe('CollectionService — what a change is announced with (doc 12)', () =>
 		expect(fixture.store('summer')).toMatchObject({ status: PublicationStatus.ACTIVE });
 	});
 
-	// The defect: `super.update` returns the base class's `UpdateResult` — `{ affected, raw,
-	// generatedMaps }` — and `CollectionChangedEvent.from(updated)` reads `id`, `slug` and
-	// `organizationId` off it, so every field of the event is `undefined`
-	// (`collection.service.ts`, the `CollectionChangedEvent.from(updated)` call in `update`, line 77,
-	// and the same call in `move`, line 108). A subscriber cannot invalidate a listing it cannot name.
-	it.failing('announces the collection it changed, so a subscriber can act on the event', async () => {
+	// The identity the event carries — `collectionId`, `slug`, `organizationId` — is read off the row
+	// the write produced, not off the write's own result: a subscriber cannot invalidate a listing the
+	// event does not name.
+	it('announces the collection it changed, so a subscriber can act on the event', async () => {
 		const fixture = collectionFixture([collectionRow('summer', { slug: 'summer', name: 'Summer' })]);
 
 		await fixture.service.update('summer', { name: 'Summer 2026' } as never);

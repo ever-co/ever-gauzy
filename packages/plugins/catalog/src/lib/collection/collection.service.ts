@@ -61,6 +61,12 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	/**
 	 * Updates a collection, re-checking the slug rule when the slug or the owner changes.
 	 *
+	 * The base class answers a write with the write's own result — an affected-row count on the
+	 * TypeORM branch — which names no collection at all, so the row the write produced is read back
+	 * before it is announced and before it is returned. The announcement and the answer then describe
+	 * the same state, which is what lets a subscriber invalidate the listing it is told about rather
+	 * than an unnamed one.
+	 *
 	 * @param id Id of the collection.
 	 * @param entity The fields to change.
 	 * @returns The updated collection.
@@ -72,7 +78,9 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 			await this.assertSlugIsAvailable(entity.slug, entity.customerId ?? collection.customerId ?? null, id);
 		}
 
-		const updated = (await super.update(id, entity)) as Collection;
+		await super.update(id, entity);
+
+		const updated = await this.findOneByIdString(id);
 
 		await this.eventBus.publish(CollectionChangedEvent.from(updated));
 
@@ -84,6 +92,10 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	 *
 	 * The check walks up from the new parent, so a cycle is refused before the closure table is
 	 * rewritten rather than after.
+	 *
+	 * As in `update`, the moved row is read back after the move and that read is what is announced
+	 * and returned: a re-parent changes the collection's place in the tree, not its identity, so the
+	 * announcement has to name the collection the write landed on.
 	 *
 	 * @param id Id of the collection to move.
 	 * @param parentId The new parent, or null to make the collection a root.
@@ -103,7 +115,9 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 			}
 		}
 
-		const moved = (await super.update(id, { parentId })) as Collection;
+		await super.update(id, { parentId });
+
+		const moved = await this.findOneByIdString(id);
 
 		await this.eventBus.publish(CollectionChangedEvent.from(moved));
 

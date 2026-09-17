@@ -712,11 +712,10 @@ describe('StockTransferService — creating, numbering and the state machine (do
 	});
 
 	// Doc 09 §8.2 states that *every* transition takes `If-Match: "<version>"` and bumps `version`, and
-	// §15.3 names the `If-Match` conflict among the unit cases this service owes. The service bumps the
-	// counter on every transition but never compares an expected one — `transition` reads the row and
-	// branches on its `status` alone (`stock-transfer.service.ts`, lines 287–313) — so a caller working
-	// from a stale copy of the document is accepted rather than refused.
-	it.failing('refuses a transition that states a version the document has moved past', async () => {
+	// §15.3 names the `If-Match` conflict among the unit cases this service owes. The transition is
+	// written under the version it was read at, so a caller working from a stale copy of the document
+	// is refused rather than accepted (`stock-transfer.service.ts`, `commitTransition`).
+	it('refuses a transition that states a version the document has moved past', async () => {
 		const { fixture, transfer } = await approvedTransfer();
 
 		await expect(
@@ -732,18 +731,14 @@ describe('StockTransferService — creating, numbering and the state machine (do
 /**
  * The ledger effect of a dispatch and a receipt.
  *
- * Every case in this block fails against the service as it stands, for one reason, and the reason is
- * the same in all of them: `StockLevelService.resolveLevel` resolves the product-level aggregate row
- * *before* it looks for the level row — and `resolveAggregate` refuses to run without a `productId`
- * (`stock-level.service.ts`, line 225: "A level row is addressed by its product, so the movement must
- * carry the product id") — while `StockTransferService.ship` and `.receive` pass no `productId` in
- * their `applyMovement` calls (`stock-transfer.service.ts`, lines 155, 215 and 227). Every dispatch
- * and every receipt therefore fails with `STOCK_INVARIANT_VIOLATION` / `INV-01` **even when the level
- * row already exists and could be resolved from `(warehouseId, variantId)`**, which is the first of
- * the two ways doc 09 §4.1 step 1 states a level row is addressed. No transfer can move stock today.
+ * A dispatch and a receipt name the variant and the location they move stock at, and nothing else:
+ * the level row standing at `(location, variant)` is what the movement is recorded against, and its
+ * own product is the product the movement belongs to. That is the first of the two ways doc 09 §4.1
+ * step 1 states a level row is addressed, and it is the one a transfer uses — a transfer moves what
+ * is at a location, and the document never has to name the product to say so.
  */
 describe('StockTransferService — shipping and receiving (doc 09 §8.3, INV-13, INV-19)', () => {
-	it.failing('moves the dispatched quantity out of the source, and leaves the total across locations unchanged', async () => {
+	it('moves the dispatched quantity out of the source, and leaves the total across locations unchanged', async () => {
 		const { fixture, transfer, lineId } = await approvedTransfer(10);
 
 		expect(fixture.store.totalOnHand()).toBe(140);
@@ -782,7 +777,7 @@ describe('StockTransferService — shipping and receiving (doc 09 §8.3, INV-13,
 		expect(fixture.transfer()).toMatchObject({ status: StockTransferStatus.RECEIVED });
 	});
 
-	it.failing('records a partial receipt on the line and completes it on the next one', async () => {
+	it('records a partial receipt on the line and completes it on the next one', async () => {
 		const { fixture, transfer, lineId } = await approvedTransfer(10);
 
 		await fixture.service.ship(transfer.id, [{ lineId, shippedQuantity: 10 }]);
@@ -801,7 +796,7 @@ describe('StockTransferService — shipping and receiving (doc 09 §8.3, INV-13,
 		expect(fixture.store.totalOnHand()).toBe(140);
 	});
 
-	it.failing('records the units that arrived damaged on the line, losing exactly those from the total', async () => {
+	it('records the units that arrived damaged on the line, losing exactly those from the total', async () => {
 		// What did not arrive is never silently dropped: nine arrived, one was damaged on the way, and the
 		// difference in the total across the two locations is exactly that one unit (INV-13, §8.3).
 		const { fixture, transfer, lineId } = await approvedTransfer(10);
