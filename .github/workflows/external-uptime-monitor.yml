@@ -80,6 +80,8 @@ jobs:
   probe:
     name: Probe public endpoints from outside the homelab
     # 🛑 DO NOT CHANGE — see the header block. GitHub-hosted is the whole point.
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
