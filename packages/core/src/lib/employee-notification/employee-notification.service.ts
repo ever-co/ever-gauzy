@@ -46,8 +46,8 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	 *
 	 * @param input - The data required to create an notification entry.
 	 * @param options.absorbRedelivery - Return an existing identical notification instead of inserting a duplicate
-	 * (see `findRedeliveredNotification`). Only `EmployeeCreateNotificationEventHandler` sets it, for a redelivered
-	 * event; direct callers such as `POST /employee-notification` insert one row per call, exactly as before.
+	 * (see `findRedeliveredNotification`). Opt-in for a future at-least-once event transport: no caller sets it
+	 * today, so the event handler and `POST /employee-notification` insert one row per call, exactly as before.
 	 * @returns The created notification entry.
 	 * @throws BadRequestException when the log creation fails.
 	 */
@@ -97,9 +97,9 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 				return undefined; // Do nothing if notification is not allowed
 			}
 
-			// A redelivered/duplicated EmployeeCreateNotificationEvent must not give the receiver the same
-			// notification twice. Only a provable duplicate is absorbed (see findRedeliveredNotification);
-			// every other event is inserted, one row per event.
+			// Opt-in (no caller sets it today): a redelivered/duplicated EmployeeCreateNotificationEvent must not
+			// give the receiver the same notification twice. Only a provable duplicate is absorbed (see
+			// findRedeliveredNotification); every other event is inserted, one row per event.
 			if (absorbRedelivery) {
 				const redelivered = await this.findRedeliveredNotification(input, tenantId, organizationId);
 				if (redelivered) {

@@ -27,6 +27,36 @@ describe('assertConvergesUnderRepeatedExecution', () => {
 			})
 		).rejects.toThrow();
 	});
+
+	it('fails for a job that changes state on a retry, even if a later retry changes it back', async () => {
+		let runs = 0;
+		await expect(
+			assertConvergesUnderRepeatedExecution({
+				run: async () => {
+					runs += 1;
+				},
+				// Equal after runs 1 and 3, different after run 2.
+				snapshot: () => runs % 2
+			})
+		).rejects.toThrow();
+	});
+});
+
+describe('attempt count', () => {
+	it.each([0, 1, 2.5, Number.NaN, Number.POSITIVE_INFINITY])(
+		'both helpers reject times = %p without running the job',
+		async (times) => {
+			const run = jest.fn(async () => undefined);
+
+			await expect(assertConvergesUnderRepeatedExecution({ run, snapshot: () => 0, times })).rejects.toThrow(
+				/times must be an integer >= 2/
+			);
+			await expect(
+				assertSideEffectFiresExactly({ run, sideEffect: jest.fn(), expectedCalls: 0, times })
+			).rejects.toThrow(/times must be an integer >= 2/);
+			expect(run).not.toHaveBeenCalled();
+		}
+	);
 });
 
 describe('assertSideEffectFiresExactly', () => {
@@ -50,6 +80,19 @@ describe('assertSideEffectFiresExactly', () => {
 		await expect(
 			assertSideEffectFiresExactly({
 				run: async () => sideEffect(),
+				sideEffect,
+				expectedCalls: 1
+			})
+		).rejects.toThrow();
+	});
+
+	it('counts only the calls made by these executions, not calls recorded before them', async () => {
+		const sideEffect = jest.fn();
+		sideEffect(); // e.g. fixture setup, before the job under test runs
+
+		await expect(
+			assertSideEffectFiresExactly({
+				run: async () => undefined,
 				sideEffect,
 				expectedCalls: 1
 			})

@@ -34,21 +34,23 @@ export async function assertConvergesUnderRepeatedExecution(params: {
 
 	// A review finding on this PR: `times` below 2 makes the whole assertion vacuous — there is no
 	// second run to converge, so it would pass for a job with NO idempotency guard at all just as
-	// readily as for one that's genuinely correct. Fail loudly instead of silently asserting nothing.
-	if (times < 2) {
+	// readily as for one that's genuinely correct. `NaN` would skip the retries the same way and
+	// `Infinity` would never finish. Fail loudly instead of silently asserting nothing.
+	if (!Number.isInteger(times) || times < 2) {
 		throw new Error(
-			`assertConvergesUnderRepeatedExecution: times must be >= 2 to prove convergence, got ${times}.`
+			`assertConvergesUnderRepeatedExecution: times must be an integer >= 2 to prove convergence, got ${times}.`
 		);
 	}
 
 	await run();
 	const afterFirstRun = snapshot();
 
+	// Compared after EVERY retry, not only the last: a retry that changes the state is not made
+	// idempotent by a later retry that happens to change it back.
 	for (let attempt = 1; attempt < times; attempt++) {
 		await run();
+		expect(snapshot()).toEqual(afterFirstRun);
 	}
-
-	expect(snapshot()).toEqual(afterFirstRun);
 }
 
 /** Structural type covering both `jest.fn()` and `jest.spyOn(...)` results, whose precise generic
@@ -76,15 +78,20 @@ export async function assertSideEffectFiresExactly(params: {
 }): Promise<void> {
 	const { run, sideEffect, expectedCalls, times = 2 } = params;
 
-	// Same reasoning as `assertConvergesUnderRepeatedExecution`: `times < 1` would run the job zero
-	// times and trivially "prove" `expectedCalls === 0` regardless of whether a dedup guard exists.
-	if (times < 1) {
-		throw new Error(`assertSideEffectFiresExactly: times must be >= 1, got ${times}.`);
+	// Same reasoning as `assertConvergesUnderRepeatedExecution`: with fewer than 2 executions there is
+	// no retry or redelivery at all, so `expectedCalls` would say nothing about a dedup guard (and
+	// `times < 1` would trivially "prove" `expectedCalls === 0`).
+	if (!Number.isInteger(times) || times < 2) {
+		throw new Error(`assertSideEffectFiresExactly: times must be an integer >= 2, got ${times}.`);
 	}
+
+	// Only the calls these executions make count: a call recorded earlier (fixture setup, a previous
+	// step of the same test) must not stand in for one a broken job failed to make.
+	const callsBefore = sideEffect.mock.calls.length;
 
 	for (let attempt = 0; attempt < times; attempt++) {
 		await run();
 	}
 
-	expect(sideEffect.mock.calls.length).toBe(expectedCalls);
+	expect(sideEffect.mock.calls.length - callsBefore).toBe(expectedCalls);
 }

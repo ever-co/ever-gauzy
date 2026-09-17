@@ -69,8 +69,9 @@ function matches(row: EmployeeNotification, key: string, expected: unknown): boo
 /**
  * Covers the redelivery check in `EmployeeNotificationService.create()`.
  *
- * `EmployeeCreateNotificationEventHandler` used to create a row for every event it handled, so the same
- * event handled twice gave the receiver the same notification twice. The service now absorbs a provable
+ * The check is opt-in (`absorbRedelivery`) and `EmployeeCreateNotificationEventHandler` does not enable it:
+ * the in-process EventBus never redelivers, so the handler keeps one row per event (pinned below).
+ * With the opt-in set, the service absorbs a provable
  * duplicate: an identical notification for the same receiver, still unread and un-archived, created
  * within `EMPLOYEE_NOTIFICATION_REDELIVERY_WINDOW_MS`.
  *
@@ -140,8 +141,8 @@ describe('EmployeeCreateNotificationEventHandler idempotency', () => {
 		};
 	}
 
-	const handle = (input: IEmployeeNotificationCreateInput) =>
-		handler.handle(new EmployeeCreateNotificationEvent(input));
+	// The redelivery check is opt-in and no caller enables it today; exercise it on the service directly.
+	const handle = (input: IEmployeeNotificationCreateInput) => service.create(input, { absorbRedelivery: true });
 
 	it('redelivering the SAME event while it is unread returns the existing notification', async () => {
 		const input = assignment();
@@ -243,5 +244,16 @@ describe('EmployeeCreateNotificationEventHandler idempotency', () => {
 
 		expect(find).toHaveBeenCalledTimes(1);
 		expect(repository.all()).toHaveLength(1);
+	});
+
+	it('the event handler inserts one row per event, as on develop (the in-process EventBus never redelivers)', async () => {
+		const input = assignment();
+		const find = jest.spyOn(repository, 'find');
+
+		await handler.handle(new EmployeeCreateNotificationEvent(input));
+		await handler.handle(new EmployeeCreateNotificationEvent(input));
+
+		expect(find).not.toHaveBeenCalled();
+		expect(repository.all()).toHaveLength(2);
 	});
 });

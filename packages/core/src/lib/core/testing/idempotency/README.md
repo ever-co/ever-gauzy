@@ -34,10 +34,12 @@ exactly the kind of side effect (row creation, outbound webhook) this task is ab
    `CleanupExpiredTokensHandler`/`CleanupInactiveTokensHandler` are idempotent by construction (both
    are conditional bulk `UPDATE`s scoped to `status = ACTIVE`), so a retried/redelivered cleanup job
    converges to the same end state and a retry affects zero additional rows.
-2. **Found gap, fixed** — `packages/core/src/lib/employee-notification/events/handlers/employee-notification.idempotency.spec.ts`:
+2. **Found gap, opt-in guard** — `packages/core/src/lib/employee-notification/events/handlers/employee-notification.idempotency.spec.ts`:
    `EmployeeCreateNotificationEventHandler` had **no** dedup guard at all; redelivering the same
-   event created a duplicate `EmployeeNotification` row every time. Fixed in
-   `EmployeeNotificationService.create()` — before creating, it looks for an IDENTICAL notification
+   event created a duplicate `EmployeeNotification` row every time. A guard was added to
+   `EmployeeNotificationService.create()` as an opt-in (`absorbRedelivery`) that the event handler does
+   not enable: the in-process `EventBus` never redelivers, so today a match could only merge two real
+   events (e.g. unassign + re-assign within the window). With it set, it looks for an IDENTICAL notification
    (same receiver, entity, entityId, type, sender, title and message, in the same tenant and
    organization) that is still unread, not archived, and was created within
    `EMPLOYEE_NOTIFICATION_REDELIVERY_WINDOW_MS` (60 s), and returns that instead of inserting again.
@@ -48,7 +50,8 @@ exactly the kind of side effect (row creation, outbound webhook) this task is ab
    event; it is not meant to merge distinct ones, and a read-then-insert does not stop two concurrent
    deliveries. The spec pins each of those cases, including the two real regressions an earlier,
    unwindowed version of this check caused (re-assignment after reading, and every mention on a task
-   after the first, since `MentionService` publishes without a receiver).
+   after the first, since `MentionService` publishes without a receiver), and that the event handler
+   still inserts one row per event, as on develop.
 3. **Found gap, fixed** — `packages/plugins/integration-zapier/src/lib/handlers/zapier-timer-started.handler.idempotency.spec.ts`:
    `ZapierWebhookService.notifyTimerStatusChanged` had the identical shape of gap as (2), but the
    side effect is an **outbound HTTP POST to a third-party system** rather than an internal DB row —
@@ -82,19 +85,28 @@ same webhook-duplication gap and are **not** fixed here — see Known gaps below
 
 ## Verification
 
-- `token-cleanup.idempotency.spec.ts`: 3/3 passing (a converge test + an explicit "retry affects
-  zero rows" test per handler).
-- `employee-notification.idempotency.spec.ts`: 8/8 passing, with and without `DB_ORM=mikro-orm` (the
-  service's ORM is pinned to TypeORM against the in-memory repository) — a redelivered unread event
-  creates exactly one row; a different entity, a read or archived first notification, an event after
-  the window, a mention without a receiver, a different sender or title, and a failed lookup each
-  still create their own. The read, archived, after-window, mention and sender/title cases all fail
-  against the earlier unwindowed check.
-- `zapier-timer-started.handler.idempotency.spec.ts`: 2/2 passing — a redelivered event sends
-  exactly one webhook, and a different timeLog's event still gets its own delivery. (This test
-  failed with 2 calls before the fix, confirming it actually catches the gap.)
-- `idempotency.assertions.spec.ts`: 4/4 passing, proving both helpers detect a genuinely
-  non-idempotent job (not just a job that happens to converge trivially).
+- `token-cleanup.idempotency.spec.ts`: 4/4 passing (a converge test + an explicit "retry affects
+  zero rows" test per handler), run through the real `TokenRepository` criteria over an in-memory
+  table, so dropping its `status = ACTIVE` guard fails all four.
+- `employee-notification.idempotency.spec.ts`: 10/10 passing, with and without `DB_ORM=mikro-orm` (the
+  service's ORM is pinned to TypeORM against the in-memory repository) — with the opt-in set, a
+  redelivered unread event creates exactly one row; a different entity, a read or archived first
+  notification, an event after the window, a mention without a receiver, a different sender or title,
+  and a failed lookup each still create their own. A direct `create()` (the `POST /employee-notification`
+  path) never runs the check, and the event handler inserts one row per event, as on develop. The
+  read, archived, after-window, mention and sender/title cases all fail against the earlier unwindowed
+  check.
+- `zapier-timer-started.handler.idempotency.spec.ts`: 8/8 passing — a redelivered event sends
+  exactly one webhook, a different timeLog's event still gets its own delivery, a failed delivery
+  stays free to retry, two concurrent redeliveries send one webhook, a concurrent redelivery still
+  delivers when the attempt already in flight fails, and an event without a timeLog id is never
+  deduped; the dedup cache never exceeds its cap (evicting the oldest key first), and an expired key
+  never suppresses a delivery. (The redelivery test failed with 2 calls before the fix, confirming it
+  actually catches the gap.)
+- `idempotency.assertions.spec.ts`: 11/11 passing, proving both helpers detect a genuinely
+  non-idempotent job (not just a job that happens to converge trivially), a retry that diverges and
+  is later restored, and calls recorded before the job ran, and reject a `times` that is not an
+  integer >= 2.
 - Full `core` suite (679/679) and the `integration-zapier` plugin suite re-run after these changes:
   no regressions.
 
