@@ -87,6 +87,12 @@ $divider: 1px solid var(--gauzy-border-default-color);
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
     color: var(--gauzy-text-color-1);
+
+    // On a phone the popover narrows to the screen, and beside the duration and the
+    // actions the range no longer fits on one line; the list would clip its end.
+    @media (max-width: 30rem) {
+      white-space: normal;
+    }
   }
 
   .time-log-duration {
