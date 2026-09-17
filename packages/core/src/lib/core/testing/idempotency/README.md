@@ -37,11 +37,18 @@ exactly the kind of side effect (row creation, outbound webhook) this task is ab
 2. **Found gap, fixed** — `packages/core/src/lib/employee-notification/events/handlers/employee-notification.idempotency.spec.ts`:
    `EmployeeCreateNotificationEventHandler` had **no** dedup guard at all; redelivering the same
    event created a duplicate `EmployeeNotification` row every time. Fixed in
-   `EmployeeNotificationService.create()` — before creating, it looks up an existing notification
-   for the same `(receiverEmployeeId, entity, entityId, type)` and returns that instead of inserting
-   again (mirrors the existing-subscription check already used in
-   `ZapierWebhookService.createSubscription`). A second test confirms this doesn't over-dedupe: a
-   later event about a *different* entity still creates its own notification.
+   `EmployeeNotificationService.create()` — before creating, it looks for an IDENTICAL notification
+   (same receiver, entity, entityId, type, sender, title and message, in the same tenant and
+   organization) that is still unread, not archived, and was created within
+   `EMPLOYEE_NOTIFICATION_REDELIVERY_WINDOW_MS` (60 s), and returns that instead of inserting again.
+   Anything it cannot prove is a duplicate is inserted as before: an event without a
+   `receiverEmployeeId` (a key TypeORM would silently drop from the lookup, widening it), the same
+   event once the first notification was read or archived (an employee re-assigned to a task must be
+   told again), the same event after the window, or a failed lookup. The window absorbs a duplicated
+   event; it is not meant to merge distinct ones, and a read-then-insert does not stop two concurrent
+   deliveries. The spec pins each of those cases, including the two real regressions an earlier,
+   unwindowed version of this check caused (re-assignment after reading, and every mention on a task
+   after the first, since `MentionService` publishes without a receiver).
 3. **Found gap, fixed** — `packages/plugins/integration-zapier/src/lib/handlers/zapier-timer-started.handler.idempotency.spec.ts`:
    `ZapierWebhookService.notifyTimerStatusChanged` had the identical shape of gap as (2), but the
    side effect is an **outbound HTTP POST to a third-party system** rather than an internal DB row —
@@ -77,8 +84,12 @@ same webhook-duplication gap and are **not** fixed here — see Known gaps below
 
 - `token-cleanup.idempotency.spec.ts`: 3/3 passing (a converge test + an explicit "retry affects
   zero rows" test per handler).
-- `employee-notification.idempotency.spec.ts`: 2/2 passing — a redelivered event creates exactly one
-  row, and a later event about a different entity still creates its own.
+- `employee-notification.idempotency.spec.ts`: 8/8 passing, with and without `DB_ORM=mikro-orm` (the
+  service's ORM is pinned to TypeORM against the in-memory repository) — a redelivered unread event
+  creates exactly one row; a different entity, a read or archived first notification, an event after
+  the window, a mention without a receiver, a different sender or title, and a failed lookup each
+  still create their own. The read, archived, after-window, mention and sender/title cases all fail
+  against the earlier unwindowed check.
 - `zapier-timer-started.handler.idempotency.spec.ts`: 2/2 passing — a redelivered event sends
   exactly one webhook, and a different timeLog's event still gets its own delivery. (This test
   failed with 2 calls before the fix, confirming it actually catches the gap.)
