@@ -50,8 +50,10 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 		const organizationId = this.resolveOrganizationId(entity);
 		const code = this.assertCode(entity.code);
 
-		const duplicate = await this.findOneByWhereOptions({ code, organizationId } as FindOptionsWhere<TaxCategory>);
-		if (duplicate) {
+		// A code nobody holds yet is the ordinary case for a creation, so the read has to be able to
+		// answer "this organization holds none" instead of raising: a throwing read would refuse every
+		// category whose code is free, which is the only category a create call is for.
+		if (await this.findByCode(code, organizationId)) {
 			throw new BadRequestException(`A tax category with the code "${code}" already exists in this organization.`);
 		}
 
@@ -82,10 +84,7 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 		const code = entity.code === undefined ? undefined : this.assertCode(entity.code);
 
 		if (code && code !== category.code) {
-			const duplicate = await this.findOneByWhereOptions({
-				code,
-				organizationId
-			} as FindOptionsWhere<TaxCategory>);
+			const duplicate = await this.findByCode(code, organizationId);
 			if (duplicate && duplicate.id !== id) {
 				throw new BadRequestException(
 					`A tax category with the code "${code}" already exists in this organization.`
@@ -131,6 +130,27 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 			isDefault: true,
 			...(organizationId ? { organizationId } : {})
 		} as FindOptionsWhere<TaxCategory>);
+	}
+
+	/**
+	 * The category an organization holds under a code.
+	 *
+	 * **A free code is an answer, not a refusal.** The read is the fail-soft half of the pair —
+	 * `findOneOrFailByWhereOptions`, whose `ITryRequest` carries `success: false` instead of raising —
+	 * because the uniqueness rule asks whether the code is *taken*, and an accountant can only populate
+	 * the taxonomy if the read that clears a free code answers rather than throws.
+	 *
+	 * @param code The code to look up, as {@link assertCode} trimmed it.
+	 * @param organizationId The organization the code has to be held inside.
+	 * @returns The category, or null when the organization holds none under that code.
+	 */
+	private async findByCode(code: string, organizationId: ID): Promise<TaxCategory | null> {
+		const outcome = await this.findOneOrFailByWhereOptions({
+			code,
+			organizationId
+		} as FindOptionsWhere<TaxCategory>);
+
+		return outcome.success ? (outcome.record as TaxCategory) : null;
 	}
 
 	/**

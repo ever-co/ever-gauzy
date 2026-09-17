@@ -17,7 +17,9 @@ import { CampaignBudgetType } from '../promotion.types';
  *   ceiling (P10: `0 <= used <= limit` after any interleaving);
  * - a release floors at zero, so a replayed reversal cannot drive a budget negative;
  * - a budget split by attribute gates each value on its own row, so one exhausted value does not
- *   block another (fixture F-19).
+ *   block another (fixture F-19);
+ * - one campaign carries one ceiling: setting it stores the first and replaces every later one without
+ *   touching what has already been consumed (`UQ_campaign_budget`, `05` §10.2; `08` §8.2).
  *
  * The repository double implements the contract of the statements the service issues — the
  * conditional increment, the floored decrement and the reset — keyed on the table each statement
@@ -27,6 +29,7 @@ import { CampaignBudgetType } from '../promotion.types';
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const ORG = '00000000-0000-4000-8000-000000000002';
 const CAMPAIGN = '00000000-0000-4000-8000-000000000090';
+const OTHER_CAMPAIGN = '00000000-0000-4000-8000-000000000091';
 
 interface IBudgetRow {
 	id: string;
@@ -98,6 +101,19 @@ function serviceUnderTest(budgets: IBudgetRow[], usages: IUsageRow[] = []) {
 		findOne: async (options?: { where?: Record<string, unknown> }) =>
 			budgets.filter((row) => matches(row, options?.where))[0] ?? null,
 		findOneBy: async (where?: Record<string, unknown>) => budgets.filter((row) => matches(row, where))[0] ?? null,
+		/**
+		 * The read the platform pairs with the fail-soft one: it raises when nothing matches, which is
+		 * what made the *first* ceiling of a campaign impossible to set.
+		 */
+		findOneByOrFail: async (where?: Record<string, unknown>) => {
+			const row = budgets.filter((one) => matches(one, where))[0];
+
+			if (!row) {
+				throw new Error('the platform read raises when nothing matches');
+			}
+
+			return row;
+		},
 		create: (partial: IBudgetRow) => ({ id: `budget-${budgets.length + 1}`, ...partial }),
 		save: async (entity: IBudgetRow) => {
 			budgets.push(entity);
@@ -423,5 +439,69 @@ describe('CampaignBudgetService.release and resetConsumption (doc 08 §14.4)', (
 
 		expect(view.budget.id).toBe('budget-1');
 		expect(view.usage.map((row) => row.attributeValue)).toEqual(['CA']);
+	});
+});
+
+describe('CampaignBudgetService.setBudget — one ceiling per campaign (05 §10.2, 08 §8.2)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const ceiling = { type: CampaignBudgetType.SPEND, limit: '100.000000', currency: 'USD' };
+
+	it('stores the first ceiling of a campaign that carries none', async () => {
+		// The defect this pins: the read that looks for the campaign's ceiling raised on the answer
+		// "there is none", so a campaign could never be budgeted at all.
+		const { service, budgets } = serviceUnderTest([]);
+
+		const created = await service.setBudget(CAMPAIGN, ceiling as never);
+
+		expect(created.campaignId).toBe(CAMPAIGN);
+		expect(created.limit).toBe('100.000000');
+		expect(budgets).toHaveLength(1);
+		expect(budgets[0]).toMatchObject({
+			campaignId: CAMPAIGN,
+			tenantId: TENANT,
+			organizationId: ORG,
+			used: '0'
+		});
+	});
+
+	it('replaces the ceiling of a campaign that already carries one, leaving its consumption alone', async () => {
+		// `PUT /campaigns/:id/budget` sets *or replaces*: the table holds one budget per campaign, so a
+		// second call moves the ceiling and never writes a second row or rewinds `used`.
+		const { service, budgets } = serviceUnderTest([budget({ limit: '100.000000', used: '40.000000' })]);
+
+		const stored = await service.setBudget(CAMPAIGN, { ...ceiling, limit: '250.000000' } as never);
+
+		expect(budgets).toHaveLength(1);
+		expect(stored.id).toBe('budget-1');
+		expect(stored.limit).toBe('250.000000');
+		expect(stored.used).toBe('40.000000');
+	});
+
+	it('leaves the ceiling of another campaign alone', async () => {
+		const { service, budgets } = serviceUnderTest([
+			budget({ id: 'budget-1' }),
+			budget({ id: 'budget-2', campaignId: OTHER_CAMPAIGN, limit: '50.000000' })
+		]);
+
+		await service.setBudget(CAMPAIGN, { type: CampaignBudgetType.USAGE, limit: '5' } as never);
+
+		expect(budgets).toHaveLength(2);
+		expect(budgets.find((row) => row.id === 'budget-2')?.limit).toBe('50.000000');
+		expect(budgets.find((row) => row.id === 'budget-1')?.limit).toBe('5');
+	});
+
+	it('refuses a ceiling whose shape does not match its type, and stores nothing', async () => {
+		const { service, budgets } = serviceUnderTest([]);
+
+		await expect(
+			service.setBudget(CAMPAIGN, { type: CampaignBudgetType.SPEND, limit: '100.000000' } as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(budgets).toHaveLength(0);
 	});
 });

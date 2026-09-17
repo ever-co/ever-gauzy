@@ -113,6 +113,16 @@ export class CampaignBudgetService extends CrudService<CampaignBudget> {
 	/**
 	 * Sets or replaces the single budget of a campaign.
 	 *
+	 * The table holds **one** budget per campaign (`UQ_campaign_budget`, `05` §10.2; `08` §8.2), so
+	 * this route is an upsert and not a duplicate check: the first call stores the ceiling, and every
+	 * later call moves it. A campaign that carries no ceiling yet is therefore the ordinary case, and
+	 * the read that looks for one has to answer "there is none" instead of raising — otherwise the
+	 * ceiling could never be set the first time. The read is the fail-soft half of the pair
+	 * (`findOneOrFailByWhereOptions`, whose `ITryRequest` carries `success: false`).
+	 *
+	 * Replacing a ceiling leaves the consumption already recorded alone: this route moves the ceiling,
+	 * and forgetting what was spent is the campaign's own reset route, an operator action with a reason.
+	 *
 	 * @param campaignId The campaign the budget belongs to.
 	 * @param input The ceiling to store.
 	 * @returns The stored budget.
@@ -121,11 +131,13 @@ export class CampaignBudgetService extends CrudService<CampaignBudget> {
 	async setBudget(campaignId: ID, input: ICampaignBudgetCreateInput): Promise<ICampaignBudget> {
 		this.assertShape(input);
 
-		const existing = await this.findOneByWhereOptions({ campaignId, ...this.scope } as never);
+		const existing = await this.findOneOrFailByWhereOptions({ campaignId, ...this.scope } as never);
 
-		if (existing) {
-			await this.update(existing.id, { ...input } as never);
-			return this.findOneByWhereOptions({ id: existing.id } as never);
+		if (existing.success && existing.record) {
+			const budget = existing.record as unknown as ICampaignBudget;
+
+			await this.update(budget.id, { ...input } as never);
+			return this.findOneByWhereOptions({ id: budget.id } as never);
 		}
 
 		return this.create({ ...input, campaignId, used: '0', ...this.scope } as never);
