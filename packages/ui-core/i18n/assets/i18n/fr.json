@@ -3385,6 +3385,9 @@
 		"BROWSE": "Parcourir",
 		"COMMENT": "Comme",
 		"COMMENTS": "Commentaires",
+		"COMMENT_PLACEHOLDER": "Écrire un commentaire…",
+		"NO_COMMENTS": "Aucun commentaire pour le moment",
+		"NO_COMMENTS_HINT": "Les commentaires apparaissent ici, les plus récents en premier.",
 		"HEADER": "Factures",
 		"INVOICE_NUMBER": "Numéro de facture",
 		"ESTIMATE_NUMBER": "Numéro d'estimation",
@@ -4424,6 +4427,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Sélectionner un client",
+			"SELECT_PROJECT": "Sélectionner un projet",
+			"SELECT_TEAM": "Sélectionner une équipe",
+			"SELECT_TASK": "Sélectionner une tâche",
+			"DESCRIPTION": "Ajouter une description"
+		},
 		"IS_BILLABLE": "Est facturable.",
 		"STOP_TIMER": "Arrêter le minuteur",
 		"START_TIMER": "Démarrer le chronomètre",

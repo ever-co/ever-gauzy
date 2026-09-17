@@ -3,6 +3,7 @@ import {
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	IAiTranscribeOptions,
+	isPrivateAiProviderEndpointAllowed,
 	speechRequest,
 	trimTrailingSlash
 } from '@gauzy/plugin-ai-chat';
@@ -63,6 +64,7 @@ const transcribeAudio = async (
 		apiKey: credentials.apiKey,
 		providerLabel: 'Deepgram',
 		providerId: PROVIDER_ID,
+		allowPrivateHost: isPrivateAiProviderEndpointAllowed(credentials),
 		parse: (body) => (body as IDeepgramListenResponse).results?.channels?.[0]?.alternatives?.[0]?.transcript ?? ''
 	});
 };

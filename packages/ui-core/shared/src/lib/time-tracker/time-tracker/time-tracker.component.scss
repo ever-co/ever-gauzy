@@ -1,23 +1,68 @@
 @use 'gauzy/_gauzy-overrides' as *;
 
+// One vertical rhythm for the whole panel, so a field, the title row and the
+// footer cluster cannot each pick their own gap.
+$panel-gap: 1rem;
+// The step between one label+field pair and the next. Shared by the field stack
+// and by the date / start-time rows inside the range picker, which is what makes
+// "Date → Start Time" read as the same interval as "Client → Project".
+$field-gap: calc(#{$panel-gap} - 5px);
+
+// How tall the scrolling region is allowed to get. Sized so the TIMER view — the
+// shorter of the two — renders whole and never shows a scrollbar, while the
+// manual view (which adds the date row and the start/end row) scrolls inside the
+// same box instead of making the card taller. THIS IS THE KNOB: raise it if the
+// timer view scrolls, lower it if the manual card still stands taller.
+$scroll-max-height: 32rem;
+// `:host` pins the card 80px from the top; leave the same again beneath it so a
+// short window cannot push the card off the bottom edge.
+$viewport-gutter: 100px;
+
+// The line box of the running session (22px type). Shared by that line and by
+// the `$` toggle beside it, which is what lets the two centre on each other
+// rather than merely share a top edge.
+$session-line: 1.625rem;
+
+// Card width, named so the window-control cluster below can be derived from it
+// instead of re-guessed. The panel's original width, kept deliberately: the
+// popup is navbar chrome and should not read as a dialog.
+$card-width: 328px;
+// `nb-card-body`'s own inset — the `card-padding: 1rem` token in
+// `_gauzy-theme-maps.scss`. Named so the scroll box can reach back across it.
+$body-padding: 16px;
+// `.timer-card`'s own padding plus `nb-card-body`'s: where a child's static
+// position starts.
+$body-inset: 20px + $body-padding;
+
 :host {
   position: fixed;
   height: 0;
   z-index: 999;
   right: 20px;
   top: 80px;
-  .status {
-	position: absolute;
-    left: 9.5rem;
-    top: 0;
-  }
   nb-card {
     border: none;
   }
   .timer-card {
     display: block;
     padding: 20px;
-    width: 328px;
+    // The bottom is the one edge this card pays for TWICE: `nb-card-body` lays
+    // its own `card-padding` (1rem) under the last row, on top of the card's
+    // 20px. The other three edges each earn theirs — the window controls sit
+    // against the top, the fields against the sides — but under the timesheet
+    // link it was just 36px of trailing space. Zeroed here so the body's own
+    // inset is the only one, which is the gap the last row actually needs.
+    padding-bottom: 0;
+    // 328px, as it always was. What this width could NOT previously hold was a
+    // two-up time range: the content box left after the card's inset and
+    // `nb-card-body`'s own is narrow, so the start/end pickers clipped to
+    // `06:00:0…`, and the textarea (`282.79px`) and the range row (`128.5%`)
+    // had each been pinned WIDER than their own parent to claw the space back.
+    //
+    // Those two overrides are gone rather than re-tuned — both are on `100%`
+    // now — and the row's Bootstrap gutters are zeroed, which is what gives the
+    // two halves their width back inside this same 328px.
+    width: $card-width;
     font-size: 14px;
     position: relative;
     box-shadow: 0px 6px 30px 0px rgba(0, 0, 0, 0.2);
@@ -33,22 +78,187 @@
     position: absolute;
     display: flex;
     justify-content: flex-end;
-    width: 300px;
+    // The cluster is placed by WIDTH from its static position — the body's
+    // content-box left edge — and pushed to the far end of that box by
+    // `flex-end`. Anchoring it with `right` instead leaves `width` to
+    // shrink-to-fit, and `flex-end` then lays the buttons out from a box that
+    // no longer spans the card, which is what threw them off the corner.
+    //
+    // The `+ 8px` carries the right end just past the card edge, where the
+    // ghost buttons' own padding turns it into the inset the cluster has always
+    // had. Derived from `$card-width` (it was a hard 300px against a 328px
+    // card) so resizing the card carries the buttons with it.
+    width: $card-width - $body-inset + 8px;
     top: 0px;
+
+    // Nebular sizes a `size="small"` button's glyph from `button-small-icon-size`
+    // (1rem), the same step it gives an icon button anywhere in a form. These two
+    // are window chrome rather than actions on the record, so they sit one step
+    // under that. Only the glyph shrinks — the button keeps its padding, so the
+    // hit target does not get smaller with it.
+    nb-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+      font-size: 0.875rem;
+    }
   }
+
+  // Title + mode switch. `space-between` is what puts the switch AFTER the
+  // title rather than beside it in a column of its own.
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    // No top margin. This row starts at the body's content edge, which already
+    // sits below the absolutely positioned window controls — they are pinned to
+    // the card's own top, outside the body's inset — so the extra step was
+    // clearing something that was already clear.
+    margin: 0 0 $panel-gap;
+
+    .panel-title {
+      color: nb-theme(text-primary-color);
+      margin: 0;
+    }
+  }
+
+  // A selected-but-disabled control (the mode switch and the billable toggle
+  // both lock while the timer runs) keeps reading as selected. Lifted out of
+  // `.timer-container`, which is no longer an ancestor of the mode switch once
+  // the switch moved onto the title row.
+  [nbButton].appearance-filled.status-primary[disabled] {
+    background-color: nb-theme(text-primary-active-color);
+    border-color: nb-theme(text-primary-active-color);
+    color: #ffffff;
+    opacity: 0.4;
+  }
+
+  // Segmented timer / manual toggle: ONE track holding two flush halves, rather
+  // than two free-standing buttons that each drew their own block and shadow —
+  // which is what made a two-state toggle read as two unrelated controls, and
+  // made it as tall as a real form button.
+  //
+  // A row in every state. The collapsed widget used to stack it into a column,
+  // so the same two options changed shape depending on the panel's size.
+  .mode-switch {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    flex: 0 0 auto;
+    padding: 2px;
+    border-radius: var(--border-radius);
+    background-color: var(--gauzy-sidebar-background-4);
+    box-shadow: $control-hairline;
+
+    // `span` is the tooltip host the disabled manual button needs (a disabled
+    // button swallows the pointer events the tooltip listens for).
+    > span {
+      display: inline-flex;
+    }
+
+    button.switch {
+      // Square, so the two sit as one control pair instead of as two pills of
+      // different widths — the stopwatch is an `fa-icon`, the list an
+      // `nb-icon`, and their intrinsic boxes do not match. 1.5rem against the
+      // title's 1rem line box, so the toggle sits inside the row rather than
+      // setting its height.
+      width: 1.5rem;
+      height: 1.5rem;
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      // Nested one step inside the track's corner, so the filled half follows
+      // the curve instead of cutting across it.
+      border-radius: calc(var(--border-radius) - 2px);
+      // The track carries the edge now; a shadow under each half drew a second
+      // one inside it.
+      box-shadow: none;
+
+      // The unselected half is the track showing through, not a grey block of
+      // its own. Nebular's filled `status-basic` paints a background, which is
+      // what gave the pair two competing surfaces instead of one.
+      &.status-basic {
+        background-color: transparent;
+        // It also keeps its own full-strength foreground, so the unselected
+        // icon sat at the same weight as the selected one and the pair read as
+        // two active options. This is the muted token the form labels use: an
+        // unselected option drops back to label weight and the filled half is
+        // the only thing that reads as chosen.
+        color: var(--gauzy-text-color-2);
+
+        nb-icon,
+        svg {
+          color: inherit;
+          fill: currentColor;
+        }
+
+        &:hover:not([disabled]) {
+          background-color: nb-theme(background-basic-color-3);
+          color: nb-theme(text-basic-color);
+        }
+      }
+
+      svg {
+        width: 11px;
+        margin: 0;
+      }
+      nb-icon {
+        height: 13px;
+        width: 13px;
+      }
+      &.status-primary nb-icon {
+        color: #fff;
+      }
+    }
+  }
+
   .timer-container {
     display: flex;
-    align-items: flex-start;
+    // Minimized is the only state where this row holds more than one thing —
+    // the timer and the mode switch beside it. `flex-start` pinned the switch to
+    // the top of a row whose other half centres its own contents, so the two
+    // sat on different lines. Centring aligns the whole widget on one axis.
+    //
+    // Safe in the expanded states too: there the row has a single `width: 100%`
+    // child, which defines the row's height and so cannot move within it.
+    align-items: center;
+
+    // Only the collapsed widget renders the switch in here (expanded puts it on
+    // the title row), so this is its gap from the timer beside it — what the
+    // dropped `.vertical` modifier used to carry.
+    .mode-switch {
+      margin-left: 0.625rem;
+    }
 
     .time-tracker {
       width: 100%;
       display: flex;
-      align-items: flex-start;
+      align-items: center;
     }
     .is_billable {
+      // The `$` toggle qualifies the RUNNING session, so it belongs on that
+      // line. The row centres its items, which floated the button against the
+      // two-line block as a whole and left it sitting between the two numbers.
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      height: $session-line;
+
       button {
         font-size: 12px;
-        padding: 5px 9px;
+        // Height comes from the line box above rather than from vertical
+        // padding, so the button cannot drift off that line when the type
+        // around it changes. Inline padding is the 9px it always had.
+        padding: 0 9px;
+        height: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
     }
     .actions {
@@ -63,72 +273,76 @@
       text-align: left;
       display: flex;
       flex-direction: column;
+      // The status icon used to be positioned `absolute; left: 9.5rem` against
+      // the CARD, so it landed on a fixed x that had nothing to do with the
+      // time it annotates and collided with anything else near the top edge.
+      // It belongs next to the running session, so it sits next to it.
+      .session {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: $session-line;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        font-size: 1rem;
+        line-height: 1;
+      }
       .today-time {
         font-size: 0.6em;
         line-height: 1;
+        margin-top: 0.5rem;
+        // Context for the reading above, not a second reading. It used to
+        // inherit the card's body colour, so both lines carried the same weight
+        // of attention and the eye had nothing to land on first. The theme's
+        // muted tier — its own name for exactly this tier, the one the form
+        // labels in this panel already use — demotes it a step and lets the
+        // session time lead.
+        color: var(--gauzy-text-color-2);
       }
       .current-session {
         font-weight: 400;
+        line-height: $session-line;
       }
     }
     .toggle {
-      [nbButton].appearance-filled.size-medium {
-        padding: 8px 7px 10px 7px;
-      }
+      // `shape="round"` can only round the box it is given, and that box was
+      // never square: the start state ran `padding: 8px 7px 10px 7px` and the
+      // stop state `8px`, over an `fa-icon` carrying another `0 3px 0 4px`.
+      // Four different insets on four sides, and two different boxes depending
+      // on whether the timer was running — so it drew a lopsided blob that
+      // changed shape on click.
+      //
+      // An explicit square with zero padding and a 50% radius is a circle in
+      // both states, whatever the glyph inside measures. The selector keeps the
+      // old specificity because it still has to beat Nebular's own
+      // `[nbButton].appearance-filled.size-medium` padding.
+      [nbButton].appearance-filled.size-medium,
       [nbButton].appearance-filled.status-danger {
-        padding: 8px;
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
       }
       fa-icon {
-        border: 1px dashed transparent !important;
         margin: 0;
-        border-radius: 50px;
-        padding: 0px 3px 0px 4px;
-      }
-    }
-    .mode {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding-left: 10px;
-      &.expanded {
-        margin-top: 3.4rem;
-      }
-      button {
-        margin: 4px;
-        padding: 4px 2px 4px 2px;
-        svg {
-          border-radius: 2rem;
-          width: 12px;
-          margin: 0;
-        }
-        &.status-primary {
-          nb-icon {
-            color: #fff;
-          }
-        }
-        nb-icon {
-          height: 16px;
-          width: 16px;
-        }
+        padding: 0;
+        display: inline-flex;
+        line-height: 1;
       }
     }
 
-    [nbButton].appearance-filled.status-primary[disabled] {
-      background-color: nb-theme(text-primary-active-color);
-      border-color: nb-theme(text-primary-active-color);
-      color: #ffffff;
-      opacity: 0.4;
-    }
     .timer,
     .time-manual {
       display: flex;
       flex-direction: column;
       width: 100%;
-    }
-
-    h6 {
-      color: nb-theme(text-primary-color);
-      margin-bottom: 2rem;
+      gap: $panel-gap;
     }
   }
   ::ng-deep {
@@ -138,28 +352,93 @@
       }
     }
   }
+
+  .form-group {
+    margin-bottom: $field-gap;
+  }
+
+  // Only the fields scroll. The window controls and the title row sit outside
+  // this box, so they stay put instead of sliding away under the pointer — and
+  // `.header` keeps its containing block, so nothing about its position moves.
+  .panel-scroll {
+    max-height: min(#{$scroll-max-height}, calc(100vh - #{$viewport-gutter}));
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    // The bar is drawn on the right edge of THIS box, which used to stop at the
+    // fields — so it ran up the middle of the card's right inset. The negative
+    // margin lets the box reach out across `nb-card-body`'s own padding to the
+    // card's content edge, and the matching padding puts the fields back exactly
+    // where they were, so only the bar moves. Stopping at the body's padding
+    // rather than the card's keeps it off the rounded corner.
+    margin-right: -$body-padding;
+    padding-right: $body-padding;
+
+    // Same thin thumb the rest of the app draws, rather than the platform's
+    // default bar cutting into a 360px card.
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--gauzy-scrollbar);
+      border-radius: 1rem;
+    }
+    scrollbar-width: thin;
+  }
+
+  // Minimized is a compact widget, not a form: there is nothing in it that could
+  // need scrolling, so it should not be a scroll container at all. Left as one it
+  // still reserves and can paint a bar over a row two controls tall, and the
+  // outset above pushes that bar into the card's inset for no reason.
+  .timer-card.collapsed .panel-scroll {
+    max-height: none;
+    overflow: visible;
+    margin-right: 0;
+    padding-right: 0;
+  }
 }
 
 .custom {
   textarea {
-    background: rgba(126, 126, 143, 0.05);
     color: nb-theme(text-basic-color);
-    border-color: nb-theme(background-basic-color-3);
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
+    // The edge every other control in the panel draws: the same
+    // `$control-hairline` `ng-select-overrides()` gives the dropdown triggers,
+    // and the same one the global `textarea` rule already wanted before this
+    // block overrode it.
+    //
+    // Was `rgba(0, 0, 0, 0.1) 0 1px 0 0 inset` — a single black hairline along
+    // the TOP edge only, at 10% alpha. On a dark canvas that is invisible, so
+    // the field had no edge at all and read as a hole in the card rather than
+    // as a control. The `border-color` that sat next to it did nothing either:
+    // `input-appearance()` sets `border: none` on every textarea in the dialog.
+    box-shadow: $control-hairline;
     resize: none;
-    width: 282.79px;
+    // Was a hard `282.79px`, which is both wider than the content box it sits
+    // in and immune to the card resize above.
+    width: 100%;
     height: 84px;
     border-radius: var(--border-radius);
-    margin-bottom: 30px;
-    &:hover {
-      border-color: nb-theme(color-primary-hover);
+    // A `<textarea>` does not inherit type from its ancestors — browsers reset
+    // form controls to their own default face and size — so this one rendered
+    // its text a size off every `ng-select` stacked above it. Same token those
+    // selectors resolve in `ng-select-overrides()`.
+    font-size: nb-theme(select-medium-text-font-size);
+    line-height: 1.5;
+    font-family: inherit;
+    // `ng-select` holds the same hairline through hover and focus rather than
+    // swapping edges, so this does too.
+    //
+    // What was here — `border-color` on hover, and a `background` on
+    // `:hover:focus` and on `:active` — could never render: the border is
+    // removed by `input-appearance()`, and the background is set by that same
+    // mixin with `!important`, which these plain declarations cannot outrank.
+    &:hover,
+    &:focus {
+      box-shadow: $control-hairline;
       color: nb-theme(text-basic-color);
-      &:focus {
-        background: rgba(126, 126, 143, 0.05);
-      }
-    }
-    &:active {
-      background-color: nb-theme(background-basic-color-1);
     }
   }
 }
@@ -168,65 +447,181 @@
   color: nb-theme(text-primary-color);
 }
 
-.custom-range-picker::ng-deep .range {
-  width: 128.5%;
+// The date / start / end rows are Bootstrap grid rows inside a 360px card: the
+// grid's own ±15px gutters push the row wider than the card and then eat the
+// width back as column padding, which is what the old `width: 128.5%` on
+// `.range` was compensating for. Dropping both gutters and spacing the two
+// halves with a `gap` keeps the fields inside the card AND full-bleed.
+.custom-range-picker {
+  display: block;
+
+  ::ng-deep {
+    .row {
+      margin-left: 0;
+      margin-right: 0;
+    }
+    .row.range {
+      display: flex;
+      // Narrower than the panel's usual step: this gap is subtracted from the
+      // two time values, which are the tightest text in the card.
+      gap: 0.5rem;
+    }
+    .col-12,
+    .col-6 {
+      flex: 1;
+      max-width: none;
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .form-group {
+      margin-bottom: 0;
+    }
+    // The picker is two stacked `.row`s (date, then start/end). Without this the
+    // start-time labels sat almost on the date field, so the interval inside the
+    // picker was visibly tighter than the one between the selectors below it.
+    // Same `$field-gap` the field stack uses, so all of them read alike.
+    .row + .row {
+      margin-top: $field-gap;
+    }
+  }
+}
+
+// The date field is a wrapper div (it needs one, to hold the calendar icon
+// absolutely) around a bare `<input>`, and the picker styles BOTH — so it drew
+// two nested edges, at a flat 42px, over a box only 90% as wide as its column,
+// while every selector under it resolves the theme's own control metrics.
+//
+// Restated here under `:host` so the specificity is SETTLED rather than left to
+// stylesheet order. The picker's own rules are `:host .input` / `:host input`,
+// which emulated encapsulation writes as `[_nghost-picker] .input` — exactly the
+// same weight as a plain `.custom-range-picker ::ng-deep .input` from this file.
+// A tie is broken by whichever component's styles load last, which is why the
+// date field could come out 90% wide and 42px tall anyway. Prefixing `:host`
+// adds this component's own host attribute and takes the rule one step clear.
+:host .custom-range-picker ::ng-deep {
+  // "Date" / "Start Time" / "End Time". These resolve `text-label-font-size`
+  // (0.75rem) through the `dialog()` mixin like every other label in the panel;
+  // this takes the picker's three down one step, to 0.625rem — exactly 2px.
+  //
+  // The line box is deliberately left where it was, so the rows keep their
+  // heights and only the type changes.
+  label,
+  .label {
+    font-size: 0.625rem;
+  }
+
+  // Start / End share one row inside a 328px card, so each trigger gets roughly
+  // half what a full-width selector gets — and the clear and chevron take their
+  // bite out of that half, not out of the full width. The theme's 16px text
+  // inset is sized for the full-width case; here it is 16 of the ~66px the value
+  // actually has, which is what clipped "08:00:00 PM" to `06:00:0…` before.
+  //
+  // Trimmed for these two only, so every full-width selector in the panel keeps
+  // the standard inset and they all still share a left edge with each other.
+  // `!important` because `ng-select-overrides()` sets this one with `!important`
+  // of its own (ng-select's own sheet loads after ours).
+  .row.range .ng-select .ng-select-container .ng-value-container {
+    padding-inline-start: 0.5rem !important;
+  }
+
+  .input {
+    // Was 90% — a tenth of the row left empty to the right of the date, so it
+    // stopped short of every field above and below it.
+    width: 100%;
+    // Was a flat 42px: the height every control in the app carried BEFORE the
+    // density pass moved them onto `$default-height`.
+    height: $default-height;
+    // The wrapper is a positioning context for the calendar icon, nothing more.
+    // The `<input>` inside it is the control and carries the surface, so a
+    // second shadow out here only doubled the edge.
+    box-shadow: none;
+  }
+
+  input {
+    width: 100%;
+    height: 100%;
+    // Was `0 10px`, which started the date 6px to the left of every selector
+    // value below it. The right inset clears the calendar icon.
+    padding: 0 2rem 0 $control-padding-x;
+    // A `<input>` does not inherit type from its ancestors — browsers reset form
+    // controls to their own face and size — and the app's global `input` rules
+    // set the radius, shadow, height and background but never a font-size. So
+    // the date rendered in the UA's ~13.3px Arial while every `ng-select` beside
+    // it resolved this token: a different size AND a different typeface.
+    font-size: nb-theme(select-medium-text-font-size);
+    font-family: inherit;
+    border-radius: var(--border-radius);
+    // The same hairline `ng-select-overrides()` gives the selectors, instead of
+    // the `--gauzy-shadow` drop shadow the picker still draws — the edge the
+    // design system replaced precisely because it disappears on a dark canvas
+    // and smudges on a light one.
+    box-shadow: $control-hairline;
+  }
+}
+
+// Checkbox copy is body text, not a form label, so it reads at the same size as
+// the values in the fields around it.
+.billable-check ::ng-deep .text {
+  font-size: nb-theme(select-medium-text-font-size);
 }
 
 .view-log-button {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
+  margin-top: $panel-gap;
+
+  // Scoped to this row on purpose. These metrics used to sit on the bare
+  // `.button` class, which the round play/pause control also carries
+  // (`[class.button]="!running"`) — so a 36px tall, 20px-padded box was being
+  // handed to a button whose whole shape is a circle.
+  .button.success.add {
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    // Was `9px 20px 18px 20px` — a 9px bottom overhang that pushed the label
+    // off the button's own centre line.
+    padding: 0 20px;
+    // Was also `box-shadow: 0px 10px 13px -7px #25b869` — a green glow cast
+    // under a solid green block. `status="success"` buttons are now
+    // outline/text (see `$gauzy-action-accents-*` in
+    // `packages/ui-core/static/styles/themes.scss`), and a coloured glow under
+    // a transparent button reads as a smudge sitting below it, not elevation.
+    font-size: 14px;
+    flex: 0 0 auto;
+    width: 120px;
+  }
 }
 
-::ng-deep .ng-select .ng-select-container {
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 0px 0px inset;
-  border-radius: var(--border-radius);
-  min-height: 42px;
-}
+// Was an `<a nbButton ghost outline>` — a full-height button box for something
+// that only navigates. As a text link it states the same thing in a line of
+// type instead of a row of chrome, which is the bottom margin this panel gets
+// back.
+.timesheet-link {
+  color: nb-theme(text-primary-color);
+  font-size: nb-theme(select-medium-text-font-size);
+  font-weight: 600;
+  text-decoration: underline;
+  white-space: nowrap;
+  cursor: pointer;
 
-::ng-deep .ng-select.ng-select-single .ng-select-container {
-  height: 42px;
+  &:hover,
+  &:focus-visible {
+    color: nb-theme(text-primary-hover-color);
+    text-decoration: underline;
+  }
 }
 
 .button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  &.timesheet {
-    background-color: transparent;
-    font-weight: normal;
-    height: 36px;
-    padding: 9px 20px 18px 20px;
-    margin: 0;
-    width: 150px;
-  }
-  &.disabled {
-    height: 36px;
-    width: 120px;
-  }
-  &.success {
-    // Was `box-shadow: 0px 10px 13px -7px #25b869` — a green glow cast under a
-    // solid green block. `status="success"` buttons are now outline/text (see
-    // `$gauzy-action-accents-*` in `packages/ui-core/static/styles/themes.scss`),
-    // and a coloured glow under a transparent button reads as a smudge sitting
-    // below it rather than as elevation.
-    &.start,
-    &.add {
-      height: 36px;
-      font-size: 14px;
-      height: 36px;
-      padding: 9px 20px 18px 20px;
-      width: 120px;
-    }
-  }
-  &.switch {
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.25);
-  }
 }
 
 .button,
 h6 {
-  display: inline-block;
   text-transform: lowercase;
   &:first-letter {
     text-transform: uppercase;

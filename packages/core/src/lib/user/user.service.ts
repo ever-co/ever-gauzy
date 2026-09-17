@@ -56,6 +56,17 @@ import {
 	magicCodeClaimWhere
 } from '../shared/single-use/claim-criteria';
 
+/**
+ * The account-status predicate every authentication path applies.
+ *
+ * `login()` and `getJwtAccessToken()` filter on it at issuance and, since GHSA-3cgp-wmrg-4fqg,
+ * `JwtStrategy.validate()` re-applies it on every request. `checkIfExists` / `checkIfExistsThirdParty`
+ * back `GET /auth/authenticated`, which is the call the web and desktop clients use to decide whether a
+ * session is still good — without the predicate that endpoint kept answering `true` for a deactivated or
+ * archived account while every other endpoint answered 401.
+ */
+const ACTIVE_ACCOUNT = { isActive: true, isArchived: false } as const;
+
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
 	constructor(
@@ -213,10 +224,18 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * GET user by email in the same tenant
+	 * GET a user by email across EVERY tenant of the installation.
+	 *
+	 * 🛑 This lookup is deliberately GLOBAL and must only be used by the pre-authentication flows
+	 * that have no tenant context yet — social/OAuth login and social signup, where the address is
+	 * what identifies the account in the first place. Calling it from a request handler that already
+	 * knows the caller's tenant turns it into a cross-tenant disclosure (and an account-existence
+	 * oracle) for the whole deployment: it answers for a user of any tenant.
+	 *
+	 * Tenant-scoped callers must use {@link getUserByEmailInTenant} instead.
 	 *
 	 * @param email
-	 * @returns
+	 * @returns the user with that email in ANY tenant, or null
 	 */
 	async getUserByEmail(email: string): Promise<IUser | null> {
 		switch (this.ormType) {
@@ -224,6 +243,37 @@ export class UserService extends TenantAwareCrudService<User> {
 				return await this.mikroOrmRepository.findOne({ email } as any);
 			case MultiORMEnum.TypeORM:
 				return await this.typeOrmRepository.findOneBy({ email });
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * GET a user by email INSIDE a single tenant.
+	 *
+	 * The tenant-safe counterpart of {@link getUserByEmail}: anything reachable from an
+	 * authenticated request handler must go through here so that one tenant can never read — or
+	 * probe for the existence of — an account belonging to another.
+	 *
+	 * Fails closed on a missing tenant: an `undefined` key is DROPPED from a TypeORM `where` object
+	 * in this codebase (see TYPEORM_NULL_WHERE_ISOLATION), so passing an absent `tenantId` straight
+	 * through would silently widen the query back to the global lookup this method exists to
+	 * replace. "I could not work out which tenant to search" must answer "no user", never "here is
+	 * somebody else's".
+	 *
+	 * @param email
+	 * @param tenantId the tenant the lookup is restricted to
+	 * @returns the user with that email in that tenant, or null
+	 */
+	async getUserByEmailInTenant(email: string, tenantId: ID): Promise<IUser | null> {
+		if (!email || !tenantId) {
+			return null;
+		}
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.findOne({ email, tenantId } as any);
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.findOneBy({ email, tenantId });
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -280,9 +330,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return !!(await this.mikroOrmRepository.findOne({ id } as any));
+				return !!(await this.mikroOrmRepository.findOne({ id, ...ACTIVE_ACCOUNT } as any));
 			case MultiORMEnum.TypeORM:
-				return !!(await this.typeOrmRepository.findOneBy({ id }));
+				return !!(await this.typeOrmRepository.findOneBy({ id, ...ACTIVE_ACCOUNT }));
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -299,9 +349,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return !!(await this.mikroOrmRepository.findOne({ thirdPartyId } as any));
+				return !!(await this.mikroOrmRepository.findOne({ thirdPartyId, ...ACTIVE_ACCOUNT } as any));
 			case MultiORMEnum.TypeORM:
-				return !!(await this.typeOrmRepository.findOneBy({ thirdPartyId }));
+				return !!(await this.typeOrmRepository.findOneBy({ thirdPartyId, ...ACTIVE_ACCOUNT }));
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}

@@ -17,6 +17,7 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { RequestContext } from '../core/context';
 import { RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
+import { assertSensitiveRelationsAllowed } from './../core/util/sensitive-relations.helper';
 import { MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { RequestApproval } from './request-approval.entity';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
@@ -43,6 +44,10 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		filter: FindManyOptions<RequestApproval>,
 		findInput: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(filter);
+
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId } = findInput;
 
@@ -187,6 +192,11 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		relations: string[],
 		findInput?: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		// The relations are applied to the EMPLOYEE read below, so the table is walked from `Employee`.
+		assertSensitiveRelationsAllowed(this.typeOrmEmployeeRepository.metadata, relations);
+
 		// Get the current tenant ID and current user ID from the request context.
 		const currentUserId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();

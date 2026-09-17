@@ -271,6 +271,10 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	 * @returns
 	 */
 	async findAll(params: BaseQueryDTO<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(params);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { organizationId: mOrgId, languageCode: mLangCode } = params.where;

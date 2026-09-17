@@ -14,6 +14,7 @@ import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee, TimeOffPolicy } from './../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { assertCurrentUserBelongsToOrganization } from './../user-organization/assert-organization-membership';
 import { TimeOffBalance } from './time-off-balance.entity';
 import { MikroOrmTimeOffBalanceRepository } from './repository/mikro-orm-time-off-balance.repository';
 import { TypeOrmTimeOffBalanceRepository } from './repository/type-orm-time-off-balance.repository';
@@ -52,6 +53,13 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 		const { policyId, year, organizationId, page, limit } = input;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 		const employeeId = this.resolveVisibleEmployeeId(input.employeeId);
+
+		// Raw repository read: nothing injects the organization, and an undefined key is DROPPED from
+		// a TypeORM where object instead of matching nothing, so a missing organization would widen
+		// the listing to every organization of the tenant. `sentTo` on the query DTO suppresses the
+		// conditional `organizationId` presence AND membership validation, so the DTO cannot be relied
+		// on for either. Fail closed.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
 
 		const where: Record<string, unknown> = { tenantId, organizationId };
 
@@ -112,6 +120,9 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 		const { employeeId, policyId, year, accrued, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
+		// Same `sentTo` bypass as the listing: the body DTO may not have checked the organization at all.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
+
 		await this.assertEmployeeAndPolicyExist(employeeId, policyId, tenantId, organizationId);
 
 		const balance = await this.findOrCreate({ employeeId, policyId, year, tenantId, organizationId });
@@ -131,6 +142,10 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 	async deduct(input: ITimeOffBalanceAdjustInput): Promise<ITimeOffBalance> {
 		const { employeeId, policyId, year, days, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
+		// Same `sentTo` bypass as the listing: the body DTO may not have checked the organization at all.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
+
 		const updated = await this.applyDelta(employeeId, policyId, year, days, organizationId, tenantId, true);
 
 		if (updated === 0) {
@@ -153,6 +168,9 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 		const { employeeId, policyId, year, days, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
+		// Same `sentTo` bypass as the listing: the body DTO may not have checked the organization at all.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
+
 		await this.applyDelta(employeeId, policyId, year, days, organizationId, tenantId, false);
 
 		return this.getOrFail(employeeId, policyId, year, organizationId, tenantId);
@@ -171,6 +189,9 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 	async carryForward(input: ITimeOffBalanceCarryForwardInput): Promise<{ carried: number }> {
 		const { policyId, fromYear, toYear, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
+		// Same `sentTo` bypass as the listing: the body DTO may not have checked the organization at all.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
 
 		if (toYear <= fromYear) {
 			throw new BadRequestException('`toYear` must be later than `fromYear`');

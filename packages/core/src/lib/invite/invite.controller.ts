@@ -1,9 +1,7 @@
 import {
 	ICreateEmailInvitesOutput,
-	IInviteAcceptInput,
 	PermissionsEnum,
 	LanguagesEnum,
-	IOrganizationContactAcceptInviteInput,
 	IOrganizationContact,
 	IPagination,
 	IInvite,
@@ -46,6 +44,8 @@ import {
 	InviteResendCommand
 } from './commands';
 import {
+	AcceptInviteDTO,
+	AcceptOrganizationContactInviteDTO,
 	CreateInviteDTO,
 	RejectInviteDTO,
 	ResendInviteDTO,
@@ -199,8 +199,13 @@ export class InviteController {
 	})
 	@Public()
 	@Post('/accept')
+	// This route is unauthenticated and its body reaches `AuthService.register()` — the shared
+	// user-creation sink — so the whitelist is what decides which columns an invitee can write.
+	// Its `/validate` and `/validate-by-code` siblings have always done this; `/accept`, the one
+	// that actually creates rows, was the route left without a pipe.
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async acceptInvitation(
-		@Body() entity: IInviteAcceptInput,
+		@Body() entity: AcceptInviteDTO,
 		@Headers('origin') origin: string,
 		@I18nLang() languageCode: LanguagesEnum
 	) {
@@ -248,13 +253,18 @@ export class InviteController {
 	})
 	@Post('/contact')
 	@Public()
+	// Unauthenticated, and its body reaches `AuthService.register()` and `OrganizationService.create()`.
+	// The whitelist is what keeps `user.organizations` (a cascading relation) and every other
+	// undeclared column out of those sinks — the same reason `/accept` above carries one.
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async acceptOrganizationContactInvite(
-		@Body() input: IOrganizationContactAcceptInviteInput,
+		@Body() input: AcceptOrganizationContactInviteDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<any> {
-		input.originalUrl = request.get('Origin');
-		return await this.commandBus.execute(new InviteAcceptOrganizationContactCommand(input, languageCode));
+		return await this.commandBus.execute(
+			new InviteAcceptOrganizationContactCommand({ ...input, originalUrl: request.get('Origin') }, languageCode)
+		);
 	}
 
 	/**

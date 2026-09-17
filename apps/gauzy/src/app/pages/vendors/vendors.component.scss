@@ -176,28 +176,22 @@
 // lays its row out in columns. A bare `.row` here would have redesigned three
 // pages that were not asked about.
 //
-// THE CELL GUTTER, and why it is declared here rather than in the template.
-//
-// The cells used to carry Bootstrap's `p-0`. Every Bootstrap utility is
-// `!important` — `.p-0 { padding: 0 !important }` — so no gutter could be added
-// to these columns from a stylesheet at ANY specificity, and the grid had none:
+// THE CELL GUTTER is Bootstrap's own. The cells used to carry `p-0`, and every
+// Bootstrap utility is `!important` — `.p-0 { padding: 0 !important }` — so no
+// gutter could be added to these columns from a stylesheet at ANY specificity:
 // the website's ellipsis ended one pixel before the first tag chip began, and
 // "Phone" and "Email" were two headings with nothing between them. The template
-// drops `p-0`; this replaces it, which is what makes a per-edge value possible.
+// drops `p-0`, which is what lets the grid's own COLUMN PADDING apply: on
+// Bootstrap 4.6 (this app's version) a `.col-*` carries a fixed 15px either side
+// and the `.row` pulls the outer pair back with a -15px margin. There is no
+// gutter custom property to reach for here — `--bs-gutter-x` is Bootstrap 5 — so
+// the value is the framework's and is changed by overriding the padding, not by
+// setting a variable.
 //
-// Zero leading, 1rem trailing. A Bootstrap `.row` bleeds 15px past its container
-// through negative margins, and the row's own 1.125rem gutter is sized to cover
-// exactly that (see the `card-list-page()` call above) — so a leading pad would
-// push the first cell off the edge that establishes, and the last column needs
-// no trailing edge of its own. 1rem matches what a smart-table cell gets from
-// `--gauzy-table-cell-padding-x` on either side of its border.
-:host .vendor-row > [class*='col-'] {
-  padding-inline: 0 1rem;
-}
-
-:host .vendor-row > [class*='col-']:last-child {
-  padding-inline-end: 0;
-}
+// A hand-written `padding-inline: 0 1rem` pair used to sit here in its place. It
+// is gone: a literal that had to be kept in step by eye with the row's own
+// gutter and with the cell padding it was copied from, for a spacing the grid
+// already provides.
 
 // The name is the row's identity: it is the only value every vendor has, the
 // one the list is scanned by, and the one the row is selected by. At the same

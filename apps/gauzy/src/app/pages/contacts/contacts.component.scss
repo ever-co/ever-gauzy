@@ -1,4 +1,5 @@
 @use '@shared/_pg-card' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 /*
  * REMOVED: the `.contact-list` block (`.member-card`, `.contact-info`,
@@ -52,3 +53,12 @@
     flex: 0 0 auto;
   }
 }
+
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Customers, Clients, Leads and Visitors all render this component, and all four
+// take the same table treatment as Invoices: density tokens, the table surface,
+// row hover/selection, the tag-chip stack, the status pills, the pager and the
+// toolbar scale. The buttons sit in `nb-card-header`, so the default `$actions`
+// selector reaches them.
+@include ga-hub.list-page();

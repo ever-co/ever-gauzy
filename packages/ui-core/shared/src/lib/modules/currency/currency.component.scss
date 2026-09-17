@@ -1,5 +1,26 @@
-::ng-deep {
-	ng-dropdown-panel.currency-selector {
-		width: auto !important;
-	}
+// The panel is sized by ng-select itself: appended to `<body>`, it writes
+// `width: <trigger>px; min-width: <trigger>px` inline, so it lines up with the
+// field it belongs to.
+//
+// This file used to force `width: auto !important` on it, which — together with
+// that inline `min-width` — made the panel "at least as wide as the trigger, and
+// as wide as the longest currency name", i.e. a popup wider than its own input
+// on every form in the app. It was also redundant by the time it broke:
+// `_overrides.scss` declares the same `width: auto !important` for every
+// appended panel at a far higher specificity, so this rule had long stopped
+// being what decided anything.
+//
+// `currency-selector` is now in that rule's opt-out list (see the note there),
+// which is what keeps the inline width — and the alignment — intact. The class
+// has to stay on the `<ng-select>` in the template for that to work: ng-select
+// copies a select's classes onto the appended panel, and that is the only way a
+// body-level selector can tell one panel from another.
+//
+// Both ends of the control then ellipsize instead of widening. The rows get that
+// from ng-select's own sheet; the trigger does not, so it is set here — without
+// it a long name is simply cut off mid-word by the container's `overflow: hidden`.
+::ng-deep .currency-selector.ng-select-single .ng-select-container .ng-value {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }

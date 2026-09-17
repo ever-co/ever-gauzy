@@ -4,6 +4,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../../../core';
 import { ImportRecordFindOrFailCommand } from './../../../import-record';
+import { ExportEntityClass, omitExportRedactionPlaceholders } from '../../../export-redact.decorator';
 import { ImportEntityFieldMapOrCreateCommand } from './../import-entity-field-map-or-create.command';
 
 @CommandHandler(ImportEntityFieldMapOrCreateCommand)
@@ -33,9 +34,12 @@ export class ImportEntityFieldMapOrCreateHandler implements ICommandHandler<Impo
 				);
 				if (success && record) {
 					const { destinationId } = record;
+					// This row was imported before, so this is an UPDATE of a live row. An export
+					// archive carries placeholders where credentials were (GHSA-j5h5-r956-rxc3); writing
+					// them back would replace working tokens and password digests with masks and nulls.
 					return await repository.save({
 						id: destinationId,
-						...entity
+						...omitExportRedactionPlaceholders(repository.metadata.target as ExportEntityClass, entity)
 					});
 				}
 				throw new NotFoundException(`The import record was not found`);

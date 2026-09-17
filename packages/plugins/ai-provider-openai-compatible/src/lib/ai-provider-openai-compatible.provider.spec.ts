@@ -1,5 +1,29 @@
+import { importEsm } from '@gauzy/plugin-ai-chat';
 import type { IAiProviderCredentials } from '@gauzy/plugin-ai-chat';
 import { openAiCompatibleProviderDefinition } from './ai-provider-openai-compatible.provider';
+
+// `createModel` loads the AI SDK through `importEsm`; stubbing only that loader lets a spec inspect the
+// options handed to the SDK factory while every other helper (the SSRF guard included) stays real.
+jest.mock('@gauzy/plugin-ai-chat', () => ({
+	...jest.requireActual('@gauzy/plugin-ai-chat'),
+	importEsm: jest.fn()
+}));
+const importEsmMock = importEsm as unknown as jest.Mock;
+
+// The SSRF egress guard resolves the provider host before the mocked `fetch` answers. Answer that
+// lookup with a fixed public address, so no case waits on — or depends on — real DNS.
+jest.mock('dns', () => ({
+	...jest.requireActual('dns'),
+	lookup: (_hostname: string, _options: unknown, callback: (error: null, addresses: unknown) => void) =>
+		callback(null, [{ address: '93.184.215.14', family: 4 }])
+}));
+
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('../../../ai-chat/src/lib/ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
 
 /**
  * The generic OpenAI-compatible provider has NO vendor host: everything hangs off the tenant's
@@ -81,5 +105,41 @@ describe('openAiCompatibleProviderDefinition', () => {
 		await expect(
 			openAiCompatibleProviderDefinition.createModel('', credentials({ baseUrl: 'http://localhost:11434/v1' }))
 		).rejects.toThrow(/no default model/);
+	});
+
+	describe('chat traffic to a tenant base URL (GHSA-w3mx-m5cr-3gxp)', () => {
+		const sdkFactory = () => {
+			const factory = jest.fn().mockReturnValue({ chatModel: jest.fn().mockReturnValue({}) });
+			importEsmMock.mockResolvedValue({ createOpenAICompatible: factory });
+			return factory;
+		};
+
+		it('hands the SDK a guarded fetch, so a chat turn cannot reach an internal host', async () => {
+			const factory = sdkFactory();
+			await openAiCompatibleProviderDefinition.createModel(
+				'llama3',
+				credentials({ baseUrl: 'http://metadata.example.com/v1' })
+			);
+
+			const { fetch: sdkFetch } = factory.mock.calls[0][0] as { fetch?: typeof fetch };
+			expect(typeof sdkFetch).toBe('function');
+
+			// This spec's `dns.lookup` answers with a public address, so use a literal internal target.
+			const fetchMock = capture({});
+			await expect(
+				sdkFetch!('http://169.254.169.254/latest/meta-data/chat/completions', { method: 'POST' })
+			).rejects.toThrow(/not allowed/);
+			expect(fetchMock).not.toHaveBeenCalled();
+		});
+
+		it('leaves an operator-configured endpoint on the SDK default transport', async () => {
+			const factory = sdkFactory();
+			await openAiCompatibleProviderDefinition.createModel(
+				'llama3',
+				credentials({ baseUrl: 'http://localhost:11434/v1', source: 'environment' })
+			);
+
+			expect(factory.mock.calls[0][0].fetch).toBeUndefined();
+		});
 	});
 });

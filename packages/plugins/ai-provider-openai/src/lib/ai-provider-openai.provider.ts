@@ -4,9 +4,11 @@ import {
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	IAiTranscribeOptions,
+	createAiProviderSdkFetch,
 	createCatalogueCache,
 	fetchCatalogueJson,
 	importEsm,
+	isPrivateAiProviderEndpointAllowed,
 	keyedCatalogue,
 	mergeCatalogue,
 	prettifyModelId,
@@ -136,7 +138,8 @@ const transcribeAudio = async (
 		model: options?.model || DEFAULT_SPEECH_MODEL,
 		language: options?.language,
 		providerLabel: 'OpenAI',
-		providerId: PROVIDER_ID
+		providerId: PROVIDER_ID,
+		allowPrivateHost: isPrivateAiProviderEndpointAllowed(credentials)
 	});
 
 /**
@@ -171,7 +174,9 @@ export const openAiProviderDefinition: IAiChatProviderDefinition = {
 		const { createOpenAI } = await importEsm<typeof import('@ai-sdk/openai')>('@ai-sdk/openai');
 		const provider = createOpenAI({
 			apiKey: credentials.apiKey,
-			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
+			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {}),
+			// A tenant base URL gets the SSRF egress guard on chat traffic too (GHSA-w3mx-m5cr-3gxp).
+			fetch: createAiProviderSdkFetch(credentials)
 		});
 		return provider(modelId);
 	},
@@ -190,7 +195,9 @@ export const openAiProviderDefinition: IAiChatProviderDefinition = {
 		const { createOpenAI } = await importEsm<typeof import('@ai-sdk/openai')>('@ai-sdk/openai');
 		const provider = createOpenAI({
 			apiKey: credentials.apiKey,
-			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
+			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {}),
+			// A tenant base URL gets the SSRF egress guard on chat traffic too (GHSA-w3mx-m5cr-3gxp).
+			fetch: createAiProviderSdkFetch(credentials)
 		});
 		return provider.textEmbeddingModel(modelId);
 	}
