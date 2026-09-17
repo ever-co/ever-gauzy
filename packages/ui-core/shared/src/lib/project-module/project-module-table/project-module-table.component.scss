@@ -1,4 +1,5 @@
 @forward 'gauzy/_gauzy-table';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 :host ngx-gauzy-button-action ::ng-deep {
     .transition-container span {
@@ -8,3 +9,14 @@
         padding-top: 0;
     }
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// A project's modules are the same table as the Projects list this component is
+// reached from, so they take the same block: density tokens, the table surface,
+// row hover/selection, the tag-chip stack, the status pills and the toolbar
+// scale.
+//
+// `$actions` is the toolbar itself — this component has no `nb-card-header`; its
+// root is a plain `.main-wrapper` div. There is no pager on this table, so the
+// pager half of the block simply matches nothing.
+@include ga-hub.list-page('.gauzy-button-container');

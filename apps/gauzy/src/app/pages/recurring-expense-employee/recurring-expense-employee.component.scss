@@ -1,4 +1,5 @@
 @use 'gauzy/_gauzy-table' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 // Removed `.setting-name` (font-size 24px / bold) and `.body-header` (flex row,
 // margin-bottom 35px). This stylesheet is emitted for exactly two templates —
@@ -103,8 +104,10 @@
 // `.setting-name` and `.body-header`, matched nothing in either template that
 // uses this stylesheet.
 //
-// The rows are laid out with fixed column widths (~57rem), so this really does
-// need to scroll sideways on a narrow viewport; what it does NOT need is
+// The rows are laid out with fixed column widths — about 41rem for the employee
+// list and 28rem for the organization one, off the `--gauzy-recurring-col*`
+// properties at the foot of this file — so this can still need to scroll
+// sideways on a narrow viewport; what it does NOT need is
 // `overflow-x: scroll`, which reserves a scrollbar gutter unconditionally. With
 // `auto` the bar only exists when there is something to scroll, and the two
 // hide-the-bar declarations now cover Firefox as well as WebKit rather than
@@ -129,4 +132,148 @@
 .history {
   align-items: center;
   gap: 8px;
+}
+
+// ── The list-page contract ───────────────────────────────────────────────────
+// Both Recurring Expenses pages take this block: Employees > Recurring Expenses
+// directly, and Organization > Recurring Expenses through the `@forward` in
+// `expense-recurring.component.scss`. The two templates differ by one column and
+// are otherwise the same markup.
+//
+// That markup is a list built BY HAND — a `.sub-header` band of column labels
+// over a `.table-scroll` of `ga-recurring-expense-block` rows — so neither
+// `list-page()` (anchored on `angular2-smart-table`) nor `card-list-page()`
+// (anchored on `.table-scroll-container`) ever reached it. What that left: 84px
+// rows, each a separately floating card with its own fill, radius and 8px bottom
+// margin, 14px values under a 0.75rem-padded `gauzy-card-3` label slab, and a
+// toolbar at full size — the last two lists in these sections still drawn the
+// way the whole app was before the density pass.
+//
+// The row component is styled from its own sheet rather than reached with
+// `::ng-deep` from here: `ga-recurring-expense-block` has exactly two consumers
+// and they are the two pages this file serves, so there is no third caller for a
+// page-scoped override to protect. It reads the density tokens below, which
+// inherit into it — the same way `ngx-people-list` and `ngx-created-by-user`
+// already size themselves.
+
+:host {
+  @include ga-hub.density-tokens();
+
+  // ── The three metrics the label band and the rows MUST agree on ────────────
+  // They are custom properties, and on `:host`, for one reason: the labels are
+  // in this component's template and the values are in
+  // `recurring-expense-block.component.scss`, so a literal would have to be
+  // written twice in two files and kept in step by hand. That is exactly how the
+  // page arrived here — `42px`, `11rem` and `17.5rem` were each spelled out in
+  // both places.
+  //
+  // The inset was 42px, room for a selection rail and a settings fly-out; the
+  // rail is 3px now (see below) and the fly-out is `display: none`.
+  --gauzy-recurring-row-inset: 0.5rem;
+  --gauzy-recurring-col: 8rem;
+  --gauzy-recurring-col-big: 12rem;
+}
+
+:host nb-card-header {
+  @include ga-hub.page-header-buttons();
+}
+
+// ── One surface, around the labels AND the rows ──────────────────────────────
+// On `.container` rather than on `.table-scroll`, which is the only interesting
+// choice here: the label band is a `thead` in everything but markup, and a
+// surface that started below it would have left the header outside the frame it
+// labels. `.container` is the one element that wraps both.
+//
+// `.table-scroll` inside it keeps the scrolling, in both axes, exactly as before;
+// the ring is on the box around it, so it stays put rather than scrolling with
+// the rows.
+:host .container {
+  @include ga-hub.surface();
+
+  // A flex column, so the list below can take exactly the room this surface has
+  // rather than guessing at it — see the note on `.table-scroll`.
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+// ── The label band, as the table header it already is ────────────────────────
+// It was a `gauzy-card-3` slab with a radius and 0.75rem of padding, i.e. a
+// second surface sitting on the first, with labels at the body size. Now: the
+// header type scale, the header padding, and the hairline that separates a
+// `thead` from the rows under it.
+//
+// The transparent 3px leading edge matches the selection rail the rows reserve,
+// so a label and the value under it start at the same x — the alignment the old
+// pair of hand-matched 18px / 42px insets was trying to hold.
+:host .sub-header.header-content {
+  // The fixed part of the column: a `thead` is not what should give way when the
+  // card is short.
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--gauzy-table-header-padding-y, 0.3125rem) var(--gauzy-table-header-padding-x, 0.4375rem);
+  border-inline-start: 3px solid transparent;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: inset 0 -1px 0 0 var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  font-size: var(--gauzy-table-header-font-size, 0.75rem);
+  font-weight: 600;
+  line-height: var(--gauzy-table-header-line-height, 0.8125rem);
+  color: var(--gauzy-text-color-2, var(--text-hint-color, rgba(113, 113, 122, 1)));
+}
+
+// SPECIFICITY: the rules these replace are `[dir=ltr]` / `[dir=rtl]` pairs at
+// (0,3,0), so naming both classes on the band is what carries these past them.
+:host .sub-header.header-content .header-info {
+  @include nb-ltr(padding-left, var(--gauzy-recurring-row-inset));
+  @include nb-rtl(padding-right, var(--gauzy-recurring-row-inset));
+}
+
+:host .sub-header.header-content .block .block-item {
+  width: var(--gauzy-recurring-col);
+}
+
+:host .sub-header.header-content .block .block-item-big {
+  width: var(--gauzy-recurring-col-big);
+}
+
+// ── The scroll port ──────────────────────────────────────────────────────────
+// The 18px leading pad was there to line the cards up under the label band's own
+// 18px margin; both are gone, and the rows now carry their inset themselves.
+//
+// `height: calc(100vh - 23.5rem)` goes with them. That number was an estimate of
+// the chrome above this list, and the label band is a good deal shorter than it
+// was when the estimate was taken — the list would now stop several rem short of
+// the surface's bottom edge, leaving a band of empty ring under the last row. As
+// a flex child it takes exactly the room the surface has, which is both accurate
+// and immune to the next change above it; `min-height: 0` because a flex child
+// that is itself a scroll port defaults to `min-height: auto` and would
+// otherwise refuse to shrink below its content.
+:host .table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+}
+
+// The Employee column's avatar chip, at the Invoices scale. `ngx-avatar` pins a
+// 20px image inside a pill padded 3px — 26px of chip, 2px short of the 28px the
+// Invoices Contact column costs its row — so only that inset is restated; the
+// image and the name are the renderer's own.
+//
+// Reached through `.table-scroll` for the specificity: the avatar nests its
+// rules under `:host-context(.report-table)`, which shims to (0,4,0), and that
+// wrapper — this component's own element, so it carries this component's content
+// attribute — is what takes the block past it without `!important`.
+:host .table-scroll ::ng-deep {
+  @include ga-hub.avatar-chip();
+}
+
+// The empty state stands in for the list INSIDE that frame now, rather than
+// floating on the card body, so it must not be taller than the box framing it.
+// `max-height: 100%` bounds it wherever the parent has a definite height and
+// resolves to `none` where it does not — the same treatment `.card-scroll` gets
+// in `styles/_overrides.scss`.
+:host .container .no-data {
+  max-height: 100%;
 }
