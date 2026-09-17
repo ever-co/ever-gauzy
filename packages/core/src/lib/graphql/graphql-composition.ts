@@ -45,12 +45,18 @@ export const GRAPHQL_ROOT_TYPE_NAMES: readonly string[] = ['Query', 'Mutation', 
 
 /**
  * The kernel SDL files, relative to the kernel directory.
+ *
+ * The error contract is documented beside these in `error-contract.md` rather than as an SDL file.
+ * It was one, and it declared nothing — deliberately, because a GraphQL error travels in the
+ * `errors` array's `extensions` and is not part of the schema at all. But the loader merges every
+ * `.gql` under a `schema` directory, and a document with no definitions is a parse error, so a file
+ * that existed to hold prose stopped the schema from composing and the GraphQL module from starting.
+ * Documentation that the loader must skip is documentation in the wrong place, so it is Markdown.
  */
 export const GRAPHQL_KERNEL_SDL_FILES: readonly string[] = [
 	'common.type.gql',
 	'pagination.type.gql',
-	'filter.type.gql',
-	'error.type.gql'
+	'filter.type.gql'
 ];
 
 /**
@@ -88,7 +94,9 @@ export const GRAPHQL_KERNEL_TYPE_FILES: Readonly<Record<string, string>> = {
 	DateTimeFilter: 'filter.type.gql',
 	JSONFilter: 'filter.type.gql',
 	TenantFilter: 'filter.type.gql'
-	// error.type.gql declares no type on purpose: the error contract travels in `extensions`.
+	// No entry for the error contract: it declares no type, because an error travels in the
+	// `errors` array's `extensions` rather than in the schema. It is documented in
+	// `schema/error-contract.md`, which the loader does not read.
 };
 
 /**
