@@ -8,6 +8,7 @@ import {
 import {
 	ColumnIndex,
 	ExportRedacted,
+	maskEmbeddedSecret,
 	MultiORMColumn,
 	MultiORMEntity,
 	TenantOrganizationBaseEntity
@@ -95,6 +96,14 @@ export class DocumentInboundAddress extends TenantOrganizationBaseEntity impleme
 	 */
 	@ApiProperty({ type: () => String })
 	@IsString()
+	// A PLATFORM address is `docs-<token>@domain`: it embeds the token, and "the address itself is the
+	// credential" (InboundAddressService), so masking `token` alone would leave it in the archive. Only
+	// the token part is masked, keeping the domain readable; anything not explicitly CUSTOM_DOMAIN (a
+	// chosen, guessable local part that grants nothing without DNS proof) is treated as PLATFORM.
+	@ExportRedacted<DocumentInboundAddress>({
+		when: (it) => it.kind !== DocumentInboundAddressKindEnum.CUSTOM_DOMAIN,
+		mask: (value, it) => maskEmbeddedSecret(value, it.token)
+	})
 	@ColumnIndex('IDX_document_inbound_address_address', { unique: true })
 	@MultiORMColumn({ type: 'varchar', length: 320 })
 	address: string;

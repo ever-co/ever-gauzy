@@ -33,6 +33,7 @@ import * as fsp from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { ImportService } from './import.service';
+import { generateImportArchiveFileName } from './import-archive-file-name';
 
 /**
  * Builds a ZIP holding a single `user.csv` and returns its bytes.
@@ -82,13 +83,31 @@ function buildService(): { service: ImportService; imported: Record<string, unkn
 	return { service, imported };
 }
 
+/**
+ * The uploaded archive is a full tenant data dump and is kept for re-download. It must not sit at a
+ * name anybody can guess, nor at one `serve-static` would hand out under `/public/`.
+ */
+describe('generateImportArchiveFileName', () => {
+	it('is an unguessable dotfile ZIP name', () => {
+		const name = generateImportArchiveFileName();
+
+		// The old default was `import-<unix-seconds>-<0..999>.zip`: ~10 bits of guessing per second.
+		expect(name).toMatch(/^\.import-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.zip$/);
+		expect(name).not.toMatch(/import-\d{10}-\d{1,3}\.zip$/);
+	});
+
+	it('never repeats', () => {
+		const names = new Set(Array.from({ length: 200 }, () => generateImportArchiveFileName()));
+		expect(names.size).toBe(200);
+	});
+});
+
 describe('ImportService', () => {
 	const created: string[] = [];
 
 	beforeEach(async () => {
 		getFile.mockReset();
 		deleteFile.mockReset();
-		deleteFile.mockResolvedValue(undefined);
 		getFile.mockImplementation(async (key: string) => {
 			// A real upload is fetched over the network or off disk; yield like one.
 			await new Promise((resolve) => setTimeout(resolve, 5));
@@ -114,6 +133,18 @@ describe('ImportService', () => {
 			expect(extractPath.startsWith(os.tmpdir())).toBe(true);
 			expect(extractPath).not.toMatch(/[\\/]public[\\/]/);
 			expect(fs.existsSync(extractPath)).toBe(true);
+		});
+
+		it('creates the extraction directory owner-only (0700)', async () => {
+			const { service } = buildService();
+			const extractPath = await service.createExtractDirectory();
+			created.push(extractPath);
+
+			if (process.platform === 'win32') {
+				// POSIX permission bits are not meaningful on Windows; the ACL of %TEMP% applies instead.
+				return;
+			}
+			expect((await fsp.stat(extractPath)).mode & 0o777).toBe(0o700);
 		});
 
 		it('gives concurrent imports different directories', async () => {
@@ -169,6 +200,18 @@ describe('ImportService', () => {
 			expect(fs.existsSync(path.join(dirB, 'user.csv'))).toBe(true);
 		});
 
+		it('never deletes the uploaded archive — the Import page downloads it again', async () => {
+			const { service } = buildService();
+			const dir = await service.createExtractDirectory();
+			created.push(dir);
+
+			await service.unzipAndParse(dir, 'import/tenant-a.zip');
+			await service.removeExtractedFiles(dir);
+
+			expect(deleteFile).not.toHaveBeenCalled();
+			expect((service as any).removeUploadedArchive).toBeUndefined();
+		});
+
 		it('removes every extracted file of an archive', async () => {
 			const { service } = buildService();
 			const dir = await service.createExtractDirectory();
@@ -196,21 +239,6 @@ describe('ImportService', () => {
 			).resolves.toBeUndefined();
 
 			removeSpy.mockRestore();
-		});
-
-		it('deletes the uploaded archive, and survives a storage failure', async () => {
-			const { service } = buildService();
-
-			await service.removeUploadedArchive('import/tenant-a.zip');
-			expect(deleteFile).toHaveBeenCalledWith('import/tenant-a.zip');
-
-			deleteFile.mockRejectedValueOnce(new Error('no such key') as never);
-			await expect(service.removeUploadedArchive('import/gone.zip')).resolves.toBeUndefined();
-
-			// Nothing to delete, nothing attempted.
-			deleteFile.mockClear();
-			await service.removeUploadedArchive('');
-			expect(deleteFile).not.toHaveBeenCalled();
 		});
 	});
 });

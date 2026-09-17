@@ -66,6 +66,8 @@ export class ImportService {
 	 * @returns Absolute path of the new, empty extraction directory.
 	 */
 	public async createExtractDirectory(): Promise<string> {
+		// `mkdtemp` creates the directory owner-only (0700) on POSIX, so other local users of a shared
+		// `/tmp` cannot read the extracted CSVs; the controller removes it in a `finally`.
 		return await fsp.mkdtemp(path.join(os.tmpdir(), 'gauzy-import-'));
 	}
 
@@ -83,27 +85,6 @@ export class ImportService {
 			await fsp.rm(extractPath, { recursive: true, force: true });
 		} catch (error) {
 			this.logger.error(`Failed to remove import extraction directory ${extractPath}`, error?.stack);
-		}
-	}
-
-	/**
-	 * Deletes the uploaded archive once it has been processed. Best effort; never throws.
-	 *
-	 * The upload is a full tenant data dump, and the local provider stores it under the
-	 * unauthenticated `/public/` root with a low-entropy `import-<unix-seconds>-<0..999>.zip` name,
-	 * where it used to stay forever. `ImportHistory.path` keeps the key for audit; nothing reads the
-	 * file back.
-	 *
-	 * @param key - Storage key of the uploaded archive.
-	 */
-	public async removeUploadedArchive(key: string): Promise<void> {
-		if (!key) {
-			return;
-		}
-		try {
-			await new FileStorage().getProvider().deleteFile(key);
-		} catch (error) {
-			this.logger.error(`Failed to remove uploaded import archive ${key}`, error?.stack);
 		}
 	}
 

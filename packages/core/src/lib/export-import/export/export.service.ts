@@ -77,17 +77,31 @@ export class ExportService {
 	 * intermediate CSV and the finished ZIP used to be downloadable over HTTP for as long as they
 	 * existed — and forever when a request failed before the delete step.
 	 *
+	 * `mkdtemp` creates the directory owner-only (0700) on POSIX, so other local users of a shared
+	 * `/tmp` cannot list or read another tenant's CSVs; the `csv` subdirectory is created 0700 too.
+	 *
+	 * If setup fails after the scratch root exists, the root is removed before the error propagates:
+	 * the caller never receives a job handle in that case, so nothing else could clean it up.
+	 *
 	 * @returns The job handle to thread through the rest of the export.
 	 */
 	async createExportJob(): Promise<IExportJob> {
 		const id = uuidv4();
 		const workDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'gauzy-export-'));
-		const csvDir = path.join(workDir, 'csv');
-		await fsp.mkdir(csvDir, { recursive: true });
 
-		const archiveName = `${id}_export.zip`;
+		try {
+			const csvDir = path.join(workDir, 'csv');
+			await fsp.mkdir(csvDir, { recursive: true, mode: 0o700 });
 
-		return { id, workDir, csvDir, archivePath: path.join(workDir, archiveName), archiveName };
+			const archiveName = `${id}_export.zip`;
+
+			return { id, workDir, csvDir, archivePath: path.join(workDir, archiveName), archiveName };
+		} catch (error) {
+			await fsp.rm(workDir, { recursive: true, force: true }).catch((cleanupError) => {
+				this.logger.error(`Failed to remove export scratch directory ${workDir}`, cleanupError?.stack);
+			});
+			throw error;
+		}
 	}
 
 	/**
@@ -418,12 +432,47 @@ export class ExportService {
 
 					const items = await repository.manager.query(sql);
 					if (isNotEmpty(items)) {
-						// Junction rows are raw SQL results holding only the two foreign keys, so
-						// there is no entity class to resolve redaction marks against and nothing
-						// secret to redact.
+						// Junction rows are raw SQL results with no entity class to resolve redaction
+						// marks against, so they bypass `redactRows`. That is only safe while they hold
+						// nothing but the junction's own foreign-key columns — enforced, not assumed.
+						this.assertJunctionRowsOnly(item.junctionEntityMetadata, referenceTableName, items);
 						await this.csvWriter(job, referenceTableName, items);
 					}
 				}
+			}
+		}
+	}
+
+	/**
+	 * Refuses to write junction rows that carry anything besides the junction table's own columns.
+	 *
+	 * `exportRelationalTables` selects `<junction>.*` as raw SQL and cannot redact, because there is no
+	 * entity class behind the rows. Today a many-to-many junction holds only its two foreign keys; if a
+	 * future junction (or a mis-resolved table name) returns other columns, fail closed rather than
+	 * write them without redaction.
+	 *
+	 * @param junction - Metadata of the junction entity the rows should belong to.
+	 * @param tableName - The table the rows were read from, for the error message.
+	 * @param rows - The raw rows returned by the query.
+	 * @throws TypeError when a row carries a column the junction does not declare as a foreign key.
+	 */
+	assertJunctionRowsOnly(
+		junction: { columns: ColumnMetadata[] } | undefined,
+		tableName: string,
+		rows: Record<string, unknown>[]
+	): void {
+		const allowed = new Set(
+			(junction?.columns ?? [])
+				.filter((column: ColumnMetadata) => column.relationMetadata || column.referencedColumn)
+				.map((column: ColumnMetadata) => column.databaseName)
+		);
+
+		for (const row of rows) {
+			const unexpected = Object.keys(row).filter((key) => !allowed.has(key));
+			if (unexpected.length > 0) {
+				throw new TypeError(
+					`Refusing to export junction table "${tableName}": unexpected column(s) ${unexpected.join(', ')} cannot be redacted`
+				);
 			}
 		}
 	}

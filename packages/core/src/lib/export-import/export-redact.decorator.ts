@@ -1,4 +1,4 @@
-import { isFunction, isNotEmpty } from '@gauzy/utils';
+import { isFunction } from '@gauzy/utils';
 import { maskSecret } from '../core/decorators/is-secret';
 
 /**
@@ -39,7 +39,30 @@ export interface IExportRedactOptions<T = any> {
 	 * refresh token), where it only ever gives an attacker free characters, so those blank instead.
 	 */
 	blank?: boolean;
+
+	/**
+	 * Write a fixed-length mask ({@link OPAQUE_EXPORT_MASK}) that discloses neither the value's length
+	 * nor a trailing hint.
+	 *
+	 * For user-chosen credentials in NOT NULL columns — an SMTP username and password. The default
+	 * mask keeps the exact length and, from 12 characters up, the last four characters: a real head
+	 * start for an offline guess at a human-picked password. `blank` would avoid that too, but an empty
+	 * cell imports as `null` and a NOT NULL column then refuses the whole row. Ignored when `blank` is set.
+	 */
+	opaque?: boolean;
+
+	/**
+	 * Builds the redacted value from the row, for a column that EMBEDS a secret rather than being one —
+	 * a `PLATFORM` inbound address `docs-<token>@domain`, whose token is the credential.
+	 *
+	 * Use {@link maskEmbeddedSecret} to write it. Ignored when `blank` is set; takes precedence over
+	 * `opaque`. A mask function that throws falls back to the default full mask.
+	 */
+	mask?: (value: unknown, row: T) => string;
 }
+
+/** What an `opaque` mark writes in place of the value. Matches the shape {@link maskSecret} produces. */
+export const OPAQUE_EXPORT_MASK = '********';
 
 /** A single mark, as stored in metadata. */
 interface IExportRedactMark<T = any> extends IExportRedactOptions<T> {
@@ -176,6 +199,115 @@ function isSecretValue(mark: IExportRedactOptions, row: unknown): boolean {
 }
 
 /**
+ * The value an export writes in place of a secret, per the mark's options.
+ */
+function redactValue(mark: IExportRedactOptions, value: unknown, row: unknown): string {
+	if (mark.blank) {
+		return '';
+	}
+	if (mark.mask) {
+		try {
+			return mark.mask(value, row);
+		} catch {
+			return maskSecret(value);
+		}
+	}
+	return mark.opaque ? OPAQUE_EXPORT_MASK : maskSecret(value);
+}
+
+/**
+ * Masks every occurrence of a secret inside a larger value, leaving the rest readable.
+ *
+ * Fails closed: when the secret is absent or does not occur in the value, the WHOLE value is masked,
+ * because nothing then shows which part of it is safe to keep.
+ *
+ * @param value - The value embedding the secret (e.g. `docs-<token>@inbound.example.com`).
+ * @param secret - The secret embedded in it (e.g. the token).
+ * @returns The value with each occurrence of the secret masked.
+ */
+export function maskEmbeddedSecret(value: unknown, secret: unknown): string {
+	const text = String(value ?? '');
+	const embedded = typeof secret === 'string' ? secret : '';
+	if (!embedded || !text.toLowerCase().includes(embedded.toLowerCase())) {
+		return maskSecret(text);
+	}
+	const masked = maskSecret(embedded);
+	let result = '';
+	let cursor = 0;
+	const haystack = text.toLowerCase();
+	const needle = embedded.toLowerCase();
+	for (let index = haystack.indexOf(needle); index !== -1; index = haystack.indexOf(needle, cursor)) {
+		result += text.slice(cursor, index) + masked;
+		cursor = index + embedded.length;
+	}
+	return result + text.slice(cursor);
+}
+
+/**
+ * Whether a value is genuinely absent: `null`, `undefined` or the empty string — and nothing else.
+ *
+ * @param value - The column value.
+ * @returns `true` only for a value there is nothing to mask in.
+ */
+function isAbsentValue(value: unknown): boolean {
+	return value === null || value === undefined || value === '';
+}
+
+/**
+ * The exact shape {@link maskSecret} produces: one or more mask characters, then at most the four
+ * characters of trailing hint.
+ */
+const MASKED_VALUE_PATTERN = /^\*+[^*]{0,4}$/;
+
+/** A run of mask characters inside a larger value, as {@link maskEmbeddedSecret} writes it. */
+const EMBEDDED_MASK_PATTERN = /\*{4,}/;
+
+/**
+ * Removes the placeholders an export archive carries in place of redacted values, so a re-import does
+ * not write them over the live values they stand for.
+ *
+ * An archive produced by {@link redactForExport} holds `****abcd` where an invoice's public-link token
+ * was, and an empty cell where a password digest was. Importing that archive back into the tenant it
+ * came from UPDATES the rows it already mapped (`ImportEntityFieldMapOrCreateHandler`), so without this
+ * step every such row would lose its working credential: public invoice links stop verifying, and every
+ * user's password digest is replaced with `null`.
+ *
+ * A property is dropped only when BOTH hold, so a real value supplied in a hand-built CSV still imports:
+ *
+ * - the column carries a mark that applies to this row (the same `when` predicate the export used), and
+ * - the value is what the export writes for it — empty for a `blank` mark, a value containing a run
+ *   of mask characters for a `mask` mark, and a bare mask for any other.
+ *
+ * @param entity - The entity class the row belongs to. When it is not a class nothing can be known
+ *                 about its marks, and the row is returned unchanged.
+ * @param row - The mapped import row.
+ * @returns A shallow copy of `row` without the redaction placeholders.
+ */
+export function omitExportRedactionPlaceholders<T extends object>(entity: ExportEntityClass, row: T): Partial<T> {
+	const copy = { ...row } as Record<string, unknown>;
+	if (!isFunction(entity)) {
+		return copy as Partial<T>;
+	}
+
+	for (const [property, mark] of getExportRedactedProperties(entity)) {
+		if (!(property in copy) || !isSecretValue(mark, row)) {
+			continue;
+		}
+		const value = copy[property];
+		const isPlaceholder = mark.blank
+			? isAbsentValue(value)
+			: mark.mask
+			? typeof value === 'string' && EMBEDDED_MASK_PATTERN.test(value)
+			: typeof value === 'string' && MASKED_VALUE_PATTERN.test(value);
+		if (isPlaceholder) {
+			delete copy[property];
+		}
+	}
+
+	return copy as Partial<T>;
+}
+
+/**
  * Projects one entity row onto the plain object that is written into an export CSV.
  *
  * Two things happen here, and both are security-relevant:
@@ -213,10 +345,11 @@ export function redactForExport(entity: ExportEntityClass, row: object, columns?
 		const value = (row as Record<string, unknown>)[property];
 		const mark = marks.get(property);
 
-		// `isNotEmpty` keeps null/undefined/'' as they are: masking an absent value would invent a
-		// non-null one and make an empty column look populated.
-		if (mark && isNotEmpty(value) && isSecretValue(mark, row)) {
-			redacted[property] = mark.blank ? '' : maskSecret(value);
+		// Absent values (null/undefined/'') stay as they are: masking one would invent a non-null value
+		// and make an empty column look populated. Deliberately NOT `isNotEmpty`, which also treats the
+		// literal strings 'null' and 'undefined' as empty and would export such a credential verbatim.
+		if (mark && !isAbsentValue(value) && isSecretValue(mark, row)) {
+			redacted[property] = redactValue(mark, value, row);
 			continue;
 		}
 

@@ -173,6 +173,7 @@ export {
 	ExportRedacted,
 	exportRedacted,
 	getExportRedactedProperties,
+	maskEmbeddedSecret,
 	redactForExport,
 	ExportEntityClass,
 	IExportRedactOptions

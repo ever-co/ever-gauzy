@@ -194,10 +194,10 @@ export class User extends TenantBaseEntity implements IUser {
 	@MultiORMColumn({ insert: false, nullable: true })
 	lastLoginAt?: Date;
 
-	/** Live e-mail verification token. */
+	/** Live e-mail verification token. Blanked: nullable, and a hint of a live token helps nobody. */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@ExportRedacted()
+	@ExportRedacted({ blank: true })
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ insert: false, nullable: true })
 	emailToken?: string;

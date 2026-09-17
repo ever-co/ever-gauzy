@@ -1,5 +1,8 @@
 import 'reflect-metadata';
 
+/** Options the upload interceptor handed to `FileStorage.storage()` when the controller was defined. */
+const mockStorageOptions: any[] = [];
+
 jest.mock('../../shared/guards', () => ({
 	PermissionGuard: class PermissionGuard {},
 	TenantPermissionGuard: class TenantPermissionGuard {}
@@ -12,7 +15,8 @@ jest.mock('../../core/file-storage', () => ({
 	archiveUploadFileFilter: jest.fn(),
 	UploadedFileStorage: () => () => undefined,
 	FileStorage: class FileStorage {
-		storage() {
+		storage(options: unknown) {
+			mockStorageOptions.push(options);
 			return {};
 		}
 	}
@@ -23,6 +27,9 @@ jest.mock('../import-history', () => ({
 	}
 }));
 jest.mock('./import.service', () => ({ ImportService: class ImportService {} }));
+jest.mock('./import-archive-file-name', () => ({
+	generateImportArchiveFileName: () => '.import-00000000-0000-4000-8000-000000000000.zip'
+}));
 
 import { ImportStatusEnum, ImportTypeEnum } from '@gauzy/contracts';
 import { ImportController } from './import.controller';
@@ -41,13 +48,20 @@ describe('ImportController', () => {
 		createExtractDirectory: jest.fn(async () => EXTRACT_PATH),
 		unzipAndParse: jest.fn(async () => undefined),
 		addCurrentUserToImportedOrganizations: jest.fn(async () => undefined),
-		removeExtractedFiles: jest.fn(async () => undefined),
-		removeUploadedArchive: jest.fn(async () => undefined)
+		removeExtractedFiles: jest.fn(async () => undefined)
 	});
 
 	const file = { key: KEY, originalname: 'archive.zip', size: 2048 } as any;
 
-	it('imports, then removes the extracted files and the uploaded archive', async () => {
+	it('stores the upload under an unguessable, unserved name instead of the provider default', () => {
+		// The default `import-<unix-seconds>-<0..999>.zip` under `/public/import/` is enumerable.
+		const [options] = mockStorageOptions;
+		expect(options.dest).toBe('import');
+		expect(typeof options.filename).toBe('function');
+		expect(options.filename({ originalname: 'dump.zip' }, 'zip')).toBe('.import-00000000-0000-4000-8000-000000000000.zip');
+	});
+
+	it('imports, then removes the extracted files and KEEPS the archive for re-download', async () => {
 		const service = buildService();
 		const commandBus = { execute: jest.fn(async (command: any) => command.input) };
 		const controller = new ImportController(service as any, commandBus as any);
@@ -57,8 +71,9 @@ describe('ImportController', () => {
 		expect(service.unzipAndParse).toHaveBeenCalledWith(EXTRACT_PATH, KEY, false);
 		expect(service.addCurrentUserToImportedOrganizations).toHaveBeenCalledWith(EXTRACT_PATH);
 		expect(service.removeExtractedFiles).toHaveBeenCalledWith(EXTRACT_PATH);
-		expect(service.removeUploadedArchive).toHaveBeenCalledWith(KEY);
 		expect(history.status).toBe(ImportStatusEnum.SUCCESS);
+		// The history row keeps the key; the archive behind it is served by the authorized route.
+		expect(history.path).toBe(KEY);
 	});
 
 	it('still removes the extracted files when the import throws', async () => {
@@ -73,7 +88,6 @@ describe('ImportController', () => {
 
 		expect(history.status).toBe(ImportStatusEnum.FAILED);
 		expect(service.removeExtractedFiles).toHaveBeenCalledWith(EXTRACT_PATH);
-		expect(service.removeUploadedArchive).toHaveBeenCalledWith(KEY);
 	});
 
 	it('still removes the extracted files when adding the user to the organizations throws', async () => {
@@ -90,7 +104,7 @@ describe('ImportController', () => {
 		expect(service.removeExtractedFiles).toHaveBeenCalledWith(EXTRACT_PATH);
 	});
 
-	it('records a FAILED history and removes the upload even if no directory was ever created', async () => {
+	it('records a FAILED history even if no directory was ever created', async () => {
 		const service = buildService();
 		service.createExtractDirectory = jest.fn(async () => {
 			throw new Error('read-only file system');
@@ -102,7 +116,6 @@ describe('ImportController', () => {
 
 		expect(history.status).toBe(ImportStatusEnum.FAILED);
 		expect(service.removeExtractedFiles).toHaveBeenCalledWith(undefined);
-		expect(service.removeUploadedArchive).toHaveBeenCalledWith(KEY);
 	});
 
 	it('gives concurrent imports their own extraction directories', async () => {

@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { ImportStatusEnum, ImportTypeEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { ImportService } from './import.service';
+import { generateImportArchiveFileName } from './import-archive-file-name';
 import { RequestContext } from '../../core/context';
 import { archiveUploadFileFilter, FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
@@ -30,7 +31,10 @@ export class ImportController {
 		FileInterceptor('file', {
 			storage: new FileStorage().storage({
 				dest: path.join('import'),
-				prefix: 'import'
+				prefix: 'import',
+				// An unguessable dotfile name: the archive is a tenant dump that is kept for re-download
+				// through an authorized route, never at a public URL. See generateImportArchiveFileName().
+				filename: () => generateImportArchiveFileName()
 			}),
 			// The import format is a ZIP of CSVs; the local provider keeps the client's extension and
 			// the file lands under /public, so anything else is refused before it is stored.
@@ -86,8 +90,9 @@ export class ImportController {
 				})
 			);
 		} finally {
+			// Only the extraction directory is removed. The uploaded archive is kept on purpose: the
+			// Import page re-downloads it through the authorized `GET /import/history/:id/download`.
 			await this._importService.removeExtractedFiles(extractPath);
-			await this._importService.removeUploadedArchive(key);
 		}
 	}
 }

@@ -134,10 +134,17 @@ async function readFromArchive(archivePath: string, fileName: string): Promise<s
 	return (await entry.buffer()).toString('utf8');
 }
 
+/**
+ * Scratch directories created by this suite, removed after each test. A job is registered here the
+ * moment it exists, so a test whose export throws half-way still leaves nothing in `os.tmpdir()`.
+ */
+const createdJobs: IExportJob[] = [];
+
 /** One whole `/export` request, the way the controller drives it. */
 async function runExport(service: ExportService, tenantId: string): Promise<{ job: IExportJob; archive: string }> {
 	return requestStore.run({ tenantId }, async () => {
 		const job = await service.createExportJob();
+		createdJobs.push(job);
 		await service.exportTables(job, undefined);
 		await service.archiveAndDownload(job);
 		return { job, archive: await readFromArchive(job.archivePath, 'integration_setting.csv') };
@@ -154,7 +161,7 @@ describe('ExportService', () => {
 	});
 
 	afterEach(async () => {
-		for (const job of jobs) {
+		for (const job of [...jobs, ...createdJobs.splice(0)]) {
 			await fsp.rm(job.workDir, { recursive: true, force: true }).catch(() => undefined);
 		}
 	});
@@ -173,6 +180,35 @@ describe('ExportService', () => {
 				expect(job.workDir.startsWith(os.tmpdir())).toBe(true);
 				expect(fs.existsSync(job.csvDir)).toBe(true);
 			}
+		});
+
+		it('creates the scratch directories owner-only (0700)', async () => {
+			const job = await service.createExportJob();
+			jobs.push(job);
+
+			if (process.platform === 'win32') {
+				// POSIX permission bits are not meaningful on Windows; the ACL of %TEMP% applies instead.
+				return;
+			}
+			expect((await fsp.stat(job.workDir)).mode & 0o777).toBe(0o700);
+			expect((await fsp.stat(job.csvDir)).mode & 0o777).toBe(0o700);
+		});
+
+		it('removes the scratch root when job setup fails after it was created', async () => {
+			const before = new Set(fs.readdirSync(os.tmpdir()).filter((name) => name.startsWith('gauzy-export-')));
+			const mkdirSpy = jest.spyOn(fsp, 'mkdir').mockRejectedValueOnce(new Error('ENOSPC'));
+
+			try {
+				await expect(service.createExportJob()).rejects.toThrow('ENOSPC');
+			} finally {
+				mkdirSpy.mockRestore();
+			}
+
+			// The caller never got a job handle, so nothing else could have removed the directory.
+			const leaked = fs
+				.readdirSync(os.tmpdir())
+				.filter((name) => name.startsWith('gauzy-export-') && !before.has(name));
+			expect(leaked).toEqual([]);
 		});
 
 		it('does not let two concurrent exports cross archives', async () => {
@@ -245,6 +281,63 @@ describe('ExportService', () => {
 			// subscriber attaches it on load, and it must not become a CSV column.
 			expect(archive.split(/\r?\n/)[0]).not.toContain('wrapSecretValue');
 			expect(archive).not.toContain('subscriber-added');
+		});
+
+		it('refuses to write junction rows that carry more than the junction foreign keys', () => {
+			// Junction rows are raw SQL and bypass redaction; that is only safe while they are FK pairs.
+			const junction = {
+				columns: [
+					{ databaseName: 'tagId', referencedColumn: {} },
+					{ databaseName: 'userId', referencedColumn: {} }
+				]
+			} as any;
+
+			expect(() =>
+				service.assertJunctionRowsOnly(junction, 'tag_user', [{ tagId: 't1', userId: 'u1' }])
+			).not.toThrow();
+			expect(() =>
+				service.assertJunctionRowsOnly(junction, 'tag_user', [{ tagId: 't1', userId: 'u1', apiKey: 'k' }])
+			).toThrow(TypeError);
+			// Without junction metadata nothing is known to be safe.
+			expect(() => service.assertJunctionRowsOnly(undefined, 'tag_user', [{ tagId: 't1' }])).toThrow(TypeError);
+		});
+
+		it('does not write a junction CSV when the rows fail that check', async () => {
+			const job = await service.createExportJob();
+			jobs.push(job);
+
+			const joinColumn = {
+				entityMetadata: { givenTableName: 'tag_user' },
+				propertyName: 'userId',
+				referencedColumn: { propertyName: 'id' }
+			};
+			const repository: any = {
+				metadata: {
+					givenTableName: 'user',
+					manyToManyRelations: [
+						{
+							joinTableName: 'tag_user',
+							joinColumns: [joinColumn],
+							junctionEntityMetadata: {
+								columns: [
+									{ databaseName: 'tagId', referencedColumn: {} },
+									{ databaseName: 'userId', referencedColumn: {} }
+								]
+							}
+						}
+					]
+				},
+				manager: { query: jest.fn(async () => [{ tagId: 't1', userId: 'u1', password: 'hunter2' }]) }
+			};
+
+			await expect(
+				service.exportRelationalTables(
+					job,
+					{ repository, relations: [{ joinTableName: 'tag_user' }], isTenantBased: true } as any,
+					{ tenantId: TENANT_A }
+				)
+			).rejects.toThrow(TypeError);
+			expect(fs.existsSync(path.join(job.csvDir, 'tag_user.csv'))).toBe(false);
 		});
 
 		it('refuses to write a table whose entity class cannot be resolved', async () => {

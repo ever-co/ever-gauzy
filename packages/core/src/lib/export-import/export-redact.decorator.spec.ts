@@ -5,6 +5,9 @@ import {
 	ExportRedacted,
 	exportRedacted,
 	getExportRedactedProperties,
+	maskEmbeddedSecret,
+	omitExportRedactionPlaceholders,
+	OPAQUE_EXPORT_MASK,
 	redactForExport
 } from './export-redact.decorator';
 
@@ -115,6 +118,88 @@ describe('ExportRedacted', () => {
 		expect(redactForExport(Setting, Object.assign(new Setting(), { value: '' })).value).toBe('');
 	});
 
+	it("masks a credential whose value is literally 'null' or 'undefined'", () => {
+		// `isNotEmpty` reads those two strings as empty, which exported them verbatim.
+		class Setting {
+			@ExportRedacted()
+			value: string;
+		}
+
+		expect(redactForExport(Setting, Object.assign(new Setting(), { value: 'null' })).value).toBe('****');
+		expect(redactForExport(Setting, Object.assign(new Setting(), { value: 'undefined' })).value).toBe('*********');
+	});
+
+	it('writes a fixed mask for an opaque mark — neither the length nor a tail of the value', () => {
+		class Smtp {
+			@ExportRedacted({ opaque: true })
+			password: string;
+		}
+
+		const short = redactForExport(Smtp, Object.assign(new Smtp(), { password: 'abc' })).password;
+		const long = redactForExport(Smtp, Object.assign(new Smtp(), { password: 'correct-horse-battery-staple' })).password;
+
+		expect(short).toBe(OPAQUE_EXPORT_MASK);
+		expect(long).toBe(OPAQUE_EXPORT_MASK);
+	});
+
+	describe('columns that embed a secret', () => {
+		class Address {
+			kind: string;
+			token: string | null;
+
+			@ExportRedacted<Address>({
+				when: (it) => it.kind !== 'CUSTOM_DOMAIN',
+				mask: (value, it) => maskEmbeddedSecret(value, it.token)
+			})
+			address: string;
+		}
+
+		const token = '0123456789abcdef0123456789abcdef';
+
+		it('masks the embedded token and keeps the rest of the value', () => {
+			const row = Object.assign(new Address(), { kind: 'PLATFORM', token, address: `docs-${token}@in.example.com` });
+			const redacted = String(redactForExport(Address, row).address);
+
+			expect(redacted).not.toContain(token.slice(0, 28));
+			expect(redacted).toBe(`docs-${'*'.repeat(28)}cdef@in.example.com`);
+		});
+
+		it('masks the whole value when the token cannot be located in it', () => {
+			const row = Object.assign(new Address(), { kind: 'PLATFORM', token: null, address: `docs-${token}@in.example.com` });
+			expect(String(redactForExport(Address, row).address)).toMatch(/^\*+.{4}$/);
+		});
+
+		it('matches the embedded token case-insensitively', () => {
+			expect(maskEmbeddedSecret(`docs-${token.toUpperCase()}@x.io`, token)).toBe(`docs-${'*'.repeat(28)}cdef@x.io`);
+		});
+
+		it('leaves a row the predicate exempts untouched', () => {
+			const row = Object.assign(new Address(), { kind: 'CUSTOM_DOMAIN', token: null, address: 'docs@acme.com' });
+			expect(redactForExport(Address, row).address).toBe('docs@acme.com');
+		});
+
+		it('falls back to the full mask when the mask function throws', () => {
+			class Broken {
+				@ExportRedacted({
+					mask: () => {
+						throw new Error('boom');
+					}
+				})
+				value: string;
+			}
+			expect(redactForExport(Broken, Object.assign(new Broken(), { value: 'v'.repeat(20) })).value).toBe(
+				'*'.repeat(16) + 'vvvv'
+			);
+		});
+
+		it('recognizes its output as a placeholder on re-import', () => {
+			const row = Object.assign(new Address(), { kind: 'PLATFORM', token, address: `docs-${token}@in.example.com` });
+			const exported = redactForExport(Address, row);
+
+			expect(omitExportRedactionPlaceholders(Address, exported)).not.toHaveProperty('address');
+		});
+	});
+
 	it('INHERITS marks — unlike @SkipExport, because more masking is the safe direction', () => {
 		class Credential {
 			@ExportRedacted()
@@ -180,6 +265,55 @@ describe('ExportRedacted', () => {
 
 		expect(Object.keys(redacted)).toEqual(['settingsName', 'settingsValue']);
 		expect(redacted).not.toHaveProperty('wrapSecretValue');
+	});
+
+	describe('omitExportRedactionPlaceholders (re-import)', () => {
+		class Setting {
+			settingsName: string;
+
+			@ExportRedacted<Setting>({ when: (it) => it.settingsName !== 'isEnabled' })
+			settingsValue: string;
+
+			@ExportRedacted({ blank: true })
+			hash: string | null;
+
+			@ExportRedacted({ opaque: true })
+			password: string;
+		}
+
+		it('drops exactly what the export wrote in place of each secret', () => {
+			const exported = redactForExport(
+				Setting,
+				Object.assign(new Setting(), {
+					settingsName: 'access_token',
+					settingsValue: 'a'.repeat(40),
+					hash: '$2b$10$' + 'k'.repeat(53),
+					password: 'smtp-password-value'
+				})
+			);
+
+			expect(omitExportRedactionPlaceholders(Setting, exported)).toEqual({ settingsName: 'access_token' });
+		});
+
+		it('keeps real values, and values the mark does not apply to', () => {
+			const flag = { settingsName: 'isEnabled', settingsValue: '****' };
+			const real = { settingsName: 'access_token', settingsValue: 'gho_real', hash: '$2b$10$abc', password: 'x' };
+
+			// The predicate says a flag row is not a secret, so its value is data even if it looks masked.
+			expect(omitExportRedactionPlaceholders(Setting, flag)).toEqual(flag);
+			expect(omitExportRedactionPlaceholders(Setting, real)).toEqual(real);
+		});
+
+		it('does not mutate the row it is given', () => {
+			const row = { settingsName: 'access_token', settingsValue: '********' };
+			omitExportRedactionPlaceholders(Setting, row);
+			expect(row).toEqual({ settingsName: 'access_token', settingsValue: '********' });
+		});
+
+		it('returns the row unchanged when the entity class is unknown', () => {
+			const row = { password: '********' };
+			expect(omitExportRedactionPlaceholders(undefined as unknown as ExportEntityClass, row)).toEqual(row);
+		});
 	});
 
 	it('refuses to project a row whose entity class is unknown', () => {

@@ -68,7 +68,8 @@ export class TenantApiKey extends TenantBaseEntity implements ITenantApiKey {
 		type: () => String,
 		description: 'The API Secret for secure authentication.'
 	})
-	@ExportRedacted()
+	// Stored as a SHA-256 digest (`TenantApiKeyService.generateApiKey`): blank, never hint a digest.
+	@ExportRedacted({ blank: true })
 	@IsNotEmpty()
 	@IsString()
 	@IsSecret()

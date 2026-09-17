@@ -87,6 +87,8 @@ export class ExportController {
 		const {
 			entities: { names }
 		} = data;
+		// NOTE: Express lower-cases header names, so this is always undefined (and the Angular client never
+		// sends it). It only stamps the global default rows; it never narrows the export. Tracked separately.
 		const organizationId = headers['Organization-Id'];
 		const job = await this._exportService.createExportJob();
 		try {

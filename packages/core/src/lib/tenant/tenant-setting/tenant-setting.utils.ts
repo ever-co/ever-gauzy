@@ -76,9 +76,22 @@ export function isSecretTenantSettingName(name: unknown): boolean {
 		return true;
 	}
 
-	const isMarkedSecret = SECRET_MARKED_CONFIGS.some(
+	return isIsSecretMarkedTenantSettingName(name) || !nonSecretTenantSettingNames.includes(name);
+}
+
+/**
+ * Whether a setting name carries `@IsSecret()` on one of the provider-configuration DTOs.
+ *
+ * This is the half of {@link isSecretTenantSettingName} that does not depend on the hand-maintained
+ * allowlist: it keeps a DTO-declared secret masked even if somebody wrongly adds its name to
+ * {@link nonSecretTenantSettingNames}. `@IsSecret()` stores its flag on the DTO prototype, which
+ * `Reflect.getMetadata` reaches from an instance by walking the prototype chain.
+ *
+ * @param name - The `tenant_setting.name` of the row.
+ * @returns `true` when a provider DTO declares the setting secret.
+ */
+export function isIsSecretMarkedTenantSettingName(name: string): boolean {
+	return SECRET_MARKED_CONFIGS.some(
 		(config) => Reflect.hasMetadata(name, config) && Reflect.getMetadata(name, config) === true
 	);
-
-	return isMarkedSecret || !nonSecretTenantSettingNames.includes(name);
 }

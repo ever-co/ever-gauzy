@@ -36,8 +36,11 @@ describe('ExportController', () => {
 
 	const res = {} as any;
 
-	it.each([
-		['exportAll', (controller: ExportController, s: any) => controller.exportAll({}, 'org-1', res), 'exportTables'],
+	/** One export route: its name, how to call it, and the service step that does the work. */
+	type ExportRouteCase = [name: string, invoke: (controller: ExportController) => Promise<unknown>, step: string];
+
+	it.each<ExportRouteCase>([
+		['exportAll', (controller: ExportController) => controller.exportAll({}, 'org-1', res), 'exportTables'],
 		[
 			'downloadTemplate',
 			(controller: ExportController) => controller.downloadTemplate(res),
@@ -52,13 +55,13 @@ describe('ExportController', () => {
 		const service = buildService();
 		const controller = new ExportController(service as any);
 
-		await invoke(controller, service);
+		await invoke(controller);
 
 		expect(service.cleanup).toHaveBeenCalledTimes(1);
 		expect(service.cleanup).toHaveBeenCalledWith(await service.createExportJob.mock.results[0].value);
 	});
 
-	it.each([
+	it.each<ExportRouteCase>([
 		['exportAll', (controller: ExportController) => controller.exportAll({}, 'org-1', res), 'exportTables'],
 		[
 			'downloadTemplate',
