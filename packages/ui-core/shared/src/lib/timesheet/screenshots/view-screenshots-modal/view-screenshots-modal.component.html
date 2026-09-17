@@ -13,21 +13,8 @@
 			</span>
 			}
 		</div>
-		<button
-			nbButton
-			ghost
-			status="basic"
-			size="small"
-			type="button"
-			class="icon-button"
-			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
-			(click)="close()"
-		>
-			<nb-icon icon="close-outline"></nb-icon>
-		</button>
-	</nb-card-header>
-
-	<nb-card-body class="slot-body custom-scroll">
+		<!-- Member, Activity and Duration ride in the header, beside the time they
+		     describe, so the body is left for screenshots, apps and time logs. -->
 		@if (timeSlot) {
 		<div class="slot-summary">
 			<div class="summary-item" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
@@ -60,7 +47,23 @@
 				</span>
 			</div>
 		</div>
+		}
+		<button
+			nbButton
+			ghost
+			status="basic"
+			size="small"
+			type="button"
+			class="icon-button close-button"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			(click)="close()"
+		>
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
 
+	<nb-card-body class="slot-body custom-scroll">
+		@if (timeSlot) {
 		@if (screenshots.length > 0) {
 		<section class="slot-section">
 			<div class="section-header">
@@ -119,7 +122,8 @@
 		}
 
 		@if (apps?.length > 0) {
-		<section class="slot-section">
+		<!-- The chips sit on the title's line; a short list needs no row of its own. -->
+		<section class="slot-section apps">
 			<div class="section-header">
 				<h6 class="section-title">{{ 'TIMESHEET.APPS' | translate }}</h6>
 				<span class="section-count">{{ apps.length }}</span>
@@ -191,7 +195,8 @@
 					</div>
 				</div>
 
-				<!-- One label column for every field, so the values start on one line. -->
+				<!-- Two label/value pairs to a row (Source | Client, Project | To-do); the
+				     free text, Notes and Reason, takes a row of its own. -->
 				<dl class="time-log-fields">
 					<dt>{{ 'TIMESHEET.SOURCE' | translate }}</dt>
 					<dd class="source">
@@ -229,13 +234,13 @@
 					</dd>
 
 					@if (timeLog?.description) {
-					<dt>{{ 'TIMESHEET.NOTES' | translate }}</dt>
-					<dd>{{ timeLog?.description }}</dd>
+					<dt class="wide">{{ 'TIMESHEET.NOTES' | translate }}</dt>
+					<dd class="wide">{{ timeLog?.description }}</dd>
 					}
 
 					@if (timeLog?.reason) {
-					<dt>{{ 'TIMESHEET.REASON' | translate }}</dt>
-					<dd>{{ timeLog?.reason }}</dd>
+					<dt class="wide">{{ 'TIMESHEET.REASON' | translate }}</dt>
+					<dd class="wide">{{ timeLog?.reason }}</dd>
 					}
 				</dl>
 
