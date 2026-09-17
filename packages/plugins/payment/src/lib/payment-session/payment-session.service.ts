@@ -28,9 +28,11 @@ import { PaymentAuthorizedEvent, PaymentCanceledEvent, PaymentFailedEvent } from
  *    `clientSecret` stays null and `REQUIRES_MORE` is unreachable: there is nobody to complete a
  *    redirect, so a provider that answers with one is recorded as a decline, not parked in a state
  *    that would expire in silence.
- * 3. **A terminal attempt is never re-opened.** `CAPTURED`, `CANCELED`, `ERROR` and `EXPIRED` are
- *    final; a retry is a new row with its own idempotency key, which is what keeps the history of
- *    what the buyer tried intact.
+ * 3. **A terminal attempt is never re-opened, and an approval delivered twice is counted once.**
+ *    `CAPTURED`, `CANCELED`, `ERROR` and `EXPIRED` are final, so a retry is a new row with its own
+ *    idempotency key — which is what keeps the history of what the buyer tried intact — and an attempt
+ *    that already stands at `AUTHORIZED` answers a re-delivered provider approval with the
+ *    authorisation already on record rather than reserving its amount a second time.
  * 4. **Every amount moves the collection.** Authorising raises the collection's `authorizedAmount`
  *    and voiding releases it, through the collection service, so the two can never disagree.
  */
@@ -108,9 +110,6 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 			throw new BadRequestException('PAYMENT_SESSION_AMOUNT_INVALID');
 		}
 
-		await this.assertCollectionCapacity(collection.id, collection.currency, amount.amount, collection.amount);
-		this.assertOffSessionShape(input);
-
 		const previous = await this.findActiveSession(collection.id, provider.id);
 
 		if (previous && previous.status === PaymentSessionStatus.AUTHORIZED) {
@@ -118,6 +117,18 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 				`Collection '${collection.id}' already has an authorised session with provider '${provider.code}'.`
 			);
 		}
+
+		// The attempt this one supersedes is not counted against it: it is about to be cancelled, so
+		// counting it would refuse the retry of an attempt that holds the whole collection amount — the
+		// ordinary retry — as if the collection were being asked for twice.
+		await this.assertCollectionCapacity(
+			collection.id,
+			collection.currency,
+			amount.amount,
+			collection.amount,
+			previous?.id
+		);
+		this.assertOffSessionShape(input);
 
 		if (previous) {
 			await this.update(previous.id, {
@@ -226,15 +237,27 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 	/**
 	 * Records the provider's approval of an attempt and reserves the amount on its collection.
 	 *
+	 * **The approval is counted once, however often it is delivered.** A session that already stands at
+	 * `AUTHORIZED` has had its answer recorded — the status, `authorizedAt`, the collection's
+	 * `authorizedAmount` and the published event — so a re-delivered answer returns the stored
+	 * authorisation rather than reserving the amount a second time. A provider that retries a callback
+	 * it never got an acknowledgement for must not be able to authorise the same money twice, and
+	 * `AUTHORIZED` is deliberately not one of the statuses `TERMINAL` lists: the money it holds is
+	 * still real and still releasable, so `voidSession` and the capture path keep working on it.
+	 *
 	 * @param id The session to authorise.
 	 * @param input Optional data the provider returned with the approval.
-	 * @returns The stored session.
+	 * @returns The stored session, and on a re-delivery the authorisation already on record.
 	 * @throws BadRequestException when the attempt is expired, already captured, or off-session and
 	 * answered with a next action the buyer cannot perform.
 	 * @throws NotFoundException when the session is not in the caller's scope.
 	 */
 	async authorizeSession(id: ID, input: IPaymentSessionUpdateInput = {}): Promise<IPaymentSession> {
 		const session = await this.findSessionOrFail(id);
+
+		if (session.status === PaymentSessionStatus.AUTHORIZED) {
+			return session;
+		}
 
 		if (session.status === PaymentSessionStatus.EXPIRED || this.isPast(session.expiresAt)) {
 			throw new BadRequestException('PAYMENT_SESSION_EXPIRED');
@@ -423,27 +446,30 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 	 * Refuses an attempt whose amount would take the collection past what it is for.
 	 *
 	 * The collection is authorised once, as a whole: its live attempts must add up to what it asks
-	 * for, or a split payment would collect more than the order.
+	 * for, or a split payment would collect more than the order. The attempt being superseded is left
+	 * out of the sum, because it is cancelled as part of opening this one and counting both would make
+	 * a retry for the whole amount look like a second charge.
 	 *
 	 * @param collectionId The collection.
 	 * @param currency The collection currency.
 	 * @param amount The amount of the new attempt.
 	 * @param collectionAmount The amount the collection is for.
+	 * @param supersededId The live attempt this one replaces, when there is one.
 	 * @throws BadRequestException when the live attempts would exceed the collection amount.
 	 */
 	private async assertCollectionCapacity(
 		collectionId: ID,
 		currency: string,
 		amount: DecimalString,
-		collectionAmount: DecimalString
+		collectionAmount: DecimalString,
+		supersededId?: ID
 	): Promise<void> {
 		const live: IPaymentSession[] = await this.find({
 			where: { collectionId, status: { $notIn: PaymentSessionService.TERMINAL } } as never
 		});
-		const total = live.reduce(
-			(sum, session) => sum.add(Money.of(session.amount, currency)),
-			Money.of(amount, currency)
-		);
+		const total = live
+			.filter((session) => session.id !== supersededId)
+			.reduce((sum, session) => sum.add(Money.of(session.amount, currency)), Money.of(amount, currency));
 
 		if (total.greaterThan(Money.of(collectionAmount, currency))) {
 			throw new BadRequestException('PAYMENT_COLLECTION_MISMATCH');

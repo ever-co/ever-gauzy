@@ -8,11 +8,12 @@
  * substituted.
  *
  * The base-class double mirrors the platform's `CrudService` where the behaviour is observable to a
- * caller, and that includes the behaviour the first case at the bottom of this file is about:
- * `findOneByWhereOptions` raises `NotFoundException` for an absent row on both ORM branches
- * (`crud.service.ts`, lines 451–469) rather than answering the `null` its prose promises. `intake` asks
- * "have I seen this callback before?" through exactly that read, which is why the case matters here and
- * every other case is written against a path that does not depend on it.
+ * caller, and that is both halves of the read pair: `findOneByWhereOptions` raises `NotFoundException`
+ * for an absent row on both ORM branches (`crud.service.ts`, `findOneByWhereOptions`) rather than
+ * answering the `null` its prose promises, while `findOneOrFailByWhereOptions` is the half a caller
+ * uses when absence is an ordinary answer, reporting the miss as an `ITryRequest` carrying
+ * `success: false`. `intake` asks "have I seen this callback before?" through the second half, because
+ * "not seen before" is what lets the payload row be written.
  */
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
@@ -51,6 +52,13 @@ jest.mock('@gauzy/core', () => {
 			}
 
 			return record;
+		}
+
+		async findOneOrFailByWhereOptions(where: any): Promise<any> {
+			// Faithful to the platform: the same read, reporting the miss as a value rather than raising.
+			const record = await this.typeOrmRepository.findOneBy(where);
+
+			return record ? { success: true, record } : { success: false };
 		}
 
 		async create(entity: any): Promise<any> {
@@ -366,11 +374,9 @@ describe('PaymentWebhookEventService — what may never be stored (doc 10 §8.9,
 			events: [eventRow('theirs', { providerId: OTHER_PROVIDER, organizationId: OTHER_ORG, eventId: 'evt_1' })]
 		});
 
-		// In this organization the pair has not been seen — and, per the `[DEFECT]` case at the bottom of
-		// this file, an unseen pair is reported as a refusal rather than as a null.
-		await expect(fixture.service.findByProviderAndEvent(PROVIDER, 'evt_1')).rejects.toBeInstanceOf(
-			NotFoundException
-		);
+		// In this organization the pair has not been seen — an unseen pair is an answer here, not a
+		// refusal, because that is the answer the intake writes a row for.
+		await expect(fixture.service.findByProviderAndEvent(PROVIDER, 'evt_1')).resolves.toBeNull();
 
 		// In the organization that owns the row, the same provider code and event id resolve to it, and the
 		// callback is answered as that organization's duplicate.
@@ -437,11 +443,9 @@ describe('PaymentWebhookEventService — the pairwise replay guard (I-14, doc 05
 			events: [eventRow('theirs', { organizationId: OTHER_ORG })]
 		});
 
-		// The pair exists — just not for this caller — so the read finds nothing here, and the row itself is
-		// untouched by the attempt.
-		await expect(fixture.service.findByProviderAndEvent(PROVIDER, 'evt_1')).rejects.toBeInstanceOf(
-			NotFoundException
-		);
+		// The pair exists — just not for this caller — so the read answers that this organization has no
+		// such event, and the row itself is untouched by the attempt.
+		await expect(fixture.service.findByProviderAndEvent(PROVIDER, 'evt_1')).resolves.toBeNull();
 		expect(fixture.event('theirs')).toMatchObject({
 			organizationId: OTHER_ORG,
 			status: PaymentWebhookEventStatus.RECEIVED,
@@ -610,12 +614,14 @@ describe('PaymentWebhookEventService — the outcome of a processing attempt (do
 });
 
 /**
- * What the base class's throwing read costs.
+ * The intake of a callback, and the replay guard's read.
  *
  * `intake` asks "have I seen this `(providerId, eventId)` before?" through `findByProviderAndEvent`,
- * which is `findOneByWhereOptions` — and that read raises `NotFoundException` when the row is absent
- * instead of answering `null`. The absence of a replay is therefore indistinguishable from a missing
- * record, and the row this whole service exists to write is never written.
+ * whose documented answer for a pair that has not been seen is `null` — the absence of a replay is an
+ * ordinary answer, distinct from a record that is missing, and it is the answer that lets the payload
+ * row be written. The read is therefore the fail-soft half of the pair, `findOneOrFailByWhereOptions`,
+ * whose `ITryRequest` carries `success: false`, and the case below is the row this whole service exists
+ * to write.
  */
 describe('PaymentWebhookEventService — the intake of a callback that has not been seen (doc 05 §12.7, I-53)', () => {
 	beforeEach(() => {
@@ -625,13 +631,7 @@ describe('PaymentWebhookEventService — the intake of a callback that has not b
 
 	afterEach(() => jest.restoreAllMocks());
 
-	// The defect: a first-time callback cannot be recorded at all, because the replay guard reads through
-	// `findOneByWhereOptions` (`payment-webhook-event.service.ts`, the
-	// `await this.findByProviderAndEvent(provider.id, eventId)` call in `intake`, line 84), which raises
-	// `NotFoundException` for an absent row rather than answering null — so "not seen before" and "the
-	// record is missing" are the same answer, and the payload-before-everything rule the class documents
-	// is unreachable.
-	it.failing('[DEFECT] writes the payload row before anything is done with it', async () => {
+	it('writes the payload row before anything is done with it', async () => {
 		const fixture = webhookFixture();
 		const receivedAt = new Date('2026-02-01T12:00:00.000Z');
 

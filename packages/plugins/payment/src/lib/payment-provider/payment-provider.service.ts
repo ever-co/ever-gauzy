@@ -133,21 +133,37 @@ export class PaymentProviderService extends CrudService<PaymentProvider> {
 	/**
 	 * Resolves a registration by its code, which is the key a callback carries.
 	 *
+	 * **Absence is an answer here, not a refusal.** The read is the pair's fail-soft half —
+	 * `findOneOrFailByWhereOptions`, whose `ITryRequest` carries `success: false` — because the code
+	 * being free is the ordinary state of the registry, and a nullable read that raises instead turns
+	 * "no registration claims this code" into a refusal the caller has to catch to make sense of.
+	 *
 	 * @param code The provider code.
 	 * @returns The registration, or null when this organization has none with that code.
 	 */
 	async findProviderByCode(code: string): Promise<IPaymentProvider | null> {
-		return this.findOneByWhereOptions({ code: code?.trim(), ...this.scope } as never);
+		const outcome = await this.findOneOrFailByWhereOptions({
+			code: code?.trim(),
+			...this.scope
+		} as never);
+
+		return outcome.success ? (outcome.record as IPaymentProvider) : null;
 	}
 
 	/**
 	 * Resolves a registration by its identifier, for a caller that must not fail when it is absent.
 	 *
+	 * The same fail-soft read as `findProviderByCode`: a caller that branches on the absence — the
+	 * callback intake, which reports a provider it cannot resolve under
+	 * `PAYMENT_WEBHOOK_UNKNOWN_PROVIDER` — needs the miss as a value rather than as an exception.
+	 *
 	 * @param id The registration identifier.
 	 * @returns The registration, or null when this organization has none with that identifier.
 	 */
 	async findProviderOrNull(id: ID): Promise<IPaymentProvider | null> {
-		return this.findOneByWhereOptions({ id, ...this.scope } as never);
+		const outcome = await this.findOneOrFailByWhereOptions({ id, ...this.scope } as never);
+
+		return outcome.success ? (outcome.record as IPaymentProvider) : null;
 	}
 
 	/**

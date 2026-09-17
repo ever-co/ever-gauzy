@@ -83,6 +83,7 @@ export class PaymentCollectionService extends CrudService<PaymentCollection> {
 		return this.create({
 			...input,
 			amount: amount.amount,
+			currency: amount.currency,
 			status: PaymentCollectionStatus.NOT_PAID,
 			authorizedAmount: '0',
 			capturedAmount: '0',
@@ -126,6 +127,10 @@ export class PaymentCollectionService extends CrudService<PaymentCollection> {
 			changes.amount = this.toMoney(changes.amount, changes.currency ?? collection.currency).amount;
 		}
 
+		if (changes.currency !== undefined) {
+			changes.currency = this.canonicalCurrency(changes.currency);
+		}
+
 		await this.update(id, { ...changes } as never);
 
 		return this.findCollectionOrFail(id);
@@ -151,21 +156,32 @@ export class PaymentCollectionService extends CrudService<PaymentCollection> {
 	/**
 	 * Resolves the live collection of an order.
 	 *
+	 * Absence is an answer: the read is the fail-soft half of the pair — `findOneOrFailByWhereOptions`,
+	 * whose `ITryRequest` carries `success: false` — because "this order has no collection yet" is the
+	 * ordinary state of an order and not a refusal.
+	 *
 	 * @param orderId The order to resolve for.
 	 * @returns The collection, or null when the order has none.
 	 */
 	async findCollectionForOrder(orderId: ID): Promise<IPaymentCollection | null> {
-		return this.findOneByWhereOptions({ orderId, ...this.scope } as never);
+		const outcome = await this.findOneOrFailByWhereOptions({ orderId, ...this.scope } as never);
+
+		return outcome.success ? (outcome.record as IPaymentCollection) : null;
 	}
 
 	/**
 	 * Resolves the live collection of a cart.
 	 *
+	 * The same fail-soft read as `findCollectionForOrder`, and the same reason: the caller that asks
+	 * is the create path's one-live-collection guard, for which "none" is what it wants to hear.
+	 *
 	 * @param cartId The cart to resolve for.
 	 * @returns The collection, or null when the cart has none.
 	 */
 	async findCollectionForCart(cartId: ID): Promise<IPaymentCollection | null> {
-		return this.findOneByWhereOptions({ cartId, ...this.scope } as never);
+		const outcome = await this.findOneOrFailByWhereOptions({ cartId, ...this.scope } as never);
+
+		return outcome.success ? (outcome.record as IPaymentCollection) : null;
 	}
 
 	/**
@@ -427,18 +443,38 @@ export class PaymentCollectionService extends CrudService<PaymentCollection> {
 	 *
 	 * @param value The decimal to read.
 	 * @param currency The currency it is in.
-	 * @returns The value as a kernel money value.
+	 * @returns The value as a kernel money value, carrying the canonical currency.
 	 * @throws BadRequestException when the currency is not three letters or the amount is not exact.
 	 */
 	private toMoney(value: DecimalString | number, currency: string): Money {
+		const canonical = this.canonicalCurrency(currency);
+
+		try {
+			return Money.of(value, canonical);
+		} catch {
+			throw new BadRequestException('PAYMENT_AMOUNT_INVALID');
+		}
+	}
+
+	/**
+	 * The canonical spelling of a currency code: trimmed and upper-cased, which is the form the money
+	 * kernel reads a code into and the form this domain stores.
+	 *
+	 * **The amount and the currency are one figure and are canonicalised together.** A stored amount
+	 * carries no redundant trailing fractional zeroes, and a stored code carries the kernel's own
+	 * spelling, because two spellings of one currency are two values to every comparison downstream:
+	 * a session that states `USD` does not equal a collection stored as `usd`, and a report grouped by
+	 * `currency` shows one currency twice.
+	 *
+	 * @param currency The currency code as the caller stated it.
+	 * @returns The code in its canonical form.
+	 * @throws BadRequestException when the code is not three letters.
+	 */
+	private canonicalCurrency(currency: string): string {
 		if (!currency || currency.trim().length !== 3) {
 			throw new BadRequestException('PAYMENT_CURRENCY_INVALID');
 		}
 
-		try {
-			return Money.of(value, currency.trim().toUpperCase());
-		} catch {
-			throw new BadRequestException('PAYMENT_AMOUNT_INVALID');
-		}
+		return currency.trim().toUpperCase();
 	}
 }

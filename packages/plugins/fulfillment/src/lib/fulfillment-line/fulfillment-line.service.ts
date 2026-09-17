@@ -4,6 +4,7 @@ import { FulfillmentLine } from './fulfillment-line.entity';
 import { TypeOrmFulfillmentLineRepository } from './repository/type-orm-fulfillment-line.repository';
 import { MikroOrmFulfillmentLineRepository } from './repository/mikro-orm-fulfillment-line.repository';
 import { TenantAwareCrudService } from '@gauzy/core';
+import { isPositiveQuantity } from '../fulfillment.quantity';
 
 /**
  * What is in a shipment.
@@ -28,11 +29,14 @@ export class FulfillmentLineService extends TenantAwareCrudService<FulfillmentLi
 	/**
 	 * Creates a line, refusing a non-positive quantity or a second row for the same order line.
 	 *
+	 * The quantity is read as a quantity rather than compared as one: a value that is not a number at
+	 * all is refused here, not waved through by a comparison that is false for it.
+	 *
 	 * @param entity The line to create.
 	 * @returns The created line.
 	 */
 	public async create(entity: DeepPartial<FulfillmentLine>): Promise<FulfillmentLine> {
-		if (Number(entity.quantity) <= 0) {
+		if (!isPositiveQuantity(entity.quantity)) {
 			throw new BadRequestException({
 				message: 'A fulfilment line quantity must be positive.',
 				code: 'FULFILLMENT_LINE_QUANTITY_INVALID',

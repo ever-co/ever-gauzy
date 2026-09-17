@@ -9,8 +9,11 @@
  * observable to a caller, and one of those places is the subject of two cases below: a lookup that
  * matches nothing **raises `NotFoundException`** rather than answering `null`
  * (`packages/core/src/lib/core/crud/crud.service.ts`, the `if (!record)` branch of
- * `findOneByWhereOptions` on line 465 and of `findOneByIdString` on line 409 — both under a doc
- * comment that still claims the opposite, and both reached through `TenantAwareCrudService`).
+ * `findOneByWhereOptions` and of `findOneByIdString` — both reached through
+ * `TenantAwareCrudService`). That is the contract for reading a resource by id. The read a caller
+ * uses when absence is an ordinary answer is the `findOneOrFailBy*` pair, whose `ITryRequest` reports
+ * `success: false` instead of raising, and the double states that pair too because the code guard
+ * below is built from it.
  */
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
@@ -71,6 +74,17 @@ jest.mock('@gauzy/core', () => {
 			}
 
 			return record;
+		}
+
+		/**
+		 * The platform's absence-is-an-answer read: a miss is reported as `success: false` instead of
+		 * being raised, which is what `CrudService.findOneOrFailByWhereOptions` does with TypeORM's
+		 * `findOneByOrFail` (`packages/core/src/lib/core/crud/crud.service.ts`).
+		 */
+		async findOneOrFailByWhereOptions(where: any): Promise<any> {
+			const record = await this.typeOrmRepository.findOneBy(where);
+
+			return record ? { success: true, record } : { success: false };
 		}
 
 		async create(entity: any): Promise<any> {
@@ -480,7 +494,7 @@ describe('ShippingOptionService — the shape a price type allows (doc 09 §12.2
 	// code is free — the first option of an organization, and every subsequent one — raises a 404 and
 	// writes nothing, so `shipping_option` can never be populated through this service. `POST
 	// /api/shipping-options` answers "The requested record was not found" for every valid request.
-	it.failing('[DEFECT] creates a shipping option whose code no other option holds', async () => {
+	it('[DEFECT] creates a shipping option whose code no other option holds', async () => {
 		const fixture = optionFixture();
 
 		const created = await fixture.service.create(flatOption() as never);
@@ -748,7 +762,7 @@ describe('ShippingOptionService — editing an option (doc 09 §12.2)', () => {
 	// (`shipping-option.service.ts`, line 84 → line 262). Re-coding an option to a code no other option
 	// holds — the ordinary way an operator renames `STANDARD` to `GROUND` — raises the base class's 404
 	// instead of writing the row.
-	it.failing('[DEFECT] accepts an edit that gives an option a code no other option holds', async () => {
+	it('[DEFECT] accepts an edit that gives an option a code no other option holds', async () => {
 		const fixture = optionFixture([option('standard', { code: 'STANDARD' })]);
 
 		await fixture.service.update('standard', { code: 'GROUND' } as never);

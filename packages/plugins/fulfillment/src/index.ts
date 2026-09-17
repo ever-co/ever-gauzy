@@ -3,6 +3,7 @@
  */
 export * from './lib/fulfillment.plugin';
 export * from './lib/fulfillment.module';
+export * from './lib/fulfillment.quantity';
 export * from './lib/fulfillment.permissions';
 export * from './lib/fulfillment.features';
 export * from './lib/entities';

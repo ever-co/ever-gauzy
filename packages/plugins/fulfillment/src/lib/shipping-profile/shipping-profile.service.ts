@@ -144,11 +144,15 @@ export class ShippingProfileService extends TenantAwareCrudService<ShippingProfi
 	 * @param exceptId A profile to exclude from the test, when updating.
 	 */
 	private async assertCodeIsFree(code: string, exceptId?: ID): Promise<void> {
-		const existing = (await this.findOneByWhereOptions({ code } as FindOptionsWhere<ShippingProfile>)) as
-			| ShippingProfile
-			| null;
+		// "Is this code still free?" is a question whose answer may be yes, so it is asked of the read
+		// that reports a miss instead of raising one: the platform's reads by id raise
+		// `NotFoundException` on a miss, which is right for reading a resource and wrong for a test
+		// whose whole subject is the absence. `ITryRequest` carries the answer.
+		const { success, record: existing } = await this.findOneOrFailByWhereOptions({
+			code
+		} as FindOptionsWhere<ShippingProfile>);
 
-		if (existing && existing.id !== exceptId) {
+		if (success && existing.id !== exceptId) {
 			throw new BadRequestException({
 				message: `SHIPPING_PROFILE_CODE_TAKEN: a profile with code ${code} already exists.`,
 				code: 'SHIPPING_PROFILE_CODE_TAKEN',

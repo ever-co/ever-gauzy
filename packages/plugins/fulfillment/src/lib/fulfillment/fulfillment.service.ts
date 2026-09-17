@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import {
 	FulfillmentDirection,
@@ -7,15 +7,21 @@ import {
 	IOrderLine,
 	IPagination
 } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
+import { TenantAwareCrudService, compareDecimalStrings } from '@gauzy/core';
 import { OrderLineService } from '@gauzy/plugin-order';
 import { Fulfillment } from './fulfillment.entity';
 import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.repository';
 import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
 import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
+import { addQuantities, isNegativeQuantity, isPositiveQuantity, remainingQuantity } from '../fulfillment.quantity';
 
-/** The transitions the fulfilment lifecycle allows, and nothing else. */
+/**
+ * The transitions the fulfilment lifecycle allows, and nothing else.
+ *
+ * `CANCELED` is reachable from `PENDING` only: goods that have left are handled by a return, never by
+ * a cancelation, so a `SHIPPED` parcel is not un-shipped (doc 09 §12.9).
+ */
 const ALLOWED_TRANSITIONS: Record<FulfillmentStatusDetail, FulfillmentStatusDetail[]> = {
 	[FulfillmentStatusDetail.PENDING]: [
 		FulfillmentStatusDetail.SHIPPED,
@@ -23,8 +29,7 @@ const ALLOWED_TRANSITIONS: Record<FulfillmentStatusDetail, FulfillmentStatusDeta
 	],
 	[FulfillmentStatusDetail.SHIPPED]: [
 		FulfillmentStatusDetail.IN_TRANSIT,
-		FulfillmentStatusDetail.DELIVERED,
-		FulfillmentStatusDetail.CANCELED
+		FulfillmentStatusDetail.DELIVERED
 	],
 	[FulfillmentStatusDetail.IN_TRANSIT]: [FulfillmentStatusDetail.DELIVERED],
 	[FulfillmentStatusDetail.DELIVERED]: [],
@@ -43,6 +48,11 @@ const ALLOWED_TRANSITIONS: Record<FulfillmentStatusDetail, FulfillmentStatusDeta
  * partial shipment of the same line is a second fulfilment, and the order line's own counters are the
  * authority on how much is outstanding. Those counters are maintained by the line service, in the same
  * transaction as the row that causes them.
+ *
+ * Every quantity on that path is an exact decimal and is computed as one — the remainder, the
+ * comparison against it and the counters themselves all go through `fulfillment.quantity.ts` — because
+ * a partial shipment of a measured good lands exactly on a boundary that binary floating point cannot
+ * represent.
  */
 @Injectable()
 export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
@@ -99,6 +109,10 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	/**
 	 * Marks a fulfilment as handed to the carrier.
 	 *
+	 * Handing the same parcel over twice is not a second hand-over, and it is refused rather than
+	 * absorbed: the counters below are a cache of the shipment lines that caused them, so a repeat
+	 * would count the same units again (doc 06 §6.9, `409 FULFILLMENT_ALREADY_SHIPPED`).
+	 *
 	 * @param fulfillmentId The fulfilment.
 	 * @param details The tracking details the carrier returned.
 	 * @returns The shipped fulfilment.
@@ -107,7 +121,16 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		fulfillmentId: ID,
 		details: { trackingNumber?: string; carrier?: string; service?: string; noNotification?: boolean } = {}
 	): Promise<Fulfillment> {
-		const fulfillment = await this.transition(fulfillmentId, FulfillmentStatusDetail.SHIPPED);
+		const { fulfillment, moved } = await this.move(fulfillmentId, FulfillmentStatusDetail.SHIPPED);
+
+		if (!moved) {
+			throw new ConflictException({
+				message: `FULFILLMENT_ALREADY_SHIPPED: fulfillment '${fulfillmentId}' is already shipped.`,
+				code: 'FULFILLMENT_ALREADY_SHIPPED',
+				details: { fulfillmentId, status: fulfillment.status }
+			});
+		}
+
 		const lines = ((await this.lineService.findAll({
 			where: { fulfillmentId }
 		})) as IPagination<FulfillmentLine>).items;
@@ -140,12 +163,21 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	/**
 	 * Marks a fulfilment as delivered.
 	 *
+	 * Delivery is reported rather than requested, so a carrier that reports it twice has not delivered
+	 * the goods twice: the repeat answers the resource it already has, and the counters below are not
+	 * moved a second time. Only a hand-over that actually happened is counted.
+	 *
 	 * @param fulfillmentId The fulfilment.
 	 * @param deliveredAt When the carrier reported delivery.
 	 * @returns The delivered fulfilment.
 	 */
 	public async deliver(fulfillmentId: ID, deliveredAt?: Date): Promise<Fulfillment> {
-		const fulfillment = await this.transition(fulfillmentId, FulfillmentStatusDetail.DELIVERED);
+		const { fulfillment, moved } = await this.move(fulfillmentId, FulfillmentStatusDetail.DELIVERED);
+
+		if (!moved) {
+			return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+		}
+
 		const lines = ((await this.lineService.findAll({
 			where: { fulfillmentId }
 		})) as IPagination<FulfillmentLine>).items;
@@ -160,7 +192,14 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	}
 
 	/**
-	 * Cancels a fulfilment that has not been delivered.
+	 * Cancels a fulfilment that has not been handed over, or answers the one already cancelled.
+	 *
+	 * The cancelation matrix of doc 09 §12.9 permits a cancelation from `PENDING` only: `SHIPPED`,
+	 * `IN_TRANSIT` and `DELIVERED` are refused with `FULFILLMENT_NOT_CANCELABLE`, because goods that
+	 * have left are handled by a return (`direction = RETURN`) rather than by an un-shipment. A
+	 * repeat submission of a cancelation is the documented no-op — `200` with the unchanged resource —
+	 * so it moves no counter: the quantities below go back to the order line once, whatever the
+	 * caller submits.
 	 *
 	 * The quantities go back to the order line, because a cancelled shipment no longer accounts for
 	 * them; re-creating the stock reservations is the inventory package's compensation for the same
@@ -171,6 +210,20 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * @returns The cancelled fulfilment.
 	 */
 	public async cancel(fulfillmentId: ID, reason?: string): Promise<Fulfillment> {
+		const current = await this.findOneByIdString(fulfillmentId);
+
+		if (current.status === FulfillmentStatusDetail.CANCELED) {
+			return this.findOneByIdString(current.id, { relations: ['lines'] });
+		}
+
+		if (current.status !== FulfillmentStatusDetail.PENDING) {
+			throw new ConflictException({
+				message: `FULFILLMENT_NOT_CANCELABLE: fulfillment '${fulfillmentId}' can no longer be canceled: it is ${current.status}.`,
+				code: 'FULFILLMENT_NOT_CANCELABLE',
+				details: { fulfillmentId, status: current.status, cancelableFrom: [FulfillmentStatusDetail.PENDING] }
+			});
+		}
+
 		const fulfillment = await this.transition(fulfillmentId, FulfillmentStatusDetail.CANCELED);
 		const lines = ((await this.lineService.findAll({
 			where: { fulfillmentId }
@@ -178,10 +231,6 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 
 		for (const line of lines) {
 			await this.bumpOrderLineCounters(line.orderLineId, -Number(line.quantity), 'FULFILLED');
-
-			if (fulfillment.status === FulfillmentStatusDetail.SHIPPED) {
-				await this.bumpOrderLineCounters(line.orderLineId, -Number(line.quantity), 'SHIPPED');
-			}
 		}
 
 		await this.update(fulfillment.id, {
@@ -195,11 +244,43 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	/**
 	 * Moves a fulfilment to a status, or refuses with the allowed set.
 	 *
+	 * A move to the status the row already holds writes nothing and answers the row unchanged, so the
+	 * machine itself is idempotent; what that means for the counters a caller moves beside it is
+	 * decided by the caller, through the `moved` flag of `move`.
+	 *
 	 * @param fulfillmentId The fulfilment.
 	 * @param to The requested status.
-	 * @returns The fulfilment, with its optimistic lock bumped.
+	 * @returns The fulfilment, with its optimistic lock bumped when it moved.
 	 */
 	public async transition(fulfillmentId: ID, to: FulfillmentStatusDetail): Promise<Fulfillment> {
+		return (await this.move(fulfillmentId, to)).fulfillment;
+	}
+
+	/**
+	 * The quantity of an order line that may still go into a fulfilment.
+	 *
+	 * @param orderLineId The order line.
+	 * @returns The outstanding quantity.
+	 */
+	public async outstandingOf(orderLineId: ID): Promise<number> {
+		return Number(await this.outstandingQuantityTextOf(orderLineId));
+	}
+
+	/**
+	 * Moves a fulfilment to a status and reports whether it actually moved.
+	 *
+	 * The lifecycle is owned here, in one place, and the flag is what lets the callers that move a
+	 * counter beside the status tell "the row is now the target" from "the row was already the
+	 * target" — a distinction that is invisible to a caller reading only the moved row.
+	 *
+	 * @param fulfillmentId The fulfilment.
+	 * @param to The requested status.
+	 * @returns The fulfilment, and whether the move happened.
+	 */
+	private async move(
+		fulfillmentId: ID,
+		to: FulfillmentStatusDetail
+	): Promise<{ fulfillment: Fulfillment; moved: boolean }> {
 		const fulfillment = await this.findOneByIdString(fulfillmentId);
 
 		if (!fulfillment) {
@@ -207,7 +288,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		}
 
 		if (fulfillment.status === to) {
-			return fulfillment;
+			return { fulfillment, moved: false };
 		}
 
 		if (!ALLOWED_TRANSITIONS[fulfillment.status].includes(to)) {
@@ -223,27 +304,32 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			version: Number(fulfillment.version ?? 1) + 1
 		} as any);
 
-		return this.findOneByIdString(fulfillment.id);
+		return { fulfillment: await this.findOneByIdString(fulfillment.id), moved: true };
 	}
 
 	/**
-	 * The quantity of an order line that may still go into a fulfilment.
+	 * The quantity of an order line that may still go into a fulfilment, as exact decimal text.
+	 *
+	 * The subtraction is the one doc 09 §12.6 states, made on the digits of the decimals rather than
+	 * on their floating point approximations, and it is answered as text because a `numeric(20,6)`
+	 * carries more significant digits than a double: the guard that compares a requested quantity
+	 * against this remainder is exact only while the remainder is still its own digits.
 	 *
 	 * @param orderLineId The order line.
-	 * @returns The outstanding quantity.
+	 * @returns The outstanding quantity, as decimal text.
 	 */
-	public async outstandingOf(orderLineId: ID): Promise<number> {
+	private async outstandingQuantityTextOf(orderLineId: ID): Promise<string> {
 		const line = await this.orderLineService.findOneByIdString(orderLineId);
 
 		if (!line) {
 			throw new NotFoundException(`ORDER_LINE_NOT_FOUND: no order line exists with id ${orderLineId}.`);
 		}
 
-		return (
-			Number(line.quantity) -
-			Number(line.writtenOffQuantity) -
-			Number(line.returnDismissedQuantity) -
-			Number(line.fulfilledQuantity)
+		return remainingQuantity(
+			line.quantity,
+			line.writtenOffQuantity,
+			line.returnDismissedQuantity,
+			line.fulfilledQuantity
 		);
 	}
 
@@ -262,7 +348,9 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		quantity: number,
 		direction: FulfillmentDirection
 	): Promise<void> {
-		if (quantity <= 0) {
+		// The requirement is a quantity, and a quantity greater than zero: `NaN` and the infinities are
+		// not quantities, and the comparison this guard used to be written as is false for all of them.
+		if (!isPositiveQuantity(quantity)) {
 			throw new BadRequestException('FULFILLMENT_LINE_QUANTITY_INVALID: a shipment quantity is positive.');
 		}
 
@@ -270,13 +358,15 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			return;
 		}
 
-		const outstanding = await this.outstandingOf(orderLineId);
+		const outstanding = await this.outstandingQuantityTextOf(orderLineId);
 
-		if (quantity > outstanding) {
+		// Compared as decimals rather than as numbers, so that a request for exactly the remainder is
+		// accepted even when the remainder has no exact binary representation.
+		if (compareDecimalStrings(quantity, outstanding) > 0) {
 			throw new BadRequestException({
 				message: 'The shipment would exceed what the order line still has to ship.',
 				code: 'FULFILLMENT_QUANTITY_EXCEEDED',
-				details: { orderLineId, requested: quantity, outstanding }
+				details: { orderLineId, requested: quantity, outstanding: Number(outstanding) }
 			});
 		}
 	}
@@ -285,7 +375,9 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * Adds a delta to one of an order line's quantity counters.
 	 *
 	 * The counters are caches of the fulfilment lines, which is why they are written here and only here:
-	 * a second writer would be a second opinion about how much of a line has shipped.
+	 * a second writer would be a second opinion about how much of a line has shipped. The addition is
+	 * exact for the same reason the remainder above is: a counter that drifted by a rounding error
+	 * would make every later remainder wrong in the same direction.
 	 *
 	 * @param orderLineId The order line.
 	 * @param delta The signed quantity.
@@ -302,17 +394,24 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			throw new NotFoundException(`ORDER_LINE_NOT_FOUND: no order line exists with id ${orderLineId}.`);
 		}
 
+		/** The counter after the move, which a cancelation may take to zero but never below. */
+		const moved = (current: number): number => {
+			const total = addQuantities(current, delta);
+
+			return isNegativeQuantity(total) ? 0 : Number(total);
+		};
+
 		const changes: Record<string, number> = {};
 
 		switch (counter) {
 			case 'FULFILLED':
-				changes['fulfilledQuantity'] = Math.max(0, Number(line.fulfilledQuantity) + delta);
+				changes['fulfilledQuantity'] = moved(line.fulfilledQuantity);
 				break;
 			case 'SHIPPED':
-				changes['shippedQuantity'] = Math.max(0, Number(line.shippedQuantity) + delta);
+				changes['shippedQuantity'] = moved(line.shippedQuantity);
 				break;
 			case 'DELIVERED':
-				changes['deliveredQuantity'] = Math.max(0, Number(line.deliveredQuantity) + delta);
+				changes['deliveredQuantity'] = moved(line.deliveredQuantity);
 				break;
 		}
 

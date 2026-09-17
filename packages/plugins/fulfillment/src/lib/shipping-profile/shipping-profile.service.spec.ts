@@ -10,7 +10,10 @@
  * observable to a caller — `findAll` answers `{ items, total }`, `update` loads the row first and then
  * answers TypeORM's `UpdateResult`, and a lookup that matches nothing **raises `NotFoundException`**
  * rather than answering `null` (`packages/core/src/lib/core/crud/crud.service.ts`, the `if (!record)`
- * branch of `findOneByWhereOptions` on line 465). One of the cases below turns on exactly that.
+ * branch of `findOneByWhereOptions`), which is the contract for reading a resource by id. The read a
+ * caller uses when absence is an ordinary answer is the `findOneOrFailBy*` pair, whose `ITryRequest`
+ * reports `success: false` instead of raising, and the double states that pair too because the code
+ * guard below is built from it.
  *
  * What the double does not model is the tenancy the real base class injects into every read
  * (`findOneWithTenant`), so the cases here state tenancy-scoped behaviour only where the service
@@ -76,6 +79,17 @@ jest.mock('@gauzy/core', () => {
 			}
 
 			return record;
+		}
+
+		/**
+		 * The platform's absence-is-an-answer read: a miss is reported as `success: false` instead of
+		 * being raised, which is what `CrudService.findOneOrFailByWhereOptions` does with TypeORM's
+		 * `findOneByOrFail` (`packages/core/src/lib/core/crud/crud.service.ts`).
+		 */
+		async findOneOrFailByWhereOptions(where: any): Promise<any> {
+			const record = await this.typeOrmRepository.findOneBy(where);
+
+			return record ? { success: true, record } : { success: false };
 		}
 
 		async create(entity: any): Promise<any> {
@@ -362,7 +376,7 @@ describe('ShippingProfileService — the code a profile claims (doc 09 §12.1)',
 	// doc comment that still claims it answers null). A profile whose code is free therefore raises a
 	// 404 and writes nothing: `shipping_profile` can never be populated through this service, and no
 	// profile can be re-coded, so the whole shipping configuration is unreachable from the API.
-	it.failing('[DEFECT] creates a profile whose code no other profile holds', async () => {
+	it('[DEFECT] creates a profile whose code no other profile holds', async () => {
 		const fixture = profileFixture();
 
 		const created = await fixture.service.create({ name: 'Standard', code: 'STANDARD' } as never);
@@ -372,7 +386,7 @@ describe('ShippingProfileService — the code a profile claims (doc 09 §12.1)',
 		expect(fixture.tables.shipping_profile).toHaveLength(1);
 	});
 
-	it.failing('[DEFECT] accepts an edit that gives a profile a code no other profile holds', async () => {
+	it('[DEFECT] accepts an edit that gives a profile a code no other profile holds', async () => {
 		const fixture = profileFixture({ shipping_profile: [profile('standard', { code: 'STANDARD' })] });
 
 		await fixture.service.update('standard', { code: 'GROUND' } as never);

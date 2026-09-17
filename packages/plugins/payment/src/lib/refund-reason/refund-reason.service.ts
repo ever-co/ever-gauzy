@@ -78,6 +78,11 @@ export class RefundReasonService extends CrudService<RefundReason> {
 	/**
 	 * Updates a reason.
 	 *
+	 * A move is judged from both ends, because the tree is at most two levels deep: the parent must be
+	 * a root, and the reason being moved must be a leaf — a reason that already refines nothing else.
+	 * Handing a parent to a reason that has refinements of its own would carry all of them down to a
+	 * third level, which is the shape this rule exists to refuse.
+	 *
 	 * @param id The reason to update.
 	 * @param input The fields to change.
 	 * @returns The stored reason.
@@ -100,7 +105,11 @@ export class RefundReasonService extends CrudService<RefundReason> {
 			const parent = await this.findReasonOrFail(input.parentId);
 			const children: IRefundReason[] = await this.find({ where: { parentId: id, ...this.scope } as never });
 
-			if (parent.parentId || children.some((child) => child.id === parent.id)) {
+			// Either condition creates a third level. A new parent that is not itself a root — because it
+			// refines something, or because it is one of this reason's own refinements — puts this reason one
+			// level down; and a reason that already has refinements carries them with it, so giving it a
+			// parent at all makes every one of them a third level.
+			if (parent.parentId || children.length) {
 				throw new BadRequestException('REFUND_REASON_DEPTH_EXCEEDED');
 			}
 		}
@@ -146,11 +155,18 @@ export class RefundReasonService extends CrudService<RefundReason> {
 	/**
 	 * Resolves a reason by its code.
 	 *
+	 * **A free code is an answer, not a refusal.** The read is the fail-soft half of the pair —
+	 * `findOneOrFailByWhereOptions`, whose `ITryRequest` carries `success: false` — because the
+	 * uniqueness rule in `createReason` asks whether the code is *taken*, and a taxonomy can only be
+	 * populated by an operator if the read that clears a free code answers rather than raises.
+	 *
 	 * @param code The stable code.
 	 * @returns The reason, or null when this organization has none with that code.
 	 */
 	async findByCode(code: string): Promise<IRefundReason | null> {
-		return this.findOneByWhereOptions({ code: code?.trim(), ...this.scope } as never);
+		const outcome = await this.findOneOrFailByWhereOptions({ code: code?.trim(), ...this.scope } as never);
+
+		return outcome.success ? (outcome.record as IRefundReason) : null;
 	}
 
 	/**

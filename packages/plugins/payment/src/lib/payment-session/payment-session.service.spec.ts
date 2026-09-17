@@ -539,15 +539,12 @@ describe('PaymentSessionService — the split may reach the collection amount an
 		expect(fixture.session(first.id).status).toBe(PaymentSessionStatus.ERROR);
 	});
 
-	// The defect: the capacity check runs *before* the previous live attempt of the same provider is
-	// superseded, so a retry of a full-amount attempt is counted against its own predecessor and refused
-	// with `PAYMENT_COLLECTION_MISMATCH` — the retry the class documentation describes ("a new attempt
-	// for the same pair supersedes the previous one ... that is what makes a retry a retry rather than a
-	// second charge") cannot be opened for the ordinary case of one provider collecting the whole
-	// amount. (`payment-session.service.ts`, the `await this.assertCollectionCapacity(...)` call in
-	// `openSession`, line 111, which precedes the `await this.findActiveSession(...)` on line 114 and the
-	// supersede on line 123; doc 10 §8.11 "The failed session is closed first".)
-	it.failing('[DEFECT] supersedes a live attempt of the whole amount instead of counting it twice', async () => {
+	// The retry the class documentation describes ("a new attempt for the same pair supersedes the
+	// previous one ... that is what makes a retry a retry rather than a second charge") holds for the
+	// ordinary case of one provider collecting the whole amount: the attempt being superseded is left
+	// out of the capacity sum, because it is cancelled as part of opening this one, and counting both
+	// would make the retry look like a second charge (doc 10 §8.11 "The failed session is closed first").
+	it('supersedes a live attempt of the whole amount instead of counting it twice', async () => {
 		const fixture = world();
 
 		const first = await fixture.service.openSession(attempt({ amount: '100' }) as never);
@@ -676,16 +673,13 @@ describe('PaymentSessionService — the provider answers (doc 10 §8.5, §8.7, �
 		expect(fixture.collection().authorizedAmount).toBe('100');
 	});
 
-	// The defect: a repeated delivery of the same provider answer counts the authorisation again.
-	// `authorizeSession` refuses only what is EXPIRED, CAPTURED or terminal, and `AUTHORIZED` is none of
-	// those, so a second call re-writes the status, raises the collection's `authorizedAmount` by the
-	// attempt's amount a second time and publishes a second `payment.authorized`. The collection is then
-	// authorised for twice what the provider approved, which is exactly the drift the derived status
-	// exists to prevent (`payment-session.service.ts`, `authorizeSession`, the terminal guard on lines
-	// 239–249 and the `recordAuthorization` call on line 269). Doc 10 §8.8 scopes the authorisation to
-	// `sessionId` and requires the stored authorisation result to be returned on a replay; doc 10 §8.5
-	// has no `AUTHORIZED -> AUTHORIZED` transition.
-	it.failing('[DEFECT] counts one authorisation once, however often the provider answer is delivered', async () => {
+	// One authorisation is counted once, however often the provider answer is delivered: an attempt that
+	// already stands at AUTHORIZED has had its answer recorded — the status, the collection's
+	// `authorizedAmount` and the published event — so a re-delivery returns the authorisation on record
+	// rather than reserving the amount again. Doc 10 §8.8 scopes the authorisation to `sessionId` and
+	// requires the stored authorisation result to be returned on a replay; doc 10 §8.5 has no
+	// `AUTHORIZED -> AUTHORIZED` transition.
+	it('counts one authorisation once, however often the provider answer is delivered', async () => {
 		const fixture = world();
 		const opened = await fixture.service.openSession(attempt({ amount: '40' }) as never);
 

@@ -14,6 +14,11 @@
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
 
+	// The platform's exact decimal primitives are pulled through the seam rather than restated: this
+	// double replaces the application graph the barrel boots, not the arithmetic the assertions below
+	// turn on.
+	const decimals = jest.requireActual('@gauzy/core/src/lib/money/decimal');
+
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
@@ -96,6 +101,7 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseEntity: BaseEntity,
 		TenantOrganizationBaseDTO: class {},
 		MikroOrmBaseEntityRepository: class {},
+		compareDecimalStrings: decimals.compareDecimalStrings,
 		ColumnIndex: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
@@ -344,7 +350,7 @@ describe('FulfillmentLineService — the quantity a shipment line may carry (doc
 	// whose check constraint says it is positive (`CHK_fulfillment_line_positive`), and reaches the
 	// order line's counter as `NaN` — a shipment whose quantity nothing can reconcile. The rule the
 	// service states is "a fulfilment line quantity must be positive", and `NaN` is not.
-	it.failing('[DEFECT] refuses a quantity that is not a positive number at all', async () => {
+	it('[DEFECT] refuses a quantity that is not a positive number at all', async () => {
 		const fixture = lineFixture();
 
 		await expect(fixture.service.create(line({ quantity: Number.NaN }) as never)).rejects.toBeInstanceOf(

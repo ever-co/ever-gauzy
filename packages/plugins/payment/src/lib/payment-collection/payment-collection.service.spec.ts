@@ -8,10 +8,11 @@
  * below is computed by the platform's own arithmetic rather than by a second implementation of it.
  *
  * The base-class double mirrors the platform's `CrudService` where the behaviour is observable to a
- * caller, and that includes the one behaviour that decides the case marked `[DEFECT]`:
- * `findOneByWhereOptions` is documented as answering `null` for an absent row but raises
- * `NotFoundException` instead, on both the TypeORM and the MikroORM branch (`crud.service.ts`,
- * lines 451–469).
+ * caller, and that is both halves of the read pair: `findOneByWhereOptions` is documented as answering
+ * `null` for an absent row but raises `NotFoundException` instead, on both the TypeORM and the MikroORM
+ * branch (`crud.service.ts`, `findOneByWhereOptions`), while `findOneOrFailByWhereOptions` is the half
+ * a caller uses when absence is an ordinary answer, reporting the miss as an `ITryRequest` carrying
+ * `success: false`.
  */
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
@@ -50,6 +51,13 @@ jest.mock('@gauzy/core', () => {
 			}
 
 			return record;
+		}
+
+		async findOneOrFailByWhereOptions(where: any): Promise<any> {
+			// Faithful to the platform: the same read, reporting the miss as a value rather than raising.
+			const record = await this.typeOrmRepository.findOneBy(where);
+
+			return record ? { success: true, record } : { success: false };
 		}
 
 		async create(entity: any): Promise<any> {
@@ -321,17 +329,12 @@ describe('PaymentCollectionService — creation and the canonical amount (doc 10
 		expect(created).toMatchObject({ amount: '100', currency: 'USD' });
 	});
 
-	// The defect: the amount is canonicalised on the way in and the currency is not. `toMoney` reads the
-	// code as `currency.trim().toUpperCase()` and then writes the caller's own spelling to the column
-	// (`payment-collection.service.ts`, the `...input` spread and the `amount: amount.amount` override in
-	// `createCollection`, lines 83–92, against `toMoney`, lines 433–443), so `usd` and `USD` become two
-	// stored spellings of one currency. The money kernel's canonical currency form is upper case
-	// (`money.ts`, `normalizeCurrency`), and the two spellings are not interchangeable downstream:
-	// `PaymentSessionService.openSession` compares an upper-cased request currency against the stored
-	// value (`payment-session.service.ts`, line 99), so a collection stored as `usd` refuses every
-	// session that states the currency correctly, and any report grouped by `currency` shows one
-	// currency twice.
-	it.failing('[DEFECT] stores the currency in the platform’s canonical form', async () => {
+	// The rule: the amount and the currency are canonicalised together, because they are one figure. The
+	// money kernel reads a code into its upper-case form (`money.ts`, `normalizeCurrency`) and the stored
+	// amount carries no redundant trailing fractional zeroes, so a collection stating `usd` is stored as
+	// `USD` — which is the form `PaymentSessionService.openSession` compares a session's currency
+	// against, and the form a report grouped by `currency` expects to find one currency under.
+	it('stores the currency in the platform’s canonical form', async () => {
 		const fixture = collectionFixture();
 
 		const created = await fixture.service.createCollection({
@@ -398,14 +401,12 @@ describe('PaymentCollectionService — creation and the canonical amount (doc 10
 		expect(fixture.tables.payment_collection).toHaveLength(1);
 	});
 
-	// The defect: the cart guard reads through `findCollectionForCart`, which is
-	// `findOneByWhereOptions` — and that read raises `NotFoundException` for an absent row instead of
-	// answering `null` (`payment-collection.service.ts`, the `this.findCollectionForCart(input.cartId)`
-	// call in `createCollection`, line 76, and `findCollectionForCart`, lines 167–169). A cart that has
-	// no collection — which is every cart before its first one — is therefore reported as a missing
-	// record, and no collection can ever be created for a cart. The same read backs
-	// `findCollectionForOrder`, whose contract is the same "or null".
-	it.failing('[DEFECT] creates the first collection of a cart that has none', async () => {
+	// The rule: the cart guard reads through `findCollectionForCart`, whose documented answer for a cart
+	// that has no collection is `null`, so the guard fires only when a collection is actually there. The
+	// same read backs `findCollectionForOrder`, whose contract is the same "or null" — which is what
+	// makes "how much is outstanding for this cart?" a question that can be asked before the first
+	// collection exists.
+	it('creates the first collection of a cart that has none', async () => {
 		const fixture = collectionFixture();
 
 		const created = await fixture.service.createCollection({
@@ -416,6 +417,8 @@ describe('PaymentCollectionService — creation and the canonical amount (doc 10
 
 		expect(created).toMatchObject({ cartId: CART, amount: '100', status: PaymentCollectionStatus.NOT_PAID });
 		await expect(fixture.service.findCollectionForCart(CART)).resolves.toMatchObject({ id: created.id });
+		await expect(fixture.service.findCollectionForCart('a-cart-with-nothing')).resolves.toBeNull();
+		await expect(fixture.service.findCollectionForOrder('an-order-with-nothing')).resolves.toBeNull();
 	});
 });
 

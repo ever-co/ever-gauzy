@@ -7,14 +7,14 @@
  * substituted.
  *
  * The base-class double mirrors the platform's `CrudService` where the behaviour is observable to a
- * caller, and one of those behaviours decides two cases below. `findOneByWhereOptions` is documented
- * as answering `null` ("Finds first entity that matches given where condition. If entity was not
- * found in the database - returns null") but it does not: on both the TypeORM and the MikroORM branch
- * it raises `NotFoundException` when the row is absent (`crud.service.ts`, `findOneByWhereOptions`,
- * lines 451–469). That is the base class this service actually runs on, so the double states the
- * throw rather than the prose, and the two `it.failing` cases at the bottom of this file record what
- * the difference costs. Every other case is written against a path that does not depend on the
- * disputed read.
+ * caller, and that is both halves of the read pair. `findOneByWhereOptions` is documented as answering
+ * `null` ("Finds first entity that matches given where condition. If entity was not found in the
+ * database - returns null") but it does not: on both the TypeORM and the MikroORM branch it raises
+ * `NotFoundException` when the row is absent (`crud.service.ts`, `findOneByWhereOptions`). That is the
+ * base class this service actually runs on, so the double states the throw rather than the prose.
+ * `findOneOrFailByWhereOptions` is the half a caller uses when absence is an ordinary answer: it
+ * answers an `ITryRequest` carrying `success: false` instead of raising, which is what the two
+ * registry reads below are written against.
  */
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
@@ -53,6 +53,13 @@ jest.mock('@gauzy/core', () => {
 			}
 
 			return record;
+		}
+
+		async findOneOrFailByWhereOptions(where: any): Promise<any> {
+			// Faithful to the platform: the same read, reporting the miss as a value rather than raising.
+			const record = await this.typeOrmRepository.findOneBy(where);
+
+			return record ? { success: true, record } : { success: false };
 		}
 
 		async create(entity: any): Promise<any> {
@@ -499,16 +506,14 @@ describe('PaymentProviderService — what is offered, and what is refused at the
 });
 
 /**
- * What the base class's throwing read costs.
+ * The registry's two fail-soft reads and the refusal they replaced.
  *
- * `createProvider` asks "is this code free?" through `findProviderByCode`, which is
- * `findOneByWhereOptions` — and that read raises `NotFoundException` when the row is absent instead of
- * answering `null`. A free code is therefore indistinguishable from a missing record, and the two
- * cases below state what the registry should do and what it does.
- *
- * `findProviderOrNull` is the same read with the same contract in its name ("or null"), and its only
- * caller — `PaymentWebhookEventService.resolveProvider` — branches on that null to raise
- * `PAYMENT_WEBHOOK_UNKNOWN_PROVIDER`, which can therefore never be raised.
+ * `createProvider` asks "is this code free?" through `findProviderByCode`, and
+ * `PaymentWebhookEventService.resolveProvider` branches on `findProviderOrNull` being `null` to raise
+ * `PAYMENT_WEBHOOK_UNKNOWN_PROVIDER`. Both are reads whose documented answer for an absent row is
+ * `null`, and both go through `findOneOrFailByWhereOptions`, whose `ITryRequest` carries
+ * `success: false` rather than raising — which is why a free code registers and an unknown identifier
+ * is an answer the caller can branch on.
  */
 describe('PaymentProviderService — registration and the null read (doc 10 §8.1, doc 10 §8.9)', () => {
 	beforeEach(() => {
@@ -518,12 +523,7 @@ describe('PaymentProviderService — registration and the null read (doc 10 §8.
 
 	afterEach(() => jest.restoreAllMocks());
 
-	// The defect: a registration whose code is free cannot be stored at all, because the duplicate guard
-	// reads through `findOneByWhereOptions` (`payment-provider.service.ts`, the
-	// `this.findProviderByCode(code)` call in `createProvider`, line 68, and `findProviderByCode`,
-	// lines 139–141), which raises `NotFoundException` for an absent row. The registry can therefore
-	// only ever be populated by a migration, never by an operator.
-	it.failing('[DEFECT] registers a provider whose code is free, with the documented defaults', async () => {
+	it('registers a provider whose code is free, with the documented defaults', async () => {
 		const fixture = providerFixture();
 
 		const created = await fixture.service.createProvider({
@@ -543,10 +543,10 @@ describe('PaymentProviderService — registration and the null read (doc 10 §8.
 		expect(fixture.tables.payment_provider).toHaveLength(1);
 	});
 
-	// The defect: the same read, one method down. `findProviderOrNull` is documented as answering "the
-	// registration, or null when this organization has none with that identifier"
-	// (`payment-provider.service.ts`, lines 149–151) and can only ever answer a row or raise.
-	it.failing('[DEFECT] answers null for an identifier this organization does not have', async () => {
+	// A code that is free is the ordinary state of the registry — every registration started that way —
+	// so the uniqueness guard's read has to answer rather than refuse, or the registry can only ever be
+	// populated by a migration and never by an operator.
+	it('answers null for an identifier this organization does not have', async () => {
 		const fixture = providerFixture([providerRow('card-primary')]);
 
 		await expect(fixture.service.findProviderOrNull('no-such-provider')).resolves.toBeNull();
@@ -556,12 +556,11 @@ describe('PaymentProviderService — registration and the null read (doc 10 §8.
 	});
 
 	it('reports an unknown identifier as not found rather than answering with any row', async () => {
-		// What a caller actually observes today, and the reason the two cases above are defects rather
-		// than unstated behaviour: the refusal is real — no row is invented — only its identity is not
-		// the one the service states.
+		// The read a caller uses when absence is not an answer: no row is invented for an identifier this
+		// organization does not have, and the refusal is still the one the service states.
 		const fixture = providerFixture([providerRow('card-primary')]);
 
-		await expect(fixture.service.findProviderOrNull('no-such-provider')).rejects.toBeInstanceOf(NotFoundException);
+		await expect(fixture.service.findProviderOrNull('no-such-provider')).resolves.toBeNull();
 		await expect(fixture.service.findProviderOrFail('no-such-provider')).rejects.toBeInstanceOf(NotFoundException);
 	});
 });

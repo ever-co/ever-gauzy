@@ -634,14 +634,11 @@ describe('RefundService — recording a refund moves nothing (doc 10 §9.1, §9.
 		expect(fixture.tables.refund).toEqual([]);
 	});
 
-	// The defect: the amount is validated twice and only the second validation is a refusal. With a
-	// `paymentId` named, `assertRefundable` runs first and calls `Money.of` on the raw request amount, so
-	// a malformed amount raises the money kernel's own `Error` — an unhandled 500 rather than the
-	// documented `PAYMENT_AMOUNT_INVALID` the same request is refused with when no payment is named
-	// (`refund.service.ts`, the `await this.assertRefundable(payment, input.amount, currency)` call on
-	// line 124, which precedes the `this.toMoney(input.amount, currency)` on line 131 that is the one
-	// written to convert the failure).
-	it.failing('[DEFECT] refuses a malformed amount with PAYMENT_AMOUNT_INVALID whatever else it names', async () => {
+	// The amount is one figure and is refused the same way on every path: the refundable check reads the
+	// request through the same conversion the rest of the request is read with, so a malformed amount is
+	// the documented `PAYMENT_AMOUNT_INVALID` whether or not a payment is named, rather than the money
+	// kernel's own error escaping as a server fault on the path that names one.
+	it('refuses a malformed amount with PAYMENT_AMOUNT_INVALID whatever else it names', async () => {
 		const fixture = refundFixture();
 
 		await expect(fixture.service.createRefund(refundInput({ amount: 'forty' }) as never)).rejects.toThrow(
@@ -651,8 +648,8 @@ describe('RefundService — recording a refund moves nothing (doc 10 §9.1, §9.
 	});
 
 	it('refuses a malformed amount with PAYMENT_AMOUNT_INVALID when no payment is named', async () => {
-		// What the same request is refused with on the path that has no payment to check it against, and
-		// the reason the case above is a defect rather than an unstated behaviour: the vocabulary exists.
+		// The same refusal on the path that has no payment to check the request against: one vocabulary
+		// for one mistake, whichever way the refund is attributed.
 		const fixture = refundFixture();
 
 		await expect(

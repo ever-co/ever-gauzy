@@ -13,13 +13,20 @@
  * is observable to a caller, which includes the part that is easy to get wrong: **a lookup that does
  * not match raises `NotFoundException`** rather than answering `null`
  * (`packages/core/src/lib/core/crud/crud.service.ts`, the `if (!record)` branch of
- * `findOneByIdString` on line 409 and of `findOneByWhereOptions` on line 465 — both under a doc
- * comment that still claims the opposite). `update` likewise loads the row first for a string id, as
+ * `findOneByIdString` and of `findOneByWhereOptions`, both reached through
+ * `TenantAwareCrudService`). That is the contract for reading a resource by id — the kernel's own doc
+ * comment states it, and a caller that must treat absence as an ordinary answer uses the
+ * `findOneOrFailBy*` pair instead. `update` likewise loads the row first for a string id, as
  * `TenantAwareCrudService.update` does. A double that answered `null` instead would silently make the
  * "not found" cases below vacuous.
  */
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
+
+	// The platform's exact decimal primitives are pulled through the seam rather than restated: this
+	// double replaces the application graph the barrel boots, not the arithmetic the assertions below
+	// turn on, and a subtraction re-implemented here would make the decimal case assert the double.
+	const decimals = jest.requireActual('@gauzy/core/src/lib/money/decimal');
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
@@ -103,6 +110,9 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseEntity: BaseEntity,
 		TenantOrganizationBaseDTO: class {},
 		MikroOrmBaseEntityRepository: class {},
+		subtractDecimalStrings: decimals.subtractDecimalStrings,
+		addDecimalStrings: decimals.addDecimalStrings,
+		compareDecimalStrings: decimals.compareDecimalStrings,
 		ColumnIndex: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
@@ -679,7 +689,7 @@ describe('FulfillmentService — a shipment against what the order line has left
 	// refused by the guard on line 275 — `0.2 > 0.19999999999999998` — and a picking screen is told
 	// there is nothing left to ship. The platform keeps exact decimal primitives for this reason
 	// (`packages/core/src/lib/money/decimal.ts`, `subtractDecimalStrings` / `compareDecimalStrings`).
-	it.failing('[DEFECT] treats a decimal remaining quantity as exact, so the last partial shipment is not refused', async () => {
+	it('[DEFECT] treats a decimal remaining quantity as exact, so the last partial shipment is not refused', async () => {
 		const fixture = fulfillmentFixture({
 			seed: { order_line: [orderLine(LINE_A, { quantity: 0.3, fulfilledQuantity: 0.1 })] }
 		});
@@ -925,7 +935,7 @@ describe('FulfillmentService — handing the same shipment over twice (doc 06 §
 	// (`fulfillment.service.ts`, lines 209–211) and `ship` reads that as permission to carry on, so a
 	// second hand-over writes the tracking details again and bumps `shippedQuantity` a second time. The
 	// API contract names the refusal — `FULFILLMENT_ALREADY_SHIPPED`, 409 (doc 06 §6.9).
-	it.failing('[DEFECT] refuses to hand an already shipped fulfilment to the carrier again', async () => {
+	it('[DEFECT] refuses to hand an already shipped fulfilment to the carrier again', async () => {
 		const { fixture, created } = await shipmentOfThree();
 
 		await fixture.service.ship(created.id, { trackingNumber: 'TRACK-0001' });
@@ -939,7 +949,7 @@ describe('FulfillmentService — handing the same shipment over twice (doc 06 §
 	// again, so `shippedQuantity` stops being the sum of the rows that caused it (doc 05 I-45). The
 	// second call's answer is tolerated either way, so that fixing the refusal above turns this case
 	// green rather than red.
-	it.failing('[DEFECT] ships the units once, however many times the shipment is handed over', async () => {
+	it('[DEFECT] ships the units once, however many times the shipment is handed over', async () => {
 		const { fixture, created } = await shipmentOfThree();
 
 		await fixture.service.ship(created.id, { trackingNumber: 'TRACK-0001' });
@@ -954,7 +964,7 @@ describe('FulfillmentService — handing the same shipment over twice (doc 06 §
 
 	// The same defect on the delivery move: `deliver` bumps `deliveredQuantity` after a `transition`
 	// that answered the unchanged row.
-	it.failing('[DEFECT] delivers the units once, however many times delivery is reported', async () => {
+	it('[DEFECT] delivers the units once, however many times delivery is reported', async () => {
 		const { fixture, created } = await shipmentOfThree();
 
 		await fixture.service.ship(created.id);
@@ -1043,7 +1053,7 @@ describe('FulfillmentService — cancelation (doc 09 §12.9)', () => {
 	// shipped. It is recorded here rather than asserted separately because the two readings of §12.9
 	// disagree about whether that scenario is reachable at all, and the case that matters is the one
 	// above: the cancelation should not be permitted.
-	it.failing('[DEFECT] refuses to cancel a fulfilment the carrier has already taken', async () => {
+	it('[DEFECT] refuses to cancel a fulfilment the carrier has already taken', async () => {
 		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 5 })] } });
 		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
 
@@ -1059,7 +1069,7 @@ describe('FulfillmentService — cancelation (doc 09 §12.9)', () => {
 	// contract publishes for this situation — `FULFILLMENT_NOT_CANCELABLE`, 409 (doc 06 §6.9, doc 09
 	// §12.9), which is what a storefront branches on to tell a customer that a parcel cannot be called
 	// back.
-	it.failing('[DEFECT] refuses a cancelation of an in-transit or delivered shipment by its documented code', async () => {
+	it('[DEFECT] refuses a cancelation of an in-transit or delivered shipment by its documented code', async () => {
 		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 9 })] } });
 		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
 
@@ -1084,7 +1094,7 @@ describe('FulfillmentService — cancelation (doc 09 §12.9)', () => {
 	// The clamp on line 309 hides it while nothing else is fulfilled; as soon as a second fulfilment
 	// holds part of the line, the second cancelation returns *its* quantity, and the order line claims
 	// less has been fulfilled than the shipments that exist.
-	it.failing('[DEFECT] returns a cancelled shipment’s quantity once, however often it is submitted', async () => {
+	it('[DEFECT] returns a cancelled shipment’s quantity once, however often it is submitted', async () => {
 		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 6 })] } });
 
 		const first = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
@@ -1153,7 +1163,7 @@ describe('FulfillmentService — what an order line still has to ship (doc 09 §
 	// `numeric(20,6)` column whose check constraint says it is positive
 	// (`CHK_fulfillment_line_positive`), and reaches the order line's counter as `NaN`. The service
 	// states the rule it means to enforce: "a shipment quantity is positive".
-	it.failing('[DEFECT] refuses a shipment quantity that is not a positive number', async () => {
+	it('[DEFECT] refuses a shipment quantity that is not a positive number', async () => {
 		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A)] } });
 
 		await expect(

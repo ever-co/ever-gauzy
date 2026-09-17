@@ -6,10 +6,12 @@
  * only the base CRUD class, the request context and the entity base classes are substituted.
  *
  * The base-class double mirrors the platform's `CrudService` where the behaviour is observable to a
- * caller, and that includes the behaviour the first case at the bottom of this file is about:
- * `findOneByWhereOptions` raises `NotFoundException` for an absent row on both ORM branches
- * (`crud.service.ts`, lines 451–469) rather than answering the `null` its prose promises. Every other
- * case is written against a path that does not depend on that read.
+ * caller, and that is both halves of the read pair: `findOneByWhereOptions` raises `NotFoundException`
+ * for an absent row on both ORM branches (`crud.service.ts`, `findOneByWhereOptions`) rather than
+ * answering the `null` its prose promises, while `findOneOrFailByWhereOptions` is the half a caller
+ * uses when absence is an ordinary answer, reporting the miss as an `ITryRequest` carrying
+ * `success: false`. `createReason` asks "is this code free?" through the second half, because a free
+ * code is how every reason in the taxonomy started.
  */
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
@@ -47,6 +49,13 @@ jest.mock('@gauzy/core', () => {
 			}
 
 			return record;
+		}
+
+		async findOneOrFailByWhereOptions(where: any): Promise<any> {
+			// Faithful to the platform: the same read, reporting the miss as a value rather than raising.
+			const record = await this.typeOrmRepository.findOneBy(where);
+
+			return record ? { success: true, record } : { success: false };
 		}
 
 		async create(entity: any): Promise<any> {
@@ -294,14 +303,11 @@ describe('RefundReasonService — what a reason may not be (doc 05 §12.6)', () 
 		expect((await fixture.service.findByCode('DAMAGED')).id).toBe('theirs');
 	});
 
-	// The defect: the depth rule on create is unreachable for a second reason. `createReason` asks whether
-	// the code is free *before* it asks how deep the new reason would sit (`refund-reason.service.ts`, the
-	// `await this.findByCode(code)` call on line 61 and the `if (input.parentId)` guard on lines 67–73), so
-	// the throw of the uniqueness read above pre-empts the depth check in every case: a code that is free
-	// raises `NotFoundException` and a code that is taken raises "already exists". A refinement of a
-	// refinement can therefore never be refused by the rule that exists to refuse it — it simply cannot be
-	// created at all, for the wrong reason.
-	it.failing('[DEFECT] refuses a refinement of a refinement, so the taxonomy stays two levels deep', async () => {
+	// The depth rule on create: the parent must be a root, so a reason cannot refine another refinement.
+	// The rule is reached only because the uniqueness read above answers rather than refuses — a code that
+	// is free is the ordinary state of a taxonomy, and `findByCode` reports it as `null` instead of
+	// raising `NotFoundException` for it.
+	it('refuses a refinement of a refinement, so the taxonomy stays two levels deep', async () => {
 		const fixture = taxonomyFixture();
 
 		await expect(
@@ -439,12 +445,13 @@ describe('RefundReasonService — the code is what reports cite (doc 05 §12.6)'
 });
 
 /**
- * What the base class's throwing read and an incomplete depth check cost.
+ * The creation of a reason, and the depth of a move.
  *
- * `createReason` asks "is this code free?" through `findByCode`, which is `findOneByWhereOptions` — and
- * that read raises `NotFoundException` when the row is absent instead of answering `null`. A free code
- * is therefore indistinguishable from a missing record, and a taxonomy can only ever be populated by a
- * migration, never by an operator.
+ * `createReason` asks "is this code free?" through the fail-soft read, whose documented answer for an
+ * absent row is `null`: a code that is free is the ordinary state of a taxonomy, so the read answers
+ * rather than refuses, and the operator path that populates the taxonomy exists. The second case is the
+ * depth rule read from the other end — a move is judged on both the parent and the reason being moved,
+ * because a reason that already has refinements carries them with it.
  */
 describe('RefundReasonService — creation and the depth of a move (doc 05 §12.6, I-52)', () => {
 	beforeEach(() => {
@@ -454,11 +461,7 @@ describe('RefundReasonService — creation and the depth of a move (doc 05 §12.
 
 	afterEach(() => jest.restoreAllMocks());
 
-	// The defect: a reason whose code is free cannot be stored at all, because the uniqueness guard reads
-	// through `findOneByWhereOptions` (`refund-reason.service.ts`, the `await this.findByCode(code)` call
-	// in `createReason`, line 61, and `findByCode`, lines 152–154), which raises `NotFoundException` for
-	// an absent row rather than answering null.
-	it.failing('[DEFECT] creates a reason whose code is free, trimmed and inside the caller’s organization', async () => {
+	it('creates a reason whose code is free, trimmed and inside the caller’s organization', async () => {
 		const fixture = reasonFixture();
 
 		const created = await fixture.service.createReason({
@@ -475,14 +478,9 @@ describe('RefundReasonService — creation and the depth of a move (doc 05 §12.
 		expect(fixture.tables.refund_reason).toHaveLength(1);
 	});
 
-	// The defect: the depth guard on a move tests the new parent's own depth and refuses a cycle, but never
-	// asks how deep the reason being moved already is. Moving a reason that has refinements under another
-	// reason therefore stores a third level — the invariant doc 05 §12.6 states ("the tree is at most two
-	// levels deep", I-52) and the case above enforces on create — and the taxonomy that guard exists to
-	// keep flat is three deep from that moment.
-	// (`refund-reason.service.ts`, `updateReason`, lines 95–106: the checks are `parent.parentId` and
-	// `children.some((child) => child.id === parent.id)`; the moved reason's own children are never read.)
-	it.failing('[DEFECT] refuses a move that would make a reason a third level deep', async () => {
+	it('refuses a move that would make a reason a third level deep', async () => {
+		// `item-problem` refines nothing and is refined by `damaged`, so giving it a parent would put
+		// `damaged` — and every other refinement it has — one level below the two the taxonomy allows.
 		const fixture = taxonomyFixture();
 
 		await expect(

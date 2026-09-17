@@ -201,12 +201,23 @@ export class PaymentWebhookEventService extends CrudService<PaymentWebhookEvent>
 	/**
 	 * Resolves a stored callback by its provider and the provider's own event id.
 	 *
+	 * **An unseen pair is an answer, not a refusal.** The read is the fail-soft half of the pair —
+	 * `findOneOrFailByWhereOptions`, whose `ITryRequest` carries `success: false` — because the replay
+	 * guard's whole question is whether this pair has been seen before, and "it has not" is the answer
+	 * that lets the payload row be written.
+	 *
 	 * @param providerId The provider registration.
 	 * @param eventId The provider's event identifier.
 	 * @returns The event, or null when this pair has not been seen.
 	 */
 	async findByProviderAndEvent(providerId: ID, eventId: string): Promise<IPaymentWebhookEvent | null> {
-		return this.findOneByWhereOptions({ providerId, eventId, ...this.scope } as never);
+		const outcome = await this.findOneOrFailByWhereOptions({
+			providerId,
+			eventId,
+			...this.scope
+		} as never);
+
+		return outcome.success ? (outcome.record as IPaymentWebhookEvent) : null;
 	}
 
 	/**

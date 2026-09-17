@@ -259,11 +259,15 @@ export class ShippingOptionService extends TenantAwareCrudService<ShippingOption
 			throw new BadRequestException('SHIPPING_OPTION_CODE_REQUIRED: a shipping option needs a code.');
 		}
 
-		const existing = (await this.findOneByWhereOptions({ code } as FindOptionsWhere<ShippingOption>)) as
-			| ShippingOption
-			| null;
+		// "Is this code still free?" is a question whose answer may be yes, so it is asked of the read
+		// that reports a miss instead of raising one: the platform's reads by id raise
+		// `NotFoundException` on a miss, which is right for reading a resource and wrong for a test
+		// whose whole subject is the absence. `ITryRequest` carries the answer.
+		const { success, record: existing } = await this.findOneOrFailByWhereOptions({
+			code
+		} as FindOptionsWhere<ShippingOption>);
 
-		if (existing && existing.id !== exceptId) {
+		if (success && existing.id !== exceptId) {
 			throw new BadRequestException({
 				message: `SHIPPING_OPTION_CODE_TAKEN: an option with code ${code} already exists.`,
 				code: 'SHIPPING_OPTION_CODE_TAKEN',

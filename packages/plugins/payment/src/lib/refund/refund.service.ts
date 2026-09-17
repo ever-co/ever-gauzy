@@ -453,17 +453,24 @@ export class RefundService extends CrudService<Refund> {
 	/**
 	 * Refuses a refund that would pass what was captured for a payment.
 	 *
+	 * The requested amount is read through the same conversion the rest of the request is read with,
+	 * so that a malformed amount is the documented `PAYMENT_AMOUNT_INVALID` refusal here as well as on
+	 * the path that has no payment to compare it against, rather than the money kernel's own error
+	 * escaping as a server fault.
+	 *
 	 * @param payment The payment being given back.
 	 * @param amount The amount requested.
 	 * @param currency The currency of the request.
-	 * @throws BadRequestException when the request exceeds what is refundable.
+	 * @throws BadRequestException when the amount is not an exact decimal or when the request exceeds
+	 * what is refundable.
 	 */
 	private async assertRefundable(payment: Payment, amount: DecimalString | number, currency: string): Promise<void> {
+		const requested = this.toMoney(amount, currency);
 		const captured = Money.of(await this.paymentCaptureService.sumCapturedForPayment(payment.id), currency);
 		const succeeded = Money.of(await this.sumSucceededForPayment(payment.id), currency);
 		const refundable = captured.subtract(succeeded);
 
-		if (Money.of(amount, currency).greaterThan(refundable)) {
+		if (requested.greaterThan(refundable)) {
 			throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
 		}
 	}
