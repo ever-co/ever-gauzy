@@ -175,6 +175,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	 * @returns
 	 */
 	public async pagination(options: any) {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
