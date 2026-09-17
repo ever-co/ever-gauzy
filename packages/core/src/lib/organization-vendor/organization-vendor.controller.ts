@@ -1,11 +1,25 @@
-import { Controller, Get, HttpStatus, Query, UseGuards, HttpCode, Delete, Param, Put, Body } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IOrganizationVendor, IPagination } from '@gauzy/contracts';
+import { ID, IOrganizationVendor, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import { OrganizationVendorService } from './organization-vendor.service';
 import { OrganizationVendor } from './organization-vendor.entity';
-import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions } from './../shared/decorators';
+import { AbstractValidationPipe, ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { TenantOrganizationBaseDTO } from './../core/dto';
 
 @ApiTags('OrganizationVendor')
 @UseGuards(TenantPermissionGuard)
@@ -56,6 +70,8 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 	 * @param body
 	 * @returns
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -84,8 +100,44 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 		description: "This Vendor can't be deleted because it is used in expense records"
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.organizationVendorService.deleteVendor(id);
+	}
+
+	/**
+	 * SOFT DELETE organization vendor by id
+	 *
+	 * Overrides the inherited `CrudController.softRemove()` route only to attach the permission gate:
+	 * `PermissionGuard` authorizes any route that carries no `@Permissions` metadata, so an
+	 * inherited handler is reachable by every member of the tenant until it is gated here.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationVendor> {
+		return super.softRemove(id, ...options);
+	}
+
+	/**
+	 * RESTORE a soft-deleted organization vendor by id
+	 *
+	 * Overrides the inherited `CrudController.softRecover()` route only to attach the permission gate.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationVendor> {
+		return super.softRecover(id, ...options);
 	}
 }
