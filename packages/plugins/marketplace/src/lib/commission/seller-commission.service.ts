@@ -58,7 +58,8 @@ export class SellerCommissionService {
 	 * @param seller The seller's default, when it sets one.
 	 * @param platformDefault The platform default from the tenant settings, when the tenant set one.
 	 * @returns The resolved commission.
-	 * @throws BadRequestException when no source supplies a rate and the basis is not a fixed fee.
+	 * @throws BadRequestException when a non-tiered basis has no resolvable rate, or a tiered basis
+	 * carries no schedule or carries a scalar rate alongside one.
 	 */
 	resolve(
 		offering: Partial<IResolvedCommission> | undefined,
@@ -94,9 +95,12 @@ export class SellerCommissionService {
 			if (fixedFeePerItem === undefined || fixedFeePerItem === null) {
 				throw new BadRequestException('A fixed per-item commission basis needs a fee per item.');
 			}
-		} else if (rate === undefined || rate === null) {
+		} else if (!this.isTiered(basis) && (rate === undefined || rate === null)) {
 			// There is no implicit zero commission: a seller-owned line with no resolvable rate is
-			// refused rather than sold at a rate nobody agreed to.
+			// refused rather than sold at a rate nobody agreed to. A tiered basis is not a line without
+			// a rate — its rate is stated by the band the line falls in, so a schedule alone is a
+			// complete answer and is resolved here rather than refused; `compute` reads the band and
+			// snapshots it onto the row.
 			throw new BadRequestException('No commission rate could be resolved for this seller-owned line.');
 		}
 

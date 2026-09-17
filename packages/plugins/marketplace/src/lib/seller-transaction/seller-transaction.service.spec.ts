@@ -411,7 +411,7 @@ describe('SellerTransactionService — the split reconciliation (doc 20 §7.6, M
 	// buried among them. Doc 20 §4.4 S10 is the worked case: the same row balances once `F`, the
 	// platform's own contribution, is accounted for as the report already does elsewhere.
 	// (`seller-transaction.service.ts`, the `splitDelta` subtraction chain in `reconcile`.)
-	it.failing('[DEFECT] reports a balanced platform-funded order with a zero split delta', async () => {
+	it('[DEFECT] reports a balanced platform-funded order with a zero split delta', async () => {
 		const fixture = transactionFixture({
 			transactions: [
 				row('sale-1', {

@@ -185,7 +185,7 @@ describe('SellerCommissionService — resolving which commission applies (doc 20
 	// sellerDiscountAmount` sets the rate for the whole line amount"), and §4.4 S5/S6 compute with no
 	// scalar rate anywhere. (`seller-commission.service.ts`, the tiered branch's rate refusal and the
 	// `rate === undefined` check the same call then reaches.)
-	it.failing('[DEFECT] resolves a tiered schedule that states its rates in the schedule alone', () => {
+	it('[DEFECT] resolves a tiered schedule that states its rates in the schedule alone', () => {
 		const outcome = service.resolve({ basis: CommissionBasis.TIERED_AMOUNT, tiers: TIERS_AMOUNT }, undefined, undefined);
 
 		expect(outcome).toMatchObject({ basis: CommissionBasis.TIERED_AMOUNT, source: CommissionSource.OFFERING });

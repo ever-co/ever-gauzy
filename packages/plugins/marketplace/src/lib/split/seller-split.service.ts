@@ -142,10 +142,10 @@ export class SellerSplitService {
 	 *
 	 * Two rules make a reversal exact. It never edits the row it reverses — the original keeps its
 	 * amounts and only its status moves to `REVERSED` on a full reversal — and the reversal that
-	 * **completes** a transaction takes the seller's net as the balancing figure
-	 * `originalNet − Σ previousNetReversals` and derives its commission from the refund amount, so both
-	 * parties are made whole to the minor unit and the residue lands on the platform's commission rather
-	 * than on a seller's net.
+	 * **completes** a transaction carries only what the reversals already written left behind, negated,
+	 * with the seller's remaining net as the balancing figure and the platform's commission derived from
+	 * the refund so that both parties are made whole to the minor unit and the residue lands on the
+	 * platform's commission rather than on a seller's net.
 	 *
 	 * @param input What is being reversed.
 	 * @returns The reversal rows.
@@ -174,26 +174,51 @@ export class SellerSplitService {
 		const alreadyReversed = await this.transactionRepository.find({
 			where: { reversesTransactionId: original.id } as FindOptionsWhere<SellerTransaction>
 		});
-		const reversedNet = Money.sum(
-			alreadyReversed.map((row) => Money.fromStorage(row.netAmount, currency, decimals)),
-			currency,
-			decimals
-		);
+
+		/** The exact sum of one monetary column over the reversals already written for this row. */
+		const reversedSoFar = (column: 'grossAmount' | 'taxAmount' | 'sellerDiscountAmount' | 'netAmount'): Money =>
+			Money.sum(
+				alreadyReversed.map((row) => Money.fromStorage(row[column], currency, decimals)),
+				currency,
+				decimals
+			);
+
+		/** The whole of one column of the row being reversed, carrying the sign a reversal needs. */
+		const reversedWhole = (column: 'grossAmount' | 'taxAmount' | 'sellerDiscountAmount'): Money =>
+			Money.fromStorage(original[column], currency, decimals).negate();
 
 		const originalNet = Money.fromStorage(original.netAmount, currency, decimals);
-		const gross = Money.fromStorage(original.grossAmount, currency, decimals).negate();
-		const tax = Money.fromStorage(original.taxAmount, currency, decimals).negate();
-		const sellerDiscount = Money.fromStorage(original.sellerDiscountAmount, currency, decimals).negate();
+
+		// A reversal states the negated amounts of what it reverses, so that adding it to the ledger
+		// moves the seller's balance and the platform's commission by exactly the amount reversed.
+		let gross = reversedWhole('grossAmount');
+		let tax = reversedWhole('taxAmount');
+		let sellerDiscount = reversedWhole('sellerDiscountAmount');
 
 		let net: Money;
 		let commission: Money;
 
 		if (input.completes) {
-			// The balancing rule: the seller is made exactly whole and the platform's commission absorbs
-			// whatever the per-unit arithmetic left over.
-			net = originalNet.add(reversedNet);
-			const refund = Money.fromStorage(input.refundAmount ?? net.abs().toStorageString(), currency, decimals);
-			commission = refund.subtract(net.abs());
+			// The reversal that **completes** a transaction is the one that makes both parties exactly
+			// whole, so it carries what the reversals already written left behind — negated, because this
+			// is the row that states them — rather than the whole of the original a second time. The
+			// seller's net is the balancing figure and the platform's commission is what remains of the
+			// refund once the seller has been made whole, so any residue lands on the platform and never
+			// on a seller's net (§4.4 S9, §5.5).
+			gross = gross.subtract(reversedSoFar('grossAmount'));
+			tax = tax.subtract(reversedSoFar('taxAmount'));
+			sellerDiscount = sellerDiscount.subtract(reversedSoFar('sellerDiscountAmount'));
+			net = originalNet.negate().subtract(reversedSoFar('netAmount'));
+
+			// What the buyer is made whole by: what is left of the row's captured amount. Where the
+			// caller states the refund, it is the refund that fixes the platform's share, and the row's
+			// own identity below is what refuses a refund that disagrees with the amounts reversed.
+			const refund = Money.fromStorage(
+				input.refundAmount ?? gross.add(tax).add(sellerDiscount).negate().toStorageString(),
+				currency,
+				decimals
+			);
+			commission = refund.add(net).negate();
 		} else {
 			commission = Money.fromStorage(original.commissionAmount, currency, decimals).negate();
 			net = gross.add(tax).add(sellerDiscount).subtract(commission);
@@ -392,10 +417,24 @@ export class SellerSplitService {
 	}
 
 	/**
-	 * MK-9, checked on the order: the rows plus the platform's own captured share account for the money.
+	 * MK-9, checked on the order: the rows and the platform's own captured share account for the money
+	 * the buyer actually paid.
 	 *
-	 * The identity holds per row, so it sums without a special case; a non-zero delta is a defect in the
-	 * arithmetic upstream and the order is refused rather than placed with a broken split.
+	 * The identity is stated against the **captured** amount, which is what a line's buyer paid for it,
+	 * not the list amount: a line's captured money is
+	 * `grossAmount + taxAmount + sellerDiscountAmount + platformDiscountAmount`, because a discount of
+	 * either funding lowers what the buyer pays (§4.5). Comparing the rows against the list amount
+	 * instead would make every discounted line fail the identity by exactly its discount, and would
+	 * mean no order carrying a promotion could be placed at all.
+	 *
+	 * The platform's own share is therefore read as a **signed** position on the order: positive for
+	 * content no seller owns — a platform-owned line or a platform-attributed shipping method — and
+	 * negative for a discount the platform funded on a seller-owned line, which it paid out of its own
+	 * pocket. With it, the statement is the plain one: the sellers' entitlement plus the platform's
+	 * commission plus what the platform itself captured is the money the buyer paid.
+	 *
+	 * The identity holds per row (MK-8), so it sums without a special case; a non-zero delta is a
+	 * defect in the arithmetic upstream and the order is refused rather than placed with a broken split.
 	 */
 	private assertSplitIdentity(
 		input: IOrderSplitInput,
@@ -407,9 +446,9 @@ export class SellerSplitService {
 
 		const sellersCaptured = Money.sum(
 			rows.map((row) =>
-				Money.fromStorage(row.netAmount, currency, decimals)
-					.add(Money.fromStorage(row.commissionAmount, currency, decimals))
-					.add(Money.fromStorage(row.platformDiscountAmount, currency, decimals))
+				Money.fromStorage(row.netAmount, currency, decimals).add(
+					Money.fromStorage(row.commissionAmount, currency, decimals)
+				)
 			),
 			currency,
 			decimals
@@ -417,7 +456,10 @@ export class SellerSplitService {
 
 		const linesCaptured = Money.sum(
 			input.lines.map((line) =>
-				Money.of(line.grossAmount, currency, decimals).add(Money.of(line.taxAmount, currency, decimals))
+				Money.of(line.grossAmount, currency, decimals)
+					.add(Money.of(line.taxAmount, currency, decimals))
+					.add(Money.of(line.sellerDiscountAmount ?? '0', currency, decimals))
+					.add(Money.of(line.platformDiscountAmount ?? '0', currency, decimals))
 			),
 			currency,
 			decimals

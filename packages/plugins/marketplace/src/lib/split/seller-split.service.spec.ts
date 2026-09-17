@@ -419,7 +419,7 @@ describe('SellerSplitService — the rows one order writes (doc 20 §4.4 S7, MK-
 	// is explicit that a discount lowers what the buyer pays. The consequence is that no order with a
 	// promotion can be placed at all. (`seller-split.service.ts`, the `linesCaptured` sum inside
 	// `assertSplitIdentity`.)
-	it.failing('[DEFECT] balances a split for an order that carries a seller-funded discount', async () => {
+	it('[DEFECT] balances a split for an order that carries a seller-funded discount', async () => {
 		const fixture = splitFixture();
 
 		const rows = await fixture.service.split(
@@ -432,12 +432,26 @@ describe('SellerSplitService — the rows one order writes (doc 20 §4.4 S7, MK-
 		expect(fixture.rowFor('l1')).toMatchObject({ commissionAmount: '14.250000', netAmount: '98.800000' });
 	});
 
-	it.failing('[DEFECT] balances a split for an order that carries a platform-funded discount', async () => {
+	it('[DEFECT] balances a split for an order that carries a platform-funded discount', async () => {
 		const fixture = splitFixture();
 
+		// §4.4 S10's line L1 in full — `gross 100.00, tax 16.99, sellerDisc −5.00, platformDisc −5.59`,
+		// the tax being the one recomputed on the reduced net base — because the amounts asserted below
+		// are that row's: `net 97.74` and `commission 14.25` are one subtraction
+		// (`100.00 + 16.99 − 5.00 − 14.25`, MK-7), and the platform's own 5.59 is what makes the buyer's
+		// captured share `106.40` rather than the `113.05` the seller-funded case captures.
 		const rows = await fixture.service.split(
 			order({
-				lines: [line({ orderLineId: 'l1', platformDiscountAmount: '-5.59' })],
+				lines: [
+					line({
+						orderLineId: 'l1',
+						quantity: '4',
+						grossAmount: '100.00',
+						taxAmount: '16.99',
+						sellerDiscountAmount: '-5.00',
+						platformDiscountAmount: '-5.59'
+					})
+				],
 				platformOwnCaptured: '-5.59'
 			}) as never
 		);
@@ -767,7 +781,7 @@ describe('SellerSplitService — reversal (doc 20 §4.4 S8/S9, §5.6)', () => {
 	// `98.80 − 3 × 24.70 = 24.70` is what remains to be reversed, and a reversal of it is negative.
 	// (`seller-split.service.ts`, the `net = originalNet.add(reversedNet)` / `commission =
 	// refund.subtract(net.abs())` pair in the `completes` branch of `reverse`.)
-	it.failing('[DEFECT] writes the completing reversal so that both parties are made exactly whole', async () => {
+	it('[DEFECT] writes the completing reversal so that both parties are made exactly whole', async () => {
 		const partial = (id: string) =>
 			saleRow({
 				id,

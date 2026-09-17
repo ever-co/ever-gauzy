@@ -208,14 +208,21 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 			const platformDiscount = sum((row) => row.platformDiscountAmount);
 
 			// `F` is the platform's own contribution to seller-owned lines, as a positive figure, and the
-			// split delta is what remains when the rows, the platform's commission and that contribution
-			// are accounted for against the money the sellers' lines captured.
+			// split delta is what remains when the rows and the platform's commission are accounted for
+			// against the money the rows actually captured. A row captures
+			// `gross + tax + sellerDiscount + platformDiscount`, because a discount of either funding
+			// lowers what the buyer pays (§4.5), and the platform's own discount therefore appears on
+			// both sides of the identity and cancels: a balanced row leaves a delta of exactly zero
+			// (§5.2 MK-9, §7.6).
+			const capturedByRows = Money.fromStorage(sum((row) => row.grossAmount), currency, decimals)
+				.add(Money.fromStorage(sum((row) => row.taxAmount), currency, decimals))
+				.add(Money.fromStorage(sum((row) => row.sellerDiscountAmount), currency, decimals))
+				.add(Money.fromStorage(platformDiscount, currency, decimals));
+
 			const splitDelta = Money.fromStorage(sumNet, currency, decimals)
 				.add(Money.fromStorage(sumCommission, currency, decimals))
 				.add(Money.fromStorage(platformDiscount, currency, decimals))
-				.subtract(Money.fromStorage(sum((row) => row.grossAmount), currency, decimals))
-				.subtract(Money.fromStorage(sum((row) => row.taxAmount), currency, decimals))
-				.subtract(Money.fromStorage(sum((row) => row.sellerDiscountAmount), currency, decimals));
+				.subtract(capturedByRows);
 
 			const reconciliation: ISellerSplitReconciliation = {
 				orderId: orderId as ID,
