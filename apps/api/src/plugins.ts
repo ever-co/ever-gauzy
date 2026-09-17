@@ -59,6 +59,8 @@ import { SentryTracing as SentryPlugin } from './sentry';
 import { PosthogAnalytics as PosthogPlugin } from './posthog';
 import { SoundshotPlugin } from '@gauzy/plugin-soundshot';
 
+import { PluginCompositionModule } from './plugin-composition';
+
 const { jitsu, sentry, posthog } = environment;
 
 /**
@@ -176,5 +178,12 @@ export const plugins = [
 	PurchasingPlugin,
 	EntitlementPlugin,
 	MarketplacePlugin,
-	SearchPlugin
+	SearchPlugin,
+
+	// Not a plugin: this installation's composition point, and the one entry here that carries no
+	// plugin metadata. It declares no table, migration or route — it is what binds the capabilities
+	// one package offers to the ports another package declares, so that neither has to import the
+	// other. It is global, so the tokens it binds resolve inside every module that injects them, and
+	// it declares no `dependsOn`, so the load-order resolver leaves it exactly here.
+	PluginCompositionModule
 ];
