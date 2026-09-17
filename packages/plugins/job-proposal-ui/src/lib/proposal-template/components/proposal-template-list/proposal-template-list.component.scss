@@ -132,35 +132,13 @@
   @include ga-hub.rows();
 
   // ── Employee cell ──────────────────────────────────────────────────────────
-  // The same renderer, and the same problem, as the Jobs → Employees and
-  // Proposals tables: `ngx-employee-links` pins an 18px avatar, an 8px gap, a
-  // 12px/15px name and a 5px/14px pill padding — a 28px chip in rows the density
-  // tokens build to a 1rem line box.
-  ngx-employee-links {
-    a {
-      @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
-      @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
-    }
+  // A block used to sit here shrinking `ngx-employee-links` to a 1rem avatar and
+  // a 0.6875rem name in a 2px-inset pill. It is gone: left alone the renderer
+  // draws an 18px image and a 12px/15px name in a pill padded 5px — a 28px chip,
+  // the same one `ngx-contact-links` costs the Invoices Contact column — so this
+  // column matches that table by construction instead of by a second set of
+  // hand-matched numbers.
 
-    img {
-      width: var(--gauzy-people-avatar-size, 1rem);
-      height: var(--gauzy-people-avatar-size, 1rem);
-      @include nb-ltr(margin-right, var(--gauzy-people-gap, 0.375rem));
-      @include nb-rtl(margin-left, var(--gauzy-people-gap, 0.375rem));
-    }
-
-    // SPECIFICITY: the component nests this under `:host a`, which shims to
-    // `[_nghost-el] a[_ngc] .names-wrapper[_ngc]` — (0,4,1). The doubled class
-    // clears it.
-    .names-wrapper.names-wrapper {
-      // Truncates on WIDTH, never on a character count, so a short name renders
-      // in full and only a genuinely long one picks up an ellipsis.
-      max-width: var(--gauzy-people-name-max-width, 8rem);
-      font-size: var(--gauzy-people-font-size, 0.6875rem);
-      // Matched to the avatar, so the two share one line box.
-      line-height: var(--gauzy-people-avatar-size, 1rem);
-    }
-  }
 }
 
 :host ::ng-deep ngx-avatar {

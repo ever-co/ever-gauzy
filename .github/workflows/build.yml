@@ -71,6 +71,8 @@ jobs:
     name: build-monorepo-root
     # Moved off the 4-core pool: this is no longer one of five equals, it is the SERIAL CRITICAL PATH
     # for the whole gate, and both halves of its work (yarn install, zstd -T0) scale with cores.
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     # 360, not 180. This job now carries the install for the ENTIRE gate, alone, and a cold install
     # here has no yarn tarball cache behind it: test_playwright.yml's equivalent deps job measured the
@@ -175,7 +177,8 @@ jobs:
     # not block a merge — the exact "no failure just means never ran" trap this file's header warns
     # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
     # fails loudly and this reports a real red instead of vanishing.
-    if: ${{ !cancelled() }}
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -240,7 +243,8 @@ jobs:
     # not block a merge — the exact "no failure just means never ran" trap this file's header warns
     # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
     # fails loudly and this reports a real red instead of vanishing.
-    if: ${{ !cancelled() }}
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     services:
@@ -330,7 +334,8 @@ jobs:
     # not block a merge — the exact "no failure just means never ran" trap this file's header warns
     # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
     # fails loudly and this reports a real red instead of vanishing.
-    if: ${{ !cancelled() }}
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -479,7 +484,8 @@ jobs:
     # The quota concern is now bounded instead of ignored: red Build runs are rare since the gate
     # rework, and retention-days: 1 ages a kept artifact out within a day regardless.
     # `skipped` (build-desktop on PR runs) still allows deletion - only failure/cancelled block it.
-    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

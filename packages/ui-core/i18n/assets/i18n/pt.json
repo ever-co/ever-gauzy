@@ -3391,6 +3391,9 @@
 		"BROWSE": "Navegar",
 		"COMMENT": "Comentário",
 		"COMMENTS": "Comentários",
+		"COMMENT_PLACEHOLDER": "Escreva um comentário…",
+		"NO_COMMENTS": "Ainda sem comentários",
+		"NO_COMMENTS_HINT": "Os comentários aparecem aqui, os mais recentes primeiro.",
 		"HEADER": "Faturas",
 		"INVOICE_NUMBER": "Número da fatura",
 		"ESTIMATE_NUMBER": "Número de estimativa",
@@ -4433,6 +4436,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Selecionar cliente",
+			"SELECT_PROJECT": "Selecionar projeto",
+			"SELECT_TEAM": "Selecionar equipe",
+			"SELECT_TASK": "Selecionar tarefa",
+			"DESCRIPTION": "Adicionar uma descrição"
+		},
 		"IS_BILLABLE": "É cobrável.",
 		"STOP_TIMER": "Parar cronômetro",
 		"START_TIMER": "Iniciar cronômetro",

@@ -95,31 +95,10 @@
   margin-bottom: 20px;
 }
 
-.history-list {
-  margin: 20px 0;
-}
-
-.history-list-item {
-  display: flex;
-  flex-direction: column;
-}
-
 .history-list-select {
   font-weight: bold;
   // margin: 20px 0;
   width: 50%;
-}
-
-.history-action {
-  font-weight: bold;
-}
-
-.history-date {
-  font-size: 12px;
-}
-
-.history-item {
-  align-self: flex-start;
 }
 
 .btn-group {
@@ -259,23 +238,27 @@ ga-pagination {
   width: 100%;
 }
 
-.comments {
-  // `scroll` reserved a scrollbar gutter on the History tab even when an invoice
-  // has one comment or none, so the empty panel showed a dead scrollbar track.
-  overflow-y: auto;
-  height: 15rem;
-}
-
-textarea {
-  height: 85px;
-  resize: none;
-}
-
 // Same hairline ring as the shared `.action` block in `gauzy/_gauzy-table.scss`
 // — this file carries a near-verbatim copy of it (with the drop shadow spelled
 // out as a literal rather than read from `--gauzy-shadow`).
 .action {
   box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  // The one line the copy had dropped, and the one that matters on the dark
+  // theme: Nebular draws a REAL 1px border on every filled button, and for
+  // `status="basic"` it colours it `color-basic-default-border` →
+  // `color-basic-300` → #edf1f7. Neither `dark` nor `gauzy-dark` restates the
+  // `color-basic-*` ramp, so that near-white is what the whole toolbar strip
+  // beside the tabs was ringed with — and the hover/active/focus steps are
+  // whiter still (#f7f9fc / #e4e9f2 / #c5cee0). Only the FILL was overridden
+  // below, which left every button outlined in white on a near-black page.
+  //
+  // Dropping the border rather than recolouring it, because the ring above is
+  // already this button's edge: it is the same hairline the cards, overlays and
+  // table use, it self-adjusts on the light themes, and it costs no layout box
+  // — so the strip also stops standing 2px taller than the identical strip on
+  // every other list page, all of which take the shared block and its
+  // `border: none` with it.
+  border: none;
 
   &[nbButton].appearance-filled.status-basic {
     background-color: var(--gauzy-card-2);
@@ -303,14 +286,134 @@ textarea {
     }
   }
 
-  &.select-nb ::ng-deep {
+  // ── The "Set status" trigger, rebuilt as a View button ──────────────
+  // Matching the select's metrics one by one got the numbers right and still
+  // left it reading as a form field, because its BOX MODEL is a field's: the
+  // label is an inline `<span>` in a block button, and the chevron is taken out
+  // of the flow and parked in a gutter the padding reserves for it — hence a
+  // wide control with the label jammed left and the arrow far away.
+  //
+  // So the box is rebuilt the way `[nbButton]` builds one: inline-flex, centred,
+  // with the chevron an ordinary sibling of the label separated by the same
+  // `button-small-icon-offset` that sits between View's eye icon and its text.
+  // Nothing is pinned after that — the padding, line box and icon size are the
+  // button's own tokens, so the height comes out of the same arithmetic rather
+  // than being hard-coded to match.
+  &.select-nb {
+    // The ring belongs on the inner <button>, which is the box that is painted.
     box-shadow: none;
+    // `button { margin: 5px }` near the top of this file spaces every button on
+    // the strip, and it cannot reach `.select-button`: that <button> lives in
+    // nb-select's template and carries THAT component's content attribute, not
+    // this one. The trigger wore `mr-2 ml-1` instead — 0.5rem / 0.25rem and
+    // nothing vertical. Those are Bootstrap utilities, i.e. `!important`, so
+    // they could not be overridden from here and came off the template; the
+    // host now takes the same 5px the buttons do.
+    margin: 5px;
 
-    .select-button {
-      box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+    ::ng-deep .select-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: nb-theme(button-small-icon-offset);
+      // Nebular's stock `select-min-width` is 13rem, and the app does not take
+      // it: of the eight themes `themes.scss` registers, six restate the token
+      // as 6rem, and the two that do not — `gauzy-light` and `gauzy-dark`, the
+      // two the app ships on — extend `default` and `dark`, which are among the
+      // six. `nb-register-theme` flattens a parent's map into the child at
+      // registration, so both inherit 6rem rather than falling back to the stock
+      // value. Either way this trigger takes none of it: the box hugs its label,
+      // the way every button on the strip does.
+      min-width: 0;
+      width: auto;
+      padding: nb-theme(button-filled-small-padding);
+      // View computes to 1.5rem: a 1rem line box inside 0.25rem of padding,
+      // with no border since the rule above drops it. The padding and the line
+      // box below reproduce that arithmetic, and the height is stated outright
+      // as well — a derived height is only ever as tall as the TALLEST thing in
+      // the flex line, so anything that resolves larger than the line box (the
+      // chevron, or a line-height that fails to resolve) would silently push
+      // the box past the buttons again.
+      height: 1.5rem;
+      // Nebular stacks `select-icon-offset` (2rem) on top of that shorthand
+      // from a `[dir=ltr]`-qualified rule, to clear the absolutely positioned
+      // chevron. There is no gutter to reserve now that the chevron is back in
+      // the flow, so the inline-end side is restated the same way — it is the
+      // only way to out-rank it.
+      @include nb-ltr(padding-right, 0.625rem);
+      @include nb-rtl(padding-left, 0.625rem);
+      line-height: nb-theme(button-small-text-line-height);
+      font-size: nb-theme(button-small-text-font-size);
+      font-weight: nb-theme(button-text-font-weight);
+      // `select-filled-basic-text-color` is `color-basic-800` (#222b45), a navy
+      // that all but vanishes on the near-black panel. This is what `.secondary`
+      // paints View with.
+      color: var(--text-hint-color);
       background: var(--gauzy-card-2);
-      height: 2rem;
+      // `select-filled-basic-border-color` resolves down the same chain as the
+      // buttons' — `color-basic-default-border` → `color-basic-300` → #edf1f7 —
+      // so the one control here that is not a button was ringed in white
+      // alongside them. `border-color` alone would not do it:
+      // `nb-select.appearance-filled .select-button` sets the style and the
+      // width too, and this selector out-ranks it, so the whole shorthand goes.
+      border: none;
       border-radius: nb-theme(button-rectangle-border-radius);
+      box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+      // Nebular draws a select's PLACEHOLDER from its own pair of tokens —
+      // 0.875rem at weight 400, against the buttons' 0.75rem at 700 — and "Set
+      // Status" IS the placeholder, i.e. the state on screen until a row is
+      // picked.
+      &.placeholder {
+        font-size: nb-theme(button-small-text-font-size);
+        font-weight: nb-theme(button-text-font-weight);
+        color: var(--text-hint-color);
+      }
+
+      // Nebular repaints a filled select on hover and focus out of the
+      // `color-basic-*` ramp — the same near-whites the border rule above got
+      // rid of. The buttons never move: this page's `.action` fill out-ranks
+      // Nebular's hover on an `[nbButton]`, and these restore that standoff.
+      &:hover,
+      &:focus,
+      &:focus:hover {
+        background: var(--gauzy-card-2);
+      }
+
+      // Disabled — which is how the strip starts out, before a row is picked.
+      // A button dims its LABEL and keeps its fill; a select swaps its fill for
+      // an opaque `background-basic-color-2` instead. Last of the three, so it
+      // settles the tie with `.placeholder` above.
+      &[disabled] {
+        background: var(--gauzy-card-2);
+        color: var(--text-disabled-color);
+      }
+
+      nb-icon {
+        // Back into the flow, which is the whole point of the block above:
+        // `position: absolute` + `top: 50%` + `translateY(-50%)` is what put
+        // the chevron in a gutter instead of beside the label.
+        position: static;
+        transform: none;
+        // View's icon is a 0.875rem BOX — `[nbButton].size-#{size} nb-icon` sets
+        // an explicit width and height from `--button-small-icon-size`, which
+        // `page-header-buttons()` compacts. A select's chevron gets neither: it
+        // is sized `1.5em` and then taken out of the flow, so its box never had
+        // to be right. Back in the flow it is a flex item whose height counts
+        // toward the button's, and `nb-icon`'s only other sizing is the global
+        // `width/height: 1em` — so both are spelled out here exactly as the
+        // button spells them.
+        font-size: nb-theme(button-small-icon-size);
+        width: nb-theme(button-small-icon-size);
+        height: nb-theme(button-small-icon-size);
+        color: var(--text-hint-color);
+      }
+    }
+
+    // The open-state flip, which Nebular writes as a SECOND transform including
+    // the centring translate it no longer needs.
+    &.open ::ng-deep .select-button nb-icon {
+      transform: rotate(180deg);
     }
   }
 }
@@ -440,60 +543,411 @@ nb-tab {
   @include ga-overrides.dialog(var(--gauzy-card-1), var(--gauzy-card-1));
 }
 
+// ── History tab: comment thread ──────────────────────────────────────────────
+// A composer on the left and the thread on the right, rather than the pair of bare
+// Bootstrap `col-6`s this used to be. A grid instead of a `.row`: with neither
+// column drawing a box, the space between them is the ONLY thing holding them
+// apart, and a `.row` cannot give a real gutter (it pads each child inwards, then
+// pulls the whole thing back out with negative margins). This gap plus each
+// panel's own side padding is what that space adds up to. One breakpoint is enough
+// to stack them on a narrow window.
+//
+// The height is pinned for the same reason the old `.comments` carried a fixed
+// 15rem: this accordion shares `.custom-content-body` (`calc(100vh - 19.5rem)`)
+// with the table below it, so a thread that grew with its content would eat the
+// table's rows one comment at a time. The thread scrolls inside that budget; the
+// composer keeps its natural size and its column absorbs the rest.
 .comments-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 0.75rem;
+  height: 15rem;
   margin-inline: 0;
 
-  & nb-list {
+  @media (max-width: 991px) {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+}
+
+// Flat: no fill and no ring of its own. Each panel is a REGION of the accordion
+// body, not a card sitting on it, and boxing the two of them inside a body that is
+// already a bordered surface put three edges between a comment and the page. What
+// separates them now is the column gap and the rule under each panel's own title.
+.comment-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0.5rem 0.75rem 0.75rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.comment-panel-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.375rem;
+  padding-bottom: 0.625rem;
+  margin-bottom: 0.875rem;
+  border-bottom: thin solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+    color: var(--gauzy-text-color-2);
+  }
+}
+
+.comment-panel-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: -0.01em;
+  color: var(--gauzy-text-color-1);
+}
+
+// Comment count, on the far end of the thread's header line.
+.comment-count {
+  @include nb-ltr(margin-left, auto);
+  @include nb-rtl(margin-right, auto);
+  min-width: 1.25rem;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 999px;
+  background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1rem;
+  text-align: center;
+  color: var(--gauzy-text-color-2);
+}
+
+// The composer's avatar column: the avatar itself and the gap between it and the
+// fields beside it. Declared once so the avatar's own box, the row's gap and the
+// centring nudge below cannot drift apart the next time the avatar is resized.
+$composer-avatar: 1.5rem;
+$composer-gap: 0.5rem;
+
+// One avatar treatment for the composer and for every comment. The shared
+// `ngx-avatar` is deliberately NOT used here: it renders nothing at all when its
+// `src` is empty, so every author who never uploaded a photo left a hole where the
+// avatar belongs. `authorInitials()` in the component covers that case, and this
+// is the box both a photo and the initials are drawn in.
+.comment-avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: $composer-avatar;
+  height: $composer-avatar;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--gauzy-text-color-1);
+  user-select: none;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+// The composer is a face beside a stack of fields — one flex row holding the
+// avatar and a flex COLUMN holding the subject and the comment box. That nesting
+// is what makes both fields start on the same line as each other, past the avatar,
+// without either of them having to carry a margin that guesses the avatar's width.
+.comment-form-row {
+  display: flex;
+  align-items: flex-start;
+  gap: $composer-gap;
+}
+
+.comment-form-fields {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+// Centres the avatar on the subject field it opens beside — half the difference
+// between the two heights.
+.comment-form-row .comment-avatar {
+  margin-top: calc((#{ga-overrides.$compact-control-height} - #{$composer-avatar}) / 2);
+}
+
+// The subject is a field of its own beside the avatar, NOT a second row inside the
+// comment box: sharing that box's edge made the two read as one input that had
+// somehow split in two. So it gets the ordinary treatment — the same borderless,
+// hairline-ringed field the Search tab's controls use, at the same height.
+//
+// `input-appearance()` — pulled in by the `:host nb-accordion` dialog include
+// above — paints every field in this accordion `--gauzy-card-1`, borderless, on a
+// 42px floor, all as `!important`, so both the fill and the floor have to be
+// re-stated at that weight to be reachable at all.
+.comment-form-title[nbInput] {
+  // `fullWidth` on the element resolves to Nebular's `.input-full-width` (0,1,0),
+  // which this out-ranks: as a column child the field is stretched to the column's
+  // width already, and a second 100% on top of that is what it does not need.
+  width: auto;
+  min-width: 0;
+  min-height: ga-overrides.$compact-control-height !important;
+  height: ga-overrides.$compact-control-height;
+  padding-block: 0;
+  background-color: var(--gauzy-card-2) !important;
+  border: none;
+  box-shadow: ga-overrides.$default-box-shadow-inset;
+  font-size: 0.75rem;
+
+  // The hairline is the field's only edge, so focus has to move it rather than add
+  // to it — with the border gone, Nebular's own focus state has nothing to colour.
+  &:focus {
+    box-shadow: inset 0 0 0 1px nb-theme(color-primary-500);
+  }
+}
+
+// The comment box is ONE control, the way a chat input is: the box owns the
+// border, the fill and the focus ring, and the body and its buttons live inside
+// it. Previously the field drew its own outline and the buttons sat on the panel
+// below it, which read as two separate widgets stacked up.
+.comment-form-box {
+  display: flex;
+  flex-direction: column;
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--border-radius);
+  background: var(--gauzy-card-2);
+  box-shadow: ga-overrides.$default-box-shadow-inset;
+
+  // Focus lands on a field inside; the ring belongs on the box that draws the edge.
+  &:focus-within {
+    box-shadow: inset 0 0 0 1px nb-theme(color-primary-500);
+  }
+
+  // The textarea has to disappear into the box: no fill, no edge of its own, no
+  // inset padding (the box already provides it). `border: none` because Nebular
+  // draws one on `[nbInput]` by default — inside the box that would be a second
+  // line weight against the box's own.
+  //
+  // Replaces the file-wide `textarea { height: 85px; resize: none }` this page
+  // used to carry for this one control.
+  textarea[nbInput] {
+    min-height: 3.5rem !important;
+    height: 3.5rem;
+    padding-block: 0.125rem;
+    padding-inline: 0;
+    background-color: transparent !important;
+    border: none;
+    box-shadow: none;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.45;
+    resize: none;
+  }
+}
+
+// The toolbar row inside the box, along its bottom edge.
+.comment-form-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+
+  // Qualified with `[nbButton]` so these out-rank Nebular's own `.size-tiny`
+  // paddings (0,2,0) rather than tying with them; the file-wide
+  // `button { margin: 5px }` is the only thing that would otherwise space them,
+  // and the flex `gap` owns that here.
+  button[nbButton] {
     margin: 0;
+    gap: 0.25rem;
+    padding: 0.1875rem 0.5rem;
+    font-size: 0.6875rem;
+    line-height: 1rem;
   }
 
-  & .col-6:nth-child(1) {
-    padding-top: 15px;
-    color: var(--gauzy-text-color-2);
+  // Nebular gives an icon beside a label its own margin; the `gap` above is the
+  // spacing, so that margin has to go.
+  button[nbButton] nb-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    margin: 0;
+    font-size: 0.75rem;
+  }
+}
 
-    & textarea {
-      font-weight: 400;
-    }
+.comment-thread .comments {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  // `scroll` reserved a scrollbar gutter on the History tab even when an invoice
+  // has one comment or none, so the empty panel showed a dead scrollbar track.
+  overflow-y: auto;
+  // A trackpad flick that reaches the end of the thread should not then scroll the
+  // page behind it.
+  overscroll-behavior-y: contain;
+  // Keeps the last character of a comment off the scrollbar.
+  @include nb-ltr(padding-right, 0.25rem);
+  @include nb-rtl(padding-left, 0.25rem);
+}
+
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// One rule between comments and no fill behind them: the thread is a list of
+// entries on the panel, not a stack of cards, and a hairline separates two of them
+// with far less weight than a filled block each. The last entry drops its rule so
+// the list does not end on a line with nothing under it.
+.comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding-bottom: 0.625rem;
+  border-bottom: thin solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+  &:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+}
+
+// Smaller here than on the composer: in the thread the avatar identifies a line of
+// text, while on the composer it sits against a full-height input.
+.comment-item .comment-avatar {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 0.5625rem;
+}
+
+.comment-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.comment-byline {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+}
+
+// The name, and where it is a link, a link that does not announce itself as one
+// until you reach for it — an underline on every name would turn the thread into a
+// column of blue rules.
+.comment-author {
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+a.comment-author {
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: nb-theme(color-primary-500);
+    text-decoration: underline;
+  }
+}
+
+// Relative age ("3 hours ago"), with the exact timestamp on the tooltip — the
+// trade every comment thread makes, and what lets the byline sit on one line
+// instead of the three stacked rows this used to be.
+.comment-time {
+  flex: 0 0 auto;
+  @include nb-ltr(margin-left, auto);
+  @include nb-rtl(margin-right, auto);
+  font-size: 0.6875rem;
+  line-height: 1.125rem;
+  color: var(--text-hint-color);
+  cursor: default;
+}
+
+// The line under the name, the way a thread puts an author's subtitle there: one
+// step down in size and weight from the name, and muted, so the eye goes name →
+// comment and picks this up only on the way past. It carried the name's own weight
+// before, which made every entry read as two headings stacked.
+.comment-subject {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  line-height: 1.125rem;
+  color: var(--text-hint-color);
+  overflow-wrap: anywhere;
+
+  &::first-letter {
+    text-transform: uppercase;
+  }
+}
+
+// `pre-wrap` so a comment keeps the line breaks its author typed — the old single
+// `<span>` collapsed them into one run — and `overflow-wrap` so an unbroken URL or
+// reference number cannot push the entry wider than its column.
+.comment-text {
+  margin: 0.3125rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--gauzy-text-color-1);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+
+  &::first-letter {
+    text-transform: uppercase;
+  }
+}
+
+// Both panels' resting state: no invoice picked yet (composer) and no comments on
+// the one that is (thread). The old markup rendered nothing at all in either case,
+// so the History tab opened as two empty boxes with nothing to say which.
+.comment-empty {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 1rem 0.75rem;
+  text-align: center;
+  color: var(--text-hint-color);
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-bottom: 0.125rem;
+    font-size: 1.25rem;
+    opacity: 0.55;
   }
 
-  & .col-6:nth-child(2) {
-    background: var(--gauzy-card-1);
-    border-radius: var(--border-radius);
-    padding: 15px 6px 0 15px;
+  span {
+    max-width: 32ch;
+    font-size: 0.6875rem;
+    line-height: 1.125rem;
+  }
+
+  .comment-empty-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.25rem;
     color: var(--gauzy-text-color-2);
-
-    & nb-list-item {
-      padding-left: 0;
-      position: relative;
-
-      & .history-item.history-date {
-        color: var(--text-hint-color);
-        margin-top: 3px;
-      }
-
-      & .history-item.history-title {
-        margin-top: 10px;
-        text-transform: capitalize;
-        font-weight: bold;
-      }
-      & .history-item.history-comment {
-        margin-top: 6px;
-        font-size: 0.85rem;
-        &.history-comment::first-letter {
-          text-transform: capitalize;
-        }
-      }
-    }
-
-    // border bottom
-    & nb-list-item::after {
-      content: '';
-      display: block;
-      width: 100%;
-      border-bottom: thin solid var(--accordion-header-border-color);
-      position: absolute;
-      bottom: 0;
-    }
   }
 }
 
@@ -659,11 +1113,44 @@ nb-tab {
       font-size: 0.75rem;
     }
 
-    // Submit / reset sit in a bare `.row`; the file-wide `button { margin: 5px }`
-    // is the only thing spacing them.
     button {
+      // The file-wide `button { margin: 5px }` near the top was the only thing
+      // spacing anything in this form.
       margin: 0.25rem;
       font-size: 0.75rem;
+    }
+
+    // ── Submit / reset ───────────────────────────────────────────────────────
+    // The two used to be `<div>`-wrapped items in a bare `.row`, left-aligned
+    // under the first filter with their leading gap coming from an `ml-3` on the
+    // submit button — so they read as a third row of fields rather than as the
+    // form's actions. The wrappers are gone (the buttons are the flex items now)
+    // and the pair closes the form off against the same edge the filter row ends
+    // on.
+    .search-actions {
+      justify-content: flex-end;
+      align-items: center;
+      // `.row`'s own negative gutters, which would hang the buttons past the
+      // accordion's padding on the right.
+      margin-inline: 0;
+      // Clear of the filter row above — with the fields' own 0.25rem underneath
+      // them that comes to 0.75rem: enough to read as the form's footer without
+      // spending height the table below is short of.
+      margin-top: 0.5rem;
+      gap: 0.375rem;
+
+      // The compact button scale the page header already runs on this page (see
+      // the `page-header-buttons()` includes further up), instead of Nebular's
+      // stock `small` box — that is what takes the size down, and it puts the
+      // form's actions on the same scale as the toolbar above the table rather
+      // than a step larger than everything around them.
+      @include ga-hub.page-header-buttons();
+
+      button {
+        // The row's `gap` spaces them now, so neither the file-wide 5px nor the
+        // 0.25rem above it should still be adding to the ends of the row.
+        margin: 0;
+      }
     }
   }
 }
@@ -738,13 +1225,167 @@ nb-tab {
   padding: 0.375rem 0.5rem;
 }
 
-// ── Search form: controls sized to their content ─────────────────────────────
-// The fields are laid out on a Bootstrap grid (`col-sm-4` / `-3` / `-2`) and every
-// control carries `fullWidth`, so each one stretched to a third or a quarter of
-// the card — a number field nearly 500px wide for a 6-digit estimate number.
-// Capping the COLUMN rather than the control keeps the grid's wrapping and order
-// intact (the cap only bites where the percentage is the larger of the two) and
-// carries the label above the field with it.
-:host .search-tab nb-accordion .row > [class*='col-'] {
-  max-width: 14rem;
+// ── Search form: all eight filters on one line ───────────────────────────────
+// The fields used to sit on two Bootstrap rows (`col-sm-4` / `-3` / `-2`) with
+// every control carrying `fullWidth`, so each stretched to a third or a quarter
+// of the card — a number field nearly 500px wide for a 6-digit estimate number —
+// and the form stood two field-rows tall above a table that is already short on
+// height. They are now one `.search-filters` row: equal-width flex columns that
+// are allowed to shrink, which is what fits all eight on a single line instead of
+// letting Bootstrap's percentage widths wrap them.
+:host .search-tab nb-accordion .search-filters {
+  flex-wrap: nowrap;
+  // Tops aligned, so the labels — and therefore the controls under them — share
+  // one baseline across the row.
+  align-items: flex-start;
+  margin-inline: 0;
+  // Replaces the columns' own 0.75rem gutters, halved: eight fields on one line
+  // are better off spending that width on the controls.
+  gap: 0.5rem;
+
+  > .search-filter-col {
+    // `flex-basis: 0`, not `auto`, so the eight share the line evenly rather than
+    // each claiming its content width.
+    flex: 1 1 0;
+    // A flex item's floor is `min-content` by default, and for a number input or
+    // a select that is wider than an eighth of the card — without this the row
+    // overflows the accordion instead of shrinking.
+    min-width: 0;
+    max-width: none;
+    padding-inline: 0;
+  }
+
+  // ── The one control that did not obey that ─────────────────────────────────
+  // Nebular's own `nb-select-theme()` floors every trigger at
+  // `nb-theme(select-min-width)`, which resolves to 6rem in all eight registered
+  // themes (see the note on `.select-nb` higher up for why that includes the two
+  // the app ships on). Eight of those side by side need 8 x 6rem + 7 x 0.5rem =
+  // 824px of ROW before a column is wide enough to hold one — well past the point
+  // where the card itself is 824px wide, and far past the 768px at which this row
+  // is allowed to wrap. Between the two, the Status trigger kept a floor its
+  // column could not give it and hung out past the accordion, taking the fields
+  // beside it with it.
+  //
+  // Unset rather than lowered: the premise of the row is that the eight columns
+  // divide the line evenly and shrink together, and a floor on one of them is the
+  // one thing that cannot hold. This is the same treatment `_overrides.scss`
+  // applies to selects inside `.card-scroll`. `!important` because that same file
+  // restates the floor with one of its own under `.nb-theme-default`; under every
+  // other theme the specificity here would have been enough on its own.
+  ::ng-deep nb-select .select-button {
+    min-width: 0 !important;
+
+    // Nebular gives the button `text-overflow: ellipsis`, but `[nbButton]` is an
+    // `inline-flex` container, so that applies to nothing — the label is a child
+    // `<span>`, and a flex item will not shrink below its content unless it is
+    // told it may. Without the pair, a status name at an eighth of the card is
+    // cut off mid-glyph by the button's own `overflow: hidden`. Same treatment
+    // the `ng-select` triggers in this row get below.
+    > span {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  // ── The labels, so the controls under them start at one height ─────────────
+  // Every label in the row is pinned to the same type size, line box and bottom
+  // margin. Two of the eight are drawn by child components (`ga-currency`,
+  // `ga-tags-color-input`), which the `.label` rule higher up in this file —
+  // scoped, no `::ng-deep` — never reached: those two kept Nebular's default
+  // 0.5rem gap under the label while the six from this template had 0.1875rem,
+  // so their inputs sat several pixels lower than the rest. That, and not the
+  // grid, is what stopped the fields lining up.
+  //
+  // The single-line clamp is the other half: the labels differ a lot in length
+  // ("Currency" against "Organization contact"), and at an eighth of the card the
+  // long ones wrapped to a second line and pushed their input a whole line down.
+  ::ng-deep .label {
+    display: block;
+    margin-bottom: 0.1875rem;
+    font-size: nb-theme(text-label-font-size);
+    line-height: 0.8125rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  // Same reach: `ga-currency` renders its own `.form-group` wrapper.
+  ::ng-deep .form-group {
+    margin-bottom: 0.25rem;
+  }
+
+  // ── One type size across the row ───────────────────────────────────────────
+  // The eight filters are four different widgets — a plain `nbInput`, two
+  // datepicker inputs, three `ng-select`s (contact, currency, tags) and the
+  // `nb-select` for status — and each arrives with its own size: `ng-select`
+  // reads `select-medium-text-font-size` from `ng-select-overrides`, a selected
+  // tag is an `nb-badge` at `text-caption-font-size`, and a bare input inherits
+  // the paragraph size. On two rows that was easy to miss; on one line it reads
+  // as four different fields.
+  //
+  // Status is the one that was already right (`#inputStatus .select-button`
+  // higher up in this file), so its 0.75rem is the row's size. Set on each text
+  // surface rather than left to inherit, because the library sheets put a size
+  // on the descendants themselves.
+  ::ng-deep {
+    input,
+    input::placeholder,
+    .ng-select,
+    .ng-select .ng-select-container,
+    .ng-select .ng-value-container,
+    .ng-select .ng-value,
+    .ng-select .ng-value-label,
+    .ng-select .ng-placeholder,
+    .ng-select .ng-input > input,
+    nb-select .select-button,
+    nb-select .select-button.placeholder,
+    nb-tag-list input,
+    .tag-label,
+    .tag-overflow {
+      font-size: 0.75rem;
+    }
+
+    // At an eighth of the card a contact or currency name is routinely longer
+    // than its trigger. `ng-select`'s own container clips it, which cuts the text
+    // mid-glyph; a flex item will not shrink below its content unless told it
+    // may, so both halves are needed for an ellipsis to engage instead.
+    .ng-select.ng-select-single .ng-select-container .ng-value-container {
+      min-width: 0;
+    }
+
+    .ng-select.ng-select-single .ng-select-container .ng-value {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  // The two date fields park a calendar glyph inside the control (`.input-icon
+  // .icon`). At full width the placeholder never reached it; at an eighth of the
+  // card it runs underneath, so the glyph is pulled in tight against the edge and
+  // the text gets the room that buys.
+  .input-date {
+    padding-inline-end: 1.5rem;
+  }
+
+  .input-icon .icon {
+    @include nb-ltr(right, 0.5rem);
+    @include nb-rtl(left, 0.5rem);
+  }
+}
+
+// One line is the point of the row, so it holds for every desktop width — the
+// columns shrink instead of wrapping. Below the tablet breakpoint eight controls
+// on a line stop being controls at all, so there the row wraps in the same order,
+// a few filters per line.
+@media (max-width: 767.98px) {
+  :host .search-tab nb-accordion .search-filters {
+    flex-wrap: wrap;
+
+    > .search-filter-col {
+      flex: 1 1 9rem;
+    }
+  }
 }
