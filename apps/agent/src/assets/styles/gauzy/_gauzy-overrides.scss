@@ -9,6 +9,14 @@ $default-radius: nb-theme(border-radius);
 $default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 1.625);
 $default-box-shadow: var(--gauzy-shadow);
 
+// Mirrors packages/ui-core/static/styles/gauzy/_gauzy-overrides.scss (keep the values identical). This app
+// lists its own styles dir ahead of ui-core's in `stylePreprocessorOptions.includePaths`, so this file shadows
+// that one: shared ui-core component sheets that `@use 'gauzy/_gauzy-overrides'` (e.g.
+// time-tracker.component.scss) bind to this copy and fail the build with "Undefined variable" unless the tokens
+// they read are defined here as well. The app's own tokens above are left as they are.
+$control-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+$control-padding-x: 1rem;
+
 @mixin ng-select-overrides($height, $radius, $box-shadow) {
   .ng-select {
     &.ng-select-single .ng-select-container {
