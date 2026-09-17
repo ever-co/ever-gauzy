@@ -43,8 +43,10 @@ export class OperationRegistry {
 
 		const registered = this.definitions.get(type);
 
-		if (registered === definition) {
-			// Registration is idempotent: a module loaded twice must not fail startup.
+		if (this.definitions.has(type) && registered === definition) {
+			// Registration is idempotent: a module loaded twice must not fail startup. The check is
+			// gated on the type actually being registered, so that a missing definition falls through
+			// to validation and is refused loudly instead of matching an absent registration.
 			return;
 		}
 
