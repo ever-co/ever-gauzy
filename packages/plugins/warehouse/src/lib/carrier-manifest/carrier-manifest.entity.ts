@@ -179,9 +179,13 @@ export class CarrierManifest extends TenantOrganizationBaseEntity implements ICa
 	version: number;
 
 	/**
-	 * Tenant extras. The keys this domain writes are `carrierAccount`, `scanCount`, `reconciliation[]`
-	 * and `handedOverByUserId`; a parcel the carrier scanned that is not on the manifest is recorded in
-	 * `reconciliation[]` and reported, never appended silently.
+	 * Tenant extras. The keys this domain writes are `carrierAccount`, `memberFulfillmentIds[]`,
+	 * `scanCount`, `reconciliation[]` and `handedOverByUserId`; a parcel the carrier scanned that is not
+	 * on the manifest is recorded in `reconciliation[]` and reported, never appended silently.
+	 *
+	 * `memberFulfillmentIds[]` is written by the close and is the frozen membership itself: the record
+	 * every later read of a closed manifest answers with, so a parcel shipped inside the same window
+	 * after the close is not reported as one of the parcels that were handed over.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()

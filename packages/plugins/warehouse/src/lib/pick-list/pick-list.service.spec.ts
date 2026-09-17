@@ -548,7 +548,7 @@ describe('PickListService — deriving a list from the shipments it serves (doc 
 	// or packed, so what is left behind is a row an operator has to clean up by hand.
 	// (`pick-list.service.ts`, the `await this.deriveLines(list, fulfillmentIds)` call on line 89, after
 	// the `super.create(...)` on line 79.)
-	it.failing('[DEFECT] writes nothing when the derivation of the lines refuses', async () => {
+	it('[DEFECT] writes nothing when the derivation of the lines refuses', async () => {
 		const fixture = pickListFixture({ withFulfillment: false, shippable: [shippable()] });
 
 		await expect(
@@ -606,7 +606,7 @@ describe('PickListService — deriving a list from the shipments it serves (doc 
 	// (`pick-list.service.ts`, the `deriveLines` call on line 89 that reaches
 	// `PickListLineService.refreshListCounters`, whose `{ status: PickListStatus.IN_PROGRESS, ... }`
 	// branch is on lines 347-349 of `pick-list-line.service.ts`.)
-	it.failing('[DEFECT] leaves a list derived from shipments in its unassigned state until a line is picked', async () => {
+	it('[DEFECT] leaves a list derived from shipments in its unassigned state until a line is picked', async () => {
 		const fixture = pickListFixture({ shippable: [shippable()] });
 
 		const list = await fixture.service.create({ warehouseId: WAREHOUSE, fulfillmentIds: [SHIPMENT] } as never);
@@ -905,7 +905,7 @@ describe('PickListService — the list state machine (doc 09 §14.5, §14.11)', 
 	// list is what a pack slip may be created from, so the defect lets a withdrawn list be packed.
 	// (`pick-list.service.ts`, `complete`, which guards on the lines' statuses on line 211 and never on
 	// the list's own.)
-	it.failing('[DEFECT] refuses to complete a list that was cancelled', async () => {
+	it('[DEFECT] refuses to complete a list that was cancelled', async () => {
 		const fixture = pickListFixture({
 			lists: [listRow('list-1', { status: PickListStatus.CANCELED })],
 			lines: [lineRow('line-1', { status: PickListLineStatus.CANCELED })]

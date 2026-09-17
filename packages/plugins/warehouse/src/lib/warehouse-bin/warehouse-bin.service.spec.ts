@@ -920,8 +920,11 @@ describe('WarehouseBinService — re-parenting a subtree (doc 09 §14.2 rule 2, 
 		// The chain above the moved rack is gone, and no pair is stored twice: a node with two parents'
 		// worth of ancestors is a node two descendant queries disagree about.
 		expect(fixture.pairs()).toHaveLength(new Set(fixture.pairs()).size);
+		// `left->leaf` is a pair *inside* the subtree: the shelf is still a descendant of the rack it
+		// moved with, so the re-parent rewrites the placement and leaves the interior alone. Every other
+		// pair is the moved subtree's new ancestry — the old one (`left` under nothing) is gone.
 		expect(new Set(fixture.pairs())).toEqual(
-			new Set(['right->right', 'left->left', 'leaf->leaf', 'right->left', 'right->leaf'])
+			new Set(['right->right', 'left->left', 'leaf->leaf', 'left->leaf', 'right->left', 'right->leaf'])
 		);
 	});
 
@@ -932,7 +935,7 @@ describe('WarehouseBinService — re-parenting a subtree (doc 09 §14.2 rule 2, 
 	// the shelf below it has become invisible to every subtree query.
 	// (`warehouse-bin.service.ts`, the `pairs` initialiser in `relinkClosure`, line 814: the subtree's
 	// own internal pairs are the ones missing.)
-	it.failing('[DEFECT] keeps the ancestry inside the subtree it moved', async () => {
+	it('[DEFECT] keeps the ancestry inside the subtree it moved', async () => {
 		const moved = chain(['left', 'leaf']);
 		const target = chain(['right']);
 		const fixture = binFixture({
@@ -960,7 +963,7 @@ describe('WarehouseBinService — re-parenting a subtree (doc 09 §14.2 rule 2, 
 
 	// The same defect reached from the other direction: lifting a subtree to a root is a re-parent, so
 	// it loses the pairs that made the leaf a descendant of the position that was lifted.
-	it.failing('[DEFECT] keeps the ancestry inside the subtree it lifted to a root', async () => {
+	it('[DEFECT] keeps the ancestry inside the subtree it lifted to a root', async () => {
 		const { bins, closure } = chain(['root', 'child', 'leaf']);
 		const fixture = binFixture({ bins, closure });
 

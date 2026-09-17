@@ -760,7 +760,7 @@ describe('WarehouseZoneService — rewriting the walking order (doc 09 §14.2)',
 	// positions, the rest at their old ones, and two of them claiming the same number.
 	// (`warehouse-zone.service.ts`, the `await this.typeOrmWarehouseZoneRepository.update(...)` inside
 	// the `for (const zone of zones)` loop of `reorder`, line 170.)
-	it.failing('[DEFECT] leaves every position as it was when a reorder is refused', async () => {
+	it('[DEFECT] leaves every position as it was when a reorder is refused', async () => {
 		const fixture = orderFixture();
 
 		await expect(

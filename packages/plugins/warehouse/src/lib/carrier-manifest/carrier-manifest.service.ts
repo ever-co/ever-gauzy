@@ -17,6 +17,12 @@ import { TypeOrmCarrierManifestRepository } from './repository/type-orm-carrier-
 export type CarrierManifestWithMembers = CarrierManifest & { members: IWarehouseShippedFulfillment[] };
 
 /**
+ * The metadata key a closed manifest records its frozen membership under: the ids of the shipments it
+ * was closed over, written in the same statement that moves it to `CLOSED`.
+ */
+const MANIFEST_MEMBERS_KEY = 'memberFulfillmentIds';
+
+/**
  * The custody boundary: the parcels handed to a carrier at one dock, at one time, with one scan.
  *
  * Membership is **derived while the manifest is a draft and frozen at close**. A draft resolves its
@@ -24,6 +30,11 @@ export type CarrierManifestWithMembers = CarrierManifest & { members: IWarehouse
  * manifest's window and not yet claimed by another manifest; closing writes the manifest id onto each
  * of those shipments in one transaction, which is what stops a parcel appearing on two manifests and
  * what makes the manifest reproducible after the fact.
+ *
+ * The membership itself is recorded on the manifest at the same moment, because the window a draft
+ * derives from stays open after the close: asking that window again would report a parcel shipped
+ * later as a member of a manifest frozen before it existed. What a closed manifest reports is
+ * therefore the membership it recorded, and never the pool as it stands now.
  *
  * That is also why no column is added to the fulfilment side beyond the metadata key, and why this
  * table holds no member table: a manifest covers shipments, a shipment may contain several packages,
@@ -136,6 +147,12 @@ export class CarrierManifestService extends TenantAwareCrudService<CarrierManife
 			shipmentCount: members.length,
 			packageCount: totals.packageCount,
 			totalWeight: totals.totalWeight,
+			// The membership is recorded as it is frozen: it is what every later read answers with, and the
+			// only thing that keeps a parcel shipped afterwards out of a manifest it was never on.
+			metadata: {
+				...(manifest.metadata ?? {}),
+				[MANIFEST_MEMBERS_KEY]: members.map((member) => String(member.fulfillmentId))
+			},
 			version: (manifest.version ?? 1) + 1
 		} as any);
 
@@ -294,24 +311,43 @@ export class CarrierManifestService extends TenantAwareCrudService<CarrierManife
 	 * @param manifest The manifest.
 	 * @returns The shipments it covers, read from the fulfilment capability.
 	 *
-	 * The membership rule is the same one a draft resolves and a closed manifest has already frozen: the
-	 * capability is asked for the shipments at the location that match the carrier and the window, and it
-	 * is asked for unclaimed ones only while the manifest is still a draft, because after close its own
-	 * members are exactly the shipments that carry its id.
+	 * A draft's membership is derived: the capability is asked for the shipments at the location that
+	 * match the carrier, the service and the window — unclaimed ones only, so a parcel another manifest
+	 * already froze is never collected twice.
+	 *
+	 * A closed manifest reports the membership it recorded at close, never the window as it stands now.
+	 * The window outlives the close, so a parcel shipped after it, on the same carrier and service,
+	 * would otherwise be reported as a member — and counted into the totals a carrier invoice is checked
+	 * against. The record is read back through the same window query because the capability exposes no
+	 * way to ask for one manifest's parcels by id; a manifest closed before the record existed carries
+	 * none, and is read the way it was read then.
 	 */
 	private async membersOf(manifest: CarrierManifest): Promise<IWarehouseShippedFulfillment[]> {
 		if (!this.fulfillment) {
 			return [];
 		}
 
-		return await this.fulfillment.listShipped({
+		const query = {
 			warehouseId: manifest.warehouseId,
 			carrier: manifest.carrier,
 			service: manifest.service,
 			windowFrom: manifest.windowFrom,
-			windowTo: manifest.windowTo,
-			unclaimedOnly: manifest.status === CarrierManifestStatus.DRAFT
-		});
+			windowTo: manifest.windowTo
+		};
+
+		if (manifest.status === CarrierManifestStatus.DRAFT) {
+			return await this.fulfillment.listShipped({ ...query, unclaimedOnly: true });
+		}
+
+		const recorded = recordedMemberIds(manifest);
+
+		if (!recorded) {
+			return await this.fulfillment.listShipped(query);
+		}
+
+		const pool = await this.fulfillment.listShipped(query);
+
+		return pool.filter((member) => recorded.has(String(member.fulfillmentId)));
 	}
 
 	/**
@@ -331,6 +367,21 @@ export class CarrierManifestService extends TenantAwareCrudService<CarrierManife
 			);
 		}
 	}
+}
+
+/**
+ * @param manifest The manifest.
+ * @returns The shipment ids its close recorded, or undefined for a manifest that records none — one
+ * closed before the record existed, which is read through the window as it always was.
+ */
+function recordedMemberIds(manifest: CarrierManifest): Set<string> | undefined {
+	const recorded = manifest.metadata?.[MANIFEST_MEMBERS_KEY];
+
+	if (!Array.isArray(recorded)) {
+		return undefined;
+	}
+
+	return new Set(recorded.map(String));
 }
 
 /**

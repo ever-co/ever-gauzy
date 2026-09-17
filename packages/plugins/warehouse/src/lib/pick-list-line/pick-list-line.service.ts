@@ -59,6 +59,10 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * Lines are normally derived from a shipment; this path exists for a replenishment list, which
 	 * serves no order, and for the corrected line an operator adds by hand.
 	 *
+	 * The list's counters are re-derived, and that is all: a line arriving does not start the work, so a
+	 * list that was unassigned when its lines were written is still unassigned and may still be given to
+	 * a picker.
+	 *
 	 * @param entity The line to add.
 	 * @returns The created line.
 	 */
@@ -88,7 +92,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			organizationId
 		} as any);
 
-		await this.refreshListCounters(list.id);
+		await this.refreshListCounters(list.id, false);
 
 		return line;
 	}
@@ -314,14 +318,22 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	}
 
 	/**
-	 * Recomputes the caches of the list a line belongs to, and promotes it to `IN_PROGRESS`.
+	 * Recomputes the caches of the list a line belongs to, and promotes it to `IN_PROGRESS` when the
+	 * change is an outcome rather than the arrival of a line.
 	 *
 	 * The counters are re-derived from the lines rather than incremented, because a counter that drifts
 	 * is worse than no counter: it is believed.
 	 *
+	 * Putting a line on a list is not the work starting, and the difference is load-bearing: a list
+	 * derived from shipments is written with its lines already on it, so a promotion here would make
+	 * every derived list be walked before a picker had been near it — and a list that is being walked
+	 * can no longer be assigned to one. The promotion belongs to the first outcome recorded against a
+	 * line, which is what `startsWork` states.
+	 *
 	 * @param pickListId The list.
+	 * @param startsWork Whether the change is an outcome recorded on a line.
 	 */
-	private async refreshListCounters(pickListId: ID): Promise<void> {
+	private async refreshListCounters(pickListId: ID, startsWork = true): Promise<void> {
 		const list = await this.typeOrmPickListRepository.findOne({
 			where: {
 				id: pickListId,
@@ -344,7 +356,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			shortCount: lines.filter((line) =>
 				[PickListLineStatus.SHORT, PickListLineStatus.SKIPPED].includes(line.status)
 			).length,
-			...(list.status === PickListStatus.PENDING || list.status === PickListStatus.ASSIGNED
+			...(startsWork && (list.status === PickListStatus.PENDING || list.status === PickListStatus.ASSIGNED)
 				? { status: PickListStatus.IN_PROGRESS, startedAt: list.startedAt ?? new Date() }
 				: {})
 		} as any);

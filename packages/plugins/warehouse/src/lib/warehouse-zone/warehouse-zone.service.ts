@@ -132,7 +132,10 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 	 *
 	 * The order is the first key of every pick-list sort, so it is written as a whole sequence rather
 	 * than as a single move: a partial reorder is what leaves two zones claiming the same position and
-	 * a pick path that depends on the order the database happens to return rows in.
+	 * a pick path that depends on the order the database happens to return rows in. The sequence is
+	 * therefore validated in full — no position twice, and every named area present at the location —
+	 * before the first position is written, so a refused reorder leaves the walking order exactly as
+	 * it was.
 	 *
 	 * @param warehouseId The location.
 	 * @param zones The zones and their new positions.
@@ -158,6 +161,11 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 			positions.add(zone.priority);
 		}
 
+		// The whole sequence is resolved before any of it is written, because the refusal that matters
+		// here is a statement about a zone rather than about a position: a reorder that names an area
+		// which is not there is refused before the first position moves, and never half way through it.
+		const resolved: Array<{ id: ID; priority: number; version: number }> = [];
+
 		for (const zone of zones) {
 			const existing = await this.typeOrmWarehouseZoneRepository.findOne({
 				where: { id: zone.id, tenantId, organizationId, warehouseId }
@@ -167,9 +175,13 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 				throw new NotFoundException(`Zone ${zone.id} was not found at this location.`);
 			}
 
+			resolved.push({ id: zone.id, priority: zone.priority, version: (existing.version ?? 1) + 1 });
+		}
+
+		for (const zone of resolved) {
 			await this.typeOrmWarehouseZoneRepository.update(zone.id, {
 				priority: zone.priority,
-				version: (existing.version ?? 1) + 1
+				version: zone.version
 			} as any);
 		}
 

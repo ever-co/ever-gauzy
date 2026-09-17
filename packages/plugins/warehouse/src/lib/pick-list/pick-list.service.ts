@@ -61,6 +61,13 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 	/**
 	 * Creates a list and derives its lines from the shipments it serves.
 	 *
+	 * The derivation is resolved **before the list row is written**, because both of its refusals are
+	 * statements about the shipments rather than about the list: a derivation that refuses must leave
+	 * nothing behind — not a number consumed for a list that does not exist, and not a numbered,
+	 * line-less row an operator has to clean up by hand. The write phase that follows is the one place
+	 * the row, its lines and its counters are written, and anything failing inside it withdraws what it
+	 * wrote, so the three appear together or not at all.
+	 *
 	 * @param entity The list to create, naming the location and the shipments.
 	 * @returns The created list, with its lines.
 	 */
@@ -73,7 +80,9 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 			throw new BadRequestException('A pick list must name the location the work happens in.');
 		}
 
+		const warehouseId = header.warehouseId;
 		const wave = header.waveId ? await this.assertWaveAcceptsLists(header.waveId) : undefined;
+		const derived = await this.planLines(warehouseId, fulfillmentIds);
 		const number = await this.allocateNumber();
 
 		const list = await super.create({
@@ -86,8 +95,14 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 			organizationId
 		} as any);
 
-		await this.deriveLines(list, fulfillmentIds);
-		await this.refreshCaches(list.id);
+		try {
+			await this.writeLines(list, derived);
+			await this.refreshCaches(list.id);
+		} catch (error) {
+			await this.withdraw(list);
+
+			throw error;
+		}
 
 		if (list.waveId) {
 			await this.pickWaveService.recomputeCaches(list.waveId);
@@ -199,12 +214,24 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 	 * folded the shortfall into its own status would make "may this shipment be packed?" a question with
 	 * two answers.
 	 *
+	 * What is refused is a list that is already closed, whether it was packed or withdrawn. The guard
+	 * cannot read the lines alone: a cancelled list has every one of its lines withdrawn, so a guard
+	 * that asked only whether an outcome is missing would answer yes and move a list the machine says is
+	 * terminal to `PICKED` — which is the status a pack slip may be created from.
+	 *
 	 * @param id The list.
 	 * @returns The completed list.
-	 * @throws BadRequestException when a line is still pending.
+	 * @throws BadRequestException when the list is closed, or when a line is still pending.
 	 */
 	public async complete(id: ID): Promise<PickList> {
 		const list = await this.findOneScoped(id);
+
+		if ([PickListStatus.PICKED, PickListStatus.CANCELED].includes(list.status)) {
+			throw new BadRequestException(
+				`A list in status "${list.status}" is closed: it has no outgoing transition, so it cannot be completed.`
+			);
+		}
+
 		const lines = await this.pickListLineService.findForList(id);
 		const pending = lines.filter((line) => line.status === 'PENDING');
 
@@ -340,18 +367,22 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 	}
 
 	/**
-	 * Derives the lines of a list from the shipments it serves, allocating a bin to each.
+	 * Resolves the lines a list will hold, and allocates a position to each.
 	 *
 	 * The derivation reads the shipment side, never the cart: by the time work is released the cart is
-	 * gone, and what a pick list may ask for is what the shipment still needs. The rows are written
-	 * through the line service, which is their only writer.
+	 * gone, and what a pick list may ask for is what the shipment still needs. Nothing is written here —
+	 * that is what lets both of the derivation's refusals happen before the list exists, so the two are
+	 * read as statements about the shipments rather than as failures that leave a row behind.
 	 *
-	 * @param list The list being filled.
-	 * @param fulfillmentIds The shipments it serves.
+	 * The rows themselves are written through the line service, which is their only writer.
+	 *
+	 * @param warehouseId The location the work happens in.
+	 * @param fulfillmentIds The shipments the list serves.
+	 * @returns The lines to write, in the order the shipments reported them.
 	 */
-	private async deriveLines(list: PickList, fulfillmentIds: ID[]): Promise<void> {
+	private async planLines(warehouseId: ID, fulfillmentIds: ID[]): Promise<Array<Partial<PickListLine>>> {
 		if (!fulfillmentIds.length) {
-			return;
+			return [];
 		}
 
 		if (!this.fulfillment) {
@@ -360,10 +391,7 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 			);
 		}
 
-		const lines = await this.fulfillment.listShippableLines({
-			warehouseId: list.warehouseId,
-			fulfillmentIds
-		});
+		const lines = await this.fulfillment.listShippableLines({ warehouseId, fulfillmentIds });
 		const selected = lines.filter((line) => isPositiveQuantity(line.quantity));
 
 		if (!selected.length) {
@@ -372,8 +400,9 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 			);
 		}
 
-		const walk = await this.walkOrder(list.warehouseId);
-		const allocation = await this.buildAllocation(list.warehouseId, walk, selected);
+		const walk = await this.walkOrder(warehouseId);
+		const allocation = await this.buildAllocation(warehouseId, walk, selected);
+		const planned: Array<Partial<PickListLine>> = [];
 
 		for (const line of selected) {
 			const bin = allocation.get(String(line.variantId));
@@ -382,8 +411,7 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 				continue;
 			}
 
-			await this.pickListLineService.create({
-				pickListId: list.id,
+			planned.push({
 				fulfillmentLineId: line.fulfillmentLineId,
 				orderLineId: line.orderLineId,
 				variantId: line.variantId,
@@ -392,6 +420,43 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 				quantityRequested: normalizeQuantity(line.quantity),
 				position: walk.findIndex((entry) => String(entry.id) === String(bin.id))
 			} as Partial<PickListLine>);
+		}
+
+		return planned;
+	}
+
+	/**
+	 * Writes the lines a list was planned with.
+	 *
+	 * @param list The list being filled.
+	 * @param lines The planned lines.
+	 */
+	private async writeLines(list: PickList, lines: Array<Partial<PickListLine>>): Promise<void> {
+		for (const line of lines) {
+			await this.pickListLineService.create({ ...line, pickListId: list.id } as Partial<PickListLine>);
+		}
+	}
+
+	/**
+	 * Withdraws a list whose write phase failed, with the lines it had already written.
+	 *
+	 * A list is created with its lines and its counters or it is not created at all, so a failure part
+	 * way through the write phase takes back what it wrote rather than leaving a list that describes
+	 * work nobody released. The withdrawal is best-effort: the caller is told what actually failed, so a
+	 * failure to take back a partial write never replaces the error that caused it.
+	 *
+	 * @param list The list to withdraw.
+	 */
+	private async withdraw(list: PickList): Promise<void> {
+		try {
+			for (const line of await this.pickListLineService.findForList(list.id)) {
+				await this.pickListLineService.delete(line.id);
+			}
+
+			await super.delete(list.id);
+		} catch {
+			// Whatever is left is the lesser problem: the failure worth reporting is the one that refused the
+			// create, and it is thrown by the caller of this method rather than swallowed.
 		}
 	}
 

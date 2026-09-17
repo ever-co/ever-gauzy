@@ -798,9 +798,15 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	/**
 	 * Rewrites the closure rows of a subtree after it moved.
 	 *
-	 * The subtree keeps its internal ancestry and gains the new parent's ancestry; the rows that
-	 * described the old placement are removed first, so the operation is idempotent and a partial
-	 * failure cannot leave a node with two parents' worth of ancestors.
+	 * The subtree keeps its internal ancestry — the pairs that made a shelf a descendant of the rack it
+	 * sits in — and gains the new parent's ancestry; the rows that described the old placement are
+	 * removed first, so the operation is idempotent and a partial failure cannot leave a node with two
+	 * parents' worth of ancestors.
+	 *
+	 * The internal pairs are read **before** the placement rows are deleted, because the deletion takes
+	 * them with it: they are the ones that make every descendant query reach past the moved node, and a
+	 * subtree that lost them answers with the node alone while the shelf below it is still physically
+	 * under it — damage that compounds with each move.
 	 *
 	 * @param binId The bin that moved.
 	 * @param parentId Its new parent, when it has one.
@@ -808,10 +814,24 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	private async relinkClosure(binId: ID, parentId?: ID): Promise<void> {
 		const descendants = await this.descendantIds(binId);
 		const subtree = descendants.length ? descendants : [binId];
+		const members = new Set(subtree.map(String));
+		const pairs: Array<[ID, ID]> = [];
+
+		for (const descendantId of subtree) {
+			const ancestors = await this.ancestorIds(descendantId);
+
+			for (const ancestorId of ancestors) {
+				if (members.has(String(ancestorId))) {
+					pairs.push([ancestorId, descendantId]);
+				}
+			}
+
+			// A bin is its own ancestor even when the pair that says so was missing, so the self-pair is
+			// stated here rather than only read back.
+			pairs.push([descendantId, descendantId]);
+		}
 
 		await this.removeFromClosure(binId, subtree);
-
-		const pairs: Array<[ID, ID]> = subtree.map((descendantId) => [descendantId, descendantId]);
 
 		if (parentId) {
 			const ancestors = await this.ancestorIds(parentId);

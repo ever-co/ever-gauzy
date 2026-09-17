@@ -606,7 +606,7 @@ describe('CarrierManifestService — closing a manifest (doc 09 §14.7, INV-24)'
 	// membership set is fixed and no fulfilment is added to or removed from it.
 	// (`carrier-manifest.service.ts`, `membersOf`, line 313: `unclaimedOnly: manifest.status ===
 	// CarrierManifestStatus.DRAFT`, which is the only narrowing the port is given.)
-	it.failing('[DEFECT] keeps the membership it froze at close, so a later shipment in the same window is not a member', async () => {
+	it('[DEFECT] keeps the membership it froze at close, so a later shipment in the same window is not a member', async () => {
 		const fixture = manifestFixture({
 			manifests: [manifestRow('manifest-1')],
 			shipments: [shipped('a')]
