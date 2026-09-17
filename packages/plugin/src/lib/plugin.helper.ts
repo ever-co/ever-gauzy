@@ -272,6 +272,38 @@ export function getPluginDependencies(plugin: Type<any> | DynamicModule): Array<
 }
 
 /**
+ * The spellings a configured plugin can be named by.
+ *
+ * A prerequisite is normally declared as the plugin's class, which is the form the compiler checks.
+ * It may also be declared as the package name, and that form is not a mistake: it lets a plugin say
+ * what it must be loaded after without taking a build-time dependency on that package, which is the
+ * only way to express a prerequisite on something that is not independently importable. Both
+ * spellings therefore have to resolve to the same configured plugin.
+ *
+ * @param plugin A configured plugin.
+ * @returns The names it answers to.
+ */
+function pluginNamesOf(plugin: Type<any> | DynamicModule): string[] {
+	const identity = isDynamicModule(plugin) ? plugin.module : plugin;
+	const className = identity?.name ?? '';
+	const names: string[] = [];
+
+	if (className) {
+		names.push(className);
+
+		// The package convention is `@gauzy/plugin-<kebab>` for the class `<Pascal>Plugin`, so the
+		// package name a plugin answers to is derived from its class rather than looked up.
+		const stem = className.replace(/Plugin$/, '');
+		if (stem) {
+			const kebab = stem.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+			names.push(`@gauzy/plugin-${kebab}`);
+		}
+	}
+
+	return names;
+}
+
+/**
  * Orders a plugin list so that every declared prerequisite is loaded before the plugin that
  * requires it.
  *
@@ -290,7 +322,22 @@ export function resolvePluginLoadOrder(plugins: Array<Type<any> | DynamicModule>
 	const identityOf = (plugin: Type<any> | DynamicModule): Type<any> =>
 		isDynamicModule(plugin) ? plugin.module : plugin;
 
-	const configured = new Set<Type<any>>(plugins.map(identityOf));
+	// A prerequisite may be named by class or by package name, so the configured plugins are indexed
+	// under every spelling they answer to. What is looked up is the plugin's IDENTITY, and what is
+	// visited and emitted is the entry as it was configured — so a dynamic module is still loaded,
+	// and still emitted, as itself.
+	const originalOf = new Map<Type<any>, Type<any> | DynamicModule>();
+	const configured = new Map<Type<any> | string, Type<any>>();
+	for (const plugin of plugins) {
+		const identity = identityOf(plugin);
+		originalOf.set(identity, plugin);
+		for (const name of pluginNamesOf(plugin)) {
+			if (!configured.has(name)) {
+				configured.set(name, identity);
+			}
+		}
+	}
+
 	const ordered: Array<Type<any> | DynamicModule> = [];
 	const visiting = new Set<Type<any>>();
 	const visited = new Set<Type<any>>();
@@ -311,15 +358,23 @@ export function resolvePluginLoadOrder(plugins: Array<Type<any> | DynamicModule>
 
 		visiting.add(identity);
 
-		for (const dependency of getPluginDependencies(plugin)) {
-			if (!configured.has(dependency)) {
+		// `dependsOn` is typed as classes, but a package name is a supported declaration and the
+		// metadata is read at runtime, so each entry is treated as either.
+		for (const dependency of getPluginDependencies(plugin) as Array<Type<any> | string>) {
+			const resolved = configured.get(dependency);
+
+			if (!resolved) {
+				// Name the dependency as it was written. A string has no `name`, so the previous
+				// message reported that the plugin required "an unnamed plugin" and gave an operator
+				// nothing to search for.
+				const named =
+					typeof dependency === 'string' ? `"${dependency}"` : dependency?.name ?? 'an unnamed plugin';
 				throw new Error(
-					`Plugin ${identity.name} requires ${dependency?.name ?? 'an unnamed plugin'}, ` +
-						'which is not present in the configured plugin list.'
+					`Plugin ${identity.name} requires ${named}, ` + 'which is not present in the configured plugin list.'
 				);
 			}
 
-			visit(dependency, [...path, identity.name]);
+			visit(originalOf.get(resolved) ?? resolved, [...path, identity.name]);
 		}
 
 		visiting.delete(identity);

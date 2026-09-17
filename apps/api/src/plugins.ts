@@ -137,10 +137,12 @@ export const plugins = [
 	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
 	RegistryPlugin,
 
-	// The commerce domains. Each owns its own tables, migrations, permissions and feature flags, and
-	// is listed here only to be loaded — the platform resolves their `dependsOn` declarations into a
-	// load order, and merges their migrations into the connection before it is opened, so this list
-	// does not need to be topologically sorted by hand.
+	// The commerce domains. Each owns its own tables, migrations, permissions and feature flags.
+	// Their migrations are merged into the connection before it is opened and ORDERED BY THE
+	// PLATFORM, so their position here does not affect them. Their load order is this list's order:
+	// each declares its prerequisites in `dependsOn`, that declaration is what keeps this list
+	// correct, and it is kept topologically sorted by hand until every declared prerequisite is
+	// itself registered here.
 	CatalogPlugin,
 	PricingPlugin,
 	TaxPlugin,
