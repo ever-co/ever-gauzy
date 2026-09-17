@@ -479,11 +479,14 @@ export type LegacyFindOneOptions<T> = Omit<FindOneOptions<T>, 'relations' | 'sel
 const UNSAFE_FIND_OPTION_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
 
 /**
- * Maximum nesting depth walked when a client-supplied `relations` structure is canonicalized.
+ * Maximum depth of a client-supplied `relations` value: both how deeply the structure may nest and
+ * how many segments one relation path may carry, whichever way the path was spelled (nested keys, a
+ * dotted string, or a mixture).
  *
- * The bound exists only to keep a hostile payload (a body nested thousands of levels deep) from
- * exhausting the stack; no real entity graph — and no entry in a sensitive-relation config — comes
- * anywhere near it, and TypeORM itself rejects a path whose hops do not exist.
+ * The bound exists to keep a hostile payload from exhausting the stack (a body nested thousands of
+ * levels deep) or burning CPU on a single enormous dotted path, whose every growing prefix would
+ * otherwise be copied and stored. No real entity graph — and no entry in a sensitive-relation
+ * config — comes anywhere near it, and TypeORM itself rejects a path whose hops do not exist.
  *
  * Exceeding it is REFUSED rather than truncated. Truncating would hand the caller the paths collected
  * so far while the ORM still joined the whole structure it was given — the relations past the bound
@@ -496,24 +499,59 @@ const UNSAFE_FIND_OPTION_SEGMENTS = new Set(['__proto__', 'prototype', 'construc
 const MAX_RELATION_PATH_DEPTH = 20;
 
 /**
+ * How {@link collectRelationPaths} reads an object-form leaf.
+ *
+ * - `authorize` emits a key WHATEVER its leaf value is. A permission check that cannot interpret a
+ *   leaf must fail closed, not skip the relation.
+ * - `orm` emits a key only when TypeORM itself would join it: a leaf of `true` or an object, which is
+ *   exactly what `SelectQueryBuilder.buildRelations` joins. `{ payments: false }`, and the
+ *   `{ payments: 'x' }` a query string produces, name a relation the ORM would NOT load, so rebuilding
+ *   them as `true` would widen the query the caller asked for.
+ */
+type RelationPathMode = 'authorize' | 'orm';
+
+/**
  * Appends one dot-notated relation fragment to `prefix`, adding EVERY intermediate prefix to `paths`.
  *
- * `appendRelationPath('organization', 'payments.invoice', paths)` records `organization.payments` and
- * `organization.payments.invoice`, so a permission lookup matches at whatever depth the config
+ * `appendRelationPath('organization', 1, 'payments.invoice', paths)` records `organization.payments`
+ * and `organization.payments.invoice`, so a permission lookup matches at whatever depth the config
  * declares the relation.
  *
  * @param prefix - The already canonicalized parent path (`''` at the root).
+ * @param prefixSegments - How many segments `prefix` carries.
  * @param fragment - A single relation fragment, possibly itself dot-notated.
  * @param paths - The accumulator every emitted path is added to.
- * @returns The full path for `fragment`, or `null` when the fragment is empty or unsafe.
+ * @returns The full path for `fragment` with its segment count, or `null` when the fragment is empty.
+ * @throws BadRequestException when a segment is prototype-polluting, or when the full path would carry
+ *         more than {@link MAX_RELATION_PATH_DEPTH} segments.
  */
-function appendRelationPath(prefix: string, fragment: string, paths: Set<string>): string | null {
+function appendRelationPath(
+	prefix: string,
+	prefixSegments: number,
+	fragment: string,
+	paths: Set<string>
+): { path: string; segments: number } | null {
 	const segments = fragment.split('.').filter((segment: string) => segment.length > 0);
 
-	// An empty fragment names nothing; a prototype-polluting segment must never become an object key
-	// (the value can originate from an untrusted API `relations` query param), so drop the branch.
-	if (segments.length === 0 || segments.some((segment: string) => UNSAFE_FIND_OPTION_SEGMENTS.has(segment))) {
+	// An empty fragment names nothing.
+	if (segments.length === 0) {
 		return null;
+	}
+
+	// A prototype-polluting segment must never become an object key (the value can originate from an
+	// untrusted API `relations` param). It is refused rather than dropped: the checks built on this
+	// walk do not rewrite the value they inspect, so a dropped branch would still reach the ORM
+	// without ever having been offered to the check.
+	if (segments.some((segment: string) => UNSAFE_FIND_OPTION_SEGMENTS.has(segment))) {
+		throw new BadRequestException(`The 'relations' option contains an invalid relation name.`);
+	}
+
+	// Checked before any prefix is built, so an enormous dotted string costs one split rather than a
+	// quadratic series of ever longer copies.
+	if (prefixSegments + segments.length > MAX_RELATION_PATH_DEPTH) {
+		throw new BadRequestException(
+			`A relation path in the 'relations' option may not be longer than ${MAX_RELATION_PATH_DEPTH} segments.`
+		);
 	}
 
 	let path = prefix;
@@ -521,19 +559,29 @@ function appendRelationPath(prefix: string, fragment: string, paths: Set<string>
 		path = path ? `${path}.${segment}` : segment;
 		paths.add(path);
 	}
-	return path;
+	return { path, segments: prefixSegments + segments.length };
 }
 
 /**
- * Depth-first walk behind {@link normalizeRelationsToPaths}.
+ * Depth-first walk behind {@link normalizeRelationsToPaths} and {@link canonicalizeFindOptionsRelations}.
  *
  * @param value - The (sub-)structure to canonicalize.
  * @param prefix - The canonicalized path of the parent key (`''` at the root).
+ * @param prefixSegments - How many segments `prefix` carries.
  * @param paths - The accumulator every emitted path is added to.
  * @param depth - The current recursion depth.
- * @throws BadRequestException when the structure nests deeper than {@link MAX_RELATION_PATH_DEPTH}.
+ * @param mode - How an object-form leaf is read; see {@link RelationPathMode}.
+ * @throws BadRequestException when the structure nests deeper, or a path runs longer, than
+ *         {@link MAX_RELATION_PATH_DEPTH}, or when a relation name is prototype-polluting.
  */
-function collectRelationPaths(value: unknown, prefix: string, paths: Set<string>, depth: number): void {
+function collectRelationPaths(
+	value: unknown,
+	prefix: string,
+	prefixSegments: number,
+	paths: Set<string>,
+	depth: number,
+	mode: RelationPathMode
+): void {
 	// Fail closed: see MAX_RELATION_PATH_DEPTH. Returning the paths gathered so far would authorize a
 	// prefix of the request while the ORM joined all of it.
 	if (depth > MAX_RELATION_PATH_DEPTH) {
@@ -549,7 +597,7 @@ function collectRelationPaths(value: unknown, prefix: string, paths: Set<string>
 	// A string is a relation path (or a comma-separated list of them).
 	if (typeof value === 'string') {
 		for (const fragment of value.split(',')) {
-			appendRelationPath(prefix, fragment.trim(), paths);
+			appendRelationPath(prefix, prefixSegments, fragment.trim(), paths);
 		}
 		return;
 	}
@@ -557,27 +605,31 @@ function collectRelationPaths(value: unknown, prefix: string, paths: Set<string>
 	// An array holds further relation values: strings, or objects (`[{ organization: { payments: true } }]`).
 	if (Array.isArray(value)) {
 		for (const entry of value) {
-			collectRelationPaths(entry, prefix, paths, depth + 1);
+			collectRelationPaths(entry, prefix, prefixSegments, paths, depth + 1, mode);
 		}
 		return;
 	}
 
 	if (typeof value === 'object') {
 		for (const key of Object.keys(value)) {
-			const path = appendRelationPath(prefix, key, paths);
+			const child = (value as Record<string, unknown>)[key];
 
-			// An unsafe/empty key is dropped together with everything under it.
-			if (path === null) {
+			// Only objects and arrays carry further relation names; a scalar leaf (`true`, `'x'`, `1`)
+			// terminates the path. In `authorize` mode the path is emitted REGARDLESS of that leaf's
+			// value; in `orm` mode only for a leaf TypeORM would join. See RelationPathMode.
+			if (mode === 'orm' && child !== true && typeof child !== 'object') {
 				continue;
 			}
 
-			// Only objects and arrays carry further relation names. A scalar leaf (`true`, `'x'`, `1`)
-			// terminates the path — and the path itself is emitted above REGARDLESS of that leaf's
-			// value, because TypeORM joins `{ payments: <object> }` all the same and a permission
-			// check that cannot interpret a leaf must fail closed, not skip the relation.
-			const child = (value as Record<string, unknown>)[key];
+			const appended = appendRelationPath(prefix, prefixSegments, key, paths);
+
+			// An empty key names nothing, and neither does anything under it.
+			if (appended === null) {
+				continue;
+			}
+
 			if (child !== null && typeof child === 'object') {
-				collectRelationPaths(child, path, paths, depth + 1);
+				collectRelationPaths(child, appended.path, appended.segments, paths, depth + 1, mode);
 			}
 		}
 	}
@@ -604,17 +656,19 @@ function collectRelationPaths(value: unknown, prefix: string, paths: Set<string>
  *
  * Every intermediate prefix is emitted (`organization`, `organization.payments`,
  * `organization.payments.invoice`) so a config lookup matches at whatever depth it declares a
- * relation, and the walk fails CLOSED: a key is emitted whatever its leaf value is, and a
- * prototype-polluting segment drops its whole branch instead of being silently accepted.
+ * relation, and the walk fails CLOSED: a key is emitted whatever its leaf value is (even `false`,
+ * which TypeORM would not join, since over-asking is the safe direction for a check), and input the
+ * walk cannot faithfully read is refused outright.
  *
  * @param relations - The `relations` value in any of the shapes above.
  * @returns The de-duplicated dot-notated relation paths, including every prefix.
- * @throws BadRequestException when the structure nests deeper than {@link MAX_RELATION_PATH_DEPTH};
- *         a structure too deep to canonicalize is refused, never partially accepted.
+ * @throws BadRequestException when the structure nests deeper, or a single path runs longer, than
+ *         {@link MAX_RELATION_PATH_DEPTH}, or when a relation name is prototype-polluting
+ *         (`__proto__`, `prototype`, `constructor`); such input is refused, never partially accepted.
  */
 export function normalizeRelationsToPaths(relations: unknown): string[] {
 	const paths = new Set<string>();
-	collectRelationPaths(relations, '', paths, 0);
+	collectRelationPaths(relations, '', 0, paths, 0, 'authorize');
 	return Array.from(paths);
 }
 
@@ -678,19 +732,24 @@ export function stringArrayToFindOptionsObject(paths: readonly string[]): Record
  * the single nested-object form TypeORM v1 consumes.
  *
  * Use this wherever a `relations` option crosses the trust boundary — a DTO transform, for example —
- * so that the shape an authorization check inspects is byte-for-byte the shape the ORM will join.
- * The conversion never loads anything the caller did not name: it runs {@link normalizeRelationsToPaths}
- * (which emits a path for every key the payload carries) and rebuilds the object from those paths.
+ * so that the shape an authorization check inspects downstream is the shape the ORM will join.
+ *
+ * The conversion never loads anything the ORM would not have loaded from the original value: an
+ * object-form key is kept only when its leaf is `true` or an object, which is what TypeORM joins, so
+ * `{ payments: false }` or a query-string `{ payments: 'x' }` is dropped rather than rebuilt as `true`.
+ * Any string or string-array path is kept as named.
  *
  * @param relations - The `relations` value in any representation.
  * @returns The canonical object form, or `undefined` when no `relations` value was supplied.
- * @throws BadRequestException when the structure nests deeper than {@link MAX_RELATION_PATH_DEPTH}.
+ * @throws BadRequestException on the same input {@link normalizeRelationsToPaths} refuses.
  */
 export function canonicalizeFindOptionsRelations<T = unknown>(relations: unknown): FindOptionsRelations<T> | undefined {
 	if (relations === null || relations === undefined) {
 		return undefined;
 	}
-	return stringArrayToFindOptionsObject(normalizeRelationsToPaths(relations)) as FindOptionsRelations<T>;
+	const paths = new Set<string>();
+	collectRelationPaths(relations, '', 0, paths, 0, 'orm');
+	return stringArrayToFindOptionsObject(Array.from(paths)) as FindOptionsRelations<T>;
 }
 
 /**

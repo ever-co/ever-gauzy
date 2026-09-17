@@ -88,12 +88,38 @@ describe('normalizeRelationsToPaths', () => {
 	});
 
 	describe('unsafe and unusable input', () => {
-		it('drops a prototype-polluting segment together with its branch', () => {
+		it('refuses a prototype-polluting segment instead of dropping its branch', () => {
+			// Dropping the branch would leave the check answering for a request it never saw: neither
+			// the interceptor nor the CRUD sink rewrites the value, so the ORM would still receive it.
 			const polluted = JSON.parse('{"__proto__":{"payments":true},"constructor":{"contact":true}}');
 
-			expect(normalizeRelationsToPaths(polluted)).toEqual([]);
-			expect(normalizeRelationsToPaths(['__proto__.payments', 'prototype'])).toEqual([]);
+			expect(() => normalizeRelationsToPaths(polluted)).toThrow(BadRequestException);
+			expect(() => normalizeRelationsToPaths(['__proto__.payments'])).toThrow(BadRequestException);
+			expect(() => normalizeRelationsToPaths('tags,prototype')).toThrow(BadRequestException);
+			expect(() => normalizeRelationsToPaths({ organization: { constructor: true } })).toThrow(
+				BadRequestException
+			);
 			expect(({} as any).payments).toBeUndefined();
+		});
+
+		it('refuses a dotted path longer than the bound, however it is spelled', () => {
+			// A flat dotted string never recursed, so it used to escape the depth bound entirely and
+			// cost a quadratic series of prefix copies.
+			const segments = (count: number): string =>
+				Array.from({ length: count }, (_value: unknown, i: number) => (i % 2 ? 'tags' : 'organization')).join(
+					'.'
+				);
+
+			expect(normalizeRelationsToPaths(segments(20))).toHaveLength(20);
+			expect(() => normalizeRelationsToPaths(segments(21))).toThrow(BadRequestException);
+			expect(() => normalizeRelationsToPaths([segments(5000)])).toThrow(BadRequestException);
+			expect(() => canonicalizeFindOptionsRelations(segments(21))).toThrow(BadRequestException);
+
+			// The prefix a nested key already contributed counts toward the same bound.
+			expect(() => normalizeRelationsToPaths({ organization: [segments(20)] })).toThrow(BadRequestException);
+			expect(() => normalizeRelationsToPaths({ [segments(15)]: { [segments(6)]: true } })).toThrow(
+				BadRequestException
+			);
 		});
 
 		it('returns nothing for values that name no relation', () => {
@@ -150,7 +176,22 @@ describe('canonicalizeFindOptionsRelations', () => {
 		expect(canonicalizeFindOptionsRelations('organization.payments')).toEqual(expected);
 		expect(canonicalizeFindOptionsRelations(['organization.payments'])).toEqual(expected);
 		expect(canonicalizeFindOptionsRelations({ organization: { payments: true } })).toEqual(expected);
-		expect(canonicalizeFindOptionsRelations({ organization: { payments: 'x' } })).toEqual(expected);
+		expect(canonicalizeFindOptionsRelations({ organization: { payments: { invoice: 'x' } } })).toEqual(expected);
+	});
+
+	it('never rebuilds a leaf TypeORM would not join as one it will', () => {
+		// TypeORM's `buildRelations` joins a relation only for a `true` or object leaf. Turning `false` —
+		// or the string a query parameter always carries — into `true` would widen the caller's query.
+		expect(canonicalizeFindOptionsRelations({ payments: false })).toEqual({});
+		expect(canonicalizeFindOptionsRelations({ organization: { payments: false }, user: true })).toEqual({
+			organization: true,
+			user: true
+		});
+		expect(canonicalizeFindOptionsRelations({ organization: { payments: 'x' } })).toEqual({ organization: true });
+		expect(canonicalizeFindOptionsRelations({ payments: 'true', contact: 1 })).toEqual({});
+
+		// The authorization walk is deliberately stricter and still names every key.
+		expect(normalizeRelationsToPaths({ payments: false })).toEqual(['payments']);
 	});
 
 	it('keeps the shape the Angular clients send intact', () => {
@@ -168,9 +209,9 @@ describe('canonicalizeFindOptionsRelations', () => {
 	});
 
 	it('never introduces a prototype-polluting key', () => {
-		const canonical = canonicalizeFindOptionsRelations(JSON.parse('{"__proto__":{"payments":true}}'));
-
-		expect(canonical).toEqual({});
+		expect(() => canonicalizeFindOptionsRelations(JSON.parse('{"__proto__":{"payments":true}}'))).toThrow(
+			BadRequestException
+		);
 		expect(({} as any).payments).toBeUndefined();
 	});
 });

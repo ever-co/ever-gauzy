@@ -1,4 +1,4 @@
-import { CallHandler, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, CallHandler, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { of } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -101,6 +101,39 @@ describe('SensitiveRelationsInterceptor', () => {
 		});
 	});
 
+	describe('a node that declares both its own permission and nested ones', () => {
+		// `employees: { _self: ORG_EMPLOYEES_VIEW, user: ORG_USERS_VIEW }`. The lookup used to return the
+		// `_self` it met first and stop, so a caller holding only ORG_EMPLOYEES_VIEW could load the
+		// employees' user accounts as well.
+		beforeEach(() =>
+			hasPermission.mockImplementation(
+				(permission: PermissionsEnum) => permission === PermissionsEnum.ORG_EMPLOYEES_VIEW
+			)
+		);
+
+		it.each([
+			['nested object', { organization: { employees: { user: true } } }],
+			['string array', ['organization.employees.user']],
+			['comma-separated string', 'organization.employees,organization.employees.user']
+		])('refuses the nested relation in the %s form with only the parent permission', (_label, relations) => {
+			expect(() => intercept(relations)).toThrow(new RegExp(PermissionsEnum.ORG_USERS_VIEW));
+			expect(handled).toBe(false);
+		});
+
+		it('still allows the parent relation itself', () => {
+			expect(() => intercept(['organization.employees'])).not.toThrow();
+			expect(handled).toBe(true);
+		});
+
+		it('applies the parent permission to an undeclared relation below it', () => {
+			hasPermission.mockReturnValue(false);
+
+			expect(() => intercept({ organization: { employees: { tags: true } } })).toThrow(
+				new RegExp(PermissionsEnum.ORG_EMPLOYEES_VIEW)
+			);
+		});
+	});
+
 	describe('with the required permission', () => {
 		beforeEach(() => hasPermission.mockReturnValue(true));
 
@@ -126,10 +159,11 @@ describe('SensitiveRelationsInterceptor', () => {
 			expect(handled).toBe(true);
 		});
 
-		it('drops a prototype-polluting branch instead of trusting it', () => {
+		it('refuses a prototype-polluting branch instead of trusting or silently dropping it', () => {
 			const polluted = JSON.parse('{"__proto__":{"payments":true}}');
 
-			expect(() => intercept(polluted)).not.toThrow();
+			expect(() => intercept(polluted)).toThrow(BadRequestException);
+			expect(handled).toBe(false);
 			expect(({} as any).payments).toBeUndefined();
 		});
 	});

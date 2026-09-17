@@ -107,20 +107,37 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * (GHSA-c3cj-m3xm-7j5h). Asserting it here, on the path every read goes through, makes the table
 	 * hold for entities and controllers that never opted in, present and future.
 	 *
-	 * @param options - The find-options about to be issued; ignored when it carries no `relations`.
+	 * TypeORM's `loadRelationIds` option is checked too. It loads the ids of the named relations (or of
+	 * EVERY relation, when set to `true`) and is honoured by the read methods, which pass the option
+	 * object through to the repository, so on an `Organization` read it would list the ids of the very
+	 * rows the table protects. No client uses it, so it is checked strictly.
+	 *
+	 * @param options - The find-options about to be issued; ignored when it carries neither `relations`
+	 *                  nor `loadRelationIds`.
 	 * @throws ForbiddenException when a requested relation requires a permission the caller lacks.
 	 */
 	protected assertRelationsPermitted(options?: unknown): void {
 		if (!options || typeof options !== 'object') {
 			return;
 		}
+		const metadata = this.typeOrmRepository?.metadata;
+
 		// `relations` is carried by both the TypeORM and the MikroORM option shapes; the union itself
 		// does not declare it, hence the read through a widened type.
-		const relations = (options as { relations?: unknown }).relations;
-		if (!relations) {
-			return;
+		const { relations, loadRelationIds } = options as { relations?: unknown; loadRelationIds?: unknown };
+		if (relations) {
+			assertSensitiveRelationsAllowed(metadata, relations);
 		}
-		assertSensitiveRelationsAllowed(this.typeOrmRepository?.metadata, relations);
+
+		if (loadRelationIds) {
+			const named =
+				typeof loadRelationIds === 'object' ? (loadRelationIds as { relations?: unknown }).relations : undefined;
+			// `{ relations: [...] }` names its relations; any other truthy value loads the ids of all of them.
+			assertSensitiveRelationsAllowed(
+				metadata,
+				named ?? (metadata?.relations ?? []).map((relation) => relation.propertyPath)
+			);
+		}
 	}
 
 	/**

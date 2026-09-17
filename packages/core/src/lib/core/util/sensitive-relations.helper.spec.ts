@@ -7,9 +7,11 @@ import { assertSensitiveRelationsAllowed } from './sensitive-relations.helper';
 /**
  * The reported bypass (GHSA-c3cj-m3xm-7j5h) was a symptom: `SensitiveRelationsInterceptor` is mounted
  * on 5 of the ~83 controllers that accept a client-supplied `relations`, while EVERY tenant-scoped
- * entity exposes an `organization` relation. `GET /api/tags?relations[0]=organization.payments` —
- * plain array form, no bypass trick, a controller with no `@Permissions` at all — reached the same
- * protected rows. These specs pin the enforcement at the sink, where every read passes.
+ * entity exposes an `organization` relation. A request such as
+ * `GET /api/equipment/pagination?relations[0]=organization.payments` — plain array form, no bypass
+ * trick, a controller with no `@Permissions` at all — reached the same protected rows. These specs pin
+ * the check itself; `CrudService` calls it from its read methods, and services that build their own
+ * query call it directly (see crud.service.hand-rolled-relations.spec.ts).
  *
  * The walk follows the ENTITY graph, not the shape of the string, so a relation is gated by the
  * entity it is loaded from: `Organization.payments` is protected, the unrelated `Invoice.payments`
@@ -165,10 +167,11 @@ describe('assertSensitiveRelationsAllowed', () => {
 			expect(() => assertSensitiveRelationsAllowed(TAG(), relations)).toThrow(BadRequestException);
 		});
 
-		it('does not let a prototype-polluting key smuggle a relation past the walk', () => {
+		it('refuses a prototype-polluting key rather than skipping the branch it hides', () => {
+			// The sink does not rewrite the value it checks, so a skipped branch would still reach the ORM.
 			const polluted = JSON.parse('{"organization":{"__proto__":{"payments":true}}}');
 
-			expect(() => assertSensitiveRelationsAllowed(TAG(), polluted)).not.toThrow();
+			expect(() => assertSensitiveRelationsAllowed(TAG(), polluted)).toThrow(BadRequestException);
 			expect(({} as any).payments).toBeUndefined();
 		});
 	});

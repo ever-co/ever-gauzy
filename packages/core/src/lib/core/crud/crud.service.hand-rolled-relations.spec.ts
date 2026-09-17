@@ -7,6 +7,20 @@ import { RequestContext } from '../context';
 import { TagService } from '../../tags/tag.service';
 import { CandidateService } from '../../candidate/candidate.service';
 import { OrganizationTeamService } from '../../organization-team/organization-team.service';
+import { TaskService } from '../../tasks/task.service';
+import { DailyPlanService } from '../../tasks/daily-plan/daily-plan.service';
+import { TimeOffRequestService } from '../../time-off-request/time-off-request.service';
+import { EmployeeService } from '../../employee/employee.service';
+import { EmailTemplateService } from '../../email-template/email-template.service';
+import { PipelineService } from '../../pipeline/pipeline.service';
+import { RequestApprovalService } from '../../request-approval/request-approval.service';
+import { TimerService } from '../../time-tracking/timer/timer.service';
+import { ActivityLogService } from '../../activity-log/activity-log.service';
+import { ExpenseService } from '../../expense/expense.service';
+import { FindSplitExpenseHandler } from '../../expense/queries/handlers/expense.find-split-expense.handler';
+import { FindSplitExpenseQuery } from '../../expense/queries/expense.find-split-expense.query';
+import { MultiORMEnum } from '../utils';
+import { CrudService } from './crud.service';
 
 /**
  * The sink-level assertion in `CrudService` only runs on the CRUD read methods. Several services
@@ -35,13 +49,29 @@ describe('sensitive-relation enforcement on hand-rolled queries', () => {
 
 	let granted: PermissionsEnum[];
 
-	const repositoryFor = (name: string) => ({
-		metadata: withOrganization(name),
-		createQueryBuilder: jest.fn(() => {
-			throw new Error(`${name}: the query must not be built when the relation is refused`);
-		}),
-		findAndCount: jest.fn().mockResolvedValue([[], 0])
-	});
+	const repositoryFor = (name: string) => {
+		const mustNotRun = (method: string) =>
+			jest.fn(() => {
+				throw new Error(`${name}.${method}: the read must not run when the relation is refused`);
+			});
+		return {
+			metadata: withOrganization(name),
+			createQueryBuilder: mustNotRun('createQueryBuilder'),
+			findAndCount: jest.fn().mockResolvedValue([[], 0]),
+			findOne: mustNotRun('findOne'),
+			findOneByOptions: mustNotRun('findOneByOptions')
+		};
+	};
+
+	/** Every repository-touching method of a fake, so a test can prove none of them ran. */
+	const untouched = (repository: ReturnType<typeof repositoryFor>) => {
+		expect(repository.createQueryBuilder).not.toHaveBeenCalled();
+		expect(repository.findAndCount).not.toHaveBeenCalled();
+		expect(repository.findOne).not.toHaveBeenCalled();
+		expect(repository.findOneByOptions).not.toHaveBeenCalled();
+	};
+
+	const PROTECTED = ['organization.payments'];
 
 	beforeEach(() => {
 		granted = [];
@@ -50,6 +80,8 @@ describe('sensitive-relation enforcement on hand-rolled queries', () => {
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: PermissionsEnum) =>
 			granted.includes(permission)
 		);
+		// Pin the ORM branch, so a `DB_ORM` set in the environment cannot route a case elsewhere.
+		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -112,5 +144,139 @@ describe('sensitive-relation enforcement on hand-rolled queries', () => {
 		await expect(service.findTags({} as any, ['organization.payments'])).rejects.toThrow(
 			'reached the query builder'
 		);
+	});
+
+	describe('the remaining hand-rolled listings', () => {
+		it.each([
+			['array', PROTECTED],
+			['object', { organization: { payments: true } }]
+		])('refuses the task listings with a protected relation in %s form', async (_label, relations) => {
+			const repository = repositoryFor('Task');
+			const service = new (TaskService as any)(repository, {}, {}, {}, {}, {}, {}, {}, {}, {}) as TaskService;
+			const options = { where: { organizationId: 'o' }, relations } as any;
+
+			await expect(service.getEmployeeTasks(options)).rejects.toThrow(ForbiddenException);
+			await expect(service.getAllTasksByEmployee('e', options)).rejects.toThrow(ForbiddenException);
+			await expect(service.findTeamTasks(options)).rejects.toThrow(ForbiddenException);
+			await expect(service.findModuleTasks(options)).rejects.toThrow(ForbiddenException);
+			await expect(service.getTasksByDateFilters({ relations } as any)).rejects.toThrow(ForbiddenException);
+
+			untouched(repository);
+		});
+
+		it('refuses the daily-plan listings with a protected relation', async () => {
+			const repository = repositoryFor('DailyPlan');
+			const service = new DailyPlanService(repository as any, {} as any, {} as any, {} as any, {} as any);
+			const options = { where: { organizationId: 'o' }, relations: PROTECTED } as any;
+
+			await expect(service.getAllPlans(options)).rejects.toThrow(ForbiddenException);
+			await expect(service.getTeamDailyPlans(options)).rejects.toThrow(ForbiddenException);
+
+			untouched(repository);
+		});
+
+		it('refuses the time-off, employee and email-template listings with a protected relation', async () => {
+			const timeOff = repositoryFor('TimeOffRequest');
+			const employee = repositoryFor('Employee');
+			const emailTemplate = repositoryFor('EmailTemplate');
+
+			await expect(
+				new TimeOffRequestService(timeOff as any, {} as any, {} as any).pagination({ relations: PROTECTED })
+			).rejects.toThrow(ForbiddenException);
+			await expect(
+				new EmployeeService(employee as any, {} as any).pagination({ relations: PROTECTED } as any)
+			).rejects.toThrow(ForbiddenException);
+			await expect(
+				new EmailTemplateService(emailTemplate as any, {} as any).findAll({
+					where: {},
+					relations: { organization: { payments: true } }
+				} as any)
+			).rejects.toThrow(ForbiddenException);
+
+			[timeOff, employee, emailTemplate].forEach(untouched);
+		});
+
+		it('walks the table from the entity actually queried, not from the service entity', async () => {
+			// The pipeline service reads DEALS, and the approvals-by-employee read loads the EMPLOYEE.
+			const pipeline = repositoryFor('Pipeline');
+			const deal = repositoryFor('Deal');
+			const approval = repositoryFor('RequestApproval');
+			const employee = repositoryFor('Employee');
+
+			await expect(
+				new PipelineService(pipeline as any, {} as any, deal as any, {} as any, {} as any).getPipelineDeals(
+					'p',
+					{},
+					PROTECTED
+				)
+			).rejects.toThrow(ForbiddenException);
+
+			const approvals = new RequestApprovalService(approval as any, {} as any, employee as any, {} as any, {} as any, {} as any);
+			await expect(approvals.findRequestApprovalsByEmployeeId('e', PROTECTED, {} as any)).rejects.toThrow(
+				ForbiddenException
+			);
+			await expect(approvals.findAllRequestApprovals({ relations: PROTECTED } as any, {} as any)).rejects.toThrow(
+				ForbiddenException
+			);
+
+			[pipeline, deal, approval, employee].forEach(untouched);
+		});
+
+		it('refuses the timer status with a protected relation on its time logs', async () => {
+			const timeLog = repositoryFor('TimeLog');
+			const employee = repositoryFor('Employee');
+			const service = new TimerService(timeLog as any, {} as any, employee as any, {} as any, {} as any, {} as any);
+
+			await expect(service.getTimerStatus({ relations: PROTECTED } as any)).rejects.toThrow(ForbiddenException);
+			await expect(service.getTimerWorkedStatus({ relations: PROTECTED } as any)).rejects.toThrow(
+				ForbiddenException
+			);
+
+			[timeLog, employee].forEach(untouched);
+		});
+
+		it('lets a listing with an unprotected relation reach its query', async () => {
+			const repository = repositoryFor('Task');
+			const service = new (TaskService as any)(repository, {}, {}, {}, {}, {}, {}, {}, {}, {}) as TaskService;
+
+			// Reaching the query builder is the proof the check let the request through.
+			await expect(
+				service.findTeamTasks({ where: { organizationId: 'o' }, relations: ['organization', 'members'] } as any)
+			).rejects.toThrow(/createQueryBuilder/);
+			expect(repository.createQueryBuilder).toHaveBeenCalled();
+		});
+	});
+
+	describe('listings that delegate to the CRUD read methods', () => {
+		// These build their options by hand but hand them to `findAll`, so the sink check covers them.
+		beforeEach(() => {
+			// No authenticated user: the tenant-aware layer passes the options on without adding a scope.
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue(null);
+		});
+
+		it('refuses the activity-log listing with a protected relation', async () => {
+			const repository = repositoryFor('ActivityLog');
+			const service = new ActivityLogService(repository as any, {} as any, {} as any);
+
+			await expect(service.findActivityLogs({ relations: PROTECTED } as any)).rejects.toThrow(ForbiddenException);
+			untouched(repository);
+		});
+
+		it('refuses the split-expense query with a protected relation', async () => {
+			const repository = repositoryFor('Expense');
+			const employeeService = {
+				findOneByOptions: jest.fn().mockResolvedValue({ organization: { id: 'o' } }),
+				findAll: jest.fn().mockResolvedValue({ items: [], total: 0 })
+			};
+			const handler = new FindSplitExpenseHandler(
+				new ExpenseService(repository as any, {} as any),
+				employeeService as any
+			);
+
+			await expect(
+				handler.execute(new FindSplitExpenseQuery({ employeeId: 'e', relations: PROTECTED } as any))
+			).rejects.toThrow(ForbiddenException);
+			untouched(repository);
+		});
 	});
 });

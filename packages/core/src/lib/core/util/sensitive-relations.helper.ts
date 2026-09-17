@@ -67,6 +67,16 @@ export function isValidPermission(value: any): value is PermissionsEnum {
  * Returns the required permission for a given relation path by traversing the config tree.
  * Supports nested relations (e.g. 'organization.employees.user').
  *
+ * A node that declares both its own permission (`_self`) and nested rules
+ * (`employees: { _self: ORG_EMPLOYEES_VIEW, user: ORG_USERS_VIEW }`) does NOT end the walk: the path
+ * keeps descending, so `organization.employees.user` resolves to the deeper `ORG_USERS_VIEW` instead of
+ * stopping at `ORG_EMPLOYEES_VIEW`. Returning the first `_self` met would let a caller holding only the
+ * parent permission load the nested relation too. The nearest `_self` above the last resolvable segment
+ * is the answer only when nothing deeper is declared — the relation it guards is loaded all the same.
+ *
+ * Callers are expected to check every prefix of a path as well (see `normalizeRelationsToPaths`), so
+ * the permission guarding `organization.employees` is enforced on its own row.
+ *
  * @param config - The sensitive relations config object (nested structure)
  * @param relationPath - The relation path requested (dot notation)
  * @returns The required permission as a PermissionsEnum, or null if none is required
@@ -76,24 +86,30 @@ export function getRequiredPermissionForRelation(
 	relationPath: string
 ): PermissionsEnum | null {
 	const pathParts = relationPath.split('.');
-	let current: SensitiveRelationConfig | PermissionsEnum | null = config;
+	let current: SensitiveRelationConfig | undefined = config;
+	// The `_self` permission of the deepest node traversed so far; it still applies to everything below.
+	let inherited: PermissionsEnum | null = null;
 
 	for (const part of pathParts) {
-		if (!current || typeof current !== 'object') return null;
+		if (!current) {
+			return inherited;
+		}
 		const value = current[part];
 
 		if (typeof value === 'object' && value !== null) {
-			if (SENSITIVE_RELATION_SELF_KEY in value && value[SENSITIVE_RELATION_SELF_KEY]) {
-				return value[SENSITIVE_RELATION_SELF_KEY] as PermissionsEnum;
+			const self = (value as SensitiveRelationConfig)[SENSITIVE_RELATION_SELF_KEY];
+			if (isValidPermission(self)) {
+				inherited = self;
 			}
 			current = value as SensitiveRelationConfig;
 		} else if (isValidPermission(value)) {
-			return value as PermissionsEnum;
+			return value;
 		} else {
-			return null;
+			// Nothing declared for this hop: whatever guards the relation above it still applies.
+			return inherited;
 		}
 	}
-	return null;
+	return inherited;
 }
 
 /**
@@ -142,11 +158,12 @@ function isOrganizationEntity(metadata: EntityMetadata | undefined): boolean {
  * interceptor, plain array form, no bypass trick at all). This function closes that at the sink so it
  * cannot recur as controllers are added.
  *
- * NOTE the boundary: this covers the reads that go through `CrudService`. A service that builds its
- * own `createQueryBuilder(...).setFindOptions({ relations })` — `TagService.findTags` (behind
- * `GET /api/tags`), `CandidateService.pagination`, `OrganizationTeamService.findAll` and a handful of
- * others — never reaches this function, and is protected only if its controller mounts the
- * interceptor. Those call sites still need auditing; see GHSA-c3cj-m3xm-7j5h follow-ups.
+ * NOTE the boundary: `CrudService` calls this on its read methods. A service that builds its own
+ * `createQueryBuilder(...).setFindOptions({ relations })` (`TagService.findTags` behind `GET /api/tags`,
+ * `TaskService`, `EmployeeService.pagination`, the time-tracking report services and others) never
+ * reaches those methods, so each such method must call `CrudService.assertRelationsPermitted` — or
+ * this function, with the metadata of the repository it actually queries — before applying a
+ * client-supplied `relations`. Relation lists the server builds itself need no check.
  *
  * The walk advances over the entity graph rather than over the shape of the requested string, so a
  * relation is gated by WHICH entity it is loaded from: `Organization.payments` needs
