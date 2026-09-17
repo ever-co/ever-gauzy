@@ -29,6 +29,13 @@ const WEBHOOK_DELIVERY_TIMEOUT_MS = 10000;
  */
 const WEBHOOK_DELIVERY_DEDUP_WINDOW_MS = 5 * 60 * 1000;
 
+/**
+ * Upper bound on remembered delivery keys, so one tenant with many subscriptions cannot grow the
+ * process-wide cache without limit. Evicting the oldest key can only let a redelivery of that event
+ * go out again (what develop always did); it never suppresses a delivery.
+ */
+const WEBHOOK_DELIVERY_DEDUP_MAX_ENTRIES = 10000;
+
 @Injectable()
 export class ZapierWebhookService {
 	private readonly logger = new Logger(ZapierWebhookService.name);
@@ -39,16 +46,21 @@ export class ZapierWebhookService {
 	 */
 	private readonly ssrfSafeHttpsAgent = createSsrfSafeHttpsAgent();
 
-	/** Dedup key -> the time it expires from this cache. See `WEBHOOK_DELIVERY_DEDUP_WINDOW_MS`. */
+	/**
+	 * Dedup key -> the time it expires from this cache. See `WEBHOOK_DELIVERY_DEDUP_WINDOW_MS`.
+	 * Insertion order is expiry order (see `markDelivered`), capped at `WEBHOOK_DELIVERY_DEDUP_MAX_ENTRIES`.
+	 */
 	private readonly recentlyDelivered = new Map<string, number>();
 
 	/**
 	 * Delivery keys currently mid-flight (reserved, not yet confirmed) — closes the concurrent-
 	 * duplicate window `recentlyDelivered` alone cannot: two redeliveries arriving close enough
 	 * together that neither has reached `markDelivered()` yet would otherwise both pass
-	 * `hasRecentlyDelivered()` and both send.
+	 * `hasRecentlyDelivered()` and both send. Each key maps to a promise that settles once that
+	 * attempt's outcome is recorded, so a concurrent duplicate waits on it instead of being dropped
+	 * and can still deliver if the reserved attempt fails.
 	 */
-	private readonly inFlight = new Set<string>();
+	private readonly inFlight = new Map<string, Promise<void>>();
 
 	constructor(
 		private readonly zapierWebhookSubscriptionRepository: TypeOrmZapierWebhookSubscriptionRepository,
@@ -198,18 +210,32 @@ export class ZapierWebhookService {
 				// (subscriber, action, source timeLog) must not resend a webhook that already went out
 				// — the receiving Zapier/Make.com zap has no dedup of its own on this payload.
 				//
-				// The check AND the reservation (`inFlight.add`) below happen with no `await` between
-				// them — a real review finding on this PR: two concurrent redeliveries could otherwise
-				// both pass `hasRecentlyDelivered()` before either reached `markDelivered()`, and both
-				// send. Since JS is single-threaded, two such calls' synchronous check-and-reserve
-				// prefixes can never interleave with EACH OTHER (only around an `await`), so whichever
-				// one's microtask runs first wins the reservation and the other sees it immediately.
+				// A concurrent duplicate waits for the attempt already in flight rather than being
+				// dropped: if that attempt fails, this call must still be free to deliver instead of both
+				// ending undelivered. Once the loop exits, the check AND the reservation
+				// (`inFlight.set`) happen with no `await` between them — a real review finding on this
+				// PR: two concurrent redeliveries could otherwise both pass `hasRecentlyDelivered()`
+				// before either reached `markDelivered()`, and both send. Since JS is single-threaded,
+				// two such calls' synchronous check-and-reserve steps can never interleave with EACH
+				// OTHER (only around an `await`), so whichever runs first wins the reservation and the
+				// other sees it immediately.
+				//
+				// An event with no source timeLog id gets no key (see `deliveryDedupKey`) and skips the
+				// guard entirely: it cannot be told apart from a different event.
 				const deliveryKey = this.deliveryDedupKey(sub.id as ID, timerData);
-				if (this.hasRecentlyDelivered(deliveryKey) || this.inFlight.has(deliveryKey)) {
-					this.logger.debug(`Skipping duplicate webhook delivery ${deliveryKey} — already sent/in flight.`);
-					return null;
+				let releaseReservation: () => void = () => undefined;
+				if (deliveryKey !== null) {
+					let pending = this.inFlight.get(deliveryKey);
+					while (pending) {
+						await pending;
+						pending = this.inFlight.get(deliveryKey);
+					}
+					if (this.hasRecentlyDelivered(deliveryKey)) {
+						this.logger.debug(`Skipping duplicate webhook delivery ${deliveryKey} — already sent.`);
+						return null;
+					}
+					this.inFlight.set(deliveryKey, new Promise<void>((resolve) => (releaseReservation = resolve)));
 				}
-				this.inFlight.add(deliveryKey);
 
 				try {
 					const result = await firstValueFrom(
@@ -240,44 +266,70 @@ export class ZapierWebhookService {
 					// Only remember a CONFIRMED delivery — `result` is `null` for a caught delivery
 					// failure (from `catchError` just above), and a failed attempt must still be free to
 					// retry, not get suppressed as "already delivered."
-					if (result !== null) {
+					if (result !== null && deliveryKey !== null) {
 						this.markDelivered(deliveryKey);
 					}
 					return result;
 				} finally {
 					// Release the reservation whether the delivery succeeded (now covered by
-					// `recentlyDelivered` instead) or failed (must be free to retry).
-					this.inFlight.delete(deliveryKey);
+					// `recentlyDelivered` instead) or failed (must be free to retry), then wake any
+					// concurrent duplicate waiting on it.
+					if (deliveryKey !== null) {
+						this.inFlight.delete(deliveryKey);
+					}
+					releaseReservation();
 				}
 			})
 		);
 	}
 
-	/** Identifies one logical webhook delivery: this subscriber, this action, this source timeLog. */
-	private deliveryDedupKey(subscriptionId: ID, timerData: ITimerZapierWebhookData): string {
-		return [subscriptionId, timerData.action, timerData.data?.id ?? ''].join(':');
+	/**
+	 * Identifies one logical webhook delivery: this subscriber, this action, this source timeLog.
+	 * `null` when the event carries no timeLog id — every such event would otherwise share one key
+	 * per subscriber and action, and a genuinely different event would be suppressed for the window.
+	 */
+	private deliveryDedupKey(subscriptionId: ID, timerData: ITimerZapierWebhookData): string | null {
+		const sourceId = timerData.data?.id;
+		return sourceId ? [subscriptionId, timerData.action, sourceId].join(':') : null;
 	}
 
 	private hasRecentlyDelivered(key: string): boolean {
 		this.pruneExpiredDeliveries();
-		return this.recentlyDelivered.has(key);
+		// Check expiry here too: pruning stops at the first live entry, so an expired key can still sit
+		// behind it (e.g. after the wall clock moved backwards) and must not suppress a delivery.
+		const expiresAt = this.recentlyDelivered.get(key);
+		return expiresAt !== undefined && expiresAt > Date.now();
 	}
 
 	private markDelivered(key: string): void {
 		// Also on the write path (not just on read, via hasRecentlyDelivered): a service that
 		// delivers a batch and then goes idle would otherwise leave those entries in
-		// `recentlyDelivered` indefinitely, since nothing would call hasRecentlyDelivered() again to
-		// trigger a prune. Bounded either way by how many distinct subscribers exist, but tidier.
+		// `recentlyDelivered` until the next read. The size cap below is what actually bounds the
+		// cache; this only keeps expired entries from occupying it.
 		this.pruneExpiredDeliveries();
+		// delete-then-set keeps insertion order == expiry order (fixed window), which lets
+		// pruneExpiredDeliveries() stop at the first live entry instead of scanning the whole Map.
+		this.recentlyDelivered.delete(key);
 		this.recentlyDelivered.set(key, Date.now() + WEBHOOK_DELIVERY_DEDUP_WINDOW_MS);
+		// Evict oldest-first past the cap. Losing a key can only let a redelivery of that event go out
+		// again; it never suppresses a delivery.
+		for (const oldestKey of this.recentlyDelivered.keys()) {
+			if (this.recentlyDelivered.size <= WEBHOOK_DELIVERY_DEDUP_MAX_ENTRIES) {
+				break;
+			}
+			this.recentlyDelivered.delete(oldestKey);
+		}
 	}
 
 	private pruneExpiredDeliveries(): void {
 		const now = Date.now();
+		// Entries are in expiry order (see markDelivered), so stop at the first live one. A full scan
+		// would run once per subscription per timer event and let one tenant block the shared event loop.
 		for (const [key, expiresAt] of this.recentlyDelivered) {
-			if (expiresAt <= now) {
-				this.recentlyDelivered.delete(key);
+			if (expiresAt > now) {
+				break;
 			}
+			this.recentlyDelivered.delete(key);
 		}
 	}
 }
