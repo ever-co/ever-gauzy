@@ -99,11 +99,47 @@ const AWAITING_PROVIDER = {
 	SUBSCRIPTION_INSTRUMENTS: {
 		owner: '@gauzy/plugin-payment',
 		needs: 'Which stored instrument may be charged, which the payment package does not currently store.'
+	},
+	ENTITLEMENT_CATALOG_PORT: {
+		owner: '@gauzy/plugin-catalog',
+		needs:
+			'Reading the product or variant an entitlement is about, so a right can be granted against a catalogue item rather than a free-text key.'
+	},
+	SELLER_MEMBERSHIP_RESOLVER: {
+		owner: 'the installation',
+		needs:
+			'Which contact is a member of which organization. No membership relation exists in an installation of these packages, so there is nothing to read and no provider can be written here — the guard stays open by construction, and a deployment that installs a contact-membership capability binds it.'
 	}
 };
 
 /** Tokens that are not cross-package ports: a multi-provider registry inside its own package. */
 const NOT_A_PORT = new Set(['SEARCH_PROVIDERS']);
+
+/**
+ * The programme's packages.
+ *
+ * Frozen deliberately. This repository hosts plugin packages for other features as well, and their
+ * tokens are their own business — including them would report a set of ports that is mostly other
+ * people's and make the remaining-work figure meaningless.
+ */
+const PACKAGES = new Set([
+	'catalog',
+	'pricing',
+	'tax',
+	'inventory',
+	'warehouse',
+	'cart',
+	'order',
+	'payment',
+	'promotion',
+	'fulfillment',
+	'returns',
+	'subscription',
+	'purchasing',
+	'entitlement',
+	'marketplace',
+	'search'
+]);
 
 /** Reads a file, or the empty string when it cannot be read. */
 function read(file) {
@@ -136,23 +172,64 @@ function walk(dir, suffixes, out = []) {
 	return out;
 }
 
-const DECLARATION = /export\s+const\s+([A-Z][A-Z0-9_]*)\s*=\s*Symbol\s*\(/g;
+/**
+ * The two spellings a port token is declared in.
+ *
+ * A `Symbol` is the common one. The other is a string constant that repeats its own name —
+ * `export const SOME_PORT = 'SOME_PORT'` — which several ports use and which a checker that reads only
+ * `Symbol` cannot see: two ports were invisible to the first version of this script for exactly that
+ * reason, and a blind spot in the checker is indistinguishable from a port that is fine. A string
+ * constant whose value differs from its name is not a token, which is what keeps route paths, header
+ * names and feature codes out of the list.
+ */
+const SYMBOL_DECLARATION = /export\s+const\s+([A-Z][A-Z0-9_]*)\s*=\s*Symbol\s*\(/g;
+const STRING_DECLARATION = /export\s+const\s+([A-Z][A-Z0-9_]*)\s*=\s*'([A-Z][A-Z0-9_]*)'\s*;/g;
+
 const BINDING = /provide:\s*([A-Z][A-Z0-9_]*)/g;
 const INJECTION = /@Inject\(\s*([A-Z][A-Z0-9_]*)\s*\)/g;
 
-/** Every port token the plugin packages declare, with the file and package that declares it. */
-function declaredPorts() {
+/**
+ * The identifiers the application actually injects.
+ *
+ * This is what separates a token from a constant that merely looks like one. A package also declares
+ * self-named string constants for things that are not injections at all — an error code, a notice, a
+ * domain-event name — and every one of them matches the string-token spelling. What makes a constant
+ * a *token* is that something asks the container for it, so the declarations are filtered by the
+ * `@Inject(...)` sites rather than by their shape.
+ *
+ * @returns {Set<string>} The injected identifiers.
+ */
+function injectedTokens() {
+	const tokens = new Set();
+	const files = [...walk(join(ROOT, 'apps'), ['.ts']), ...walk(join(ROOT, 'packages'), ['.ts'])].filter(
+		(file) => !file.endsWith('.spec.ts')
+	);
+
+	for (const file of files) {
+		for (const match of read(file).matchAll(INJECTION)) tokens.add(match[1]);
+	}
+
+	return tokens;
+}
+
+/** Every port token the plugin packages declare and something injects, with where it is declared. */
+function declaredPorts(injected) {
 	const ports = new Map();
-	const files = walk(join(ROOT, 'packages', 'plugins'), ['.types.ts', '.tokens.ts']);
+	const files = walk(join(ROOT, 'packages', 'plugins'), ['.ts']).filter((file) => !file.endsWith('.spec.ts'));
 
 	for (const file of files) {
 		const source = read(file);
 		const owner = relative(join(ROOT, 'packages', 'plugins'), file).split(/[\\/]/)[0];
 
-		for (const match of source.matchAll(DECLARATION)) {
-			const token = match[1];
-			if (NOT_A_PORT.has(token)) continue;
+		const declare = (token) => {
+			if (NOT_A_PORT.has(token) || !injected.has(token) || !PACKAGES.has(owner)) return;
 			ports.set(token, { token, declaredBy: owner, file: relative(ROOT, file), injections: 0 });
+		};
+
+		for (const match of source.matchAll(SYMBOL_DECLARATION)) declare(match[1]);
+
+		for (const match of source.matchAll(STRING_DECLARATION)) {
+			if (match[1] === match[2]) declare(match[1]);
 		}
 	}
 
@@ -194,7 +271,7 @@ function boundPorts(ports) {
 	return bindings;
 }
 
-const ports = declaredPorts();
+const ports = declaredPorts(injectedTokens());
 const bindings = boundPorts(ports);
 
 const bound = [];
