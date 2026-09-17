@@ -446,7 +446,7 @@ describe('SubscriptionItemService — resolving a line set (doc 05 §15.3, doc 1
 	// is billed for twice what they agreed to. The price is unaffected; only the quantity is.
 	// (`subscription-item.service.ts`: quantities go through `storeQuantity` and the helpers it uses,
 	// which measure them at the quantity column's own scale.)
-	it('[DEFECT] keeps a fractional recurring quantity at the quantity column’s scale', async () => {
+	it('keeps a fractional recurring quantity at the quantity column’s scale', async () => {
 		const fixture = itemFixture();
 
 		await fixture.service.replaceItems(

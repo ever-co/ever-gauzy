@@ -212,12 +212,64 @@ for (const root of ROOTS) {
 const defects = findings.filter((finding) => finding.kind === 'defect');
 const defensive = findings.filter((finding) => finding.kind === 'defensive');
 
+/**
+ * A method that promises null and delegates straight to a read that raises.
+ *
+ * The first version of this script looked only at call sites, and missed the shape one level up: a
+ * method declared `Promise<X | null>` and documented as answering null, whose entire body is
+ * `return await this.findOneByWhereOptions(...)`. Its contract is unkeepable — the read raises before
+ * the method can answer — and every caller that branches on null is in the same position as the ones
+ * this script was written for. The caller is not even in the same file, which is why a window around
+ * the call site cannot see it.
+ *
+ * @param lines The file's lines.
+ * @returns {Array<{line: number, method: string}>} The declarations whose body cannot keep them.
+ */
+function unkeepableNullableMethods(lines) {
+	const found = [];
+	const declaration = /(?:public\s+|private\s+|protected\s+)?async\s+(\w+)\s*\([^)]*\)\s*:\s*Promise<[^;{]*\|\s*null\s*>/;
+
+	for (let index = 0; index < lines.length; index++) {
+		const match = declaration.exec(lines[index]);
+		if (!match) continue;
+
+		const body = lines.slice(index, Math.min(lines.length, index + 24)).join('\n');
+
+		// Returning the throwing read is the defect. Going through the fail-soft pair is not, even
+		// though it names a method the two share a prefix with, so the fail-soft spelling is excluded
+		// rather than the whole family.
+		const returnsThrowing = /return\s+(?:await\s+)?(?:this\.)?[\w.]*findOneBy(?:Where)?Options\s*\(/.test(body);
+		const goesThroughPair = /return\s+(?:await\s+)?(?:this\.)?[\w.]*findOneOrFailBy/.test(body);
+		const catches = /catch\s*\(/.test(body);
+
+		if (returnsThrowing && !goesThroughPair && !catches) {
+			found.push({ line: index + 1, method: match[1] });
+		}
+	}
+
+	return found;
+}
+
+const unkeepable = [];
+
+for (const root of ROOTS) {
+	for (const file of sources(root)) {
+		const text = read(file);
+		if (!/Promise<[^;{]*\|\s*null\s*>/.test(text)) continue;
+
+		for (const entry of unkeepableNullableMethods(text.split(/\r?\n/))) {
+			unkeepable.push({ file: relative(ROOT, file), ...entry });
+		}
+	}
+}
+
 console.log('');
 console.log('Nullable reads — a method that raises is not a method that answers null');
 console.log('====================================================================');
 console.log('');
 console.log(`  ${calls} call(s) to the throwing reads across the programme's packages and the application`);
 console.log(`  ${defects.length} treat absence as an ordinary answer, which is the defect`);
+console.log(`  ${unkeepable.length} method(s) promise null and cannot answer it`);
 console.log(`  ${defensive.length} guard against it and then throw, which is a branch that cannot be taken`);
 console.log('');
 
@@ -230,6 +282,14 @@ if (defects.length) {
 	console.log('');
 }
 
+if (unkeepable.length) {
+	console.log('  Declared nullable, and the body raises instead:');
+	for (const entry of unkeepable) {
+		console.log(`    ${entry.file}:${entry.line}  → ${entry.method}() is declared to answer null`);
+	}
+	console.log('');
+}
+
 if (defensive.length) {
 	console.log('  Dead branches — the read raises before the branch can run:');
 	for (const finding of defensive) {
@@ -238,12 +298,14 @@ if (defensive.length) {
 	console.log('');
 }
 
-if (defects.length) {
+if (defects.length || unkeepable.length) {
 	console.log('  The fail-soft pair is `findOneOrFailByOptions` / `findOneOrFailByWhereOptions`, whose');
 	console.log('  result carries `success` instead of raising.');
 }
 
-console.log('');
-console.log(defects.length === 0 ? 'nullable read check: PASSED' : 'nullable read check: FAILED');
+const failed = defects.length > 0 || unkeepable.length > 0;
 
-process.exit(defects.length === 0 ? 0 : 1);
+console.log('');
+console.log(failed ? 'nullable read check: FAILED' : 'nullable read check: PASSED');
+
+process.exit(failed ? 1 : 0);

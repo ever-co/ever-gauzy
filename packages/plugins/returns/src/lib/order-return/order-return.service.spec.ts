@@ -962,7 +962,7 @@ describe('OrderReturnService — receiving goods (doc 10 §11.6, §11.3)', () =>
 	// (`order-return.service.ts`: the receipt is planned and its movements resolved before either is
 	// written, and the `catch` around the line write, the movement writes and the status write reverses
 	// the movements that were posted and puts the lines back.)
-	it('[DEFECT] leaves a return un-received when its stock movements could not be written', async () => {
+	it('leaves a return un-received when its stock movements could not be written', async () => {
 		const fixture = returnFixture({
 			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
 			withLedger: false
@@ -986,7 +986,7 @@ describe('OrderReturnService — receiving goods (doc 10 §11.6, §11.3)', () =>
 	// received`), and the service's own statement is that "the same lines can be received again".
 	// (`order-return-line.service.ts`: `planReceipt` adds each delivery to what the line already holds,
 	// and refuses a total that would exceed what was requested.)
-	it('[DEFECT] reaches RECEIVED when the remainder arrives in a second delivery', async () => {
+	it('reaches RECEIVED when the remainder arrives in a second delivery', async () => {
 		const fixture = returnFixture({
 			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
 			lines: [lineRow('line-1', { quantity: '5.000000' })]
@@ -1176,7 +1176,7 @@ describe('OrderReturnService — closing (doc 10 §11.1)', () => {
 	// "`CLOSED` | unchanged since receipt | refund confirmed". (`order-return.service.ts`: the refusal
 	// is kept for a header that claims `RECEIVED` while a line still owes units, and a
 	// `PARTIALLY_RECEIVED` return closes short with the remainder written to `metadata.shortClose`.)
-	it('[DEFECT] closes a partly received return short, leaving the remainder abandoned', async () => {
+	it('closes a partly received return short, leaving the remainder abandoned', async () => {
 		const fixture = returnFixture({
 			returns: [returnRow('return-1', { status: OrderReturnStatus.PARTIALLY_RECEIVED })],
 			lines: [lineRow('line-1', { quantity: '5.000000', receivedQuantity: '3.000000' })]

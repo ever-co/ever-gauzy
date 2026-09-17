@@ -122,14 +122,22 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 	 * The organization's default category, which is what a variant or a party that names no category is
 	 * taxed under.
 	 *
+	 * **Not having declared one is an answer, not a refusal.** An organization may tax nothing by
+	 * default, and the caller that needs a category then says so itself, naming the thing that is
+	 * missing rather than the record it could not find. So the read is the fail-soft half of the pair,
+	 * like the code lookup below it — the contract of this method is that it answers null, and a read
+	 * that raises could not keep it.
+	 *
 	 * @param organizationId The organization; the caller's organization when it is omitted.
 	 * @returns The default category, or null when the organization has not declared one.
 	 */
 	public async findDefault(organizationId?: ID): Promise<TaxCategory | null> {
-		return await this.findOneByWhereOptions({
+		const outcome = await this.findOneOrFailByWhereOptions({
 			isDefault: true,
 			...(organizationId ? { organizationId } : {})
 		} as FindOptionsWhere<TaxCategory>);
+
+		return outcome.success ? (outcome.record as TaxCategory) : null;
 	}
 
 	/**

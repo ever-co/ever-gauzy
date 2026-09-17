@@ -935,7 +935,7 @@ describe('SubscriptionService — putting a customer on a plan (doc 11 §10.4)',
 	// without reading the status first, and a trial exists precisely so that nothing is owed for it.
 	// (`subscription.service.ts`: the row's `amount` is zero whenever the period is a trial, and what
 	// the period would have cost stays in its metadata.)
-	it('[DEFECT] writes a trial’s first cycle with nothing on it', async () => {
+	it('writes a trial’s first cycle with nothing on it', async () => {
 		const fixture = subscriptionFixture({
 			plans: [planRow(PLAN, { trialDays: 14 }), planRow(BETTER_PLAN)],
 			subscriptions: [],
