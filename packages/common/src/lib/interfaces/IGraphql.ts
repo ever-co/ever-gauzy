@@ -1,5 +1,23 @@
 import { Type } from '@nestjs/common';
 import { DocumentNode } from 'graphql';
+import { ApolloServerPlugin } from '@apollo/server';
+
+/**
+ * The ceilings a GraphQL deployment applies to a query before it is executed.
+ *
+ * Each ceiling is optional and each has a default, so a deployment that states none gets the
+ * platform's own values and a deployment that raises one raises only that one.
+ */
+export interface GraphQLQueryLimitOptions {
+	/** Maximum selection-set depth of one operation. */
+	maxDepth?: number;
+	/** Maximum weighted cost of one operation. */
+	maxComplexity?: number;
+	/** Maximum number of aliased fields in one operation. */
+	maxAliases?: number;
+	/** Maximum number of operations in one HTTP request. */
+	maxBatchSize?: number;
+}
 
 /**
  * Configuration options for a GraphQL API in NestJS.
@@ -24,6 +42,23 @@ export interface GraphQLApiConfigurationOptions {
 	 * A boolean indicating whether the GraphQL Playground should be enabled.
 	 */
 	playground: boolean | any;
+
+	/**
+	 * Whether the deployment publishes its schema to clients. Defaults to the playground policy,
+	 * and is overridable through the environment.
+	 */
+	introspection?: boolean;
+
+	/**
+	 * Apollo Server plugins this deployment installs. The platform's own limits are always present
+	 * alongside them; this is the deployment's attach point, not the only one.
+	 */
+	apolloServerPlugins?: ApolloServerPlugin[];
+
+	/**
+	 * The ceilings this deployment applies to a query.
+	 */
+	limits?: GraphQLQueryLimitOptions;
 
 	/**
 	 * The module containing resolvers for the GraphQL API.
