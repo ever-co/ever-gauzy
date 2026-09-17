@@ -8,6 +8,7 @@ import {
 	IEngagement,
 	IGetContractsDto,
 	IUpworkApiConfigStatus,
+	IUpworkSyncContractsDto,
 	IUpworkSyncContractsRelatedDataDto,
 	IIntegrationMap,
 	IUpworkClientSecretPair
@@ -50,8 +51,9 @@ export class UpworkService {
 	 * @param dto - The integration and organization to read the contracts for.
 	 * @returns The freelancer's Upwork engagements.
 	 */
-	getContracts(dto: IGetContractsDto): Observable<IEngagement[]> {
-		const data = JSON.stringify(dto);
+	getContracts({ integrationId, organizationId }: IGetContractsDto): Observable<IEngagement[]> {
+		// Serialize an explicit allowlist, so no stray field of the caller's object reaches the URL.
+		const data = JSON.stringify({ integrationId, organizationId });
 		return this.http.get<IEngagement[]>(`${API_PREFIX}/integrations/upwork/freelancer-contracts`, {
 			params: { data }
 		});
@@ -70,8 +72,22 @@ export class UpworkService {
 		});
 	}
 
-	syncContracts(syncContractsDto): Observable<IIntegrationMap[]> {
-		return this.http.post<IIntegrationMap[]>(`${API_PREFIX}/integrations/upwork/sync-contracts`, syncContractsDto);
+	/**
+	 * Syncs Upwork contracts into projects of an organization.
+	 *
+	 * @param dto - The integration, organization and contracts to sync.
+	 * @returns The integration maps produced by the sync.
+	 */
+	syncContracts({
+		integrationId,
+		organizationId,
+		contracts
+	}: IUpworkSyncContractsDto): Observable<IIntegrationMap[]> {
+		return this.http.post<IIntegrationMap[]>(`${API_PREFIX}/integrations/upwork/sync-contracts`, {
+			integrationId,
+			organizationId,
+			contracts
+		});
 	}
 
 	/**
@@ -81,8 +97,25 @@ export class UpworkService {
 	 *              credentials (GHSA-3rqg-gpm9-gx84).
 	 * @returns The integration maps produced by the sync.
 	 */
-	syncContractsRelatedData(dto: IUpworkSyncContractsRelatedDataDto) {
-		return this.http.post<IIntegrationMap[]>(`${API_PREFIX}/integrations/upwork/sync-contracts-related-data`, dto);
+	syncContractsRelatedData({
+		integrationId,
+		organizationId,
+		contracts,
+		entitiesToSync,
+		employeeId,
+		providerId,
+		providerReferenceId
+	}: IUpworkSyncContractsRelatedDataDto) {
+		// Post an explicit allowlist, so no stray field of the caller's object reaches the API.
+		return this.http.post<IIntegrationMap[]>(`${API_PREFIX}/integrations/upwork/sync-contracts-related-data`, {
+			integrationId,
+			organizationId,
+			contracts,
+			entitiesToSync,
+			employeeId,
+			providerId,
+			providerReferenceId
+		});
 	}
 
 	getAllReports(dto): Observable<any> {

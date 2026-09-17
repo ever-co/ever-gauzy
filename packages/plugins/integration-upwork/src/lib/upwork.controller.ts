@@ -22,6 +22,7 @@ import {
 	IEngagement,
 	IUpworkApiConfigStatus,
 	IUpworkClientSecretPair,
+	IUpworkSyncContractsDto,
 	IUpworkSyncContractsRelatedDataDto,
 	IPagination,
 	PermissionsEnum,
@@ -64,15 +65,18 @@ export class UpworkController {
 	@Post('/transactions')
 	@UseInterceptors(FileInterceptor('file'))
 	async create(@UploadedFile() file: Express.Multer.File, @Body() organizationDto: any): Promise<any> {
+		// The incomes and expenses land in the organization named by the body, so it must be one the caller may act on.
+		await this._upworkService.assertOrganizationAccess(organizationDto?.organizationId);
 		return await this._upworkTransactionService.handleTransactions(file, organizationDto);
 	}
 
 	/**
-	 * Authorizes Upwork by generating an access token and secret pair.
+	 * Starts the Upwork OAuth handshake, or names the integration that already completed it.
 	 *
-	 * @param config - The configuration containing client secret pair.
+	 * @param config - The Upwork consumer key and secret typed into the authorize form.
 	 * @param organizationId - The ID of the organization.
-	 * @returns A promise that resolves with the access token and secret pair.
+	 * @returns The authorization URL to send the operator to, or the existing integration id. Never
+	 *          a request-token secret or an access token (GHSA-3rqg-gpm9-gx84).
 	 */
 	@ApiOperation({ summary: 'Authorize Upwork' })
 	@ApiResponse({
@@ -96,11 +100,12 @@ export class UpworkController {
 	}
 
 	/**
-	 * Retrieves the access token for the specified organization.
+	 * Completes the Upwork OAuth handshake for the specified organization.
 	 *
-	 * @param accessTokenDto - The DTO containing the access token information.
+	 * @param accessTokenDto - The request token and verifier Upwork's callback handed back.
 	 * @param organizationId - The ID of the organization.
-	 * @returns A promise that resolves with the access token.
+	 * @returns The id of the integration now holding the access token. The token itself stays on
+	 *          the server (GHSA-3rqg-gpm9-gx84).
 	 */
 	@ApiOperation({ summary: 'Get Access Token' })
 	@ApiResponse({
@@ -207,9 +212,10 @@ export class UpworkController {
 	}
 
 	/**
-	 * Syncs contracts with the provided data.
+	 * Syncs Upwork contracts into projects of the specified organization.
 	 *
-	 * @param syncContractsDto - The data transfer object containing contract details to sync.
+	 * @param syncContractsDto - The integration, organization and contracts to sync. A tenant in the
+	 *                           body is ignored: the server takes it from the request context.
 	 * @returns A promise that resolves with the result of the synchronization process.
 	 */
 	@ApiOperation({ summary: 'Sync Contracts' })
@@ -226,7 +232,7 @@ export class UpworkController {
 		description: 'The request is invalid.'
 	})
 	@Post('/sync-contracts')
-	async syncContracts(@Body() syncContractsDto: any): Promise<IIntegrationMap[]> {
+	async syncContracts(@Body() syncContractsDto: IUpworkSyncContractsDto): Promise<IIntegrationMap[]> {
 		return await this._upworkService.syncContracts(syncContractsDto);
 	}
 

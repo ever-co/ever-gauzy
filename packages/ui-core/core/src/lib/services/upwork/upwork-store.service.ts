@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
 import { tap, map } from 'rxjs/operators';
 import moment from 'moment';
 import { ID, IEngagement, IOrganization, IUpworkApiConfigStatus, IUpworkDateRange } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/ui-core/common';
 import { UpworkService } from './upwork.service';
 import { Store } from '../store/store.service';
 
@@ -58,9 +59,13 @@ export class UpworkStoreService {
 	 */
 	private _configStatus$: BehaviorSubject<IUpworkApiConfigStatus> = new BehaviorSubject(null);
 	public configStatus$: Observable<IUpworkApiConfigStatus> = this._configStatus$.asObservable();
+	/** The `integrationId:organizationId` pair the cached configuration state belongs to. */
+	private _configStatusScope: string = null;
 
 	private _contracts$: BehaviorSubject<IEngagement[]> = new BehaviorSubject([]);
 	public contracts$: Observable<IEngagement[]> = this._contracts$.asObservable();
+	/** The `integrationId:organizationId` pair the cached contracts belong to. */
+	private _contractsScope: string = null;
 
 	private _selectedIntegrationId$: BehaviorSubject<string> = new BehaviorSubject(null);
 
@@ -89,11 +94,6 @@ export class UpworkStoreService {
 	 * @returns An observable stream of IEngagement[] representing contracts.
 	 */
 	getContracts(): Observable<IEngagement[]> {
-		const contracts$ = this._contracts$.getValue();
-		if (contracts$) {
-			return EMPTY; // Return empty observable if contracts$ already has a value
-		}
-
 		const integrationId = this._selectedIntegrationId$.getValue();
 		const organizationId = this.getSelectedOrganization()?.id;
 
@@ -101,16 +101,26 @@ export class UpworkStoreService {
 			return EMPTY; // Nothing to ask for until an integration and an organization are selected
 		}
 
-		return this._upworkService
-			.getContracts({ integrationId, organizationId })
-			.pipe(tap((contracts) => this._contracts$.next(contracts)));
+		// Reuse the cache only when it holds contracts of this integration and organization. The
+		// subject is seeded with `[]`, which is truthy, so a plain truthiness check never loaded them.
+		const scope = UpworkStoreService._scopeKey(integrationId, organizationId);
+		if (isNotEmpty(this._contracts$.getValue()) && this._contractsScope === scope) {
+			return EMPTY;
+		}
+
+		return this._upworkService.getContracts({ integrationId, organizationId }).pipe(
+			tap((contracts) => {
+				this._contractsScope = scope;
+				this._contracts$.next(contracts);
+			})
+		);
 	}
 
 	/**
 	 * Get upwork income/expense reports
 	 */
 	loadReports(organization: IOrganization): Observable<any> {
-		const { id: organizationId, tenantId } = organization;
+		const { id: organizationId } = organization;
 		const relations: object = {
 			income: ['employee', 'employee.user'],
 			expense: ['employee', 'employee.user', 'vendor', 'category']
@@ -119,7 +129,7 @@ export class UpworkStoreService {
 		const integrationId = this._selectedIntegrationId$.getValue();
 		const data = JSON.stringify({
 			relations,
-			filter: { dateRange, ...{ organizationId, tenantId } }
+			filter: { dateRange, organizationId }
 		});
 
 		return this._upworkService.getAllReports({ integrationId, data }).pipe(
@@ -138,19 +148,20 @@ export class UpworkStoreService {
 
 	/**
 	 * Syncs contracts with Upwork.
+	 *
+	 * The tenant is not sent: the API takes it from the authenticated request context.
+	 *
 	 * @param contracts The contracts to sync.
 	 * @returns An observable that completes after syncing contracts.
 	 */
 	syncContracts(contracts: IEngagement[]) {
 		const integrationId = this._selectedIntegrationId$.getValue();
-		const { id: organizationId, tenantId } = this.getSelectedOrganization();
+		const { id: organizationId } = this.getSelectedOrganization();
 
 		return this._upworkService.syncContracts({
 			integrationId,
 			organizationId,
-			tenantId,
-			contracts,
-			employeeId: this.employeeId
+			contracts
 		});
 	}
 
@@ -228,17 +239,32 @@ export class UpworkStoreService {
 		const { integrationId, organizationId } = input;
 		this.setSelectedIntegrationId(integrationId);
 
-		const configStatus = this._configStatus$.getValue();
-		if (configStatus) {
+		// This store is a root singleton: reuse the cached state only for the same integration and organization.
+		const scope = UpworkStoreService._scopeKey(integrationId, organizationId);
+		if (this._configStatus$.getValue() && this._configStatusScope === scope) {
 			return EMPTY;
 		}
 
 		const data = JSON.stringify({
 			filter: { organizationId }
 		});
-		return this._upworkService
-			.getConfig({ integrationId, data })
-			.pipe(tap((status) => this._configStatus$.next(status)));
+		return this._upworkService.getConfig({ integrationId, data }).pipe(
+			tap((status) => {
+				this._configStatusScope = scope;
+				this._configStatus$.next(status);
+			})
+		);
+	}
+
+	/**
+	 * Builds the key a cached value is tied to.
+	 *
+	 * @param integrationId The Upwork integration.
+	 * @param organizationId The organization.
+	 * @returns The `integrationId:organizationId` key.
+	 */
+	private static _scopeKey(integrationId: ID, organizationId: ID): string {
+		return `${integrationId}:${organizationId}`;
 	}
 
 	/*
