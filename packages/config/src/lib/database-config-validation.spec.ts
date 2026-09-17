@@ -14,7 +14,7 @@ import { assertValidDatabaseType, parseIntEnv } from './database-helpers';
  * value mirrors how `database.ts` parsed and the drivers used it before: an empty `DB_TYPE` still
  * means better-sqlite3, numbers keep `Number.parseInt` semantics ("5000ms" is 5000), 0 stays valid
  * wherever a driver accepted it (DB_SLOW_QUERY_LOGGING_TIMEOUT=0 turns the slow-query warning off),
- * and SQLite still ignores the pool/timeout variables it never used.
+ * and SQLite still ignores the pool/timeout variables it never used (while still printing them at startup).
  *
  * Covered first as pure functions, then as `database.ts` module-load behavior via
  * `jest.isolateModules` — the same pattern `database-helpers.spec.ts` already uses, required because
@@ -141,6 +141,25 @@ function loadDatabaseConfig(env: DatabaseEnv): LoadedDatabaseConfig {
 	return loaded!;
 }
 
+/** The start of each pool/timeout line `database.ts` prints at startup, in the order it prints them. */
+const POOL_SETTING_LOG_PREFIXES = [
+	'DB ORM Pool Size: ',
+	'DB Knex Pool Size: ',
+	'DB Connection Timeout: ',
+	'DB Idle Timeout: ',
+	'DB Slow Query Logging Timeout: '
+] as const;
+
+/** The pool/timeout lines a `console.log` spy recorded, in the order they were printed. */
+function poolSettingLogLines(consoleLog: jest.SpyInstance): string[] {
+	return consoleLog.mock.calls
+		.map(([line]) => line)
+		.filter(
+			(line): line is string =>
+				typeof line === 'string' && POOL_SETTING_LOG_PREFIXES.some((prefix) => line.startsWith(prefix))
+		);
+}
+
 describe('database.ts at import time', () => {
 	const originalEnv = Object.fromEntries(DATABASE_ENV_KEYS.map((key) => [key, process.env[key]]));
 	let consoleLog: jest.SpyInstance;
@@ -207,6 +226,62 @@ describe('database.ts at import time', () => {
 				DB_PATH: ':memory:'
 			});
 			expect(dbTypeOrmConnectionConfig.type).toBe('better-sqlite3');
+		});
+
+		describe('startup log lines', () => {
+			// NODE_ENV only changes the default connection timeout.
+			const defaultPoolSettingLogLines = [
+				'DB ORM Pool Size: 40',
+				'DB Knex Pool Size: 10',
+				`DB Connection Timeout: ${process.env.NODE_ENV === 'production' ? 5000 : 2000}`,
+				'DB Idle Timeout: 10000',
+				'DB Slow Query Logging Timeout: 10000'
+			];
+
+			beforeEach(() => {
+				consoleLog.mockClear();
+			});
+
+			it.each([
+				['sqlite', 'sqlite'],
+				['better-sqlite3', 'better-sqlite3'],
+				['empty', '']
+			])('print each pool/timeout setting once for DB_TYPE %s, like every other DB_TYPE', (_name, dbType) => {
+				loadDatabaseConfig({ DB_TYPE: dbType, DB_PATH: ':memory:' });
+				expect(poolSettingLogLines(consoleLog)).toEqual(defaultPoolSettingLogLines);
+			});
+
+			it('print the values SQLite ignores parsed with plain Number.parseInt, without throwing or warning', () => {
+				const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+				try {
+					expect(() =>
+						loadDatabaseConfig({
+							DB_TYPE: 'better-sqlite3',
+							DB_PATH: ':memory:',
+							DB_POOL_SIZE: 'abc',
+							DB_POOL_SIZE_KNEX: '-1',
+							DB_CONNECTION_TIMEOUT: '0',
+							DB_IDLE_TIMEOUT: 'soon',
+							DB_SLOW_QUERY_LOGGING_TIMEOUT: '5000ms'
+						})
+					).not.toThrow();
+					expect(poolSettingLogLines(consoleLog)).toEqual([
+						'DB ORM Pool Size: NaN',
+						'DB Knex Pool Size: -1',
+						'DB Connection Timeout: 0',
+						'DB Idle Timeout: NaN',
+						'DB Slow Query Logging Timeout: 5000'
+					]);
+					expect(warn).not.toHaveBeenCalled();
+				} finally {
+					warn.mockRestore();
+				}
+			});
+
+			it.each(['postgres', 'mysql'])('print each pool/timeout setting once for DB_TYPE=%s', (dbType) => {
+				loadDatabaseConfig({ DB_TYPE: dbType });
+				expect(poolSettingLogLines(consoleLog)).toEqual(defaultPoolSettingLogLines);
+			});
 		});
 
 		it.each(['postgres', 'mysql'])(

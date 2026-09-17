@@ -1,12 +1,11 @@
 /**
  * TASK 9 (improvement roadmap) — Unified Observability and Correlation IDs.
  *
- * Real review finding on this PR: `DocsPipelineService.baseOf()` — the function that carries the
- * tenant/organization snapshot forward at every chain hop (extract -> classify -> chunk -> embed ->
- * index/thumbnail) — enumerated the fields it copies and had not been updated to include the new
- * `correlationId` field, so it was silently dropped at the very first hop. Every later stage, and
- * every requeue, lost the id that ties its logs back to the request that started the run — the
- * propagation TASK 9 set out to add never actually survived past `docs.extract`.
+ * `DocsPipelineService.baseOf()` — the function that carries the tenant/organization snapshot forward
+ * at every chain hop (extract -> classify -> chunk -> embed -> index/thumbnail) — enumerates the fields
+ * it copies, so a payload field it does not list (such as `correlationId`) is silently dropped at the
+ * very first hop. Every later stage, and every requeue, would then lose the id that ties its logs back
+ * to the request that started the run, and the propagation would never get past `docs.extract`.
  *
  * Carrying the id is only half of it: the worker-stage outcome and failure lines must also PRINT it
  * (the "Enqueued ..." line of `DocsQueueService` already did), otherwise the id rides along on every

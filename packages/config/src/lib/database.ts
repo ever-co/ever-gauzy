@@ -149,6 +149,31 @@ function readConnectionPoolSettings(type: DatabaseTypeEnum.postgres | DatabaseTy
 	};
 }
 
+/**
+ * Prints the same five pool/timeout startup lines as `readConnectionPoolSettings` for SQLite, which never
+ * uses these settings. The values are parsed with plain `Number.parseInt` and are never validated, so a
+ * value SQLite ignores can never abort its startup: an unparsable one prints as `NaN`, as it always did.
+ */
+function logConnectionPoolSettingsUnvalidated(): void {
+	const poolSize = process.env.DB_POOL_SIZE ? Number.parseInt(process.env.DB_POOL_SIZE) : 40;
+	const knexPoolSize = process.env.DB_POOL_SIZE_KNEX ? Number.parseInt(process.env.DB_POOL_SIZE_KNEX) : 10;
+	const defaultConnectionTimeout = process.env.NODE_ENV === 'production' ? 5000 : 2000;
+	const connectionTimeout = process.env.DB_CONNECTION_TIMEOUT
+		? Number.parseInt(process.env.DB_CONNECTION_TIMEOUT)
+		: defaultConnectionTimeout;
+	const idleTimeout = process.env.DB_IDLE_TIMEOUT ? Number.parseInt(process.env.DB_IDLE_TIMEOUT) : 10000;
+	const slowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+		? Number.parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+		: 10000;
+
+	console.log('DB ORM Pool Size: ' + poolSize);
+	console.log('DB Knex Pool Size: ' + knexPoolSize);
+
+	console.log('DB Connection Timeout: ' + connectionTimeout);
+	console.log('DB Idle Timeout: ' + idleTimeout);
+	console.log('DB Slow Query Logging Timeout: ' + slowQueryLoggingTimeout);
+}
+
 // Assigned by the PostgreSQL / MySQL branches of the switch below (see readConnectionPoolSettings).
 let dbPoolSize: number;
 let dbPoolSizeKnex: number;
@@ -377,6 +402,10 @@ switch (dbType) {
 
 	case DatabaseTypeEnum.sqlite:
 	case DatabaseTypeEnum.betterSqlite3:
+		// SQLite never uses the pool/timeout settings and must not validate them, but they are still printed
+		// at startup like for every other DB_TYPE (see logConnectionPoolSettingsUnvalidated).
+		logConnectionPoolSettingsUnvalidated();
+
 		// Determine if running from dist or source
 		const isDist = __dirname.includes('dist');
 

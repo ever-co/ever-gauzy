@@ -89,10 +89,10 @@ describe('DocumentProcessingService.snapshotOf — correlation id propagation', 
 		expect(snapshot.documentId).toBe('doc-1');
 	});
 
-	// Review finding on this PR: the tests above only proved `snapshotOf()` stamps a correlationId
-	// onto the object it returns — none of them proved that id actually reaches a QUEUED job payload,
-	// which is the only place it does any good (`DocsPipelineService.baseOf()`, fixed separately on
-	// this same PR, is the id's next hop). `enqueueExtract()` is the real entry point that does
+	// The tests above only prove `snapshotOf()` stamps a correlationId onto the object it returns —
+	// none of them proves that id actually reaches a QUEUED job payload, which is the only place it
+	// does any good (`DocsPipelineService.baseOf()` is the id's next hop, covered by
+	// `docs-pipeline.correlation-id.spec.ts`). `enqueueExtract()` is the real entry point that does
 	// `snapshotOf()` + `docsQueueService.enqueue()`; drive that instead of `snapshotOf()` alone.
 	it('reaches the queued docs.extract payload via enqueueExtract()', async () => {
 		(RequestContext.currentCorrelationId as jest.Mock).mockReturnValue('correlation-abc');

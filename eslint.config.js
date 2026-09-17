@@ -110,10 +110,15 @@ module.exports = [
 						//                            intentional composition-root pattern (bundles the four
 						//                            sub-UI plugins into one), not accidental coupling.
 						//
-						// Adding a NEW cross-plugin import that isn't one of these five relationships is what
-						// this rule is actually meant to catch — it stops the problem from getting worse
-						// without requiring the two grandfathered integrations to be refactored in the same
-						// change that adds the rule.
+						// The allowance is per TARGET, not per source-target pair: any `type:plugin` package may
+						// import any package tagged `type:plugin-extension-point`, so a new import of, say,
+						// `job-proposal` from a plugin other than `integration-upwork` still passes lint. What the
+						// rule does catch is a new import of any plugin WITHOUT that tag, which stops the problem
+						// from getting worse without requiring the two grandfathered integrations to be refactored
+						// in the same change that adds the rule. Pinning each grandfathered pair takes more than a
+						// tag on the target: the constraints matching a project AND together and can only narrow,
+						// so each consumer (`integration-upwork`, `job-search`, `jobs-ui`) would need a source tag
+						// of its own in place of `type:plugin`. That belongs with the follow-up refactor above.
 						{
 							sourceTag: 'type:plugin',
 							onlyDependOnLibsWithTags: ['type:core', 'type:shared', 'type:plugin-extension-point']

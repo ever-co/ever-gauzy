@@ -3,9 +3,9 @@
  *
  * `bulkReindex()` is the one docs queue producer that builds its job payload by hand instead of
  * through `DocumentProcessingService.snapshotOf()`, so it is the one place the request's correlation
- * id can be forgotten — review finding on this PR: it was. These tests pin that every enqueued
- * `docs.chunk` payload of the sweep carries it, that it is absent (not a string "undefined", not a
- * null) with no request context, and that nothing else about the sweep's payload/options changed.
+ * id can be forgotten. These tests pin that every enqueued `docs.chunk` payload of the sweep carries
+ * it, that it is absent (not a string "undefined", not a null) with no request context, and that
+ * nothing else about the sweep's payload/options changed.
  *
  * `@gauzy/core` boots the entire application graph on import (entities -> bootstrap), so — same as
  * `document-processing.snapshot.spec.ts` — `RequestContext` is mocked at the module boundary, and

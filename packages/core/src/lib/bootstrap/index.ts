@@ -184,8 +184,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		// A response header is invisible to browser JS unless explicitly exposed (CORS's own
 		// default allowlist is a handful of simple headers, and this isn't one) — without this, a
 		// cross-origin caller that did NOT send its own `x-correlation-id` had a value written to the
-		// response but no way to read it back via `fetch`/`XMLHttpRequest`, defeating the same-origin
-		// case's fix (review finding on this PR).
+		// response but no way to read it back via `fetch`/`XMLHttpRequest`.
 		exposedHeaders: ['X-Correlation-Id']
 	});
 

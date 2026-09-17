@@ -47,12 +47,18 @@ import { getMigrationsConfig } from '../bootstrap';
 describe('TypeORM migrations: fresh SQLite database smoke test', () => {
 	let dbPath: string;
 	let dataSource: DataSource;
+	// What the single `runMigrations()` in `beforeAll` applied. Running the chain there, rather than in
+	// the first test, gives every test the migrated schema even when it runs on its own (for example
+	// with --testNamePattern), and a migration that throws fails every test with that error instead of
+	// cascading into confusing "no such table" failures in the schema checks.
+	let applied: Awaited<ReturnType<DataSource['runMigrations']>>;
 
 	// `initialize()` loads the migration classes, which is where ts-jest transforms (and type-checks)
-	// all ~300 files. On a cold transform cache that ran past the 10 minutes this hook used to allow,
-	// and the whole run took about 30 minutes on a busy machine. Any change to the resolved Jest
-	// config — including `testPathIgnorePatterns` — starts a new cache, so the first run after one is
-	// always cold. Generous, but still bounded.
+	// all ~300 files, and `runMigrations()` then applies the whole chain. On a cold transform cache
+	// loading alone ran past the 10 minutes this hook used to allow, and the whole run took about 30
+	// minutes on a busy machine. Any change to the resolved Jest config — including
+	// `testPathIgnorePatterns` — starts a new cache, so the first run after one is always cold.
+	// Generous, but still bounded.
 	const initializeTimeoutMs = 60 * 60 * 1000;
 
 	beforeAll(async () => {
@@ -70,6 +76,7 @@ describe('TypeORM migrations: fresh SQLite database smoke test', () => {
 			logging: false
 		});
 		await dataSource.initialize();
+		applied = await dataSource.runMigrations({ transaction: 'each' });
 	}, initializeTimeoutMs);
 
 	afterAll(async () => {
@@ -81,17 +88,17 @@ describe('TypeORM migrations: fresh SQLite database smoke test', () => {
 
 	it(
 		'runs the entire migration chain from an empty database without throwing',
-		async () => {
-			const applied = await dataSource.runMigrations({ transaction: 'each' });
-			// Review finding on this PR: a loose `> 250` bound would silently tolerate dozens of
-			// migrations quietly failing to register (e.g. a glob/import regression) as long as
-			// enough still ran anyway. Assert the exact migration-file count instead — computed here,
-			// not hardcoded, so this test fails loudly (a real diff, not a silent pass) the day the
-			// chain's actual length and the files on disk disagree, without needing to hand-update a
-			// magic number every time a migration is added.
+		() => {
+			// A loose bound (e.g. `> 250`) would silently tolerate dozens of migrations quietly failing
+			// to register (e.g. a glob/import regression) as long as enough still ran anyway. Assert the
+			// exact migration-file count instead — computed here, not hardcoded, with the same `.ts` /
+			// `.js` extensions as the `*{.ts,.js}` glob `getMigrationsConfig()` hands TypeORM — so this
+			// test fails loudly (a real diff, not a silent pass) the day the chain's actual length and
+			// the files on disk disagree, without needing to hand-update a magic number every time a
+			// migration is added.
 			const migrationFileCount = fs
 				.readdirSync(path.join(__dirname, 'migrations'))
-				.filter((file) => file.endsWith('.ts')).length;
+				.filter((file) => file.endsWith('.ts') || file.endsWith('.js')).length;
 			expect(applied.length).toBe(migrationFileCount);
 		},
 		10 * 60 * 1000

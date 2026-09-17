@@ -10,16 +10,15 @@ import { RequestContext } from './request-context';
  * missing one gets a generated id instead, and — the one genuinely NEW behavior added here — that
  * id is always echoed back on the response, so a caller that did NOT send its own id can still
  * learn the one the server used to correlate its own logs/support requests against server-side
- * ones. Also proves the log/header-injection guard added in response to a real security finding on
- * this PR: an inbound value is only trusted when it matches a safe, bounded character set —
- * anything else (a literal `\n`, an oversized value) is treated as absent instead of being
- * echoed/logged verbatim.
+ * ones. Also proves the log/header-injection guard: an inbound value is only trusted when it matches
+ * a safe, bounded character set — anything else (a literal `\n`, an oversized value) is treated as
+ * absent instead of being echoed/logged verbatim.
  */
 describe('RequestContextMiddleware — correlation id propagation', () => {
 	const originalClsService = RequestContext['clsService'];
 
-	// A real `AsyncLocalStorage`-backed double (cubic review nit on this PR), not one shared
-	// `Map` that `run()` never actually scopes: the real `ClsService` gives each `run()` call its
+	// A real `AsyncLocalStorage`-backed double, not one shared `Map` that `run()` never actually
+	// scopes: the real `ClsService` gives each `run()` call its
 	// own store, so `get()` outside of any `run()` — including AFTER one has returned — sees
 	// nothing, exactly like a queue worker thread that never had a `RequestContext` at all. A
 	// bare shared `Map` would keep "leaking" the last request's values there too, silently masking
