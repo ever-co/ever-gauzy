@@ -10,6 +10,13 @@ import {
 } from './openai-compatible-transcribe';
 import { SpeechProviderError, isSpeechProviderError } from './speech-provider-error';
 
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('../ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
+
 /**
  * The shared speech request every STT provider plugin goes through. What matters is observable
  * only on the wire — which fields the multipart body carries, which headers, and what the thrown

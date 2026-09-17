@@ -18,6 +18,13 @@ jest.mock('dns', () => ({
 		callback(null, [{ address: '93.184.215.14', family: 4 }])
 }));
 
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('../../../ai-chat/src/lib/ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
+
 /**
  * The generic OpenAI-compatible provider has NO vendor host: everything hangs off the tenant's
  * base URL, the key is optional, and the two hard requirements (a base URL, a chosen model) must

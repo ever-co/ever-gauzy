@@ -15,6 +15,14 @@ import {
 jest.mock('dns', () => ({ ...jest.requireActual('dns'), lookup: jest.fn() }));
 const lookupMock = lookup as unknown as jest.Mock;
 type LookupCallback = (error: null, addresses: { address: string; family: number }[]) => void;
+
+// These cases pin down the pre-flight and the options each request is made with, against a stubbed
+// `global.fetch`. The transport opens real sockets, so hand its requests to that stub; what the
+// connection-time check does on a real socket is covered by `ssrf-connection.spec.ts` and
+// `fetch-over-node-http.spec.ts`.
+jest.mock('./fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
 import { assertSafeAiProviderBaseUrl } from '../credentials/base-url.validator';
 
 /**

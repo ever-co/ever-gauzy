@@ -10,6 +10,13 @@ import {
 } from './model-catalogue';
 import type { IAiProviderCredentials } from './provider.types';
 
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('./ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
+
 const model = (id: string): IAiChatModel => ({ id, label: id, providerId: 'test' });
 
 const CURATED: IAiChatModel[] = [model('curated-a'), model('curated-b')];

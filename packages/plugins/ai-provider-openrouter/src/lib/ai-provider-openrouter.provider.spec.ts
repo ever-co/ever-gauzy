@@ -8,6 +8,13 @@ jest.mock('dns', () => ({
 		callback(null, [{ address: '93.184.215.14', family: 4 }])
 }));
 
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('../../../ai-chat/src/lib/ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
+
 /**
  * OpenRouter carries the only ENFORCED list of the six: `listPlatformModels` is the allowlist for the
  * shared free-tier key, so a paid slug leaking into it is spendable on the platform account. It has

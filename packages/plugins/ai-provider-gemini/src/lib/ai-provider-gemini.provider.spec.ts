@@ -8,6 +8,13 @@ jest.mock('dns', () => ({
 		callback(null, [{ address: '93.184.215.14', family: 4 }])
 }));
 
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('../../../ai-chat/src/lib/ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
+
 /**
  * Gemini's `models.list` reports `supportedGenerationMethods` but nothing about TOOLS, so the
  * denylist below is the only filter — which is exactly why it needs a table. Image, music, robotics
