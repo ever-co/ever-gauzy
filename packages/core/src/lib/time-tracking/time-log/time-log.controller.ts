@@ -11,25 +11,24 @@ import {
 	Delete,
 	ValidationPipe
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
-import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput, ID } from '@gauzy/contracts';
+import { ITimeLog, PermissionsEnum, ID } from '@gauzy/contracts';
+import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
-import { Permissions } from './../../shared/decorators';
+import { OrganizationPolicyTarget, Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard, EmployeeTrackedDataGuard } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
-import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
+import { GetTimeLogConflictQueryDTO, TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
-import { IGetConflictTimeLogCommand } from './commands';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller('/timesheet/time-log')
 export class TimeLogController {
-	constructor(private readonly _timeLogService: TimeLogService, private readonly _commandBus: CommandBus) {}
+	constructor(private readonly _timeLogService: TimeLogService) {}
 
 	/**
 	 * Get conflicting timer logs based on the provided entity.
@@ -47,8 +46,12 @@ export class TimeLogController {
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('conflict')
-	async getConflict(@Query() request: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
-		return await this._commandBus.execute(new IGetConflictTimeLogCommand(request));
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getConflict(@Query() request: GetTimeLogConflictQueryDTO): Promise<ITimeLog[]> {
+		// Goes through the service, never the command bus directly: the command uses `employeeId`,
+		// `organizationId` and `tenantId` exactly as given, and this route is reachable by any
+		// TIME_TRACKER holder — i.e. every ordinary employee.
+		return await this._timeLogService.getConflictTimeLogs(request);
 	}
 
 	/**
@@ -293,6 +296,7 @@ export class TimeLogController {
 	@Put(':id')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
+	@OrganizationPolicyTarget(TimeLog)
 	async updateManualTime(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: UpdateManualTimeLogDTO

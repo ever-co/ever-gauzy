@@ -5003,6 +5003,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Select Client",
+			"SELECT_PROJECT": "Select Project",
+			"SELECT_TEAM": "Select Team",
+			"SELECT_TASK": "Select Task",
+			"DESCRIPTION": "Add a description"
+		},
 		"IS_BILLABLE": "Is Billable",
 		"STOP_TIMER": "Stop Timer",
 		"START_TIMER": "Start Timer",

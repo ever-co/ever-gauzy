@@ -4487,6 +4487,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Изберете клиент",
+			"SELECT_PROJECT": "Изберете проект",
+			"SELECT_TEAM": "Изберете отбор",
+			"SELECT_TASK": "Изберете задача",
+			"DESCRIPTION": "Добавете описание"
+		},
 		"IS_BILLABLE": "Is Billable",
 		"STOP_TIMER": "Stop Timer",
 		"START_TIMER": "Страртирай таймер",

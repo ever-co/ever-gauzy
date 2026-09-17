@@ -3,10 +3,11 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from './../../shared/decorators';
+import { OrganizationPolicyTarget, Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard, EmployeeTrackedDataGuard } from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
+import { TimeSlot } from './time-slot.entity';
 import { TimeSlotService } from './time-slot.service';
 import { DeleteTimeSlotDTO, TimeSlotQueryDTO } from './dto';
 
@@ -98,6 +99,7 @@ export class TimeSlotController {
 	})
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
+	@OrganizationPolicyTarget(TimeSlot)
 	@Put('/:id')
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() request: ITimeSlot): Promise<ITimeSlot> {
 		return await this._commandBus.execute(new UpdateTimeSlotCommand(id, request));

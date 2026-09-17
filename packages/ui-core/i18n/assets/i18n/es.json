@@ -4440,6 +4440,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Seleccionar cliente",
+			"SELECT_PROJECT": "Seleccionar proyecto",
+			"SELECT_TEAM": "Seleccionar equipo",
+			"SELECT_TASK": "Seleccionar tarea",
+			"DESCRIPTION": "Añadir una descripción"
+		},
 		"IS_BILLABLE": "Es facturable.",
 		"STOP_TIMER": "Detener temporizador",
 		"START_TIMER": "Iniciar temporizador",

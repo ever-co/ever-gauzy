@@ -30,6 +30,7 @@ import {
 	wrapSerialize,
 	validateDateRange
 } from '../../core/utils';
+import { assertSensitiveRelationsAllowed } from '../../core/util/sensitive-relations.helper';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
 import {
@@ -84,6 +85,10 @@ export class TimerService {
 	 * This is intended to be used directly by the command handler
 	 */
 	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		assertSensitiveRelationsAllowed(this.typeOrmTimeLogRepository.metadata, request.relations);
+
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, source, todayStart, todayEnd } = request;
 
@@ -711,6 +716,10 @@ export class TimerService {
 	 * @returns The timer status for the employee.
 	 */
 	public async getTimerWorkedStatus(request: ITimerStatusInput): Promise<ITimerStatus[]> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		assertSensitiveRelationsAllowed(this.typeOrmTimeLogRepository.metadata, request.relations);
+
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 		const { organizationId, organizationTeamId, source } = request;
 

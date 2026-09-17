@@ -4451,6 +4451,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "בחר לקוח",
+			"SELECT_PROJECT": "בחר פרויקט",
+			"SELECT_TEAM": "בחר קבוצה",
+			"SELECT_TASK": "בחר משימה",
+			"DESCRIPTION": "הוסף תיאור"
+		},
 		"IS_BILLABLE": "ניתן לחיוב",
 		"STOP_TIMER": "עצור טיימר",
 		"START_TIMER": "התחל טיימר",

@@ -4438,6 +4438,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Selecionar cliente",
+			"SELECT_PROJECT": "Selecionar projeto",
+			"SELECT_TEAM": "Selecionar equipe",
+			"SELECT_TASK": "Selecionar tarefa",
+			"DESCRIPTION": "Adicionar uma descrição"
+		},
 		"IS_BILLABLE": "É cobrável.",
 		"STOP_TIMER": "Parar cronômetro",
 		"START_TIMER": "Iniciar cronômetro",

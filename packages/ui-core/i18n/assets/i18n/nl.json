@@ -4438,6 +4438,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Selecteer klant",
+			"SELECT_PROJECT": "Selecteer project",
+			"SELECT_TEAM": "Selecteer team",
+			"SELECT_TASK": "Selecteer taak",
+			"DESCRIPTION": "Voeg een beschrijving toe"
+		},
 		"IS_BILLABLE": "Is factureerbaar",
 		"STOP_TIMER": "Stop Timer",
 		"START_TIMER": "Start Timer",

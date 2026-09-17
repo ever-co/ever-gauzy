@@ -4429,6 +4429,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Sélectionner un client",
+			"SELECT_PROJECT": "Sélectionner un projet",
+			"SELECT_TEAM": "Sélectionner une équipe",
+			"SELECT_TASK": "Sélectionner une tâche",
+			"DESCRIPTION": "Ajouter une description"
+		},
 		"IS_BILLABLE": "Est facturable.",
 		"STOP_TIMER": "Arrêter le minuteur",
 		"START_TIMER": "Démarrer le chronomètre",

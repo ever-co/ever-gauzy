@@ -2,7 +2,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl, Length, Matches } from 'class-validator';
 import { IAiProviderCredential } from '@gauzy/contracts';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import {
+	ColumnIndex,
+	ExportRedacted,
+	MultiORMColumn,
+	MultiORMEntity,
+	TenantOrganizationBaseEntity
+} from '@gauzy/core';
 import { MikroOrmAiProviderCredentialRepository } from './repositories/mikro-orm-ai-provider-credential.repository';
 
 /**
@@ -37,6 +43,7 @@ export class AiProviderCredential extends TenantOrganizationBaseEntity implement
 	 * AES-256-GCM with the `ENCRYPTION_KEY` env secret). Never returned by read
 	 * endpoints; list responses expose only a masked hint ('••••' + last 4).
 	 */
+	@ExportRedacted({ blank: true })
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ type: 'text', nullable: true })
 	apiKey?: string;
