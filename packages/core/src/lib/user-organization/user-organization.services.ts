@@ -23,15 +23,23 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 	/**
 	 * Finds all user organizations based on the provided filter options.
 	 *
+	 * Every loaded `user` relation is handed back as a real `User` instance, whichever ORM loaded it
+	 * and whether or not employees were requested, so the global `TransformInterceptor` can apply the
+	 * `@Exclude({ toPlainOnly: true })` redaction of the `User` credential columns.
+	 *
 	 * @param filter Optional filter options to apply when querying user organizations.
-	 * @returns A promise resolving to an array of user organizations.
+	 * @param includeEmployee When true, attaches each user's employee record as `user.employee`.
+	 * @returns A promise resolving to the paginated user organizations.
 	 */
 	async findUserOrganizations(
 		filter: BaseQueryDTO<UserOrganization>,
 		includeEmployee: boolean
 	): Promise<IPagination<UserOrganization>> {
 		// Use the filter as-is, permission handling is now handled by the interceptor
-		let { items, total } = await super.findAll(filter ?? ({} as BaseQueryDTO<UserOrganization>));
+		const { items, total } = await super.findAll(filter ?? ({} as BaseQueryDTO<UserOrganization>));
+
+		// Employee details keyed by user ID; stays empty unless 'includeEmployee' is set to true
+		const employeeMap = new Map<string, Employee>();
 
 		// If 'includeEmployee' is set to true, fetch employee details associated with each user organization
 		if (includeEmployee) {
@@ -48,8 +56,6 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 				// Fetch all employee details in bulk for the extracted user IDs
 				const employees = await this.employeeService.findEmployeesByUserIds(userIds, tenantId);
 
-				// Map employee details to a dictionary for easier lookup
-				const employeeMap = new Map<string, Employee>();
 				employees.forEach((employee: Employee) => {
 					// If user ID is available, add employee details to the map
 					if (employee.userId) {
@@ -57,41 +63,51 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 						employeeMap.set(employee.userId, employee);
 					}
 				});
-
-				// Merge employee details into each user organization.
-				//
-				// SECURITY: never rebuild a LOADED entity with an object spread here. `User.hash`,
-				// `refreshToken`, `code`, `codeExpireAt` and `emailToken` are redacted only by
-				// class-transformer's `@Exclude({ toPlainOnly: true })`, whose metadata is reached
-				// through the class prototype. A spread produces a prototype-less plain object, so
-				// the global `TransformInterceptor` (`instanceToPlain`) would serialize those
-				// credential columns verbatim to any caller that asked for `relations[]=user`.
-				// Mutate the entity in place and re-wrap the user in a `User` instance — the same
-				// pattern as `UserService.findMeUser` — so the prototype, and with it the
-				// redaction, survives the addition of `employee`.
-				const itemsWithEmployees = items.map((organization: UserOrganization) => {
-					// If user ID is available, fetch employee details
-					if (organization.userId && organization.user) {
-						// Fetch employee details using the user ID
-						const employee = employeeMap.get(organization.userId);
-						organization.user = new User({
-							...organization.user,
-							...(employee && { employee })
-						});
-					}
-					// Return the entity itself (prototype intact), never a copy of it
-					return organization;
-				});
-
-				// Return paginated result with employee details
-				return { items: itemsWithEmployees, total };
 			} catch (error) {
 				console.error(`Error fetching employee details: ${error.message}`);
 			}
 		}
 
-		// Return original items if 'includeEmployee' is false
-		return { items, total };
+		// Redaction runs on EVERY path, including the employee-lookup failure above
+		return { items: items.map((organization) => this.restoreUserPrototype(organization, employeeMap)), total };
+	}
+
+	/**
+	 * Ensures a user organization row carries its loaded `user` as a `User` instance, merging in the
+	 * matching employee when one was found.
+	 *
+	 * SECURITY: `User.hash`, `refreshToken`, `code`, `codeExpireAt`, `emailVerifiedAt` and
+	 * `emailToken` are redacted only by class-transformer's `@Exclude({ toPlainOnly: true })`, whose
+	 * metadata is reached through the class prototype. A prototype-less user object therefore has
+	 * every credential column serialized verbatim by the global `TransformInterceptor`
+	 * (`instanceToPlain`). Such an object arises two ways: rebuilding a loaded entity with an object
+	 * spread (never do that here), and the MikroORM branch of `CrudService.findAll`, which returns
+	 * `wrap(entity).toJSON()` plain objects. The user is re-wrapped whenever it is not already a
+	 * `User` or an employee has to be attached — the same pattern as `UserService.findMeUser`.
+	 *
+	 * The employee is looked up by `userId`, falling back to the loaded `user.id` so a projection
+	 * that omits `userId` neither skips the re-wrap nor loses the employee.
+	 *
+	 * @param organization The user organization row as returned by `findAll` (mutated in place).
+	 * @param employeeMap Employee records keyed by user ID.
+	 * @returns The same row, with `user` safe to serialize.
+	 */
+	private restoreUserPrototype(organization: UserOrganization, employeeMap: Map<string, Employee>): UserOrganization {
+		const user = organization?.user;
+		if (!user || typeof user !== 'object') {
+			return organization;
+		}
+
+		const employee = employeeMap.get(organization.userId ?? user.id);
+		if (!(user instanceof User) || employee) {
+			organization.user = new User({
+				...user,
+				...(employee && { employee })
+			});
+		}
+
+		// Return the row itself, never a spread copy of it
+		return organization;
 	}
 
 	/**
