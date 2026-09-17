@@ -154,6 +154,9 @@ import { IdempotencyInterceptor } from '../idempotency/idempotency.interceptor';
 import { EventOutboxModule } from '../event-outbox/event-outbox.module';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
+import { MeasurementModule } from '../measurement/measurement.module';
+import { PaymentTermModule } from '../payment-term/payment-term.module';
+import { AddressRoleModule } from '../address-role/address-role.module';
 import { GraphqlSubscriptionModule } from '../graphql/subscriptions/graphql-subscription.module';
 import { RoleModule } from '../role/role.module';
 import { SharedEntityModule } from '../shared-entity/shared-entity.module';
@@ -481,6 +484,14 @@ if (environment.THROTTLE_ENABLED) {
 		EventOutboxModule,
 		OperationModule,
 		WebhookModule,
+		// What a number means and when a document is settled. The measurement families are read by
+		// inventory, purchasing, projects and time tracking alike, a settlement term is read by the
+		// accounting document and by procurement, and an address role is a dimension of the address book —
+		// so all three are kernel capabilities with their own guarded routes rather than fields on a
+		// resource some other module owns.
+		MeasurementModule,
+		PaymentTermModule,
+		AddressRoleModule,
 		// The subscription surface: the fan-out, the catalogue of streamable events, the delivery
 		// decision, and the two routes an event takes to a subscriber — the outbox consumer for a
 		// durable fact and the bus bridge for a domain that publishes in process. Adding it changes

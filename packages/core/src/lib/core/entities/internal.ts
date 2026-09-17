@@ -191,6 +191,11 @@ export * from '../../operation/operation-step.entity';
 export * from '../../operation/operation.entity';
 export * from '../../webhook/webhook-delivery.entity';
 export * from '../../webhook/webhook-subscription.entity';
+export * from '../../measurement/unit-category.entity';
+export * from '../../measurement/unit.entity';
+export * from '../../payment-term/payment-term.entity';
+export * from '../../payment-term/payment-term-line.entity';
+export * from '../../address-role/address-role.entity';
 
 //core subscribers
 export * from '../../activity-log/activity-log.subscriber';

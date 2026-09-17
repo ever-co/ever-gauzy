@@ -8,7 +8,9 @@ import { WarehouseBinType } from '../../warehouse.types';
  * A bin as a caller sees it.
  *
  * `capacityUnits`, `maxWeight` and `maxVolume` are exact decimal strings, never numbers: the columns
- * behind them are exact decimals and a JSON number would lose the exactness on the way in.
+ * behind them are exact decimals and a JSON number would lose the exactness on the way in. Each of
+ * them carries a sibling `…UnitId`, because a capacity is a quantity *in a stated unit* — a bin whose
+ * unit of handling is a pallet and a request expressed in pieces cannot be compared without one.
  */
 export class WarehouseBinDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String })
@@ -58,15 +60,30 @@ export class WarehouseBinDTO extends TenantOrganizationBaseDTO {
 	@IsNumberString()
 	readonly capacityUnits?: string;
 
+	@ApiPropertyOptional({ type: () => String, description: 'The unit `capacityUnits` is counted in.' })
+	@IsOptional()
+	@IsUUID()
+	readonly capacityUnitId?: ID;
+
 	@ApiPropertyOptional({ type: () => String, description: 'Weight ceiling, e.g. "1200.0000".' })
 	@IsOptional()
 	@IsNumberString()
 	readonly maxWeight?: string;
 
+	@ApiPropertyOptional({ type: () => String, description: 'The mass unit `maxWeight` is expressed in.' })
+	@IsOptional()
+	@IsUUID()
+	readonly maxWeightUnitId?: ID;
+
 	@ApiPropertyOptional({ type: () => String, description: 'Volume ceiling, e.g. "3.5000".' })
 	@IsOptional()
 	@IsNumberString()
 	readonly maxVolume?: string;
+
+	@ApiPropertyOptional({ type: () => String, description: 'The volume unit `maxVolume` is expressed in.' })
+	@IsOptional()
+	@IsUUID()
+	readonly maxVolumeUnitId?: ID;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 32 })
 	@IsOptional()

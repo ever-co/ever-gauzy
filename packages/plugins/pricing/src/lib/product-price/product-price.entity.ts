@@ -12,7 +12,7 @@ import {
 	ProductVariant,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
-import { PriceStatus } from '../pricing.types';
+import { PriceBaseSource, PriceComputeMode, PriceStatus } from '../pricing.types';
 import { PriceList } from '../price-list/price-list.entity';
 import { MikroOrmProductPriceRepository } from './repository/mikro-orm-product-price.repository';
 
@@ -25,10 +25,26 @@ import { MikroOrmProductPriceRepository } from './repository/mikro-orm-product-p
  * further rows of the same table distinguished by `minQuantity` / `maxQuantity`, not a child table,
  * because a tier is the same fact at a different quantity rather than a different kind of fact.
  *
+ * **A row says how it computes, not only what it is.** `computeMode` is the whole of that: an
+ * `AMOUNT` row states its price in `amount` and is the only mode that existed before, while a
+ * `PERCENT_OFF` row states *how* — a base (`baseSource`, and `basePriceListId` for a price book), a
+ * signed share (`percent`, negative for a cost-plus markup) and an optional price ending (`roundTo`).
+ * The arithmetic stays on the price row rather than moving into `rule`, because `rule` answers "does
+ * this row apply?" with a boolean and a value-producing expression inside it would leak pricing
+ * arithmetic into the evaluator that tax, fulfilment, approvals and entitlements share. A companion
+ * table is refused for the same reason: the derivation is a property *of* the price, so a companion
+ * row would be 1:1 and would add a second thing to keep in step.
+ *
+ * A row with `variantId` null is **open-scoped**: its applicability is exactly its `rule` rows with
+ * `ownerType = PRICE`, and it prices every variant they select. That is what the nullable relation is
+ * for, and it is why an open row must carry at least one product-, variant- or collection-rooted
+ * rule — a scope-less open row would re-price the whole catalogue.
+ *
  * Two rules the schema cannot state and the service therefore owns: the tiers of one
  * `(variant, currency, price list)` tuple must not overlap — an overlapping pair makes the resolved
  * price depend on row order — and the margin guard rails (`minMarginPercent`, `maxDiscountPercent`)
- * are applied when a price is calculated, never stored into `amount`.
+ * are applied when a price is calculated, on the **derived** amount for a derived row, never stored
+ * into `amount`.
  *
  * `compareAtAmount` is display-only and `costAmount` is a reporting snapshot: neither ever enters a
  * computed total. Conditions that decide whether this row applies (`quantity`, `customer.group`,
@@ -43,6 +59,11 @@ import { MikroOrmProductPriceRepository } from './repository/mikro-orm-product-p
 	where: '"deletedAt" IS NULL'
 })
 @ColumnIndex('IDX_price_org_created', ['organizationId', 'createdAt'], { where: '"deletedAt" IS NULL' })
+@ColumnIndex('IDX_price_base_list', ['basePriceListId'], { where: '"basePriceListId" IS NOT NULL' })
+@ColumnIndex('IDX_price_unit', ['unitId'], { where: '"unitId" IS NOT NULL' })
+@ColumnIndex('IDX_price_open_scope', ['organizationId', 'currency', 'status'], {
+	where: '"variantId" IS NULL AND "deletedAt" IS NULL'
+})
 @ColumnIndex('UQ_price_tier', ['variantId', 'currency', 'priceListId', 'minQuantity', 'maxQuantity'], {
 	unique: true,
 	where: '"deletedAt" IS NULL'
@@ -61,10 +82,110 @@ export class ProductPrice extends TenantOrganizationBaseEntity {
 
 	/**
 	 * What one unit costs, exact, at the storage scale of a money column.
+	 *
+	 * **Null exactly when the row derives its price**, which is a breaking read change: every consumer
+	 * of a price row has to handle the derived case, and the mitigation is that the resolve response is
+	 * the sanctioned read path for a price — it echoes `baseAmount` and `computation`, so a caller
+	 * never has to interpret a null.
 	 */
-	@ApiProperty({ type: () => String })
-	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, transformer: new ColumnNumericTransformerPipe() })
-	amount: DecimalString;
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@MultiORMColumn({
+		type: 'numeric',
+		precision: 20,
+		scale: 6,
+		nullable: true,
+		transformer: new ColumnNumericTransformerPipe()
+	})
+	amount?: DecimalString;
+
+	/**
+	 * How the row computes its price: the row's `amount` **is** the price, or the price is derived from
+	 * a base. A closed two-value set, so an enumeration and not a registry.
+	 */
+	@ApiProperty({ type: () => String, enum: PriceComputeMode, default: PriceComputeMode.AMOUNT })
+	@IsEnum(PriceComputeMode)
+	@MultiORMColumn({ type: 'simple-enum', enum: PriceComputeMode, default: PriceComputeMode.AMOUNT })
+	computeMode: PriceComputeMode;
+
+	/**
+	 * Signed fraction of the base: positive reduces it, negative is a cost-plus **markup**. Required
+	 * exactly when `computeMode` is `PERCENT_OFF`, and bounded by `-1000 < percent <= 100`.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@MultiORMColumn({
+		type: 'numeric',
+		precision: 9,
+		scale: 6,
+		nullable: true,
+		transformer: new ColumnNumericTransformerPipe()
+	})
+	percent?: DecimalString;
+
+	/**
+	 * Which price the derivation starts from. Required exactly when `computeMode` is `PERCENT_OFF`.
+	 */
+	@ApiPropertyOptional({ type: () => String, enum: PriceBaseSource })
+	@IsOptional()
+	@IsEnum(PriceBaseSource)
+	@MultiORMColumn({ type: 'simple-enum', enum: PriceBaseSource, nullable: true })
+	baseSource?: PriceBaseSource;
+
+	/**
+	 * The list a `PRICE_LIST` derivation reads. Required exactly when `baseSource` is `PRICE_LIST`,
+	 * never the row's own list, acyclic (the service refuses `PRICE_BASE_CYCLE`) and depth-capped at
+	 * five when a chain of derived lists is resolved.
+	 *
+	 * `RESTRICT` and not `CASCADE`: a list another list derives from is part of that list's meaning, so
+	 * removing it would silently change a price rather than merely orphan a row.
+	 */
+	@MultiORMManyToOne(() => PriceList, {
+		/** A base list a derivation reads cannot be deleted out from under it. */
+		onDelete: 'RESTRICT',
+		nullable: true
+	})
+	@JoinColumn()
+	basePriceList?: PriceList;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: ProductPrice) => it.basePriceList)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	basePriceListId?: ID;
+
+	/**
+	 * The multiple the derived amount is quantised to, applied **after** the percentage and **before**
+	 * the currency rounding boundary B1. A price ending (`19.99`) is a merchandising decision about a
+	 * price, not a property of a currency, so it has no other home. Null means no quantisation, and a
+	 * stated value is greater than zero.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@MultiORMColumn({
+		type: 'numeric',
+		precision: 20,
+		scale: 6,
+		nullable: true,
+		transformer: new ColumnNumericTransformerPipe()
+	})
+	roundTo?: DecimalString;
+
+	/**
+	 * The unit `minQuantity` and `maxQuantity` are expressed in. Null means the variant's sales unit,
+	 * else its stock unit.
+	 *
+	 * A tier is a threshold, and "10+" is a different threshold per box and per piece, so a unitless
+	 * tier does not merely read ambiguously — it returns the wrong price to one of the two readers. The
+	 * column carries **no foreign key**: `unit` belongs to the kernel's measurement set, which owns the
+	 * target and adds the constraint once it exists.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ nullable: true })
+	unitId?: ID;
 
 	/**
 	 * Manufacturer's suggested or previously charged price, carried for display only. It is never
@@ -230,7 +351,11 @@ export class ProductPrice extends TenantOrganizationBaseEntity {
 	priceListId?: ID;
 
 	/**
-	 * Variant the price is for.
+	 * Variant the price is for, or null for an **open-scoped** row.
+	 *
+	 * Null does not mean "unset": it means the row's applicability is exactly its `rule` rows with
+	 * `ownerType = PRICE`, and it prices every variant those rules select. A row with a variant keeps
+	 * the meaning it always had.
 	 *
 	 * `CASCADE` is the deliberate deviation from the rule that a mandatory reference to a master row
 	 * restricts deletion: a price is part of the variant, so it is removed with it rather than
@@ -238,16 +363,17 @@ export class ProductPrice extends TenantOrganizationBaseEntity {
 	 */
 	@MultiORMManyToOne(() => ProductVariant, {
 		onDelete: 'CASCADE',
-		nullable: false
+		nullable: true
 	})
 	@JoinColumn()
-	variant: ProductVariant;
+	variant?: ProductVariant;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsUUID()
 	@RelationId((it: ProductPrice) => it.variant)
-	@MultiORMColumn({ relationId: true })
-	variantId: ID;
+	@MultiORMColumn({ nullable: true, relationId: true })
+	variantId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------

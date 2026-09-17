@@ -38,6 +38,12 @@ import { MikroOrmWarehouseBinRepository } from './repository/mikro-orm-warehouse
  * than enforcing them, because a real warehouse overfills a bin and the record has to be able to say
  * so; a bin that may not be picked from at all is a different fact and is expressed with
  * `isPickable`.
+ *
+ * Each of the three limits states the unit it is expressed in — `capacityUnitId`, `maxWeightUnitId`
+ * and `maxVolumeUnitId`. Without them the same physical limit could be entered as `1` by an operator
+ * thinking in pallets and read as `1` by a request thinking in pieces, and both readers would be
+ * right about a different question. A null unit stays what the column always meant: a count nobody
+ * has yet declared the unit of.
  */
 @MultiORMEntity('warehouse_bin', { mikroOrmRepository: () => MikroOrmWarehouseBinRepository })
 @Tree('closure-table')
@@ -116,19 +122,56 @@ export class WarehouseBin extends TenantOrganizationBaseEntity implements IWareh
 	@MultiORMColumn({ type: 'decimal', precision: 20, scale: 6, nullable: true })
 	capacityUnits?: DecimalString;
 
-	/** Weight ceiling in the organization's weight unit. A planning limit, warned on rather than enforced. */
+	/**
+	 * The unit `capacityUnits` is counted in.
+	 *
+	 * A capacity is a quantity in a stated unit and never a bare number: a bin whose handling unit is a
+	 * pallet and a request expressed in pieces cannot be compared without one, and the comparison is
+	 * what the put-away allocator and the low-stock tie-break make their decisions on. A null unit is
+	 * an **uninterpreted count** — the behaviour every bin had before the column existed — and a bin
+	 * that declares a capacity without one is reported by the capacity job rather than guessed at,
+	 * because guessing would silently redefine every capacity an operator has already entered.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	capacityUnitId?: ID;
+
+	/** Weight ceiling in `maxWeightUnitId`. A planning limit, warned on rather than enforced. */
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal string, e.g. "1200.0000".' })
 	@IsOptional()
 	@IsNumberString()
 	@MultiORMColumn({ type: 'decimal', precision: 12, scale: 4, nullable: true })
 	maxWeight?: DecimalString;
 
-	/** Volume ceiling, in the organization's volume unit. */
+	/**
+	 * The mass unit `maxWeight` is expressed in; null means the organization's configured default mass
+	 * unit. Four decimals is a statement about storage and the unit is a statement about meaning.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ nullable: true })
+	maxWeightUnitId?: ID;
+
+	/** Volume ceiling, in `maxVolumeUnitId`. */
 	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal string, e.g. "3.5000".' })
 	@IsOptional()
 	@IsNumberString()
 	@MultiORMColumn({ type: 'decimal', precision: 12, scale: 4, nullable: true })
 	maxVolume?: DecimalString;
+
+	/**
+	 * The volume unit `maxVolume` is expressed in; null means the organization's configured default
+	 * volume unit.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ nullable: true })
+	maxVolumeUnitId?: ID;
 
 	/** Physical coordinate, used for the sorted pick path when the tree alone is not enough. */
 	@ApiPropertyOptional({ type: () => String, maxLength: 32 })

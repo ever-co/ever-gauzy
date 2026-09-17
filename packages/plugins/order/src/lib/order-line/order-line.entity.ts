@@ -1,6 +1,16 @@
 import { JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+	IsBoolean,
+	IsEnum,
+	IsInt,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUUID,
+	MaxLength
+} from 'class-validator';
 import { ID, IOrderLine } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -9,23 +19,36 @@ import {
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
+	MultiORMOneToMany,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
+import { OrderLineInvoiceStatus, OrderLineKind } from '../order.types';
 import { Order } from '../order/order.entity';
+import { OrderLineInvoice } from '../order-line-invoice/order-line-invoice.entity';
 import { MikroOrmOrderLineRepository } from './repository/mikro-orm-order-line.repository';
 
 /**
  * One line of an order: what was bought, at the price it was bought at.
  *
- * Three groups of columns live here and none of them may be confused with another:
+ * Four groups of columns live here and none of them may be confused with another:
  *
  * - **Snapshots** — `title`, `sku`, `barcode`, `thumbnail`, `unitPrice`, `originalUnitPrice`,
  *   `isTaxInclusive`, `weight`. The customer bought a description at a price; renaming a product or
  *   editing a price list must not rewrite history.
  * - **Live references** — `productId`, `variantId`, `warehouseId`. Fulfilment, returns and exchanges
  *   resolve the current row, and a read falls back to the snapshot when the target is gone.
- * - **Caches of other rows** — the seven quantity counters. Each has exactly one derivation rule, and
- *   each is written in the same transaction as the row that causes it.
+ * - **Caches of other rows** — the fulfilment, return and write-off counters, and the four registers
+ *   the money side writes: `invoicedQuantity`, `creditedQuantity`, `invoiceStatus` and `refundedQuantity`
+ *   / `refundedAmount`. Each has exactly one derivation rule, and each is written in the same
+ *   transaction as the row that causes it.
+ * - **Authored facts about this line** — `kind` (whether it is a real line at all) and `promisedAt`
+ *   with the `leadTimeDays` it was computed from.
+ *
+ * The invoicing registers are what make a line billable **in parts**. `invoiceItemId` names the first
+ * item the line was flattened into and is retained so nothing that reads it breaks; the pivot in
+ * `order_line_invoice` is the line's real link to invoicing, and the two counters are its sum. A
+ * deposit, a milestones invoice and a credit note therefore all have somewhere to land, where the
+ * single retained column could express exactly one of them, once, for ever.
  */
 @MultiORMEntity('order_line', { mikroOrmRepository: () => MikroOrmOrderLineRepository })
 export class OrderLine extends TenantOrganizationBaseEntity implements IOrderLine {
@@ -246,6 +269,107 @@ export class OrderLine extends TenantOrganizationBaseEntity implements IOrderLin
 	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, default: 0, transformer: new ColumnNumericTransformerPipe() })
 	writtenOffQuantity: number;
 
+	/**
+	 * Quantity delivered **beyond** what was outstanding. Recorded rather than clamped: a short-picked
+	 * order that ships the balance twice is a real thing, and a counter that refused to say so would
+	 * make the over-delivery invisible instead of exceptional.
+	 */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, default: 0, transformer: new ColumnNumericTransformerPipe() })
+	overFulfilledQuantity: number;
+
+	/**
+	 * What kind of line this is.
+	 *
+	 * A `SECTION` or a `NOTE` is a presentation row: it carries no quantity, no price and no product, so
+	 * a reader that forgets to skip one is harmless rather than wrong. Before the value set existed, a
+	 * quotation that needed a heading had to be given a fake product line — which then entered the
+	 * invoice, the fulfilment and the totals.
+	 */
+	@ApiProperty({ type: () => String, enum: OrderLineKind, default: OrderLineKind.ITEM })
+	@IsOptional()
+	@IsEnum(OrderLineKind)
+	@MultiORMColumn({ type: 'simple-enum', enum: OrderLineKind, default: OrderLineKind.ITEM })
+	kind: OrderLineKind;
+
+	/**
+	 * Cache: the quantity actually billed against this line.
+	 *
+	 * The sum of the `order_line_invoice` rows with `direction = INVOICE` whose invoice is not void. It
+	 * is a cache and never authored, which is what makes "this line was billed in two parts" a fact the
+	 * order can state rather than one reconstructed from the invoice side.
+	 */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, default: 0, transformer: new ColumnNumericTransformerPipe() })
+	invoicedQuantity: number;
+
+	/** Cache: the same rows with `direction = CREDIT`. A credit may never exceed what was invoiced. */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, default: 0, transformer: new ColumnNumericTransformerPipe() })
+	creditedQuantity: number;
+
+	/**
+	 * Cache: how much of the line has been billed, against the basis the variant's own billing policy
+	 * names. Stored rather than aggregated per row because it is the column a listing filters on, and
+	 * derived rather than authored because a caller that could set it could make the order disagree
+	 * with the invoices that justify it.
+	 */
+	@ApiProperty({ type: () => String, enum: OrderLineInvoiceStatus, default: OrderLineInvoiceStatus.NOT_INVOICED })
+	@IsOptional()
+	@IsEnum(OrderLineInvoiceStatus)
+	@MultiORMColumn({
+		type: 'simple-enum',
+		enum: OrderLineInvoiceStatus,
+		default: OrderLineInvoiceStatus.NOT_INVOICED,
+		length: 32
+	})
+	invoiceStatus: OrderLineInvoiceStatus;
+
+	/** Cache: the quantity paid back on this line, over the `refund_line` rows of succeeded refunds. */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, default: 0, transformer: new ColumnNumericTransformerPipe() })
+	refundedQuantity: number;
+
+	/**
+	 * Cache: the money paid back on this line, in the order's currency, stored as a positive magnitude.
+	 * It carries no sibling currency column because the order it belongs to already is one.
+	 */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, default: 0, transformer: new ColumnNumericTransformerPipe() })
+	refundedAmount: number;
+
+	/**
+	 * The date this line was promised to the customer.
+	 *
+	 * Authored deliberately at placement — by staff, or from a channel's lead-time default — and
+	 * **never silently rewritten**: moving a promise is an `UPDATE_ORDER_PROPERTIES` change, so the
+	 * customer sees the move in the order's own history rather than finding a different date.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
+	promisedAt?: Date;
+
+	/**
+	 * The lead time the promise was computed from, so the promise stays explainable after the product's
+	 * own lead time changes.
+	 */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsInt()
+	@MultiORMColumn({ nullable: true, type: 'int' })
+	leadTimeDays?: number;
+
 	/** Open-ended payload: age limits, promotion codes, tax-rate codes and substitution notes. */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
@@ -262,4 +386,13 @@ export class OrderLine extends TenantOrganizationBaseEntity implements IOrderLin
 	@MultiORMManyToOne(() => Order, (it) => it.lines, { onDelete: 'CASCADE' })
 	@JoinColumn()
 	order?: Order;
+
+	/**
+	 * Every invoice item and credit-note item this line was billed through.
+	 *
+	 * This is the line's real link to invoicing — one line, many items, across many invoices — and the
+	 * two counters above are its sum. The retained `invoiceItemId` names the first of them.
+	 */
+	@MultiORMOneToMany(() => OrderLineInvoice, (it) => it.orderLine, { onDelete: 'CASCADE' })
+	invoiceLinks?: OrderLineInvoice[];
 }

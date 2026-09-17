@@ -427,8 +427,11 @@ export interface IWarehouseBin extends IBasePerTenantAndOrganizationEntityModel 
 	isPickable: boolean;
 	isBlocked: boolean;
 	capacityUnits?: DecimalString;
+	capacityUnitId?: ID;
 	maxWeight?: DecimalString;
+	maxWeightUnitId?: ID;
 	maxVolume?: DecimalString;
+	maxVolumeUnitId?: ID;
 	aisle?: string;
 	rack?: string;
 	level?: string;
@@ -614,3 +617,49 @@ export interface IBinReconciliationReport {
 	driftCount: number;
 	movementIds: ID[];
 }
+
+/**
+ * One bin's capacity measured against a request.
+ *
+ * A capacity is a quantity in a stated unit, and this is the shape that says so: the request arrives
+ * in whatever unit the caller entered it in, is converted through the factor it supplies into the unit
+ * the capacity is declared in, and is then compared with the capacity itself. Every number below is an
+ * exact decimal, and `exceeded` is a **warning** rather than a refusal — a real warehouse overfills a
+ * bin and the record has to be able to say so.
+ */
+export interface IWarehouseBinCapacityCheck {
+	binId: ID;
+	/** The unit the capacity is declared in; null when the bin declares none. */
+	capacityUnitId?: ID;
+	/** The declared capacity, in `capacityUnitId`; null when the bin declares none. */
+	capacityUnits?: DecimalString;
+	/** The quantity asked for, as it was supplied. */
+	requestedQuantity: DecimalString;
+	/** The unit the request was supplied in, when the caller named one. */
+	requestedUnitId?: ID;
+	/**
+	 * The request converted into `capacityUnitId` through the supplied factor. Null when the bin
+	 * declares no capacity or no capacity unit, because a conversion into an undeclared unit would be a
+	 * guess rather than a measurement.
+	 */
+	requestedInCapacityUnit?: DecimalString;
+	/** The exact difference `capacityUnits − requestedInCapacityUnit`; null when either is null. */
+	remainingQuantity?: DecimalString;
+	/** Whether the request is larger than the declared capacity. */
+	exceeded: boolean;
+	/** The codes a caller acts on: the invariant breach, and the capacity being passed. */
+	notices: string[];
+}
+
+/**
+ * The warning a bin whose capacity is declared without a unit raises.
+ *
+ * A pallet position is the case the measurement model exists for: the unit of handling is the pallet,
+ * and a capacity of `1` compared against a request of 480 pieces is either a wrong refusal or a wrong
+ * acceptance. The unit cannot be guessed for a bin that predates the column, so the operator is asked
+ * — which makes this a warning the capacity job surfaces rather than a migration-time default.
+ */
+export const WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED = 'WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED';
+
+/** The refusal a caller receives when it declares a capacity without the unit it is counted in. */
+export const WAREHOUSE_BIN_CAPACITY_UNIT_REQUIRED = 'WAREHOUSE_BIN_CAPACITY_UNIT_REQUIRED';

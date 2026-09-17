@@ -14,7 +14,11 @@ import { PRICING_FEATURES } from './pricing.features';
 import { PRICING_PERMISSIONS } from './pricing.permissions';
 import { schemaExtensions } from './graphql/schema-extensions';
 import { resolvers } from './graphql/resolvers';
-import { AddPriceListForeignKeys1791000000130, CreatePricingTables1791000000120 } from './database/migrations';
+import {
+	AddPriceComputationColumns1791000000135,
+	AddPriceListForeignKeys1791000000130,
+	CreatePricingTables1791000000120
+} from './database/migrations';
 
 /**
  * The settings this plugin reads.
@@ -69,7 +73,11 @@ const PRICING_SETTINGS: PluginSettingContribution[] = [
 	 * against every other migration in the installation, so the tables exist before the API serves a
 	 * request whether or not any other plugin is installed.
 	 */
-	migrations: [CreatePricingTables1791000000120, AddPriceListForeignKeys1791000000130],
+	migrations: [
+		CreatePricingTables1791000000120,
+		AddPriceListForeignKeys1791000000130,
+		AddPriceComputationColumns1791000000135
+	],
 	/**
 	 * The pricing capabilities a role may be granted.
 	 */

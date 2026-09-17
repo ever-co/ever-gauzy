@@ -4,6 +4,13 @@ import { getDynamicPluginsModules, getResolversFromPlugins } from '@gauzy/plugin
 import { RoleEntityResolver } from './../role/role-entity.resolver';
 import { RoleModule } from './../role/role.module';
 import { RolePermissionModule } from './../role-permission/role-permission.module';
+import { UnitCategoryResolver } from './../measurement/unit-category.resolver';
+import { UnitResolver } from './../measurement/unit.resolver';
+import { MeasurementModule } from './../measurement/measurement.module';
+import { PaymentTermResolver } from './../payment-term/payment-term.resolver';
+import { PaymentTermModule } from './../payment-term/payment-term.module';
+import { AddressRoleResolver } from './../address-role/address-role.resolver';
+import { AddressRoleModule } from './../address-role/address-role.module';
 
 /**
  * Resolvers the platform itself ships.
@@ -11,9 +18,16 @@ import { RolePermissionModule } from './../role-permission/role-permission.modul
  * `RoleEntityResolver` is declared by `RoleModule` — a resolver can only inject services its own
  * module can reach, so it belongs beside the service it calls — and is listed here as well so the
  * resolver is discovered from the module the Apollo configuration names, whichever way the resolver
- * graph is later rearranged.
+ * graph is later rearranged. The measurement, settlement-term and address-role resolvers follow the
+ * same rule: each is declared by the module that owns its service.
  */
-const CORE_RESOLVERS: Array<Type<any>> = [RoleEntityResolver];
+const CORE_RESOLVERS: Array<Type<any>> = [
+	RoleEntityResolver,
+	UnitCategoryResolver,
+	UnitResolver,
+	PaymentTermResolver,
+	AddressRoleResolver
+];
 
 /**
  * The domain modules that own the platform's core resolvers.
@@ -27,7 +41,13 @@ const CORE_RESOLVERS: Array<Type<any>> = [RoleEntityResolver];
  * resolver here carries resolves its permission lookup from *this* module — exporting the service
  * from the module that happens to own it is not enough, the module has to be imported.
  */
-const CORE_RESOLVER_MODULES: Array<Type<any>> = [RoleModule, RolePermissionModule];
+const CORE_RESOLVER_MODULES: Array<Type<any>> = [
+	RoleModule,
+	RolePermissionModule,
+	MeasurementModule,
+	PaymentTermModule,
+	AddressRoleModule
+];
 
 /**
  * Hosts the GraphQL resolvers.

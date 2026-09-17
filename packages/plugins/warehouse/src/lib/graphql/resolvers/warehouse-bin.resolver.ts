@@ -9,7 +9,7 @@ import { WarehouseZone } from '../../warehouse-zone/warehouse-zone.entity';
 import { WarehouseZoneService } from '../../warehouse-zone/warehouse-zone.service';
 import { WarehouseFeatures } from '../../warehouse.features';
 import { WarehousePermissions } from '../../warehouse.permissions';
-import { IWarehouseBin, WarehouseBinType } from '../../warehouse.types';
+import { IWarehouseBin, IWarehouseBinCapacityCheck, WarehouseBinType } from '../../warehouse.types';
 import { buildConnection, IPageSelection, resolveWindow } from '../pagination';
 import { toUserError } from '../wire';
 
@@ -24,8 +24,11 @@ interface IWarehouseBinInput {
 	isPickable?: boolean;
 	isBlocked?: boolean;
 	capacityUnits?: string;
+	capacityUnitId?: ID;
 	maxWeight?: string;
+	maxWeightUnitId?: ID;
 	maxVolume?: string;
+	maxVolumeUnitId?: ID;
 	aisle?: string;
 	rack?: string;
 	level?: string;
@@ -128,6 +131,36 @@ export class WarehouseBinResolver {
 	@Query('warehouseBinContents')
 	async warehouseBinContents(@Args('id') id: ID) {
 		return await this.warehouseBinService.findContents(id);
+	}
+
+	/**
+	 * Measures a request against a bin's declared capacity.
+	 *
+	 * The answer is a warning rather than a refusal, because exceeding a planning limit is something a
+	 * real warehouse does — and a bin whose capacity has no declared unit is reported instead of being
+	 * compared, since a comparison of two numbers in unknown units answers nothing.
+	 *
+	 * @param input The bin, the requested quantity and the factor that converts it.
+	 * @returns The comparison, with its notices.
+	 */
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_VIEW)
+	@Query('warehouseBinCapacity')
+	async warehouseBinCapacity(
+		@Args('input') input: { binId: ID; quantity: string; unitId?: ID; conversionFactor?: string }
+	): Promise<IWarehouseBinCapacityCheck> {
+		return await this.warehouseBinService.checkCapacity(input);
+	}
+
+	/**
+	 * Lists the bins whose capacity is declared without the unit it is counted in.
+	 *
+	 * @param warehouseId The location, when the caller wants one location only.
+	 * @returns One entry per bin with an undeclared capacity unit, pallet positions first.
+	 */
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_VIEW)
+	@Query('warehouseBinCapacityWarnings')
+	async warehouseBinCapacityWarnings(@Args('warehouseId') warehouseId?: ID) {
+		return await this.warehouseBinService.capacityWarnings(warehouseId);
 	}
 
 	/**

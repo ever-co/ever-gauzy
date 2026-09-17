@@ -5,6 +5,7 @@ export * from './lib/order.plugin';
 export * from './lib/order.module';
 export * from './lib/order.permissions';
 export * from './lib/order.features';
+export * from './lib/order.types';
 export * from './lib/entities';
 export * from './lib/database/order-migrations';
 export * from './lib/graphql';
@@ -24,6 +25,13 @@ export * from './lib/order-line/order-line.service';
 export * from './lib/order-line/order-line.controller';
 export * from './lib/order-line/repository/type-orm-order-line.repository';
 export * from './lib/order-line/repository/mikro-orm-order-line.repository';
+
+export * from './lib/order-line-invoice/order-line-invoice.entity';
+export * from './lib/order-line-invoice/order-line-invoice.service';
+export * from './lib/order-line-invoice/order-line-invoice.controller';
+export * from './lib/order-line-invoice/dto';
+export * from './lib/order-line-invoice/repository/type-orm-order-line-invoice.repository';
+export * from './lib/order-line-invoice/repository/mikro-orm-order-line-invoice.repository';
 
 export * from './lib/order-address/order-address.entity';
 export * from './lib/order-address/order-address.service';

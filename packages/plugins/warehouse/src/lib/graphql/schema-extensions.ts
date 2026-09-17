@@ -132,8 +132,14 @@ export const schemaExtensions = gql`
 		isPickable: Boolean!
 		isBlocked: Boolean!
 		capacityUnits: Decimal
+		"The unit \`capacityUnits\` is counted in; null is an uninterpreted count."
+		capacityUnitId: ID
 		maxWeight: Decimal
+		"The mass unit \`maxWeight\` is expressed in; null means the organization's default."
+		maxWeightUnitId: ID
 		maxVolume: Decimal
+		"The volume unit \`maxVolume\` is expressed in; null means the organization's default."
+		maxVolumeUnitId: ID
 		aisle: String
 		rack: String
 		level: String
@@ -480,14 +486,61 @@ export const schemaExtensions = gql`
 		isPickable: Boolean
 		isBlocked: Boolean
 		capacityUnits: Decimal
+		"The unit \`capacityUnits\` is counted in. A capacity without one cannot be compared with a request."
+		capacityUnitId: ID
 		maxWeight: Decimal
+		"The mass unit \`maxWeight\` is expressed in."
+		maxWeightUnitId: ID
 		maxVolume: Decimal
+		"The volume unit \`maxVolume\` is expressed in."
+		maxVolumeUnitId: ID
 		aisle: String
 		rack: String
 		level: String
 		position: String
 		sortOrder: Int
 		metadata: JSON
+	}
+
+	"What one capacity measurement found."
+	type WarehouseBinCapacityCheck {
+		binId: ID!
+		"The unit the capacity is declared in; null when the bin declares none."
+		capacityUnitId: ID
+		"The declared capacity, in \`capacityUnitId\`."
+		capacityUnits: Decimal
+		"The quantity asked for, as it was supplied."
+		requestedQuantity: Decimal!
+		"The unit the request was supplied in, when the caller named one."
+		requestedUnitId: ID
+		"The request converted into the capacity's unit; null when there is nothing to convert into."
+		requestedInCapacityUnit: Decimal
+		"The exact difference \`capacityUnits - requestedInCapacityUnit\`."
+		remainingQuantity: Decimal
+		"Whether the request is larger than the declared capacity. A warning, never a refusal."
+		exceeded: Boolean!
+		"The codes a caller acts on."
+		notices: [String!]!
+	}
+
+	"One bin whose capacity is declared without the unit it is counted in."
+	type WarehouseBinCapacityWarning {
+		binId: ID!
+		code: String!
+		warehouseId: ID!
+		type: WarehouseBinType!
+		capacityUnits: Decimal!
+		"The warning code: WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED."
+		notice: String!
+	}
+
+	"The request one capacity measurement is made of."
+	input WarehouseBinCapacityInput {
+		binId: ID!
+		quantity: Decimal!
+		unitId: ID
+		"How many of the capacity's units one of the request's units is; one when omitted."
+		conversionFactor: Decimal
 	}
 
 	"A consecutive range of bins."
@@ -648,6 +701,10 @@ export const schemaExtensions = gql`
 		warehouseBinSubtree(id: ID!): [WarehouseBin!]!
 		"The derived contents of a bin."
 		warehouseBinContents(id: ID!): [WarehouseBinBalance!]!
+		"Measures a requested quantity against a bin's declared capacity, in the capacity's own unit."
+		warehouseBinCapacity(input: WarehouseBinCapacityInput!): WarehouseBinCapacityCheck!
+		"Bins whose capacity is declared without the unit it is counted in; pallet positions first."
+		warehouseBinCapacityWarnings(warehouseId: ID): [WarehouseBinCapacityWarning!]!
 		"Pick waves of the caller's organization."
 		pickWaves(filter: PickWaveFilter, page: PageInput): PickWaveConnection!
 		"One wave, with its pick lists."

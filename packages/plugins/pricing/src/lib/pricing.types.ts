@@ -4,11 +4,12 @@ import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
  * The pricing vocabulary.
  *
  * Pricing answers one question — what does one unit of this variant cost, for this context, right
- * now — and the four enumerations below are the closed parts of that answer: what kind of list is
- * competing, whether the list is eligible, whether the price row is eligible, and which scope a
- * tax-inclusivity preference is keyed by. Everything contextual (channel, region, customer group,
- * quantity, window) is data rather than an enumeration, because a business adds a channel far more
- * often than it changes the shape of the question.
+ * now — and the enumerations below are the closed parts of that answer: what kind of list is
+ * competing, whether the list is eligible, whether the price row is eligible, which scope a
+ * tax-inclusivity preference is keyed by, and **how a price row computes the price it states**.
+ * Everything contextual (channel, region, customer group, quantity, window) is data rather than an
+ * enumeration, because a business adds a channel far more often than it changes the shape of the
+ * question.
  */
 
 /*
@@ -90,6 +91,57 @@ export enum PriceSource {
 	VARIANT_RETAIL_PRICE = 'VARIANT_RETAIL_PRICE'
 }
 
+/**
+ * How a price row computes its price.
+ *
+ * A closed two-value set, deliberately: the arithmetic space does not grow, so this is an
+ * enumeration and not a registry. A mode a package could add would need a code path of its own, not
+ * a row, and pretending otherwise is how a pricing engine becomes un-reviewable.
+ */
+export enum PriceComputeMode {
+	/** The row's `amount` **is** the price. The only mode before this revision. */
+	AMOUNT = 'AMOUNT',
+	/** The price is **derived** from a base: `amount = base × (1 − percent / 100)`, then `roundTo`. */
+	PERCENT_OFF = 'PERCENT_OFF'
+}
+
+/**
+ * Which price a derivation starts from.
+ *
+ * Required exactly when `computeMode` is `PERCENT_OFF`. `COST` with a negative `percent` is the
+ * cost-plus **markup**; `PRICE_LIST` is the price-book case, where a derived list re-derives itself
+ * when its base list changes instead of going stale.
+ */
+export enum PriceBaseSource {
+	/** The legacy variant retail price, converted through `exchange_rate` when the currencies differ. */
+	LIST = 'LIST',
+	/** `product_price.costAmount` when set, else the legacy variant unit cost. */
+	COST = 'COST',
+	/** Another price list, named by `basePriceListId`: acyclic and depth-capped at resolution. */
+	PRICE_LIST = 'PRICE_LIST'
+}
+
+/**
+ * How a winning row arrived at its amount, echoed with the resolution.
+ *
+ * A derived row stores no amount, so a caller that reads the row directly would read null. The
+ * resolution is the sanctioned read path for a price and this is the part of it that explains the
+ * arithmetic: which mode produced the amount, and — for a derivation — the base, the share and the
+ * price ending that were applied to it.
+ */
+export interface IPriceComputation {
+	/** How the winning row computes. */
+	computeMode: PriceComputeMode;
+	/** Signed fraction of the base; positive reduces it and negative is a cost-plus markup. */
+	percent?: DecimalString;
+	/** Which price the derivation started from. */
+	baseSource?: PriceBaseSource;
+	/** The list a `PRICE_LIST` derivation read. */
+	basePriceListId?: ID;
+	/** The multiple the derived amount was quantised to, after the percentage and before rounding. */
+	roundTo?: DecimalString;
+}
+
 /*
 |--------------------------------------------------------------------------
 | Resolution
@@ -141,6 +193,13 @@ export interface IResolvedPrice {
 	currency: CurrencyCode;
 	/** What one unit costs. */
 	amount: DecimalString;
+	/**
+	 * The amount the winner derived from, when it derived one. Null for an `AMOUNT` row, and the
+	 * honest "was" figure for a derived winner — the price the base says, before the row's share.
+	 */
+	baseAmount?: DecimalString;
+	/** How the winning row arrived at `amount`. */
+	computation?: IPriceComputation;
 	/** What it would cost without the winning list: the "was" price. */
 	originalAmount?: DecimalString;
 	/** Display-only manufacturer's suggested price carried from the winning row. */
@@ -151,6 +210,8 @@ export interface IResolvedPrice {
 	source: PriceSource;
 	/** Names of the conditions that narrowed the candidate set, for the resolution trace. */
 	matchedRules: string[];
+	/** Notices the resolution raises: a margin floor passed, a base that could not be resolved. */
+	notices?: string[];
 	/** Human-readable account of the decision. */
 	explain: string;
 }
@@ -173,14 +234,29 @@ export interface IProductPriceTierInput {
 export interface IProductPriceBulkItem {
 	/** Existing row to update; absent means insert. */
 	id?: ID;
-	/** Variant the price belongs to. */
-	variantId: ID;
+	/**
+	 * Variant the price belongs to. May be omitted only for an **open-scoped** row, whose
+	 * applicability is exactly its `rule` rows with `ownerType = PRICE`.
+	 */
+	variantId?: ID;
 	/** Price list the price belongs to; absent means the default price of the variant. */
 	priceListId?: ID;
 	/** Currency of the amount. */
 	currency: CurrencyCode;
-	/** Selling price. */
-	amount: DecimalString | number;
+	/** Selling price. Absent exactly when the row derives its price. */
+	amount?: DecimalString | number;
+	/** How the row computes its price; `AMOUNT` when omitted. */
+	computeMode?: PriceComputeMode;
+	/** Signed fraction of the base; required when `computeMode` is `PERCENT_OFF`. */
+	percent?: DecimalString | number;
+	/** Which price the derivation starts from; required when `computeMode` is `PERCENT_OFF`. */
+	baseSource?: PriceBaseSource;
+	/** The list a `PRICE_LIST` derivation reads; required when `baseSource` is `PRICE_LIST`. */
+	basePriceListId?: ID;
+	/** The multiple the derived amount is quantised to, before the currency rounding boundary. */
+	roundTo?: DecimalString | number;
+	/** The unit `minQuantity` and `maxQuantity` are expressed in. */
+	unitId?: ID;
 	/** Display-only "was" price. */
 	compareAtAmount?: DecimalString | number;
 	/** Cost snapshot used by the margin guard. */

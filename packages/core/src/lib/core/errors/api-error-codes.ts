@@ -190,6 +190,47 @@ export const ApiErrorCode = {
 	TAX_INCLUSIVE_MISMATCH: 'TAX_INCLUSIVE_MISMATCH',
 
 	/* ------------------------------------------------------------------ *
+	 * Measurement — a quantity whose meaning the rows do not support
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Two units of different measurement families were used together. Conversion is defined only
+	 * inside one family, so "10 pieces" and "120 grams" cannot be added, compared or converted, and a
+	 * request that implies they can is refused rather than answered with a number that means nothing.
+	 */
+	UNIT_CATEGORY_MISMATCH: 'UNIT_CATEGORY_MISMATCH',
+	/** A family was created, or reached, without the reference unit that defines its base quantity. */
+	UNIT_CATEGORY_NO_REFERENCE: 'UNIT_CATEGORY_NO_REFERENCE',
+	/** A variant's stock unit is not its family's reference unit, which the stock ledger's sum requires. */
+	STOCK_UNIT_NOT_REFERENCE: 'STOCK_UNIT_NOT_REFERENCE',
+	/** A variant level's family disagrees with the family of the product level above it. */
+	PRODUCT_LEVEL_UNIT_CATEGORY_MISMATCH: 'PRODUCT_LEVEL_UNIT_CATEGORY_MISMATCH',
+
+	/* ------------------------------------------------------------------ *
+	 * Settlement terms — a schedule the document total cannot support
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * A term's instalments allocate more than the document total. Returned with `422`, the status the
+	 * API specification assigns it, because the request is well-formed and the resource is understood
+	 * — it is the arithmetic that does not close.
+	 */
+	PAYMENT_TERM_OVERALLOCATED: 'PAYMENT_TERM_OVERALLOCATED',
+	/** A term's percentage lines do not total 100 when the term carries no fixed line. */
+	PAYMENT_TERM_PERCENT_SUM: 'PAYMENT_TERM_PERCENT_SUM',
+	/** A term's instalment lines are not addressable: no lines, or two lines sharing a sequence. */
+	PAYMENT_TERM_LINES_INVALID: 'PAYMENT_TERM_LINES_INVALID',
+
+	/* ------------------------------------------------------------------ *
+	 * The address book — a role or a default the rows contradict
+	 * ------------------------------------------------------------------ */
+
+	/** One owner holds two default addresses for one role, which only a service check can catch. */
+	ADDRESS_DEFAULT_MISMATCH: 'ADDRESS_DEFAULT_MISMATCH',
+	/** An address's buyer-scoped owner column disagrees with its polymorphic owner pair. */
+	ADDRESS_OWNER_MISMATCH: 'ADDRESS_OWNER_MISMATCH',
+
+	/* ------------------------------------------------------------------ *
 	 * Platform — the floor every route falls back to
 	 * ------------------------------------------------------------------ */
 

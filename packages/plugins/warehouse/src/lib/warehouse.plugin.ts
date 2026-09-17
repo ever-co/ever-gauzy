@@ -3,6 +3,7 @@ import { Type } from '@nestjs/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { CreateWarehouseLayoutTables1791000000180 } from './database/migrations/1791000000180-CreateWarehouseLayoutTables';
 import { CreateWarehouseWorkTables1791000000190 } from './database/migrations/1791000000190-CreateWarehouseWorkTables';
+import { AddWarehouseBinCapacityUnits1791000000195 } from './database/migrations/1791000000195-AddWarehouseBinCapacityUnits';
 import { resolvers } from './graphql/resolvers';
 import { schemaExtensions } from './graphql/schema-extensions';
 import { WAREHOUSE_FEATURES } from './warehouse.features';
@@ -47,7 +48,11 @@ const WAREHOUSE_DEPENDS_ON: string[] = ['@gauzy/plugin-inventory'];
 	 * The migrations this plugin owns. The platform merges them into the connection's migration list
 	 * before the connection is created, so they run in timestamp order with every other package's.
 	 */
-	migrations: [CreateWarehouseLayoutTables1791000000180, CreateWarehouseWorkTables1791000000190],
+	migrations: [
+		CreateWarehouseLayoutTables1791000000180,
+		CreateWarehouseWorkTables1791000000190,
+		AddWarehouseBinCapacityUnits1791000000195
+	],
 	/**
 	 * The permissions the plugin contributes to the platform role model.
 	 */

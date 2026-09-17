@@ -7,13 +7,23 @@ import { TypeOrmWarehouseZoneRepository } from '../warehouse-zone/repository/typ
 import {
 	IBinReconciliationLine,
 	IBinReconciliationReport,
+	IWarehouseBinCapacityCheck,
 	IWarehouseBinRangeInput,
 	IWarehouseStockLedgerPort,
+	WAREHOUSE_BIN_CAPACITY_UNIT_REQUIRED,
+	WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED,
 	WAREHOUSE_STOCK_LEDGER,
 	WarehouseBinType,
 	WarehouseStockMovementKind
 } from '../warehouse.types';
-import { normalizeQuantity, subtractQuantities, toQuantityUnits } from '../warehouse.quantity';
+import {
+	QUANTITY_SCALE,
+	fromQuantityUnits,
+	isGreaterThan,
+	normalizeQuantity,
+	subtractQuantities,
+	toQuantityUnits
+} from '../warehouse.quantity';
 import { WarehouseBin } from './warehouse-bin.entity';
 import { MikroOrmWarehouseBinRepository } from './repository/mikro-orm-warehouse-bin.repository';
 import { TypeOrmWarehouseBinRepository } from './repository/type-orm-warehouse-bin.repository';
@@ -36,6 +46,11 @@ const MAX_BIN_DEPTH = 5;
  * here, so reconciliation compares what the level rows claim with what the ledger recorded and
  * **writes the difference as a movement through the inventory capability**. This service never moves a
  * quantity itself: two writers of one level is how a level drifts.
+ *
+ * The capacity is the third. `capacityUnits` is a quantity *in a stated unit*, so this service refuses
+ * a write that declares one without the other, converts a request into the capacity's own unit exactly
+ * before comparing, and reports the bins whose capacity predates the unit column rather than guessing
+ * what their operator meant.
  */
 @Injectable()
 export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
@@ -72,6 +87,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 		await this.assertCodeIsFree(warehouseId, code);
 		await this.assertZoneBelongsToLocation(warehouseId, entity.zoneId);
 		await this.assertParentIsUsable(warehouseId, entity.zoneId, entity.parentId, undefined);
+		this.assertCapacityCarriesItsUnit(entity.capacityUnits, entity.capacityUnitId, true);
 
 		const bin = await super.create({
 			...entity,
@@ -81,8 +97,11 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			sortOrder: entity.sortOrder ?? 0,
 			version: 1,
 			capacityUnits: entity.capacityUnits ? normalizeQuantity(entity.capacityUnits) : undefined,
+			capacityUnitId: entity.capacityUnitId ?? undefined,
 			maxWeight: entity.maxWeight ? normalizeQuantity(entity.maxWeight) : undefined,
+			maxWeightUnitId: entity.maxWeightUnitId ?? undefined,
 			maxVolume: entity.maxVolume ? normalizeQuantity(entity.maxVolume) : undefined,
+			maxVolumeUnitId: entity.maxVolumeUnitId ?? undefined,
 			tenantId,
 			organizationId
 		} as any);
@@ -166,6 +185,20 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			await this.assertCodeIsNotPrinted(id);
 		}
 
+		// The capacity's unit is checked on the row as it would stand, but only when the caller touched
+		// one of the two: a bin whose capacity predates the unit column stays editable for every other
+		// reason, and declaring its unit is what the capacity job asks its operator to do.
+		const statesCapacity =
+			entity.capacityUnits !== undefined || entity.capacityUnitId !== undefined;
+
+		if (statesCapacity) {
+			this.assertCapacityCarriesItsUnit(
+				entity.capacityUnits !== undefined ? entity.capacityUnits : bin.capacityUnits,
+				entity.capacityUnitId !== undefined ? entity.capacityUnitId : bin.capacityUnitId,
+				true
+			);
+		}
+
 		await super.update(id, {
 			...entity,
 			warehouseId: bin.warehouseId,
@@ -175,6 +208,172 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 		} as any);
 
 		return await this.findOneScoped(id);
+	}
+
+	/**
+	 * Measures a request against a bin's declared capacity.
+	 *
+	 * This is the method the measurement model exists for. A capacity is a quantity in a stated unit, so
+	 * a request entered in another unit is converted through the factor the caller supplies — the
+	 * conversion happens once, here, at the boundary where a document quantity meets a level — and only
+	 * then compared. The answer is a **warning**: exceeding a planning limit is something a real
+	 * warehouse does, and the record has to be able to say so rather than refuse the put-away.
+	 *
+	 * A bin that declares a capacity without a unit is reported with
+	 * `WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED` and nothing is converted, because converting into an
+	 * undeclared unit would be a guess dressed as a measurement.
+	 *
+	 * @param input The bin, the requested quantity and — when the request is in another unit — the unit
+	 * it was entered in and that unit's factor against the capacity's unit.
+	 * @returns The comparison, exact, with the notices a caller acts on.
+	 */
+	public async checkCapacity(input: {
+		binId: ID;
+		quantity: DecimalString | number;
+		unitId?: ID;
+		conversionFactor?: DecimalString | number;
+	}): Promise<IWarehouseBinCapacityCheck> {
+		const bin = await this.findOneScoped(input.binId);
+		const requestedQuantity = normalizeQuantity(input.quantity);
+		const notices: string[] = [];
+
+		if (bin.capacityUnits == null) {
+			return {
+				binId: bin.id,
+				capacityUnitId: bin.capacityUnitId,
+				requestedQuantity,
+				requestedUnitId: input.unitId,
+				exceeded: false,
+				notices
+			};
+		}
+
+		if (!bin.capacityUnitId) {
+			notices.push(WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED);
+
+			return {
+				binId: bin.id,
+				capacityUnits: normalizeQuantity(bin.capacityUnits),
+				requestedQuantity,
+				requestedUnitId: input.unitId,
+				exceeded: false,
+				notices
+			};
+		}
+
+		const converted = normalizeQuantity(
+			this.convertQuantity(requestedQuantity, input.conversionFactor ?? '1')
+		);
+		const remaining = subtractQuantities(bin.capacityUnits, converted);
+		const exceeded = isGreaterThan(converted, bin.capacityUnits);
+
+		if (exceeded) {
+			notices.push('WAREHOUSE_BIN_CAPACITY_EXCEEDED');
+		}
+
+		return {
+			binId: bin.id,
+			capacityUnitId: bin.capacityUnitId,
+			capacityUnits: normalizeQuantity(bin.capacityUnits),
+			requestedQuantity,
+			requestedUnitId: input.unitId,
+			requestedInCapacityUnit: converted,
+			remainingQuantity: remaining,
+			exceeded,
+			notices
+		};
+	}
+
+	/**
+	 * Lists the bins whose capacity is declared without the unit it is counted in.
+	 *
+	 * This is the "ask the tenant" half of the revision. Every bin that already carried a capacity was
+	 * conceived in whatever unit its operator had in mind, and no migration can recover which one —
+	 * defaulting to pieces would silently redefine a pallet position's capacity of `1` as one item. The
+	 * report names them so an operator declares the unit, and the pallet positions are named first
+	 * because they are the ones whose handling unit makes the ambiguity operational rather than
+	 * theoretical.
+	 *
+	 * @param warehouseId The location, when the caller wants one location only.
+	 * @returns One entry per bin with an undeclared capacity unit, pallet positions first.
+	 */
+	public async capacityWarnings(warehouseId?: ID): Promise<
+		Array<{ binId: ID; code: string; warehouseId: ID; type: WarehouseBinType; capacityUnits: DecimalString; notice: string }>
+	> {
+		const bins = await this.typeOrmWarehouseBinRepository.find({
+			where: {
+				...(warehouseId ? { warehouseId } : {}),
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			}
+		});
+
+		return bins
+			.filter((bin) => bin.capacityUnits != null && !bin.capacityUnitId)
+			.sort((left, right) => {
+				const leftPallet = left.type === WarehouseBinType.PALLET ? 0 : 1;
+				const rightPallet = right.type === WarehouseBinType.PALLET ? 0 : 1;
+
+				return leftPallet !== rightPallet ? leftPallet - rightPallet : left.code.localeCompare(right.code);
+			})
+			.map((bin) => ({
+				binId: bin.id,
+				code: bin.code,
+				warehouseId: bin.warehouseId as ID,
+				type: bin.type,
+				capacityUnits: normalizeQuantity(bin.capacityUnits),
+				notice: WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED
+			}));
+	}
+
+	/**
+	 * Converts a quantity into another unit through a factor, exactly.
+	 *
+	 * `factor` is how many of the target unit one of the source unit is — the same orientation
+	 * `unit.factor` carries — so the product is taken at twice the quantity scale and quantised back to
+	 * it once, half away from zero. Nothing here is a floating-point number: a capacity comparison that
+	 * drifts at the sixth decimal is a comparison that answers the wrong question at exactly the
+	 * boundary where the answer matters.
+	 *
+	 * @param quantity The quantity to convert.
+	 * @param factor How many target units one source unit is.
+	 * @returns The converted quantity, at the storage scale.
+	 */
+	private convertQuantity(quantity: DecimalString | number, factor: DecimalString | number): DecimalString {
+		const units = toQuantityUnits(quantity);
+		const factorUnits = toQuantityUnits(factor);
+		const divisor = 10n ** BigInt(QUANTITY_SCALE);
+		const product = units * factorUnits;
+		const negative = product < 0n;
+		const magnitude = negative ? -product : product;
+		const quantised = (magnitude + divisor / 2n) / divisor;
+
+		return fromQuantityUnits(negative ? -quantised : quantised);
+	}
+
+	/**
+	 * @param capacityUnits The declared capacity, as it would stand.
+	 * @param capacityUnitId The unit it is counted in, as it would stand.
+	 * @param stated Whether the write states the capacity at all; a legacy row edited for another
+	 * reason is left to the capacity job rather than refused.
+	 * @throws BadRequestException when a capacity is declared without the unit it is counted in.
+	 */
+	private assertCapacityCarriesItsUnit(
+		capacityUnits: DecimalString | number | null | undefined,
+		capacityUnitId: ID | undefined,
+		stated: boolean
+	): void {
+		if (!stated || capacityUnits == null || capacityUnits === '') {
+			return;
+		}
+
+		if (!capacityUnitId) {
+			throw new BadRequestException(
+				`${WAREHOUSE_BIN_CAPACITY_UNIT_REQUIRED}: a capacity is a quantity in a stated unit, so a bin that declares ` +
+					'one must declare the unit it is counted in — otherwise a request in pieces and a capacity in pallets ' +
+					'are compared as though they were the same number.'
+			);
+		}
 	}
 
 	/**

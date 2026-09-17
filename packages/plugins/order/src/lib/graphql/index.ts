@@ -1,8 +1,10 @@
 import { OrderResolver } from './order.resolver';
 import { OrderChangeResolver } from './order-change.resolver';
+import { OrderLineInvoiceResolver } from './order-line-invoice.resolver';
 
 export { OrderResolver } from './order.resolver';
 export { OrderChangeResolver } from './order-change.resolver';
+export { OrderLineInvoiceResolver } from './order-line-invoice.resolver';
 
 /**
  * The GraphQL-only shapes: the connection payloads and the totals a root field answers with.
@@ -25,4 +27,4 @@ export type {
  * A plugin's resolvers are registered with its SDL, so disabling the package removes both: the schema
  * never advertises a field nothing can resolve.
  */
-export const orderResolvers = [OrderResolver, OrderChangeResolver];
+export const orderResolvers = [OrderResolver, OrderChangeResolver, OrderLineInvoiceResolver];

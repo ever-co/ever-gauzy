@@ -163,7 +163,14 @@ function serviceUnderTest(lists: IListRow[], prices: IPriceRow[] = []) {
 	const productPriceService = new ProductPriceService(
 		typeOrmProductPriceRepository as never,
 		{} as never,
-		{ resolveTaxInclusivity: async () => null } as never
+		{ resolveTaxInclusivity: async () => null } as never,
+		// A `LIST` derivation converts through the rate in force and fails closed when there is none; no
+		// fixture in this file derives its price, so a converter that refuses is the honest stub.
+		{
+			convert: async () => {
+				throw new Error('no rate covers the pair');
+			}
+		} as never
 	);
 
 	return {

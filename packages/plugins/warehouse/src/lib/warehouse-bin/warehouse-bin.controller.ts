@@ -13,13 +13,14 @@ import {
 	UseValidationPipe
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
-import { IBinReconciliationReport } from '../warehouse.types';
+import { IBinReconciliationReport, IWarehouseBinCapacityCheck } from '../warehouse.types';
 import { WarehouseFeatures } from '../warehouse.features';
 import { WarehousePermissions } from '../warehouse.permissions';
 import { WarehouseBin } from './warehouse-bin.entity';
 import { WarehouseBinService } from './warehouse-bin.service';
 import {
 	BlockWarehouseBinDTO,
+	CheckWarehouseBinCapacityDTO,
 	CreateWarehouseBinDTO,
 	CreateWarehouseBinRangeDTO,
 	ReconcileWarehouseBinDTO,
@@ -60,6 +61,23 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	}
 
 	/**
+	 * Lists the bins whose capacity is declared without the unit it is counted in.
+	 *
+	 * The route is mapped before the by-id route on purpose: a literal segment declared after `:id`
+	 * would be captured by it and refused as a malformed identifier instead of being served.
+	 *
+	 * @param warehouseId The location, when the caller wants one location only.
+	 * @returns One entry per bin with an undeclared capacity unit, pallet positions first.
+	 */
+	@ApiOperation({ summary: 'List bins whose capacity unit is undeclared' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The bins whose capacity cannot be interpreted were listed.' })
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_VIEW)
+	@Get('/capacity-warnings')
+	async capacityWarnings(@Query('warehouseId') warehouseId?: ID) {
+		return await this.warehouseBinService.capacityWarnings(warehouseId);
+	}
+
+	/**
 	 * Reads a bin with its area, its parent and its children.
 	 *
 	 * @param id The bin.
@@ -71,6 +89,25 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	@Get(':id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<WarehouseBin> {
 		return await this.warehouseBinService.findOneDetailed(id);
+	}
+
+	/**
+	 * Measures a request against a bin's declared capacity.
+	 *
+	 * The route is mapped before the by-id route so `/capacity-check` is not read as an identifier.
+	 *
+	 * @param entity The bin, the requested quantity and the factor that converts it when the request is
+	 * in another unit.
+	 * @returns The comparison, with its notices.
+	 */
+	@ApiOperation({ summary: 'Measure a requested quantity against a bin capacity' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The request was measured against the declared capacity.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The quantity is not an exact decimal.' })
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_VIEW)
+	@Post('/capacity-check')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async capacityCheck(@Body() entity: CheckWarehouseBinCapacityDTO): Promise<IWarehouseBinCapacityCheck> {
+		return await this.warehouseBinService.checkCapacity(entity);
 	}
 
 	/**

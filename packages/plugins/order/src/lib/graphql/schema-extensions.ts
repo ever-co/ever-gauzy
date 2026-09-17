@@ -62,6 +62,10 @@ export const orderSchemaExtensions = gql`
 		canceledAt: DateTime
 		cancelReason: String
 		purchaseOrderNumber: String
+		"The settlement schedule the order was placed against; null when none was agreed."
+		paymentTermId: ID
+		"The date the goods were promised: a cache of the lines, never authored."
+		promisedAt: DateTime
 		externalId: String
 		metadata: JSON
 		lines: [OrderLine!]
@@ -105,7 +109,82 @@ export const orderSchemaExtensions = gql`
 		returnReceivedQuantity: Decimal!
 		returnDismissedQuantity: Decimal!
 		writtenOffQuantity: Decimal!
+		"Quantity delivered beyond what was outstanding, recorded rather than clamped."
+		overFulfilledQuantity: Decimal!
+		"What kind of line this is: a real line, a heading or a note."
+		kind: OrderLineKind!
+		"Cache: the quantity actually billed, over the line's invoice links."
+		invoicedQuantity: Decimal!
+		"Cache: the same links with direction CREDIT."
+		creditedQuantity: Decimal!
+		"Derived from the billing basis and the two counters; never authored."
+		invoiceStatus: OrderLineInvoiceStatus!
+		"Cache: the quantity paid back, over the refund lines of succeeded refunds."
+		refundedQuantity: Decimal!
+		"Cache: the money paid back, in the order's currency, as a positive magnitude."
+		refundedAmount: Decimal!
+		"The date this line was promised to the customer."
+		promisedAt: DateTime
+		"The lead time the promise was computed from."
+		leadTimeDays: Int
 		metadata: JSON
+		"Every invoice item and credit-note item this line was billed through."
+		invoiceLinks: [OrderLineInvoice!]
+	}
+
+	"One line-to-invoice link: the pivot that makes a partial invoice expressible."
+	type OrderLineInvoice {
+		id: ID!
+		orderLineId: ID!
+		"The invoice item, or the credit-note item, this link records."
+		invoiceItemId: ID!
+		"Which way this link moves the line's counters."
+		direction: OrderLineInvoiceDirection!
+		"The quantity the item actually billed, in the line's unit."
+		quantity: Decimal!
+		"The signed amount the item carried; negative for a credit."
+		amount: Decimal!
+		currency: String!
+		metadata: JSON
+		createdAt: DateTime
+		updatedAt: DateTime
+	}
+
+	"What one line's invoicing counters say, and what is left to bill."
+	type OrderLineInvoicingPosition {
+		"The quantity the line is invoiced against."
+		basisQuantity: Decimal!
+		invoicedQuantity: Decimal!
+		creditedQuantity: Decimal!
+		"The basis less what has been invoiced, never negative."
+		toInvoiceQuantity: Decimal!
+		invoiceStatus: OrderLineInvoiceStatus!
+	}
+
+	"What kind of line this is."
+	enum OrderLineKind {
+		"A real line: priced, fulfilled, invoiced."
+		ITEM
+		"A presentation heading, which carries no quantity and no price."
+		SECTION
+		"A free-text line between items."
+		NOTE
+	}
+
+	"How much of a line has been billed."
+	enum OrderLineInvoiceStatus {
+		NOT_INVOICED
+		PARTIALLY_INVOICED
+		INVOICED
+		OVER_INVOICED
+	}
+
+	"Which way a line-to-invoice link moves the counters."
+	enum OrderLineInvoiceDirection {
+		"A positive invoice item that bills part of the line."
+		INVOICE
+		"A negative credit-note item that credits part of the line."
+		CREDIT
 	}
 
 	"A frozen address of an order."
@@ -282,6 +361,8 @@ export const orderSchemaExtensions = gql`
 		locale: String
 		isTest: Boolean
 		source: String
+		"The settlement schedule the order is placed against."
+		paymentTermId: ID
 		externalId: String
 	}
 
@@ -292,6 +373,30 @@ export const orderSchemaExtensions = gql`
 		note: String
 		externalId: String
 		cancelReason: String
+		paymentTermId: ID
+	}
+
+	"The request that records one line-to-invoice link."
+	input OrderLineInvoiceInput {
+		orderLineId: ID!
+		invoiceItemId: ID!
+		"Which way the link moves the counters; a bill when omitted."
+		direction: OrderLineInvoiceDirection
+		"The quantity the item actually billed, in the line's unit."
+		quantity: Decimal!
+		"The signed amount the item carried; negative for a credit."
+		amount: Decimal!
+		currency: String!
+		"The quantity the line is invoiced against; the ordered quantity when omitted."
+		basisQuantity: Decimal
+		metadata: JSON
+	}
+
+	"The answer to recording a link."
+	type OrderLineInvoicePayload {
+		link: OrderLineInvoice
+		"The line as it stands after the counters moved."
+		line: OrderLine
 	}
 
 	input OrderChangeActionInput {
@@ -335,6 +440,10 @@ export const orderSchemaExtensions = gql`
 		orderChanges(orderId: ID!, status: String): OrderChangeConnection!
 		"Read one change with its actions."
 		orderChange(id: ID!): OrderChange
+		"Every item and credit-note item one order line was billed through, oldest first."
+		orderLineInvoices(orderLineId: ID!): [OrderLineInvoice!]!
+		"How much of one order line is left to bill."
+		orderLineInvoicingPosition(orderLineId: ID!, basisQuantity: Decimal): OrderLineInvoicingPosition!
 	}
 
 	extend type Mutation {
@@ -350,5 +459,32 @@ export const orderSchemaExtensions = gql`
 		confirmOrderChange(id: ID!): OrderChange!
 		declineOrderChange(id: ID!, reason: String): OrderChange!
 		cancelOrderChange(id: ID!, reason: String): OrderChange!
+		"Records a link and moves the line's counters with it, in one transaction."
+		recordOrderLineInvoice(input: OrderLineInvoiceInput!): OrderLineInvoicePayload!
+		"Amends a link's tenant extras; the rest of the row describes an issued document."
+		updateOrderLineInvoice(id: ID!, metadata: JSON): OrderLineInvoice!
+		"Removes a link and re-derives the line's counters from what remains."
+		deleteOrderLineInvoice(id: ID!): DeleteOrderLineInvoicePayload!
+		"Re-derives the counters of a line from its links — the reconciliation read."
+		recomputeOrderLineInvoices(orderLineId: ID!, basisQuantity: Decimal): OrderLine!
+		"Records one refund against a line, in as many parts as it was paid in."
+		recordOrderLineRefund(input: OrderLineRefundInput!): OrderLine!
+	}
+
+	"The request that records one refund against an order line."
+	input OrderLineRefundInput {
+		orderLineId: ID!
+		"The quantity paid back, as a positive magnitude."
+		quantity: Decimal!
+		"The money paid back, in the order currency, as a positive magnitude."
+		amount: Decimal!
+		"Currency of the amount; checked against the order the line belongs to."
+		currency: String!
+	}
+
+	"What removing a link did."
+	type DeleteOrderLineInvoicePayload {
+		id: ID!
+		deleted: Boolean!
 	}
 `;

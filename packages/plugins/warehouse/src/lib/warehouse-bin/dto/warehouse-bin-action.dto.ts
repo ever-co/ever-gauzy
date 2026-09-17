@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsNumberString, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ID } from '@gauzy/contracts';
 
 /**
@@ -55,4 +55,38 @@ export class ReconcileWarehouseBinDTO {
 	})
 	@IsOptional()
 	readonly repair?: boolean;
+}
+
+/**
+ * One capacity measurement.
+ *
+ * The quantity is an exact decimal string, and `conversionFactor` is how many of the capacity's units
+ * one of the request's units is — the same orientation `unit.factor` carries. Supplying it is what
+ * lets a request entered in pieces be compared with a capacity declared in pallets; omitting it
+ * compares the two numbers as though they were the same unit, which is the reading every bin had
+ * before the capacity's unit existed.
+ */
+export class CheckWarehouseBinCapacityDTO {
+	@ApiProperty({ type: () => String, description: 'The bin whose capacity is being measured against.' })
+	@IsNotEmpty()
+	@IsUUID()
+	readonly binId: ID;
+
+	@ApiProperty({ type: () => String, description: 'The requested quantity, as an exact decimal string.' })
+	@IsNotEmpty()
+	@IsNumberString()
+	readonly quantity: string;
+
+	@ApiPropertyOptional({ type: () => String, description: 'The unit the quantity was entered in.' })
+	@IsOptional()
+	@IsUUID()
+	readonly unitId?: ID;
+
+	@ApiPropertyOptional({
+		type: () => String,
+		description: 'How many of the capacity’s units one of the request’s units is; one when omitted.'
+	})
+	@IsOptional()
+	@IsNumberString()
+	readonly conversionFactor?: string;
 }

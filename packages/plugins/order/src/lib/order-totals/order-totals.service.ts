@@ -76,6 +76,7 @@ export class OrderTotalsService {
 		const snapshot = await this.computeTotals(order);
 		const paymentStatus = await this.derivePaymentStatus(order, snapshot);
 		const fulfillmentStatus = await this.deriveFulfillmentStatus(order);
+		const promisedAt = await this.promisedDate(order);
 		const version = Number(order.version) + 1;
 
 		await this.typeOrmOrderRepository.update(order.id, {
@@ -95,6 +96,7 @@ export class OrderTotalsService {
 			paymentStatus,
 			fulfillmentStatus,
 			sellerCount: await this.countSellers(order),
+			promisedAt,
 			version
 		} as any);
 
@@ -269,6 +271,30 @@ export class OrderTotalsService {
 			fulfilledQuantity: total('fulfilledQuantity'),
 			receivedReturnQuantity: total('returnReceivedQuantity')
 		});
+	}
+
+	/**
+	 * The date the order's goods were promised, derived from its lines.
+	 *
+	 * A promise is made per deliverable — lines ship separately — so the order's own date is the latest
+	 * of them and nothing else: it is a cache of the lines, and the totals write is the one place that
+	 * already runs whenever a line moves. An order whose lines carry no promise has no promised date
+	 * rather than a fabricated one.
+	 *
+	 * @param order The order.
+	 * @returns The latest promised date among the lines, or null when none of them carries one.
+	 */
+	private async promisedDate(order: Order): Promise<Date | null> {
+		const lines = ((await this.lineService.findAll({
+			where: { orderId: order.id }
+		})) as IPagination<OrderLine>).items;
+
+		const promised = lines
+			.map((line) => line.promisedAt)
+			.filter((value): value is Date => value != null)
+			.map((value) => new Date(value).getTime());
+
+		return promised.length ? new Date(Math.max(...promised)) : null;
 	}
 
 	/**

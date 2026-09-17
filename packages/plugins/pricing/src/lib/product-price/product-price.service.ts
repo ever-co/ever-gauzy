@@ -4,15 +4,19 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { Money, MultiORMEnum, ProductVariantPrice, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import {
+	IPriceComputation,
 	IPriceContext,
 	IProductPriceBulkItem,
 	IResolvedPrice,
+	PriceBaseSource,
 	PriceBulkMode,
+	PriceComputeMode,
 	PriceListStatus,
 	PriceListType,
 	PriceSource,
 	PriceStatus
 } from '../pricing.types';
+import { ExchangeRateService } from '../exchange-rate/exchange-rate.service';
 import { PricePreferenceService } from '../price-preference/price-preference.service';
 import { ProductPrice } from './product-price.entity';
 import { TypeOrmProductPriceRepository } from './repository/type-orm-product-price.repository';
@@ -37,6 +41,22 @@ interface IResolutionScope {
 }
 
 /**
+ * What one candidate resolves to: the amount that competes, the base it derived from, and the
+ * arithmetic that got there.
+ */
+interface IResolvedAmount {
+	/** The amount the tie-break compares and the caller is charged. */
+	amount: DecimalString;
+	/** The base a derived amount was computed from; absent for an `AMOUNT` row. */
+	baseAmount?: DecimalString;
+	/** How the row computed its amount. */
+	computation: IPriceComputation;
+}
+
+/** How deep a chain of derived price lists may be before a candidate is eliminated. */
+const MAX_BASE_LIST_DEPTH = 5;
+
+/**
  * Product prices: the write-time rules and the resolution algorithm.
  *
  * There is exactly one table in the platform that says what a variant costs and this service is its
@@ -53,6 +73,12 @@ interface IResolutionScope {
  * 3. **Quantity tiers of one tuple never overlap.** A tier is validated on write against the rows
  *    that already exist for the same `(variant, currency, price list)`, because overlapping bands
  *    would make the answer depend on row order — a defect the database cannot see.
+ * 4. **A row may say how it computes rather than what it is.** `computeMode = 'PERCENT_OFF'` derives
+ *    the amount from a base — the legacy retail price, a cost, or another price list — so a price book
+ *    is one row instead of a matrix re-derived by hand on every base change, and a base correction
+ *    propagates instead of leaving every derived list stale. The comparison of step 6 is then made on
+ *    the **resolved** amount, and a candidate whose base cannot be resolved is eliminated with
+ *    `PRICE_BASE_UNRESOLVED` rather than compared.
  *
  * Rule rows (`rule` with `ownerType = PRICE` or `PRICE_LIST`) are conditions decided by the
  * platform's rule engine. The seam for them is `matchedRules` on every resolution: the trace names
@@ -64,7 +90,8 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	constructor(
 		readonly typeOrmProductPriceRepository: TypeOrmProductPriceRepository,
 		readonly mikroOrmProductPriceRepository: MikroOrmProductPriceRepository,
-		private readonly pricePreferenceService: PricePreferenceService
+		private readonly pricePreferenceService: PricePreferenceService,
+		private readonly exchangeRateService: ExchangeRateService
 	) {
 		super(typeOrmProductPriceRepository, mikroOrmProductPriceRepository);
 	}
@@ -97,6 +124,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		const prepared = this.prepare(entity);
 		await this.assertTierIsFree(prepared);
 		this.assertMarginFloor(prepared);
+		await this.assertBaseChainIsUsable(prepared, []);
 
 		return await super.create(prepared);
 	}
@@ -122,13 +150,29 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		// The row as it would stand after the change: the fields the caller did not state keep the value
 		// they already hold, which is what makes the overlap and margin checks meaningful on a partial
 		// update rather than against a half-built row.
+		const computeMode = (entity.computeMode as PriceComputeMode) ?? existing.computeMode;
 		const merged: DeepPartial<ProductPrice> = {
 			...entity,
 			id,
 			variantId: (entity.variantId as ID) ?? existing.variantId,
 			currency: (entity.currency as CurrencyCode) ?? existing.currency,
 			priceListId: entity.priceListId !== undefined ? (entity.priceListId as ID) : existing.priceListId,
-			amount: (entity.amount as DecimalString) ?? existing.amount,
+			// The amount a row carries follows from its mode: a derived row stores none, so a change of
+			// mode that the caller did not accompany with an amount leaves the column to the row's own
+			// rule rather than keeping a number the mode no longer means anything by.
+			amount:
+				entity.amount !== undefined
+					? (entity.amount as DecimalString)
+					: computeMode === PriceComputeMode.PERCENT_OFF
+					? undefined
+					: (existing.amount as DecimalString),
+			computeMode,
+			percent: entity.percent !== undefined ? (entity.percent as DecimalString) : existing.percent,
+			baseSource: entity.baseSource !== undefined ? (entity.baseSource as PriceBaseSource) : existing.baseSource,
+			basePriceListId:
+				entity.basePriceListId !== undefined ? (entity.basePriceListId as ID) : existing.basePriceListId,
+			roundTo: entity.roundTo !== undefined ? (entity.roundTo as DecimalString) : existing.roundTo,
+			unitId: entity.unitId !== undefined ? (entity.unitId as ID) : existing.unitId,
 			minQuantity: (entity.minQuantity as DecimalString) ?? existing.minQuantity,
 			maxQuantity: (entity.maxQuantity as DecimalString) ?? existing.maxQuantity,
 			costAmount: (entity.costAmount as DecimalString) ?? existing.costAmount,
@@ -139,11 +183,20 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 
 		await this.assertTierIsFree(prepared);
 		this.assertMarginFloor(prepared);
+		await this.assertBaseChainIsUsable(prepared, []);
 
 		// Only what the caller stated is written, with the normalisation the full row received: omitting a
 		// field leaves it alone rather than clearing it, so a partial update cannot silently drop a
-		// guard rail or a quantity band.
-		return await super.update(id, this.suppliedOnly(entity, prepared));
+		// guard rail or a quantity band. The mode and the amount travel together, because they are one
+		// fact: writing one without the other would leave a row whose shape contradicts its own rule.
+		const changes: DeepPartial<ProductPrice> = { ...this.suppliedOnly(entity, prepared) };
+
+		if (entity.computeMode !== undefined || entity.amount !== undefined) {
+			changes.computeMode = prepared.computeMode;
+			changes.amount = prepared.amount;
+		}
+
+		return await super.update(id, changes);
 	}
 
 	/**
@@ -251,6 +304,13 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * asked for against what came back, and a missing price is a configuration gap to report, never a
 	 * free product.
 	 *
+	 * **A candidate is compared on its resolved amount, not on its stored one.** A row whose
+	 * `computeMode` is `PERCENT_OFF` stores no amount at all, so its amount is derived here — before the
+	 * currency rounding boundary and before the tie-break — and a candidate whose base cannot be
+	 * resolved is **eliminated** with `PRICE_BASE_UNRESOLVED` rather than compared against a number it
+	 * does not have. That ordering is the reason the candidate window is materialised and then
+	 * resolved, rather than ordered in SQL: a derived amount is not a column.
+	 *
 	 * @param context The context to price against.
 	 * @param options.priceListId Restricts candidates to one list — the dry run of a draft list, which
 	 * is also the one case where that list's own status is not required to be `ACTIVE`.
@@ -297,34 +357,68 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			byVariant.set(row.variantId, bucket);
 		}
 
-		const winners: Array<{ variantId: ID; price: ProductPrice; originalAmount?: DecimalString }> = [];
+		const eligible = new Map<ID, ProductPrice[]>();
 		const unpriced: ID[] = [];
+		const legacyNeeded = new Set<ID>();
 
 		for (const variantId of variantIds) {
 			const candidates = (byVariant.get(variantId) ?? []).filter((row) => this.isCandidate(row, scope));
 
 			if (!candidates.length) {
 				unpriced.push(variantId);
+				legacyNeeded.add(variantId);
 				continue;
 			}
 
-			const price = this.pickWinner(candidates);
+			eligible.set(variantId, candidates);
 
-			winners.push({ variantId, price, originalAmount: this.originalAmountFor(candidates, price, scope) });
-		}
-
-		// The legacy table is read once, and only for the variants that need it: those with no price
-		// at all, and those whose winning row states a margin floor but no cost to measure it against.
-		const legacyNeeded = new Set<ID>(unpriced);
-
-		for (const winner of winners) {
-			if (winner.price.minMarginPercent != null && winner.price.costAmount == null) {
-				legacyNeeded.add(winner.variantId);
+			// A `LIST` or `COST` derivation starts from the legacy variant price, and a row that states a
+			// margin floor with no cost of its own measures it against the same row. Both are read once
+			// for the variants that need them rather than once per candidate.
+			if (
+				candidates.some(
+					(row) =>
+						this.baseNeedsLegacyPrice(row) ||
+						(row.minMarginPercent != null && row.costAmount == null)
+				)
+			) {
+				legacyNeeded.add(variantId);
 			}
 		}
 
-		const legacy = legacyNeeded.size ? await this.findLegacyPrices([...legacyNeeded]) : new Map<ID, ProductVariantPrice>();
+		const legacy = legacyNeeded.size
+			? await this.findLegacyPrices([...legacyNeeded])
+			: new Map<ID, ProductVariantPrice>();
+
+		const winners: Array<{
+			variantId: ID;
+			price: ProductPrice;
+			originalAmount?: DecimalString;
+			resolvedAmount: IResolvedAmount;
+			notices: string[];
+		}> = [];
 		const resolved: IResolvedPrice[] = [];
+
+		for (const [variantId, candidates] of eligible) {
+			const notices: string[] = [];
+			const amounts = await this.resolveCandidateAmounts(candidates, scope, legacy.get(variantId), notices, 0, []);
+			const surviving = candidates.filter((row) => amounts.has(String(row.id)));
+
+			if (!surviving.length) {
+				unpriced.push(variantId);
+				continue;
+			}
+
+			const price = this.pickWinner(surviving, amounts);
+
+			winners.push({
+				variantId,
+				price,
+				originalAmount: this.originalAmountFor(surviving, price, scope, amounts),
+				resolvedAmount: amounts.get(String(price.id)) as IResolvedAmount,
+				notices
+			});
+		}
 
 		for (const winner of winners) {
 			resolved.push(
@@ -333,6 +427,8 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 					winner.price,
 					scope,
 					winner.originalAmount,
+					winner.resolvedAmount,
+					winner.notices,
 					legacy.get(winner.variantId)
 				)
 			);
@@ -352,13 +448,21 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	}
 
 	/**
-	 * Turns the winning row into a resolution: the amount, the "was" amount, the tax basis and the
-	 * human-readable account of the decision.
+	 * Turns the winning row into a resolution: the amount, what it derived from, the "was" amount, the
+	 * tax basis and the human-readable account of the decision.
+	 *
+	 * The amount is the **resolved** one, which for a derived row is the number this resolver computed
+	 * rather than a number the row stored — there is none to store. The base it derived from and the
+	 * arithmetic that was applied are echoed with it, because the resolution is the sanctioned read path
+	 * for a price: a caller that reads a derived row directly reads a null amount, and this is what
+	 * makes that null interpretable instead of merely absent.
 	 *
 	 * @param variantId The variant being priced.
 	 * @param price The winning row.
 	 * @param scope The resolution scope.
 	 * @param originalAmount The "was" amount, when there is a real higher price.
+	 * @param resolvedAmount The amount the row resolved to, with its base and its computation.
+	 * @param candidateNotices What the candidate pass recorded: a base that could not be resolved.
 	 * @param legacyPrice The legacy variant price row, when one is needed for the margin floor.
 	 * @returns The resolution.
 	 */
@@ -367,10 +471,12 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		price: ProductPrice,
 		scope: IResolutionScope,
 		originalAmount: DecimalString | undefined,
+		resolvedAmount: IResolvedAmount,
+		candidateNotices: string[] = [],
 		legacyPrice?: ProductVariantPrice
 	): Promise<IResolvedPrice> {
 		const list = price.priceList;
-		const amount = Money.fromStorage(price.amount, price.currency);
+		const amount = Money.of(resolvedAmount.amount, price.currency);
 		const taxInclusive =
 			price.taxInclusive ??
 			list?.isTaxInclusive ??
@@ -380,8 +486,8 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			})) ??
 			false;
 
-		const notices: string[] = [];
-		const marginNotice = this.marginNotice(price, legacyPrice);
+		const notices: string[] = [...candidateNotices];
+		const marginNotice = this.marginNotice(price, resolvedAmount.amount, legacyPrice);
 
 		if (marginNotice) {
 			notices.push(marginNotice);
@@ -393,12 +499,15 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			priceListId: list?.id,
 			currency: price.currency,
 			amount: this.toStorage(amount, 'resolved amount'),
+			baseAmount: resolvedAmount.baseAmount,
+			computation: resolvedAmount.computation,
 			originalAmount,
 			compareAtAmount: price.compareAtAmount != null ? String(price.compareAtAmount) : undefined,
 			taxInclusive,
 			source: list ? PriceSource.PRICE_LIST : PriceSource.DEFAULT_PRICE,
 			matchedRules: this.traceOf(price, scope, taxInclusive),
-			explain: this.explain(price, scope, originalAmount, taxInclusive, notices)
+			notices,
+			explain: this.explain(price, scope, originalAmount, taxInclusive, notices, resolvedAmount)
 		};
 	}
 
@@ -504,11 +613,12 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	/**
 	 * Orders candidates by the documented tie-break chain and returns the winner.
 	 *
-	 * @param candidates The candidates of one variant, all eligible.
+	 * @param candidates The candidates of one variant, all eligible and all with a resolved amount.
+	 * @param amounts What each candidate resolved to.
 	 * @returns The winning row.
 	 */
-	private pickWinner(candidates: ProductPrice[]): ProductPrice {
-		const ordered = [...candidates].sort((left, right) => this.compareCandidates(left, right));
+	private pickWinner(candidates: ProductPrice[], amounts: Map<string, IResolvedAmount>): ProductPrice {
+		const ordered = [...candidates].sort((left, right) => this.compareCandidates(left, right, amounts));
 		const override = ordered.find((row) => row.priceList?.type === PriceListType.OVERRIDE);
 
 		if (override) {
@@ -540,7 +650,13 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 
 		if (sale && base) {
 			// A tie goes to the sale: a deliberate discount is the intent the operator expressed.
-			return this.compareAmounts(sale.amount, base.amount, sale.currency) <= 0 ? sale : base;
+			return this.compareAmounts(
+				this.amountOf(sale, amounts),
+				this.amountOf(base, amounts),
+				sale.currency
+			) <= 0
+				? sale
+				: base;
 		}
 
 		return sale ?? base;
@@ -548,14 +664,19 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 
 	/**
 	 * The documented tie-break chain: a list-bearing price before a default one, an `OVERRIDE` list
-	 * first, higher priority first, lower amount first, and finally the identifier — which makes the
-	 * order total so that the same context always produces the same winner.
+	 * first, higher priority first, lower **resolved** amount first, and finally the identifier — which
+	 * makes the order total so that the same context always produces the same winner.
 	 *
 	 * @param left One candidate.
 	 * @param right Another candidate.
+	 * @param amounts What each candidate resolved to.
 	 * @returns The comparison result.
 	 */
-	private compareCandidates(left: ProductPrice, right: ProductPrice): number {
+	private compareCandidates(
+		left: ProductPrice,
+		right: ProductPrice,
+		amounts: Map<string, IResolvedAmount>
+	): number {
 		const leftList = left.priceList;
 		const rightList = right.priceList;
 
@@ -576,9 +697,24 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			}
 		}
 
-		const byAmount = this.compareAmounts(left.amount, right.amount, left.currency);
+		const byAmount = this.compareAmounts(
+			this.amountOf(left, amounts),
+			this.amountOf(right, amounts),
+			left.currency
+		);
 
 		return byAmount !== 0 ? byAmount : String(left.id).localeCompare(String(right.id));
+	}
+
+	/**
+	 * @param row A candidate.
+	 * @param amounts What the candidates resolved to.
+	 * @returns The amount the row competes on — its derived amount for a derived row, its stored one
+	 * otherwise. The stored amount is the fallback only for a row this pass did not resolve, which
+	 * cannot reach the tie-break because an unresolved candidate is eliminated before it.
+	 */
+	private amountOf(row: ProductPrice, amounts: Map<string, IResolvedAmount>): DecimalString {
+		return amounts.get(String(row.id))?.amount ?? (row.amount as DecimalString) ?? '0';
 	}
 
 	/**
@@ -589,27 +725,305 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * @param candidates Every eligible candidate of one variant.
 	 * @param winner The winning row.
 	 * @param scope The resolution scope.
+	 * @param amounts What each candidate resolved to.
 	 * @returns The original amount, or undefined.
 	 */
 	private originalAmountFor(
 		candidates: ProductPrice[],
 		winner: ProductPrice,
-		scope: IResolutionScope
+		scope: IResolutionScope,
+		amounts: Map<string, IResolvedAmount>
 	): DecimalString | undefined {
 		const references = candidates.filter((row) => row.priceList && row.priceList.type !== PriceListType.SALE);
 		const reference = references.length
 			? references
-					.map((row) => row.amount)
+					.map((row) => this.amountOf(row, amounts))
 					.reduce((lowest, amount) =>
 						this.compareAmounts(amount, lowest, scope.currency) < 0 ? amount : lowest
 					)
-			: candidates.find((row) => !row.priceList)?.amount;
+			: candidates.find((row) => !row.priceList)
+			? this.amountOf(candidates.find((row) => !row.priceList) as ProductPrice, amounts)
+			: undefined;
 
 		if (reference == null) {
 			return undefined;
 		}
 
-		return this.compareAmounts(reference, winner.amount, scope.currency) > 0 ? reference : undefined;
+		return this.compareAmounts(reference, this.amountOf(winner, amounts), scope.currency) > 0
+			? reference
+			: undefined;
+	}
+
+	/*
+	|--------------------------------------------------------------------------
+	| Derivation
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Resolves what each candidate actually costs.
+	 *
+	 * A candidate whose `computeMode` is `AMOUNT` resolves to the number it stores. A `PERCENT_OFF`
+	 * candidate resolves to `base × (1 − percent / 100)`, then quantised to `roundTo` when it states
+	 * one — **before** the currency rounding boundary, which the caller applies, because a price ending
+	 * is a merchandising decision about a price and not a property of a currency.
+	 *
+	 * A candidate whose base cannot be resolved is left out of the map rather than given a substitute
+	 * amount, and the elimination is recorded as `PRICE_BASE_UNRESOLVED`. Comparing such a candidate on
+	 * a guessed number would make it win a price the base does not support; the honest answer is that
+	 * the candidate has no price, and the caller is told which row and why.
+	 *
+	 * @param candidates The eligible candidates of one variant.
+	 * @param scope The resolution scope.
+	 * @param legacyPrice The legacy variant price row, which two of the three bases read.
+	 * @param notices Collects the eliminations, so a caller sees why a row did not compete.
+	 * @param depth How deep the chain of derived lists already is.
+	 * @param visited The lists already walked, which is what makes a cycle detectable.
+	 * @returns The resolved amount of every candidate whose base resolved, by row identifier.
+	 */
+	private async resolveCandidateAmounts(
+		candidates: ProductPrice[],
+		scope: IResolutionScope,
+		legacyPrice: ProductVariantPrice | undefined,
+		notices: string[],
+		depth: number,
+		visited: ID[]
+	): Promise<Map<string, IResolvedAmount>> {
+		const amounts = new Map<string, IResolvedAmount>();
+
+		for (const row of candidates) {
+			if (row.computeMode !== PriceComputeMode.PERCENT_OFF) {
+				if (row.amount == null) {
+					notices.push(
+						`PRICE_BASE_UNRESOLVED: the price ${row.id} states neither an amount nor a derivation, so it did not compete.`
+					);
+
+					continue;
+				}
+
+				amounts.set(String(row.id), {
+					amount: this.toStorage(Money.fromStorage(row.amount, row.currency), 'amount'),
+					computation: { computeMode: PriceComputeMode.AMOUNT }
+				});
+
+				continue;
+			}
+
+			const baseAmount = await this.resolveBase(row, scope, legacyPrice, depth, visited);
+
+			if (baseAmount == null) {
+				notices.push(
+					`PRICE_BASE_UNRESOLVED: the price ${row.id} derives its amount from ${row.baseSource}` +
+						`${row.basePriceListId ? ` (${row.basePriceListId})` : ''}, which has no amount for this variant and context, so the row did not compete.`
+				);
+
+				continue;
+			}
+
+			amounts.set(String(row.id), {
+				amount: this.deriveAmount(row, baseAmount),
+				baseAmount: this.toStorage(Money.of(baseAmount, row.currency), 'base amount'),
+				computation: this.computationOf(row)
+			});
+		}
+
+		return amounts;
+	}
+
+	/**
+	 * @param row A price row.
+	 * @returns Whether the row derives its price and starts from the legacy variant price.
+	 */
+	private baseNeedsLegacyPrice(row: ProductPrice): boolean {
+		if (row.computeMode !== PriceComputeMode.PERCENT_OFF) {
+			return false;
+		}
+
+		return row.baseSource === PriceBaseSource.LIST || row.baseSource === PriceBaseSource.COST;
+	}
+
+	/**
+	 * @param row A derived price row.
+	 * @returns The arithmetic the row states, as the resolution echoes it back.
+	 */
+	private computationOf(row: ProductPrice): IPriceComputation {
+		return {
+			computeMode: PriceComputeMode.PERCENT_OFF,
+			percent: row.percent != null ? String(row.percent) : undefined,
+			baseSource: row.baseSource,
+			basePriceListId: row.basePriceListId,
+			roundTo: row.roundTo != null ? String(row.roundTo) : undefined
+		};
+	}
+
+	/**
+	 * Applies a row's share and its price ending to a base.
+	 *
+	 * Both steps go through the platform money helper, so a derived price is a price the ledger would
+	 * also compute: the share is a subtraction of `base × share`, not a multiplication by
+	 * `1 − share / 100` evaluated in floating point, and the ending is the money layer's own
+	 * quantisation to an increment.
+	 *
+	 * @param row The derived row.
+	 * @param baseAmount The base it derives from, in the row's currency.
+	 * @returns The derived amount, at the storage scale, before the currency rounding boundary.
+	 */
+	private deriveAmount(row: ProductPrice, baseAmount: DecimalString): DecimalString {
+		const currency = row.currency;
+		const base = Money.of(baseAmount, currency);
+		const share = Money.of(row.percent ?? '0', currency);
+		const reduction = base.multiply(share.amount).divide('100');
+		const derived = base.subtract(reduction);
+
+		if (row.roundTo == null) {
+			return this.toStorage(derived, 'derived amount');
+		}
+
+		// The ending is applied to the derived amount and before the currency rounding boundary: a price
+		// ending is a merchandising decision about a price, not a property of a currency.
+		return this.toStorage(derived.roundToIncrement(row.roundTo).rounded, 'derived amount');
+	}
+
+	/**
+	 * Resolves the base a derived row starts from.
+	 *
+	 * The three bases are deliberately different kinds of answer: `LIST` is the legacy variant retail
+	 * price, converted through the exchange-rate table when it is stated in another currency and failing
+	 * **closed** with `PRICE_BASE_CURRENCY_MISMATCH` when no rate covers the pair, because a silent
+	 * conversion can price a product below cost; `COST` is the row's own cost snapshot, else the legacy
+	 * variant unit cost; and `PRICE_LIST` is the resolved amount of another list for the same variant
+	 * and context, followed at most five lists deep and refused when the chain loops.
+	 *
+	 * @param row The derived row.
+	 * @param scope The resolution scope.
+	 * @param legacyPrice The legacy variant price row.
+	 * @param depth How deep the chain of derived lists already is.
+	 * @param visited The lists already walked.
+	 * @returns The base amount in the row's currency, or undefined when there is none.
+	 * @throws BadRequestException when a `LIST` base is stated in an unconvertible currency, or when the
+	 * chain of derived lists returns to a list it has already read.
+	 */
+	private async resolveBase(
+		row: ProductPrice,
+		scope: IResolutionScope,
+		legacyPrice: ProductVariantPrice | undefined,
+		depth: number,
+		visited: ID[]
+	): Promise<DecimalString | undefined> {
+		switch (row.baseSource) {
+			case PriceBaseSource.LIST: {
+				if (legacyPrice?.retailPrice == null) {
+					return undefined;
+				}
+
+				const retailCurrency = (legacyPrice.retailPriceCurrency ?? row.currency) as CurrencyCode;
+
+				if (retailCurrency === row.currency) {
+					return String(legacyPrice.retailPrice);
+				}
+
+				try {
+					const converted = await this.exchangeRateService.convert(
+						legacyPrice.retailPrice,
+						retailCurrency,
+						row.currency,
+						scope.at
+					);
+
+					return converted.amount;
+				} catch (error) {
+					throw new BadRequestException(
+						`PRICE_BASE_CURRENCY_MISMATCH: the row ${row.id} derives from a retail price in ${retailCurrency} ` +
+							`and no ${retailCurrency}/${row.currency} rate covers ${scope.at.toISOString()}, so its amount cannot be computed. ` +
+							`Record the rate, or state the base in ${row.currency}.`
+					);
+				}
+			}
+
+			case PriceBaseSource.COST: {
+				const cost = row.costAmount ?? legacyPrice?.unitCost;
+
+				return cost == null ? undefined : String(cost);
+			}
+
+			case PriceBaseSource.PRICE_LIST: {
+				if (!row.basePriceListId || depth >= MAX_BASE_LIST_DEPTH) {
+					return undefined;
+				}
+
+				if (visited.some((listId) => String(listId) === String(row.basePriceListId))) {
+					throw new BadRequestException(
+						`PRICE_BASE_CYCLE: the chain of derived price lists returns to ${row.basePriceListId}, so no amount in it is ever computed.`
+					);
+				}
+
+				return await this.resolveListAmount(
+					row,
+					scope,
+					legacyPrice,
+					depth + 1,
+					[...visited, row.basePriceListId]
+				);
+			}
+
+			default:
+				return undefined;
+		}
+	}
+
+	/**
+	 * Resolves the amount one base list states for a variant and context.
+	 *
+	 * The base list is resolved by the ordinary algorithm, restricted to that list: its own rows are
+	 * candidates, its own derivation is followed, and the winner's **resolved** amount is what the
+	 * derived row reads. That is what makes a price book follow its base instead of going stale — and it
+	 * is also why the depth is capped: a chain of lists each deriving from the next is a configuration
+	 * an operator can build by accident, and an unbounded walk would answer it with a stack overflow
+	 * rather than an explanation.
+	 *
+	 * @param row The derived row, whose currency and variant the base list is read for.
+	 * @param scope The resolution scope.
+	 * @param legacyPrice The legacy variant price row.
+	 * @param depth How deep the chain already is.
+	 * @param visited The lists already walked.
+	 * @returns The base list's resolved amount, or undefined when it states none.
+	 */
+	private async resolveListAmount(
+		row: ProductPrice,
+		scope: IResolutionScope,
+		legacyPrice: ProductVariantPrice | undefined,
+		depth: number,
+		visited: ID[]
+	): Promise<DecimalString | undefined> {
+		const { tenantId, organizationId } = this.scope;
+		const rows = await this.typeOrmProductPriceRepository.find({
+			where: {
+				tenantId,
+				organizationId,
+				variantId: row.variantId,
+				currency: row.currency,
+				priceListId: row.basePriceListId
+			} as FindOptionsWhere<ProductPrice>,
+			relations: { priceList: true }
+		});
+
+		const candidates = rows.filter((candidate) => this.isCandidate(candidate, scope));
+
+		if (!candidates.length) {
+			return undefined;
+		}
+
+		const notices: string[] = [];
+		const amounts = await this.resolveCandidateAmounts(candidates, scope, legacyPrice, notices, depth, visited);
+		const surviving = candidates.filter((candidate) => amounts.has(String(candidate.id)));
+
+		if (!surviving.length) {
+			return undefined;
+		}
+
+		const winner = this.pickWinner(surviving, amounts);
+
+		return amounts.get(String(winner.id))?.amount;
 	}
 
 	/*
@@ -621,8 +1035,13 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	/**
 	 * Normalises an incoming price and refuses the shapes the money layer cannot carry.
 	 *
+	 * The row is read as a whole — an amount and a derivation are mutually exclusive, so validating
+	 * either one alone would accept a row that states a price and a way of computing a different one.
+	 *
 	 * @param entity The price as it arrived.
 	 * @returns The price with canonical currency, exact decimals and the caller's organization.
+	 * @throws BadRequestException when the row is not a usable price: no organization, no currency, a
+	 * shape that states neither an amount nor a derivation, or one that states both.
 	 */
 	private prepare(entity: DeepPartial<ProductPrice>): DeepPartial<ProductPrice> {
 		const { organizationId } = this.scope;
@@ -635,35 +1054,30 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			throw new BadRequestException('PRICE_ORGANIZATION_MISMATCH: a price belongs to the caller\'s organization.');
 		}
 
-		if (!entity.variantId) {
-			throw new BadRequestException('PRICE_VARIANT_REQUIRED: a price is the price of a variant.');
-		}
-
 		const currency = this.normalizeCurrency(entity.currency);
+		const computeMode = (entity.computeMode as PriceComputeMode) ?? PriceComputeMode.AMOUNT;
 
-		if (entity.amount === undefined || entity.amount === null || entity.amount === '') {
-			throw new BadRequestException('PRICE_AMOUNT_REQUIRED: a price needs an amount.');
-		}
-
-		const amount = this.toMoney(entity.amount, 'amount', currency);
-
-		if (amount.isNegative()) {
-			throw new BadRequestException('PRICE_AMOUNT_NEGATIVE: a price is never negative.');
-		}
-
+		// `variantId` is deliberately **not** required. A row without one is open-scoped: its
+		// applicability is exactly its `rule` rows with `ownerType = PRICE`, and it prices every variant
+		// they select. Those rules are written through the platform rule resource rather than here, so
+		// this service cannot insist on one at write time — what it can do, and does, is refuse a
+		// configuration whose base or share is unusable, and leave "an open row without a rule prices the
+		// whole catalogue" to the price-list validation the operator runs before activating a list.
 		const prepared: DeepPartial<ProductPrice> = {
 			...entity,
 			organizationId,
 			currency,
-			amount: this.toStorage(amount, 'amount'),
+			computeMode,
 			status: (entity.status as PriceStatus) ?? PriceStatus.ACTIVE,
-			minQuantity: this.readOptionalDecimal(entity.minQuantity, 'minQuantity', currency),
-			maxQuantity: this.readOptionalDecimal(entity.maxQuantity, 'maxQuantity', currency),
 			compareAtAmount: this.readOptionalDecimal(entity.compareAtAmount, 'compareAtAmount', currency),
 			costAmount: this.readOptionalDecimal(entity.costAmount, 'costAmount', currency),
 			minMarginPercent: this.readOptionalDecimal(entity.minMarginPercent, 'minMarginPercent', currency),
-			maxDiscountPercent: this.readOptionalDecimal(entity.maxDiscountPercent, 'maxDiscountPercent', currency)
+			maxDiscountPercent: this.readOptionalDecimal(entity.maxDiscountPercent, 'maxDiscountPercent', currency),
+			roundTo: this.readOptionalDecimal(entity.roundTo, 'roundTo', currency),
+			percent: this.readOptionalDecimal(entity.percent, 'percent', currency)
 		};
+
+		this.prepareComputation(prepared, entity, currency);
 
 		if (prepared.minQuantity != null && prepared.maxQuantity != null) {
 			const min = Money.of(prepared.minQuantity, currency);
@@ -680,6 +1094,166 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	}
 
 	/**
+	 * Reads and validates the pair — an amount, or a derivation — that states what the row costs.
+	 *
+	 * The two are mutually exclusive by construction, which is the whole point of the mode: a row that
+	 * stated both would leave every consumer to choose one, and the choice would be made differently in
+	 * the resolver, in the invoice bridge and in an export. The check constraints state the same rule on
+	 * the dialects that have them; this is where it is stated for every dialect, including the one that
+	 * cannot.
+	 *
+	 * @param prepared The row being assembled, which this fills in.
+	 * @param entity The row as it arrived.
+	 * @param currency Currency the row is priced in.
+	 * @throws BadRequestException when the row states an amount and a derivation, or neither, or a
+	 * derivation whose base, share or ending is missing or out of range.
+	 */
+	private prepareComputation(
+		prepared: DeepPartial<ProductPrice>,
+		entity: DeepPartial<ProductPrice>,
+		currency: CurrencyCode
+	): void {
+		const computeMode = prepared.computeMode as PriceComputeMode;
+		const hasAmount = entity.amount !== undefined && entity.amount !== null && entity.amount !== '';
+		const percent = prepared.percent;
+		const baseSource = prepared.baseSource as PriceBaseSource | undefined;
+		const basePriceListId = prepared.basePriceListId as ID | undefined;
+
+		if (prepared.roundTo != null && !Money.of(prepared.roundTo, currency).isPositive()) {
+			throw new BadRequestException(
+				'PRICE_ROUND_TO_INVALID: a price ending is a positive multiple; a price rounded to zero has no amount.'
+			);
+		}
+
+		if (computeMode === PriceComputeMode.AMOUNT) {
+			if (!hasAmount) {
+				throw new BadRequestException(
+					'PRICE_AMOUNT_REQUIRED: a price row either states its amount or derives one from a base.'
+				);
+			}
+
+			if (percent != null || baseSource != null || basePriceListId != null) {
+				throw new BadRequestException(
+					'PRICE_COMPUTE_MODE_FIELDS: an amount row states neither a share nor a base; declare computeMode PERCENT_OFF to derive its price.'
+				);
+			}
+
+			const amount = this.toMoney(entity.amount, 'amount', currency);
+
+			if (amount.isNegative()) {
+				throw new BadRequestException('PRICE_AMOUNT_NEGATIVE: a price is never negative.');
+			}
+
+			prepared.amount = this.toStorage(amount, 'amount');
+
+			return;
+		}
+
+		if (hasAmount) {
+			throw new BadRequestException(
+				'PRICE_COMPUTE_MODE_FIELDS: a derived row stores no amount — the price is what its base and its share compute to, so storing one would be a second answer that goes stale.'
+			);
+		}
+
+		if (percent == null) {
+			throw new BadRequestException(
+				`PRICE_PERCENT_REQUIRED: computeMode ${PriceComputeMode.PERCENT_OFF} derives the price from a share of a base, and none was given.`
+			);
+		}
+
+		// A signed fraction, not a percentage: `0.250000` is 25 % off and `-0.150000` is a 15 % markup.
+		// The floor is deliberately far below any real cost-plus: it is a guard against a value that is
+		// arithmetically meaningless rather than a commercial limit.
+		if (Money.of(percent, currency).lessThanOrEqual(Money.of('-1000', currency))) {
+			throw new BadRequestException('PRICE_PERCENT_RANGE: a share is greater than -1000.');
+		}
+
+		if (Money.of(percent, currency).greaterThan(Money.of('100', currency))) {
+			throw new BadRequestException(
+				'PRICE_PERCENT_RANGE: a share of more than 100 would make the derived price negative.'
+			);
+		}
+
+		if (!baseSource) {
+			throw new BadRequestException(
+				'PRICE_BASE_SOURCE_REQUIRED: a derived price states the base it derives from — LIST, COST or PRICE_LIST.'
+			);
+		}
+
+		if (baseSource === PriceBaseSource.PRICE_LIST) {
+			if (!basePriceListId) {
+				throw new BadRequestException(
+					'PRICE_BASE_UNRESOLVED: a PRICE_LIST derivation names the list it reads.'
+				);
+			}
+
+			if (prepared.priceListId != null && String(basePriceListId) === String(prepared.priceListId)) {
+				throw new BadRequestException(
+					'PRICE_BASE_CYCLE: a list cannot derive from itself, because its price would then be defined in terms of itself.'
+				);
+			}
+		} else if (basePriceListId != null) {
+			throw new BadRequestException(
+				'PRICE_COMPUTE_MODE_FIELDS: only a PRICE_LIST derivation names a base list; this row names one beside another base.'
+			);
+		}
+
+		prepared.amount = null as unknown as DecimalString;
+	}
+
+	/**
+	 * Refuses a derivation whose chain of base lists loops or is deeper than the resolver will follow.
+	 *
+	 * The write-time half of the acyclicity rule: the resolver also refuses a cycle it meets, because a
+	 * chain can be made cyclic by an update on the other side of it, but a cycle caught here is caught
+	 * by the caller who created it and can be explained to them.
+	 *
+	 * @param entity The prepared row.
+	 * @param visited The lists already walked up the chain.
+	 * @throws BadRequestException with `PRICE_BASE_CYCLE` when the chain returns to a list it has
+	 * already read, or with `PRICE_BASE_CHAIN_TOO_DEEP` when it exceeds the resolution depth cap.
+	 */
+	private async assertBaseChainIsUsable(entity: DeepPartial<ProductPrice>, visited: ID[]): Promise<void> {
+		if (entity.computeMode !== PriceComputeMode.PERCENT_OFF) {
+			return;
+		}
+
+		const basePriceListId = entity.basePriceListId as ID | undefined;
+
+		if ((entity.baseSource as PriceBaseSource) !== PriceBaseSource.PRICE_LIST || !basePriceListId) {
+			return;
+		}
+
+		if (visited.some((listId) => String(listId) === String(basePriceListId))) {
+			throw new BadRequestException(
+				`PRICE_BASE_CYCLE: the chain of derived price lists returns to ${basePriceListId}, so no amount in it is ever computed.`
+			);
+		}
+
+		if (visited.length + 1 > MAX_BASE_LIST_DEPTH) {
+			throw new BadRequestException(
+				`PRICE_BASE_CHAIN_TOO_DEEP: a chain of derived price lists is followed at most ${MAX_BASE_LIST_DEPTH} lists deep.`
+			);
+		}
+
+		const { tenantId, organizationId } = this.scope;
+		const base = await this.typeOrmProductPriceRepository.findOne({
+			where: {
+				tenantId,
+				organizationId,
+				priceListId: basePriceListId,
+				computeMode: PriceComputeMode.PERCENT_OFF
+			} as FindOptionsWhere<ProductPrice>
+		});
+
+		if (!base) {
+			return;
+		}
+
+		await this.assertBaseChainIsUsable(base, [...visited, basePriceListId]);
+	}
+
+	/**
 	 * @param entity The prepared price.
 	 * @throws BadRequestException when a band of the same `(variant, currency, price list)` tuple
 	 * overlaps it, because two overlapping bands make the answer depend on row order.
@@ -690,7 +1264,9 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			where: {
 				tenantId,
 				organizationId,
-				variantId: entity.variantId,
+				// An open-scoped row's variant is null rather than absent, so the bands it is compared
+				// against are the other open rows of the same tuple and not every variant's.
+				variantId: entity.variantId ?? IsNull(),
 				currency: entity.currency,
 				priceListId: entity.priceListId ?? IsNull(),
 				...(entity.id ? { id: Not(entity.id as ID) } : {})
@@ -785,11 +1361,16 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 
 	/**
 	 * @param price A price row that is being resolved.
+	 * @param resolvedAmount The amount the row resolved to — its derived amount for a derived row.
 	 * @param legacyPrice The legacy variant price row, when one was read.
 	 * @returns The margin notice, or undefined when the row states no floor, no cost is known, or the
 	 * price is at or above the floor.
 	 */
-	private marginNotice(price: ProductPrice, legacyPrice?: ProductVariantPrice): string | undefined {
+	private marginNotice(
+		price: ProductPrice,
+		resolvedAmount: DecimalString,
+		legacyPrice?: ProductVariantPrice
+	): string | undefined {
 		if (price.minMarginPercent == null) {
 			return undefined;
 		}
@@ -801,7 +1382,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		}
 
 		const floor = this.minimumPriceForMargin(cost, price.minMarginPercent, price.currency);
-		const amount = Money.fromStorage(price.amount, price.currency);
+		const amount = Money.of(resolvedAmount, price.currency);
 
 		return amount.lessThan(floor)
 			? `MARGIN_BELOW_MINIMUM: ${amount.amount} ${price.currency} is below the ${price.minMarginPercent} margin floor of ${floor.amount}.`
@@ -960,6 +1541,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * @param originalAmount The "was" amount, when there is one.
 	 * @param taxInclusive The tax basis that was resolved.
 	 * @param notices Any notices the resolution produced.
+	 * @param resolvedAmount What the row resolved to, with its arithmetic.
 	 * @returns One sentence an operator can act on.
 	 */
 	private explain(
@@ -967,10 +1549,11 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		scope: IResolutionScope,
 		originalAmount: DecimalString | undefined,
 		taxInclusive: boolean,
-		notices: string[]
+		notices: string[],
+		resolvedAmount: IResolvedAmount
 	): string {
 		const list = price.priceList;
-		const amount = Money.fromStorage(price.amount, price.currency);
+		const amount = Money.of(resolvedAmount.amount, price.currency);
 		const origin = list
 			? `the ${list.type.toLowerCase()} price list "${list.name}"`
 			: 'the variant default price';
@@ -978,12 +1561,17 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			price.minQuantity != null || price.maxQuantity != null
 				? ` for the quantity band ${price.minQuantity ?? '−∞'}–${price.maxQuantity ?? '+∞'}`
 				: '';
+		const derivation = resolvedAmount.baseAmount
+			? ` The price was derived from a base of ${resolvedAmount.baseAmount} ${price.currency} at a share of ` +
+			  `${resolvedAmount.computation.percent} (${resolvedAmount.computation.baseSource})` +
+			  `${resolvedAmount.computation.roundTo ? `, rounded to ${resolvedAmount.computation.roundTo}` : ''}.`
+			: '';
 		const original = originalAmount ? ` It replaces ${originalAmount} ${price.currency}.` : '';
 		const tax = taxInclusive ? ' Tax is included in the amount.' : ' Tax is not included in the amount.';
 
 		return (
 			`Resolved ${amount.amount} ${price.currency} from ${origin}${tier} for quantity ` +
-			`${scope.quantity} at ${scope.at.toISOString()}.${original}${tax}` +
+			`${scope.quantity} at ${scope.at.toISOString()}.${derivation}${original}${tax}` +
 			(notices.length ? ` ${notices.join(' ')}` : '')
 		);
 	}
@@ -1115,7 +1703,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			where: {
 				tenantId,
 				organizationId,
-				variantId: item.variantId,
+				variantId: item.variantId ?? IsNull(),
 				currency,
 				priceListId: item.priceListId ?? IsNull(),
 				minQuantity: item.minQuantity ?? IsNull(),
@@ -1128,15 +1716,30 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * @param item One bulk row.
 	 * @param existing The row it updates, when it updates one.
 	 * @returns The payload the ordinary write path receives, so a bulk write obeys exactly the rules a
-	 * single write does.
+	 * single write does — including the pair a row states: an amount, or a derivation of one.
 	 */
 	private toPricePayload(item: IProductPriceBulkItem, existing?: ProductPrice | null): DeepPartial<ProductPrice> {
+		const computeMode = (item.computeMode as PriceComputeMode) ?? existing?.computeMode ?? PriceComputeMode.AMOUNT;
+
 		return {
 			id: existing?.id,
-			variantId: item.variantId,
+			variantId: item.variantId ?? existing?.variantId,
 			priceListId: item.priceListId ?? existing?.priceListId,
 			currency: item.currency as CurrencyCode,
-			amount: item.amount as DecimalString,
+			amount:
+				item.amount !== undefined
+					? (item.amount as unknown as DecimalString)
+					: computeMode === PriceComputeMode.PERCENT_OFF
+					? undefined
+					: (existing?.amount as DecimalString),
+			computeMode,
+			percent: (item.percent as unknown as DecimalString) ?? existing?.percent,
+			baseSource: (item.baseSource as PriceBaseSource) ?? existing?.baseSource,
+			basePriceListId: item.basePriceListId ?? existing?.basePriceListId,
+			roundTo: (item.roundTo as unknown as DecimalString) ?? existing?.roundTo,
+			unitId: item.unitId ?? existing?.unitId,
+			compareAtAmount: (item.compareAtAmount as unknown as DecimalString) ?? existing?.compareAtAmount,
+			costAmount: (item.costAmount as unknown as DecimalString) ?? existing?.costAmount,
 			minQuantity: (item.minQuantity as DecimalString) ?? existing?.minQuantity,
 			maxQuantity: (item.maxQuantity as DecimalString) ?? existing?.maxQuantity,
 			status: (item.status as PriceStatus) ?? existing?.status ?? PriceStatus.ACTIVE

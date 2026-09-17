@@ -133,9 +133,23 @@ export const schemaExtensions = gql`
 		organizationId: ID
 		"Null is the default price of the variant, used when no price list wins."
 		priceListId: ID
-		variantId: ID!
+		"Null is an open-scoped row: its applicability is exactly its own PRICE rules."
+		variantId: ID
 		currency: String!
-		amount: Decimal!
+		"The price, for a row that states one; null exactly when the row derives its price."
+		amount: Decimal
+		"How the row computes its price."
+		computeMode: PriceComputeMode!
+		"Signed fraction of the base: positive reduces it, negative is a cost-plus markup."
+		percent: Decimal
+		"Which price a derivation starts from."
+		baseSource: PriceBaseSource
+		"The list a PRICE_LIST derivation reads."
+		basePriceListId: ID
+		"The multiple the derived amount is rounded to, before the currency rounding boundary."
+		roundTo: Decimal
+		"The unit the quantity bounds are expressed in; null means the variant's sales unit."
+		unitId: ID
 		"""
 		Display-only "was" price. It never enters a total.
 		"""
@@ -200,6 +214,10 @@ export const schemaExtensions = gql`
 		currency: String!
 		"What one unit costs."
 		amount: Decimal!
+		"The base a derived winner computed from; null for a row that states its own amount."
+		baseAmount: Decimal
+		"How the winning row arrived at its amount."
+		computation: PriceComputation
 		"What it would cost without the winning list, when that is a real reduction."
 		originalAmount: Decimal
 		compareAtAmount: Decimal
@@ -207,8 +225,41 @@ export const schemaExtensions = gql`
 		source: PriceSource!
 		"The conditions the resolution applied, for an operator reading the decision."
 		matchedRules: [String!]!
+		"Notices the resolution raised: a margin floor passed, a candidate whose base did not resolve."
+		notices: [String!]!
 		"A human-readable account of the decision."
 		explain: String!
+	}
+
+	"How a winning price row arrived at its amount."
+	type PriceComputation {
+		computeMode: PriceComputeMode!
+		"Signed fraction of the base."
+		percent: Decimal
+		"Which price the derivation started from."
+		baseSource: PriceBaseSource
+		"The list a PRICE_LIST derivation read."
+		basePriceListId: ID
+		"The multiple the derived amount was quantised to."
+		roundTo: Decimal
+	}
+
+	"How a price row computes its price."
+	enum PriceComputeMode {
+		"The row's amount is the price."
+		AMOUNT
+		"The price is derived from a base and a signed share."
+		PERCENT_OFF
+	}
+
+	"Which price a derivation starts from."
+	enum PriceBaseSource {
+		"The legacy variant retail price, converted when the currencies differ."
+		LIST
+		"The row's cost snapshot, else the legacy variant unit cost."
+		COST
+		"Another price list, named by basePriceListId."
+		PRICE_LIST
 	}
 
 	"How a price list competes for a context."
@@ -376,6 +427,9 @@ export const schemaExtensions = gql`
 		priceListId: ID
 		currency: String
 		status: PriceStatus
+		computeMode: PriceComputeMode
+		"Only the rows that derive from this list."
+		basePriceListId: ID
 	}
 
 	"How to order a list of price rows."
@@ -475,13 +529,26 @@ export const schemaExtensions = gql`
 		metadata: JSON
 	}
 
-	"The fields a price row is created with."
+	"""
+	The fields a price row is created with.
+
+	A row either states its amount or says how to derive one, and either names the variant it prices or
+	is scoped by its own rules. Both pairs are deliberate: the first is what makes a price book one row
+	instead of a matrix, and the second is what makes one row able to price a category.
+	"""
 	input CreateProductPriceInput {
 		organizationId: ID
-		variantId: ID!
+		variantId: ID
 		priceListId: ID
 		currency: String!
-		amount: Decimal!
+		amount: Decimal
+		computeMode: PriceComputeMode
+		"Signed fraction of the base: 0.25 is 25 % off, -0.15 is a 15 % markup."
+		percent: Decimal
+		baseSource: PriceBaseSource
+		basePriceListId: ID
+		roundTo: Decimal
+		unitId: ID
 		compareAtAmount: Decimal
 		costAmount: Decimal
 		minQuantity: Decimal
@@ -507,6 +574,12 @@ export const schemaExtensions = gql`
 		priceListId: ID
 		currency: String
 		amount: Decimal
+		computeMode: PriceComputeMode
+		percent: Decimal
+		baseSource: PriceBaseSource
+		basePriceListId: ID
+		roundTo: Decimal
+		unitId: ID
 		compareAtAmount: Decimal
 		costAmount: Decimal
 		minQuantity: Decimal
@@ -523,10 +596,16 @@ export const schemaExtensions = gql`
 	"One row of a bulk price batch."
 	input ProductPriceBulkItemInput {
 		id: ID
-		variantId: ID!
+		variantId: ID
 		priceListId: ID
 		currency: String!
-		amount: Decimal!
+		amount: Decimal
+		computeMode: PriceComputeMode
+		percent: Decimal
+		baseSource: PriceBaseSource
+		basePriceListId: ID
+		roundTo: Decimal
+		unitId: ID
 		minQuantity: Decimal
 		maxQuantity: Decimal
 		status: PriceStatus

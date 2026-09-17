@@ -9,3 +9,5 @@
  */
 export { CreatePricingTables1791000000120 } from './1791000000120-CreatePricingTables';
 export { AddPriceListForeignKeys1791000000130 } from './1791000000130-AddPriceListForeignKeys';
+export { AddPriceComputationColumns1791000000135 } from './1791000000135-AddPriceComputationColumns';
+

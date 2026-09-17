@@ -209,7 +209,14 @@ function serviceUnderTest(prices: IPriceRow[], lists: IListRow[] = [], legacy: I
 		service: new ProductPriceService(
 			typeOrmProductPriceRepository as never,
 			{} as never,
-			{ resolveTaxInclusivity: async () => null } as never
+			{ resolveTaxInclusivity: async () => null } as never,
+			// A `LIST` derivation converts through the rate in force and fails closed when there is none;
+			// the fixtures below state their prices, so a converter that refuses is the honest stub.
+			{
+				convert: async () => {
+					throw new Error('no rate covers the pair');
+				}
+			} as never
 		)
 	};
 }

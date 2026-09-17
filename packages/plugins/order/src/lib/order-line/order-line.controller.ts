@@ -12,7 +12,7 @@ import {
 import { OrderLine } from './order-line.entity';
 import { OrderLineService } from './order-line.service';
 import { ORDER_PERMISSIONS } from '../order.permissions';
-import { CreateOrderLineDTO, UpdateOrderLineDTO } from './dto';
+import { CreateOrderLineDTO, RecordOrderLineRefundDTO, UpdateOrderLineDTO } from './dto';
 
 /**
  * The OrderLine resource.
@@ -63,5 +63,31 @@ export class OrderLineController extends CrudController<OrderLine> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateOrderLineDTO): Promise<any> {
 		return this.service.update(id, entity as any);
+	}
+
+	/**
+	 * Records one refund against a line, in as many parts as it was paid in.
+	 *
+	 * The register is the order's, and the evidence is the payment domain's: the `refund_line` rows
+	 * belong to that capability and this package must not read them, so the payment side reports what it
+	 * paid back and this route moves the counter in one guarded write. Two partial refunds of one line
+	 * are therefore two calls, and the register accumulates both.
+	 *
+	 * @param id The order line.
+	 * @param entity The refund to record.
+	 * @returns The line, as it now stands.
+	 */
+	@ApiOperation({ summary: 'Record a refund against an order line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The refund was recorded and the register moved.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The refund exceeds what the line invoiced.' })
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Post(':id/refunds')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async recordRefund(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: RecordOrderLineRefundDTO
+	): Promise<OrderLine> {
+		return await this.service.recordRefund({ orderLineId: id, ...entity });
 	}
 }

@@ -357,7 +357,7 @@ function orderFixture(seeds: { lines?: any[]; shippingMethods?: any[]; order?: R
 
 	const totalsService = new OrderTotalsService(
 		typeOrmOrderRepository as never,
-		new OrderLineService(repo('order_line') as never, {} as never) as never,
+		new OrderLineService(repo('order_line') as never, {} as never, {} as never) as never,
 		new OrderShippingMethodService(repo('order_shipping_method') as never, {} as never) as never,
 		new OrderCreditLineService(repo('order_credit_line') as never, {} as never) as never,
 		new OrderTransactionService(repo('order_transaction') as never, {} as never) as never,
@@ -370,7 +370,7 @@ function orderFixture(seeds: { lines?: any[]; shippingMethods?: any[]; order?: R
 		{} as never,
 		typeOrmOrderRepository as never,
 		new OrderChangeActionService(repo('order_change_action') as never, {} as never),
-		new OrderLineService(repo('order_line') as never, {} as never),
+		new OrderLineService(repo('order_line') as never, {} as never, {} as never),
 		new OrderShippingMethodService(repo('order_shipping_method') as never, {} as never),
 		new OrderAddressService(repo('order_address') as never, {} as never),
 		new OrderCreditLineService(repo('order_credit_line') as never, {} as never),

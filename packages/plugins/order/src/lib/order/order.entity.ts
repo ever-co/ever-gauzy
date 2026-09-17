@@ -389,6 +389,35 @@ export class Order extends TenantOrganizationBaseEntity implements IOrder {
 	@MultiORMColumn({ nullable: true, type: 'varchar', length: 64 })
 	purchaseOrderNumber?: string;
 
+	/**
+	 * The settlement schedule the order was placed against, resolved from the buyer.
+	 *
+	 * It is what makes a payment term mean something to an order: the schedule says when each
+	 * instalment falls due, and the order records which schedule it agreed to. The column carries **no
+	 * foreign key**: `payment_term` belongs to the kernel's settlement-term set, which owns the target
+	 * and adds the constraint once it exists — the programme's rule for a reference across set
+	 * boundaries, stated where the column is declared.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	paymentTermId?: ID;
+
+	/**
+	 * The date the goods were promised.
+	 *
+	 * A **cache of the lines**, never authored: the promise is made per deliverable — lines ship
+	 * separately — so this is `max(line.promisedAt)`, materialised by the totals writer for the listing
+	 * that filters on it. Reading it as an authored field would let it disagree with the lines that
+	 * justify it.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
+	promisedAt?: Date;
+
 	/** Open-ended payload: the approval request, credit-note invoices and the last validation warnings. */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()

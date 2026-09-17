@@ -2,7 +2,9 @@ import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import {
 	IProductPriceBulkItem,
 	IResolvedPrice,
+	PriceBaseSource,
 	PriceBulkMode,
+	PriceComputeMode,
 	PriceListStatus,
 	PriceListType,
 	PricePreferenceAttribute,
@@ -154,15 +156,29 @@ export interface IProductPriceFilter {
 	priceListId?: ID;
 	currency?: CurrencyCode;
 	status?: PriceStatus;
+	computeMode?: PriceComputeMode;
+	/** Only the rows that derive from this list. */
+	basePriceListId?: ID;
 }
 
-/** The fields a price row is created with. */
+/**
+ * The fields a price row is created with.
+ *
+ * `variantId` and `amount` are both optional, and for the same reason: a row either names the variant
+ * it prices or is scoped by its rules, and it either states an amount or says how to derive one.
+ */
 export interface ICreateProductPriceInput {
 	organizationId?: ID;
-	variantId: ID;
+	variantId?: ID;
 	priceListId?: ID;
 	currency: CurrencyCode;
-	amount: DecimalString;
+	amount?: DecimalString;
+	computeMode?: PriceComputeMode;
+	percent?: DecimalString;
+	baseSource?: PriceBaseSource;
+	basePriceListId?: ID;
+	roundTo?: DecimalString;
+	unitId?: ID;
 	compareAtAmount?: DecimalString;
 	costAmount?: DecimalString;
 	minQuantity?: DecimalString;

@@ -91,6 +91,19 @@ export class OrderDTO extends TenantOrganizationBaseDTO {
 	@MaxLength(64)
 	readonly purchaseOrderNumber: string;
 
+	/**
+	 * The settlement schedule the order is placed against.
+	 *
+	 * A payment term is what makes "net 30" mean something to an order: the schedule says when each
+	 * instalment falls due, and the order records which one it agreed to. `promisedAt` is deliberately
+	 * **absent** from this DTO: it is a cache of the lines, materialised by the totals writer, and a
+	 * caller that could set it could make the order promise something no line agrees with.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	readonly paymentTermId: string;
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()

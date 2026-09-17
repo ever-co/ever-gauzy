@@ -211,6 +211,14 @@ export class ProductPriceResolver {
 			where.status = filter.status;
 		}
 
+		if (filter.computeMode) {
+			where.computeMode = filter.computeMode;
+		}
+
+		if (filter.basePriceListId) {
+			where.basePriceListId = filter.basePriceListId;
+		}
+
 		return where;
 	}
 
