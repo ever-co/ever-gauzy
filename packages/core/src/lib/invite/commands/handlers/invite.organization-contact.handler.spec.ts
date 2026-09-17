@@ -94,6 +94,16 @@ describe('InviteOrganizationContactHandler.userExistsForSameTenant (GHSA-6qvm-3w
 		expect(inviteService.createOrganizationContactInvite).not.toHaveBeenCalled();
 	});
 
+	it('fails closed when the tenant-scoped lookup itself fails, instead of treating it as "no user"', async () => {
+		const { handler, userService, inviteService } = buildHandler([TENANT_A_USER]);
+		userService.getUserByEmailInTenant.mockRejectedValueOnce(new Error('connection terminated'));
+
+		// A swallowed lookup error used to leave `user` undefined, which read as "nobody has this
+		// address" and sent the invitation to an address that may already be a user of the tenant.
+		await expect(handler.execute(command(TENANT_A))).rejects.toThrow('connection terminated');
+		expect(inviteService.createOrganizationContactInvite).not.toHaveBeenCalled();
+	});
+
 	it('CONTROL: the global lookup this used to call reports a foreign-tenant account as "already exists"', async () => {
 		const { userService } = buildHandler([TENANT_B_USER]);
 

@@ -76,7 +76,10 @@ const buildService = () => {
 	service.typeOrmUserRepository = {
 		create: jest.fn((plain: any) => ({ ...plain })),
 		save: jest.fn(async (entity: any) => {
-			const row = { ...entity, id: NEW_USER_ID };
+			// A leaked body `id` must be able to survive into the row, the way it would on a real
+			// `save()` (an entity carrying a primary key is an UPDATE of that row) — otherwise the
+			// id-pin test below could never observe the regression it exists to catch.
+			const row = { id: NEW_USER_ID, ...entity };
 			userRows.push(row);
 			return row;
 		}),
@@ -244,6 +247,7 @@ describe('AuthService.register never updates an employee row it did not create (
 		);
 
 		const persisted = userRows[0];
+		expect(persisted.id).toBe(NEW_USER_ID);
 		expect(persisted.hash).toBe('$2b$10$server-side');
 		for (const field of ['emailVerifiedAt', 'emailToken', 'code', 'codeExpireAt', 'refreshToken']) {
 			expect(persisted[field]).toBeUndefined();

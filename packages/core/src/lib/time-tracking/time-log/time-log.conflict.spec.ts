@@ -60,6 +60,17 @@ describe('GET /timesheet/time-log/conflict is scoped and validated (GHSA-6qvm-3w
 			expect(result.endDate).toEqual(new Date('2026-01-05T09:00:00.000Z'));
 		});
 
+		it.each([
+			['array', ['project', 'task', 'project']],
+			['comma-string', 'project,task,project']
+		])('collapses a repeated relation in the %s form, so the handler never joins one alias twice', async (_label, relations) => {
+			// Each name becomes `leftJoinAndSelect(..., name)`; a duplicate alias makes TypeORM throw,
+			// which surfaced as a 500 on input the allow-list had already accepted.
+			const result: any = await run(conflictQuery({ relations }));
+
+			expect(result.relations).toEqual(['project', 'task']);
+		});
+
 		it('drops a caller-supplied tenantId rather than carrying it into the query', async () => {
 			const result: any = await run(conflictQuery({ tenantId: OTHER_TENANT_ID }));
 

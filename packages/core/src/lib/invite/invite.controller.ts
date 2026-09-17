@@ -2,7 +2,6 @@ import {
 	ICreateEmailInvitesOutput,
 	PermissionsEnum,
 	LanguagesEnum,
-	IOrganizationContactAcceptInviteInput,
 	IOrganizationContact,
 	IPagination,
 	IInvite,
@@ -46,6 +45,7 @@ import {
 } from './commands';
 import {
 	AcceptInviteDTO,
+	AcceptOrganizationContactInviteDTO,
 	CreateInviteDTO,
 	RejectInviteDTO,
 	ResendInviteDTO,
@@ -253,13 +253,18 @@ export class InviteController {
 	})
 	@Post('/contact')
 	@Public()
+	// Unauthenticated, and its body reaches `AuthService.register()` and `OrganizationService.create()`.
+	// The whitelist is what keeps `user.organizations` (a cascading relation) and every other
+	// undeclared column out of those sinks — the same reason `/accept` above carries one.
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async acceptOrganizationContactInvite(
-		@Body() input: IOrganizationContactAcceptInviteInput,
+		@Body() input: AcceptOrganizationContactInviteDTO,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<any> {
-		input.originalUrl = request.get('Origin');
-		return await this.commandBus.execute(new InviteAcceptOrganizationContactCommand(input, languageCode));
+		return await this.commandBus.execute(
+			new InviteAcceptOrganizationContactCommand({ ...input, originalUrl: request.get('Origin') }, languageCode)
+		);
 	}
 
 	/**

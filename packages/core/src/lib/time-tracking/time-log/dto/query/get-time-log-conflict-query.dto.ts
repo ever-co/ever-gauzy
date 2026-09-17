@@ -58,6 +58,17 @@ export function toIdArray({ value }: TransformFnParams): ID[] | undefined {
 }
 
 /**
+ * Parses `relations` exactly like the shared transform, then drops repeated names.
+ *
+ * `GetConflictTimeLogHandler` emits one `leftJoinAndSelect(..., relation)` per entry using the
+ * relation name as the join alias, so `relations=project,project` would register the alias twice and
+ * TypeORM would throw — a 500 on input that passes the allow-list. Order is preserved.
+ */
+export function toUniqueRelations(params: TransformFnParams): string[] {
+	return [...new Set(parseRelationsString(params))];
+}
+
+/**
  * Get conflicting time logs request DTO validation.
  *
  * The route used to bind the raw `IGetTimeLogConflictInput` interface with no pipe at all, which
@@ -97,7 +108,7 @@ export class GetTimeLogConflictQueryDTO implements IGetTimeLogConflictInput {
 
 	@ApiPropertyOptional({ type: () => String, enum: TimeLogConflictRelationEnum, isArray: true })
 	@IsOptional()
-	@Transform(parseRelationsString)
+	@Transform(toUniqueRelations)
 	@IsEnum(TimeLogConflictRelationEnum, { each: true })
 	readonly relations: string[] = [];
 }

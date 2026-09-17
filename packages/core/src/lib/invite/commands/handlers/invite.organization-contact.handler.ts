@@ -122,10 +122,10 @@ export class InviteOrganizationContactHandler
 			);
 		}
 
-		let user: IUser;
-		try {
-			user = await this.userService.getUserByEmailInTenant(email, tenantId);
-		} catch (error) {}
+		// No try/catch here on purpose: a lookup that FAILS is not a lookup that found nobody. Letting
+		// the error propagate keeps this duplicate-user guard fail-closed instead of sending the
+		// invitation because the database was unreachable.
+		const user: IUser | null = await this.userService.getUserByEmailInTenant(email, tenantId);
 
 		if (!user) {
 			return false;

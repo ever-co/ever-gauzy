@@ -149,7 +149,24 @@ describe('POST /invite/accept cannot carry privileged fields into the sink (GHSA
 			expect(result.user.firstName).toBe('Ada');
 		});
 
+		it('still accepts a user object that carries only server-owned fields (empty once whitelisted)', async () => {
+			// Before this route had a pipe such a body was accepted: `InviteAcceptHandler` re-supplies
+			// email, role and tenant from the invitation. `@IsNotEmptyObject()` sees the object as
+			// class-transformer built it (keys still present) and the nested whitelist only strips
+			// afterwards, so the emptied `user` must not — and does not — turn into a 400.
+			const result: any = await run({
+				code: '123456',
+				email: INVITED_EMAIL,
+				user: { email: INVITED_EMAIL, role: { name: RolesEnum.EMPLOYEE }, tenant: { id: TENANT_ID } },
+				password: 'correct-horse'
+			});
+
+			expect(result.user).toEqual({});
+		});
+
 		it.each([
+			['a user array instead of an object', { email: INVITED_EMAIL, token: 't', user: [{ firstName: 'A' }] }],
+			['a scalar user', { email: INVITED_EMAIL, token: 't', user: 'Ada' }],
 			['a malformed email', { email: 'not-an-email', token: 't', user: { firstName: 'A' } }],
 			['a missing email', { token: 't', user: { firstName: 'A' } }],
 			['a missing user object', { email: INVITED_EMAIL, token: 't' }],
@@ -268,6 +285,21 @@ describe('POST /invite/accept cannot carry privileged fields into the sink (GHSA
 			expect(input.user.email).toBe(INVITED_EMAIL);
 			expect(input.user.tenantId).toBe(TENANT_ID);
 			expect(input.inviteId).toBe(INVITE_ID);
+		});
+
+		it('works on a copy and leaves the command input it was handed untouched', async () => {
+			const { handler, commandBus } = buildHandler(RolesEnum.EMPLOYEE);
+			const input = hostileInput();
+			const snapshot = JSON.parse(JSON.stringify(input));
+
+			await handler.execute(new InviteAcceptCommand(input, 'en' as any));
+
+			expect(input).toEqual(snapshot);
+			// …while the dispatched copy is still the pinned, stripped one.
+			const dispatched = commandBus.execute.mock.calls[0][0].input;
+			expect(dispatched).not.toBe(input);
+			expect(dispatched).not.toHaveProperty('id');
+			expect(dispatched.user.roleId).toBe(EMPLOYEE_ROLE_ID);
 		});
 
 		it.each([

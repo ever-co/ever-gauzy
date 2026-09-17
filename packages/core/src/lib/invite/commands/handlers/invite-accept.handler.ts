@@ -30,7 +30,15 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 	 */
 	public async execute(command: InviteAcceptCommand) {
 		try {
-			const { input, languageCode } = command;
+			const { languageCode } = command;
+			// Work on a copy: the command's input is the caller's (readonly) DTO, and everything below
+			// deletes from it and pins fields on its nested `user`. The copy is two levels deep on
+			// purpose — those are the only levels written to — and a missing `user` is left missing
+			// so the pin below still fails instead of registering an account with no user at all.
+			const input = {
+				...command.input,
+				...(command.input.user && { user: { ...command.input.user } })
+			} as typeof command.input;
 			const { email, token, code } = input;
 
 			// Drop the fields the INVITE owns before anything downstream reads them. The HTTP entry
