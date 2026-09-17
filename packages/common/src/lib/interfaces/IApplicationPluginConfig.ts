@@ -33,6 +33,44 @@ export interface GraphqlConfigurationOptions {
 	 * @description Defines an array of plugins for Apollo Server.
 	 */
 	apolloServerPlugins?: ApolloServerPlugin[];
+
+	/**
+	 * Whether the deployment publishes its schema to clients.
+	 * @description Overridable through the environment; defaults to the playground policy, so an
+	 * installation that has not stated a preference follows the one it already made.
+	 */
+	introspection?: boolean;
+
+	/**
+	 * Whether automatic persisted queries are accepted.
+	 * @description Off unless a deployment asks for it.
+	 */
+	persistedQueries?: boolean;
+
+	/**
+	 * Maximum selection-set depth of one GraphQL operation.
+	 * @description Overridable through the environment; a deployment that states nothing gets the
+	 * platform's default.
+	 */
+	maxDepth?: number;
+
+	/**
+	 * Maximum weighted cost of one GraphQL operation.
+	 * @description Overridable through the environment.
+	 */
+	maxComplexity?: number;
+
+	/**
+	 * Maximum number of aliased fields in one GraphQL operation.
+	 * @description Overridable through the environment.
+	 */
+	maxAliases?: number;
+
+	/**
+	 * Maximum number of operations accepted in one HTTP request.
+	 * @description Overridable through the environment.
+	 */
+	maxBatchSize?: number;
 }
 
 /**

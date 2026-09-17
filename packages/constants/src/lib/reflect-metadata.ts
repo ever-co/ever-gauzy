@@ -15,3 +15,14 @@ export const FEATURE_METADATA = '__feature__';
  * set is never persisted.
  */
 export const VISIBLE_WITH_METADATA = '__visible:with__';
+
+/**
+ * The list of gated properties a class declares, in declaration order.
+ *
+ * A property's own metadata says which permission it needs, but it cannot be *found* by asking the
+ * class what it declares: an instance field lives on the instance, so the prototype carries no
+ * property to enumerate — a projection that scanned prototype names would see only accessors and
+ * miss every stored column. Each declaration therefore also appends itself to this class-level list,
+ * which is what the projection and the write check read, once per class.
+ */
+export const VISIBLE_WITH_FIELDS_METADATA = '__visible:fields__';
