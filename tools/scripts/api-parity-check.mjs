@@ -313,6 +313,34 @@ function matchingParenthesis(source, open) {
 	return -1;
 }
 
+/**
+ * The schema source a package contributes.
+ *
+ * This platform is schema-first: a resolver's `@Query`/`@Mutation` decorator names a field that must
+ * already exist in the composed schema, and a field the schema does not declare is never served. So a
+ * package's resolvers and its schema document are two halves of one surface, and a package that ships
+ * the first without the second has a GraphQL surface that is declared, type-checks, appears in every
+ * static reading of the source — and does not exist at runtime. One package shipped exactly that: a
+ * plugin whose `extensions` carried a single entity resolver and no schema at all, with eleven query
+ * resolvers that nothing could ever call.
+ *
+ * The document is read as text: a `.gql` file, or a TypeScript module whose name says schema or which
+ * builds its document with `gql`. Both spellings are in use here.
+ *
+ * @param dir The package directory.
+ * @returns {string} Everything the package contributes to the composed schema.
+ */
+function schemaSourceOf(dir) {
+	const files = walk(dir, (name) => name.endsWith('.gql'))
+		.concat(
+			walk(dir, (name) => name.endsWith('.ts') && !name.endsWith('.spec.ts')).filter(
+				(file) => /schema/i.test(file) || /(?:export\s+const\s+\w+\s*=\s*gql|from\s+['"]graphql-tag['"])/.test(read(file))
+			)
+		);
+
+	return files.map(read).join('\n');
+}
+
 const problems = [];
 const acknowledged = [];
 const oneSided = [];
@@ -338,6 +366,39 @@ for (const name of PACKAGES) {
 
 	const { resources, files: controllerFiles } = restResourcesOf(dir);
 	const { fields, files: graphqlFiles } = graphqlRootFieldsOf(dir);
+	const resolverFiles = walk(dir, (name) => name.endsWith('.resolver.ts'));
+
+	// A resolver whose field the schema does not declare is a field nothing can call.
+	if (resolverFiles.length > 0) {
+		const pluginSource = walk(dir, (name) => name.endsWith('.plugin.ts')).map(read).join('\n');
+		const schema = schemaSourceOf(dir);
+
+		problems.push(
+			...[
+				!/extensions\s*:\s*\{[\s\S]{0,400}?schema\s*:/.test(pluginSource)
+					? {
+							package: name,
+							kind: 'no-schema',
+							detail: `${resolverFiles.length} resolver file(s) and no schema extension in the plugin metadata, so none of their fields can be served`
+						}
+					: null,
+				schema.trim().length === 0
+					? {
+							package: name,
+							kind: 'no-schema',
+							detail: 'resolvers are declared and the package contributes no schema document at all'
+						}
+					: null,
+				...[...fields.keys()]
+					.filter((field) => !new RegExp(`\\b${field}\\b`).test(schema))
+					.map((field) => ({
+						package: name,
+						kind: 'field-not-declared',
+						detail: `the resolver declares ${field} and the package's schema document does not`
+					}))
+			].filter(Boolean)
+		);
+	}
 
 	for (const field of fields.keys()) declaredFields.add(field);
 

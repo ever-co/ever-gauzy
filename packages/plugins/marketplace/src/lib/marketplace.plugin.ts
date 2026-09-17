@@ -11,7 +11,8 @@ import { SellerTransaction } from './seller-transaction/seller-transaction.entit
 import { SellerPayout } from './seller-payout/seller-payout.entity';
 import { SellerPayoutLine } from './seller-payout-line/seller-payout-line.entity';
 import { SellerSettlement } from './seller-settlement/seller-settlement.entity';
-import { SellerEntityResolver } from './graphql/marketplace.resolver';
+import { schemaExtensions } from './graphql/schema-extensions';
+import { resolvers } from './graphql/resolvers';
 
 /**
  * The marketplace plugin.
@@ -68,9 +69,17 @@ import { SellerEntityResolver } from './graphql/marketplace.resolver';
 	/**
 	 * GraphQL parity with the REST surface: the same resources, the same permissions, the same field
 	 * selection.
+	 *
+	 * The schema document and the resolvers are one contribution and are declared together, because
+	 * neither half is usable alone: a root field the schema does not declare is never served, however
+	 * well its resolver is written, and a root field with no resolver answers null without an error
+	 * anywhere. `schemaExtensions` declares every type and root field the marketplace serves, and
+	 * `resolvers` — the same list the plugin module provides — supplies their behaviour and the guards
+	 * that protect them.
 	 */
 	extensions: {
-		resolvers: [SellerEntityResolver]
+		schema: schemaExtensions,
+		resolvers
 	}
 })
 export class MarketplacePlugin implements IOnPluginBootstrap, IOnPluginDestroy {

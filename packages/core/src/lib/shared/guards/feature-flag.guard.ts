@@ -138,8 +138,30 @@ export class FeatureFlagGuard implements CanActivate {
 			return true;
 		}
 
-		// If the feature is not enabled, throw a NotFoundException
-		const { method, url } = context.switchToHttp().getRequest();
+		// If the feature is not enabled, refuse the request — naming what was refused.
+		//
+		// The refusal has to read the context it is in. This guard protects REST routes and GraphQL
+		// fields alike, and on a GraphQL execution context `switchToHttp().getRequest()` hands back the
+		// resolver's first argument rather than a request: destructuring `method` and `url` from it
+		// produced a message made of `undefined` at best and a TypeError at worst, so a capability that
+		// is switched off denied through the GraphQL door by crashing rather than by refusing. The two
+		// contexts are told apart and each names what it actually has.
+		const contextType = context.getType<'http' | 'graphql'>();
+
+		if (contextType === 'graphql') {
+			// The execution context's arguments are the resolver's own: the root value, the arguments,
+			// the context and the field being resolved. Naming the field is the closest thing a GraphQL
+			// request has to a URL, and it is what a caller needs in order to know what was refused.
+			const info = context.getArgByIndex?.(3) as { fieldName?: string } | undefined;
+
+			throw new NotFoundException(
+				info?.fieldName ? `Cannot query field ${info.fieldName}` : 'The requested capability is not enabled.'
+			);
+		}
+
+		const request = context.switchToHttp().getRequest();
+		const { method, url } = request ?? {};
+
 		throw new NotFoundException(`Cannot ${method} ${url}`);
 	}
 }

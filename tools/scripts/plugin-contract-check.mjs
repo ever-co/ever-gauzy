@@ -247,6 +247,33 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 	}
 	check(`${at}: project.json exists`, existsSync(join(dir, 'project.json')));
 
+	// --- guarded handlers can reach their guard's dependencies -------------------------------
+	// A guard is resolved in the context of the module that hosts the handler it protects, so the
+	// module that declares a controller or provides a resolver has to be able to reach the permission
+	// service those guards ask for. Every module here gets that by importing the role-permission
+	// module, and a module that hosts a handler without it fails at boot with an unknown-dependency
+	// error naming the guard rather than the module. One package shipped exactly that: a resolver added
+	// to a module's providers, whose guards' module had never been imported, and the application did
+	// not start at all.
+	{
+		const modules = walk(join(dir, 'src')).filter((f) => f.endsWith('.module.ts') && !f.endsWith('.spec.ts'));
+
+		for (const file of modules) {
+			const source = read(file);
+			const hostsHandlers =
+				/controllers\s*:\s*\[[^\]]*[A-Za-z]/.test(source) ||
+				/providers\s*:\s*\[[\s\S]{0,2000}?\b[A-Za-z]+Resolver\b/.test(source);
+
+			if (!hostsHandlers) continue;
+
+			check(
+				`${at}: ${rel(file)} imports the role-permission module its handlers' guards resolve from`,
+				/\bRolePermissionModule\b/.test(source),
+				'the module hosts a guarded handler and does not import the module the guard resolves from'
+			);
+		}
+	}
+
 	// --- declared dependencies --------------------------------------------------------------
 	// A package that imports another package has to say so. In this workspace every package is linked
 	// and every path is mapped, so an undeclared import resolves on the developer's machine and fails
