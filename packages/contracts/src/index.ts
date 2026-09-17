@@ -143,6 +143,7 @@ export * from './lib/role-permission.model';
 export * from './lib/role.model';
 export * from './lib/rule.model';
 export * from './lib/screening-task.model';
+export * from './lib/search.model';
 export * from './lib/screenshot.model';
 export * from './lib/seed.model';
 export * from './lib/sequence.model';

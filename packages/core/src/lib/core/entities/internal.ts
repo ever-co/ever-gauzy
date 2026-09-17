@@ -139,6 +139,8 @@ export * from '../../role-permission/role-permission.entity';
 export * from '../../role/role.entity';
 export * from '../../rule/rule.entity';
 export * from '../../skills/skill.entity';
+export * from '../../search/search-document.entity';
+export * from '../../search/search-index-definition.entity';
 export * from '../../shared-entity/shared-entity.entity';
 export * from '../../sequence/sequence.entity';
 export * from '../../entity-subscription/entity-subscription.entity';

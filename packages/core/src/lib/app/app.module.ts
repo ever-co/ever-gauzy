@@ -148,6 +148,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { PluginContributionModule } from '../plugin-contributions/plugin-contribution.module';
 import { RuleModule } from '../rule/rule.module';
 import { SequenceModule } from '../sequence/sequence.module';
+import { SearchModule } from '../search/search.module';
 import { IdempotencyModule } from '../idempotency/idempotency.module';
 import { EventOutboxModule } from '../event-outbox/event-outbox.module';
 import { OperationModule } from '../operation/operation.module';
@@ -462,6 +463,10 @@ if (environment.THROTTLE_ENABLED) {
 		RolePermissionModule,
 		PluginContributionModule,
 		SequenceModule,
+		// Platform search. The index tables are core because the platform searches contacts,
+		// invoices, expenses, products, orders, projects, tasks, employees and documents alike —
+		// the search plugin owns the pipeline and the providers, core owns the schema.
+		SearchModule,
 		// Kernel capabilities every domain above builds on: one rule engine, one money-adjustment ledger,
 		// one tax ledger, and the money layer the three of them round through.
 		RuleModule,
