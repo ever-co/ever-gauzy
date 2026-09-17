@@ -38,6 +38,15 @@ import { VideosPlugin } from '@gauzy/plugin-videos';
 import { RegistryPlugin } from '@gauzy/plugin-registry';
 import { CamshotPlugin } from '@gauzy/plugin-camshot';
 
+import { CatalogPlugin } from '@gauzy/plugin-catalog';
+import { PricingPlugin } from '@gauzy/plugin-pricing';
+import { TaxPlugin } from '@gauzy/plugin-tax';
+import { InventoryPlugin } from '@gauzy/plugin-inventory';
+import { CartPlugin } from '@gauzy/plugin-cart';
+import { OrderPlugin } from '@gauzy/plugin-order';
+import { ReturnsPlugin } from '@gauzy/plugin-returns';
+import { MarketplacePlugin } from '@gauzy/plugin-marketplace';
+
 import { SentryTracing as SentryPlugin } from './sentry';
 import { PosthogAnalytics as PosthogPlugin } from './posthog';
 import { SoundshotPlugin } from '@gauzy/plugin-soundshot';
@@ -126,5 +135,18 @@ export const plugins = [
 	// Indicates the inclusion or intention to use the SoundshotPlugin in the codebase.
 	SoundshotPlugin,
 	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
-	RegistryPlugin
+	RegistryPlugin,
+
+	// The commerce domains. Each owns its own tables, migrations, permissions and feature flags, and
+	// is listed here only to be loaded — the platform resolves their `dependsOn` declarations into a
+	// load order, and merges their migrations into the connection before it is opened, so this list
+	// does not need to be topologically sorted by hand.
+	CatalogPlugin,
+	PricingPlugin,
+	TaxPlugin,
+	InventoryPlugin,
+	CartPlugin,
+	OrderPlugin,
+	ReturnsPlugin,
+	MarketplacePlugin
 ];

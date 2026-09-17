@@ -255,7 +255,20 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 
 	const indexFile = join(srcDir, 'index.ts');
 	if (check(`${at}: src/index.ts exists`, existsSync(indexFile), rel(indexFile))) {
-		check(`${at}: src/index.ts re-exports`, /export\s/.test(read(indexFile)));
+		const barrel = read(indexFile);
+		check(`${at}: src/index.ts re-exports`, /export\s/.test(barrel));
+		// The package is consumed by its name, so the plugin class has to be reachable from the
+		// barrel. A package whose barrel exports every entity and service but not the plugin itself
+		// cannot be imported at all, and the omission is invisible until something tries to load it.
+		const pascal = plugin
+			.split('-')
+			.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+			.join('');
+		check(
+			`${at}: src/index.ts exports the plugin declaration`,
+			/from\s*['"][^'"]*\.plugin['"]/.test(barrel) || new RegExp(`\\b${pascal}Plugin\\b`).test(barrel),
+			'the barrel does not re-export the *.plugin module, so the package cannot be imported'
+		);
 	}
 
 	// --- the plugin class -------------------------------------------------------------------
