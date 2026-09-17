@@ -123,10 +123,31 @@ describe('normalizeTrackerIp', () => {
 		expect(normalizeTrackerIp('203.0.113.10')).toBe('203.0.113.10');
 	});
 
-	it('accepts plain IPv6 and lowercases it', () => {
-		expect(normalizeTrackerIp('2001:DB8::1')).toBe('2001:db8::1');
-		expect(normalizeTrackerIp('[2001:db8::1]')).toBe('2001:db8::1');
-		expect(normalizeTrackerIp('::1')).toBe('::1');
+	it('collapses the hex spelling of an IPv4-mapped address too', () => {
+		expect(normalizeTrackerIp('::ffff:cb00:710a')).toBe('203.0.113.10');
+		expect(normalizeTrackerIp('0:0:0:0:0:ffff:203.0.113.10')).toBe('203.0.113.10');
+	});
+
+	it('buckets IPv6 by canonical /64, so neither re-spelling nor rotating inside the prefix mints a bucket', () => {
+		const spellings = [
+			'2001:DB8::1',
+			'[2001:db8::1]',
+			'2001:db8:0:0::1',
+			'2001:0db8:0000:0000:0000:0000:0000:0001',
+			// A client choosing a different interface identifier inside its own /64 on every request.
+			'2001:db8::dead:beef',
+			'2001:db8:0:0:ffff:ffff:ffff:ffff',
+			// A zone id names a local interface, not a different client.
+			'2001:db8::1%eth0'
+		];
+
+		expect(new Set(spellings.map((value) => normalizeTrackerIp(value)))).toEqual(new Set(['2001:db8:0:0::/64']));
+	});
+
+	it('keeps different /64 prefixes apart', () => {
+		expect(normalizeTrackerIp('2001:db8:0:1::1')).toBe('2001:db8:0:1::/64');
+		expect(normalizeTrackerIp('2001:db8:0:2::1')).toBe('2001:db8:0:2::/64');
+		expect(normalizeTrackerIp('::1')).toBe('0:0:0:0::/64');
 	});
 
 	it('strips a port from an IPv4 literal', () => {

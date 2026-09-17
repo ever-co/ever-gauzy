@@ -441,6 +441,15 @@ jobs:
           # The heap ceiling `start:api:forever` used.
           NODE_OPTIONS: --max-old-space-size=12288
           DEMO: 'false'
+          # The suite signs in as the seeded accounts with their published passwords
+          # (apps/gauzy-e2e/src/support/Base/pagedata/LoginPageData.ts), so this job seeds exactly
+          # those values on purpose. Pinned here, together with the explicit override, so the seed
+          # guard (GHSA-4r2r-mv32-3468) never depends on the API build configuration above staying
+          # non-production: a production build would otherwise refuse to seed and fail every spec.
+          DEMO_SUPER_ADMIN_PASSWORD: 'admin'
+          DEMO_ADMIN_PASSWORD: 'admin'
+          DEMO_EMPLOYEE_PASSWORD: '12345678'
+          ALLOW_INSECURE_SEED_CREDENTIALS: 'true'
           # MUST be set in the process env (not just .env) before the API starts: the sqlite-vs-postgres
           # column-type guards (isBetterSqlite3() in @gauzy/config) are captured at module load, before
           # the app reads .env. Without this the timestamp columns resolve to Postgres 'timestamp' and

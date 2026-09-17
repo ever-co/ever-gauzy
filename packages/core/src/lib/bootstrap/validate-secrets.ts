@@ -90,9 +90,9 @@ const KNOWN_DEFAULT_SEED_CREDENTIALS: ReadonlyArray<{ key: string; value: string
  *
  * Reads the live `environment.demoCredentialConfig` first — that is the object
  * `DEFAULT_SUPER_ADMINS` / `DEFAULT_ADMINS` / `DEFAULT_EMPLOYEES` are built from, so it is the
- * value that would really be hashed into the database — and falls back to `process.env` so a test
- * or a tool that mutates the environment after the config module was evaluated still gets a
- * truthful answer.
+ * value that would really be hashed into the database. `process.env` is consulted only when the
+ * config carries no value at all. The other order let a variable set AFTER the config was evaluated
+ * satisfy this check while the seed still hashed the published default captured earlier.
  *
  * @param key - The environment variable backing the account's password.
  * @returns The effective password, trimmed.
@@ -105,16 +105,29 @@ function resolveSeedPassword(key: string): string {
 		DEMO_EMPLOYEE_PASSWORD: credentials.employeePassword
 	};
 
-	return String(process.env[key] ?? fromConfig[key] ?? '').trim();
+	return String(fromConfig[key] ?? process.env[key] ?? '').trim();
 }
 
 /**
- * Validates that the accounts created by the default seed do not use their shipped passwords.
+ * Options for {@link validateSeedCredentials}.
+ */
+export interface SeedCredentialOptions {
+	/**
+	 * Whether this seed also creates the fixture accounts (`DEFAULT_EVER_EMPLOYEES`, created by the
+	 * `ever` and `all` seed types). Their password is hard-coded and published, and no variable
+	 * rotates it, so such a seed is refused in production outright.
+	 */
+	readonly createsFixtureAccounts?: boolean;
+}
+
+/**
+ * Validates that the accounts created by a seed do not use published passwords.
  *
  * Mirrors {@link validateApplicationSecrets} exactly:
- * - always logs a prominent warning when a default is still in place (any environment);
- * - additionally refuses to seed in a real production deployment (`NODE_ENV=production` and
- *   `DEMO !== 'true'`), unless the operator opts out via `ALLOW_INSECURE_SEED_CREDENTIALS=true`.
+ * - always logs a prominent warning when a published password is still in place (any environment);
+ * - additionally refuses to seed in a real production deployment (`NODE_ENV=production` or a
+ *   production build, and `DEMO !== 'true'`), unless the operator opts out via
+ *   `ALLOW_INSECURE_SEED_CREDENTIALS=true`.
  *
  * Exemptions, and why they are safe:
  * - `DEMO=true` — the daily-reset demo is meant to be logged into with the documented credentials;
@@ -122,34 +135,58 @@ function resolveSeedPassword(key: string): string {
  *   and the desktop README tells the user to sign in as `admin@ever.co`. Refusing to boot there
  *   would break the desktop product without closing any network-reachable hole.
  *
+ * This only runs when a seed is about to run. The boot-time seed runs only against a database with
+ * no users, so an existing deployment is never refused by it.
+ *
  * Call this BEFORE the seeder touches the database: `runDefaultSeed()` truncates every table before
  * it inserts, so an abort has to happen first to be harmless.
  *
- * @throws Error in production (non-demo, non-Electron) when a default seed password is detected.
+ * @param options - What the seed about to run creates.
+ * @throws Error in production (non-demo, non-Electron) when a published seed password is detected.
  */
-export function validateSeedCredentials(): void {
+export function validateSeedCredentials(options: SeedCredentialOptions = {}): void {
 	const weak = KNOWN_DEFAULT_SEED_CREDENTIALS.filter(({ key, value }) => {
 		const current = resolveSeedPassword(key);
 		// Empty counts as weak: an unset variable is exactly how the shipped default is reached.
 		return !current || current === value;
 	});
+	const fixtures = options.createsFixtureAccounts === true;
 
-	if (weak.length === 0) {
+	if (weak.length === 0 && !fixtures) {
 		return;
 	}
 
 	const keys = weak.map(({ key }) => key);
 	const accounts = weak.map(({ account }) => account);
-	const guidance =
-		`Set ${keys.join(', ')} to strong, unique values before seeding a new deployment. ` +
-		'These variables decide the passwords of the accounts created on the first boot against an ' +
-		'empty database, and their defaults are published in this repository, so leaving them unset ' +
-		'hands anyone who can reach the login page full control of the new instance.';
+	const problems: string[] = [];
+
+	if (weak.length > 0) {
+		problems.push(
+			`${keys.join(', ')} ${keys.length === 1 ? 'is' : 'are'} unset or use the well-known default value ` +
+				`(affected accounts: ${accounts.join(', ')}). Set ${keys.length === 1 ? 'it' : 'them'} to strong, ` +
+				'unique values before seeding a new deployment: these variables decide the passwords of the ' +
+				'accounts created on the first boot against an empty database, and their defaults are published ' +
+				'in this repository, so leaving them unset hands anyone who can reach the login page full control ' +
+				'of the new instance.'
+		);
+	}
+	if (fixtures) {
+		problems.push(
+			'This seed type also creates the DEFAULT_EVER_EMPLOYEES fixture accounts, whose password is ' +
+				'hard-coded and published in this repository and cannot be rotated through configuration. Use ' +
+				'the default seed (`yarn seed`) for a real deployment.'
+		);
+	}
+	const guidance = problems.join(' ');
 
 	// eslint-disable-next-line no-console
-	console.error(chalk.bgRed.whiteBright.bold(` INSECURE SEED CREDENTIALS: ${keys.join(', ')} `));
+	console.error(
+		chalk.bgRed.whiteBright.bold(
+			` INSECURE SEED CREDENTIALS: ${[...keys, ...(fixtures ? ['fixture accounts'] : [])].join(', ')} `
+		)
+	);
 	// eslint-disable-next-line no-console
-	console.error(chalk.red(`Affected accounts: ${accounts.join(', ')}. ${guidance}`));
+	console.error(chalk.red(guidance));
 
 	// Use the RUNTIME NODE_ENV (not only the build-time `environment.production` flag), so a
 	// deployment that runs a non-prod build with NODE_ENV=production is still protected.
@@ -169,8 +206,7 @@ export function validateSeedCredentials(): void {
 			return;
 		}
 		throw new Error(
-			`Refusing to seed: ${keys.join(', ')} ${keys.length === 1 ? 'is' : 'are'} unset or use the ` +
-				`well-known default value in a production deployment. ${guidance} ` +
+			`Refusing to seed a production deployment: ${guidance} ` +
 				'(To override temporarily, set ALLOW_INSECURE_SEED_CREDENTIALS=true — not recommended.)'
 		);
 	}

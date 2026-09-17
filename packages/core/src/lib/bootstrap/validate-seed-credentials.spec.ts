@@ -14,6 +14,13 @@ import { validateSeedCredentials } from './validate-secrets';
  * a real production deployment, with demo and the Electron desktop server exempt.
  */
 describe('validateSeedCredentials', () => {
+	/** Which `environment.demoCredentialConfig` field each variable feeds. */
+	const CONFIG_FIELD = {
+		DEMO_SUPER_ADMIN_PASSWORD: 'superAdminPassword',
+		DEMO_ADMIN_PASSWORD: 'adminPassword',
+		DEMO_EMPLOYEE_PASSWORD: 'employeePassword'
+	} as const;
+
 	const MANAGED = [
 		'NODE_ENV',
 		'DEMO',
@@ -73,11 +80,20 @@ describe('validateSeedCredentials', () => {
 		error.mockRestore();
 	});
 
+	/**
+	 * Sets one seed password the way a deployment does: in the environment AND in the config object the
+	 * seeder reads it from (which @gauzy/config fills from the environment once, at import).
+	 */
+	const setSeedPassword = (key: keyof typeof CONFIG_FIELD, value: string) => {
+		process.env[key] = value;
+		(environment.demoCredentialConfig as Record<string, string>)[CONFIG_FIELD[key]] = value;
+	};
+
 	/** Sets every seed password to a value nobody could have read in the README. */
 	const setStrongSeedPasswords = () => {
-		process.env.DEMO_SUPER_ADMIN_PASSWORD = 'cJ8-rotated-super-admin';
-		process.env.DEMO_ADMIN_PASSWORD = 'cJ8-rotated-admin';
-		process.env.DEMO_EMPLOYEE_PASSWORD = 'cJ8-rotated-employee';
+		setSeedPassword('DEMO_SUPER_ADMIN_PASSWORD', 'cJ8-rotated-super-admin');
+		setSeedPassword('DEMO_ADMIN_PASSWORD', 'cJ8-rotated-admin');
+		setSeedPassword('DEMO_EMPLOYEE_PASSWORD', 'cJ8-rotated-employee');
 	};
 
 	describe('production, non-demo', () => {
@@ -94,7 +110,7 @@ describe('validateSeedCredentials', () => {
 
 		it('refuses when a password is explicitly set to the shipped default', () => {
 			setStrongSeedPasswords();
-			process.env.DEMO_SUPER_ADMIN_PASSWORD = 'admin';
+			setSeedPassword('DEMO_SUPER_ADMIN_PASSWORD', 'admin');
 
 			expect(() => validateSeedCredentials()).toThrow(/DEMO_SUPER_ADMIN_PASSWORD/);
 			expect(() => validateSeedCredentials()).not.toThrow(/DEMO_EMPLOYEE_PASSWORD/);
@@ -102,17 +118,17 @@ describe('validateSeedCredentials', () => {
 
 		it('refuses on the ADMIN and EMPLOYEE defaults too, not only the super admin', () => {
 			setStrongSeedPasswords();
-			process.env.DEMO_ADMIN_PASSWORD = 'admin';
+			setSeedPassword('DEMO_ADMIN_PASSWORD', 'admin');
 			expect(() => validateSeedCredentials()).toThrow(/DEMO_ADMIN_PASSWORD/);
 
 			setStrongSeedPasswords();
-			process.env.DEMO_EMPLOYEE_PASSWORD = '12345678';
+			setSeedPassword('DEMO_EMPLOYEE_PASSWORD', '12345678');
 			expect(() => validateSeedCredentials()).toThrow(/DEMO_EMPLOYEE_PASSWORD/);
 		});
 
 		it('treats a whitespace-only password as unset', () => {
 			setStrongSeedPasswords();
-			process.env.DEMO_SUPER_ADMIN_PASSWORD = '   ';
+			setSeedPassword('DEMO_SUPER_ADMIN_PASSWORD', '   ');
 
 			expect(() => validateSeedCredentials()).toThrow(/DEMO_SUPER_ADMIN_PASSWORD/);
 		});
@@ -124,6 +140,23 @@ describe('validateSeedCredentials', () => {
 			expect(error).not.toHaveBeenCalled();
 		});
 
+		it('judges the password the seeder will hash, not a variable changed after the config was read', () => {
+			// The seed arrays are built from `environment.demoCredentialConfig`, which still holds the
+			// published defaults here. A later process.env value must not make the check pass.
+			process.env.DEMO_SUPER_ADMIN_PASSWORD = 'cJ8-rotated-super-admin';
+			process.env.DEMO_ADMIN_PASSWORD = 'cJ8-rotated-admin';
+			process.env.DEMO_EMPLOYEE_PASSWORD = 'cJ8-rotated-employee';
+
+			expect(() => validateSeedCredentials()).toThrow(/DEMO_SUPER_ADMIN_PASSWORD/);
+		});
+
+		it('refuses a seed that creates the hard-coded fixture accounts, even with rotated passwords', () => {
+			setStrongSeedPasswords();
+
+			expect(() => validateSeedCredentials({ createsFixtureAccounts: true })).toThrow(/DEFAULT_EVER_EMPLOYEES/);
+			expect(() => validateSeedCredentials({ createsFixtureAccounts: false })).not.toThrow();
+		});
+
 		it('honours the documented emergency override, loudly', () => {
 			process.env.ALLOW_INSECURE_SEED_CREDENTIALS = 'true';
 
@@ -133,6 +166,23 @@ describe('validateSeedCredentials', () => {
 				true
 			);
 		});
+	});
+
+	it('refuses on a production BUILD even when NODE_ENV does not say production', () => {
+		environment.production = true;
+
+		delete process.env.NODE_ENV;
+		expect(() => validateSeedCredentials()).toThrow(/Refusing to seed/);
+
+		process.env.NODE_ENV = 'development';
+		expect(() => validateSeedCredentials()).toThrow(/Refusing to seed/);
+	});
+
+	it('keeps a demo boot working, fixture accounts included', () => {
+		process.env.NODE_ENV = 'production';
+		process.env.DEMO = 'true';
+
+		expect(() => validateSeedCredentials({ createsFixtureAccounts: true })).not.toThrow();
 	});
 
 	it('warns but keeps demo deployments working', () => {

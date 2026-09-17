@@ -96,12 +96,24 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
 	 * The Redis half of {@link increment}, kept separate so the whole sequence can be bounded by one
 	 * deadline rather than each command individually.
 	 *
+	 * The block check and the hit are read in ONE `MULTI`, which Redis executes without interleaving.
+	 * Reading the block marker in a separate round trip first let two concurrent requests both see "no
+	 * block"; one then created the block and cleared the counter, and the other incremented the fresh
+	 * counter and was admitted DURING the block. With the snapshot, every request whose hit lands after
+	 * the block was set also sees the block, and every request whose hit lands before it sees a count
+	 * that already includes the earlier hits.
+	 *
+	 * A client that is not connected is not asked at all: node-redis would park the commands in its
+	 * offline queue and replay them on reconnect, long after this request fell back to the in-process
+	 * store, double-counting it into the shared bucket.
+	 *
 	 * @param hitKey - Key holding the hit counter.
 	 * @param blockKey - Key holding the block marker.
 	 * @param ttl - Window length in milliseconds.
 	 * @param limit - Hits allowed within the window.
 	 * @param blockDuration - How long to block once the limit is exceeded, in milliseconds.
 	 * @returns The bucket state after the hit.
+	 * @throws Error when the client is not ready, so the caller takes the in-process fallback.
 	 */
 	private async incrementInRedis(
 		hitKey: string,
@@ -110,23 +122,28 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
 		limit: number,
 		blockDuration: number
 	): Promise<ThrottlerStorageRecord> {
-		const blockTtl = await this.client.pTTL(blockKey);
+		if (this.client.isReady === false) {
+			throw new Error('Redis client is not connected');
+		}
+
+		const results = await this.client.multi().pTTL(blockKey).incr(hitKey).pTTL(hitKey).exec();
+		const blockTtl = Number(results?.[0] ?? -2);
+		const totalHits = Number(results?.[1] ?? 0);
+		let remainingTtl = Number(results?.[2] ?? -1);
 
 		if (blockTtl > 0) {
+			// Still blocked. The hit recorded above must not survive into the window that follows
+			// the block (the in-process store does not count hits while blocked either), so drop it.
+			await this.client.del(hitKey);
+
 			const seconds = Math.ceil(blockTtl / 1000);
-			// Still blocked: report a hit count past the limit so the guard raises 429 without
-			// the counter itself having to survive the block window.
 			return {
-				totalHits: limit + 1,
+				totalHits: Math.max(totalHits, limit + 1),
 				timeToExpire: seconds,
 				isBlocked: true,
 				timeToBlockExpire: seconds
 			};
 		}
-
-		const results = await this.client.multi().incr(hitKey).pTTL(hitKey).exec();
-		const totalHits = Number(results?.[0] ?? 0);
-		let remainingTtl = Number(results?.[1] ?? -1);
 
 		// -1 = key exists with no expiry, -2 = key vanished between the increment and the TTL read.
 		// Either way the window needs (re)arming, or a counter would live forever and block the
@@ -137,14 +154,19 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
 		}
 
 		if (totalHits > limit) {
-			await this.client.set(blockKey, '1', { PX: blockDuration });
+			// `ThrottlerGuard` resolves `blockDuration` to the ttl when none is configured, but Redis
+			// rejects `PX 0`, and a rejected SET would silently hand this request to the per-process
+			// fallback — so never ask for less than 1 ms. NX: a concurrent request that already set the
+			// block owns its expiry; this one must not push it further out.
+			const blockMs = Math.max(1, blockDuration);
+			await this.client.set(blockKey, '1', { PX: blockMs, NX: true });
 			await this.client.del(hitKey);
 
 			return {
 				totalHits,
-				timeToExpire: Math.ceil(blockDuration / 1000),
+				timeToExpire: Math.ceil(blockMs / 1000),
 				isBlocked: true,
-				timeToBlockExpire: Math.ceil(blockDuration / 1000)
+				timeToBlockExpire: Math.ceil(blockMs / 1000)
 			};
 		}
 

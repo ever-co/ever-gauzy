@@ -163,7 +163,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		// The confirmation code is six alphanumeric characters — roughly 2^31 possibilities — so a
 		// per-address rate limit alone leaves it guessable by anything distributed. Count failures
 		// against the email instead, outside the catch that turns everything into a 400.
-		await this._loginAttemptService.assertNotLockedOut(LoginAttemptScope.TEAM_JOIN_CODE, email);
+		const attempt = await this._loginAttemptService.begin(LoginAttemptScope.TEAM_JOIN_CODE, email);
 
 		try {
 			let record: IOrganizationTeamJoinRequest;
@@ -216,11 +216,18 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			});
 			delete record.id;
 
-			await this._loginAttemptService.reset(LoginAttemptScope.TEAM_JOIN_CODE, email);
+			await attempt.succeed();
 
 			return record;
 		} catch (error) {
-			await this._loginAttemptService.recordFailure(LoginAttemptScope.TEAM_JOIN_CODE, email);
+			// A request that carried no code or token at all guessed nothing, so it gives its slot back
+			// instead of counting against the email (a buggy client must not lock the join flow). Every
+			// other path — above all the lookup miss of a wrong code — counts: the check fails closed.
+			if (error instanceof BadRequestException) {
+				await attempt.release();
+			} else {
+				await attempt.fail();
+			}
 			throw new BadRequestException();
 		}
 	}

@@ -461,7 +461,7 @@ export class AuthService extends SocialAuthService {
 		// below (which rewrites every failure into a 401 — a lockout has to surface as a 429).
 		// The @Throttle on the route is keyed on the client address; this counter is not, so
 		// changing address between attempts no longer buys a fresh allowance.
-		await this.loginAttemptService.assertNotLockedOut(LoginAttemptScope.PASSWORD, email);
+		const attempt = await this.loginAttemptService.begin(LoginAttemptScope.PASSWORD, email);
 
 		try {
 			// Find ALL users by email
@@ -565,7 +565,7 @@ export class AuthService extends SocialAuthService {
 			]);
 
 			// Credentials were good: forget the streak that preceded them.
-			await this.loginAttemptService.reset(LoginAttemptScope.PASSWORD, email);
+			await attempt.succeed();
 
 			return {
 				user: new User({
@@ -578,9 +578,14 @@ export class AuthService extends SocialAuthService {
 		} catch (error) {
 			// Log the error with a timestamp and the error message for debugging
 			this.logger.error(`Login failed at ${new Date().toISOString()}: ${error.message}`);
-			// Every path out of here is a 401 to the caller, so every path out of here counts as a
-			// failed attempt against this email.
-			await this.loginAttemptService.recordFailure(LoginAttemptScope.PASSWORD, email);
+			// Every rejection of the credentials themselves is raised above as UnauthorizedException, and
+			// only those count against the account. Anything else (a database or token-signing error) says
+			// nothing about the password, and counting it would let an outage lock real users out.
+			if (error instanceof UnauthorizedException) {
+				await attempt.fail();
+			} else {
+				await attempt.release();
+			}
 			throw new UnauthorizedException();
 		}
 	}
@@ -652,21 +657,28 @@ export class AuthService extends SocialAuthService {
 		const { email, password } = input;
 
 		// Same per-account control as `login()`: this route verifies the very same password.
-		await this.loginAttemptService.assertNotLockedOut(LoginAttemptScope.PASSWORD, email);
+		const attempt = await this.loginAttemptService.begin(LoginAttemptScope.PASSWORD, email);
 
 		/** Fetching users matching the query */
-		const allUsers = await this.userService.find({
-			where: [
-				{
-					email,
-					isActive: true,
-					isArchived: false,
-					hash: Not(IsNull())
-				}
-			],
-			relations: { tenant: true },
-			order: { createdAt: 'DESC' }
-		});
+		let allUsers: IUser[];
+		try {
+			allUsers = await this.userService.find({
+				where: [
+					{
+						email,
+						isActive: true,
+						isArchived: false,
+						hash: Not(IsNull())
+					}
+				],
+				relations: { tenant: true },
+				order: { createdAt: 'DESC' }
+			});
+		} catch (error) {
+			// No verdict on the password: give the slot back rather than counting a failure.
+			await attempt.release();
+			throw error;
+		}
 
 		// Filter users based on password match using async verification
 		const validatedUsers: IUser[] = [];
@@ -695,11 +707,11 @@ export class AuthService extends SocialAuthService {
 		let users = validatedUsers;
 
 		if (users.length === 0) {
-			await this.loginAttemptService.recordFailure(LoginAttemptScope.PASSWORD, email);
+			await attempt.fail();
 			throw new UnauthorizedException();
 		}
 
-		await this.loginAttemptService.reset(LoginAttemptScope.PASSWORD, email);
+		await attempt.succeed();
 
 		const code = generateAlphaNumericCode();
 		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
@@ -2032,7 +2044,7 @@ export class AuthService extends SocialAuthService {
 		// The magic code is six alphanumeric characters, so the per-account counter is the control
 		// that actually bounds guessing here. Checked outside the catch, which turns everything
 		// into a 401.
-		await this.loginAttemptService.assertNotLockedOut(LoginAttemptScope.MAGIC_CODE, payload?.email);
+		const attempt = await this.loginAttemptService.begin(LoginAttemptScope.MAGIC_CODE, payload?.email);
 
 		try {
 			const { email, code } = payload;
@@ -2093,14 +2105,21 @@ export class AuthService extends SocialAuthService {
 					throw new UnauthorizedException();
 				}
 
-				await this.loginAttemptService.reset(LoginAttemptScope.MAGIC_CODE, email);
+				await attempt.succeed();
 
 				return response;
 			}
 
 			throw new UnauthorizedException();
 		} catch (error) {
-			await this.loginAttemptService.recordFailure(LoginAttemptScope.MAGIC_CODE, payload?.email);
+			// A wrong, expired or already-claimed code is raised above as UnauthorizedException; only
+			// that counts against the account. A lookup or claim that failed for infrastructure reasons
+			// says nothing about the code.
+			if (error instanceof UnauthorizedException) {
+				await attempt.fail();
+			} else {
+				await attempt.release();
+			}
 			throw new UnauthorizedException();
 		}
 	}

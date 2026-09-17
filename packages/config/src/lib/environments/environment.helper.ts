@@ -40,11 +40,19 @@ export const isEnvFlagEnabled = (...keys: string[]): boolean => {
  * preserved instead of collapsing to the fallback — some of these settings use `0` to mean
  * "disabled", and silently re-enabling them would be the wrong default.
  *
+ * The WHOLE trimmed value must be decimal digits. `Number.parseInt` alone accepts a numeric prefix,
+ * so a typo such as `AUTH_MAX_FAILED_ATTEMPTS=0oops` would have parsed as `0` and silently switched
+ * the brute-force counter off; anything malformed now takes the fallback instead.
+ *
  * @param value - The raw environment value.
- * @param fallback - Value used when `value` is unset or is not a non-negative integer.
+ * @param fallback - Value used when `value` is unset, malformed, or not a safe non-negative integer.
  * @returns The parsed value, or `fallback`.
  */
 export const parseNonNegativeInt = (value: string | undefined, fallback: number): number => {
-	const parsed = Number.parseInt((value ?? '').trim(), 10);
-	return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+	const normalized = (value ?? '').trim();
+	if (!/^\d+$/.test(normalized)) {
+		return fallback;
+	}
+	const parsed = Number(normalized);
+	return Number.isSafeInteger(parsed) ? parsed : fallback;
 };
