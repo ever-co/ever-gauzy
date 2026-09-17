@@ -19,6 +19,9 @@ export class EmployeeCreateNotificationEventHandler implements IEventHandler<Emp
 	async handle(event: EmployeeCreateNotificationEvent) {
 		try {
 			this.logger.debug(`Creating notification for employee: ${event.input.receiverEmployeeId}`);
+			// One row per event, as on develop: the in-process EventBus never redelivers, so a content match here
+			// could only merge two real events (e.g. unassign + re-assign within the window). Pass
+			// `{ absorbRedelivery: true }` only once these events arrive over an at-least-once transport.
 			return await this.employeeNotificationService.create(event.input);
 		} catch (error) {
 			this.logger.error(`Failed to create notification: ${error.message}`, error.stack);

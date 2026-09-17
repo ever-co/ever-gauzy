@@ -30,6 +30,15 @@ export interface IDocsJobBase {
 	reason: DocsJobReason;
 	/** For activity-log attribution; absent for system-initiated runs. */
 	initiatedByUserId?: ID;
+	/**
+	 * TASK 9 (improvement roadmap) — Unified Observability and Correlation IDs. Snapshot of
+	 * `RequestContext.currentCorrelationId()` at enqueue time, so a log line emitted on the queue
+	 * worker thread can still be tied back to the HTTP request that triggered this job — the same
+	 * snapshot-not-live-context pattern `tenantId`/`initiatedByUserId` already use, and for the same
+	 * reason: `RequestContext` is not available on a queue thread. Absent for system-initiated runs
+	 * (a scheduled recovery sweep, a reconcile pass) that have no originating request.
+	 */
+	correlationId?: ID;
 }
 
 /** Payload of `docs.extract`. */
