@@ -1,4 +1,5 @@
 export * from './measurement.constants';
+export * from './default-unit-families';
 export * from './measurement.permissions';
 export * from './quantity.codec';
 export * from './unit-category.entity';

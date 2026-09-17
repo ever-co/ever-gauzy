@@ -4,22 +4,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { prepareSQLQuery as p } from '../database.helper';
 import { replacePlaceholders } from '../../core/utils';
-
-/** One physical measurement family and the reference unit that defines it. */
-interface ISeedUnitFamily {
-	/** `unit_category.code` — `COUNT` / `MASS` / `LENGTH` / `VOLUME` / `AREA` / `TIME`. */
-	category: string;
-	/** `unit_category.name`. */
-	categoryName: string;
-	/** The reference unit's `code`. */
-	reference: string;
-	/** The reference unit's `name`. */
-	referenceName: string;
-	/** Display suffix; null falls back to the code. */
-	symbol: string;
-	/** Quantity granularity of the reference unit, per the schema specification. */
-	decimalPlaces: number;
-}
+import {
+	DEFAULT_UNIT_FAMILIES,
+	DEFAULT_UNIT_REFERENCE_SETTING_KEYS,
+	ISeedUnitFamily
+} from '../../measurement/default-unit-families';
 
 /**
  * The third of the three data-only kernel migrations: the platform defaults existing organizations
@@ -73,25 +62,17 @@ export class SeedCoreDefaults1791000000520 implements MigrationInterface {
 	/**
 	 * The physical measurement families.
 	 *
-	 * The reference of each family is its **smallest** unit, so every factor is a multiplier greater
-	 * than or equal to one. Packaging vocabulary ("sleeve of 6") is deliberately absent: a container
-	 * is the tenant's own word for its own goods, not a platform fact.
+	 * Read from `measurement/default-unit-families.ts` rather than restated here: the fresh-install
+	 * seed is one of two paths that write these rows, and
+	 * `SeedMeasurementFamilies1791000000185` is the other — it exists because this migration ran on an
+	 * installation whose schema predated `unit_category` and `unit`, skipped this step for that reason,
+	 * and was then recorded as applied. Two copies of one catalogue would let the two paths write
+	 * different rows while both looked correct.
 	 */
-	private readonly unitFamilies: ISeedUnitFamily[] = [
-		{ category: 'COUNT', categoryName: 'Count', reference: 'PIECE', referenceName: 'Piece', symbol: 'pc', decimalPlaces: 0 },
-		{ category: 'MASS', categoryName: 'Mass', reference: 'GRAM', referenceName: 'Gram', symbol: 'g', decimalPlaces: 3 },
-		{ category: 'LENGTH', categoryName: 'Length', reference: 'MILLIMETRE', referenceName: 'Millimetre', symbol: 'mm', decimalPlaces: 1 },
-		{ category: 'VOLUME', categoryName: 'Volume', reference: 'MILLILITRE', referenceName: 'Millilitre', symbol: 'ml', decimalPlaces: 3 },
-		{ category: 'AREA', categoryName: 'Area', reference: 'SQUARE_MILLIMETRE', referenceName: 'Square millimetre', symbol: 'mm2', decimalPlaces: 1 },
-		{ category: 'TIME', categoryName: 'Time', reference: 'SECOND', referenceName: 'Second', symbol: 's', decimalPlaces: 3 }
-	];
+	private readonly unitFamilies: ISeedUnitFamily[] = DEFAULT_UNIT_FAMILIES;
 
 	/** The tenant-setting keys that point at the seeded references an operator may re-declare. */
-	private readonly unitSettingKeys: Array<{ name: string; category: string }> = [
-		{ name: 'measure.default.massUnitId', category: 'MASS' },
-		{ name: 'measure.default.lengthUnitId', category: 'LENGTH' },
-		{ name: 'measure.default.volumeUnitId', category: 'VOLUME' }
-	];
+	private readonly unitSettingKeys: Array<{ name: string; category: string }> = DEFAULT_UNIT_REFERENCE_SETTING_KEYS;
 
 	/**
 	 * The entity kinds global search declares a definition for.
