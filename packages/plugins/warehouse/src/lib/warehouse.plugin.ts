@@ -4,6 +4,7 @@ import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from 
 import { CreateWarehouseLayoutTables1791000000180 } from './database/migrations/1791000000180-CreateWarehouseLayoutTables';
 import { CreateWarehouseWorkTables1791000000190 } from './database/migrations/1791000000190-CreateWarehouseWorkTables';
 import { AddWarehouseBinCapacityUnits1791000000195 } from './database/migrations/1791000000195-AddWarehouseBinCapacityUnits';
+import { AddWarehouseBinCapacityUnitForeignKeys1791000000196 } from './database/migrations/1791000000196-AddWarehouseBinCapacityUnitForeignKeys';
 import { resolvers } from './graphql/resolvers';
 import { schemaExtensions } from './graphql/schema-extensions';
 import { WAREHOUSE_FEATURES } from './warehouse.features';
@@ -46,12 +47,15 @@ const WAREHOUSE_DEPENDS_ON: string[] = ['@gauzy/plugin-inventory'];
 	entities: [...ALL_WAREHOUSE_ENTITIES],
 	/**
 	 * The migrations this plugin owns. The platform merges them into the connection's migration list
-	 * before the connection is created, so they run in timestamp order with every other package's.
+	 * before the connection is created, so they run in timestamp order with every other package's. The
+	 * fourth constrains the three unit references the third adds, and it is a file of its own because it
+	 * may only run once the kernel's measurement set has created `unit`.
 	 */
 	migrations: [
 		CreateWarehouseLayoutTables1791000000180,
 		CreateWarehouseWorkTables1791000000190,
-		AddWarehouseBinCapacityUnits1791000000195
+		AddWarehouseBinCapacityUnits1791000000195,
+		AddWarehouseBinCapacityUnitForeignKeys1791000000196
 	],
 	/**
 	 * The permissions the plugin contributes to the platform role model.

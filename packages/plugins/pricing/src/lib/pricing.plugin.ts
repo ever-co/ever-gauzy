@@ -17,6 +17,7 @@ import { resolvers } from './graphql/resolvers';
 import {
 	AddPriceComputationColumns1791000000135,
 	AddPriceListForeignKeys1791000000130,
+	AddPriceUnitForeignKey1791000000186,
 	CreatePricingTables1791000000120
 } from './database/migrations';
 
@@ -71,12 +72,16 @@ const PRICING_SETTINGS: PluginSettingContribution[] = [
 	/**
 	 * The migrations that create this plugin's schema. They are ordered by their own timestamps
 	 * against every other migration in the installation, so the tables exist before the API serves a
-	 * request whether or not any other plugin is installed.
+	 * request whether or not any other plugin is installed. The fourth adds the constraint from a price
+	 * row to the unit its amount is stated in, and it sits at a tick above the kernel revision block
+	 * because the table it points at is created there — the iteration order is the timestamp, not the
+	 * range this package's earlier files happen to occupy.
 	 */
 	migrations: [
 		CreatePricingTables1791000000120,
 		AddPriceListForeignKeys1791000000130,
-		AddPriceComputationColumns1791000000135
+		AddPriceComputationColumns1791000000135,
+		AddPriceUnitForeignKey1791000000186
 	],
 	/**
 	 * The pricing capabilities a role may be granted.
