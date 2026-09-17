@@ -5,10 +5,19 @@
 // one hairline between blocks, and 12px text everywhere but the title.
 $inset: 1.25rem;
 $gap: 0.75rem;
-$section-gap: 1.25rem;
+$section-gap: 1rem;
 $icon-button-size: 1.75rem;
 $label-width: 5.5rem;
 $divider: 1px solid var(--gauzy-border-default-color);
+// The Recent Activities card's thumbnail and activity bar, as measured on the
+// dashboard at 1920px (the card's width flexes; this is its size there).
+$thumb-width: 15.625rem;
+$thumb-height: 8.125rem;
+$progress-height: 5px;
+$activity-bar-width: 6rem;
+// Below this the popup is narrower than its three thumbnails: the summary drops
+// under the title and the time-log fields go back to one pair per row.
+$compact-breakpoint: 52.5rem;
 
 @mixin text($size: 12px, $weight: 400, $color: var(--gauzy-text-color-1)) {
 	font-size: $size;
@@ -20,7 +29,8 @@ $divider: 1px solid var(--gauzy-border-default-color);
 
 :host {
 	display: block;
-	width: 45rem;
+	// Three thumbnails and their gaps between the insets, plus the card's border.
+	width: calc(#{$thumb-width * 3 + $gap * 2 + $inset * 2} + 2px);
 	// The pane takes this width, so the popup is what has to give way on a phone.
 	max-width: calc(100vw - 2rem);
 
@@ -30,17 +40,32 @@ $divider: 1px solid var(--gauzy-border-default-color);
 		background-color: var(--gauzy-card-1);
 	}
 
-	// The close button's own box provides the trailing inset.
+	// Title, summary, close on one row. The close button's own box provides the
+	// trailing inset.
 	nb-card-header.slot-header {
-		display: flex;
+		display: grid;
+		grid-template-areas: 'heading summary close';
+		grid-template-columns: minmax(0, 1fr) auto auto;
 		align-items: center;
-		justify-content: space-between;
-		gap: $gap;
-		padding: 0.875rem 0.75rem 0.875rem $inset;
+		column-gap: 1rem;
+		padding: 0.75rem 0.75rem 0.75rem $inset;
 		border-bottom: $divider;
+
+		@media (max-width: $compact-breakpoint) {
+			grid-template-areas:
+				'heading close'
+				'summary summary';
+			grid-template-columns: minmax(0, 1fr) auto;
+			row-gap: 0.75rem;
+		}
+	}
+
+	.close-button {
+		grid-area: close;
 	}
 
 	.slot-heading {
+		grid-area: heading;
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
@@ -91,34 +116,52 @@ $divider: 1px solid var(--gauzy-border-default-color);
 		display: flex;
 		flex-direction: column;
 		gap: $section-gap;
-		padding: $inset;
+		padding: 1rem $inset;
 	}
 
-	// Member, Activity and Duration as equal cells in one outlined strip. The
-	// Member cell is permission-gated; the rest widen to fill when it is absent.
+	// Member (permission-gated), Activity and Duration, a hairline between each.
 	.slot-summary {
-		display: grid;
-		grid-auto-columns: minmax(0, 1fr);
-		grid-auto-flow: column;
-		border: $divider;
-		border-radius: var(--border-radius);
+		grid-area: summary;
+		display: flex;
+		align-items: stretch;
 	}
 
+	// Items stretch to the tallest (the member chip's) and lay out from the top, so
+	// the three labels share one line.
 	.summary-item {
 		display: flex;
 		flex-direction: column;
-		justify-content: space-between;
-		gap: 0.5rem;
+		justify-content: flex-start;
+		gap: 0.25rem;
 		min-width: 0;
-		padding: 0.75rem 1rem;
+		padding-inline: 1rem;
 
 		& + .summary-item {
 			border-inline-start: $divider;
+		}
+
+		// The header's column gap already separates the first item from the title.
+		&:first-child {
+			padding-inline-start: 0;
+		}
+
+		&:last-child {
+			padding-inline-end: 0.25rem;
 		}
 	}
 
 	.summary-label {
 		@include text($color: var(--gauzy-text-color-2));
+	}
+
+	// Each value row centred in the chip's height, so the values share a line too.
+	.summary-item > .summary-value,
+	.summary-item > .activity-meter,
+	.summary-item > ngx-avatar {
+		display: flex;
+		align-items: center;
+		// The member chip's rendered height.
+		min-height: 1.875rem;
 	}
 
 	.summary-value {
@@ -134,8 +177,14 @@ $divider: 1px solid var(--gauzy-border-default-color);
 		gap: 0.625rem;
 
 		nb-progress-bar {
-			flex: 1 1 auto;
-			min-width: 0;
+			flex: none;
+			width: $activity-bar-width;
+
+			// The card's bar: Nebular's tiny size is 16px here.
+			::ng-deep .progress-container {
+				height: $progress-height;
+				background-color: var(--gauzy-card-2);
+			}
 		}
 	}
 
@@ -166,11 +215,11 @@ $divider: 1px solid var(--gauzy-border-default-color);
 		font-variant-numeric: tabular-nums;
 	}
 
-	// Four columns at this width, kept even when there are fewer screenshots, so a
-	// thumbnail is the same size in every slot.
+	// Fixed card-sized columns, three to a row at the popup's full width. They drop
+	// to fewer, and then shrink, only when the popup narrows on a small screen.
 	.screenshot-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(min(#{$thumb-width}, 100%), $thumb-width));
 		gap: $gap;
 	}
 
@@ -184,11 +233,11 @@ $divider: 1px solid var(--gauzy-border-default-color);
 
 	.screenshot-frame {
 		position: relative;
-		aspect-ratio: 16 / 10;
+		height: $thumb-height;
 		overflow: hidden;
 		border: $divider;
 		border-radius: var(--border-radius);
-		background: var(--gauzy-card-2);
+		background: var(--gauzy-hover-tint);
 		cursor: zoom-in;
 
 		img {
@@ -197,6 +246,16 @@ $divider: 1px solid var(--gauzy-border-default-color);
 			height: 100%;
 			object-fit: cover;
 			transition: transform 0.2s ease;
+
+			// The fallback picture for a missing screenshot, as the Recent Activities
+			// card shows it: whole, padded small and dimmed. `!important` on the opacity
+			// against the img directive's inline `opacity: 1`.
+			&.default-image {
+				box-sizing: border-box;
+				padding: 2.5rem;
+				object-fit: contain;
+				opacity: 0.35 !important;
+			}
 		}
 
 		&:hover img {
@@ -251,6 +310,17 @@ $divider: 1px solid var(--gauzy-border-default-color);
 		@include text($color: var(--gauzy-text-color-2));
 		text-align: center;
 		font-variant-numeric: tabular-nums;
+	}
+
+	// Title then chips on one row; a long list wraps inside its own column.
+	.slot-section.apps {
+		flex-direction: row;
+		align-items: center;
+
+		.app-list {
+			flex: 1 1 0;
+			min-width: 0;
+		}
 	}
 
 	.app-list {
@@ -328,13 +398,31 @@ $divider: 1px solid var(--gauzy-border-default-color);
 		gap: 0.25rem;
 	}
 
+	// Two label/value pairs to a row. Notes and Reason (`.wide`) start a row and run
+	// to its end, since free text needs the width.
 	.time-log-fields {
 		display: grid;
-		grid-template-columns: $label-width minmax(0, 1fr);
+		grid-template-columns: $label-width minmax(0, 1fr) $label-width minmax(0, 1fr);
 		align-items: center;
 		gap: 0.625rem $gap;
 		margin: 0;
-		padding: 0.875rem 1rem;
+		padding: 0.75rem 1rem;
+
+		dt.wide {
+			grid-column: 1;
+		}
+
+		dd.wide {
+			grid-column: 2 / -1;
+		}
+
+		@media (max-width: $compact-breakpoint) {
+			grid-template-columns: $label-width minmax(0, 1fr);
+
+			dd.wide {
+				grid-column: 2;
+			}
+		}
 
 		dt {
 			@include text($color: var(--gauzy-text-color-2));
@@ -365,9 +453,11 @@ $divider: 1px solid var(--gauzy-border-default-color);
 		}
 	}
 
-	// The client chip truncates at 110px for table cells; here it has the row.
+	// The client chip truncates at 110px for table cells; here it may use its column
+	// and ellipsises only past that. `!important` because the chip's own rule, four
+	// scoped selectors deep, out-ranks anything reachable from this component.
 	ngx-contact-links ::ng-deep .names-wrapper {
-		max-width: none;
+		max-width: none !important;
 	}
 
 	// The project cell is sized for tables (28px logo, 14px name, member count).
