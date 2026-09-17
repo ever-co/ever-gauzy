@@ -80,6 +80,10 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns Promise<ITimesheet[]> - List of timesheets
 	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(request);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				let {

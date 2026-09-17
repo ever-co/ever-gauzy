@@ -100,6 +100,7 @@ import { OAuthClientService } from './oauth-client/oauth-client.service';
 import { OAuthClient } from './oauth-client/oauth-client.entity';
 import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
 import { passwordResetConsumeWhere } from '../shared/single-use/claim-criteria';
+import { LoginAttemptScope, LoginAttemptService } from './login-attempt.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -143,7 +144,8 @@ export class AuthService extends SocialAuthService {
 		private readonly typeOrmPasswordResetRepository: TypeOrmPasswordResetRepository,
 		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository,
 		private readonly oauthClientService: OAuthClientService,
-		private readonly termsAcceptanceService: TermsAcceptanceService
+		private readonly termsAcceptanceService: TermsAcceptanceService,
+		private readonly loginAttemptService: LoginAttemptService
 	) {
 		super();
 	}
@@ -456,6 +458,12 @@ export class AuthService extends SocialAuthService {
 	 * @returns A Promise that resolves to the authentication response or null
 	 */
 	async login({ email, password }: IUserLoginInput): Promise<IAuthResponse | null> {
+		// Per-ACCOUNT brute-force control, checked before any credential work and OUTSIDE the catch
+		// below (which rewrites every failure into a 401 — a lockout has to surface as a 429).
+		// The @Throttle on the route is keyed on the client address; this counter is not, so
+		// changing address between attempts no longer buys a fresh allowance.
+		const attempt = await this.loginAttemptService.begin(LoginAttemptScope.PASSWORD, email);
+
 		try {
 			// Find ALL users by email
 			const users = await this.userService.find({
@@ -557,6 +565,9 @@ export class AuthService extends SocialAuthService {
 				this.userService.setUserLastLoginTimestamp(selectedUser.id)
 			]);
 
+			// Credentials were good: forget the streak that preceded them.
+			await attempt.succeed();
+
 			return {
 				user: new User({
 					...selectedUser,
@@ -568,6 +579,14 @@ export class AuthService extends SocialAuthService {
 		} catch (error) {
 			// Log the error with a timestamp and the error message for debugging
 			this.logger.error(`Login failed at ${new Date().toISOString()}: ${error.message}`);
+			// Every rejection of the credentials themselves is raised above as UnauthorizedException, and
+			// only those count against the account. Anything else (a database or token-signing error) says
+			// nothing about the password, and counting it would let an outage lock real users out.
+			if (error instanceof UnauthorizedException) {
+				await attempt.fail();
+			} else {
+				await attempt.release();
+			}
 			throw new UnauthorizedException();
 		}
 	}
@@ -638,19 +657,29 @@ export class AuthService extends SocialAuthService {
 	): Promise<IUserSigninWorkspaceResponse> {
 		const { email, password } = input;
 
+		// Same per-account control as `login()`: this route verifies the very same password.
+		const attempt = await this.loginAttemptService.begin(LoginAttemptScope.PASSWORD, email);
+
 		/** Fetching users matching the query */
-		const allUsers = await this.userService.find({
-			where: [
-				{
-					email,
-					isActive: true,
-					isArchived: false,
-					hash: Not(IsNull())
-				}
-			],
-			relations: { tenant: true },
-			order: { createdAt: 'DESC' }
-		});
+		let allUsers: IUser[];
+		try {
+			allUsers = await this.userService.find({
+				where: [
+					{
+						email,
+						isActive: true,
+						isArchived: false,
+						hash: Not(IsNull())
+					}
+				],
+				relations: { tenant: true },
+				order: { createdAt: 'DESC' }
+			});
+		} catch (error) {
+			// No verdict on the password: give the slot back rather than counting a failure.
+			await attempt.release();
+			throw error;
+		}
 
 		// Filter users based on password match using async verification
 		const validatedUsers: IUser[] = [];
@@ -679,8 +708,11 @@ export class AuthService extends SocialAuthService {
 		let users = validatedUsers;
 
 		if (users.length === 0) {
+			await attempt.fail();
 			throw new UnauthorizedException();
 		}
+
+		await attempt.succeed();
 
 		const code = generateAlphaNumericCode();
 		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
@@ -2069,6 +2101,11 @@ export class AuthService extends SocialAuthService {
 		payload: IUserEmailInput & IUserCodeInput,
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
+		// The magic code is six alphanumeric characters, so the per-account counter is the control
+		// that actually bounds guessing here. Checked outside the catch, which turns everything
+		// into a 401.
+		const attempt = await this.loginAttemptService.begin(LoginAttemptScope.MAGIC_CODE, payload?.email);
+
 		try {
 			const { email, code } = payload;
 
@@ -2128,11 +2165,21 @@ export class AuthService extends SocialAuthService {
 					throw new UnauthorizedException();
 				}
 
+				await attempt.succeed();
+
 				return response;
 			}
 
 			throw new UnauthorizedException();
 		} catch (error) {
+			// A wrong, expired or already-claimed code is raised above as UnauthorizedException; only
+			// that counts against the account. A lookup or claim that failed for infrastructure reasons
+			// says nothing about the code.
+			if (error instanceof UnauthorizedException) {
+				await attempt.fail();
+			} else {
+				await attempt.release();
+			}
 			throw new UnauthorizedException();
 		}
 	}

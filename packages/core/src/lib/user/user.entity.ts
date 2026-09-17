@@ -46,6 +46,7 @@ import {
 	VirtualMultiOrmColumn
 } from './../core/decorators/entity';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 
 @MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })
 export class User extends TenantBaseEntity implements IUser {
@@ -109,16 +110,23 @@ export class User extends TenantBaseEntity implements IUser {
 	})
 	timeFormat?: TimeFormatEnum;
 
+	/**
+	 * bcrypt password digest. Blanked rather than masked on export: a trailing hint of a digest buys
+	 * an offline cracker free characters and buys an operator nothing.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@ExportRedacted({ blank: true })
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ nullable: true })
 	hash?: string;
 
+	/** Hashed refresh token — same reasoning as {@link User.hash}. */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@ExportRedacted({ blank: true })
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ insert: false, nullable: true })
 	refreshToken?: string;
@@ -160,9 +168,11 @@ export class User extends TenantBaseEntity implements IUser {
 	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	uiPreferences?: IUserUiPreferences;
 
+	/** Live one-time sign-in / verification code. */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
+	@ExportRedacted()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ insert: false, nullable: true })
 	code?: string;
@@ -184,8 +194,10 @@ export class User extends TenantBaseEntity implements IUser {
 	@MultiORMColumn({ insert: false, nullable: true })
 	lastLoginAt?: Date;
 
+	/** Live e-mail verification token. Blanked: nullable, and a hint of a live token helps nobody. */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
+	@ExportRedacted({ blank: true })
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ insert: false, nullable: true })
 	emailToken?: string;

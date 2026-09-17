@@ -2,16 +2,14 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { environment as env } from '@gauzy/config';
-import { ID, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { ID, IRole, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { JsonWebTokenError, verify } from 'jsonwebtoken';
 import { CLS_ID, ClsService } from 'nestjs-cls';
 import { ExtractJwt } from 'passport-jwt';
 import { v4 as uuidv4 } from 'uuid';
-import { SerializedRequestContext } from './types';
+import { IAuthenticatedUser, SerializedRequestContext } from './types';
 
 export class RequestContext {
 	protected static clsService: ClsService;
@@ -207,6 +205,38 @@ export class RequestContext {
 	}
 
 	/**
+	 * Retrieves the name of the role the current user holds, as loaded from the database for THIS
+	 * request.
+	 *
+	 * `RegisterAuthorizationGuard` historically attached the role as a bare name, so both shapes are
+	 * accepted here.
+	 *
+	 * @returns {RolesEnum | null} - The current role name, or null when the user has no resolvable role.
+	 */
+	static currentRoleName(): RolesEnum | null {
+		const user: IAuthenticatedUser | null = RequestContext.currentUser();
+		const role: IRole | RolesEnum | undefined = user?.role as IRole | RolesEnum | undefined;
+
+		if (!role) {
+			return null;
+		}
+
+		const name = typeof role === 'string' ? role : role.name;
+		return (name as RolesEnum) || null;
+	}
+
+	/**
+	 * Retrieves the enabled permissions of the current user's role, as loaded from the database for
+	 * THIS request. Never the `permissions` claim of the access token.
+	 *
+	 * @returns {PermissionsEnum[]} - The granted permissions, or an empty array when none are known.
+	 */
+	static currentPermissions(): PermissionsEnum[] {
+		const user: IAuthenticatedUser | null = RequestContext.currentUser();
+		return Array.isArray(user?.permissions) ? user.permissions : [];
+	}
+
+	/**
 	 * Retrieves the current employee ID from the request context.
 	 * @returns {string | null} - The current employee ID if available, otherwise null.
 	 */
@@ -232,15 +262,15 @@ export class RequestContext {
 	/**
 	 * Retrieves the current user from the request context.
 	 * @param {boolean} throwError - Flag indicating whether to throw an error if user is not found.
-	 * @returns {IUser | null} - The current user if found, otherwise null.
+	 * @returns {IAuthenticatedUser | null} - The current user if found, otherwise null.
 	 */
-	static currentUser(throwError?: boolean): IUser | null {
+	static currentUser(throwError?: boolean): IAuthenticatedUser | null {
 		const requestContext = RequestContext.currentRequestContext();
 
 		// Check if request context exists
 		if (requestContext) {
 			// Get user from request context
-			const user: IUser = requestContext._req['user'];
+			const user: IAuthenticatedUser = requestContext._req['user'];
 
 			// If user exists, return it
 			if (user) {
@@ -295,29 +325,25 @@ export class RequestContext {
 	 * Checks if the current request context has the specified permissions.
 	 *
 	 * @param permissions - An array of permissions to check.
-	 * @param throwError - Whether to throw an error if permissions are not found.
+	 * @param throwError - Whether to throw an HTTP 401 instead of returning `false`. This fires whenever the
+	 *                     check fails — for an authenticated caller who simply lacks it, not only when no
+	 *                     user is attached (the token-decoding implementation returned early for the former).
 	 * @returns True if the required permissions are found, otherwise false.
 	 */
 	static hasPermissions(permissions: PermissionsEnum[], throwError?: boolean): boolean {
-		const requestContext = RequestContext.currentRequestContext();
-		if (requestContext) {
-			try {
-				// tslint:disable-next-line
-				const token = this.currentToken();
-				if (token) {
-					const jwtPayload = verify(token, env.JWT_SECRET) as {
-						id: string;
-						permissions: PermissionsEnum[];
-					};
-					return permissions.every((permission: PermissionsEnum) =>
-						(jwtPayload.permissions ?? []).includes(permission)
-					);
-				}
-			} catch (error) {
-				// Do nothing here, we throw below anyway if needed
-				console.log(error);
+		// The permissions of the CURRENT role, attached to the request by JwtStrategy. Reading the
+		// token's `permissions` claim instead would authorize against the permission set the role had
+		// when the token was issued, which survives a demotion for the token's whole lifetime.
+		const user: IUser | null = RequestContext.currentUser();
+
+		if (user) {
+			const granted = RequestContext.currentPermissions();
+
+			if (permissions.every((permission: PermissionsEnum) => granted.includes(permission))) {
+				return true;
 			}
 		}
+
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
@@ -328,27 +354,23 @@ export class RequestContext {
 	 * Checks if the current request context has any of the specified permissions.
 	 *
 	 * @param permissions - An array of permissions to check.
-	 * @param throwError - Whether to throw an error if no permissions are found.
+	 * @param throwError - Whether to throw an HTTP 401 instead of returning `false`. This fires whenever the
+	 *                     check fails — for an authenticated caller who simply lacks it, not only when no
+	 *                     user is attached (the token-decoding implementation returned early for the former).
 	 * @returns True if any of the required permissions are found, otherwise false.
 	 */
 	static hasAnyPermission(permissions: PermissionsEnum[], throwError?: boolean): boolean {
-		const requestContext = RequestContext.currentRequestContext();
-		if (requestContext) {
-			try {
-				// tslint:disable-next-line
-				const token = this.currentToken();
-				if (token) {
-					const jwtPayload = verify(token, env.JWT_SECRET) as {
-						id: string;
-						permissions: PermissionsEnum[];
-					};
-					return (jwtPayload.permissions ?? []).some((permission) => permissions.includes(permission));
-				}
-			} catch (error) {
-				// Do nothing here, we throw below anyway if needed
-				console.log(error);
+		// Database-fresh permissions, for the same reason as `hasPermissions()` above.
+		const user: IUser | null = RequestContext.currentUser();
+
+		if (user) {
+			const granted = RequestContext.currentPermissions();
+
+			if (granted.some((permission: PermissionsEnum) => permissions.includes(permission))) {
+				return true;
 			}
 		}
+
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
@@ -392,27 +414,21 @@ export class RequestContext {
 	 * Checks if the current request context has any of the specified roles.
 	 *
 	 * @param roles - An array of roles to check.
-	 * @param throwError - Whether to throw an error if no roles are found.
+	 * @param throwError - Whether to throw an HTTP 401 instead of returning `false`. This fires whenever the
+	 *                     check fails — for an authenticated caller who simply lacks it, not only when no
+	 *                     user is attached (the token-decoding implementation returned early for the former).
 	 * @returns True if any of the required roles are found, otherwise false.
 	 */
 	static hasRoles(roles: RolesEnum[], throwError?: boolean): boolean {
-		const context = RequestContext.currentRequestContext();
-		if (context) {
-			try {
-				// tslint:disable-next-line
-				const token = this.currentToken();
-				if (token) {
-					const { role } = verify(token, env.JWT_SECRET) as { id: string; role: RolesEnum };
-					return roles.includes(role ?? null);
-				}
-			} catch (error) {
-				if (error instanceof JsonWebTokenError) {
-					return false;
-				} else {
-					throw error;
-				}
-			}
+		// The role the user holds RIGHT NOW, not the `role` claim baked into their access token: a
+		// demoted user kept their former role — and everything RoleGuard, TenantPermissionGuard and
+		// OrganizationPermissionGuard grant on the strength of it — until that token expired.
+		const role: RolesEnum | null = RequestContext.currentRoleName();
+
+		if (role && roles.includes(role)) {
+			return true;
 		}
+
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
