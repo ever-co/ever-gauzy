@@ -1,4 +1,4 @@
-import { GqlModuleOptions } from '@nestjs/graphql';
+import { ApolloDriverConfig } from '@nestjs/apollo';
 
 /**
  * The transport package the sub-protocol needs.
@@ -40,7 +40,7 @@ export function supportsSubscriptionTransport(): boolean {
  *
  * @returns The `subscriptions` option, or an empty object.
  */
-export function subscriptionTransportOptions(): Pick<GqlModuleOptions, 'subscriptions'> | Record<string, never> {
+export function subscriptionTransportOptions(): { subscriptions?: ApolloDriverConfig['subscriptions'] } {
 	if (!supportsSubscriptionTransport()) {
 		return {};
 	}

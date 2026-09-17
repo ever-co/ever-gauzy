@@ -4,6 +4,7 @@ import { GraphQLError } from 'graphql';
 import { RequestContext } from '../../core/context/request-context';
 import { ApiErrorCode, DEFAULT_CODE_BY_STATUS } from '../../core/errors/api-error-codes';
 import { ApiException } from '../../core/errors/api-exception';
+import { resolveDriverPayload } from '../../core/errors/api-exception.filter';
 import { describeDatabaseError, isDatabaseErrorPayload, safeMessageForDatabaseText } from '../../core/errors/database-error';
 import { toSafeHttpException } from '../../core/interceptors/safe-http-exception';
 
@@ -40,11 +41,17 @@ export class GraphqlExceptionFilter implements GqlExceptionFilter {
 		// not already an HttpException.
 		const http = toSafeHttpException(exception);
 		const api = exception instanceof ApiException ? exception : undefined;
+		// The same classification the HTTP envelope runs, so a driver payload cannot be a 409 with a
+		// described message over REST and a 400 VALIDATION_FAILED here.
+		const driver = api ? undefined : resolveDriverPayload(exception instanceof HttpException ? exception.getResponse() : exception);
 		const traceId = RequestContext.currentTraceId();
 
-		return new GraphQLError(safeMessageFor(exception, http), {
+		return new GraphQLError(driver ? describeDatabaseError(driver) : safeMessageFor(exception, http), {
 			extensions: {
-				code: api?.code ?? DEFAULT_CODE_BY_STATUS[http.getStatus()] ?? ApiErrorCode.INTERNAL_ERROR,
+				code:
+					api?.code ??
+					(driver ? ApiErrorCode.INTERNAL_ERROR : DEFAULT_CODE_BY_STATUS[http.getStatus()]) ??
+					ApiErrorCode.INTERNAL_ERROR,
 				status: http.getStatus(),
 				...(api?.details ? { details: api.details } : {}),
 				// Omitted rather than sent as null when no request context exists, so a client never

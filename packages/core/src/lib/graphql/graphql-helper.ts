@@ -8,6 +8,8 @@ import { getPluginExtensions } from '@gauzy/plugin';
 import { isNotEmpty } from '@gauzy/utils';
 import { assertComposition, assertExtendable } from './graphql-composition';
 import { createGraphqlRequestContext } from './graphql-context';
+import { createBatchLimitPlugin, createGraphqlLimitRules } from './graphql-limits';
+import { mergeLimitSettings, resolveGraphqlPolicy } from './graphql-policy';
 import { subscriptionTransportOptions } from './subscriptions/subscription-transport';
 
 /**
@@ -29,12 +31,48 @@ export async function createGraphqlModuleOptions(
 	typesLoader: GraphQLTypesLoader,
 	options: GraphQLApiConfigurationOptions
 ): Promise<GqlModuleOptions> {
+	// What this deployment publishes and accepts, resolved once per boot. The environment overrides
+	// the configuration and the development behaviour is the default, so a workstation keeps the
+	// playground it had while a production deployment stops serving one unless it asks for it.
+	const policy = resolveGraphqlPolicy(process.env, {
+		playground: options.playground,
+		debug: options.debug,
+		introspection: options.introspection,
+		limits: mergeLimitSettings(configService.graphqlConfigOptions, options.limits)
+	});
+
+	// Reported once, at boot, next to the values that were actually applied: a deployment that set a
+	// ceiling to something unusable needs to see that in the log, and it must not fail the boot.
+	for (const warning of policy.warnings) {
+		console.warn(`[GraphQL] ${warning}`);
+	}
+
+	// The deployment's own attach point. Until it was read here, `apolloServerPlugins` was declared
+	// on the configuration, defaulted to an empty array in all three shipped configurations and
+	// passed to nothing, so a plugin configured there had no effect whatsoever.
+	const apolloServerPlugins =
+		options.apolloServerPlugins ?? configService.graphqlConfigOptions?.apolloServerPlugins ?? [];
+
 	return {
 		driver: ApolloDriver,
 		path: `/${options.path}`,
 		typeDefs: await createTypeDefs(configService, options, typesLoader),
-		playground: options.playground || false,
-		debug: options.debug || false,
+		playground: policy.playground,
+		debug: policy.debug,
+		plugins: [
+			...apolloServerPlugins,
+			// The platform's own plugin, so the batch ceiling holds in a deployment that configures
+			// no plugin of its own — the deployment that forgets to attach one is the one that needs
+			// the ceiling most.
+			createBatchLimitPlugin(policy.maxBatchSize)
+		],
+		// Depth, cost, aliases and introspection ride validation rules rather than the plugin array,
+		// so they hold even when `apolloServerPlugins` is empty.
+		validationRules: createGraphqlLimitRules(policy),
+		// Introspection is a policy, not a leftover. Apollo Server 5 has no `introspection` flag of
+		// its own any more, which is why the refusal is a rule above: it is what carries the
+		// catalogued code instead of a generic validation error.
+		persistedQueries: policy.persistedQueries ? {} : false,
 		cors: {
 			origin: '*',
 			credentials: true,
@@ -60,7 +98,9 @@ export async function createGraphqlModuleOptions(
 				'X-Channel-Id',
 				// Retry-safe writes and conditional updates.
 				'Idempotency-Key',
-				'If-Match'
+				'If-Match',
+				// A conditional read states the version it already has.
+				'If-None-Match'
 			].join(', ')
 		},
 		include: [options.resolverModule],

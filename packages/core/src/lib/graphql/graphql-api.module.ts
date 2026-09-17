@@ -2,11 +2,26 @@ import { DynamicModule, Module, Type } from '@nestjs/common';
 import { getConfig } from '@gauzy/config';
 import { getDynamicPluginsModules, getResolversFromPlugins } from '@gauzy/plugin';
 import { RoleEntityResolver } from './../role/role-entity.resolver';
+import { RoleModule } from './../role/role.module';
 
 /**
  * Resolvers the platform itself ships.
+ *
+ * `RoleEntityResolver` is declared by `RoleModule` — a resolver can only inject services its own
+ * module can reach, so it belongs beside the service it calls — and is listed here as well so the
+ * resolver is discovered from the module the Apollo configuration names, whichever way the resolver
+ * graph is later rearranged.
  */
 const CORE_RESOLVERS: Array<Type<any>> = [RoleEntityResolver];
+
+/**
+ * The domain modules that own the platform's core resolvers.
+ *
+ * Importing them is what makes their services injectable by the resolvers above: without this the
+ * resolver graph would resolve, but the first resolver that asked for a domain service would fail
+ * the boot with an unresolved dependency.
+ */
+const CORE_RESOLVER_MODULES: Array<Type<any>> = [RoleModule];
 
 /**
  * Hosts the GraphQL resolvers.
@@ -33,7 +48,7 @@ export class GraphqlApiModule {
 
 		return {
 			module: GraphqlApiModule,
-			imports: getDynamicPluginsModules(),
+			imports: [...CORE_RESOLVER_MODULES, ...getDynamicPluginsModules()],
 			providers: resolvers,
 			exports: resolvers
 		};
