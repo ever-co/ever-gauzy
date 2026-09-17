@@ -219,13 +219,20 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 
 			const gross = recurringAmount(prepared, currency);
 			const { discount, net } = applyRecurringDiscount(gross, this.discountOf(plan, input.discountPercentage));
+			// A trial owes nothing, so its cycle row is written waived **and for zero** (doc 11 §10.4
+			// step 4: "the first billing amount is zero, the billing row is written with
+			// `status = 'WAIVED'` and `amount = 0`"). What the period would have cost is kept in the
+			// metadata rather than in the amount, because a waived row carrying the recurring amount is
+			// indistinguishable from revenue to anything that reads the amount without reading the
+			// status first.
+			const amount = trialDays > 0 ? Money.zero(currency).round().toStorageString() : net.toStorageString();
 			const billing = await manager.save(
 				SubscriptionBilling,
 				manager.create(SubscriptionBilling, {
 					subscriptionId: subscription.id,
 					periodStart: period.start,
 					periodEnd: period.end,
-					amount: net.toStorageString(),
+					amount,
 					currency,
 					status: trialDays > 0 ? SubscriptionBillingStatus.WAIVED : SubscriptionBillingStatus.PENDING,
 					dueAt: period.start,

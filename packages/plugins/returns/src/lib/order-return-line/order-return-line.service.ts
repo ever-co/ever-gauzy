@@ -19,6 +19,22 @@ import { TypeOrmOrderReturnLineRepository } from './repository/type-orm-order-re
 /** The return statuses in which its line set may still be written. */
 const EDITABLE_STATUSES: OrderReturnStatus[] = [OrderReturnStatus.OPEN, OrderReturnStatus.REQUESTED];
 
+/**
+ * What one line of a return holds once a delivery is written, and what it held before it.
+ *
+ * The pair is what makes a receipt reversible: the quantities it will write are stated before the
+ * first row changes, so a receipt whose stock movements are refused can be put back to `previous`
+ * instead of leaving the return claiming goods it never took back.
+ */
+export interface IOrderReturnReceiptPlan {
+	/** The line this delivery is against. */
+	line: OrderReturnLine;
+	/** What the line holds once this delivery is written: every delivery so far, not only this one. */
+	receipt: { receivedQuantity: DecimalString; damagedQuantity: DecimalString; restock: boolean };
+	/** What the line held before it, so a receipt that is not written can be undone. */
+	previous: { receivedQuantity: DecimalString; damagedQuantity: DecimalString; restock: boolean };
+}
+
 /** The return statuses that still count against the order's fulfilled quantity. */
 const LIVE_STATUSES: OrderReturnStatus[] = [
 	OrderReturnStatus.OPEN,
@@ -265,27 +281,33 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 	}
 
 	/**
-	 * Records what physically arrived against a return's lines.
+	 * Validates a receipt and states what each line will hold, without writing anything.
 	 *
-	 * The three quantities are re-checked here rather than trusted from the caller: a receipt that
-	 * claims more than was requested would make the return's own arithmetic a lie, and the line is
-	 * the only place that knows what was requested. Damaged units count against the request exactly
-	 * like good ones do — an item that arrived broken still arrived.
+	 * Separated from the write so a whole receipt — the quantities it moves and the stock movements it
+	 * will ask the ledger for — can be validated before the first row changes. A receipt that cannot be
+	 * posted has to leave the return exactly as it was (doc 10 §11.6, the failure semantics of steps
+	 * 2–3), and validation that happened after the write could not promise that.
+	 *
+	 * **The quantities accumulate.** One return arrives over as many deliveries as the customer sends,
+	 * so a second delivery is added to the first rather than replacing it: overwriting would make the
+	 * remainder of a partly received return unclaimable, and the return could never reach `RECEIVED`
+	 * (doc 10 §11.1, `PARTIALLY_RECEIVED --> RECEIVED`).
 	 *
 	 * @param returnId The return being received.
 	 * @param inputs The quantities that arrived, per line.
-	 * @returns The updated lines.
+	 * @returns The lines with what they will hold and what they held, in the order the caller stated.
 	 * @throws NotFoundException when a line does not belong to the return.
-	 * @throws BadRequestException when a line's quantities are outside the requested quantity.
+	 * @throws BadRequestException when a delivery carries nothing, or when the deliveries together
+	 * would exceed what the line was requested for.
 	 */
-	public async recordReceipt(returnId: ID, inputs: IOrderReturnReceiptInput[]): Promise<OrderReturnLine[]> {
+	public async planReceipt(returnId: ID, inputs: IOrderReturnReceiptInput[]): Promise<IOrderReturnReceiptPlan[]> {
 		if (!Array.isArray(inputs) || inputs.length === 0) {
 			throw new BadRequestException('Receiving a return needs at least one line.');
 		}
 
 		const lines = await this.findForReturn(returnId);
 		const byId = new Map<ID, OrderReturnLine>(lines.map((line) => [line.id, line]));
-		const touched: OrderReturnLine[] = [];
+		const plan: IOrderReturnReceiptPlan[] = [];
 
 		for (const input of inputs) {
 			const line = byId.get(input.lineId);
@@ -294,28 +316,98 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 				throw new NotFoundException(`Return line ${input.lineId} does not belong to this return.`);
 			}
 
-			const received = normalizeQuantity(input.receivedQuantity);
-			const damaged = normalizeQuantity(input.damagedQuantity ?? 0);
-			const settled = sumQuantities([received, damaged]);
+			const arrived = normalizeQuantity(input.receivedQuantity);
+			const broken = normalizeQuantity(input.damagedQuantity ?? 0);
+			const delivered = sumQuantities([arrived, broken]);
 
-			if (toQuantityUnits(settled) <= 0n) {
+			if (toQuantityUnits(delivered) <= 0n) {
 				throw new BadRequestException(`Return line ${input.lineId} was received with no quantity at all.`);
 			}
 
-			if (toQuantityUnits(settled) > toQuantityUnits(line.quantity)) {
+			// What the line holds once this delivery is added, measured against what was asked for:
+			// damaged units count exactly like sound ones, because an item that arrived broken arrived.
+			const held = sumQuantities([line.receivedQuantity, line.damagedQuantity, delivered]);
+
+			if (toQuantityUnits(held) > toQuantityUnits(line.quantity)) {
 				throw new BadRequestException(
-					`Return line ${input.lineId} was requested for ${line.quantity} but ${settled} was received.`
+					`Return line ${input.lineId} was requested for ${line.quantity} but ${held} was received.`
 				);
 			}
 
-			line.receivedQuantity = received;
-			line.damagedQuantity = damaged;
+			plan.push({
+				line,
+				receipt: {
+					receivedQuantity: sumQuantities([line.receivedQuantity, arrived]),
+					damagedQuantity: sumQuantities([line.damagedQuantity, broken]),
+					restock: input.restock ?? line.restock
+				},
+				previous: {
+					receivedQuantity: line.receivedQuantity,
+					damagedQuantity: line.damagedQuantity,
+					restock: line.restock
+				}
+			});
+		}
 
-			if (input.restock !== undefined) {
-				line.restock = input.restock;
-			}
+		return plan;
+	}
 
-			touched.push(line);
+	/**
+	 * Writes the quantities a receipt planned.
+	 *
+	 * @param plan The validated receipt.
+	 * @returns The written lines.
+	 */
+	public async applyReceipt(plan: IOrderReturnReceiptPlan[]): Promise<OrderReturnLine[]> {
+		return await this.writeReceipt(plan, 'receipt');
+	}
+
+	/**
+	 * Puts the lines back to what they held before a receipt.
+	 *
+	 * This is the compensation the receive operation needs when the stock movements behind a receipt
+	 * are refused after the lines were written: the goods did not go back on the shelf, so the return
+	 * must not say they arrived (doc 10 §11.6: "a failure in steps 2–3 compensates fully and the
+	 * return stays `APPROVED`").
+	 *
+	 * @param plan The receipt being undone.
+	 * @returns The restored lines.
+	 */
+	public async restoreReceipt(plan: IOrderReturnReceiptPlan[]): Promise<OrderReturnLine[]> {
+		return await this.writeReceipt(plan, 'previous');
+	}
+
+	/**
+	 * Records what physically arrived against a return's lines.
+	 *
+	 * @param returnId The return being received.
+	 * @param inputs The quantities that arrived, per line.
+	 * @returns The updated lines.
+	 * @throws NotFoundException when a line does not belong to the return.
+	 * @throws BadRequestException when a line's quantities are outside the requested quantity.
+	 */
+	public async recordReceipt(returnId: ID, inputs: IOrderReturnReceiptInput[]): Promise<OrderReturnLine[]> {
+		return await this.applyReceipt(await this.planReceipt(returnId, inputs));
+	}
+
+	/**
+	 * Writes one side of a receipt plan onto the lines it names.
+	 *
+	 * @param plan The validated receipt.
+	 * @param side Which of the two states to write.
+	 * @returns The written lines.
+	 */
+	private async writeReceipt(
+		plan: IOrderReturnReceiptPlan[],
+		side: 'receipt' | 'previous'
+	): Promise<OrderReturnLine[]> {
+		const touched: OrderReturnLine[] = [];
+
+		for (const entry of plan) {
+			entry.line.receivedQuantity = entry[side].receivedQuantity;
+			entry.line.damagedQuantity = entry[side].damagedQuantity;
+			entry.line.restock = entry[side].restock;
+			touched.push(entry.line);
 		}
 
 		return await this.typeOrmOrderReturnLineRepository.save(touched);

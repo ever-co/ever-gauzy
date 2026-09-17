@@ -10,6 +10,7 @@ import {
 	SUBSCRIPTION_PRICING
 } from '../subscription.types';
 import { normalizeDecimal, recurringAmount } from '../subscription.cycle';
+import { normalizeQuantity, toQuantityUnits } from '../subscription.quantity';
 import { currentScope } from '../subscription.scope';
 import { SubscriptionItem } from './subscription-item.entity';
 import { MikroOrmSubscriptionItemRepository } from './repository/mikro-orm-subscription-item.repository';
@@ -169,7 +170,7 @@ export class SubscriptionItemService extends TenantAwareCrudService<Subscription
 
 			prepared.push({
 				variantId: item.variantId,
-				quantity: this.store(normalizeDecimal(item.quantity, '1'), currency),
+				quantity: this.storeQuantity(normalizeDecimal(item.quantity, '1')),
 				unitPrice: await this.resolveUnitPrice(item.variantId, currency, item.unitPrice, customerId),
 				position: Number.isFinite(Number(item.position)) ? Number(item.position) : index,
 				metadata: item.metadata
@@ -215,7 +216,10 @@ export class SubscriptionItemService extends TenantAwareCrudService<Subscription
 	 * @param subscriptionId The subscription the line belongs to.
 	 * @param variantId The variant whose line is changing.
 	 * @param quantity The new quantity, as an exact decimal.
-	 * @param currency The currency the subscription is expressed in.
+	 * @param currency The subscription's currency, which is stated by every caller of this method. It
+	 * is not what the quantity is measured against — a quantity is stored at the quantity column's own
+	 * scale, never at the currency's minor unit — but it stays on the signature so the callers that
+	 * resolve a subscription's currency first do not have to special-case this one write.
 	 * @returns The updated line.
 	 * @throws NotFoundException when the subscription has no line for that variant.
 	 */
@@ -234,7 +238,7 @@ export class SubscriptionItemService extends TenantAwareCrudService<Subscription
 			);
 		}
 
-		await super.update(current.id, { quantity: this.store(normalizeDecimal(quantity, '1'), currency) } as any);
+		await super.update(current.id, { quantity: this.storeQuantity(normalizeDecimal(quantity, '1')) } as any);
 
 		return await this.findOneScoped(current.id);
 	}
@@ -368,6 +372,28 @@ export class SubscriptionItemService extends TenantAwareCrudService<Subscription
 		}
 
 		return this.store(normalizeDecimal(resolved.unitPrice, '0'), currency);
+	}
+
+	/**
+	 * Stores a recurring quantity at the scale its own column declares.
+	 *
+	 * A quantity is a count of units, so the currency of the prices beside it has no say in how it is
+	 * measured: it is kept at `numeric(20,6)`, which is what `subscription_item.quantity` is. Rounding
+	 * it at the currency's minor unit instead would silently change what the customer is billed — half
+	 * a unit in a currency with no minor unit would become one.
+	 *
+	 * @param value An exact decimal quantity.
+	 * @returns The quantity at the quantity column's scale.
+	 * @throws BadRequestException when the quantity is negative or is not an exact decimal.
+	 */
+	private storeQuantity(value: DecimalString): DecimalString {
+		if (toQuantityUnits(value) < 0n) {
+			throw new BadRequestException(
+				'SUBSCRIPTION_AMOUNT_INVALID: a recurring quantity or price cannot be negative.'
+			);
+		}
+
+		return normalizeQuantity(value);
 	}
 
 	/**

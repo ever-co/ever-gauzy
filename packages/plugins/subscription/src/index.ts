@@ -5,6 +5,7 @@ export * from './lib/subscription.plugin';
 export * from './lib/subscription.module';
 export * from './lib/subscription.types';
 export * from './lib/subscription.cycle';
+export * from './lib/subscription.quantity';
 export * from './lib/subscription.scope';
 export * from './lib/subscription.permissions';
 export * from './lib/subscription.features';

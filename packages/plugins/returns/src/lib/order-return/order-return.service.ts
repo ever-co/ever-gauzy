@@ -15,10 +15,10 @@ import {
 	RETURNS_STOCK_LEDGER,
 	StockMovementKind
 } from '../returns.types';
-import { subtractQuantities, sumQuantities, toQuantityUnits } from '../returns.quantity';
+import { fromQuantityUnits, subtractQuantities, sumQuantities, toQuantityUnits } from '../returns.quantity';
 import { Money, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { OrderReturnLine } from '../order-return-line/order-return-line.entity';
-import { OrderReturnLineService } from '../order-return-line/order-return-line.service';
+import { IOrderReturnReceiptPlan, OrderReturnLineService } from '../order-return-line/order-return-line.service';
 import { OrderReturn } from './order-return.entity';
 import { MikroOrmOrderReturnRepository } from './repository/mikro-orm-order-return.repository';
 import { TypeOrmOrderReturnRepository } from './repository/type-orm-order-return.repository';
@@ -35,6 +35,26 @@ const DECIDABLE_STATUSES: OrderReturnStatus[] = [
 
 /** Statuses that may be received into. */
 const RECEIVABLE_STATUSES: OrderReturnStatus[] = [OrderReturnStatus.APPROVED, OrderReturnStatus.PARTIALLY_RECEIVED];
+
+/** One movement a receipt will ask the ledger for, resolved against a line and a location. */
+interface IPlannedMovement {
+	/** Location the goods moved at. */
+	warehouseId: ID;
+	/** Variant that moved. */
+	variantId: ID;
+	/** Quantity this delivery moved, which is this delivery's share and never the line's running total. */
+	quantity: string;
+	/** What kind of movement this is. */
+	kind: StockMovementKind;
+	/** Why the movement happened. */
+	reason: string;
+}
+
+/** One movement the ledger accepted, kept so a receipt that cannot finish can be reversed. */
+interface IPostedMovement extends IPlannedMovement {
+	/** The ledger's own row, when it reported one. */
+	movementId?: ID;
+}
 
 /**
  * Goods coming back: the authorisation, the receipt, and the money that follows it.
@@ -203,17 +223,29 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 *
 	 * This is the transition the whole domain exists for, and it happens in one order:
 	 *
-	 * 1. the lines are re-validated and their received quantities recorded;
-	 * 2. the return moves to `RECEIVED` or `PARTIALLY_RECEIVED`, so the refund that follows is issued
+	 * 1. the whole receipt is stated — what every line will hold once this delivery is written, and
+	 *    every stock movement the ledger will be asked for — before anything is written, so a receipt
+	 *    whose quantities or locations cannot be posted is refused while the return is still exactly as
+	 *    it was;
+	 * 2. the lines are written, accumulating onto what earlier deliveries already recorded;
+	 * 3. a stock movement is written for every unit this delivery brought — a `RETURN` for the units
+	 *    going back on the shelf, a `WRITE_OFF` for the units that came back unsellable, and a
+	 *    `DAMAGE` record for the ones that arrived broken — through the ledger, never by writing a
+	 *    level here;
+	 * 4. the return moves to `RECEIVED` or `PARTIALLY_RECEIVED`, so the refund that follows is issued
 	 *    against a return that already says the goods are in;
-	 * 3. a stock movement is written for every unit that arrived — a `RETURN` for the units going back
-	 *    on the shelf, a `WRITE_OFF` for the units that came back unsellable, and a `DAMAGE` record
-	 *    for the ones that arrived broken — through the ledger, never by writing a level here;
-	 * 4. only then is the refund issued, so money never leaves for goods the ledger refused.
+	 * 5. only then is the refund issued, so money never leaves for goods the ledger refused.
+	 *
+	 * **A failure in steps 2–3 compensates fully and the return stays where it was** (doc 10 §11.6):
+	 * the movements that were posted are reversed in the ledger and the lines are put back to what
+	 * they held, so a receipt whose goods never went back into stock is never recorded as if they had.
+	 * Nothing compensates a failure in step 5 — the goods physically arrived, so the inventory is
+	 * right, and un-posting them to retry a payment would be the worse error.
 	 *
 	 * A partial receipt leaves the return `PARTIALLY_RECEIVED` and keeps the remainder outstanding;
-	 * the same lines can be received again. Closing is deliberately not automatic: a fully received
-	 * return that is still being inspected must stay open, and `close` is what ends it.
+	 * the same lines can be received again, and the delivery that completes the request moves the
+	 * return to `RECEIVED`. Closing is deliberately not automatic: a fully received return that is
+	 * still being inspected must stay open, and `close` is what ends it.
 	 *
 	 * @param id The return being received.
 	 * @param lines The quantities that arrived, per line.
@@ -229,25 +261,44 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 		this.assertStatus(orderReturn, RECEIVABLE_STATUSES, 'receive');
 
-		const fulfilled = await this.lineService.readFulfilledLines(orderReturn.orderId);
-		const recorded = await this.lineService.recordReceipt(id, lines);
-		const settlement = this.summarize(recorded);
+		const posted: IPostedMovement[] = [];
+		let plan: IOrderReturnReceiptPlan[] = [];
+		let settlement = { received: '0', outstanding: '0' };
 
-		const status =
-			toQuantityUnits(settlement.outstanding) === 0n
-				? OrderReturnStatus.RECEIVED
-				: OrderReturnStatus.PARTIALLY_RECEIVED;
+		try {
+			const fulfilled = await this.lineService.readFulfilledLines(orderReturn.orderId);
+			plan = await this.lineService.planReceipt(id, lines);
 
-		// The status is written first: the refund below reads the return and refuses to refund one
-		// that has not received anything, which is the check that keeps money behind goods.
-		await super.update(id, {
-			status,
-			receivedAt: new Date(),
-			warehouseId: options.warehouseId ?? orderReturn.warehouseId,
-			note: options.note ?? orderReturn.note
-		} as any);
+			const movements = this.planMovements(orderReturn, plan, fulfilled, options.warehouseId);
 
-		const movementIds = await this.writeStockMovements(orderReturn, recorded, fulfilled, options.warehouseId);
+			settlement = this.summarize(plan);
+
+			const status =
+				toQuantityUnits(settlement.outstanding) === 0n
+					? OrderReturnStatus.RECEIVED
+					: OrderReturnStatus.PARTIALLY_RECEIVED;
+
+			await this.lineService.applyReceipt(plan);
+
+			for (const movement of movements) {
+				posted.push(await this.postMovement(orderReturn, movement));
+			}
+
+			// The status is written last, and the refund below reads it: the refund guard refuses a
+			// return that has not received anything, which is the check that keeps money behind goods.
+			await super.update(id, {
+				status,
+				receivedAt: new Date(),
+				warehouseId: options.warehouseId ?? orderReturn.warehouseId,
+				note: options.note ?? orderReturn.note
+			} as any);
+		} catch (error) {
+			await this.compensateReceipt(orderReturn, plan, posted);
+
+			throw error;
+		}
+
+		const updated = await this.findOneScoped(id);
 
 		let refund: IRefundResult | undefined;
 
@@ -255,12 +306,12 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			refund = await this.refund(id, options.refund, undefined, options.note);
 		}
 
-		const updated = await this.findOneScoped(id);
-
 		return {
 			returnId: updated.id,
 			status: updated.status,
-			movementIds,
+			movementIds: posted
+				.map((movement) => movement.movementId)
+				.filter((movementId): movementId is ID => !!movementId),
 			refund,
 			receivedQuantity: settlement.received,
 			outstandingQuantity: settlement.outstanding
@@ -329,11 +380,25 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	}
 
 	/**
-	 * Closes a return whose goods are all in and whose refund is settled.
+	 * Closes a return, which is the state that says nothing further can happen to it.
 	 *
-	 * Closing is deliberate rather than automatic: a fully received return that is still being
-	 * inspected or haggled over must stay open, and `CLOSED` is the state that says nothing further
-	 * can happen to it.
+	 * There are two closures, and which one this is depends on what the lines say.
+	 *
+	 * - **Settled.** Every line is fully accounted for — what was received plus what arrived damaged
+	 *   is what was requested — so the return is closed on its goods.
+	 * - **Short.** A `PARTIALLY_RECEIVED` return whose goods will never all arrive is closed short,
+	 *   which is the documented end of that state (doc 10 §11.1:
+	 *   `PARTIALLY_RECEIVED --> CLOSED : short close after the receive window`). The outstanding
+	 *   quantity is written onto the return's own `metadata.shortClose` — per line and in total —
+	 *   rather than left to be inferred from the difference between two columns, so a return closed
+	 *   with goods outstanding says so, and no remainder is abandoned silently. Nothing moves in
+	 *   stock: only the received units were ever posted (doc 10 §11.7, `CLOSED` is "unchanged since
+	 *   receipt").
+	 *
+	 * A header that claims `RECEIVED` while one of its lines still owes units contradicts itself, and
+	 * that is refused rather than closed short: `RECEIVED` is the claim that everything arrived, so a
+	 * return may not close on a claim its own lines deny. The short close belongs to the state that
+	 * admits the shortfall.
 	 *
 	 * @param id The return to close.
 	 * @returns The closed return.
@@ -352,14 +417,41 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		);
 
 		const lines = await this.lineService.findForReturn(id);
+		const shortfalls = lines
+			.map((line) => ({
+				line,
+				outstanding: this.outstandingOf(line.quantity, line.receivedQuantity, line.damagedQuantity)
+			}))
+			.filter((entry) => toQuantityUnits(entry.outstanding) > 0n);
 
-		if (lines.some((line) => toQuantityUnits(line.quantity) > toQuantityUnits(sumQuantities([line.receivedQuantity, line.damagedQuantity])))) {
+		if (shortfalls.length && orderReturn.status === OrderReturnStatus.RECEIVED) {
 			throw new BadRequestException(
 				'This return still has lines that were not fully received; receive them or cancel the return before closing it.'
 			);
 		}
 
-		await super.update(id, { status: OrderReturnStatus.CLOSED, closedAt: new Date() } as any);
+		const closedAt = new Date();
+
+		await super.update(id, {
+			status: OrderReturnStatus.CLOSED,
+			closedAt,
+			...(shortfalls.length
+				? {
+						metadata: {
+							...(orderReturn.metadata ?? {}),
+							shortClose: {
+								closedAt: closedAt.toISOString(),
+								outstandingQuantity: sumQuantities(shortfalls.map((entry) => entry.outstanding)),
+								lines: shortfalls.map((entry) => ({
+									returnLineId: entry.line.id,
+									orderLineId: entry.line.orderLineId,
+									outstandingQuantity: entry.outstanding
+								}))
+							}
+						}
+				  }
+				: {})
+		} as any);
 
 		return await this.findOneScoped(id);
 	}
@@ -466,37 +558,41 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	}
 
 	/**
-	 * Writes the stock movements a receipt produced.
+	 * States the stock movements a receipt will produce, without writing any of them.
 	 *
-	 * Every unit that arrived produces exactly one movement, and which one depends on what happened to
-	 * it: a restocked unit is a `RETURN`, a unit that came back unsellable is a `WRITE_OFF` (recorded
-	 * without ever entering sellable stock), and a unit that arrived broken is a `DAMAGE`. The ledger
-	 * owns the level; this method only states what happened.
+	 * Every unit **this delivery** brought produces exactly one movement, and which one depends on what
+	 * happened to it: a restocked unit is a `RETURN`, a unit that came back unsellable is a
+	 * `WRITE_OFF` (recorded without ever entering sellable stock), and a unit that arrived broken is a
+	 * `DAMAGE`. What the line already held is subtracted first, because the ledger holds every arrival
+	 * separately and a movement for a unit that was recorded by an earlier delivery would count it
+	 * twice.
+	 *
+	 * Stating the movements before writing them is what lets a receipt that cannot be posted leave the
+	 * return untouched: the ledger is reached only after every movement is known to be placeable.
 	 *
 	 * @param orderReturn The return being received.
-	 * @param lines The lines as they were recorded.
+	 * @param plan The validated receipt.
 	 * @param fulfilled The order's fulfilled lines, which name the variant each line is for.
 	 * @param warehouseId The receiving location, when it was given on the request.
-	 * @returns The movement ids the ledger wrote.
-	 * @throws BadRequestException when there is something to move and no ledger is registered, or
-	 * when the variant or the location of a movement is unknown.
+	 * @returns The movements the ledger will be asked for, in the order the lines state them.
+	 * @throws BadRequestException when the variant or the location of a movement is unknown.
 	 */
-	private async writeStockMovements(
+	private planMovements(
 		orderReturn: OrderReturn,
-		lines: OrderReturnLine[],
+		plan: IOrderReturnReceiptPlan[],
 		fulfilled: Map<ID, { variantId?: ID }>,
 		warehouseId?: ID
-	): Promise<ID[]> {
+	): IPlannedMovement[] {
 		const pending: Array<{ line: OrderReturnLine; quantity: string; kind: StockMovementKind; reason: string }> = [];
 
-		for (const line of lines) {
-			const received = line.receivedQuantity ?? '0';
-			const damaged = line.damagedQuantity ?? '0';
-			const restock = line.restock !== false;
+		for (const entry of plan) {
+			const received = subtractQuantities(entry.receipt.receivedQuantity, entry.previous.receivedQuantity);
+			const damaged = subtractQuantities(entry.receipt.damagedQuantity, entry.previous.damagedQuantity);
+			const restock = entry.receipt.restock;
 
 			if (toQuantityUnits(received) > 0n) {
 				pending.push({
-					line,
+					line: entry.line,
 					quantity: received,
 					kind: restock ? StockMovementKind.RETURN : StockMovementKind.WRITE_OFF,
 					reason: restock
@@ -507,7 +603,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 			if (toQuantityUnits(damaged) > 0n) {
 				pending.push({
-					line,
+					line: entry.line,
 					quantity: damaged,
 					kind: StockMovementKind.DAMAGE,
 					reason: 'Returned goods arrived damaged.'
@@ -519,13 +615,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			return [];
 		}
 
-		if (!this.stockLedger) {
-			throw new BadRequestException(
-				'RETURN_STOCK_LEDGER_UNAVAILABLE: the inventory capability is not registered, so returned goods cannot be written back to stock.'
-			);
-		}
-
-		const movementIds: ID[] = [];
+		const movements: IPlannedMovement[] = [];
 
 		for (const movement of pending) {
 			const warehouse = movement.line.warehouseId ?? warehouseId ?? orderReturn.warehouseId;
@@ -543,45 +633,159 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 				);
 			}
 
-			const result = await this.stockLedger.recordMovement({
+			movements.push({
 				warehouseId: warehouse,
 				variantId,
 				quantity: movement.quantity,
 				kind: movement.kind,
-				referenceType: 'ORDER_RETURN',
-				referenceId: orderReturn.id,
 				reason: movement.reason
 			});
-
-			if (result?.movementId) {
-				movementIds.push(result.movementId);
-			}
 		}
 
-		return movementIds;
+		return movements;
 	}
 
 	/**
-	 * @param lines The lines as they were recorded.
-	 * @returns The received and outstanding quantities of the whole return, as exact decimals.
+	 * Puts a receipt that could not be posted back the way it was found.
+	 *
+	 * Every way a receipt can fail ends here (doc 10 §11.6: "a failure in steps 2–3 compensates fully
+	 * and the return stays `APPROVED`"), and it is what stops a return from claiming goods that never
+	 * went back into stock:
+	 *
+	 * 1. the movements the ledger already accepted are reversed, because the goods they recorded are
+	 *    not there;
+	 * 2. the lines are put back to the quantities they held before the delivery, so the remainder a
+	 *    later delivery would settle is still outstanding;
+	 * 3. the header is stated in the state it was read in, so a reader finds the return it had.
+	 *
+	 * This is a compensating action rather than a rollback: the rows live in two places — this plugin's
+	 * tables and the ledger — and no transaction spans them, so the receipt is undone in the reverse of
+	 * the order it was done in.
+	 *
+	 * @param orderReturn The return as it was read, which is the state the receipt is undone to.
+	 * @param plan The receipt that was being written.
+	 * @param posted The movements the ledger accepted before the failure.
 	 */
-	private summarize(lines: OrderReturnLine[]): { received: string; outstanding: string } {
+	private async compensateReceipt(
+		orderReturn: OrderReturn,
+		plan: IOrderReturnReceiptPlan[],
+		posted: IPostedMovement[]
+	): Promise<void> {
+		await this.reverseMovements(orderReturn, posted);
+		await this.lineService.restoreReceipt(plan);
+
+		await super.update(orderReturn.id, {
+			status: orderReturn.status,
+			receivedAt: orderReturn.receivedAt,
+			warehouseId: orderReturn.warehouseId,
+			note: orderReturn.note
+		} as any);
+	}
+
+	/**
+	 * Asks the ledger for one movement.
+	 *
+	 * @param orderReturn The return the movement belongs to.
+	 * @param movement The planned movement.
+	 * @returns The movement as the ledger recorded it.
+	 * @throws BadRequestException when the inventory capability is not registered, because a receipt
+	 * whose goods never became sellable is worse than a receipt that did not happen.
+	 */
+	private async postMovement(orderReturn: OrderReturn, movement: IPlannedMovement): Promise<IPostedMovement> {
+		const result = await this.requireLedger().recordMovement({
+			warehouseId: movement.warehouseId,
+			variantId: movement.variantId,
+			quantity: movement.quantity,
+			kind: movement.kind,
+			referenceType: 'ORDER_RETURN',
+			referenceId: orderReturn.id,
+			reason: movement.reason
+		});
+
+		return { ...movement, movementId: result?.movementId };
+	}
+
+	/**
+	 * Reverses the movements a receipt managed to post before it failed.
+	 *
+	 * The ledger is asked for the opposite delta rather than the row being deleted, because the ledger
+	 * records what happened: a movement that was written and reversed is a different fact from one that
+	 * was never written, and only the first is true. The reason names the reversal so the pair reads as
+	 * one compensated receipt (doc 10 §11.6 step 3).
+	 *
+	 * @param orderReturn The return the movements belong to.
+	 * @param posted The movements the ledger accepted.
+	 */
+	private async reverseMovements(orderReturn: OrderReturn, posted: IPostedMovement[]): Promise<void> {
+		const ledger = this.stockLedger;
+
+		if (!ledger || !posted.length) {
+			return;
+		}
+
+		for (const movement of posted) {
+			await ledger.recordMovement({
+				warehouseId: movement.warehouseId,
+				variantId: movement.variantId,
+				quantity: fromQuantityUnits(-toQuantityUnits(movement.quantity)),
+				kind: movement.kind,
+				referenceType: 'ORDER_RETURN',
+				referenceId: orderReturn.id,
+				reason: `RECEIVE_COMPENSATED: ${movement.reason}`
+			});
+		}
+	}
+
+	/**
+	 * @returns The stock ledger, which a receipt with something to move cannot do without.
+	 * @throws BadRequestException when the inventory capability is not registered.
+	 */
+	private requireLedger(): IStockLedgerPort {
+		if (!this.stockLedger) {
+			throw new BadRequestException(
+				'RETURN_STOCK_LEDGER_UNAVAILABLE: the inventory capability is not registered, so returned goods cannot be written back to stock.'
+			);
+		}
+
+		return this.stockLedger;
+	}
+
+	/**
+	 * @param plan The receipt as it will be written.
+	 * @returns The received and outstanding quantities of the whole return, as exact decimals, once
+	 * every line of the plan holds what this delivery leaves on it.
+	 */
+	private summarize(plan: IOrderReturnReceiptPlan[]): { received: string; outstanding: string } {
 		let received = '0';
 		let outstanding = '0';
 
-		for (const line of lines) {
-			const settled = sumQuantities([line.receivedQuantity, line.damagedQuantity]);
+		for (const entry of plan) {
+			const settled = sumQuantities([entry.receipt.receivedQuantity, entry.receipt.damagedQuantity]);
 
 			received = sumQuantities([received, settled]);
 			outstanding = sumQuantities([
 				outstanding,
-				toQuantityUnits(settled) > toQuantityUnits(line.quantity)
-					? '0'
-					: subtractQuantities(line.quantity, settled)
+				this.outstandingOf(entry.line.quantity, entry.receipt.receivedQuantity, entry.receipt.damagedQuantity)
 			]);
 		}
 
 		return { received, outstanding };
+	}
+
+	/**
+	 * @param quantity What the line was requested for.
+	 * @param received What arrived sound.
+	 * @param damaged What arrived broken; it counts against the request exactly like a sound unit.
+	 * @returns What the line still owes against its request, clamped at zero.
+	 */
+	private outstandingOf(
+		quantity: string | number | null | undefined,
+		received: string | number | null | undefined,
+		damaged: string | number | null | undefined
+	): string {
+		const settled = sumQuantities([received, damaged]);
+
+		return toQuantityUnits(settled) > toQuantityUnits(quantity) ? '0' : subtractQuantities(quantity, settled);
 	}
 
 	/**
