@@ -202,6 +202,61 @@ export function getSettingsFromPlugins(
 }
 
 /**
+ * A resource query schema a plugin declares.
+ *
+ * Typed structurally rather than by importing the core declaration: a plugin package depends on the
+ * core package and never the reverse, so the shape a plugin contributes is described here and the
+ * consumer checks it before use. Nothing in this contract is optional beyond the allow-lists,
+ * because a declaration without a resource name cannot be collected at all.
+ */
+export interface PluginApiQuerySchemaContribution {
+	/** The concept root word: `role`, never a storage-qualified name. */
+	readonly resource: string;
+
+	/** Fields a caller may filter on. A dotted entry is a one-level relation path. */
+	readonly filterable?: readonly string[];
+
+	/** Fields a caller may sort by. */
+	readonly sortable?: readonly string[];
+
+	/** Paths a caller may ask for in a sparse fieldset. */
+	readonly selectable?: readonly string[];
+
+	/** Relations a caller may expand, as dotted paths. */
+	readonly expandable?: readonly string[];
+
+	/** Fields the free-text parameter searches. */
+	readonly searchable?: readonly string[];
+
+	/** The sort applied when a caller asks for none. */
+	readonly defaultSort?: readonly string[];
+
+	/** The kind of each filterable field, which decides the operators it accepts. */
+	readonly kinds?: Readonly<Record<string, string>>;
+
+	/** The page size used when a caller asks for none. */
+	readonly defaultPageSize?: number;
+
+	/** The largest page a caller may ask for. */
+	readonly maxPageSize?: number;
+}
+
+/**
+ * Get the resource query schemas a set of plugins contributes.
+ *
+ * @param plugins An array of plugins that may declare query schemas.
+ * @returns Every declared schema, in plugin order.
+ */
+export function getApiQuerySchemasFromPlugins(
+	plugins?: Array<Type<any> | DynamicModule>
+): Array<PluginApiQuerySchemaContribution> {
+	return getContributionsFromPlugins<PluginApiQuerySchemaContribution>(
+		plugins ?? [],
+		PLUGIN_METADATA.API_QUERY_SCHEMAS
+	);
+}
+
+/**
  * Get the plugin classes a given plugin declares as prerequisites.
  *
  * @param plugin The plugin to inspect.

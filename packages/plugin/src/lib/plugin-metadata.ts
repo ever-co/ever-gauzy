@@ -45,7 +45,17 @@ export const PLUGIN_METADATA = {
 	/**
 	 * Key representing the plugins this plugin requires to be loaded first.
 	 */
-	DEPENDS_ON: 'dependsOn'
+	DEPENDS_ON: 'dependsOn',
+
+	/**
+	 * Key representing the resource query schemas the plugin declares.
+	 *
+	 * A plugin that adds a list endpoint declares what that resource may be filtered, sorted,
+	 * selected and expanded by, exactly as a core resource does beside its controller. The platform
+	 * unions the declarations, so the REST query protocol and the generated GraphQL inputs serve a
+	 * plugin's resource on the same terms as a built-in one.
+	 */
+	API_QUERY_SCHEMAS: 'apiQuerySchemas'
 } as const;
 
 /**
