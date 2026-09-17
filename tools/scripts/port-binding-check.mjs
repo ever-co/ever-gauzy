@@ -68,10 +68,6 @@ const AWAITING_PROVIDER = {
 		needs:
 			'A refund entry point whose answer is the refund id rather than the row, and which accepts the claim path that names no payment.'
 	},
-	RETURNS_ORDER_FULFILLMENT: {
-		owner: '@gauzy/plugin-order',
-		needs: 'How much of an order line has been fulfilled, so a return cannot exceed what was sent.'
-	},
 	RETURNS_SHIPMENT_GATEWAY: {
 		owner: '@gauzy/plugin-fulfillment',
 		needs: 'Creating the outbound shipment a return or an exchange travels on.'
@@ -87,10 +83,6 @@ const AWAITING_PROVIDER = {
 	SUBSCRIPTION_CATALOG: {
 		owner: '@gauzy/plugin-catalog',
 		needs: 'A read of which products and variants may be subscribed to, which the catalogue does not currently record.'
-	},
-	SUBSCRIPTION_PRICING: {
-		owner: '@gauzy/plugin-pricing',
-		needs: 'The recurring price of a variant for a billing period and a currency.'
 	},
 	SUBSCRIPTION_ORDER_GATEWAY: {
 		owner: '@gauzy/plugin-order',
