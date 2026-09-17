@@ -1,4 +1,4 @@
-{
+﻿{
 	"BUTTONS": {
 		"PAY": "Плащане",
 		"ADD_EXISTING_USER": "Добавете съществуващ потребител",
@@ -2530,6 +2530,8 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
 				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Честота на снимки",
 				"SCREENSHOT_FREQUENCY_INFO": "Посочете честотата на актуализация или интервали на време за синхронизация.",
 				"RANDOM_SCREENSHOT": "Случайна снимка",

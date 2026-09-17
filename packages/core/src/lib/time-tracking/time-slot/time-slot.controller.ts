@@ -56,7 +56,6 @@ export class TimeSlotController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/:id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() options: FindOneOptions): Promise<ITimeSlot> {
 		return await this._timeSlotService.findOneByIdString(id, options);

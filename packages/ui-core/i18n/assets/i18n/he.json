@@ -1,4 +1,4 @@
-{
+﻿{
 	"BUTTONS": {
 		"PAY": "Pay",
 		"ADD_EXISTING_USER": "Add Existing User",
@@ -2496,6 +2496,8 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
 				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "תדירות צילומי מסך",
 				"SCREENSHOT_FREQUENCY_INFO": "ציין את תדירות העדכון או המרווחים הזמניים לסנכרון.",
 				"RANDOM_SCREENSHOT": "צילום מסך אקראי",

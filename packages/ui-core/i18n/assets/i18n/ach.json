@@ -2343,7 +2343,9 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "crwdns11495:0crwdne11495:0",
 				"ACTIVITY_PROOF_DURATION": "crwdns11497:0crwdne11497:0",
 				"ACTIVITY_PROOF_DURATION_INFO": "crwdns11499:0crwdne11499:0",
-				"ALLOW_TRACK_INACTIVITY": "crwdns11501:0crwdne11501:0"
+				"ALLOW_TRACK_INACTIVITY": "crwdns11501:0crwdne11501:0",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs."
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "crwdns4764:0crwdne4764:0",

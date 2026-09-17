@@ -1,4 +1,4 @@
-{
+﻿{
 	"BUTTONS": {
 		"PAY": "Pagar",
 		"ADD_EXISTING_USER": "Agregar usuario existente",
@@ -2459,6 +2459,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Duración del diálogo de cuenta regresiva de prueba de actividad, representa una cantidad de minutos otorgados para demostrar la actividad.",
 				"ENABLE_DETECTION_INACTIVITY": "Habilitar la detección de inactividad del empleado.",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Habilitado: el sistema detectará la inactividad y mostrará una advertencia. \nDeshabilitado: no se mostrará ninguna advertencia cuando un empleado esté inactivo.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Frecuencia de capturas de pantalla",
 				"SCREENSHOT_FREQUENCY_INFO": "Especifique la frecuencia de actualización o los intervalos de sincronización de tiempo.",
 				"RANDOM_SCREENSHOT": "Captura de pantalla aleatoria",

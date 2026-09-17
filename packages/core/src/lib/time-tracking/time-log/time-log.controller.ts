@@ -46,7 +46,6 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
-	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('conflict')
 	async getConflict(@Query() request: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
 		return await this._commandBus.execute(new IGetConflictTimeLogCommand(request));
@@ -248,7 +247,6 @@ export class TimeLogController {
 	 * @param options Additional options for finding the time log.
 	 * @returns The found time log.
 	 */
-	@UseGuards(EmployeeTrackedDataGuard)
 	@Get(':id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() options: FindOneOptions): Promise<ITimeLog> {
 		return await this._timeLogService.findOneByIdString(id, options);

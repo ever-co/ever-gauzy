@@ -17,13 +17,13 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	public title: string;
 	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	private readonly _router = inject(Router);
+	private readonly _pageTabRegistryService = inject(PageTabRegistryService);
+	private readonly _store = inject(Store);
 
 	constructor(
 		private readonly _route: ActivatedRoute,
 		private readonly _cdr: ChangeDetectorRef,
-		private readonly _routeUtil: RouteUtil,
-		private readonly _pageTabRegistryService: PageTabRegistryService,
-		private readonly _store: Store
+		private readonly _routeUtil: RouteUtil
 	) {}
 
 	ngOnInit(): void {
