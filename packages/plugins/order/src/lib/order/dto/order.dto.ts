@@ -1,4 +1,4 @@
-﻿import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEmail, IsNumber, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { AddressType } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
@@ -7,8 +7,8 @@ import { TenantOrganizationBaseDTO } from '@gauzy/core';
  * The writable surface of an order.
  *
  * The statuses and every total are deliberately absent. `status` moves through `OrderStateMachine`
- * alone, `OrderPaymentStatus` and `fulfillmentStatus` are materialised from the order's own rows, and the
- * totals are written by the totals writer from the lines and the money ledgers â€” a caller that could
+ * alone, `paymentStatus` and `fulfillmentStatus` are materialised from the order's own rows, and the
+ * totals are written by the totals writer from the lines and the money ledgers — a caller that could
  * set any of them could make a cache disagree with the ledger that is its source of truth.
  */
 export class OrderDTO extends TenantOrganizationBaseDTO {

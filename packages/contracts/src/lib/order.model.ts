@@ -1,4 +1,4 @@
-﻿import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { ICommerceCartTotals } from './commerce-cart.model';
 import { CurrencyCode } from './money.model';
 
@@ -190,7 +190,7 @@ export interface IOrder extends IBasePerTenantAndOrganizationEntityModel {
 	currencyDecimals: number;
 	locale?: string;
 	status: OrderStatus;
-	OrderPaymentStatus: OrderPaymentStatus;
+	paymentStatus: OrderPaymentStatus;
 	fulfillmentStatus: FulfillmentStatus;
 	isDraft: boolean;
 	isTest: boolean;

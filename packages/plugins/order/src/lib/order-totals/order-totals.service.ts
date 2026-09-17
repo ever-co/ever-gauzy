@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
 	AdjustmentOwnerType,
 	FulfillmentStatus,
@@ -73,7 +73,7 @@ export class OrderTotalsService {
 		}
 
 		const snapshot = await this.computeTotals(order);
-		const OrderPaymentStatus = await this.derivePaymentStatus(order, snapshot);
+		const paymentStatus = await this.derivePaymentStatus(order, snapshot);
 		const fulfillmentStatus = await this.deriveFulfillmentStatus(order);
 		const version = Number(order.version) + 1;
 
@@ -91,7 +91,7 @@ export class OrderTotalsService {
 			paidTotal: snapshot.paidTotal,
 			refundedTotal: snapshot.refundedTotal,
 			outstandingTotal: snapshot.outstandingTotal,
-			OrderPaymentStatus,
+			paymentStatus,
 			fulfillmentStatus,
 			sellerCount: await this.countSellers(order),
 			version

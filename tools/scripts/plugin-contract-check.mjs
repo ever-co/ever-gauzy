@@ -501,6 +501,118 @@ for (const migration of allMigrations) {
 check('migration ordering was actually examined', orderChecks > 0, 'no foreign key references were found to check');
 
 /* ------------------------------------------------------------------------------------------------
+ * Entity columns against their table
+ * ---------------------------------------------------------------------------------------------- */
+
+// An entity that maps a column the table does not have fails on the first read or write of that
+// entity — every query names every column, so one missing column breaks the whole resource, not one
+// field of it. The migration check above proves the TABLE exists; this proves the table has the
+// COLUMNS the entity declares.
+//
+// Only columns the entity explicitly asks for with a column decorator are checked, because those
+// are unambiguous: a property carrying one is a column by definition, and a relation property is
+// not (it may be expressed purely by the foreign key its owner declares separately). Checking
+// relation properties would mean guessing how the mapper names their join column, and a check that
+// guesses reports defects that are not there.
+
+/** The body of the CREATE TABLE for a table, or undefined when no migration creates it. */
+function createTableBody(source, table) {
+	const pattern = new RegExp(`create\\s+table(?:\\s+if\\s+not\\s+exists)?\\s+["'\`]?${table}["'\`]?\\s*\\(`, 'i');
+	const match = pattern.exec(source);
+	if (!match) return undefined;
+	let depth = 1;
+	let index = match.index + match[0].length;
+	const start = index;
+	while (index < source.length && depth > 0) {
+		const character = source[index];
+		if (character === '(') depth++;
+		else if (character === ')') depth--;
+		index++;
+	}
+	return source.slice(start, index - 1);
+}
+
+/** The column an explicitly-decorated property maps to. */
+function columnOf(property, decoratorArgs) {
+	const explicit = decoratorArgs.match(/name\s*:\s*['"]([A-Za-z0-9_]+)['"]/);
+	if (explicit) return explicit[1];
+	// Absent an explicit name the mapper keeps the property name as the column name. Verified
+	// against the shipped migrations, which write quoted camelCase identifiers — `"channelId"`,
+	// `"createdByUserId"` — rather than converting to snake_case. Deriving snake_case here reports
+	// every column of every entity as missing, which is how this check first read.
+	return property;
+}
+
+const allMigrationSource = allMigrations.map((m) => m.source).join('\n');
+let columnChecks = 0;
+if (existsSync(pluginsDir)) {
+	for (const plugin of readdirSync(pluginsDir, { withFileTypes: true }).filter((e) => e.isDirectory())) {
+		const packageMigrations = allMigrations.filter((m) => m.file.includes(`${sep}${plugin.name}${sep}`));
+		if (packageMigrations.length === 0) continue;
+		const packageSource = packageMigrations.map((m) => m.source).join('\n');
+
+		for (const file of walk(join(pluginsDir, plugin.name))) {
+			if (!file.endsWith('.entity.ts')) continue;
+			const source = read(file);
+			const table = source.match(/@MultiORMEntity\(\s*['"]([a-z0-9_]+)['"]/)?.[1];
+			if (!table) continue;
+
+			const body = createTableBody(packageSource, table);
+			if (body === undefined) continue; // the table's absence is already reported above
+
+			// Walk the declarations line by line: find each column decorator, find where its
+			// argument list ends by tracking parenthesis depth, then take the next declaration
+			// after it. A single regex spanning lines cannot do this — it cannot tell a property
+			// from an object key inside the decorator's own arguments, and it will happily match a
+			// far-away import, which is how an earlier version of this check reported a column
+			// named after a type that appears only in an import statement.
+			const lines = source.split('\n');
+			for (let i = 0; i < lines.length; i++) {
+				if (!/@MultiORMColumn\b/.test(lines[i])) continue;
+
+				let depth = 0;
+				let sawOpen = false;
+				let end = i;
+				let args = '';
+				for (; end < lines.length && end < i + 60; end++) {
+					const line = lines[end];
+					args += line + ' ';
+					for (const character of line) {
+						if (character === '(') {
+							depth++;
+							sawOpen = true;
+						} else if (character === ')') {
+							depth--;
+						}
+					}
+					if (sawOpen && depth <= 0) break;
+					if (!sawOpen) break; // a bare `@MultiORMColumn` with no argument list
+				}
+
+				let property;
+				for (let k = end + 1; k < lines.length && k < end + 12; k++) {
+					const line = lines[k].trim();
+					if (line.length === 0 || line.startsWith('@') || line.startsWith('*') || line.startsWith('//')) continue;
+					property = /^(?:public\s+|readonly\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*[?!]?\s*[:;(]/.exec(line)?.[1];
+					break;
+				}
+				if (!property) continue;
+
+				const column = columnOf(property, args);
+				columnChecks++;
+				check(
+					`${table}.${column} exists in its migration (from ${basename(file)})`,
+					new RegExp(`\\b${column}\\b`).test(body),
+					`the entity declares the column but no migration creates it`
+				);
+			}
+		}
+	}
+}
+check('entity columns were actually examined', columnChecks > 0, 'no decorated properties were found to check');
+void allMigrationSource;
+
+/* ------------------------------------------------------------------------------------------------
  * Kernel capabilities
  * ---------------------------------------------------------------------------------------------- */
 

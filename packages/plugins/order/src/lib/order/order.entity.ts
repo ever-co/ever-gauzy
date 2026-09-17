@@ -1,4 +1,4 @@
-﻿import { JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsBoolean,
@@ -155,7 +155,7 @@ export class Order extends TenantOrganizationBaseEntity implements IOrder {
 	@ApiProperty({ type: () => String, enum: OrderPaymentStatus })
 	@IsEnum(OrderPaymentStatus)
 	@MultiORMColumn({ type: 'simple-enum', enum: OrderPaymentStatus, default: OrderPaymentStatus.NOT_PAID })
-	OrderPaymentStatus: OrderPaymentStatus;
+	paymentStatus: OrderPaymentStatus;
 
 	/**
 	 * Materialised from the fulfilment lines and their order-line quantities. Never written directly.

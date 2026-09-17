@@ -1,4 +1,4 @@
-﻿import { JoinColumn } from 'typeorm';
+import { JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ID, IOrderTransaction, OrderTransactionType } from '@gauzy/contracts';
@@ -19,7 +19,7 @@ import { MikroOrmOrderTransactionRepository } from './repository/mikro-orm-order
  *
  * **Append-only.** A row is never updated and never deleted; a correction is a new row of the opposite
  * kind, which is what makes the ledger reconcilable and auditable. The order's `paidTotal`,
- * `refundedTotal`, `outstandingTotal` and `OrderPaymentStatus` are all derived from these rows, inside the
+ * `refundedTotal`, `outstandingTotal` and `paymentStatus` are all derived from these rows, inside the
  * same transaction that appends one.
  *
  * An `AUTHORIZATION` is deliberately *not* money received: only a `CAPTURE`, a `CREDIT` or a positive
