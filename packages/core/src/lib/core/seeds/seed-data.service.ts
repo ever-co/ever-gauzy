@@ -11,6 +11,7 @@ import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { environment as env, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { IEmployee, IOrganization, IOrganizationProject, IRole, ITenant, IUser } from '@gauzy/contracts';
+import { validateSeedCredentials } from '../../bootstrap/validate-secrets';
 import { getPluginModules, hasLifecycleMethod, PluginLifecycleMethods } from '@gauzy/plugin';
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
@@ -268,6 +269,10 @@ export class SeedDataService {
 	 * Seed All Data
 	 */
 	public async runAllSeed() {
+		// Same default-credential gate as `runDefaultSeed`: this path also calls `seedBasicDefaultData()`,
+		// and as a non-DEFAULT seed it additionally creates the hard-coded DEFAULT_EVER_EMPLOYEES accounts.
+		validateSeedCredentials({ createsFixtureAccounts: true });
+
 		try {
 			this.seedType = SeederTypeEnum.ALL;
 
@@ -304,6 +309,15 @@ export class SeedDataService {
 	 * Seed Default Data
 	 */
 	public async runDefaultSeed(fromAPI: boolean) {
+		// Fail BEFORE `resetDatabase()` truncates anything: this seed creates the SUPER_ADMIN, ADMIN
+		// and EMPLOYEE accounts from `environment.demoCredentialConfig`, whose defaults are published
+		// in the README (GHSA-4r2r-mv32-3468). Covers both entry points — the boot-time
+		// `AppService.seedDBIfEmpty()` and the `yarn seed` CLI — because both land here. On a demo
+		// boot this becomes an ALL seed (below), which also creates the fixture accounts.
+		validateSeedCredentials({
+			createsFixtureAccounts: this.configService.get('demo') === true && fromAPI === true
+		});
+
 		try {
 			if (this.configService.get('demo') === true && fromAPI === true) {
 				this.seedType = SeederTypeEnum.ALL;
@@ -338,6 +352,10 @@ export class SeedDataService {
 	 * Seed Default Ever Data
 	 */
 	public async runEverSeed() {
+		// Same default-credential gate as `runDefaultSeed`: this path also calls `seedBasicDefaultData()`,
+		// and as a non-DEFAULT seed it additionally creates the hard-coded DEFAULT_EVER_EMPLOYEES accounts.
+		validateSeedCredentials({ createsFixtureAccounts: true });
+
 		try {
 			this.seedType = SeederTypeEnum.EVER;
 

@@ -9,6 +9,7 @@ import {
 	UseInterceptors
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { FeatureFlag, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { EmailConfirmationService } from './email-confirmation.service';
@@ -33,6 +34,9 @@ export class EmailVerificationController {
 	@HttpCode(HttpStatus.OK)
 	@Public()
 	@Post()
+	// Public token verification: without an explicit limit these routes inherited the global
+	// THROTTLE_LIMIT (60000/min) and were effectively not rate limited.
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
 	public async confirmEmail(@Body() body: ConfirmEmailByTokenDTO): Promise<Object> {
 		const user = await this.emailConfirmationService.decodeConfirmationToken(body.token);
@@ -51,6 +55,7 @@ export class EmailVerificationController {
 	@HttpCode(HttpStatus.OK)
 	@Public()
 	@Post('code')
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
 	public async confirmEmailByCode(@Body() body: ConfirmEmailByCodeDTO): Promise<Object> {
 		const user = await this.emailConfirmationService.confirmationByCode(body);
@@ -67,6 +72,7 @@ export class EmailVerificationController {
 	@ApiOperation({ summary: 'Resend email verification link' })
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post('resend-link')
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
 	public async resendConfirmationLink(@Body() config: AppIntegrationConfigDTO): Promise<Object> {
 		return await this.emailConfirmationService.resendConfirmationLink(config);
