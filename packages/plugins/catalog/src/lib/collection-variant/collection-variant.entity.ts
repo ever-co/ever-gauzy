@@ -81,6 +81,6 @@ export class CollectionVariant extends TenantOrganizationBaseEntity {
 	@ApiProperty({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+	@MultiORMColumn({ default: () => 'CURRENT_TIMESTAMP' })
 	addedAt: Date;
 }

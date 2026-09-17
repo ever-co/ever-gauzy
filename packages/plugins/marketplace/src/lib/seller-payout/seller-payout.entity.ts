@@ -131,22 +131,22 @@ export class SellerPayout extends TenantOrganizationBaseEntity implements ISelle
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	fxCapturedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	periodStart?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	periodEnd?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	scheduledAt?: Date;
 
 	/**
@@ -159,7 +159,7 @@ export class SellerPayout extends TenantOrganizationBaseEntity implements ISelle
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	approvedAt?: Date;
 
 	/**
@@ -174,17 +174,17 @@ export class SellerPayout extends TenantOrganizationBaseEntity implements ISelle
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	paidAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	failedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	canceledAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String })

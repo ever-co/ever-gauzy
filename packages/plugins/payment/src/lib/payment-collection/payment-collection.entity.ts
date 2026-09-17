@@ -189,7 +189,7 @@ export class PaymentCollection extends TenantOrganizationBaseEntity implements I
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	fxCapturedAt?: Date;
 
 	/**
@@ -197,7 +197,7 @@ export class PaymentCollection extends TenantOrganizationBaseEntity implements I
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	completedAt?: Date;
 
 	/**

@@ -68,7 +68,7 @@ export class Campaign extends TenantOrganizationBaseEntity implements ICampaign 
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startsAt?: Date;
 
 	/**
@@ -76,7 +76,7 @@ export class Campaign extends TenantOrganizationBaseEntity implements ICampaign 
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endsAt?: Date;
 
 	/**

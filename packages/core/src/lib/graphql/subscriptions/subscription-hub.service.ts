@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, Optional } from '@nestjs/common';
 import { GraphqlPubSub } from './graphql-pubsub.service';
 import { SubscriptionCatalogue } from './subscription-catalogue';
 import {
@@ -89,8 +89,11 @@ export class GraphqlSubscriptionHub implements OnModuleDestroy {
 		private readonly pubSub: GraphqlPubSub,
 		private readonly authorizer: SubscriptionAuthorizer,
 		private readonly catalogue: SubscriptionCatalogue,
-		limits: SubscriptionLimits = DEFAULT_SUBSCRIPTION_LIMITS,
-		clock: SubscriptionClock = systemSubscriptionClock
+		// Injected optionally: both are configuration seams with defaults, and a parameter typed as an
+		// interface has no runtime token for the container to match. Without this Nest tries to resolve
+		// the emitted type, finds nothing, and refuses to start - the defaults below would never apply.
+		@Optional() limits: SubscriptionLimits = DEFAULT_SUBSCRIPTION_LIMITS,
+		@Optional() clock: SubscriptionClock = systemSubscriptionClock
 	) {
 		this.limits = limits;
 		this.clock = clock;

@@ -88,14 +88,14 @@ export class SearchDocument extends TenantOrganizationBaseEntity implements ISea
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	sourceUpdatedAt?: Date;
 
 	/**
 	 * When the row was written.
 	 */
 	@ApiProperty({ type: () => Date })
-	@MultiORMColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+	@MultiORMColumn({ default: () => 'CURRENT_TIMESTAMP' })
 	indexedAt: Date;
 
 	/**

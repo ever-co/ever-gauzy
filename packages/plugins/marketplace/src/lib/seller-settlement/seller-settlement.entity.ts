@@ -112,17 +112,17 @@ export class SellerSettlement extends TenantOrganizationBaseEntity implements IS
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	fxCapturedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	periodStart?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	periodEnd?: Date;
 
 	/**
@@ -153,7 +153,7 @@ export class SellerSettlement extends TenantOrganizationBaseEntity implements IS
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	reconciledAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -164,7 +164,7 @@ export class SellerSettlement extends TenantOrganizationBaseEntity implements IS
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	closedAt?: Date;
 
 	/**

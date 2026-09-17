@@ -64,7 +64,7 @@ export class EventDelivery extends TenantOrganizationBaseEntity implements IEven
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	deliveredAt?: Date;
 
 	/**

@@ -157,12 +157,12 @@ export class SellerOffering extends TenantOrganizationBaseEntity implements ISel
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	availableFrom?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	availableTo?: Date;
 
 	/**
@@ -209,7 +209,7 @@ export class SellerOffering extends TenantOrganizationBaseEntity implements ISel
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	approvedAt?: Date;
 
 	/**

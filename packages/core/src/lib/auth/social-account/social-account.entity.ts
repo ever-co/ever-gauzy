@@ -15,7 +15,7 @@ export class SocialAccount extends TenantBaseEntity implements ISocialAccount {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsEnum(ProviderEnum, { message: 'provider `$value` must be a valid enum value' })
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	provider: ProviderEnum;
 
 	@ApiProperty({ type: () => String })

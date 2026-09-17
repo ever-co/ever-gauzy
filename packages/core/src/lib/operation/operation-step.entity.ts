@@ -112,7 +112,7 @@ export class OperationStep extends TenantOrganizationBaseEntity implements IOper
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startedAt?: Date;
 
 	/**
@@ -121,6 +121,6 @@ export class OperationStep extends TenantOrganizationBaseEntity implements IOper
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	finishedAt?: Date;
 }

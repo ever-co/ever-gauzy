@@ -66,7 +66,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiProperty({ type: () => String, enum: InviteStatusEnum })
 	@IsNotEmpty()
 	@IsEnum(InviteStatusEnum)
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	status: InviteStatusEnum;
 
 	/**

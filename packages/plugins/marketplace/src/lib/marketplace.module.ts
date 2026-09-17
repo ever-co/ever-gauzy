@@ -1,3 +1,9 @@
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { Seller } from './seller/seller.entity';
+import { SellerOffering } from './seller-offering/seller-offering.entity';
+import { SellerTransaction } from './seller-transaction/seller-transaction.entity';
+import { EventOutboxModule } from '@gauzy/core';
 import { Module } from '@nestjs/common';
 import { SellerModule } from './seller/seller.module';
 import { SellerOfferingModule } from './seller-offering/seller-offering.module';
@@ -22,6 +28,11 @@ import { TypeOrmSellerTransactionRepository } from './seller-transaction/reposit
  */
 @Module({
 	imports: [
+		// The repositories declared below are bound to their entities, so the module registers them here -
+		// the same registration every aggregate module performs for the entities it owns.
+		TypeOrmModule.forFeature([Seller, SellerOffering, SellerTransaction]),
+		MikroOrmModule.forFeature([Seller, SellerOffering, SellerTransaction]),
+		EventOutboxModule,
 		SellerModule,
 		SellerOfferingModule,
 		SellerTransactionModule,

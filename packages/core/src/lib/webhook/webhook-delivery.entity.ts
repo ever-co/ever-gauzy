@@ -118,7 +118,7 @@ export class WebhookDelivery extends TenantOrganizationBaseEntity implements IWe
 	@IsOptional()
 	@IsDateString()
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	nextAttemptAt?: Date;
 
 	/**
@@ -127,7 +127,7 @@ export class WebhookDelivery extends TenantOrganizationBaseEntity implements IWe
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	deliveredAt?: Date;
 
 	/**

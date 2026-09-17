@@ -134,7 +134,7 @@ export class Promotion extends TenantOrganizationBaseEntity implements IPromotio
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startsAt?: Date;
 
 	/**
@@ -142,7 +142,7 @@ export class Promotion extends TenantOrganizationBaseEntity implements IPromotio
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endsAt?: Date;
 
 	/**

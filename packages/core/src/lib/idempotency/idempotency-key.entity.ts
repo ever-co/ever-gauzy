@@ -101,7 +101,7 @@ export class IdempotencyKey extends TenantOrganizationBaseEntity implements IIde
 	@ApiProperty({ type: () => Date })
 	@IsDateString()
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'timestamptz' })
+	@MultiORMColumn({ })
 	expiresAt: Date;
 
 	/**
@@ -113,6 +113,6 @@ export class IdempotencyKey extends TenantOrganizationBaseEntity implements IIde
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	lockedAt?: Date;
 }

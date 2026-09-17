@@ -135,7 +135,7 @@ export class Seller extends TenantOrganizationBaseEntity implements ISeller {
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	submittedAt?: Date;
 
 	/**
@@ -143,12 +143,12 @@ export class Seller extends TenantOrganizationBaseEntity implements ISeller {
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	activatedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	suspendedAt?: Date;
 
 	/**
@@ -164,7 +164,7 @@ export class Seller extends TenantOrganizationBaseEntity implements ISeller {
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	rejectedAt?: Date;
 
 	/**
@@ -179,7 +179,7 @@ export class Seller extends TenantOrganizationBaseEntity implements ISeller {
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	offboardedAt?: Date;
 
 	/**
@@ -231,7 +231,7 @@ export class Seller extends TenantOrganizationBaseEntity implements ISeller {
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	verifiedAt?: Date;
 
 	/**
@@ -240,7 +240,7 @@ export class Seller extends TenantOrganizationBaseEntity implements ISeller {
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	verificationExpiresAt?: Date;
 
 	/**

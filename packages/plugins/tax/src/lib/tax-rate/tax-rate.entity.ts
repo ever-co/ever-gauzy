@@ -188,7 +188,7 @@ export class TaxRate extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDate()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startsAt?: Date;
 
 	/**
@@ -197,7 +197,7 @@ export class TaxRate extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDate()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endsAt?: Date;
 
 	/**

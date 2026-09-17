@@ -63,7 +63,7 @@ export class GiftCardTransaction extends TenantOrganizationBaseEntity implements
 	 * When the movement happened.
 	 */
 	@ApiProperty({ type: () => Date })
-	@MultiORMColumn({ type: 'timestamptz' })
+	@MultiORMColumn({ })
 	occurredAt: Date;
 
 	/*

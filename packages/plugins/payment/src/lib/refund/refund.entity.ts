@@ -153,7 +153,7 @@ export class Refund extends TenantOrganizationBaseEntity implements IRefund {
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDate()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	refundedAt?: Date;
 
 	/**

@@ -159,7 +159,7 @@ export class Operation extends TenantOrganizationBaseEntity implements IOperatio
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startedAt?: Date;
 
 	/**
@@ -168,7 +168,7 @@ export class Operation extends TenantOrganizationBaseEntity implements IOperatio
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	finishedAt?: Date;
 
 	/**
@@ -181,7 +181,7 @@ export class Operation extends TenantOrganizationBaseEntity implements IOperatio
 	@IsOptional()
 	@IsDateString()
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	deadlineAt?: Date;
 
 	/**

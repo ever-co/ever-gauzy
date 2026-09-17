@@ -85,7 +85,7 @@ export class Coupon extends TenantOrganizationBaseEntity implements ICoupon {
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startsAt?: Date;
 
 	/**
@@ -93,7 +93,7 @@ export class Coupon extends TenantOrganizationBaseEntity implements ICoupon {
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endsAt?: Date;
 
 	/**

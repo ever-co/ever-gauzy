@@ -167,7 +167,7 @@ export class SellerTransaction extends TenantOrganizationBaseEntity implements I
 	 * reversal.
 	 */
 	@ApiProperty({ type: () => Date })
-	@MultiORMColumn({ type: 'timestamptz' })
+	@MultiORMColumn({ })
 	occurredAt: Date;
 
 	/**
@@ -176,17 +176,17 @@ export class SellerTransaction extends TenantOrganizationBaseEntity implements I
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	settleableAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	settledAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	paidAt?: Date;
 
 	/**

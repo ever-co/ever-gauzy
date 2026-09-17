@@ -80,7 +80,7 @@ export class PaymentCapture extends TenantOrganizationBaseEntity implements IPay
 	 */
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@MultiORMColumn({ type: 'timestamptz' })
+	@MultiORMColumn({ })
 	capturedAt: Date;
 
 	/**

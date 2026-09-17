@@ -64,7 +64,7 @@ export class PromotionUsage extends TenantOrganizationBaseEntity implements IPro
 	 * When the row was created, which is the reservation instant, not the order instant.
 	 */
 	@ApiProperty({ type: () => Date })
-	@MultiORMColumn({ type: 'timestamptz' })
+	@MultiORMColumn({ })
 	usedAt: Date;
 
 	/**

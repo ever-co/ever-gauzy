@@ -62,6 +62,6 @@ export class CollectionChannel extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	publishedAt?: Date;
 }

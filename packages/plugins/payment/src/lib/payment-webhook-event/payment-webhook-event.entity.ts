@@ -94,7 +94,7 @@ export class PaymentWebhookEvent extends TenantOrganizationBaseEntity implements
 	 */
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@MultiORMColumn({ type: 'timestamptz' })
+	@MultiORMColumn({ })
 	receivedAt: Date;
 
 	/**
@@ -103,7 +103,7 @@ export class PaymentWebhookEvent extends TenantOrganizationBaseEntity implements
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDate()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	processedAt?: Date;
 
 	/**

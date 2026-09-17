@@ -82,7 +82,7 @@ export class ExchangeRate extends TenantOrganizationBaseEntity {
 	 */
 	@ApiProperty({ type: () => Date })
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz' })
+	@MultiORMColumn({ })
 	validFrom: Date;
 
 	/**
@@ -92,7 +92,7 @@ export class ExchangeRate extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	validUntil?: Date;
 
 	/**

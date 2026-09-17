@@ -101,7 +101,7 @@ export class EventOutbox extends TenantOrganizationBaseEntity implements IEventO
 	@ApiProperty({ type: () => Date })
 	@IsDateString()
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'timestamptz' })
+	@MultiORMColumn({ })
 	availableAt: Date;
 
 	/**
@@ -110,7 +110,7 @@ export class EventOutbox extends TenantOrganizationBaseEntity implements IEventO
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	publishedAt?: Date;
 
 	/**

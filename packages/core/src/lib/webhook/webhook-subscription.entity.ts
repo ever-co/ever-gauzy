@@ -124,7 +124,7 @@ export class WebhookSubscription extends TenantOrganizationBaseEntity implements
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	lastSuccessAt?: Date;
 
 	/**
@@ -133,7 +133,7 @@ export class WebhookSubscription extends TenantOrganizationBaseEntity implements
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	lastFailureAt?: Date;
 
 	/**
@@ -142,7 +142,7 @@ export class WebhookSubscription extends TenantOrganizationBaseEntity implements
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	disabledAt?: Date;
 
 	/**

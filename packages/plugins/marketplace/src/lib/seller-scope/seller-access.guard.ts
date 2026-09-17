@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable, Optional } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { ISellerScope } from './seller-scope';
@@ -60,7 +60,20 @@ const STAFF_WRITE_PERMISSIONS: string[] = [
  */
 @Injectable()
 export class SellerAccessGuard implements CanActivate {
-	constructor(private readonly membershipResolver?: ISellerMembershipResolver) {}
+	/**
+	 * The membership resolver is a seam a consuming package may fill, not a requirement.
+	 *
+	 * It is injected optionally and by token: the token is what a registrar provides, and optional
+	 * because the marketplace must work in an installation that never registers one. Without the
+	 * decorators Nest tries to resolve the parameter's emitted type, which for an interface is
+	 * `Object`, and refuses to start the application — so the seam would be a dependency on the
+	 * very package it exists to avoid depending on.
+	 */
+	constructor(
+		@Optional()
+		@Inject(SELLER_MEMBERSHIP_RESOLVER)
+		private readonly membershipResolver?: ISellerMembershipResolver
+	) {}
 
 	/**
 	 * @param context The execution context.

@@ -147,7 +147,7 @@ export class PriceList extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startsAt?: Date;
 
 	/**
@@ -156,7 +156,7 @@ export class PriceList extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endsAt?: Date;
 
 	/**

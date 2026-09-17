@@ -67,7 +67,7 @@ export class ProductChannel extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	publishedAt?: Date;
 
 	/**
@@ -76,7 +76,7 @@ export class ProductChannel extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	unpublishedAt?: Date;
 
 	/**

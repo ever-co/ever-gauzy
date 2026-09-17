@@ -35,7 +35,7 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	status: DailyPlanStatusEnum;
 
 	/*

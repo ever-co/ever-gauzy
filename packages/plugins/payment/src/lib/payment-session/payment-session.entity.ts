@@ -160,7 +160,7 @@ export class PaymentSession extends TenantOrganizationBaseEntity implements IPay
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDate()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	expiresAt?: Date;
 
 	/**
@@ -169,7 +169,7 @@ export class PaymentSession extends TenantOrganizationBaseEntity implements IPay
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDate()
-	@MultiORMColumn({ type: 'timestamptz', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	authorizedAt?: Date;
 
 	/**
