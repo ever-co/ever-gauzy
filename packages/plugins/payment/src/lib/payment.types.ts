@@ -409,12 +409,115 @@ export interface IPaymentWebhookIntake {
 	readonly duplicate: boolean;
 }
 
+/*
+|--------------------------------------------------------------------------
+| The order line's refund register, as this domain sees it
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * One refund this domain reports against one order line.
+ *
+ * The shape is deliberately the one the order domain's `IRecordLineRefundInput` already has, field for
+ * field. It is **declared here rather than imported** because a port is a description of what this
+ * domain needs, not a reference to the package that happens to satisfy it today: importing the order
+ * package — even for a type — is what would make this package unable to boot without it.
+ */
+export interface IPaymentOrderLineRefund {
+	/** The order line the money was paid back on. */
+	readonly orderLineId: ID;
+	/** The quantity paid back, as an exact decimal. */
+	readonly quantity: DecimalString;
+	/** The money paid back, in the order's currency, as a positive magnitude. */
+	readonly amount: DecimalString;
+	/** The order's currency, which the receiving side checks against its own order. */
+	readonly currency: string;
+}
+
+/** What the register holds once the report has been applied. */
+export interface IPaymentOrderLineRefundResult {
+	/** The order line whose register moved. */
+	readonly id: ID;
+	/** The quantity refunded against the line so far, as an exact decimal. */
+	readonly refundedQuantity: DecimalString;
+	/** The money refunded against the line so far, as an exact decimal. */
+	readonly refundedAmount: DecimalString;
+}
+
+/**
+ * The order line's refund register as this domain sees it.
+ *
+ * Provided by the order capability and injected under `PAYMENT_ORDER_LINE_REFUND`.
+ *
+ * **Why this seam.** `refund_line` is this package's table and `order_line.refundedQuantity` /
+ * `refundedAmount` are the order package's columns — a register whose evidence lives in another
+ * capability. The order domain owns the rule that moves it (one guarded write, conditional on the
+ * counters the transaction read, so two concurrent refunds cannot both claim to be the second), and
+ * this domain owns the fact that money went back. The programme reaches a capability of another
+ * package through an optional injection token rather than an imported module — the stock ledger, the
+ * refund gateway and the order's fulfilled quantities are all reached that way — and this is the same
+ * arrangement, which is why neither package has to be installed for the other to boot.
+ *
+ * **Why not the event bus.** The refund flow already publishes `RefundCreatedEvent` when a refund is
+ * recorded and `PaymentRefundedEvent` when it succeeds, and a consumer could in principle hear one of
+ * them. It cannot act on it: `EventBus.ofType` matches on the event's constructor, so a listener in
+ * another package would have to import the event class — the very dependency this seam exists to avoid
+ * — and neither event carries the line breakdown, so the listener would then have to read this
+ * package's `refund_line` rows to discover which order lines moved. A port states the fact once, to
+ * the domain that owns the register, with no import in either direction.
+ *
+ * **What a caller may rely on.** The port moves the register for the lines a **succeeded** refund paid
+ * back, and it is called after the refund's status has moved, so a register never counts money that
+ * has not gone back. It is not part of the money movement's own transaction: the money moved at the
+ * provider, and a register that lagged one call is recoverable by re-reporting the lines, whereas a
+ * refund that failed because a register refused would be a refund the customer was told about and did
+ * not get. `RefundService` therefore reports and continues rather than rolling back, and the order
+ * package's `recomputeRefundCounters` is the reconciliation half — it re-derives the register from the
+ * totals this domain reports, so a report that was lost converges on the next run rather than needing
+ * a manual correction.
+ */
+export interface IPaymentOrderLineRefundPort {
+	/** Records one refund against one order line, moving that line's refund register. */
+	recordRefund(refund: IPaymentOrderLineRefund): Promise<IPaymentOrderLineRefundResult>;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Injection tokens
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * Token the order line's refund register is injected under.
+ *
+ * Optional on purpose: a payment settles an invoice, a subscription renewal or a marketplace payout as
+ * readily as it settles an order, and a deployment that installs this package without the order package
+ * — or refunds a document that has no order line at all — still records the refund. What it does not
+ * do is pretend the register moved: the absence is reported under
+ * `PAYMENT_ORDER_LINE_REFUND_UNAVAILABLE` so an operator can see which refunds were not mirrored.
+ *
+ * Nothing in this package provides the token, and nothing in this package imports the order package to
+ * find out whether it exists. Registering a provider under it is what enables the mirror, and
+ * `useExisting: OrderLineService` is all that provider needs to be, because `recordRefund` already has
+ * the port's shape.
+ *
+ * **Where that registration has to live, and why it is not a one-line module import.** A provider is
+ * resolved in the scope of the module that declares the injecting handler, and Nest imports are not
+ * inherited downwards — so `RefundService`, a provider of this package's own module, sees a token only
+ * if that module provides it or imports a module that exports it. Making this package import the order
+ * package to reach `OrderLineService` is exactly the dependency the seam exists to avoid. The
+ * registration therefore belongs to a **composition module that is global**: a module that imports the
+ * order package's module, provides `{ provide: PAYMENT_ORDER_LINE_REFUND, useExisting: OrderLineService }`
+ * and is marked global reaches every module's scope without either package importing the other. A
+ * deployment that does not install the order package simply never registers that module, the token stays
+ * unbound, and the refund path reports rather than fails.
+ */
+export const PAYMENT_ORDER_LINE_REFUND = Symbol('PAYMENT_ORDER_LINE_REFUND');
+
 /**
  * Paginated provider registrations.
  */
-export type IPaymentProviderPagination = IPagination<IPaymentProvider>;
-
-/**
+export type IPaymentProviderPagination = IPagination<IPaymentProvider>;/**
  * Paginated collections.
  */
 export type IPaymentCollectionPagination = IPagination<IPaymentCollection>;

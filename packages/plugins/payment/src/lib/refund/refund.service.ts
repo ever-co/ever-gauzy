@@ -1,12 +1,21 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as chalk from 'chalk';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import { CrudService, EventBus, Money, Payment, RequestContext } from '@gauzy/core';
 import { Refund } from './refund.entity';
 import { TypeOrmRefundRepository } from './repository/type-orm-refund.repository';
 import { MikroOrmRefundRepository } from './repository/mikro-orm-refund.repository';
-import { IRefund, IRefundCreateInput, IRefundLine, IRefundUpdateInput, RefundStatus } from '../payment.types';
+import {
+	IPaymentOrderLineRefundPort,
+	IRefund,
+	IRefundCreateInput,
+	IRefundLine,
+	IRefundUpdateInput,
+	PAYMENT_ORDER_LINE_REFUND,
+	RefundStatus
+} from '../payment.types';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { RefundLineService } from '../refund-line/refund-line.service';
@@ -35,6 +44,14 @@ import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
  * they are written with the refund in one transaction through the refund-line service, which is what
  * makes `Σ refund_line.amount <= refund.amount` a fact about the stored data rather than a hope about
  * the caller.
+ *
+ * **A succeeded refund moves the order line's register, through a port rather than an import.** The
+ * lines this domain stores are the evidence for `order_line.refundedQuantity` / `refundedAmount`, which
+ * the order package owns and is the only place that can move — one guarded write, conditional on the
+ * counters the transaction read. This service reports what it paid back, per line, through
+ * `IPaymentOrderLineRefundPort`, which is optional: a deployment without the order package still
+ * refunds, and the lines it could not mirror are reported under
+ * `PAYMENT_ORDER_LINE_REFUND_UNAVAILABLE` rather than left silently unmirrored.
  */
 @Injectable()
 export class RefundService extends CrudService<Refund> {
@@ -45,7 +62,15 @@ export class RefundService extends CrudService<Refund> {
 		private readonly paymentCaptureService: PaymentCaptureService,
 		private readonly paymentCollectionService: PaymentCollectionService,
 		private readonly refundLineService: RefundLineService,
-		private readonly eventBus: EventBus
+		private readonly eventBus: EventBus,
+		/**
+		 * The order line's refund register, when the order capability is registered. Optional in the
+		 * literal sense: nothing in this package provides the token, and a deployment that does not
+		 * install the order package must still boot and refund.
+		 */
+		@Optional()
+		@Inject(PAYMENT_ORDER_LINE_REFUND)
+		private readonly orderLineRefunds?: IPaymentOrderLineRefundPort
 	) {
 		super(typeOrmRefundRepository, mikroOrmRefundRepository);
 	}
@@ -221,6 +246,14 @@ export class RefundService extends CrudService<Refund> {
 			...(note ? { note } : {})
 		} as never);
 
+		/**
+		 * The register moves here rather than at creation, because a register counts **succeeded**
+		 * refunds: a pending refund is an intention, and one that is cancelled or refused leaves the
+		 * order untouched. The status has already moved, so a reader never sees a register counting money
+		 * that has not gone back.
+		 */
+		await this.mirrorToOrderLines(await this.findRefundOrFail(id));
+
 		this.eventBus.publish(
 			new PaymentRefundedEvent(
 				refund.id,
@@ -232,6 +265,77 @@ export class RefundService extends CrudService<Refund> {
 		);
 
 		return this.findRefundOrFail(id);
+	}
+
+	/**
+	 * Reports a succeeded refund to the order line's register, one line at a time.
+	 *
+	 * The register is the order package's column and this service never writes it: it reports what it
+	 * paid back, per line, and the capability that owns the line moves the counter in one guarded write.
+	 * The lines are read from `refund_line`, which is this package's own table, so a refund whose
+	 * breakdown is an array in its metadata — one written before the breakdown became rows — is reported
+	 * from that array rather than skipped.
+	 *
+	 * **Nothing here may fail the refund.** The money has already moved at the provider and the refund is
+	 * already `SUCCEEDED`, so a report that throws afterwards would tell the caller the refund failed
+	 * when it did not, and the caller would retry a refund that has already gone back. A refused report
+	 * is logged under a named code and the remaining lines are still reported, because one line the
+	 * register cannot move — a line that has not been invoiced enough, say — is no reason to leave the
+	 * others unmirrored. The reconciliation half is the order package's `recomputeRefundCounters`, which
+	 * re-derives the register from totals this domain reports, so a report that was lost converges
+	 * rather than needing a manual correction.
+	 *
+	 * @param refund The refund that has just succeeded.
+	 */
+	private async mirrorToOrderLines(refund: IRefund): Promise<void> {
+		const lines = await this.refundLineService.findLines(refund.id);
+
+		if (!lines.length) {
+			// A refund that names no order line — one settled against a return, a claim or a bare
+			// payment — has no register to move, which is a fact rather than a failure.
+			return;
+		}
+
+		if (!this.orderLineRefunds) {
+			console.log(
+				chalk.yellow(
+					`PAYMENT_ORDER_LINE_REFUND_UNAVAILABLE: refund ${refund.id} succeeded and the order line ` +
+						`register is not registered in this deployment, so ${lines.length} order line(s) were ` +
+						'not mirrored. Re-report them through the order capability once it is present.'
+				)
+			);
+
+			return;
+		}
+
+		for (const line of lines) {
+			try {
+				await this.orderLineRefunds.recordRefund({
+					orderLineId: line.orderLineId,
+					quantity: line.quantity,
+					amount: line.amount,
+					currency: line.currency ?? refund.currency
+				});
+			} catch (error) {
+				console.log(
+					chalk.yellow(
+						`PAYMENT_ORDER_LINE_REFUND_FAILED: refund ${refund.id} succeeded and order line ` +
+							`${line.orderLineId} was not mirrored (${this.describe(error)}). The refund stands; ` +
+							'recompute the line register from the refund totals to reconcile it.'
+					)
+				);
+			}
+		}
+	}
+
+	/**
+	 * A thrown value as a line of text, for a report that must not itself throw.
+	 *
+	 * @param error Whatever was thrown.
+	 * @returns The message, or the value as text.
+	 */
+	private describe(error: unknown): string {
+		return error instanceof Error ? error.message : String(error);
 	}
 
 	/**
