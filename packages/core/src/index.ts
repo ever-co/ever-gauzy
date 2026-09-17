@@ -206,3 +206,22 @@ export {
  * cannot accept a long-running request — so it would either invent its own or go without.
  */
 export * from './lib/api';
+/**
+ * The kernel capabilities every domain builds on: exact money arithmetic, the generic rule engine,
+ * the money-adjustment and tax ledgers, document numbering, the retry-safe request store, the
+ * transactional outbox, the durable-operation runtime, outbound delivery, and platform search.
+ *
+ * Exported for the same reason as the API conventions above — a plugin package has to be able to
+ * build on the same kernel a resource in core does. A domain that cannot reach the money layer
+ * writes its own arithmetic, and a domain that cannot reach the rule engine writes its own
+ * conditions; both are how a platform ends up with three of everything.
+ */
+export * from './lib/money';
+export * from './lib/rule';
+export * from './lib/adjustment';
+export * from './lib/tax-line';
+export * from './lib/sequence';
+export * from './lib/search';
+export * from './lib/event-outbox';
+export * from './lib/operation';
+export * from './lib/webhook';

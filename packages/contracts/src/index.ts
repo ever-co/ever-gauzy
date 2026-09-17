@@ -105,6 +105,7 @@ export * from './lib/marketplace.model';
 export * from './lib/mention.model';
 export * from './lib/money.model';
 export * from './lib/operation.model';
+export * from './lib/order.model';
 export * from './lib/organization-award.model';
 export * from './lib/organization-contact.model';
 export * from './lib/organization-department.model';
