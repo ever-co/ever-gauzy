@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, timingSafeEqual } from 'crypto';
-import { ID, IPagination } from '@gauzy/contracts';
-import { CrudService, EventBus, RequestContext } from '@gauzy/core';
+import { DecimalString, ID, IPagination } from '@gauzy/contracts';
+import { CrudService, EventBus, Money, RequestContext } from '@gauzy/core';
 import { GiftCardRedeemedEvent } from '../events';
 import { GiftCard } from './gift-card.entity';
 import { TypeOrmGiftCardRepository } from './repository/type-orm-gift-card.repository';
@@ -48,6 +48,11 @@ export class GiftCardService extends CrudService<GiftCard> {
 	/**
 	 * Issues a card: face value, an `ISSUE` movement for the same amount, and a balance equal to it.
 	 *
+	 * The `ISSUE` row is the ledger's record of the credit that created the card rather than a movement
+	 * of its balance, which is why the ledger-derived balance adds the face value to the movements
+	 * *after* it and not to this one: counting the row and the column would show every reconciliation
+	 * twice the card (doc 08 §13.3 `ISSUE`, GC1; doc 05 §10.9).
+	 *
 	 * @param input The card to issue.
 	 * @returns The stored card.
 	 * @throws BadRequestException when the face value is not positive.
@@ -62,13 +67,15 @@ export class GiftCardService extends CrudService<GiftCard> {
 		pinHash?: string;
 		metadata?: Record<string, unknown>;
 	}): Promise<IGiftCard> {
-		if (Number(input.initialAmount) <= 0) {
+		const faceValue = Money.of(input.initialAmount, input.currency);
+
+		if (!faceValue.isPositive()) {
 			throw new BadRequestException('GIFT_CARD_INVALID: a card is issued with a positive face value.');
 		}
 
 		const card = await this.create({
 			...input,
-			balance: input.initialAmount,
+			balance: faceValue.toStorageString(),
 			status: GiftCardStatus.ACTIVE,
 			...this.scope
 		} as never);
@@ -76,8 +83,8 @@ export class GiftCardService extends CrudService<GiftCard> {
 		await this.giftCardTransactionService.append({
 			giftCardId: card.id,
 			orderId: input.orderId,
-			amount: input.initialAmount,
-			balanceAfter: input.initialAmount,
+			amount: faceValue.toStorageString(),
+			balanceAfter: faceValue.toStorageString(),
 			type: GiftCardTransactionType.ISSUE,
 			note: 'Card issued'
 		});
@@ -122,17 +129,23 @@ export class GiftCardService extends CrudService<GiftCard> {
 			throw new BadRequestException('GIFT_CARD_CURRENCY_MISMATCH: a card is not converted.');
 		}
 
-		const balance = Number(card.balance);
-		const requested = Number(amount);
-		const outstanding = context.outstanding === undefined ? requested : Number(context.outstanding);
-		const applied = Math.min(balance, Math.max(0, Math.min(requested, outstanding)));
+		const balance = Money.of(card.balance, card.currency);
+		const requested = Money.of(amount, card.currency);
+		const outstanding =
+			context.outstanding === undefined ? requested : Money.of(context.outstanding, card.currency);
+		// `applied = min(balance, max(0, outstanding))`, on exact decimals: a redemption larger than the
+		// card holds is applied up to the balance and never drives it below zero (doc 08 §13.3 GC2).
+		const applied = Money.min(
+			balance,
+			Money.max(Money.zero(card.currency), Money.min(requested, outstanding))
+		);
 
-		if (applied <= 0) {
+		if (!applied.isPositive()) {
 			throw new BadRequestException('GIFT_CARD_INSUFFICIENT_BALANCE');
 		}
 
 		return this.applyMovement(card, {
-			amount: -applied,
+			amount: applied.negate().amount,
 			type: GiftCardTransactionType.REDEEM,
 			orderId: context.orderId,
 			note: 'Redeemed against an order'
@@ -154,28 +167,30 @@ export class GiftCardService extends CrudService<GiftCard> {
 		context: { orderId?: ID; note?: string } = {}
 	): Promise<{ card: IGiftCard; applied: string }> {
 		const card = await this.findCardOrFail(giftCardId);
-		const value = Number(amount);
+		const value = Money.of(amount, card.currency);
 
-		if (!(value > 0)) {
+		if (!value.isPositive()) {
 			throw new BadRequestException('A refund to a card is a positive amount.');
 		}
 
 		// The ceiling is what the order consumed: a card can never be refunded more than it paid.
-		const consumed = Math.abs(
-			Number(await this.giftCardTransactionService.totalOfType(card.id, GiftCardTransactionType.REDEEM))
+		const consumed = Money.of(
+			await this.giftCardTransactionService.totalOfType(card.id, GiftCardTransactionType.REDEEM),
+			card.currency
+		).abs();
+		const alreadyReturned = Money.of(
+			await this.giftCardTransactionService.totalOfType(card.id, GiftCardTransactionType.REFUND),
+			card.currency
 		);
-		const alreadyReturned = Number(
-			await this.giftCardTransactionService.totalOfType(card.id, GiftCardTransactionType.REFUND)
-		);
-		const refundable = Math.max(0, consumed - alreadyReturned);
-		const applied = Math.min(value, refundable);
+		const refundable = Money.max(Money.zero(card.currency), consumed.subtract(alreadyReturned));
+		const applied = Money.min(value, refundable);
 
-		if (applied <= 0) {
+		if (!applied.isPositive()) {
 			throw new BadRequestException('GIFT_CARD_INSUFFICIENT_BALANCE: nothing is refundable on this card.');
 		}
 
 		return this.applyMovement(card, {
-			amount: applied,
+			amount: applied.amount,
 			type: GiftCardTransactionType.REFUND,
 			orderId: context.orderId,
 			note: context.note ?? 'Refunded to the card'
@@ -198,14 +213,14 @@ export class GiftCardService extends CrudService<GiftCard> {
 		}
 
 		const card = await this.findCardOrFail(giftCardId);
-		const value = Number(amount);
+		const value = Money.of(amount, card.currency);
 
-		if (value < 0 && Math.abs(value) > Number(card.balance)) {
+		if (value.isNegative() && value.abs().greaterThan(Money.of(card.balance, card.currency))) {
 			throw new BadRequestException('GIFT_CARD_INSUFFICIENT_BALANCE: an adjustment cannot overdraw a card.');
 		}
 
 		return this.applyMovement(card, {
-			amount: value,
+			amount: value.amount,
 			type: GiftCardTransactionType.ADJUST,
 			note
 		});
@@ -242,11 +257,11 @@ export class GiftCardService extends CrudService<GiftCard> {
 	 */
 	async expire(giftCardId: ID, forfeit: boolean): Promise<IGiftCard> {
 		const card = await this.findCardOrFail(giftCardId);
-		const balance = Number(card.balance);
+		const balance = Money.of(card.balance, card.currency);
 
-		if (forfeit && balance > 0) {
+		if (forfeit && balance.isPositive()) {
 			await this.applyMovement(card, {
-				amount: -balance,
+				amount: balance.negate().amount,
 				type: GiftCardTransactionType.EXPIRE,
 				note: 'Balance forfeited at expiry'
 			});
@@ -320,33 +335,38 @@ export class GiftCardService extends CrudService<GiftCard> {
 	 * cache it explains; a failure between the two leaves a ledger that is right and a cache the audit
 	 * repairs, which is the safe direction.
 	 *
+	 * The balance is money, so it is moved as money: `0.30` less `0.10` is `0.2` and never the
+	 * `0.19999999999999998` a binary floating-point subtraction leaves behind, because a balance no
+	 * money column accepts is a card no customer can spend (doc 07 §1.2, doc 08 §13.3 GC4).
+	 *
 	 * @param card The card being moved.
 	 * @param movement The signed amount and why.
 	 * @returns The card and the amount applied.
 	 */
 	private async applyMovement(
 		card: IGiftCard,
-		movement: { amount: number; type: GiftCardTransactionType; orderId?: ID; note?: string }
+		movement: { amount: DecimalString; type: GiftCardTransactionType; orderId?: ID; note?: string }
 	): Promise<{ card: IGiftCard; applied: string }> {
 		const current = await this.findCardOrFail(card.id);
-		const balanceAfter = Number(current.balance) + movement.amount;
+		const amount = Money.of(movement.amount, current.currency);
+		const balanceAfter = Money.of(current.balance, current.currency).add(amount);
 
-		if (balanceAfter < 0) {
+		if (balanceAfter.isNegative()) {
 			throw new BadRequestException('GIFT_CARD_INSUFFICIENT_BALANCE');
 		}
 
 		await this.giftCardTransactionService.append({
 			giftCardId: current.id,
 			orderId: movement.orderId,
-			amount: String(movement.amount),
-			balanceAfter: String(balanceAfter),
+			amount: amount.amount,
+			balanceAfter: balanceAfter.amount,
 			type: movement.type,
 			note: movement.note
 		});
 
-		const status = balanceAfter === 0 && movement.amount < 0 ? GiftCardStatus.REDEEMED : current.status;
+		const status = balanceAfter.isZero() && amount.isNegative() ? GiftCardStatus.REDEEMED : current.status;
 
-		await this.update(current.id, { balance: String(balanceAfter), status } as never);
+		await this.update(current.id, { balance: balanceAfter.amount, status } as never);
 
 		const updated = await this.findCardOrFail(current.id);
 
@@ -354,11 +374,11 @@ export class GiftCardService extends CrudService<GiftCard> {
 			// Emitted after the balance and its ledger row are both stored, so a subscriber that shows the
 			// new balance can never read the old one.
 			await this.eventBus.publish(
-				GiftCardRedeemedEvent.from(updated, String(Math.abs(movement.amount)), String(balanceAfter), movement.orderId)
+				GiftCardRedeemedEvent.from(updated, amount.abs().amount, balanceAfter.amount, movement.orderId)
 			);
 		}
 
-		return { card: updated, applied: String(movement.amount) };
+		return { card: updated, applied: amount.amount };
 	}
 
 	/**

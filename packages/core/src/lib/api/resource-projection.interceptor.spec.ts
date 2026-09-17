@@ -29,8 +29,20 @@ class CostedLineHolder {
 	lines: CostedLine[] = [];
 }
 
-const visibilityFor = (granted: PermissionsEnum[]): FieldVisibility =>
-	({ canSee: (permission: PermissionsEnum) => granted.includes(permission) }) as unknown as FieldVisibility;
+/**
+ * A real `FieldVisibility` whose answer to "may this caller see this?" is fixed by the test.
+ *
+ * Only the permission decision is faked. The interceptor also asks the service to project a response
+ * and to assert a field is visible, and both of those are the service's own behaviour built on that
+ * decision — a double that implements the decision alone is not a stand-in for the class, it is a
+ * stand-in for one method of it, and the cases that reach the other two fail on a missing function
+ * rather than on the behaviour under test.
+ */
+const visibilityFor = (granted: PermissionsEnum[]): FieldVisibility => {
+	const visibility = new FieldVisibility();
+	visibility.canSee = (permission: PermissionsEnum) => granted.includes(permission);
+	return visibility;
+};
 
 const httpContext = (request: unknown): ExecutionContext =>
 	({

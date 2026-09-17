@@ -336,10 +336,10 @@ describe('CouponService.redeem — one use, taken once (doc 08 §13.2)', () => {
 });
 
 /**
- * Defects found while writing this suite. The case is marked `failing` so the suite stays green while
- * the defect stays visible; fixing the source turns it red, which is the signal to un-mark it.
+ * The case the defect was found by. It asserts what the endpoint requires, and it passes now that
+ * the source does it.
  */
-describe('CouponService.validate — documented defects (failing cases)', () => {
+describe('CouponService.validate — the behaviour the defect was found by', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
@@ -347,12 +347,12 @@ describe('CouponService.validate — documented defects (failing cases)', () => 
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it.failing('answers a code that names no coupon instead of failing the lookup', async () => {
+	it('answers a code that names no coupon instead of failing the lookup', async () => {
 		// `validate` is the endpoint a checkout calls with whatever the customer typed, and it is
 		// written to answer with a reason (`if (!coupon) return { valid: false, reason: 'COUPON_INVALID' }`).
-		// The lookup it uses — `findOneByWhereOptions` (coupon.service.ts:176) — throws
-		// `NotFoundException` when there is no row (core `crud.service.ts`:465), so a mistyped code is
-		// reported as a missing resource rather than as an invalid code.
+		// The read it uses answers with null when no row carries the code, so a mistyped code is
+		// reported as an invalid code rather than as a missing resource
+		// (doc 06 §6.6 `COUPON_INVALID`, doc 08 §13.2).
 		const { service } = serviceUnderTest([coupon({ id: 'c-1', code: 'SAVE10' })]);
 
 		const verdict = await service.validate('not-a-code', { at: AT });

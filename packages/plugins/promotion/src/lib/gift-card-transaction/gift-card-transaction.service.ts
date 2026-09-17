@@ -1,6 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ID } from '@gauzy/contracts';
-import { CrudService, RequestContext } from '@gauzy/core';
+import { DecimalString, ID } from '@gauzy/contracts';
+import {
+	CrudService,
+	RequestContext,
+	STORAGE_SCALE,
+	addDecimalStrings,
+	formatDecimalUnits,
+	normalizeDecimalString,
+	toUnitsAtScale
+} from '@gauzy/core';
 import { GiftCardTransaction } from './gift-card-transaction.entity';
 import { TypeOrmGiftCardTransactionRepository } from './repository/type-orm-gift-card-transaction.repository';
 import { MikroOrmGiftCardTransactionRepository } from './repository/mikro-orm-gift-card-transaction.repository';
@@ -56,7 +64,10 @@ export class GiftCardTransactionService extends CrudService<GiftCardTransaction>
 		type: GiftCardTransactionType;
 		note?: string;
 	}): Promise<IGiftCardTransaction> {
-		if (Number(input.amount) === 0) {
+		// A zero movement is not a movement: it would claim the ledger recorded something while the
+		// balance stayed exactly where it was. The comparison is made on the decimal, not on a parsed
+		// `number`, so `0.000000` and `0` are the same nothing.
+		if (normalizeDecimalString(input.amount) === '0') {
 			throw new BadRequestException('A zero-amount movement is not recorded on a gift-card ledger.');
 		}
 
@@ -83,15 +94,22 @@ export class GiftCardTransactionService extends CrudService<GiftCardTransaction>
 	}
 
 	/**
-	 * Derives a card's balance from its ledger: face value plus every movement.
+	 * Derives a card's balance from its ledger: face value plus every movement of the balance.
 	 *
 	 * This is the authority. The `gift_card.balance` column is a cache of it, maintained in the same
 	 * transaction as each movement so a read never has to sum the ledger, and compared with this
 	 * figure by the nightly audit.
 	 *
+	 * The `ISSUE` row is the ledger's record of the credit that created the card — it carries the face
+	 * value itself — so it is not summed a second time: `initialAmount` is what it credited, and adding
+	 * both would show every reconciliation twice the card (doc 05 §10.9, doc 08 §13.3 GC1).
+	 *
+	 * The sum is decimal arithmetic on scaled integers, so a chain of movements that a binary floating
+	 * point sum would leave a fraction of a cent out of adds back to the stored balance exactly.
+	 *
 	 * @param giftCardId The card to derive.
 	 * @param initialAmount The card's face value.
-	 * @returns The derived balance.
+	 * @returns The derived balance, at the scale the money columns carry.
 	 * @throws NotFoundException never — an unknown card simply has no movements and derives to its
 	 * face value; the caller has already loaded the card.
 	 */
@@ -100,9 +118,11 @@ export class GiftCardTransactionService extends CrudService<GiftCardTransaction>
 			where: { giftCardId, ...this.scope }
 		});
 
-		const moved = rows.reduce((sum, row) => sum + Number(row.amount ?? 0), 0);
+		const moved = rows
+			.filter((row) => row.type !== GiftCardTransactionType.ISSUE)
+			.reduce<DecimalString>((sum, row) => addDecimalStrings(sum, row.amount), '0');
 
-		return String(Number(initialAmount) + moved);
+		return formatDecimalUnits(toUnitsAtScale(addDecimalStrings(initialAmount, moved), STORAGE_SCALE), STORAGE_SCALE);
 	}
 
 	/**
@@ -111,13 +131,13 @@ export class GiftCardTransactionService extends CrudService<GiftCardTransaction>
 	 *
 	 * @param giftCardId The card to total.
 	 * @param type The movement type to total.
-	 * @returns The signed sum.
+	 * @returns The signed sum, as an exact decimal.
 	 */
 	async totalOfType(giftCardId: ID, type: GiftCardTransactionType): Promise<string> {
 		const rows = await this.typeOrmGiftCardTransactionRepository.find({
 			where: { giftCardId, type, ...this.scope }
 		});
 
-		return String(rows.reduce((sum, row) => sum + Number(row.amount ?? 0), 0));
+		return rows.reduce<DecimalString>((sum, row) => addDecimalStrings(sum, row.amount), '0');
 	}
 }

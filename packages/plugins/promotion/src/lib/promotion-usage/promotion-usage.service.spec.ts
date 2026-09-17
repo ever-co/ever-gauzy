@@ -19,7 +19,8 @@ import { PromotionUsageStatus, RevertOnReturnPolicy } from '../promotion.types';
  * - the per-customer count ignores reverted rows, so a customer who cancelled is not blocked by
  *   their own history.
  *
- * Two cases at the end are marked `failing`; each names the source and the rule it breaks.
+ * The cases at the end are the ones a defect was found by; each names the source and the rule it
+ * broke.
  */
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
@@ -218,10 +219,10 @@ describe('PromotionUsageService — the redemption lifecycle (doc 08 §14.1–§
 });
 
 /**
- * Defects found while writing this suite. Each case is marked `failing` so the suite stays green
- * while the defect stays visible; fixing the source turns them red, which is the signal to un-mark.
+ * The cases each defect was found by. Every one asserts what the lifecycle requires, and every one
+ * passes now that the source does it.
  */
-describe('PromotionUsageService — documented defects (failing cases)', () => {
+describe('PromotionUsageService — the behaviour each defect was found by', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
@@ -229,12 +230,10 @@ describe('PromotionUsageService — documented defects (failing cases)', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it.failing('reserves a promotion on a cart that has never reserved it', async () => {
-		// The first reservation of any cart is the normal case, and it cannot be taken. `reserve` asks
-		// for the live reservation with `findOneByWhereOptions` (promotion-usage.service.ts:294-305,
-		// reached from :66), which THROWS when the row is absent (core `crud.service.ts`:465) instead of
-		// returning null, so the "reuse the existing reservation, never double it" path is the only one
-		// that can ever run.
+	it('reserves a promotion on a cart that has never reserved it', async () => {
+		// The first reservation of any cart is the normal case. `reserve` asks for the live reservation
+		// with a read that answers with null when the cart holds none (promotion-usage.service.ts:294-305,
+		// reached from :66), so the "create the first one" path runs as well as the "reuse it" path.
 		const { service, rows } = serviceUnderTest([]);
 
 		const reservation = await service.reserve({
@@ -249,11 +248,10 @@ describe('PromotionUsageService — documented defects (failing cases)', () => {
 		expect(rows).toHaveLength(1);
 	});
 
-	it.failing('reverts a proportional share as an exact decimal', async () => {
+	it('reverts a proportional share as an exact decimal', async () => {
 		// F-22: the reverted amount is `allocate(appliedDiscount, [1, 2])[0]` — an allocation of an
 		// already-rounded whole, so a third of 25.00 is 8.33 and the remaining 16.67 adds back to 25.00.
-		// `revert` multiplies in binary floating point instead (promotion-usage.service.ts:146-155), and
-		// reports `8.333333333333334`, which no money column accepts.
+		// `revert` allocates rather than multiplies, so the two parts sum to the whole exactly.
 		const { service, rows } = serviceUnderTest([
 			usage({ id: 'u-1', orderId: ORDER, status: PromotionUsageStatus.REGISTERED, amount: '25.000000' })
 		]);

@@ -47,10 +47,12 @@ export class CampaignService extends CrudService<Campaign> {
 			throw new BadRequestException('CAMPAIGN_IDENTIFIER_REQUIRED');
 		}
 
-		const existing = await this.findOneByWhereOptions({
+		// The uniqueness check asks whether the identifier is taken, so one nobody holds is the normal
+		// answer rather than a missing resource.
+		const existing = await this.typeOrmCampaignRepository.findOneBy({
 			...this.scope,
 			identifier
-		} as never);
+		});
 
 		if (existing) {
 			throw new BadRequestException(`Campaign "${identifier}" already exists in this organization.`);
@@ -72,10 +74,10 @@ export class CampaignService extends CrudService<Campaign> {
 		const campaign = await this.findCampaignOrFail(id);
 
 		if (input.identifier && input.identifier.trim() !== campaign.identifier) {
-			const clash = await this.findOneByWhereOptions({
+			const clash = await this.typeOrmCampaignRepository.findOneBy({
 				...this.scope,
 				identifier: input.identifier.trim()
-			} as never);
+			});
 
 			if (clash) {
 				throw new BadRequestException(`Campaign "${input.identifier}" already exists in this organization.`);

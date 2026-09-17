@@ -10,9 +10,11 @@ import { ArgumentsHost } from '@nestjs/common';
  * replaces the caller's own failure with `response.status is not a function`: an error about the
  * error path, with the original exception lost behind it.
  *
- * The check is written against `getType()` returning something *other* than `'http'` rather than
- * against `'graphql'` exactly. A context this code has never heard of has no HTTP response either,
- * and assuming one is precisely what produces the crash this guards.
+ * The answer is deliberately "HTTP unless the host says otherwise". A host that reports a type other
+ * than `http` has no HTTP reply to write, and a host that cannot answer at all is treated as HTTP,
+ * which is the behaviour every caller had before this check existed. The opposite default would turn
+ * a host that merely does not implement `getType` into a rethrow — silently changing what an error
+ * response is, in the one place that decides it.
  *
  * It lives in its own module because both global filters need it and one of them is the other's
  * delegate — a shared helper imported by both keeps that relationship a delegation rather than a
@@ -23,9 +25,10 @@ import { ArgumentsHost } from '@nestjs/common';
  */
 export function isHttpHost(host: ArgumentsHost): boolean {
 	try {
-		return host.getType<'http' | 'graphql' | 'rpc' | 'ws'>() === 'http';
+		const type = host?.getType?.();
+		return type === undefined || type === 'http';
 	} catch {
-		// A host that cannot say what it is has no HTTP response to write to.
-		return false;
+		// A host whose `getType` throws is no more informative than one that lacks it.
+		return true;
 	}
 }

@@ -39,9 +39,8 @@ import { PromotionService } from './promotion.service';
  * under test are the ones that ship. No database, no network, no wall clock: the instant every case
  * runs at is stated in the context.
  *
- * Five cases at the end are marked `failing`: they assert behaviour the specification requires and
- * the implementation does not have. Each names the source it comes from. They are written this way
- * rather than deleted or weakened, so the suite stays green while the defect stays visible.
+ * The cases at the end are the ones a defect was found by: each asserts behaviour the specification
+ * requires and names the source it comes from.
  */
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
@@ -272,10 +271,9 @@ function world(fixture: {
 /**
  * A cart context: the lines, the currency and the instant every case prices at.
  *
- * The default line is 20.00 so that a ten percent discount of it is 2.00 exactly. A percentage of an
- * amount that is not representable in binary floating point currently fails the evaluation outright
- * — see the marked failing case at the end of this file — so the fixtures that are *not* about that
- * defect state amounts the arithmetic can carry.
+ * The default line is 20.00, so that a ten percent discount of it is 2.00 exactly and the arithmetic
+ * of a case that is not about a fraction is read at a glance; the cases that are about a fraction
+ * state the amount they need.
  */
 const context = (overrides: Record<string, unknown> = {}) => ({
 	currency: 'USD',
@@ -791,11 +789,11 @@ describe('PromotionService — publishing and withdrawing (doc 08 §8.4)', () =>
 });
 
 /**
- * Defects found while writing this suite. Each case asserts what the specification requires, and
- * each is marked `failing` because the implementation does not do it yet: the suite stays green and
- * the defect stays visible. Fixing the source turns these red — that is the signal to un-mark them.
+ * The cases each defect was found by. Every one asserts what the specification requires, and every
+ * one passes now that the source does it: the case is named here rather than deleted so the
+ * behaviour it pinned stays pinned.
  */
-describe('PromotionService.evaluate — documented defects (failing cases)', () => {
+describe('PromotionService.evaluate — the behaviour each defect was found by', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
@@ -803,11 +801,10 @@ describe('PromotionService.evaluate — documented defects (failing cases)', () 
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it.failing('evaluates a promotion attached to a campaign that has no budget', async () => {
+	it('evaluates a promotion attached to a campaign that has no budget', async () => {
 		// A campaign is a window; a budget is optional. `budgetHeadroom` asks the budget service for the
-		// campaign's budget with `findOneByWhereOptions`, which THROWS when there is no row
-		// (promotion.service.ts:657-666, `budgetHeadroom`), so a promotion attached to a campaign
-		// without a money ceiling fails the whole evaluation instead of applying.
+		// campaign's budget with a read that answers with null when the campaign has no ceiling, so an
+		// unbudgeted promotion applies instead of failing the whole evaluation.
 		const campaign = {
 			id: 'campaign-plain',
 			tenantId: TENANT,
@@ -828,11 +825,10 @@ describe('PromotionService.evaluate — documented defects (failing cases)', () 
 		expect(evaluation.result.applications).toHaveLength(1);
 	});
 
-	it.failing('allocates no more than the budget headroom it applied', async () => {
-		// The application is truncated to the headroom, the adjustment rows are not: the allocations
-		// still carry the full computed 50.00 (promotion.service.ts:340-367, `evaluate` — `applyAction`
-		// writes the allocations before the budget check runs), so Σ|allocations| exceeds what was
-		// granted and the caller's discount is larger than the campaign's remaining money.
+	it('allocates no more than the budget headroom it applied', async () => {
+		// The application is truncated to the headroom and the adjustment rows are written from the
+		// truncated amount, so Σ|allocations| is what was granted and the caller's discount is never
+		// larger than the campaign's remaining money.
 		const campaign = {
 			id: 'campaign-budget',
 			tenantId: TENANT,
@@ -877,14 +873,11 @@ describe('PromotionService.evaluate — documented defects (failing cases)', () 
 		expect(allocated.abs().toStorageString()).toBe('20.000000');
 	});
 
-	it.failing('applies a ten percent discount to a discounted line (fixture F-02)', async () => {
+	it('applies a ten percent discount to a discounted line (fixture F-02)', async () => {
 		// Doc 08 F-02: `2 x 24.99 = 49.98`, ten percent of it is `4.998`, and the adjustment is `-5.00`
-		// once it reaches the currency's scale. The engine computes the discount as
-		// `(discountable * value) / 100` on `Number`s (promotion.service.ts:595-598), so a cart of
-		// 49.98 evaluated at ten percent gives `4.997999999999999`; `Money.of` refuses it as a
-		// non-decimal, and the whole evaluation THROWS `MONEY_NOT_DECIMAL_STRING` rather than
-		// discounting the cart. Any percentage of an amount that is not exactly representable in
-		// binary floating point fails the same way.
+		// once it reaches the currency's scale. The percentage is an exact decimal product, so a cart of
+		// 49.98 evaluated at ten percent discounts rather than failing `Money.of` on
+		// `4.997999999999999`.
 		const spring = promotion({ id: 'promo-spring', code: 'SPRING10', title: 'Spring 10 %' });
 		const { service } = world({
 			promotions: [spring],
@@ -906,11 +899,10 @@ describe('PromotionService.evaluate — documented defects (failing cases)', () 
 		expect(Money.of(evaluation.result.applications[0].amount, 'USD').toStorageString()).toBe('5.000000');
 	});
 
-	it.failing('reports a fractional total as an exact decimal rather than as a binary floating-point sum', async () => {
+	it('reports a fractional total as an exact decimal rather than as a binary floating-point sum', async () => {
 		// Money is an exact decimal and never a `number` (doc 07 §1.2). `evaluate` accumulates the
-		// allocations with `+` on `Number` and reports the raw result (promotion.service.ts:378,
-		// `discountTotal`, and :373, the application's `amount`), so a cart of 0.10 + 0.20 is reported
-		// as `0.30000000000000004` — a string no money column and no `Money.of` accepts.
+		// allocations as decimals through the money layer, so a cart of 0.10 + 0.20 is reported as
+		// `0.300000` — the string a money column and `Money.of` accept.
 		const promo = promotion({ id: 'promo-cent', code: 'CENT', title: 'Thirty cents off' });
 		const { service } = world({
 			promotions: [promo],
@@ -938,11 +930,10 @@ describe('PromotionService.evaluate — documented defects (failing cases)', () 
 		expect(Money.of(evaluation.result.discountTotal, 'USD').abs().toStorageString()).toBe('0.300000');
 	});
 
-	it.failing('reports a code that names no promotion as a notice', async () => {
+	it('reports a code that names no promotion as a notice', async () => {
 		// Doc 08 §11 step 1: a code the caller presented that names nothing is reported. The service
-		// looks it up with `findOneByWhereOptions` (promotion.service.ts:425), which throws
-		// `NotFoundException` when the row is missing (core `crud.service.ts`:465), so one mistyped
-		// coupon code in a cart turns the whole price calculation into a 404 instead of a notice.
+		// looks it up with a read that answers with null when no row carries the code, so one mistyped
+		// coupon code in a cart is a notice rather than a 404 on the whole price calculation.
 		const spring = promotion({ id: 'promo-spring', code: 'SPRING10', title: 'Spring 10 %' });
 		const { service } = world({
 			promotions: [spring],

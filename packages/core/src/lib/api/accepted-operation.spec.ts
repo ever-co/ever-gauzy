@@ -25,9 +25,23 @@ interface Captured {
 	status?: number;
 }
 
+/**
+ * The handler and the class the reflector is asked about.
+ *
+ * An interceptor reads its declaration from the metadata of the handler it protects and the class
+ * that declares it, so a context standing in for a real one has to answer both. A stub that answers
+ * only `getType` and `switchToHttp` is not an `ExecutionContext`: the cast that turns it into one
+ * hides the omission from the compiler and the interceptor fails on the first member it reads.
+ */
+class DeclaringController {}
+
+const declaringHandler = (): void => undefined;
+
 const httpContext = (request: unknown, captured: Captured): ExecutionContext =>
 	({
 		getType: () => 'http',
+		getHandler: () => declaringHandler,
+		getClass: () => DeclaringController,
 		switchToHttp: () => ({
 			getRequest: () => request,
 			getResponse: () => ({

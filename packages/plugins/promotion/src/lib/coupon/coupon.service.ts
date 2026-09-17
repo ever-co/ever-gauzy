@@ -104,7 +104,9 @@ export class CouponService extends CrudService<Coupon> {
 			throw new BadRequestException('COUPON_INVALID: a coupon needs a code.');
 		}
 
-		const existing = await this.findOneByWhereOptions({ code, ...this.scope } as never);
+		// The uniqueness check asks whether the code is taken, so a code nobody holds is the normal
+		// answer rather than a missing resource.
+		const existing = await this.typeOrmCouponRepository.findOneBy({ code, ...this.scope });
 
 		if (existing) {
 			throw new BadRequestException(`COUPON_INVALID: the code "${code}" already exists.`);
@@ -173,7 +175,10 @@ export class CouponService extends CrudService<Coupon> {
 		context: { customerId?: ID; at?: Date } = {}
 	): Promise<{ valid: boolean; coupon?: ICoupon; reason?: string }> {
 		const normalised = this.normalise(code);
-		const coupon = await this.findOneByWhereOptions({ code: normalised, ...this.scope } as never);
+		// A code the customer typed that names nothing is a caller-correctable outcome and is answered
+		// as one: the reason is what a customer service agent acts on, and a mistyped code must not be
+		// reported as a missing resource (doc 06 §6.6 `COUPON_INVALID`, doc 08 §13.2).
+		const coupon = await this.typeOrmCouponRepository.findOneBy({ code: normalised, ...this.scope });
 
 		if (!coupon) {
 			return { valid: false, reason: 'COUPON_INVALID' };

@@ -76,6 +76,28 @@ export interface IPromotionEvaluation {
 	readonly allocations: IPromotionAllocation[];
 }
 
+/** One owner an action would take money off, and how much of it. */
+interface IPromotionAdjustmentPart {
+	readonly ownerType: 'LINE' | 'SHIPPING';
+	readonly ownerId: ID;
+	/** The key the owner's remaining discountable amount is held under. */
+	readonly key: string;
+	readonly amount: Money;
+}
+
+/**
+ * What one action of a promotion would take off, before the campaign budget has admitted it.
+ *
+ * The plan is what makes the budget a property of the promotion rather than of one of its actions:
+ * every action is computed first, the promotion's total is measured against the ceiling once, and
+ * the allocation rows are written from the amount that was admitted.
+ */
+interface IPromotionAdjustmentPlan {
+	readonly action: IPromotionAction;
+	readonly parts: IPromotionAdjustmentPart[];
+	readonly total: Money;
+}
+
 /**
  * Promotions: the offer and its evaluation.
  *
@@ -125,7 +147,9 @@ export class PromotionService extends CrudService<Promotion> {
 		const code = input.code ? input.code.trim().toUpperCase() : undefined;
 
 		if (code) {
-			const clash = await this.findOneByWhereOptions({ code, ...this.scope } as never);
+			// A code nobody has taken is a clash the caller did not create, so the read answers rather
+			// than failing: the check is "is this code free", not "does this code exist".
+			const clash = await this.typeOrmPromotionRepository.findOneBy({ code, ...this.scope });
 
 			if (clash) {
 				throw new BadRequestException(`PROMOTION_ALREADY_APPLIED: the code "${code}" is already in use.`);
@@ -318,13 +342,14 @@ export class PromotionService extends CrudService<Promotion> {
 			});
 
 		// The remaining discountable amount is per owner, not per promotion: a later promotion sees
-		// what the earlier ones left and no more.
-		const remaining = new Map<string, number>();
+		// what the earlier ones left and no more. It is money, so it is carried as money — a `number`
+		// would drop a cent the moment a cart holds an amount binary floating point cannot represent.
+		const remaining = new Map<string, Money>();
 		for (const line of context.lines) {
-			remaining.set(`LINE:${line.id}`, Number(line.amount));
+			remaining.set(`LINE:${line.id}`, Money.of(line.amount, context.currency));
 		}
 		for (const method of context.shipping ?? []) {
-			remaining.set(`SHIPPING:${method.id}`, Number(method.amount));
+			remaining.set(`SHIPPING:${method.id}`, Money.of(method.amount, context.currency));
 		}
 
 		for (const promotion of ordered) {
@@ -335,33 +360,49 @@ export class PromotionService extends CrudService<Promotion> {
 			}
 
 			const actions = await this.promotionActionService.findByPromotion(promotion.id);
-			let promotionTotal = 0;
+			const plans: IPromotionAdjustmentPlan[] = [];
+			let promotionTotal = Money.zero(context.currency);
 
 			for (const action of actions.sort((left, right) => left.position - right.position)) {
-				const applied = this.applyAction(promotion, action, context, remaining, allocations);
-				promotionTotal += applied;
+				const plan = this.planAction(action, context, remaining);
+
+				if (plan) {
+					plans.push(plan);
+					promotionTotal = promotionTotal.add(plan.total);
+				}
 			}
 
-			if (promotionTotal <= 0) {
+			if (!promotionTotal.isPositive()) {
 				notices.push(this.notice(promotion, PromotionNotice.NO_DISCOUNTABLE_AMOUNT, 'Nothing was left to discount.'));
 				continue;
 			}
 
-			const budgetHeadroom = await this.budgetHeadroom(promotion);
+			// The ceiling is checked against the promotion's total, once, and what it truncates is taken
+			// off the parts as well as off the total: the allocations report what was granted, never what
+			// was computed (doc 08 §11.3, §11 step 6).
+			const budgetHeadroom = await this.budgetHeadroom(promotion, context.currency);
+			let appliedTotal = promotionTotal;
 
-			if (budgetHeadroom !== null && budgetHeadroom < promotionTotal) {
+			if (budgetHeadroom !== null && budgetHeadroom.lessThan(promotionTotal)) {
 				notices.push(
 					this.notice(
 						promotion,
 						PromotionNotice.PARTIALLY_APPLIED_BUDGET,
 						'The campaign budget admitted only part of the computed discount.',
-						{ computed: String(promotionTotal), headroom: String(budgetHeadroom) }
+						{
+							computed: promotionTotal.toStorageString(),
+							headroom: budgetHeadroom.toStorageString()
+						}
 					)
 				);
-				promotionTotal = Math.max(0, budgetHeadroom);
+				appliedTotal = Money.max(Money.zero(context.currency), budgetHeadroom);
 			}
 
-			if (promotionTotal <= 0) {
+			// A discount the budget refused outright is a discount nobody was given, so the amount it was
+			// measured against goes back to its owners before the next candidate is evaluated.
+			this.commit(promotion, plans, appliedTotal, remaining, allocations);
+
+			if (!appliedTotal.isPositive()) {
 				notices.push(this.notice(promotion, PromotionNotice.BUDGET_EXCEEDED, 'The campaign budget is spent.'));
 				continue;
 			}
@@ -370,19 +411,22 @@ export class PromotionService extends CrudService<Promotion> {
 				promotionId: promotion.id,
 				code: promotion.code,
 				isAutomatic: promotion.isAutomatic,
-				amount: String(promotionTotal),
+				amount: appliedTotal.toStorageString(),
 				currency: context.currency
 			});
 		}
 
-		const discountTotal = allocations.reduce((sum, allocation) => sum + Number(allocation.amount), 0);
+		const discountTotal = Money.sum(
+			allocations.map((allocation) => Money.of(allocation.amount, context.currency)),
+			context.currency
+		);
 
 		return {
 			allocations,
 			result: {
 				applications,
 				notices,
-				discountTotal: String(-Math.abs(discountTotal)),
+				discountTotal: discountTotal.abs().negate().toStorageString(),
 				currency: context.currency
 			}
 		};
@@ -422,13 +466,16 @@ export class PromotionService extends CrudService<Promotion> {
 		if (context.codes?.length) {
 			for (const codeRaw of context.codes) {
 				const code = codeRaw.trim().toUpperCase();
-				const coded = await this.findOneByWhereOptions({ code, ...this.scope } as never);
+				// A code the caller presented that names nothing is an answer, not a failure: one
+				// mistyped code in a cart must not turn the whole price calculation into a 404
+				// (doc 08 §11 step 1, doc 06 §6.6 `COUPON_INVALID`).
+				const coded = await this.typeOrmPromotionRepository.findOneBy({ code, ...this.scope });
 
 				if (!coded) {
 					notices.push({
 						promotionId: '' as ID,
 						code,
-						notice: PromotionNotice.PROMOTION_INACTIVE,
+						notice: PromotionNotice.COUPON_INACTIVE,
 						message: `No promotion carries the code "${code}".`
 					});
 					continue;
@@ -538,9 +585,9 @@ export class PromotionService extends CrudService<Promotion> {
 			}
 		}
 
-		const headroom = await this.budgetHeadroom(promotion);
+		const headroom = await this.budgetHeadroom(promotion, context.currency);
 
-		if (headroom !== null && headroom <= 0) {
+		if (headroom !== null && !headroom.isPositive()) {
 			notices.push(this.notice(promotion, PromotionNotice.BUDGET_EXCEEDED, 'The promotion budget is spent.'));
 			return false;
 		}
@@ -549,30 +596,31 @@ export class PromotionService extends CrudService<Promotion> {
 	}
 
 	/**
-	 * Applies one action to the owners it targets and writes the allocations it produced.
+	 * Computes what one action takes off, and from which owners.
 	 *
-	 * @param promotion The promotion being applied.
+	 * Nothing is written to the allocation list here. A promotion's total is only known once every one
+	 * of its actions has been computed, and the campaign's ceiling is measured against that total — so
+	 * the rows are written by `commit`, from the amount the ceiling admitted (doc 08 §11 step 6).
+	 *
 	 * @param action The action to apply.
 	 * @param context The evaluation context.
-	 * @param remaining The per-owner remaining discountable amounts, updated in place.
-	 * @param allocations The allocation list to append to.
-	 * @returns The total the action took off.
+	 * @param remaining The per-owner remaining discountable amounts, charged in place.
+	 * @returns What the action would take off, or null when it has nothing to take off.
 	 */
-	private applyAction(
-		promotion: IPromotion,
+	private planAction(
 		action: IPromotionAction,
 		context: IPromotionEvaluationContext,
-		remaining: Map<string, number>,
-		allocations: IPromotionAllocation[]
-	): number {
+		remaining: Map<string, Money>
+	): IPromotionAdjustmentPlan | null {
+		const currency = context.currency;
 		const targetedLines =
 			action.targetType === PromotionActionTargetType.SHIPPING
 				? []
-				: context.lines.filter((line) => (remaining.get(`LINE:${line.id}`) ?? 0) > 0);
+				: context.lines.filter((line) => this.isDiscountable(remaining, `LINE:${line.id}`));
 		const targetedShipping =
 			action.targetType === PromotionActionTargetType.ITEMS
 				? []
-				: (context.shipping ?? []).filter((method) => (remaining.get(`SHIPPING:${method.id}`) ?? 0) > 0);
+				: (context.shipping ?? []).filter((method) => this.isDiscountable(remaining, `SHIPPING:${method.id}`));
 
 		const owners = [
 			...targetedLines.map((line) => ({ ownerType: 'LINE' as const, ownerId: line.id, key: `LINE:${line.id}` })),
@@ -584,88 +632,193 @@ export class PromotionService extends CrudService<Promotion> {
 		];
 
 		if (!owners.length) {
-			return 0;
+			return null;
 		}
 
-		const weights = owners.map((owner) => String(remaining.get(owner.key) ?? 0));
-		const discountable = weights.reduce((sum, weight) => sum + Number(weight), 0);
-		const value = Number(action.value);
-		const cap = Number((action.metadata as { maxDiscountAmount?: string } | undefined)?.maxDiscountAmount ?? Infinity);
+		const weights = owners.map((owner) => remaining.get(owner.key) ?? Money.zero(currency));
+		const discountable = Money.sum(weights, currency);
+		const stated = action.value !== null && action.value !== undefined && String(action.value).trim() !== '';
+		const percentage =
+			action.type === PromotionActionType.PERCENTAGE || action.type === PromotionActionType.TIERED_PERCENTAGE;
+		let discount: Money;
 
-		let discount =
-			action.type === PromotionActionType.PERCENTAGE || action.type === PromotionActionType.TIERED_PERCENTAGE
-				? (discountable * Math.min(value, 100)) / 100
-				: Math.min(value, discountable);
+		if (percentage) {
+			// `f(value, Σ discountable)`: an exact decimal scaled by the percentage and divided by a
+			// hundred, so ten percent of `49.98` is the `4.998` the currency scale then resolves, never
+			// the `4.997999999999999` a binary floating-point product would leave behind. A tiered
+			// percentage carries its percentage in `metadata.tiers` rather than in `value`, and an
+			// action that states no percentage has none to take off.
+			if (!stated) {
+				return null;
+			}
+
+			discount = discountable.multiply(action.value).divide(100);
+		} else if (action.type === PromotionActionType.FREE_SHIPPING && !stated) {
+			// Free shipping discounts the targeted methods to zero (doc 08 §10.1); a stated value is the
+			// cap the operator put on it.
+			discount = discountable;
+		} else {
+			if (!stated) {
+				return null;
+			}
+
+			discount = Money.min(Money.of(action.value, currency), discountable);
+		}
 
 		if (action.allocation === PromotionActionAllocation.EACH) {
+			// The per-unit discount is computed once and applied to whole units, so a `maxQuantity` cap
+			// cannot be crossed by a fraction of a unit.
 			const units = Math.min(
 				Number(action.applyToQuantity ?? Number.MAX_SAFE_INTEGER),
 				Number(action.maxQuantity ?? Number.MAX_SAFE_INTEGER)
 			);
-			const perUnit = owners.length ? discount / owners.length : 0;
-			discount = perUnit * Math.min(units, owners.length);
+
+			discount = discount.divide(owners.length).multiply(Math.min(units, owners.length));
 		}
 
-		discount = Math.max(0, Math.min(discount, discountable, cap, Number.isFinite(cap) ? cap : discountable));
+		const cap = (action.metadata as { maxDiscountAmount?: DecimalString } | undefined)?.maxDiscountAmount;
 
-		if (discount <= 0) {
-			return 0;
+		if (cap !== null && cap !== undefined) {
+			discount = Money.min(discount, Money.of(cap, currency));
+		}
+
+		discount = Money.min(discount, discountable);
+
+		if (!discount.isPositive()) {
+			return null;
 		}
 
 		// The split is the largest-remainder allocation, so the parts sum back to the whole exactly and
 		// no cent is created or lost by rounding.
-		const parts = Money.of(String(discount), context.currency).allocate(weights);
-		let applied = 0;
+		const parts = discount.allocate(weights.map((weight) => weight.amount));
+		const charges: IPromotionAdjustmentPart[] = [];
+		let total = Money.zero(currency);
 
 		for (const [index, part] of parts.entries()) {
 			const owner = owners[index];
-			const amount = Number(part.amount);
 
-			if (amount <= 0) {
+			if (!part.isPositive()) {
 				continue;
 			}
 
-			remaining.set(owner.key, (remaining.get(owner.key) ?? 0) - amount);
-			allocations.push({
-				ownerType: owner.ownerType,
-				ownerId: owner.ownerId,
-				promotionId: promotion.id,
-				actionId: action.id,
-				code: promotion.code,
-				amount: String(-amount)
-			});
-			applied += amount;
+			remaining.set(owner.key, (remaining.get(owner.key) ?? Money.zero(currency)).subtract(part));
+			charges.push({ ownerType: owner.ownerType, ownerId: owner.ownerId, key: owner.key, amount: part });
+			total = total.add(part);
 		}
 
-		return applied;
+		return { action, parts: charges, total };
+	}
+
+	/**
+	 * Writes the allocation rows of a promotion, from the amount the campaign budget admitted.
+	 *
+	 * A discount the ceiling truncated is re-allocated across the targets its actions computed, by
+	 * largest remainder, so Σ|allocations| equals the application to the last minor unit and the parts
+	 * of a split sum to the whole exactly. A promotion the ceiling refused outright writes no row and
+	 * gives back everything its actions charged, so the next candidate is not charged for a discount
+	 * nobody was given (doc 08 §11.3).
+	 *
+	 * @param promotion The promotion being applied.
+	 * @param plans What each of its actions computed.
+	 * @param appliedTotal What the campaign budget admitted.
+	 * @param remaining The per-owner remaining discountable amounts, corrected in place.
+	 * @param allocations The allocation list to append to.
+	 */
+	private commit(
+		promotion: IPromotion,
+		plans: IPromotionAdjustmentPlan[],
+		appliedTotal: Money,
+		remaining: Map<string, Money>,
+		allocations: IPromotionAllocation[]
+	): void {
+		const currency = appliedTotal.currency;
+		const computedTotal = Money.sum(
+			plans.map((plan) => plan.total),
+			currency
+		);
+		const truncated = !appliedTotal.equals(computedTotal);
+		const shares = truncated
+			? appliedTotal.allocate(plans.flatMap((plan) => plan.parts.map((part) => part.amount.amount)))
+			: [];
+		let index = 0;
+
+		for (const plan of plans) {
+			for (const part of plan.parts) {
+				const share = truncated ? shares[index] : part.amount;
+
+				index += 1;
+
+				if (truncated) {
+					// What the ceiling did not admit is still discountable, so it goes back to its owner.
+					remaining.set(
+						part.key,
+						(remaining.get(part.key) ?? Money.zero(currency)).add(part.amount.subtract(share))
+					);
+				}
+
+				if (!share.isPositive()) {
+					continue;
+				}
+
+				allocations.push({
+					ownerType: part.ownerType,
+					ownerId: part.ownerId,
+					promotionId: promotion.id,
+					actionId: plan.action.id,
+					code: promotion.code,
+					amount: share.negate().toStorageString()
+				});
+			}
+		}
+	}
+
+	/**
+	 * Whether an owner still has something left to discount.
+	 *
+	 * @param remaining The per-owner remaining discountable amounts.
+	 * @param key The owner's key.
+	 * @returns True when the owner has a positive amount left.
+	 */
+	private isDiscountable(remaining: Map<string, Money>, key: string): boolean {
+		return remaining.get(key)?.isPositive() ?? false;
 	}
 
 	/**
 	 * The headroom of a promotion's budget, which is the smaller of its inline budget and its
 	 * campaign's when it has both.
 	 *
+	 * A budget is optional: a campaign is a window, and a promotion attached to one is unbudgeted —
+	 * not invalid — when no ceiling has been set, so the read leaves it unbudgeted rather than failing
+	 * the whole evaluation (doc 08 §12.2, §11.3).
+	 *
 	 * @param promotion The promotion to measure.
+	 * @param currency The currency the evaluation is priced in.
 	 * @returns The headroom, or null when the promotion has no budget at all.
 	 */
-	private async budgetHeadroom(promotion: IPromotion): Promise<number | null> {
-		const headrooms: number[] = [];
+	private async budgetHeadroom(promotion: IPromotion, currency: string): Promise<Money | null> {
+		const headrooms: Money[] = [];
 
 		if (promotion.budgetAmount !== null && promotion.budgetAmount !== undefined) {
-			headrooms.push(Number(promotion.budgetAmount) - Number(promotion.budgetSpent ?? 0));
+			headrooms.push(
+				Money.fromStorage(promotion.budgetAmount, currency).subtract(
+					Money.fromStorage(promotion.budgetSpent, currency)
+				)
+			);
 		}
 
 		if (promotion.campaignId) {
-			const budget = (await this.campaignBudgetService.findOneByWhereOptions({
-				campaignId: promotion.campaignId,
-				...this.scope
-			} as never)) as { limit?: string; used?: string } | null;
+			const budget = await this.campaignBudgetService.findBudget(promotion.campaignId);
 
-			if (budget) {
-				headrooms.push(Number(budget.limit ?? 0) - Number(budget.used ?? 0));
+			// A campaign with no budget row is a campaign with no money ceiling. A ceiling with no limit
+			// is an unlimited one rather than a spent one, so neither is a headroom of zero.
+			if (budget && budget.limit !== null && budget.limit !== undefined) {
+				headrooms.push(
+					Money.fromStorage(budget.limit, currency).subtract(Money.fromStorage(budget.used, currency))
+				);
 			}
 		}
 
-		return headrooms.length ? Math.min(...headrooms) : null;
+		return headrooms.length ? headrooms.reduce((smallest, headroom) => Money.min(smallest, headroom)) : null;
 	}
 
 	/**

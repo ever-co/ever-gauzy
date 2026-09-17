@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, RequestContext } from '@gauzy/core';
+import { CrudService, Money, RequestContext, normalizeDecimalString } from '@gauzy/core';
 import { PromotionUsage } from './promotion-usage.entity';
 import { TypeOrmPromotionUsageRepository } from './repository/type-orm-promotion-usage.repository';
 import { MikroOrmPromotionUsageRepository } from './repository/mikro-orm-promotion-usage.repository';
@@ -71,10 +71,13 @@ export class PromotionUsageService extends CrudService<PromotionUsage> {
 		}
 
 		if (input.orderId) {
-			const registered = await this.findOneByWhereOptions({
+			// A redemption the order does not hold yet is the ordinary case for a first placement, so
+			// the read answers with nothing rather than failing the reservation.
+			const registered = await this.typeOrmPromotionUsageRepository.findOneBy({
 				promotionId: input.promotionId,
-				orderId: input.orderId
-			} as never);
+				orderId: input.orderId,
+				...this.scope
+			});
 
 			if (registered) {
 				return registered;
@@ -133,7 +136,11 @@ export class PromotionUsageService extends CrudService<PromotionUsage> {
 		policy: RevertOnReturnPolicy = RevertOnReturnPolicy.PROPORTIONAL,
 		returnedShare = 1
 	): Promise<{ reverted: DecimalString; usage: IPromotionUsage | null }> {
-		const usage = await this.findOneByWhereOptions({ promotionId, orderId, ...this.scope } as never);
+		const usage = await this.typeOrmPromotionUsageRepository.findOneBy({
+			promotionId,
+			orderId,
+			...this.scope
+		});
 
 		if (!usage) {
 			throw new NotFoundException('PROMOTION_NOT_FOUND: no redemption of this promotion on that order.');
@@ -143,19 +150,31 @@ export class PromotionUsageService extends CrudService<PromotionUsage> {
 			return { reverted: '0', usage };
 		}
 
-		const registered = Number(usage.amount);
-		const share = policy === RevertOnReturnPolicy.NEVER ? 0 : policy === RevertOnReturnPolicy.ALWAYS ? 1 : returnedShare;
-		const reverted = Math.min(registered, Math.max(0, registered * share));
+		const registered = Money.of(usage.amount, usage.currency);
+		const raw =
+			policy === RevertOnReturnPolicy.NEVER ? 0 : policy === RevertOnReturnPolicy.ALWAYS ? 1 : returnedShare;
+		const share = Math.min(1, Math.max(0, Number(raw) || 0));
 
-		if (reverted >= registered) {
+		// A proportional reversal is an allocation of the registered amount rather than a multiplication
+		// by a fraction: the two parts are whole minor units and sum back to the whole exactly, so the
+		// share that goes back to the budget and the residual the customer keeps can never disagree by a
+		// cent (doc 08 §14.2, F-22).
+		const [revertedPart, residualPart] = registered.allocate([share, 1 - share]);
+		const reverted = normalizeDecimalString(revertedPart.amount);
+		const residual = normalizeDecimalString(residualPart.amount);
+
+		if (revertedPart.equals(registered)) {
 			await this.update(usage.id, { status: PromotionUsageStatus.REVERTED } as never);
 		} else {
 			// A partial reversal keeps the row registered and reduces the recorded benefit, so the
 			// residue stays attributable to the units the customer kept.
-			await this.update(usage.id, { amount: String(registered - reverted) } as never);
+			await this.update(usage.id, { amount: residual } as never);
 		}
 
-		return { reverted: String(reverted), usage: await this.findOneByWhereOptions({ id: usage.id } as never) };
+		return {
+			reverted,
+			usage: await this.typeOrmPromotionUsageRepository.findOneBy({ id: usage.id, ...this.scope })
+		};
 	}
 
 	/**
@@ -296,13 +315,15 @@ export class PromotionUsageService extends CrudService<PromotionUsage> {
 			return null;
 		}
 
-		const row = await this.findOneByWhereOptions({
+		// The first reservation of a cart is the normal case, so a cart that holds no reservation is an
+		// answer: the row is created below rather than the lookup failing the reservation.
+		const row = await this.typeOrmPromotionUsageRepository.findOneBy({
 			promotionId,
 			cartId,
 			status: PromotionUsageStatus.RESERVED,
 			...this.scope
-		} as never);
+		});
 
-		return row ?? null;
+		return (row as IPromotionUsage) ?? null;
 	}
 }

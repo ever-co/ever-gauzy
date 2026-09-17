@@ -162,6 +162,23 @@ export class CampaignBudgetService extends CrudService<CampaignBudget> {
 	}
 
 	/**
+	 * Reads the budget of a campaign, or null when the campaign carries none.
+	 *
+	 * A budget is optional: a campaign is a window, and a promotion attached to one is unbudgeted —
+	 * not invalid — when no ceiling was set. The evaluation reads it through this method rather than
+	 * through a fail-lookup, because "this campaign has no ceiling" is an answer and not a failure
+	 * (doc 08 §12.2, §11.3).
+	 *
+	 * @param campaignId The campaign to read.
+	 * @returns The budget, or null.
+	 */
+	async findBudget(campaignId: ID): Promise<ICampaignBudget | null> {
+		const budget = await this.typeOrmCampaignBudgetRepository.findOneBy({ campaignId, ...this.scope });
+
+		return budget ?? null;
+	}
+
+	/**
 	 * Reads the budget of a campaign together with its per-attribute consumption.
 	 *
 	 * @param campaignId The campaign to read.
@@ -169,7 +186,7 @@ export class CampaignBudgetService extends CrudService<CampaignBudget> {
 	 * @throws NotFoundException when the campaign has no budget.
 	 */
 	async getBudget(campaignId: ID): Promise<{ budget: ICampaignBudget; usage: ICampaignBudgetUsage[] }> {
-		const budget = await this.findOneByWhereOptions({ campaignId, ...this.scope } as never);
+		const budget = await this.findBudget(campaignId);
 
 		if (!budget) {
 			throw new NotFoundException('CAMPAIGN_BUDGET_NOT_FOUND');

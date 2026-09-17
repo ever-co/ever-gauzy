@@ -416,11 +416,10 @@ describe('GiftCardService.expire, cancel and balanceByCode (doc 08 §13.3)', () 
 });
 
 /**
- * Defects found while writing this suite. Each case asserts what the domain requires and is marked
- * `failing` because the implementation does not do it yet: the suite stays green while the defect
- * stays visible. Fixing the source turns these red — that is the signal to un-mark them.
+ * The cases each defect was found by. Each asserts what the domain requires, and each passes now
+ * that the source does it.
  */
-describe('GiftCardService — documented defects (failing cases)', () => {
+describe('GiftCardService — the behaviour each defect was found by', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
@@ -428,11 +427,9 @@ describe('GiftCardService — documented defects (failing cases)', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it.failing('keeps a balance an exact decimal when the amounts are not representable in binary', async () => {
-		// A balance is money (doc 07 §1.2). `applyMovement` computes it as
-		// `Number(current.balance) + movement.amount` (gift-card.service.ts:332) and stores
-		// `String(balanceAfter)`, so spending 0.10 of a 0.30 card leaves `0.19999999999999998`: a value
-		// no money column accepts and no customer can be charged.
+	it('keeps a balance an exact decimal when the amounts are not representable in binary', async () => {
+		// A balance is money (doc 07 §1.2). `applyMovement` moves it through the money layer, so spending
+		// 0.10 of a 0.30 card leaves `0.2`: a value the money layer carries and the customer can spend.
 		const { service, cards } = serviceUnderTest([
 			giftCard({ id: 'gc-1', code: 'GC-ODD', initialAmount: '0.300000', balance: '0.300000' })
 		]);
@@ -444,12 +441,10 @@ describe('GiftCardService — documented defects (failing cases)', () => {
 		expect(cards[0].balance).not.toContain('999999');
 	});
 
-	it.failing('derives the same balance the card stores', async () => {
-		// GC1 and the ledger's own docblock ("face value plus every movement … compared with this figure
-		// by the nightly audit") require the derived figure and the stored column to agree. `issue`
-		// records an `ISSUE` movement OF the face value AND sets the balance to it
-		// (gift-card.service.ts:69-83), so a derived balance comes out at twice the card
-		// (gift-card-transaction.service.ts:98-106): every card an audit touched would be doubled.
+	it('derives the same balance the card stores', async () => {
+		// GC1 and the ledger's own docblock require the derived figure and the stored column to agree.
+		// The `ISSUE` row is the record of the credit that created the card, so the derivation adds the
+		// face value to the movements after it and not to the issue row as well.
 		const { service, cards, giftCardTransactionService } = serviceUnderTest([]);
 		const card = await service.issue({ code: 'GC-1000', initialAmount: '100.000000', currency: 'USD' });
 
