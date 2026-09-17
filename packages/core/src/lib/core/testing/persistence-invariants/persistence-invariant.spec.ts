@@ -10,7 +10,7 @@ import {
 	assertCannotUpdateAcrossTenant,
 	assertListExcludesOtherTenant
 } from '../tenant-isolation/tenant-isolation.assertions';
-import { getORMType } from '../../utils';
+import { getORMType, MultiORMEnum } from '../../utils';
 
 /**
  * TASK 3: the unified persistence-invariant framework — TASK 1's tenant-isolation invariants
@@ -66,6 +66,31 @@ describe(`Persistence invariants (DB_ORM=${getORMType()})`, () => {
 
 	it('can read its own tenant row against the real database (positive control)', async () => {
 		await assertCanReadOwnTenant(harness.service, ownRow.id);
+	});
+
+	// Positive controls for the write paths. Without them, an update, delete or save() that failed for
+	// every caller would satisfy the matching "cannot" test below just as well as a correct one.
+	it('can update its own tenant row against the real database (positive control)', async () => {
+		await harness.service.update(ownRow.id, { name: 'renamed' });
+		await expect(harness.service.findOneByIdString(ownRow.id)).resolves.toMatchObject({ name: 'renamed' });
+	});
+
+	it('can delete its own tenant row against the real database (positive control)', async () => {
+		const result = await harness.service.delete(ownRow.id);
+		expect(result.affected).toBe(1);
+		expect(await harness.exists(ownRow.id)).toBe(false);
+	});
+
+	// Under MikroORM, save() rejects the caller's OWN existing row as well (the same code as on develop):
+	// `assertNotForeignRow` loads it with `fields: ['id', 'tenantId']`, which does not hydrate the
+	// `persist: false` `tenantId` mirror, so the guard fails closed with "belongs to another tenant",
+	// the very error the "cannot claim" test below expects. `it.failing` records that instead of letting
+	// the MikroORM run pass as proof, and turns red once save() works for the caller's own tenant there.
+	const itExceptMikroOrm = getORMType() === MultiORMEnum.MikroORM ? it.failing : it;
+
+	itExceptMikroOrm('can save() its own tenant row against the real database (positive control)', async () => {
+		await harness.service.save({ id: ownRow.id, name: 'resaved' });
+		await expect(harness.service.findOneByIdString(ownRow.id)).resolves.toMatchObject({ name: 'resaved' });
 	});
 
 	it('cannot read another tenant row against the real database', async () => {

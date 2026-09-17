@@ -70,7 +70,8 @@ replays the first one's cached result instead of running under MikroORM.
 
 ## Verification
 
-Both ORMs pass 6/6. Mutation-tested (disabling the tenant filter in
+Both ORMs pass 9/9 (under MikroORM the own-tenant save() positive control is an expected failure, see
+Known gaps). Mutation-tested (disabling the tenant filter in
 `TenantAwareCrudService.findConditionsWithTenantByUser`) under **both** `DB_ORM=typeorm` and
 `DB_ORM=mikro-orm`: multiple assertions failed as expected under each, then reverted before
 committing. Full `core` suite also re-run under both `DB_ORM` values — no regressions beyond the
@@ -81,8 +82,9 @@ The list invariant was later found to be weaker than it looked. Rows used to pil
 file's tests, and the assertion only checked that the newest foreign id was absent — which, under
 TypeORM's default page of 10 rows, stayed true with tenant filtering on the list path switched off.
 Each test now starts from an empty table (`harness.clear()` in `beforeEach`), and
-`assertListExcludesOtherTenant` requires every listed row to belong to the caller's tenant. The same
-list-path mutation now fails the list test under both ORMs, including on a table holding six rows
+`assertListExcludesOtherTenant` requires every listed row to belong to the caller's tenant, on a page
+sized to the reported total (so a full default page of own-tenant rows cannot hide a foreign row
+behind it). The same list-path mutation now fails the list test under both ORMs, including on a table holding six rows
 per tenant.
 
 ## Known gaps / natural next steps
@@ -96,3 +98,9 @@ per tenant.
   either), scoped separately per the roadmap's own "start narrow, expand later" guidance.
 - Per the roadmap, the next expansion is progressively covering more entities (`Task`, `TimeLog`,
   `Timesheet`, `Invoice`, `Expense`, `Organization`, `Payment`, ...) through this same framework.
+- Under MikroORM, `TenantAwareCrudService.save()` does not work for the caller's own tenant (unchanged from
+  develop). For an existing row, `assertNotForeignRow` loads it with `fields: ['id', 'tenantId']`, which does not
+  hydrate the `persist: false` `tenantId` mirror, so the guard fails closed with "The record belongs to another
+  tenant". Inserting a new row fails too, because the upsert names a `tenant` column that does not exist. The
+  own-tenant `save()` positive control is therefore `it.failing` under MikroORM, and the MikroORM "cannot claim via
+  save()" result proves nothing until that is fixed.

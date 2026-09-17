@@ -82,9 +82,9 @@ export async function assertCannotClaimForeignRowOnWrite<T extends TenantBaseEnt
  * rows under TypeORM when no `take` is given, so once the table holds more than a page of rows, that
  * one foreign id can simply fall outside the page — the check then passes with tenant filtering
  * switched off entirely (reproduced against the persistence-invariant suite's real SQLite database).
- * So every row on the page must belong to the caller's own tenant, and the page must not be empty
- * (an empty page satisfies both checks without proving anything). Seed at least one own-tenant row
- * before calling this.
+ * So the page is sized to the reported total and must cover it, every row on it must belong to the
+ * caller's own tenant, and it must not be empty (an empty page satisfies these checks without proving
+ * anything). Seed at least one own-tenant row before calling this.
  */
 export async function assertListExcludesOtherTenant<T extends TenantBaseEntity>(
 	service: TenantAwareCrudService<T>,
@@ -95,10 +95,14 @@ export async function assertListExcludesOtherTenant<T extends TenantBaseEntity>(
 	const ownTenantId = RequestContext.currentUser()?.tenantId;
 	expect(ownTenantId).toBeTruthy();
 
-	const { items } = await service.paginate();
+	// Ask for a page as large as the reported total, so no row (own or foreign) can sit past the page
+	// being checked — not even when more own-tenant rows than one default page come first.
+	const { total } = await service.paginate();
+	const { items } = await service.paginate({ take: Math.max(total, 1) });
 	const rows = items as Array<{ id?: ID; tenantId?: ID }>;
 
 	expect(rows.length).toBeGreaterThan(0);
+	expect(rows.length).toBe(total);
 	// Listing the offending rows (rather than a bare boolean) makes a failure show what leaked.
 	expect(rows.filter((row) => row.tenantId !== ownTenantId)).toEqual([]);
 	expect(rows.map((row) => row.id)).not.toContain(foreignId);

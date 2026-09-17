@@ -13,12 +13,14 @@ export interface ITenantFixture {
  * `overrides.user` to layer on extra fields (e.g. `employeeId`) a particular test needs.
  */
 export function createTenantFixture(overrides: Partial<ITenantFixture> = {}): ITenantFixture {
-	const tenantId = overrides.tenantId ?? randomUUID();
+	const tenantId = overrides.tenantId ?? overrides.user?.tenantId ?? randomUUID();
 	const organizationId = overrides.organizationId ?? randomUUID();
+	// `tenantId` goes last: in production `RequestContext.currentTenantId()` is `currentUser().tenantId`,
+	// so a user override must never leave the two pointing at different tenants.
 	const user = {
 		id: randomUUID(),
-		tenantId,
-		...overrides.user
+		...overrides.user,
+		tenantId
 	} as IUser;
 
 	return { tenantId, organizationId, user };
@@ -47,7 +49,14 @@ export function asTenantUser(fixture: ITenantFixture, options: { permissions?: P
 	const spies = [
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(fixture.user),
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(fixture.tenantId),
-		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(fixture.user.employeeId ?? null),
+		// Same rule as the production `currentEmployeeId()`: null for a CHANGE_SELECTED_EMPLOYEE holder.
+		jest
+			.spyOn(RequestContext, 'currentEmployeeId')
+			.mockImplementation(() =>
+				grantedPermissions.has(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+					? null
+					: fixture.user.employeeId || null
+			),
 		jest
 			.spyOn(RequestContext, 'hasPermission')
 			.mockImplementation((permission) => grantedPermissions.has(permission))

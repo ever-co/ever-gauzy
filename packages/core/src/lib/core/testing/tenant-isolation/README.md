@@ -13,7 +13,9 @@ stand-in for that TypeORM `Repository<T>` surface — enough to drive the REAL s
 against representative two-tenant data, without the cost/fragility of synchronizing the full
 production entity graph (many relations, Postgres-specific column types) into a throwaway SQLite
 database. It understands only the where-shapes `TenantAwareCrudService` itself produces (a flat FK
-column, or a one-level `{ relation: { id } }` shorthand) — it is not a general TypeORM mock.
+column, a one-level `{ relation: { id } }` shorthand, or `In(...)`; any other operator throws), and
+like TypeORM it leaves soft-deleted rows out of reads unless `withDeleted` is set — it is not a general
+TypeORM mock.
 
 ## Building blocks
 
@@ -25,7 +27,8 @@ column, or a one-level `{ relation: { id } }` shorthand) — it is not a general
 - `createTenantFixture()` / `createCrossTenantFixture()` — fresh tenant/organization/user ids;
   the latter gives you the standard `{ tenantA, tenantB }` attacker/victim pair.
 - `asTenantUser(fixture)` — points `RequestContext` at a fixture for the test, the same way a real
-  request's JWT-derived `req.user` would. Returns `{ restore }`; call it in `afterEach`.
+  request's JWT-derived `req.user` would. `currentEmployeeId()` follows the production rule (null when
+  `CHANGE_SELECTED_EMPLOYEE` is granted). Returns `{ restore }`; call it in `afterEach`.
 - `assertCannotReadAcrossTenant` / `assertCannotUpdateAcrossTenant` / `assertCannotDeleteAcrossTenant`
   / `assertCannotClaimForeignRowOnWrite` / `assertListExcludesOtherTenant`, paired with
   `assertCanReadOwnTenant` as a positive control — see `tenant-isolation.assertions.ts` for the

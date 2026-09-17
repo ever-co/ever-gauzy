@@ -1,10 +1,10 @@
-import { DeleteResult, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOperator, UpdateResult } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 
 export type FakeRow = Record<string, any> & { id?: ID };
 
 type Where = Record<string, any>;
-type FindOptions = { where?: Where | Where[]; skip?: number; take?: number };
+type FindOptions = { where?: Where | Where[]; skip?: number; take?: number; withDeleted?: boolean };
 
 /**
  * Minimal in-memory stand-in for a TypeORM `Repository<T>`, covering only the surface that
@@ -15,8 +15,10 @@ type FindOptions = { where?: Where | Where[]; skip?: number; take?: number };
  * drive the REAL production service classes (`EmployeeService`, `OrganizationProjectService`, ...)
  * against representative seed data, without standing up a real SQL database. Row matching only
  * understands the where-shapes `TenantAwareCrudService` itself produces: a flat scalar column
- * (`{ tenantId: x }`) or a one-level relation shorthand (`{ tenant: { id: x } }`) — enough to prove
- * the tenant/organization scoping the class is responsible for, without reimplementing a query
+ * (`{ tenantId: x }`), a one-level relation shorthand (`{ tenant: { id: x } }`) or `In(...)`
+ * (`{ id: In(ids) }`, used by `deleteMany()` and the foreign-row guard); any other operator throws.
+ * Like TypeORM, reads leave soft-deleted rows out unless `withDeleted` is passed. That is enough to
+ * prove the tenant/organization scoping the class is responsible for, without reimplementing a query
  * planner.
  *
  * NOT a general-purpose TypeORM mock: it deliberately has no notion of joins, ordering, or
@@ -59,6 +61,16 @@ export class InMemoryTenantRepository<T extends FakeRow = FakeRow> {
 			return true;
 		}
 		return Object.entries(where).every(([key, value]) => {
+			if (value instanceof FindOperator) {
+				// `TenantAwareCrudService.deleteMany()` and `assertNotForeignRows()` look rows up by
+				// `{ id: In(ids) }`. Compared as a plain value the operator matches no row: the bulk delete
+				// becomes a silent no-op and the foreign-row guard never sees a foreign id. Any other
+				// operator throws, so a query this fake cannot evaluate fails loudly instead of matching nothing.
+				if (value.type !== 'in') {
+					throw new Error(`InMemoryTenantRepository: unsupported operator "${value.type}" on "${key}"`);
+				}
+				return (value.value as unknown as unknown[]).includes(row[key]);
+			}
 			if (value && typeof value === 'object' && !Array.isArray(value) && 'id' in value) {
 				// Relation shorthand, e.g. `{ tenant: { id } }` -> compare against the flat FK column,
 				// since fixture rows only ever carry the scalar `tenantId`/`organizationId` columns.
@@ -68,28 +80,40 @@ export class InMemoryTenantRepository<T extends FakeRow = FakeRow> {
 		});
 	}
 
-	private select(where?: Where | Where[]): T[] {
+	/**
+	 * Rows matching `where`. `excludeDeleted` is how the reads below mirror TypeORM on an entity with a
+	 * delete-date column: a row `softDelete()` marked is left out unless the caller passes `withDeleted`
+	 * (as `assertNotForeignRow` does). `update`/`delete`/`softDelete` keep seeing it, as TypeORM's do.
+	 */
+	private select(where?: Where | Where[], excludeDeleted = false): T[] {
 		const clauses = Array.isArray(where) ? where : [where];
-		return this.all().filter((row) => clauses.some((clause) => this.matchesOne(row, clause)));
+		return this.all().filter(
+			(row) =>
+				!(excludeDeleted && row.deletedAt != null) && clauses.some((clause) => this.matchesOne(row, clause))
+		);
+	}
+
+	private selectForRead(options?: FindOptions): T[] {
+		return this.select(options?.where, !options?.withDeleted);
 	}
 
 	async find(options?: FindOptions): Promise<T[]> {
-		const matched = this.select(options?.where);
+		const matched = this.selectForRead(options);
 		const skip = options?.skip ?? 0;
 		const take = options?.take ?? matched.length;
 		return matched.slice(skip, skip + take);
 	}
 
 	async findAndCount(options?: FindOptions): Promise<[T[], number]> {
-		return [await this.find(options), this.select(options?.where).length];
+		return [await this.find(options), this.selectForRead(options).length];
 	}
 
 	async count(options?: FindOptions): Promise<number> {
-		return this.select(options?.where).length;
+		return this.selectForRead(options).length;
 	}
 
 	async findOne(options?: FindOptions): Promise<T | null> {
-		return this.select(options?.where)[0] ?? null;
+		return this.selectForRead(options)[0] ?? null;
 	}
 
 	async findOneBy(where: Where): Promise<T | null> {
