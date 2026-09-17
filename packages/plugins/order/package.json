@@ -37,6 +37,8 @@
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/plugin-cart": "^0.1.0",
+		"@gauzy/plugin-pricing": "^0.1.0",
+		"@gauzy/plugin-tax": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@mikro-orm/nestjs": "^6.1.2",
 		"@nestjs/graphql": "^13.0.0",

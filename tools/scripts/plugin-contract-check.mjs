@@ -247,6 +247,45 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 	}
 	check(`${at}: project.json exists`, existsSync(join(dir, 'project.json')));
 
+	// --- declared dependencies --------------------------------------------------------------
+	// A package that imports another package has to say so. In this workspace every package is linked
+	// and every path is mapped, so an undeclared import resolves on the developer's machine and fails
+	// only where it matters: an installation that pulls this package and not the one it imports. The
+	// declaration is also what pays for a load-order prerequisite written as a plugin's class - the
+	// form the compiler checks - since a class can only be named by importing it.
+	{
+		let manifest = null;
+		try {
+			manifest = JSON.parse(read(pkgPath));
+		} catch {
+			manifest = null;
+		}
+
+		const declared = new Set([
+			...Object.keys(manifest?.dependencies ?? {}),
+			...Object.keys(manifest?.peerDependencies ?? {}),
+			...Object.keys(manifest?.devDependencies ?? {})
+		]);
+
+		const imported = new Set();
+		const sources = walk(join(dir, 'src')).filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'));
+
+		for (const file of sources) {
+			const source = read(file);
+			for (const match of source.matchAll(/import\s+(?!type\b)[\s\S]{0,120}?from\s*['"](@gauzy\/plugin-[\w-]+)['"]/g)) {
+				imported.add(match[1]);
+			}
+		}
+
+		for (const dependency of imported) {
+			check(
+				`${at}: declares ${dependency}, which it imports`,
+				declared.has(dependency),
+				'the import resolves through the workspace but the package does not depend on it'
+			);
+		}
+	}
+
 	// --- source layout ----------------------------------------------------------------------
 	const srcDir = join(dir, 'src');
 	const srcFiles = walk(srcDir);
