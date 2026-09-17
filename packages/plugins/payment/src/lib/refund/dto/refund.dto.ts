@@ -1,9 +1,22 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsObject, IsOptional, IsString, IsUUID, Length, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+	IsArray,
+	IsDate,
+	IsEnum,
+	IsObject,
+	IsOptional,
+	IsString,
+	IsUUID,
+	Length,
+	MaxLength,
+	ValidateNested
+} from 'class-validator';
 import { DecimalString } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
-import { RefundStatus } from '../payment.types';
+import { RefundStatus } from '../../payment.types';
 import { IsDecimalAmount } from '../../payment.validators';
+import { RefundLineDTO } from '../../refund-line/dto/refund-line.dto';
 
 /**
  * Money given back. A refund can never exceed what was captured for its payment.
@@ -115,4 +128,18 @@ export class RefundDTO extends TenantOrganizationBaseDTO {
 	@IsOptional()
 	@IsObject()
 	readonly metadata?: Record<string, unknown>;
+
+	/**
+	 * The lines the refund paid back, when the caller knows them.
+	 *
+	 * Each entry is written as a `refund_line` row in the same transaction as the refund, so a refund
+	 * is never stored without the breakdown it was asked for, and their amounts may not sum to more
+	 * than the refund's own. The lines are maintained afterwards through the refund-line routes.
+	 */
+	@ApiPropertyOptional({ type: () => [RefundLineDTO] })
+	@IsOptional()
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => RefundLineDTO)
+	readonly lines?: RefundLineDTO[];
 }

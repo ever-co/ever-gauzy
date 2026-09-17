@@ -1,6 +1,8 @@
 import { BaseEvent } from '@gauzy/core';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { Coupon, GiftCard, Promotion } from '../promotion.types';
+import { Coupon } from '../coupon/coupon.entity';
+import { GiftCard } from '../gift-card/gift-card.entity';
+import { Promotion } from '../promotion/promotion.entity';
 
 /**
  * Raised when a promotion is created, activated or expired.

@@ -141,14 +141,14 @@ export const schemaExtensions = gql`
 	"""
 	A promotion: the offer itself.
 
-	Its conditions are not a column — they are `rule` rows the kernel's rule engine owns and this
+	Its conditions are not a column — they are \`rule\` rows the kernel's rule engine owns and this
 	domain reads — and the money it moves is recorded in the kernel's adjustment ledger. What is
 	declared here is what the promotion *is*: what it gives (its action set), when it runs, who may
 	use it, and how much of it may be given away.
 	"""
 	type Promotion {
 		id: ID!
-		"Optional code. A promotion with no code and `isAutomatic` applies itself."
+		"Optional code. A promotion with no code and \`isAutomatic\` applies itself."
 		code: String
 		"Customer-facing name of the offer."
 		title: String!
@@ -267,7 +267,7 @@ export const schemaExtensions = gql`
 	"""
 	The spend or usage ceiling of one campaign.
 
-	`used` is a cache of the usage ledger rather than an authority: the checkout consumes it through a
+	\`used\` is a cache of the usage ledger rather than an authority: the checkout consumes it through a
 	single conditional statement and the reconciliation job re-derives it, so reading it here and
 	reading the ledger can disagree only between those two events.
 	"""
@@ -316,7 +316,7 @@ export const schemaExtensions = gql`
 	"""
 	A redeemable code belonging to a promotion.
 
-	The code is stored upper-cased, so `save10` and `SAVE10` cannot both exist in one organization,
+	The code is stored upper-cased, so \`save10\` and \`SAVE10\` cannot both exist in one organization,
 	and its own window and limits narrow the promotion's rather than widening them.
 	"""
 	type Coupon {
@@ -351,7 +351,7 @@ export const schemaExtensions = gql`
 	One application of a promotion: the row the limits and the budget are checked against.
 
 	A row is written by the checkout — reserved while the basket is being paid for, registered when
-	the order is placed — and moved to `REVERTED` by a cancellation or a return. It is a fact, not a
+	the order is placed — and moved to \`REVERTED\` by a cancellation or a return. It is a fact, not a
 	record an operator maintains.
 	"""
 	type PromotionUsage {
@@ -379,7 +379,7 @@ export const schemaExtensions = gql`
 	"""
 	A stored-value instrument.
 
-	`balance` is a materialised cache of the card's ledger, never the authority; the ledger is what a
+	\`balance\` is a materialised cache of the card's ledger, never the authority; the ledger is what a
 	redemption is actually checked against.
 	"""
 	type GiftCard {
@@ -400,7 +400,7 @@ export const schemaExtensions = gql`
 		expiresAt: DateTime
 		"Reloadable marker, issuer, recipient and message."
 		metadata: JSON
-		"Every movement on the card, oldest first."
+		"Every movement on the card, most recent first."
 		transactions: [GiftCardTransaction!]
 		tenantId: ID
 		organizationId: ID
@@ -569,7 +569,7 @@ export const schemaExtensions = gql`
 	# Filters and ordering.
 	#
 	# A filter is flat: every member names one column and every member is an equality, so the object a
-	# caller sends is the object the services receive as their `where`. An absent member filters
+	# caller sends is the object the services receive as their \`where\`. An absent member filters
 	# nothing, which is what makes a filter built up field by field behave.
 	# ------------------------------------------------------------------------------------------------
 
@@ -919,7 +919,7 @@ export const schemaExtensions = gql`
 	"""
 	The ceiling to store on a campaign. Omitted fields keep their stored values.
 
-	`limit` is what a campaign that has no budget yet cannot do without: setting a ceiling for the
+	\`limit\` is what a campaign that has no budget yet cannot do without: setting a ceiling for the
 	first time stores one, so a request that leaves it out can only succeed against a budget that
 	already exists.
 	"""
@@ -990,7 +990,7 @@ export const schemaExtensions = gql`
 
 	# ------------------------------------------------------------------------------------------------
 	# Mutation payloads. A payload always carries the resource, the operation and the caller-correctable
-	# outcomes; a business rejection is a successful operation with a `userError`.
+	# outcomes; a business rejection is a successful operation with a \`userError\`.
 	# ------------------------------------------------------------------------------------------------
 
 	"The outcome of creating a promotion."
@@ -1225,7 +1225,7 @@ export const schemaExtensions = gql`
 		"""
 		Whether a code may be used, and why not when it may not. Nothing is consumed.
 
-		`cartId` is the basket the code would be applied to; it is carried so a GraphQL caller sends
+		\`cartId\` is the basket the code would be applied to; it is carried so a GraphQL caller sends
 		the same request the REST route takes, and the answer is computed from the coupon's own window
 		and limits.
 		"""
@@ -1301,7 +1301,7 @@ export const schemaExtensions = gql`
 
 		The stream is the promotion domain's own event stream, so a subscriber sees exactly the facts
 		the domain already publishes for its outbox rather than a second, transport-shaped copy of
-		them. `promotionId` narrows the stream to one promotion; it can only narrow what the caller is
+		them. \`promotionId\` narrows the stream to one promotion; it can only narrow what the caller is
 		already allowed to read.
 		"""
 		promotionChanged(promotionId: ID): PromotionChangedPayload!

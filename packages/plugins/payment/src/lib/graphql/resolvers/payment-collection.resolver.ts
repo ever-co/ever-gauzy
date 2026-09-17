@@ -5,8 +5,7 @@ import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core
 import { PaymentCollectionService } from '../../payment-collection/payment-collection.service';
 import { IPaymentCollection } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
-import { payload, rejection, toConnection, toOrder } from '../types/connection';
-import {
+import { rejection, toConnection, toOrder } from '../types/connection';import {
 	ICreatePaymentCollectionGraphInput,
 	ICreatePaymentCollectionPayload,
 	IPaymentCollectionConnection,
@@ -69,9 +68,12 @@ export class PaymentCollectionResolver {
 		@Args('input') input: ICreatePaymentCollectionGraphInput
 	): Promise<ICreatePaymentCollectionPayload> {
 		try {
-			return payload(await this.paymentCollectionService.createCollection(input as never));
+			return {
+				paymentCollection: await this.paymentCollectionService.createCollection(input as never),
+				userErrors: []
+			};
 		} catch (error) {
-			return rejection<IPaymentCollection>(error);
+			return { paymentCollection: null, ...rejection<IPaymentCollection>(error) };
 		}
 	}
 
@@ -85,9 +87,12 @@ export class PaymentCollectionResolver {
 		@Args('input') input: IUpdatePaymentCollectionGraphInput
 	): Promise<IUpdatePaymentCollectionPayload> {
 		try {
-			return payload(await this.paymentCollectionService.updateCollection(input.id, input as never));
+			return {
+				paymentCollection: await this.paymentCollectionService.updateCollection(input.id, input as never),
+				userErrors: []
+			};
 		} catch (error) {
-			return rejection<IPaymentCollection>(error);
+			return { paymentCollection: null, ...rejection<IPaymentCollection>(error) };
 		}
 	}
 }

@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { ISearchProvider, ISearchProviderHealth } from '@gauzy/contracts';
 import { SEARCH_SETTING_DEFAULTS } from '../search.settings';
 import { DatabaseSearchProvider } from './database-search.provider';
+import { SEARCH_PROVIDERS } from './search-provider.tokens';
 
 /**
  * The seam between a query and the backend that answers it.
@@ -23,8 +24,42 @@ export class SearchProviderRegistry {
 	/** The key the deployment configured, empty when it configured none. */
 	private engineKey: string = SEARCH_SETTING_DEFAULTS.engineKey;
 
-	constructor(private readonly databaseSearchProvider: DatabaseSearchProvider) {
+	constructor(
+		private readonly databaseSearchProvider: DatabaseSearchProvider,
+		@Optional()
+		@Inject(SEARCH_PROVIDERS)
+		externalProviders?: ISearchProvider | ISearchProvider[]
+	) {
 		this.register(databaseSearchProvider);
+		this.registerExternal(externalProviders);
+	}
+
+	/**
+	 * Registers the providers a deployment bound to {@link SEARCH_PROVIDERS}.
+	 *
+	 * The built-in provider is already registered by the time this runs, so an engine that claims its
+	 * key is refused rather than shadowing it. A key that is taken by a *different* engine is refused
+	 * too, for the same reason a duplicate registration is: two backends behind one key would answer
+	 * the same query differently depending on which package loaded first, and that is a defect that
+	 * only shows up under load.
+	 *
+	 * @param externalProviders The bound provider, providers, or nothing at all.
+	 */
+	private registerExternal(externalProviders?: ISearchProvider | ISearchProvider[]): void {
+		const providers = Array.isArray(externalProviders)
+			? externalProviders
+			: externalProviders
+				? [externalProviders]
+				: [];
+
+		for (const provider of providers) {
+			if (!provider) {
+				continue;
+			}
+
+			this.register(provider);
+			this.logger.log(`The search provider "${provider.key}" is registered and may answer queries.`);
+		}
 	}
 
 	/**

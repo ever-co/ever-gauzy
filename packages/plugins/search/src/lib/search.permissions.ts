@@ -36,6 +36,14 @@ export const SEARCH_PERMISSIONS = {
 } as const;
 
 /**
+ * The permission values the guards and the resolvers read.
+ *
+ * They are the same values {@link SEARCH_PERMISSIONS} holds and the same ones the catalogue below
+ * contributes; naming them once is what stops a guard and its catalogue entry from drifting apart.
+ */
+export const SearchPermissions = SEARCH_PERMISSIONS;
+
+/**
  * The permission catalogue entries this plugin contributes to the platform role model.
  *
  * A declared `defaultFor` role receives the permission when a tenant is provisioned from scratch;

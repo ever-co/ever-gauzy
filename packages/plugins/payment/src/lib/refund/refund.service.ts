@@ -6,9 +6,10 @@ import { CrudService, EventBus, Money, Payment, RequestContext } from '@gauzy/co
 import { Refund } from './refund.entity';
 import { TypeOrmRefundRepository } from './repository/type-orm-refund.repository';
 import { MikroOrmRefundRepository } from './repository/mikro-orm-refund.repository';
-import { IRefund, IRefundCreateInput, IRefundUpdateInput, RefundStatus } from '../payment.types';
+import { IRefund, IRefundCreateInput, IRefundLine, IRefundUpdateInput, RefundStatus } from '../payment.types';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
+import { RefundLineService } from '../refund-line/refund-line.service';
 import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
 
 /**
@@ -29,6 +30,11 @@ import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
  * has already reached a terminal status is refused with `REFUND_ALREADY_SETTLED` — the status moves
  * once — and a refund that is cancelled or fails leaves the payment and the order untouched, because
  * money that never moved must not appear in a ledger.
+ *
+ * **What the refund paid back is rows, not an array.** A request may carry the `lines` it settles, and
+ * they are written with the refund in one transaction through the refund-line service, which is what
+ * makes `Σ refund_line.amount <= refund.amount` a fact about the stored data rather than a hope about
+ * the caller.
  */
 @Injectable()
 export class RefundService extends CrudService<Refund> {
@@ -38,6 +44,7 @@ export class RefundService extends CrudService<Refund> {
 		@InjectRepository(Payment) private readonly paymentRepository: Repository<Payment>,
 		private readonly paymentCaptureService: PaymentCaptureService,
 		private readonly paymentCollectionService: PaymentCollectionService,
+		private readonly refundLineService: RefundLineService,
 		private readonly eventBus: EventBus
 	) {
 		super(typeOrmRefundRepository, mikroOrmRefundRepository);
@@ -56,12 +63,19 @@ export class RefundService extends CrudService<Refund> {
 	/**
 	 * Records a refund against an order, and against the payment it gives back when one is named.
 	 *
-	 * @param input The refund to record.
+	 * **The refund row and the lines that explain it are written in one transaction.** A request that
+	 * carries `lines` writes one `refund_line` row per entry as part of the same unit of work that
+	 * writes the refund, so a refund can never be stored without the breakdown it was asked for, and no
+	 * reader can observe a refund whose lines sum to more than it gives back. Every line is checked
+	 * first: it must name an order line of the caller's organization, its magnitudes must be positive
+	 * exact decimals, and the sum of the lines may not pass the refund's own amount.
+	 *
+	 * @param input The refund to record, with the lines it paid back when the caller knows them.
 	 * @returns The stored refund, pending.
 	 * @throws NotFoundException when the payment is not in the caller's organization.
 	 * @throws BadRequestException when the refund names no payment and no return or claim it could be
-	 * attributed to, when the amount is not a positive exact decimal, or when it would exceed what
-	 * the payment captured.
+	 * attributed to, when the amount is not a positive exact decimal, when it would exceed what the
+	 * payment captured, or when a line it carries is not writable.
 	 */
 	async createRefund(input: IRefundCreateInput): Promise<IRefund> {
 		if (!input.paymentId && !input.returnId && !input.claimId) {
@@ -95,13 +109,24 @@ export class RefundService extends CrudService<Refund> {
 			throw new BadRequestException('REFUND_AMOUNT_INVALID');
 		}
 
-		const refund = await this.create({
-			...input,
-			amount: amount.amount,
-			currency,
-			status: RefundStatus.PENDING,
-			...this.scope
-		} as never);
+		const { lines, ...fields } = input;
+
+		const refund = await this.typeOrmRefundRepository.manager.transaction(async (manager) => {
+			const row = manager.create(Refund, {
+				...fields,
+				amount: amount.amount,
+				currency,
+				status: RefundStatus.PENDING,
+				...this.scope
+			} as Partial<Refund>);
+			const saved = await manager.save(Refund, row);
+
+			if (lines?.length) {
+				await this.refundLineService.appendLines(manager, saved, lines);
+			}
+
+			return saved;
+		});
 
 		this.eventBus.publish(
 			new RefundCreatedEvent(
@@ -118,7 +143,10 @@ export class RefundService extends CrudService<Refund> {
 
 	/**
 	 * Updates the descriptive fields of a refund. The amount, the currency and the status are not
-	 * among them: an amount is what the refund is, and the status moves through approval.
+	 * among them: an amount is what the refund is, and the status moves through approval. Neither is
+	 * the line breakdown, which is written with the refund and maintained through the refund-line
+	 * routes — a breakdown changed from here would be a second, quieter way to say what the refund is
+	 * for.
 	 *
 	 * @param id The refund to update.
 	 * @param input The fields to change.
@@ -132,11 +160,12 @@ export class RefundService extends CrudService<Refund> {
 			throw new BadRequestException('REFUND_ALREADY_SETTLED');
 		}
 
-		const { status, amount, currency, paymentId, ...changes } = input;
+		const { status, amount, currency, paymentId, lines, ...changes } = input;
 		void status;
 		void amount;
 		void currency;
 		void paymentId;
+		void lines;
 
 		await this.update(id, { ...changes } as never);
 
@@ -277,6 +306,22 @@ export class RefundService extends CrudService<Refund> {
 	 */
 	async findRefunds(options: Record<string, unknown> = {}): Promise<IPagination<IRefund>> {
 		return this.findAll({ ...options, where: { ...((options.where as object) ?? {}), ...this.scope } } as never);
+	}
+
+	/**
+	 * The lines a refund paid back, resolved through the refund-line service.
+	 *
+	 * A refund does not map its breakdown as a relation: the lines are owned by their own service, which
+	 * is also the only place that knows how to answer for a refund written before the breakdown became
+	 * rows.
+	 *
+	 * @param id The refund to read.
+	 * @returns The lines of the refund, each marked `legacy` when it came from the metadata array of a
+	 * refund written before this package recorded a line as a row.
+	 * @throws NotFoundException when the refund is not in the caller's organization.
+	 */
+	async findRefundLines(id: ID): Promise<IRefundLine[]> {
+		return this.refundLineService.findLines(id);
 	}
 
 	/**

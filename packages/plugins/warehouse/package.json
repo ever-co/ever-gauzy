@@ -1,0 +1,76 @@
+{
+	"name": "@gauzy/plugin-warehouse",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform Warehouse Plugin — zones, bins, picking, packing and carrier manifests",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/warehouse"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-warehouse",
+		"lib:build:prod": "yarn nx build plugin-warehouse",
+		"lib:watch": "yarn nx build plugin-warehouse --watch"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26"
+	},
+	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
+		"@mikro-orm/nestjs": "^6.1.2",
+		"@nestjs/graphql": "^13.0.3",
+		"@nestjs/mapped-types": "^2.1.1",
+		"@nestjs/swagger": "^11.4.4",
+		"@nestjs/typeorm": "^11.0.1",
+		"chalk": "^4.1.0",
+		"class-validator": "^0.14.2",
+		"graphql-tag": "^2.12.6",
+		"tslib": "^2.6.2",
+		"typeorm": "^1.0.0"
+	},
+	"devDependencies": {
+		"@nestjs/testing": "^11.1.26",
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	},
+	"keywords": [
+		"warehouse",
+		"zone",
+		"bin",
+		"picking",
+		"packing",
+		"manifest",
+		"plugin",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"microservices",
+		"platform"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}

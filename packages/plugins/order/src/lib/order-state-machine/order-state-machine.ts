@@ -22,7 +22,23 @@ export interface IOrderTransitionContext {
 	readonly hasShippableLines: boolean;
 	/** The current fulfilment status, which decides whether a cancellation is still allowed. */
 	readonly fulfillmentStatus: FulfillmentStatus;
+	/** The materialised money state of the order, which decides whether it may be confirmed. */
+	readonly paymentStatus: OrderPaymentStatus;
 }
+
+/**
+ * The money states a confirmation may leave behind.
+ *
+ * Confirmation is the platform's promise that the money question is answered: the payment is
+ * authorised, it is captured, or it is not due — a zero total or an on-account order (doc 10 §5.2).
+ * Every other state means the question is still open, and an order in one of them is confirmed only
+ * once the money moves.
+ */
+const CONFIRMABLE_PAYMENT_STATUSES: OrderPaymentStatus[] = [
+	OrderPaymentStatus.AUTHORIZED,
+	OrderPaymentStatus.CAPTURED,
+	OrderPaymentStatus.NOT_PAID
+];
 
 /** The transitions the order lifecycle allows. */
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
@@ -83,8 +99,10 @@ export class OrderStateMachine {
 				return !context.hasCapture;
 
 			case OrderStatus.CONFIRMED:
-				// Confirmation needs the money side settled or not required, and no open approval.
-				return !context.hasOpenApproval;
+				// Confirmation needs the money side answered and no open approval: an order whose
+				// payment is still with the buyer, failed, or only partly authorised or captured is
+				// placed but not confirmed — that is what `REQUIRES_ACTION` is for.
+				return !context.hasOpenApproval && CONFIRMABLE_PAYMENT_STATUSES.includes(context.paymentStatus);
 
 			case OrderStatus.PROCESSING:
 				return true;

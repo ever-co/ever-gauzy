@@ -31,6 +31,13 @@ import { MikroOrmCommerceCheckoutSessionRepository } from './commerce-checkout-s
  * a table TypeORM knows about and MikroORM does not. The core adjustment and tax-line modules are
  * imported because the cart's money is *their* rows: the cart writes the ledger and recomputes its own
  * cache from it, and it must not keep a second copy of a discount or of a tax amount.
+ *
+ * One capability is deliberately **not** imported: the stock the checkout ladder measures a line
+ * against belongs to the inventory package, and this package must not read its tables. It is reached
+ * through the optional `CART_STOCK_AVAILABILITY` port instead (see `cart.types.ts`), so the binding is
+ * the installation's to make — with the provider registered the ladder's `STOCK` step runs, and on an
+ * installation that has no inventory package the step is reported as skipped and the cart still
+ * validates and completes.
  */
 @Module({
 	controllers: [

@@ -18,6 +18,7 @@ import {
 	IPromotionEvaluationResult,
 	IPromotionNotice,
 	IPromotionUpdateInput,
+	IPromotionUsage,
 	PromotionActionAllocation,
 	PromotionActionTargetType,
 	PromotionActionType,
@@ -242,7 +243,7 @@ export class PromotionService extends CrudService<Promotion> {
 	 * @param options Optional filters.
 	 * @returns One page of redemptions.
 	 */
-	async findUsage(id: ID, options: Record<string, unknown> = {}): Promise<IPagination<unknown>> {
+	async findUsage(id: ID, options: Record<string, unknown> = {}): Promise<IPagination<IPromotionUsage>> {
 		await this.findPromotionOrFail(id);
 
 		return this.promotionUsageService.findByPromotion(id, options);

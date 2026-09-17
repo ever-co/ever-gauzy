@@ -1,4 +1,35 @@
+import { FeatureEnum } from '@gauzy/contracts';
 import { PluginFeatureContribution } from '@gauzy/plugin';
+
+/**
+ * The feature code, as the platform feature enum.
+ *
+ * The catalogue is a closed enumeration the platform ships, and this package must not edit it. A
+ * plugin's flags are contributed through the plugin metadata and unioned into the catalogue at
+ * bootstrap, so the value is an ordinary string by the time a guard reads it — which is exactly what
+ * the cast states.
+ *
+ * @param code The feature code.
+ * @returns The code, as the platform feature enum.
+ */
+function feature(code: string): FeatureEnum {
+	return code as unknown as FeatureEnum;
+}
+
+/**
+ * The feature flags this plugin gates its endpoints with.
+ *
+ * `@FeatureFlag(SearchFeatures.SEARCH)` is on the controller, so a tenant that does not run global
+ * search carries the two tables (empty) and none of the endpoints.
+ */
+export const SearchFeatures = {
+	/** Global search: the query, suggestion, facet and index endpoints. */
+	SEARCH: feature('FEATURE_SEARCH'),
+	/** Answering queries through a registered engine provider instead of the built-in index. */
+	EXTERNAL_SEARCH: feature('FEATURE_EXTERNAL_SEARCH'),
+	/** Serving listing reads from the indexed documents rather than from the source tables. */
+	SEARCH_INDEX: feature('FEATURE_SEARCH_INDEX')
+} as const;
 
 /**
  * The feature flags this plugin declares.

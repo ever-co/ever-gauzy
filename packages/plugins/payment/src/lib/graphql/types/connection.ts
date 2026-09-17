@@ -75,6 +75,22 @@ export interface IMutationPayload<T> {
 }
 
 /**
+ * A mutation payload whose resource member is named after the resource.
+ *
+ * The SDL names the member a client selects — `paymentSession`, `refund`, `refundReason` — rather than
+ * a generic `resource`, because a client reads the type's own member and never a bag. A payload alias
+ * therefore states both halves: the shape every mutation in this package answers with, and the member
+ * the schema actually declares. The generic member stays declared and stays empty, so a resolver that
+ * answers through `rejection` and one that answers with a resource are the same type to a caller.
+ *
+ * @template T The resource the mutation acted on.
+ * @template K The member name the SDL gives that resource.
+ */
+export type IResourcePayload<T, K extends string> = IMutationPayload<T> & {
+	readonly [member in K]: T | null;
+};
+
+/**
  * Maps a page of rows onto a connection.
  *
  * @param page The page the service returned.

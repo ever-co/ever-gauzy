@@ -4,8 +4,8 @@ import {
 	FulfillmentDirection,
 	FulfillmentStatusDetail,
 	ID,
-	IPagination,
-	OrderLine
+	IOrderLine,
+	IPagination
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { OrderLineService } from '@gauzy/plugin-order';
@@ -296,7 +296,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		delta: number,
 		counter: 'FULFILLED' | 'SHIPPED' | 'DELIVERED'
 	): Promise<void> {
-		const line: OrderLine = await this.orderLineService.findOneByIdString(orderLineId);
+		const line: IOrderLine = await this.orderLineService.findOneByIdString(orderLineId);
 
 		if (!line) {
 			throw new NotFoundException(`ORDER_LINE_NOT_FOUND: no order line exists with id ${orderLineId}.`);

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { ID } from '@gauzy/contracts';
@@ -12,7 +12,9 @@ import {
 } from '@gauzy/core';
 import { TAX_PERMISSION_VALUES, taxPermission } from '../tax.permissions';
 import { IResolvedTaxRate, TaxCalculationResult, TaxWriteInput } from '../tax.types';
+import { TaxRatePart } from '../tax-rate-part/tax-rate-part.entity';
 import { CreateTaxRateDTO, ResolveTaxRateDTO, TaxCalculationDTO, UpdateTaxRateDTO } from './dto';
+import { SetTaxRatePartsDTO } from '../tax-rate-part/dto';
 import { TaxRate } from './tax-rate.entity';
 import { TaxRateService } from './tax-rate.service';
 
@@ -28,6 +30,11 @@ import { TaxRateService } from './tax-rate.service';
  * scoped to the resource that owns the rates: resolving the rates that apply to a destination, and
  * computing what a set of amounts comes to under them. Neither is a resource — no row is created and
  * the computation returns the breakdown rather than storing it.
+ *
+ * A rate's **parts** are reached here too, and deliberately not as a resource of their own. A part exists
+ * only as one element of its rate's ordered list, it has no lifecycle, and the person who writes it is the
+ * person who authors the rate; a separate permission would let a role reshape the arithmetic of a rate it
+ * may not create.
  */
 @ApiTags('TaxRate')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -95,10 +102,54 @@ export class TaxRateController extends CrudController<TaxRate> {
 	}
 
 	/**
+	 * Reads the ordered parts a rate is made of.
+	 *
+	 * @param id The rate to read.
+	 * @returns The parts of the rate, ordered by their sequence.
+	 */
+	@ApiOperation({ summary: 'List the parts a tax rate is made of' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The parts of the rate.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such tax rate in this organization.' })
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_RATES_VIEW))
+	@Get(':id/parts')
+	async listParts(@Param('id', UUIDValidationPipe) id: ID): Promise<TaxRatePart[]> {
+		return await this.taxRateService.listParts(id);
+	}
+
+	/**
+	 * Replaces the ordered parts a rate is made of.
+	 *
+	 * The breakdown is written as a set: the shares of the parts have to add up, so adding one changes what
+	 * the others carry. An empty list returns the rate to its one implied part — `TAX`, 100 %, base 1 —
+	 * which is the breakdown every rate had before parts existed.
+	 *
+	 * @param id The rate whose parts are being written.
+	 * @param entity The complete ordered list the rate should carry.
+	 * @returns The parts after the write.
+	 */
+	@ApiOperation({ summary: 'Replace the parts a tax rate is made of' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The parts of the rate were written.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The list is not a usable breakdown.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such tax rate in this organization.' })
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_RATES_EDIT))
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/parts')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async setParts(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: SetTaxRatePartsDTO
+	): Promise<TaxRatePart[]> {
+		return await this.taxRateService.setParts(id, entity.parts as TaxWriteInput<TaxRatePart>[]);
+	}
+
+	/**
 	 * Resolves the rates that apply to a destination.
 	 *
-	 * @param request The category to resolve within and the destination to resolve for.
-	 * @returns The winning rate, followed by the compound rates of its chain.
+	 * The regime is selected before the rates are: the party's own assignment first, then the most specific
+	 * matching regime of the destination, and the general set when nothing matches.
+	 *
+	 * @param request The category to resolve within, the party's assignment and the destination.
+	 * @returns The rates of the winning level, in the order they are applied.
 	 */
 	@ApiOperation({ summary: 'Resolve the rates that apply to a destination' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The resolved rate chain.' })
@@ -109,6 +160,9 @@ export class TaxRateController extends CrudController<TaxRate> {
 	async resolve(@Body() request: ResolveTaxRateDTO): Promise<IResolvedTaxRate[]> {
 		return await this.taxRateService.resolve({
 			taxCategoryId: request.taxCategoryId,
+			taxRegimeId: request.taxRegimeId,
+			partyTaxRegistrationPresent: request.partyTaxRegistrationPresent,
+			documentDirection: request.documentDirection,
 			regionId: request.regionId,
 			countryCode: request.countryCode,
 			provinceCode: request.provinceCode,
@@ -141,11 +195,15 @@ export class TaxRateController extends CrudController<TaxRate> {
 				referenceId: line.referenceId,
 				taxCategoryId: line.taxCategoryId,
 				amount: line.amount,
+				quantity: line.quantity,
 				regionId: line.regionId,
 				countryCode: line.countryCode,
 				provinceCode: line.provinceCode,
 				postalCode: line.postalCode
 			})),
+			taxRegimeId: request.taxRegimeId,
+			partyTaxRegistrationPresent: request.partyTaxRegistrationPresent,
+			documentDirection: request.documentDirection,
 			regionId: request.regionId,
 			countryCode: request.countryCode,
 			provinceCode: request.provinceCode,

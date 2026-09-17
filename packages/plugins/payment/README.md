@@ -12,6 +12,7 @@ and reported back to us by the provider that moved it.
 | `payment_session` | `PaymentSession` | one attempt with one provider, including the off-session attempt that charges a saved instrument |
 | `payment_capture` | `PaymentCapture` | money actually taken, append-only: a partial capture is another row |
 | `refund` | `Refund` | money given back, linked to the order and to the return or claim that caused it |
+| `refund_line` | `RefundLine` | which order lines a refund paid back, as rows: the refund's amount is the ceiling of their sum, and a goodwill refund — which has no return at all — is expressible here |
 | `refund_reason` | `RefundReason` | the governed reason tree refund reporting is grouped by |
 | `payment_webhook_event` | `PaymentWebhookEvent` | an inbound provider callback, recorded before anything is parsed |
 

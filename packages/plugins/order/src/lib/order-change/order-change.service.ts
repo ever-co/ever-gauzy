@@ -313,16 +313,9 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 		);
 
 		for (const action of actions) {
-			const owner = DELEGATED_ACTIONS[action.action];
-
-			if (owner) {
-				throw new BadRequestException({
-					message: `The ${action.action} action is applied by ${owner}, which is not installed alongside this package.`,
-					code: 'ORDER_CHANGE_ACTION_NOT_SUPPORTED',
-					details: { action: action.action, owner }
-				});
-			}
-
+			// The set is checked for self-contradiction before the owner of an action is consulted: a
+			// change that removes a line and fulfils the same line cannot be honoured by anybody, and
+			// saying so is more use to the caller than the delegation refusal it would otherwise get.
 			if (
 				action.action === OrderChangeActionType.FULFILLMENT_CREATE &&
 				action.referenceId &&
@@ -332,6 +325,16 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 					message: 'A fulfilment cannot reference a line that the same change removes.',
 					code: 'ORDER_CHANGE_ACTIONS_INCONSISTENT',
 					details: { orderLineId: action.referenceId }
+				});
+			}
+
+			const owner = DELEGATED_ACTIONS[action.action];
+
+			if (owner) {
+				throw new BadRequestException({
+					message: `The ${action.action} action is applied by ${owner}, which is not installed alongside this package.`,
+					code: 'ORDER_CHANGE_ACTION_NOT_SUPPORTED',
+					details: { action: action.action, owner }
 				});
 			}
 		}
@@ -465,11 +468,15 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 				} as DeepPartial<OrderCreditLine>);
 
 				// A credit settles part of the balance without money moving, so it is also a ledger row:
-				// the credit total and the paid total move together, by construction rather than by
-				// reconciliation.
+				// the row records the movement, and the credit line below is what reduces what the
+				// customer owes. The sign is the ledger's own convention — `CREDIT` is money given
+				// back, never money received (doc 10 §8.6) — which is what keeps the credit counted
+				// **once**: `creditTotal` is the sum of the credit lines (doc 07 §6.1 step 11) while
+				// `paidTotal` sums only positive rows of the paid kinds (step 12). A positive row here
+				// would be subtracted a second time by `outstandingTotal` (step 14).
 				await this.transactionService.create({
 					orderId: change.orderId,
-					amount,
+					amount: -amount,
 					currency: order?.currency,
 					type: OrderTransactionType.CREDIT,
 					referenceType: details['referenceType'] ?? 'credit_line',
@@ -576,6 +583,10 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	 * Loads a line and refuses one that belongs to another order, so a change cannot reach across
 	 * aggregates.
 	 *
+	 * The read is a list query rather than a "find or fail" one: a missing row is this service's own
+	 * answer to give, and the generic not-found of a lookup would leave `ORDER_LINE_NOT_FOUND` — the
+	 * code the API documents for a line that is not in the order — unreachable (doc 06, 404).
+	 *
 	 * @param orderId The order.
 	 * @param lineId The line.
 	 * @returns The line.
@@ -585,7 +596,7 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 			throw new BadRequestException('ORDER_CHANGE_ACTION_INVALID: the action needs a line reference.');
 		}
 
-		const line = await this.lineService.findOneByWhereOptions({ id: lineId } as any);
+		const [line] = await this.lineService.find({ where: { id: lineId } } as any);
 
 		if (!line || line.orderId !== orderId) {
 			throw new NotFoundException(`ORDER_LINE_NOT_FOUND: order ${orderId} has no line ${lineId}.`);

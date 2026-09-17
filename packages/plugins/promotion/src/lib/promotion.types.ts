@@ -216,6 +216,115 @@ export interface IPromotionEvaluationResult {
 }
 
 /**
+ * The fields a campaign is created with.
+ *
+ * The writable shape of the aggregate, as the service is handed it: the tenant, the organization and
+ * the audit columns come from the request context, so they are not members here.
+ */
+export interface ICampaignCreateInput {
+	/** Stable handle used by imports and by every external caller. Unique per organization. */
+	identifier: string;
+	name: string;
+	description?: string;
+	status?: CampaignStatus;
+	startsAt?: Date;
+	endsAt?: Date;
+	metadata?: Record<string, unknown>;
+}
+
+/**
+ * The fields of a campaign that may be changed. Every one of them is optional, and a member that is
+ * absent keeps the value it was stored with.
+ */
+export type ICampaignUpdateInput = Partial<ICampaignCreateInput>;
+
+/**
+ * The ceiling to store on a campaign.
+ *
+ * `campaignId` is optional because the route that sets one campaign's ceiling carries the campaign in
+ * its path and the service is handed the identifier separately; a budget created on its own path
+ * carries it here.
+ */
+export interface ICampaignBudgetCreateInput {
+	/** The campaign the ceiling belongs to. */
+	campaignId?: ID;
+	/** What the ceiling counts. */
+	type: CampaignBudgetType;
+	/** The ceiling: money for the spend types, a count for the usage types. Exact decimal. */
+	limit: DecimalString;
+	/** Context attribute path the ceiling is split by, for the `*_BY_ATTRIBUTE` types. */
+	attribute?: string;
+	/** Currency of the ceiling, for the spend types. */
+	currency?: string;
+}
+
+/**
+ * The fields a promotion is created with.
+ *
+ * The action set is a member rather than a second request because a promotion without an effect has
+ * nothing to apply: the service stores the promotion and then replaces its whole action set, so a
+ * caller that states the offer and its effect gets one commit rather than a window in which the
+ * promotion exists and does nothing.
+ */
+export interface IPromotionCreateInput {
+	code?: string;
+	title: string;
+	description?: string;
+	type?: PromotionType;
+	status?: PromotionStatus;
+	isAutomatic?: boolean;
+	isCombinable?: boolean;
+	stackingGroup?: string;
+	priority?: number;
+	campaignId?: ID;
+	channelId?: ID;
+	currency?: string;
+	customerGroupId?: ID;
+	startsAt?: Date;
+	endsAt?: Date;
+	usageLimit?: number;
+	perCustomerUsageLimit?: number;
+	budgetAmount?: DecimalString;
+	isTaxInclusive?: boolean;
+	metadata?: Record<string, unknown>;
+	/** The effect of the offer, applied as a whole set after the promotion is stored. */
+	actions?: Partial<IPromotionAction>[];
+}
+
+/**
+ * The fields of a promotion that may be changed. Every one of them is optional.
+ */
+export type IPromotionUpdateInput = Partial<IPromotionCreateInput>;
+
+/**
+ * The fields a coupon is created with.
+ *
+ * A code is required, because a coupon without one is a row nothing can redeem; the batch it belongs
+ * to is a grouping a caller may state or let the service mint, and the limits are the code's own and
+ * narrow the promotion's rather than widening them.
+ */
+export interface ICouponCreateInput {
+	/** The code the customer types; stored upper-cased. */
+	code: string;
+	/** The promotion a redemption grants; absent means the code is not attached yet. */
+	promotionId?: ID;
+	/** Groups the coupons produced by one mailing. */
+	batchId?: string;
+	/** Per-code redemption cap; absent inherits the promotion's limit. */
+	usageLimit?: number;
+	/** Per-code, per-customer cap. */
+	perCustomerLimit?: number;
+	startsAt?: Date;
+	endsAt?: Date;
+	metadata?: Record<string, unknown>;
+}
+
+/**
+ * The fields of a coupon that may be changed.
+ */
+export type ICouponUpdateInput = Partial<Omit<ICouponCreateInput, 'code'>>;
+
+/**
  * A campaign: a window and a budget, nothing more. It holds no rules of its own.
  */
 export interface ICampaign extends IBasePerTenantAndOrganizationEntityModel {

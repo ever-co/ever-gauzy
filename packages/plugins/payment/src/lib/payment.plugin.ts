@@ -6,8 +6,7 @@ import { PAYMENT_FEATURES } from './payment.features';
 import { PAYMENT_SETTINGS } from './payment.settings';
 import { schemaExtensions } from './graphql/schema-extensions';
 import { resolvers } from './graphql/resolvers';
-import { CreatePaymentTables1791000000280 } from './migrations/1791000000280-CreatePaymentTables';
-import { AddPaymentDomainForeignKeys1791000000290 } from './migrations/1791000000290-AddPaymentDomainForeignKeys';
+import { ALL_PAYMENT_MIGRATIONS } from './migrations';
 
 /**
  * The declared prerequisite list, in the shape the published plugin metadata declares today.
@@ -23,8 +22,9 @@ type PluginDependencies = NonNullable<Parameters<typeof Plugin>[0]['dependsOn']>
  *
  * What this package contributes is the whole of the provider lifecycle around a payment: the
  * registry of providers, the collection that groups the attempts for one order or cart, the sessions
- * themselves, the append-only captures, the refunds with their governed reasons and the log of the
- * callbacks the providers send back. What it deliberately does **not** contribute is a second
+ * themselves, the append-only captures, the refunds with their governed reasons and the lines each of
+ * them paid back, and the log of the callbacks the providers send back. What it deliberately does
+ * **not** contribute is a second
  * `payment` table: a payment is a payment whichever document it settles, so the core row is extended
  * and read, and the four lifecycle amounts on it are maintained here in the same transaction as the
  * capture or the refund that moved them.
@@ -52,10 +52,11 @@ type PluginDependencies = NonNullable<Parameters<typeof Plugin>[0]['dependsOn']>
 	entities: ALL_PAYMENT_ENTITIES,
 	/**
 	 * The database migrations this plugin owns, in run order. The first creates the seven tables of
-	 * the domain; the second constrains the columns this domain owns on the core tables, which exist
-	 * only once the core set has run.
+	 * the domain, the second creates `refund_line` — the lines a refund paid back, which used to be an
+	 * array inside the refund's metadata — and the third constrains the columns this domain owns on
+	 * the core tables, which exist only once the core set has run.
 	 */
-	migrations: [CreatePaymentTables1791000000280, AddPaymentDomainForeignKeys1791000000290],
+	migrations: ALL_PAYMENT_MIGRATIONS,
 	/**
 	 * The permissions this plugin contributes to the platform role model.
 	 */

@@ -1,5 +1,6 @@
 import { TaxCategoryResolver } from './tax-category.resolver';
 import { TaxRateResolver } from './tax-rate.resolver';
+import { TaxRegimeResolver } from './tax-regime.resolver';
 
 /**
  * The resolvers this plugin contributes to the platform's schema.
@@ -8,4 +9,4 @@ import { TaxRateResolver } from './tax-rate.resolver';
  * are registered only when the plugin is loaded, so disabling the package removes its schema and its
  * resolvers together.
  */
-export const resolvers = [TaxCategoryResolver, TaxRateResolver];
+export const resolvers = [TaxCategoryResolver, TaxRateResolver, TaxRegimeResolver];

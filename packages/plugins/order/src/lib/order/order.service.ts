@@ -100,7 +100,7 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 *
 	 * @param cart The cart, with its totals already recomputed and validated by the cart package.
 	 * @param options The checkout request.
-	 * @returns The placed order.
+	 * @returns The placed and confirmed order.
 	 */
 	public async createFromCart(
 		cart: ICommerceCart & { lines?: DeepPartial<OrderLine>[]; shippingMethods?: DeepPartial<OrderShippingMethod>[] },
@@ -187,12 +187,12 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			} as DeepPartial<OrderAddress>);
 		}
 
-		await this.historyService.record(order.id, 'ORDER_PLACED', 'Order placed', {
+		// The timeline entry is written once, by the step that actually places the order, and it
+		// carries what the placement came from.
+		return this.placeAndConfirm(order.id, {
 			cartId: cart.id,
 			idempotencyKey: options.idempotencyKey
 		});
-
-		return this.recomputeAndMaybeConfirm(order.id);
 	}
 
 	/**
@@ -200,9 +200,10 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 * committed.
 	 *
 	 * @param orderId The order.
+	 * @param placedWith What the placement is attributed to, recorded on the timeline entry.
 	 * @returns The placed order.
 	 */
-	public async place(orderId: ID): Promise<Order> {
+	public async place(orderId: ID, placedWith: { cartId?: ID; idempotencyKey?: string } = {}): Promise<Order> {
 		const order = await this.findOneByIdString(orderId);
 
 		if (!order) {
@@ -222,11 +223,15 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			isSettled: false,
 			hasOpenApproval: false,
 			hasShippableLines: lines.some((line) => line.requiresShipping),
-			fulfillmentStatus: order.fulfillmentStatus
+			fulfillmentStatus: order.fulfillmentStatus,
+			paymentStatus: order.paymentStatus
 		});
 
 		await this.typeOrmOrderRepository.update(order.id, { ...move, isDraft: false } as any);
-		await this.historyService.record(order.id, 'ORDER_PLACED', 'Order placed', { number: order.number });
+		await this.historyService.record(order.id, 'ORDER_PLACED', 'Order placed', {
+			number: order.number,
+			...placedWith
+		});
 
 		return this.totalsService.recompute(order.id, 'PLACED');
 	}
@@ -246,16 +251,21 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		}
 
 		const openChanges = await this.changeService.findOpenForOrder(orderId);
+		// The money facts are read from the order's own ledger rather than asserted: a confirmation is
+		// the platform's statement that the money question is answered, and literals here would let an
+		// order be confirmed while its payment is still with the buyer (doc 10 §5.2, §5.5).
+		const snapshot = await this.totalsService.computeTotals(order);
 		const move = OrderStateMachine.transition(order, OrderStatus.CONFIRMED, {
 			actor,
-			hasCapture: false,
+			hasCapture: Number(snapshot.paidTotal ?? 0) > 0,
 			hasShipped: false,
-			isSettled: true,
+			isSettled: await this.totalsService.isPaymentSettled(order),
 			hasOpenApproval: openChanges.some(
 				(change: OrderChange) => change.status === OrderChangeStatus.REQUESTED
 			),
 			hasShippableLines: false,
-			fulfillmentStatus: order.fulfillmentStatus
+			fulfillmentStatus: order.fulfillmentStatus,
+			paymentStatus: await this.totalsService.derivePaymentStatus(order, snapshot)
 		});
 
 		await this.typeOrmOrderRepository.update(order.id, move as any);
@@ -287,7 +297,8 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			isSettled: false,
 			hasOpenApproval: false,
 			hasShippableLines: false,
-			fulfillmentStatus: order.fulfillmentStatus
+			fulfillmentStatus: order.fulfillmentStatus,
+			paymentStatus: order.paymentStatus
 		});
 
 		await this.typeOrmOrderRepository.update(order.id, {
@@ -319,7 +330,8 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			isSettled: true,
 			hasOpenApproval: false,
 			hasShippableLines: false,
-			fulfillmentStatus: order.fulfillmentStatus
+			fulfillmentStatus: order.fulfillmentStatus,
+			paymentStatus: order.paymentStatus
 		});
 
 		await this.typeOrmOrderRepository.update(order.id, {
@@ -397,7 +409,8 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			isSettled: true,
 			hasOpenApproval: false,
 			hasShippableLines: false,
-			fulfillmentStatus: order.fulfillmentStatus
+			fulfillmentStatus: order.fulfillmentStatus,
+			paymentStatus: order.paymentStatus
 		});
 
 		await this.typeOrmOrderRepository.update(order.id, move as any);
@@ -407,22 +420,24 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	}
 
 	/**
-	 * Recomputes an order and, when it is already placed but not yet confirmed, confirms it.
+	 * Places the order a cart became, and confirms it.
 	 *
-	 * Used by the checkout path: an order created from a cart has nothing left to approve when the
-	 * money side is handled, so it moves straight to `CONFIRMED`.
+	 * Used by the checkout path: a cart that completed has nothing left to approve, so the order it
+	 * became is confirmed as soon as it is placed. It is placed **through `place`** rather than moved
+	 * straight to `CONFIRMED`, because the documented checkout is two steps — `create-order` inserts
+	 * the order as `DRAFT` (doc 10 §3.4 step 4) and `commit-order` places it as `PENDING` with its
+	 * `placedAt` (step 8) — and `DRAFT -> CONFIRMED` is not a move the transition table contains
+	 * (§5.2). Jumping over `PENDING` is what made every checkout fail, after the draft order, its
+	 * lines and its addresses had already been written.
 	 *
 	 * @param orderId The order.
-	 * @returns The order.
+	 * @param placedWith What the placement came from, recorded on the timeline entry.
+	 * @returns The confirmed order.
 	 */
-	private async recomputeAndMaybeConfirm(orderId: ID): Promise<Order> {
-		let order = await this.totalsService.recompute(orderId, 'PLACED');
+	private async placeAndConfirm(orderId: ID, placedWith: { cartId?: ID; idempotencyKey?: string } = {}): Promise<Order> {
+		await this.place(orderId, placedWith);
 
-		if (order.status === OrderStatus.DRAFT) {
-			order = await this.confirm(orderId, 'SYSTEM');
-		}
-
-		return order;
+		return this.confirm(orderId, 'SYSTEM');
 	}
 
 	/**

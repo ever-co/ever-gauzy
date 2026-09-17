@@ -115,6 +115,14 @@ export const schemaExtensions = gql`
 		UPDATED_AT
 	}
 
+	enum RefundLineSortField {
+		ORDER_LINE_ID
+		QUANTITY
+		AMOUNT
+		CREATED_AT
+		UPDATED_AT
+	}
+
 	enum PaymentWebhookEventSortField {
 		TYPE
 		STATUS
@@ -232,6 +240,25 @@ export const schemaExtensions = gql`
 		note: String
 		metadata: JSON
 		refundReason: RefundReason
+		lines: [RefundLine!]
+		isActive: Boolean
+		isArchived: Boolean
+		archivedAt: DateTime
+		tenantId: ID
+		organizationId: ID
+		createdAt: DateTime!
+		updatedAt: DateTime!
+	}
+
+	type RefundLine {
+		id: ID!
+		refundId: ID!
+		orderLineId: ID!
+		quantity: Decimal!
+		amount: Decimal!
+		currency: String!
+		metadata: JSON
+		legacy: Boolean
 		isActive: Boolean
 		isArchived: Boolean
 		archivedAt: DateTime
@@ -310,6 +337,11 @@ export const schemaExtensions = gql`
 		node: RefundReason!
 	}
 
+	type RefundLineEdge {
+		cursor: String!
+		node: RefundLine!
+	}
+
 	type PaymentWebhookEventEdge {
 		cursor: String!
 		node: PaymentWebhookEvent!
@@ -353,6 +385,13 @@ export const schemaExtensions = gql`
 	type RefundReasonConnection {
 		items: [RefundReason!]!
 		edges: [RefundReasonEdge!]
+		total: Int!
+		pageInfo: PageInfo
+	}
+
+	type RefundLineConnection {
+		items: [RefundLine!]!
+		edges: [RefundLineEdge!]
 		total: Int!
 		pageInfo: PageInfo
 	}
@@ -414,6 +453,13 @@ export const schemaExtensions = gql`
 		isActive: Boolean
 	}
 
+	input RefundLineFilter {
+		id: ID
+		refundId: ID
+		orderLineId: ID
+		currency: String
+	}
+
 	input PaymentWebhookEventFilter {
 		id: ID
 		providerId: ID
@@ -451,6 +497,11 @@ export const schemaExtensions = gql`
 
 	input RefundReasonSort {
 		field: RefundReasonSortField!
+		direction: SortDirection
+	}
+
+	input RefundLineSort {
+		field: RefundLineSortField!
 		direction: SortDirection
 	}
 
@@ -560,7 +611,34 @@ export const schemaExtensions = gql`
 		note: String
 		storeCredit: Boolean
 		metadata: JSON
+		lines: [RefundLineInput!]
 		idempotencyKey: String
+	}
+
+	input RefundLineInput {
+		orderLineId: ID!
+		quantity: Decimal!
+		amount: Decimal!
+		currency: String
+		metadata: JSON
+	}
+
+	input CreateRefundLineInput {
+		refundId: ID!
+		orderLineId: ID!
+		quantity: Decimal!
+		amount: Decimal!
+		currency: String
+		metadata: JSON
+		idempotencyKey: String
+	}
+
+	input UpdateRefundLineInput {
+		id: ID!
+		quantity: Decimal
+		amount: Decimal
+		currency: String
+		metadata: JSON
 	}
 
 	input UpdateRefundInput {
@@ -702,6 +780,25 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	type CreateRefundLinePayload {
+		refundLine: RefundLine
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	type UpdateRefundLinePayload {
+		refundLine: RefundLine
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	type DeleteRefundLinePayload {
+		refundLine: RefundLine
+		deleted: Boolean!
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
 	type ReprocessPaymentWebhookEventPayload {
 		paymentWebhookEvent: PaymentWebhookEvent
 		operation: Operation
@@ -751,6 +848,14 @@ export const schemaExtensions = gql`
 			offset: Int
 		): RefundReasonConnection!
 		refundReason(id: ID!): RefundReason
+		refundLines(
+			filter: RefundLineFilter
+			sort: RefundLineSort
+			page: PageInput
+			limit: Int
+			offset: Int
+		): RefundLineConnection!
+		refundLine(id: ID!): RefundLine
 		paymentWebhookEvents(
 			filter: PaymentWebhookEventFilter
 			sort: PaymentWebhookEventSort
@@ -778,6 +883,9 @@ export const schemaExtensions = gql`
 		createRefundReason(input: CreateRefundReasonInput!): CreateRefundReasonPayload!
 		updateRefundReason(input: UpdateRefundReasonInput!): UpdateRefundReasonPayload!
 		deleteRefundReason(id: ID!): DeleteRefundReasonPayload!
+		createRefundLine(input: CreateRefundLineInput!): CreateRefundLinePayload!
+		updateRefundLine(input: UpdateRefundLineInput!): UpdateRefundLinePayload!
+		deleteRefundLine(id: ID!): DeleteRefundLinePayload!
 		reprocessPaymentWebhookEvent(
 			input: ReprocessPaymentWebhookEventInput!
 		): ReprocessPaymentWebhookEventPayload!

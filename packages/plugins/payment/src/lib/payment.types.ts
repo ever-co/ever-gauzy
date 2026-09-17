@@ -220,6 +220,35 @@ export interface IRefund extends IBasePerTenantAndOrganizationEntityModel {
 	note?: string;
 	metadata?: Record<string, unknown>;
 	refundReason?: IRefundReason;
+	/**
+	 * The lines the refund paid back, resolved through the refund-line service rather than mapped as
+	 * a relation, so the same read answers for a refund whose breakdown was written before the table
+	 * existed.
+	 */
+	lines?: IRefundLine[];
+}
+
+/**
+ * Which lines a refund paid back, as a row.
+ *
+ * The breakdown is money, and it is its own table rather than an array inside `refund.metadata`:
+ * nothing enforced the sum of an array, nothing indexed it, and no lock could be taken on it. A row
+ * is a positive magnitude in the order currency — the direction of the movement is the ledger row's —
+ * and its `amount` is capped by the refund it belongs to.
+ *
+ * `legacy` marks a row that was read from the per-line array a refund written before this table
+ * existed carries in its metadata. Those rows are answered for, never written: the array is a read
+ * path kept for the refunds that still hold it, and no new refund writes one.
+ */
+export interface IRefundLine extends IBasePerTenantAndOrganizationEntityModel {
+	refundId: ID;
+	orderLineId: ID;
+	quantity: DecimalString;
+	amount: DecimalString;
+	currency: string;
+	metadata?: Record<string, unknown>;
+	refund?: IRefund;
+	readonly legacy?: boolean;
 }
 
 /**
@@ -314,6 +343,19 @@ export type IRefundCreateInput = Partial<IRefund> & Pick<IRefund, 'orderId' | 'a
 export type IRefundUpdateInput = Partial<IRefund>;
 
 /**
+ * The writable surface of a refund line: what came back, and for how much. The currency is the
+ * refund's, and the refund a line belongs to is named by the row it is written with.
+ */
+export type IRefundLineCreateInput = Partial<IRefundLine> &
+	Pick<IRefundLine, 'orderLineId' | 'quantity' | 'amount'>;
+
+/**
+ * The fields of a refund line an update may change. What the line explains — its refund and its order
+ * line — is not among them: a different order line is a different line.
+ */
+export type IRefundLineUpdateInput = Partial<IRefundLine>;
+
+/**
  * The writable surface of a refund reason.
  */
 export type IRefundReasonCreateInput = Partial<IRefundReason> & Pick<IRefundReason, 'code' | 'label'>;
@@ -391,6 +433,11 @@ export type IPaymentCapturePagination = IPagination<IPaymentCapture>;
  * Paginated refunds.
  */
 export type IRefundPagination = IPagination<IRefund>;
+
+/**
+ * Paginated refund lines.
+ */
+export type IRefundLinePagination = IPagination<IRefundLine>;
 
 /**
  * Paginated refund reasons.

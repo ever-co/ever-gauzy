@@ -7,6 +7,7 @@ import { PaymentCollection } from './payment-collection/payment-collection.entit
 import { PaymentSession } from './payment-session/payment-session.entity';
 import { PaymentCapture } from './payment-capture/payment-capture.entity';
 import { Refund } from './refund/refund.entity';
+import { RefundLine } from './refund-line/refund-line.entity';
 import { RefundReason } from './refund-reason/refund-reason.entity';
 import { PaymentWebhookEvent } from './payment-webhook-event/payment-webhook-event.entity';
 import { PaymentProviderService } from './payment-provider/payment-provider.service';
@@ -14,6 +15,7 @@ import { PaymentCollectionService } from './payment-collection/payment-collectio
 import { PaymentSessionService } from './payment-session/payment-session.service';
 import { PaymentCaptureService } from './payment-capture/payment-capture.service';
 import { RefundService } from './refund/refund.service';
+import { RefundLineService } from './refund-line/refund-line.service';
 import { RefundReasonService } from './refund-reason/refund-reason.service';
 import { PaymentWebhookEventService } from './payment-webhook-event/payment-webhook-event.service';
 import { PaymentProviderController } from './payment-provider/payment-provider.controller';
@@ -21,6 +23,7 @@ import { PaymentCollectionController } from './payment-collection/payment-collec
 import { PaymentSessionController } from './payment-session/payment-session.controller';
 import { PaymentCaptureController } from './payment-capture/payment-capture.controller';
 import { RefundController } from './refund/refund.controller';
+import { RefundLineController } from './refund-line/refund-line.controller';
 import { RefundReasonController } from './refund-reason/refund-reason.controller';
 import { PaymentWebhookEventController } from './payment-webhook-event/payment-webhook-event.controller';
 import { TypeOrmPaymentProviderRepository } from './payment-provider/repository/type-orm-payment-provider.repository';
@@ -33,6 +36,8 @@ import { TypeOrmPaymentCaptureRepository } from './payment-capture/repository/ty
 import { MikroOrmPaymentCaptureRepository } from './payment-capture/repository/mikro-orm-payment-capture.repository';
 import { TypeOrmRefundRepository } from './refund/repository/type-orm-refund.repository';
 import { MikroOrmRefundRepository } from './refund/repository/mikro-orm-refund.repository';
+import { TypeOrmRefundLineRepository } from './refund-line/repository/type-orm-refund-line.repository';
+import { MikroOrmRefundLineRepository } from './refund-line/repository/mikro-orm-refund-line.repository';
 import { TypeOrmRefundReasonRepository } from './refund-reason/repository/type-orm-refund-reason.repository';
 import { MikroOrmRefundReasonRepository } from './refund-reason/repository/mikro-orm-refund-reason.repository';
 import { TypeOrmPaymentWebhookEventRepository } from './payment-webhook-event/repository/type-orm-payment-webhook-event.repository';
@@ -52,6 +57,7 @@ export const ALL_PAYMENT_ENTITIES = [
 	PaymentSession,
 	PaymentCapture,
 	Refund,
+	RefundLine,
 	RefundReason,
 	PaymentWebhookEvent
 ];
@@ -89,6 +95,7 @@ export const ALL_PAYMENT_ENTITIES = [
 		PaymentSessionController,
 		PaymentCaptureController,
 		RefundController,
+		RefundLineController,
 		RefundReasonController,
 		PaymentWebhookEventController
 	],
@@ -98,6 +105,7 @@ export const ALL_PAYMENT_ENTITIES = [
 		PaymentSessionService,
 		PaymentCaptureService,
 		RefundService,
+		RefundLineService,
 		RefundReasonService,
 		PaymentWebhookEventService,
 		TypeOrmPaymentProviderRepository,
@@ -110,6 +118,8 @@ export const ALL_PAYMENT_ENTITIES = [
 		MikroOrmPaymentCaptureRepository,
 		TypeOrmRefundRepository,
 		MikroOrmRefundRepository,
+		TypeOrmRefundLineRepository,
+		MikroOrmRefundLineRepository,
 		TypeOrmRefundReasonRepository,
 		MikroOrmRefundReasonRepository,
 		TypeOrmPaymentWebhookEventRepository,
@@ -122,6 +132,7 @@ export const ALL_PAYMENT_ENTITIES = [
 		PaymentSessionService,
 		PaymentCaptureService,
 		RefundService,
+		RefundLineService,
 		RefundReasonService,
 		PaymentWebhookEventService
 	]

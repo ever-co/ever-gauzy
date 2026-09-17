@@ -1,6 +1,18 @@
 import { Observable } from 'rxjs';
 import { ID, IPagination, IOperation, DecimalString } from '@gauzy/contracts';
-import { ICoupon, IGiftCard, IPromotion } from '../../promotion.types';
+import {
+	CampaignBudgetType,
+	CampaignStatus,
+	GiftCardStatus,
+	ICoupon,
+	IGiftCard,
+	IPromotion,
+	PromotionActionAllocation,
+	PromotionActionTargetType,
+	PromotionActionType,
+	PromotionStatus,
+	PromotionType
+} from '../../promotion.types';
 
 /**
  * The TypeScript side of the promotion domain's GraphQL contribution.
@@ -236,12 +248,16 @@ export type VoidGiftCardPayload = IMutationPayload<'giftCard', IGiftCard>;
 
 /**
  * One action of a promotion, as it is written.
+ *
+ * The schema's enumerations arrive as their own string values, so a member declared as an enum here
+ * is the domain enumeration rather than a `string`: the resolver hands the object straight to the
+ * service, and the boundary between the two surfaces stays free of a conversion.
  */
 export interface IPromotionActionInput {
 	readonly id?: ID;
-	readonly type: string;
-	readonly targetType: string;
-	readonly allocation?: string;
+	readonly type: PromotionActionType;
+	readonly targetType: PromotionActionTargetType;
+	readonly allocation?: PromotionActionAllocation;
 	readonly value: DecimalString;
 	readonly currency?: string;
 	readonly maxQuantity?: DecimalString;
@@ -257,8 +273,8 @@ export interface ICreatePromotionInput {
 	readonly code?: string;
 	readonly title: string;
 	readonly description?: string;
-	readonly type?: string;
-	readonly status?: string;
+	readonly type?: PromotionType;
+	readonly status?: PromotionStatus;
 	readonly isAutomatic?: boolean;
 	readonly isCombinable?: boolean;
 	readonly stackingGroup?: string;
@@ -285,7 +301,7 @@ export interface ICreateCampaignInput {
 	readonly identifier: string;
 	readonly name: string;
 	readonly description?: string;
-	readonly status?: string;
+	readonly status?: CampaignStatus;
 	readonly startsAt?: Date;
 	readonly endsAt?: Date;
 	readonly metadata?: Record<string, unknown>;
@@ -296,7 +312,7 @@ export interface IUpdateCampaignInput extends Partial<ICreateCampaignInput> {}
 
 /** The ceiling to store on a campaign. */
 export interface IUpdateCampaignBudgetInput {
-	readonly type?: string;
+	readonly type?: CampaignBudgetType;
 	readonly limit?: DecimalString;
 	readonly attribute?: string;
 	readonly currency?: string;
@@ -366,7 +382,7 @@ export interface ICouponValidationPayload {
 export interface IGiftCardBalancePayload {
 	readonly balance: DecimalString;
 	readonly currency: string;
-	readonly status: string;
+	readonly status: GiftCardStatus;
 }
 
 /* ------------------------------------------------------------------------------------------------

@@ -5,7 +5,7 @@ import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core
 import { PaymentProviderService } from '../../payment-provider/payment-provider.service';
 import { IPaymentProvider } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
-import { payload, rejection, toConnection, toOrder } from '../types/connection';
+import { rejection, toConnection, toOrder } from '../types/connection';
 import {
 	ICreatePaymentProviderGraphInput,
 	ICreatePaymentProviderPayload,
@@ -72,9 +72,9 @@ export class PaymentProviderResolver {
 		@Args('input') input: ICreatePaymentProviderGraphInput
 	): Promise<ICreatePaymentProviderPayload> {
 		try {
-			return payload(await this.paymentProviderService.createProvider(input as never));
+			return { paymentProvider: await this.paymentProviderService.createProvider(input as never), userErrors: [] };
 		} catch (error) {
-			return rejection<IPaymentProvider>(error);
+			return { paymentProvider: null, ...rejection<IPaymentProvider>(error) };
 		}
 	}
 
@@ -87,9 +87,12 @@ export class PaymentProviderResolver {
 		@Args('input') input: IUpdatePaymentProviderGraphInput
 	): Promise<IUpdatePaymentProviderPayload> {
 		try {
-			return payload(await this.paymentProviderService.updateProvider(input.id, input as never));
+			return {
+				paymentProvider: await this.paymentProviderService.updateProvider(input.id, input as never),
+				userErrors: []
+			};
 		} catch (error) {
-			return rejection<IPaymentProvider>(error);
+			return { paymentProvider: null, ...rejection<IPaymentProvider>(error) };
 		}
 	}
 
@@ -103,9 +106,9 @@ export class PaymentProviderResolver {
 			const provider = await this.paymentProviderService.findProviderOrFail(id);
 			await this.paymentProviderService.delete(id);
 
-			return payload(provider);
+			return { paymentProvider: provider, deleted: true, userErrors: [] };
 		} catch (error) {
-			return rejection<IPaymentProvider>(error);
+			return { paymentProvider: null, deleted: false, ...rejection<IPaymentProvider>(error) };
 		}
 	}
 }

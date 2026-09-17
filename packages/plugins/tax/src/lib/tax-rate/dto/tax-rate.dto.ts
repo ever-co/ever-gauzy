@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsBoolean,
 	IsDate,
+	IsEnum,
 	IsInt,
 	IsNotEmpty,
 	IsNumber,
@@ -15,6 +16,7 @@ import {
 } from 'class-validator';
 import { ID } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
+import { TaxAmountType, TaxDirection } from '../../tax.types';
 
 /**
  * Tax rate request DTO validation.
@@ -66,6 +68,24 @@ export class TaxRateDTO extends TenantOrganizationBaseDTO {
 	@IsString()
 	@MaxLength(255)
 	readonly name: string;
+
+	/**
+	 * The arithmetic of the rate. `PERCENT` is the default and every existing rate keeps it; `FIXED` says
+	 * the rate's amount is an amount per unit of the owner's quantity, carried by its fixed parts.
+	 */
+	@ApiPropertyOptional({ type: () => String, enum: TaxAmountType, default: TaxAmountType.PERCENT })
+	@IsOptional()
+	@IsEnum(TaxAmountType)
+	readonly amountType: TaxAmountType;
+
+	/**
+	 * Which side of a document the rate applies to. A supplier bill is not taxed at the sales rate, and the
+	 * same code legitimately exists on both sides at different rates.
+	 */
+	@ApiPropertyOptional({ type: () => String, enum: TaxDirection, default: TaxDirection.SALE })
+	@IsOptional()
+	@IsEnum(TaxDirection)
+	readonly direction: TaxDirection;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

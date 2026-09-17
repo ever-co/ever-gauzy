@@ -1,6 +1,17 @@
 import { JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
+import {
+	IsBoolean,
+	IsDate,
+	IsEnum,
+	IsInt,
+	IsNotEmpty,
+	IsOptional,
+	IsString,
+	IsUUID,
+	MaxLength,
+	Min
+} from 'class-validator';
 import { ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -9,9 +20,13 @@ import {
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
+	MultiORMOneToMany,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { TaxCategory } from '../tax-category/tax-category.entity';
+import { TaxAmountType, TaxDirection } from '../tax.types';
+import { TaxRatePart } from '../tax-rate-part/tax-rate-part.entity';
+import { TaxRegimeRate } from '../tax-regime-rate/tax-regime-rate.entity';
 import { MikroOrmTaxRateRepository } from './repository/mikro-orm-tax-rate.repository';
 
 /**
@@ -32,7 +47,18 @@ import { MikroOrmTaxRateRepository } from './repository/mikro-orm-tax-rate.repos
  * priority are read together to break a tie inside one tenant; and the window is scanned by the
  * maintenance screens. The window in the migration also carries `CHK_tax_rate_nonneg`, which keeps a
  * rate from being written below zero on the dialects that can hold the check.
+ *
+ * A rate is not one percentage. Its `direction` says which side of a document it belongs to — a sales
+ * rate is not automatically the rate a supplier bill is taxed at, and the same code legitimately exists
+ * on both sides at different rates — its `amountType` says whether the rate is arithmetic on a
+ * percentage or an amount, and its **parts** are the ordered breakdown an accountant reconciles. A rate
+ * that declares no part is one implied part (`TAX`, 100 %, base 1), so a rate written before parts
+ * existed produces exactly the breakdown it always did.
  */
+/** A code is unique inside an organization among the rates that are not soft-deleted. */
+@ColumnIndex('IDX_tax_rate_org_direction', ['organizationId', 'direction'], { where: '"deletedAt" IS NULL' })
+/** The accountant's reconciliation key is the code at an instant, so the overlap check reads this tuple. */
+@ColumnIndex('IDX_tax_rate_org_code', ['organizationId', 'code', 'direction'], { where: '"deletedAt" IS NULL' })
 @ColumnIndex('IDX_tax_rate_zone', ['regionId', 'countryCode', 'provinceCode', 'taxCategoryId'], {
 	where: '"deletedAt" IS NULL'
 })
@@ -115,6 +141,30 @@ export class TaxRate extends TenantOrganizationBaseEntity {
 	@ApiProperty({ type: () => Number })
 	@MultiORMColumn({ type: 'numeric', precision: 9, scale: 6, transformer: new ColumnNumericTransformerPipe() })
 	rate: number;
+
+	/**
+	 * How the rate arrives at its amount. `PERCENT` is the arithmetic of a fraction and `FIXED` says the
+	 * rate's amount is carried by its parts as an amount per unit of the owner's quantity.
+	 *
+	 * The column is also what the resolution reads to tell a deliberate zero rate from a rate that only
+	 * looks like one: a winner with `rate = 0` stops the ladder **only** when it is `PERCENT` and has no
+	 * non-zero fixed part. A fixed-amount or part-only tax with a zero percentage is not a zero-rated
+	 * supply, and descending past it would under-collect.
+	 */
+	@ApiProperty({ type: () => String, enum: TaxAmountType, default: TaxAmountType.PERCENT })
+	@IsEnum(TaxAmountType)
+	@MultiORMColumn({ type: 'simple-enum', enum: TaxAmountType, default: TaxAmountType.PERCENT })
+	amountType: TaxAmountType;
+
+	/**
+	 * Which document direction the rate applies to. `SALE` is the default, so every rate written before
+	 * the column existed keeps its behaviour on the sales path; the purchase path selects `PURCHASE` and
+	 * `BOTH`.
+	 */
+	@ApiProperty({ type: () => String, enum: TaxDirection, default: TaxDirection.SALE })
+	@IsEnum(TaxDirection)
+	@MultiORMColumn({ type: 'simple-enum', enum: TaxDirection, default: TaxDirection.SALE })
+	direction: TaxDirection;
 
 	/**
 	 * Human readable name, for example `Ontario provincial sales tax`.
@@ -207,4 +257,24 @@ export class TaxRate extends TenantOrganizationBaseEntity {
 	@IsOptional()
 	@JsonColumn<Record<string, unknown>>({ nullable: true })
 	metadata?: Record<string, unknown>;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
+	/**
+	 * The ordered parts the rate is made of. Empty means one implied part: `TAX`, 100 %, base 1 — the
+	 * breakdown every rate produced before parts existed, which is why no existing rate changes.
+	 */
+	@MultiORMOneToMany(() => TaxRatePart, (part) => part.taxRate)
+	parts?: TaxRatePart[];
+
+	/**
+	 * The membership rows that attach the rate to a regime. **The presence of a row is what makes the
+	 * rate regime-specific**: a rate with at least one row is a candidate only when one of its regimes is
+	 * the one selected for the document, and a rate with no row stays general.
+	 */
+	@MultiORMOneToMany(() => TaxRegimeRate, (membership) => membership.taxRate)
+	regimeMemberships?: TaxRegimeRate[];
 }

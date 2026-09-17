@@ -226,6 +226,32 @@ export class PromotionUsageService extends CrudService<PromotionUsage> {
 	}
 
 	/**
+	 * Reads the redemptions one coupon granted, for the coupon's own view.
+	 *
+	 * @param couponId The coupon to read.
+	 * @returns The redemption rows, most recent first.
+	 */
+	async findByCoupon(couponId: ID): Promise<IPromotionUsage[]> {
+		const rows = await this.typeOrmPromotionUsageRepository.find({
+			where: { couponId, ...this.scope },
+			order: { usedAt: 'DESC' }
+		});
+
+		return rows as unknown as IPromotionUsage[];
+	}
+
+	/**
+	 * Paginates the redemption ledger of the caller's organization, optionally narrowed to one
+	 * promotion, coupon, order, basket or customer.
+	 *
+	 * @param options Optional filters, merged with the tenancy scope.
+	 * @returns One page of redemptions.
+	 */
+	async findUsages(options: Record<string, unknown> = {}): Promise<IPagination<IPromotionUsage>> {
+		return this.findAll({ ...options, where: { ...((options.where as object) ?? {}), ...this.scope } } as never);
+	}
+
+	/**
 	 * Counts the live redemptions of a promotion by one customer, which is how the per-customer limit
 	 * is answered. Reserved rows count: a limit that ignores a reservation is a limit two checkouts
 	 * can exceed.

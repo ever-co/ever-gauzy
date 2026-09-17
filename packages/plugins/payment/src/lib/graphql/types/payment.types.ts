@@ -7,9 +7,10 @@ import {
 	IPaymentSession,
 	IPaymentWebhookEvent,
 	IRefund,
+	IRefundLine,
 	IRefundReason
 } from '../../payment.types';
-import { IConnection, IMutationPayload } from './connection';
+import { IConnection, IResourcePayload } from './connection';
 
 /**
  * The shapes the payment resolvers read and answer with.
@@ -23,7 +24,8 @@ import { IConnection, IMutationPayload } from './connection';
  * arguments.
  *
  * The payload aliases exist so a resolver's return type names the mutation it serves, rather than
- * `IMutationPayload<IPaymentSession>` repeated in seven signatures.
+ * `IMutationPayload<IPaymentSession>` repeated in seven signatures, and so the member the SDL gives the
+ * resource — `paymentSession`, `refund` — is stated once rather than repeated in every signature.
  */
 
 /**
@@ -80,6 +82,14 @@ export const REFUND_SORT_FIELDS: Record<string, string> = {
 export const REFUND_REASON_SORT_FIELDS: Record<string, string> = {
 	CODE: 'code',
 	LABEL: 'label',
+	CREATED_AT: 'createdAt',
+	UPDATED_AT: 'updatedAt'
+};
+
+export const REFUND_LINE_SORT_FIELDS: Record<string, string> = {
+	ORDER_LINE_ID: 'orderLineId',
+	QUANTITY: 'quantity',
+	AMOUNT: 'amount',
 	CREATED_AT: 'createdAt',
 	UPDATED_AT: 'updatedAt'
 };
@@ -162,6 +172,16 @@ export interface IRefundReasonFilter {
 }
 
 /**
+ * A refund-line filter.
+ */
+export interface IRefundLineFilter {
+	readonly id?: ID;
+	readonly refundId?: ID;
+	readonly orderLineId?: ID;
+	readonly currency?: string;
+}
+
+/**
  * A callback filter.
  */
 export interface IPaymentWebhookEventFilter {
@@ -241,6 +261,26 @@ export interface IOpenPaymentSessionGraphInput {
 }
 
 /**
+ * The authorisation of an attempt, as the SDL declares it. The amount is advisory: the attempt already
+ * carries the amount the provider was asked for, and the service refuses one that does not match
+ * rather than silently authorising a different figure.
+ */
+export interface IAuthorizePaymentSessionGraphInput {
+	readonly id: ID;
+	readonly amount?: string;
+	readonly data?: Record<string, unknown>;
+	readonly idempotencyKey?: string;
+}
+
+/**
+ * The voiding of an attempt, as the SDL declares it.
+ */
+export interface IVoidPaymentSessionGraphInput {
+	readonly id: ID;
+	readonly reason?: string;
+}
+
+/**
  * The capture input, as the SDL declares it.
  */
 export interface ICapturePaymentGraphInput {
@@ -269,6 +309,79 @@ export interface ICreateRefundGraphInput {
 	readonly note?: string;
 	readonly storeCredit?: boolean;
 	readonly metadata?: Record<string, unknown>;
+	readonly lines?: IRefundLineGraphInput[];
+	readonly idempotencyKey?: string;
+}
+
+/**
+ * The descriptive fields of a refund an update may change, as the SDL declares them. The amount, the
+ * currency and the status are not among them: an amount is what the refund is, and the status moves
+ * through approval.
+ */
+export interface IUpdateRefundGraphInput {
+	readonly id: ID;
+	readonly reasonId?: ID;
+	readonly reason?: string;
+	readonly note?: string;
+	readonly metadata?: Record<string, unknown>;
+}
+
+/**
+ * The approval of a refund, as the SDL declares it.
+ */
+export interface IApproveRefundGraphInput {
+	readonly id: ID;
+	readonly note?: string;
+	readonly idempotencyKey?: string;
+}
+
+/**
+ * The withdrawal of a refund, as the SDL declares it.
+ */
+export interface ICancelRefundGraphInput {
+	readonly id: ID;
+	readonly reason?: string;
+}
+
+/**
+ * One line of a refund request, as the SDL declares it: what came back, and for how much. The currency
+ * is the refund's, and a request that names a different one is refused rather than converted.
+ */
+export interface IRefundLineGraphInput {
+	readonly orderLineId: ID;
+	readonly quantity: string;
+	readonly amount: string;
+	readonly currency?: string;
+	readonly metadata?: Record<string, unknown>;
+}
+
+/**
+ * The refund-line inputs, as the SDL declares them. The create input states its refund, because a line
+ * recorded on its own has to say which refund it accounts for.
+ */
+export interface ICreateRefundLineGraphInput extends IRefundLineGraphInput {
+	readonly refundId: ID;
+	readonly idempotencyKey?: string;
+}
+
+/**
+ * What a line of a pending refund may change: its quantity, its amount and its metadata. What the line
+ * explains — its refund and its order line — is not among them.
+ */
+export interface IUpdateRefundLineGraphInput {
+	readonly id: ID;
+	readonly quantity?: string;
+	readonly amount?: string;
+	readonly currency?: string;
+	readonly metadata?: Record<string, unknown>;
+}
+
+/**
+ * The replay of a stored callback, as the SDL declares it.
+ */
+export interface IReprocessPaymentWebhookEventGraphInput {
+	readonly id: ID;
+	readonly force?: boolean;
 	readonly idempotencyKey?: string;
 }
 
@@ -322,6 +435,11 @@ export type IRefundConnection = IConnection<IRefund>;
 export type IRefundReasonConnection = IConnection<IRefundReason>;
 
 /**
+ * A page of refund lines.
+ */
+export type IRefundLineConnection = IConnection<IRefundLine>;
+
+/**
  * A page of inbound callbacks.
  */
 export type IPaymentWebhookEventConnection = IConnection<IPaymentWebhookEvent>;
@@ -329,77 +447,114 @@ export type IPaymentWebhookEventConnection = IConnection<IPaymentWebhookEvent>;
 /**
  * The answer of a provider mutation.
  */
-export type ICreatePaymentProviderPayload = IMutationPayload<IPaymentProvider>;
+export type ICreatePaymentProviderPayload = IResourcePayload<IPaymentProvider, 'paymentProvider'>;
 
 /**
  * The answer of a provider update.
  */
-export type IUpdatePaymentProviderPayload = IMutationPayload<IPaymentProvider>;
+export type IUpdatePaymentProviderPayload = IResourcePayload<IPaymentProvider, 'paymentProvider'>;
 
 /**
  * The answer of a provider deletion.
  */
-export type IDeletePaymentProviderPayload = IMutationPayload<IPaymentProvider>;
+export type IDeletePaymentProviderPayload = IResourcePayload<IPaymentProvider, 'paymentProvider'> & {
+	readonly deleted: boolean;
+};
 
 /**
  * The answer of a collection mutation.
  */
-export type ICreatePaymentCollectionPayload = IMutationPayload<IPaymentCollection>;
+export type ICreatePaymentCollectionPayload = IResourcePayload<IPaymentCollection, 'paymentCollection'>;
 
 /**
  * The answer of a collection update.
  */
-export type IUpdatePaymentCollectionPayload = IMutationPayload<IPaymentCollection>;
+export type IUpdatePaymentCollectionPayload = IResourcePayload<IPaymentCollection, 'paymentCollection'>;
 
 /**
  * The answer of a session creation.
  */
-export type IOpenPaymentSessionPayload = IMutationPayload<IPaymentSession>;
+export type IOpenPaymentSessionPayload = IResourcePayload<IPaymentSession, 'paymentSession'>;
 
 /**
  * The answer of a session authorisation.
  */
-export type IAuthorizePaymentSessionPayload = IMutationPayload<IPaymentSession>;
+export type IAuthorizePaymentSessionPayload = IResourcePayload<IPaymentSession, 'paymentSession'>;
 
 /**
  * The answer of a session cancellation.
  */
-export type IVoidPaymentSessionPayload = IMutationPayload<IPaymentSession>;
+export type IVoidPaymentSessionPayload = IResourcePayload<IPaymentSession, 'paymentSession'>;
 
 /**
  * The answer of a capture.
  */
-export type ICapturePaymentPayload = IMutationPayload<IPaymentCapture>;
+export type ICapturePaymentPayload = IResourcePayload<IPaymentCapture, 'paymentCapture'>;
 
 /**
  * The answer of a refund creation.
  */
-export type ICreateRefundPayload = IMutationPayload<IRefund>;
+export type ICreateRefundPayload = IResourcePayload<IRefund, 'refund'>;
 
 /**
- * The answer of a refund approval or cancellation.
+ * The answer of a refund update.
  */
-export type IApproveRefundPayload = IMutationPayload<IRefund>;
+export type IUpdateRefundPayload = IResourcePayload<IRefund, 'refund'>;
+
+/**
+ * The answer of a refund approval.
+ */
+export type IApproveRefundPayload = IResourcePayload<IRefund, 'refund'>;
+
+/**
+ * The answer of a refund cancellation.
+ */
+export type ICancelRefundPayload = IResourcePayload<IRefund, 'refund'>;
 
 /**
  * The answer of a refund reason creation.
  */
-export type ICreateRefundReasonPayload = IMutationPayload<IRefundReason>;
+export type ICreateRefundReasonPayload = IResourcePayload<IRefundReason, 'refundReason'>;
 
 /**
  * The answer of a refund reason update.
  */
-export type IUpdateRefundReasonPayload = IMutationPayload<IRefundReason>;
+export type IUpdateRefundReasonPayload = IResourcePayload<IRefundReason, 'refundReason'>;
 
 /**
- * The answer of a refund reason deletion.
+ * The answer of a refund reason deletion. A reason is deactivated rather than removed, so `deleted`
+ * reports that the reason is out of the catalogue — not that its row is gone.
  */
-export type IDeleteRefundReasonPayload = IMutationPayload<IRefundReason>;
+export type IDeleteRefundReasonPayload = IResourcePayload<IRefundReason, 'refundReason'> & {
+	readonly deleted: boolean;
+};
+
+/**
+ * The answer of a refund-line creation.
+ */
+export type ICreateRefundLinePayload = IResourcePayload<IRefundLine, 'refundLine'>;
+
+/**
+ * The answer of a refund-line update.
+ */
+export type IUpdateRefundLinePayload = IResourcePayload<IRefundLine, 'refundLine'>;
+
+/**
+ * The answer of a refund-line removal. A line is soft-deleted like every other row of this platform,
+ * so `deleted` reports that the line no longer counts towards its refund — the live pair it occupied
+ * is free again.
+ */
+export type IDeleteRefundLinePayload = IResourcePayload<IRefundLine, 'refundLine'> & {
+	readonly deleted: boolean;
+};
 
 /**
  * The answer of a callback re-run.
  */
-export type IReprocessPaymentWebhookEventPayload = IMutationPayload<IPaymentWebhookEvent>;
+export type IReprocessPaymentWebhookEventPayload = IResourcePayload<
+	IPaymentWebhookEvent,
+	'paymentWebhookEvent'
+>;
 
 /**
  * Separates the range members of a filter from the equality members.

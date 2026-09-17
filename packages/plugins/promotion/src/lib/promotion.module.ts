@@ -3,6 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EventBusModule, RolePermissionModule } from '@gauzy/core';
+import { resolvers } from './graphql/resolvers';
 import { ALL_PROMOTION_ENTITIES } from './promotion.plugin';
 import { Campaign } from './campaign/campaign.entity';
 import { CampaignBudget } from './campaign-budget/campaign-budget.entity';
@@ -57,7 +58,9 @@ import { MikroOrmGiftCardTransactionRepository } from './gift-card-transaction/r
  * entity that only one of them knows is a table no repository can reach. The repositories are
  * providers rather than bare `Repository<T>` injections so a service depends on one class under
  * either ORM, and the services are exported because the cart, order and returns domains consume the
- * promotion engine through them rather than through their own copy of it.
+ * promotion engine through them rather than through their own copy of it — and because a resolver is
+ * hosted by the platform's composition module, which reaches a plugin's services through what the
+ * plugin's own module exports.
  */
 @Module({
 	imports: [
@@ -106,11 +109,16 @@ import { MikroOrmGiftCardTransactionRepository } from './gift-card-transaction/r
 		TypeOrmGiftCardRepository,
 		MikroOrmGiftCardRepository,
 		TypeOrmGiftCardTransactionRepository,
-		MikroOrmGiftCardTransactionRepository
+		MikroOrmGiftCardTransactionRepository,
+		// The GraphQL resolvers are providers here because they inject the same services the REST
+		// controllers do; the plugin hands the composition pass the same classes through
+		// `extensions.resolvers`, so there is one implementation per rule rather than one per surface.
+		...resolvers
 	],
 	exports: [
 		CampaignService,
 		CampaignBudgetService,
+		CampaignBudgetUsageService,
 		PromotionService,
 		PromotionActionService,
 		CouponService,

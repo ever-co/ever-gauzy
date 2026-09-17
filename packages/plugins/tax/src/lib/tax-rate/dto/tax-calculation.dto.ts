@@ -3,6 +3,7 @@ import {
 	IsArray,
 	IsBoolean,
 	IsDate,
+	IsEnum,
 	IsNotEmpty,
 	IsOptional,
 	IsString,
@@ -12,6 +13,7 @@ import {
 	MaxLength
 } from 'class-validator';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
+import { TaxDirection } from '../../tax.types';
 
 /**
  * The exact-decimal shape a monetary input must have.
@@ -40,6 +42,18 @@ export class TaxCalculationLineDTO {
 	@IsString()
 	@Matches(DECIMAL_STRING_PATTERN, { message: 'amount must be an exact decimal string such as "49.980000"' })
 	readonly amount: DecimalString;
+
+	/**
+	 * The owner's quantity, as an exact decimal string; one when it is omitted.
+	 *
+	 * A fixed part of a rate contributes its amount per unit of this quantity, and the quantity is
+	 * snapshotted on the tax line, so the evidence of a fixed tax is complete.
+	 */
+	@ApiPropertyOptional({ type: () => String, example: '3.000000' })
+	@IsOptional()
+	@IsString()
+	@Matches(DECIMAL_STRING_PATTERN, { message: 'quantity must be an exact decimal string such as "3.000000"' })
+	readonly quantity: DecimalString;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -78,6 +92,32 @@ export class TaxCalculationDTO {
 	@ApiProperty({ type: () => [TaxCalculationLineDTO] })
 	@IsArray()
 	readonly lines: TaxCalculationLineDTO[];
+
+	/**
+	 * The regime assigned to the party, when the caller resolved one. It always wins over the destination,
+	 * and it is selected once for the whole document rather than once per line.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	readonly taxRegimeId: ID;
+
+	/**
+	 * Whether the party states a usable registration number, which a regime may require.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	readonly partyTaxRegistrationPresent: boolean;
+
+	/**
+	 * The side of the document being taxed; a sale when it is omitted. A supplier bill is not taxed at the
+	 * sales rates.
+	 */
+	@ApiPropertyOptional({ type: () => String, enum: TaxDirection, default: TaxDirection.SALE })
+	@IsOptional()
+	@IsEnum(TaxDirection)
+	readonly documentDirection: TaxDirection;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

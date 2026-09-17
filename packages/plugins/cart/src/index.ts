@@ -5,6 +5,7 @@ export * from './lib/cart.plugin';
 export * from './lib/cart.module';
 export * from './lib/cart.permissions';
 export * from './lib/cart.features';
+export * from './lib/cart.types';
 export * from './lib/entities';
 export * from './lib/database/cart-migrations';
 export * from './lib/graphql';

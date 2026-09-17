@@ -1,4 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	Inject,
+	Injectable,
+	NotFoundException,
+	Optional,
+	ServiceUnavailableException
+} from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import {
 	AdjustmentOwnerType,
@@ -30,6 +38,7 @@ import {
 	TotalsCalculator
 } from '../totals/totals-calculator';
 import { cartCheckoutRegistry } from '../checkout/cart-checkout.registry';
+import { CART_STOCK_AVAILABILITY, ICartStockPort } from '../cart.types';
 
 /**
  * How long a cart lives, in hours, when nothing narrower is configured.
@@ -40,6 +49,17 @@ import { cartCheckoutRegistry } from '../checkout/cart-checkout.registry';
  */
 const DEFAULT_TTL_HOURS_ANONYMOUS = 168;
 const DEFAULT_TTL_HOURS_CUSTOMER = 720;
+
+/**
+ * What the `STOCK` step refuses with: the ladder's error shape, plus what it measured, so an operator
+ * reading the refusal can see the quantity that was asked for and the one that could have been served.
+ */
+interface IStockRefusal {
+	readonly code: string;
+	readonly step: string;
+	readonly message: string;
+	readonly details: Record<string, unknown>;
+}
 
 /**
  * The cart aggregate's service.
@@ -60,7 +80,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		private readonly promotionService: CommerceCartPromotionService,
 		private readonly checkoutSessionService: CommerceCheckoutSessionService,
 		private readonly adjustmentService: AdjustmentService,
-		private readonly taxLineService: TaxLineService
+		private readonly taxLineService: TaxLineService,
+		@Optional()
+		@Inject(CART_STOCK_AVAILABILITY)
+		private readonly stockAvailability?: ICartStockPort
 	) {
 		super(typeOrmCommerceCartRepository, mikroOrmCommerceCartRepository);
 	}
@@ -146,6 +169,16 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 				(candidate.subscriptionPlanId ?? null) === (line.subscriptionPlanId ?? null)
 		);
 
+		// What the cart would hold after the addition, which is what has to be available: a line that
+		// merges into an existing one asks for the sum of the two. The refusal happens here, where the
+		// buyer can still change the quantity, rather than at checkout, where the reservation step of
+		// the operation would fail on an order that was already being built.
+		await this.assertStockAvailable({
+			variantId: line.variantId,
+			warehouseId: line.warehouseId,
+			quantity: Number(line.quantity) + Number(match?.quantity ?? 0)
+		});
+
 		if (match) {
 			await this.lineService.update(match.id, {
 				quantity: Number(match.quantity) + Number(line.quantity)
@@ -179,10 +212,18 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		changes: DeepPartial<CommerceCartLine>
 	): Promise<CommerceCart> {
 		await this.assertMutable(cartId);
-		await this.assertLineBelongsToCart(cartId, lineId);
+		const line = await this.assertLineBelongsToCart(cartId, lineId);
 
 		if (changes.quantity !== undefined && Number(changes.quantity) <= 0) {
 			throw new BadRequestException('CART_LINE_QUANTITY_INVALID: a line quantity must be positive.');
+		}
+
+		if (changes.quantity !== undefined) {
+			await this.assertStockAvailable({
+				variantId: line.variantId,
+				warehouseId: changes.warehouseId ?? line.warehouseId,
+				quantity: Number(changes.quantity)
+			});
 		}
 
 		await this.lineService.update(lineId, changes as any);
@@ -428,6 +469,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			!(cart.lines ?? []).some((line) => line.requiresShipping) ||
 				Boolean(cart.shippingAddressId || cart.shippingAddressSnapshot)
 		);
+
+		// Step 10 — `STOCK`. It is the one step this package cannot answer from its own rows: what is
+		// on hand belongs to the inventory capability, which is reached through the optional port.
+		const stock = await this.stockStep(cart);
+
+		steps.push({ step: 'STOCK', status: stock.status });
+		errors.push(...stock.errors);
+
 		check(
 			'CURRENCY',
 			'CART_CURRENCY_REQUIRED',
@@ -442,6 +491,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * Completes a cart: it is validated strictly, its totals are recomputed once more, and the order is
 	 * placed through the registered checkout handler.
 	 *
+	 * A cart that already became an order is refused before the ladder runs, with `CART_ALREADY_COMPLETED`
+	 * rather than the `CART_STATUS_INVALID` a completed cart would otherwise collect: the ladder answers
+	 * "this status cannot complete", while the caller needs to hear that the completion it is asking for
+	 * has already happened and where the order it produced is.
+	 *
 	 * The handler is what makes this legal across the package boundary — the cart never imports the
 	 * order package. An installation without a handler gets a loud failure rather than a cart that
 	 * silently never becomes an order.
@@ -454,6 +508,19 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		cartId: ID,
 		options: { idempotencyKey?: string; paymentSessionId?: string } = {}
 	): Promise<{ cart: CommerceCart; orderId: string; orderNumber: string }> {
+		const existing = await this.findOneWithContent(cartId);
+
+		// A cart that already became an order is refused with the code that names what happened, and
+		// not with the ladder's generic status refusal: the caller's next move is to read the order the
+		// cart points at, which the code and the id tell it how to do (doc 06, 409).
+		if (existing.orderId) {
+			throw new ConflictException({
+				message: `CART_ALREADY_COMPLETED: cart ${cartId} already became order ${existing.orderId}.`,
+				code: 'CART_ALREADY_COMPLETED',
+				details: { cartId, orderId: existing.orderId }
+			});
+		}
+
 		const verdict = await this.validate(cartId, CommerceCartValidationMode.STRICT);
 
 		if (!verdict.valid) {
@@ -724,6 +791,116 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
+	 * The `STOCK` step of the ladder: what is on hand for every line.
+	 *
+	 * What may be sold belongs to the inventory capability, so it is asked for through the optional
+	 * `CART_STOCK_AVAILABILITY` port rather than read from a stock table. With no capability registered
+	 * the step is reported as `SKIPPED` and the cart validates exactly as it did before the step
+	 * existed — an installation that runs this package without the inventory package still sells — and
+	 * the availability is then decided by the checkout operation's own `reserve-stock` step, which
+	 * fails the reservation rather than a cart that could never have been filled.
+	 *
+	 * @param cart The cart.
+	 * @returns The verdict of the step and the errors it found, one per line that cannot be served.
+	 */
+	private async stockStep(
+		cart: CommerceCart
+	): Promise<{ status: 'PASSED' | 'FAILED' | 'SKIPPED'; errors: IStockRefusal[] }> {
+		if (!this.stockAvailability) {
+			return { status: 'SKIPPED', errors: [] };
+		}
+
+		const errors: IStockRefusal[] = [];
+
+		for (const line of cart.lines ?? []) {
+			const refusal = await this.stockRefusalOf(line);
+
+			if (refusal) {
+				errors.push(refusal);
+			}
+		}
+
+		return { status: errors.length === 0 ? 'PASSED' : 'FAILED', errors };
+	}
+
+	/**
+	 * Measures one line against the ladder's rule: `sellableQuantity + (allowBackorder ? backorderLimit
+	 * : 0) >= quantity` (doc 10 §2.5 step 10).
+	 *
+	 * A line asking for more than is on hand is `CART_BACKORDER_LIMIT_EXCEEDED` where the location takes
+	 * backorders — the limit is the bound it broke — and `CART_INSUFFICIENT_STOCK` where it does not.
+	 *
+	 * @param line The line.
+	 * @returns The refusal, or null when the line can be served.
+	 */
+	private async stockRefusalOf(
+		line: Pick<CommerceCartLine, 'variantId' | 'warehouseId' | 'quantity'>
+	): Promise<IStockRefusal | null> {
+		const quantity = Number(line.quantity);
+
+		if (!this.stockAvailability || quantity <= 0) {
+			return null;
+		}
+
+		const availability = await this.stockAvailability.availabilityOf({
+			variantId: line.variantId,
+			warehouseId: line.warehouseId
+		});
+
+		// A variant the capability does not stock at the line's location has nothing to sell, which is
+		// the same answer as zero on hand for the purpose of this rule.
+		const sellable = Number(availability?.sellableQuantity ?? 0);
+		const backorderLimit = availability?.allowBackorder ? Number(availability.backorderLimit ?? 0) : 0;
+
+		if (sellable + backorderLimit >= quantity) {
+			return null;
+		}
+
+		const details = {
+			variantId: line.variantId,
+			warehouseId: line.warehouseId,
+			requestedQuantity: quantity,
+			sellableQuantity: sellable,
+			backorderLimit
+		};
+
+		return availability?.allowBackorder
+			? {
+					code: 'CART_BACKORDER_LIMIT_EXCEEDED',
+					step: 'STOCK',
+					message: `Only ${sellable} unit(s) can be sold from stock and the backorder limit of ${backorderLimit} does not cover ${quantity}.`,
+					details
+				}
+			: {
+					code: 'CART_INSUFFICIENT_STOCK',
+					step: 'STOCK',
+					message: `Only ${sellable} unit(s) of variant ${line.variantId} can be sold.`,
+					details
+				};
+	}
+
+	/**
+	 * Refuses a quantity the stock capability cannot serve.
+	 *
+	 * @param line The variant, the location and the quantity the cart would hold.
+	 * @throws BadRequestException with the ladder's own code for the step, so a refusal at the moment
+	 * of writing reads the same as the same refusal found by `validate`.
+	 */
+	private async assertStockAvailable(
+		line: Pick<CommerceCartLine, 'variantId' | 'warehouseId' | 'quantity'>
+	): Promise<void> {
+		const refusal = await this.stockRefusalOf(line);
+
+		if (refusal) {
+			throw new BadRequestException({
+				message: refusal.message,
+				code: refusal.code,
+				details: { step: refusal.step, ...refusal.details }
+			});
+		}
+	}
+
+	/**
 	 * Loads a cart that must be mutable, or refuses.
 	 *
 	 * @param cartId The cart.
@@ -748,13 +925,16 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 *
 	 * @param cartId The cart.
 	 * @param lineId The line.
+	 * @returns The line.
 	 */
-	private async assertLineBelongsToCart(cartId: ID, lineId: ID): Promise<void> {
+	private async assertLineBelongsToCart(cartId: ID, lineId: ID): Promise<CommerceCartLine> {
 		const line = await this.lineService.findOneByWhereOptions({ id: lineId } as FindOptionsWhere<CommerceCartLine>);
 
 		if (!line || line.cartId !== cartId) {
 			throw new NotFoundException(`CART_LINE_NOT_FOUND: cart ${cartId} has no line ${lineId}.`);
 		}
+
+		return line;
 	}
 
 	/**

@@ -115,7 +115,11 @@ export class PaymentCollectionService extends CrudService<PaymentCollection> {
 			);
 		}
 
-		const { status, ...changes } = input;
+		// The status is derived from the amounts and the sessions and is never taken from a caller, so it
+		// is lifted off the input here rather than written. The input type excludes it — which is the
+		// point — so naming it takes the widening below, and the run-time strip is what keeps a body
+		// that carries one from reaching the update.
+		const { status, ...changes } = input as IPaymentCollectionUpdateInput & { status?: unknown };
 		void status;
 
 		if (changes.amount !== undefined) {

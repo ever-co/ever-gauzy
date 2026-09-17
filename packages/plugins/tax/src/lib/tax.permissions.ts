@@ -16,8 +16,12 @@ export const TAX_PERMISSION_VALUES = {
 	TAX_CATEGORIES_EDIT: 'TAX_CATEGORIES_EDIT',
 	/** Read rates, resolve a rate for an address and compute tax for a given amount. */
 	TAX_RATES_VIEW: 'TAX_RATES_VIEW',
-	/** Create, update, delete and bulk-upsert rates. */
-	TAX_RATES_EDIT: 'TAX_RATES_EDIT'
+	/** Create, update, delete and bulk-upsert rates, and set their parts and their arithmetic. */
+	TAX_RATES_EDIT: 'TAX_RATES_EDIT',
+	/** Read tax regimes, their rate membership and their matching criteria. */
+	TAX_REGIMES_VIEW: 'TAX_REGIMES_VIEW',
+	/** Create, update and delete tax regimes, and set which rates belong to each. */
+	TAX_REGIMES_EDIT: 'TAX_REGIMES_EDIT'
 } as const;
 
 /**
@@ -66,6 +70,18 @@ export const TAX_PERMISSIONS: PluginPermissionContribution[] = [
 		value: TAX_PERMISSION_VALUES.TAX_RATES_EDIT,
 		label: 'Edit tax rates',
 		group: 'GENERAL',
-		description: 'Create, update, delete and bulk-upsert tax rates.'
+		description: 'Create, update, delete and bulk-upsert tax rates, and set the parts each rate is made of.'
+	},
+	{
+		value: TAX_PERMISSION_VALUES.TAX_REGIMES_VIEW,
+		label: 'Read tax regimes',
+		group: 'GENERAL',
+		description: 'Read tax regimes, their rate membership and their matching criteria.'
+	},
+	{
+		value: TAX_PERMISSION_VALUES.TAX_REGIMES_EDIT,
+		label: 'Edit tax regimes',
+		group: 'ADMINISTRATION',
+		description: 'Create, update and delete tax regimes, and set which rates belong to each.'
 	}
 ];

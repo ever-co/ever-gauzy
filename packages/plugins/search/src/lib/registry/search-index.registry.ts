@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { ISearchIndexField, ISearchIndexRegistration, SearchFieldKind } from '@gauzy/contracts';
 
 /**
@@ -29,6 +30,72 @@ const FIELD_KINDS: ReadonlySet<string> = new Set<string>(Object.values(SearchFie
 export class SearchIndexRegistry {
 	/** Declarations by entity key. Insertion order is preserved, which is the order listings show. */
 	private readonly definitions = new Map<string, ISearchIndexRegistration>();
+
+	private readonly logger = new Logger(SearchIndexRegistry.name);
+
+	constructor(private readonly dataSource: DataSource) {}
+
+	/**
+	 * Registers a package's declarations, skipping the ones this installation cannot serve.
+	 *
+	 * Registration happens here rather than in a constructor because whether a declaration is worth
+	 * registering depends on what the live connection maps, and that is a fact about the running
+	 * installation rather than about the code: a declaration for a package that is not loaded
+	 * describes a class of rows that does not exist.
+	 *
+	 * It is idempotent, so a package loaded twice — which is what a worker is — registers once, and a
+	 * declaration another package has already claimed is left alone rather than throwing. The
+	 * difference from {@link registerMany} is deliberate: that method refuses a duplicate because two
+	 * declarations for one entity in the same package is a defect, while a second *load* of the same
+	 * package is not.
+	 *
+	 * @param definitions The declarations to register.
+	 * @returns The declarations that are registered, in declaration order.
+	 */
+	registerShipped(definitions: readonly ISearchIndexRegistration[]): ISearchIndexRegistration[] {
+		const accepted: ISearchIndexRegistration[] = [];
+
+		for (const definition of definitions ?? []) {
+			const entity = String(definition?.entity ?? '').trim();
+
+			if (!this.isMapped(entity)) {
+				this.logger.warn(
+					`The "${entity}" index declaration is not registered, because no entity in this installation ` +
+						'maps its table. The package that owns the entity is not loaded.'
+				);
+
+				continue;
+			}
+
+			if (!this.definitions.has(entity)) {
+				this.register(definition);
+			}
+
+			const registered = this.definitions.get(entity);
+
+			if (registered) {
+				accepted.push(registered);
+			}
+		}
+
+		return accepted;
+	}
+
+	/**
+	 * Whether the live connection maps an entity key.
+	 *
+	 * The key is a table name, which is what a declaration states and what a search request passes as
+	 * its entity filter — so the answer is read from the connection's own metadata rather than from a
+	 * list of names kept beside it.
+	 *
+	 * @param entity The entity key.
+	 * @returns True when an entity maps the table.
+	 */
+	isMapped(entity: string): boolean {
+		const key = String(entity ?? '').trim();
+
+		return Boolean(key) && this.dataSource.entityMetadatas.some((metadata) => metadata.tableName === key);
+	}
 
 	/**
 	 * Registers one declaration.

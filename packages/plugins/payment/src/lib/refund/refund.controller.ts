@@ -60,10 +60,10 @@ export class RefundController extends CrudController<Refund> {
 	}
 
 	/**
-	 * Reads one refund with its governed reason and the payment it gives back.
+	 * Reads one refund with its governed reason, the payment it gives back and the lines it paid back.
 	 *
 	 * @param id The refund to read.
-	 * @returns The refund.
+	 * @returns The refund, with its line breakdown.
 	 */
 	@ApiOperation({ summary: 'Find a refund by id' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Refund retrieved' })
@@ -71,7 +71,9 @@ export class RefundController extends CrudController<Refund> {
 	@Permissions(PaymentPermission.REFUNDS_VIEW as PermissionsEnum)
 	@Get(':id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<IRefund> {
-		return this.refundService.findRefundOrFail(id);
+		const refund = await this.refundService.findRefundOrFail(id);
+
+		return { ...refund, lines: await this.refundService.findRefundLines(id) };
 	}
 
 	/**

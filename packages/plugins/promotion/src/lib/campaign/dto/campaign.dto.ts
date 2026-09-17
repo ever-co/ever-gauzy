@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
 import { DecimalString } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
-import { CampaignStatus } from '../promotion.types';
+import { CampaignStatus } from '../../promotion.types';
 
 /**
  * A campaign: the window and the budget that a group of promotions runs inside.

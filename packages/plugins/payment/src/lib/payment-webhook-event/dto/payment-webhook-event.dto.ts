@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsInt, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { DecimalString } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
-import { PaymentWebhookEventStatus } from '../payment.types';
+import { PaymentWebhookEventStatus } from '../../payment.types';
 
 /**
  * An inbound provider notification, recorded before anything is parsed so a handler defect can be replayed.

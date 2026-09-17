@@ -5,6 +5,8 @@ import { DecimalString, ID } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { TAX_PERMISSION_VALUES, taxPermission } from '../../tax.permissions';
 import { IResolvedTaxRate, TaxWriteInput } from '../../tax.types';
+import { TaxRatePart } from '../../tax-rate-part/tax-rate-part.entity';
+import { TaxRatePartService } from '../../tax-rate-part/tax-rate-part.service';
 import { TaxRate } from '../../tax-rate/tax-rate.entity';
 import { TaxRateService, formatTaxRate } from '../../tax-rate/tax-rate.service';
 import { toConnection } from '../connection.helper';
@@ -12,6 +14,7 @@ import {
 	CreateTaxRateInput,
 	PageInput,
 	ResolveTaxRateInput,
+	SetTaxRatePartsInput,
 	SortInput,
 	TaxRateConnection,
 	TaxRateFilterInput,
@@ -28,6 +31,7 @@ const TAX_RATE_SORT_FIELDS: Record<TaxRateSortField, string> = {
 	NAME: 'name',
 	CODE: 'code',
 	COUNTRY_CODE: 'countryCode',
+	DIRECTION: 'direction',
 	STARTS_AT: 'startsAt',
 	CREATED_AT: 'createdAt',
 	UPDATED_AT: 'updatedAt'
@@ -37,15 +41,23 @@ const TAX_RATE_SORT_FIELDS: Record<TaxRateSortField, string> = {
  * The tax rate resource over GraphQL.
  *
  * Beside the CRUD root fields the resolver exposes the resolution the capability exists for: given a
- * category and a destination it returns the rates that apply, most specific zone first. Resolution is a
- * read, so it carries the view permission like every other read here, and the mutations carry the edit
- * permission, which overrides the class-level one for that method.
+ * category, the party's assignment and a destination it returns the rates that apply, direction and regime
+ * first and then most specific zone. Resolution is a read, so it carries the view permission like every
+ * other read here, and the mutations carry the edit permission, which overrides the class-level one for
+ * that method.
+ *
+ * A rate's parts are reached through the rate and not as a resource of their own: a part exists only as an
+ * element of its rate's ordered list and is written by the person who authors the rate, under the rate's
+ * editing permission.
  */
 @Resolver('TaxRate')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_RATES_VIEW))
 export class TaxRateResolver {
-	constructor(private readonly taxRateService: TaxRateService) {}
+	constructor(
+		private readonly taxRateService: TaxRateService,
+		private readonly taxRatePartService: TaxRatePartService
+	) {}
 
 	/**
 	 * Lists the rates of the caller's organization.
@@ -84,12 +96,15 @@ export class TaxRateResolver {
 	}
 
 	/**
-	 * Resolves the rates that apply to a destination, most specific zone first.
+	 * Resolves the rates that apply to a destination, direction and regime first.
 	 */
 	@Query('resolveTaxRate')
 	async resolveTaxRate(@Args('input') input: ResolveTaxRateInput): Promise<IResolvedTaxRate[]> {
 		return await this.taxRateService.resolve({
 			taxCategoryId: input.taxCategoryId,
+			taxRegimeId: input.taxRegimeId,
+			partyTaxRegistrationPresent: input.partyTaxRegistrationPresent,
+			documentDirection: input.documentDirection,
 			regionId: input.regionId,
 			countryCode: input.countryCode,
 			provinceCode: input.provinceCode,
@@ -97,6 +112,14 @@ export class TaxRateResolver {
 			regionTaxInclusive: input.regionTaxInclusive,
 			now: input.at ? new Date(input.at) : undefined
 		});
+	}
+
+	/**
+	 * Reads the ordered parts a rate is made of.
+	 */
+	@Query('taxRateParts')
+	async taxRateParts(@Args('id') id: ID): Promise<TaxRatePart[]> {
+		return await this.taxRateService.listParts(id);
 	}
 
 	/**
@@ -138,6 +161,15 @@ export class TaxRateResolver {
 	}
 
 	/**
+	 * Replaces the ordered parts a rate is made of.
+	 */
+	@Mutation('setTaxRateParts')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_RATES_EDIT))
+	async setTaxRateParts(@Args('input') input: SetTaxRatePartsInput): Promise<TaxRatePart[]> {
+		return await this.taxRateService.setParts(input.id, input.parts as TaxWriteInput<TaxRatePart>[]);
+	}
+
+	/**
 	 * Serialises a rate as the fixed six-decimal string the wire carries.
 	 *
 	 * The column is `numeric(9,6)` and is read through the platform's numeric transformer, which hands
@@ -147,6 +179,18 @@ export class TaxRateResolver {
 	@ResolveField('rate')
 	rate(@Parent() taxRate: TaxRate): DecimalString {
 		return formatTaxRate(taxRate.rate);
+	}
+
+	/**
+	 * The ordered parts the rate is made of, read through the part service.
+	 *
+	 * An empty list means the rate carries its one implied part — `TAX`, 100 %, base 1 — which is the
+	 * breakdown every rate produced before parts existed; the resolution reports that implied part so a
+	 * caller never has to know the rule to read a breakdown.
+	 */
+	@ResolveField('parts')
+	async parts(@Parent() taxRate: TaxRate): Promise<TaxRatePart[]> {
+		return await this.taxRatePartService.listForRate(taxRate.id);
 	}
 
 	/**
@@ -200,6 +244,12 @@ export class TaxRateResolver {
 		}
 		if (filter?.isActive !== undefined) {
 			where.isActive = filter.isActive;
+		}
+		if (filter?.amountType) {
+			where.amountType = filter.amountType;
+		}
+		if (filter?.direction) {
+			where.direction = filter.direction;
 		}
 		if (filter?.liveAt) {
 			this.applyLiveWindow(where, filter.liveAt);

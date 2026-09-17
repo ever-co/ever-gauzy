@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { isMySQL, isSqlite } from '@gauzy/config';
-import { DecimalString, ID } from '@gauzy/contracts';
+import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import { CrudService, MultiORMEnum, RequestContext } from '@gauzy/core';
 import { CampaignBudget } from './campaign-budget.entity';
 import { TypeOrmCampaignBudgetRepository } from './repository/type-orm-campaign-budget.repository';
@@ -129,6 +129,36 @@ export class CampaignBudgetService extends CrudService<CampaignBudget> {
 		}
 
 		return this.create({ ...input, campaignId, used: '0', ...this.scope } as never);
+	}
+
+	/**
+	 * Paginates the ceilings of the caller's organization.
+	 *
+	 * The listing is what a reconciliation walks, one page at a time; it is scoped like every other
+	 * read here, so one tenant can never observe another's budget.
+	 *
+	 * @param options Optional filters, merged with the tenancy scope.
+	 * @returns One page of budgets.
+	 */
+	async findBudgets(options: Record<string, unknown> = {}): Promise<IPagination<ICampaignBudget>> {
+		return this.findAll({ ...options, where: { ...((options.where as object) ?? {}), ...this.scope } } as never);
+	}
+
+	/**
+	 * Loads one ceiling of the caller's organization.
+	 *
+	 * @param id The budget to load.
+	 * @returns The budget.
+	 * @throws NotFoundException when it is not in the caller's scope.
+	 */
+	async findBudgetOrFail(id: ID): Promise<ICampaignBudget> {
+		const budget = await this.findOneByWhereOptions({ id, ...this.scope } as never);
+
+		if (!budget) {
+			throw new NotFoundException('CAMPAIGN_BUDGET_NOT_FOUND');
+		}
+
+		return budget;
 	}
 
 	/**

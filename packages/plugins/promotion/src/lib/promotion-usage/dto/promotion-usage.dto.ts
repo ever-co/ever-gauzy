@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsOptional, IsString, IsUUID, Length, MaxLength } from 'class-validator';
 import { DecimalString } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
-import { PromotionUsageStatus } from '../promotion.types';
+import { PromotionUsageStatus } from '../../promotion.types';
 import { IsDecimalAmount } from '../../promotion.validators';
 
 /**
