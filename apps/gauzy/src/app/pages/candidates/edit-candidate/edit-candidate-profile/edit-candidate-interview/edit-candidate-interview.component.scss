@@ -1,5 +1,6 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-overrides' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 .checkboxes {
   display: flex;
@@ -29,3 +30,16 @@
   }
   @include input-appearance(2rem, var(--gauzy-card-1));
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// A tab of the candidate profile, brought onto the same footing as the
+// Candidates list it is opened from: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills and the pager.
+//
+// The default `$actions` (`nb-card-header`), where this used to pass `null` on
+// the grounds that the tab had no compact toolbar. It has one, and nothing else:
+// the header is a single `ngx-gauzy-button-action` — Add, the layout selector,
+// and the Edit / Delete group in table mode — every button of it `size="small"`,
+// which is the exact row the mixin's button block is written for. `null` left
+// that row at full size over rows that had just been compacted.
+@include ga-hub.list-page();

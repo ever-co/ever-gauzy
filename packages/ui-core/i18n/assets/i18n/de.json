@@ -3387,6 +3387,9 @@
 		"BROWSE": "Suchen",
 		"COMMENT": "Kommentar",
 		"COMMENTS": "Kommentare",
+		"COMMENT_PLACEHOLDER": "Kommentar schreiben…",
+		"NO_COMMENTS": "Noch keine Kommentare",
+		"NO_COMMENTS_HINT": "Kommentare erscheinen hier, die neuesten zuerst.",
 		"HEADER": "Rechnungen",
 		"INVOICE_NUMBER": "Rechnungsnummer",
 		"ESTIMATE_NUMBER": "Schätzung Nummer",
@@ -4429,6 +4432,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Kunde auswählen",
+			"SELECT_PROJECT": "Projekt auswählen",
+			"SELECT_TEAM": "Team auswählen",
+			"SELECT_TASK": "Aufgabe auswählen",
+			"DESCRIPTION": "Beschreibung hinzufügen"
+		},
 		"IS_BILLABLE": "Ist abzurechnen.",
 		"STOP_TIMER": "Stoppuhr",
 		"START_TIMER": "Starten Sie den Timer",

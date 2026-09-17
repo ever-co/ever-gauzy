@@ -86,8 +86,23 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 			// Filter and ensure that query parameters are present.
 			filter((params: Params) => !!params),
 
-			// Tap into the observable to update the 'user.email' property with the 'email' query parameter.
-			tap(({ email }: Params) => (this.user.email = email)),
+			/**
+			 * Carry what the checkout already collected into the form.
+			 *
+			 * Both values arrive from Stripe by way of ever.co/checkout/complete, which reads them off
+			 * the completed Checkout Session. The email is the address the subscription was created
+			 * against, and the template hides its input entirely when the parameter is present - which
+			 * is why assigning it only when it is actually there matters: an absent parameter used to
+			 * write `undefined` over whatever the model already held.
+			 *
+			 * The name is a prefill and stays editable. Stripe collects one full name, which is the
+			 * shape this form wants, but it knows nothing of the length limits configured here, so the
+			 * buyer has to be able to correct it.
+			 */
+			tap(({ email, name }: Params) => {
+				if (email) this.user.email = email;
+				if (name) this.user.fullName = name;
+			}),
 
 			// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
 			untilDestroyed(this)
