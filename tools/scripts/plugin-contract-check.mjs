@@ -330,6 +330,7 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 
 	// --- migrations -------------------------------------------------------------------------
 	const migrationFiles = tsFiles.filter((f) => /migrations?[\\/]/.test(f) || /UpQueryRunner/.test(read(f)));
+	const migrationSource = migrationFiles.map(read).join('\n');
 	if (check(`${at}: owns at least one migration`, migrationFiles.length > 0, 'no migration file')) {
 		for (const file of migrationFiles) {
 			const source = read(file);
@@ -338,6 +339,17 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 			check(`${at}: ${where} has a mysql up`, source.includes('mysqlUpQueryRunner'), where);
 			check(`${at}: ${where} has a sqlite up`, source.includes('sqliteUpQueryRunner'), where);
 			check(`${at}: ${where} has a down`, /async down\s*\(/.test(source), where);
+		}
+
+		// A contracted table that no migration creates is a table that will not exist on a fresh
+		// install — the entity maps it, every test that ran against a synchronised schema passed,
+		// and the first clean deployment fails. This is the check that catches that.
+		for (const table of tables) {
+			check(
+				`${at}: a migration creates table "${table}"`,
+				new RegExp(`create\\s+table[^;]{0,120}?\\b${table}\\b`, 'i').test(migrationSource),
+				`no CREATE TABLE for "${table}" in this package's migrations`
+			);
 		}
 	}
 
