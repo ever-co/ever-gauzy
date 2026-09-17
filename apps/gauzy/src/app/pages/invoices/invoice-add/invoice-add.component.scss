@@ -7,14 +7,28 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
       $alpha: 0.1
     ),
   inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
+
+// "Generate invoice items" — the one action that has to be taken before this
+// form has anything to save, so it is the only button in the body and it needs
+// to read as one.
+//
+// It was drawn `background-color: var(--gauzy-card-2)` with a TRANSPARENT
+// border: the exact colour of the card body behind it and no edge, so at rest it
+// was green text floating on the page with no button around it, and hovering it
+// pinned the border transparent again so nothing appeared. Same green, drawn the
+// way every other outline button in the app is drawn (see the `.green` block in
+// `gauzy/_gauzy-dialogs`): a translucent ring at rest that goes solid on hover.
 [nbButton].gen.appearance-outline.status-basic {
-  background-color: var(--gauzy-card-2);
-  border-color: transparent;
+  background-color: transparent;
+  border-color: rgba(
+    $color: $green,
+    $alpha: 0.4
+  );
   box-shadow: $shadow;
   border-width: 2px;
   color: $green;
   &:hover {
-    border-color: transparent;
+    border-color: $green;
   }
 }
 [nbButton].gen.appearance-outline:hover {

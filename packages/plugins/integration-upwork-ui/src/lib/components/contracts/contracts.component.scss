@@ -1,3 +1,4 @@
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 ::ng-deep {
   .contracts-table {
     .angular2-smart-actions {
@@ -10,4 +11,23 @@
       }
     }
   }
+}
+
+// ── Table density, without the list-page surface ─────────────────────────────
+// This table was drawn at the smart table's loose defaults — 0.8125rem cells on
+// 0.375rem/0.625rem padding, the fallbacks in the `:root` block of
+// `_overrides.scss` — so it read a size larger than every list page in the app.
+// `density-tokens()` is what those pages set, and it is what closes the gap.
+//
+// Only the density and the row treatment, NOT the `list-page()` bundle: this
+// template renders a bare `<angular2-smart-table>` with no
+// `.table-scroll-container` to paint, no `.pagination-container` to compact and
+// no compact list toolbar — the other three parts of that bundle would have
+// nothing to match.
+:host {
+  @include ga-hub.density-tokens();
+}
+
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
 }

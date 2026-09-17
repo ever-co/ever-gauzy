@@ -3414,6 +3414,9 @@
 		"BROWSE": "Browse",
 		"COMMENT": "Comment",
 		"COMMENTS": "Comments",
+		"COMMENT_PLACEHOLDER": "כתבו תגובה…",
+		"NO_COMMENTS": "אין עדיין תגובות",
+		"NO_COMMENTS_HINT": "תגובות יופיעו כאן, החדשות ביותר תחילה.",
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
 		"ESTIMATE_NUMBER": "Estimate Number",
@@ -4446,6 +4449,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "בחר לקוח",
+			"SELECT_PROJECT": "בחר פרויקט",
+			"SELECT_TEAM": "בחר קבוצה",
+			"SELECT_TASK": "בחר משימה",
+			"DESCRIPTION": "הוסף תיאור"
+		},
 		"IS_BILLABLE": "ניתן לחיוב",
 		"STOP_TIMER": "עצור טיימר",
 		"START_TIMER": "התחל טיימר",

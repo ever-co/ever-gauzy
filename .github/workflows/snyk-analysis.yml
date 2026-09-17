@@ -24,6 +24,8 @@ permissions:
 jobs:
   analyze:
     name: Analyze
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
     timeout-minutes: 300
 

@@ -39,15 +39,17 @@
                 </div>
               </div>
               <div class="col-sm-6">
-                <label for="inputOrganizationContact" class="label"
-                  >{{ 'INVOICES_PAGE.CONTACT' | translate }}
-                </label>
-                <ga-contact-select
-                  [addTag]="true"
-                  [placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
-                  formControlName="organizationContact"
-                  (onChanged)="selectOrganizationContact($event)"
-                ></ga-contact-select>
+                <div class="form-group">
+                  <label for="inputOrganizationContact" class="label">
+                    {{ 'INVOICES_PAGE.CONTACT' | translate }}
+                  </label>
+                  <ga-contact-select
+                    [addTag]="true"
+                    [placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+                    formControlName="organizationContact"
+                    (onChanged)="selectOrganizationContact($event)"
+                  ></ga-contact-select>
+                </div>
               </div>
             </div>
             <div class="row">
@@ -119,13 +121,14 @@
                     </div>
                   </div>
                   <div class="row">
-                    <div class="col-sm-12 mb-4">
-                      <ga-tags-color-input
-                        [selectedTags]="form.get('tags').value"
-                        (selectedTagsEvent)="selectedTagsEvent($event)"
-                        [isOrgLevel]="true"
-                        >
-                      </ga-tags-color-input>
+                    <div class="col-sm-12">
+                      <div class="form-group">
+                        <ga-tags-color-input
+                          [selectedTags]="form.get('tags').value"
+                          (selectedTagsEvent)="selectedTagsEvent($event)"
+                          [isOrgLevel]="true"
+                        ></ga-tags-color-input>
+                      </div>
                     </div>
                   </div>
                   <div class="row">
@@ -183,6 +186,7 @@
                             placeholder="{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS' | translate }}"
                             formControlName="project"
                             id="inputProject"
+                            class="item-selector"
                             (change)="selectProject($event)"
                             [multiple]="true"
                             appendTo="body"
@@ -211,6 +215,7 @@
                             placeholder="{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_TASKS' | translate }}"
                             formControlName="task"
                             id="inputTask"
+                            class="item-selector"
                             (change)="selectTask($event)"
                             [multiple]="true"
                             appendTo="body"
@@ -239,6 +244,7 @@
                             placeholder="{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_PRODUCTS' | translate }}"
                             formControlName="product"
                             id="inputProduct"
+                            class="item-selector"
                             (change)="selectProduct($event)"
                             [multiple]="true"
                             appendTo="body"
@@ -267,6 +273,7 @@
                             placeholder="{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_EXPENSES' | translate }}"
                             formControlName="expense"
                             id="inputExpense"
+                            class="item-selector"
                             (change)="selectExpense($event)"
                             [multiple]="true"
                             appendTo="body"
@@ -309,7 +316,6 @@
                               status="success"
                               [disabled]="!invoiceType"
                               nbButton
-                              class="ml-3"
                               >
                               {{ 'INVOICES_PAGE.INVOICE_TYPE.GENERATE_FOR_UNINVOICED_EXPENSES' | translate }}
                             </button>
@@ -489,7 +495,7 @@
                     </div>
                   </form>
                   @if (shouldLoadTable) {
-                    <div>
+                    <div class="items">
                       <div class="table-scroll-container custom-table">
                         <angular2-smart-table
                           [class.ga-table-loading]="loading"
@@ -517,12 +523,12 @@
                     </div>
                   }
                 </nb-card-body>
-                <nb-card-footer class="text-left">
-                  <button class="mr-3" size="small" status="basic" outline nbButton (click)="cancel()">
+                <nb-card-footer>
+                  <button size="small" status="basic" outline nbButton (click)="cancel()">
                     {{ 'BUTTONS.CANCEL' | translate }}
                   </button>
                   <button
-                    class="mr-3 gray"
+                    class="gray"
                     (click)="addInvoice('DRAFT')"
                     size="small"
                     status="primary"
@@ -532,7 +538,6 @@
                     {{ 'BUTTONS.SAVE_AS_DRAFT' | translate }}
                   </button>
                   <button
-                    class="mr-3"
                     (click)="sendToContact()"
                     status="success"
                     size="small"
@@ -542,7 +547,6 @@
                     {{ 'BUTTONS.SAVE_AND_SEND_CONTACT' | translate }}
                   </button>
                   <button
-                    class="mr-3"
                     (click)="sendViaEmail()"
                     status="success"
                     size="small"
