@@ -96,13 +96,15 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	 *
 	 * Declared here only so the inherited `CrudController` route carries a permission. Without an
 	 * override there is no handler on this class for the decorator to sit on, and `PermissionGuard`
-	 * authorizes any route whose permission metadata is empty.
+	 * authorizes any route whose permission metadata is empty. Method metadata is not inherited by an
+	 * override, so the base route's `@HttpCode` is restated to keep the response status unchanged.
 	 *
 	 * @param entity - The membership to create.
 	 * @returns The created membership.
 	 */
 	@ApiOperation({ summary: 'Add a user to an organization' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The membership has been created' })
+	@HttpCode(HttpStatus.CREATED)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Post()
 	async create(@Body() entity: DeepPartial<UserOrganization>): Promise<UserOrganization> {
@@ -113,14 +115,16 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	 * Update a user's membership of an organization.
 	 *
 	 * Declared here only so the inherited `CrudController` route carries a permission. See
-	 * {@link create} for why an override is required.
+	 * {@link create} for why an override is required. Method metadata is not inherited by an override,
+	 * so the base route's `@HttpCode` is restated to keep the response status unchanged.
 	 *
 	 * @param id - The membership to update.
 	 * @param entity - The fields to update.
 	 * @returns The updated membership.
 	 */
 	@ApiOperation({ summary: "Update a user's membership of an organization" })
-	@ApiResponse({ status: HttpStatus.OK, description: 'The membership has been updated' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The membership has been updated' })
+	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Put(':id')
 	async update(
@@ -134,13 +138,15 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	 * Soft-delete a user's membership of an organization.
 	 *
 	 * Declared here only so the inherited `CrudController` route carries a permission. See
-	 * {@link create} for why an override is required.
+	 * {@link create} for why an override is required. Method metadata is not inherited by an override,
+	 * so the base route's `@HttpCode` is restated to keep the response status unchanged.
 	 *
 	 * @param id - The membership to soft-delete.
 	 * @returns The soft-deleted membership.
 	 */
 	@ApiOperation({ summary: "Soft-delete a user's membership of an organization" })
-	@ApiResponse({ status: HttpStatus.OK, description: 'The membership has been soft-deleted' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The membership has been soft-deleted' })
+	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Delete(':id/soft')
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID): Promise<UserOrganization> {
@@ -151,13 +157,15 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	 * Restore a soft-deleted membership of an organization.
 	 *
 	 * Declared here only so the inherited `CrudController` route carries a permission. See
-	 * {@link create} for why an override is required.
+	 * {@link create} for why an override is required. Method metadata is not inherited by an override,
+	 * so the base route's `@HttpCode` is restated to keep the response status unchanged.
 	 *
 	 * @param id - The membership to restore.
 	 * @returns The restored membership.
 	 */
 	@ApiOperation({ summary: 'Restore a soft-deleted membership of an organization' })
-	@ApiResponse({ status: HttpStatus.OK, description: 'The membership has been restored' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The membership has been restored' })
+	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Put(':id/recover')
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID): Promise<UserOrganization> {

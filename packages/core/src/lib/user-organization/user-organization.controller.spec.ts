@@ -1,6 +1,7 @@
 import '../core/entities/internal';
 
-import { ExecutionContext } from '@nestjs/common';
+import { ExecutionContext, HttpStatus } from '@nestjs/common';
+import { HTTP_CODE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { sign } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
@@ -70,6 +71,21 @@ describe('UserOrganizationController permission gates', () => {
 		checkRolePermission.mockResolvedValue(true);
 
 		await expect(guard.canActivate(contextFor(handler))).resolves.toBe(true);
+	});
+
+	/**
+	 * Overriding an inherited handler replaces its method metadata, so the overrides must restate
+	 * the base `CrudController` status codes or the Angular UI, desktop apps and Ever Teams would see
+	 * a silent 202 -> 200 contract change.
+	 */
+	it.each([
+		['create', UserOrganizationController.prototype.create, HttpStatus.CREATED],
+		['update', UserOrganizationController.prototype.update, HttpStatus.ACCEPTED],
+		['delete', UserOrganizationController.prototype.delete, HttpStatus.ACCEPTED],
+		['softRemove', UserOrganizationController.prototype.softRemove, HttpStatus.ACCEPTED],
+		['softRecover', UserOrganizationController.prototype.softRecover, HttpStatus.ACCEPTED]
+	] as [string, Function, HttpStatus][])('keeps the inherited response status on %s', (_name, handler, status) => {
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, handler)).toBe(status);
 	});
 
 	it('leaves the listing open so every member can still resolve their own organizations', async () => {
