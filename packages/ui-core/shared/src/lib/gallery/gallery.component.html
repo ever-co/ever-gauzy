@@ -1,4 +1,5 @@
 <div class="gallery-inner" tabindex="-1" #galleryInner [@fadeInOut]>
+	@let recordedTime = item?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async);
 	<!-- When the active screenshot was taken, its place in the set, and the actions. -->
 	<header class="gallery-header">
 		<!-- Product images (Inventory) carry no recorded time; only the counter shows. -->
@@ -10,7 +11,7 @@
 			}
 			<span class="gallery-subtitle">
 				@if (item?.recordedAt) {
-				{{ item?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }}
+				{{ recordedTime }}
 				}
 				@if (active_index >= 0 && items.length > 0) {
 				<span class="gallery-counter">{{ active_index + 1 }} / {{ items.length }}</span>
@@ -19,7 +20,12 @@
 		</div>
 		<div class="gallery-actions">
 			@if (item?.description) {
-			<button type="button" class="gallery-button" [nbTooltip]="item?.description">
+			<button
+				type="button"
+				class="gallery-button"
+				[nbTooltip]="item?.description"
+				[attr.aria-label]="'REPORT_PAGE.DESCRIPTION' | translate"
+			>
 				<nb-icon icon="info-outline"></nb-icon>
 			</button>
 			}
@@ -68,7 +74,12 @@
 				[class.not-work-related]="media?.isWorkRelated === false"
 				(click)="$event.stopPropagation()"
 			>
-				<img class="media" draggable="false" [src]="media?.fullUrl" />
+				<img
+					class="media"
+					draggable="false"
+					[src]="media?.fullUrl"
+					[alt]="media?.description || ((media?.recordedAt ? 'TIMESHEET.SCREENSHOTS.TAKEN_AT' : 'TIMESHEET.SCREENSHOTS.POSITION') | translate : { time: recordedTime, position: active_index + 1, total: items.length })"
+				/>
 			</div>
 			}
 		</div>
@@ -86,22 +97,24 @@
 	<footer class="gallery-footer">
 		<div class="thumb-items custom-scroll" #customScroll>
 			@for (thumb of items; track trackByThumbId(index, thumb); let index = $index) {
+			@let thumbTime = thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false;
+			<!-- Named by its place in the set, which stays unique when there is no time. -->
 			<button
 				type="button"
 				class="thumb-item"
 				[class.thumb-item-active]="item?.id === thumb?.id"
 				[class.not-work-related]="thumb?.isWorkRelated === false"
+				[attr.aria-pressed]="item?.id === thumb?.id"
+				[attr.aria-label]="('TIMESHEET.SCREENSHOTS.POSITION' | translate : { position: index + 1, total: items.length }) + (thumb?.recordedAt ? ', ' + thumbTime : '')"
 				(click)="setFocus(thumb)"
 			>
 				<span class="thumb-frame">
 					@if (thumb) {
-					<img draggable="false" [src]="thumb?.thumbUrl" alt="Thumbnail Image" />
+					<img draggable="false" [src]="thumb?.thumbUrl" alt="" />
 					}
 				</span>
 				@if (thumb?.recordedAt) {
-				<span class="thumb-time">
-					{{ thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false }}
-				</span>
+				<span class="thumb-time">{{ thumbTime }}</span>
 				}
 			</button>
 			}
