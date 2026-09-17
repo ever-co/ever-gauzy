@@ -1,48 +1,144 @@
 @use 'themes' as *;
-.tag-color {
-  position: unset;
-  display: inline-flex;
-  align-items: center;
-  width: 1rem;
-  height: 1rem;
-  margin-right: 10px;
-  margin-left: 10px;
+
+// ── One row of the tag dropdown ──────────────────────────────────────────────
+// The row's chrome — its fill, radius, padding, hover and selected tints — comes
+// from the shared `.ng-option` block in `_overrides.scss`, the same one every
+// other dropdown in the app uses. What lives here is only what is INSIDE the
+// row: the state box, the tag's colour and its name.
+//
+// It was a `d-flex align-items-center` with the spacing carried on the swatch as
+// `margin-left: 10px; margin-right: 10px`, so the row was indented by a margin
+// that belonged to something else and the three items had no consistent rhythm
+// between them. One gap, set once.
+.tag-option {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	// The name ellipsizes rather than the row growing: a flex item will not
+	// shrink below its own content unless its container says it may.
+	min-width: 0;
 }
 
+// The state box. A bare `<input type="checkbox">` is the one control on the row
+// the theme never reached — and worse, the app-wide `input` rule in
+// `text-inputs-overrides` treats it as a text field, so it was handed a text
+// field's `min-height`, radius, fill and inset ring: a tall soft-cornered box
+// next to a 1.25rem line of text. Strip the control chrome off it and let it be
+// a checkbox.
+//
+// `accent-color` is the single property that repaints a NATIVE checkbox, and it
+// resolves the same brand colour `nb-checkbox` is drawn in, so a checked tag row
+// matches a checked box anywhere else in the app.
+//
+// `pointer-events: none` because the row, not the box, is the click target:
+// ng-select selects on the row's own click, and the box is bound one-way
+// (`[ngModel]`), so a click that landed on it used to flip it and then have the
+// change detection flip it back.
+.tag-option-check {
+	flex: none;
+	width: 0.875rem;
+	height: 0.875rem;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	border-radius: unset;
+	box-shadow: none;
+	background-color: transparent;
+	accent-color: nb-theme(color-primary-default);
+	pointer-events: none;
+}
+
+// The tag's colour in a dropdown row.
+//
+// `:not(.tag-label)` because the selected CHIP in the trigger carries this class
+// too, and that one is a text pill, not a swatch — the two used to share a
+// `width: 1rem; height: 1rem` box that only the chip's `display: unset` (which
+// computes to `inline`, where width and height do not apply) kept from taking
+// effect. The split says which of the two each rule is for.
+//
+// A dot rather than the 16px square with 10px of margin on either side it was:
+// against the row's 1.25rem line box that square read as a second control, and
+// the margins pushed the tag name a third of the way across the row.
+.tag-color:not(.tag-label) {
+	position: unset;
+	flex: none;
+	display: inline-block;
+	width: 0.5rem;
+	height: 0.5rem;
+	margin: 0;
+	padding: 0;
+	border-radius: 50%;
+	// The colours these dots carry are user-chosen, so a pale tag has to stay
+	// visible on a pale panel. Same hairline the overlay surfaces are drawn with.
+	box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+}
+
+// ── A selected tag, in the trigger ───────────────────────────────────────────
+// A filled pill in the tag's own colour, with the text colour computed against
+// it (`backgroundContrast` in the component) so a pale tag is readable.
+//
+// It relied on `display: unset` to escape the swatch box above; now that the
+// swatch is scoped away from it, it can declare its own box. `inline-block` and
+// not `inline-flex`: the text is a child text node of `nb-badge`, and
+// `text-overflow` only engages in a block container.
 .tag-label {
-  display: unset;
-  margin-right: 0;
-  border-radius: 2rem;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 13px;
-  letter-spacing: 0em;
-  padding: 3px 8px;
+	position: unset;
+	display: inline-block;
+	max-width: 100%;
+	margin: 0;
+	padding: 0.125rem 0.5rem;
+	// NO `border-radius` on purpose, where there used to be a `2rem` stadium. This
+	// is an `nb-badge`, and so is the tag chip a smart-table row renders
+	// (`notes-with-tags`, which overrides everything about the chip EXCEPT its
+	// corner). Leaving it alone is what makes a tag look the same in the field you
+	// pick it in as in the table it ends up in — both resolve `badge-border-radius`.
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: 600;
+	line-height: 1rem;
+	letter-spacing: 0em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+	// The chip removes the tag on click (`(click)="clear(item)"`), which nothing
+	// on it said. It is the only affordance in the trigger that is not the
+	// trigger itself.
+	cursor: pointer;
 }
 
-input {
-  box-shadow: unset;
-  height: unset;
+// The "+N" chip at the end of the row: the tags that did not fit. Neutral, so it
+// reads as a count and not as another tag.
+.tag-overflow {
+	display: inline-block;
+	padding: 0.125rem 0.375rem;
+	// A `<span>`, so unlike the chips beside it there is no badge radius to
+	// inherit — it resolves the same token by hand to sit on their corner.
+	border-radius: nb-theme(badge-border-radius);
+	background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+	color: var(--gauzy-text-color-2);
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: 600;
+	line-height: 1rem;
+	vertical-align: middle;
 }
+
 :host ::ng-deep {
-  .ng-select.ng-select-multiple
-    .ng-select-container
-    .ng-value-container
-    .ng-value {
-    background-color: transparent;
-    margin-right: 0;
-  }
-  .ng-select .ng-select-focused .ng-select-container {
-    &:hover,
-    &:focus,
-    &:active,
-    &:visited {
-      box-shadow: var(--gauzy-shadow) inset !important;
-    }
-  }
-  .ng-select .ng-select-container {
-    box-shadow: var(--gauzy-shadow) inset !important;
-  }
+	.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
+		background-color: transparent;
+		// The gap between two chips, which the chips themselves no longer carry.
+		margin-right: 0.25rem;
+	}
+	.ng-select .ng-select-focused .ng-select-container {
+		&:hover,
+		&:focus,
+		&:active,
+		&:visited {
+			box-shadow: var(--gauzy-shadow) inset !important;
+		}
+	}
+	.ng-select .ng-select-container {
+		box-shadow: var(--gauzy-shadow) inset !important;
+	}
 }
 
 // The tag name inside a dropdown row. `_overrides.scss` lets an appended
@@ -57,8 +153,8 @@ input {
 // text. `overflow: hidden` (not just `overflow-x`) so the box is a genuine
 // ellipsis container; `white-space: nowrap` is inherited from `.ng-option`.
 .text {
-  min-width: 0;
-  max-width: 20rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
+	min-width: 0;
+	max-width: 20rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
