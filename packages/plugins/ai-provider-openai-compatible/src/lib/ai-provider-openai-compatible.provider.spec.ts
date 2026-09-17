@@ -1,5 +1,14 @@
+import { importEsm } from '@gauzy/plugin-ai-chat';
 import type { IAiProviderCredentials } from '@gauzy/plugin-ai-chat';
 import { openAiCompatibleProviderDefinition } from './ai-provider-openai-compatible.provider';
+
+// `createModel` loads the AI SDK through `importEsm`; stubbing only that loader lets a spec inspect the
+// options handed to the SDK factory while every other helper (the SSRF guard included) stays real.
+jest.mock('@gauzy/plugin-ai-chat', () => ({
+	...jest.requireActual('@gauzy/plugin-ai-chat'),
+	importEsm: jest.fn()
+}));
+const importEsmMock = importEsm as unknown as jest.Mock;
 
 // The SSRF egress guard resolves the provider host before the mocked `fetch` answers. Answer that
 // lookup with a fixed public address, so no case waits on — or depends on — real DNS.
@@ -89,5 +98,41 @@ describe('openAiCompatibleProviderDefinition', () => {
 		await expect(
 			openAiCompatibleProviderDefinition.createModel('', credentials({ baseUrl: 'http://localhost:11434/v1' }))
 		).rejects.toThrow(/no default model/);
+	});
+
+	describe('chat traffic to a tenant base URL (GHSA-w3mx-m5cr-3gxp)', () => {
+		const sdkFactory = () => {
+			const factory = jest.fn().mockReturnValue({ chatModel: jest.fn().mockReturnValue({}) });
+			importEsmMock.mockResolvedValue({ createOpenAICompatible: factory });
+			return factory;
+		};
+
+		it('hands the SDK a guarded fetch, so a chat turn cannot reach an internal host', async () => {
+			const factory = sdkFactory();
+			await openAiCompatibleProviderDefinition.createModel(
+				'llama3',
+				credentials({ baseUrl: 'http://metadata.example.com/v1' })
+			);
+
+			const { fetch: sdkFetch } = factory.mock.calls[0][0] as { fetch?: typeof fetch };
+			expect(typeof sdkFetch).toBe('function');
+
+			// This spec's `dns.lookup` answers with a public address, so use a literal internal target.
+			const fetchMock = capture({});
+			await expect(
+				sdkFetch!('http://169.254.169.254/latest/meta-data/chat/completions', { method: 'POST' })
+			).rejects.toThrow(/not allowed/);
+			expect(fetchMock).not.toHaveBeenCalled();
+		});
+
+		it('leaves an operator-configured endpoint on the SDK default transport', async () => {
+			const factory = sdkFactory();
+			await openAiCompatibleProviderDefinition.createModel(
+				'llama3',
+				credentials({ baseUrl: 'http://localhost:11434/v1', source: 'environment' })
+			);
+
+			expect(factory.mock.calls[0][0].fetch).toBeUndefined();
+		});
 	});
 });

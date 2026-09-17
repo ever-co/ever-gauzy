@@ -75,6 +75,7 @@ export type { IAiChatRateLimitEnvelope } from './lib/rate-limit';
 export {
 	ALLOW_PRIVATE_BASE_URLS_ENV,
 	SsrfBlockedError,
+	createAiProviderSdkFetch,
 	getUnsafeAiOutboundUrlReason,
 	getUnsafeAiProviderBaseUrlReason,
 	isPrivateAiProviderBaseUrlAllowed,

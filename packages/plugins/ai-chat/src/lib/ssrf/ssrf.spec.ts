@@ -4,6 +4,7 @@ import {
 	ALLOW_PRIVATE_BASE_URLS_ENV,
 	getUnsafeAiOutboundUrlReason,
 	getUnsafeAiProviderBaseUrlReason,
+	createAiProviderSdkFetch,
 	isPrivateAiProviderEndpointAllowed,
 	SsrfBlockedError,
 	ssrfSafeFetch
@@ -329,6 +330,110 @@ describe('AI provider base URL — SSRF egress guard', () => {
 			).resolves.toBeInstanceOf(Response);
 			expect(mock).toHaveBeenCalledTimes(1);
 			expect(resolver).not.toHaveBeenCalled();
+		});
+	});
+
+	/**
+	 * Chat completions and embeddings reach the stored base URL through the AI SDK's own `fetch`, not
+	 * through the catalogue or speech helpers. Without this guard a tenant base URL on a wildcard-DNS
+	 * name (`169.254.169.254.nip.io`) passed every literal check and was requested on each chat turn.
+	 */
+	describe('createAiProviderSdkFetch (chat and embedding sinks)', () => {
+		const realFetch = global.fetch;
+		afterEach(() => {
+			global.fetch = realFetch;
+		});
+		beforeEach(() => {
+			delete process.env[ALLOW_PRIVATE_BASE_URLS_ENV];
+		});
+
+		const okFetch = () => {
+			const mock = jest.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+			global.fetch = mock as unknown as typeof fetch;
+			return mock;
+		};
+
+		it.each([
+			[
+				'an operator environment credential',
+				{ apiKey: 'k', baseUrl: 'http://10.0.0.5/v1', source: 'environment' }
+			],
+			['a platform credential', { apiKey: 'k', baseUrl: 'http://10.0.0.5/v1', source: 'platform' }],
+			['a tenant key that uses the vendor host', { apiKey: 'k', source: 'tenant' }],
+			['a tenant key with a blank base URL', { apiKey: 'k', baseUrl: '  ', source: 'tenant' }]
+		] as const)('leaves %s on the SDK default transport', (_label, credentials) => {
+			expect(createAiProviderSdkFetch(credentials)).toBeUndefined();
+			expect(createAiProviderSdkFetch(null)).toBeUndefined();
+		});
+
+		it('refuses a tenant base URL whose public-looking host resolves to an internal address', async () => {
+			const mock = okFetch();
+			const sdkFetch = createAiProviderSdkFetch(
+				{ apiKey: 'k', baseUrl: 'http://169.254.169.254.nip.io/v1', source: 'tenant' },
+				{ resolver: jest.fn().mockResolvedValue(['169.254.169.254']) }
+			);
+
+			expect(sdkFetch).toBeDefined();
+			await expect(
+				sdkFetch!('http://169.254.169.254.nip.io/v1/chat/completions', { method: 'POST', body: '{}' })
+			).rejects.toThrow(SsrfBlockedError);
+			expect(mock).not.toHaveBeenCalled();
+		});
+
+		it('passes a public tenant request through unchanged except that redirects are refused', async () => {
+			const mock = okFetch();
+			const sdkFetch = createAiProviderSdkFetch(
+				{ apiKey: 'k', baseUrl: 'https://llm.example.com/v1', source: 'tenant' },
+				{ resolver: jest.fn().mockResolvedValue(['93.184.216.34']) }
+			);
+
+			await expect(
+				sdkFetch!('https://llm.example.com/v1/chat/completions', {
+					method: 'POST',
+					headers: { authorization: 'Bearer k' },
+					body: '{"stream":true}'
+				})
+			).resolves.toBeInstanceOf(Response);
+
+			expect(mock).toHaveBeenCalledTimes(1);
+			const [url, init] = mock.mock.calls[0];
+			expect(url).toBe('https://llm.example.com/v1/chat/completions');
+			expect(init).toEqual({
+				method: 'POST',
+				headers: { authorization: 'Bearer k' },
+				body: '{"stream":true}',
+				redirect: 'error'
+			});
+		});
+
+		it('judges a Request object by its own URL', async () => {
+			const mock = okFetch();
+			const sdkFetch = createAiProviderSdkFetch({
+				apiKey: 'k',
+				baseUrl: 'https://llm.example.com/v1',
+				source: 'tenant'
+			});
+
+			await expect(sdkFetch!(new Request('http://127.0.0.1:8080/v1/embeddings'))).rejects.toThrow(
+				SsrfBlockedError
+			);
+			expect(mock).not.toHaveBeenCalled();
+		});
+
+		it('lets a tenant use a private endpoint only on a deployment that opted in', async () => {
+			const mock = okFetch();
+			const credentials = { apiKey: '', baseUrl: 'http://localhost:11434/v1', source: 'tenant' } as const;
+
+			await expect(
+				createAiProviderSdkFetch(credentials)!('http://localhost:11434/v1/chat/completions')
+			).rejects.toThrow(SsrfBlockedError);
+			expect(mock).not.toHaveBeenCalled();
+
+			process.env[ALLOW_PRIVATE_BASE_URLS_ENV] = 'true';
+			await expect(
+				createAiProviderSdkFetch(credentials)!('http://localhost:11434/v1/chat/completions')
+			).resolves.toBeInstanceOf(Response);
+			expect(mock).toHaveBeenCalledTimes(1);
 		});
 	});
 });

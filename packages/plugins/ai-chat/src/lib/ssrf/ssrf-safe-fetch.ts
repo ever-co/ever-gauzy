@@ -20,6 +20,7 @@
 import { lookup as dnsLookup } from 'dns';
 import { isIP } from 'net';
 import { isPrivateOrLoopbackHost } from '@gauzy/utils';
+import type { IAiProviderCredentials } from '../provider.types';
 import { getUnsafeAiOutboundUrlReason, isPrivateAiProviderBaseUrlAllowed } from './outbound-url-guard';
 
 /** Thrown instead of performing a request the egress guard refuses. */
@@ -155,6 +156,24 @@ export async function ssrfSafeFetch(
 	init?: RequestInit,
 	options?: ISsrfSafeFetchOptions
 ): Promise<Response> {
+	await assertOutboundTargetAllowed(url, init?.signal, options);
+	return await fetch(url, { ...(init ?? {}), redirect: 'error' });
+}
+
+/**
+ * The egress checks {@link ssrfSafeFetch} runs before a request: URL-literal check, then (unless
+ * private targets are permitted) resolve-then-check of a hostname.
+ *
+ * @param url - Absolute URL about to be requested.
+ * @param signal - The request's abort signal; bounds the DNS pre-flight.
+ * @param options - Egress-guard options.
+ * @throws SsrfBlockedError when the target is refused.
+ */
+async function assertOutboundTargetAllowed(
+	url: string,
+	signal: AbortSignal | null | undefined,
+	options?: ISsrfSafeFetchOptions
+): Promise<void> {
 	const allowPrivate = options?.allowPrivateHost ?? isPrivateAiProviderBaseUrlAllowed();
 
 	const reason = getUnsafeAiOutboundUrlReason(url, { allowPrivate });
@@ -166,11 +185,50 @@ export async function ssrfSafeFetch(
 		// An IP literal has nothing to resolve and was already judged by the literal check above.
 		const hostname = new URL(url).hostname.replace(/^\[|\]$/g, '');
 		if (!isIP(hostname)) {
-			await assertResolvedHostIsPublic(hostname, options?.resolver, init?.signal);
+			await assertResolvedHostIsPublic(hostname, options?.resolver, signal);
 		}
 	}
+}
 
-	return await fetch(url, { ...(init ?? {}), redirect: 'error' });
+/**
+ * The `fetch` to hand an AI SDK provider factory (`create*({ baseURL, fetch })`) so chat completions
+ * and embeddings get the same egress guard as the catalogue and dictation requests.
+ *
+ * Those sinks send their request to the SAME stored base URL, but through the SDK's own `fetch`: a
+ * tenant base URL whose host is a public-looking name resolving to an internal address (a wildcard
+ * DNS service is enough — no rebinding needed) passed the store-time and read-time LITERAL checks and
+ * was then requested, redirects followed, by every chat turn (GHSA-w3mx-m5cr-3gxp).
+ *
+ * Only a TENANT-supplied base URL is guarded. For anything else — the operator's own `*_BASE_URL`, a
+ * platform key, or a tenant key with no base URL, which the SDK sends to the vendor's built-in host —
+ * this returns `undefined`, so the factory keeps its default transport and operator traffic is
+ * unchanged. For a tenant URL, private targets follow the `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS` deployment
+ * flag, exactly as `isPrivateAiProviderEndpointAllowed` decides for the catalogue and speech paths.
+ *
+ * Carries the same residual as {@link ssrfSafeFetch}: the check is a pre-flight, not the connection.
+ *
+ * @param credentials - The credentials the provider model is being created with.
+ * @param options.resolver - DNS resolver override (tests); `dns.lookup` otherwise.
+ * @returns A guarded `fetch`, or `undefined` when the address was not chosen by a tenant.
+ */
+export function createAiProviderSdkFetch(
+	credentials: IAiProviderCredentials | null | undefined,
+	options?: Pick<ISsrfSafeFetchOptions, 'resolver'>
+): typeof fetch | undefined {
+	if (credentials?.source !== 'tenant' || !credentials.baseUrl?.trim()) {
+		return undefined;
+	}
+	const guardOptions: ISsrfSafeFetchOptions = {
+		allowPrivateHost: isPrivateAiProviderBaseUrlAllowed(),
+		resolver: options?.resolver
+	};
+	return async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+		// The SDK passes a string today; a `Request` is judged by its own URL and signal all the same.
+		const request = typeof input === 'object' && !(input instanceof URL) ? input : undefined;
+		const url = request ? request.url : String(input);
+		await assertOutboundTargetAllowed(url, init?.signal ?? request?.signal, guardOptions);
+		return await fetch(input, { ...(init ?? {}), redirect: 'error' });
+	};
 }
 
 /** Whether an error came from the egress guard (duck-typed, so it survives bundle boundaries). */

@@ -4,6 +4,7 @@ import {
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	IAiTranscribeOptions,
+	createAiProviderSdkFetch,
 	createCatalogueCache,
 	fetchCatalogueJson,
 	importEsm,
@@ -140,6 +141,8 @@ export const openAiCompatibleProviderDefinition: IAiChatProviderDefinition = {
 		const provider = createOpenAICompatible({
 			name: PROVIDER_ID,
 			baseURL: credentials.baseUrl,
+			// A tenant base URL gets the SSRF egress guard on chat traffic too (GHSA-w3mx-m5cr-3gxp).
+			fetch: createAiProviderSdkFetch(credentials),
 			...(credentials.apiKey ? { apiKey: credentials.apiKey } : {})
 		});
 		return provider.chatModel(modelId);
