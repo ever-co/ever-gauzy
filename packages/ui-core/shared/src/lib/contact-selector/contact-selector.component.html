@@ -16,7 +16,7 @@
 	[items]="contacts"
 	appendTo="body"
 	[(ngModel)]="contactId"
-	[placeholder]="'TIMER_TRACKER.SELECT_CLIENT' | translate"
+	[placeholder]="placeholder ?? ('TIMER_TRACKER.SELECT_CLIENT' | translate)"
 	bindValue="id"
 	bindLabel="name"
 ></ng-select>
