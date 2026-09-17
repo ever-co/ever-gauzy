@@ -20,6 +20,7 @@ import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } 
 import { AccessTokenModule } from '../access-token/access-token.module';
 import { AccountingTemplateModule } from '../accounting-template/accounting-template.module';
 import { ActivityLogModule } from '../activity-log/activity-log.module';
+import { AdjustmentModule } from '../adjustment/adjustment.module';
 import { ApiCallLogModule } from '../api-call-log/api-call-log.module'; // Global Api Call Log Module
 import { AppointmentEmployeesModule } from '../appointment-employees/appointment-employees.module';
 import { ApprovalPolicyModule } from '../approval-policy/approval-policy.module';
@@ -105,6 +106,7 @@ import { KeyResultModule } from '../keyresult/keyresult.module';
 import { LanguageModule } from '../language/language.module';
 import { MentionModule } from '../mention/mention.module';
 import { MerchantModule } from '../merchant/merchant.module';
+import { MoneyModule } from '../money/money.module';
 import { OrganizationAwardModule } from '../organization-award/organization-award.module';
 import { OrganizationContactModule } from '../organization-contact/organization-contact.module';
 import { OrganizationDepartmentModule } from '../organization-department/organization-department.module';
@@ -144,6 +146,7 @@ import { RequestApprovalModule } from '../request-approval/request-approval.modu
 import { ResourceLinkModule } from '../resource-link/resource-link.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { PluginContributionModule } from '../plugin-contributions/plugin-contribution.module';
+import { RuleModule } from '../rule/rule.module';
 import { SequenceModule } from '../sequence/sequence.module';
 import { RoleModule } from '../role/role.module';
 import { SharedEntityModule } from '../shared-entity/shared-entity.module';
@@ -166,6 +169,7 @@ import { TaskStatusModule } from '../tasks/statuses/status.module';
 import { TaskModule } from '../tasks/task.module';
 import { TaskVersionModule } from '../tasks/versions/version.module';
 import { TaskViewModule } from '../tasks/views/view.module';
+import { TaxLineModule } from '../tax-line/tax-line.module';
 import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
@@ -454,6 +458,12 @@ if (environment.THROTTLE_ENABLED) {
 		RolePermissionModule,
 		PluginContributionModule,
 		SequenceModule,
+		// Kernel capabilities every domain above builds on: one rule engine, one money-adjustment ledger,
+		// one tax ledger, and the money layer the three of them round through.
+		RuleModule,
+		AdjustmentModule,
+		TaxLineModule,
+		MoneyModule,
 		TenantModule,
 		TenantSettingModule,
 		// In-product billing pages. Every route inside 404s unless STRIPE_SECRET_KEY is set, so a
