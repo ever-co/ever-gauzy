@@ -18,7 +18,7 @@
  */
 
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { join, relative, sep, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
@@ -420,7 +420,7 @@ for (const plugin of Object.keys(PLUGINS)) {
 }
 
 /* ------------------------------------------------------------------------------------------------
- * Kernel capabilities
+ * Migration ordering
  * ---------------------------------------------------------------------------------------------- */
 
 // The core migrations, read once: a kernel table is proved to exist by the migration that creates
@@ -431,6 +431,67 @@ const coreMigrations = existsSync(coreMigrationsDir)
 			.filter((f) => f.endsWith('.ts'))
 			.map((f) => ({ file: join(coreMigrationsDir, f), source: read(join(coreMigrationsDir, f)) }))
 	: [];
+
+// Every migration this programme ships, core and plugin, in the order they will run. Migrations run
+// in filename-timestamp order, so a migration may only reference a table that an EARLIER migration
+// creates. A reference to a table created later works on a developer's machine — where the schema
+// may already be synchronised, or tables may persist from an earlier run in a different order — and
+// fails on a first clean install, which is the one run nobody repeats often enough to notice.
+const allMigrations = [...coreMigrations.map((m) => ({ file: m.file, source: m.source }))];
+if (existsSync(pluginsDir)) {
+	for (const plugin of readdirSync(pluginsDir, { withFileTypes: true }).filter((e) => e.isDirectory())) {
+		for (const file of walk(join(pluginsDir, plugin.name))) {
+			if (!file.endsWith('.ts') || /index\.ts$/.test(file)) continue;
+			if (!/UpQueryRunner/.test(read(file))) continue;
+			allMigrations.push({ file, source: read(file) });
+		}
+	}
+}
+
+/** The tick a migration runs at, taken from its filename. */
+const tickOf = (file) => {
+	const match = basename(file).match(/^(\d{10,})-/);
+	return match ? Number(match[1]) : undefined;
+};
+
+/** When each table is created, by the earliest migration that creates it. */
+const createdBy = new Map();
+for (const migration of allMigrations) {
+	const tick = tickOf(migration.file);
+	if (tick === undefined) continue;
+	for (const match of migration.source.matchAll(/create\s+table(?:\s+if\s+not\s+exists)?\s+["'`]?([a-z0-9_]+)["'`]?/gi)) {
+		const table = match[1].toLowerCase();
+		if (!createdBy.has(table) || tick < createdBy.get(table).tick) {
+			createdBy.set(table, { tick, file: migration.file });
+		}
+	}
+}
+
+let orderChecks = 0;
+for (const migration of allMigrations) {
+	const tick = tickOf(migration.file);
+	if (tick === undefined) continue;
+	for (const match of migration.source.matchAll(/references\s+["'`]?([a-z0-9_]+)["'`]?/gi)) {
+		const target = match[1].toLowerCase();
+		const creator = createdBy.get(target);
+		// A target this programme never creates is a table the platform already had, created long
+		// before any of these migrations — nothing to check.
+		if (!creator) continue;
+		orderChecks++;
+		check(
+			`migration order: ${basename(migration.file)} references "${target}"`,
+			creator.tick <= tick,
+			`"${target}" is created later, by ${basename(creator.file)} at ${creator.tick}`
+		);
+	}
+}
+check('migration ordering was actually examined', orderChecks > 0, 'no foreign key references were found to check');
+
+/* ------------------------------------------------------------------------------------------------
+ * Kernel capabilities
+ * ---------------------------------------------------------------------------------------------- */
+
+// The core migrations are read above, in the migration-ordering pass, because both passes need them.
 
 for (const { name, runtime } of [
 	...KERNEL_MODULES.map((name) => ({ name, runtime: true })),
