@@ -240,7 +240,7 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 				organizationId: RequestContext.currentOrganizationId(),
 				status: In(LIVE_STATUSES)
 			},
-			select: ['id']
+			select: { id: true }
 		});
 
 		const returnIds = liveReturns.map((row) => row.id).filter((id) => !!id && id !== excludeReturnId);
@@ -362,7 +362,7 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 				organizationId: RequestContext.currentOrganizationId(),
 				status: In(LIVE_STATUSES)
 			},
-			select: ['orderId']
+			select: { orderId: true }
 		});
 
 		return Array.from(new Set(rows.map((row) => row.orderId).filter((id) => !!id)));

@@ -5,9 +5,7 @@ import {
 	IsArray,
 	IsBoolean,
 	IsNotEmpty,
-	IsNumber,
 	IsOptional,
-	IsPositive,
 	IsString,
 	IsUUID,
 	MaxLength,
@@ -19,9 +17,8 @@ import { OrderReturnDTO } from './order-return.dto';
 /**
  * One requested line, as a caller supplies it.
  *
- * The quantity is a number here rather than a decimal string because a customer returns whole or
- * measured units and the service writes the exact decimal; there is no amount of money on a return
- * line for a client to get wrong.
+ * The quantity is an exact decimal string, like every other quantity of the domain: the column behind
+ * it is `numeric(20,6)` and a JSON number would lose the exactness on the way in.
  */
 export class CreateOrderReturnLineInputDTO {
 	@ApiProperty({ type: () => String })
@@ -29,11 +26,9 @@ export class CreateOrderReturnLineInputDTO {
 	@IsUUID()
 	readonly orderLineId: ID;
 
-	@ApiProperty({ type: () => Number, minimum: 0, exclusiveMinimum: true })
+	@ApiProperty({ type: () => String, description: 'Exact decimal string, e.g. "2.000000".' })
 	@IsNotEmpty()
-	@IsNumber()
-	@IsPositive()
-	readonly quantity: number;
+	readonly quantity: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

@@ -377,8 +377,12 @@ export class StockLevelService {
 	/**
 	 * Validates the domain invariants of a movement against the locked level state.
 	 *
-	 * The reservation rule is the one that matters: a hold must never be able to drive available stock
-	 * negative unless the level explicitly permits a backorder, and then only up to its stated limit.
+	 * Two rules, and both are evaluated for every movement rather than for a subset of types. A
+	 * reservation-only movement leaves the on-hand quantity where it was, so the quantity rule is
+	 * satisfied by construction; but the hold rule is exactly the one a pure reservation can break,
+	 * and skipping it there would be skipping it where it matters most. The engine exists to make
+	 * overselling impossible, so the check is unconditional and reads the values it took under the
+	 * row lock.
 	 */
 	private assertInvariants(
 		type: StockMovementType,
@@ -388,36 +392,36 @@ export class StockLevelService {
 	): void {
 		const allowBackorder = !!level.allowBackorder;
 		const isUnlimited = !!level.isUnlimited;
+		const levelDetail = { id: level.id, type, quantityAfter, reservedAfter };
 
 		if (reservedAfter < 0) {
 			throw invariantViolation('INV-07', 'Reserved quantity must never become negative.', {
-				level: { id: level.id, reservedAfter }
+				level: levelDetail
 			});
 		}
 
 		if (quantityAfter < 0 && !isUnlimited) {
 			throw invariantViolation('INV-05', 'On-hand quantity must never become negative on a tracked level.', {
-				level: { id: level.id, quantityAfter }
+				level: levelDetail
 			});
 		}
 
-		if (!RESERVATION_ONLY_TYPES.includes(type) && reservedAfter > quantityAfter && !isUnlimited) {
+		if (reservedAfter > quantityAfter && !isUnlimited) {
 			if (!allowBackorder) {
 				throw invariantViolation(
 					'INV-07',
-					'A reservation may not exceed the on-hand quantity on a level that does not allow backorder.',
-					{ level: { id: level.id, quantityAfter, reservedAfter } }
+					'A hold may not exceed the on-hand quantity on a level that does not allow backorder.',
+					{ level: levelDetail }
 				);
 			}
-			const limit = level.backorderLimit === null || level.backorderLimit === undefined
-				? undefined
-				: Number(level.backorderLimit);
+			const limit =
+				level.backorderLimit === null || level.backorderLimit === undefined
+					? undefined
+					: Number(level.backorderLimit);
 			if (limit !== undefined && reservedAfter - quantityAfter > limit) {
-				throw invariantViolation(
-					'INV-07',
-					'The reservation would exceed the level’s backorder limit.',
-					{ level: { id: level.id, quantityAfter, reservedAfter, backorderLimit: limit } }
-				);
+				throw invariantViolation('INV-07', 'The hold would exceed the level’s backorder limit.', {
+					level: { ...levelDetail, backorderLimit: limit }
+				});
 			}
 		}
 	}

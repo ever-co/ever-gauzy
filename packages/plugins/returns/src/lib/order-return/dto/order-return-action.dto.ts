@@ -126,11 +126,9 @@ export class EditOrderReturnLineDTO {
 	@IsUUID()
 	readonly orderLineId: ID;
 
-	@ApiProperty({ type: () => Number, minimum: 0, exclusiveMinimum: true })
+	@ApiProperty({ type: () => String, description: 'Exact decimal string, e.g. "2.000000".' })
 	@IsNotEmpty()
-	@IsNumber()
-	@IsPositive()
-	readonly quantity: number;
+	readonly quantity: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

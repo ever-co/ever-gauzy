@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, Length, Matches, MaxLength } from 'class-validator';
+import {
+	IsArray,
+	IsBoolean,
+	IsDate,
+	IsNotEmpty,
+	IsOptional,
+	IsString,
+	IsUUID,
+	Length,
+	Matches,
+	MaxLength
+} from 'class-validator';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 
 /**
@@ -103,5 +114,6 @@ export class TaxCalculationDTO {
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
+	@IsDate()
 	readonly at: Date;
 }

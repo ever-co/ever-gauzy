@@ -108,9 +108,13 @@ export class ApiExceptionFilter extends BaseExceptionFilter {
  * driver's text in `message` instead, and that case is deliberately NOT claimed here: it carries no
  * structured payload to classify, so it takes the delegation path and keeps today's bytes.
  *
+ * Exported because the GraphQL surface classifies the same payload with it. One implementation is
+ * what makes "the same failure carries the same code on both surfaces" a property rather than a
+ * coincidence.
+ *
  * @param payload - The exception's response payload.
  */
-function resolveDriverPayload(payload: unknown): unknown {
+export function resolveDriverPayload(payload: unknown): unknown {
 	if (isDatabaseErrorPayload(payload)) {
 		return payload;
 	}

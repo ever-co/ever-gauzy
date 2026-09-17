@@ -1,0 +1,227 @@
+import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
+import { IPagination, ShippingPriceType } from '@gauzy/contracts';
+import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { ShippingOption } from '../shipping-option/shipping-option.entity';
+import { IShippingEligibilityContext, ShippingOptionService } from '../shipping-option/shipping-option.service';
+import { ShippingProfile } from '../shipping-profile/shipping-profile.entity';
+import { ShippingProfileService } from '../shipping-profile/shipping-profile.service';
+import { ShippingProfileVariant } from '../shipping-profile-variant/shipping-profile-variant.entity';
+import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
+import { IShippingOptionConnection, IShippingOptionEligibility, IShippingProfileConnection, IShippingRate } from './types';
+
+/**
+ * The shipping configuration: profiles, their variant attachments, and the sellable options.
+ *
+ * Profiles and options share a resolver because they are one configuration: an option names the profile
+ * it is offered for, and the pairing is what decides whether a cart of digital goods is offered a
+ * courier at all.
+ */
+@Resolver(() => ShippingOption)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_VIEW)
+export class ShippingOptionResolver {
+	constructor(
+		private readonly optionService: ShippingOptionService,
+		private readonly profileService: ShippingProfileService
+	) {}
+
+	/**
+	 * Lists shipping profiles.
+	 *
+	 * @returns A page of profiles.
+	 */
+	@Query(() => Object, { name: 'shippingProfiles' })
+	async shippingProfiles(): Promise<IShippingProfileConnection> {
+		const page = (await this.profileService.findAll({})) as IPagination<ShippingProfile>;
+
+		return { items: page.items, total: page.total };
+	}
+
+	/**
+	 * Reads one shipping profile.
+	 *
+	 * @param id The profile.
+	 * @returns The profile with its variants.
+	 */
+	@Query(() => Object, { name: 'shippingProfile', nullable: true })
+	async shippingProfile(@Args('id', { type: () => ID }) id: string): Promise<ShippingProfile> {
+		return this.profileService.findOneByIdString(id, { relations: ['variants'] });
+	}
+
+	/**
+	 * The profile a variant ships under.
+	 *
+	 * @param variantId The variant.
+	 * @returns The profile, or null when the organization has neither an attachment nor a default.
+	 */
+	@Query(() => Object, { name: 'shippingProfileForVariant', nullable: true })
+	async shippingProfileForVariant(
+		@Args('variantId', { type: () => ID }) variantId: string
+	): Promise<ShippingProfile> {
+		return this.profileService.resolveForVariant(variantId);
+	}
+
+	/**
+	 * Lists shipping options.
+	 *
+	 * @returns A page of options.
+	 */
+	@Query(() => Object, { name: 'shippingOptions' })
+	async shippingOptions(): Promise<IShippingOptionConnection> {
+		const page = (await this.optionService.findAll({})) as IPagination<ShippingOption>;
+
+		return { items: page.items, total: page.total };
+	}
+
+	/**
+	 * Reads one shipping option.
+	 *
+	 * @param id The option.
+	 * @returns The option.
+	 */
+	@Query(() => Object, { name: 'shippingOption', nullable: true })
+	async shippingOption(@Args('id', { type: () => ID }) id: string): Promise<ShippingOption> {
+		return this.optionService.findOneByIdString(id);
+	}
+
+	/**
+	 * The options a cart may choose between.
+	 *
+	 * @param input What the cart looks like.
+	 * @returns The options, each with its reason when it is not available.
+	 */
+	@Query(() => [Object], { name: 'shippingOptionsForContext' })
+	async shippingOptionsForContext(
+		@Args('input', { type: () => Object, nullable: true }) input?: IShippingEligibilityContext
+	): Promise<IShippingOptionEligibility[]> {
+		return this.optionService.findEligible(input ?? {});
+	}
+
+	/**
+	 * Prices one option for a cart.
+	 *
+	 * @param shippingOptionId The option.
+	 * @param input What the cart looks like.
+	 * @returns The amount, or the strategy that must be asked for it.
+	 */
+	@Query(() => Object, { name: 'shippingRate', nullable: true })
+	async shippingRate(
+		@Args('shippingOptionId', { type: () => ID }) shippingOptionId: string,
+		@Args('input', { type: () => Object, nullable: true }) input?: IShippingEligibilityContext
+	): Promise<IShippingRate> {
+		return this.optionService.calculate(shippingOptionId, input ?? {});
+	}
+
+	/**
+	 * Creates a shipping profile.
+	 *
+	 * @param input The profile to create.
+	 * @returns The created profile.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_CREATE)
+	@Mutation(() => Object, { name: 'createShippingProfile' })
+	async createShippingProfile(
+		@Args('input', { type: () => Object }) input: Record<string, any>
+	): Promise<ShippingProfile> {
+		return this.profileService.create(input as any);
+	}
+
+	/**
+	 * Updates a shipping profile.
+	 *
+	 * @param id The profile.
+	 * @param input The fields to change.
+	 * @returns The profile.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_EDIT)
+	@Mutation(() => Object, { name: 'updateShippingProfile' })
+	async updateShippingProfile(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { type: () => Object }) input: Record<string, any>
+	): Promise<ShippingProfile> {
+		await this.profileService.update(id, input as any);
+
+		return this.profileService.findOneByIdString(id);
+	}
+
+	/**
+	 * Deletes a shipping profile.
+	 *
+	 * @param id The profile.
+	 * @returns True when the profile was removed.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
+	@Mutation(() => Boolean, { name: 'deleteShippingProfile' })
+	async deleteShippingProfile(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
+		const result = await this.profileService.delete(id);
+
+		return Boolean(result);
+	}
+
+	/**
+	 * Attaches and detaches variants.
+	 *
+	 * @param input The profile and the variants to add and remove.
+	 * @returns The attachments that exist after the change.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_EDIT)
+	@Mutation(() => [Object], { name: 'assignShippingProfileVariant' })
+	async assignShippingProfileVariant(
+		@Args('input', { type: () => Object }) input: Record<string, any>
+	): Promise<ShippingProfileVariant[]> {
+		return this.profileService.assignVariants(input.profileId, {
+			add: input.add,
+			remove: input.remove
+		});
+	}
+
+	/**
+	 * Creates a shipping option.
+	 *
+	 * @param input The option to create.
+	 * @returns The created option.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_CREATE)
+	@Mutation(() => Object, { name: 'createShippingOption' })
+	async createShippingOption(
+		@Args('input', { type: () => Object }) input: Record<string, any>
+	): Promise<ShippingOption> {
+		return this.optionService.create({
+			...(input as any),
+			priceType: (input.priceType as ShippingPriceType) ?? ShippingPriceType.FLAT
+		});
+	}
+
+	/**
+	 * Updates a shipping option.
+	 *
+	 * @param id The option.
+	 * @param input The fields to change.
+	 * @returns The option.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_EDIT)
+	@Mutation(() => Object, { name: 'updateShippingOption' })
+	async updateShippingOption(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { type: () => Object }) input: Record<string, any>
+	): Promise<ShippingOption> {
+		await this.optionService.update(id, input as any);
+
+		return this.optionService.findOneByIdString(id);
+	}
+
+	/**
+	 * Deletes a shipping option.
+	 *
+	 * @param id The option.
+	 * @returns True when the option was removed.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
+	@Mutation(() => Boolean, { name: 'deleteShippingOption' })
+	async deleteShippingOption(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
+		const result = await this.optionService.delete(id);
+
+		return Boolean(result);
+	}
+}

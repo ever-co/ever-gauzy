@@ -3,13 +3,13 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere, In, Raw } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { LIKE_OPERATOR, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
-import { TAX_PERMISSION_VALUES, taxPermission } from '../tax.permissions';
-import { TaxCategory } from '../tax-category/tax-category.entity';
-import { TaxCategoryService } from '../tax-category/tax-category.service';
-import { TaxRate } from '../tax-rate/tax-rate.entity';
-import { TaxRateService } from '../tax-rate/tax-rate.service';
-import { TaxWriteInput } from '../tax.types';
-import { toConnection } from './connection.helper';
+import { TAX_PERMISSION_VALUES, taxPermission } from '../../tax.permissions';
+import { TaxCategory } from '../../tax-category/tax-category.entity';
+import { TaxCategoryService } from '../../tax-category/tax-category.service';
+import { TaxRate } from '../../tax-rate/tax-rate.entity';
+import { TaxRateService } from '../../tax-rate/tax-rate.service';
+import { TaxWriteInput } from '../../tax.types';
+import { toConnection } from '../connection.helper';
 import {
 	CreateTaxCategoryInput,
 	PageInput,
@@ -18,7 +18,7 @@ import {
 	TaxCategoryFilterInput,
 	TaxCategorySortField,
 	UpdateTaxCategoryInput
-} from './graphql.types';
+} from '../graphql.types';
 
 /**
  * The fields of the category type that may be sorted by, as the entity names them.

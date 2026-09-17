@@ -30,14 +30,16 @@ export class OrderExchangeLineResolver {
 	/**
 	 * Resolves the value of one line.
 	 *
+	 * The currency is stated by the caller because a line belongs to an exchange and the exchange is
+	 * where the currency lives; the multiplication runs through the platform money layer, so the value
+	 * a client displays is the same value `differenceDue` was computed from.
+	 *
 	 * @param line The line being read.
-	 * @param currency The currency the exchange is in.
+	 * @param currency The currency to express the value in.
 	 * @returns The line total as an exact decimal string.
 	 */
 	@ResolveField('lineTotal')
-	async lineTotal(@Parent() line: IOrderExchangeLine, @Args('currency') currency?: string): Promise<string> {
-		const resolved = currency ?? 'USD';
-
-		return Money.of(line.unitPrice ?? '0', resolved).multiply(line.quantity ?? '0').round().toStorageString();
+	async lineTotal(@Parent() line: IOrderExchangeLine, @Args('currency') currency: string): Promise<string> {
+		return Money.of(line.unitPrice ?? '0', currency).multiply(line.quantity ?? '0').round().toStorageString();
 	}
 }

@@ -107,13 +107,17 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * `variantId` is read from the stored row when the caller does not restate it: a price's variant
 	 * is part of its identity, and the overlap check is meaningless without it.
 	 *
+	 * The payload is the row the caller states rather than the query payload the driver is handed:
+	 * every value below is validated and normalised, and a member that names a column default instead
+	 * of a value is not something this service can check.
+	 *
 	 * @param id The price to update.
 	 * @param entity The fields to change.
 	 * @returns The update result.
 	 * @throws BadRequestException when the row is not a valid price, when the change would overlap a
 	 * neighbouring band, or when it would fall below the margin floor.
 	 */
-	public async updateOne(id: ID, entity: QueryDeepPartialEntity<ProductPrice>): Promise<UpdateResult | ProductPrice> {
+	public async updateOne(id: ID, entity: DeepPartial<ProductPrice>): Promise<UpdateResult | ProductPrice> {
 		const existing = await this.findOneByIdString(id);
 		// The row as it would stand after the change: the fields the caller did not state keep the value
 		// they already hold, which is what makes the overlap and margin checks meaningful on a partial
@@ -140,6 +144,23 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		// field leaves it alone rather than clearing it, so a partial update cannot silently drop a
 		// guard rail or a quantity band.
 		return await super.update(id, this.suppliedOnly(entity, prepared));
+	}
+
+	/**
+	 * The fields a partial update writes.
+	 *
+	 * The caller states which fields change and the prepared row says what they become, so the write
+	 * carries the stated fields with the normalised values and leaves every other column as it stands.
+	 *
+	 * @param entity The fields the caller stated.
+	 * @param prepared The row as it would stand, normalised.
+	 * @returns The fields to write.
+	 */
+	private suppliedOnly(
+		entity: DeepPartial<ProductPrice>,
+		prepared: DeepPartial<ProductPrice>
+	): DeepPartial<ProductPrice> {
+		return Object.fromEntries(Object.keys(entity).map((field: keyof ProductPrice) => [field, prepared[field]]));
 	}
 
 	/**
@@ -265,7 +286,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 				variantId: In(variantIds),
 				currency: scope.currency
 			} as FindOptionsWhere<ProductPrice>,
-			relations: ['priceList']
+			relations: { priceList: true }
 		});
 
 		const byVariant = new Map<ID, ProductPrice[]>();
@@ -828,7 +849,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 
 		const rows = await this.typeOrmProductPriceRepository.manager.find(ProductVariantPrice, {
 			where: { tenantId, organizationId, productVariant: { id: In(variantIds) } } as any,
-			relations: ['productVariant']
+			relations: { productVariant: true }
 		});
 
 		for (const row of rows) {

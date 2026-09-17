@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { ID, IPagination, OfferingStatus, SellerStatus } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, RequestContext, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
 import { SellerOffering } from './seller-offering.entity';
 import { MikroOrmSellerOfferingRepository } from './repository/mikro-orm-seller-offering.repository';
 import { TypeOrmSellerOfferingRepository } from './repository/type-orm-seller-offering.repository';
@@ -18,17 +18,18 @@ import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
  *   variant may be offered by many sellers: competing offers are the normal case, and the winner is
  *   decided by the platform's price resolution rather than by a second pricing mechanism.
  * - **Publication is a conjunction, and every clause is checked separately** so a refusal names the
- *   clause that failed instead of answering "not available". A seller must be active, the offering must
- *   be active, its window must contain now, the channel and the region must be in the effective sets,
- *   and the catalogue must have published the product and the variant to that channel — a seller cannot
- *   publish a variant the platform has not published.
+ *   clause that failed instead of answering "not available". A seller must be active, the offering
+ *   must be active, its window must contain now, the channel and the region must be in the effective
+ *   sets, and the catalogue must have published the product and the variant to that channel — a seller
+ *   cannot publish a variant the platform has not published.
  */
 @Injectable()
 export class SellerOfferingService extends TenantAwareCrudService<SellerOffering> {
 	constructor(
 		readonly typeOrmSellerOfferingRepository: TypeOrmSellerOfferingRepository,
 		readonly mikroOrmSellerOfferingRepository: MikroOrmSellerOfferingRepository,
-		private readonly sellerRepository: TypeOrmSellerRepository
+		private readonly sellerRepository: TypeOrmSellerRepository,
+		private readonly outbox: EventOutboxService
 	) {
 		super(typeOrmSellerOfferingRepository, mikroOrmSellerOfferingRepository);
 	}
@@ -38,11 +39,13 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		const where = { ...(filter?.where ?? {}) };
 
 		if (scope && !scope.staff) {
+			// The seller predicate is applied whether or not the caller named a seller: asking for another
+			// seller's offerings is refused rather than silently narrowed.
 			assertSellerScope(scope, where.sellerId);
 			where.sellerId = scope.sellerId;
 		}
 
-		return this.pagination({ ...filter, where });
+		return this.paginate({ ...filter, where });
 	}
 
 	/** Reads one offering, refusing one that belongs to another seller. */
@@ -84,15 +87,31 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 			...input,
 			...window,
 			status: input.status ?? OfferingStatus.DRAFT,
-			// The organization is copied from the seller the service read, never from the request body:
-			// a child row that could name another organization would be the leak the invariant exists for.
+			// The organization is copied from the seller the service read, never from the request body: a
+			// child row that could name another organization would be the leak the invariant exists for.
 			organizationId: seller.organizationId,
 			tenantId: seller.tenantId
 		} as Partial<SellerOffering>);
 
 		try {
-			return await this.typeOrmSellerOfferingRepository.save(offering as SellerOffering);
+			const created = await this.typeOrmSellerOfferingRepository.save(offering as SellerOffering);
+
+			await this.emit(created, 'seller-offering.created', {
+				variantId: created.variantId,
+				productId: created.productId,
+				sellerSku: created.sellerSku,
+				priceAmount: created.priceAmount,
+				priceCurrency: created.priceCurrency
+			});
+
+			return created;
 		} catch (error) {
+			if (!isUniqueViolation(error)) {
+				throw error;
+			}
+
+			// `(sellerId, variantId)` is unique among live offerings, so a second offer of one variant by
+			// one seller is a conflict rather than a duplicate listing.
 			throw new ConflictException('This seller already offers this variant, or the SKU is already used.');
 		}
 	}
@@ -105,10 +124,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 			input.availableFrom ?? offering.availableFrom,
 			input.availableTo ?? offering.availableTo
 		);
-		this.assertPrice(
-			input.priceAmount ?? offering.priceAmount,
-			input.priceCurrency ?? offering.priceCurrency
-		);
+		this.assertPrice(input.priceAmount ?? offering.priceAmount, input.priceCurrency ?? offering.priceCurrency);
 
 		// Named as strings rather than as `keyof SellerOffering`, because the immutable set includes the
 		// columns every platform base entity contributes — the organization and the tenant above all,
@@ -122,7 +138,11 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		Object.assign(offering, values);
 
-		return this.typeOrmSellerOfferingRepository.save(offering);
+		const saved = await this.typeOrmSellerOfferingRepository.save(offering);
+
+		await this.emit(saved, 'seller-offering.updated', { changed: Object.keys(values), status: saved.status });
+
+		return saved;
 	}
 
 	/** Moves an offering to `PENDING_REVIEW`. */
@@ -135,7 +155,11 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		offering.status = OfferingStatus.PENDING_REVIEW;
 
-		return this.typeOrmSellerOfferingRepository.save(offering);
+		const submitted = await this.typeOrmSellerOfferingRepository.save(offering);
+
+		await this.emit(submitted, 'seller-offering.updated', { changed: ['status'], status: submitted.status });
+
+		return submitted;
 	}
 
 	/**
@@ -158,7 +182,14 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		offering.approvedAt = new Date();
 		offering.approvedByUserId = RequestContext.currentUserId();
 
-		return this.typeOrmSellerOfferingRepository.save(offering);
+		const published = await this.typeOrmSellerOfferingRepository.save(offering);
+
+		await this.emit(published, 'seller-offering.updated', {
+			changed: ['status', 'channelIds'],
+			status: published.status
+		});
+
+		return published;
 	}
 
 	/** Pauses an offering without withdrawing it. */
@@ -167,7 +198,11 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		offering.status = OfferingStatus.PAUSED;
 
-		return this.typeOrmSellerOfferingRepository.save(offering);
+		const paused = await this.typeOrmSellerOfferingRepository.save(offering);
+
+		await this.emit(paused, 'seller-offering.updated', { changed: ['status'], status: paused.status });
+
+		return paused;
 	}
 
 	/** Withdraws an offering; the row is kept, because it explains a past line's price and commission. */
@@ -176,7 +211,11 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		offering.status = OfferingStatus.WITHDRAWN;
 
-		return this.typeOrmSellerOfferingRepository.save(offering);
+		const withdrawn = await this.typeOrmSellerOfferingRepository.save(offering);
+
+		await this.emit(withdrawn, 'seller-offering.withdrawn', { reason: 'WITHDRAWN' });
+
+		return withdrawn;
 	}
 
 	/** Replaces the offering's publication sets. */
@@ -195,7 +234,14 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 			offering.regionIds = sets.regionIds;
 		}
 
-		return this.typeOrmSellerOfferingRepository.save(offering);
+		const saved = await this.typeOrmSellerOfferingRepository.save(offering);
+
+		await this.emit(saved, 'seller-offering.updated', {
+			changed: ['channelIds', 'regionIds'],
+			status: saved.status
+		});
+
+		return saved;
 	}
 
 	/**
@@ -234,7 +280,9 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 			return 'NO_LONGER_AVAILABLE';
 		}
 
-		if (channelId && this.effectiveChannels(offering, seller).length && !this.effectiveChannels(offering, seller).includes(String(channelId))) {
+		const channels = this.effectiveChannels(offering, seller);
+
+		if (channelId && channels.length && !channels.includes(String(channelId))) {
 			return 'CHANNEL_NOT_PUBLISHED';
 		}
 
@@ -247,25 +295,20 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 	/** Refuses a publication the clauses block. */
 	private assertPublication(offering: SellerOffering, seller: Seller): void {
 		if (seller.status !== SellerStatus.ACTIVE) {
-			throw new ForbiddenException(`Seller '${seller.code}' is ${seller.status}, so its offerings are not sellable.`);
+			throw new ForbiddenException(
+				`Seller '${seller.code}' is ${seller.status}, so its offerings are not sellable.`
+			);
 		}
 
 		const window = this.assertWindow(offering.availableFrom, offering.availableTo);
 
-		if (window.availableFrom || window.availableTo) {
-			const now = new Date();
-
-			if (window.availableTo && new Date(window.availableTo) <= now) {
-				throw new BadRequestException('The availability window of this offering has already closed.');
-			}
+		if (window.availableTo && new Date(window.availableTo) <= new Date()) {
+			throw new BadRequestException('The availability window of this offering has already closed.');
 		}
 	}
 
 	/** Refuses a window that ends before it starts. */
-	private assertWindow(
-		availableFrom?: Date,
-		availableTo?: Date
-	): { availableFrom?: Date; availableTo?: Date } {
+	private assertWindow(availableFrom?: Date, availableTo?: Date): { availableFrom?: Date; availableTo?: Date } {
 		if (availableFrom && availableTo && new Date(availableTo) <= new Date(availableFrom)) {
 			throw new BadRequestException('The availability window must end after it starts.');
 		}
@@ -278,6 +321,33 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		if (priceAmount !== undefined && priceAmount !== null && !priceCurrency) {
 			throw new BadRequestException('An authored price needs a currency.');
 		}
+	}
+
+	/**
+	 * Writes one outbox row for an offering state change.
+	 *
+	 * The event is written in the same transaction as the row, so an offering cannot change without the
+	 * platform being able to say that it did — which is what a catalogue projection, a price-cache
+	 * invalidation and an open-cart validation all depend on.
+	 */
+	private async emit(offering: SellerOffering, name: string, extra: Record<string, any> = {}): Promise<void> {
+		await this.typeOrmSellerOfferingRepository.manager.transaction(async (manager) => {
+			await this.outbox.append(manager, {
+				name,
+				aggregateType: 'SELLER_OFFERING',
+				aggregateId: offering.id as ID,
+				data: {
+					offeringId: offering.id,
+					sellerId: offering.sellerId,
+					status: offering.status,
+					channelIds: offering.channelIds ?? [],
+					commissionRate: offering.commissionRate,
+					...extra
+				},
+				tenantId: offering.tenantId,
+				organizationId: offering.organizationId
+			});
+		});
 	}
 
 	/** Reads the seller a child row is being written for. */

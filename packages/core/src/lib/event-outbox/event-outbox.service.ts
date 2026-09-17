@@ -471,7 +471,7 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 */
 	async findLastDeliveredSequence(consumerKey: string, partitionKey: string): Promise<number> {
 		const raw = await this.typeOrmEventDeliveryRepository
-			.createQueryBuilder(EventDelivery, 'delivery')
+			.createQueryBuilder('delivery')
 			.select('MAX(delivery.sequence)', 'max')
 			.where('delivery.consumerKey = :consumerKey', { consumerKey })
 			.andWhere('delivery.partitionKey = :partitionKey', { partitionKey })

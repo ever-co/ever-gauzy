@@ -7,6 +7,7 @@ import { OrderClaim } from '../../order-claim/order-claim.entity';
 import { OrderClaimService } from '../../order-claim/order-claim.service';
 import { OrderClaimLineService } from '../../order-claim-line/order-claim-line.service';
 import { OrderClaimLine } from '../../order-claim-line/order-claim-line.entity';
+import { OrderReturnService } from '../../order-return/order-return.service';
 
 /** The request that opens a claim, as the schema declares it. */
 interface IRequestOrderClaimArgs {
@@ -35,7 +36,8 @@ interface IRequestOrderClaimArgs {
 export class OrderClaimResolver {
 	constructor(
 		private readonly orderClaimService: OrderClaimService,
-		private readonly orderClaimLineService: OrderClaimLineService
+		private readonly orderClaimLineService: OrderClaimLineService,
+		private readonly orderReturnService: OrderReturnService
 	) {}
 
 	/**
@@ -148,5 +150,24 @@ export class OrderClaimResolver {
 		}
 
 		return await this.orderClaimLineService.findForClaim(claim.id);
+	}
+
+	/**
+	 * Resolves the return created for a claim, which is the inbound half of a replacement.
+	 *
+	 * @param claim The claim being read.
+	 * @returns The return, or null when the claim has none.
+	 */
+	@ResolveField('returnOfClaim')
+	async returnOfClaim(@Parent() claim: IOrderClaim) {
+		if (!claim.returnId) {
+			return null;
+		}
+
+		try {
+			return await this.orderReturnService.findOneDetailed(claim.returnId);
+		} catch (error) {
+			return null;
+		}
 	}
 }

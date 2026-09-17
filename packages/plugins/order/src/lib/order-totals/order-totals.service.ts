@@ -3,6 +3,7 @@ import {
 	AdjustmentOwnerType,
 	FulfillmentStatus,
 	ID,
+	IOrderTotals,
 	IPagination,
 	OrderStatus,
 	OrderTransactionType,
@@ -23,7 +24,7 @@ import { OrderSummaryService } from '../order-summary/order-summary.service';
 import { OrderTransaction } from '../order-transaction/order-transaction.entity';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
 import { OrderStateMachine } from '../order-state-machine/order-state-machine';
-import { TypeOrmOrderRepository } from './repository/type-orm-order.repository';
+import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repository';
 
 /**
  * The only writer of an order's total columns.
@@ -114,10 +115,14 @@ export class OrderTotalsService {
 	/**
 	 * Computes an order's totals without writing anything.
 	 *
+	 * The calculator marks the four order-only totals optional, because a cart runs neither the credit
+	 * lines nor the money ledger step and has no such totals. An order always runs both, so they are
+	 * stated here rather than left for every reader to narrow.
+	 *
 	 * @param order The order.
 	 * @returns The computed totals, including the order-only tail.
 	 */
-	public async computeTotals(order: Order): Promise<ITotalsSnapshot> {
+	public async computeTotals(order: Order): Promise<IOrderTotals> {
 		const lines = ((await this.lineService.findAll({
 			where: { orderId: order.id }
 		})) as IPagination<OrderLine>).items;
@@ -194,7 +199,15 @@ export class OrderTotalsService {
 			}))
 		};
 
-		return TotalsCalculator.compute(context);
+		const snapshot = TotalsCalculator.compute(context);
+
+		return {
+			...snapshot,
+			creditTotal: snapshot.creditTotal ?? 0,
+			paidTotal: snapshot.paidTotal ?? 0,
+			refundedTotal: snapshot.refundedTotal ?? 0,
+			outstandingTotal: snapshot.outstandingTotal ?? 0
+		};
 	}
 
 	/**

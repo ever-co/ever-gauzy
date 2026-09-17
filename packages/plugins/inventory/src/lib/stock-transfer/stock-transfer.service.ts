@@ -310,3 +310,5 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 			transfer.version = Number(transfer.version ?? 1) + 1;
 			return await manager.save(StockTransfer, transfer);
 		});
+	}
+}

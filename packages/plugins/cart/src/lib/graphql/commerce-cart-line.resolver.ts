@@ -1,11 +1,13 @@
-import { Args, ID, Mutation, Parent, ResolveField, Resolver } from '@nestjs/graphql';
+﻿import { Args, ID, Mutation, Parent, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { IPagination } from '@gauzy/contracts';
 import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { CommerceCart } from '../commerce-cart/commerce-cart.entity';
 import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
+import { CommerceCartLine } from '../commerce-cart-line/commerce-cart-line.entity';
 import { CommerceCartLineService } from '../commerce-cart-line/commerce-cart-line.service';
 import { CART_PERMISSIONS } from '../cart.permissions';
-import { Cart, CartLine } from './types';
+import { Cart } from './types';
 
 /**
  * The cart's line fields and the line mutations.
@@ -14,7 +16,7 @@ import { Cart, CartLine } from './types';
  * through the cart's mutations. The resolver delegates every rule to the cart service, which is what
  * keeps a GraphQL edit and a REST edit from behaving differently.
  */
-@Resolver(() => Cart)
+@Resolver('Cart')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(CART_PERMISSIONS.CARTS_VIEW)
 export class CommerceCartLineResolver {
@@ -30,10 +32,10 @@ export class CommerceCartLineResolver {
 	 * @returns The cart's lines.
 	 */
 	@ResolveField('lines', () => [Object], { nullable: true })
-	async lines(@Parent() cart: Cart): Promise<CartLine[]> {
+	async lines(@Parent() cart: Cart): Promise<CommerceCartLine[]> {
 		const page = (await this.commerceCartLineService.findAll({
 			where: { cartId: cart.id }
-		})) as IPagination<CartLine>;
+		})) as IPagination<CommerceCartLine>;
 
 		return page.items;
 	}
@@ -46,7 +48,7 @@ export class CommerceCartLineResolver {
 	 */
 	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
 	@Mutation(() => Object, { name: 'addCartLine' })
-	async addCartLine(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<Cart> {
+	async addCartLine(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<CommerceCart> {
 		return this.commerceCartService.addLine(input.cartId, input as any);
 	}
 
@@ -58,7 +60,7 @@ export class CommerceCartLineResolver {
 	 */
 	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
 	@Mutation(() => Object, { name: 'updateCartLine' })
-	async updateCartLine(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<Cart> {
+	async updateCartLine(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<CommerceCart> {
 		return this.commerceCartService.updateLine(input.cartId, input.lineId, input as any);
 	}
 
@@ -74,7 +76,7 @@ export class CommerceCartLineResolver {
 	async removeCartLine(
 		@Args('cartId', { type: () => ID }) cartId: string,
 		@Args('lineId', { type: () => ID }) lineId: string
-	): Promise<Cart> {
+	): Promise<CommerceCart> {
 		return this.commerceCartService.removeLine(cartId, lineId);
 	}
 }

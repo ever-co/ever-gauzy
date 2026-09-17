@@ -21,6 +21,78 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	})
 	quantity: number;
 
+	/**
+	 * Quantity held by open reservations at this level. Availability is derived from it and is never
+	 * stored: a stored available quantity would be a third source of truth for one number.
+	 */
+	@ApiPropertyOptional({ type: Number })
+	@MultiORMColumn({
+		nullable: true,
+		type: 'numeric',
+		default: 0,
+		transformer: new ColumnNumericTransformerPipe()
+	})
+	reservedQuantity: number;
+
+	/**
+	 * Buffer that has to stay unsold, subtracted from availability.
+	 */
+	@ApiPropertyOptional({ type: Number })
+	@MultiORMColumn({
+		nullable: true,
+		type: 'numeric',
+		default: 0,
+		transformer: new ColumnNumericTransformerPipe()
+	})
+	safetyStock: number;
+
+	/**
+	 * Quantity already on its way to this level. Reported beside availability rather than added to it,
+	 * because goods that have not arrived cannot be sold.
+	 */
+	@ApiPropertyOptional({ type: Number })
+	@MultiORMColumn({
+		nullable: true,
+		type: 'numeric',
+		default: 0,
+		transformer: new ColumnNumericTransformerPipe()
+	})
+	incomingQuantity: number;
+
+	/**
+	 * How far a hold may exceed the quantity on hand. A null limit means no ceiling was set, which is
+	 * not the same as a ceiling of zero, so the column carries no default.
+	 */
+	@ApiPropertyOptional({ type: Number })
+	@MultiORMColumn({
+		nullable: true,
+		type: 'numeric',
+		transformer: new ColumnNumericTransformerPipe()
+	})
+	backorderLimit: number;
+
+	/**
+	 * Whether the level is untracked. A write never drives an untracked level negative.
+	 */
+	@ApiPropertyOptional({ type: Boolean, default: false })
+	@MultiORMColumn({ nullable: true, default: false })
+	isUnlimited: boolean;
+
+	/**
+	 * Whether a hold may exceed the quantity on hand at this level.
+	 */
+	@ApiPropertyOptional({ type: Boolean, default: false })
+	@MultiORMColumn({ nullable: true, default: false })
+	allowBackorder: boolean;
+
+	/**
+	 * Optimistic-lock counter. Every write takes the counter it read and bumps it, so two writers
+	 * cannot both win the same level row.
+	 */
+	@ApiPropertyOptional({ type: () => Number })
+	@MultiORMColumn({ type: 'int', default: 1 })
+	version: number;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

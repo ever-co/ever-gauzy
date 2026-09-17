@@ -113,11 +113,11 @@ export async function commitVersionedUpdate<T extends BaseEntity>(
 		...(state.actualVersion === undefined ? {} : { actualVersion: state.actualVersion })
 	});
 
-	if (outcome.ok) {
+	if (outcome.status === 'written') {
 		return { version: outcome.version };
 	}
 
-	if (outcome.code === 'RESOURCE_NOT_FOUND') {
+	if (outcome.status === 'missing') {
 		throw new ApiException(HttpStatus.NOT_FOUND, ApiErrorCode.RESOURCE_NOT_FOUND, 'The requested record was not found.', {
 			id: options.id
 		});

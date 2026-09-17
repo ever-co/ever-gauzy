@@ -106,7 +106,7 @@ export class AddTaxCategoryForeignKeys1791000000150 implements MigrationInterfac
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		return;
+		void queryRunner;
 	}
 
 	/**
@@ -117,7 +117,7 @@ export class AddTaxCategoryForeignKeys1791000000150 implements MigrationInterfac
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		return;
+		void queryRunner;
 	}
 
 	/**

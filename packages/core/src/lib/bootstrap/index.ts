@@ -183,7 +183,9 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			'X-Channel-Id',
 			// Retry-safe writes and conditional updates.
 			'Idempotency-Key',
-			'If-Match'
+			'If-Match',
+			// A conditional read states the version it already has.
+			'If-None-Match'
 		].join(', ')
 	});
 

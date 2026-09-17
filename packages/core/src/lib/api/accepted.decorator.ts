@@ -1,4 +1,4 @@
-import { applyDecorators, HttpStatus, MethodDecorator, SetMetadata, UseInterceptors } from '@nestjs/common';
+import { applyDecorators, HttpStatus, SetMetadata, UseInterceptors } from '@nestjs/common';
 import { ApiHeader, ApiResponse } from '@nestjs/swagger';
 import {
 	ACCEPTED_OPERATION_METADATA,

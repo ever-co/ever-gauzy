@@ -3,11 +3,11 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere, In, Raw } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
-import { TAX_PERMISSION_VALUES, taxPermission } from '../tax.permissions';
-import { IResolvedTaxRate, TaxWriteInput } from '../tax.types';
-import { TaxRate } from './tax-rate.entity';
-import { TaxRateService, formatTaxRate } from './tax-rate.service';
-import { toConnection } from './connection.helper';
+import { TAX_PERMISSION_VALUES, taxPermission } from '../../tax.permissions';
+import { IResolvedTaxRate, TaxWriteInput } from '../../tax.types';
+import { TaxRate } from '../../tax-rate/tax-rate.entity';
+import { TaxRateService, formatTaxRate } from '../../tax-rate/tax-rate.service';
+import { toConnection } from '../connection.helper';
 import {
 	CreateTaxRateInput,
 	PageInput,
@@ -17,7 +17,7 @@ import {
 	TaxRateFilterInput,
 	TaxRateSortField,
 	UpdateTaxRateInput
-} from './graphql.types';
+} from '../graphql.types';
 
 /**
  * The fields of the rate type that may be sorted by, as the entity names them.

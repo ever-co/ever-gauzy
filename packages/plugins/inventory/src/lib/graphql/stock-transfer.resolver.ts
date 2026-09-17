@@ -12,6 +12,7 @@ import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { EventBus, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
+import { StockTransferStatus } from './../inventory.enums';
 import { StockTransfer } from './../stock-transfer/stock-transfer.entity';
 import { StockTransferService } from './../stock-transfer/stock-transfer.service';
 import { StockTransferChangedEvent } from './../events';
@@ -28,7 +29,7 @@ export class StockTransferResolver {
 	/** Transfers, filtered by state. */
 	@Query('stockTransfers')
 	@Permissions(InventoryPermission.STOCK_TRANSFER_VIEW as PermissionsEnum)
-	async stockTransfers(@Args('status') status: string): Promise<any> {
+	async stockTransfers(@Args('status') status: StockTransferStatus): Promise<any> {
 		return await this.service.findTransfers({ where: { status } });
 	}
 

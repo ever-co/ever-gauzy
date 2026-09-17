@@ -1,7 +1,6 @@
 import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
-import { AddTaxCategoryForeignKeys1791000000150 } from './database/migrations/1791000000150-AddTaxCategoryForeignKeys';
-import { CreateTaxTables1791000000140 } from './database/migrations/1791000000140-CreateTaxTables';
+import { AddTaxCategoryForeignKeys1791000000150, CreateTaxTables1791000000140 } from './database/migrations';
 import { resolvers } from './graphql/resolvers';
 import { schemaExtensions } from './graphql/schema-extensions';
 import { TaxCategory } from './tax-category/tax-category.entity';

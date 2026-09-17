@@ -201,7 +201,12 @@ export interface IOrder extends IBasePerTenantAndOrganizationEntityModel {
 	source?: string;
 	shippingAddressId?: ID;
 	billingAddressId?: ID;
-	sellerCount?: number;
+	/**
+	 * The number of distinct sellers across the order's lines. Derived, and never absent: the column is
+	 * `NOT NULL DEFAULT 0`, so an order that has not been recomputed yet reports zero rather than
+	 * nothing.
+	 */
+	sellerCount: number;
 	itemSubtotal: number;
 	itemDiscountTotal: number;
 	itemTaxTotal: number;
@@ -323,7 +328,11 @@ export interface IOrderTransaction extends IBasePerTenantAndOrganizationEntityMo
 	referenceType?: string;
 	referenceId?: ID;
 	description?: string;
-	occurredAt: Date;
+	/**
+	 * When the movement happened. Optional because the column is nullable: a row written without an
+	 * instant is a row whose time is unknown, which is not the same fact as one written now.
+	 */
+	occurredAt?: Date;
 	createdByUserId?: ID;
 	metadata?: Record<string, unknown>;
 }

@@ -1,5 +1,6 @@
 import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
+import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
 import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { OrderChangeService } from './../order-change/order-change.service';
@@ -8,6 +9,12 @@ import { OrderHistoryService } from './../order-history/order-history.service';
 import { OrderSummaryService } from './../order-summary/order-summary.service';
 import { OrderTransactionService } from './../order-transaction/order-transaction.service';
 import { ORDER_PERMISSIONS } from './../order.permissions';
+import {
+	ORDER_CHANGE_STATUSES,
+	ORDER_TRANSACTION_TYPES,
+	isOrderChangeStatus,
+	isOrderTransactionType
+} from './filters';
 import {
 	IOrderChangeConnection,
 	IOrderSummaryConnection,
@@ -29,7 +36,7 @@ import {
  * Everything here delegates to the service that owns the rule, so the change lifecycle — including the
  * exclusivity rule and the atomic application of an action set — exists once.
  */
-@Resolver(() => OrderChange)
+@Resolver('OrderChange')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)
 export class OrderChangeResolver {
@@ -47,13 +54,25 @@ export class OrderChangeResolver {
 	 * @param orderId The order.
 	 * @param status Optional status filter.
 	 * @returns A page of changes.
+	 * @throws BadRequestException when a status is given that a change does not have.
 	 */
 	@Query(() => Object, { name: 'orderChanges' })
 	async orderChanges(
 		@Args('orderId', { type: () => ID }) orderId: string,
 		@Args('status', { type: () => String, nullable: true }) status?: string
 	): Promise<IOrderChangeConnection> {
-		const where = { orderId, ...(status ? { status } : {}) };
+		const where: FindOptionsWhere<OrderChange> = { orderId };
+
+		if (status) {
+			if (!isOrderChangeStatus(status)) {
+				throw new BadRequestException(
+					`The change status "${status}" is not one of: ${ORDER_CHANGE_STATUSES.join(', ')}.`
+				);
+			}
+
+			where.status = status;
+		}
+
 		const page = (await this.changeService.findAll({ where, relations: ['actions'] })) as IPagination<OrderChange>;
 
 		return { items: page.items, total: page.total };
@@ -92,13 +111,25 @@ export class OrderChangeResolver {
 	 * @param orderId The order.
 	 * @param type Optional transaction-type filter.
 	 * @returns A page of transactions.
+	 * @throws BadRequestException when a type is given that the ledger does not carry.
 	 */
 	@Query(() => Object, { name: 'orderTransactions' })
 	async orderTransactions(
 		@Args('orderId', { type: () => ID }) orderId: string,
 		@Args('type', { type: () => String, nullable: true }) type?: string
 	): Promise<IOrderTransactionConnection> {
-		const where = { orderId, ...(type ? { type } : {}) };
+		const where: FindOptionsWhere<OrderTransaction> = { orderId };
+
+		if (type) {
+			if (!isOrderTransactionType(type)) {
+				throw new BadRequestException(
+					`The transaction type "${type}" is not one of: ${ORDER_TRANSACTION_TYPES.join(', ')}.`
+				);
+			}
+
+			where.type = type;
+		}
+
 		const page = (await this.transactionService.findAll({ where })) as IPagination<OrderTransaction>;
 
 		return { items: page.items, total: page.total };

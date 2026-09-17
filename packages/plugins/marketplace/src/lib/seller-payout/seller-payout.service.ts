@@ -6,7 +6,6 @@ import {
 	ID,
 	IPagination,
 	ISellerPayoutRunResult,
-	Money,
 	SellerPayoutMode,
 	SellerPayoutSchedule,
 	SellerPayoutStatus,
@@ -14,7 +13,7 @@ import {
 	SellerTransactionStatus,
 	SellerVerificationStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { SellerPayout } from './seller-payout.entity';
 import { MikroOrmSellerPayoutRepository } from './repository/mikro-orm-seller-payout.repository';
 import { TypeOrmSellerPayoutRepository } from './repository/type-orm-seller-payout.repository';
@@ -71,7 +70,7 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 			where.sellerId = scope.sellerId;
 		}
 
-		return this.pagination({ ...filter, where });
+		return this.paginate({ ...filter, where });
 	}
 
 	/**

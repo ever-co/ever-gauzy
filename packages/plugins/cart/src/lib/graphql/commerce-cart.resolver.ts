@@ -1,9 +1,12 @@
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
+import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
 import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { CommerceCart } from '../commerce-cart/commerce-cart.entity';
 import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
 import { CART_PERMISSIONS } from '../cart.permissions';
+import { CART_STATUSES, isCartStatus } from './filters';
 import { Cart, ICartConnection } from './types';
 
 /**
@@ -14,7 +17,7 @@ import { Cart, ICartConnection } from './types';
  * caller therefore cannot diverge in what they are allowed to do, and there is no second
  * implementation of any rule here.
  */
-@Resolver(() => Cart)
+@Resolver('Cart')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(CART_PERMISSIONS.CARTS_VIEW)
 export class CommerceCartResolver {
@@ -25,6 +28,7 @@ export class CommerceCartResolver {
 	 *
 	 * @param filter The filter arguments.
 	 * @returns A page of carts.
+	 * @throws BadRequestException when a status is given that the cart does not have.
 	 */
 	@Query(() => Object, { name: 'carts' })
 	async carts(
@@ -32,11 +36,22 @@ export class CommerceCartResolver {
 		@Args('customerId', { type: () => ID, nullable: true }) customerId?: string,
 		@Args('email', { type: () => String, nullable: true }) email?: string
 	): Promise<ICartConnection> {
-		const where = {
-			...(status ? { status } : {}),
-			...(customerId ? { customerId } : {}),
-			...(email ? { email } : {})
-		};
+		const where: FindOptionsWhere<CommerceCart> = {};
+
+		if (status) {
+			if (!isCartStatus(status)) {
+				throw new BadRequestException(`The cart status "${status}" is not one of: ${CART_STATUSES.join(', ')}.`);
+			}
+
+			where.status = status;
+		}
+		if (customerId) {
+			where.customerId = customerId;
+		}
+		if (email) {
+			where.email = email;
+		}
+
 		const page = (await this.commerceCartService.findAll({ where })) as IPagination<Cart>;
 
 		return { items: page.items, total: page.total };
@@ -49,7 +64,7 @@ export class CommerceCartResolver {
 	 * @returns The cart.
 	 */
 	@Query(() => Object, { name: 'cart', nullable: true })
-	async cart(@Args('id', { type: () => ID }) id: string): Promise<Cart> {
+	async cart(@Args('id', { type: () => ID }) id: string): Promise<CommerceCart> {
 		return this.commerceCartService.findOneWithContent(id);
 	}
 
@@ -61,7 +76,7 @@ export class CommerceCartResolver {
 	 */
 	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
 	@Mutation(() => Object, { name: 'createCart' })
-	async createCart(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<Cart> {
+	async createCart(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<CommerceCart> {
 		return this.commerceCartService.create(input);
 	}
 
@@ -77,7 +92,7 @@ export class CommerceCartResolver {
 	async updateCart(
 		@Args('id', { type: () => ID }) id: string,
 		@Args('input', { type: () => Object }) input: Record<string, any>
-	): Promise<Cart> {
+	): Promise<CommerceCart> {
 		await this.commerceCartService.update(id, input as any);
 
 		return this.commerceCartService.recalculate(id, 'CART_UPDATED');
@@ -109,7 +124,7 @@ export class CommerceCartResolver {
 	async associateCartWithContact(
 		@Args('id', { type: () => ID }) id: string,
 		@Args('contactId', { type: () => ID }) contactId: string
-	): Promise<Cart> {
+	): Promise<CommerceCart> {
 		await this.commerceCartService.update(id, { customerId: contactId } as any);
 
 		return this.commerceCartService.recalculate(id, 'CUSTOMER_CHANGED');
@@ -127,7 +142,7 @@ export class CommerceCartResolver {
 	async mergeCarts(
 		@Args('targetCartId', { type: () => ID }) targetCartId: string,
 		@Args('sourceCartId', { type: () => ID }) sourceCartId: string
-	): Promise<Cart> {
+	): Promise<CommerceCart> {
 		return this.commerceCartService.merge(targetCartId, sourceCartId);
 	}
 }

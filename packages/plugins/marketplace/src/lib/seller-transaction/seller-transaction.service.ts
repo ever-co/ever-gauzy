@@ -6,12 +6,11 @@ import {
 	IPagination,
 	ISellerSplitReconciliation,
 	ISellerTransaction,
-	Money,
 	SellerHoldReason,
 	SellerTransactionKind,
 	SellerTransactionStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { SellerTransaction } from './seller-transaction.entity';
 import { MikroOrmSellerTransactionRepository } from './repository/mikro-orm-seller-transaction.repository';
 import { TypeOrmSellerTransactionRepository } from './repository/type-orm-seller-transaction.repository';
@@ -56,7 +55,7 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 			where.sellerId = scope.sellerId;
 		}
 
-		return this.pagination({ ...filter, where });
+		return this.paginate({ ...filter, where });
 	}
 
 	/**
@@ -119,6 +118,12 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 	/**
 	 * Holds a row out of payouts, with a reason a seller can read.
 	 *
+	 * No outbox row is written, and that is deliberate rather than an omission: the event catalogue
+	 * names a state change for a sale being recorded, a row becoming settleable and a row being
+	 * reversed, and it does not name a hold. The hold is visible where it matters — on the row's own
+	 * status and reason, on the statement, and through the `seller.suspended` event when a suspension is
+	 * what held a seller's balance.
+	 *
 	 * @param id The row id.
 	 * @param reason Why it is held.
 	 * @param note Free-text note.
@@ -134,11 +139,11 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 		transaction.status = SellerTransactionStatus.HELD;
 		transaction.holdReason = reason;
 
-		const saved = await this.typeOrmSellerTransactionRepository.save(transaction);
+		if (note) {
+			transaction.description = note;
+		}
 
-		await this.emit(saved, 'seller.transaction.hold', { reason, note });
-
-		return saved;
+		return this.typeOrmSellerTransactionRepository.save(transaction);
 	}
 
 	/**

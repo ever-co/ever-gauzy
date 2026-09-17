@@ -124,15 +124,22 @@ describe('classifySchemaDiff', () => {
 	});
 
 	it('classifies a removed field as breaking', () => {
-		const removed = classifySchemaDiff(withLine('  tenantId: String!\n', ''), BASE);
+		const removed = classifySchemaDiff(BASE, withLine('  tenantId: String!\n', ''));
 
 		expect(removed.kind).toBe('BREAKING');
 		expect(changeAt(removed, 'Role.tenantId').kind).toBe('FIELD_REMOVED');
 		expect(removed.changes).toHaveLength(1);
 	});
 
+	it('classifies a new field as additive', () => {
+		const added = classifySchemaDiff(withLine('  tenantId: String!\n', ''), BASE);
+
+		expect(added.kind).toBe('ADDITIVE');
+		expect(changeAt(added, 'Role.tenantId').kind).toBe('FIELD_ADDED');
+	});
+
 	it('classifies a removed type as breaking', () => {
-		const removed = classifySchemaDiff(withLine('\nenum RoleStatus {\n  ACTIVE\n  ARCHIVED\n}\n', ''), BASE);
+		const removed = classifySchemaDiff(BASE, withLine('\nenum RoleStatus {\n  ACTIVE\n  ARCHIVED\n}\n', ''));
 
 		expect(removed.kind).toBe('BREAKING');
 		expect(changeAt(removed, 'RoleStatus').kind).toBe('TYPE_REMOVED');

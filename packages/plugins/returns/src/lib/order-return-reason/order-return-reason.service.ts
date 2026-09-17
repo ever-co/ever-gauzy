@@ -86,7 +86,9 @@ export class OrderReturnReasonService extends TenantAwareCrudService<OrderReturn
 			await this.assertRootParent(entity.parentId, reason.organizationId);
 		}
 
-		return await super.update(id, entity as any);
+		await super.update(id, entity as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -100,7 +102,9 @@ export class OrderReturnReasonService extends TenantAwareCrudService<OrderReturn
 	public async deactivate(id: ID): Promise<OrderReturnReason> {
 		await this.findOneScoped(id);
 
-		return await super.update(id, { isActive: false } as any);
+		await super.update(id, { isActive: false } as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**

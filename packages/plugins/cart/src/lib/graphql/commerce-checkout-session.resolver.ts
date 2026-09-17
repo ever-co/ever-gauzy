@@ -1,11 +1,15 @@
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
+import { FindOptionsWhere } from 'typeorm';
 import { CommerceCheckoutSessionStatus, IPagination } from '@gauzy/contracts';
 import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { CommerceCart } from '../commerce-cart/commerce-cart.entity';
 import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
+import { CommerceCheckoutSession } from '../commerce-checkout-session/commerce-checkout-session.entity';
 import { CommerceCheckoutSessionService } from '../commerce-checkout-session/commerce-checkout-session.service';
 import { CART_PERMISSIONS } from '../cart.permissions';
-import { CheckoutSession, ICheckoutResult, ICheckoutSessionConnection } from './types';
+import { CHECKOUT_SESSION_STATUSES, isCheckoutSessionStatus } from './filters';
+import { ICheckoutResult, ICheckoutSessionConnection } from './types';
 
 /**
  * The checkout root fields.
@@ -14,7 +18,7 @@ import { CheckoutSession, ICheckoutResult, ICheckoutSessionConnection } from './
  * a cart becomes a financial document, and the permission exists so that preparing a cart and placing
  * it can be granted separately.
  */
-@Resolver(() => CheckoutSession)
+@Resolver('CheckoutSession')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(CART_PERMISSIONS.CARTS_VIEW)
 export class CommerceCheckoutSessionResolver {
@@ -29,16 +33,31 @@ export class CommerceCheckoutSessionResolver {
 	 * @param cartId Optional cart filter.
 	 * @param status Optional status filter.
 	 * @returns A page of sessions.
+	 * @throws BadRequestException when a status is given that a checkout session does not have.
 	 */
 	@Query(() => Object, { name: 'checkoutSessions' })
 	async checkoutSessions(
 		@Args('cartId', { type: () => ID, nullable: true }) cartId?: string,
 		@Args('status', { type: () => String, nullable: true }) status?: string
 	): Promise<ICheckoutSessionConnection> {
-		const where = { ...(cartId ? { cartId } : {}), ...(status ? { status } : {}) };
+		const where: FindOptionsWhere<CommerceCheckoutSession> = {};
+
+		if (cartId) {
+			where.cartId = cartId;
+		}
+		if (status) {
+			if (!isCheckoutSessionStatus(status)) {
+				throw new BadRequestException(
+					`The checkout session status "${status}" is not one of: ${CHECKOUT_SESSION_STATUSES.join(', ')}.`
+				);
+			}
+
+			where.status = status;
+		}
+
 		const page = (await this.commerceCheckoutSessionService.findAll({
 			where
-		})) as IPagination<CheckoutSession>;
+		})) as IPagination<CommerceCheckoutSession>;
 
 		return { items: page.items, total: page.total };
 	}
@@ -50,7 +69,7 @@ export class CommerceCheckoutSessionResolver {
 	 * @returns The session.
 	 */
 	@Query(() => Object, { name: 'checkoutSession', nullable: true })
-	async checkoutSession(@Args('id', { type: () => ID }) id: string): Promise<CheckoutSession> {
+	async checkoutSession(@Args('id', { type: () => ID }) id: string): Promise<CommerceCheckoutSession> {
 		return this.commerceCheckoutSessionService.findOneByIdString(id);
 	}
 
@@ -62,7 +81,7 @@ export class CommerceCheckoutSessionResolver {
 	 */
 	@Permissions(CART_PERMISSIONS.CARTS_CHECKOUT)
 	@Mutation(() => Object, { name: 'startCheckout' })
-	async startCheckout(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<CheckoutSession> {
+	async startCheckout(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<CommerceCheckoutSession> {
 		const open = await this.commerceCheckoutSessionService.findOpenForCart(input.cartId);
 
 		if (open) {

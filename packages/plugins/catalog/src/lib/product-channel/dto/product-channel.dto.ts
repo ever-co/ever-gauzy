@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsUUID, Min } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
-import { PublicationStatus } from '../catalog.types';
+import { PublicationStatus } from '../../catalog.types';
 
 /**
  * Product publication request DTO validation.

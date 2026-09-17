@@ -58,7 +58,18 @@ import { DatabaseModule } from '../database/database.module';
 					? path.join(path.resolve(__dirname, '../../../../../../../data/'), '*.gql')
 					: path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql')
 			],
-			resolverModule: GraphqlApiModule
+			resolverModule: GraphqlApiModule,
+			// The deployment's own attach point and ceilings travel with the rest of the options. Every
+			// key is optional: an installation that configures none gets an empty plugin array and the
+			// platform's default limits, and the environment can override each of them.
+			apolloServerPlugins: configService.graphqlConfigOptions.apolloServerPlugins,
+			introspection: configService.graphqlConfigOptions.introspection,
+			limits: {
+				maxDepth: configService.graphqlConfigOptions.maxDepth,
+				maxComplexity: configService.graphqlConfigOptions.maxComplexity,
+				maxAliases: configService.graphqlConfigOptions.maxAliases,
+				maxBatchSize: configService.graphqlConfigOptions.maxBatchSize
+			}
 		})) as DynamicModule,
 		FileStorageModule
 	],

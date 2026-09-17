@@ -131,7 +131,7 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 			where.tenantId = tenantId;
 		}
 
-		const collection = await this.typeOrmCollectionRepository.findOne({ where, relations: ['children'] });
+		const collection = await this.typeOrmCollectionRepository.findOne({ where, relations: { children: true } });
 
 		if (!collection) {
 			throw new NotFoundException(`No collection with slug "${slug}" exists in this organization.`);
@@ -181,7 +181,7 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 
 			const parent = await this.typeOrmCollectionRepository.findOne({
 				where: { id: current },
-				select: ['id', 'parentId']
+				select: { id: true, parentId: true }
 			});
 
 			current = parent?.parentId;

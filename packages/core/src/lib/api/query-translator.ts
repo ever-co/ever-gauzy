@@ -83,6 +83,36 @@ export interface ApiMikroOrmFindOptions {
 	withDeleted: boolean;
 }
 
+/** The value a containment test takes: a JSON document or an array, never a scalar. */
+type ContainmentOperand = readonly unknown[] | Record<string | number | symbol, unknown>;
+
+/**
+ * Whether a filter value is the shape a containment test is defined over.
+ *
+ * A `Date` is excluded on purpose: it is an object to `typeof`, but it is not a JSON document, and
+ * passing one on would reach the engine as something its containment operator cannot take.
+ */
+function isContainmentOperand(value: unknown): value is ContainmentOperand {
+	if (Array.isArray(value)) {
+		return true;
+	}
+	return !!value && typeof value === 'object' && !(value instanceof Date);
+}
+
+/**
+ * The error a containment filter whose operand is not a document is refused with.
+ *
+ * Both engines read this filter through {@link isContainmentOperand}, so the refusal is written once
+ * and the two translations cannot answer the same filter differently.
+ */
+function invalidContainmentOperand(value: unknown): ApiQueryError {
+	return new ApiQueryError(
+		'VALIDATION_FAILED',
+		`The "contains" filter takes a JSON document or an array, not a ${value === null ? 'null' : typeof value}.`,
+		{ operator: 'contains' }
+	);
+}
+
 /** One condition, translated for TypeORM. */
 function typeOrmCondition(op: FilterOperator, value: unknown, negate: boolean): unknown {
 	switch (op) {
@@ -116,8 +146,16 @@ function typeOrmCondition(op: FilterOperator, value: unknown, negate: boolean): 
 			const bounds = value as readonly [unknown, unknown];
 			return negate ? Not(Between(bounds[0], bounds[1])) : Between(bounds[0], bounds[1]);
 		}
-		case 'contains':
+		case 'contains': {
+			// Containment is defined over a document, not over a scalar: both engines translate it to
+			// their storage's containment operator, which takes a JSON value or an array. A scalar
+			// operand therefore has no translation, and is refused here with the protocol's own error
+			// rather than handed to the engine to fail on.
+			if (!isContainmentOperand(value)) {
+				throw invalidContainmentOperand(value);
+			}
 			return negate ? Not(JsonContains(value)) : JsonContains(value);
+		}
 		default:
 			throw new ApiQueryError('QUERY_UNSUPPORTED_OPERATOR', `The operator "${String(op)}" has no translation.`, {
 				operator: String(op)
@@ -271,6 +309,16 @@ function mikroOrmCondition(op: FilterOperator, value: unknown, negate: boolean):
 	if (op === 'eq' || op === 'ne' || op === 'in' || op === 'nin') {
 		const flipped = negate ? (op === 'eq' ? 'ne' : op === 'ne' ? 'eq' : op === 'in' ? 'nin' : 'in') : op;
 		return { [MIKRO_ORM_OPERATOR[flipped] as string]: value };
+	}
+	if (op === 'contains') {
+		// The operand rule of the TypeORM branch, applied here too: this engine spells containment as
+		// an array operator just as that one does, and one filter may not be refused by one branch and
+		// accepted by the other.
+		if (!isContainmentOperand(value)) {
+			throw invalidContainmentOperand(value);
+		}
+		const containment = { [MIKRO_ORM_OPERATOR.contains as string]: value };
+		return negate ? { $not: containment } : containment;
 	}
 	const mapped = { [MIKRO_ORM_OPERATOR[op] as string]: value };
 	return negate ? { $not: mapped } : mapped;

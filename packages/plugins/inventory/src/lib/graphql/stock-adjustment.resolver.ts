@@ -12,6 +12,7 @@ import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { EventBus, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
+import { StockAdjustmentStatus } from './../inventory.enums';
 import { StockAdjustment } from './../stock-adjustment/stock-adjustment.entity';
 import { StockAdjustmentService } from './../stock-adjustment/stock-adjustment.service';
 
@@ -26,7 +27,7 @@ export class StockAdjustmentResolver {
 	/** Manual correction instructions. */
 	@Query('stockAdjustments')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
-	async stockAdjustments(@Args('warehouseId') warehouseId: string, @Args('variantId') variantId: string, @Args('status') status: string): Promise<any> {
+	async stockAdjustments(@Args('warehouseId') warehouseId: string, @Args('variantId') variantId: string, @Args('status') status: StockAdjustmentStatus): Promise<any> {
 		return await this.service.findAdjustments({ where: { warehouseId, variantId, status } });
 	}
 

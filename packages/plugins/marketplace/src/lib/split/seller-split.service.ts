@@ -7,12 +7,11 @@ import {
 	ID,
 	ICommissionComputationInput,
 	IResolvedCommission,
-	Money,
 	RoundingMode,
 	SellerTransactionKind,
 	SellerTransactionStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, RequestContext } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext } from '@gauzy/core';
 import { SellerCommissionService } from '../commission/seller-commission.service';
 import { Seller } from '../seller/seller.entity';
 import { TypeOrmSellerRepository } from '../seller/repository/type-orm-seller.repository';
@@ -235,7 +234,31 @@ export class SellerSplitService {
 			await this.transactionRepository.save(original);
 		}
 
-		return this.transactionRepository.save(reversal as SellerTransaction);
+		const persisted = await this.transactionRepository.save(reversal as SellerTransaction);
+
+		await this.transactionRepository.manager.transaction(async (manager) => {
+			await this.outbox.append(manager, {
+				name: 'seller.transaction.reversed',
+				aggregateType: 'SELLER_TRANSACTION',
+				aggregateId: persisted.id as ID,
+				data: {
+					sellerId: persisted.sellerId,
+					transactionId: persisted.reversesTransactionId,
+					reversalId: persisted.id,
+					orderId: persisted.orderId,
+					refundId: persisted.refundId,
+					kind: persisted.kind,
+					currency: persisted.currency,
+					grossAmount: persisted.grossAmount,
+					commissionAmount: persisted.commissionAmount,
+					netAmount: persisted.netAmount
+				},
+				tenantId: persisted.tenantId,
+				organizationId: persisted.organizationId
+			});
+		});
+
+		return persisted;
 	}
 
 	/**

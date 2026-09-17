@@ -81,6 +81,8 @@ export class OrderClaimLineController extends CrudController<OrderClaimLine> {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateOrderClaimLineDTO
 	): Promise<OrderClaimLine> {
-		return await this.orderClaimLineService.update(id, entity as any);
+		await this.orderClaimLineService.update(id, entity as any);
+
+		return await this.orderClaimLineService.findOneByIdString(id);
 	}
 }

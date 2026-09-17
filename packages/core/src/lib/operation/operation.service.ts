@@ -16,6 +16,7 @@ import {
 	IOperationStartResult,
 	IOperationStepContext,
 	IOperationStepDefinition,
+	IOperationStepResult,
 	IStepRetryPolicy
 } from './operation.contract';
 import { TypeOrmOperationRepository } from './repository/type-orm-operation.repository';
@@ -585,7 +586,7 @@ export class OperationService extends CrudService<Operation> {
 	 */
 	async findLiveForAggregate(aggregateType: string, aggregateId: ID): Promise<Operation | null> {
 		return this.typeOrmOperationRepository
-			.createQueryBuilder(Operation, 'operation')
+			.createQueryBuilder('operation')
 			.where('operation.aggregateType = :aggregateType', { aggregateType })
 			.andWhere('operation.aggregateId = :aggregateId', { aggregateId })
 			.andWhere('operation.status IN (:...statuses)', { statuses: LIVE_STATUSES })
@@ -665,14 +666,18 @@ export class OperationService extends CrudService<Operation> {
 					step.name
 				);
 
+				// A step that returned nothing performed its effect without producing output, which is
+				// not a failure: the empty result stands in for it and the columns take their defaults.
+				const outcome: IOperationStepResult = isStepResult(result) ? result : {};
+
 				// The output and the compensator's data are persisted in one write: a step that applied
 				// an effect must never be recorded as successful without what it takes to undo it.
 				await this.saveStep(step, {
 					status: OperationStepStatus.COMPLETED,
 					attemptCount: attempt,
 					input,
-					output: result?.output ?? {},
-					compensationData: result?.compensationData ?? null,
+					output: outcome.output ?? {},
+					compensationData: outcome.compensationData ?? null,
 					finishedAt: new Date(),
 					lastError: null
 				});
@@ -1125,6 +1130,19 @@ export class OperationService extends CrudService<Operation> {
  */
 function isTerminalStatus(status: OperationStatus): boolean {
 	return TERMINAL_STATUSES.includes(status);
+}
+
+/**
+ * Whether a step returned a result.
+ *
+ * A step may finish without returning anything, which is not a failure: it performed its effect
+ * and had no output to report. The runtime reads such a step as the empty result.
+ *
+ * @param value What the handler returned.
+ * @returns True when there is a result to read the output and the compensator's data from.
+ */
+function isStepResult(value: unknown): value is IOperationStepResult {
+	return !!value && typeof value === 'object';
 }
 
 /**

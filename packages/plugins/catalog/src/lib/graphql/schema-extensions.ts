@@ -141,6 +141,34 @@ export const schemaExtensions = gql`
 		updatedAt: DateTime!
 	}
 
+	type TagProductVariant {
+		id: ID!
+		productVariantId: ID!
+		tagId: ID!
+		productVariant: ProductVariant
+		tag: Tag
+		createdAt: DateTime!
+		updatedAt: DateTime!
+	}
+
+	type CollectionVariantConnection {
+		items: [CollectionVariant!]!
+		total: Int!
+		pageInfo: PageInfo
+	}
+
+	type CollectionChannelConnection {
+		items: [CollectionChannel!]!
+		total: Int!
+		pageInfo: PageInfo
+	}
+
+	type TagProductVariantConnection {
+		items: [TagProductVariant!]!
+		total: Int!
+		pageInfo: PageInfo
+	}
+
 	type CollectionConnection {
 		items: [Collection!]!
 		total: Int!
@@ -195,6 +223,22 @@ export const schemaExtensions = gql`
 	input CollectionProductFilter {
 		collectionId: ID
 		productId: ID
+	}
+
+	input CollectionVariantFilter {
+		collectionId: ID
+		variantId: ID
+	}
+
+	input CollectionChannelFilter {
+		collectionId: ID
+		channelId: ID
+		status: PublicationStatus
+	}
+
+	input TagProductVariantFilter {
+		productVariantId: ID
+		tagId: ID
 	}
 
 	input ProductPublicationFilter {
@@ -286,6 +330,13 @@ export const schemaExtensions = gql`
 		collection(id: ID!): Collection
 		collectionBySlug(slug: String!): Collection
 		collectionProducts(filter: CollectionProductFilter, limit: Int, offset: Int): CollectionProductConnection!
+		collectionVariants(filter: CollectionVariantFilter, limit: Int, offset: Int): CollectionVariantConnection!
+		collectionChannels(filter: CollectionChannelFilter, limit: Int, offset: Int): CollectionChannelConnection!
+		productVariantFacets(
+			filter: TagProductVariantFilter
+			limit: Int
+			offset: Int
+		): TagProductVariantConnection!
 		productPublications(filter: ProductPublicationFilter, limit: Int, offset: Int): ProductPublicationConnection!
 		productPublication(id: ID!): ProductPublication
 		productVariantPublications(
@@ -303,6 +354,10 @@ export const schemaExtensions = gql`
 		deleteCollection(id: ID!): Boolean!
 		addCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 		removeCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
+		addCollectionVariants(collectionId: ID!, variantIds: [ID!]!): [CollectionVariant!]!
+		removeCollectionVariants(collectionId: ID!, variantIds: [ID!]!): [CollectionVariant!]!
+		attachProductVariantFacets(variantId: ID!, tagIds: [ID!]!): [TagProductVariant!]!
+		detachProductVariantFacets(variantId: ID!, tagIds: [ID!]!): [TagProductVariant!]!
 		assignCollectionChannel(collectionId: ID!, input: CollectionChannelInput!): [CollectionChannel!]!
 		unassignCollectionChannel(collectionId: ID!, channelId: ID!): [CollectionChannel!]!
 		publishProduct(productId: ID!, channelIds: [ID!]!, publishedAt: DateTime): [ProductPublication!]!

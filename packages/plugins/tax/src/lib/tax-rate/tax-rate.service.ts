@@ -733,12 +733,17 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	}
 
 	/**
-	 * @param startsAt The start of the window, when it has one.
-	 * @param endsAt The end of the window, when it has one.
+	 * @param startsAt The start of the window, when it has one, as a write carried it.
+	 * @param endsAt The end of the window, when it has one, as a write carried it.
 	 * @throws BadRequestException when the window ends before it starts.
 	 */
-	private assertWindow(startsAt?: Date, endsAt?: Date): void {
-		if (startsAt && endsAt && new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
+	private assertWindow(startsAt?: DeepPartial<Date>, endsAt?: DeepPartial<Date>): void {
+		// A partial write types its dates as partial dates, so a bound is read as the instant it names
+		// before the two are compared.
+		const from = startsAt ? new Date(String(startsAt)) : undefined;
+		const to = endsAt ? new Date(String(endsAt)) : undefined;
+
+		if (from && to && to.getTime() <= from.getTime()) {
 			throw new BadRequestException('The window of a tax rate must end after it starts.');
 		}
 	}

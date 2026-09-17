@@ -8,7 +8,6 @@ import { TaxCategory } from './tax-category/tax-category.entity';
 import { TaxCategoryService } from './tax-category/tax-category.service';
 import { MikroOrmTaxCategoryRepository } from './tax-category/repository/mikro-orm-tax-category.repository';
 import { TypeOrmTaxCategoryRepository } from './tax-category/repository/type-orm-tax-category.repository';
-import { TaxCalculationController } from './tax-rate/tax-calculation.controller';
 import { TaxRateController } from './tax-rate/tax-rate.controller';
 import { TaxRate } from './tax-rate/tax-rate.entity';
 import { TaxRateService } from './tax-rate/tax-rate.service';
@@ -24,7 +23,7 @@ import { TypeOrmTaxRateRepository } from './tax-rate/repository/type-orm-tax-rat
  * module imports, and the module is what supplies it.
  */
 @Module({
-	controllers: [TaxCategoryController, TaxRateController, TaxCalculationController],
+	controllers: [TaxCategoryController, TaxRateController],
 	imports: [
 		TypeOrmModule.forFeature([TaxCategory, TaxRate]),
 		MikroOrmModule.forFeature([TaxCategory, TaxRate]),

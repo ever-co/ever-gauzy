@@ -218,13 +218,13 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 	 */
 	async listSellers(filter: any = {}, scope?: ISellerScope): Promise<IPagination<Seller>> {
 		if (scope && !scope.staff) {
-			return this.pagination({
+			return this.paginate({
 				...filter,
 				where: { ...(filter?.where ?? {}), id: scope.sellerId }
 			});
 		}
 
-		return this.pagination(filter);
+		return this.paginate(filter);
 	}
 
 	/**

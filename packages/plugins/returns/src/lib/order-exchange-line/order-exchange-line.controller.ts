@@ -81,6 +81,8 @@ export class OrderExchangeLineController extends CrudController<OrderExchangeLin
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateOrderExchangeLineDTO
 	): Promise<OrderExchangeLine> {
-		return await this.orderExchangeLineService.update(id, entity as any);
+		await this.orderExchangeLineService.update(id, entity as any);
+
+		return await this.orderExchangeLineService.findOneByIdString(id);
 	}
 }

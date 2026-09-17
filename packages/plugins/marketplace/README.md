@@ -104,8 +104,24 @@ set; the marketplace adds the lifecycle and money operations.
 | Payout lines | `/seller-payout-lines` | read |
 | Settlements | `/seller-settlements` | `:id/reconcile`, `:id/close`, `:id/dispute` |
 
-GraphQL exposes the same resources with the same permissions, including the `sellerChanged`,
-`sellerPayoutChanged` and `sellerSettlementChanged` event roots the platform's subscription model uses.
+GraphQL exposes the same resources with the same permissions and the same scoping: the seller, its
+offerings, its ledger, its payouts, its payout lines and its settlements are readable, and every
+lifecycle and money operation is a mutation guarded by the permission its REST route carries. A write
+that the REST surface refuses for a missing permission is refused here with the same permission, so a
+client cannot reach through GraphQL what REST would deny.
+
+The state changes themselves are emitted on the platform's transactional outbox — `seller.created`,
+`seller.verified`, `seller.activated`, `seller.suspended`, `seller.rejected`,
+`seller-offering.created`/`.updated`/`.withdrawn`,
+`seller.transaction.recorded`/`.settleable`/`.reversed`,
+`seller-payout.created`/`.paid`/`.failed`/`.canceled` and
+`seller-settlement.recorded`/`.closed` — in the same transaction as the row that changed, which is
+what lets a subscriber, a projection or a scheduled job observe the marketplace without polling it.
+Three state changes have no event because the catalogue names none for them, and inventing a name
+would put this package's vocabulary into a catalogue the whole platform reads: a seller profile edit,
+a ledger hold and the `OFFBOARDING` state a seller enters before the operation's later steps run
+(`seller.offboarded` is emitted when the `SELLER_OFFBOARD` operation completes, which is the
+operation runtime's step, not this package's).
 
 ## Permissions and features
 

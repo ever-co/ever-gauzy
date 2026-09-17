@@ -46,8 +46,8 @@ export class SellerPayoutLineController extends CrudController<SellerPayoutLine>
 	@ApiOperation({ summary: 'Read one payout line' })
 	@ApiResponse({ status: 200, description: 'Payout line retrieved successfully', type: SellerPayoutLine })
 	@Get('/:id')
-	async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<SellerPayoutLine> {
-		return this.sellerPayoutLineService.getLine(id);
+	async findById(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<SellerPayoutLine> {
+		return this.sellerPayoutLineService.getLine(id, this.scope(request));
 	}
 
 	/** The seller scope the guard resolved. */

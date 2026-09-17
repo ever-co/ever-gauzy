@@ -5,9 +5,7 @@ import {
 	IsArray,
 	IsEnum,
 	IsNotEmpty,
-	IsNumber,
 	IsOptional,
-	IsPositive,
 	IsString,
 	IsUUID,
 	MaxLength,
@@ -35,11 +33,9 @@ export class CreateOrderClaimLineInputDTO {
 	@IsUUID()
 	readonly variantId?: ID;
 
-	@ApiProperty({ type: () => Number, minimum: 0, exclusiveMinimum: true })
+	@ApiProperty({ type: () => String, description: 'Exact decimal string, e.g. "1.000000".' })
 	@IsNotEmpty()
-	@IsNumber()
-	@IsPositive()
-	readonly quantity: number;
+	readonly quantity: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: OrderClaimReason })
 	@IsOptional()

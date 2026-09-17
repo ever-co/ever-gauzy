@@ -211,12 +211,18 @@ export class ExchangeRateService extends TenantAwareCrudService<ExchangeRate> {
 	}
 
 	/**
-	 * @param validFrom Start of the window.
-	 * @param validUntil End of the window, when one is given.
+	 * @param validFrom Start of the window, as a write carried it.
+	 * @param validUntil End of the window, when one is given, as a write carried it.
 	 * @throws BadRequestException when the window is empty.
 	 */
-	private assertWindow(validFrom: Date, validUntil?: Date): void {
-		if (validUntil && validFrom && new Date(validUntil).getTime() <= new Date(validFrom).getTime()) {
+	private assertWindow(validFrom?: DeepPartial<Date>, validUntil?: DeepPartial<Date>): void {
+		// A partial write types its dates as partial dates, so a bound is read as the instant it names
+		// before the two are compared; a value that names no instant leaves the window unjudged rather
+		// than failing a caller whose bound the driver would have refused anyway.
+		const from = validFrom ? new Date(String(validFrom)) : undefined;
+		const until = validUntil ? new Date(String(validUntil)) : undefined;
+
+		if (from && until && until.getTime() <= from.getTime()) {
 			throw new BadRequestException(
 				'PRICE_EXCHANGE_RATE_INVALID: validUntil must be later than validFrom, otherwise the rate is never in force.'
 			);

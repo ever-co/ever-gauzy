@@ -60,7 +60,7 @@ export async function composeSchemaForSnapshot(
 	// The loader is the one the runtime uses, so file discovery and the merge order are the
 	// runtime's rather than a second implementation of them.
 	const typesLoader = new GraphQLTypesLoader();
-	const typeDefs = await typesLoader.mergeTypesByPaths(...typePaths.map(toPosixPath));
+	const typeDefs = await typesLoader.mergeTypesByPaths(typePaths.map(toPosixPath));
 
 	const schema = extendWithPlugins(buildSchema(typeDefs), getPluginExtensions(plugins as PluginEntry[]));
 	return printSchema(schema);

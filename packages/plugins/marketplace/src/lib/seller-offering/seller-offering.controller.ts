@@ -61,7 +61,11 @@ export class SellerOfferingController extends CrudController<SellerOffering> {
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
 	@Put('/:id')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async update(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID, @Body() entity: any): Promise<SellerOffering> {
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: any,
+		@Req() request: any
+	): Promise<SellerOffering> {
 		return this.sellerOfferingService.updateOffering(id, entity, this.scope(request));
 	}
 

@@ -146,11 +146,13 @@ export class OrderExchangeService extends TenantAwareCrudService<OrderExchange> 
 
 		const differenceDue = await this.computeDifference(exchange);
 
-		return await super.update(id, {
+		await super.update(id, {
 			status: OrderExchangeStatus.APPROVED,
 			differenceDue,
 			note: note ?? exchange.note
 		} as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -165,10 +167,12 @@ export class OrderExchangeService extends TenantAwareCrudService<OrderExchange> 
 
 		this.assertStatus(exchange, [...DECIDABLE_STATUSES, OrderExchangeStatus.APPROVED], 'reject');
 
-		return await super.update(id, {
+		await super.update(id, {
 			status: OrderExchangeStatus.REJECTED,
 			note: reason ?? exchange.note
 		} as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -183,11 +187,13 @@ export class OrderExchangeService extends TenantAwareCrudService<OrderExchange> 
 
 		this.assertStatus(exchange, [...DECIDABLE_STATUSES, OrderExchangeStatus.APPROVED], 'cancel');
 
-		return await super.update(id, {
+		await super.update(id, {
 			status: OrderExchangeStatus.CANCELED,
 			canceledAt: new Date(),
 			note: reason ?? exchange.note
 		} as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -206,10 +212,12 @@ export class OrderExchangeService extends TenantAwareCrudService<OrderExchange> 
 
 		this.assertStatus(exchange, [OrderExchangeStatus.APPROVED], 'close');
 
-		return await super.update(id, {
+		await super.update(id, {
 			status: OrderExchangeStatus.CLOSED,
 			note: note ?? exchange.note
 		} as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -222,7 +230,9 @@ export class OrderExchangeService extends TenantAwareCrudService<OrderExchange> 
 	public async linkReturn(id: ID, returnId: ID): Promise<OrderExchange> {
 		await this.findOneScoped(id);
 
-		return await super.update(id, { returnId } as any);
+		await super.update(id, { returnId } as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -238,7 +248,7 @@ export class OrderExchangeService extends TenantAwareCrudService<OrderExchange> 
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
 			},
-			relations: ['lines', 'return', 'return.lines']
+			relations: { lines: true, return: { lines: true } }
 		});
 
 		if (!exchange) {

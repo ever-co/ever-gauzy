@@ -81,6 +81,8 @@ export class OrderReturnLineController extends CrudController<OrderReturnLine> {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateOrderReturnLineDTO
 	): Promise<OrderReturnLine> {
-		return await this.orderReturnLineService.update(id, entity as any);
+		await this.orderReturnLineService.update(id, entity as any);
+
+		return await this.orderReturnLineService.findOneByIdString(id);
 	}
 }

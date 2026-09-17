@@ -4,10 +4,9 @@ import {
 	CurrencyCode,
 	ID,
 	IPagination,
-	Money,
 	SellerSettlementStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { SellerSettlement } from './seller-settlement.entity';
 import { MikroOrmSellerSettlementRepository } from './repository/mikro-orm-seller-settlement.repository';
 import { TypeOrmSellerSettlementRepository } from './repository/type-orm-seller-settlement.repository';
@@ -43,7 +42,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 			where.sellerId = scope.sellerId;
 		}
 
-		return this.pagination({ ...filter, where });
+		return this.paginate({ ...filter, where });
 	}
 
 	/** Reads one settlement. */

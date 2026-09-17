@@ -19,9 +19,11 @@ import {
 	StockMovementResolver,
 	StockReservationResolver,
 	StockTransferResolver,
+	StockTransferLineResolver,
 	StockAlertResolver,
 	StockAdjustmentResolver,
 	StockCountResolver,
+	StockCountLineResolver,
 	ChannelWarehouseResolver,
 	StockLevelResolver
 } from './graphql';
@@ -61,9 +63,11 @@ const pluginMetadata = {
 			StockMovementResolver,
 			StockReservationResolver,
 			StockTransferResolver,
+			StockTransferLineResolver,
 			StockAlertResolver,
 			StockAdjustmentResolver,
 			StockCountResolver,
+			StockCountLineResolver,
 			ChannelWarehouseResolver
 		]
 	},

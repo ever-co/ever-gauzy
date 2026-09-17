@@ -189,7 +189,7 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	 */
 	async findDue(limit = 50, now: Date = new Date()): Promise<WebhookDelivery[]> {
 		return this.typeOrmWebhookDeliveryRepository
-			.createQueryBuilder(WebhookDelivery, 'delivery')
+			.createQueryBuilder('delivery')
 			.where('delivery.status IN (:...statuses)', {
 				statuses: [WebhookDeliveryStatus.PENDING, WebhookDeliveryStatus.FAILED]
 			})

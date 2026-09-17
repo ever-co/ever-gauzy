@@ -42,9 +42,9 @@ export class EditOrderExchangeLineDTO {
 	@IsString()
 	readonly variantId: string;
 
-	@ApiPropertyOptional({ type: () => Number })
+	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal string, e.g. "1.000000".' })
 	@IsOptional()
-	readonly quantity?: number;
+	readonly quantity?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

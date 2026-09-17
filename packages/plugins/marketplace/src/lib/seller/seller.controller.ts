@@ -96,9 +96,9 @@ export class SellerController extends CrudController<Seller> {
 	@Put('/:id')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
-		@Req() request: any,
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: UpdateSellerDTO
+		@Body() entity: UpdateSellerDTO,
+		@Req() request: any
 	): Promise<Seller> {
 		return this.sellerService.updateSeller(id, entity as Partial<Seller>, this.scope(request));
 	}

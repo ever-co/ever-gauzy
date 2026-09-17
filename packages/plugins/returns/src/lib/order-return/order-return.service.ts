@@ -110,9 +110,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			status: OrderReturnStatus.OPEN,
 			requestedAt: new Date(),
 			noNotification: header.noNotification ?? false,
-			refundAmount: header.refundAmount
-				? Money.of(String(header.refundAmount), header.currency).round().toStorageString()
-				: undefined,
+			refundAmount: this.normalizeAmount(header.refundAmount, header.currency),
 			tenantId,
 			organizationId
 		} as any);
@@ -149,11 +147,13 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 		this.assertStatus(orderReturn, [OrderReturnStatus.OPEN, OrderReturnStatus.REQUESTED], 'approve');
 
-		return await super.update(id, {
+		await super.update(id, {
 			status: OrderReturnStatus.APPROVED,
 			approvedAt: new Date(),
 			note: note ?? orderReturn.note
 		} as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -169,10 +169,12 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 		this.assertStatus(orderReturn, DECIDABLE_STATUSES, 'reject');
 
-		return await super.update(id, {
+		await super.update(id, {
 			status: OrderReturnStatus.REJECTED,
 			reason: reason ?? orderReturn.reason
 		} as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -187,11 +189,13 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 		this.assertStatus(orderReturn, DECIDABLE_STATUSES, 'cancel');
 
-		return await super.update(id, {
+		await super.update(id, {
 			status: OrderReturnStatus.CANCELED,
 			canceledAt: new Date(),
 			reason: reason ?? orderReturn.reason
 		} as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -200,13 +204,16 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * This is the transition the whole domain exists for, and it happens in one order:
 	 *
 	 * 1. the lines are re-validated and their received quantities recorded;
-	 * 2. a stock movement is written for every unit that arrived — a `RETURN` for the units going back
+	 * 2. the return moves to `RECEIVED` or `PARTIALLY_RECEIVED`, so the refund that follows is issued
+	 *    against a return that already says the goods are in;
+	 * 3. a stock movement is written for every unit that arrived — a `RETURN` for the units going back
 	 *    on the shelf, a `WRITE_OFF` for the units that came back unsellable, and a `DAMAGE` record
 	 *    for the ones that arrived broken — through the ledger, never by writing a level here;
-	 * 3. only then is the refund issued, so money never leaves for goods the ledger refused.
+	 * 4. only then is the refund issued, so money never leaves for goods the ledger refused.
 	 *
 	 * A partial receipt leaves the return `PARTIALLY_RECEIVED` and keeps the remainder outstanding;
-	 * the same lines can be received again.
+	 * the same lines can be received again. Closing is deliberately not automatic: a fully received
+	 * return that is still being inspected must stay open, and `close` is what ends it.
 	 *
 	 * @param id The return being received.
 	 * @param lines The quantities that arrived, per line.
@@ -224,12 +231,23 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 		const fulfilled = await this.lineService.readFulfilledLines(orderReturn.orderId);
 		const recorded = await this.lineService.recordReceipt(id, lines);
-		const movementIds = await this.writeStockMovements(orderReturn, recorded, fulfilled, options.warehouseId);
 		const settlement = this.summarize(recorded);
 
-		const status = toQuantityUnits(settlement.outstanding) === 0n
-			? OrderReturnStatus.RECEIVED
-			: OrderReturnStatus.PARTIALLY_RECEIVED;
+		const status =
+			toQuantityUnits(settlement.outstanding) === 0n
+				? OrderReturnStatus.RECEIVED
+				: OrderReturnStatus.PARTIALLY_RECEIVED;
+
+		// The status is written first: the refund below reads the return and refuses to refund one
+		// that has not received anything, which is the check that keeps money behind goods.
+		await super.update(id, {
+			status,
+			receivedAt: new Date(),
+			warehouseId: options.warehouseId ?? orderReturn.warehouseId,
+			note: options.note ?? orderReturn.note
+		} as any);
+
+		const movementIds = await this.writeStockMovements(orderReturn, recorded, fulfilled, options.warehouseId);
 
 		let refund: IRefundResult | undefined;
 
@@ -237,17 +255,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			refund = await this.refund(id, options.refund, undefined, options.note);
 		}
 
-		const fullyReceived = status === OrderReturnStatus.RECEIVED;
-		const settled = fullyReceived && (options.refund === undefined || !!refund);
-
-		const updated = await super.update(id, {
-			status: settled ? OrderReturnStatus.CLOSED : status,
-			receivedAt: new Date(),
-			closedAt: settled ? new Date() : undefined,
-			refundAmount: refund ? refund.amount : orderReturn.refundAmount,
-			warehouseId: options.warehouseId ?? orderReturn.warehouseId,
-			note: options.note ?? orderReturn.note
-		} as any);
+		const updated = await this.findOneScoped(id);
 
 		return {
 			returnId: updated.id,
@@ -351,7 +359,9 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			);
 		}
 
-		return await super.update(id, { status: OrderReturnStatus.CLOSED, closedAt: new Date() } as any);
+		await super.update(id, { status: OrderReturnStatus.CLOSED, closedAt: new Date() } as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -408,7 +418,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
 			},
-			relations: ['lines', 'reason_', 'warehouse']
+			relations: { lines: true, reason_: true, warehouse: true }
 		});
 
 		if (!orderReturn) {
@@ -416,6 +426,24 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		}
 
 		return orderReturn;
+	}
+
+	/**
+	 * Normalises an amount a caller stated onto the currency's scale.
+	 *
+	 * An amount of zero is a real amount, so the check is for "not stated" rather than for "falsy" — a
+	 * return recorded with a zero refund is a different fact from a return whose refund is unknown.
+	 *
+	 * @param amount The stated amount, when one was.
+	 * @param currency The currency it is expressed in.
+	 * @returns The amount at the storage scale, or undefined when none was stated.
+	 */
+	private normalizeAmount(amount: string | number | undefined, currency: string): string | undefined {
+		if (amount === undefined || amount === null || String(amount) === '') {
+			return undefined;
+		}
+
+		return Money.of(String(amount), currency).round().toStorageString();
 	}
 
 	/**

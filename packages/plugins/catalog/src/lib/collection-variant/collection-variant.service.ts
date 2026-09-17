@@ -28,7 +28,7 @@ export class CollectionVariantService extends TenantAwareCrudService<CollectionV
 	public async findByCollection(collectionId: ID): Promise<CollectionVariant[]> {
 		return this.typeOrmCollectionVariantRepository.find({
 			where: { collectionId, organizationId: RequestContext.currentOrganizationId() },
-			relations: ['variant'],
+			relations: { variant: true },
 			order: { position: 'ASC', addedAt: 'ASC' }
 		});
 	}

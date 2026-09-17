@@ -11,6 +11,7 @@ import {
 } from '../returns.types';
 import { OrderClaimLineService } from '../order-claim-line/order-claim-line.service';
 import { OrderClaimLine } from '../order-claim-line/order-claim-line.entity';
+import { TypeOrmOrderExchangeRepository } from '../order-exchange/repository/type-orm-order-exchange.repository';
 import { OrderClaim } from './order-claim.entity';
 import { MikroOrmOrderClaimRepository } from './repository/mikro-orm-order-claim.repository';
 import { TypeOrmOrderClaimRepository } from './repository/type-orm-order-claim.repository';
@@ -38,6 +39,7 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 	constructor(
 		readonly typeOrmOrderClaimRepository: TypeOrmOrderClaimRepository,
 		readonly mikroOrmOrderClaimRepository: MikroOrmOrderClaimRepository,
+		readonly typeOrmOrderExchangeRepository: TypeOrmOrderExchangeRepository,
 		private readonly lineService: OrderClaimLineService,
 		private readonly sequenceService: SequenceService,
 		@Optional()
@@ -79,9 +81,10 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 			number,
 			type: header.type ?? OrderClaimType.REFUND,
 			status: OrderClaimStatus.OPEN,
-			refundAmount: header.refundAmount
-				? Money.of(String(header.refundAmount), header.currency).round().toStorageString()
-				: undefined,
+			refundAmount:
+				header.refundAmount === undefined || header.refundAmount === null || String(header.refundAmount) === ''
+					? undefined
+					: Money.of(String(header.refundAmount), header.currency).round().toStorageString(),
 			tenantId,
 			organizationId
 		} as any);
@@ -128,33 +131,32 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 		this.assertStatus(claim, DECIDABLE_STATUSES, 'approve');
 
 		const lines = await this.lineService.findForClaim(id);
-		const canBeShipped = lines.some((line) => line.isAdditionalItem === true) || !!claim.returnId;
+		const canBeShipped = lines.some((line) => line.isAdditionalItem === true) || (await this.hasLinkedExchange(claim));
 
 		if (claim.type === OrderClaimType.REPLACE && !canBeShipped) {
 			throw new BadRequestException(
-				'A replacement claim must have at least one additional item or a linked return, otherwise there is nothing to ship.'
+				'A replacement claim must have at least one additional item or a linked exchange, otherwise there is nothing to ship.'
 			);
 		}
 
 		if (claim.type === OrderClaimType.REFUND) {
 			const refund = await this.settleRefund(claim, refundAmount, note);
 
-			return {
-				claim: await super.update(id, {
-					status: OrderClaimStatus.CLOSED,
-					refundAmount: refund.amount,
-					note: note ?? claim.note
-				} as any),
-				refund
-			};
+			await super.update(id, {
+				status: OrderClaimStatus.CLOSED,
+				refundAmount: refund.amount,
+				note: note ?? claim.note
+			} as any);
+
+			return { claim: await this.findOneScoped(id), refund };
 		}
 
-		return {
-			claim: await super.update(id, {
-				status: OrderClaimStatus.APPROVED,
-				note: note ?? claim.note
-			} as any)
-		};
+		await super.update(id, {
+			status: OrderClaimStatus.APPROVED,
+			note: note ?? claim.note
+		} as any);
+
+		return { claim: await this.findOneScoped(id) };
 	}
 
 	/**
@@ -169,10 +171,12 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 
 		this.assertStatus(claim, [...DECIDABLE_STATUSES, OrderClaimStatus.APPROVED], 'reject');
 
-		return await super.update(id, {
+		await super.update(id, {
 			status: OrderClaimStatus.REJECTED,
 			reason: reason ?? claim.reason
 		} as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -187,11 +191,13 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 
 		this.assertStatus(claim, [...DECIDABLE_STATUSES, OrderClaimStatus.APPROVED], 'cancel');
 
-		return await super.update(id, {
+		await super.update(id, {
 			status: OrderClaimStatus.CANCELED,
 			canceledAt: new Date(),
 			reason: reason ?? claim.reason
 		} as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -210,10 +216,12 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 
 		this.assertStatus(claim, [OrderClaimStatus.APPROVED], 'close');
 
-		return await super.update(id, {
+		await super.update(id, {
 			status: OrderClaimStatus.CLOSED,
 			note: note ?? claim.note
 		} as any);
+
+		return await this.findOneScoped(id);
 	}
 
 	/**
@@ -229,7 +237,7 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
 			},
-			relations: ['lines', 'return']
+			relations: { lines: true, return: true }
 		});
 
 		if (!claim) {
@@ -250,7 +258,37 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 	public async linkReturn(id: ID, returnId: ID): Promise<OrderClaim> {
 		await this.findOneScoped(id);
 
-		return await super.update(id, { returnId } as any);
+		await super.update(id, { returnId } as any);
+
+		return await this.findOneScoped(id);
+	}
+
+	/**
+	 * Reads whether the claim's return is the inbound half of an exchange, which is the other way a
+	 * replacement claim can have something to ship.
+	 *
+	 * The claim and the exchange are linked through the return rather than to each other: the claim
+	 * asks for replacement goods, the return brings the faulty ones back, and the exchange is what
+	 * ships the replacements against that return.
+	 *
+	 * @param claim The claim being approved.
+	 * @returns True when an exchange exists for the claim's return.
+	 */
+	private async hasLinkedExchange(claim: OrderClaim): Promise<boolean> {
+		if (!claim.returnId) {
+			return false;
+		}
+
+		const exchange = await this.typeOrmOrderExchangeRepository.findOne({
+			where: {
+				returnId: claim.returnId,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			},
+			select: { id: true }
+		});
+
+		return !!exchange;
 	}
 
 	/**

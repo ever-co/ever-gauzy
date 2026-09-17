@@ -4,9 +4,9 @@
  * Every column the aggregate accepts from a caller is declared here once, so the create and
  * update shapes cannot drift apart from the read shape.
  */
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
-import { StockTransferStatus } from './../inventory.enums';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsDate, IsEnum, IsInt, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { StockTransferStatus } from './../../inventory.enums';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
 /**
@@ -17,72 +17,72 @@ export class StockTransferDTO extends TenantOrganizationBaseDTO {
 	 * Document number, unique per organization.
 	 */
 	@ApiPropertyOptional({ type: () => String })
-		@IsOptional()
-		@IsString()
-		@MaxLength(64)
+	@IsOptional()
+	@IsString()
+	@MaxLength(64)
 	number?: string;
 
 	/**
 	 * Location the stock leaves.
 	 */
 	@ApiPropertyOptional({ type: () => String })
-		@IsOptional()
-		@IsUUID()
+	@IsOptional()
+	@IsUUID()
 	fromWarehouseId?: string;
 
 	/**
 	 * Location the stock arrives at.
 	 */
 	@ApiPropertyOptional({ type: () => String })
-		@IsOptional()
-		@IsUUID()
+	@IsOptional()
+	@IsUUID()
 	toWarehouseId?: string;
 
 	/**
 	 * Lifecycle state of the transfer.
 	 */
 	@ApiPropertyOptional({ type: () => String, enum: StockTransferStatus })
-		@IsOptional()
-		@IsEnum(StockTransferStatus)
+	@IsOptional()
+	@IsEnum(StockTransferStatus)
 	status?: StockTransferStatus;
 
 	/**
 	 * When the transfer was dispatched.
 	 */
 	@ApiPropertyOptional({ type: () => Date })
-		@IsOptional()
-		@IsDate()
+	@IsOptional()
+	@IsDate()
 	shippedAt?: Date;
 
 	/**
 	 * When the transfer was fully received.
 	 */
 	@ApiPropertyOptional({ type: () => Date })
-		@IsOptional()
-		@IsDate()
+	@IsOptional()
+	@IsDate()
 	receivedAt?: Date;
 
 	/**
 	 * Free text from the operator.
 	 */
 	@ApiPropertyOptional({ type: () => String })
-		@IsOptional()
-		@IsString()
+	@IsOptional()
+	@IsString()
 	note?: string;
 
 	/**
 	 * Optimistic-lock counter.
 	 */
 	@ApiPropertyOptional({ type: () => Number })
-		@IsOptional()
-		@IsInt()
+	@IsOptional()
+	@IsInt()
 	version?: number;
 
 	/**
 	 * Tenant extras.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
-		@IsOptional()
-		@IsObject()
+	@IsOptional()
+	@IsObject()
 	metadata?: Record<string, any>;
 }

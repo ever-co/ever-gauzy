@@ -31,7 +31,7 @@ export class TagProductVariantService extends TenantAwareCrudService<TagProductV
 	public async findByVariant(variantId: ID): Promise<TagProductVariant[]> {
 		return this.typeOrmTagProductVariantRepository.find({
 			where: { productVariantId: variantId, organizationId: RequestContext.currentOrganizationId() },
-			relations: ['tag']
+			relations: { tag: true }
 		});
 	}
 

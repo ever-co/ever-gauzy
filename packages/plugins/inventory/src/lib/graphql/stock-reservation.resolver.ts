@@ -12,6 +12,7 @@ import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { EventBus, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
+import { StockReservationReferenceType, StockReservationStatus } from './../inventory.enums';
 import { StockReservation } from './../stock-reservation/stock-reservation.entity';
 import { StockReservationService } from './../stock-reservation/stock-reservation.service';
 import { StockReservationChangedEvent } from './../events';
@@ -28,7 +29,7 @@ export class StockReservationResolver {
 	/** Holds, filtered by the document that owns them. */
 	@Query('stockReservations')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
-	async stockReservations(@Args('referenceType') referenceType: string, @Args('referenceId') referenceId: string, @Args('status') status: string): Promise<any> {
+	async stockReservations(@Args('referenceType') referenceType: StockReservationReferenceType, @Args('referenceId') referenceId: string, @Args('status') status: StockReservationStatus): Promise<any> {
 		return await this.service.findReservations({ where: { referenceType, referenceId, status } });
 	}
 

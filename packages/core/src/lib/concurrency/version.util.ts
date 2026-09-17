@@ -56,8 +56,16 @@ export interface IVersionExpectation {
 	versions: number[];
 }
 
-/** The result of reading an `If-Match` header. */
-export type IfMatchParse = { ok: true; expectation: IVersionExpectation } | { ok: false; reason: VersionParseFailure };
+/**
+ * The result of reading an `If-Match` header.
+ *
+ * The discriminant is a string rather than a boolean on purpose: this package compiles without
+ * `strictNullChecks`, and under that setting a negated boolean discriminant (`if (!parsed.ok)`) does
+ * not narrow the union — a member of the wrong branch would type-check and fail at runtime instead.
+ */
+export type IfMatchParse =
+	| { status: 'match'; expectation: IVersionExpectation }
+	| { status: 'invalid'; reason: VersionParseFailure };
 
 /** What the guard must do with a request, decided from the header and the row it names. */
 export type VersionPrecondition =
@@ -70,9 +78,9 @@ export type VersionPrecondition =
 
 /** What an update that ran under a version precondition produced. */
 export type VersionedWriteOutcome =
-	| { ok: true; version: number }
-	| { ok: false; code: 'ENTITY_VERSION_CONFLICT'; expectedVersion: number; actualVersion?: number }
-	| { ok: false; code: 'RESOURCE_NOT_FOUND' };
+	| { status: 'written'; version: number }
+	| { status: 'conflict'; expectedVersion: number; actualVersion?: number }
+	| { status: 'missing' };
 
 /**
  * Reads an `If-Match` header.
@@ -95,7 +103,7 @@ export function parseIfMatch(header: unknown): IfMatchParse | null {
 	}
 
 	if (typeof raw !== 'string') {
-		return { ok: false, reason: 'malformed' };
+		return { status: 'invalid', reason: 'malformed' };
 	}
 
 	const value = raw.trim();
@@ -105,7 +113,7 @@ export function parseIfMatch(header: unknown): IfMatchParse | null {
 	}
 
 	if (value === '*') {
-		return { ok: true, expectation: { wildcard: true, versions: [] } };
+		return { status: 'match', expectation: { wildcard: true, versions: [] } };
 	}
 
 	const versions: number[] = [];
@@ -114,7 +122,7 @@ export function parseIfMatch(header: unknown): IfMatchParse | null {
 		const version = parseEntityTag(part);
 
 		if (version === null) {
-			return { ok: false, reason: 'malformed' };
+			return { status: 'invalid', reason: 'malformed' };
 		}
 
 		if (!versions.includes(version)) {
@@ -122,7 +130,9 @@ export function parseIfMatch(header: unknown): IfMatchParse | null {
 		}
 	}
 
-	return versions.length ? { ok: true, expectation: { wildcard: false, versions } } : { ok: false, reason: 'malformed' };
+	return versions.length
+		? { status: 'match', expectation: { wildcard: false, versions } }
+		: { status: 'invalid', reason: 'malformed' };
 }
 
 /**
@@ -248,7 +258,7 @@ export function evaluateVersionPrecondition(input: {
 		return input.required === false ? { action: 'SKIP' } : { action: 'REQUIRE' };
 	}
 
-	if (!parsed.ok) {
+	if (parsed.status === 'invalid') {
 		return { action: 'INVALID', reason: parsed.reason };
 	}
 
@@ -302,18 +312,17 @@ export function evaluateVersionedWrite(input: {
 	exists?: boolean;
 }): VersionedWriteOutcome {
 	if (input.affected > 0) {
-		return { ok: true, version: bumpVersion(input.expected) };
+		return { status: 'written', version: bumpVersion(input.expected) };
 	}
 
 	if (input.exists === false) {
-		return { ok: false, code: 'RESOURCE_NOT_FOUND' };
+		return { status: 'missing' };
 	}
 
 	const actual = parseEntityVersion(input.actualVersion);
 
 	return {
-		ok: false,
-		code: 'ENTITY_VERSION_CONFLICT',
+		status: 'conflict',
 		expectedVersion: input.expected,
 		...(actual === null ? {} : { actualVersion: actual })
 	};

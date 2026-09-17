@@ -160,10 +160,15 @@ export const inventorySchemaExtensions = gql`
 		stockReservation(id: ID!): StockReservation
 		stockTransfers(status: String): [StockTransfer!]!
 		stockTransfer(id: ID!): StockTransfer
+		stockTransferLines(transferId: ID!): [StockTransferLine!]!
+		stockTransferLine(id: ID!): StockTransferLine
 		stockAlerts(variantId: ID, isActive: Boolean): [StockAlert!]!
 		stockAdjustments(warehouseId: ID, variantId: ID, status: String): [StockAdjustment!]!
 		stockCounts(warehouseId: ID, status: String, mode: String): [StockCount!]!
 		stockCount(id: ID!): StockCount
+		stockCountLines(stockCountId: ID!): [StockCountLine!]!
+		stockCountLine(id: ID!): StockCountLine
+		stockCountVariance(stockCountId: ID!): StockCountVariance!
 		channelWarehouses(channelId: ID, warehouseId: ID): [ChannelWarehouse!]!
 	}
 
@@ -178,6 +183,7 @@ export const inventorySchemaExtensions = gql`
 		shipStockTransfer(id: ID!, lines: [StockTransferShipLineInput!]!): StockTransfer!
 		receiveStockTransfer(id: ID!, lines: [StockTransferReceiveLineInput!]!): StockTransfer!
 		cancelStockTransfer(id: ID!, reason: String): StockTransfer!
+		addStockTransferLine(input: StockTransferLineInput!): StockTransferLine!
 		createStockAlert(input: StockAlertInput!): StockAlert!
 		updateStockAlert(id: ID!, input: StockAlertInput!): StockAlert!
 		deleteStockAlert(id: ID!): Boolean!
@@ -219,9 +225,18 @@ export const inventorySchemaExtensions = gql`
 	}
 
 	input StockTransferLineInput {
+		transferId: ID
 		variantId: ID!
 		requestedQuantity: Float!
 		unitCost: Float
+		note: String
+	}
+
+	"""The variance of one count session, in units and valued at the recorded unit cost."""
+	type StockCountVariance {
+		units: Float!
+		value: Float!
+		unpricedLines: Int!
 	}
 
 	input StockTransferShipLineInput {

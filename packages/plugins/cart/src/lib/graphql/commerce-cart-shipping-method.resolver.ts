@@ -1,11 +1,13 @@
-import { Args, ID, Mutation, Parent, ResolveField, Resolver } from '@nestjs/graphql';
+﻿import { Args, ID, Mutation, Parent, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { IPagination } from '@gauzy/contracts';
 import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { CommerceCart } from '../commerce-cart/commerce-cart.entity';
 import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
+import { CommerceCartShippingMethod } from '../commerce-cart-shipping-method/commerce-cart-shipping-method.entity';
 import { CommerceCartShippingMethodService } from '../commerce-cart-shipping-method/commerce-cart-shipping-method.service';
 import { CART_PERMISSIONS } from '../cart.permissions';
-import { Cart, CartShippingMethod } from './types';
+import { Cart } from './types';
 
 /**
  * The cart's delivery fields and the delivery mutations.
@@ -13,7 +15,7 @@ import { Cart, CartShippingMethod } from './types';
  * The price is the shipping calculation's, never this resolver's; setting a delivery choice replaces
  * whatever was there, which is why the mutation takes the whole choice rather than a patch.
  */
-@Resolver(() => Cart)
+@Resolver('Cart')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(CART_PERMISSIONS.CARTS_VIEW)
 export class CommerceCartShippingMethodResolver {
@@ -29,10 +31,10 @@ export class CommerceCartShippingMethodResolver {
 	 * @returns The cart's delivery choices.
 	 */
 	@ResolveField('shippingMethods', () => [Object], { nullable: true })
-	async shippingMethods(@Parent() cart: Cart): Promise<CartShippingMethod[]> {
+	async shippingMethods(@Parent() cart: Cart): Promise<CommerceCartShippingMethod[]> {
 		const page = (await this.commerceCartShippingMethodService.findAll({
 			where: { cartId: cart.id }
-		})) as IPagination<CartShippingMethod>;
+		})) as IPagination<CommerceCartShippingMethod>;
 
 		return page.items;
 	}
@@ -57,10 +59,10 @@ export class CommerceCartShippingMethodResolver {
 	 */
 	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
 	@Mutation(() => Object, { name: 'removeCartShippingMethod' })
-	async removeCartShippingMethod(@Args('cartId', { type: () => ID }) cartId: string): Promise<Cart> {
+	async removeCartShippingMethod(@Args('cartId', { type: () => ID }) cartId: string): Promise<CommerceCart> {
 		const page = (await this.commerceCartShippingMethodService.findAll({
 			where: { cartId }
-		})) as IPagination<CartShippingMethod>;
+		})) as IPagination<CommerceCartShippingMethod>;
 
 		for (const method of page.items) {
 			await this.commerceCartShippingMethodService.delete(method.id);

@@ -32,7 +32,7 @@ export class CollectionProductService extends TenantAwareCrudService<CollectionP
 	public async findByCollection(collectionId: ID): Promise<CollectionProduct[]> {
 		return this.typeOrmCollectionProductRepository.find({
 			where: { collectionId, organizationId: RequestContext.currentOrganizationId() },
-			relations: ['product'],
+			relations: { product: true },
 			order: { position: 'ASC', addedAt: 'ASC' }
 		});
 	}

@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+import { OrderClaimReason } from '../../returns.types';
 
 /** The body of `POST /order-claims/:id/approve`. */
 export class ApproveOrderClaimDTO {
@@ -42,14 +43,14 @@ export class EditOrderClaimLineDTO {
 	@IsString()
 	readonly variantId?: string;
 
-	@ApiPropertyOptional({ type: () => Number })
+	@ApiPropertyOptional({ type: () => String, description: 'Exact decimal string, e.g. "1.000000".' })
 	@IsOptional()
-	readonly quantity?: number;
+	readonly quantity?: string;
 
-	@ApiPropertyOptional({ type: () => String })
+	@ApiPropertyOptional({ type: () => String, enum: OrderClaimReason })
 	@IsOptional()
-	@IsString()
-	readonly reason?: string;
+	@IsEnum(OrderClaimReason)
+	readonly reason?: OrderClaimReason;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()

@@ -1,5 +1,6 @@
 import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
+import { FindOptionsWhere } from 'typeorm';
 import { IPagination, OrderChangeType } from '@gauzy/contracts';
 import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { OrderService } from '../order/order.service';
@@ -11,6 +12,14 @@ import { OrderLineService } from '../order-line/order-line.service';
 import { OrderShippingMethodService } from '../order-shipping-method/order-shipping-method.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { ORDER_PERMISSIONS } from '../order.permissions';
+import {
+	FULFILLMENT_STATUSES,
+	ORDER_PAYMENT_STATUSES,
+	ORDER_STATUSES,
+	isFulfillmentStatus,
+	isOrderPaymentStatus,
+	isOrderStatus
+} from './filters';
 import {
 	IOrderConnection,
 	Order,
@@ -31,7 +40,7 @@ import {
  * allowed to do or in what a rule means. Every relation is resolved by its own aggregate's service,
  * which is what makes the order graph one query without N+1 reads.
  */
-@Resolver(() => Order)
+@Resolver('Order')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)
 export class OrderResolver {
@@ -51,6 +60,7 @@ export class OrderResolver {
 	 *
 	 * @param filter The filter arguments.
 	 * @returns A page of orders.
+	 * @throws BadRequestException when a status is given that the order does not have.
 	 */
 	@Query(() => Object, { name: 'orders' })
 	async orders(
@@ -60,13 +70,44 @@ export class OrderResolver {
 		@Args('customerId', { type: () => ID, nullable: true }) customerId?: string,
 		@Args('channelId', { type: () => ID, nullable: true }) channelId?: string
 	): Promise<IOrderConnection> {
-		const where = {
-			...(status ? { status } : {}),
-			...(paymentStatus ? { paymentStatus } : {}),
-			...(fulfillmentStatus ? { fulfillmentStatus } : {}),
-			...(customerId ? { customerId } : {}),
-			...(channelId ? { channelId } : {})
-		};
+		const where: FindOptionsWhere<Order> = {};
+
+		if (status) {
+			if (!isOrderStatus(status)) {
+				throw new BadRequestException(`The order status "${status}" is not one of: ${ORDER_STATUSES.join(', ')}.`);
+			}
+
+			where.status = status;
+		}
+
+		if (paymentStatus) {
+			if (!isOrderPaymentStatus(paymentStatus)) {
+				throw new BadRequestException(
+					`The payment status "${paymentStatus}" is not one of: ${ORDER_PAYMENT_STATUSES.join(', ')}.`
+				);
+			}
+
+			where.paymentStatus = paymentStatus;
+		}
+
+		if (fulfillmentStatus) {
+			if (!isFulfillmentStatus(fulfillmentStatus)) {
+				throw new BadRequestException(
+					`The fulfilment status "${fulfillmentStatus}" is not one of: ${FULFILLMENT_STATUSES.join(', ')}.`
+				);
+			}
+
+			where.fulfillmentStatus = fulfillmentStatus;
+		}
+
+		if (customerId) {
+			where.customerId = customerId;
+		}
+
+		if (channelId) {
+			where.channelId = channelId;
+		}
+
 		const page = (await this.orderService.findAll({ where })) as IPagination<Order>;
 
 		return { items: page.items, total: page.total };

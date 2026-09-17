@@ -191,8 +191,12 @@ export const schemaExtensions = gql`
 		unitPrice: Decimal!
 		note: String
 		metadata: JSON
-		"The value of this line: quantity multiplied by the snapshotted unit price."
-		lineTotal: Decimal!
+		"""
+		The value of this line: quantity multiplied by the snapshotted unit price, expressed in the
+		currency the caller states. The currency is an argument rather than a stored field because a
+		line belongs to an exchange, and the exchange is where the currency lives.
+		"""
+		lineTotal(currency: String!): Decimal!
 	}
 
 	"One page of returns."

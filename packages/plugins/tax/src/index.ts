@@ -15,7 +15,6 @@ export * from './lib/tax-category/tax-category.service';
 export * from './lib/tax-category/dto';
 export * from './lib/tax-category/repository/mikro-orm-tax-category.repository';
 export * from './lib/tax-category/repository/type-orm-tax-category.repository';
-export * from './lib/tax-rate/tax-calculation.controller';
 export * from './lib/tax-rate/tax-rate.controller';
 export * from './lib/tax-rate/tax-rate.entity';
 export * from './lib/tax-rate/tax-rate.service';

@@ -75,7 +75,7 @@ export class ProductRelationService extends TenantAwareCrudService<ProductRelati
 				organizationId: RequestContext.currentOrganizationId(),
 				...(type ? { type } : {})
 			},
-			relations: ['relatedProduct'],
+			relations: { relatedProduct: true },
 			order: { type: 'ASC', position: 'ASC' }
 		});
 	}
@@ -90,7 +90,7 @@ export class ProductRelationService extends TenantAwareCrudService<ProductRelati
 	public async findTowards(productId: ID): Promise<ProductRelation[]> {
 		return this.typeOrmProductRelationRepository.find({
 			where: { relatedProductId: productId, organizationId: RequestContext.currentOrganizationId() },
-			relations: ['product'],
+			relations: { product: true },
 			order: { type: 'ASC', position: 'ASC' }
 		});
 	}

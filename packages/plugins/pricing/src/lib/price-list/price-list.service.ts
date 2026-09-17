@@ -61,12 +61,16 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 	/**
 	 * Updates a list after the same checks.
 	 *
+	 * The payload is the row the caller states rather than the query payload the driver is handed:
+	 * every value below is validated and normalised, and a member that names a column default instead
+	 * of a value is not something this service can check.
+	 *
 	 * @param id The list to update.
 	 * @param entity The fields to change.
 	 * @returns The update result.
 	 * @throws BadRequestException when the change would leave the list with an empty window.
 	 */
-	public async updateOne(id: ID, entity: QueryDeepPartialEntity<PriceList>): Promise<UpdateResult | PriceList> {
+	public async updateOne(id: ID, entity: DeepPartial<PriceList>): Promise<UpdateResult | PriceList> {
 		const existing = await this.findOneByIdString(id);
 		const prepared = this.prepare({
 			...entity,
@@ -179,7 +183,13 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 			);
 		}
 
-		if (entity.startsAt && entity.endsAt && new Date(entity.endsAt).getTime() <= new Date(entity.startsAt).getTime()) {
+		// A partial write types its dates as partial dates, so a bound is read as the instant it names
+		// before the two are compared: the window is validated as one, and neither bound is trusted to
+		// already be a `Date`.
+		const startsAt = entity.startsAt ? new Date(String(entity.startsAt)) : undefined;
+		const endsAt = entity.endsAt ? new Date(String(entity.endsAt)) : undefined;
+
+		if (startsAt && endsAt && endsAt.getTime() <= startsAt.getTime()) {
 			throw new BadRequestException(
 				'PRICE_LIST_WINDOW_INVALID: endsAt must be later than startsAt, otherwise the list is never eligible.'
 			);

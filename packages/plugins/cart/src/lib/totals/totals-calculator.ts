@@ -1,5 +1,5 @@
-import { Money, RoundingMode } from '@gauzy/core';
-import { CurrencyCode, ICommerceCartTotals } from '@gauzy/contracts';
+import { Money } from '@gauzy/core';
+import { CurrencyCode, ICommerceCartTotals, RoundingMode } from '@gauzy/contracts';
 
 /**
  * One line as the totals chain sees it.

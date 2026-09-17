@@ -12,6 +12,7 @@ import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { EventBus, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
+import { StockCountMode, StockCountStatus } from './../inventory.enums';
 import { StockCount } from './../stock-count/stock-count.entity';
 import { StockCountService } from './../stock-count/stock-count.service';
 
@@ -26,7 +27,7 @@ export class StockCountResolver {
 	/** Count sessions. */
 	@Query('stockCounts')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
-	async stockCounts(@Args('warehouseId') warehouseId: string, @Args('status') status: string, @Args('mode') mode: string): Promise<any> {
+	async stockCounts(@Args('warehouseId') warehouseId: string, @Args('status') status: StockCountStatus, @Args('mode') mode: StockCountMode): Promise<any> {
 		return await this.service.findCounts({ where: { warehouseId, status, mode } });
 	}
 

@@ -13,7 +13,9 @@ import { AdjustmentService, TaxLineService, TenantAwareCrudService } from '@gauz
 import { CommerceCart } from './commerce-cart.entity';
 import { CommerceCartLine } from '../commerce-cart-line/commerce-cart-line.entity';
 import { CommerceCartLineService } from '../commerce-cart-line/commerce-cart-line.service';
+import { CommerceCartShippingMethod } from '../commerce-cart-shipping-method/commerce-cart-shipping-method.entity';
 import { CommerceCartShippingMethodService } from '../commerce-cart-shipping-method/commerce-cart-shipping-method.service';
+import { CommerceCartPromotion } from '../commerce-cart-promotion/commerce-cart-promotion.entity';
 import { CommerceCartPromotionService } from '../commerce-cart-promotion/commerce-cart-promotion.service';
 import { CommerceCheckoutSessionService } from '../commerce-checkout-session/commerce-checkout-session.service';
 import { TypeOrmCommerceCartRepository } from './repository/type-orm-commerce-cart.repository';

@@ -32,6 +32,19 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	})
 	quantity: number;
 
+	/**
+	 * Quantity held by open reservations, aggregated over the variants of this product at this
+	 * location. It is the running sum of the variant rows, never re-derived by a read.
+	 */
+	@ApiPropertyOptional({ type: Number })
+	@MultiORMColumn({
+		nullable: true,
+		type: 'numeric',
+		default: 0,
+		transformer: new ColumnNumericTransformerPipe()
+	})
+	reservedQuantity: number;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

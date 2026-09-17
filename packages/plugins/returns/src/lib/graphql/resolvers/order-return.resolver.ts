@@ -8,6 +8,8 @@ import { OrderReturn } from '../../order-return/order-return.entity';
 import { OrderReturnService } from '../../order-return/order-return.service';
 import { OrderReturnLineService } from '../../order-return-line/order-return-line.service';
 import { OrderReturnLine } from '../../order-return-line/order-return-line.entity';
+import { OrderReturnReason } from '../../order-return-reason/order-return-reason.entity';
+import { OrderReturnReasonService } from '../../order-return-reason/order-return-reason.service';
 
 /** The request that opens a return, as the schema declares it. */
 interface IRequestOrderReturnArgs {
@@ -42,7 +44,8 @@ interface IReceiveOrderReturnArgs {
 export class OrderReturnResolver {
 	constructor(
 		private readonly orderReturnService: OrderReturnService,
-		private readonly orderReturnLineService: OrderReturnLineService
+		private readonly orderReturnLineService: OrderReturnLineService,
+		private readonly orderReturnReasonService: OrderReturnReasonService
 	) {}
 
 	/**
@@ -222,6 +225,28 @@ export class OrderReturnResolver {
 		}
 
 		return await this.orderReturnLineService.findForReturn(orderReturn.id);
+	}
+
+	/**
+	 * Resolves the governed reason the return was filed under.
+	 *
+	 * Resolved from the cause rather than stored on the return: a return that carries a reason id whose
+	 * row has been deactivated still has to answer what it was filed under.
+	 *
+	 * @param orderReturn The return being read.
+	 * @returns The reason, or null when the return has none.
+	 */
+	@ResolveField('reasonCode')
+	async reasonCode(@Parent() orderReturn: IOrderReturn): Promise<OrderReturnReason | null> {
+		if (!orderReturn.reasonId) {
+			return null;
+		}
+
+		try {
+			return await this.orderReturnReasonService.findOneScoped(orderReturn.reasonId);
+		} catch (error) {
+			return null;
+		}
 	}
 
 	/**
