@@ -5,6 +5,7 @@ import {
 	IOnPluginDestroy,
 	PluginSettingContribution
 } from '@gauzy/plugin';
+import { IUnitReference, registerUnitReferences } from '@gauzy/core';
 import { ExchangeRate } from './exchange-rate/exchange-rate.entity';
 import { PriceList } from './price-list/price-list.entity';
 import { PricePreference } from './price-preference/price-preference.entity';
@@ -44,6 +45,28 @@ const PRICING_SETTINGS: PluginSettingContribution[] = [
 		scope: 'ORGANIZATION',
 		description:
 			'Whether a variant with no price row resolves to the legacy variant retail price. Turning it off makes an unpriced variant resolve to nothing instead, which is the stricter setting.'
+	}
+];
+
+/**
+ * The unit references this package owns.
+ *
+ * A price is an amount **for a quantity in a stated unit**, so `product_price.unitId` names the unit
+ * the amount is per — three for a tenner, or a price per kilogram. It is declared here rather than
+ * left to the kernel because the column is this package's: the kernel owns the rule that a unit
+ * reference must name a unit that exists, and this is where it is told which column the rule applies
+ * to.
+ *
+ * No family is stated, and that is deliberate. A tenant prices per piece, per kilogram and per hour
+ * with the same table, so a family fixed here would refuse two thirds of what the tenant sells. The
+ * requirement the column does carry — that the unit exists — is the one the kernel checks.
+ */
+const PRICING_UNIT_REFERENCES: IUnitReference[] = [
+	{
+		table: 'product_price',
+		column: 'unitId',
+		owner: '@gauzy/plugin-pricing',
+		description: 'The unit a price amount is stated per, which may be a unit of any family.'
 	}
 ];
 
@@ -116,6 +139,11 @@ export class PricingPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	 * Called when the plugin is being initialized.
 	 */
 	onPluginBootstrap(): void | Promise<void> {
+		// Declaring the reference, rather than only constraining it, is what lets the nightly audit
+		// see the rows a constraint could not reach: the dialect this installation runs on may be one
+		// that cannot attach a constraint to a column that already exists.
+		registerUnitReferences(PRICING_UNIT_REFERENCES);
+
 		if (this.logEnabled) {
 			console.log(chalk.green(`${PricingPlugin.name} is being bootstrapped...`));
 		}

@@ -3,13 +3,11 @@ import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
 /**
- * One constraint this migration adds, and the rule it carries.
+ * One constraint this migration adds.
  */
 interface IBinUnitForeignKey {
 	/** The column that states the unit a bin's limit is expressed in. */
 	column: string;
-	/** The service check that carries the rule where the dialect cannot declare the constraint. */
-	check: string;
 }
 
 /**
@@ -79,11 +77,16 @@ export class AddWarehouseBinCapacityUnitForeignKeys1791000000196 implements Migr
 	 * limit is measured against and its volume ceiling is what a pallet plan is measured against —
 	 * three limits of one position, each stated in its own unit, and none of them interchangeable with
 	 * another.
+	 *
+	 * What compensates for the dialect that cannot take them is named where it is declared rather than
+	 * here: the plugin's own `registerUnitReferences` call tells the kernel's nightly measurement
+	 * audit which three columns carry the rule, and that audit reports a row naming a unit that does
+	 * not exist as `UNIT_REFERENCE_DANGLING`.
 	 */
 	private readonly foreignKeys: IBinUnitForeignKey[] = [
-		{ column: 'capacityUnitId', check: 'WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED' },
-		{ column: 'maxWeightUnitId', check: 'WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED' },
-		{ column: 'maxVolumeUnitId', check: 'WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED' }
+		{ column: 'capacityUnitId' },
+		{ column: 'maxWeightUnitId' },
+		{ column: 'maxVolumeUnitId' }
 	];
 
 	/**

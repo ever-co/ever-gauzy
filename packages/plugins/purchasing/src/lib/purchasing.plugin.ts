@@ -1,6 +1,7 @@
 import * as chalk from 'chalk';
 import { Type } from '@nestjs/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { IUnitReference, registerUnitReferences } from '@gauzy/core';
 import { migrations } from './database/migrations';
 import { resolvers } from './graphql/resolvers';
 import { schemaExtensions } from './graphql/schema-extensions';
@@ -18,6 +19,24 @@ import { PURCHASING_PERMISSIONS } from './purchasing.permissions';
  * compile-time one.
  */
 const PURCHASING_DEPENDS_ON: string[] = ['@gauzy/plugin-inventory', '@gauzy/plugin-warehouse'];
+
+/**
+ * The unit references this package owns.
+ *
+ * A purchase line is ordered in a unit, and the vendor's own unit is not necessarily the one the
+ * goods are stocked in — a supplier sells a pallet of forty cartons and the warehouse receives
+ * cartons — so `purchase_order_line.unitId` names the unit the *line* is written in and states no
+ * family. Declaring it here is what tells the kernel's audit, which owns the rule that such a column
+ * must name a unit that exists, which column the rule applies to.
+ */
+const PURCHASING_UNIT_REFERENCES: IUnitReference[] = [
+	{
+		table: 'purchase_order_line',
+		column: 'unitId',
+		owner: '@gauzy/plugin-purchasing',
+		description: 'The unit a purchase order line is ordered in, which may be a unit of any family.'
+	}
+];
 
 /**
  * Purchasing: what the organization buys, what arrives, and how the two are reconciled.
@@ -76,6 +95,8 @@ export class PurchasingPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	 * Called when the plugin is being initialized.
 	 */
 	onPluginBootstrap(): void | Promise<void> {
+		registerUnitReferences(PURCHASING_UNIT_REFERENCES);
+
 		if (this.logEnabled) {
 			console.log(chalk.green(`${PurchasingPlugin.name} is being bootstrapped...`));
 		}

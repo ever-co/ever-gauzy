@@ -217,6 +217,7 @@ export * from './lib/api';
  * conditions; both are how a platform ends up with three of everything.
  */
 export * from './lib/money';
+export * from './lib/measurement';
 export * from './lib/rule';
 export * from './lib/adjustment';
 export * from './lib/tax-line';

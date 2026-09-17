@@ -414,13 +414,27 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
-	 * Finds first entity by a given find options.
-	 * If entity was not found in the database - returns null.
+	 * Finds the first entity by the given find options.
 	 *
-	 * @param options
-	 * @returns
+	 * **A miss raises rather than answering `null`.** The declared return type says the row, and the
+	 * body has always raised `NotFoundException` on a miss — which is what the API contract wants,
+	 * since the exception filter turns it into the `404` a caller reading one resource by id should
+	 * get. The doc comment here used to promise `null`, and the `| null` in the signature said the
+	 * same thing; neither was enforced, because this workspace compiles without `strictNullChecks`,
+	 * where `T | null` collapses to `T` and a comment cannot be checked at all. A caller that reads
+	 * that promise and branches on `null` therefore gets a `404` from a path that meant to ask a
+	 * question, which is how a "is this code still free?" check came to refuse every free code.
+	 *
+	 * **A caller that must treat absence as an ordinary answer uses `findOneOrFailByOptions`**, whose
+	 * `ITryRequest` carries `success: false` instead of raising. That is the pair this platform
+	 * already uses in fifty-odd places, and it is the only shape here that says "not finding it is an
+	 * outcome" without changing what a read by id does.
+	 *
+	 * @param options The find options.
+	 * @returns The record.
+	 * @throws NotFoundException when no record matches.
 	 */
-	public async findOneByOptions(options: IFindOneOptions<T>): Promise<T | null> {
+	public async findOneByOptions(options: IFindOneOptions<T>): Promise<T> {
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
@@ -442,13 +456,18 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
-	 * Finds first entity that matches given where condition.
-	 * If entity was not found in the database - returns null.
+	 * Finds the first entity matching the given where condition.
 	 *
-	 * @param options
-	 * @returns
+	 * **A miss raises rather than answering `null`**, for the reason `findOneByOptions` states in
+	 * full: the body has always raised `NotFoundException`, the declared `| null` was never enforced
+	 * because this workspace compiles without `strictNullChecks`, and a caller that needs absence as
+	 * an ordinary answer uses `findOneOrFailByWhereOptions` and reads `success`.
+	 *
+	 * @param options The where condition.
+	 * @returns The record.
+	 * @throws NotFoundException when no record matches.
 	 */
-	public async findOneByWhereOptions(options: IFindWhereOptions<T>): Promise<T | null> {
+	public async findOneByWhereOptions(options: IFindWhereOptions<T>): Promise<T> {
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:

@@ -201,6 +201,13 @@ export const ApiErrorCode = {
 	UNIT_CATEGORY_MISMATCH: 'UNIT_CATEGORY_MISMATCH',
 	/** A family was created, or reached, without the reference unit that defines its base quantity. */
 	UNIT_CATEGORY_NO_REFERENCE: 'UNIT_CATEGORY_NO_REFERENCE',
+	/**
+	 * A column that names a unit names one that does not exist.
+	 *
+	 * The code the measurement audit reports a reference its dialect could not constrain — a row
+	 * imported, restored or hand-corrected past the write path that guards the column.
+	 */
+	UNIT_REFERENCE_DANGLING: 'UNIT_REFERENCE_DANGLING',
 	/** A variant's stock unit is not its family's reference unit, which the stock ledger's sum requires. */
 	STOCK_UNIT_NOT_REFERENCE: 'STOCK_UNIT_NOT_REFERENCE',
 	/** A variant level's family disagrees with the family of the product level above it. */
