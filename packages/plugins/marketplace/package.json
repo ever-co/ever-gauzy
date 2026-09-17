@@ -1,0 +1,72 @@
+{
+	"name": "@gauzy/plugin-marketplace",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform Marketplace Plugin",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/marketplace"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-marketplace",
+		"lib:build:prod": "yarn nx build plugin-marketplace",
+		"lib:watch": "yarn nx build plugin-marketplace --watch"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26"
+	},
+	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
+		"@mikro-orm/nestjs": "^6.1.2",
+		"@nestjs/mapped-types": "^2.1.1",
+		"@nestjs/swagger": "^11.4.4",
+		"@nestjs/typeorm": "^11.0.1",
+		"chalk": "^4.1.0",
+		"class-validator": "^0.14.2",
+		"tslib": "^2.6.2",
+		"typeorm": "^1.0.0"
+	},
+	"devDependencies": {
+		"@nestjs/testing": "^11.1.26",
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	},
+	"keywords": [
+		"marketplace",
+		"seller",
+		"commission",
+		"payout",
+		"settlement",
+		"plugin",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"microservices"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}
