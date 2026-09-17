@@ -337,7 +337,25 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 	}
 
 	// --- GraphQL ----------------------------------------------------------------------------
-	check(`${at}: exposes GraphQL resolvers`, tsFiles.some((f) => /\.resolver\.ts$/.test(f)), 'no .resolver.ts');
+	const resolverFiles = tsFiles.filter((f) => /\.resolver\.ts$/.test(f));
+	check(`${at}: exposes GraphQL resolvers`, resolverFiles.length > 0, 'no .resolver.ts');
+
+	// Both protocols are required for every concept, not one resolver per package. An aggregate
+	// exposed over REST has to be reachable over GraphQL as well, or the same thing is available
+	// through one door and missing behind the other.
+	const resolverSource = resolverFiles.map(read).join('\n');
+	for (const file of controllers) {
+		const base = file.slice(0, -'.controller.ts'.length).split(sep).pop();
+		const pascal = base
+			.split('-')
+			.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+			.join('');
+		check(
+			`${at}: "${base}" is reachable over GraphQL as well as REST`,
+			new RegExp(`\\b${pascal}\\b`).test(resolverSource),
+			`no resolver mentions ${pascal}`
+		);
+	}
 
 	// --- migrations -------------------------------------------------------------------------
 	// A barrel that re-exports the migrations sits in the same directory as they do, so the
