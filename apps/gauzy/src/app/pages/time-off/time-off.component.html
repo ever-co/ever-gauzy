@@ -89,9 +89,12 @@
 					#timeOffTable
 				></angular2-smart-table>
 			</div>
-			@if (smartTableSource) {
-			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-			} }
+			<div class="pagination-container">
+				@if (smartTableSource) {
+				<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+				}
+			</div>
+			}
 			<!-- Grid Card View -->
 			@case (componentLayoutStyleEnum.CARDS_GRID) {
 			<div class="custom-grid">
