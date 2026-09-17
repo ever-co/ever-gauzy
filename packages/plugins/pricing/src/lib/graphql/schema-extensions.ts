@@ -136,7 +136,9 @@ export const schemaExtensions = gql`
 		variantId: ID!
 		currency: String!
 		amount: Decimal!
-		"Display-only \"was\" price. It never enters a total."
+		"""
+		Display-only "was" price. It never enters a total.
+		"""
 		compareAtAmount: Decimal
 		"Cost snapshot the margin guard reads. It never enters a total."
 		costAmount: Decimal
