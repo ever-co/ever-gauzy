@@ -1596,18 +1596,25 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			paymentMethodTokenId: subscription.paymentMethodTokenId
 		};
 
-		if (!this.instruments) {
-			if (!remembered.accountHolderId && !remembered.paymentMethodTokenId) {
-				return {
-					...remembered,
-					refusal: {
-						code: 'SUBSCRIPTION_PAYMENT_METHOD_MISSING',
-						message:
-							'No payment instrument is remembered for this subscription and no instrument capability is registered, so the cycle cannot be charged.'
-					}
-				};
-			}
+		// Nothing is remembered, so there is nothing for a capability to resolve and nothing to charge.
+		// The cycle fails with the code the dunning path and the "update your payment method"
+		// notification both point at, and this is asked **before** the capability is: a registered
+		// instrument capability cannot resolve a payer the subscription never named, and the answer it
+		// would give — "no such account holder" — is a refusal about a row rather than about this
+		// subscription, which is not what the customer is told and not what the dunning schedule keys on.
+		if (!remembered.accountHolderId && !remembered.paymentMethodTokenId) {
+			return {
+				...remembered,
+				refusal: {
+					code: 'SUBSCRIPTION_PAYMENT_METHOD_MISSING',
+					message: 'No payment instrument is remembered for this subscription, so the cycle cannot be charged.'
+				}
+			};
+		}
 
+		// A tenant that registers no instrument capability still has the identifiers the subscription
+		// carries, so the cycle is attempted with them and the provider answers for them.
+		if (!this.instruments) {
 			return remembered;
 		}
 

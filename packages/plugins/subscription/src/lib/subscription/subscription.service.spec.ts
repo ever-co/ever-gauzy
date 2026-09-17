@@ -409,6 +409,8 @@ function subscriptionFixture(
 	};
 	const orderCalls: Row[] = [];
 	const prorationCalls: Row[] = [];
+	/** Every payer the instrument capability was asked to resolve, so "it was never asked" is provable. */
+	const instrumentCalls: Row[] = [];
 	const events: Row[] = [];
 	const adjustments: Row[] = [];
 	/** Every write the service committed, so a rollback can be asserted rather than assumed. */
@@ -618,14 +620,17 @@ function subscriptionFixture(
 		options.withInstruments === false
 			? undefined
 			: {
-					resolveChargeableInstrument: async (request: Row) =>
-						options.instrumentRefusal
+					resolveChargeableInstrument: async (request: Row) => {
+						instrumentCalls.push(request);
+
+						return options.instrumentRefusal
 							? { chargeable: false, ...options.instrumentRefusal }
 							: {
 									chargeable: true,
 									accountHolderId: request.accountHolderId ?? HOLDER,
 									paymentMethodTokenId: request.paymentMethodTokenId ?? TOKEN
-							  }
+							  };
+					}
 			  };
 
 	const service = new SubscriptionService(
@@ -650,6 +655,7 @@ function subscriptionFixture(
 		events,
 		orderCalls,
 		prorationCalls,
+		instrumentCalls,
 		adjustments,
 		adjustmentsOf: (ownerId: string) =>
 			adjustments.filter((row) => row.ownerType === AdjustmentOwnerType.SUBSCRIPTION_BILLING && row.ownerId === ownerId),
@@ -1813,6 +1819,36 @@ describe('SubscriptionService — a failure is a state, not an exception (doc 11
 			message: 'the card was removed'
 		});
 		expect(fixture.orderCalls).toEqual([]);
+	});
+
+	it('fails a subscription that remembers no payer with its own code, without asking the capability', async () => {
+		// The registered capability is a different case from the absent one, and it must not change the
+		// answer: a subscription that names no payer has nothing for a capability to resolve, and the
+		// refusal the customer and the dunning schedule see is `SUBSCRIPTION_PAYMENT_METHOD_MISSING`
+		// (doc 11 §10.5 step 1) — not whatever a resolver answers about a row it was never given.
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { paymentAccountHolderId: null, paymentMethodTokenId: null })]
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({
+			status: SubscriptionBillingStatus.FAILED,
+			errorCode: 'SUBSCRIPTION_PAYMENT_METHOD_MISSING'
+		});
+		expect(fixture.instrumentCalls).toEqual([]);
+		expect(fixture.orderCalls).toEqual([]);
+	});
+
+	it('asks the capability for a payer the subscription does remember', async () => {
+		// The other half of the case above: when the subscription does name a payer, the capability is
+		// the thing that decides whether it may still be charged, and it is asked with what is stored.
+		const fixture = subscriptionFixture({});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.instrumentCalls).toHaveLength(1);
+		expect(fixture.instrumentCalls[0]).toMatchObject({ accountHolderId: HOLDER, paymentMethodTokenId: TOKEN });
 	});
 });
 
