@@ -117,6 +117,46 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 	}
 
 	/**
+	 * Updates the fields of a transfer under the version the caller read.
+	 *
+	 * An edit of a document two operators are working on is the same race as a transition of it: both
+	 * read the transfer, both write it back, and the second write would silently erase the first. The
+	 * update route therefore takes the precondition the transitions take and moves the document to its
+	 * next version in the same statement — the comparison and the write are one
+	 * `UPDATE … WHERE id = ? AND version = ?` — so a caller editing a copy the document has moved past
+	 * is refused with the version conflict instead of landing on top of the edit it never saw.
+	 *
+	 * A caller that states no version states no precondition, and the edit is then evaluated against
+	 * the document alone. It still moves the version on: every write to a versioned document does, so
+	 * the copy everybody else holds is refused from that moment.
+	 *
+	 * The document is read twice for two different reasons: once through the resource’s own scoped read,
+	 * which is what tells a caller that a transfer of another tenant is not one it may edit, and once
+	 * inside the transaction, which is the version the write is predicated on.
+	 *
+	 * @param id Id of the transfer.
+	 * @param partialEntity The columns the caller changes.
+	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 * @returns The transfer at the version this write produced.
+	 */
+	public async update(
+		id: ID,
+		partialEntity: Partial<StockTransfer>,
+		expectedVersion?: number
+	): Promise<StockTransfer> {
+		await this.findOneByIdString(id);
+
+		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
+			const transfer = await this.requireTransfer(manager, id);
+			this.assertVersion(transfer, expectedVersion);
+
+			// The version the caller stated is not a column it writes: the stored counter is the one the
+			// compare-and-set below moves, so a body that carries a version cannot overwrite it.
+			return await this.commitTransition(manager, transfer, { ...partialEntity });
+		});
+	}
+
+	/**
 	 * Moves a draft transfer into the requested state.
 	 *
 	 * @param id Id of the transfer.
@@ -179,16 +219,21 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 				line.shippedQuantity = shipped;
 				await manager.save(StockTransferLine, line);
 
-				await this.stockLevelService.applyMovement({
-					warehouseId: transfer.fromWarehouseId,
-					variantId: line.variantId,
-					type: StockMovementType.TRANSFER_OUT,
-					quantityDelta: -shipped,
-					reservedDelta: 0,
-					referenceType: StockMovementReferenceType.TRANSFER,
-					referenceId: line.id,
-					reason: 'TRANSFER_SHIP'
-				});
+				// The movement joins this dispatch's transaction: a line refused later in the loop takes
+				// the movements of the lines before it back with it, so a dispatch is one write or none.
+				await this.stockLevelService.applyMovement(
+					{
+						warehouseId: transfer.fromWarehouseId,
+						variantId: line.variantId,
+						type: StockMovementType.TRANSFER_OUT,
+						quantityDelta: -shipped,
+						reservedDelta: 0,
+						referenceType: StockMovementReferenceType.TRANSFER,
+						referenceId: line.id,
+						reason: 'TRANSFER_SHIP'
+					},
+					manager
+				);
 			}
 
 			return await this.commitTransition(manager, transfer, {
@@ -246,28 +291,37 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 				await manager.save(StockTransferLine, line);
 
 				if (Number(input.receivedQuantity) > 0) {
-					await this.stockLevelService.applyMovement({
-						warehouseId: transfer.toWarehouseId,
-						variantId: line.variantId,
-						type: StockMovementType.TRANSFER_IN,
-						quantityDelta: Number(input.receivedQuantity),
-						reservedDelta: 0,
-						referenceType: StockMovementReferenceType.TRANSFER,
-						referenceId: line.id,
-						reason: 'TRANSFER_RECEIVE'
-					});
+					// The inbound movement joins this receipt's transaction, exactly as the outbound one
+					// joins the dispatch's: a line refused later in the loop takes this arrival back with
+					// it, so the destination never shows stock the receipt says did not arrive.
+					await this.stockLevelService.applyMovement(
+						{
+							warehouseId: transfer.toWarehouseId,
+							variantId: line.variantId,
+							type: StockMovementType.TRANSFER_IN,
+							quantityDelta: Number(input.receivedQuantity),
+							reservedDelta: 0,
+							referenceType: StockMovementReferenceType.TRANSFER,
+							referenceId: line.id,
+							reason: 'TRANSFER_RECEIVE'
+						},
+						manager
+					);
 				}
 				if (Number(input.damagedQuantity ?? 0) > 0) {
-					await this.stockLevelService.applyMovement({
-						warehouseId: transfer.toWarehouseId,
-						variantId: line.variantId,
-						type: StockMovementType.DAMAGE,
-						quantityDelta: 0,
-						reservedDelta: 0,
-						referenceType: StockMovementReferenceType.TRANSFER,
-						referenceId: line.id,
-						reason: 'DAMAGE'
-					});
+					await this.stockLevelService.applyMovement(
+						{
+							warehouseId: transfer.toWarehouseId,
+							variantId: line.variantId,
+							type: StockMovementType.DAMAGE,
+							quantityDelta: 0,
+							reservedDelta: 0,
+							referenceType: StockMovementReferenceType.TRANSFER,
+							referenceId: line.id,
+							reason: 'DAMAGE'
+						},
+						manager
+					);
 				}
 			}
 
@@ -301,6 +355,24 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 	*/
 
 	/**
+	 * Loads a transfer, or refuses with the document that is not there.
+	 *
+	 * @param manager The transaction the caller runs in.
+	 * @param id Id of the transfer.
+	 * @throws NotFoundException When no transfer holds that id.
+	 */
+	private async requireTransfer(manager: any, id: ID): Promise<StockTransfer> {
+		const transfer = await manager.findOne(StockTransfer, { where: { id } });
+		if (!transfer) {
+			throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The transfer does not exist.', {
+				notFound: true,
+				details: { transferId: id }
+			});
+		}
+		return transfer;
+	}
+
+	/**
 	 * Loads a transfer and refuses the transition when the document is at another version or in the
 	 * wrong state.
 	 *
@@ -315,13 +387,7 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 		expected: StockTransferStatus[],
 		expectedVersion?: number
 	): Promise<StockTransfer> {
-		const transfer = await manager.findOne(StockTransfer, { where: { id } });
-		if (!transfer) {
-			throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The transfer does not exist.', {
-				notFound: true,
-				details: { transferId: id }
-			});
-		}
+		const transfer = await this.requireTransfer(manager, id);
 		this.assertVersion(transfer, expectedVersion);
 		if (!expected.includes(transfer.status)) {
 			throw inventoryError(
@@ -348,13 +414,7 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 		expectedVersion?: number
 	): Promise<StockTransfer> {
 		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
-			const transfer = await manager.findOne(StockTransfer, { where: { id } });
-			if (!transfer) {
-				throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The transfer does not exist.', {
-					notFound: true,
-					details: { transferId: id }
-				});
-			}
+			const transfer = await this.requireTransfer(manager, id);
 			this.assertVersion(transfer, expectedVersion);
 			if (!ALLOWED_FROM[status].includes(transfer.status)) {
 				throw inventoryError(

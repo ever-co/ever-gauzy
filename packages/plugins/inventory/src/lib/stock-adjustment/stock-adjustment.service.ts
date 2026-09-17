@@ -92,19 +92,24 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 			const quantityDelta = this.resolveDelta(adjustment.type, Number(adjustment.quantity), current);
 
 			if (quantityDelta !== 0) {
-				const applied = await this.stockLevelService.applyMovement({
-					warehouseId: adjustment.warehouseId,
-					variantId: adjustment.variantId,
-					productId: (await this.productOf(manager, adjustment.variantId)) as ID,
-					type: StockMovementType.ADJUSTMENT,
-					quantityDelta,
-					reservedDelta: 0,
-					referenceType: StockMovementReferenceType.ADJUSTMENT,
-					referenceId: adjustment.id,
-					reason: adjustment.reasonCode,
-					note: adjustment.note,
-					levelId: level?.id
-				});
+				// The movement joins this instruction's transaction, so an instruction that fails to be
+				// stamped as applied does not leave the correction it wrote behind.
+				const applied = await this.stockLevelService.applyMovement(
+					{
+						warehouseId: adjustment.warehouseId,
+						variantId: adjustment.variantId,
+						productId: (await this.productOf(manager, adjustment.variantId)) as ID,
+						type: StockMovementType.ADJUSTMENT,
+						quantityDelta,
+						reservedDelta: 0,
+						referenceType: StockMovementReferenceType.ADJUSTMENT,
+						referenceId: adjustment.id,
+						reason: adjustment.reasonCode,
+						note: adjustment.note,
+						levelId: level?.id
+					},
+					manager
+				);
 				adjustment.movementId = applied.movementId;
 				adjustment.warehouseProductVariantId = applied.levelId;
 			}

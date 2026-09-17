@@ -65,3 +65,44 @@ export interface IStockAvailability {
 	readonly allowBackorder: boolean;
 	readonly backorderLimit?: number;
 }
+
+/** Which level rows a reconciliation walks. */
+export interface IStockReconciliationFilter {
+	/** Restrict the walk to one location. */
+	readonly warehouseId?: ID;
+	/** Restrict the walk to one variant. */
+	readonly variantId?: ID;
+	/** How many level rows one run walks; the documented batch size is the default. */
+	readonly take?: number;
+	/** How long to wait for a level row lock before the write is refused, in milliseconds. */
+	readonly lockTimeoutMs?: number;
+}
+
+/**
+ * One level the reconciliation put back in agreement with its ledger.
+ *
+ * The numbers are carried so the report says what the run changed and by how much, rather than only
+ * how many rows it touched: `quantityBefore` is what the level held, `ledgerQuantity` is what its
+ * movements sum to, and `quantityAfter` is the value the correction left behind.
+ */
+export interface IStockLevelCorrection {
+	readonly levelId: ID;
+	readonly warehouseId: ID;
+	readonly variantId: ID;
+	readonly quantityBefore: number;
+	readonly ledgerQuantity: number;
+	readonly quantityAfter: number;
+}
+
+/**
+ * What one reconciliation run found and corrected.
+ *
+ * `scanned` counts the level rows the run walked and `corrected` the rows the ledger disagreed with;
+ * a run that reports zero corrected rows is the operational definition of a ledger that has
+ * converged with its levels.
+ */
+export interface IStockReconciliation {
+	readonly scanned: number;
+	readonly corrected: number;
+	readonly corrections: IStockLevelCorrection[];
+}

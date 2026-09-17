@@ -9,7 +9,18 @@
  * service, the transfer-line service and the real ledger engine everything moves through.
  */
 jest.mock('@gauzy/core', () => {
-	const { NotFoundException } = require('@nestjs/common');
+	const { NotFoundException, SetMetadata } = require('@nestjs/common');
+	const { PERMISSIONS_METADATA } = require('@gauzy/constants');
+
+	/**
+	 * The kernel’s own entity-tag parser, read from its source rather than restated here.
+	 *
+	 * The controller reads `If-Match` with it, and the cases below are about the route following the
+	 * kernel’s reading of a precondition rather than inventing a second one — so the parser is the real
+	 * one. It is a file with no imports at all — neither NestJS nor an ORM — which is why it can be
+	 * loaded beside the doubled barrel.
+	 */
+	const { parseIfMatch } = jest.requireActual('../../../../../core/src/lib/concurrency/version.util');
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
@@ -80,6 +91,12 @@ jest.mock('@gauzy/core', () => {
 				return value;
 			}
 		},
+		PermissionGuard: class PermissionGuard {},
+		TenantPermissionGuard: class TenantPermissionGuard {},
+		UUIDValidationPipe: class UUIDValidationPipe {},
+		UseValidationPipe: decorator,
+		Permissions: (...permissions: string[]) => SetMetadata(PERMISSIONS_METADATA, permissions),
+		parseIfMatch,
 		BaseEvent: class {},
 		EventBus: class {},
 		Product: class Product {},
@@ -125,6 +142,7 @@ import { StockMovement } from '../stock-movement/stock-movement.entity';
 import { StockTransferLine } from '../stock-transfer-line/stock-transfer-line.entity';
 import { StockTransferLineService } from '../stock-transfer-line/stock-transfer-line.service';
 import { StockTransfer } from './stock-transfer.entity';
+import { StockTransferController } from './stock-transfer.controller';
 import { StockTransferService } from './stock-transfer.service';
 
 /**
@@ -169,6 +187,14 @@ type Row = Record<string, any>;
 /**
  * The in-memory stand-in for the connection the transfer service and the ledger engine write through.
  *
+ * It is a real (if tiny) transactional store, and the two transactions it hands out are deliberately
+ * not the same thing. `manager.transaction` is the caller’s unit of work: a throw from inside it puts
+ * the store back exactly as it was. `dataSource.transaction` is what a component asks for when it
+ * opens a transaction of its own — and on a real connection that runs on a connection of its own, so
+ * what it commits is durable and the caller’s rollback cannot take it back. The double models that
+ * difference, because a one-store nested snapshot hides exactly the defect a caller needs to see: a
+ * movement written inside its own transaction survives the document that wrote it.
+ *
  * @param tables The whole datastore.
  */
 function datastore(tables: Record<string, Row[]>) {
@@ -196,9 +222,72 @@ function datastore(tables: Record<string, Row[]>) {
 		Object.fromEntries(
 			Object.entries(tables).map(([table, tableRows]) => [table, tableRows.map((row) => ({ ...row }))])
 		);
+	/**
+	 * The transactions in flight, outermost first, and what each one has written.
+	 *
+	 * A transaction that commits while another is open committed on a connection of its own, so its
+	 * writes are recorded here and re-applied after an outer rollback put the store back: they are not
+	 * the outer transaction’s to undo.
+	 */
+	const frames: Array<{ writes: Array<{ table: string; id: string }> }> = [];
+	const committedElsewhere: Array<{ table: string; id: string; row: Row }> = [];
+	/** Records that the innermost open transaction wrote a row, so a commit can be told apart. */
+	const recordWrite = (table: string | undefined, id: unknown) => {
+		const frame = frames[frames.length - 1];
+
+		if (!frame || !table || id === undefined || id === null) {
+			return;
+		}
+
+		frame.writes.push({ table, id: String(id) });
+	};
 	const restore = (copy: Record<string, Row[]>) => {
 		for (const [table, tableRows] of Object.entries(copy)) {
 			tables[table] = tableRows;
+		}
+		// A commit another transaction made is not this one’s to roll back.
+		for (const commit of committedElsewhere) {
+			const table = tables[commit.table] ?? (tables[commit.table] = []);
+			const index = table.findIndex((row) => same(row.id, commit.id));
+
+			if (index >= 0) {
+				table[index] = { ...commit.row };
+				continue;
+			}
+
+			table.push({ ...commit.row });
+		}
+	};
+	/**
+	 * Runs one transaction.
+	 *
+	 * @param run The work the transaction holds.
+	 * @param independent Whether this is a transaction the caller opened for itself — one that commits
+	 * on a connection of its own and therefore survives an outer rollback.
+	 */
+	const transaction = async (run: (transactional: any) => Promise<any>, independent: boolean) => {
+		const copy = snapshot();
+		frames.push({ writes: [] });
+
+		try {
+			const result = await run(manager);
+			const frame = frames.pop();
+
+			if (independent && frames.length && frame) {
+				for (const write of frame.writes) {
+					const row = (tables[write.table] ?? []).find((candidate) => same(candidate.id, write.id));
+
+					if (row) {
+						committedElsewhere.push({ table: write.table, id: write.id, row: { ...row } });
+					}
+				}
+			}
+
+			return result;
+		} catch (error) {
+			frames.pop();
+			restore(copy);
+			throw error;
 		}
 	};
 	const matches = (row: Row, where: Row = {}) =>
@@ -323,6 +412,7 @@ function datastore(tables: Record<string, Row[]>) {
 				for (const [column, value] of Object.entries(updateSpec)) {
 					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value) : value;
 				}
+				recordWrite(entityToTable.get(target), row.id);
 
 				return { affected: 1 };
 			}
@@ -344,6 +434,7 @@ function datastore(tables: Record<string, Row[]>) {
 
 				if (index >= 0) {
 					Object.assign(table[index], row);
+					recordWrite(entityToTable.get(entity), row.id);
 					continue;
 				}
 
@@ -352,6 +443,7 @@ function datastore(tables: Record<string, Row[]>) {
 				}
 
 				table.push(row);
+				recordWrite(entityToTable.get(entity), row.id);
 			}
 
 			return Array.isArray(rowOrRows) ? list : list[0];
@@ -387,9 +479,20 @@ function datastore(tables: Record<string, Row[]>) {
 
 			return { affected };
 		},
-		query: async (sql: string) => {
+		/**
+		 * The raw statements the engine issues: the lock timeout, the row lock, and the read of a
+		 * variant’s own product — which is what a movement that names no product resolves a first-time
+		 * level from. Anything else is a statement this double does not model, and it says so instead of
+		 * answering.
+		 */
+		query: async (sql: string, params: any[] = []) => {
 			if (/SET LOCAL lock_timeout|SET SESSION innodb_lock_wait_timeout|FOR UPDATE/.test(sql)) {
 				return [];
+			}
+			if (/FROM "product_variant"/.test(sql)) {
+				const variant = tables.product_variant.find((row) => same(row.id, params[0]));
+
+				return variant ? [{ productId: variant.productId }] : [];
 			}
 
 			throw new Error(`the in-memory double does not implement the statement "${sql}"`);
@@ -397,22 +500,21 @@ function datastore(tables: Record<string, Row[]>) {
 	};
 
 	/**
-	 * The transaction the service and the engine both ask for: the callback sees the same datastore,
-	 * and a throw from anywhere inside it puts the datastore back exactly as it was, which is what makes
-	 * "no half-state" a claim about the store rather than about the call log.
+	 * The two transactions this connection hands out, and they are not the same thing.
+	 *
+	 * The manager’s is the caller’s unit of work: the callback sees the same datastore, and a throw from
+	 * anywhere inside it puts the datastore back exactly as it was, which is what makes "no half-state"
+	 * a claim about the store rather than about the call log. The data source’s is a transaction a
+	 * component opens for itself, and on a real connection that is a second connection: what it commits
+	 * is durable, and the caller’s rollback cannot undo it.
 	 */
-	manager.transaction = async (run: (transactional: any) => Promise<any>) => {
-		const copy = snapshot();
+	manager.transaction = async (run: (transactional: any) => Promise<any>) => await transaction(run, false);
 
-		try {
-			return await run(manager);
-		} catch (error) {
-			restore(copy);
-			throw error;
-		}
+	const dataSource: any = {
+		manager,
+		createQueryBuilder,
+		transaction: async (run: (transactional: any) => Promise<any>) => await transaction(run, true)
 	};
-
-	const dataSource: any = { manager, createQueryBuilder, transaction: manager.transaction };
 	const repository = (table: string, entity: unknown): any => ({
 		manager,
 		metadata: { tableName: table, hasColumnWithPropertyPath: () => false },
@@ -450,10 +552,18 @@ function datastore(tables: Record<string, Row[]>) {
  *
  * @param options.source What the source location holds.
  * @param options.destination What the destination location holds.
+ * @param options.seedDestination Whether the variant has ever been stocked at the destination at all,
+ * so the receipt that opens a level there for the first time is reachable.
  */
-function transferFixture(options: { source?: number; destination?: number } = {}) {
+function transferFixture(options: { source?: number; destination?: number; seedDestination?: boolean } = {}) {
 	const tables: Record<string, Row[]> = {
 		product: [{ id: PRODUCT, tenantId: TENANT, organizationId: ORG }],
+		// Where a variant says which product it belongs to: the answer a movement that names no product
+		// resolves a first-time level from.
+		product_variant: [
+			{ id: VARIANT, productId: PRODUCT },
+			{ id: OTHER_VARIANT, productId: PRODUCT }
+		],
 		warehouse_product: [],
 		warehouse_product_variant: [],
 		stock_movement: [],
@@ -462,6 +572,10 @@ function transferFixture(options: { source?: number; destination?: number } = {}
 	};
 
 	for (const [index, warehouseId] of [SOURCE, DESTINATION].entries()) {
+		if (index === 1 && options.seedDestination === false) {
+			continue;
+		}
+
 		const quantity = index === 0 ? options.source ?? 100 : options.destination ?? 40;
 
 		tables.warehouse_product.push({
@@ -507,13 +621,22 @@ function transferFixture(options: { source?: number; destination?: number } = {}
 		stockLevelService
 	);
 
+	const controller = new StockTransferController(service);
+
 	return {
 		service,
+		controller,
 		store,
 		tables,
 		allocated,
 		transfer: (id: string = 'stock_transfer-1') => tables.stock_transfer.find((row) => row.id === id),
 		lines: () => tables.stock_transfer_line,
+		aggregateAt: (warehouseId: string) => tables.warehouse_product.find((row) => row.warehouseId === warehouseId),
+		levelAt: (warehouseId: string) => {
+			const aggregate = tables.warehouse_product.find((row) => row.warehouseId === warehouseId);
+
+			return tables.warehouse_product_variant.find((row) => row.warehouseProductId === aggregate?.id);
+		},
 		onHand: (warehouseId: string) => {
 			const aggregate = tables.warehouse_product.find((row) => row.warehouseId === warehouseId);
 
@@ -725,6 +848,91 @@ describe('StockTransferService — creating, numbering and the state machine (do
 				}
 			).cancel(transfer.id, 'Stale copy of the document', transfer.version - 1)
 		).rejects.toMatchObject({ response: { code: expect.stringContaining('VERSION_CONFLICT') } });
+	});
+});
+
+/**
+ * The version guard on the CRUD `update` route.
+ *
+ * Doc 09 §8.5 states the service contract as `update(id, input, expectedVersion)`, and §8.2 states that
+ * *every* transition takes `If-Match: "<version>"` and bumps the version. An edit of a transfer’s own
+ * fields is a write on the same versioned document as a transition, so it takes the same precondition:
+ * the edit is written under the version it was read at, and a caller working from a copy the document
+ * has moved past is refused with the transition’s own conflict code rather than silently erasing the
+ * edit it never saw. The controller reads the header with the kernel’s own entity-tag parser — the one
+ * the transitions already use — so the resource has one reading of a precondition rather than two.
+ *
+ * The controller is what these cases drive, because the header *is* the interface: the version arrives
+ * as a request precondition, and a service-level test would not show whether the route reads it.
+ */
+describe('StockTransferController — the version guard on the update route (doc 09 §8.5)', () => {
+	it('refuses an edit that states a version the document has moved past', async () => {
+		const { fixture, transfer } = await approvedTransfer();
+		const current = fixture.transfer(transfer.id).version;
+		const before = { ...fixture.transfer(transfer.id) };
+
+		await expect(
+			fixture.controller.update(transfer.id, { note: 'Written from a stale copy' } as never, `"${current - 1}"`)
+		).rejects.toMatchObject({
+			response: {
+				code: 'STOCK_TRANSFER_VERSION_CONFLICT',
+				details: { transferId: transfer.id, actualVersion: current, expectedVersion: current - 1 }
+			}
+		});
+		// The refusal is an edit that did not happen: the document is exactly as it was.
+		expect(fixture.transfer(transfer.id)).toEqual(before);
+	});
+
+	it('accepts an edit that states the version the document holds, and moves the document on', async () => {
+		const { fixture, transfer } = await approvedTransfer();
+		const current = fixture.transfer(transfer.id).version;
+
+		const updated = await fixture.controller.update(
+			transfer.id,
+			{ note: 'Rebalanced at the dock' } as never,
+			`"${current}"`
+		);
+
+		expect(updated).toMatchObject({
+			id: transfer.id,
+			note: 'Rebalanced at the dock',
+			status: StockTransferStatus.APPROVED,
+			version: current + 1
+		});
+		expect(fixture.transfer(transfer.id)).toMatchObject({ note: 'Rebalanced at the dock', version: current + 1 });
+		// An edit moves no stock: it is the document that changed, not what is at either location.
+		expect(fixture.store.ledgerOf(SOURCE)).toEqual([]);
+		expect(fixture.store.totalOnHand()).toBe(140);
+	});
+
+	it('treats a request that states no precondition as a request that states none', async () => {
+		const { fixture, transfer } = await approvedTransfer();
+		const current = fixture.transfer(transfer.id).version;
+
+		const withoutHeader = await fixture.controller.update(transfer.id, { note: 'No header' } as never);
+
+		expect(withoutHeader).toMatchObject({ note: 'No header', version: current + 1 });
+
+		// `*` states that the document must exist and accepts whatever version it holds, which is the same
+		// unconditional edit written the explicit way.
+		const wildcard = await fixture.controller.update(transfer.id, { note: 'A wildcard' } as never, '*');
+
+		expect(wildcard).toMatchObject({ note: 'A wildcard', version: current + 2 });
+	});
+
+	it('refuses a header it cannot read as one version rather than ignoring it', async () => {
+		// A precondition that quietly degrades into an unconditional write is the failure the header
+		// exists to prevent, so a header that is not a version is refused before anything is written.
+		const { fixture, transfer } = await approvedTransfer();
+		const before = { ...fixture.transfer(transfer.id) };
+
+		await expect(
+			fixture.controller.update(transfer.id, { note: 'Malformed' } as never, 'the-version-i-read')
+		).rejects.toMatchObject({ response: { statusCode: 400 } });
+		await expect(
+			fixture.controller.update(transfer.id, { note: 'Two of them' } as never, '"1", "2"')
+		).rejects.toMatchObject({ response: { statusCode: 400 } });
+		expect(fixture.transfer(transfer.id)).toEqual(before);
 	});
 });
 
@@ -1002,6 +1210,184 @@ describe('StockTransferLineService — the lines a dispatch and a receipt write'
 			}
 		});
 		expect(fixture.lines()).toHaveLength(1);
+	});
+});
+
+/**
+ * The receipt that opens a level at a location which has never stocked the variant.
+ *
+ * A transfer moves what is at a location, so the document names the variant and the two locations and
+ * never a product. For the receipt into a location that has never stocked the variant there is no level
+ * row to take the product from, and the product-level aggregate the new level hangs from has to be
+ * created — with the variant’s own product, which the variant table states. The alternative is a
+ * receipt refused for a product id the caller had no way to know, which is what this case pins against:
+ * the level is created with the variant’s product, and the ledger sum still equals the level quantity.
+ */
+describe('StockTransferService — receiving into a location that has never stocked the variant (INV-01)', () => {
+	it('creates the destination level from the variant’s own product and keeps the ledger in agreement', async () => {
+		const fixture = transferFixture({ seedDestination: false });
+		const transfer = await fixture.service.createTransfer({
+			fromWarehouseId: SOURCE,
+			toWarehouseId: DESTINATION,
+			lines: [{ variantId: VARIANT, requestedQuantity: 6 }]
+		});
+		await fixture.service.request(transfer.id);
+		await fixture.service.approve(transfer.id);
+		const lineId = fixture.lines()[0].id;
+
+		await fixture.service.ship(transfer.id, [{ lineId, shippedQuantity: 6 }]);
+
+		// Nothing has ever been stocked at the destination: no aggregate, no level.
+		expect(fixture.aggregateAt(DESTINATION)).toBeUndefined();
+		expect(fixture.levelAt(DESTINATION)).toBeUndefined();
+
+		await fixture.service.receive(transfer.id, [{ lineId, receivedQuantity: 6 }]);
+
+		const aggregate = fixture.aggregateAt(DESTINATION);
+		const level = fixture.levelAt(DESTINATION);
+
+		expect(aggregate).toMatchObject({ warehouseId: DESTINATION, productId: PRODUCT, quantity: 6 });
+		expect(level).toMatchObject({ variantId: VARIANT, quantity: 6, reservedQuantity: 0, version: 2 });
+		// The movement is recorded against the level and the product it resolved to, so a ledger read
+		// needs no second lookup to know whose stock it moved.
+		expect(fixture.store.ledgerOf(DESTINATION)).toHaveLength(1);
+		expect(fixture.store.ledgerOf(DESTINATION)[0]).toMatchObject({
+			type: StockMovementType.TRANSFER_IN,
+			quantity: 6,
+			quantityBefore: 0,
+			quantityAfter: 6,
+			warehouseId: DESTINATION,
+			variantId: VARIANT,
+			warehouseProductId: aggregate.id,
+			warehouseProductVariantId: level.id,
+			referenceId: lineId
+		});
+		// INV-01, on the level that was created by this very receipt: the level is the sum of its ledger.
+		expect(fixture.store.ledgerOf(DESTINATION).reduce((sum, row) => sum + Number(row.quantity), 0)).toBe(
+			Number(level.quantity)
+		);
+		expect(fixture.transfer(transfer.id)).toMatchObject({ status: StockTransferStatus.RECEIVED });
+	});
+
+	it('keeps the receipt one write when the level it opens is refused', async () => {
+		// Control for the case above: the level is created inside the receipt’s transaction, so a receipt
+		// the destination refuses leaves no level, no aggregate and no movement behind.
+		const fixture = transferFixture({ seedDestination: false });
+		const transfer = await fixture.service.createTransfer({
+			fromWarehouseId: SOURCE,
+			toWarehouseId: DESTINATION,
+			lines: [{ variantId: VARIANT, requestedQuantity: 6 }]
+		});
+		await fixture.service.request(transfer.id);
+		await fixture.service.approve(transfer.id);
+		const lineId = fixture.lines()[0].id;
+
+		await fixture.service.ship(transfer.id, [{ lineId, shippedQuantity: 6 }]);
+
+		await expect(
+			fixture.service.receive(transfer.id, [{ lineId, receivedQuantity: 7 }])
+		).rejects.toMatchObject({ response: { code: 'STOCK_TRANSFER_OVER_RECEIPT' } });
+
+		expect(fixture.aggregateAt(DESTINATION)).toBeUndefined();
+		expect(fixture.levelAt(DESTINATION)).toBeUndefined();
+		expect(fixture.store.ledgerOf(DESTINATION)).toEqual([]);
+		expect(fixture.lines()[0]).toMatchObject({ receivedQuantity: 0, damagedQuantity: 0 });
+	});
+});
+
+/**
+ * The engine’s transaction is the caller’s transaction.
+ *
+ * A receipt writes its inbound movement beside its own line and status, and the two are one write or
+ * neither: the movement joins the transaction the receipt is already inside. The failure this pins is
+ * the one a shared store hides — an engine that opened a transaction of its own would commit the
+ * movement on a second connection, and the receipt’s rollback would leave a level and a ledger row that
+ * no document explains. The control below shows that this fixture can see exactly that difference.
+ */
+describe('StockTransferService — the movement engine joins its caller’s transaction (doc 09 §4.1)', () => {
+	/** A transfer already dispatched, with two lines on the road: the state a receipt starts from. */
+	function inTransitFixture() {
+		const fixture = transferFixture();
+
+		fixture.tables.stock_transfer.push({
+			id: 'transfer-two-lines',
+			number: 'TRF-000010',
+			tenantId: TENANT,
+			organizationId: ORG,
+			fromWarehouseId: SOURCE,
+			toWarehouseId: DESTINATION,
+			status: StockTransferStatus.IN_TRANSIT,
+			version: 4,
+			shippedAt: new Date('2026-01-15T10:00:00.000Z')
+		});
+		for (const [id, variantId] of [
+			['line-a', VARIANT],
+			['line-b', OTHER_VARIANT]
+		] as const) {
+			fixture.tables.stock_transfer_line.push({
+				id,
+				tenantId: TENANT,
+				organizationId: ORG,
+				transferId: 'transfer-two-lines',
+				variantId,
+				requestedQuantity: 10,
+				shippedQuantity: 10,
+				receivedQuantity: 0,
+				damagedQuantity: 0
+			});
+		}
+
+		return fixture;
+	}
+
+	it('takes a receipt’s inbound movement back with the receipt that failed after it', async () => {
+		const fixture = inTransitFixture();
+
+		await expect(
+			fixture.service.receive('transfer-two-lines', [
+				{ lineId: 'line-a', receivedQuantity: 5 },
+				{ lineId: 'line-b', receivedQuantity: 11 }
+			])
+		).rejects.toMatchObject({ response: { code: 'STOCK_TRANSFER_OVER_RECEIPT' } });
+
+		// The first line’s movement was written before the second was refused, and it is gone with the
+		// receipt: the destination holds what it held, the ledger has no row for an arrival that did not
+		// happen, and the line says nothing arrived.
+		expect(fixture.onHand(DESTINATION)).toBe(40);
+		expect(fixture.store.ledgerOf(DESTINATION)).toEqual([]);
+		expect(fixture.lines().map((line) => line.receivedQuantity)).toEqual([0, 0]);
+		expect(fixture.transfer('transfer-two-lines')).toMatchObject({
+			status: StockTransferStatus.IN_TRANSIT,
+			version: 4
+		});
+	});
+
+	it('CONTROL: this fixture can see a movement an engine’s own transaction committed', async () => {
+		// The same store, the same failure, and the movement written by an engine asked for a transaction
+		// of its own: on a real connection that transaction has a connection of its own, so its commit is
+		// durable and the caller’s rollback cannot reach it. This is the divergence the case above is
+		// about — the fixture reports it, which is what makes that case a claim rather than a coincidence.
+		const fixture = inTransitFixture();
+		const engine = new StockLevelService(fixture.store.dataSource as never);
+
+		await expect(
+			fixture.store.manager.transaction(async () => {
+				await engine.applyMovement({
+					warehouseId: DESTINATION,
+					variantId: VARIANT,
+					type: StockMovementType.TRANSFER_IN,
+					quantityDelta: 5,
+					reservedDelta: 0,
+					referenceType: StockMovementReferenceType.TRANSFER,
+					referenceId: 'line-a',
+					reason: 'CONTROL'
+				} as never);
+				throw new Error('the caller’s transaction failed after the movement was written');
+			})
+		).rejects.toThrow();
+
+		expect(fixture.onHand(DESTINATION)).toBe(45);
+		expect(fixture.store.ledgerOf(DESTINATION)).toHaveLength(1);
 	});
 });
 

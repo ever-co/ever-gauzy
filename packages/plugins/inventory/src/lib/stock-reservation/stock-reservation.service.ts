@@ -120,24 +120,27 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 			} as Partial<StockReservation>);
 			const persisted = await manager.save(StockReservation, reservation);
 
-			await this.stockLevelService.applyMovement({
-				warehouseId: input.warehouseId,
-				variantId: input.variantId,
-				productId: input.productId,
-				binId: input.binId,
-				type: StockMovementType.RESERVATION,
-				quantityDelta: 0,
-				reservedDelta: quantity,
-				referenceType: toMovementReference(input.referenceType),
-				referenceId: input.referenceId,
-				levelId: level?.id,
-				// The caller's policy for this call travels with the movement. The level's own column is
-				// what the hold rule reads when the caller states nothing; when the caller states the
-				// policy the demand is allowed under, that is what the rule measures it against — which is
-				// the whole point of the per-call override, and the case it exists for is a demand past
-				// what the level currently holds.
-				...(input.allowBackorder === undefined ? {} : { allowBackorder: input.allowBackorder })
-			} as IStockMovementInput);
+			await this.stockLevelService.applyMovement(
+				{
+					warehouseId: input.warehouseId,
+					variantId: input.variantId,
+					productId: input.productId,
+					binId: input.binId,
+					type: StockMovementType.RESERVATION,
+					quantityDelta: 0,
+					reservedDelta: quantity,
+					referenceType: toMovementReference(input.referenceType),
+					referenceId: input.referenceId,
+					levelId: level?.id,
+					// The caller's policy for this call travels with the movement. The level's own column is
+					// what the hold rule reads when the caller states nothing; when the caller states the
+					// policy the demand is allowed under, that is what the rule measures it against — which is
+					// the whole point of the per-call override, and the case it exists for is a demand past
+					// what the level currently holds.
+					...(input.allowBackorder === undefined ? {} : { allowBackorder: input.allowBackorder })
+				} as IStockMovementInput,
+				manager
+			);
 
 			return persisted;
 		});
@@ -299,17 +302,20 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 			reservation.releasedAt = new Date();
 			const saved = await manager.save(StockReservation, reservation);
 
-			await this.stockLevelService.applyMovement({
-				warehouseId: reservation.warehouseId,
-				variantId: reservation.variantId,
-				type: StockMovementType.RELEASE,
-				quantityDelta: 0,
-				reservedDelta: -Number(reservation.quantity),
-				referenceType: toMovementReference(reservation.referenceType),
-				referenceId: reservation.referenceId,
-				reason,
-				levelId: reservation.warehouseProductVariantId
-			});
+			await this.stockLevelService.applyMovement(
+				{
+					warehouseId: reservation.warehouseId,
+					variantId: reservation.variantId,
+					type: StockMovementType.RELEASE,
+					quantityDelta: 0,
+					reservedDelta: -Number(reservation.quantity),
+					referenceType: toMovementReference(reservation.referenceType),
+					referenceId: reservation.referenceId,
+					reason,
+					levelId: reservation.warehouseProductVariantId
+				},
+				manager
+			);
 
 			return saved;
 		});

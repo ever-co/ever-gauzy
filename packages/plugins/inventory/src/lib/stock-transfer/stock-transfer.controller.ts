@@ -62,14 +62,24 @@ export class StockTransferController {
 		return await this.stockTransferService.createTransfer(entity as any);
 	}
 
-	/** Updates the note of a draft transfer. */
+	/**
+	 * Updates the fields of a transfer.
+	 *
+	 * The edit is a write on a versioned document, so it takes the same precondition the transitions
+	 * take and is refused with the same conflict when the transfer has moved on.
+	 */
 	@ApiOperation({ summary: 'Update a stock transfer' })
 	@ApiResponse({ status: 202, description: 'Transfer updated.' })
+	@ApiResponse({ status: 409, description: 'The transfer has moved past the stated version.' })
 	@Permissions(InventoryPermission.STOCK_TRANSFER_CREATE as PermissionsEnum)
 	@Post(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateStockTransferDTO) {
-		return await this.stockTransferService.update(id, entity as any);
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateStockTransferDTO,
+		@Headers('if-match') ifMatch?: string
+	): Promise<StockTransfer> {
+		return await this.stockTransferService.update(id, entity as any, this.expectedVersion(ifMatch));
 	}
 
 	/** Submits a draft transfer for approval. */

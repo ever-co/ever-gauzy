@@ -167,6 +167,7 @@ type Row = Record<string, any>;
 /** The tables this suite drives, as plain arrays. */
 interface ITables {
 	product: Row[];
+	product_variant: Row[];
 	warehouse_product: Row[];
 	warehouse_product_variant: Row[];
 	stock_movement: Row[];
@@ -529,7 +530,7 @@ function datastore(
 				return bin ? [{ warehouseId: bin.warehouseId }] : [];
 			}
 			if (/FROM "product_variant"/.test(sql)) {
-				const variant = tables.product.find((row) => same(row.id, params[0]));
+				const variant = tables.product_variant.find((row) => same(row.id, params[0]));
 
 				return variant ? [{ productId: variant.productId }] : [];
 			}
@@ -609,6 +610,12 @@ function levelFixture(
 		product: [
 			{ id: PRODUCT, tenantId: TENANT, organizationId: ORG },
 			{ id: 'other-product', tenantId: TENANT, organizationId: ORG }
+		],
+		// The variant table is where a variant says which product it belongs to, which is the answer a
+		// first-time stock is resolved from when the caller names no product of its own.
+		product_variant: [
+			{ id: VARIANT, productId: PRODUCT },
+			{ id: 'other-variant', productId: 'other-product' }
 		],
 		warehouse_product: [],
 		warehouse_product_variant: [],
@@ -1159,6 +1166,117 @@ describe('StockLevelService — resolving the level (doc 09 §4.1 steps 1–2)',
 		await expect(
 			fixture.service.applyMovement(movement({ productId: 'no-such-product' }) as never)
 		).rejects.toMatchObject({ response: { code: 'STOCK_LEVEL_NOT_FOUND' } });
+		expect(fixture.tables.warehouse_product_variant).toEqual([]);
+		expect(fixture.tables.stock_movement).toEqual([]);
+	});
+
+	// The product a first-time stock belongs to is not unknowable: a variant belongs to exactly one
+	// product and the variant table says which. A movement that names only the `(location, variant)`
+	// pair — which is what a receipt into a location that has never stocked the variant is — is
+	// therefore answerable, and demanding a product the caller has no reason to know would refuse it.
+	it('stocks a variant at a location for the first time from the variant’s own product', async () => {
+		const fixture = levelFixture({ seedLevel: false, withAggregate: false });
+
+		const applied = await fixture.service.applyMovement(
+			movement({ productId: undefined, type: StockMovementType.RECEIPT, quantityDelta: 6 }) as never
+		);
+
+		expect(applied).toMatchObject({ quantityBefore: 0, quantityAfter: 6 });
+		// The aggregate the level hangs from is created with the product the variant belongs to, and the
+		// ledger row records the product beside the level it moved.
+		const aggregate = fixture.store.aggregateFor();
+		expect(aggregate).toMatchObject({ warehouseId: WAREHOUSE, productId: PRODUCT, quantity: 6 });
+		expect(fixture.store.levelFor()).toMatchObject({
+			variantId: VARIANT,
+			quantity: 6,
+			reservedQuantity: 0,
+			version: 2
+		});
+		expect(fixture.store.ledgerOf()).toHaveLength(1);
+		expect(fixture.store.ledgerOf()[0]).toMatchObject({
+			type: StockMovementType.RECEIPT,
+			quantity: 6,
+			warehouseProductId: aggregate.id,
+			warehouseProductVariantId: fixture.store.levelFor().id
+		});
+		// INV-01: whatever opened the level, the level is the sum of its movements.
+		expect(fixture.store.ledgerOf().reduce((sum, row) => sum + Number(row.quantity), 0)).toBe(
+			Number(fixture.store.levelFor().quantity)
+		);
+	});
+
+	it('refuses a movement whose stated product is not the product the variant belongs to', async () => {
+		// A caller that states a product has made a claim about which stock item the movement is about.
+		// The variant contradicts it, and the two readings name two different products, so the movement
+		// is refused rather than written against either one of them.
+		const fixture = levelFixture({ seedLevel: false, withAggregate: false });
+
+		await expect(
+			fixture.service.applyMovement(movement({ productId: 'other-product' }) as never)
+		).rejects.toMatchObject({
+			response: {
+				code: 'STOCK_INVARIANT_VIOLATION',
+				details: { invariant: 'INV-01', statedProductId: 'other-product', variantProductId: PRODUCT }
+			}
+		});
+		expect(fixture.tables.warehouse_product).toEqual([]);
+		expect(fixture.tables.warehouse_product_variant).toEqual([]);
+		expect(fixture.tables.stock_movement).toEqual([]);
+	});
+
+	it('accepts a stated product that is the product the variant belongs to', async () => {
+		// The control for the two cases above: the same fixture, the same product, stated by the caller
+		// instead of resolved from the variant.
+		const fixture = levelFixture({ seedLevel: false, withAggregate: false });
+
+		const applied = await fixture.service.applyMovement(
+			movement({ productId: PRODUCT, quantityDelta: 6 }) as never
+		);
+
+		expect(applied).toMatchObject({ quantityAfter: 6 });
+		expect(fixture.store.aggregateFor()).toMatchObject({ productId: PRODUCT });
+	});
+
+	it('stocks into the aggregate the location already holds for the variant’s product', async () => {
+		// The same first-time path with the product-level row already there: the level is created under
+		// the aggregate that exists rather than a second one for the same product.
+		const fixture = levelFixture({ seedLevel: false, withAggregate: true });
+
+		await fixture.service.applyMovement(movement({ productId: undefined, quantityDelta: 4 }) as never);
+
+		expect(fixture.tables.warehouse_product).toHaveLength(1);
+		expect(fixture.store.levelFor()).toMatchObject({
+			variantId: VARIANT,
+			warehouseProductId: 'aggregate-1',
+			quantity: 4
+		});
+	});
+
+	it('refuses a stated product the variant contradicts even where that product is already stocked', async () => {
+		// The aggregate of the product the caller names is already at the location — the state that would
+		// let an unchecked disagreement slip a level of another product’s variant underneath it. The
+		// check runs before that aggregate is resolved, so the movement is refused rather than written
+		// against a product the variant does not belong to.
+		const fixture = levelFixture({ seedLevel: false, withAggregate: false });
+		fixture.tables.warehouse_product.push({
+			id: 'aggregate-of-another-product',
+			tenantId: TENANT,
+			organizationId: ORG,
+			warehouseId: WAREHOUSE,
+			productId: 'other-product',
+			quantity: 0,
+			reservedQuantity: 0,
+			version: 1
+		});
+
+		await expect(
+			fixture.service.applyMovement(movement({ productId: 'other-product' }) as never)
+		).rejects.toMatchObject({
+			response: {
+				code: 'STOCK_INVARIANT_VIOLATION',
+				details: { invariant: 'INV-01', statedProductId: 'other-product', variantProductId: PRODUCT }
+			}
+		});
 		expect(fixture.tables.warehouse_product_variant).toEqual([]);
 		expect(fixture.tables.stock_movement).toEqual([]);
 	});

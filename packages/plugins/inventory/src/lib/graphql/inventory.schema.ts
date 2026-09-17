@@ -137,7 +137,7 @@ export const inventorySchemaExtensions = gql`
 	}
 
 	"""Availability of one variant at one location. Derived, never stored."""
-	type InventoryLevel {
+	type StockLevel {
 		id: ID!
 		warehouseId: ID!
 		variantId: ID!
@@ -151,9 +151,26 @@ export const inventorySchemaExtensions = gql`
 		backorderLimit: Float
 	}
 
+	"""One level a reconciliation put back in agreement with its movement ledger."""
+	type StockLevelCorrection {
+		levelId: ID!
+		warehouseId: ID!
+		variantId: ID!
+		quantityBefore: Float!
+		ledgerQuantity: Float!
+		quantityAfter: Float!
+	}
+
+	"""What one reconciliation run scanned, and what it corrected."""
+	type StockLevelReconciliation {
+		scanned: Int!
+		corrected: Int!
+		corrections: [StockLevelCorrection!]!
+	}
+
 	extend type Query {
-		inventoryLevels(warehouseId: ID, variantId: ID): [InventoryLevel!]!
-		inventoryLevel(warehouseId: ID!, variantId: ID!): InventoryLevel
+		stockLevels(warehouseId: ID, variantId: ID, take: Int): [StockLevel!]!
+		stockLevel(warehouseId: ID!, variantId: ID!): StockLevel
 		availableQuantity(warehouseId: ID!, variantId: ID!): Float!
 		stockMovements(warehouseId: ID!, variantId: ID!, take: Int): [StockMovement!]!
 		stockReservations(referenceType: String, referenceId: ID, status: String): [StockReservation!]!
@@ -173,6 +190,7 @@ export const inventorySchemaExtensions = gql`
 	}
 
 	extend type Mutation {
+		reconcileStockLevels(input: StockLevelReconciliationInput): StockLevelReconciliation!
 		adjustStock(input: StockAdjustmentInput!): StockAdjustment!
 		applyStockAdjustment(id: ID!): StockAdjustment!
 		createStockReservation(input: StockReservationInput!): StockReservation!
@@ -193,6 +211,13 @@ export const inventorySchemaExtensions = gql`
 		closeStockCount(id: ID!): StockCount!
 		assignChannelWarehouse(input: ChannelWarehouseInput!): ChannelWarehouse!
 		unassignChannelWarehouse(channelId: ID!, warehouseId: ID!): Boolean!
+	}
+
+	"""What the caller wants a reconciliation run to walk. Everything may be left out."""
+	input StockLevelReconciliationInput {
+		warehouseId: ID
+		variantId: ID
+		take: Int
 	}
 
 	input StockAdjustmentInput {
@@ -283,9 +308,9 @@ export const inventorySchemaExtensions = gql`
 	}
 
 	extend type Subscription {
-		inventoryLevelChanged(warehouseId: ID, variantId: ID): InventoryLevel!
-		inventoryLevelLow(warehouseId: ID): InventoryLevel!
-		inventoryLevelOutOfStock(warehouseId: ID): InventoryLevel!
+		stockLevelChanged(warehouseId: ID, variantId: ID): StockLevel!
+		stockLevelLow(warehouseId: ID): StockLevel!
+		stockLevelOutOfStock(warehouseId: ID): StockLevel!
 		stockReservationChanged(referenceId: ID): StockReservation!
 		stockTransferChanged(id: ID): StockTransfer!
 	}

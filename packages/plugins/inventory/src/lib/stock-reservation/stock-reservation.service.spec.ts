@@ -474,12 +474,17 @@ function datastore(tables: Record<string, Row[]>, options: { contention?: IConte
 
 			return { affected };
 		},
-		query: async (sql: string) => {
+		query: async (sql: string, params: any[] = []) => {
 			if (/SET LOCAL lock_timeout|SET SESSION innodb_lock_wait_timeout/.test(sql)) {
 				return [];
 			}
 			if (/FOR UPDATE/.test(sql)) {
 				return [];
+			}
+			if (/FROM "product_variant"/.test(sql)) {
+				const variant = tables.product_variant.find((row) => same(row.id, params[0]));
+
+				return variant ? [{ productId: variant.productId }] : [];
 			}
 
 			throw new Error(`the in-memory double does not implement the statement "${sql}"`);
@@ -573,6 +578,10 @@ function reservationFixture(
 ) {
 	const tables: Record<string, Row[]> = {
 		product: [{ id: PRODUCT, tenantId: TENANT, organizationId: ORG }],
+		// Where a variant says which product it belongs to: the answer the ledger engine resolves a
+		// first-time level from when a caller names no product, and the claim it checks a stated one
+		// against when a caller names something else.
+		product_variant: [{ id: VARIANT, productId: PRODUCT }],
 		warehouse_product: [],
 		warehouse_product_variant: [],
 		stock_movement: [],
@@ -751,6 +760,41 @@ describe('StockReservationService — holding stock (doc 09 §5, INV-03)', () =>
 		});
 		expect(fixture.store.reservations()).toEqual([]);
 		expect(fixture.store.ledger()).toEqual([]);
+	});
+
+	it('opens the level from the variant’s own product when a hold is allowed to be a backorder', async () => {
+		// The one path on which a hold reaches a location that has never stocked the variant: the caller
+		// states that the demand may be backordered, so nothing is there to hold and nothing is there to
+		// take the product from either. The variant names its own product, and the level and the aggregate
+		// it hangs from are opened from that answer rather than refused for a product the caller — which
+		// states the variant and the location — had no way to know.
+		const fixture = reservationFixture({ seedLevel: false });
+
+		const accepted = await fixture.service.reserve(hold({ quantity: 2, allowBackorder: true }) as never);
+
+		expect(accepted).toMatchObject({ quantity: 2, status: StockReservationStatus.ACTIVE });
+		expect(fixture.tables.warehouse_product).toEqual([
+			expect.objectContaining({ warehouseId: WAREHOUSE, productId: PRODUCT, reservedQuantity: 2 })
+		]);
+		expect(fixture.store.level()).toMatchObject({
+			variantId: VARIANT,
+			quantity: 0,
+			reservedQuantity: 2,
+			version: 2
+		});
+		// The hold and the ledger row that explains it are still one write, on a level this call created.
+		expect(fixture.store.ledger()).toHaveLength(1);
+		expect(fixture.store.ledger()[0]).toMatchObject({
+			type: StockMovementType.RESERVATION,
+			quantity: 0,
+			reservedBefore: 0,
+			reservedAfter: 2,
+			warehouseProductVariantId: fixture.store.level().id
+		});
+		// INV-03 on the level that was opened by the hold: the reserved quantity is the sum of the holds.
+		expect(fixture.store.level().reservedQuantity).toBe(
+			fixture.store.reservations().reduce((sum, row) => sum + Number(row.quantity), 0)
+		);
 	});
 
 	// The hold row and the movement that explains it are one write: `reserve` creates the reservation

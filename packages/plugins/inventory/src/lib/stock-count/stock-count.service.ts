@@ -200,19 +200,25 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 					continue;
 				}
 
-				const applied = await this.stockLevelService.applyMovement({
-					warehouseId: count.warehouseId,
-					variantId: line.variantId,
-					productId: await this.productOf(manager, line.variantId),
-					binId: line.binId,
-					type: StockMovementType.COUNT,
-					quantityDelta: delta,
-					reservedDelta: 0,
-					referenceType: StockMovementReferenceType.COUNT,
-					referenceId: line.id,
-					reason: StockReasonCode.CYCLE_COUNT,
-					levelId: line.warehouseProductVariantId
-				});
+				// The correction joins this session's transaction: a later line that cannot be written
+				// takes the corrections of the lines before it back with it, so closing a session is one
+				// write or none.
+				const applied = await this.stockLevelService.applyMovement(
+					{
+						warehouseId: count.warehouseId,
+						variantId: line.variantId,
+						productId: await this.productOf(manager, line.variantId),
+						binId: line.binId,
+						type: StockMovementType.COUNT,
+						quantityDelta: delta,
+						reservedDelta: 0,
+						referenceType: StockMovementReferenceType.COUNT,
+						referenceId: line.id,
+						reason: StockReasonCode.CYCLE_COUNT,
+						levelId: line.warehouseProductVariantId
+					},
+					manager
+				);
 				line.movementId = applied.movementId;
 				line.variance = Number(closing) - Number(line.expectedQuantity);
 				await manager.save(StockCountLine, line);
