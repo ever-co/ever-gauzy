@@ -134,12 +134,22 @@ nb-card-body {
   // attribute. The doubled classes make up the difference, the same idiom the
   // Invoices and Pipelines sheets use on `.tab-link.tab-link`.
   gauzy-task-badge-view .badge-color.badge-color {
-    height: var(--gauzy-table-badge-height, 1rem);
-    padding: var(--gauzy-table-chip-padding-y, 0) var(--gauzy-table-chip-padding-x, 0.3125rem);
+    // Same box as `ga-status-badge` now draws, from the same two tokens: the
+    // pills in the Status column and the pills every other list page shows were
+    // otherwise a different height and a different corner from each other.
+    //
+    // `min-height` rather than `height`, and `padding-block` rather than a
+    // padding shorthand with 0 in the block axis. The old pair pinned a 1rem box
+    // and then spent nothing on vertical padding — which it could not have done
+    // anyway, since under `border-box` padding inside a pinned height comes out
+    // of the text's box rather than adding to the pill.
+    min-height: var(--gauzy-table-badge-height, 1rem);
+    padding-block: var(--gauzy-table-badge-padding-y, 0.1875rem);
+    padding-inline: var(--gauzy-table-chip-padding-x, 0.3125rem);
     gap: var(--gauzy-table-chip-gap, 0.125rem);
     font-size: var(--gauzy-table-header-font-size, 0.75rem);
     line-height: var(--gauzy-table-header-line-height, 0.8125rem);
-    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    border-radius: var(--gauzy-table-badge-radius, 0.25rem);
 
     .badge-img.badge-img {
       width: var(--gauzy-table-header-font-size, 0.75rem);
@@ -199,6 +209,19 @@ nb-card-body {
 
 // The page-header action row: "+ Add", the selection strip and the grid-vs-list
 // selector, compacted to the table's scale (see the mixin).
-:host .gauzy-button-container {
+//
+// `nb-card-header`, not `.gauzy-button-container` — which is what this was, and
+// is the same mistake the mixin's own doc comment warns about. This header holds
+// TWO button groups: the toolbar in `.tasks-component__settings >
+// .gauzy-button-container`, and the project-settings gear, which is a bare
+// `<button nbButton size="small">` sitting in `.card-header-title` beside the
+// heading. Naming only the container left that gear at its full 0.5625rem box
+// next to a toolbar that had shrunk to 0.25rem, so the one control the eye lands
+// on first was the one still drawn oversized.
+//
+// Every metric the row needs is a CUSTOM PROPERTY, so one declaration on the
+// header reaches both groups — `ngx-gauzy-button-action`'s own template and
+// `ga-layout-selector` included, across their component boundaries.
+:host nb-card-header {
   @include ga-hub.page-header-buttons();
 }
