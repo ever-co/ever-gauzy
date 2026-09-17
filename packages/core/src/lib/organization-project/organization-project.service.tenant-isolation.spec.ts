@@ -1,6 +1,8 @@
 import '../core/entities/internal';
 
 import { randomUUID } from 'crypto';
+import { CrudService } from '../core/crud/crud.service';
+import { MultiORMEnum } from '../core/utils';
 import { OrganizationProjectService } from './organization-project.service';
 import { OrganizationProject } from './organization-project.entity';
 import { InMemoryTenantRepository } from '../core/testing/tenant-isolation/in-memory-tenant-repository';
@@ -32,6 +34,12 @@ describe('OrganizationProjectService tenant isolation', () => {
 	let restore: () => void;
 
 	beforeEach(() => {
+		// `InMemoryTenantRepository` stands in for the TypeORM repository only, so pin that branch.
+		// `ormType` is resolved from `DB_ORM` at module load; a `DB_ORM=mikro-orm` in the environment
+		// would otherwise send every call to the inert MikroORM stand-in and fail the whole suite. The
+		// dual-ORM run of these same assertions is `persistence-invariant.spec.ts`, against a real database.
+		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
+
 		repository = new InMemoryTenantRepository<OrganizationProject>(new Set(['id', 'tenantId', 'organizationId']));
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const unused = {} as any;
@@ -63,7 +71,10 @@ describe('OrganizationProjectService tenant isolation', () => {
 		({ restore } = asTenantUser(tenantA));
 	});
 
-	afterEach(() => restore());
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
 
 	it('can read its own tenant project (positive control)', async () => {
 		await assertCanReadOwnTenant(service, ownProject.id);

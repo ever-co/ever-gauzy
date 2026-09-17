@@ -7,6 +7,15 @@
 		// see `packages/core/tsconfig.spec.json`, which this mirrors for the same reason: importing
 		// `@gauzy/core` (e.g. `TimerStartedEvent`) reaches ESM-only deps like `uuid`.
 		"allowJs": true,
+		// Makes ts-jest transpile each file on its own instead of type-checking the whole program.
+		// Without it, importing anything that transitively reaches `@gauzy/core` (e.g. this package's
+		// own handlers, which import `TimerStartedEvent` from it) re-checks `@gauzy/core`'s SOURCE
+		// under this package's stricter `noPropertyAccessFromIndexSignature` setting and fails on
+		// unrelated `process.env.X` accesses in `packages/core/src/lib/bootstrap` — a cross-package
+		// tsconfig-strictness mismatch, not a real type error in this package's own code. The cost:
+		// specs here are NOT type-checked when Jest runs them, so a type error in one only shows up in
+		// an editor or a `tsc` run. Test-tooling-only; does not affect the production build.
+		"isolatedModules": true,
 		"types": ["jest", "node"]
 	},
 	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]

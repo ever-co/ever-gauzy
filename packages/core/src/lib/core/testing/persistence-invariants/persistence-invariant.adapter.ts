@@ -29,6 +29,9 @@ export interface IPersistenceInvariantHarness {
 	seed(row: Partial<PersistenceInvariantFixture>): Promise<PersistenceInvariantFixture>;
 	/** Test-only: read a row back directly, bypassing tenant scoping, to check post-conditions. */
 	exists(id: string): Promise<boolean>;
+	/** Test-only: hard-delete every fixture row (soft-deleted ones included), so each test starts from
+	 *  exactly the rows it seeds instead of inheriting every earlier test's. */
+	clear(): Promise<void>;
 	close(): Promise<void>;
 }
 
@@ -63,7 +66,10 @@ async function createTypeOrmHarness(): Promise<IPersistenceInvariantHarness> {
 
 	// The MikroORM side of the constructor is never invoked while this process's ormType is
 	// TypeORM (see CrudService's `ormType` switch) — an inert stand-in is enough, same as TASK 1.
-	const service = new PersistenceInvariantService(repository, {} as unknown as MikroOrmBaseEntityRepository<PersistenceInvariantFixture>);
+	const service = new PersistenceInvariantService(
+		repository,
+		{} as unknown as MikroOrmBaseEntityRepository<PersistenceInvariantFixture>
+	);
 
 	return {
 		service,
@@ -84,6 +90,10 @@ async function createTypeOrmHarness(): Promise<IPersistenceInvariantHarness> {
 		},
 		async exists(id) {
 			return (await repository.findOne({ where: { id }, withDeleted: true })) !== null;
+		},
+		async clear() {
+			// A plain `DELETE FROM` on SQLite: removes soft-deleted rows too, unlike `softDelete`.
+			await repository.clear();
 		},
 		async close() {
 			await dataSource.destroy();
@@ -107,7 +117,10 @@ async function createMikroOrmHarness(): Promise<IPersistenceInvariantHarness> {
 	});
 	await orm.getSchemaGenerator().createSchema();
 	const em = orm.em.fork();
-	const mikroOrmRepository = new MikroOrmBaseEntityRepository<PersistenceInvariantFixture>(em, PersistenceInvariantFixture);
+	const mikroOrmRepository = new MikroOrmBaseEntityRepository<PersistenceInvariantFixture>(
+		em,
+		PersistenceInvariantFixture
+	);
 
 	// `TenantAwareCrudService` reads `this.typeOrmRepository.metadata.hasColumnWithPropertyPath(...)`
 	// UNCONDITIONALLY — regardless of which ORM actually executes the query — to decide whether an
@@ -135,9 +148,14 @@ async function createMikroOrmHarness(): Promise<IPersistenceInvariantHarness> {
 			return entity;
 		},
 		async exists(id) {
-			return (
-				(await em.findOne(PersistenceInvariantFixture, { id } as any, { filters: false })) !== null
-			);
+			return (await em.findOne(PersistenceInvariantFixture, { id } as any, { filters: false })) !== null;
+		},
+		async clear() {
+			// `nativeDelete` issues the DELETE directly, so `SoftDeleteHandler` (a flush hook) never turns
+			// it into an update; `filters: false` keeps the soft-delete filter from sparing deleted rows.
+			await em.nativeDelete(PersistenceInvariantFixture, {}, { filters: false });
+			// Drop the now-stale entities from the identity map as well.
+			em.clear();
 		},
 		async close() {
 			await orm.close(true);

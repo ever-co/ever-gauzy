@@ -33,11 +33,14 @@ approach, since `DB_ORM` is fixed at module-import time for the whole process.
 ## Running
 
 ```sh
-DB_ORM=typeorm   npx nx test core --testFile=persistence-invariant.spec.ts
-DB_ORM=mikro-orm npx nx test core --testFile=persistence-invariant.spec.ts
+DB_ORM=typeorm   npx nx test core --testFile=persistence-invariant.spec.ts --skip-nx-cache
+DB_ORM=mikro-orm npx nx test core --testFile=persistence-invariant.spec.ts --skip-nx-cache
 # or both, failing if either does:
 packages/core/src/lib/core/testing/persistence-invariants/run-both-orms.sh
 ```
+
+`--skip-nx-cache` matters: `DB_ORM` is not part of the Nx cache key, so without it the second command
+replays the first one's cached result instead of running under MikroORM.
 
 ## What's new here vs. reusing TASK 1/2 as-is
 
@@ -58,7 +61,7 @@ packages/core/src/lib/core/testing/persistence-invariants/run-both-orms.sh
 - MikroORM's `@PrimaryKey({ type: 'uuid' })` has no generator, unlike TypeORM's
   `@PrimaryGeneratedColumn('uuid')` (found in TASK 2, applies here too).
 - A `@MultiORMManyToOne` relation's explicitly-named join column and its `@RelationId` mirror column
-  land on two different physical columns under MikroORM's *default* naming strategy — production
+  land on two different physical columns under MikroORM's _default_ naming strategy — production
   avoids this by setting `namingStrategy: EntityCaseNamingStrategy` in
   `packages/config/src/lib/database.ts`, which this harness's `MikroORM.init()` now matches. Confirmed
   as a test-harness-configuration pitfall, not a live production bug, only because production actually
@@ -73,6 +76,14 @@ Both ORMs pass 6/6. Mutation-tested (disabling the tenant filter in
 committing. Full `core` suite also re-run under both `DB_ORM` values — no regressions beyond the
 already-documented [tenant-isolation harness limitation](../tenant-isolation/README.md#known-gaps-left-for-later-tasks-per-the-improvement-roadmap)
 (TASK 1's fake repository is TypeORM-shaped only); this suite's own tests pass in both full runs.
+
+The list invariant was later found to be weaker than it looked. Rows used to pile up across the
+file's tests, and the assertion only checked that the newest foreign id was absent — which, under
+TypeORM's default page of 10 rows, stayed true with tenant filtering on the list path switched off.
+Each test now starts from an empty table (`harness.clear()` in `beforeEach`), and
+`assertListExcludesOtherTenant` requires every listed row to belong to the caller's tenant. The same
+list-path mutation now fails the list test under both ORMs, including on a table holding six rows
+per tenant.
 
 ## Known gaps / natural next steps
 

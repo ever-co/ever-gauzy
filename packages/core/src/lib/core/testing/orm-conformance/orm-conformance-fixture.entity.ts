@@ -19,11 +19,7 @@ import { MultiORMColumn, MultiORMEntity } from '../../decorators/entity';
  * under test (filter-out-by-default, `deletedAt` set on delete) is the real production mechanism,
  * not a reimplementation of it.
  */
-@SoftDeletable(
-	() => OrmConformanceFixture,
-	'deletedAt',
-	() => new Date()
-)
+@SoftDeletable(() => OrmConformanceFixture, 'deletedAt', () => new Date())
 @MultiORMEntity('orm_conformance_fixture')
 export class OrmConformanceFixture {
 	@PrimaryKey({ type: 'uuid' })

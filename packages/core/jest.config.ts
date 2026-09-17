@@ -32,5 +32,11 @@ module.exports = {
 	transformIgnorePatterns: [
 		'node_modules/(?!(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios)/)'
 	],
+	// Jest's own default (`/node_modules/`) plus the fresh-database migration smoke test. That one
+	// spec runs the whole migration chain through ts-jest — about 3-6 minutes with a warm transform
+	// cache, and up to half an hour on a cold one — so leaving it in `nx test core` would make every
+	// run of this project pay for it. It has its own target instead, `nx run core:test-migration-smoke`,
+	// which replaces this list with just `/node_modules/` from the command line.
+	testPathIgnorePatterns: ['/node_modules/', '/src/lib/database/migration-smoke\\.spec\\.ts$'],
 	coverageDirectory: '../../coverage/packages/core'
 };

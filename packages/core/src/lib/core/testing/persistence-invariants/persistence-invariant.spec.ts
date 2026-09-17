@@ -45,7 +45,15 @@ describe(`Persistence invariants (DB_ORM=${getORMType()})`, () => {
 	});
 
 	beforeEach(async () => {
-		ownRow = await harness.seed({ tenantId: tenantA.tenantId, organizationId: tenantA.organizationId, name: 'own' });
+		// The database lives for the whole file (`beforeAll`), so without this every test would also see
+		// every earlier test's rows. With exactly one own and one foreign row per test, no assertion can
+		// pass just because the row it checks for fell outside a result page.
+		await harness.clear();
+		ownRow = await harness.seed({
+			tenantId: tenantA.tenantId,
+			organizationId: tenantA.organizationId,
+			name: 'own'
+		});
 		foreignRow = await harness.seed({
 			tenantId: tenantB.tenantId,
 			organizationId: tenantB.organizationId,

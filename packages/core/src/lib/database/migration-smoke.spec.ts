@@ -18,8 +18,19 @@ import { getMigrationsConfig } from '../bootstrap';
  * live Postgres/MySQL/Redis dependency in this sandboxed environment. It is also the engine this
  * repo already runs full migrations against today, incidentally, in the self-hosted Playwright E2E
  * job (which deletes `apps/api/data/gauzy.sqlite3` and boots the API against an empty file) — this
- * test gives that same coverage an explicit, fast, PR-level failure path instead of only surfacing
- * as "the API never came up" inside a 10-minute E2E poll loop.
+ * test gives that same coverage a direct, explicit test failure instead of only surfacing as "the API
+ * never came up" inside a 10-minute E2E poll loop.
+ *
+ * It is NOT a fast or PR-level check. Every migration file goes through ts-jest, so a run takes about
+ * 3-6 minutes with a warm transform cache and up to half an hour on a cold one. It is therefore
+ * excluded from the default `nx test core` run (`testPathIgnorePatterns` in
+ * `packages/core/jest.config.ts`) and has its own target instead, which no workflow runs today — run
+ * it on demand before merging a migration change:
+ *
+ *   yarn nx run core:test-migration-smoke
+ *
+ * (Unit tests run in CI only on pushes to `stage`, and `.github/workflows/test-unit.yml` runs the
+ * `test` target alone, so this target is not part of that run either.)
  *
  * Real Postgres/MySQL fresh-migration runs are NOT covered here — see this file's own "Known gaps"
  * note at the bottom and `packages/core/project.json`'s `test-postgres-migrations` target, which
@@ -37,6 +48,13 @@ describe('TypeORM migrations: fresh SQLite database smoke test', () => {
 	let dbPath: string;
 	let dataSource: DataSource;
 
+	// `initialize()` loads the migration classes, which is where ts-jest transforms (and type-checks)
+	// all ~300 files. On a cold transform cache that ran past the 10 minutes this hook used to allow,
+	// and the whole run took about 30 minutes on a busy machine. Any change to the resolved Jest
+	// config — including `testPathIgnorePatterns` — starts a new cache, so the first run after one is
+	// always cold. Generous, but still bounded.
+	const initializeTimeoutMs = 60 * 60 * 1000;
+
 	beforeAll(async () => {
 		// A real temp FILE, not `:memory:` — several migrations reference `queryRunner.connection`
 		// options / pragma behavior that only apply to a file-backed connection, matching how the
@@ -52,7 +70,7 @@ describe('TypeORM migrations: fresh SQLite database smoke test', () => {
 			logging: false
 		});
 		await dataSource.initialize();
-	}, 10 * 60 * 1000); // 297 raw-SQL migrations against a cold file; generous but bounded.
+	}, initializeTimeoutMs);
 
 	afterAll(async () => {
 		if (dataSource?.isInitialized) {
@@ -80,8 +98,9 @@ describe('TypeORM migrations: fresh SQLite database smoke test', () => {
 	);
 
 	it('schema consistency: representative tables exist with their expected columns', async () => {
-		const tableNames: string[] = (await dataSource.query("SELECT name FROM sqlite_master WHERE type = 'table'"))
-			.map((row: { name: string }) => row.name);
+		const tableNames: string[] = (
+			await dataSource.query("SELECT name FROM sqlite_master WHERE type = 'table'")
+		).map((row: { name: string }) => row.name);
 
 		for (const table of ['tenant', 'organization', 'user', 'employee', 'invoice', 'time_log']) {
 			expect(tableNames).toContain(table);

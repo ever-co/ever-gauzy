@@ -48,7 +48,9 @@ export function asTenantUser(fixture: ITenantFixture, options: { permissions?: P
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(fixture.user),
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(fixture.tenantId),
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(fixture.user.employeeId ?? null),
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission) => grantedPermissions.has(permission))
+		jest
+			.spyOn(RequestContext, 'hasPermission')
+			.mockImplementation((permission) => grantedPermissions.has(permission))
 	];
 
 	return { restore: () => spies.forEach((spy) => spy.mockRestore()) };

@@ -19,11 +19,7 @@ import { PersistenceInvariantTenant } from './persistence-invariant-tenant.entit
  * a REAL database under EITHER ORM, reusing the exact same tenant-isolation assertions from
  * `../tenant-isolation/tenant-isolation.assertions` that TASK 1 wrote against an in-memory fake.
  */
-@SoftDeletable(
-	() => PersistenceInvariantFixture,
-	'deletedAt',
-	() => new Date()
-)
+@SoftDeletable(() => PersistenceInvariantFixture, 'deletedAt', () => new Date())
 @MultiORMEntity('persistence_invariant_fixture')
 export class PersistenceInvariantFixture {
 	@PrimaryKey({ type: 'uuid' })

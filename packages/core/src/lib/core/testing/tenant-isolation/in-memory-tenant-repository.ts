@@ -26,7 +26,10 @@ export class InMemoryTenantRepository<T extends FakeRow = FakeRow> {
 	private readonly rows = new Map<ID, T>();
 	private sequence = 0;
 
-	constructor(private readonly columns: ReadonlySet<string>, seed: T[] = []) {
+	constructor(
+		private readonly columns: ReadonlySet<string>,
+		seed: T[] = []
+	) {
 		seed.forEach((row) => this.seed(row));
 	}
 

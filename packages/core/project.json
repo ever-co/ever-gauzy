@@ -60,6 +60,15 @@
 			"options": {
 				"jestConfig": "packages/core/jest.config.ts"
 			}
+		},
+		"test-migration-smoke": {
+			"executor": "@nx/jest:jest",
+			"options": {
+				"jestConfig": "packages/core/jest.config.ts",
+				"testFile": "src/lib/database/migration-smoke\\.spec\\.ts$",
+				"testPathIgnorePatterns": ["/node_modules/"],
+				"passWithNoTests": false
+			}
 		}
 	}
 }

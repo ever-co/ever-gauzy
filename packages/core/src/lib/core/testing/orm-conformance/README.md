@@ -22,14 +22,18 @@ process invocations**, each with `DB_ORM` set before Jest (and therefore the fix
 loads:
 
 ```sh
-DB_ORM=typeorm   npx nx test core --testFile=orm-conformance.spec.ts
-DB_ORM=mikro-orm npx nx test core --testFile=orm-conformance.spec.ts
+DB_ORM=typeorm   npx nx test core --testFile=orm-conformance.spec.ts --skip-nx-cache
+DB_ORM=mikro-orm npx nx test core --testFile=orm-conformance.spec.ts --skip-nx-cache
 # or, to run both and fail if either does:
 packages/core/src/lib/core/testing/orm-conformance/run-both-orms.sh
 ```
 
+Keep `--skip-nx-cache` (as `run-both-orms.sh` does): `DB_ORM` is not part of the Nx cache key, so
+without it the second command is a cache hit that replays the first run's result instead of testing
+the other ORM.
+
 `getORMType()` defaults to TypeORM when `DB_ORM` is unset, matching production, so the first line
-above is also just `npx nx test core --testFile=orm-conformance.spec.ts`.
+above is also just `npx nx test core --testFile=orm-conformance.spec.ts --skip-nx-cache`.
 
 ## Why a standalone fixture entity instead of a real one (e.g. `Employee`)?
 
@@ -50,9 +54,10 @@ ordering test fail under `DB_ORM=mikro-orm` (the other three, and the TypeORM ru
 confirmed the suite actually detects a real behavioral divergence, then reverted before committing.
 
 Running the full `core` suite with `DB_ORM=mikro-orm` set also confirmed this conformance suite (and
-648 of the other 660 pre-existing tests) are unaffected by the global ORM switch; the only failures
-are the [tenant-isolation harness](../tenant-isolation/README.md)'s specs, which are TypeORM-only by
-design — see that folder's README.
+648 of the other 660 pre-existing tests) are unaffected by the global ORM switch. The 12 failures at
+the time were the [tenant-isolation harness](../tenant-isolation/README.md)'s specs, which are
+TypeORM-only by design; they now pin the TypeORM branch themselves, so they pass whatever `DB_ORM`
+says — see that folder's README.
 
 ## Known gaps (left for later tasks per the improvement roadmap)
 

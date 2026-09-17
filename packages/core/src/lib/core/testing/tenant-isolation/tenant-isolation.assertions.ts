@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
+import { RequestContext } from '../../context';
 import { TenantAwareCrudService } from '../../crud/tenant-aware-crud.service';
 import { TenantBaseEntity } from '../../entities/internal';
 
@@ -74,12 +75,31 @@ export async function assertCannotClaimForeignRowOnWrite<T extends TenantBaseEnt
 	await expect(service.save({ id: foreignId } as any)).rejects.toThrow(/belongs to another tenant/i);
 }
 
-/** A tenant-scoped list (paginate/find) must never surface another tenant's rows. */
+/**
+ * A tenant-scoped list (paginate/find) must never surface another tenant's rows.
+ *
+ * Checking only that `foreignId` is absent is not enough. `CrudService.paginate` returns at most 10
+ * rows under TypeORM when no `take` is given, so once the table holds more than a page of rows, that
+ * one foreign id can simply fall outside the page — the check then passes with tenant filtering
+ * switched off entirely (reproduced against the persistence-invariant suite's real SQLite database).
+ * So every row on the page must belong to the caller's own tenant, and the page must not be empty
+ * (an empty page satisfies both checks without proving anything). Seed at least one own-tenant row
+ * before calling this.
+ */
 export async function assertListExcludesOtherTenant<T extends TenantBaseEntity>(
 	service: TenantAwareCrudService<T>,
 	foreignId: ID
 ): Promise<void> {
+	// The same tenant the service scopes by (`TenantAwareCrudService` reads it from
+	// `RequestContext.currentUser()`, which `asTenantUser` points at the acting tenant).
+	const ownTenantId = RequestContext.currentUser()?.tenantId;
+	expect(ownTenantId).toBeTruthy();
+
 	const { items } = await service.paginate();
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	expect((items as any[]).map((item) => item.id)).not.toContain(foreignId);
+	const rows = items as Array<{ id?: ID; tenantId?: ID }>;
+
+	expect(rows.length).toBeGreaterThan(0);
+	// Listing the offending rows (rather than a bare boolean) makes a failure show what leaked.
+	expect(rows.filter((row) => row.tenantId !== ownTenantId)).toEqual([]);
+	expect(rows.map((row) => row.id)).not.toContain(foreignId);
 }

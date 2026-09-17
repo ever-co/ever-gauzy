@@ -36,7 +36,9 @@ export async function assertConvergesUnderRepeatedExecution(params: {
 	// second run to converge, so it would pass for a job with NO idempotency guard at all just as
 	// readily as for one that's genuinely correct. Fail loudly instead of silently asserting nothing.
 	if (times < 2) {
-		throw new Error(`assertConvergesUnderRepeatedExecution: times must be >= 2 to prove convergence, got ${times}.`);
+		throw new Error(
+			`assertConvergesUnderRepeatedExecution: times must be >= 2 to prove convergence, got ${times}.`
+		);
 	}
 
 	await run();
