@@ -30,15 +30,47 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 	 */
 	public async execute(command: InviteAcceptCommand) {
 		try {
-			const { input, languageCode } = command;
+			const { languageCode } = command;
+			// Work on a copy: the command's input is the caller's (readonly) DTO, and everything below
+			// deletes from it and pins fields on its nested `user`. The copy is two levels deep on
+			// purpose — those are the only levels written to — and a missing `user` is left missing
+			// so the pin below still fails instead of registering an account with no user at all.
+			const input = {
+				...command.input,
+				...(command.input.user && { user: { ...command.input.user } })
+			} as typeof command.input;
 			const { email, token, code } = input;
+
+			// Drop the fields the INVITE owns before anything downstream reads them. The HTTP entry
+			// point whitelists the body with `AcceptInviteDTO`, but this command is also reachable
+			// through the command bus, and `AuthService.register` spreads what it is handed into
+			// repository `create()` calls: a top-level `id` there is a primary key, which turns the
+			// employee `save()` into an UPDATE of somebody else's row, and `featureAsEmployee`
+			// self-provisions an employee profile that `/auth/register` only lets an admin create.
+			// `inviteId` and `organizationId` are re-set from the invitation a few lines below and
+			// in each sub-handler, so removing them here cannot break a legitimate accept.
+			const inviteOwnedFields = input as unknown as Record<string, unknown>;
+			for (const field of [
+				'id',
+				'featureAsEmployee',
+				'organizationId',
+				'createdByUserId',
+				'isImporting',
+				'sourceId'
+			]) {
+				delete inviteOwnedFields[field];
+			}
 
 			let invite: IInvite;
 
-			// Validate invite by token or code
-			if (typeof input === 'object' && 'email' in input && 'token' in input) {
+			// Validate invite by token or code.
+			//
+			// Discriminate on the VALUE, not on key presence: with a validated DTO in front of this
+			// handler the class may declare both properties, and `'token' in input` would then take
+			// the token branch for a code-only acceptance (the Ever Teams flow) and fail it.
+			if (email && token) {
 				invite = await this.inviteService.validateByToken({ email, token });
-			} else if (typeof input === 'object' && 'email' in input && 'code' in input) {
+			} else if (email && code) {
 				invite = await this.inviteService.validateByCode({ email, code });
 			}
 			if (!invite) {

@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, HttpException, NotAcceptableException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	ForbiddenException,
+	HttpException,
+	NotAcceptableException
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { chain, pluck } from 'underscore';
@@ -6,6 +12,7 @@ import {
 	IManualTimeInput,
 	PermissionsEnum,
 	IDateRange,
+	IGetTimeLogConflictInput,
 	IGetTimeLogReportInput,
 	ITimeLog,
 	TimeLogType,
@@ -1434,6 +1441,54 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		return where;
+	}
+
+	/**
+	 * Returns the time logs of an employee that overlap a date range, for a REQUEST-BORNE input.
+	 *
+	 * `GET /timesheet/time-log/conflict` used to hand the caller's query straight to
+	 * `IGetConflictTimeLogCommand`, which uses `employeeId` and `organizationId` verbatim. The route
+	 * only requires the TIME_TRACKER permission — which the default EMPLOYEE role holds — so any
+	 * employee could name a colleague's employee id and read that colleague's time logs (start/stop
+	 * times, description, source, plus any joined relation) over any date range they liked.
+	 *
+	 * This wrapper puts the same authorization the report and delete paths already use in front of
+	 * it, and is the ONLY entry point the controller should use. `addManualTime`, `updateManualTime`
+	 * and the timer service keep executing the command directly: their `employeeId` has already been
+	 * forced to the caller's own by `TimeLogBodyTransformPipe`.
+	 *
+	 * @param input The validated conflict query.
+	 * @returns The conflicting time logs the caller is allowed to see.
+	 */
+	async getConflictTimeLogs(input: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
+		// Fail closed. The tenant is never taken from the caller's query here: the command falls
+		// back to `input.tenantId` when the context has none, which on a request would be a
+		// caller-chosen tenant.
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new ForbiddenException('A tenant context is required to read conflicting time logs');
+		}
+
+		const { employeeId } = input;
+		if (!employeeId) {
+			throw new ForbiddenException('An employee is required to read conflicting time logs');
+		}
+
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			// `currentEmployeeId()` returns null for CHANGE_SELECTED_EMPLOYEE holders by design, so
+			// it is only meaningful in this branch; fall back to the user's own employee id.
+			const currentEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+
+			// Own logs are always readable. Otherwise the caller has to actually manage that
+			// employee — the same check `getFilterTimeLogQuery` and `deleteTimeLogs` apply. A caller
+			// with no employee identity at all matches neither and is refused.
+			const isOwnEmployee = !!currentEmployeeId && String(currentEmployeeId) === String(employeeId);
+			if (!isOwnEmployee && !(await this._managedEmployeeService.canManageEmployees([employeeId], []))) {
+				throw new ForbiddenException('You do not have permission to read time logs for this employee');
+			}
+		}
+
+		return await this.commandBus.execute(new IGetConflictTimeLogCommand({ ...input, tenantId }));
 	}
 
 	/**
