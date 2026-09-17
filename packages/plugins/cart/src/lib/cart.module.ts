@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { AdjustmentModule, TaxLineModule } from '@gauzy/core';
+import { AdjustmentModule, TaxLineModule, RolePermissionModule } from '@gauzy/core';
 import { ALL_CART_ENTITIES } from './entities';
 import { CommerceCartController } from './commerce-cart/commerce-cart.controller';
 import { CommerceCartService } from './commerce-cart/commerce-cart.service';
@@ -41,6 +41,8 @@ import { MikroOrmCommerceCheckoutSessionRepository } from './commerce-checkout-s
 		CommerceCheckoutSessionController
 	],
 	imports: [
+		// The controllers below are guarded, and the guard resolves the caller's permissions.
+		RolePermissionModule,
 		TypeOrmModule.forFeature(ALL_CART_ENTITIES),
 		MikroOrmModule.forFeature(ALL_CART_ENTITIES),
 		AdjustmentModule,

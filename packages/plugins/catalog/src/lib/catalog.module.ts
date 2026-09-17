@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { EventBusModule } from '@gauzy/core';
+import { EventBusModule, RolePermissionModule } from '@gauzy/core';
 import { Collection } from './collection/collection.entity';
 import { CollectionController } from './collection/collection.controller';
 import { CollectionService } from './collection/collection.service';
@@ -69,6 +69,8 @@ import { TypeOrmTagProductVariantRepository } from './tag-product-variant/reposi
 		TagProductVariantController
 	],
 	imports: [
+		// The controllers below are guarded, and the guard resolves the caller's permissions.
+		RolePermissionModule,
 		TypeOrmModule.forFeature([
 			Collection,
 			CollectionProduct,

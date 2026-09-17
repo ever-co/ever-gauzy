@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { EventBusModule, Payment } from '@gauzy/core';
+import { EventBusModule, Payment, RolePermissionModule } from '@gauzy/core';
 import { PaymentProvider } from './payment-provider/payment-provider.entity';
 import { PaymentCollection } from './payment-collection/payment-collection.entity';
 import { PaymentSession } from './payment-session/payment-session.entity';
@@ -77,6 +77,8 @@ export const ALL_PAYMENT_ENTITIES = [
  */
 @Module({
 	imports: [
+		// The controllers below are guarded, and the guard resolves the caller's permissions.
+		RolePermissionModule,
 		TypeOrmModule.forFeature([...ALL_PAYMENT_ENTITIES, Payment]),
 		MikroOrmModule.forFeature(ALL_PAYMENT_ENTITIES),
 		EventBusModule

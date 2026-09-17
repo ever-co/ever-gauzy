@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { EventOutboxModule } from '@gauzy/core';
+import { EventOutboxModule, RolePermissionModule } from '@gauzy/core';
 import { SellerSettlement } from './seller-settlement.entity';
 import { SellerSettlementController } from './seller-settlement.controller';
 import { SellerSettlementService } from './seller-settlement.service';
@@ -20,6 +20,8 @@ import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 @Module({
 	controllers: [SellerSettlementController],
 	imports: [
+		// The controllers below are guarded, and the guard resolves the caller's permissions.
+		RolePermissionModule,
 		TypeOrmModule.forFeature([SellerSettlement, SellerTransaction]),
 		MikroOrmModule.forFeature([SellerSettlement, SellerTransaction]),
 		EventOutboxModule

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { AdjustmentModule, SequenceModule, TaxLineModule } from '@gauzy/core';
+import { AdjustmentModule, SequenceModule, TaxLineModule, RolePermissionModule } from '@gauzy/core';
 import { CartModule } from '@gauzy/plugin-cart';
 import { ALL_ORDER_ENTITIES } from './entities';
 import { OrderController } from './order/order.controller';
@@ -74,6 +74,8 @@ import { OrderTotalsService } from './order-totals/order-totals.service';
 		OrderHistoryController
 	],
 	imports: [
+		// The controllers below are guarded, and the guard resolves the caller's permissions.
+		RolePermissionModule,
 		TypeOrmModule.forFeature(ALL_ORDER_ENTITIES),
 		MikroOrmModule.forFeature(ALL_ORDER_ENTITIES),
 		AdjustmentModule,

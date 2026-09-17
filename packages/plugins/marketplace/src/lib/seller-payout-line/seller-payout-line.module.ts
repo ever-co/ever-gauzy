@@ -1,3 +1,4 @@
+import { RolePermissionModule } from '@gauzy/core';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -17,6 +18,8 @@ import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 @Module({
 	controllers: [SellerPayoutLineController],
 	imports: [
+		// The controllers below are guarded, and the guard resolves the caller's permissions.
+		RolePermissionModule,
 		TypeOrmModule.forFeature([SellerPayoutLine, SellerPayout]),
 		MikroOrmModule.forFeature([SellerPayoutLine, SellerPayout])
 	],

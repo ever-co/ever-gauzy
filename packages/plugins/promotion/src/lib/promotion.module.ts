@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { EventBusModule } from '@gauzy/core';
+import { EventBusModule, RolePermissionModule } from '@gauzy/core';
 import { ALL_PROMOTION_ENTITIES } from './promotion.plugin';
 import { Campaign } from './campaign/campaign.entity';
 import { CampaignBudget } from './campaign-budget/campaign-budget.entity';
@@ -61,6 +61,8 @@ import { MikroOrmGiftCardTransactionRepository } from './gift-card-transaction/r
  */
 @Module({
 	imports: [
+		// The controllers below are guarded, and the guard resolves the caller's permissions.
+		RolePermissionModule,
 		TypeOrmModule.forFeature(ALL_PROMOTION_ENTITIES),
 		MikroOrmModule.forFeature(ALL_PROMOTION_ENTITIES),
 		EventBusModule,

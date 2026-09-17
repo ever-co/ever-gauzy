@@ -1,3 +1,4 @@
+import { RolePermissionModule } from '@gauzy/core';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -41,6 +42,8 @@ import { MikroOrmShippingProfileVariantRepository } from './shipping-profile-var
 		ShippingProfileVariantController
 	],
 	imports: [
+		// The controllers below are guarded, and the guard resolves the caller's permissions.
+		RolePermissionModule,
 		TypeOrmModule.forFeature(ALL_FULFILLMENT_ENTITIES),
 		MikroOrmModule.forFeature(ALL_FULFILLMENT_ENTITIES),
 		OrderModule
