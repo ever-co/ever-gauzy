@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl, Length, Matches } from 'class-validator';
 import { IAiProviderCredentialCreateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
+import { IsSafeAiProviderBaseUrl } from '../base-url.validator';
 
 /**
  * DTO for creating (or upserting) a per-tenant BYOK AI provider credential.
@@ -37,6 +38,11 @@ export class CreateAiProviderCredentialDTO extends TenantOrganizationBaseDTO imp
 		{ protocols: ['http', 'https'], require_protocol: true, require_tld: false },
 		{ message: 'Base URL must be a valid HTTP or HTTPS URL' }
 	)
+	// `require_tld: false` above is what makes `http://localhost` and `http://169.254.169.254/` valid
+	// URLs here — deliberately, because self-hosted model servers need it. This is the rule that says
+	// the server may not REQUEST them (GHSA-w3mx-m5cr-3gxp); the credential service repeats it and
+	// remains the authority.
+	@IsSafeAiProviderBaseUrl()
 	baseUrl?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, description: 'Whether this credential is active', default: true })

@@ -2,8 +2,6 @@ import { Injectable, ExecutionContext, CallHandler, ClassSerializerInterceptor, 
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { instanceToPlain } from 'class-transformer';
-import { verify } from 'jsonwebtoken';
-import { environment } from '@gauzy/config';
 import { RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 
@@ -17,16 +15,12 @@ export class SerializerInterceptor extends ClassSerializerInterceptor implements
 	 * @returns An observable that represents the intercepted response.
 	 */
 	intercept(ctx: ExecutionContext, next: CallHandler): Observable<any> {
-		// Extract the current token from the request context
-		const token = RequestContext.currentToken();
-
-		// Verify the token and extract the user's role
-		const { role } = verify(token, environment.JWT_SECRET) as {
-			id: string;
-			role: RolesEnum;
-		};
+		// The role the caller holds in the database, attached to the request by JwtStrategy. The token's
+		// `role` claim would keep exposing a demoted user's former serialization groups (and decoding it
+		// here threw outright on a request that carries no bearer token).
+		const role: RolesEnum | null = RequestContext.currentRoleName();
 
 		// Handle the response and transform the data based on the role
-		return next.handle().pipe(map((data) => instanceToPlain(data, { groups: [role] })));
+		return next.handle().pipe(map((data) => instanceToPlain(data, { groups: role ? [role] : [] })));
 	}
 }

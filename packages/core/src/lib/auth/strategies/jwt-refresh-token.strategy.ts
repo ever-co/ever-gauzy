@@ -50,7 +50,12 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 
 			const user = await this.userService.findOneByIdString(verifiedUserId); // Fetch the user based on the payload ID
 
-			if (!user) {
+			// A deactivated or archived account must not be able to mint anything, and must not be
+			// attached to the request context either. `getAccessTokenFromRefreshToken` happens to filter
+			// on the same predicates further down the call chain today, but a refresh-route handler must
+			// not inherit an authenticated identity this strategy was willing to hand out.
+			// Exact predicates, as at issuance: an unknown (NULL) status is refused too.
+			if (!user || user.isActive !== true || user.isArchived !== false) {
 				return done(new UnauthorizedException('Unauthorized'), false); // Return unauthorized if validation fails
 			}
 

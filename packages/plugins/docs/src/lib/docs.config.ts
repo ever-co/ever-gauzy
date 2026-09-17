@@ -218,6 +218,25 @@ export const getDocsConfig = (): IDocsConfig => ({
 });
 
 /**
+ * Rate-limit bucket key for the Documents routes.
+ *
+ * @param req - The incoming request, after authentication has populated `req.user`.
+ * @returns `docs:<tenantId>:<userId>` for an authenticated user, otherwise a bucket keyed on the
+ * Express-resolved client address (one shared bucket when even that is missing).
+ */
+export const docsRateLimitTracker = (req: Record<string, any>): string => {
+	const tenantId = req?.user?.tenantId;
+	const userId = req?.user?.id;
+
+	if (tenantId && userId) {
+		return `docs:${tenantId}:${userId}`;
+	}
+
+	const ip = typeof req?.ip === 'string' && req.ip ? req.ip : 'unresolved-client';
+	return `docs:unauthenticated:${ip}`;
+};
+
+/**
  * Builds the `@Throttle()` override of one abuse-relevant Documents route
  * (`08-permissions-security.md` §9).
  *
@@ -234,8 +253,10 @@ export const getDocsConfig = (): IDocsConfig => ({
  *
  * The tracker is the per-user key the spec asks for (`tenantId:userId`) rather than the
  * platform default of a client IP, so one tenant's burst cannot exhaust another tenant's
- * budget behind a shared egress address. An unauthenticated request (there is none on these
- * guarded routes today) degrades to the request IP instead of sharing one global bucket.
+ * budget behind a shared egress address. Both ids come from the verified token (`req.user`), never
+ * from a request header: a client-chosen value in the key would let the caller pick a fresh bucket
+ * per request, the defect GHSA-86mw-2crg-vmhc describes. A request without an authenticated user
+ * (there is none on these guarded routes today) degrades to the address Express resolved for it.
  *
  * @param limit Requests allowed per {@link DOCS_RATE_LIMIT_WINDOW_MS} window.
  * @returns The `@Throttle()` options for the platform's `default` named throttler.
@@ -244,11 +265,7 @@ export const docsRateLimit = (limit: number) => ({
 	default: {
 		limit,
 		ttl: DOCS_RATE_LIMIT_WINDOW_MS,
-		getTracker: (req: Record<string, any>): string => {
-			const tenantId = req?.user?.tenantId ?? req?.headers?.['tenant-id'] ?? 'no-tenant';
-			const userId = req?.user?.id ?? req?.ip ?? 'anonymous';
-			return `docs:${tenantId}:${userId}`;
-		}
+		getTracker: docsRateLimitTracker
 	}
 });
 

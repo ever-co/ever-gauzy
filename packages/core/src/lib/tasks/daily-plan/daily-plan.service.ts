@@ -125,6 +125,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
 	async getAllPlans(options: BaseQueryDTO<DailyPlan>, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			const { where } = options;
 			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
@@ -205,6 +209,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
 	async getTeamDailyPlans(options: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			// Apply optional find options if provided
 			const { where, relations = [] } = options || {};

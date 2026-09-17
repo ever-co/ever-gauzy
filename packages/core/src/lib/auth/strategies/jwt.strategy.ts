@@ -3,9 +3,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
-import { IUser } from '@gauzy/contracts';
+import { IAuthenticatedUser } from '../../core/context/types';
 import { AuthService } from '../auth.service';
 import { EmployeeService } from '../../employee/employee.service';
+import { RoleAuthorizationService } from '../../role/role-authorization.service';
 import { UserOrganizationService } from '../../user-organization/user-organization.services';
 
 @Injectable()
@@ -16,7 +17,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	constructor(
 		private readonly _authService: AuthService,
 		private readonly _employeeService: EmployeeService,
-		private readonly _userOrganizationService: UserOrganizationService
+		private readonly _userOrganizationService: UserOrganizationService,
+		private readonly _roleAuthorizationService: RoleAuthorizationService
 	) {
 		super({
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -47,18 +49,37 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			}
 
 			// We use this to also attach the user object to the request context.
-			const user: IUser = await this._authService.getAuthenticatedUser(id, thirdPartyId);
+			const user: IAuthenticatedUser = await this._authService.getAuthenticatedUser(id, thirdPartyId);
 
-			if (!user) {
+			// A token outlives the account it was issued for. Deactivating or archiving a user is an
+			// off-boarding or incident-response control, and it has to end the session on the NEXT request
+			// rather than whenever the token happens to expire (up to JWT_TOKEN_EXPIRATION_TIME, 24h by
+			// default). These are the exact predicates (`isActive: true, isArchived: false`) that `login()`
+			// and `getJwtAccessToken()` already apply at issuance, so no one who holds a token today is
+			// locked out by them — and an account whose status is unknown (NULL) is refused, as it is there.
+			if (!user || user.isActive !== true || user.isArchived !== false) {
 				return done(new UnauthorizedException('unauthorized'), false);
 			}
+
+			// Pin the role and permissions the user holds RIGHT NOW onto the request. Every
+			// RequestContext.hasRoles/hasPermissions check during this request reads them instead of the
+			// `role` / `permissions` claims frozen into the token, so a demotion also takes effect on the
+			// next request. If the role cannot be resolved the user gets none — authorization fails closed.
+			await this._roleAuthorizationService.attachAuthorizationState(user);
 
 			// Validate and assign employeeId from JWT
 			let validatedEmployee = null;
 			if (employeeId) {
 				const employee = await this._employeeService.findOneByIdString(employeeId);
 
-				if (!employee || employee.userId !== user.id) {
+				// Same reasoning as for the user above: a deactivated or archived employee record must not
+				// keep granting the employee context its token was minted with.
+				if (
+					!employee ||
+					employee.userId !== user.id ||
+					employee.isActive !== true ||
+					employee.isArchived !== false
+				) {
 					return done(new UnauthorizedException('unauthorized'), false);
 				}
 

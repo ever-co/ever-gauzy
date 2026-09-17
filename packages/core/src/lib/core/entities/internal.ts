@@ -191,7 +191,6 @@ export * from '../../employee/employee.subscriber';
 export * from '../../employee-recent-visit/employee-recent-visit.subscriber';
 export * from '../../employee-setting/employee-setting.subscriber';
 export * from '../../employee-notification-setting/employee-notification-setting.subscriber';
-export * from '../../export-import/import-history/import-history.subscriber';
 export * from '../../feature/feature.subscriber';
 export * from '../../image-asset/image-asset.subscriber';
 export * from '../../integration-setting/integration-setting.subscriber';
