@@ -42,6 +42,7 @@ import { IncomingMessage } from 'node:http';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, defineConfig, environment } from '@gauzy/config';
+import { DEFAULT_GRAPHQL_API_PATH } from '@gauzy/constants';
 import {
 	getEntitiesFromPlugins,
 	getMigrationsFromPlugins,
@@ -52,6 +53,7 @@ import {
 } from '@gauzy/plugin';
 import { MultiORMEnum, getORMType } from '../core/utils';
 import { ApiExceptionFilter, DatabaseErrorFilter } from '../core/errors';
+import { RequestContextMiddleware } from '../core/context';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
@@ -223,6 +225,47 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Set the global prefix for routes
 	const globalPrefix = 'api';
 	app.setGlobalPrefix(globalPrefix);
+
+	// The request context on the one route that lives outside the prefix.
+	//
+	// `RequestContextMiddleware` is registered with `forRoutes('*')`, and Nest scopes a middleware
+	// pattern to the global prefix — so it covers `/api/*` and nothing else. The GraphQL endpoint is
+	// mounted at `/graphql`, outside the prefix, so an operation arriving there ran with no request
+	// context at all: `RequestContext.currentTenantId()` answered null inside every resolver, and the
+	// tenant guard therefore refused every guarded operation, including the kernel's own, for callers
+	// whose grants were perfectly correct. Mounting the same middleware on that endpoint is what makes
+	// a resolver's request scope real; the REST surface is untouched, because the pattern it already
+	// had still applies.
+	const graphqlPath = `/${DEFAULT_GRAPHQL_API_PATH}`;
+	try {
+		// Resolved per request, not once here. Nest instantiates the middleware while the application
+		// is initialised — after this code runs — so an instance read now does not exist yet, and one
+		// looked up from the container instead does not return at all. By the time a request arrives
+		// the instance is there; until it is, the request is passed through rather than failed, because
+		// a missing request scope is a degraded operation and not a reason to refuse one.
+		let warned = false;
+		app.getHttpAdapter()
+			.getInstance()
+			.use(graphqlPath, (request, response, next) => {
+				const requestContextMiddleware = RequestContextMiddleware.instance;
+				if (!requestContextMiddleware) {
+					if (!warned) {
+						warned = true;
+						console.warn(
+							`Request context middleware is not available; an operation on ${graphqlPath} runs without a request scope.`
+						);
+					}
+					return next();
+				}
+				return requestContextMiddleware.use(request, response, next);
+			});
+		console.log(`Request context middleware mounted on ${graphqlPath}`);
+	} catch (error) {
+		// Reported rather than thrown: a deployment whose GraphQL operations cannot be scoped is worse
+		// off than one that boots without them, but a boot that fails here would take the REST surface
+		// down with it — and REST is the surface that already works.
+		console.warn(`Could not mount the request context middleware on ${graphqlPath}: ${error}`);
+	}
 
 	// Never let database internals reach a client. Many services re-throw a caught ORM error as
 	// `new BadRequestException(error)`, and Nest serializes that object's enumerable properties —
