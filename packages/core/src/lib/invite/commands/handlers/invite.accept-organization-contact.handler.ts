@@ -4,6 +4,7 @@ import {
 	ContactOrganizationInviteStatus,
 	IInvite,
 	IOrganization,
+	IOrganizationContact,
 	IOrganizationCreateInput,
 	ITenant,
 	RolesEnum
@@ -104,21 +105,30 @@ export class InviteAcceptOrganizationContactHandler
 			throw new ConflictException('Invite has already been accepted');
 		}
 
+		// 0.1 Read the invitation now, before provisioning anything: it decides which address the
+		// account is created for, and a claimed id that is not an organization-contact invite must
+		// stop here rather than after a tenant, organization and roles have been committed. Nothing
+		// has been written yet on this path, so the claim is handed back: otherwise anyone holding a
+		// team-member invite id could burn that invitation through this public route.
+		let invite: IInvite;
+		let organizationContact: IOrganizationContact;
 		try {
-			// 0.1 Read the invitation now, before provisioning anything: it decides which address the
-			// account is created for, and a claimed id that is not an organization-contact invite must
-			// stop here rather than after a tenant, organization and roles have been committed.
-			const invite = await this.inviteService.findOneByIdString(inviteId, {
+			invite = await this.inviteService.findOneByIdString(inviteId, {
 				relations: {
 					organizationContacts: true
 				}
 			});
 			// TODO Make invite and contact as one to one, since an invite is not shared by multiple contacts
-			const [organizationContact] = invite?.organizationContacts ?? [];
+			[organizationContact] = invite?.organizationContacts ?? [];
 			if (!organizationContact) {
 				throw new BadRequestException('Invite is not an organization contact invite');
 			}
+		} catch (error) {
+			await this.inviteService.releaseInvite(inviteId);
+			throw error;
+		}
 
+		try {
 			// 0.2 Nothing that identifies or owns an EXISTING row may come from this public body.
 			contactOrganization = sanitizeContactOrganization(contactOrganization);
 

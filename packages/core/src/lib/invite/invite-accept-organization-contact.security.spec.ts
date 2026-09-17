@@ -169,6 +169,7 @@ describe('POST /invite/contact cannot carry privileged fields into the sinks (GH
 			const inviteService = {
 				claimInvite: jest.fn().mockResolvedValue(true),
 				findOneByIdString: jest.fn().mockResolvedValue(invite),
+				releaseInvite: jest.fn().mockResolvedValue(undefined),
 				update: jest.fn().mockResolvedValue({ affected: 1 })
 			};
 			const authService = { register: jest.fn().mockResolvedValue({ id: 'new-user' }) };
@@ -192,7 +193,15 @@ describe('POST /invite/contact cannot carry privileged fields into the sinks (GH
 				commandBus as any
 			);
 
-			return { handler, inviteService, authService, organizationService, organizationContactService, tenantService };
+			return {
+				handler,
+				inviteService,
+				authService,
+				organizationService,
+				organizationContactService,
+				tenantService,
+				roleService
+			};
 		};
 
 		const contactInvite = { id: INVITE_ID, email: INVITED_EMAIL, organizationContacts: [{ id: CONTACT_ID }] };
@@ -261,6 +270,23 @@ describe('POST /invite/contact cannot carry privileged fields into the sinks (GH
 			await expect(handler.execute(hostileCommand())).rejects.toMatchObject({ status: 400 });
 			expect(tenantService.create).not.toHaveBeenCalled();
 			expect(authService.register).not.toHaveBeenCalled();
+		});
+
+		it('hands the claim back when the invite is refused before anything was provisioned', async () => {
+			const { handler, inviteService } = buildHandler({ id: INVITE_ID, organizationContacts: [] });
+
+			await expect(handler.execute(hostileCommand())).rejects.toMatchObject({ status: 400 });
+			expect(inviteService.claimInvite).toHaveBeenCalledWith(INVITE_ID);
+			expect(inviteService.releaseInvite).toHaveBeenCalledWith(INVITE_ID);
+			expect(inviteService.update).not.toHaveBeenCalled();
+		});
+
+		it('keeps the claim once provisioning has started, so a retry cannot build a second tenant', async () => {
+			const { handler, inviteService, roleService } = buildHandler(contactInvite);
+			roleService.findOneByWhereOptions.mockRejectedValue(new Error('role lookup failed'));
+
+			await expect(handler.execute(hostileCommand())).rejects.toThrow('role lookup failed');
+			expect(inviteService.releaseInvite).not.toHaveBeenCalled();
 		});
 	});
 });
