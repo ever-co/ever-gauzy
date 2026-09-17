@@ -4908,7 +4908,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Fotos des Bildschirms",
 			"OF": "von",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Bildschirmfoto, aufgenommen um {{ time }}",
+			"POSITION": "Bildschirmfoto {{ position }} von {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Achtung. Der Timer läuft, du kannst nur Screenshots entfernen, wenn du den Timer stoppst oder die Inside Timer App benutzt.",
 		"DELETE_CONFIRM": "Bist du sicher, diese Screenshots und Zeitprotokolle zu löschen?",

@@ -4912,7 +4912,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Screenshot",
 			"OF": "di",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Screenshot acquisito alle {{ time }}",
+			"POSITION": "Screenshot {{ position }} di {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Avviso. Il cronometro è in esecuzione, è possibile rimuovere solo gli screenshot se si interrompe il cronometro o dall'app Timer interna",
 		"DELETE_CONFIRM": "Sei sicuro di voler eliminare queste schermate e il registro del tempo?",

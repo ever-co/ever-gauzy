@@ -4911,7 +4911,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Zrzuty ekranu",
 			"OF": "z",
-			"TIME_LOG": "Rejestr czasu"
+			"TIME_LOG": "Rejestr czasu",
+			"TAKEN_AT": "Zrzut ekranu wykonany o {{ time }}",
+			"POSITION": "Zrzut ekranu {{ position }} z {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Ostrzeżenie. Licznik jest aktywny, możesz usunąć zrzuty ekranu tylko w przypadku zatrzymania licznika lub w aplikacji Timer",
 		"DELETE_CONFIRM": "Jesteś pewny, że chcesz usunąć te zrzuty ekranu i dziennik czasu?",
