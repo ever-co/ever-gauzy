@@ -91,3 +91,117 @@ describe('TimeOffBalanceService.findAllByFilter organization scope', () => {
 		});
 	});
 });
+
+/**
+ * The write endpoints take the same `TenantOrganizationBaseDTO` body, so `sentTo` skips their
+ * organization validation too. Each write has to refuse a missing or foreign organization before it
+ * touches a balance, or an editor could allocate, spend or roll over leave in a sibling organization.
+ */
+describe('TimeOffBalanceService writes organization scope', () => {
+	let service: TimeOffBalanceService;
+	let manager: { count: jest.Mock; findOne: jest.Mock };
+	let repository: {
+		findOne: jest.Mock;
+		find: jest.Mock;
+		save: jest.Mock;
+		createQueryBuilder: jest.Mock;
+		manager: typeof manager;
+	};
+
+	const writes: Array<[string, (organizationId?: string) => Promise<unknown>]> = [
+		[
+			'allocate',
+			(organizationId) =>
+				service.allocate({
+					employeeId: EMPLOYEE_ID,
+					policyId: EMPLOYEE_ID,
+					year: 2026,
+					accrued: 10,
+					organizationId,
+					sentTo: 'x'
+				} as any)
+		],
+		[
+			'deduct',
+			(organizationId) =>
+				service.deduct({
+					employeeId: EMPLOYEE_ID,
+					policyId: EMPLOYEE_ID,
+					year: 2026,
+					days: 1,
+					organizationId,
+					sentTo: 'x'
+				} as any)
+		],
+		[
+			'reverse',
+			(organizationId) =>
+				service.reverse({
+					employeeId: EMPLOYEE_ID,
+					policyId: EMPLOYEE_ID,
+					year: 2026,
+					days: 1,
+					organizationId,
+					sentTo: 'x'
+				} as any)
+		],
+		[
+			'carryForward',
+			(organizationId) =>
+				service.carryForward({
+					policyId: EMPLOYEE_ID,
+					fromYear: 2025,
+					toYear: 2026,
+					organizationId,
+					sentTo: 'x'
+				} as any)
+		]
+	];
+
+	beforeEach(() => {
+		// The caller is a member of ORGANIZATION_ID only; every other lookup finds nothing.
+		manager = {
+			count: jest.fn(async (_entity, { where }) => (where.organizationId === ORGANIZATION_ID ? 1 : 0)),
+			findOne: jest.fn(async () => null)
+		};
+		repository = {
+			findOne: jest.fn(async () => null),
+			find: jest.fn(async () => []),
+			save: jest.fn(async (entity) => entity),
+			createQueryBuilder: jest.fn(),
+			manager
+		};
+		service = new TimeOffBalanceService(repository as any, {} as any);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER_ID);
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	it.each(writes)('%s refuses a missing organization before touching any balance', async (_name, write) => {
+		await expect(write(undefined)).rejects.toBeInstanceOf(BadRequestException);
+
+		expect(manager.count).not.toHaveBeenCalled();
+		expect(manager.findOne).not.toHaveBeenCalled();
+		expect(repository.createQueryBuilder).not.toHaveBeenCalled();
+		expect(repository.findOne).not.toHaveBeenCalled();
+		expect(repository.save).not.toHaveBeenCalled();
+	});
+
+	it.each(writes)('%s refuses an organization the caller is not a member of', async (_name, write) => {
+		await expect(write(SIBLING_ORGANIZATION_ID)).rejects.toBeInstanceOf(ForbiddenException);
+
+		expect(manager.count).toHaveBeenCalledTimes(1);
+		expect(manager.count.mock.calls[0][1].where).toEqual({
+			tenantId: TENANT_ID,
+			userId: USER_ID,
+			organizationId: SIBLING_ORGANIZATION_ID
+		});
+		expect(manager.findOne).not.toHaveBeenCalled();
+		expect(repository.createQueryBuilder).not.toHaveBeenCalled();
+		expect(repository.findOne).not.toHaveBeenCalled();
+		expect(repository.save).not.toHaveBeenCalled();
+	});
+});

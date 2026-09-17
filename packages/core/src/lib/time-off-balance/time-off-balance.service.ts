@@ -120,6 +120,9 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 		const { employeeId, policyId, year, accrued, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
+		// Same `sentTo` bypass as the listing: the body DTO may not have checked the organization at all.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
+
 		await this.assertEmployeeAndPolicyExist(employeeId, policyId, tenantId, organizationId);
 
 		const balance = await this.findOrCreate({ employeeId, policyId, year, tenantId, organizationId });
@@ -139,6 +142,10 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 	async deduct(input: ITimeOffBalanceAdjustInput): Promise<ITimeOffBalance> {
 		const { employeeId, policyId, year, days, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
+		// Same `sentTo` bypass as the listing: the body DTO may not have checked the organization at all.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
+
 		const updated = await this.applyDelta(employeeId, policyId, year, days, organizationId, tenantId, true);
 
 		if (updated === 0) {
@@ -161,6 +168,9 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 		const { employeeId, policyId, year, days, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
+		// Same `sentTo` bypass as the listing: the body DTO may not have checked the organization at all.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
+
 		await this.applyDelta(employeeId, policyId, year, days, organizationId, tenantId, false);
 
 		return this.getOrFail(employeeId, policyId, year, organizationId, tenantId);
@@ -179,6 +189,9 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 	async carryForward(input: ITimeOffBalanceCarryForwardInput): Promise<{ carried: number }> {
 		const { policyId, fromYear, toYear, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
+		// Same `sentTo` bypass as the listing: the body DTO may not have checked the organization at all.
+		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
 
 		if (toYear <= fromYear) {
 			throw new BadRequestException('`toYear` must be later than `fromYear`');
