@@ -186,8 +186,14 @@ export class GalleryComponent implements OnInit, AfterViewInit, OnDestroy {
 		requestAnimationFrame(() => {
 			const activeItem = this.customScroll.nativeElement.querySelector('.thumb-item-active');
 
-			// Centres the active thumbnail in the filmstrip.
-			activeItem?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+			// Centres the active thumbnail in the filmstrip. The stylesheet's reduced-motion
+			// query cannot reach a scripted scroll, so it jumps rather than glides there.
+			const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			activeItem?.scrollIntoView({
+				behavior: reduceMotion ? 'auto' : 'smooth',
+				block: 'nearest',
+				inline: 'center'
+			});
 		});
 	}
 
