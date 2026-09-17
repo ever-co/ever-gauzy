@@ -48,19 +48,39 @@ function featureFlagScope(): { tenantId: string; organizationId: string } {
 }
 
 /**
- * The cache key one flag resolves under.
+ * The cache key one flag resolves under, for a scope the caller names.
  *
  * The answer `FeatureService.isFeatureEnabled()` returns is scoped to the requesting tenant (and to
  * the organization selected on the request), so the key has to carry both. Exported because whatever
  * evicts a flag entry has to build the same key: an eviction written against a different shape is an
  * eviction that silently misses.
  *
+ * The scope is named here rather than read from the request because a writer is not a resolver: the
+ * request that switched a flag off is an administrator's, while the entries its write made wrong belong
+ * to the scopes the write changed — which for a tenant-wide toggle is every organization of the tenant.
+ *
+ * @param flag The feature code being resolved.
+ * @param tenantId The tenant, or null for a resolution that has none.
+ * @param organizationId The organization, or null for a tenant-wide resolution.
+ * @returns The tenant- and organization-scoped cache key.
+ */
+export function featureFlagCacheKeyFor(
+	flag: FeatureEnum,
+	tenantId?: string | null,
+	organizationId?: string | null
+): string {
+	return `${featureFlagCacheKeyPrefix(tenantId)}${organizationId ?? NO_ORGANIZATION}_${flag}`;
+}
+
+/**
+ * The cache key one flag resolves under, for the scope of the current request.
+ *
  * @param flag The feature code being resolved.
  * @returns The tenant-scoped cache key.
  */
 export function featureFlagCacheKey(flag: FeatureEnum): string {
 	const { tenantId, organizationId } = featureFlagScope();
-	return `${featureFlagCacheKeyPrefix(tenantId)}${organizationId}_${flag}`;
+	return featureFlagCacheKeyFor(flag, tenantId, organizationId);
 }
 
 /**
@@ -75,6 +95,51 @@ export function featureFlagCacheKey(flag: FeatureEnum): string {
  */
 export function featureFlagCacheKeyPrefix(tenantId: string = NO_TENANT): string {
 	return `${FEATURE_FLAG_CACHE_NAMESPACE}_${tenantId ?? NO_TENANT}_`;
+}
+
+/**
+ * Removes the entries a flag's own write has just made wrong.
+ *
+ * The guard caches a resolved flag, so without this an administrator who switches a capability off
+ * keeps being served it until the entry expires — the entry is the only thing standing between the
+ * write and the next request, and until now nothing removed it. The entry is addressed by the same
+ * builder the guard reads through, because an eviction written against another key shape deletes a
+ * key no resolution ever wrote and looks, from the outside, exactly like an eviction that worked.
+ *
+ * The scopes are named rather than read from the request: a tenant-wide toggle rewrites the row of
+ * every organization that has one, and each of those rows is a cached answer that has just changed.
+ * The caller passes the scopes it actually wrote, and this removes one entry per scope.
+ *
+ * One case stays bounded rather than immediate, and it is stated here because it is a real limit: an
+ * organization that has **no** row of its own resolves from the tenant-wide row, so a tenant-wide
+ * write leaves that organization's cached answer wrong until it expires. The scopes that have a row
+ * — the ones the write touched — are evicted at once, which is why {@link FEATURE_FLAG_CACHE_TTL_MS}
+ * is what bounds the remainder rather than what bounds everything.
+ *
+ * The keys are removed one at a time rather than through the multi-key call: this installation's cache
+ * is in memory, Redis, or a two-layer pair depending on how it is deployed, and a store is only
+ * obliged to implement the single-key removal. A toggle is written by hand and by nobody else, so the
+ * difference in round trips is not worth a deletion that a deployment silently skips.
+ *
+ * @param cacheManager The cache the guard reads through.
+ * @param flag The feature code whose enablement changed.
+ * @param tenantId The tenant whose rows were written.
+ * @param organizationIds Every organization whose row was written, `null` for the tenant-wide row.
+ * @returns How many distinct entries were removed.
+ */
+export async function evictFeatureFlagEntries(
+	cacheManager: Cache,
+	flag: FeatureEnum,
+	tenantId: string | null,
+	organizationIds: Array<string | null>
+): Promise<number> {
+	const keys = new Set(
+		organizationIds.map((organizationId) => featureFlagCacheKeyFor(flag, tenantId, organizationId))
+	);
+
+	await Promise.all([...keys].map((key) => cacheManager.del(key)));
+
+	return keys.size;
 }
 
 /**
