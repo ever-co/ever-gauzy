@@ -331,17 +331,27 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 	/**
 	 * Finds first entity that matches given where condition.
-	 * If entity was not found in the database - rejects with error.
+	 * If entity was not found in the database - answers `success: false` rather than raising.
 	 *
-	 * @param options
-	 * @returns
+	 * The MikroORM branch states the criteria the way the parser expects to read them. That parser
+	 * reads a find *options* object and takes its `where` from it, so handing it the criteria
+	 * themselves leaves it with no `where` at all — and an absent filter is not an empty filter, it is
+	 * a filter that matches every row. The read then answered with the first row of the table
+	 * whatever was asked for, which is the worst possible answer for the callers this method exists
+	 * for: a caller asking whether a code is still free would be told about a different row entirely.
+	 * Every other call site in this class passes a full options object and is correct as it stands.
+	 *
+	 * @param options The where condition.
+	 * @returns Whether a record was found, and the record.
 	 */
 	public async findOneOrFailByWhereOptions(options: IFindWhereOptions<T>): Promise<ITryRequest<T>> {
 		try {
 			let record: T;
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({
+						where: options
+					} as FindManyOptions);
 					record = (await this.mikroOrmRepository.findOneOrFail(where, mikroOptions)) as any;
 					break;
 				case MultiORMEnum.TypeORM:
