@@ -266,6 +266,45 @@ function boundPorts(ports) {
 const ports = declaredPorts(injectedTokens());
 const bindings = boundPorts(ports);
 
+/**
+ * Whether the module a binding lives in is actually loaded.
+ *
+ * A `provide:` line is a promise the application only keeps if something asks for the module. The
+ * plugin list is what the loader reads, so a composition module that no entry names is a file that
+ * never runs and a set of ports that stay unbound — and nothing static complains, because an
+ * unreferenced module is perfectly valid TypeScript. This check was written after exactly that
+ * happened: the composition point was committed without the line that registers it, and the bindings
+ * below were reported as bound by a version of this script that read the file and never asked whether
+ * the application would.
+ *
+ * @returns {Set<string>} The module class names the plugin list registers.
+ */
+function registeredModules() {
+	const source = read(join(ROOT, 'apps', 'api', 'src', 'plugins.ts'));
+	const names = new Set();
+
+	for (const match of source.matchAll(/\b([A-Z]\w*(?:Module|Plugin))\b/g)) names.add(match[1]);
+
+	return names;
+}
+
+const registered = registeredModules();
+const unloaded = [];
+
+for (const [token, site] of bindings) {
+	const absolute = join(ROOT, site);
+
+	// Only a binding that lives inside the application has to be registered there; one a package
+	// declares is reached through that package's module, which the plugin list already names.
+	if (!/^apps[\\/]/.test(site)) continue;
+
+	const declaration = /export\s+class\s+([A-Z]\w*)/.exec(read(absolute));
+
+	if (declaration && !registered.has(declaration[1])) {
+		unloaded.push({ token, site, module: declaration[1] });
+	}
+}
+
 const bound = [];
 const awaiting = [];
 const problems = [];
@@ -330,7 +369,13 @@ if (written.length) {
 	console.log('');
 }
 
-const failed = problems.length > 0 || written.length > 0;
+if (unloaded.length) {
+	console.log(`  ${unloaded.length} binding(s) live in a module the plugin list never registers, so nothing loads them:`);
+	for (const entry of unloaded) console.log(`    ${entry.token} → ${entry.module} (${entry.site})`);
+	console.log('');
+}
+
+const failed = problems.length > 0 || written.length > 0 || unloaded.length > 0;
 console.log(failed ? 'port binding check: FAILED' : 'port binding check: PASSED');
 
 process.exit(failed ? 1 : 0);
