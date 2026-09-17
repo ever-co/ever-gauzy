@@ -684,6 +684,219 @@ for (const { name, runtime } of [
 }
 
 /* ------------------------------------------------------------------------------------------------
+ * Wiring
+ *
+ * Two faults found by booting rather than by reading, both of which a static check can see.
+ *
+ * A controller that overrides a CRUD base method to add a projection does not inherit that method's
+ * decorators: the override replaces the property and Nest maps a route only where a route decorator
+ * is present. The endpoint then simply is not there — the service has the method, GraphQL serves the
+ * field, and only a live request shows the gap.
+ *
+ * A guard, and a resolver, are providers of the module that declares the handler. Their dependencies
+ * must therefore be reachable from *that* module: importing the module in a parent does not help,
+ * because Nest imports are not inherited downwards, and a resolver hosted by the composition module
+ * can only inject what the plugin module exports.
+ * ---------------------------------------------------------------------------------------------- */
+
+/** The CRUD base surface, and the route the base class maps for each method. */
+const CRUD_BASE_ROUTES = new Map([
+	['findAll', 'GET /'],
+	['findById', 'GET /:id'],
+	['getCount', 'GET /count'],
+	['pagination', 'GET /pagination'],
+	['create', 'POST /'],
+	['update', 'PUT /:id'],
+	['delete', 'DELETE /:id'],
+	['softRemove', 'DELETE /:id/soft'],
+	['softRecover', 'PUT /:id/recover']
+]);
+
+const ROUTE_DECORATOR = /@(Get|Post|Put|Patch|Delete|Head|Options|All)\s*\(/;
+
+/** The decorator lines sitting directly above a member, read backwards from it. */
+function decoratorsAbove(lines, index) {
+	const collected = [];
+	for (let i = index - 1; i >= 0 && i >= index - 40; i--) {
+		const line = lines[i].trim();
+		if (line === '') continue;
+		if (line.startsWith('@') || line.startsWith('//') || line.startsWith('*') || line.startsWith('/*')) {
+			collected.push(line);
+			continue;
+		}
+		if (line.endsWith('}') || line.endsWith(';') || line.endsWith('{')) break;
+		collected.push(line);
+	}
+	return collected.join('\n');
+}
+
+/** The names a decorator array such as `exports: [A, B]` lists. */
+function arrayNamesIn(source, key) {
+	const names = [];
+	const re = new RegExp(`\\b${key}\\s*:\\s*\\[`, 'g');
+	let match;
+	while ((match = re.exec(source))) {
+		let i = match.index + match[0].length;
+		let depth = 1;
+		let body = '';
+		for (; i < source.length && depth > 0; i++) {
+			const ch = source[i];
+			if (ch === '[') depth++;
+			else if (ch === ']') {
+				depth--;
+				if (depth === 0) break;
+			}
+			body += ch;
+		}
+		// Comments have to go before splitting on commas: a comma inside a comment would otherwise
+		// glue the next name onto the comment's tail and hide it from this check.
+		body = body.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+		for (const raw of body.split(',')) {
+			const name = raw.trim();
+			if (/^[A-Za-z_$][\w$]*$/.test(name)) names.push(name);
+		}
+	}
+	return names;
+}
+
+/** The type names a class's constructor parameters are declared as. */
+function constructorDependencies(source) {
+	const deps = [];
+	const text = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+	const re = /constructor\s*\(/g;
+	let match;
+	while ((match = re.exec(text))) {
+		let i = match.index + match[0].length;
+		let depth = 1;
+		let body = '';
+		for (; i < text.length && depth > 0; i++) {
+			const ch = text[i];
+			if (ch === '(') depth++;
+			else if (ch === ')') {
+				depth--;
+				if (depth === 0) break;
+			}
+			body += ch;
+		}
+		for (const parameter of body.split(',')) {
+			const colon = parameter.indexOf(':');
+			if (colon === -1) continue;
+			const type = parameter
+				.slice(colon + 1)
+				.replace(/=[\s\S]*$/, '')
+				.trim();
+			const head = /^([A-Za-z_$][\w$]*)/.exec(type);
+			if (!head) continue;
+			if (['string', 'number', 'boolean', 'any', 'unknown', 'void', 'Type', 'Object'].includes(head[1])) continue;
+			if (/@Inject\s*\(/.test(parameter)) continue;
+			deps.push(head[1]);
+		}
+	}
+	return deps;
+}
+
+for (const plugin of Object.keys(PLUGINS)) {
+	const dir = join(pluginsDir, plugin);
+	if (!existsSync(dir)) continue;
+	const at = `plugin-${plugin}`;
+	const files = walk(dir).filter((file) => file.endsWith('.ts') && !file.endsWith('.d.ts'));
+	const controllerFiles = files.filter((file) => file.endsWith('.controller.ts'));
+	const moduleFiles = files.filter((file) => file.endsWith('.module.ts'));
+
+	// What the plugin's own modules make injectable, and what each module imports.
+	const exportedByPlugin = new Set();
+	const importsByModule = new Map();
+	const controllersByModule = new Map();
+	for (const file of moduleFiles) {
+		const source = read(file);
+		const className = /export\s+class\s+([A-Za-z_$][\w$]*)/.exec(source)?.[1];
+		for (const name of arrayNamesIn(source, 'exports')) exportedByPlugin.add(name);
+		for (const name of arrayNamesIn(source, 'providers')) exportedByPlugin.add(name);
+		if (className) {
+			importsByModule.set(className, arrayNamesIn(source, 'imports'));
+			for (const controller of arrayNamesIn(source, 'controllers')) controllersByModule.set(controller, className);
+		}
+	}
+
+	for (const file of controllerFiles) {
+		const source = read(file);
+		const className = /export\s+class\s+([A-Za-z_$][\w$]*)/.exec(source)?.[1] ?? basename(file);
+		const lines = source.split(/\r?\n/);
+
+		// Every CRUD override must restate the route it is overriding.
+		for (let i = 0; i < lines.length; i++) {
+			const method = /^\t(?:public\s+|async\s+)*([A-Za-z_$][\w$]*)\s*\(/.exec(lines[i]);
+			if (!method || !CRUD_BASE_ROUTES.has(method[1])) continue;
+			check(
+				`${at}: ${className}.${method[1]}() keeps its route`,
+				ROUTE_DECORATOR.test(decoratorsAbove(lines, i)),
+				`the override drops the inherited route ${CRUD_BASE_ROUTES.get(method[1])} — add the route decorator, or the endpoint disappears`
+			);
+		}
+
+		// A resource a client can only write is not a resource; the read routes have to exist. A
+		// controller that leaves `findAll` and `findById` to the CRUD base inherits the routes, so
+		// the source only has to declare the ones it overrides — which is checked just above.
+		if (/extends\s+(CrudController|TenantAwareCrudController)/.test(source)) {
+			// `@Get()` and `@Get('/')` are the same route: Nest joins the controller path and the
+			// method path, and a leading slash on the method path does not change the result.
+			if (/^\t(?:public\s+|async\s+)*findAll\s*\(/m.test(source)) {
+				check(
+					`${at}: ${className} maps a GET collection route`,
+					/@Get\(\s*['"`]?\/?['"`]?\s*\)/.test(source),
+					'it overrides findAll without a @Get() route, so the resource cannot be listed'
+				);
+			}
+			if (/^\t(?:public\s+|async\s+)*findById\s*\(/m.test(source)) {
+				check(
+					`${at}: ${className} maps a GET by-id route`,
+					/@Get\(\s*['"`]?\/?:id['"`]?\s*\)/.test(source),
+					"it overrides findById without a @Get(':id') route, so one record cannot be read"
+				);
+			}
+		}
+
+		// The module that declares this controller must reach what its guards inject.
+		const host = controllersByModule.get(className);
+		if (!host) {
+			check(`${at}: ${className} is declared by a module`, false, 'no module lists it in `controllers`');
+			continue;
+		}
+		const hostImports = importsByModule.get(host) ?? [];
+		check(
+			`${at}: ${host} imports RolePermissionModule for ${className}`,
+			hostImports.includes('RolePermissionModule'),
+			'the permission guard is a provider of this module, so this module must import the service it reads'
+		);
+		if (/FeatureFlagGuard/.test(source)) {
+			check(
+				`${at}: ${host} imports FeatureModule for ${className}`,
+				hostImports.includes('FeatureModule'),
+				'the feature guard is a provider of this module, so this module must import FeatureService'
+			);
+		}
+	}
+
+	// A resolver is hosted by the composition module, so it can only inject what this plugin exports.
+	for (const file of files.filter((f) => f.endsWith('.resolver.ts'))) {
+		const source = read(file);
+		const className = /export\s+class\s+([A-Za-z_$][\w$]*)/.exec(source)?.[1] ?? basename(file);
+		for (const dependency of constructorDependencies(source)) {
+			// Only a class this plugin declares is this check's business.
+			const declaredHere = files.some((other) =>
+				new RegExp(`export\\s+(?:abstract\\s+)?class\\s+${dependency}\\b`).test(read(other))
+			);
+			if (!declaredHere) continue;
+			check(
+				`${at}: ${className} can inject ${dependency}`,
+				exportedByPlugin.has(dependency),
+				'the resolver is hosted by the composition module, so the plugin module must export this service'
+			);
+		}
+	}
+}
+
+/* ------------------------------------------------------------------------------------------------
  * Forbidden words
  * ---------------------------------------------------------------------------------------------- */
 
