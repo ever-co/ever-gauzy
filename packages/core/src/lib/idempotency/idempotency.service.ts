@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { In, LessThan } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ID,
@@ -112,6 +113,128 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 
 			return this.resolveExisting(raced, input, policy);
 		}
+	}
+
+	/**
+	 * Claims a key for the caller, treating a row past its retention window as free.
+	 *
+	 * `startOrReplay` answers from whatever row the key resolves to, and a row only means something
+	 * while its response is still replayable. Past `expiresAt` it is dead weight that still occupies
+	 * the unique tuple, so it is cleared here exactly as the cleanup job would clear it and the
+	 * request then claims the key as if it had never been presented. Without this, a key reused
+	 * after its window would be answered with a response the platform promised not to keep.
+	 *
+	 * @param input The scope, key and request hash the caller presented.
+	 * @param policy Overrides for the retention and stale-lock windows.
+	 * @returns A claim the caller owns, or the stored response, or the reason it must wait.
+	 */
+	async claim(input: IIdempotencyStartInput, policy: IIdempotencyPolicy = {}): Promise<IIdempotencyClaim> {
+		const existing = await this.findByKey(input.scope, input.key);
+
+		if (existing && this.isExpired(existing)) {
+			await this.clearExpired(existing.id);
+		}
+
+		return this.startOrReplay(input, policy);
+	}
+
+	/**
+	 * Whether a stored row is past the window its response may be replayed in.
+	 *
+	 * @param record The stored row, or anything carrying its expiry.
+	 * @param now The moment to compare against.
+	 * @returns True when the row must no longer be replayed.
+	 */
+	isExpired(record: Pick<IdempotencyKey, 'expiresAt'>, now: Date = new Date()): boolean {
+		if (!record?.expiresAt) {
+			return false;
+		}
+
+		const expiry = new Date(record.expiresAt).getTime();
+
+		return Number.isFinite(expiry) && expiry <= now.getTime();
+	}
+
+	/**
+	 * Deletes expired rows, bounded by `limit`.
+	 *
+	 * The cleanup job calls this on a schedule. Two rules shape it: a row whose response is still
+	 * inside its window is never deleted, and an `IN_PROGRESS` row is only deleted once its lock is
+	 * stale — deleting a live lease would let a retry start a second run of work that is still
+	 * executing, which is the one outcome the key exists to prevent.
+	 *
+	 * The criteria are asserted twice, once to pick the rows and once to delete them, so a row that
+	 * completed or was refreshed between the two statements survives.
+	 *
+	 * @param limit The maximum number of rows to delete in one sweep.
+	 * @param policy Overrides for the stale-lock window.
+	 * @returns How many rows were deleted.
+	 */
+	async purgeExpired(limit: number = 500, policy: IIdempotencyPolicy = {}): Promise<number> {
+		if (!Number.isFinite(limit) || limit <= 0) {
+			return 0;
+		}
+
+		const now = new Date();
+		const staleLockMs = policy.staleLockMs ?? IdempotencyService.DEFAULT_STALE_LOCK_MS;
+		const abandonedBefore = new Date(now.getTime() - Math.max(staleLockMs, 0));
+
+		const terminal = await this.typeOrmIdempotencyKeyRepository.find({
+			where: {
+				expiresAt: LessThan(now),
+				status: In([IdempotencyStatus.COMPLETED, IdempotencyStatus.FAILED])
+			} as any,
+			select: ['id'] as any,
+			take: limit
+		});
+
+		const remaining = limit - terminal.length;
+		const abandoned =
+			remaining > 0
+				? await this.typeOrmIdempotencyKeyRepository.find({
+						where: {
+							expiresAt: LessThan(now),
+							status: IdempotencyStatus.IN_PROGRESS,
+							lockedAt: LessThan(abandonedBefore)
+						} as any,
+						select: ['id'] as any,
+						take: remaining
+				  })
+				: [];
+
+		const terminalIds = terminal.map((row) => row.id);
+		const abandonedIds = abandoned.map((row) => row.id);
+
+		if (terminalIds.length) {
+			await this.typeOrmIdempotencyKeyRepository.delete({
+				id: In(terminalIds),
+				expiresAt: LessThan(now),
+				status: In([IdempotencyStatus.COMPLETED, IdempotencyStatus.FAILED])
+			} as any);
+		}
+
+		if (abandonedIds.length) {
+			await this.typeOrmIdempotencyKeyRepository.delete({
+				id: In(abandonedIds),
+				expiresAt: LessThan(now),
+				status: IdempotencyStatus.IN_PROGRESS,
+				lockedAt: LessThan(abandonedBefore)
+			} as any);
+		}
+
+		return terminalIds.length + abandonedIds.length;
+	}
+
+	/**
+	 * Clears one expired row, but only while it is still expired.
+	 *
+	 * @param id The row id.
+	 */
+	private async clearExpired(id: ID): Promise<void> {
+		await this.typeOrmIdempotencyKeyRepository.delete({
+			id,
+			expiresAt: LessThan(new Date())
+		} as any);
 	}
 
 	/**

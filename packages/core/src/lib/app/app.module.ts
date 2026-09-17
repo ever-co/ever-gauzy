@@ -150,9 +150,11 @@ import { RuleModule } from '../rule/rule.module';
 import { SequenceModule } from '../sequence/sequence.module';
 import { SearchModule } from '../search/search.module';
 import { IdempotencyModule } from '../idempotency/idempotency.module';
+import { IdempotencyInterceptor } from '../idempotency/idempotency.interceptor';
 import { EventOutboxModule } from '../event-outbox/event-outbox.module';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
+import { GraphqlSubscriptionModule } from '../graphql/subscriptions/graphql-subscription.module';
 import { RoleModule } from '../role/role.module';
 import { SharedEntityModule } from '../shared-entity/shared-entity.module';
 import { ApiKeyAuthGuard } from '../shared/guards/api-key-auth.guard';
@@ -479,6 +481,11 @@ if (environment.THROTTLE_ENABLED) {
 		EventOutboxModule,
 		OperationModule,
 		WebhookModule,
+		// The subscription surface: the fan-out, the catalogue of streamable events, the delivery
+		// decision, and the two routes an event takes to a subscriber — the outbox consumer for a
+		// durable fact and the bus bridge for a domain that publishes in process. Adding it changes
+		// no existing route.
+		GraphqlSubscriptionModule,
 		TenantModule,
 		TenantSettingModule,
 		// In-product billing pages. Every route inside 404s unless STRIPE_SECRET_KEY is set, so a
@@ -628,6 +635,14 @@ if (environment.THROTTLE_ENABLED) {
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor
+		},
+		// Retry safety. Registered once, for the whole application, and inert on every handler that
+		// does not declare `@Idempotent(...)`: a route that has not adopted the convention reads no
+		// header, hashes nothing and writes no row it did not write before. Registered after the
+		// serialization interceptor so the response it records is the one the handler produced.
+		{
+			provide: APP_INTERCEPTOR,
+			useClass: IdempotencyInterceptor
 		}
 	]
 })
