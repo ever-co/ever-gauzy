@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import {
@@ -37,12 +37,23 @@ export class StockLevelController {
 	/**
 	 * Lists the levels of a location, of a variant, or of the caller's tenant.
 	 */
+	/**
+	 * Lists the levels of a location, of a variant, or of the caller's tenant.
+	 *
+	 * **Both filters are optional, and saying so is the whole of this signature.** The tenant-wide read
+	 * is the one an operator asks for first, and it is the one the platform's own parameter pipe cannot
+	 * express: `UUIDValidationPipe` refuses an absent value outright, so a route that carried it on
+	 * both filters answered `404` to every unfiltered request — the documented read was unreachable and
+	 * the refusal named a missing identifier rather than the request being understood. The framework's
+	 * own pipe does express it: an absent value is `undefined`, and a value that is present but is not
+	 * an identifier is still a refusal.
+	 */
 	@ApiOperation({ summary: 'List stock levels' })
 	@ApiResponse({ status: 200, description: 'Levels found.' })
 	@Get()
 	async findAll(
-		@Query('warehouseId', UUIDValidationPipe) warehouseId?: ID,
-		@Query('variantId', UUIDValidationPipe) variantId?: ID,
+		@Query('warehouseId', new ParseUUIDPipe({ optional: true })) warehouseId?: ID,
+		@Query('variantId', new ParseUUIDPipe({ optional: true })) variantId?: ID,
 		@Query('take') take?: number
 	): Promise<IStockAvailability[]> {
 		return await this.stockLevelService.findLevels({

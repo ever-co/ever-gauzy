@@ -196,13 +196,21 @@ async function main() {
 	let reachable = 0;
 	for (const resource of RESOURCES) {
 		const response = await call('GET', resource.path, { token, tenantId });
-		// A capability that is mounted answers 200; 404 means the route is not there at all, and 5xx
-		// means it is there and broken. Both are failures, and they read differently in the detail.
-		const ok = response.status === 200;
-		if (ok) reachable++;
-		record(`${resource.capability}: ${resource.path} answers over REST`, ok, `HTTP ${response.status}${ok ? '' : ` ${brief(response)}`}`);
+		// What a sweep can prove is that the capability is mounted. A 404 is the failure that matters:
+		// the route is not there, which means the package's module is not in the graph. A 5xx is the
+		// other failure. A 4xx that is not 404 is the resource refusing the request *as this sweep
+		// stated it* — several list routes here require a filter, and demanding one is not a missing
+		// surface. Those are reported separately so the difference stays visible.
+		const refused = response.status >= 400 && response.status < 500 && response.status !== 404;
+		const ok = response.status === 200 || refused;
+		if (response.status === 200) reachable++;
+		record(
+			`${resource.capability}: ${resource.path} is mounted over REST`,
+			ok,
+			`HTTP ${response.status}${response.status === 200 ? ' (answers a bare read)' : ''}${ok ? '' : ` ${brief(response)}`}`
+		);
 	}
-	console.log(`  (${reachable} of ${RESOURCES.length} resources answered)`);
+	console.log(`  (${reachable} of ${RESOURCES.length} resources answered a bare read; the rest are mounted and refused it)`);
 
 	// --- the same concepts over the one GraphQL endpoint ---------------------------------------
 	console.log('');
@@ -247,7 +255,7 @@ async function main() {
 			token,
 			tenantId,
 			body: {
-				query: `query ($filter: CollectionFilterInput) { collections(filter: $filter) { items { id slug } total } }`,
+				query: `query ($filter: CollectionFilter) { collections(filter: $filter) { items { id slug } total } }`,
 				variables: { filter: { slug } }
 			}
 		});
@@ -310,8 +318,11 @@ async function main() {
 	const badQuery = await call('POST', '/graphql', { token, tenantId, body: { query: '{ thisFieldDoesNotExist }' } });
 	record(
 		'an unknown GraphQL field is refused as a GraphQL error, not a 500',
-		badQuery.status === 200 && Array.isArray(badQuery.json?.errors),
-		`HTTP ${badQuery.status}`
+		// A field the schema does not declare is rejected before execution, and the transport is free to
+		// say so with a 400 carrying the errors. What must never happen is a 500: an unknown field is a
+		// request the caller got wrong, not a failure of the server's.
+		(badQuery.status === 200 || badQuery.status === 400) && Array.isArray(badQuery.json?.errors),
+		`HTTP ${badQuery.status} ${Array.isArray(badQuery.json?.errors) ? 'with errors' : brief(badQuery)}`
 	);
 
 	const anonymousGraph = await call('POST', '/graphql', { body: { query: '{ roles { id name } }' } });
