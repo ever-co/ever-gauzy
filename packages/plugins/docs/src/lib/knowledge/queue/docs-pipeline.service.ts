@@ -419,11 +419,7 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		}
 		try {
 			const force = job.data.reason === 'replace' || job.data.reason === 'reindex';
-			await this.enqueueChained<IDocsThumbnailJob>(
-				DOCS_JOB_THUMBNAIL,
-				{ ...this.baseOf(job.data), force },
-				job
-			);
+			await this.enqueueChained<IDocsThumbnailJob>(DOCS_JOB_THUMBNAIL, { ...this.baseOf(job.data), force }, job);
 		} catch (error) {
 			this.logger.warn(
 				`Could not enqueue docs.thumbnail for document ${document.id}${this.correlationTag(job.data)}: ` +
@@ -500,11 +496,12 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		const attempts = job.attempts ?? 1;
 		const isFinalAttempt = job.attemptsMade + 1 >= attempts;
 
+		// Built first: the id is optional, and inlining the conditional would nest template literals.
+		const correlationSuffix = job.data?.correlationId ? `, correlationId ${job.data.correlationId}` : '';
+
 		this.logger.error(
 			`docs.${stage} failed for document ${document.id} (attempt ${job.attemptsMade + 1}/${attempts}, ` +
-				`transient=${transient}` +
-				`${job.data?.correlationId ? `, correlationId ${job.data.correlationId}` : ''}` +
-				`): ${(error as Error).message}`
+				`transient=${transient}${correlationSuffix}): ${(error as Error).message}`
 		);
 
 		if (transient && !isFinalAttempt) {
@@ -536,7 +533,7 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		const payload = job.data as IDocsJobBase | undefined;
 		this.logger.error(
 			`${jobName} failed inline for document ${payload?.documentId ?? 'n/a'}${this.correlationTag(payload)}: ` +
-				`${(error as Error)?.message ?? error}`
+				`${(error as Error)?.message ?? String(error)}`
 		);
 
 		if (jobName === DOCS_JOB_RECONCILE || !payload?.documentId) {

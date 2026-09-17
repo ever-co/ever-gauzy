@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import { IUser, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../context';
 

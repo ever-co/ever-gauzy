@@ -141,7 +141,7 @@ export class InMemoryTenantRepository<T extends FakeRow = FakeRow> {
 		const list = Array.isArray(entity) ? entity : [entity];
 		const saved = list.map((item) => {
 			const id = (item as Partial<T>).id ?? (`generated-${++this.sequence}` as unknown as ID);
-			const merged = { ...(this.rows.get(id) ?? {}), ...item, id } as T;
+			const merged = { ...this.rows.get(id), ...item, id } as T;
 			this.rows.set(id, merged);
 			return merged;
 		});

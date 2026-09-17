@@ -226,7 +226,7 @@ export class ZapierWebhookService {
 				let releaseReservation: () => void = () => undefined;
 				if (deliveryKey !== null) {
 					let pending = this.inFlight.get(deliveryKey);
-					while (pending) {
+					while (pending !== undefined) {
 						await pending;
 						pending = this.inFlight.get(deliveryKey);
 					}

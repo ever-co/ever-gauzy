@@ -38,10 +38,10 @@ export async function assertCanReadOwnTenant<T extends TenantBaseEntity>(
 export async function assertCannotUpdateAcrossTenant<T extends TenantBaseEntity>(
 	service: TenantAwareCrudService<T>,
 	foreignId: ID,
-	patch: Record<string, unknown> = { isActive: false }
+	patch?: Record<string, unknown>
 ): Promise<void> {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	await expect(service.update(foreignId, patch as any)).rejects.toThrow(NotFoundException);
+	await expect(service.update(foreignId, (patch ?? { isActive: false }) as any)).rejects.toThrow(NotFoundException);
 }
 
 /**

@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import { createAdapterForCurrentOrm, IOrmConformanceAdapter } from './orm-conformance.adapter';
 import { getORMType } from '../../utils';
 

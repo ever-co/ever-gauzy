@@ -99,7 +99,7 @@ describe('TypeORM migrations: fresh SQLite database smoke test', () => {
 			const migrationFileCount = fs
 				.readdirSync(path.join(__dirname, 'migrations'))
 				.filter((file) => file.endsWith('.ts') || file.endsWith('.js')).length;
-			expect(applied.length).toBe(migrationFileCount);
+			expect(applied).toHaveLength(migrationFileCount);
 		},
 		10 * 60 * 1000
 	);
