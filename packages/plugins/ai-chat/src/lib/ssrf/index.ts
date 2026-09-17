@@ -3,6 +3,7 @@ export {
 	getUnsafeAiOutboundUrlReason,
 	getUnsafeAiProviderBaseUrlReason,
 	isPrivateAiProviderBaseUrlAllowed,
+	isPrivateAiProviderEndpointAllowed,
 	isSafeAiProviderBaseUrl
 } from './outbound-url-guard';
 export { SsrfBlockedError, isSsrfBlockedError, ssrfSafeFetch } from './ssrf-safe-fetch';

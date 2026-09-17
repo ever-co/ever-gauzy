@@ -1,5 +1,13 @@
 import type { IAiChatModelList } from '@gauzy/plugin-ai-chat';
 
+// The SSRF egress guard resolves the provider host before the mocked `fetch` answers. Answer that
+// lookup with a fixed public address, so no case waits on — or depends on — real DNS.
+jest.mock('dns', () => ({
+	...jest.requireActual('dns'),
+	lookup: (_hostname: string, _options: unknown, callback: (error: null, addresses: unknown) => void) =>
+		callback(null, [{ address: '93.184.215.14', family: 4 }])
+}));
+
 /**
  * OpenRouter carries the only ENFORCED list of the six: `listPlatformModels` is the allowlist for the
  * shared free-tier key, so a paid slug leaking into it is spendable on the platform account. It has

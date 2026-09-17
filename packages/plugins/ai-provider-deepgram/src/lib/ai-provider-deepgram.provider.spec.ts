@@ -1,6 +1,14 @@
 import type { IAiProviderCredentials } from '@gauzy/plugin-ai-chat';
 import { deepgramProviderDefinition } from './ai-provider-deepgram.provider';
 
+// The SSRF egress guard resolves the provider host before the mocked `fetch` answers. Answer that
+// lookup with a fixed public address, so no case waits on — or depends on — real DNS.
+jest.mock('dns', () => ({
+	...jest.requireActual('dns'),
+	lookup: (_hostname: string, _options: unknown, callback: (error: null, addresses: unknown) => void) =>
+		callback(null, [{ address: '93.184.215.14', family: 4 }])
+}));
+
 /**
  * Deepgram is the one provider whose request is NOT multipart: raw bytes, container in
  * Content-Type, `Authorization: Token`. And it is voice-only — chat must be refused.

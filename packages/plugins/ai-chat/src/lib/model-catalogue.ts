@@ -13,6 +13,7 @@
 import type { IAiChatModel } from '@gauzy/contracts';
 import type { IAiChatModelList, IAiProviderCredentials } from './provider.types';
 import { ssrfSafeFetch } from './ssrf';
+import type { HostnameResolver } from './ssrf';
 
 /** How long a fetched catalogue stays fresh. Model lists change on the order of weeks. */
 const DEFAULT_TTL_MS = 30 * 60 * 1000;
@@ -165,13 +166,18 @@ export function credentialCacheKey(credentials: IAiProviderCredentials | null): 
  *
  * The request goes through the SSRF egress guard because for the self-hosted providers this URL is
  * built from a TENANT-SUPPLIED base URL: loopback/private/link-local targets are refused, the host
- * is re-checked after DNS resolution, and redirects are not followed (GHSA-w3mx-m5cr-3gxp). A
- * deployment that genuinely runs its model server on a private address opts in with
- * `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS=true`.
+ * is re-checked after DNS resolution, and redirects are not followed (GHSA-w3mx-m5cr-3gxp).
+ *
+ * @param url - Absolute catalogue URL.
+ * @param init.headers - Extra request headers (auth).
+ * @param init.allowPrivateHost - Permit a private target. Pass
+ *        `isPrivateAiProviderEndpointAllowed(credentials)`, which allows operator-chosen and built-in
+ *        addresses and leaves a tenant-supplied one to the `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS` flag.
+ * @param init.resolver - DNS resolver for the egress pre-flight; `dns.lookup` when unset (tests inject one).
  */
 export async function fetchCatalogueJson<T>(
 	url: string,
-	init?: { headers?: Record<string, string>; allowPrivateHost?: boolean }
+	init?: { headers?: Record<string, string>; allowPrivateHost?: boolean; resolver?: HostnameResolver }
 ): Promise<T> {
 	const response = await ssrfSafeFetch(
 		url,
@@ -179,7 +185,7 @@ export async function fetchCatalogueJson<T>(
 			headers: { accept: 'application/json', ...(init?.headers ?? {}) },
 			signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
 		},
-		{ allowPrivateHost: init?.allowPrivateHost }
+		{ allowPrivateHost: init?.allowPrivateHost, resolver: init?.resolver }
 	);
 	if (!response.ok) {
 		// Deliberately does NOT include the response body: these endpoints are called with a

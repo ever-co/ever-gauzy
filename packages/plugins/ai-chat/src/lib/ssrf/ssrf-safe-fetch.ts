@@ -7,12 +7,18 @@
  * `@gauzy/core`), but that agent is an `http(s)` agent for axios and cannot be handed to the global
  * `fetch` these sinks use, so the same resolve-then-check rule is applied here as a pre-flight.
  *
+ * Known residual: a pre-flight is not the connection. `fetch` resolves the host again when it
+ * connects, so a hostname whose answer flips between the two lookups is not caught here. Closing that
+ * needs a connection-level `lookup` (an undici `Dispatcher`), which is tracked separately. Every
+ * verdict is therefore computed fresh — nothing is cached that an attacker could outlive.
+ *
  * Node's `dns` lives in THIS module, never in `@gauzy/utils` — that package is reachable from
  * browser bundles and a `dns` import would break them. The pure predicates stay next door in
  * `outbound-url-guard.ts`.
  */
 
 import { lookup as dnsLookup } from 'dns';
+import { isIP } from 'net';
 import { isPrivateOrLoopbackHost } from '@gauzy/utils';
 import { getUnsafeAiOutboundUrlReason, isPrivateAiProviderBaseUrlAllowed } from './outbound-url-guard';
 
@@ -30,7 +36,12 @@ export class SsrfBlockedError extends Error {
 export type HostnameResolver = (hostname: string) => Promise<string[]>;
 
 export interface ISsrfSafeFetchOptions {
-	/** Permit loopback/private/link-local targets. Defaults to the deployment flag. */
+	/**
+	 * Permit loopback/private/link-local targets. Defaults to the deployment flag.
+	 *
+	 * Set it only from server-side provenance (see `isPrivateAiProviderEndpointAllowed`), never from
+	 * anything a tenant supplied: `true` skips both the host-class rule and the DNS pre-flight.
+	 */
 	allowPrivateHost?: boolean;
 	/** Override the DNS resolver (tests). Defaults to `dns.lookup`. */
 	resolver?: HostnameResolver;
@@ -46,78 +57,75 @@ const defaultResolver: HostnameResolver = (hostname: string) =>
 	});
 
 /**
- * How long a per-host verdict is reused.
+ * Resolver error codes that are a DEFINITIVE "this name does not exist / has no address".
  *
- * A resolver round trip costs hundreds of milliseconds and a settings page or a dictation burst asks
- * about the same host repeatedly. Deliberately SHORT: the verdict is what a DNS-rebinding attacker
- * would want to outlive, so the window in which a host that has just turned internal is still judged
- * public is kept to seconds — narrower than the OS resolver's own cache, which the connection that
- * follows reads from anyway.
+ * `dns.lookup` reports both `EAI_NONAME` and `EAI_NODATA` as `ENOTFOUND`; the others are the spellings
+ * `dns.promises.Resolver` and raw `getaddrinfo` wrappers use for the same verdict.
  */
-const VERDICT_TTL_MS = 10_000;
-
-/** Bound, so a tenant churning hostnames cannot grow this without limit. */
-const VERDICT_MAX_ENTRIES = 256;
+const NON_EXISTENT_HOST_CODES = new Set(['ENOTFOUND', 'ENODATA', 'NOTFOUND', 'EAI_NONAME', 'EAI_NODATA']);
 
 /**
- * hostname → { blocked, at }. Only ever populated by the DEFAULT resolver (see below).
+ * Wait for `promise`, but give up as soon as `signal` aborts.
  *
- * Held on `globalThis` rather than in the module closure so it is shared by every copy of this
- * module in a process — the plugin barrel, the provider-helpers entry point the provider plugins map
- * onto, and a jest registry that has been reset. One host is then resolved once per TTL no matter
- * which door the request came through.
+ * The caller's `AbortSignal` is its whole request budget (`AbortSignal.timeout(...)` on the dictation
+ * and catalogue paths). Without this a resolver that stalls holds the request past that budget,
+ * because `fetch` — the only thing that would have honoured the signal — has not been called yet.
+ * Rejects with the signal's own reason, so a timeout still reads as a `TimeoutError` upstream.
  */
-const VERDICT_CACHE_KEY = Symbol.for('@gauzy/plugin-ai-chat:ssrf-host-verdicts');
-const verdicts: Map<string, { blocked: boolean; at: number }> = ((globalThis as Record<symbol, unknown>)[
-	VERDICT_CACHE_KEY
-] ??= new Map<string, { blocked: boolean; at: number }>()) as Map<string, { blocked: boolean; at: number }>;
+function raceAbort<T>(promise: Promise<T>, signal?: AbortSignal | null): Promise<T> {
+	if (!signal) return promise;
+	if (signal.aborted) return Promise.reject(signal.reason);
+	return new Promise<T>((resolve, reject) => {
+		const onAbort = () => reject(signal.reason);
+		signal.addEventListener('abort', onAbort, { once: true });
+		promise.then(
+			(value) => {
+				signal.removeEventListener('abort', onAbort);
+				resolve(value);
+			},
+			(error) => {
+				signal.removeEventListener('abort', onAbort);
+				reject(error);
+			}
+		);
+	});
+}
 
 /**
- * Refuse the request when the host resolves to a non-public address.
+ * Refuse the request when the host resolves to a non-public address, or cannot be checked at all.
  *
- * A lookup that ERRORS is not a verdict of "private" and is deliberately allowed through: an
- * unresolvable host cannot be connected to either, so the fetch below fails on the very same
- * resolution a moment later, and failing here instead would turn every transient resolver hiccup
- * into a security-shaped error the user cannot act on.
+ * Fails CLOSED: only a definitive "no such host" ({@link NON_EXISTENT_HOST_CODES}, or an empty answer)
+ * is let through, since there is then nothing to connect to and `fetch` fails on its own lookup with a
+ * message a self-hoster can act on. Any other resolver failure — a timeout, `EAI_AGAIN`, a refused or
+ * broken resolver — is not a verdict, and a check that cannot reach a verdict must not return the
+ * permissive one.
  *
- * The verdict cache is skipped whenever a caller injects its own `resolver`, so a test that answers
- * differently for the same hostname is never served another test's answer.
+ * @param hostname - The URL hostname about to be requested.
+ * @param resolver - Resolver override (tests); `dns.lookup` otherwise.
+ * @param signal - The request's abort signal; honoured while resolving.
+ * @throws SsrfBlockedError when any resolved address is non-public or the lookup failed inconclusively.
  */
-async function assertResolvedHostIsPublic(hostname: string, resolver?: HostnameResolver): Promise<void> {
-	const cacheable = resolver === undefined;
-	const now = Date.now();
-
-	if (cacheable) {
-		const cached = verdicts.get(hostname);
-		if (cached && now - cached.at < VERDICT_TTL_MS) {
-			if (cached.blocked) throw blockedError();
-			return;
-		}
-	}
-
+async function assertResolvedHostIsPublic(
+	hostname: string,
+	resolver?: HostnameResolver,
+	signal?: AbortSignal | null
+): Promise<void> {
 	let addresses: string[];
 	try {
-		addresses = await (resolver ?? defaultResolver)(hostname);
-	} catch {
-		return;
+		addresses = await raceAbort((resolver ?? defaultResolver)(hostname), signal);
+	} catch (error) {
+		// The request's own budget ran out: surface that, not a security-shaped refusal.
+		if (signal?.aborted && error === signal.reason) throw error;
+		const code = (error as { code?: unknown } | null)?.code;
+		if (typeof code === 'string' && NON_EXISTENT_HOST_CODES.has(code)) return;
+		throw new SsrfBlockedError('The configured AI provider endpoint could not be verified as a public address.');
 	}
 
 	// ANY private address disqualifies the host, not just the first: a resolver under the caller's
 	// control can answer with a public address alongside an internal one and let the connection pick.
-	const blocked = addresses.some((address) => isPrivateOrLoopbackHost(address));
-
-	if (cacheable) {
-		verdicts.delete(hostname);
-		verdicts.set(hostname, { blocked, at: Date.now() });
-		// Map preserves insertion order, so the first key is the least recently written.
-		while (verdicts.size > VERDICT_MAX_ENTRIES) {
-			const oldest = verdicts.keys().next().value;
-			if (oldest === undefined) break;
-			verdicts.delete(oldest);
-		}
+	if (addresses.some((address) => isPrivateOrLoopbackHost(address))) {
+		throw blockedError();
 	}
-
-	if (blocked) throw blockedError();
 }
 
 /**
@@ -137,7 +145,8 @@ const blockedError = () =>
  * fetch API spells it.
  *
  * @param url - Absolute URL to request.
- * @param init - Standard `fetch` init; `redirect` is forced to `'error'`.
+ * @param init - Standard `fetch` init; `redirect` is forced to `'error'`, and `signal` also bounds
+ *        the DNS pre-flight.
  * @param options - Egress-guard options.
  * @throws SsrfBlockedError before any request is made when the target is refused.
  */
@@ -154,7 +163,11 @@ export async function ssrfSafeFetch(
 	}
 
 	if (!allowPrivate) {
-		await assertResolvedHostIsPublic(new URL(url).hostname, options?.resolver);
+		// An IP literal has nothing to resolve and was already judged by the literal check above.
+		const hostname = new URL(url).hostname.replace(/^\[|\]$/g, '');
+		if (!isIP(hostname)) {
+			await assertResolvedHostIsPublic(hostname, options?.resolver, init?.signal);
+		}
 	}
 
 	return await fetch(url, { ...(init ?? {}), redirect: 'error' });

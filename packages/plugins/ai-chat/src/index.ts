@@ -78,6 +78,7 @@ export {
 	getUnsafeAiOutboundUrlReason,
 	getUnsafeAiProviderBaseUrlReason,
 	isPrivateAiProviderBaseUrlAllowed,
+	isPrivateAiProviderEndpointAllowed,
 	isSafeAiProviderBaseUrl,
 	isSsrfBlockedError,
 	ssrfSafeFetch

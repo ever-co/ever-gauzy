@@ -256,12 +256,15 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	 * @throws ForbiddenException when the delivery cannot be proven to come from GitHub.
 	 */
 	public async receiveHook(request: IGithubWebhookRequest): Promise<void> {
-		const secret = this.config.webhookSecret?.trim();
+		// The HMAC key is the configured value VERBATIM — `createProbot` hands Probot the same untrimmed
+		// string, and GitHub keys its signature with exactly what was typed into the App settings.
+		// Trimming is used only to recognize a blank (unset) secret.
+		const secret = this.config.webhookSecret;
 
 		// No Probot instance (no appId/privateKey) or no secret means this deployment cannot verify
 		// anything. Answering 2xx there is indistinguishable from a working receiver — refuse, so the
 		// misconfiguration shows up in the GitHub App's delivery log instead of being silently dropped.
-		if (!this.probot || !secret) {
+		if (!this.probot || typeof secret !== 'string' || !secret.trim()) {
 			throw new ForbiddenException('GitHub webhooks are not enabled on this deployment.');
 		}
 

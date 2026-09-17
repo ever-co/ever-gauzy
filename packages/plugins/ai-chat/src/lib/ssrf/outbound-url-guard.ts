@@ -15,14 +15,17 @@
  */
 
 import { getUnsafeOutboundUrlReason, isPrivateOrLoopbackHost } from '@gauzy/utils';
+import type { IAiProviderCredentials } from '../provider.types';
 
 /**
- * Opt-in for deployments that legitimately talk to a model server on a private address.
+ * Opt-in for deployments that let TENANTS point a provider at a private address.
  *
- * Default DENY. Single-tenant self-hosts and desktop/local-server builds run LocalAI, Speaches,
- * vLLM, Ollama or whisper.cpp on `localhost` or a LAN address and must set this to `true`; on shared
- * hosting it stays off, because there the same capability is a tenant reaching the operator's
- * internal network.
+ * Default DENY. Single-tenant self-hosts and desktop/local-server builds whose users enter a
+ * LocalAI, Speaches, vLLM, Ollama or whisper.cpp address on `localhost` or a LAN in the settings page
+ * set this to `true`; on shared hosting it stays off, because there the same capability is a tenant
+ * reaching the operator's internal network. Addresses the OPERATOR chose — a `*_BASE_URL` environment
+ * value or a provider's built-in default — are not tenant input and do not need it (see
+ * {@link isPrivateAiProviderEndpointAllowed}).
  */
 export const ALLOW_PRIVATE_BASE_URLS_ENV = 'GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS';
 
@@ -37,6 +40,35 @@ const PUBLIC_PROBE_HOST = 'public.example.com';
 /** Whether this deployment has opted in to private/loopback AI-provider endpoints. */
 export function isPrivateAiProviderBaseUrlAllowed(): boolean {
 	return (process.env[ALLOW_PRIVATE_BASE_URLS_ENV] ?? '').trim().toLowerCase() === 'true';
+}
+
+/**
+ * Whether a request made with these credentials may target a loopback/private/link-local host — the
+ * value provider plugins pass as `allowPrivateHost` to the catalogue and speech helpers.
+ *
+ * The SSRF threat is a TENANT choosing the address, so the rule follows who chose it:
+ *
+ * - **A tenant credential that carries its own base URL** → only when the deployment opted in with
+ *   {@link ALLOW_PRIVATE_BASE_URLS_ENV}. This is the GHSA-w3mx-m5cr-3gxp case and stays default-deny.
+ * - **Anything else** → allowed. An `environment`/`platform` credential's base URL comes from the
+ *   operator's own `*_BASE_URL` variable, and a credential with NO base URL makes the provider fall back
+ *   to its built-in default (`http://localhost:8000/v1` for Speaches, a vendor host for the rest).
+ *   Neither is tenant input, and refusing them broke zero-config local providers on every install
+ *   that had not set the flag.
+ *
+ * `source` is assigned by the server's credential resolver, never read from a request, so a tenant
+ * cannot claim a different provenance. With no credentials at all nothing vouches for the address,
+ * so only the deployment flag decides.
+ *
+ * @param credentials - The credentials the request is about to be made with.
+ * @returns `true` when a private target is acceptable for this request.
+ */
+export function isPrivateAiProviderEndpointAllowed(credentials: IAiProviderCredentials | null | undefined): boolean {
+	if (!credentials) {
+		return isPrivateAiProviderBaseUrlAllowed();
+	}
+	const tenantSuppliedUrl = credentials.source === 'tenant' && !!credentials.baseUrl?.trim();
+	return !tenantSuppliedUrl || isPrivateAiProviderBaseUrlAllowed();
 }
 
 /**

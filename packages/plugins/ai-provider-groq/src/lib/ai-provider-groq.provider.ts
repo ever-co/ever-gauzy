@@ -7,6 +7,7 @@ import {
 	createCatalogueCache,
 	fetchCatalogueJson,
 	importEsm,
+	isPrivateAiProviderEndpointAllowed,
 	keyedCatalogue,
 	mergeCatalogue,
 	prettifyModelId,
@@ -93,7 +94,8 @@ const transcribeAudio = async (
 		model: options?.model || DEFAULT_SPEECH_MODEL,
 		language: options?.language,
 		providerLabel: 'Groq',
-		providerId: PROVIDER_ID
+		providerId: PROVIDER_ID,
+		allowPrivateHost: isPrivateAiProviderEndpointAllowed(credentials)
 	});
 
 /**

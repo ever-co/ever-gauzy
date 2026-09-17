@@ -267,6 +267,9 @@ describe('fetchCatalogueJson', () => {
 		global.fetch = realFetch;
 	});
 
+	/** Answers the egress guard's DNS pre-flight without the network (`example.test` never resolves). */
+	const publicResolver = () => Promise.resolve(['93.184.215.14']);
+
 	it.each([
 		'http://169.254.169.254/latest/meta-data/',
 		'http://localhost:8080/v1/models',
@@ -286,7 +289,7 @@ describe('fetchCatalogueJson', () => {
 		const fetchMock = jest.fn().mockResolvedValue(streamed(['{"data":[]}']));
 		global.fetch = fetchMock as unknown as typeof fetch;
 
-		await fetchCatalogueJson('https://example.test/models');
+		await fetchCatalogueJson('https://example.test/models', { resolver: publicResolver });
 
 		expect(fetchMock.mock.calls[0][1].redirect).toBe('error');
 	});
@@ -304,7 +307,9 @@ describe('fetchCatalogueJson', () => {
 	it('parses a chunked response that declares no length', async () => {
 		global.fetch = jest.fn().mockResolvedValue(streamed(['{"data":[{"id":"a"}', ',{"id":"b"}]}']));
 
-		await expect(fetchCatalogueJson('https://example.test/models')).resolves.toEqual({
+		await expect(
+			fetchCatalogueJson('https://example.test/models', { resolver: publicResolver })
+		).resolves.toEqual({
 			data: [{ id: 'a' }, { id: 'b' }]
 		});
 	});
@@ -315,7 +320,9 @@ describe('fetchCatalogueJson', () => {
 		const oneMegabyte = 'x'.repeat(1024 * 1024);
 		global.fetch = jest.fn().mockResolvedValue(streamed(Array.from({ length: 6 }, () => oneMegabyte)));
 
-		await expect(fetchCatalogueJson('https://example.test/models')).rejects.toThrow(/too large/);
+		await expect(
+			fetchCatalogueJson('https://example.test/models', { resolver: publicResolver })
+		).rejects.toThrow(/too large/);
 	});
 
 	it('rejects a declared length over the cap before reading anything', async () => {
@@ -323,7 +330,9 @@ describe('fetchCatalogueJson', () => {
 			.fn()
 			.mockResolvedValue(streamed(['{}'], { headers: { 'content-length': String(8 * 1024 * 1024) } }));
 
-		await expect(fetchCatalogueJson('https://example.test/models')).rejects.toThrow(/too large/);
+		await expect(
+			fetchCatalogueJson('https://example.test/models', { resolver: publicResolver })
+		).rejects.toThrow(/too large/);
 	});
 
 	it('never puts the error body in the message — these calls carry a credential', async () => {
@@ -331,7 +340,9 @@ describe('fetchCatalogueJson', () => {
 			.fn()
 			.mockResolvedValue(new Response('{"error":"invalid key sk-secret-abc"}', { status: 401 }));
 
-		await expect(fetchCatalogueJson('https://example.test/models')).rejects.toThrow(
+		await expect(
+			fetchCatalogueJson('https://example.test/models', { resolver: publicResolver })
+		).rejects.toThrow(
 			expect.objectContaining({ message: expect.not.stringContaining('sk-secret-abc') })
 		);
 	});

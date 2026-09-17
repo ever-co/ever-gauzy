@@ -38,7 +38,10 @@ export function verifyGithubWebhookSignature(payload: Buffer, header: string, se
 	const scheme = header.slice(0, separator);
 	// Lower-cased because hex is case-insensitive and this is a normalization, not a relaxation:
 	// the digest still has to match byte for byte after it.
-	const candidate = header.slice(separator + 1).trim().toLowerCase();
+	const candidate = header
+		.slice(separator + 1)
+		.trim()
+		.toLowerCase();
 	if (scheme !== 'sha256' || !/^[0-9a-f]+$/.test(candidate)) {
 		return false;
 	}

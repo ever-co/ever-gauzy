@@ -59,6 +59,19 @@ export function isPrivateOrLoopbackHost(hostname: string): boolean {
 			if ((firstHextet & 0xffc0) === 0xfe80) return true; // fe80::/10
 			if ((firstHextet & 0xfe00) === 0xfc00) return true; // fc00::/7
 		}
+		// Translation prefixes that carry an IPv4 address inside the IPv6 one. A DNS64/NAT64 gateway or
+		// a 6to4 relay turns these into a connection to that IPv4 address, so they are judged by it.
+		const groups = expandIpv6(host);
+		if (groups) {
+			// NAT64 well-known prefix 64:ff9b::/96 (RFC 6052): the IPv4 address is the last 32 bits.
+			if (groups[0] === 0x64 && groups[1] === 0xff9b && groups.slice(2, 6).every((h) => h === 0)) {
+				return isPrivateIpv4(ipv4FromGroups(groups[6], groups[7]));
+			}
+			// 6to4 2002::/16 (RFC 3056): the IPv4 address is the 32 bits right after the prefix.
+			if (groups[0] === 0x2002) {
+				return isPrivateIpv4(ipv4FromGroups(groups[1], groups[2]));
+			}
+		}
 		return false;
 	}
 
@@ -72,6 +85,53 @@ export function isPrivateOrLoopbackHost(hostname: string): boolean {
 /** Whether the given dotted-decimal IPv4 string falls in a private/loopback/link-local range. */
 function isPrivateIpv4(ip: string): boolean {
 	return PRIVATE_IPV4_PATTERNS.some((re) => re.test(ip));
+}
+
+/** Dotted-decimal IPv4 address from two 16-bit groups. */
+function ipv4FromGroups(high: number, low: number): string {
+	return `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
+}
+
+/**
+ * Expand an IPv6 literal (brackets already stripped, lower-case) into its eight 16-bit groups.
+ *
+ * Handles `::` compression and a trailing dotted IPv4 part (`64:ff9b::10.0.0.1`), and drops a zone
+ * id (`fe80::1%eth0`). Returns `null` for anything that is not a well-formed IPv6 literal, so a
+ * caller only ever acts on a real address.
+ *
+ * @param host - The IPv6 literal.
+ * @returns The eight groups, or `null` when `host` does not parse.
+ */
+function expandIpv6(host: string): number[] | null {
+	let address = host.split('%')[0];
+
+	// A trailing dotted IPv4 part stands for the last two groups.
+	const dotted = address.match(/^(.*:)(\d{1,3}(?:\.\d{1,3}){3})$/);
+	if (dotted) {
+		const octets = dotted[2].split('.').map(Number);
+		if (octets.some((octet) => octet > 255)) return null;
+		address =
+			dotted[1] + ((octets[0] << 8) | octets[1]).toString(16) + ':' + ((octets[2] << 8) | octets[3]).toString(16);
+	}
+
+	const halves = address.split('::');
+	if (halves.length > 2) return null;
+	const parse = (part: string): number[] | null => {
+		if (part === '') return [];
+		const groups = part.split(':');
+		if (groups.some((group) => !/^[0-9a-f]{1,4}$/.test(group))) return null;
+		return groups.map((group) => parseInt(group, 16));
+	};
+	const head = parse(halves[0]);
+	const tail = halves.length === 2 ? parse(halves[1]) : [];
+	if (!head || !tail) return null;
+
+	if (halves.length === 1) {
+		return head.length === 8 ? head : null;
+	}
+	const missing = 8 - head.length - tail.length;
+	if (missing < 1) return null;
+	return [...head, ...new Array<number>(missing).fill(0), ...tail];
 }
 
 /**

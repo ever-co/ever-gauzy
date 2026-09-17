@@ -1,11 +1,19 @@
 import { BadRequestException } from '@nestjs/common';
+import { lookup } from 'dns';
 import {
 	ALLOW_PRIVATE_BASE_URLS_ENV,
 	getUnsafeAiOutboundUrlReason,
 	getUnsafeAiProviderBaseUrlReason,
+	isPrivateAiProviderEndpointAllowed,
 	SsrfBlockedError,
 	ssrfSafeFetch
 } from './index';
+
+// The DEFAULT resolver is `dns.lookup`; replacing it lets a spec prove what the guard does when no
+// resolver is injected (no verdict reuse) without touching the network.
+jest.mock('dns', () => ({ ...jest.requireActual('dns'), lookup: jest.fn() }));
+const lookupMock = lookup as unknown as jest.Mock;
+type LookupCallback = (error: null, addresses: { address: string; family: number }[]) => void;
 import { assertSafeAiProviderBaseUrl } from '../credentials/base-url.validator';
 
 /**
@@ -34,7 +42,10 @@ describe('AI provider base URL — SSRF egress guard', () => {
 
 		it.each([
 			['cloud metadata', 'http://169.254.169.254/latest/meta-data/'],
-			['cloud metadata with a trailing `?` that would swallow the appended path', 'http://169.254.169.254/latest/meta-data/?'],
+			[
+				'cloud metadata with a trailing `?` that would swallow the appended path',
+				'http://169.254.169.254/latest/meta-data/?'
+			],
 			['loopback by name', 'http://localhost:8080/v1'],
 			['loopback by name with a trailing dot', 'http://localhost./v1'],
 			['loopback by IPv4 literal', 'http://127.0.0.1:11434/v1'],
@@ -105,6 +116,38 @@ describe('AI provider base URL — SSRF egress guard', () => {
 		});
 	});
 
+	describe('isPrivateAiProviderEndpointAllowed (who chose the address)', () => {
+		beforeEach(() => {
+			delete process.env[ALLOW_PRIVATE_BASE_URLS_ENV];
+		});
+
+		it('keeps a TENANT-supplied base URL default-deny, and honours the deployment opt-in for it', () => {
+			const tenant = { apiKey: '', baseUrl: 'http://localhost:8000/v1', source: 'tenant' as const };
+			expect(isPrivateAiProviderEndpointAllowed(tenant)).toBe(false);
+
+			process.env[ALLOW_PRIVATE_BASE_URLS_ENV] = 'true';
+			expect(isPrivateAiProviderEndpointAllowed(tenant)).toBe(true);
+		});
+
+		it.each([
+			[
+				'an operator `*_BASE_URL` (environment source)',
+				{ apiKey: 'k', baseUrl: 'http://10.0.0.5/v1', source: 'environment' }
+			],
+			['a platform credential', { apiKey: 'k', baseUrl: 'http://10.0.0.5/v1', source: 'platform' }],
+			['a tenant row with NO base URL (built-in default address)', { apiKey: '', source: 'tenant' }],
+			['a tenant row with a blank base URL', { apiKey: '', baseUrl: '   ', source: 'tenant' }]
+		])('allows %s without the opt-in — none of it is tenant input', (_label, credentials) => {
+			expect(isPrivateAiProviderEndpointAllowed(credentials as never)).toBe(true);
+		});
+
+		it('falls back to the deployment flag when there are no credentials to vouch for the address', () => {
+			expect(isPrivateAiProviderEndpointAllowed(null)).toBe(false);
+			process.env[ALLOW_PRIVATE_BASE_URLS_ENV] = 'true';
+			expect(isPrivateAiProviderEndpointAllowed(null)).toBe(true);
+		});
+	});
+
 	describe('ssrfSafeFetch (delivery time)', () => {
 		const realFetch = global.fetch;
 		afterEach(() => {
@@ -128,9 +171,13 @@ describe('AI provider base URL — SSRF egress guard', () => {
 			const mock = okFetch();
 
 			await expect(
-				ssrfSafeFetch('https://llm.example.com/v1/models', { headers: { accept: 'application/json' } }, {
-					resolver: resolvesTo('93.184.216.34')
-				})
+				ssrfSafeFetch(
+					'https://llm.example.com/v1/models',
+					{ headers: { accept: 'application/json' } },
+					{
+						resolver: resolvesTo('93.184.216.34')
+					}
+				)
 			).resolves.toBeInstanceOf(Response);
 
 			expect(mock).toHaveBeenCalledTimes(1);
@@ -192,15 +239,83 @@ describe('AI provider base URL — SSRF egress guard', () => {
 			});
 		});
 
-		it('lets an unresolvable host through to fetch, which fails on the same resolution', async () => {
-			// A lookup ERROR is not a verdict of "private": failing closed here would turn every
-			// resolver hiccup into a security-shaped message, and the request cannot connect either way.
+		it('lets a host that DEFINITIVELY does not exist through the guard (there is nothing to connect to)', async () => {
+			// `fetch` then fails on its own lookup with the "could not be reached" message a self-hoster
+			// can act on, instead of a security-shaped refusal for a typo.
 			const mock = okFetch();
-			const resolver = jest.fn().mockRejectedValue(Object.assign(new Error('getaddrinfo ENOTFOUND'), {}));
+			const resolver = jest
+				.fn()
+				.mockRejectedValue(
+					Object.assign(new Error('getaddrinfo ENOTFOUND nowhere.example.com'), { code: 'ENOTFOUND' })
+				);
 
 			await expect(
 				ssrfSafeFetch('https://nowhere.example.com/v1/models', undefined, { resolver })
 			).resolves.toBeInstanceOf(Response);
+			expect(mock).toHaveBeenCalledTimes(1);
+		});
+
+		it.each([
+			['a temporary resolver failure', Object.assign(new Error('getaddrinfo EAI_AGAIN'), { code: 'EAI_AGAIN' })],
+			['a refused resolver', Object.assign(new Error('queryA ECONNREFUSED'), { code: 'ECONNREFUSED' })],
+			['an error with no code at all', new Error('resolver exploded')]
+		])('fails CLOSED on %s — no verdict is not a public verdict', async (_label, failure) => {
+			const mock = okFetch();
+			const resolver = jest.fn().mockRejectedValue(failure);
+
+			await expect(ssrfSafeFetch('https://flaky.example.com/v1/models', undefined, { resolver })).rejects.toThrow(
+				SsrfBlockedError
+			);
+			expect(mock).not.toHaveBeenCalled();
+		});
+
+		it('re-resolves on every request instead of reusing an earlier public verdict', async () => {
+			// The rebinding shape: public for the first request, internal for the next one.
+			const mock = okFetch();
+			lookupMock
+				.mockImplementationOnce((_host: string, _options: unknown, callback: LookupCallback) =>
+					callback(null, [{ address: '93.184.215.14', family: 4 }])
+				)
+				.mockImplementationOnce((_host: string, _options: unknown, callback: LookupCallback) =>
+					callback(null, [{ address: '169.254.169.254', family: 4 }])
+				);
+
+			await expect(ssrfSafeFetch('https://rebind.example.com/v1/models')).resolves.toBeInstanceOf(Response);
+			await expect(ssrfSafeFetch('https://rebind.example.com/v1/models')).rejects.toThrow(SsrfBlockedError);
+
+			expect(lookupMock).toHaveBeenCalledTimes(2);
+			expect(mock).toHaveBeenCalledTimes(1);
+		});
+
+		it('gives up on a stalled lookup when the request signal aborts, reporting the abort rather than a refusal', async () => {
+			const mock = okFetch();
+			const resolver = jest.fn().mockReturnValue(new Promise<string[]>(() => undefined));
+			const controller = new AbortController();
+			const reason = Object.assign(new Error('The operation was aborted due to timeout'), {
+				name: 'TimeoutError'
+			});
+
+			const pending = ssrfSafeFetch(
+				'https://slow-dns.example.com/v1/models',
+				{ signal: controller.signal },
+				{
+					resolver
+				}
+			);
+			controller.abort(reason);
+
+			await expect(pending).rejects.toBe(reason);
+			expect(mock).not.toHaveBeenCalled();
+		});
+
+		it('does not resolve a public IP literal — the literal check already judged it', async () => {
+			const mock = okFetch();
+			const resolver = resolvesTo('10.0.0.1');
+
+			await expect(
+				ssrfSafeFetch('https://93.184.215.14/v1/models', undefined, { resolver })
+			).resolves.toBeInstanceOf(Response);
+			expect(resolver).not.toHaveBeenCalled();
 			expect(mock).toHaveBeenCalledTimes(1);
 		});
 

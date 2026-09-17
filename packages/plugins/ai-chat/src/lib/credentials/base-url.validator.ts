@@ -41,13 +41,16 @@ export function IsSafeAiProviderBaseUrl(validationOptions?: ValidationOptions) {
 			options: validationOptions,
 			validator: {
 				validate(value: unknown) {
-					// `null`/`undefined` means "clear" or "not supplied" — `@IsOptional` owns that case.
-					if (value === null || value === undefined || value === '') return true;
+					// `null`/`undefined` means "clear" or "not supplied" — `@IsOptional` owns that case. An
+					// empty string is NOT that: it is refused here exactly as the service refuses it.
+					if (value === null || value === undefined) return true;
 					return typeof value === 'string' && getUnsafeAiProviderBaseUrlReason(value) === null;
 				},
 				defaultMessage(args: ValidationArguments) {
 					const reason =
-						typeof args.value === 'string' ? getUnsafeAiProviderBaseUrlReason(args.value) : 'it is not a valid URL';
+						typeof args.value === 'string'
+							? getUnsafeAiProviderBaseUrlReason(args.value)
+							: 'it is not a valid URL';
 					return `Invalid base URL: ${reason}.`;
 				}
 			}

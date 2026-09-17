@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto';
+import { createHmac, randomBytes } from 'crypto';
 import { ForbiddenException } from '@nestjs/common';
 import { ProbotDiscovery, IGithubWebhookRequest } from './probot.discovery';
 import { verifyGithubWebhookSignature } from './webhook-signature';
@@ -15,7 +15,9 @@ import { ProbotConfig } from './probot.types';
  * decision it makes is entirely local, and building the module would drag in the whole entity graph.
  */
 describe('ProbotDiscovery.receiveHook — GitHub webhook signature verification', () => {
-	const SECRET = 's3cr3t-webhook-key';
+	// Generated per run rather than written down: the value is irrelevant to what is tested, and a
+	// literal high-entropy fixture is exactly what secret scanners are right to flag.
+	const SECRET = randomBytes(24).toString('hex');
 
 	/** A realistic `installation.deleted` delivery — the destructive one. */
 	const rawBody = Buffer.from(JSON.stringify({ action: 'deleted', installation: { id: 42_000_001 } }), 'utf8');
@@ -50,7 +52,16 @@ describe('ProbotDiscovery.receiveHook — GitHub webhook signature verification'
 		return { discovery, receive };
 	};
 
-	const request = (overrides: Partial<IGithubWebhookRequest> = {}): IGithubWebhookRequest => ({
+	/**
+	 * An incoming request as `receiveHook` receives it.
+	 *
+	 * `body` is what Express's JSON parser leaves on a real request next to `rawBody`. It is not part of
+	 * {@link IGithubWebhookRequest}, but carrying it here is what lets a test tell "hashes the raw bytes"
+	 * apart from "hashes a re-serialization of the parsed body".
+	 */
+	const request = (
+		overrides: Partial<IGithubWebhookRequest> & { body?: unknown } = {}
+	): IGithubWebhookRequest & { body?: unknown } => ({
 		headers: {
 			'x-github-delivery': 'd3adbeef-0000-4000-8000-000000000000',
 			'x-github-event': 'installation',
@@ -122,20 +133,56 @@ describe('ProbotDiscovery.receiveHook — GitHub webhook signature verification'
 		const { discovery, receive } = buildDiscovery();
 		const tampered = Buffer.from(JSON.stringify({ action: 'deleted', installation: { id: 999 } }), 'utf8');
 
-		await expect(discovery.receiveHook(request({ rawBody: tampered }))).rejects.toBeInstanceOf(
-			ForbiddenException
-		);
+		await expect(discovery.receiveHook(request({ rawBody: tampered }))).rejects.toBeInstanceOf(ForbiddenException);
 		expect(receive).not.toHaveBeenCalled();
 	});
 
-	it('hashes the RAW bytes, so a signature over a re-encoded body does not verify', async () => {
-		// Same object, different serialization (key order + whitespace). `JSON.stringify(request.body)`
-		// would have made this pass, which is exactly the trap the raw-body capture exists to avoid.
-		const { discovery, receive } = buildDiscovery();
-		const reEncoded = Buffer.from(
+	describe('hashes the RAW bytes, never a re-serialization of the parsed body', () => {
+		// GitHub signs the bytes it sent — here pretty-printed with its own key order, which
+		// `JSON.stringify(request.body)` does not reproduce.
+		const wireBytes = Buffer.from(
 			JSON.stringify({ installation: { id: 42_000_001 }, action: 'deleted' }, null, 2),
 			'utf8'
 		);
+		const parsedBody = JSON.parse(wireBytes.toString('utf8'));
+		const headersSignedOver = (payload: Buffer) => ({
+			'x-github-delivery': 'id',
+			'x-github-event': 'installation',
+			'x-hub-signature-256': signatureFor(payload)
+		});
+
+		it('accepts a signature over the exact wire bytes even though a re-serialization would differ', async () => {
+			// Precondition that makes this test discriminating: the parsed body re-serializes differently.
+			expect(Buffer.from(JSON.stringify(parsedBody), 'utf8').equals(wireBytes)).toBe(false);
+			const { discovery, receive } = buildDiscovery();
+
+			await expect(
+				discovery.receiveHook(
+					request({ rawBody: wireBytes, body: parsedBody, headers: headersSignedOver(wireBytes) })
+				)
+			).resolves.toBeUndefined();
+			expect(receive).toHaveBeenCalledWith(expect.objectContaining({ payload: parsedBody }));
+		});
+
+		it('refuses a signature minted over the re-serialized parsed body', async () => {
+			const { discovery, receive } = buildDiscovery();
+			const reSerialized = Buffer.from(JSON.stringify(parsedBody), 'utf8');
+
+			await expect(
+				discovery.receiveHook(
+					request({ rawBody: wireBytes, body: parsedBody, headers: headersSignedOver(reSerialized) })
+				)
+			).rejects.toBeInstanceOf(ForbiddenException);
+			expect(receive).not.toHaveBeenCalled();
+		});
+	});
+
+	it('keys the HMAC with the configured secret VERBATIM, surrounding whitespace included', async () => {
+		// GitHub signs with exactly what was entered in the App settings, and Probot is handed the same
+		// untrimmed value; trimming it here would 403 every genuine delivery.
+		const padded = ` ${SECRET}
+`;
+		const { discovery, receive } = buildDiscovery({ webhookSecret: padded });
 
 		await expect(
 			discovery.receiveHook(
@@ -143,20 +190,23 @@ describe('ProbotDiscovery.receiveHook — GitHub webhook signature verification'
 					headers: {
 						'x-github-delivery': 'id',
 						'x-github-event': 'installation',
-						'x-hub-signature-256': signatureFor(reEncoded)
+						'x-hub-signature-256': signatureFor(rawBody, padded)
 					}
 				})
 			)
-		).rejects.toBeInstanceOf(ForbiddenException);
-		expect(receive).not.toHaveBeenCalled();
+		).resolves.toBeUndefined();
+		expect(receive).toHaveBeenCalledTimes(1);
+
+		// ...and the trimmed value is therefore NOT the key.
+		const { discovery: second, receive: secondReceive } = buildDiscovery({ webhookSecret: padded });
+		await expect(second.receiveHook(request())).rejects.toBeInstanceOf(ForbiddenException);
+		expect(secondReceive).not.toHaveBeenCalled();
 	});
 
 	it('refuses when the body parser stashed no raw body (non-JSON content type)', async () => {
 		const { discovery, receive } = buildDiscovery();
 
-		await expect(discovery.receiveHook(request({ rawBody: undefined }))).rejects.toBeInstanceOf(
-			ForbiddenException
-		);
+		await expect(discovery.receiveHook(request({ rawBody: undefined }))).rejects.toBeInstanceOf(ForbiddenException);
 		expect(receive).not.toHaveBeenCalled();
 	});
 
@@ -215,7 +265,7 @@ describe('ProbotDiscovery.receiveHook — GitHub webhook signature verification'
 });
 
 describe('verifyGithubWebhookSignature', () => {
-	const SECRET = 'abc';
+	const SECRET = randomBytes(16).toString('hex');
 	const payload = Buffer.from('{"a":1}', 'utf8');
 	const expected = createHmac('sha256', SECRET).update(payload).digest('hex');
 

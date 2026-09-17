@@ -1,4 +1,5 @@
 import {
+	MAX_TRANSCRIPTION_RESPONSE_BYTES,
 	MAX_TRANSCRIPT_CHARS,
 	classifySpeechHttpFailure,
 	redactSecret,
@@ -42,6 +43,12 @@ describe('speech helpers', () => {
 
 	const audio = Buffer.from('fake-audio-bytes');
 
+	/**
+	 * Answers the SSRF egress guard's DNS pre-flight with a public address, so these specs never touch
+	 * the network — and so a sandbox with no resolver does not turn every case into a refusal.
+	 */
+	const publicResolver = () => Promise.resolve(['93.184.215.14']);
+
 	describe('transcribeViaOpenAiCompatible', () => {
 		const call = (overrides: Partial<Parameters<typeof transcribeViaOpenAiCompatible>[0]> = {}) =>
 			transcribeViaOpenAiCompatible({
@@ -52,6 +59,7 @@ describe('speech helpers', () => {
 				model: 'whisper-large-v3',
 				providerLabel: 'Example',
 				providerId: 'example',
+				resolver: publicResolver,
 				...overrides
 			});
 
@@ -182,6 +190,48 @@ describe('speech helpers', () => {
 			await expect(call()).resolves.toHaveLength(MAX_TRANSCRIPT_CHARS);
 		});
 
+		it('refuses to buffer an oversized successful body, whether chunked or declared', async () => {
+			// A 2xx `{"text": …}` far past the budget, streamed with no content-length like a chunked reply.
+			const oversized = `{"text":"${'x'.repeat(MAX_TRANSCRIPTION_RESPONSE_BYTES)}"}`;
+			global.fetch = jest.fn().mockImplementation(() =>
+				Promise.resolve(
+					new Response(
+						new ReadableStream<Uint8Array>({
+							start(controller) {
+								controller.enqueue(new TextEncoder().encode(oversized));
+								controller.close();
+							}
+						}),
+						{ status: 200 }
+					)
+				)
+			) as unknown as typeof fetch;
+			const chunked = (await call().catch((e: unknown) => e)) as SpeechProviderError;
+			expect(chunked.kind).toBe('response');
+			expect(chunked.message).toMatch(/oversized response/);
+
+			capture(
+				{ text: 'short' },
+				{ status: 200, headers: { 'content-length': String(MAX_TRANSCRIPTION_RESPONSE_BYTES + 1) } }
+			);
+			const declared = (await call().catch((e: unknown) => e)) as SpeechProviderError;
+			expect(declared.kind).toBe('response');
+			expect(declared.message).toMatch(/oversized response/);
+		});
+
+		it('bounds the DNS pre-flight by the request timeout, not just the HTTP request', async () => {
+			const fetchMock = capture({ text: 'ok' });
+			const stalled = () => new Promise<string[]>(() => undefined);
+
+			const error = (await call({ timeoutMs: 50, resolver: stalled }).catch(
+				(e: unknown) => e
+			)) as SpeechProviderError;
+
+			expect(error.kind).toBe('network');
+			expect(error.message).toMatch(/no answer within/);
+			expect(fetchMock).not.toHaveBeenCalled();
+		});
+
 		it('wraps a timeout as a `network` error that says so', async () => {
 			const timeout = new Error('The operation was aborted due to timeout');
 			timeout.name = 'TimeoutError';
@@ -218,7 +268,8 @@ describe('speech helpers', () => {
 				headers: { 'xi-api-key': 'xi-secret' },
 				apiKey: 'xi-secret',
 				providerLabel: 'ElevenLabs',
-				providerId: 'elevenlabs'
+				providerId: 'elevenlabs',
+				resolver: publicResolver
 			});
 			expect(text).toBe('from eleven');
 			const { options, form } = requestOf(fetchMock);
@@ -244,6 +295,7 @@ describe('speech helpers', () => {
 				apiKey: 'dg-secret',
 				providerLabel: 'Deepgram',
 				providerId: 'deepgram',
+				resolver: publicResolver,
 				parse: (body) =>
 					String(
 						(body as { results?: { channels?: { alternatives?: { transcript?: string }[] }[] } }).results
@@ -261,6 +313,7 @@ describe('speech helpers', () => {
 				init: { method: 'POST' },
 				apiKey: 'dg-secret',
 				providerLabel: 'X',
+				resolver: publicResolver,
 				parse: () => {
 					throw new Error('unexpected shape (dg-secret)');
 				}

@@ -54,6 +54,19 @@ describe('AiProviderCredentialService — base URL SSRF guard', () => {
 				return {} as never;
 			}
 		} as never);
+		// A local provider that works WITHOUT a base URL (it falls back to its own default address).
+		AiProviderRegistry.register({
+			id: 'local-stt',
+			label: 'Local STT',
+			apiKeyEnvVars: [],
+			models: [],
+			defaultModel: '',
+			order: 101,
+			requiresApiKey: false,
+			async createModel() {
+				return {} as never;
+			}
+		} as never);
 	});
 
 	afterEach(() => {
@@ -77,10 +90,14 @@ describe('AiProviderCredentialService — base URL SSRF guard', () => {
 	 * refused URL never reached the database.
 	 */
 	const buildService = (existing?: Record<string, unknown>) => {
-		const service = new AiProviderCredentialService({} as never, {} as never, {
-			encrypt: (value: string) => `enc(${value})`,
-			decrypt: (value: string) => String(value).replace(/^enc\(|\)$/g, '')
-		} as never);
+		const service = new AiProviderCredentialService(
+			{} as never,
+			{} as never,
+			{
+				encrypt: (value: string) => `enc(${value})`,
+				decrypt: (value: string) => String(value).replace(/^enc\(|\)$/g, '')
+			} as never
+		);
 
 		const create = jest.fn().mockImplementation(async (payload: Record<string, unknown>) => ({ ...payload }));
 		const update = jest.fn().mockResolvedValue(undefined);
@@ -151,6 +168,55 @@ describe('AiProviderCredentialService — base URL SSRF guard', () => {
 				service.upsert({ providerId: 'openai-compatible', baseUrl: 'http://localhost:8080/v1' } as never)
 			).resolves.toBeDefined();
 			expect(create).toHaveBeenCalledTimes(1);
+		});
+
+		describe('clearing or omitting the base URL (the branches that skip the host check)', () => {
+			const row = (providerId: string, baseUrl: string) => ({
+				id: 'cred-1',
+				tenantId: 'tenant-1',
+				providerId,
+				baseUrl,
+				enabled: true
+			});
+
+			it('refuses `baseUrl: null` for a provider that cannot run without one, and persists nothing', async () => {
+				const { service, update } = buildService(row('openai-compatible', 'https://llm.example.com/v1'));
+
+				await expect(service.updateCredential('cred-1', { baseUrl: null } as never)).rejects.toBeInstanceOf(
+					BadRequestException
+				);
+				expect(update).not.toHaveBeenCalled();
+			});
+
+			it('stores `baseUrl: null` as a clear for a provider with its own default address', async () => {
+				const { service, update } = buildService(row('local-stt', 'https://stt.example.com/v1'));
+
+				await expect(service.updateCredential('cred-1', { baseUrl: null } as never)).resolves.toBeDefined();
+				expect(update).toHaveBeenCalledTimes(1);
+				expect(update.mock.calls[0][1]).toMatchObject({ baseUrl: null });
+			});
+
+			it('lets an unrelated edit through on a row whose STORED URL predates the guard, which read time still drops', async () => {
+				// Store time judges only the incoming value, so upgrading never makes a settings edit
+				// impossible to save — the stored value is refused where it is used instead.
+				const legacy = { ...row('openai-compatible', 'http://169.254.169.254/latest/meta-data/'), apiKey: '' };
+				const { service, update } = buildService(legacy);
+
+				await expect(service.updateCredential('cred-1', { defaultModel: 'm' } as never)).resolves.toBeDefined();
+				expect(update).toHaveBeenCalledTimes(1);
+				expect(update.mock.calls[0][1]).not.toHaveProperty('baseUrl');
+				await expect(service.getDecryptedCredential('openai-compatible', 'tenant-1')).resolves.toBeNull();
+			});
+
+			it('upsert without a base URL keeps the stored one and never re-validates it into the payload', async () => {
+				const { service, update } = buildService(row('openai-compatible', 'https://llm.example.com/v1'));
+
+				await expect(
+					service.upsert({ providerId: 'openai-compatible', defaultModel: 'm' } as never)
+				).resolves.toBeDefined();
+				expect(update).toHaveBeenCalledTimes(1);
+				expect(update.mock.calls[0][1]).not.toHaveProperty('baseUrl');
+			});
 		});
 	});
 
