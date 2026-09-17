@@ -36,6 +36,8 @@ env:
 jobs:
   typecheck-configs:
     name: typecheck-configs
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
     timeout-minutes: 10
     steps:
@@ -67,6 +69,8 @@ jobs:
 
   lint:
     name: lint (non-blocking)
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     # Non-blocking at the JOB level, not just on the ESLint step. The step-level flag below keeps
     # a red lint result from failing the job; this keeps anything else in the job — a cache miss,

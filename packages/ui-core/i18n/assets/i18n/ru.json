@@ -3420,6 +3420,9 @@
 		"BROWSE": "Обзор",
 		"COMMENT": "Комментарий",
 		"COMMENTS": "Комментарии",
+		"COMMENT_PLACEHOLDER": "Напишите комментарий…",
+		"NO_COMMENTS": "Комментариев пока нет",
+		"NO_COMMENTS_HINT": "Комментарии появляются здесь, начиная с новых.",
 		"HEADER": "Счета",
 		"INVOICE_NUMBER": "Номер счёта",
 		"ESTIMATE_NUMBER": "Расчетный номер",
@@ -4452,6 +4455,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Выберите клиента",
+			"SELECT_PROJECT": "Выберите проект",
+			"SELECT_TEAM": "Выберите команду",
+			"SELECT_TASK": "Выберите задачу",
+			"DESCRIPTION": "Добавьте описание"
+		},
 		"IS_BILLABLE": "Оплачивается",
 		"STOP_TIMER": "Остановить таймер",
 		"START_TIMER": "Запустить таймер",

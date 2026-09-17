@@ -85,6 +85,22 @@ nb-card {
   @include ga-hub.rows();
 }
 
+// ── The page-header action row ───────────────────────────────────────────────
+// The seventh block of the list-page contract, and the one this sheet never
+// had: the six above brought the TABLE down to the shared density while "+ Add",
+// the selection strip, "Manage invites" and the grid-vs-list selector all stayed
+// at their full 0.375rem/0.875rem box around a 1rem icon. A toolbar a size and a
+// half larger than the rows beneath it is the most visible half of the
+// inconsistency, so this page read as unconverted even though most of it was.
+//
+// `nb-card-header` rather than `.gauzy-button-container`, because this header
+// holds a second group: "Manage invites" is a `<button nbButton class="action"
+// size="small">` in `.card-header-title`, outside the toolbar container. Naming
+// only the container would have left it behind — see the note in the mixin.
+:host nb-card-header {
+  @include ga-hub.page-header-buttons();
+}
+
 // ── Status pills ─────────────────────────────────────────────────────────────
 // Every other list page routes its statuses through `ga-status-badge`, which is
 // what the canonical block points `status-badge-tints()` at. This page does not:
@@ -107,53 +123,21 @@ nb-card {
 }
 
 // ── Full Name cell ───────────────────────────────────────────────────────────
-// `ga-picture-name-tags` renders `<ngx-avatar class="report-table">`, and that
-// context in `avatar.component.scss` pins a 20px image, a 12px name and an 8px
-// gap inside a padded tinted pill — 26px of chip in rows the density tokens
-// build to a 1rem line box, which made Full Name both the widest-reading and
-// the tallest cell in the table and left every row taller than the equivalent
-// row on Payments.
+// `ga-picture-name-tags` renders `<ngx-avatar class="report-table">`, and this
+// sheet used to shrink it: a 1rem image, a 0.6875rem name and a 2px-inset pill,
+// about 20px of chip, so that a person cost the row the same 1rem line box a
+// glyph does.
 //
-// Sized off the `gauzy-people-*` tokens, so the chip matches the scale the rest
-// of the row already follows. Table-scoped, not page-wide: `ga-card-grid`
-// instantiates the same `renderComponent` and its cards have room for the full
-// treatment.
+// That block is gone — it is what made this table read a size smaller than the
+// Invoices table it is meant to match. The image and the name are the renderer's
+// own 20px/12px again; only the pill's vertical inset is restated, which takes a
+// 20px image to the same 28px that the 18px-plus-5px `ngx-contact-links` chip
+// costs the Invoices Contact column. See `avatar-chip()` for the arithmetic.
 //
-// SPECIFICITY: `:host-context(.report-table) X` shims to
-// `.report-table[_nghost] X[_ngcontent]` — (0,4,0) for `.inner-wrapper`,
-// `.link-text` and `.image-container` — while `:host ::ng-deep` buys only the
-// one `[_nghost]` attribute. Naming `.report-table` (it sits on the host
-// element) plus one doubled class clears those. The nested `img` is the
-// exception: it shims to `.report-table[_nghost] .image-container[_ngc]
-// img[_ngc]`, (0,5,1), which no reachable combination of doubled classes here
-// beats without reading as line noise, so those two declarations are
-// `!important` — the same register that rule already uses for its own
-// `border-radius`.
-:host ::ng-deep angular2-smart-table ngx-avatar.report-table {
-  .inner-wrapper.inner-wrapper {
-    gap: var(--gauzy-people-gap, 0.375rem);
-    // Keeps the original asymmetry — a hair of inset around the image, more
-    // breathing room after the name — just scaled to the smaller chip. Not zero
-    // on the image side: `.inner-wrapper` is a stadium with `overflow: hidden`,
-    // so a flush image would be clipped by the left-hand curve.
-    @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
-    @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
-  }
-
-  .link-text.link-text {
-    font-size: var(--gauzy-people-font-size, 0.6875rem);
-    line-height: var(--gauzy-people-avatar-size, 1rem);
-  }
-
-  .image-container.image-container {
-    width: var(--gauzy-people-avatar-size, 1rem);
-    height: var(--gauzy-people-avatar-size, 1rem);
-
-    img {
-      width: var(--gauzy-people-avatar-size, 1rem) !important;
-      height: var(--gauzy-people-avatar-size, 1rem) !important;
-    }
-  }
+// Table-scoped, as the old block was: `ga-card-grid` instantiates the same
+// `renderComponent` for the card layout, which is not paying for a table row.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  @include ga-hub.avatar-chip();
 }
 
 // ── Screen Capture cell ──────────────────────────────────────────────────────
