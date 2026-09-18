@@ -116,6 +116,7 @@ class Table {
 			},
 			orderBy: (_column: string, _direction: string) => builder,
 			addOrderBy: (_column: string, _direction: string) => builder,
+			take: (_count: number) => builder,
 			setLock: (_mode: string) => builder,
 			getOne: async () => filtered()[0] ?? null,
 			getMany: async () => filtered()
@@ -125,7 +126,14 @@ class Table {
 	}
 }
 
-/** Reads the `alias.column <op> :param` and `alias.column IN (:...param)` clauses the service builds. */
+/**
+ * Reads the clauses the service builds: `alias.column <op> :param`, `alias.column IN (:...param)`, and the
+ * nullity test the sweep states.
+ *
+ * The nullity form names its column in quotes — `operation."leaseExpiresAt" IS NOT NULL` — because the
+ * column is camelCase and a bare identifier would be folded to lower case by the dialect. The double reads
+ * the shape the service actually writes rather than the service being written around the double.
+ */
 function evaluate(row: Row, clause: string, params: Row): boolean {
 	const inClause = /(\w+)\.(\w+)\s+IN\s*\(:\.\.\.(\w+)\)/.exec(clause);
 
@@ -135,7 +143,16 @@ function evaluate(row: Row, clause: string, params: Row): boolean {
 		return (params[parameter] as unknown[]).includes(row[column]);
 	}
 
-	const parsed = /(\w+)\.(\w+)\s*(<=|>=|<>|=|<|>)\s*:(\w+)/.exec(clause);
+	const nullity = /(\w+)\."?(\w+)"?\s+IS\s+(NOT\s+)?NULL/i.exec(clause);
+
+	if (nullity) {
+		const [, , column, negated] = nullity;
+		const isNull = row[column] === null || row[column] === undefined;
+
+		return negated ? !isNull : isNull;
+	}
+
+	const parsed = /(\w+)\."?(\w+)"?\s*(<=|>=|<>|=|<|>)\s*:(\w+)/.exec(clause);
 
 	if (!parsed) {
 		throw new Error(`The in-memory query builder cannot read the clause "${clause}".`);
@@ -515,8 +532,10 @@ describe('driving an operation forwards', () => {
 		expect(first.executedSteps).toEqual(['reserve']);
 		expect(first.finished).toBe(false);
 		expect(first.operation.status).toBe('RUNNING');
-		// The lease is released so another pass — in this process or another — can continue.
-		expect((first.operation.state as Row).lease).toBeUndefined();
+		// The lease is released so another pass — in this process or another — can continue, and the
+		// columns are cleared rather than a JSON member deleted: the row is what the sweep reads.
+		expect(first.operation.lockedBy).toBeNull();
+		expect(first.operation.leaseExpiresAt).toBeNull();
 
 		const second = await service.execute(operation.id as string);
 
@@ -591,11 +610,43 @@ describe('driving an operation forwards', () => {
 
 		const reclaimed = await service.claim(operation.id as string, 'worker-b', 60_000);
 
-		expect((reclaimed?.state as Row).lease).toMatchObject({ ownerId: 'worker-b' });
+		// The lease is three columns of the row rather than a member of `state`: it is what the sweep
+		// filters on, and a value inside a JSON document carries no index on any dialect.
+		expect(reclaimed?.lockedBy).toBe('worker-b');
+		expect(reclaimed?.lockedAt).toBeInstanceOf(Date);
+		expect(reclaimed?.leaseExpiresAt).toBeInstanceOf(Date);
+		expect((reclaimed?.state as Row)?.lease).toBeUndefined();
 	});
 
-	it('does not drive an operation parked on an external decision', async () => {
-		const { service, registry, operations, define } = runtime();
+	it('sweeps up the operations whose lease has lapsed, and nothing else', async () => {
+		const { service, registry, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+
+		// Three operations: one whose worker is holding a live lease, one whose worker died, and one that
+		// finished — the sweep has to name the second and neither of the others.
+		const held = await service.start({ type: TYPE, input: {} });
+		const abandoned = await service.start({ type: TYPE, input: {} });
+		const finished = await service.start({ type: TYPE, input: {} });
+
+		await service.claim(held.operation.id as string, 'worker-a', 60_000);
+		await service.claim(abandoned.operation.id as string, 'worker-a', 60_000);
+		await service.execute(finished.operation.id as string);
+
+		// The worker of the abandoned one stops renewing; the held one renews by taking it again.
+		jest.setSystemTime(new Date(T0.getTime() + 30_000));
+		await service.claim(held.operation.id as string, 'worker-a', 60_000);
+
+		jest.setSystemTime(new Date(T0.getTime() + 90_000));
+
+		const stalled = await service.findStalled();
+
+		expect(stalled.map((row) => row.id)).toEqual([abandoned.operation.id]);
+		// A sweep reports; it does not reclaim. Reclaiming is `claim`, which decides under the row's lock.
+		expect((await service.findById(abandoned.operation.id as string))?.lockedBy).toBe('worker-a');
+	});
+
+	it('does not drive an operation parked on an external decision', async () => {		const { service, registry, operations, define } = runtime();
 
 		registry.register(TYPE, define(['reserve']));
 		const { operation } = await service.start({ type: TYPE, input: {} });

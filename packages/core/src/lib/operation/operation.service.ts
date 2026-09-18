@@ -111,6 +111,15 @@ export class OperationService extends CrudService<Operation> {
 	 */
 	static readonly DEFAULT_LEASE_MS = 60_000;
 
+	/**
+	 * The patch that leaves no lease behind.
+	 *
+	 * Stated once rather than written out at each of the three places an operation stops holding one, so
+	 * "a finished or released operation carries no lease" is one fact in the code as well as one rule on
+	 * the table (`CHK_operation_status_terminal`).
+	 */
+	private static readonly NO_LEASE = { lockedAt: null, lockedBy: null, leaseExpiresAt: null } as const;
+
 	/** Operation-level attempt budget of an operation whose definition declares none. */
 	static readonly DEFAULT_MAX_ATTEMPTS = 3;
 
@@ -217,6 +226,11 @@ export class OperationService extends CrudService<Operation> {
 	 * lease holder executes steps, a holder that dies stops renewing, and the operation is then
 	 * claimable by another worker, which resumes it from the persisted step statuses.
 	 *
+	 * **The lease lives in the row's own columns**, not in `state`: `lockedAt`, `lockedBy` and
+	 * `leaseExpiresAt` are what a stuck-operation report names and what the sweep filters on, and a value
+	 * inside a JSON document carries no index on any of the three dialects. The decision and the write are
+	 * one statement inside the transaction, so two workers cannot both read a free lease and both take it.
+	 *
 	 * @param operationId The operation id.
 	 * @param ownerId Identity of the worker claiming it.
 	 * @param leaseMs How long the lease is valid.
@@ -248,18 +262,11 @@ export class OperationService extends CrudService<Operation> {
 				return null;
 			}
 
-			const lease = operation.state?.lease;
-
-			if (lease && lease.ownerId !== ownerId && new Date(lease.expiresAt).getTime() > Date.now()) {
+			if (this.isLeasedByAnother(operation, ownerId)) {
 				return null;
 			}
 
-			const state: IOperationState = {
-				...(operation.state ?? {}),
-				lease: { ownerId, expiresAt: new Date(Date.now() + leaseMs) }
-			};
-
-			Object.assign(operation, { state });
+			Object.assign(operation, this.leaseOf(ownerId, leaseMs));
 
 			if (operation.status === OperationStatus.PENDING) {
 				Object.assign(operation, { status: OperationStatus.RUNNING, startedAt: operation.startedAt ?? new Date() });
@@ -267,6 +274,42 @@ export class OperationService extends CrudService<Operation> {
 
 			return manager.save(Operation, operation);
 		});
+	}
+
+	/**
+	 * The operations whose worker has stopped reporting, oldest lease first.
+	 *
+	 * The sweep the durable-operation runtime needs: an operation is stalled when its status is **live** —
+	 * `PENDING`, `RUNNING` or `COMPENSATING`, the three the exclusivity rule treats as in flight — and the
+	 * lease it holds has lapsed. A terminal operation is not stalled, it is finished, and an operation with
+	 * no lease at all is one nobody has started rather than one somebody abandoned; both are excluded by
+	 * the predicate rather than by a filter the caller has to remember.
+	 *
+	 * The read is the one `IDX_operation_lease` exists for: the index is partial on exactly this predicate,
+	 * so the sweep reads the few stuck rows rather than every operation ever run. Nothing is *changed* here
+	 * — a sweep that reclaimed as a side effect would make its own report unreadable — so a caller that
+	 * wants to take one over calls {@link claim}, which decides under the row's lock.
+	 *
+	 * @param options.staleMs How long a lease may be unexpired-but-unrenewed before the row counts as
+	 * stalled; `0` means the lease's own expiry is the whole test.
+	 * @param options.limit The most rows to answer with.
+	 * @param options.now The instant to compare against; defaults to the clock, and is stated in tests.
+	 * @returns The stalled operations, the one whose lease lapsed longest ago first.
+	 */
+	async findStalled(options: { staleMs?: number; limit?: number; now?: Date } = {}): Promise<Operation[]> {
+		const now = options.now ?? new Date();
+		const cutoff = new Date(now.getTime() - (options.staleMs ?? 0));
+
+		return this.typeOrmOperationRepository
+			.createQueryBuilder('operation')
+			.where('operation.status IN (:...live)', {
+				live: [OperationStatus.PENDING, OperationStatus.RUNNING, OperationStatus.COMPENSATING]
+			})
+			.andWhere('operation."leaseExpiresAt" IS NOT NULL')
+			.andWhere('operation."leaseExpiresAt" < :cutoff', { cutoff })
+			.orderBy('operation."leaseExpiresAt"', 'ASC')
+			.take(options.limit ?? 100)
+			.getMany();
 	}
 
 	/**
@@ -844,11 +887,8 @@ export class OperationService extends CrudService<Operation> {
 		}
 
 		// A settled operation holds no lease: leaving one behind would make a finished operation look
-		// busy to the recovery scan.
-		const state = { ...(operation.state ?? {}) };
-		delete state.lease;
-
-		return this.saveOperation(operation, { ...patch, status, state });
+		// busy to the recovery scan, and the table's own `CHK_operation_status_terminal` refuses it.
+		return this.saveOperation(operation, { ...patch, status, ...OperationService.NO_LEASE });
 	}
 
 	/**
@@ -858,10 +898,7 @@ export class OperationService extends CrudService<Operation> {
 	 * @returns The saved operation.
 	 */
 	private async releaseLease(operation: Operation): Promise<Operation> {
-		const state = { ...(operation.state ?? {}) };
-		delete state.lease;
-
-		return this.saveOperation(operation, { state });
+		return this.saveOperation(operation, { ...OperationService.NO_LEASE });
 	}
 
 	/**
@@ -876,18 +913,44 @@ export class OperationService extends CrudService<Operation> {
 	 */
 	private async renewLease(operation: Operation, ownerId: string, leaseMs: number): Promise<Operation> {
 		const current = await this.require(operation.id as ID);
-		const lease = current.state?.lease;
 
-		if (lease && lease.ownerId !== ownerId) {
-			throw new OperationLeaseLostError(current.id as ID, ownerId, lease.ownerId);
+		if (current.lockedBy && current.lockedBy !== ownerId) {
+			throw new OperationLeaseLostError(current.id as ID, ownerId, current.lockedBy);
 		}
 
-		return this.saveOperation(current, {
-			state: {
-				...(current.state ?? {}),
-				lease: { ownerId, expiresAt: new Date(Date.now() + leaseMs) }
-			}
-		});
+		return this.saveOperation(current, this.leaseOf(ownerId, leaseMs));
+	}
+
+	/**
+	 * The columns that take a lease, as one patch.
+	 *
+	 * @param ownerId The worker taking it.
+	 * @param leaseMs How long it is valid.
+	 * @returns The three columns the lease is.
+	 */
+	private leaseOf(ownerId: string, leaseMs: number): Pick<Operation, 'lockedAt' | 'lockedBy' | 'leaseExpiresAt'> {
+		const now = Date.now();
+
+		return { lockedAt: new Date(now), lockedBy: ownerId, leaseExpiresAt: new Date(now + leaseMs) };
+	}
+
+	/**
+	 * Whether a live lease on the row belongs to somebody else.
+	 *
+	 * The two halves are stated separately because they answer different questions: a lease held by
+	 * *this* worker is the worker resuming its own operation, which is allowed, while a lease held by
+	 * another worker is only respected while it has not lapsed.
+	 *
+	 * @param operation The row as it was read inside the transaction.
+	 * @param ownerId The worker asking.
+	 * @returns Whether the operation is held by another worker whose lease is still valid.
+	 */
+	private isLeasedByAnother(operation: Operation, ownerId: string): boolean {
+		if (!operation.lockedBy || operation.lockedBy === ownerId) {
+			return false;
+		}
+
+		return Boolean(operation.leaseExpiresAt && new Date(operation.leaseExpiresAt).getTime() > Date.now());
 	}
 
 	/**

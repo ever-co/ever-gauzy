@@ -250,17 +250,13 @@ for (const file of markdownFiles(DOCS)) {
 |--------------------------------------------------------------------------
 |
 | Each entry names the column (or the table) the rule is about and which no migration declares yet, so
-| the reason is checkable rather than asserted: a `why` that has stopped being true is reported as a
-| stale entry, and the wave that makes it true has to move the promise into a migration.
+| the reason is checkable rather than asserted. The list is **empty**: every rule the specification
+| promises is created by a migration. It stays because the mechanism is the point — a promise that cannot
+| be kept yet has to be named here rather than left to look like a gap forever, and an entry whose reason
+| has stopped being true (its column has arrived, or a migration now creates the rule) is reported as
+| stale so the wave that lands it has to move the name out of this list.
 */
-const DEFERRED = [
-	{
-		name: 'CHK_operation_status_terminal',
-		table: 'operation',
-		column: 'lockedAt',
-		why: 'the lease is still inside `operation.state`; §3.14 moves it to the `lockedAt`/`lockedBy`/`leaseExpiresAt` columns, and the rule belongs to those columns'
-	}
-];
+const DEFERRED = [];
 
 const deferredByName = new Map(DEFERRED.map((entry) => [entry.name, entry]));
 
@@ -274,11 +270,23 @@ const deferred = [];
 const stale = [];
 
 for (const [name, promise] of [...promised].sort(([a], [b]) => a.localeCompare(b))) {
-	if (inForce.has(name)) {
+	const entry = deferredByName.get(name);
+
+	/*
+	 * A deferred promise that is now in force is a *stale entry*, and it is reported as one: the list of
+	 * deferrals is a statement about the specification's own gaps, and an entry left behind after the gap
+	 * closed reads as a gap that is still open. The check runs before the "already in force" short-circuit
+	 * for exactly that reason.
+	 */
+	if (entry && inForce.has(name)) {
+		stale.push({ ...entry, why: 'the promise is now created by a migration' });
+
 		continue;
 	}
 
-	const entry = deferredByName.get(name);
+	if (inForce.has(name)) {
+		continue;
+	}
 
 	if (entry) {
 		// The reason has to still be true: a column that has arrived means the promise can be kept, and

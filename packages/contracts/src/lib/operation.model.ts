@@ -52,6 +52,12 @@ export enum OperationStepStatus {
  * Only the lease holder executes steps, so two workers can never drive one operation. A worker that
  * dies stops renewing, the lease expires, and another worker claims the operation and resumes from
  * the persisted step statuses.
+ *
+ * **It is stored in columns, not in `state`.** `IOperationState` deliberately carries no `lease` member:
+ * the sweep that looks for a stuck operation filters on the expiry, and a value inside a JSON document
+ * carries no index on any of the three dialects — so the lease is `lockedAt`, `lockedBy` and
+ * `leaseExpiresAt` on the operation row, and this interface is the shape the runtime reads and writes
+ * them as.
  */
 export interface IOperationLease {
 	/** Identity of the process holding the lease. */
@@ -70,8 +76,6 @@ export interface IOperationLease {
 export interface IOperationState {
 	/** Index of the step the runtime is at, for operators watching progress. */
 	cursor?: number;
-	/** Set while a worker is driving the operation. */
-	lease?: IOperationLease;
 	/** Set by a cancellation request; steps check it and the runtime acts on it before the next step. */
 	cancelRequested?: boolean;
 	/** Set when the operation is parked on an external decision and must not be executed. */

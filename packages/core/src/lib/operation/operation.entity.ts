@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
 import { RelationId } from 'typeorm';
 import { ID, IOperation, IOperationState, OperationStatus, JsonData } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -58,10 +58,13 @@ export class Operation extends TenantOrganizationBaseEntity implements IOperatio
 	input: JsonData;
 
 	/**
-	 * The mutable execution state: cursor, lease, cancellation flag and shared variables.
+	 * The mutable execution state: cursor, cancellation flag, awaiting-decision marker and the shared
+	 * variables a later step reads.
 	 *
-	 * Read whole and written whole, which is why it is JSON rather than a column per field: the
-	 * runtime is the only writer and it always replaces the object it read.
+	 * Read whole and written whole, which is why it is JSON rather than a column per field: the runtime is
+	 * the only writer and it always replaces the object it read. **The lease is deliberately not here** —
+	 * it lives in the three columns below, because the sweep that looks for a stuck operation has to filter
+	 * on it and a value inside a JSON document carries no index on any of the three dialects.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
@@ -93,6 +96,46 @@ export class Operation extends TenantOrganizationBaseEntity implements IOperatio
 	@Min(1)
 	@MultiORMColumn({ type: 'int', default: 3 })
 	maxAttempts: number;
+
+	/**
+	 * When the worker driving the operation took the lease.
+	 *
+	 * Null while the operation is `PENDING` and cleared the moment it reaches a terminal status, which is
+	 * the rule `CHK_operation_status_terminal` states: a finished operation holds no lease. The pair with
+	 * {@link lockedBy} is what a stuck-operation report names — *who* holds an operation that has not moved.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
+	lockedAt?: Date;
+
+	/**
+	 * Identity of the worker that holds the lease.
+	 *
+	 * A worker that finds its own identity replaced here has lost the operation to another worker — the
+	 * race the lease exists to lose loudly rather than silently — and stops writing.
+	 */
+	@ApiPropertyOptional({ type: () => String, maxLength: 128 })
+	@IsOptional()
+	@IsString()
+	@MaxLength(128)
+	@MultiORMColumn({ type: 'varchar', length: 128, nullable: true })
+	lockedBy?: string;
+
+	/**
+	 * When the lease lapses.
+	 *
+	 * This is the column the sweep reads: an operation whose status is live and whose lease has expired is
+	 * one whose worker died, and it is claimable again. The index is partial on exactly that predicate, so
+	 * the sweep reads the few stuck rows rather than every operation ever run.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@ColumnIndex('IDX_operation_lease', ['leaseExpiresAt'], {
+		where: `"leaseExpiresAt" IS NOT NULL AND "status" IN ('PENDING', 'RUNNING', 'COMPENSATING')`
+	})
+	@MultiORMColumn({ nullable: true })
+	leaseExpiresAt?: Date;
 
 	/**
 	 * The last error, as an `IOperationError`.
