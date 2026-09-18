@@ -47,46 +47,13 @@ const ROOT = process.argv[2] ? resolve(process.argv[2]) : resolve(HERE, '..', '.
  * stops being true.
  */
 const AWAITING_PROVIDER = {
-	CART_STOCK_AVAILABILITY: {
-		owner: '@gauzy/plugin-inventory',
-		needs: 'A stock port over the level and hold services: how much of a variant is available at a location.'
-	},
-	WAREHOUSE_STOCK_LEDGER: {
-		owner: '@gauzy/plugin-inventory',
-		needs: 'The ledger port the warehouse reads bin contents from and writes every physical move back through.'
-	},
-	WAREHOUSE_FULFILLMENT: {
-		owner: '@gauzy/plugin-fulfillment',
-		needs: 'A read of the shipment lines a pick list is derived from.'
-	},
-	RETURNS_STOCK_LEDGER: {
-		owner: '@gauzy/plugin-inventory',
-		needs: 'The same ledger port, for the movements a return puts back into stock.'
-	},
-	RETURNS_REFUND_GATEWAY: {
-		owner: '@gauzy/plugin-payment',
-		needs:
-			'A refund entry point whose answer is the refund id rather than the row, and which accepts the claim path that names no payment.'
-	},
-	RETURNS_SHIPMENT_GATEWAY: {
-		owner: '@gauzy/plugin-fulfillment',
-		needs: 'Creating the outbound shipment a return or an exchange travels on.'
-	},
 	PURCHASING_INVENTORY: {
 		owner: '@gauzy/plugin-inventory',
 		needs: 'The receiving side of the ledger: the put-away a goods receipt writes.'
 	},
-	PURCHASING_APPROVAL: {
-		owner: '@gauzy/plugin-purchasing',
-		needs: 'A facade over the kernel approval service, so a purchase order above its threshold is routed rather than confirmed.'
-	},
 	SUBSCRIPTION_ORDER_GATEWAY: {
 		owner: '@gauzy/plugin-order',
 		needs: 'Raising the order a billing period produces, and the proration order a mid-period change produces.'
-	},
-	SUBSCRIPTION_INSTRUMENTS: {
-		owner: '@gauzy/plugin-payment',
-		needs: 'Which stored instrument may be charged, which the payment package does not currently store.'
 	},
 	SELLER_MEMBERSHIP_RESOLVER: {
 		owner: 'the installation',

@@ -1,11 +1,26 @@
 import { Global, Module } from '@nestjs/common';
+import { PaymentInstrumentEligibilityService, PaymentInstrumentModule } from '@gauzy/core';
+import { CART_STOCK_AVAILABILITY } from '@gauzy/plugin-cart';
 import { CatalogItemService, CatalogModule, ProductVariantSaleService } from '@gauzy/plugin-catalog';
+import {
+	FulfillmentModule,
+	ReturnShipmentService,
+	WarehouseFulfillmentService
+} from '@gauzy/plugin-fulfillment';
+import { InventoryModule, StockAvailabilityService, StockLedgerService } from '@gauzy/plugin-inventory';
 import { OrderLineFulfillmentService, OrderLineService, OrderModule } from '@gauzy/plugin-order';
 import { PricingModule, RecurringPriceService } from '@gauzy/plugin-pricing';
-import { PAYMENT_ORDER_LINE_REFUND } from '@gauzy/plugin-payment';
+import { PAYMENT_ORDER_LINE_REFUND, PaymentModule, ReturnRefundService } from '@gauzy/plugin-payment';
+import { PURCHASING_APPROVAL, PurchaseApprovalService, PurchasingModule } from '@gauzy/plugin-purchasing';
 import { ENTITLEMENT_CATALOG_PORT } from '@gauzy/plugin-entitlement';
-import { RETURNS_ORDER_FULFILLMENT } from '@gauzy/plugin-returns';
-import { SUBSCRIPTION_CATALOG, SUBSCRIPTION_PRICING } from '@gauzy/plugin-subscription';
+import {
+	RETURNS_ORDER_FULFILLMENT,
+	RETURNS_REFUND_GATEWAY,
+	RETURNS_SHIPMENT_GATEWAY,
+	RETURNS_STOCK_LEDGER
+} from '@gauzy/plugin-returns';
+import { SUBSCRIPTION_CATALOG, SUBSCRIPTION_INSTRUMENTS, SUBSCRIPTION_PRICING } from '@gauzy/plugin-subscription';
+import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-warehouse';
 
 /**
  * This installation's composition point.
@@ -51,7 +66,21 @@ import { SUBSCRIPTION_CATALOG, SUBSCRIPTION_PRICING } from '@gauzy/plugin-subscr
 		// is measured against.
 		OrderModule,
 		// The pricing package owns what a variant costs, including what it costs again every period.
-		PricingModule
+		PricingModule,
+		// The purchasing package owns the approval request a purchase order files, and its module
+		// exports the service that answers the port.
+		PurchasingModule,
+		// Whether a remembered payer may still be charged is a rule over two kernel tables, so the
+		// service that answers it lives in the kernel and is reached from here like any other provider.
+		PaymentInstrumentModule,
+		// The inventory package owns the level rows a sellability answer is derived from and the ledger
+		// every physical move is written through.
+		InventoryModule,
+		// What a pick list is derived from, and the shipment a return or an exchange travels on, are
+		// both the fulfilment package's own rows.
+		FulfillmentModule,
+		// The refund a return asks for is a row of the payment package's refund register.
+		PaymentModule
 	],
 	providers: [
 		// The payment package reports what a succeeded refund paid back per line; the order package is
@@ -68,14 +97,41 @@ import { SUBSCRIPTION_CATALOG, SUBSCRIPTION_PRICING } from '@gauzy/plugin-subscr
 		{ provide: SUBSCRIPTION_CATALOG, useExisting: ProductVariantSaleService },
 		// An entitlement names the product and the variant it is over, and only the catalogue can say
 		// what those identifiers name.
-		{ provide: ENTITLEMENT_CATALOG_PORT, useExisting: CatalogItemService }
+		{ provide: ENTITLEMENT_CATALOG_PORT, useExisting: CatalogItemService },
+		// A purchase order is approved by the platform's own approval machinery: the purchasing package
+		// files the request, and the core approval service owns the row.
+		{ provide: PURCHASING_APPROVAL, useExisting: PurchaseApprovalService },
+		// A renewal with nobody present has to ask whether the payer the subscription remembers may
+		// still be charged, and the tables that answer it are the kernel's.
+		{ provide: SUBSCRIPTION_INSTRUMENTS, useExisting: PaymentInstrumentEligibilityService },
+		// The cart asks what may be sold before it accepts a line, and the inventory package owns the
+		// level rows the answer is derived from.
+		{ provide: CART_STOCK_AVAILABILITY, useExisting: StockAvailabilityService },
+		// The warehouse reads bin contents from the ledger and writes every physical move back through
+		// it; a return restocks what came back through the same ledger, in the same instance.
+		{ provide: WAREHOUSE_STOCK_LEDGER, useExisting: StockLedgerService },
+		{ provide: RETURNS_STOCK_LEDGER, useExisting: StockLedgerService },
+		// A pick list is built from what the fulfilment rows say was shipped, and a return or an
+		// exchange needs an outbound shipment of its own.
+		{ provide: WAREHOUSE_FULFILLMENT, useExisting: WarehouseFulfillmentService },
+		{ provide: RETURNS_SHIPMENT_GATEWAY, useExisting: ReturnShipmentService },
+		// A return's money is refunded by the payment package, which owns the refund register.
+		{ provide: RETURNS_REFUND_GATEWAY, useExisting: ReturnRefundService }
 	],
 	exports: [
 		PAYMENT_ORDER_LINE_REFUND,
 		RETURNS_ORDER_FULFILLMENT,
 		SUBSCRIPTION_PRICING,
 		SUBSCRIPTION_CATALOG,
-		ENTITLEMENT_CATALOG_PORT
+		ENTITLEMENT_CATALOG_PORT,
+		PURCHASING_APPROVAL,
+		SUBSCRIPTION_INSTRUMENTS,
+		CART_STOCK_AVAILABILITY,
+		WAREHOUSE_STOCK_LEDGER,
+		RETURNS_STOCK_LEDGER,
+		WAREHOUSE_FULFILLMENT,
+		RETURNS_SHIPMENT_GATEWAY,
+		RETURNS_REFUND_GATEWAY
 	]
 })
 export class PluginCompositionModule {}
