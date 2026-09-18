@@ -1,8 +1,9 @@
-import { ActivityLogModule, DatabaseModule, MentionModule, TokenModule } from '@gauzy/core';
+import { ActivityLogModule, DatabaseModule, JobExecutionModule, MentionModule, TokenModule } from '@gauzy/core';
 import { PluginModule } from '@gauzy/plugin';
 import { SchedulerModule } from '@gauzy/scheduler';
 import { Module } from '@nestjs/common';
 import { WorkerJobsModule } from './worker-jobs.module';
+import { SchedulerLedgerBootstrap } from './scheduler-ledger.bootstrap';
 import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } from './worker.constants';
 
 @Module({
@@ -34,6 +35,15 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		}),
 		WorkerJobsModule,
 		/**
+		 * The ledger a scheduled pass is recorded in.
+		 *
+		 * This process is the one that ticks the schedules, so it is the one that has something to
+		 * record; `SchedulerLedgerBootstrap` below attaches the recorder to the scheduler's single run
+		 * funnel once the graph is up. An installation that does not want the rows simply does not
+		 * import this module — the recorder is optional and off by default on the scheduler's side.
+		 */
+		JobExecutionModule,
+		/**
 		 * Instantiates every plugin listed in `src/plugins.ts` and runs its `onPluginBootstrap`.
 		 *
 		 * 🛑 `registerPluginConfig({ plugins })` in `main.ts` is NOT enough on its own: it only
@@ -48,6 +58,7 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		 * exists when a plugin registers its own queue.
 		 */
 		PluginModule.init()
-	]
+	],
+	providers: [SchedulerLedgerBootstrap]
 })
 export class AppModule {}
