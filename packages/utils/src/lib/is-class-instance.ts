@@ -16,5 +16,13 @@ export function isClassInstance(item: any): boolean {
 	if (Object.getPrototypeOf(item) === null) {
 		return false;
 	}
-	return item.constructor.name !== 'Object';
+	// An ordinary object can still carry an own `constructor` that is null or
+	// undefined: `{"constructor": null}` is valid JSON, so it arrives with any
+	// parsed payload. Reading `.name` on it throws just the same, so treat it as
+	// plain data too.
+	const constructor = item.constructor;
+	if (constructor === null || constructor === undefined) {
+		return false;
+	}
+	return constructor.name !== 'Object';
 }

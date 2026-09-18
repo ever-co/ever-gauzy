@@ -31,6 +31,14 @@ describe('isClassInstance', () => {
 		expect(() => isClassInstance(nullProto)).not.toThrow();
 		expect(isClassInstance(nullProto)).toBe(false);
 	});
+
+	it('returns false for an object whose own `constructor` is null or undefined', () => {
+		// `{"constructor": null}` is valid JSON, so this reaches the same
+		// `item.constructor.name` read from any parsed payload - it throws exactly
+		// like the null-prototype case and must be treated as plain data too.
+		expect(isClassInstance(JSON.parse('{"constructor":null}'))).toBe(false);
+		expect(isClassInstance({ constructor: undefined })).toBe(false);
+	});
 });
 
 describe('deepClone / deepMerge with null-prototype values', () => {
