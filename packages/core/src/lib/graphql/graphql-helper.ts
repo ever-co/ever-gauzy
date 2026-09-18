@@ -1,11 +1,14 @@
 import { GqlModuleOptions, GraphQLTypesLoader } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
-import { buildSchema, extendSchema, printSchema } from 'graphql';
+import { HttpException, HttpStatus } from '@nestjs/common';
+import { GraphQLError, buildSchema, extendSchema, printSchema } from 'graphql';
 import * as path from 'path';
 import { GraphQLApiConfigurationOptions } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import { getPluginExtensions, isDynamicModule, reflectDynamicModuleMetadata } from '@gauzy/plugin';
 import { isNotEmpty } from '@gauzy/utils';
+import { ApiErrorCode } from '../core/errors/api-error-codes';
+import { RequestContext } from '../core/context/request-context';
 import { assertComposition, assertExtendable } from './graphql-composition';
 import { createGraphqlRequestContext } from './graphql-context';
 import { createBatchLimitPlugin, createGraphqlLimitRules } from './graphql-limits';
@@ -125,6 +128,17 @@ export async function createGraphqlModuleOptions(
 		},
 		// Every plugin module as well as the host, so the resolvers those modules declare are found.
 		include: [options.resolverModule, ...pluginResolverModules],
+		// No stack, in any environment. The server's own default is to attach `extensions.stacktrace`
+		// whenever the surface is not in production, which is a second, unversioned envelope beside the
+		// platform's: a client that switches on `extensions.code` finds a stack where it expected a
+		// status, and an internal failure's message and frames — which the filter deliberately scrubs
+		// and logs instead — reach the caller anyway. The `traceId` the envelope carries is what joins
+		// a report to those logs, so nothing is lost by refusing the shortcut.
+		//
+		// The name is the installed server's own: it is `includeStacktraceInErrorResponses` and not the
+		// older `includeStacktrace`, and an option the server does not know is silently ignored rather
+		// than refused — which is exactly how a leak survives a fix that looks correct.
+		includeStacktraceInErrorResponses: false,
 		// The context is the request scope: every resolver in one operation shares it, and the loader
 		// registry inside it is what makes a nested relation one query per relation rather than one
 		// per parent row.
@@ -136,11 +150,133 @@ export async function createGraphqlModuleOptions(
 		// `traceId` that joins a report to the logs. Without it the response would carry graphql-js's
 		// own formatting and a caller switching on `extensions.code` would need a second table for
 		// the GraphQL surface.
-		formatError: (error) => new GraphqlExceptionFilter().catch(error),
+		//
+		// 🛑 The **second** argument is the one the filter must be given. Apollo calls this as
+		// `formatError(enrichedError, originalError)`: the first is a copy it has already normalised —
+		// a plain `{ message, locations, path, extensions }` — and the platform's own failure carries
+		// its status, code and details on the exception that was actually thrown, which is the second.
+		// Handing the first one over made `toSafeHttpException` find no status at all, so every
+		// resolver failure answered `INTERNAL_ERROR`/`500` with the details dropped — a not-found read
+		// that REST reports as `RESOURCE_NOT_FOUND`/`404` — and a mistake in the document itself was
+		// reported as a server fault instead of a bad request.
+		formatError: (error, originalError) => formatGraphqlError(error, originalError),
 		// Subscriptions ride the same path and the same authorisation. The key is added only when the
 		// transport package is installed, so an installation without it boots as it does today.
 		...subscriptionTransportOptions()
 	} as GqlModuleOptions;
+}
+
+/**
+ * Renders one failure into the platform's error envelope.
+ *
+ * Three kinds of failure reach this function, and each is answered by a different rule:
+ *
+ * 1. **A resolver failure that is an HTTP failure** — an `HttpException` or one of the platform's
+ *    `ApiException`s, which is what every service throws. The filter is the only code that knows the
+ *    code/status/details mapping, so it is handed the exception itself and its answer is the reply.
+ * 2. **A failure graphql-js raised before any resolver ran** — an unknown field, a malformed
+ *    document, a variable of the wrong type. Nothing threw it, no HTTP meaning exists for it, and the
+ *    request is what is wrong: it is reported as `VALIDATION_FAILED` with a `400`. The message is kept
+ *    verbatim, because it names the field or the position the caller has to fix.
+ * 3. **Anything else the resolver threw** — a raw `Error`, a driver failure. That is the server's
+ *    problem, and the filter reports it as it does over REST: a classified 5xx, logged here, with no
+ *    stack and no driver text sent to the caller.
+ *
+ * A `GraphQLError` that already carries a `code` and a `status` in its extensions is passed through
+ * untouched. That is not a courtesy: a resolver may raise one deliberately — the field gates do, and
+ * so does the cost limiter — and re-classifying it would answer a permission denial with a validation
+ * failure, which is a different statement about a different thing.
+ *
+ * @param error The enriched error Apollo is about to send.
+ * @param originalError The error as it was thrown, which is where the platform's own envelope lives.
+ * @returns The error the response's `errors` array carries.
+ */
+function formatGraphqlError(error: GraphQLError, originalError?: unknown): GraphQLError {
+	const filter = new GraphqlExceptionFilter();
+
+	/*
+	 * The exception is unwrapped before anything is decided about it. The driver's transport turns a
+	 * resolver's failure into a `GraphQLError` and keeps the exception on that error's `originalError`,
+	 * so what arrives here is usually a wrapper and the platform's status, code and details are one —
+	 * sometimes two — links down the chain. Walking it is what makes a not-found read answer
+	 * `RESOURCE_NOT_FOUND`/`404` like its REST route instead of a validation failure.
+	 */
+	const thrown = unwrapThrownError(originalError ?? error);
+
+	// A resolver failure the platform itself raised: the filter is the only code that knows the
+	// code/status/details mapping, and it must see the exception rather than any copy of it.
+	if (thrown instanceof HttpException) {
+		return filter.catch(thrown);
+	}
+
+	if (thrown instanceof GraphQLError) {
+		const extensions = (thrown.extensions ?? {}) as Record<string, unknown>;
+
+		// A deliberate GraphQLError: it has already stated its envelope, and re-classifying it would
+		// answer a field gate's permission denial with a validation failure. The enriched error is
+		// returned, so the caller keeps the path and the locations the driver resolved.
+		if (typeof extensions.code === 'string' && typeof extensions.status === 'number') {
+			return error;
+		}
+
+		// A failure graphql-js raised on the document, which never reached a resolver: the request is
+		// what is wrong, and the message names the field or the position the caller has to fix.
+		const traceId = RequestContext.currentTraceId();
+
+		return new GraphQLError(error.message, {
+			nodes: error.nodes,
+			source: error.source,
+			positions: error.positions,
+			path: error.path,
+			originalError: error.originalError,
+			extensions: {
+				...error.extensions,
+				code: ApiErrorCode.VALIDATION_FAILED,
+				status: HttpStatus.BAD_REQUEST,
+				...(traceId ? { traceId } : {})
+			}
+		});
+	}
+
+	// Anything else the resolver threw — a raw `Error`, a driver failure: the server's problem, and the
+	// filter reports it exactly as the REST path does, logging the original and telling the caller only
+	// that it failed.
+	return filter.catch(originalError ?? error);
+}
+
+/**
+ * Walks a thrown value's `originalError` chain to the error that was actually raised.
+ *
+ * The transport wraps what a resolver threw, and the wrapper is what reaches the error formatter: a
+ * `GraphQLError` carrying the exception on `originalError`, sometimes through more than one link. The
+ * walk stops at the first `HttpException` — which is what every service in the platform throws, either
+ * directly or as an `ApiException` — and otherwise returns the deepest error it found, so a plain
+ * `Error` is still classified by the filter rather than by its wrapper.
+ *
+ * The depth bound is deliberate: a malformed chain must not become an infinite loop inside the error
+ * path, which is the one place that cannot fail.
+ *
+ * @param error The error as it arrived.
+ * @returns The error that was raised, or the value given when the chain holds neither.
+ */
+function unwrapThrownError(error: unknown): unknown {
+	let current: unknown = error;
+
+	for (let depth = 0; depth < 8 && current; depth++) {
+		if (current instanceof HttpException) {
+			return current;
+		}
+
+		const next = (current as { originalError?: unknown }).originalError;
+
+		if (!next || next === current) {
+			break;
+		}
+
+		current = next;
+	}
+
+	return current;
 }
 
 /**

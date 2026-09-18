@@ -325,6 +325,39 @@ async function main() {
 		`HTTP ${badQuery.status} ${Array.isArray(badQuery.json?.errors) ? 'with errors' : brief(badQuery)}`
 	);
 
+	/*
+	 * The code, not only the shape. Every failure on this surface is promised the same `code`, `status`
+	 * and `traceId` its REST counterpart reports, because a client switches its retry and its message
+	 * lookup on the pair. Wiring the error formatter to the wrong error — the copy the transport has
+	 * already normalised, rather than the exception that was thrown — answered `INTERNAL_ERROR` for
+	 * every failure and dropped the details, which no assertion on the HTTP status can see.
+	 */
+	const validationError = badQuery.json?.errors?.[0]?.extensions;
+	record(
+		'a document the schema rejects carries the platform validation code',
+		validationError?.code === 'VALIDATION_FAILED' && validationError?.status === 400,
+		`${badQuery.json?.errors?.[0]?.message ?? 'no error'} → ${JSON.stringify(validationError)}`
+	);
+
+	// The same failure over both surfaces: a node read of an identifier that does not exist.
+	const missingNode = await call('POST', '/graphql', {
+		token,
+		tenantId,
+		body: { query: '{ collection(id: "00000000-0000-4000-8000-0000000000ff") { id } }' }
+	});
+	const missingExtensions = missingNode.json?.errors?.[0]?.extensions;
+	record(
+		'a GraphQL refusal carries the code and status its REST route reports',
+		missingExtensions?.code === 'RESOURCE_NOT_FOUND' && missingExtensions?.status === 404,
+		`${missingNode.json?.errors?.[0]?.message ?? 'no error'} → ${JSON.stringify(missingExtensions)}`
+	);
+
+	record(
+		'no stacktrace reaches the GraphQL caller',
+		!(missingExtensions?.stacktrace || missingExtensions?.exception),
+		`extensions: ${Object.keys(missingExtensions ?? {}).join(', ') || 'none'}`
+	);
+
 	const anonymousGraph = await call('POST', '/graphql', { body: { query: '{ roles { id name } }' } });
 	record(
 		'a guarded GraphQL field refuses an anonymous caller',
