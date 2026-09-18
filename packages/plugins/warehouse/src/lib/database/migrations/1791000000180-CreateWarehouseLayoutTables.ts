@@ -358,12 +358,30 @@ export class CreateWarehouseLayoutTables1791000000180 implements MigrationInterf
 			`, CONSTRAINT "FK_warehouse_product_variant_bin" FOREIGN KEY ("binId") REFERENCES "warehouse_bin" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
 		);
 
+		/*
+		 * Two pragmas, for two different reasons.
+		 *
+		 * `foreign_keys = OFF` lets the rows be copied into the rebuilt table without every constraint
+		 * being re-checked mid-rebuild. `legacy_alter_table = ON` is the one that keeps the *other*
+		 * tables' definitions honest: since SQLite 3.25 a `RENAME TO` also rewrites the foreign keys of
+		 * tables that referenced the renamed one, so renaming this table aside left
+		 * `stock_movement`, `stock_reservation`, `stock_adjustment` and `stock_count_line` pointing at
+		 * `warehouse_product_variant_bin_fk_backup` — the name the last statement drops. Their
+		 * definitions stayed valid, so nothing failed at migration time; every later write to one of them
+		 * failed at prepare time with "no such table". `legacy_alter_table` restores the behaviour this
+		 * rebuild was written against.
+		 */
 		await queryRunner.query('PRAGMA foreign_keys = OFF');
-		await queryRunner.query(`ALTER TABLE "${table}" RENAME TO "${table}_bin_fk_backup"`);
-		await queryRunner.query(withConstraint);
-		await queryRunner.query(`INSERT INTO "${table}" SELECT * FROM "${table}_bin_fk_backup"`);
-		await queryRunner.query(`DROP TABLE "${table}_bin_fk_backup"`);
-		await queryRunner.query('PRAGMA foreign_keys = ON');
+		await queryRunner.query('PRAGMA legacy_alter_table = ON');
+		try {
+			await queryRunner.query(`ALTER TABLE "${table}" RENAME TO "${table}_bin_fk_backup"`);
+			await queryRunner.query(withConstraint);
+			await queryRunner.query(`INSERT INTO "${table}" SELECT * FROM "${table}_bin_fk_backup"`);
+			await queryRunner.query(`DROP TABLE "${table}_bin_fk_backup"`);
+		} finally {
+			await queryRunner.query('PRAGMA legacy_alter_table = OFF');
+			await queryRunner.query('PRAGMA foreign_keys = ON');
+		}
 	}
 
 	/**
@@ -384,12 +402,20 @@ export class CreateWarehouseLayoutTables1791000000180 implements MigrationInterf
 			')'
 		);
 
+		// The same two pragmas as the rebuild above: `foreign_keys` off for the copy, and
+		// `legacy_alter_table` on so the rename does not rewrite other tables' foreign keys to name the
+		// backup this method is about to drop.
 		await queryRunner.query('PRAGMA foreign_keys = OFF');
-		await queryRunner.query(`ALTER TABLE "${table}" RENAME TO "${table}_bin_fk_backup"`);
-		await queryRunner.query(withoutConstraint);
-		await queryRunner.query(`INSERT INTO "${table}" SELECT * FROM "${table}_bin_fk_backup"`);
-		await queryRunner.query(`DROP TABLE "${table}_bin_fk_backup"`);
-		await queryRunner.query('PRAGMA foreign_keys = ON');
+		await queryRunner.query('PRAGMA legacy_alter_table = ON');
+		try {
+			await queryRunner.query(`ALTER TABLE "${table}" RENAME TO "${table}_bin_fk_backup"`);
+			await queryRunner.query(withoutConstraint);
+			await queryRunner.query(`INSERT INTO "${table}" SELECT * FROM "${table}_bin_fk_backup"`);
+			await queryRunner.query(`DROP TABLE "${table}_bin_fk_backup"`);
+		} finally {
+			await queryRunner.query('PRAGMA legacy_alter_table = OFF');
+			await queryRunner.query('PRAGMA foreign_keys = ON');
+		}
 	}
 
 	/**

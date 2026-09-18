@@ -297,6 +297,15 @@ export class AddPaymentDomainForeignKeys1791000000290 implements MigrationInterf
 	 * and replayed after the backup has gone — rebuilding a table without them would leave a table that
 	 * is correct and unindexed, which is a performance defect that no test would report.
 	 *
+	 * 🛑 **`legacy_alter_table` is what keeps every other table's definition honest.** Since SQLite 3.25
+	 * a `RENAME TO` also rewrites the foreign keys *of other tables* that referenced the renamed one, so
+	 * renaming this table aside to rebuild it left every referencing table pointing at
+	 * `<table>_payment_fk_backup` — a name the next statement drops. The definitions stayed syntactically
+	 * valid, which is why nothing noticed, and every later write to one of those tables failed at prepare
+	 * time with "no such table: main.<table>_payment_fk_backup". Turning the legacy behaviour on for the
+	 * rename makes SQLite leave other tables alone, which is the behaviour this rebuild was written
+	 * against; it is turned off again whatever happens, because it is a connection-level setting.
+	 *
 	 * @param queryRunner The query runner.
 	 * @param table The table to rebuild.
 	 * @param definition The table's new `CREATE TABLE` statement.
@@ -304,10 +313,15 @@ export class AddPaymentDomainForeignKeys1791000000290 implements MigrationInterf
 	private async rebuildSqliteTable(queryRunner: QueryRunner, table: string, definition: string): Promise<void> {
 		const indexes = await this.sqliteIndexesOf(queryRunner, table);
 
-		await queryRunner.query(`ALTER TABLE "${table}" RENAME TO "${table}_payment_fk_backup"`);
-		await queryRunner.query(definition);
-		await queryRunner.query(`INSERT INTO "${table}" SELECT * FROM "${table}_payment_fk_backup"`);
-		await queryRunner.query(`DROP TABLE "${table}_payment_fk_backup"`);
+		await queryRunner.query(`PRAGMA legacy_alter_table = ON`);
+		try {
+			await queryRunner.query(`ALTER TABLE "${table}" RENAME TO "${table}_payment_fk_backup"`);
+			await queryRunner.query(definition);
+			await queryRunner.query(`INSERT INTO "${table}" SELECT * FROM "${table}_payment_fk_backup"`);
+			await queryRunner.query(`DROP TABLE "${table}_payment_fk_backup"`);
+		} finally {
+			await queryRunner.query(`PRAGMA legacy_alter_table = OFF`);
+		}
 
 		for (const index of indexes) {
 			await queryRunner.query(index);

@@ -202,12 +202,25 @@ export class AddPaymentOrderForeignKey1791000000230 implements MigrationInterfac
 			`, CONSTRAINT "FK_${table}_order" FOREIGN KEY ("orderId") REFERENCES "order" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
 		);
 
-		await queryRunner.query(`ALTER TABLE "${table}" RENAME TO "${table}_order_fk_backup"`);
-		await queryRunner.query(withConstraint);
-		await queryRunner.query(
-			`INSERT INTO "${table}" SELECT * FROM "${table}_order_fk_backup"`
-		);
-		await queryRunner.query(`DROP TABLE "${table}_order_fk_backup"`);
+		/*
+		 * `legacy_alter_table` keeps this rebuild from rewriting other tables' definitions. Since SQLite
+		 * 3.25 a `RENAME TO` also updates the foreign keys of tables that referenced the renamed one, so
+		 * renaming this table aside left every referencing table pointing at `<table>_order_fk_backup`,
+		 * which the last statement drops: the definitions stayed valid and every later write to one of
+		 * those tables failed with "no such table: main.<table>_order_fk_backup". The pragma restores the
+		 * behaviour this rebuild was written against and is reset immediately afterwards.
+		 */
+		await queryRunner.query(`PRAGMA legacy_alter_table = ON`);
+		try {
+			await queryRunner.query(`ALTER TABLE "${table}" RENAME TO "${table}_order_fk_backup"`);
+			await queryRunner.query(withConstraint);
+			await queryRunner.query(
+				`INSERT INTO "${table}" SELECT * FROM "${table}_order_fk_backup"`
+			);
+			await queryRunner.query(`DROP TABLE "${table}_order_fk_backup"`);
+		} finally {
+			await queryRunner.query(`PRAGMA legacy_alter_table = OFF`);
+		}
 
 		console.log(chalk.gray(`Rebuilt ${table} with the order foreign key (${columnFragment}).`));
 	}
@@ -230,10 +243,17 @@ export class AddPaymentOrderForeignKey1791000000230 implements MigrationInterfac
 			')'
 		);
 
-		await queryRunner.query(`ALTER TABLE "${table}" RENAME TO "${table}_order_fk_backup"`);
-		await queryRunner.query(withoutConstraint);
-		await queryRunner.query(`INSERT INTO "${table}" SELECT * FROM "${table}_order_fk_backup"`);
-		await queryRunner.query(`DROP TABLE "${table}_order_fk_backup"`);
+		// The same `legacy_alter_table` guard as the rebuild above, for the same reason: without it the
+		// rename rewrites other tables' foreign keys to name the backup this method is about to drop.
+		await queryRunner.query(`PRAGMA legacy_alter_table = ON`);
+		try {
+			await queryRunner.query(`ALTER TABLE "${table}" RENAME TO "${table}_order_fk_backup"`);
+			await queryRunner.query(withoutConstraint);
+			await queryRunner.query(`INSERT INTO "${table}" SELECT * FROM "${table}_order_fk_backup"`);
+			await queryRunner.query(`DROP TABLE "${table}_order_fk_backup"`);
+		} finally {
+			await queryRunner.query(`PRAGMA legacy_alter_table = OFF`);
+		}
 	}
 
 	/**
