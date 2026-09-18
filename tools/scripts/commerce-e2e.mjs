@@ -118,6 +118,106 @@ function brief(result) {
 }
 
 /**
+ * The feature codes the sweep's routes are gated behind.
+ *
+ * `FeatureFlagGuard` answers `404 Cannot GET …` for a route whose feature is switched off — it hides
+ * the surface rather than admitting that it exists — so a disabled capability and an unmounted one are
+ * indistinguishable to a sweep. An installation provisioned from scratch switches eight of this
+ * programme's thirty-two codes on and leaves the rest to an explicit business decision (appendix B §4),
+ * and a suite that does not state that decision reports every default-off capability as missing: that is
+ * exactly what a fresh installation produced the first time this file ran against one.
+ *
+ * The sweep therefore states it, through the platform's own toggle endpoint, before it measures
+ * anything — and the enablement is itself one of the checks, so a deployment where the toggle refuses
+ * is reported rather than silently worked around.
+ */
+const GATED_FEATURES = [
+	'FEATURE_ORDER',
+	'FEATURE_CART',
+	'FEATURE_CATALOG',
+	'FEATURE_PRICING',
+	'FEATURE_TAX',
+	'FEATURE_PROMOTION',
+	'FEATURE_INVENTORY',
+	'FEATURE_GRAPHQL',
+	'FEATURE_WAREHOUSE',
+	'FEATURE_FULFILLMENT',
+	'FEATURE_RETURNS',
+	'FEATURE_SUBSCRIPTION',
+	'FEATURE_PURCHASING',
+	'FEATURE_ENTITLEMENT',
+	'FEATURE_MARKETPLACE',
+	'FEATURE_SEARCH',
+	'FEATURE_MULTI_CURRENCY',
+	'FEATURE_MULTI_REGION',
+	'FEATURE_MULTI_WAREHOUSE',
+	'FEATURE_B2B_CREDIT',
+	'FEATURE_ORDER_APPROVALS',
+	'FEATURE_GIFT_CARDS',
+	'FEATURE_WEBHOOKS',
+	'FEATURE_EXTERNAL_SEARCH',
+	'FEATURE_SEARCH_INDEX',
+	'FEATURE_BACKORDERS',
+	'FEATURE_PRICE_TIERS',
+	'FEATURE_BULK_API',
+	'FEATURE_DATA_EXPORT',
+	'FEATURE_TAX_PROVIDER',
+	'FEATURE_SUBSCRIPTION_BILLING',
+	'FEATURE_SELLER_PAYOUT_SCHEDULER'
+];
+
+/**
+ * Switches on every capability the sweep is about to read.
+ *
+ * @param {string} token The credential.
+ * @param {string} tenantId The tenant the caller is acting as.
+ * @returns {Promise<void>}
+ */
+async function enableGatedCapabilities(token, tenantId) {
+	const catalogue = await call('GET', '/api/feature/toggle', { token, tenantId });
+	const idByCode = new Map((catalogue.json?.items ?? []).map((feature) => [feature.code, feature.id]));
+
+	const toggles = await call('GET', '/api/feature/toggle/organizations', { token, tenantId });
+	const enabled = new Set(
+		(toggles.json?.items ?? []).filter((row) => row.isEnabled === true).map((row) => row.featureId)
+	);
+
+	const switched = [];
+	const missing = [];
+
+	for (const code of GATED_FEATURES) {
+		const featureId = idByCode.get(code);
+
+		if (!featureId) {
+			missing.push(`${code} is not in the catalogue`);
+			continue;
+		}
+
+		if (enabled.has(featureId)) continue;
+
+		const answer = await call('POST', '/api/feature/toggle', {
+			token,
+			tenantId,
+			body: { featureId, isEnabled: true }
+		});
+
+		if (answer.status === 200 || answer.status === 201) {
+			switched.push(code);
+		} else {
+			missing.push(`${code} (HTTP ${answer.status})`);
+		}
+	}
+
+	record(
+		'every gated commerce capability is switched on for this run',
+		missing.length === 0,
+		`${switched.length} switched on, ${GATED_FEATURES.length - switched.length - missing.length} already on${
+			missing.length ? `, not enabled: ${missing.slice(0, 3).join(', ')}` : ''
+		}`
+	);
+}
+
+/**
  * Turns a REST resource path into the GraphQL root field the design says must answer it.
  *
  * The convention is the plural resource name in lower camel case: `/order-returns` is `orderReturns`.
@@ -190,6 +290,9 @@ async function main() {
 		unscoped.status === 401 || unscoped.status === 403,
 		`HTTP ${unscoped.status}`
 	);
+
+	// --- the gated capabilities are switched on ------------------------------------------------
+	await enableGatedCapabilities(token, tenantId);
 
 	// --- every capability is mounted, over REST ------------------------------------------------
 	console.log('');

@@ -3,8 +3,11 @@ import { ApprovalPolicyTypesStringEnum, DecimalString } from '@gauzy/contracts';
 import {
 	RequestApprovalService,
 	RequestContext,
+	STORAGE_SCALE,
+	formatDecimalUnits,
 	isValidDecimalString,
-	normalizeDecimalString
+	normalizeDecimalString,
+	toUnitsAtScale
 } from '@gauzy/core';
 import { IPurchaseApprovalRequest, IPurchaseApprovalResult } from '../purchasing.types';
 
@@ -96,15 +99,23 @@ export class PurchaseApprovalService {
 		 * order's own total (`'62' is not an exact decimal amount`) and every approval of an order that
 		 * had been raised through the API. What is refused is unchanged: something that is not an exact
 		 * decimal at all. What is now accepted is any exact decimal, in whatever form it arrives.
+		 *
+		 * It is then expressed at the **column's own scale**, which is what the row will hold: the
+		 * request's amount and the value the approval machinery stores are the same text rather than two
+		 * spellings of one amount, so a reader comparing the request with the order it is about compares
+		 * two values that were written the same way. A value carrying a digit below that scale is refused
+		 * by `toUnitsAtScale` rather than rounded — money is never quietly rounded at a boundary.
 		 */
 		let amount: DecimalString;
 
 		try {
-			amount = normalizeDecimalString(
+			const normalized = normalizeDecimalString(
 				typeof request.amount === 'number' || typeof request.amount === 'bigint'
 					? request.amount
 					: String(request.amount ?? '').trim()
 			);
+
+			amount = formatDecimalUnits(toUnitsAtScale(normalized, STORAGE_SCALE), STORAGE_SCALE);
 		} catch {
 			amount = undefined as unknown as DecimalString;
 		}

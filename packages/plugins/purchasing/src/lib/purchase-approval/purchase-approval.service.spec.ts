@@ -6,23 +6,37 @@
  * approval machinery behind it is a double, because what this suite is about is the *request* this
  * package files, not the row the kernel writes for it.
  */
-jest.mock('@gauzy/core', () => ({
-	RequestApprovalService: class RequestApprovalService {},
-	// The decimal test is the platform's own, taken from the money layer rather than restated here: a
-	// double that answered differently would make this suite pass while the service refused real input.
-	isValidDecimalString: jest.requireActual('@gauzy/core/src/lib/money/decimal').isValidDecimalString,
-	// The double answers with the fixture's scope, which is what a request-scoped read resolves to. A
-	// case that is about the scope re-points it with a spy, so the scope is never a constant of this
-	// specification.
-	RequestContext: {
-		currentUser: () => null,
-		currentUserId: () => null,
-		currentTenantId: () => 'tenant-1',
-		currentOrganizationId: () => 'organization-1',
-		currentEmployeeId: () => null,
-		hasPermission: () => false
-	}
-}));
+jest.mock('@gauzy/core', () => {
+	/*
+	 * Both halves of the money layer the service reaches for are the platform's own, taken from the same
+	 * module rather than restated here: a double that answered differently would make this suite pass
+	 * while the service refused real input. `normalizeDecimalString` is here because the service
+	 * normalises the amount before it tests it — the port is handed the order's own `grandTotal`, which
+	 * the numeric columns hand over as a number — and a mock that omitted it made every call take the
+	 * refusal path, which is what this suite caught.
+	 */
+	const decimal = jest.requireActual('@gauzy/core/src/lib/money/decimal');
+
+	return {
+		RequestApprovalService: class RequestApprovalService {},
+		isValidDecimalString: decimal.isValidDecimalString,
+		normalizeDecimalString: decimal.normalizeDecimalString,
+		formatDecimalUnits: decimal.formatDecimalUnits,
+		toUnitsAtScale: decimal.toUnitsAtScale,
+		STORAGE_SCALE: decimal.STORAGE_SCALE,
+		// The double answers with the fixture's scope, which is what a request-scoped read resolves to. A
+		// case that is about the scope re-points it with a spy, so the scope is never a constant of this
+		// specification.
+		RequestContext: {
+			currentUser: () => null,
+			currentUserId: () => null,
+			currentTenantId: () => 'tenant-1',
+			currentOrganizationId: () => 'organization-1',
+			currentEmployeeId: () => null,
+			hasPermission: () => false
+		}
+	};
+});
 
 import { BadRequestException } from '@nestjs/common';
 import { ApprovalPolicyTypesStringEnum } from '@gauzy/contracts';

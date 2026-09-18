@@ -1,57 +1,45 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
-import {
-	addCheckConstraint,
-	dropCheckConstraint,
-	ICheckConstraintDefinition
-} from '../check-constraint.helper';
+import { addCheckConstraint, dropCheckConstraint, ICheckConstraintDefinition } from '@gauzy/core';
 
 /**
- * Adds the check that a party's loyalty balance is never negative, now that the column it guards exists
- * on installations that were created before this migration set.
+ * Adds the rule the order chapter states about a line that is not a line.
  *
- * ## Why it was missing
+ * ## Why a tick of its own
  *
- * `organization_contact.loyaltyPoints` was added as a plain column by
- * `1791000000095-AlterCoreTablesForExtensions`. That migration adds columns to tables it does not
- * create, so it can express a default but it cannot attach a rule to a table whose rows already exist —
- * a `CHECK` added to a populated table fails on the rows the rule would already refuse, and the
- * pre-existing rows of a live installation are exactly the rows this migration set may not assume
- * anything about. The companion constraint therefore runs on its own tick, after the column has been
- * backfilled to `0` by `0095`, and is the tick this migration occupies.
+ * `order_line` is created by `1791000000220-CreateOrderTables`, this package's first tick. The `kind`
+ * column exists for a reason: an order carries lines that are not things that were sold — a rounding
+ * line, a note, a placeholder for a bundle's parent — and those lines must not carry a quantity, a price
+ * or a product, because every figure computed over the order's lines would otherwise pick up a line that
+ * never existed. Stating the rule here, rather than leaving it to the writers, is what holds an import, a
+ * seed and a manual correction to it as well.
  *
- * ## Why the column carries a rule at all
+ * ## The rule
  *
- * The balance is a **cache of the `LOYALTY` adjustment movements**, written by the ledger and read by a
- * checkout that needs one number rather than a sum. A cached sum can drift, and the one drift a rule can
- * catch at the storage layer is a negative balance: no sequence of movements produces one, so a negative
- * value is always a write that went wrong. The rule is stated where the value lands, which is what makes
- * it hold for every writer — the redemption path, an import, a seed and a manual correction alike. The
- * same rule is enforced at the point of write by `OrganizationContactSubscriber`, which is what carries
- * it on the embedded dialect.
+ * **`CHK_order_line_kind_shape` — a line of any other kind than `ITEM` has no quantity, no price and no
+ * product or variant.** `quantity = 0 AND unitPrice = 0` rather than merely "empty": a line that carries
+ * a zero is a line that took part in the arithmetic and contributed nothing, which is exactly what a
+ * non-item line is, and a NULL would leave every sum over the lines undefined instead.
  *
- * ## Dialects
+ * The rule is stated as an implication from the kind rather than as a list of forbidden kinds, so a kind
+ * added later is a real line until it says otherwise; the failure mode of the other direction is an order
+ * whose new kind of line silently carries no quantity.
  *
- * PostgreSQL and MySQL enforce a `CHECK`; MySQL only began *enforcing* `CHECK` in 8.0.16 — on an older
- * server the constraint is parsed and ignored, which is why the same rule is also enforced at the point
- * of write. SQLite cannot add a `CHECK` to an existing table at all, so its branch is a documented no-op
- * and the rule there is the write-time check plus the nightly audit that compares stored rows against the
- * documented invariants.
- *
- * The probes and the dialect choice are the shared helper's; this class states only what is being added.
+ * The probes, the dialect choice and the embedded dialect's documented no-op are the shared helper's;
+ * this class states only what is being added.
  */
-export class AddOrganizationContactLoyaltyCheck1791000000545 implements MigrationInterface {
-	name = 'AddOrganizationContactLoyaltyCheck1791000000545';
+export class AddOrderLineKindShapeCheck1791000000430 implements MigrationInterface {
+	name = 'AddOrderLineKindShapeCheck1791000000430';
 
 	/** The one rule this tick carries. */
 	private static readonly CONSTRAINTS: readonly ICheckConstraintDefinition[] = [
 		{
-			table: 'organization_contact',
-			name: 'CHK_organization_contact_loyalty_nonneg',
-			columns: ['loyaltyPoints'],
-			postgres: `ALTER TABLE "organization_contact" ADD CONSTRAINT "CHK_organization_contact_loyalty_nonneg" CHECK ("loyaltyPoints" >= 0)`,
-			mysql: `ALTER TABLE \`organization_contact\` ADD CONSTRAINT \`CHK_organization_contact_loyalty_nonneg\` CHECK (\`loyaltyPoints\` >= 0)`
+			table: 'order_line',
+			name: 'CHK_order_line_kind_shape',
+			columns: ['kind', 'quantity', 'unitPrice', 'productId', 'variantId'],
+			postgres: `ALTER TABLE "order_line" ADD CONSTRAINT "CHK_order_line_kind_shape" CHECK ("kind" = 'ITEM' OR ("quantity" = 0 AND "unitPrice" = 0 AND "productId" IS NULL AND "variantId" IS NULL))`,
+			mysql: `ALTER TABLE \`order_line\` ADD CONSTRAINT \`CHK_order_line_kind_shape\` CHECK (\`kind\` = 'ITEM' OR (\`quantity\` = 0 AND \`unitPrice\` = 0 AND \`productId\` IS NULL AND \`variantId\` IS NULL))`
 		}
 	];
 
@@ -163,7 +151,7 @@ export class AddOrganizationContactLoyaltyCheck1791000000545 implements Migratio
 	 * @param queryRunner The runner the migration is executing on.
 	 */
 	private async addAll(queryRunner: QueryRunner): Promise<void> {
-		for (const constraint of AddOrganizationContactLoyaltyCheck1791000000545.CONSTRAINTS) {
+		for (const constraint of AddOrderLineKindShapeCheck1791000000430.CONSTRAINTS) {
 			await addCheckConstraint(queryRunner, constraint, this.name);
 		}
 	}
@@ -174,7 +162,7 @@ export class AddOrganizationContactLoyaltyCheck1791000000545 implements Migratio
 	 * @param queryRunner The runner the migration is executing on.
 	 */
 	private async dropAll(queryRunner: QueryRunner): Promise<void> {
-		for (const constraint of AddOrganizationContactLoyaltyCheck1791000000545.CONSTRAINTS) {
+		for (const constraint of AddOrderLineKindShapeCheck1791000000430.CONSTRAINTS) {
 			await dropCheckConstraint(queryRunner, constraint);
 		}
 	}

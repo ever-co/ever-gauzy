@@ -1,57 +1,50 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
-import {
-	addCheckConstraint,
-	dropCheckConstraint,
-	ICheckConstraintDefinition
-} from '../check-constraint.helper';
+import { addCheckConstraint, dropCheckConstraint, ICheckConstraintDefinition } from '../check-constraint.helper';
 
 /**
- * Adds the check that a party's loyalty balance is never negative, now that the column it guards exists
- * on installations that were created before this migration set.
+ * Adds the rule the kernel's chapter states about a table this migration set does not create.
  *
- * ## Why it was missing
+ * ## Why a tick of its own
  *
- * `organization_contact.loyaltyPoints` was added as a plain column by
- * `1791000000095-AlterCoreTablesForExtensions`. That migration adds columns to tables it does not
- * create, so it can express a default but it cannot attach a rule to a table whose rows already exist —
- * a `CHECK` added to a populated table fails on the rows the rule would already refuse, and the
- * pre-existing rows of a live installation are exactly the rows this migration set may not assume
- * anything about. The companion constraint therefore runs on its own tick, after the column has been
- * backfilled to `0` by `0095`, and is the tick this migration occupies.
+ * `tenant_setting` is a columns-added table as far as this programme is concerned:
+ * `1791000000095-AlterCoreTablesForExtensions` extends it with the scope columns. A rule about a
+ * populated table cannot ride along with the migration that adds the column — the rows that already
+ * exist are exactly the rows the rule may not assume anything about — so it is stated here, on its own
+ * tick, after the columns are in place.
  *
- * ## Why the column carries a rule at all
+ * ## The rule
  *
- * The balance is a **cache of the `LOYALTY` adjustment movements**, written by the ledger and read by a
- * checkout that needs one number rather than a sum. A cached sum can drift, and the one drift a rule can
- * catch at the storage layer is a negative balance: no sequence of movements produces one, so a negative
- * value is always a write that went wrong. The rule is stated where the value lands, which is what makes
- * it hold for every writer — the redemption path, an import, a seed and a manual correction alike. The
- * same rule is enforced at the point of write by `OrganizationContactSubscriber`, which is what carries
- * it on the embedded dialect.
+ * **`CHK_tenant_setting_scope_channel` — a setting is channel-scoped exactly when it names a channel.**
+ * `scope` is the address of a setting and `channelId` is the narrower address inside it, so a row that
+ * says `CHANNEL` and names no channel is a setting nothing can resolve, and a row that names a channel
+ * while claiming a tenant or organization scope is a setting that would be read by a resolution it does
+ * not belong to. The backfill of `1791000000095` sets `scope = 'TENANT'` and leaves `channelId` null, so
+ * it satisfies the rule and the constraint can be added to the populated table.
  *
- * ## Dialects
+ * **The second rule this chapter promises, and why it is not here.** `CHK_operation_status_terminal` —
+ * "a terminal operation holds no lease" — reads `lockedAt`, one of the lease columns §3.14 declares and
+ * the durable-operation runtime has yet to grow: today the lease lives inside `operation.state`, where no
+ * `CHECK` can reach it. A statement for a column no installation carries would be a migration that runs
+ * everywhere and constrains nothing, so the rule is deliberately left to the change that moves the lease
+ * into columns, and the gate `tools/scripts/constraint-parity-check.mjs` carries it in its `DEFERRED`
+ * list — with the column it is waiting for — so the promise is visible rather than missing.
  *
- * PostgreSQL and MySQL enforce a `CHECK`; MySQL only began *enforcing* `CHECK` in 8.0.16 — on an older
- * server the constraint is parsed and ignored, which is why the same rule is also enforced at the point
- * of write. SQLite cannot add a `CHECK` to an existing table at all, so its branch is a documented no-op
- * and the rule there is the write-time check plus the nightly audit that compares stored rows against the
- * documented invariants.
- *
- * The probes and the dialect choice are the shared helper's; this class states only what is being added.
+ * The probes, the dialect choice and the embedded dialect's documented no-op are the shared helper's;
+ * this class states only what is being added.
  */
-export class AddOrganizationContactLoyaltyCheck1791000000545 implements MigrationInterface {
-	name = 'AddOrganizationContactLoyaltyCheck1791000000545';
+export class AddCoreCheckConstraints1791000000546 implements MigrationInterface {
+	name = 'AddCoreCheckConstraints1791000000546';
 
 	/** The one rule this tick carries. */
 	private static readonly CONSTRAINTS: readonly ICheckConstraintDefinition[] = [
 		{
-			table: 'organization_contact',
-			name: 'CHK_organization_contact_loyalty_nonneg',
-			columns: ['loyaltyPoints'],
-			postgres: `ALTER TABLE "organization_contact" ADD CONSTRAINT "CHK_organization_contact_loyalty_nonneg" CHECK ("loyaltyPoints" >= 0)`,
-			mysql: `ALTER TABLE \`organization_contact\` ADD CONSTRAINT \`CHK_organization_contact_loyalty_nonneg\` CHECK (\`loyaltyPoints\` >= 0)`
+			table: 'tenant_setting',
+			name: 'CHK_tenant_setting_scope_channel',
+			columns: ['scope', 'channelId'],
+			postgres: `ALTER TABLE "tenant_setting" ADD CONSTRAINT "CHK_tenant_setting_scope_channel" CHECK (("scope" = 'CHANNEL') = ("channelId" IS NOT NULL))`,
+			mysql: `ALTER TABLE \`tenant_setting\` ADD CONSTRAINT \`CHK_tenant_setting_scope_channel\` CHECK ((\`scope\` = 'CHANNEL') = (\`channelId\` IS NOT NULL))`
 		}
 	];
 
@@ -163,7 +156,7 @@ export class AddOrganizationContactLoyaltyCheck1791000000545 implements Migratio
 	 * @param queryRunner The runner the migration is executing on.
 	 */
 	private async addAll(queryRunner: QueryRunner): Promise<void> {
-		for (const constraint of AddOrganizationContactLoyaltyCheck1791000000545.CONSTRAINTS) {
+		for (const constraint of AddCoreCheckConstraints1791000000546.CONSTRAINTS) {
 			await addCheckConstraint(queryRunner, constraint, this.name);
 		}
 	}
@@ -174,7 +167,7 @@ export class AddOrganizationContactLoyaltyCheck1791000000545 implements Migratio
 	 * @param queryRunner The runner the migration is executing on.
 	 */
 	private async dropAll(queryRunner: QueryRunner): Promise<void> {
-		for (const constraint of AddOrganizationContactLoyaltyCheck1791000000545.CONSTRAINTS) {
+		for (const constraint of AddCoreCheckConstraints1791000000546.CONSTRAINTS) {
 			await dropCheckConstraint(queryRunner, constraint);
 		}
 	}

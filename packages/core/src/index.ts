@@ -40,6 +40,20 @@ export {
 	revertLastDatabaseMigration,
 	runDatabaseMigrations
 } from './lib/database';
+// The probes a migration needs to add a `CHECK` safely: a rule about a populated table is added on its
+// own tick, long after the file that created the table, and every package that adds one needs the same
+// four probes — the table, the columns the rule reads, the constraint's own absence, and the embedded
+// dialect, which cannot add a constraint to an existing table at all.
+export {
+	addCheckConstraint,
+	dropCheckConstraint,
+	hasCheckConstraint,
+	supportsCheckConstraints
+} from './lib/database/check-constraint.helper';
+export type {
+	ICheckConstraintDefinition,
+	TCheckConstraintOutcome
+} from './lib/database/check-constraint.helper';
 export * from './lib/event-bus';
 export * from './lib/logger';
 export { EVER_REDIS_CLIENT, RedisModule } from './lib/redis';

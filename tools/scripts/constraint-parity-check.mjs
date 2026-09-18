@@ -22,9 +22,13 @@
  *     the inline `CREATE TABLE` bodies they carry.
  *
  * A promised rule whose table exists and which no migration creates is a **gap**, and the script exits
- * non-zero while one exists. A promised rule whose table no migration creates either is reported as
- * **deferred** and does not fail the run: a table that does not exist cannot carry a constraint, and
- * those promises are the record of what a later chapter has still to deliver.
+ * non-zero while one exists. A promise that cannot be created yet — for a table no migration creates, or
+ * for a column that is still to be added — is listed in `DEFERRED` below with the reason, and does not
+ * fail the run: those are the record of what a later chapter has still to deliver. The list is the point,
+ * exactly as the deliberately one-sided root fields are in the API parity gate — a promise that cannot be
+ * kept yet has to be *named* as such rather than left to look like a gap forever. An entry whose column
+ * has since arrived is reported as stale, so the wave that lands it has to move the name out of the list
+ * and into a migration.
  *
  * Usage:
  *   node tools/scripts/constraint-parity-check.mjs [repoRoot] [docsRoot]
@@ -101,6 +105,29 @@ function checkNames(text) {
 	return [...new Set(text.match(/CHK_[A-Za-z0-9_]+/g) ?? [])];
 }
 
+/**
+ * Every `CHK_…` name a piece of text *creates*, without repeats.
+ *
+ * A migration in this platform is mostly prose, and its comments name the constraints it creates — which
+ * is exactly what a reader wants and exactly what a naive scan gets wrong: a name mentioned in a comment
+ * about a rule that is deliberately deferred was counted as in force, and the deferral then vanished from
+ * the report instead of being reported. Only a name that follows the `CONSTRAINT` keyword is a statement
+ * the database executes, whether it appears in a `CREATE TABLE` body or in an `ALTER TABLE … ADD
+ * CONSTRAINT`, so that is what is counted.
+ *
+ * @param text The migration source.
+ * @returns The names it creates.
+ */
+function createdCheckNames(text) {
+	const names = new Set();
+
+	for (const match of text.matchAll(/CONSTRAINT\s+["'`]?(CHK_[A-Za-z0-9_]+)["'`]?/g)) {
+		names.add(match[1]);
+	}
+
+	return [...names];
+}
+
 /** Every table name a piece of text creates, alters or references in a statement. */
 function statementTables(text) {
 	const names = new Set();
@@ -124,19 +151,51 @@ if (!existsSync(DOCS)) {
 */
 const migrations = migrationFiles(join(ROOT, 'packages'));
 const inForce = new Map();
-const tables = new Set();
+const tables = new Map();
 
 for (const file of migrations) {
 	const source = readFileSync(file, 'utf8');
 
-	for (const name of checkNames(source)) {
+	for (const name of createdCheckNames(source)) {
 		if (!inForce.has(name)) {
 			inForce.set(name, file);
 		}
 	}
 
-	for (const table of statementTables(source)) {
-		tables.add(table);
+	/*
+	 * A table's columns are read from the statements that create and alter it: `CREATE TABLE "x" ( … )`
+	 * up to the primary key that closes every table this programme writes, and every `ALTER TABLE "x"`
+	 * statement. A column a promise names but no statement declares is what makes a rule unimplementable
+	 * today, so this is the difference between "the constraint is missing" and "the column is".
+	 */
+	for (const match of source.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?["'`]?([A-Za-z0-9_]+)["'`]?\s*\(/gi)) {
+		const table = match[1];
+		const from = match.index + match[0].length;
+		const rest = source.slice(from);
+		const primaryKey = rest.search(/PRIMARY\s+KEY/i);
+		const body = rest.slice(0, primaryKey === -1 ? 4000 : primaryKey);
+		const entry = tables.get(table) ?? { columns: new Set(), files: new Set() };
+
+		entry.files.add(file);
+
+		for (const column of body.matchAll(/["'`]([A-Za-z0-9_]+)["'`]\s+[A-Za-z]/g)) {
+			entry.columns.add(column[1]);
+		}
+
+		tables.set(table, entry);
+	}
+
+	for (const match of source.matchAll(/ALTER\s+TABLE\s+["'`]?([A-Za-z0-9_]+)["'`]?([\s\S]{0,2000}?)(?:`\)|`;|"\)|";|\)`|\);)/gi)) {
+		const table = match[1];
+		const entry = tables.get(table) ?? { columns: new Set(), files: new Set() };
+
+		entry.files.add(file);
+
+		for (const column of match[2].matchAll(/["'`]([A-Za-z0-9_]+)["'`]/g)) {
+			entry.columns.add(column[1]);
+		}
+
+		tables.set(table, entry);
 	}
 }
 
@@ -172,7 +231,7 @@ for (const file of markdownFiles(DOCS)) {
 			}
 
 			const stated = [...statementTables(window.join('\n'))];
-			const byName = [...tables]
+			const byName = [...tables.keys()]
 				.filter((table) => name.startsWith(`CHK_${table}_`) || name.startsWith(`CHK_${table}`))
 				.sort((a, b) => b.length - a.length);
 
@@ -187,42 +246,116 @@ for (const file of markdownFiles(DOCS)) {
 
 /*
 |--------------------------------------------------------------------------
+| The promises that cannot be kept yet, and why
+|--------------------------------------------------------------------------
+|
+| Each entry names the column (or the table) the rule is about and which no migration declares yet, so
+| the reason is checkable rather than asserted: a `why` that has stopped being true is reported as a
+| stale entry, and the wave that makes it true has to move the promise into a migration.
+*/
+const DEFERRED = [
+	{
+		name: 'CHK_operation_status_terminal',
+		table: 'operation',
+		column: 'lockedAt',
+		why: 'the lease is still inside `operation.state`; §3.14 moves it to the `lockedAt`/`lockedBy`/`leaseExpiresAt` columns, and the rule belongs to those columns'
+	},
+	{
+		name: 'CHK_adjustment_funding',
+		table: 'adjustment',
+		column: 'fundedBy',
+		why: 'the marketplace’s funding columns on `adjustment` (`fundedBy`, `sellerId`) have not landed; doc 20 §4.5 is their specification'
+	},
+	{
+		name: 'CHK_promotion_funding_share',
+		table: 'promotion',
+		column: 'fundingType',
+		why: 'the marketplace’s funding columns on `promotion` (`fundingType`, `sellerFundingShare`, `sellerId`) have not landed; doc 20 §11.2 is their specification'
+	},
+	{
+		name: 'CHK_promotion_seller_funding',
+		table: 'promotion',
+		column: 'sellerId',
+		why: 'the marketplace’s `sellerId` on `promotion` has not landed; doc 20 §11.2 is its specification'
+	}
+];
+
+const deferredByName = new Map(DEFERRED.map((entry) => [entry.name, entry]));
+
+/*
+|--------------------------------------------------------------------------
 | The comparison
 |--------------------------------------------------------------------------
 */
 const gaps = [];
 const deferred = [];
+const stale = [];
 
 for (const [name, promise] of [...promised].sort(([a], [b]) => a.localeCompare(b))) {
 	if (inForce.has(name)) {
 		continue;
 	}
 
+	const entry = deferredByName.get(name);
+
+	if (entry) {
+		// The reason has to still be true: a column that has arrived means the promise can be kept, and
+		// the entry has to leave this list in the same change that keeps it.
+		const columns = tables.get(entry.table)?.columns;
+		const arrived = columns ? columns.has(entry.column) : false;
+
+		if (arrived) {
+			stale.push(entry);
+		} else {
+			deferred.push({ name, ...promise, why: entry.why });
+		}
+
+		continue;
+	}
+
 	const tableExists = promise.table ? tables.has(promise.table) : false;
 
-	(tableExists ? gaps : deferred).push({ name, ...promise });
+	(tableExists ? gaps : deferred).push({
+		name,
+		...promise,
+		why: promise.table ? undefined : 'no migration creates the table the promise names'
+	});
 }
 
 console.log(`constraint parity check: ${migrations.length} migration file(s), ${tables.size} table(s), ${inForce.size} check constraint(s) in force.`);
 console.log(`constraint parity check: ${promised.size} check constraint(s) promised by the specification.`);
 
 if (deferred.length) {
-	console.log(`\nDeferred (${deferred.length}) — promised for a table no migration creates yet:`);
+	console.log(`\nDeferred (${deferred.length}) — promised, and not creatable yet:`);
 
 	for (const entry of deferred) {
 		console.log(`  · ${entry.name}  (${entry.doc}:${entry.line}${entry.table ? `, table ${entry.table}` : ''})`);
+		console.log(`      ${entry.why}`);
 	}
 }
 
-if (gaps.length) {
-	console.log(`\nGAPS (${gaps.length}) — promised for a table that exists, and created by no migration:`);
+if (stale.length) {
+	console.log(`\nSTALE (${stale.length}) — the reason for deferring these has stopped being true:`);
 
-	for (const entry of gaps) {
-		console.log(`  ✗ ${entry.name}  (${entry.doc}:${entry.line}, table ${entry.table})`);
+	for (const entry of stale) {
+		console.log(`  ✗ ${entry.name} — ${entry.table}.${entry.column} now exists, so the rule can be created;`);
+		console.log('      move it out of DEFERRED and into a migration.');
+	}
+}
+
+if (gaps.length || stale.length) {
+	if (gaps.length) {
+		console.log(`\nGAPS (${gaps.length}) — promised for a table that exists, and created by no migration:`);
+
+		for (const entry of gaps) {
+			console.log(`  ✗ ${entry.name}  (${entry.doc}:${entry.line}, table ${entry.table})`);
+		}
 	}
 
 	console.log('\nconstraint parity check: FAILED');
 	process.exit(1);
 }
 
-console.log('\nconstraint parity check: OK — every promised rule whose table exists is created by a migration.');
+console.log(
+	'\nconstraint parity check: OK — every promised rule whose table exists is created by a migration, and every deferral still has its reason.'
+);

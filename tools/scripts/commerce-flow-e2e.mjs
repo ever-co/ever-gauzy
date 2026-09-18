@@ -328,6 +328,116 @@ async function readBack(name, path, assertion, evidence) {
 	return row;
 }
 
+/**
+ * The feature codes the routes this flow drives are gated behind.
+ *
+ * The same list the sweep states, for the same reason, and stated here rather than derived from it
+ * because the two files are run independently: each has to be able to provision what it needs on an
+ * installation it finds in any state.
+ */
+const GATED_FEATURES = [
+	'FEATURE_ORDER',
+	'FEATURE_CART',
+	'FEATURE_CATALOG',
+	'FEATURE_PRICING',
+	'FEATURE_TAX',
+	'FEATURE_PROMOTION',
+	'FEATURE_INVENTORY',
+	'FEATURE_GRAPHQL',
+	'FEATURE_WAREHOUSE',
+	'FEATURE_FULFILLMENT',
+	'FEATURE_RETURNS',
+	'FEATURE_SUBSCRIPTION',
+	'FEATURE_PURCHASING',
+	'FEATURE_ENTITLEMENT',
+	'FEATURE_MARKETPLACE',
+	'FEATURE_SEARCH',
+	'FEATURE_MULTI_CURRENCY',
+	'FEATURE_MULTI_REGION',
+	'FEATURE_MULTI_WAREHOUSE',
+	'FEATURE_B2B_CREDIT',
+	'FEATURE_ORDER_APPROVALS',
+	'FEATURE_GIFT_CARDS',
+	'FEATURE_WEBHOOKS',
+	'FEATURE_EXTERNAL_SEARCH',
+	'FEATURE_SEARCH_INDEX',
+	'FEATURE_BACKORDERS',
+	'FEATURE_PRICE_TIERS',
+	'FEATURE_BULK_API',
+	'FEATURE_DATA_EXPORT',
+	'FEATURE_TAX_PROVIDER',
+	'FEATURE_SUBSCRIPTION_BILLING',
+	'FEATURE_SELLER_PAYOUT_SCHEDULER'
+];
+
+/**
+ * Switches on every capability this flow drives.
+ *
+ * The toggle is written **twice** per code — once tenant-wide and once for the caller's own
+ * organization — and that is not redundancy. The guard caches a resolved flag per tenant and per
+ * organization, and a write evicts only the entries of the scopes it touched; an organization that has no
+ * row of its own resolves from the tenant-wide row, so a tenant-wide write alone leaves that
+ * organization's cached answer standing until the entry expires (sixty seconds, the guard's TTL). Every
+ * request this suite makes states the organization, so the organization-scoped row is the one its reads
+ * resolve *and* the one whose cache entry the second write evicts — which is what makes the precondition
+ * take effect on the next request rather than a minute later.
+ *
+ * @returns {Promise<void>}
+ */
+async function enableGatedCapabilities() {
+	const catalogue = await call('GET', '/api/feature/toggle', { token: session.token, tenantId: session.tenantId });
+	const idByCode = new Map((catalogue.json?.items ?? []).map((feature) => [feature.code, feature.id]));
+
+	const toggles = await call('GET', '/api/feature/toggle/organizations', {
+		token: session.token,
+		tenantId: session.tenantId
+	});
+	const enabledForOrganization = new Set(
+		(toggles.json?.items ?? [])
+			.filter((row) => row.isEnabled === true && row.organizationId === session.organizationId)
+			.map((row) => row.featureId)
+	);
+
+	const switched = [];
+	const missing = [];
+
+	for (const code of GATED_FEATURES) {
+		const featureId = idByCode.get(code);
+
+		if (!featureId) {
+			missing.push(`${code} is not in the catalogue`);
+			continue;
+		}
+
+		if (enabledForOrganization.has(featureId)) continue;
+
+		const tenantWide = await call('POST', '/api/feature/toggle', {
+			token: session.token,
+			tenantId: session.tenantId,
+			body: { featureId, isEnabled: true }
+		});
+		const scoped = await call('POST', '/api/feature/toggle', {
+			token: session.token,
+			tenantId: session.tenantId,
+			body: { featureId, isEnabled: true, organizationId: session.organizationId }
+		});
+
+		if ((tenantWide.status === 200 || tenantWide.status === 201) && (scoped.status === 200 || scoped.status === 201)) {
+			switched.push(code);
+		} else {
+			missing.push(`${code} (HTTP ${tenantWide.status}/${scoped.status})`);
+		}
+	}
+
+	record(
+		'every gated capability this flow drives is switched on',
+		missing.length === 0,
+		`${switched.length} switched on, ${GATED_FEATURES.length - switched.length - missing.length} already on${
+			missing.length ? `, not enabled: ${missing.slice(0, 3).join(', ')}` : ''
+		}`
+	);
+}
+
 async function main() {
 	console.log('');
 	console.log('commerce flow end-to-end suite');
@@ -357,6 +467,18 @@ async function main() {
 	);
 
 	if (!session.token || !session.organizationId) return finish();
+
+	// --- the gated capabilities are switched on ---------------------------------------------------
+	/*
+	 * `FeatureFlagGuard` answers `404 Cannot GET …` for a route whose feature is switched off, so a
+	 * disabled capability reads exactly like a route that was never mounted. A fresh installation
+	 * switches eight of this programme's thirty-two codes on and leaves the rest to an explicit
+	 * business decision (appendix B §4), and this flow drives purchasing, warehouse, returns,
+	 * subscription and marketplace routes among others — so it states the decision through the
+	 * platform's own toggle endpoint before it measures anything, and reports the outcome as a check.
+	 */
+	section('the capabilities this flow drives are switched on');
+	await enableGatedCapabilities();
 
 	// --- the fixture chain ------------------------------------------------------------------------
 	/*
