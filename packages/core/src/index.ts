@@ -72,6 +72,12 @@ export { FeatureService } from './lib/feature/feature.service';
 export { FeatureOrganizationService } from './lib/feature/feature-organization.service';
 export { RoleModule, RoleService } from './lib/role';
 export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
+// The approval machinery is public API for the same reason as `FeatureModule` above: a package that
+// wants a decision recorded on a document it owns has to file the request against the platform's own
+// `request_approval` row rather than declaring a parallel approval table, and it can only do that
+// through the module that provides the service and the service itself.
+export { RequestApprovalModule } from './lib/request-approval/request-approval.module';
+export { RequestApprovalService } from './lib/request-approval/request-approval.service';
 export * from './lib/tenant';
 export { UserModule, UserService } from './lib/user';
 
@@ -218,6 +224,19 @@ export * from './lib/api';
  */
 export * from './lib/money';
 export * from './lib/measurement';
+export * from './lib/channel';
+export * from './lib/channel-domain';
+export * from './lib/channel-region';
+export * from './lib/region';
+export * from './lib/region-country';
+export * from './lib/address';
+export * from './lib/contact-group';
+export * from './lib/contact-group-member';
+export * from './lib/contact-credential';
+export * from './lib/contact-buyer';
+export * from './lib/payment-account-holder';
+export * from './lib/payment-method-token';
+export * from './lib/payment-instrument';
 export * from './lib/rule';
 export * from './lib/adjustment';
 export * from './lib/tax-line';
@@ -226,3 +245,5 @@ export * from './lib/search';
 export * from './lib/event-outbox';
 export * from './lib/operation';
 export * from './lib/webhook';
+export * from './lib/job-execution';
+export * from './lib/job-dead-letter';

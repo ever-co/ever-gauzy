@@ -238,6 +238,171 @@ export const ApiErrorCode = {
 	ADDRESS_OWNER_MISMATCH: 'ADDRESS_OWNER_MISMATCH',
 
 	/* ------------------------------------------------------------------ *
+	 * The remembered payer — an account at a provider, and the instruments under it
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * No account at a provider matches what the caller named. Distinct from the restricted code below
+	 * because the two call for different handling: a miss is a configuration defect or a stale
+	 * identifier, while a restriction is a state the provider put the account in and which the next
+	 * attempt may find lifted.
+	 */
+	PAYMENT_ACCOUNT_HOLDER_NOT_FOUND: 'PAYMENT_ACCOUNT_HOLDER_NOT_FOUND',
+	/**
+	 * The account exists but may not be used: it is not `ACTIVE`, or it is a recurring-debit account
+	 * that carries no mandate.
+	 *
+	 * The same code covers "the provider accepts no new charge while an existing mandate is still
+	 * honoured" and "nothing may be charged at all", because a caller's response to both is identical —
+	 * do not charge this payer — and the qualifier in the accompanying reason distinguishes them for a
+	 * human.
+	 */
+	PAYMENT_ACCOUNT_HOLDER_RESTRICTED: 'PAYMENT_ACCOUNT_HOLDER_RESTRICTED',
+	/** A move the account's own lifecycle does not allow: a status it cannot reach, a terminal state reopened. */
+	PAYMENT_ACCOUNT_HOLDER_STATUS_INVALID: 'PAYMENT_ACCOUNT_HOLDER_STATUS_INVALID',
+	/** A mandate write that carries a reference without its acceptance instant, or the reverse. */
+	PAYMENT_ACCOUNT_HOLDER_MANDATE_INVALID: 'PAYMENT_ACCOUNT_HOLDER_MANDATE_INVALID',
+	/** The account still has live instruments, so it may not be removed; the supported path is disabling it. */
+	PAYMENT_ACCOUNT_HOLDER_IN_USE: 'PAYMENT_ACCOUNT_HOLDER_IN_USE',
+	/** The party already holds a live account of this kind with this provider. */
+	PAYMENT_ACCOUNT_HOLDER_ACTIVE_EXISTS: 'PAYMENT_ACCOUNT_HOLDER_ACTIVE_EXISTS',
+	/** No saved instrument matches what the caller named. */
+	PAYMENT_METHOD_TOKEN_NOT_FOUND: 'PAYMENT_METHOD_TOKEN_NOT_FOUND',
+	/** The instrument was removed. Terminal, and the only removal path there is. */
+	PAYMENT_METHOD_TOKEN_REVOKED: 'PAYMENT_METHOD_TOKEN_REVOKED',
+	/** The instrument's expiry has passed. Terminal. */
+	PAYMENT_METHOD_TOKEN_EXPIRED: 'PAYMENT_METHOD_TOKEN_EXPIRED',
+	/**
+	 * The instrument cannot be used, and no more specific code applies: it is in the recoverable refused
+	 * state, it was not confirmed against the provider, it carries facts its kind cannot carry, or it
+	 * does not belong to the account the caller named.
+	 */
+	PAYMENT_METHOD_VALIDATION_FAILED: 'PAYMENT_METHOD_VALIDATION_FAILED',
+	/** The provider's reference is already saved against this provider and is still reusable. */
+	PAYMENT_METHOD_TOKEN_ALREADY_SAVED: 'PAYMENT_METHOD_TOKEN_ALREADY_SAVED',
+	/** The currency of the charge contradicts the currency the account settles in. */
+	PAYMENT_CURRENCY_MISMATCH: 'PAYMENT_CURRENCY_MISMATCH',
+
+	/* ------------------------------------------------------------------ *
+	 * Party data — the group, its membership, the login and the company account
+	 * ------------------------------------------------------------------ */
+
+	/** No contact group matches what the caller named, inside the caller's organization. */
+	CONTACT_GROUP_NOT_FOUND: 'CONTACT_GROUP_NOT_FOUND',
+	/**
+	 * No party matches what the caller named, inside the caller's organization.
+	 *
+	 * Documented in `docs/06-api-specification.md` as the customer-contact miss, and emitted by the party
+	 * reads this set's own services make — a company account that has to exist before a buyer is attached
+	 * to it, for instance.
+	 */
+	CONTACT_NOT_FOUND: 'CONTACT_NOT_FOUND',
+	/**
+	 * The group's shape is not one the platform can store: a code that is blank once trimmed, or a
+	 * discount that is not a fraction.
+	 *
+	 * The discount is the case worth naming — it is stored as a fraction and not as a percentage, so a
+	 * caller that sent `10` meaning ten per cent is refused rather than handed a group that discounts
+	 * everything by a thousand per cent.
+	 */
+	CONTACT_GROUP_INVALID: 'CONTACT_GROUP_INVALID',
+	/**
+	 * The group's code is already used by a live group of this organization.
+	 *
+	 * A code is how an integration and a rule address a group, so two live rows sharing one would make
+	 * a price list resolve to whichever row the planner reached first.
+	 */
+	CONTACT_GROUP_CODE_TAKEN: 'CONTACT_GROUP_CODE_TAKEN',
+	/**
+	 * The group is one the platform maintains, so an operator may neither delete it nor change its code.
+	 *
+	 * The refusal is deliberately a named code rather than a generic one: "you may not delete this" and
+	 * "this row is gone" call for different handling on the client, and only the first is recoverable by
+	 * editing something else.
+	 */
+	CONTACT_GROUP_SYSTEM: 'CONTACT_GROUP_SYSTEM',
+	/**
+	 * The membership write the request describes is not one this group may hold: a hand-written
+	 * membership of a rule-based group (whose membership is computed and never materialised), a second
+	 * live membership for the same pair, or a window that has already closed.
+	 */
+	CONTACT_GROUP_MEMBER_INVALID: 'CONTACT_GROUP_MEMBER_INVALID',
+	/** No membership matches what the caller named. */
+	CONTACT_GROUP_MEMBER_NOT_FOUND: 'CONTACT_GROUP_MEMBER_NOT_FOUND',
+	/** No credential matches what the caller named. */
+	CONTACT_CREDENTIAL_NOT_FOUND: 'CONTACT_CREDENTIAL_NOT_FOUND',
+	/** The contact already holds a credential; one contact is one login. */
+	CONTACT_CREDENTIAL_EXISTS: 'CONTACT_CREDENTIAL_EXISTS',
+	/** The login identifier is already taken inside this tenant, which is the scope a login is resolved in. */
+	CONTACT_CREDENTIAL_EMAIL_TAKEN: 'CONTACT_CREDENTIAL_EMAIL_TAKEN',
+	/**
+	 * Too many consecutive failed authentications. The credential refuses every login until
+	 * `lockedUntil` passes, whatever password is presented. Documented in `docs/06-api-specification.md`,
+	 * which assigns it `423`.
+	 */
+	CONTACT_CREDENTIAL_LOCKED: 'CONTACT_CREDENTIAL_LOCKED',
+	/** A single-use token was presented after it lapsed, or a body that carried one carried no expiry with it. */
+	CONTACT_CREDENTIAL_TOKEN_INVALID: 'CONTACT_CREDENTIAL_TOKEN_INVALID',
+	/**
+	 * A credential body carried a plaintext password, or asked a row to expose one of its secrets.
+	 *
+	 * The hash is produced by the platform's password hasher before the row is written, and the secrets
+	 * are absent from every projection by construction, so a request naming one is refused rather than
+	 * quietly ignored — a caller that believes it set a password has a bug it would otherwise never see.
+	 */
+	CONTACT_CREDENTIAL_SECRET_NOT_ACCEPTED: 'CONTACT_CREDENTIAL_SECRET_NOT_ACCEPTED',
+	/** No company-account membership matches what the caller named. */
+	CONTACT_BUYER_NOT_FOUND: 'CONTACT_BUYER_NOT_FOUND',
+	/**
+	 * A row named as a company account is not one declared `COMPANY`, or a change would leave live buyer
+	 * rows hanging off an individual. Documented in `docs/06-api-specification.md`, which assigns it `409`.
+	 */
+	COMPANY_ACCOUNT_REQUIRED: 'COMPANY_ACCOUNT_REQUIRED',
+	/** A party cannot be its own buyer: purchasing authority is not a relationship with oneself. */
+	CONTACT_BUYER_SELF: 'CONTACT_BUYER_SELF',
+	/** The pair already has a live membership. */
+	CONTACT_BUYER_EXISTS: 'CONTACT_BUYER_EXISTS',
+	/** The buyer already belongs to another live company account, which is one relationship at a time. */
+	CONTACT_BUYER_COMPANY_EXISTS: 'CONTACT_BUYER_COMPANY_EXISTS',
+	/** A membership's role, limit or period start day is not one the account can hold. */
+	CONTACT_BUYER_TERMS_INVALID: 'CONTACT_BUYER_TERMS_INVALID',
+	/** The buyer's role may not place an order on the company account at all. */
+	BUYER_NOT_AUTHORISED: 'BUYER_NOT_AUTHORISED',
+	/** The order exceeds the buyer's per-order ceiling or the rolling-period ceiling. */
+	BUYER_LIMIT_EXCEEDED: 'BUYER_LIMIT_EXCEEDED',
+	/**
+	 * The party is blocked: checkout and login are refused while the profile and the order history stay
+	 * readable. Documented in the schema chapter's `organization_contact` invariants.
+	 */
+	CONTACT_BLOCKED: 'CONTACT_BLOCKED',
+
+	/* ------------------------------------------------------------------ *
+	 * The job runtime — the scheduler's run ledger and its dead-letter store
+	 * ------------------------------------------------------------------ */
+
+	/** No run in the ledger matches what the caller named, inside the caller's scope. */
+	JOB_EXECUTION_NOT_FOUND: 'JOB_EXECUTION_NOT_FOUND',
+	/**
+	 * An attempt was not opened because a live run of the same job and scope is still in flight.
+	 *
+	 * The refusal is a fact rather than a fault: the caller records it as a `SKIPPED_OVERLAP` row, which
+	 * is what makes "the job did not run" a different fact from "the job ran and did nothing".
+	 */
+	JOB_EXECUTION_ALREADY_RUNNING: 'JOB_EXECUTION_ALREADY_RUNNING',
+	/**
+	 * The write contradicts what a run is: an outcome that is not an outcome, a run that has already
+	 * ended, an attempt count that would go backwards, or a job id that was not presented.
+	 */
+	JOB_EXECUTION_STATE_INVALID: 'JOB_EXECUTION_STATE_INVALID',
+	/** No dead letter matches what the caller named, inside the caller's scope. */
+	JOB_DEAD_LETTER_NOT_FOUND: 'JOB_DEAD_LETTER_NOT_FOUND',
+	/**
+	 * The write contradicts the dead letter's lifecycle: a row replayed or discarded twice, a discard
+	 * without a reason, a row recorded without its payload, or a name or attempt count that is missing.
+	 */
+	JOB_DEAD_LETTER_STATE_INVALID: 'JOB_DEAD_LETTER_STATE_INVALID',
+
+	/* ------------------------------------------------------------------ *
 	 * Platform — the floor every route falls back to
 	 * ------------------------------------------------------------------ */
 

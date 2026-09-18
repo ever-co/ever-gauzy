@@ -1,0 +1,40 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { ContactGroupModule } from '../contact-group/contact-group.module';
+import { ContactGroupMember } from './contact-group-member.entity';
+import { ContactGroupMemberService } from './contact-group-member.service';
+import { TypeOrmContactGroupMemberRepository } from './repository/type-orm-contact-group-member.repository';
+import { MikroOrmContactGroupMemberRepository } from './repository/mikro-orm-contact-group-member.repository';
+
+/**
+ * Group membership: who is in which group, until when, and who put them there.
+ *
+ * **Both ORMs are registered**, for the reason the group module states: the kernel is dual-ORM and each
+ * repository pair belongs with the module that declares its table.
+ *
+ * **`ContactGroupModule` is imported because the write has to ask about the group.** Does it exist
+ * inside the caller's scope, and does its kind allow a hand-written membership at all? The dependency
+ * runs one way — the group service never reads membership — so no cycle is created, and the group's
+ * member count is answered by this module's service to whoever asks rather than by a collection on the
+ * group row.
+ *
+ * **`RolePermissionModule` is imported for the guards**, so that the module which will host this
+ * domain's handlers can reach the permission lookup they inject.
+ */
+@Module({
+	imports: [
+		TypeOrmModule.forFeature([ContactGroupMember]),
+		MikroOrmModule.forFeature([ContactGroupMember]),
+		ContactGroupModule,
+		RolePermissionModule
+	],
+	providers: [
+		ContactGroupMemberService,
+		TypeOrmContactGroupMemberRepository,
+		MikroOrmContactGroupMemberRepository
+	],
+	exports: [ContactGroupMemberService, TypeOrmContactGroupMemberRepository, MikroOrmContactGroupMemberRepository]
+})
+export class ContactGroupMemberModule {}

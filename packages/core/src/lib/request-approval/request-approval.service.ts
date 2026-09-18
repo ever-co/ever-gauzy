@@ -241,6 +241,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	/**
 	 * Creates a RequestApproval record.
 	 *
+	 * `requestId` and `requestType` are the polymorphic pair that attaches the request to the document
+	 * it is about: `requestType` names the kind of document and `requestId` names the row, which is
+	 * what lets an approver's list, a threshold policy and the document itself all resolve the same
+	 * request without any of them owning a column on the other. A request filed without the pair
+	 * exists, but nothing can say what it is about.
+	 *
 	 * @param entity - The input data to create a RequestApproval.
 	 * @returns The saved RequestApproval entity.
 	 */
@@ -253,6 +259,11 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		requestApproval.approvalPolicyId = entity.approvalPolicyId;
 		requestApproval.name = entity.name;
 		requestApproval.min_count = entity.min_count;
+		requestApproval.requestId = entity.requestId;
+		requestApproval.requestType = entity.requestType;
+		requestApproval.amount = entity.amount;
+		requestApproval.currency = entity.currency;
+		requestApproval.note = entity.note;
 		requestApproval.tags = entity.tags;
 		requestApproval.organizationId = entity.organizationId;
 		requestApproval.tenantId = tenantId;

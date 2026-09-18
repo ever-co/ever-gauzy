@@ -241,22 +241,34 @@ export class AddressRoleService extends TenantAwareCrudService<AddressRole> {
 	 * @param addressId The address to make the default.
 	 * @param role The role.
 	 * @param ownerAddressIds Every address of the same owner, this one included.
+	 * @param manager The transaction to write inside, when the caller has one. The address book passes
+	 * its own: the role row is the role dimension of the same default the address's boolean mirrors and
+	 * the party's column records, and the three are one fact written in one transaction or they are
+	 * three answers to one question. Opened here when the caller has none, exactly as {@link assign}
+	 * does.
 	 * @returns The stored role row.
 	 * @throws ApiException `ADDRESS_DEFAULT_MISMATCH` (409) when a sibling's mirror boolean disagrees.
 	 */
-	async setDefault(addressId: ID, role: AddressRoleEnum, ownerAddressIds: ID[]): Promise<AddressRole> {
+	async setDefault(
+		addressId: ID,
+		role: AddressRoleEnum,
+		ownerAddressIds: ID[],
+		manager?: EntityManager
+	): Promise<AddressRole> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 		const siblings = [...new Set([addressId, ...(ownerAddressIds ?? [])])];
 
-		return this.typeOrmRepository.manager.transaction(async (manager: EntityManager) => {
-			await manager.update(
+		const write = async (entityManager: EntityManager): Promise<AddressRole> => {
+			await entityManager.update(
 				AddressRole,
 				{ role, addressId: In(siblings), tenantId, organizationId } as any,
 				{ isDefault: false } as any
 			);
 
-			const row = await manager.findOne(AddressRole, { where: { addressId, role, tenantId, organizationId } as any });
+			const row = await entityManager.findOne(AddressRole, {
+				where: { addressId, role, tenantId, organizationId } as any
+			});
 
 			if (!row) {
 				throw new NotFoundException(
@@ -266,8 +278,14 @@ export class AddressRoleService extends TenantAwareCrudService<AddressRole> {
 
 			row.isDefault = true;
 
-			return manager.save(row);
-		});
+			return entityManager.save(row);
+		};
+
+		if (manager) {
+			return write(manager);
+		}
+
+		return this.typeOrmRepository.manager.transaction(write);
 	}
 
 	/**
