@@ -61,7 +61,7 @@
 						>
 							<div
 								(click)="onClickKeyResult(keyResult, goalIndex(goal))"
-								class="goal-row key-result"
+								class="goal-row key-result keyResult"
 							>
 								<span class="goal-name">{{ keyResult.name }}</span>
 								<span class="goal-percent">{{ keyResult.progress }}%</span>
@@ -88,8 +88,8 @@
 						<nb-accordion-item-body class="add-key-result">
 							<button
 								nbButton
-								status="basic"
-								class="action success"
+								status="success"
+								outline
 								size="small"
 								(click)="addKeyResult(goalIndex(goal), true)"
 							>
@@ -178,7 +178,7 @@
 		nbPopoverPlacement="bottom"
 		[nbPopover]="groupByPopover"
 		size="small"
-		class="action secondary"
+		class="action"
 	>
 		<nb-icon icon="folder"></nb-icon>{{ 'GOALS_PAGE.GROUP_BY' | translate }}
 	</button>
@@ -189,7 +189,7 @@
 		nbPopoverPlacement="bottom"
 		[nbPopover]="filterPopover"
 		size="small"
-		class="action secondary"
+		class="action"
 	>
 		<nb-icon icon="funnel"></nb-icon>{{ 'FORM.FILTER' | translate }}
 	</button>
