@@ -1,0 +1,174 @@
+# The contact-group domain's GraphQL types.
+#
+# A group is a named set of parties that prices, promotions, shipping and payment eligibility can
+# target. The row is deliberately small — the commercial terms it grants are a reference to a price list
+# and a group-wide discount — and its membership is the pivot, declared by the membership domain's own
+# document and reached from here through the two fields at the end of the type.
+#
+# `discountPercent` is a **fraction** and not a percentage: `0.1` is ten per cent. It is a ratio rather
+# than an amount, so it is carried as `Float`; every money value in this schema is `Decimal`, serialised
+# as a string with six fractional digits.
+
+"""
+A named set of parties that prices and promotions can target.
+"""
+type ContactGroup {
+	id: ID!
+	tenantId: ID
+	organizationId: ID
+	"""The display name of the group, as an operator reads it."""
+	name: String!
+	"""
+	The stable key an integration addresses the group by, unique per organization among live rows.
+	Written once for a group the platform maintains, whose code its own logic addresses it by.
+	"""
+	code: String!
+	"""What the group is for, in the tenant's own words."""
+	description: String
+	"""Whether membership is explicit or computed. A rule-based group's membership is never written down."""
+	type: ContactGroupType!
+	"""The price list granted to every member of this group."""
+	priceListId: ID
+	"""
+	The group-wide discount, as a fraction between 0 and 1. Applied when no price list wins.
+
+	A value a resolution branches on, so it is a column rather than a key of `metadata`.
+	"""
+	discountPercent: Float
+	"""
+	Whether the platform maintains this group. Such a group is neither deletable nor re-codable, and
+	the flag is written by the platform's own seeding path rather than by a request.
+	"""
+	isSystem: Boolean!
+	"""Tenant-defined extras that nothing filters on."""
+	metadata: JSON
+	"""
+	The live membership of this group, oldest first. Resolved by the membership domain, which owns the
+	pivot and the rule that an expired row is absent to every reader.
+	"""
+	members: [ContactGroupMember!]
+	"""
+	How many parties are live members. Resolved from the pivot rather than counted as rows, because a
+	membership whose window has closed is not a membership.
+	"""
+	memberCount: Int!
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+What kind of membership a group has.
+
+Static and rule-based segmentation live in one concept, because both are "a set of contacts that prices
+and promotions can target". The kind is not a label: it decides who may write a membership row.
+"""
+enum ContactGroupType {
+	"""Membership is exactly the live member rows of this group, and they may be written by hand."""
+	STATIC
+	"""Membership is computed from the group's rules on every evaluation and is never materialised."""
+	RULE_BASED
+}
+
+"""
+The boundary of one page of groups.
+"""
+type ContactGroupEdge {
+	node: ContactGroup!
+	cursor: String!
+}
+
+"""
+One page of groups, with the total the filters select and the boundary cursors.
+"""
+type ContactGroupConnection {
+	nodes: [ContactGroup!]!
+	edges: [ContactGroupEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a group may be sorted by.
+"""
+enum ContactGroupSortField {
+	createdAt
+	updatedAt
+	name
+	code
+	type
+	isSystem
+	discountPercent
+}
+
+"""
+The order the groups are returned in. At most three keys are accepted.
+"""
+input ContactGroupSort {
+	field: ContactGroupSortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on the kind of membership.
+"""
+input ContactGroupTypeFilter {
+	eq: ContactGroupType
+	ne: ContactGroupType
+	in: [ContactGroupType!]
+	nin: [ContactGroupType!]
+	isNull: Boolean
+}
+
+"""
+The fields a group list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+"""
+input ContactGroupFilter {
+	id: IDFilter
+	name: StringFilter
+	code: StringFilter
+	description: StringFilter
+	type: ContactGroupTypeFilter
+	priceListId: IDFilter
+	isSystem: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ContactGroupFilter!]
+	or: [ContactGroupFilter!]
+	not: ContactGroupFilter
+}
+
+"""
+What a caller states when it creates a group.
+
+`isSystem` is absent by construction: a caller that could promote its own group to undeletable would be
+deciding a platform matter. A body that states it is refused rather than ignored.
+"""
+input CreateContactGroupInput {
+	organizationId: ID!
+	name: String!
+	code: String!
+	description: String
+	type: ContactGroupType
+	priceListId: ID
+	discountPercent: Float
+	metadata: JSON
+}
+
+"""
+What a caller may change on a group that exists.
+
+The kind is among the mutable fields, because a tenant that outgrows a hand-kept list turns it into a
+rule-based segment; the service refuses that change while hand-written member rows exist.
+"""
+input UpdateContactGroupInput {
+	id: ID!
+	organizationId: ID!
+	name: String
+	code: String
+	description: String
+	type: ContactGroupType
+	priceListId: ID
+	discountPercent: Float
+	metadata: JSON
+}

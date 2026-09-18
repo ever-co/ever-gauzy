@@ -5,6 +5,8 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { AddressRoleModule } from '../address-role/address-role.module';
 import { Address } from './address.entity';
 import { AddressService } from './address.service';
+import { AddressController } from './address.controller';
+import { AddressResolver } from './address.resolver';
 import { TypeOrmAddressRepository } from './repository/type-orm-address.repository';
 import { MikroOrmAddressRepository } from './repository/mikro-orm-address.repository';
 
@@ -26,12 +28,15 @@ import { MikroOrmAddressRepository } from './repository/mikro-orm-address.reposi
  * address's own boolean and the party's authoritative column, and the pivot's `setDefault` is what
  * clears the siblings, so the rule stays stated once, in the service that owns it.
  *
- * **`RolePermissionModule` is imported for the guards rather than for a service.** This module owns no
- * HTTP handler today — the controller and the resolvers that will carry `/addresses` are a later
- * wave — and a guard is a provider of whichever module hosts the handler it protects, so the module
- * that will host them has to be able to reach the permission lookup those guards ask for. Importing it
- * here is what makes this module the one place a handler is added, rather than a second edit a later
- * change has to remember.
+ * **`RolePermissionModule` is imported for the guards rather than for a service.** The controller and
+ * the resolver that carry `/addresses` are providers of this module, and a guard is a provider of
+ * whichever module hosts the handler it protects, so the module that hosts them has to be able to
+ * reach the permission lookup those guards ask for. Importing it here is what makes this module the
+ * one place a handler is added.
+ *
+ * **The controller and the resolver are declared and exported here**, beside the service they call:
+ * a resolver can only inject services its own module can reach, and the composition module the Apollo
+ * configuration names imports this one so the resolver is discovered without a second registration.
  */
 @Module({
 	imports: [
@@ -40,7 +45,8 @@ import { MikroOrmAddressRepository } from './repository/mikro-orm-address.reposi
 		RolePermissionModule,
 		AddressRoleModule
 	],
-	providers: [AddressService, TypeOrmAddressRepository, MikroOrmAddressRepository],
-	exports: [AddressService, TypeOrmAddressRepository, MikroOrmAddressRepository]
+	controllers: [AddressController],
+	providers: [AddressService, AddressResolver, TypeOrmAddressRepository, MikroOrmAddressRepository],
+	exports: [AddressService, AddressResolver, TypeOrmAddressRepository, MikroOrmAddressRepository]
 })
 export class AddressModule {}

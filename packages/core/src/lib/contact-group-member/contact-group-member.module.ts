@@ -5,6 +5,8 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { ContactGroupModule } from '../contact-group/contact-group.module';
 import { ContactGroupMember } from './contact-group-member.entity';
 import { ContactGroupMemberService } from './contact-group-member.service';
+import { ContactGroupMemberController } from './contact-group-member.controller';
+import { ContactGroupMemberResolver } from './contact-group-member.resolver';
 import { TypeOrmContactGroupMemberRepository } from './repository/type-orm-contact-group-member.repository';
 import { MikroOrmContactGroupMemberRepository } from './repository/mikro-orm-contact-group-member.repository';
 
@@ -20,8 +22,15 @@ import { MikroOrmContactGroupMemberRepository } from './repository/mikro-orm-con
  * member count is answered by this module's service to whoever asks rather than by a collection on the
  * group row.
  *
- * **`RolePermissionModule` is imported for the guards**, so that the module which will host this
- * domain's handlers can reach the permission lookup they inject.
+ * **The membership routes and the membership field resolvers are declared here rather than beside the
+ * group**, and that is the same one-way dependency read the other way round: this module can reach both
+ * services, while the group module cannot reach this one without closing a cycle. So the routes that
+ * hang off `/contact-groups/:id/members`, and the `members` / `memberCount` fields of the group type,
+ * are answered from here — by the service that owns the pivot, and not by a row count over its table,
+ * because a membership whose window has closed is absent to every reader.
+ *
+ * **`RolePermissionModule` is imported for the guards**, so that this module — which hosts the
+ * membership controller and resolver — can reach the permission lookup they inject.
  */
 @Module({
 	imports: [
@@ -30,11 +39,18 @@ import { MikroOrmContactGroupMemberRepository } from './repository/mikro-orm-con
 		ContactGroupModule,
 		RolePermissionModule
 	],
+	controllers: [ContactGroupMemberController],
 	providers: [
 		ContactGroupMemberService,
+		ContactGroupMemberResolver,
 		TypeOrmContactGroupMemberRepository,
 		MikroOrmContactGroupMemberRepository
 	],
-	exports: [ContactGroupMemberService, TypeOrmContactGroupMemberRepository, MikroOrmContactGroupMemberRepository]
+	exports: [
+		ContactGroupMemberService,
+		ContactGroupMemberResolver,
+		TypeOrmContactGroupMemberRepository,
+		MikroOrmContactGroupMemberRepository
+	]
 })
 export class ContactGroupMemberModule {}

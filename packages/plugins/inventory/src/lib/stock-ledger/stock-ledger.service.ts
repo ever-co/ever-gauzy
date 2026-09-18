@@ -26,20 +26,24 @@
  *   variant that is not stocked at the location has no home bin at all, which is a different answer
  *   from a level that names none.
  *
- * **What a movement does to the level.** The caller states a signed quantity and a kind, and the kind
- * decides whether that quantity moves the level:
+ * **What a movement does to the level.** The caller states a signed quantity and a kind, and the
+ * quantity is what the level moves by:
  *
  * | kind | effect on the level |
  * |---|---|
- * | `RETURN`, `ADJUSTMENT`, `TRANSFER_IN`, `TRANSFER_OUT`, `SALE`, `COUNT`, `RECEIPT`, `ISSUE` | the stated signed quantity, which is what the caller’s own document says happened |
- * | `WRITE_OFF`, `DAMAGE` | none: both record units that never entered sellable stock, so the level stays where it is and the movement is the record of the event |
+ * | `RETURN`, `ADJUSTMENT`, `TRANSFER_IN`, `TRANSFER_OUT`, `SALE`, `COUNT`, `RECEIPT`, `ISSUE`, `WRITE_OFF`, `DAMAGE` | the stated signed quantity, which is what the caller’s own document says happened |
+ * | any of the above, stated with `eventOnly` | none: the units never entered this location’s stock, so the level stays where it is, the row records the event and the stated quantity is kept in the row’s note |
  *
- * The two event-only kinds are stated by the flows that receive goods — units that came back
- * unsellable, units that arrived broken — and in every one of them the units are recorded without
- * ever being sellable. Applying the stated quantity there would put damaged stock into the number the
- * platform sells against, which is the one error an inventory ledger must not make. The stated
- * quantity is not lost: it is kept in the movement’s own note, so the row still says how many units
- * the event was about.
+ * **An event is a property of the request, not of a kind.** `WRITE_OFF` and `DAMAGE` are stated by
+ * callers on both sides of that line and the ledger may not guess which one is speaking. A goods
+ * receipt that is reversed states a *delta* — the receipt it undoes moved the level, so the
+ * compensating write-off has to move it back, and reading the kind as "no effect" would leave goods
+ * the installation no longer holds in the number it sells against. A return whose units came back
+ * unsellable states an *event* — those units were never in this location’s stock, so applying their
+ * quantity would put unsellable units into the same number, which is the one error an inventory ledger
+ * must not make. The first caller states nothing extra and its quantity lands; the second states
+ * `eventOnly`, and the quantity it stated is kept in the movement’s own note so the row still says how
+ * many units the event was about.
  *
  * **The ledger stays append-only.** A movement is written, never edited and never deleted; a caller
  * that must undo one states its opposite, exactly as the compensation path of a receipt does. Every
@@ -86,15 +90,6 @@ import {
  * records what the column will hold and the two sides of the ledger’s invariant are the same number.
  */
 const LEDGER_QUANTITY_SCALE = 6;
-
-/**
- * The kinds that record an event without changing the level.
- *
- * Both name units that never entered sellable stock: a write-off is how a flow records that goods
- * came back and are not going on the shelf, and a damage is how it records that they arrived broken.
- * The level is the number the platform sells against, so neither may add to it.
- */
-const EVENT_ONLY_TYPES: StockMovementType[] = [StockMovementType.WRITE_OFF, StockMovementType.DAMAGE];
 
 /**
  * A level row as this seam reads it.
@@ -266,8 +261,9 @@ export class StockLedgerService {
 	 *
 	 * The request is the calling package’s statement of what physically happened: which variant, at
 	 * which location, in which bin, how many units, and which of its own documents asked for it. The
-	 * quantity is brought to the ledger’s scale, the kind decides whether it moves the level (see the
-	 * class documentation), and the engine resolves the level row, locks it, validates the domain
+	 * quantity is brought to the ledger’s scale and is the level’s delta, unless the caller states that
+	 * the movement is an event about units that never entered this location’s stock (`eventOnly`, see the
+	 * class documentation); the engine then resolves the level row, locks it, validates the domain
 	 * invariants against the locked values and writes the append-only row beside the level update —
 	 * one transaction, so the two are never apart.
 	 *
@@ -284,7 +280,7 @@ export class StockLedgerService {
 		this.assertStated(request, ['warehouseId', 'variantId', 'referenceType', 'referenceId']);
 
 		const stated = this.quantityText(request.quantity);
-		const delta = this.levelDeltaOf(type, stated);
+		const delta = request.eventOnly ? this.quantityText(0) : stated;
 
 		const applied = await this.stockLevelService.applyMovement({
 			warehouseId: request.warehouseId,
@@ -296,8 +292,8 @@ export class StockLedgerService {
 			referenceType: request.referenceType as StockMovementReferenceType,
 			referenceId: request.referenceId,
 			reason: request.reason,
-			// A kind that records an event without moving the level would otherwise leave a row that
-			// does not say how many units the event was about; the quantity the caller stated is kept.
+			// An event-only movement would otherwise leave a row that does not say how many units the
+			// event was about; the quantity the caller stated is kept.
 			...(delta === stated ? {} : { note: this.eventNoteOf(type, stated) }),
 			occurredAt: request.occurredAt
 		});
@@ -472,18 +468,6 @@ export class StockLedgerService {
 	}
 
 	/**
-	 * The change a movement of this kind makes to the level.
-	 *
-	 * @param type The movement type.
-	 * @param stated The exact quantity the caller stated.
-	 * @returns The stated quantity, or zero for a kind that records an event which never entered
-	 * sellable stock.
-	 */
-	private levelDeltaOf(type: StockMovementType, stated: DecimalString): DecimalString {
-		return EVENT_ONLY_TYPES.includes(type) ? this.quantityText(0) : stated;
-	}
-
-	/**
 	 * The note kept on a movement that records an event without moving the level.
 	 *
 	 * @param type The movement type.
@@ -491,7 +475,7 @@ export class StockLedgerService {
 	 * @returns The note, which says what the row is and how many units it was about.
 	 */
 	private eventNoteOf(type: StockMovementType, stated: DecimalString): string {
-		return `${type}: the level is unchanged, because units recorded by this kind never entered sellable stock. The caller stated ${stated}.`;
+		return `${type}: the level is unchanged, because the caller stated that these units never entered this location's stock. The caller stated ${stated}.`;
 	}
 
 	/**

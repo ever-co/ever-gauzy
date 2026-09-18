@@ -46,6 +46,15 @@ interface IPlannedMovement {
 	quantity: string;
 	/** What kind of movement this is. */
 	kind: StockMovementKind;
+	/**
+	 * Whether these units ever entered the location's stock.
+	 *
+	 * A restocked unit did, once it is received, and its quantity lands on the level. A unit that came
+	 * back unsellable or arrived damaged never did — it is recorded as an event about the units, and the
+	 * level is left where it is, which is what keeps units the platform cannot sell out of the number it
+	 * sells against.
+	 */
+	eventOnly: boolean;
 	/** Why the movement happened. */
 	reason: string;
 }
@@ -561,9 +570,12 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * States the stock movements a receipt will produce, without writing any of them.
 	 *
 	 * Every unit **this delivery** brought produces exactly one movement, and which one depends on what
-	 * happened to it: a restocked unit is a `RETURN`, a unit that came back unsellable is a
-	 * `WRITE_OFF` (recorded without ever entering sellable stock), and a unit that arrived broken is a
-	 * `DAMAGE`. What the line already held is subtracted first, because the ledger holds every arrival
+	 * happened to it: a restocked unit is a `RETURN` that lands on the level, a unit that came back
+	 * unsellable is an **event-only** `WRITE_OFF`, and a unit that arrived broken is an **event-only**
+	 * `DAMAGE`. The two latter kinds are stated with `eventOnly` because those units never entered the
+	 * location's stock: they left the network on a sale and came back unsellable, so the row records what
+	 * happened to them while the level — the number the platform sells against — keeps the quantity it
+	 * had. What the line already held is subtracted first, because the ledger holds every arrival
 	 * separately and a movement for a unit that was recorded by an earlier delivery would count it
 	 * twice.
 	 *
@@ -583,7 +595,13 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		fulfilled: Map<ID, { variantId?: ID }>,
 		warehouseId?: ID
 	): IPlannedMovement[] {
-		const pending: Array<{ line: OrderReturnLine; quantity: string; kind: StockMovementKind; reason: string }> = [];
+		const pending: Array<{
+			line: OrderReturnLine;
+			quantity: string;
+			kind: StockMovementKind;
+			eventOnly: boolean;
+			reason: string;
+		}> = [];
 
 		for (const entry of plan) {
 			const received = subtractQuantities(entry.receipt.receivedQuantity, entry.previous.receivedQuantity);
@@ -595,6 +613,9 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 					line: entry.line,
 					quantity: received,
 					kind: restock ? StockMovementKind.RETURN : StockMovementKind.WRITE_OFF,
+					// A restocked unit is on the shelf and moves the level; a unit nobody may sell is
+					// recorded as the event it was.
+					eventOnly: !restock,
 					reason: restock
 						? 'Returned goods went back into sellable stock.'
 						: 'Returned goods were not restocked.'
@@ -606,6 +627,8 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 					line: entry.line,
 					quantity: damaged,
 					kind: StockMovementKind.DAMAGE,
+					// Damaged units are never sellable, so they are recorded without entering the level.
+					eventOnly: true,
 					reason: 'Returned goods arrived damaged.'
 				});
 			}
@@ -638,6 +661,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 				variantId,
 				quantity: movement.quantity,
 				kind: movement.kind,
+				eventOnly: movement.eventOnly,
 				reason: movement.reason
 			});
 		}
@@ -697,6 +721,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			variantId: movement.variantId,
 			quantity: movement.quantity,
 			kind: movement.kind,
+			eventOnly: movement.eventOnly,
 			referenceType: 'ORDER_RETURN',
 			referenceId: orderReturn.id,
 			reason: movement.reason
@@ -729,6 +754,9 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 				variantId: movement.variantId,
 				quantity: fromQuantityUnits(-toQuantityUnits(movement.quantity)),
 				kind: movement.kind,
+				// The reversal of an event is an event: negating a movement that never entered the level
+				// and letting the delta land would add units the ledger never had.
+				eventOnly: movement.eventOnly,
 				referenceType: 'ORDER_RETURN',
 				referenceId: orderReturn.id,
 				reason: `RECEIVE_COMPENSATED: ${movement.reason}`

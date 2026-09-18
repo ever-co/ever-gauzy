@@ -4,6 +4,8 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { ContactGroup } from './contact-group.entity';
 import { ContactGroupService } from './contact-group.service';
+import { ContactGroupController } from './contact-group.controller';
+import { ContactGroupResolver } from './contact-group.resolver';
 import { TypeOrmContactGroupRepository } from './repository/type-orm-contact-group.repository';
 import { MikroOrmContactGroupRepository } from './repository/mikro-orm-contact-group.repository';
 
@@ -20,18 +22,30 @@ import { MikroOrmContactGroupRepository } from './repository/mikro-orm-contact-g
  * the same repository the service writes through, and re-providing it elsewhere would give it a second
  * instance over the same table.
  *
- * **`RolePermissionModule` is imported for the guards rather than for a service.** This module owns no
- * HTTP handler today, but a guard is a provider of whichever module hosts the handler it protects, so
- * the module that will host this domain's controllers and resolvers has to be able to reach the
- * permission lookup those guards ask for.
+ * **`RolePermissionModule` is imported for the guards rather than for a service.** The controller and the
+ * resolver that carry `/contact-groups` are providers of this module, and a guard is a provider of
+ * whichever module hosts the handler it protects, so the module that hosts them has to be able to reach
+ * the permission lookup those guards ask for.
+ *
+ * **The membership of a group is not served from this module, and that is a module fact rather than a
+ * split for its own sake.** `ContactGroupMemberModule` imports this one, so injecting the pivot's service
+ * here would close a cycle; the membership routes and the `members` / `memberCount` field resolvers are
+ * therefore declared there, beside the service that owns the fact.
  */
 @Module({
 	imports: [TypeOrmModule.forFeature([ContactGroup]), MikroOrmModule.forFeature([ContactGroup]), RolePermissionModule],
+	controllers: [ContactGroupController],
 	providers: [
 		ContactGroupService,
+		ContactGroupResolver,
 		TypeOrmContactGroupRepository,
 		MikroOrmContactGroupRepository
 	],
-	exports: [ContactGroupService, TypeOrmContactGroupRepository, MikroOrmContactGroupRepository]
+	exports: [
+		ContactGroupService,
+		ContactGroupResolver,
+		TypeOrmContactGroupRepository,
+		MikroOrmContactGroupRepository
+	]
 })
 export class ContactGroupModule {}

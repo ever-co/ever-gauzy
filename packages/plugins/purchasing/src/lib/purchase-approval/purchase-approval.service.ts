@@ -1,6 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ApprovalPolicyTypesStringEnum } from '@gauzy/contracts';
-import { RequestApprovalService, RequestContext, isValidDecimalString } from '@gauzy/core';
+import { ApprovalPolicyTypesStringEnum, DecimalString } from '@gauzy/contracts';
+import {
+	RequestApprovalService,
+	RequestContext,
+	isValidDecimalString,
+	normalizeDecimalString
+} from '@gauzy/core';
 import { IPurchaseApprovalRequest, IPurchaseApprovalResult } from '../purchasing.types';
 
 /**
@@ -83,9 +88,28 @@ export class PurchaseApprovalService {
 			);
 		}
 
-		// The amount is tested as an exact decimal rather than converted: a value that is not one is
-		// refused here, so nothing below this line has to guess at what a malformed amount meant.
-		if (!isValidDecimalString(request.amount)) {
+		/*
+		 * The amount is normalised rather than tested as it arrived, and the difference is not cosmetic:
+		 * this port is called with the purchase order's own `grandTotal`, which the amount columns hand
+		 * over as a **number** — the platform's numeric transformer parses what the driver returns — and
+		 * the decimal test accepts strings only. Testing the value as it arrived therefore refused the
+		 * order's own total (`'62' is not an exact decimal amount`) and every approval of an order that
+		 * had been raised through the API. What is refused is unchanged: something that is not an exact
+		 * decimal at all. What is now accepted is any exact decimal, in whatever form it arrives.
+		 */
+		let amount: DecimalString;
+
+		try {
+			amount = normalizeDecimalString(
+				typeof request.amount === 'number' || typeof request.amount === 'bigint'
+					? request.amount
+					: String(request.amount ?? '').trim()
+			);
+		} catch {
+			amount = undefined as unknown as DecimalString;
+		}
+
+		if (!amount || !isValidDecimalString(amount)) {
 			throw new BadRequestException(
 				`PURCHASE_APPROVAL_AMOUNT_NOT_DECIMAL: '${request.amount}' is not an exact decimal amount.`
 			);
@@ -95,7 +119,7 @@ export class PurchaseApprovalService {
 			name: request.name,
 			requestId: request.purchaseOrderId,
 			requestType: ApprovalPolicyTypesStringEnum.PURCHASE_ORDER,
-			amount: request.amount,
+			amount,
 			currency: request.currency,
 			note: request.note,
 			organizationId: RequestContext.currentOrganizationId(),

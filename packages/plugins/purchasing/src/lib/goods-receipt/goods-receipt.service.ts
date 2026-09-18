@@ -965,9 +965,18 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 
 			return allocated.formatted;
 		} catch (error) {
-			throw new ConflictException(
-				`GOODS_RECEIPT_SEQUENCE_MISSING: no numbering series is configured for goods receipts (key "${GOODS_RECEIPT_NUMBER_KEY}"), so a number cannot be allocated.`
-			);
+			/*
+			 * Only the absence of a series is this message's to report. Catching everything answered "no
+			 * series is configured" for any failure at all — a contention timeout, a database error — so a
+			 * broken allocation was reported as a misconfiguration and the real cause was never seen.
+			 */
+			if (error instanceof NotFoundException) {
+				throw new ConflictException(
+					`GOODS_RECEIPT_SEQUENCE_MISSING: no numbering series is configured for goods receipts (key "${GOODS_RECEIPT_NUMBER_KEY}"), so a number cannot be allocated.`
+				);
+			}
+
+			throw error;
 		}
 	}
 }

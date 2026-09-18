@@ -903,10 +903,10 @@ describe('StockLedgerService — the movements a caller states', () => {
 		expect(await service.readBinBalances([BIN])).toEqual([{ binId: BIN, variantId: VARIANT, quantity: '-2.000000' }]);
 	});
 
-	it('records a write-off without moving the level, and keeps the quantity in the row', async () => {
-		// A return line that is not restockable writes a write-off and leaves the level unchanged: the units
-		// came back without ever entering sellable stock. The quantity the caller stated is kept on the row,
-		// so the ledger still says how many units the event was about.
+	it('records a write-off the caller states as an event without moving the level, and keeps the quantity in the row', async () => {
+		// A return line that is not restockable states an event-only write-off and leaves the level
+		// unchanged: the units came back without ever entering sellable stock. The quantity the caller
+		// stated is kept on the row, so the ledger still says how many units the event was about.
 		const { service, store } = fixture(stocked(4));
 
 		const result = await service.recordMovement({
@@ -914,6 +914,7 @@ describe('StockLedgerService — the movements a caller states', () => {
 			variantId: VARIANT,
 			quantity: '2',
 			kind: StockMovementType.WRITE_OFF,
+			eventOnly: true,
 			referenceType: 'ORDER_RETURN',
 			referenceId: REFERENCE,
 			reason: 'Returned goods were not restocked.'
@@ -932,7 +933,34 @@ describe('StockLedgerService — the movements a caller states', () => {
 		expect(compareDecimalStrings(ledgerSum(store, VARIANT, WAREHOUSE), store.levels[0].quantity)).toBe(0);
 	});
 
-	it('records a damage without moving the level, so broken units are never sellable', async () => {
+	it('applies a write-off the caller states as a delta, so reversing a receipt takes its goods back out', async () => {
+		// The other caller of the same kind: a goods receipt that is reversed. The receipt moved the level,
+		// so the compensating write-off has to move it back — reading the kind as "no effect" would leave
+		// goods the installation no longer holds in the number it sells against.
+		const { service, store } = fixture(stocked(4));
+
+		const result = await service.recordMovement({
+			warehouseId: WAREHOUSE,
+			variantId: VARIANT,
+			quantity: '-4',
+			kind: StockMovementType.WRITE_OFF,
+			referenceType: 'GOODS_RECEIPT',
+			referenceId: REFERENCE,
+			reason: 'RECEIPT_CANCELED'
+		});
+
+		const written = movementsOf(store, 'GOODS_RECEIPT')[0];
+
+		expect(result.quantityAfter).toBe('0.000000');
+		expect(store.levels[0].quantity).toBe(0);
+		expect(written).toMatchObject({ type: StockMovementType.WRITE_OFF, quantity: -4 });
+		// A delta movement carries no event note: its quantity is the level's change, so the row already
+		// says what happened and nothing has to be kept beside it.
+		expect(written.note).toBeUndefined();
+		expect(compareDecimalStrings(ledgerSum(store, VARIANT, WAREHOUSE), store.levels[0].quantity)).toBe(0);
+	});
+
+	it('records a damage as an event without moving the level, so broken units are never sellable', async () => {
 		const { service, store } = fixture(stocked(4));
 
 		const result = await service.recordMovement({
@@ -940,6 +968,7 @@ describe('StockLedgerService — the movements a caller states', () => {
 			variantId: VARIANT,
 			quantity: '1',
 			kind: StockMovementType.DAMAGE,
+			eventOnly: true,
 			referenceType: 'ORDER_RETURN',
 			referenceId: REFERENCE,
 			reason: 'Returned goods arrived damaged.'
@@ -948,13 +977,14 @@ describe('StockLedgerService — the movements a caller states', () => {
 		expect(result.quantityAfter).toBe('4.000000');
 		expect(store.levels[0].quantity).toBe(4);
 		expect(movementsOf(store, 'ORDER_RETURN')[0]).toMatchObject({ type: StockMovementType.DAMAGE, quantity: 0 });
-		// Control: the compensating movement of the same kind moves the level just as little, so a receipt
-		// that is compensated leaves the level exactly as it was found.
+		// Control: the compensating movement of the same kind is stated as an event too, so it moves the
+		// level just as little and a receipt that is compensated leaves the level exactly as it was found.
 		await service.recordMovement({
 			warehouseId: WAREHOUSE,
 			variantId: VARIANT,
 			quantity: '-1',
 			kind: StockMovementType.DAMAGE,
+			eventOnly: true,
 			referenceType: 'ORDER_RETURN',
 			referenceId: REFERENCE,
 			reason: 'RECEIVE_COMPENSATED'

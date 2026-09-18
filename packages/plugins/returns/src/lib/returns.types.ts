@@ -114,11 +114,14 @@ export enum OrderExchangeStatus {
  * Declared here so a return or an exchange can name what it needs without the domain owning the
  * ledger: a restockable unit is a `RETURN`, a unit that came back unsellable is a `WRITE_OFF`, and a
  * unit that arrived broken is a `DAMAGE`. Writing them is the inventory ledger's job.
+ *
+ * The first moves the level and the other two do not, and that difference is stated on the request
+ * (`eventOnly`) rather than inferred from the kind: see {@link IStockMovementRequest}.
  */
 export enum StockMovementKind {
 	/** Goods came back and go into sellable stock. */
 	RETURN = 'RETURN',
-	/** Goods came back and are removed from stock. */
+	/** Goods came back and are removed from the network without ever entering sellable stock. */
 	WRITE_OFF = 'WRITE_OFF',
 	/** Goods were damaged and are recorded without ever being sellable. */
 	DAMAGE = 'DAMAGE'
@@ -145,6 +148,14 @@ export interface IStockMovementRequest {
 	readonly quantity: DecimalString;
 	/** What kind of movement this is. */
 	readonly kind: StockMovementKind;
+	/**
+	 * Whether the units this movement is about ever entered the location's stock.
+	 *
+	 * A return's discarded units and its damaged units never did — they left the network on a sale and
+	 * came back unsellable — so the movement records the event and the level keeps the quantity it had.
+	 * A restocked unit states `false` (or nothing) and its quantity lands on the level.
+	 */
+	readonly eventOnly?: boolean;
 	/** Concept that asked for the movement, e.g. `ORDER_RETURN`. */
 	readonly referenceType: string;
 	/** Row that asked for the movement. */

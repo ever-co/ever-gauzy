@@ -90,12 +90,21 @@ const ENTITY_TABLES = new Map<unknown, string>([
  * The `where` the service states is applied — equality, with a missing column and a null column treated
  * as the same thing to the database — so a read that stopped narrowing is caught here.
  */
-function world(seed: { channels?: Row[]; domains?: Row[]; memberships?: Row[]; regions?: Row[] } = {}) {
+function world(
+	seed: {
+		channels?: Row[];
+		domains?: Row[];
+		memberships?: Row[];
+		regions?: Row[];
+		organizations?: Row[];
+	} = {}
+) {
 	const tables: Record<string, Row[]> = {
 		channel: [...(seed.channels ?? [])],
 		channel_domain: [...(seed.domains ?? [])],
 		channel_region: [...(seed.memberships ?? [])],
-		region: [...(seed.regions ?? [])]
+		region: [...(seed.regions ?? [])],
+		organization: [...(seed.organizations ?? [])]
 	};
 	const locks: string[] = [];
 	const statements: Array<Record<string, unknown>> = [];
@@ -242,6 +251,15 @@ const domainRow = (channelId: string, hostname: string, overrides: Row = {}): Ro
 	...overrides
 });
 
+/** One `organization` row, narrowed to the one fact a channel inherits from it. */
+const organizationRow = (id: string, overrides: Row = {}): Row => ({
+	id,
+	tenantId: TENANT,
+	name: `Organization ${id}`,
+	currency: 'USD',
+	...overrides
+});
+
 /** One `region` row. */
 const regionRow = (id: string, overrides: Row = {}): Row => ({
 	id,
@@ -258,7 +276,13 @@ const regionRow = (id: string, overrides: Row = {}): Row => ({
 
 /** The services under test, over one in-memory world. */
 function channels(
-	seed: { channels?: Row[]; domains?: Row[]; memberships?: Row[]; regions?: Row[] } = {}
+	seed: {
+		channels?: Row[];
+		domains?: Row[];
+		memberships?: Row[];
+		regions?: Row[];
+		organizations?: Row[];
+	} = {}
 ) {
 	const store = world(seed);
 	const currencyService = {
@@ -284,7 +308,9 @@ function channels(
 		store.repository('channel') as never,
 		{} as never,
 		channelDomainService,
-		channelRegionService
+		channelRegionService,
+		// The organization is read for the currency a channel inherits from it.
+		store.repository('organization') as never
 	);
 
 	return { ...store, channelService, channelDomainService, channelRegionService };
@@ -340,6 +366,30 @@ describe('ChannelService — opening a sales context', () => {
 		expect(
 			await refusalOf(() => channelService.createChannel({ name: 'Web', code: 'web', defaultCurrency: 'EU' }))
 		).toMatch(/^VALIDATION_FAILED/);
+	});
+
+	it('inherits the organization currency when the caller states none', async () => {
+		const { channelService } = channels({ organizations: [organizationRow(ORG, { currency: 'EUR' })] });
+
+		const created = await channelService.createChannel({ name: 'Web', code: 'web' });
+
+		// The channel does not choose its currency: a channel that defaulted to a constant would price
+		// the same catalogue differently from the organization's own ledgers.
+		expect(created.defaultCurrency).toBe('EUR');
+	});
+
+	it('falls back to the schema default when the organization states no usable currency', async () => {
+		const { channelService } = channels();
+
+		// No organization row at all: a currency that cannot be read is a gap in the organization's own
+		// configuration, not a reason to leave a channel unwritable.
+		expect((await channelService.createChannel({ name: 'Web', code: 'web' })).defaultCurrency).toBe('USD');
+
+		const { channelService: misconfigured } = channels({
+			organizations: [organizationRow(ORG, { currency: '' })]
+		});
+
+		expect((await misconfigured.createChannel({ name: 'Web', code: 'web' })).defaultCurrency).toBe('USD');
 	});
 
 	it('refuses a code the organization already uses among its live rows', async () => {

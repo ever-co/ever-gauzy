@@ -282,12 +282,29 @@ export class SequenceService extends CrudService<Sequence> {
 	/**
 	 * Reads a series row under a lock where the dialect supports one.
 	 *
+	 * 🛑 **The channel is filtered explicitly, and that is not a style choice.** The organization-wide
+	 * series is the one whose `channelId` is `NULL`, and "no channel" has to be asked for as
+	 * `channelId IS NULL`: a `where` that carries `channelId: null` is only translated into that SQL when
+	 * the connection declares how to treat a null value, and a query builder that does not falls back to
+	 * `channelId = NULL` — which matches nothing, in every dialect, because `NULL = NULL` is unknown
+	 * rather than true. That is how the allocator answered "no numbering series is configured" for an
+	 * organization that had all seven of them.
+	 *
 	 * @param manager The transaction manager.
-	 * @param where The lookup conditions.
+	 * @param where The lookup conditions, whose `channelId` member may be an id, `null` for the
+	 * organization-wide series, or absent to accept either.
 	 * @returns The series, or null.
 	 */
 	private async lockSeries(manager: any, where: Record<string, unknown>): Promise<Sequence | null> {
-		const query = manager.createQueryBuilder(Sequence, 'sequence').where(where);
+		const { channelId, ...scope } = where;
+
+		const query = manager.createQueryBuilder(Sequence, 'sequence').where(scope);
+
+		if (channelId === null) {
+			query.andWhere('sequence.channelId IS NULL');
+		} else if (channelId !== undefined) {
+			query.andWhere('sequence.channelId = :channelId', { channelId });
+		}
 
 		if (isPostgres() || isMySQL()) {
 			// `pessimistic_write` maps to FOR UPDATE on both dialects.

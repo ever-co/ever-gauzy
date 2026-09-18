@@ -5,6 +5,8 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { ContactBuyer } from './contact-buyer.entity';
 import { ContactBuyerService } from './contact-buyer.service';
+import { ContactBuyerController } from './contact-buyer.controller';
+import { ContactBuyerResolver } from './contact-buyer.resolver';
 import { TypeOrmContactBuyerRepository } from './repository/type-orm-contact-buyer.repository';
 import { MikroOrmContactBuyerRepository } from './repository/mikro-orm-contact-buyer.repository';
 
@@ -16,8 +18,8 @@ import { MikroOrmContactBuyerRepository } from './repository/mikro-orm-contact-b
  * and that it is live — and locks it for the decision. The party's own module owns its service; this
  * module only needs the table mapped, which is what `forFeature` states.
  *
- * **`RolePermissionModule` is imported for the guards**, so that the module which will host the
- * company-account endpoints can reach the permission lookup their guards inject.
+ * **`RolePermissionModule` is imported for the guards**, so that this module — which hosts the
+ * company-account controller and resolver — can reach the permission lookup their guards inject.
  *
  * **Buyer authority deliberately does not come from a tenant `role`.** A buyer is not staff: they have no
  * `user` row in the common case and no business in the back-office permission model, and a tenant-wide
@@ -31,7 +33,18 @@ import { MikroOrmContactBuyerRepository } from './repository/mikro-orm-contact-b
 		MikroOrmModule.forFeature([ContactBuyer, OrganizationContact]),
 		RolePermissionModule
 	],
-	providers: [ContactBuyerService, TypeOrmContactBuyerRepository, MikroOrmContactBuyerRepository],
-	exports: [ContactBuyerService, TypeOrmContactBuyerRepository, MikroOrmContactBuyerRepository]
+	controllers: [ContactBuyerController],
+	providers: [
+		ContactBuyerService,
+		ContactBuyerResolver,
+		TypeOrmContactBuyerRepository,
+		MikroOrmContactBuyerRepository
+	],
+	exports: [
+		ContactBuyerService,
+		ContactBuyerResolver,
+		TypeOrmContactBuyerRepository,
+		MikroOrmContactBuyerRepository
+	]
 })
 export class ContactBuyerModule {}

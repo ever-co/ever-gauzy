@@ -50,6 +50,14 @@ export interface IStockLedgerHomeBin {
  * restocks, a receipt arrives — and none of them owns the ledger’s vocabulary. What the ledger does
  * with a kind is stated once, in the service that answers this seam, so a caller reads it in one
  * place rather than inferring it from its own enumeration.
+ *
+ * **The quantity is the delta, unless the caller states that the movement is an event.** Every kind is
+ * a delta kind: the signed quantity the caller states is what the level moves by. A caller recording
+ * units that never entered the location’s stock at all — a return’s discarded or damaged units — states
+ * `eventOnly`, and then the row is written with a zero delta and the stated quantity is kept in the
+ * row’s note. Which of the two a movement is belongs to the *request* and not to the kind, because the
+ * same kind is stated by callers on both sides of it: a compensating write-off that takes back what a
+ * receipt added moves the level, while a write-off of goods that never reached the shelf does not.
  */
 export interface IStockLedgerMovementRequest {
 	/** The location the movement happened at. */
@@ -60,6 +68,14 @@ export interface IStockLedgerMovementRequest {
 	readonly quantity: DecimalString;
 	/** What kind of movement this is. */
 	readonly kind: string;
+	/**
+	 * Whether this movement records an event about units that never entered this location’s stock.
+	 *
+	 * `false` (the default) means the stated quantity is the level’s delta. `true` means the units are
+	 * outside the level — the row records the event, the stated quantity is kept in the row’s note, and
+	 * the level keeps the quantity it had.
+	 */
+	readonly eventOnly?: boolean;
 	/** The bin the movement physically happened in, when the location addresses stock by bin. */
 	readonly binId?: ID;
 	/** The concept that asked for the movement, e.g. `ORDER_RETURN`. */

@@ -1,0 +1,54 @@
+# The contact-group domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own. The names are the
+# ones the GraphQL API specification fixes for this resource, mutation by mutation, so the REST surface
+# and this one expose the same capabilities under the same words.
+#
+# Three fields the endpoint table would suggest are deliberately absent, because each would describe a
+# capability this delivery cannot honour: an expansion of the group's rules (the rule kernel declares no
+# type in this schema), a preview of a rule-based group's membership (the segment evaluation the platform
+# does not ship), and a node query for the membership pivot (it is reached through the group, and not
+# through a root of its own).
+
+extend type Query {
+	"""
+	The groups of the caller's organization, newest first.
+	"""
+	contactGroups(
+		filter: ContactGroupFilter
+		sort: [ContactGroupSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ContactGroupConnection!
+
+	"""
+	One group of the caller's organization, or null when there is none.
+	"""
+	contactGroup(id: ID!): ContactGroup
+}
+
+extend type Mutation {
+	"""
+	Creates a static or a rule-based group. A body that states `isSystem` is refused.
+	"""
+	createContactGroup(input: CreateContactGroupInput!): ContactGroup!
+
+	"""
+	Changes a group. A group the platform maintains is refused a code change, and a static group with
+	hand-written members is refused a change of kind.
+	"""
+	updateContactGroup(input: UpdateContactGroupInput!): ContactGroup!
+
+	"""
+	Soft-deletes a group, which is the only removal path there is: a price list, a promotion and a rule
+	may all name it, and the rows that do keep working while it is recoverable. A group the platform
+	maintains is not removable at all.
+	"""
+	deleteContactGroup(id: ID!): ContactGroup!
+}

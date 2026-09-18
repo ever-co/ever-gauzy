@@ -45,6 +45,7 @@ import {
 import { createRolePermissions } from '../../role-permission/role-permission.seed';
 import { createDefaultTenant, createRandomTenants, DEFAULT_EVER_TENANT, DEFAULT_TENANT } from '../../tenant';
 import { createDefaultTenantSetting } from './../../tenant/tenant-setting/tenant-setting.seed';
+import { createDefaultCommerceDefaults } from './commerce-defaults.seed';
 import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
@@ -490,6 +491,21 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute('Default Email Templates', createDefaultEmailTemplates(this.dataSource));
+
+		/**
+		 * The defaults an organization needs before it can issue a document — its default channel, its
+		 * default region and the seven numbering series — are seeded here rather than only by the
+		 * data-only kernel migration, because that migration runs **before** this seeding creates the
+		 * organization, and it seeds only the organizations it can see. Without this step a fresh
+		 * installation has no `ORDER` series and no `PO` series, so it can create parties, suppliers,
+		 * warehouses and products and then fail to raise a single order — which is exactly what happened
+		 * before it was added. Every insert is guarded by the row it would create, so a second boot
+		 * creates nothing.
+		 */
+		await this.tryExecute(
+			'Commerce Defaults',
+			createDefaultCommerceDefaults(this.dataSource, this.organizations)
+		);
 
 		await this.tryExecute('Default Accounting Templates', createDefaultAccountingTemplates(this.dataSource));
 

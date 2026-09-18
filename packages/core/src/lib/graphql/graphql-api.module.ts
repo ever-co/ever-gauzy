@@ -11,10 +11,21 @@ import { PaymentTermResolver } from './../payment-term/payment-term.resolver';
 import { PaymentTermModule } from './../payment-term/payment-term.module';
 import { AddressRoleResolver } from './../address-role/address-role.resolver';
 import { AddressRoleModule } from './../address-role/address-role.module';
+import { GraphqlSubscriptionModule } from './subscriptions/graphql-subscription.module';
 import { ChannelResolver } from './../channel/channel.resolver';
 import { ChannelDomainResolver } from './../channel-domain/channel-domain.resolver';
 import { RegionResolver } from './../region/region.resolver';
 import { ChannelModule } from './../channel/channel.module';
+import { AddressResolver } from './../address/address.resolver';
+import { AddressModule } from './../address/address.module';
+import { ContactGroupResolver } from './../contact-group/contact-group.resolver';
+import { ContactGroupModule } from './../contact-group/contact-group.module';
+import { ContactGroupMemberResolver } from './../contact-group-member/contact-group-member.resolver';
+import { ContactGroupMemberModule } from './../contact-group-member/contact-group-member.module';
+import { ContactCredentialResolver } from './../contact-credential/contact-credential.resolver';
+import { ContactCredentialModule } from './../contact-credential/contact-credential.module';
+import { ContactBuyerResolver } from './../contact-buyer/contact-buyer.resolver';
+import { ContactBuyerModule } from './../contact-buyer/contact-buyer.module';
 
 /**
  * Resolvers the platform itself ships.
@@ -36,7 +47,15 @@ const CORE_RESOLVERS: Array<Type<any>> = [
 	// them from the module its configuration names.
 	ChannelResolver,
 	ChannelDomainResolver,
-	RegionResolver
+	RegionResolver,
+	// The party-data kernel. Each resolver is declared by the domain module that owns the service it
+	// calls: the address book, the group, the membership pivot (whose resolver is attached to the
+	// group type because the membership has no root of its own), the login and the company account.
+	AddressResolver,
+	ContactGroupResolver,
+	ContactGroupMemberResolver,
+	ContactCredentialResolver,
+	ContactBuyerResolver
 ];
 
 /**
@@ -59,8 +78,25 @@ const CORE_RESOLVER_MODULES: Array<Type<any>> = [
 	AddressRoleModule,
 	// One module for the whole kernel domain: it provides all five services, the three resolvers that
 	// call them and the publisher the two subscribable facts travel through, so importing it is what
-	// makes the resolver graph above resolvable. Its own imports bring the subscription module with it.
-	ChannelModule
+	// makes the resolver graph above resolvable.
+	ChannelModule,
+	// 🛑 The subscription module is imported **here**, by the module that hosts the resolvers, and not
+	// only inside `ChannelModule`. A module's imports are not inherited by the module that imports it:
+	// `ChannelModule` importing this one gives its *own* providers the pub-sub, while the channel
+	// resolver is a provider of *this* module — it is listed in `providers` below — so its dependencies
+	// are resolved here. Leaving it out booted into `Nest can't resolve dependencies of the
+	// ChannelResolver (…, ?)`, which no static check sees, because the resolver and the module that
+	// provides the dependency it injects are each individually correct.
+	GraphqlSubscriptionModule,
+	// The party-data kernel, one module per domain. `ContactGroupMemberModule` is listed beside the
+	// group module rather than inside it because it imports the group module — the membership write has
+	// to ask whether the group's kind allows a hand-written row — so the two are imported here in the
+	// order their own dependency already fixes.
+	AddressModule,
+	ContactGroupModule,
+	ContactGroupMemberModule,
+	ContactCredentialModule,
+	ContactBuyerModule
 ];
 
 /**

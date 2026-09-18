@@ -1,0 +1,42 @@
+# The company-account membership domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own. The names are the
+# ones the GraphQL API specification fixes for this resource.
+#
+# **Three root fields, and no more, is the specification's own list.** §3.2 row 4 names `contactBuyers`,
+# `createContactBuyer` and `deleteContactBuyer` for this resource: there is no node query, and no update,
+# because neither side of the pivot is mutable — a membership that could be re-pointed at another buyer
+# or another account would be a way to move purchasing authority without a trace, and the supported path
+# is to remove the membership and attach a new one.
+
+extend type Query {
+	"""
+	The company-account memberships of the caller's organization, newest first.
+	"""
+	contactBuyers(
+		filter: ContactBuyerFilter
+		sort: [ContactBuyerSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ContactBuyerConnection!
+}
+
+extend type Mutation {
+	"""
+	Attaches a buyer to a company account. The account must be a company and must be live, the two sides
+	must be different parties, and the buyer must not already belong to a live account.
+	"""
+	createContactBuyer(input: CreateContactBuyerInput!): ContactBuyer!
+
+	"""
+	Removes a membership, softly, which is the only removal path there is: an order placed by this buyer
+	must remain attributable to the membership that authorised it.
+	"""
+	deleteContactBuyer(id: ID!): ContactBuyer!
+}

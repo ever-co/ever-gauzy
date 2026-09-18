@@ -44,7 +44,15 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		findInput: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
 		const tenantId = RequestContext.currentTenantId();
-		const { organizationId } = findInput;
+		/*
+		 * The scope of the read is the caller's, and the input narrows it rather than stating it: a
+		 * register asked for without a filter is the register of the caller's own organization, which is
+		 * how every other list of this platform is scoped. Reading the member straight out of the input
+		 * left it `undefined` for the bare request the administration surface and the purchase-order flow
+		 * both make, and every condition below then compared a column against nothing — so the register
+		 * answered an empty list while the single read of the same row answered it in full.
+		 */
+		const organizationId = findInput?.organizationId ?? RequestContext.currentOrganizationId();
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -92,6 +100,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 						.orWhere({
 							'equipment_sharing.organizationId': organizationId,
 							'equipment_sharing.tenantId': tenantId
+						})
+						// A request raised in this organization belongs to it even when it names no
+						// policy and no time-off / equipment-sharing record (e.g. a purchasing request).
+						.orWhere({
+							'request_approval.organizationId': organizationId,
+							'request_approval.tenantId': tenantId
 						});
 				});
 
@@ -175,6 +189,17 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 							});
 						})
 					)
+					// A request raised in this organization belongs to it even when it names no policy
+					// and no time-off / equipment-sharing record (e.g. a purchasing request).
+					.orWhere(
+						new Brackets((sqb) => {
+							sqb.where(p('request_approval.organizationId =:organizationId'), {
+								organizationId
+							}).andWhere(p('request_approval.tenantId =:tenantId'), {
+								tenantId
+							});
+						})
+					)
 					.getManyAndCount();
 
 				return { items, total };
@@ -191,7 +216,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		const currentUserId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const { organizationId } = findInput;
+		// The same scope rule as the register's list: the input narrows the read, and the caller's own
+		// organization is what it is narrowed to when the input states none.
+		const organizationId = findInput?.organizationId ?? RequestContext.currentOrganizationId();
 		const result = await this.find({
 			where: {
 				createdByUserId: currentUserId,

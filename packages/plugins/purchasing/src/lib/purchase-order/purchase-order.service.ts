@@ -796,9 +796,20 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 
 			return allocated.formatted;
 		} catch (error) {
-			throw new ConflictException(
-				`PURCHASE_ORDER_SEQUENCE_MISSING: no numbering series is configured for ${document} (key "${key}"), so a number cannot be allocated.`
-			);
+			/*
+			 * Only the *absence* of a series is this message's to report, and the distinction is not
+			 * cosmetic: catching everything answered "no series is configured" for any failure at all —
+			 * a contention timeout, a database error, a claim that never settled — so a broken allocation
+			 * was reported as a misconfiguration and the real cause was never seen. The series being
+			 * missing is a `NotFoundException` from the allocator; anything else keeps its own identity.
+			 */
+			if (error instanceof NotFoundException) {
+				throw new ConflictException(
+					`PURCHASE_ORDER_SEQUENCE_MISSING: no numbering series is configured for ${document} (key "${key}"), so a number cannot be allocated.`
+				);
+			}
+
+			throw error;
 		}
 	}
 

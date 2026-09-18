@@ -486,7 +486,13 @@ function receiptFixture(
 	const sequenceService = {
 		allocate: async (key: string) => {
 			if (options.numberSeries === false) {
-				throw new Error(`no series configured for ${key}`);
+				/*
+				 * The real allocator answers a key it has no active series for with a `NotFoundException`
+				 * — "no numbering series is configured" — and the services map exactly that to their own
+				 * `*_SEQUENCE_MISSING` code. A double that threw a plain `Error` would be testing a
+				 * refusal the platform never raises, and would pass while the mapping was wrong.
+				 */
+				throw new NotFoundException(`no series configured for ${key}`);
 			}
 
 			return { formatted: 'GR-000001', key };

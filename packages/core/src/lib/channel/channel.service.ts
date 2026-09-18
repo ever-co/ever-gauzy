@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ChannelRegionRefusalReason,
@@ -17,6 +18,7 @@ import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ChannelDomainService } from '../channel-domain/channel-domain.service';
 import { ChannelRegionService } from '../channel-region/channel-region.service';
+import { Organization } from '../organization/organization.entity';
 import { Channel } from './channel.entity';
 import { TypeOrmChannelRepository } from './repository/type-orm-channel.repository';
 import { MikroOrmChannelRepository } from './repository/mikro-orm-channel.repository';
@@ -82,7 +84,20 @@ export class ChannelService extends TenantAwareCrudService<Channel> {
 		 * carries. The dependency runs one way: the pivot reads the channel table through its repository
 		 * rather than through this service, so no cycle exists between the two.
 		 */
-		private readonly channelRegionService: ChannelRegionService
+		private readonly channelRegionService: ChannelRegionService,
+		/**
+		 * The organization, read for the one fact a channel inherits from it rather than decides: the
+		 * currency a document created without one is denominated in.
+		 *
+		 * Read through the platform's TypeORM repository, which is the pattern the platform already uses
+		 * wherever a value has to be read before a row is written — the authorization guard reads an
+		 * organization exactly this way — and **not** by importing `OrganizationModule`: this module is
+		 * reached from the kernel barrel, and importing the organization's module from here closes a
+		 * require cycle through the token module that leaves `TokenModule` undefined while it is being
+		 * decorated. The table is all this read needs, so the table's entity is what it asks for.
+		 */
+		@InjectRepository(Organization)
+		private readonly organizationRepository: Repository<Organization>
 	) {
 		super(typeOrmChannelRepository, mikroOrmChannelRepository);
 	}
@@ -132,7 +147,9 @@ export class ChannelService extends TenantAwareCrudService<Channel> {
 			);
 		}
 
-		const currency = input?.defaultCurrency ? String(input.defaultCurrency).trim().toUpperCase() : 'USD';
+		const currency = input?.defaultCurrency
+			? String(input.defaultCurrency).trim().toUpperCase()
+			: await this.organizationCurrency();
 
 		if (currency.length !== 3) {
 			throw new BadRequestException(
@@ -144,9 +161,10 @@ export class ChannelService extends TenantAwareCrudService<Channel> {
 			...input,
 			name,
 			code,
-			// Stated rather than left to the column's own default: the schema chapter names the
-			// organization's currency as this column's default, and a caller that knows it states it —
-			// while a row written by a path that states nothing still lands in a valid state.
+			// Stated rather than left to the column's own default: the currency a document created
+			// without one is denominated in is the *organization's*, and the column's own default is a
+			// constant that would silently disagree with the organization on every deployment whose
+			// currency is not that constant.
 			defaultCurrency: currency,
 			orderNumberPadding: input?.orderNumberPadding ?? 6,
 			status: ChannelStatus.DRAFT,
@@ -527,6 +545,39 @@ export class ChannelService extends TenantAwareCrudService<Channel> {
 		await this.softDelete(id);
 
 		return this.findChannelOrFail(id);
+	}
+
+	/**
+	 * The currency a channel inherits from its organization.
+	 *
+	 * A channel does not choose its currency: the organization's ledgers, its tax configuration and the
+	 * documents already written in it are all denominated in one currency, and a channel that defaulted to
+	 * a different one would price the same catalogue differently per storefront. So when a caller states no
+	 * currency the organization's own is read here and written on the row, which is the only way the column
+	 * can be right on a deployment whose currency is not the column's constant default.
+	 *
+	 * A missing organization row, or one that states nothing usable, falls back to that constant rather
+	 * than refusing the write: the caller has already been authenticated against the organization, so a
+	 * currency that cannot be read is a gap in the organization's own configuration and not a reason to
+	 * leave the channel unwritable.
+	 *
+	 * @returns The organization's currency, or the schema's fallback when it states none.
+	 */
+	private async organizationCurrency(): Promise<string> {
+		const organizationId = this.scope.organizationId;
+
+		if (!organizationId) {
+			return 'USD';
+		}
+
+		const organization = await this.organizationRepository.findOne({
+			where: { id: organizationId },
+			select: { id: true, currency: true }
+		} as never);
+
+		const currency = organization?.currency ? String(organization.currency).trim().toUpperCase() : '';
+
+		return currency.length === 3 ? currency : 'USD';
 	}
 
 	/**

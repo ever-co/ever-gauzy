@@ -160,6 +160,26 @@ class SeriesStore {
 
 				return builder;
 			},
+			/**
+			 * The allocator states the channel condition as a raw fragment rather than as a `where` member,
+			 * because "no channel" has to be asked for as `IS NULL`: a `channelId = NULL` comparison matches
+			 * nothing in any dialect. The double models the two fragments the service states — a null channel
+			 * and a stated one — and refuses anything else rather than quietly matching every row, so a
+			 * condition this double does not understand fails the suite instead of passing it.
+			 */
+			andWhere: (fragment: string, parameters: Row = {}) => {
+				if (/IS\s+NULL\s*$/i.test(fragment)) {
+					// `matches` treats a missing column and a null column as the same thing, which is what
+					// the database does here.
+					conditions.channelId = null;
+				} else if (parameters.channelId !== undefined) {
+					conditions.channelId = parameters.channelId;
+				} else {
+					throw new Error(`the sequence double was handed a condition it does not model: ${fragment}`);
+				}
+
+				return builder;
+			},
 			setLock: (mode: string) => {
 				this.locks.push(`${alias}:${mode}`);
 

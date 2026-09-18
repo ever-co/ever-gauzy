@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CurrencyModule } from '../currency/currency.module';
+import { Organization } from '../organization/organization.entity';
 import { Channel } from './channel.entity';
 import { ChannelService } from './channel.service';
 import { TypeOrmChannelRepository } from './repository/type-orm-channel.repository';
@@ -56,9 +57,15 @@ import { RegionResolver } from '../region/region.resolver';
  * **`CurrencyModule` is imported for a service, not for a guard.** The region's write path checks its
  * currency against the platform's currency master (invariant I-26), and the master is the module that
  * owns that question; asking it here rather than re-reading the table is what keeps "which currencies
- * exist" a single answer. **`RolePermissionModule` is imported for the guards**: a guard is a provider
- * of whichever module hosts the handler it protects, so the module that hosts this domain's
- * controllers and resolvers has to be able to reach the permission lookup those guards ask for.
+ * exist" a single answer. **The organization's own table is registered here rather than its module being
+ * imported**, because a channel inherits its currency from the organization and that read needs the
+ * table and nothing else: this module is reached from the kernel barrel, and importing
+ * `OrganizationModule` from here closes a require cycle through the token module that leaves
+ * `TokenModule` undefined while it is being decorated. `Organization` is therefore in this module's own
+ * `forFeature` list, and the service reads it through the platform's repository for that entity.
+ * **`RolePermissionModule` is imported for the guards**: a guard is a provider of whichever module hosts
+ * the handler it protects, so the module that hosts this domain's controllers and resolvers has to be
+ * able to reach the permission lookup those guards ask for.
  *
  * **`GraphqlSubscriptionModule` is imported for the publisher, not for a resolver.** The two
  * subscribable facts of this domain travel on the platform's own fan-out, so the module that owns the
@@ -68,7 +75,7 @@ import { RegionResolver } from '../region/region.resolver';
  */
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Channel, ChannelDomain, Region, RegionCountry, ChannelRegion]),
+		TypeOrmModule.forFeature([Channel, ChannelDomain, Region, RegionCountry, ChannelRegion, Organization]),
 		MikroOrmModule.forFeature([Channel, ChannelDomain, Region, RegionCountry, ChannelRegion]),
 		CurrencyModule,
 		RolePermissionModule,

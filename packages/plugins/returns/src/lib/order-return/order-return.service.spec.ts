@@ -337,6 +337,8 @@ interface IMovement {
 	variantId: string;
 	quantity: string;
 	kind: StockMovementKind;
+	/** Whether the movement was stated as an event about units that never entered the level. */
+	eventOnly?: boolean;
 	referenceType: string;
 	referenceId: string;
 	reason: string;
@@ -828,10 +830,15 @@ describe('OrderReturnService — receiving goods (doc 10 §11.6, §11.3)', () =>
 		]);
 
 		expect(fixture.movements).toHaveLength(3);
-		expect(fixture.movements.map((movement) => [movement.kind, movement.quantity])).toEqual([
-			[StockMovementKind.RETURN, '4.000000'],
-			[StockMovementKind.WRITE_OFF, '2.000000'],
-			[StockMovementKind.DAMAGE, '1.000000']
+		expect(
+			fixture.movements.map((movement) => [movement.kind, movement.quantity, movement.eventOnly ?? false])
+		).toEqual([
+			[StockMovementKind.RETURN, '4.000000', false],
+			// The two units nobody may sell are stated as events: the ledger writes the row and leaves the
+			// level alone, because these units were never in the location's stock. A movement that carried
+			// the quantity as a delta would put unsellable units into the number the platform sells against.
+			[StockMovementKind.WRITE_OFF, '2.000000', true],
+			[StockMovementKind.DAMAGE, '1.000000', true]
 		]);
 		// Every movement names the return as its concept and the location it landed at, so the ledger
 		// reads without a join and the units are counted where they physically are.

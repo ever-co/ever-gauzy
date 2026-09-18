@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ID } from '@gauzy/contracts';
 
@@ -84,6 +85,11 @@ export class ChangeSubscriptionPlanDTO {
 export class BillSubscriptionDTO {
 	@ApiPropertyOptional({ type: () => 'timestamptz', description: 'Instant to bill against; defaults to now.' })
 	@IsOptional()
+	// `@Type` is what makes the member sendable at all. A JSON body carries a string, and `@IsDate()`
+	// alone refuses it — "asOf must be a Date instance" — so without the conversion the route could only
+	// ever be called without an instant, and the operator's "bill this subscription as of the first of
+	// the month" was unreachable from every client.
+	@Type(() => Date)
 	@IsDate()
 	readonly asOf?: Date;
 }
@@ -103,6 +109,7 @@ export class RunSubscriptionBillingDTO {
 
 	@ApiPropertyOptional({ type: () => 'timestamptz', description: 'Instant to treat as now.' })
 	@IsOptional()
+	@Type(() => Date)
 	@IsDate()
 	readonly asOf?: Date;
 }
