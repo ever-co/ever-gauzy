@@ -185,6 +185,17 @@ $control-column: 14rem;
 // density token, set after its `list-page()` include (same `:host` specificity,
 // so source order decides), which reaches every cell in both tabs' one shared
 // table template.
+// The status pill in the read-only View drawer. `ga-status-badge` is built for a
+// smart-table cell, where `width: 100%` is what keeps a status column even; in a
+// drawer's value cell that stretched a one-word status across the whole column.
+:host ::ng-deep ngx-record-view .record-value ga-status-badge {
+  display: inline-flex;
+
+  > div {
+    width: auto;
+  }
+}
+
 :host {
   --gauzy-table-cell-padding-y: 0.7rem;
   // The tab labels at the page's own 12px, down from Nebular's 14px.
