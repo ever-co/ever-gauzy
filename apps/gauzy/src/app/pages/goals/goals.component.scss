@@ -10,6 +10,9 @@
 // Nebular's own parents in `themes.scss` and never pick up the `gauzy-*` keys),
 // and a `var()` with no fallback makes the browser throw the declaration away.
 $row-inset: 1rem;
+// Objective and key-result rows breathe at 1.3rem top and bottom: at the 0.6rem
+// they carried before, the row was barely taller than its own 1rem line box.
+$row-padding-y: 1.3rem;
 $row-gap: 0.75rem;
 $chevron: 1.75rem;
 // The chevron is positioned absolutely at `right: 1rem` by Nebular, so it sits
@@ -47,7 +50,11 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
     @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
     height: 100%;
     .goals-container {
-      height: calc(100vh - 20.5rem);
+      // Fills whatever the card body leaves rather than a `calc(100vh - …)` guess
+      // at the chrome above it, so the list reaches the footer on every screen.
+      flex: 1 1 auto;
+      min-height: 0;
+      height: auto;
       overflow: auto;
       @include nb-ltr(padding, 0 0.5rem 0 0);
       @include nb-rtl(padding, 0 0 0 0.5rem);
@@ -93,8 +100,8 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
   // Nebular's own header is 1.25rem/1.5rem of padding around 15px text.
   nb-accordion-item-header {
     gap: $row-gap;
-    @include nb-ltr(padding, 0.625rem $chevron-slot 0.625rem $row-inset);
-    @include nb-rtl(padding, 0.625rem $row-inset 0.625rem $chevron-slot);
+    @include nb-ltr(padding, $row-padding-y $chevron-slot $row-padding-y $row-inset);
+    @include nb-rtl(padding, $row-padding-y $row-inset $row-padding-y $chevron-slot);
     font-size: 12px;
     font-weight: 600;
     line-height: 1rem;
@@ -167,8 +174,8 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
     border-top: $divider;
     // The same end slot as the header above, so a key result's bar sits exactly
     // under its objective's bar.
-    @include nb-ltr(padding, 0.5rem $chevron-slot 0.5rem 2rem);
-    @include nb-rtl(padding, 0.5rem 2rem 0.5rem $chevron-slot);
+    @include nb-ltr(padding, $row-padding-y $chevron-slot $row-padding-y 2rem);
+    @include nb-rtl(padding, $row-padding-y 2rem $row-padding-y $chevron-slot);
 
     .goal-name {
       font-weight: 400;
@@ -187,7 +194,7 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
 
   nb-accordion-item-body.add-key-result ::ng-deep .item-body {
     border-top: $divider;
-    padding: 0.5rem $row-inset;
+    padding: $row-padding-y $row-inset;
   }
 }
 
@@ -211,5 +218,56 @@ nb-accordion-item-body:has(.key-result) {
 
   &.item.selected {
     background: nb-theme(color-primary-transparent-100);
+  }
+}
+
+// The card fills the page down to the footer. The host already gets
+// `flex: 1 1 auto` from the page frame (`styles/_overrides.scss`), so it has a
+// definite height; the card takes all of it and hands what is left below the
+// header to the body, and the body to the scrolling list.
+//
+// The host itself cannot be the flex container: `pages.component.scss` sets
+// `display: block` on every `router-outlet + *` from a (0,1,1) selector, which
+// out-ranks `:host` (0,1,0). The chain therefore starts one level down.
+:host {
+  min-height: 0;
+
+  > nb-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    margin-bottom: 0;
+
+    > nb-card-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+  }
+}
+
+// The Add new Objective, Group By and Filter menus. They render into the CDK
+// overlay, outside this component's tree, so they are reachable only from a
+// global rule — scoped to the `nbPopoverClass` those three buttons set, never
+// bare, so no other popover in the app is touched.
+::ng-deep .goals-popover {
+  nb-list-item {
+    padding: 0.6rem;
+    border: 0;
+    font-size: 12px;
+    line-height: 1rem;
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+
+    &:hover {
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    }
+  }
+
+  nb-list,
+  > div {
+    padding: 0.6rem;
+    background: transparent;
   }
 }
