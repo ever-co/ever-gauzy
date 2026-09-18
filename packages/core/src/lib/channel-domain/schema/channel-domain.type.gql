@@ -1,0 +1,131 @@
+# The channel-domain domain's GraphQL types.
+#
+# A hostname row exists for one question: which channel is this `Host` header. The type is therefore
+# small and deliberately carries the resolution's own facts — the normalised hostname, the canonical
+# flag, whether it is served over TLS and whether other hosts redirect to it — beside the channel it
+# resolves to. `Channel` is declared by the channel domain; this file references it.
+
+"""
+One hostname that resolves to one channel.
+
+Exactly one row per channel is primary, and `hostname` is unique across the whole deployment rather
+than per tenant: the header is global, and two tenants claiming one host would make the resolution
+ambiguous in exactly the request that cannot ask a question first.
+"""
+type ChannelDomain {
+	id: ID!
+	channelId: ID!
+	channel: Channel
+	"""Lower-cased hostname, without scheme and without a trailing slash."""
+	hostname: String!
+	"""Whether this is the channel's canonical host, which the others redirect to."""
+	isPrimary: Boolean!
+	"""When false the host is served over plain HTTP — development and internal deployments."""
+	isSslEnabled: Boolean!
+	"""Whether a request to this host is redirected to the channel's primary host."""
+	redirectToPrimary: Boolean!
+	"""Tenant extras: the certificate reference, a content-delivery identifier."""
+	metadata: JSON
+	tenantId: ID
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+What a verification of one hostname answers.
+
+`verified` is true when the hostname resolves to the channel it is bound to, `resolvedTo` names the
+channel it resolved to, and `checkedAt` is when the check ran. Whether a certificate is installed in
+front of the host is a deployment question this database does not hold.
+"""
+type ChannelDomainVerification {
+	verified: Boolean!
+	resolvedTo: ID
+	checkedAt: DateTime!
+}
+
+"""
+The boundary of one page of hostnames.
+"""
+type ChannelDomainEdge {
+	node: ChannelDomain!
+	cursor: String!
+}
+
+"""
+One page of hostnames, with the total the filters select and the boundary cursors.
+"""
+type ChannelDomainConnection {
+	nodes: [ChannelDomain!]!
+	edges: [ChannelDomainEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a hostname may be sorted by.
+"""
+enum ChannelDomainSortField {
+	createdAt
+	updatedAt
+	hostname
+	isPrimary
+	isSslEnabled
+	redirectToPrimary
+}
+
+"""
+The order the hostnames are returned in. At most three keys are accepted.
+"""
+input ChannelDomainSort {
+	field: ChannelDomainSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a hostname list may be narrowed by.
+"""
+input ChannelDomainFilter {
+	id: IDFilter
+	channelId: IDFilter
+	hostname: StringFilter
+	isPrimary: BooleanFilter
+	isSslEnabled: BooleanFilter
+	redirectToPrimary: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ChannelDomainFilter!]
+	or: [ChannelDomainFilter!]
+	not: ChannelDomainFilter
+}
+
+"""
+What a caller states when it binds a hostname to a channel.
+
+`channelId` and `hostname` are both required. The three flags carry their column defaults when they
+are absent, so a plain binding is a primary, TLS-served, non-redirecting host.
+"""
+input CreateChannelDomainInput {
+	channelId: ID!
+	hostname: String!
+	isPrimary: Boolean
+	isSslEnabled: Boolean
+	redirectToPrimary: Boolean
+	metadata: JSON
+}
+
+"""
+What a caller may change on a hostname that exists.
+
+The hostname and the channel are absent: a binding that could be re-pointed is a binding whose
+resolution changes under the requests that already resolved it. Setting `isPrimary` moves the flag
+from the current holder rather than being refused, because an update is the deliberate operation.
+"""
+input UpdateChannelDomainInput {
+	id: ID!
+	isPrimary: Boolean
+	isSslEnabled: Boolean
+	redirectToPrimary: Boolean
+	metadata: JSON
+}

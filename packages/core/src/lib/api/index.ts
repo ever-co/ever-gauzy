@@ -24,6 +24,7 @@ export * from './field-selection';
 export * from './filter-parser';
 export * from './sort-parser';
 export * from './cursor';
+export * from './graphql-connection';
 export * from './query-parser';
 export * from './legacy-data';
 export * from './deprecation-headers.interceptor';

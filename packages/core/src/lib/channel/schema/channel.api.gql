@@ -1,0 +1,83 @@
+# The channel domain's root fields.
+#
+# `Query`, `Mutation` and `Subscription` are declared by the kernel and extended here: a root
+# operation type exists once for the whole platform, so a domain adds fields to it and never declares
+# its own. The names are the ones the GraphQL API specification fixes for this resource, mutation by
+# mutation, so the REST surface and this one expose the same capabilities under the same words.
+#
+# Every connection takes the same query protocol the REST list route takes — the same filters in
+# `filter`, the same keys in `sort`, the same page in `page` — and answers with the same shape the
+# kernel's `PageInfo` gives every other connection, so a cursor obtained over one surface resumes on
+# the other.
+
+extend type Query {
+	"""
+	The channels of the caller's organization, the default one first.
+	"""
+	channels(
+		filter: ChannelFilter
+		sort: [ChannelSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): ChannelConnection!
+
+	"""
+	One channel of the caller's organization, or null when there is none.
+	"""
+	channel(id: ID!): Channel
+}
+
+extend type Mutation {
+	"""
+	Opens a sales context. The channel is stored `DRAFT`.
+	"""
+	createChannel(input: CreateChannelInput!): Channel!
+
+	"""
+	Changes the descriptive facts of a channel. A body that states a `code` is refused.
+	"""
+	updateChannel(input: UpdateChannelInput!): Channel!
+
+	"""
+	Retires a channel: it keeps its rows and stops serving. The organization's default channel is
+	refused, and a hard delete is not offered — the order side's reference is `RESTRICT`.
+	"""
+	deleteChannel(id: ID!): Channel!
+
+	"""
+	Claims the organization's default channel, releasing the flag from the previous holder.
+	"""
+	setDefaultChannel(id: ID!): Channel!
+
+	"""
+	Moves the channel along its lifecycle: `DRAFT → ACTIVE | ARCHIVED`, `ACTIVE ↔ INACTIVE`,
+	`ARCHIVED` terminal. Reaching `ACTIVE` requires a hostname, because a channel no request can
+	resolve to would be active in the database and unreachable in fact.
+	"""
+	setChannelStatus(input: SetChannelStatusInput!): Channel!
+
+	"""
+	Replaces the channel's region links. The operation is a set, and a member the channel still names
+	as its default region cannot be left out.
+	"""
+	replaceChannelRegions(input: ReplaceChannelRegionsInput!): [ChannelRegion!]!
+}
+
+extend type Subscription {
+	"""
+	Every change to a channel of the caller's tenant: a creation, an edit, a status move, a default
+	change, a region-set replacement, a retirement, or a hostname bound to or withdrawn from it. The
+	stream is narrowed by `channelId` and by `action`; both only ever narrow what the credential may
+	already read.
+
+	A subscription is a notification and never a system of record: an event produced while the client
+	is disconnected is not replayed, and a client that must not miss one registers a webhook.
+	"""
+	channelChanged(channelId: ID, action: String): Channel!
+}

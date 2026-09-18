@@ -23,6 +23,14 @@ import { ChannelRegion } from '../channel-region/channel-region.entity';
 import { ChannelRegionService } from '../channel-region/channel-region.service';
 import { TypeOrmChannelRegionRepository } from '../channel-region/repository/type-orm-channel-region.repository';
 import { MikroOrmChannelRegionRepository } from '../channel-region/repository/mikro-orm-channel-region.repository';
+import { GraphqlSubscriptionModule } from '../graphql/subscriptions';
+import { ChannelController } from './channel.controller';
+import { ChannelResolver } from './channel.resolver';
+import { ChannelEventPublisher } from './channel-event.publisher';
+import { ChannelDomainController } from '../channel-domain/channel-domain.controller';
+import { ChannelDomainResolver } from '../channel-domain/channel-domain.resolver';
+import { RegionController } from '../region/region.controller';
+import { RegionResolver } from '../region/region.resolver';
 
 /**
  * The sales context: the channel, the hostnames that resolve to it, the commercial geography, and the
@@ -48,24 +56,35 @@ import { MikroOrmChannelRegionRepository } from '../channel-region/repository/mi
  * **`CurrencyModule` is imported for a service, not for a guard.** The region's write path checks its
  * currency against the platform's currency master (invariant I-26), and the master is the module that
  * owns that question; asking it here rather than re-reading the table is what keeps "which currencies
- * exist" a single answer. **`RolePermissionModule` is imported for the guards**: this module owns no HTTP
- * handler today, but a guard is a provider of whichever module hosts the handler it protects, so the
- * module that will host this domain's controllers and resolvers has to be able to reach the permission
- * lookup those guards ask for.
+ * exist" a single answer. **`RolePermissionModule` is imported for the guards**: a guard is a provider
+ * of whichever module hosts the handler it protects, so the module that hosts this domain's
+ * controllers and resolvers has to be able to reach the permission lookup those guards ask for.
+ *
+ * **`GraphqlSubscriptionModule` is imported for the publisher, not for a resolver.** The two
+ * subscribable facts of this domain travel on the platform's own fan-out, so the module that owns the
+ * writers has to reach `GraphqlPubSub` and the event catalogue. Importing it here — rather than in the
+ * composition module alone — is what lets the publisher resolve its dependencies from the module that
+ * declares it, and Nest's modules are singletons, so the composition module reaches the same instance.
  */
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Channel, ChannelDomain, Region, RegionCountry, ChannelRegion]),
 		MikroOrmModule.forFeature([Channel, ChannelDomain, Region, RegionCountry, ChannelRegion]),
 		CurrencyModule,
-		RolePermissionModule
+		RolePermissionModule,
+		GraphqlSubscriptionModule
 	],
+	controllers: [ChannelController, ChannelDomainController, RegionController],
 	providers: [
 		ChannelService,
 		ChannelDomainService,
 		RegionService,
 		RegionCountryService,
 		ChannelRegionService,
+		ChannelEventPublisher,
+		ChannelResolver,
+		ChannelDomainResolver,
+		RegionResolver,
 		TypeOrmChannelRepository,
 		MikroOrmChannelRepository,
 		TypeOrmChannelDomainRepository,
@@ -83,6 +102,10 @@ import { MikroOrmChannelRegionRepository } from '../channel-region/repository/mi
 		RegionService,
 		RegionCountryService,
 		ChannelRegionService,
+		ChannelEventPublisher,
+		ChannelResolver,
+		ChannelDomainResolver,
+		RegionResolver,
 		TypeOrmChannelRepository,
 		MikroOrmChannelRepository,
 		TypeOrmChannelDomainRepository,

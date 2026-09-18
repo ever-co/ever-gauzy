@@ -11,6 +11,10 @@ import { PaymentTermResolver } from './../payment-term/payment-term.resolver';
 import { PaymentTermModule } from './../payment-term/payment-term.module';
 import { AddressRoleResolver } from './../address-role/address-role.resolver';
 import { AddressRoleModule } from './../address-role/address-role.module';
+import { ChannelResolver } from './../channel/channel.resolver';
+import { ChannelDomainResolver } from './../channel-domain/channel-domain.resolver';
+import { RegionResolver } from './../region/region.resolver';
+import { ChannelModule } from './../channel/channel.module';
 
 /**
  * Resolvers the platform itself ships.
@@ -18,15 +22,21 @@ import { AddressRoleModule } from './../address-role/address-role.module';
  * `RoleEntityResolver` is declared by `RoleModule` — a resolver can only inject services its own
  * module can reach, so it belongs beside the service it calls — and is listed here as well so the
  * resolver is discovered from the module the Apollo configuration names, whichever way the resolver
- * graph is later rearranged. The measurement, settlement-term and address-role resolvers follow the
- * same rule: each is declared by the module that owns its service.
+ * graph is later rearranged. The measurement, settlement-term, address-role and multi-channel kernel
+ * resolvers follow the same rule: each is declared by the module that owns its service.
  */
 const CORE_RESOLVERS: Array<Type<any>> = [
 	RoleEntityResolver,
 	UnitCategoryResolver,
 	UnitResolver,
 	PaymentTermResolver,
-	AddressRoleResolver
+	AddressRoleResolver,
+	// The multi-channel, multi-region kernel. All three resolvers are declared by `ChannelModule`,
+	// because one module provides the five services they call; they are listed here so Apollo finds
+	// them from the module its configuration names.
+	ChannelResolver,
+	ChannelDomainResolver,
+	RegionResolver
 ];
 
 /**
@@ -46,7 +56,11 @@ const CORE_RESOLVER_MODULES: Array<Type<any>> = [
 	RolePermissionModule,
 	MeasurementModule,
 	PaymentTermModule,
-	AddressRoleModule
+	AddressRoleModule,
+	// One module for the whole kernel domain: it provides all five services, the three resolvers that
+	// call them and the publisher the two subscribable facts travel through, so importing it is what
+	// makes the resolver graph above resolvable. Its own imports bring the subscription module with it.
+	ChannelModule
 ];
 
 /**
