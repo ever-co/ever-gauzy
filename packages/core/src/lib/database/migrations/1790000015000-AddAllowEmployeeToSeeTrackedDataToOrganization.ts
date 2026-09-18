@@ -5,42 +5,35 @@ import { DatabaseTypeEnum } from '@gauzy/config';
 export class AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000 implements MigrationInterface {
 	name = 'AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000';
 
-	private static readonly DIALECTS = {
-		postgres: {
-			addColumn: `ALTER TABLE "organization" ADD "allowEmployeeToSeeTrackedData" boolean NOT NULL DEFAULT true`,
-			dropColumn: `ALTER TABLE "organization" DROP COLUMN "allowEmployeeToSeeTrackedData"`
-		},
-		sqlite: {
-			addColumn: `ALTER TABLE "organization" ADD COLUMN "allowEmployeeToSeeTrackedData" boolean NOT NULL DEFAULT 1`,
-			dropColumn: `ALTER TABLE "organization" DROP COLUMN "allowEmployeeToSeeTrackedData"`
-		},
-		mysql: {
-			addColumn: 'ALTER TABLE `organization` ADD `allowEmployeeToSeeTrackedData` tinyint NOT NULL DEFAULT 1',
-			dropColumn: 'ALTER TABLE `organization` DROP COLUMN `allowEmployeeToSeeTrackedData`'
-		}
-	} as const;
-
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(`${this.name} start running!`));
-		const dialect = this.dialectFor(queryRunner);
-		await queryRunner.query(dialect.addColumn);
+		const dbEngine = queryRunner.connection.options.type as DatabaseTypeEnum;
+		const queryMap: Record<string, string> = {
+			[DatabaseTypeEnum.postgres]: `ALTER TABLE "organization" ADD "allowEmployeeToSeeTrackedData" boolean NOT NULL DEFAULT true`,
+			[DatabaseTypeEnum.sqlite]: `ALTER TABLE "organization" ADD COLUMN "allowEmployeeToSeeTrackedData" boolean NOT NULL DEFAULT 1`,
+			[DatabaseTypeEnum.betterSqlite3]: `ALTER TABLE "organization" ADD COLUMN "allowEmployeeToSeeTrackedData" boolean NOT NULL DEFAULT 1`,
+			[DatabaseTypeEnum.mysql]: 'ALTER TABLE `organization` ADD `allowEmployeeToSeeTrackedData` tinyint NOT NULL DEFAULT 1'
+		};
+		const sql = queryMap[dbEngine];
+		if (!sql) {
+			throw new Error(`Unsupported database engine: ${dbEngine}`);
+		}
+		await queryRunner.query(sql);
 	}
 
 	public async down(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(`${this.name} reverting changes!`));
-		const dialect = this.dialectFor(queryRunner);
-		await queryRunner.query(dialect.dropColumn);
-	}
-
-	private dialectFor(queryRunner: QueryRunner) {
-		const type = queryRunner.connection.options.type as DatabaseTypeEnum;
-		if (type === DatabaseTypeEnum.postgres)
-			return AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000.DIALECTS.postgres;
-		if (type === DatabaseTypeEnum.mysql)
-			return AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000.DIALECTS.mysql;
-		if (type === DatabaseTypeEnum.sqlite || type === DatabaseTypeEnum.betterSqlite3) {
-			return AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000.DIALECTS.sqlite;
+		const dbEngine = queryRunner.connection.options.type as DatabaseTypeEnum;
+		const revertMap: Record<string, string> = {
+			[DatabaseTypeEnum.postgres]: `ALTER TABLE "organization" DROP COLUMN "allowEmployeeToSeeTrackedData"`,
+			[DatabaseTypeEnum.sqlite]: `ALTER TABLE "organization" DROP COLUMN "allowEmployeeToSeeTrackedData"`,
+			[DatabaseTypeEnum.betterSqlite3]: `ALTER TABLE "organization" DROP COLUMN "allowEmployeeToSeeTrackedData"`,
+			[DatabaseTypeEnum.mysql]: 'ALTER TABLE `organization` DROP COLUMN `allowEmployeeToSeeTrackedData`',
+		};
+		const sql = revertMap[dbEngine];
+		if (!sql) {
+			throw new Error(`Unsupported database engine: ${dbEngine}`);
 		}
-		throw new Error(`Unsupported database: ${type}`);
+		await queryRunner.query(sql);
 	}
 }
