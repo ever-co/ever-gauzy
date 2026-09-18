@@ -269,7 +269,16 @@ function ledger() {
 
 			return { movementId: `movement-${movements.length}`, quantityAfter: '0.000000' };
 		},
-		relocate: async () => []
+		relocate: async () => [],
+		// The two operations this domain does not perform. A home-bin declaration and a put-away belong to
+		// the bin surface, and a pick neither declares where stock lives nor walks it in; they are stated
+		// here because the port declares them, and as refusals a test would see rather than as silent no-ops.
+		setHomeBin: async () => {
+			throw new Error('a pick does not declare home bins');
+		},
+		putAway: async () => {
+			throw new Error('a pick does not put stock away');
+		}
 	};
 
 	return { port, movements };

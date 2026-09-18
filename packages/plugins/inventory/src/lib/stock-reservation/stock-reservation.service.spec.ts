@@ -117,7 +117,7 @@ jest.mock(
 );
 
 import { FindOperator } from 'typeorm';
-import { Product, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
+import { Product, ProductVariant, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
 import { StockMovementType, StockReservationReferenceType, StockReservationStatus } from '../inventory.enums';
 import { StockLevelService } from '../stock-level/stock-level.service';
 import { StockMovement } from '../stock-movement/stock-movement.entity';
@@ -180,6 +180,7 @@ interface IContention {
 function datastore(tables: Record<string, Row[]>, options: { contention?: IContention } = {}) {
 	const entityToTable = new Map<unknown, string>([
 		[Product, 'product'],
+		[ProductVariant, 'product_variant'],
 		[WarehouseProduct, 'warehouse_product'],
 		[WarehouseProductVariant, 'warehouse_product_variant'],
 		[StockMovement, 'stock_movement'],

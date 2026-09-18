@@ -114,7 +114,7 @@ jest.mock(
 	{ virtual: true }
 );
 
-import { Product, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
+import { Product, ProductVariant, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
 import {
 	StockAdjustmentStatus,
 	StockAdjustmentType,
@@ -163,6 +163,7 @@ type Row = Record<string, any>;
 function datastore(tables: Record<string, Row[]>) {
 	const entityToTable = new Map<unknown, string>([
 		[Product, 'product'],
+		[ProductVariant, 'product_variant'],
 		[WarehouseProduct, 'warehouse_product'],
 		[WarehouseProductVariant, 'warehouse_product_variant'],
 		[StockMovement, 'stock_movement'],

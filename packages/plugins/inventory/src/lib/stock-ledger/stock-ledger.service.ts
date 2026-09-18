@@ -80,6 +80,8 @@ import {
 	IStockLedgerHomeBin,
 	IStockLedgerMovementRequest,
 	IStockLedgerMovementResult,
+	IStockLedgerPutAway,
+	IStockLedgerPutAwayResult,
 	IStockLedgerRelocation
 } from './stock-ledger.types';
 
@@ -381,12 +383,127 @@ export class StockLedgerService {
 		});
 	}
 
+	/**
+	 * Walks received units from where they were dropped into the bin they now live in.
+	 *
+	 * **The bin becomes the level's home bin, and that is why this is not a relocation.** The home bin is
+	 * `warehouse_product_variant.binId` — the record of the operator's decision about where the stock
+	 * lives, which a pick reads to know where to send the picker and which the put-away is the only
+	 * operation that ever writes. A relocation moves units between two bins a level already holds; a
+	 * put-away is how a level comes to hold them in a bin at all, so it writes the column and the movement
+	 * in one transaction.
+	 *
+	 * **The walk is two legs or none.** When the units are recorded in the receiving area's bin, that leg
+	 * is a `TRANSFER_OUT` and the target bin's is a `TRANSFER_IN`; the location's own quantity is unchanged
+	 * by the pair, which is the invariant a relocation states and this shares. When they are not — the
+	 * common case, because a receipt lands in the location rather than in an address — there is no leg to
+	 * leave, and the put-away writes the `TRANSFER_IN` and the home bin alone: a `TRANSFER_OUT` of stock
+	 * that was never recorded anywhere would subtract units the ledger does not have, which is how a level
+	 * goes negative through a correct-looking operation.
+	 *
+	 * @param request The location, the variant, the target bin, the quantity and its provenance.
+	 * @returns The movements that were written, the bin now named as home, and the level after the walk.
+	 * @throws BadRequestException when a member is missing or the quantity is not positive, or when the
+	 * put-away names the receiving bin as the target — a walk that arrives where it started.
+	 */
+	public async putAway(request: IStockLedgerPutAway): Promise<IStockLedgerPutAwayResult> {
+		this.assertStated(request, ['warehouseId', 'variantId', 'binId', 'referenceType', 'referenceId']);
+
+		const stated = this.quantityText(request.quantity);
+
+		if (compareDecimalStrings(stated, '0') <= 0) {
+			throw inventoryError(
+				InventoryErrorCode.INVARIANT_VIOLATION,
+				'A put-away states the quantity it places as a positive decimal.',
+				{ badRequest: true, details: { quantity: request.quantity } }
+			);
+		}
+
+		if (request.fromBinId && String(request.fromBinId) === String(request.binId)) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_SAME_LOCATION,
+				'A put-away must place the units in a different bin from the one they are recorded in.',
+				{ badRequest: true, details: { binId: request.binId } }
+			);
+		}
+
+		return await this.typeOrmStockMovementRepository.manager.transaction(async (manager) => {
+			const reference = {
+				referenceType: request.referenceType as StockMovementReferenceType,
+				referenceId: request.stockMovementId ?? request.referenceId,
+				reason: request.reason
+			};
+
+			const outbound = request.fromBinId
+				? await this.stockLevelService.applyMovement(
+						{
+							warehouseId: request.warehouseId,
+							variantId: request.variantId,
+							binId: request.fromBinId,
+							type: StockMovementType.TRANSFER_OUT,
+							quantityDelta: Number(this.negated(stated)),
+							reservedDelta: 0,
+							...reference
+						},
+						manager
+				  )
+				: undefined;
+
+			const inbound = await this.stockLevelService.applyMovement(
+				{
+					warehouseId: request.warehouseId,
+					variantId: request.variantId,
+					binId: request.binId,
+					type: StockMovementType.TRANSFER_IN,
+					quantityDelta: Number(stated),
+					reservedDelta: 0,
+					...reference
+				},
+				manager
+			);
+
+			// The home bin is written inside the same transaction as the movement that placed the units, so
+			// a level never names a bin the ledger has not been told about.
+			await this.stockLevelService.setHomeBin(
+				{ warehouseId: request.warehouseId, variantId: request.variantId, binId: request.binId },
+				manager
+			);
+
+			return {
+				...(outbound ? { transferOutMovementId: outbound.movementId } : {}),
+				transferInMovementId: inbound.movementId,
+				binId: request.binId,
+				quantityAfter: this.quantityText(
+					addDecimalStrings(inbound.quantityBefore ?? 0, stated)
+				) as DecimalString
+			};
+		});
+	}
+
+	/**
+	 * Names the bin a variant is kept in at a location, writing no movement.
+	 *
+	 * The declaration counterpart of a relocation: nothing physically moved, so nothing is written to the
+	 * ledger — the level row's `binId` is the operator's statement of where the stock is expected to be,
+	 * and reconciliation is what reports that statement once it disagrees with the placement. It is on this
+	 * seam rather than on the level service because a package that does not own stock asks the ledger to
+	 * make statements about it, exactly as it asks the ledger to move it.
+	 *
+	 * @param request The location, the variant and the bin to name as home.
+	 * @returns Whether a level row was found and named.
+	 * @throws BadRequestException when a member is missing.
+	 */
+	public async setHomeBin(request: { warehouseId: ID; variantId: ID; binId: ID }): Promise<boolean> {
+		this.assertStated(request, ['warehouseId', 'variantId', 'binId']);
+
+		return this.stockLevelService.setHomeBin(request);
+	}
+
 	/*
 	|--------------------------------------------------------------------------
 	| Internals
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
 	 * The joined ledger read every derived balance builds.
 	 *
@@ -430,6 +547,12 @@ export class StockLedgerService {
 	 * The condition is stated on the aggregate, for the reason the class documents. A caller with no
 	 * tenant or no organization is not narrowed, which is how the ledger’s own reads treat a worker, a
 	 * migration or a system context.
+	 *
+	 * An aggregate that names **no** organization is the tenant-wide row — the reading the platform
+	 * gives a shared row everywhere else — so it is in scope for every organization of the tenant
+	 * rather than for none. The distinction matters most on this seam: a movement written for a product
+	 * the tenant shares carries no organization of its own, and a read that insisted on one would report
+	 * an empty bin beside a bin the ledger has just been told is full.
 	 */
 	private scopeToCaller<T>(query: SelectQueryBuilder<T>): void {
 		const tenantId = RequestContext.currentTenantId();
@@ -439,7 +562,9 @@ export class StockLedgerService {
 			query.andWhere('aggregate.tenantId = :tenantId', { tenantId });
 		}
 		if (organizationId) {
-			query.andWhere('aggregate.organizationId = :organizationId', { organizationId });
+			query.andWhere('(aggregate.organizationId = :organizationId OR aggregate.organizationId IS NULL)', {
+				organizationId
+			});
 		}
 	}
 

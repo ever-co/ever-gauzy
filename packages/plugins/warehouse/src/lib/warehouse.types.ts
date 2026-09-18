@@ -291,6 +291,43 @@ export interface IWarehouseStockLedgerPort {
 		referenceId: ID;
 		reason?: string;
 	}): Promise<IWarehouseStockMovementResult[]>;
+	/**
+	 * Names the bin a variant is kept in at a location, writing no movement.
+	 *
+	 * It is the ledger's because the column is the level row's: a declaration about where stock is
+	 * expected to be is not a physical move, so the warehouse states it here rather than writing a level
+	 * itself — and reconciliation is what reports the declaration once it disagrees with the placement.
+	 */
+	setHomeBin(request: { warehouseId: ID; variantId: ID; binId: ID }): Promise<boolean>;
+	/**
+	 * Walks received units from where they were dropped into the bin they now live in.
+	 *
+	 * The ledger writes the arrival and names the target bin as the variant's home in one transaction, so
+	 * a level never points at a bin the ledger has not been told about.
+	 */
+	putAway(request: {
+		warehouseId: ID;
+		variantId: ID;
+		binId: ID;
+		quantity: DecimalString;
+		fromBinId?: ID;
+		stockMovementId?: ID;
+		referenceType: string;
+		referenceId: ID;
+		reason?: string;
+	}): Promise<IWarehousePutAwayResult>;
+}
+
+/** What the ledger answers with once a put-away is written. */
+export interface IWarehousePutAwayResult {
+	/** The leg out of the receiving area, when the units were recorded in a bin. */
+	readonly transferOutMovementId?: ID;
+	/** The leg into the target bin. */
+	readonly transferInMovementId: ID;
+	/** The bin the level row now names as the variant's home. */
+	readonly binId: ID;
+	/** The level after the walk. */
+	readonly quantityAfter: DecimalString;
 }
 
 /** One line of a shipment that is due to leave, as the warehouse reads it. */

@@ -224,6 +224,12 @@ export class StockAvailabilityService {
 	 * The aggregate is the row the condition is stated on, for the reason the class documents. A
 	 * caller with no tenant or no organization is not narrowed, which is how the ledger’s own reads
 	 * treat a worker, a migration or a system context.
+	 *
+	 * An aggregate that names **no** organization is the tenant-wide row — the reading the platform
+	 * gives a shared row everywhere else — so it is in scope for every organization of the tenant
+	 * rather than for none. Narrowing to the caller’s own organization alone would answer zero for a
+	 * product the tenant shares, which is a wrong answer rather than a narrow one: the stock exists, at
+	 * that location, and a channel asking whether it can sell is entitled to count it.
 	 */
 	private scopeToCaller<T>(query: SelectQueryBuilder<T>): void {
 		const tenantId = RequestContext.currentTenantId();
@@ -233,7 +239,9 @@ export class StockAvailabilityService {
 			query.andWhere('aggregate.tenantId = :tenantId', { tenantId });
 		}
 		if (organizationId) {
-			query.andWhere('aggregate.organizationId = :organizationId', { organizationId });
+			query.andWhere('(aggregate.organizationId = :organizationId OR aggregate.organizationId IS NULL)', {
+				organizationId
+			});
 		}
 	}
 

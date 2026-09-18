@@ -206,6 +206,29 @@ function same(left: unknown, right: unknown): boolean {
 	return String(left ?? '') === String(right ?? '');
 }
 
+/**
+ * Answers the scope condition the ledger states on the aggregate.
+ *
+ * The condition admits the tenant-wide row — the aggregate that names no organization — beside the
+ * caller’s own, so the double models both readings: without the `IS NULL` half it would answer the
+ * equality alone and a shared row would look out of scope, which is the defect the condition exists
+ * to prevent.
+ *
+ * @param rowOrganizationId The organization of the aggregate the row hangs from.
+ * @param sql The condition the read stated.
+ * @param callerOrganizationId The organization the caller runs in.
+ * @returns Whether the database would have returned the row.
+ */
+function scopedToOrganization(
+	rowOrganizationId: string | null | undefined,
+	sql: string,
+	callerOrganizationId: unknown
+): boolean {
+	return /IS NULL/.test(sql)
+		? rowOrganizationId == null || same(rowOrganizationId, callerOrganizationId)
+		: same(rowOrganizationId, callerOrganizationId);
+}
+
 /** @returns A copy of the store, and the value each array had. */
 function snapshot(store: IStore): IStore {
 	return {
@@ -262,7 +285,7 @@ function movementMatches(store: IStore, row: IMovementRow, conditions: IConditio
 			return same(aggregate?.tenantId, params.tenantId);
 		}
 		if (/aggregate\.organizationId/.test(sql)) {
-			return same(aggregate?.organizationId, params.organizationId);
+			return scopedToOrganization(aggregate?.organizationId, sql, params.organizationId);
 		}
 
 		throw new Error(`the in-memory ledger read does not implement the condition "${sql}"`);
@@ -296,7 +319,7 @@ function levelMatches(store: IStore, row: ILevelRow, conditions: ICondition[]): 
 			return same(aggregate?.tenantId, params.tenantId);
 		}
 		if (/aggregate\.organizationId/.test(sql)) {
-			return same(aggregate?.organizationId, params.organizationId);
+			return scopedToOrganization(aggregate?.organizationId, sql, params.organizationId);
 		}
 
 		throw new Error(`the in-memory level read does not implement the condition "${sql}"`);
@@ -449,6 +472,27 @@ function engine(store: IStore) {
 		 * @param manager The transaction the write joins, when the caller is inside one.
 		 * @returns The movement row that was written and the level state it produced.
 		 */
+		/**
+		 * Naming the bin a variant is kept in, which the engine owns because the level row is its table.
+		 * The double answers the same way the engine does: the bin lands on the level row the movement was
+		 * applied to, and a location that does not stock the variant has no row to name one on.
+		 */
+		setHomeBin: async (input: any, manager?: unknown) => {
+			const aggregate = store.aggregates.find((row) => same(row.warehouseId, input.warehouseId));
+			const level = store.levels.find(
+				(row) => same(row.warehouseProductId, aggregate?.id) && same(row.variantId, input.variantId)
+			);
+
+			if (!level) {
+				return false;
+			}
+
+			level.binId = input.binId;
+			void manager;
+
+			return true;
+		},
+
 		applyMovement: async (input: any, manager?: unknown) => {
 			const level = levelOf(input);
 			const quantityBefore = Number(level.quantity ?? 0);
@@ -709,6 +753,19 @@ describe('StockLedgerService — the derived balances of the ledger', () => {
 		});
 	});
 
+	it('reads a balance of the tenant-wide row every organization shares', async () => {
+		// A product that names no organization belongs to the whole tenant, so the stock the ledger holds
+		// against it is in scope for every organization of that tenant. This is the shape a put-away of a
+		// shared product produces: with the equality alone the bin answers empty the moment after the
+		// ledger recorded the units as placed there.
+		const { service } = fixture({
+			aggregates: [{ id: AGGREGATE, warehouseId: WAREHOUSE, tenantId: TENANT, organizationId: null }],
+			movements: [movementRow({ binId: BIN, quantity: 5 })]
+		});
+
+		expect(await service.readBinBalances([BIN])).toEqual([{ binId: BIN, variantId: VARIANT, quantity: '5.000000' }]);
+	});
+
 	it('does not read a balance of another tenant', async () => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(OTHER_TENANT);
 		const { service } = fixture({
@@ -746,6 +803,19 @@ describe('StockLedgerService — what the level rows claim sits in a bin', () =>
 		expect(await service.readExpectedBinBalances({ warehouseId: WAREHOUSE, binIds: [BIN, OTHER_BIN] })).toEqual([
 			{ binId: BIN, variantId: VARIANT, quantity: '4.000000' },
 			{ binId: OTHER_BIN, variantId: OTHER_VARIANT, quantity: '3.000000' }
+		]);
+	});
+
+	it('claims the levels of a tenant-wide row for every organization that shares it', async () => {
+		// The claim side of the same reading: a level of a product the tenant shares is claimed at its bin
+		// whichever organization of the tenant is counting it.
+		const { service } = fixture({
+			aggregates: [{ id: AGGREGATE, warehouseId: WAREHOUSE, tenantId: TENANT, organizationId: null }],
+			levels: [levelRow({ id: 'level-1', binId: BIN, quantity: 4 })]
+		});
+
+		expect(await service.readExpectedBinBalances({ warehouseId: WAREHOUSE, binIds: [BIN] })).toEqual([
+			{ binId: BIN, variantId: VARIANT, quantity: '4.000000' }
 		]);
 	});
 
@@ -1198,6 +1268,112 @@ describe('StockLedgerService — a relocation between two bins', () => {
 			response: { code: 'STOCK_INVARIANT_VIOLATION' }
 		});
 		expect(movementsOf(store, 'WAREHOUSE_BIN_TRANSFER')).toEqual([]);
+		expect(store.transactions).toEqual([]);
+	});
+});
+
+describe('StockLedgerService — the put-away that walks received units into a bin', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('records the arrival in the bin and names it the variant’s home, which nothing else writes', async () => {
+		// The home bin is `warehouse_product_variant.binId` — what a pick reads to know where to send the
+		// picker — and the put-away is the only operation that writes it. Before this, the column was
+		// declared, indexed, read by the ledger's own home-bin answer, and written by nobody.
+		const { service, store } = fixture(stocked(0));
+
+		const result = await service.putAway({
+			warehouseId: WAREHOUSE,
+			variantId: VARIANT,
+			binId: BIN,
+			quantity: '6',
+			referenceType: 'GOODS_RECEIPT',
+			referenceId: REFERENCE
+		});
+
+		const legs = movementsOf(store, 'GOODS_RECEIPT');
+
+		expect(legs.map((movement) => [movement.type, movement.quantity, movement.binId])).toEqual([
+			[StockMovementType.TRANSFER_IN, 6, BIN]
+		]);
+		expect(result.transferOutMovementId).toBeUndefined();
+		expect(result.transferInMovementId).toBe(legs[0].id);
+		expect(result.binId).toBe(BIN);
+		expect(result.quantityAfter).toBe('6.000000');
+		// The level holds the units and names the bin they are in.
+		expect(store.levels[0].quantity).toBe(6);
+		expect(store.levels[0].binId).toBe(BIN);
+		expect(await service.resolveHomeBin({ warehouseId: WAREHOUSE, variantId: VARIANT })).toMatchObject({
+			binId: BIN,
+			quantity: '6.000000'
+		});
+		expect(compareDecimalStrings(ledgerSum(store, VARIANT, WAREHOUSE), store.levels[0].quantity)).toBe(0);
+	});
+
+	it('walks the units out of the receiving bin when they were recorded in one', async () => {
+		// A receipt that lands in an addressed receiving area is stock the ledger has, so the walk leaves
+		// it; the pair nets to zero at the location, as a relocation does.
+		const { service, store } = fixture(stocked(6, { binId: OTHER_BIN }));
+
+		const result = await service.putAway({
+			warehouseId: WAREHOUSE,
+			variantId: VARIANT,
+			fromBinId: OTHER_BIN,
+			binId: BIN,
+			quantity: '6',
+			referenceType: 'GOODS_RECEIPT',
+			referenceId: REFERENCE
+		});
+
+		const legs = movementsOf(store, 'GOODS_RECEIPT');
+
+		expect(legs.map((movement) => [movement.type, movement.quantity, movement.binId])).toEqual([
+			[StockMovementType.TRANSFER_OUT, -6, OTHER_BIN],
+			[StockMovementType.TRANSFER_IN, 6, BIN]
+		]);
+		expect(result.transferOutMovementId).toBe(legs[0].id);
+		// The location holds what it held and the home bin moved.
+		expect(store.levels[0].quantity).toBe(6);
+		expect(store.levels[0].binId).toBe(BIN);
+		expect(legs[0].__transaction).toBe(legs[1].__transaction);
+		expect(store.transactions).toHaveLength(1);
+		expect(compareDecimalStrings(ledgerSum(store, VARIANT, WAREHOUSE), store.levels[0].quantity)).toBe(0);
+	});
+
+	it('refuses a walk that arrives where it started, or that places nothing', async () => {
+		const { service, store } = fixture(stocked(6));
+
+		await expect(
+			service.putAway({
+				warehouseId: WAREHOUSE,
+				variantId: VARIANT,
+				fromBinId: BIN,
+				binId: BIN,
+				quantity: '1',
+				referenceType: 'GOODS_RECEIPT',
+				referenceId: REFERENCE
+			})
+		).rejects.toMatchObject({ response: { code: 'STOCK_TRANSFER_SAME_LOCATION' } });
+
+		for (const quantity of ['0', '-3']) {
+			await expect(
+				service.putAway({
+					warehouseId: WAREHOUSE,
+					variantId: VARIANT,
+					binId: BIN,
+					quantity,
+					referenceType: 'GOODS_RECEIPT',
+					referenceId: REFERENCE
+				})
+			).rejects.toMatchObject({ response: { code: 'STOCK_INVARIANT_VIOLATION' } });
+		}
+
+		expect(movementsOf(store, 'GOODS_RECEIPT')).toEqual([]);
+		expect(store.levels[0].binId).toBeUndefined();
 		expect(store.transactions).toEqual([]);
 	});
 });

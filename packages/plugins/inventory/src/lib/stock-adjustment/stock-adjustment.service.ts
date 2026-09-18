@@ -177,9 +177,14 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 			.getOne();
 	}
 
-	/** Reads the product of a variant, which the ledger row needs for its denormalised reference. */
+	/**
+	 * Reads the product of a variant, which the ledger row needs for its denormalised reference.
+	 *
+	 * Read through the level service rather than as raw SQL: the `SELECT … WHERE "id" = $1` this method
+	 * used to carry is a PostgreSQL placeholder, and the embedded dialect refused it with `RangeError: Too
+	 * many parameter values were provided` the first time a correction had to create a level.
+	 */
 	private async productOf(manager: any, variantId: ID): Promise<ID | undefined> {
-		const raw = await manager.query('SELECT "productId" FROM "product_variant" WHERE "id" = $1', [variantId]);
-		return raw && raw[0] ? raw[0].productId : undefined;
+		return this.stockLevelService.productOfVariant(manager, variantId);
 	}
 }

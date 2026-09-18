@@ -164,7 +164,11 @@ function matches(row: ILevelRow, conditions: ICondition[]): boolean {
 			return same(row.aggregate.tenantId, params.tenantId);
 		}
 		if (/aggregate\.organizationId/.test(sql)) {
-			return same(row.aggregate.organizationId, params.organizationId);
+			// The scope condition admits the tenant-wide row (no organization) beside the caller's own,
+			// so the double models both readings rather than the equality alone.
+			return /IS NULL/.test(sql)
+				? row.aggregate.organizationId == null || same(row.aggregate.organizationId, params.organizationId)
+				: same(row.aggregate.organizationId, params.organizationId);
 		}
 		if (/level\.variantId/.test(sql)) {
 			return same(row.variantId, params.variantId);
@@ -393,8 +397,31 @@ describe('StockAvailabilityService — what may be sold of a variant', () => {
 
 		expect(await service.availabilityOf({ variantId: VARIANT })).toMatchObject({ sellableQuantity: 5 });
 		expect(reads[0].map((condition) => condition.sql)).toEqual(
-			expect.arrayContaining(['aggregate.tenantId = :tenantId', 'aggregate.organizationId = :organizationId'])
+			expect.arrayContaining([
+				'aggregate.tenantId = :tenantId',
+				'(aggregate.organizationId = :organizationId OR aggregate.organizationId IS NULL)'
+			])
 		);
+	});
+
+	it('counts a level the whole tenant shares beside the caller’s own', async () => {
+		// A product that names no organization belongs to the tenant, and its stock is sellable at every
+		// organization of that tenant. Answering zero for it would hide stock the platform holds.
+		const { service } = fixture([
+			level({ id: 'level-mine', quantity: 5 }),
+			level({
+				id: 'level-shared',
+				quantity: 4,
+				aggregate: { warehouseId: WAREHOUSE, tenantId: TENANT, organizationId: null }
+			}),
+			level({
+				id: 'level-theirs',
+				quantity: 100,
+				aggregate: { warehouseId: WAREHOUSE, tenantId: TENANT, organizationId: OTHER_ORG }
+			})
+		]);
+
+		expect(await service.availabilityOf({ variantId: VARIANT })).toMatchObject({ sellableQuantity: 9 });
 	});
 
 	it('does not sum a level of another tenant into the answer', async () => {
@@ -422,7 +449,7 @@ describe('StockAvailabilityService — what may be sold of a variant', () => {
 				'level.variantId = :variantId',
 				'aggregate.warehouseId = :warehouseId',
 				'aggregate.tenantId = :tenantId',
-				'aggregate.organizationId = :organizationId'
+				'(aggregate.organizationId = :organizationId OR aggregate.organizationId IS NULL)'
 			])
 		);
 		expect(reads[0].find((condition) => condition.sql === 'level.variantId = :variantId').params).toEqual({
@@ -442,7 +469,10 @@ describe('StockAvailabilityService — what may be sold of a variant', () => {
 
 		expect(await service.availabilityOf({ variantId: VARIANT })).toMatchObject({ sellableQuantity: 9 });
 		expect(reads[0].map((condition) => condition.sql)).not.toEqual(
-			expect.arrayContaining(['aggregate.tenantId = :tenantId', 'aggregate.organizationId = :organizationId'])
+			expect.arrayContaining([
+				'aggregate.tenantId = :tenantId',
+				'(aggregate.organizationId = :organizationId OR aggregate.organizationId IS NULL)'
+			])
 		);
 	});
 

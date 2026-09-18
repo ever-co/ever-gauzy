@@ -117,7 +117,7 @@ jest.mock(
 	{ virtual: true }
 );
 
-import { Product, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
+import { Product, ProductVariant, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType } from '../inventory.enums';
 import { StockMovement } from '../stock-movement/stock-movement.entity';
 import { StockLevelService } from './stock-level.service';
@@ -200,6 +200,9 @@ function datastore(
 ) {
 	const entityToTable = new Map<unknown, keyof ITables>([
 		[Product, 'product'],
+		// The variant table is read through the repository rather than as raw SQL: the engine needs a
+		// variant's product before it can create the level for it, and the double answers the same read.
+		[ProductVariant, 'product_variant'],
 		[WarehouseProduct, 'warehouse_product'],
 		[WarehouseProductVariant, 'warehouse_product_variant'],
 		[StockMovement, 'stock_movement']

@@ -115,3 +115,45 @@ export interface IStockLedgerRelocation {
 	/** Free-text explanation kept beside both movements. */
 	readonly reason?: string;
 }
+
+/**
+ * One put-away: the walk received units take from where they were dropped into a storage bin.
+ *
+ * It differs from a relocation in two ways that are the reason it is its own request rather than a
+ * relocation with an option. The units **arrive** — they were received into the location a moment ago and
+ * this is the movement that says where they now live — and the target bin becomes the variant's **home
+ * bin**, the column a pick reads to know where to send the picker. A relocation moves units between bins a
+ * level already holds; a put-away is how the level comes to hold them in a bin at all.
+ */
+export interface IStockLedgerPutAway {
+	/** The location the units are already in. */
+	readonly warehouseId: ID;
+	/** The variant being placed. */
+	readonly variantId: ID;
+	/** The bin the units are placed into, which becomes the variant's home bin. */
+	readonly binId: ID;
+	/** The positive quantity being placed. */
+	readonly quantity: DecimalString;
+	/** The stock movement the units were received by, when the caller has one. */
+	readonly stockMovementId?: ID;
+	/** The concept that asked for the put-away, e.g. `GOODS_RECEIPT`. */
+	readonly referenceType: string;
+	/** The row that asked for the put-away. */
+	readonly referenceId: ID;
+	/** The bin the units are walking from, when the receiving area is itself a bin. */
+	readonly fromBinId?: ID;
+	/** Free-text explanation kept beside both movements. */
+	readonly reason?: string;
+}
+
+/** What a put-away wrote. */
+export interface IStockLedgerPutAwayResult {
+	/** The leg out of the receiving area, when the units were recorded in a bin. */
+	readonly transferOutMovementId?: ID;
+	/** The leg into the target bin. */
+	readonly transferInMovementId: ID;
+	/** The bin the level row now names as the variant's home, which is the one that was placed into. */
+	readonly binId: ID;
+	/** The level after the walk, as the ledger computed it. */
+	readonly quantityAfter: DecimalString;
+}

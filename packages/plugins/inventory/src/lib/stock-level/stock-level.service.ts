@@ -17,7 +17,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntityManager } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { DatabaseTypeEnum } from '@gauzy/config';
-import { Product, RequestContext, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
+import { Product, ProductVariant, RequestContext, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
 import { StockMovement } from './../stock-movement/stock-movement.entity';
 import { StockMovementType } from './../inventory.enums';
 import { InventoryErrorCode, invariantViolation, inventoryError } from './../inventory.errors';
@@ -243,6 +243,42 @@ export class StockLevelService {
 	public async availableQuantity(warehouseId: ID, variantId: ID): Promise<number> {
 		const level = await this.findLevel(warehouseId, variantId);
 		return level ? level.availableQuantity : 0;
+	}
+
+	/**
+	 * Names the bin a variant is kept in at a location.
+	 *
+	 * The home bin is the level row's own `binId` — the record of the operator's decision about where the
+	 * stock lives, which a pick reads to know where to send the picker — and this is its only writer. It is
+	 * a method of this service rather than of the caller because the level table is this service's own, and
+	 * because the write has to join the caller's transaction: a put-away that named a bin while its
+	 * movement rolled back would leave a level pointing at a bin the ledger has never been told about.
+	 *
+	 * A location that does not stock the variant has no level row to name a bin on, and the write answers
+	 * `false` rather than creating one: a level row exists because stock exists, and a put-away that runs
+	 * before the receipt is a caller mistake its caller is better placed to report.
+	 *
+	 * @param input The location, the variant and the bin.
+	 * @param manager The transaction to write inside, when the caller is already in one.
+	 * @returns Whether a level row was found and named.
+	 */
+	public async setHomeBin(
+		input: { warehouseId: ID; variantId: ID; binId: ID },
+		manager?: EntityManager
+	): Promise<boolean> {
+		const run = async (transactional: EntityManager): Promise<boolean> => {
+			const level = await this.findLevelRow(transactional, input.warehouseId, input.variantId);
+
+			if (!level) {
+				return false;
+			}
+
+			await transactional.update(WarehouseProductVariant, level.id, { binId: input.binId });
+
+			return true;
+		};
+
+		return manager ? run(manager) : this.dataSource.transaction(run);
 	}
 
 	/**
@@ -626,7 +662,7 @@ export class StockLevelService {
 		variantId?: ID
 	): Promise<WarehouseProduct> {
 		const statedProductId = productId;
-		const variantProductId = variantId ? await this.productOf(manager, variantId) : undefined;
+		const variantProductId = variantId ? await this.productOfVariant(manager, variantId) : undefined;
 		const resolvedProductId = statedProductId ?? variantProductId;
 
 		if (!resolvedProductId) {
@@ -684,22 +720,48 @@ export class StockLevelService {
 	}
 
 	/**
-	 * Reads the product a variant belongs to.
+	 * Reads the product a variant belongs to, for a caller that has to state it.
 	 *
-	 * The ledger row carries the variant’s product as a denormalised reference, and the variant table is
-	 * where that answer lives — the same read the manual-correction and cycle-count paths make when they
-	 * hand the engine the product of the variant they are correcting.
+	 * The ledger row carries the variant's product as a denormalised reference, and the variant table is
+	 * where that answer lives — the manual-correction and cycle-count paths both need it before they can
+	 * state a movement, which is why this is public rather than private.
+	 *
+	 * **It is read through the repository rather than as raw SQL, and that is not style.** Each caller used
+	 * to carry its own `SELECT … WHERE "id" = $1` — a PostgreSQL placeholder on a platform that runs three
+	 * dialects — so the first movement that had to *create* a level on the embedded dialect died with
+	 * `RangeError: Too many parameter values were provided`, which is better-sqlite3 refusing a bound
+	 * parameter its statement has no placeholder for. A repository read has no placeholders to get wrong,
+	 * so the dialect cannot disagree with the caller.
 	 *
 	 * @param manager The transaction the read runs in.
 	 * @param variantId The variant to read.
 	 * @returns The product of the variant, or undefined when the variant names none.
 	 */
-	private async productOf(manager: EntityManager, variantId: ID): Promise<ID | undefined> {
-		const raw: Array<{ productId?: ID }> = await manager.query(
-			'SELECT "productId" FROM "product_variant" WHERE "id" = $1',
-			[variantId]
-		);
-		return raw && raw[0] ? raw[0].productId : undefined;
+	public async productOfVariant(manager: EntityManager, variantId: ID): Promise<ID | undefined> {
+		const variant = await manager.findOne(ProductVariant, {
+			where: { id: variantId },
+			select: { id: true, productId: true }
+		} as never);
+
+		return (variant as { productId?: ID } | null)?.productId ?? undefined;
+	}
+
+	/**
+	 * The placeholder a bound parameter is written as on this connection.
+	 *
+	 * One read in this service cannot go through a repository — `warehouse_bin` belongs to the warehouse
+	 * package, which this one does not depend on — so it is raw SQL, and raw SQL has to say `$1` on
+	 * PostgreSQL and `?` everywhere else. That difference is what the class's other raw reads got wrong,
+	 * and the reason this is a method rather than three string literals.
+	 *
+	 * @param manager The manager whose connection decides the form.
+	 * @param position The parameter's position, counted from one.
+	 * @returns The placeholder text.
+	 */
+	private placeholder(manager: EntityManager, position = 1): string {
+		return (manager.connection.options.type as DatabaseTypeEnum) === DatabaseTypeEnum.postgres
+			? `$${position}`
+			: '?';
 	}
 
 	/**
@@ -901,7 +963,7 @@ export class StockLevelService {
 			return undefined;
 		}
 		const rows: Array<{ warehouseId: string }> = await manager.query(
-			'SELECT "warehouseId" FROM "warehouse_bin" WHERE "id" = $1',
+			`SELECT "warehouseId" FROM "warehouse_bin" WHERE "id" = ${this.placeholder(manager)}`,
 			[input.binId]
 		);
 		const bin = rows && rows[0];

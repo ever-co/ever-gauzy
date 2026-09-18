@@ -39,6 +39,11 @@ const TIMEOUT_MS = Number(process.env.E2E_TIMEOUT_MS || 30_000);
  */
 const RESOURCES = [
 	{ path: '/api/collections', capability: 'catalog' },
+	// The variant list is read because it is the one resource of the catalogue that is *mounted and
+	// unreadable*: it asked for a relation named `settings` where the entity declares `setting`, so every
+	// call answered `500`. A sweep that only checks that a resource is mounted does not see that, which is
+	// why the list is read here rather than only the products it hangs from.
+	{ path: '/api/product-variants', capability: 'catalog' },
 	{ path: '/api/product-prices', capability: 'pricing' },
 	{ path: '/api/tax-rates', capability: 'tax' },
 	{ path: '/api/stock-levels', capability: 'inventory' },

@@ -26,6 +26,8 @@ import { ContactCredentialResolver } from './../contact-credential/contact-crede
 import { ContactCredentialModule } from './../contact-credential/contact-credential.module';
 import { ContactBuyerResolver } from './../contact-buyer/contact-buyer.resolver';
 import { ContactBuyerModule } from './../contact-buyer/contact-buyer.module';
+import { ProductVariantResolver } from './../product-variant/product-variant.resolver';
+import { ProductVariantModule } from './../product-variant/product-variant.module';
 
 /**
  * Resolvers the platform itself ships.
@@ -55,7 +57,10 @@ const CORE_RESOLVERS: Array<Type<any>> = [
 	ContactGroupResolver,
 	ContactGroupMemberResolver,
 	ContactCredentialResolver,
-	ContactBuyerResolver
+	ContactBuyerResolver,
+	// The catalogue's buyable unit. A variant is served over REST by `/api/product-variants`, so the
+	// same capability is served here rather than over REST alone.
+	ProductVariantResolver
 ];
 
 /**
@@ -96,7 +101,10 @@ const CORE_RESOLVER_MODULES: Array<Type<any>> = [
 	ContactGroupModule,
 	ContactGroupMemberModule,
 	ContactCredentialModule,
-	ContactBuyerModule
+	ContactBuyerModule,
+	// The variant module provides the service, the command bus the two write fields dispatch through
+	// and the product service the generator reads its product from.
+	ProductVariantModule
 ];
 
 /**

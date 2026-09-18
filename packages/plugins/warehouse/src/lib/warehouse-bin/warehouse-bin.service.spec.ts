@@ -395,6 +395,10 @@ function ledger(seed: ILedgerSeed = {}) {
 		reason?: string;
 	}> = [];
 	const asked: Array<Record<string, unknown>> = [];
+	/** Every home-bin declaration the service asked for, as it stated it. */
+	const declarations: Array<Record<string, unknown>> = [];
+	/** Every put-away the service asked for, as it stated it. */
+	const putAways: Array<Record<string, unknown>> = [];
 
 	for (const [variantId, bins] of Object.entries(seed.placement ?? {})) {
 		placement.set(
@@ -525,6 +529,52 @@ function ledger(seed: ILedgerSeed = {}) {
 
 				return { movementId, quantityAfter: totalOf(variantId) };
 			});
+		},
+		// A home-bin declaration, which writes the level row's own column and no movement.
+		setHomeBin: async (request) => {
+			declarations.push(request as unknown as Record<string, unknown>);
+			const level = levels.get(String(request.variantId));
+
+			if (!level) {
+				return false;
+			}
+
+			level.binId = String(request.binId);
+
+			return true;
+		},
+		// The walk received units take into a bin: the arrival, and the leg out of the receiving bin when
+		// the units were recorded in one, recorded against the document that asked for the walk.
+		putAway: async (request) => {
+			putAways.push(request as unknown as Record<string, unknown>);
+			const variantId = String(request.variantId);
+			const level = levels.get(variantId);
+			const legs: string[] = [];
+
+			if (request.fromBinId) {
+				const held = binsOf(variantId);
+
+				held.set(String(request.fromBinId), addQuantities(held.get(String(request.fromBinId)) ?? '0', subtractQuantities('0', request.quantity)));
+				placement.set(variantId, held);
+				legs.push(`putaway-${putAways.length}-out`);
+			}
+
+			const held = binsOf(variantId);
+
+			held.set(String(request.binId), addQuantities(held.get(String(request.binId)) ?? '0', request.quantity));
+			placement.set(variantId, held);
+			legs.push(`putaway-${putAways.length}-in`);
+
+			if (level) {
+				level.binId = String(request.binId);
+			}
+
+			return {
+				...(request.fromBinId ? { transferOutMovementId: legs[0] } : {}),
+				transferInMovementId: legs[legs.length - 1],
+				binId: String(request.binId),
+				quantityAfter: totalOf(variantId)
+			};
 		}
 	};
 
@@ -534,6 +584,8 @@ function ledger(seed: ILedgerSeed = {}) {
 		relocations,
 		legs,
 		asked,
+		declarations,
+		putAways,
 		/** The level row as it stands, which no reconciliation may change. */
 		level: (variantId: string) => levels.get(variantId),
 		/** What the ledger derives for one bin of one variant. */
@@ -1233,6 +1285,92 @@ describe('WarehouseBinService — re-parenting a subtree (doc 09 §14.2 rule 2, 
 			} as never)
 		).rejects.toThrow(/BIN_HIERARCHY_TOO_DEEP/);
 		expect(fixture.tables.bin).toHaveLength(5);
+	});
+});
+
+describe('WarehouseBinService — where a variant is kept, and the walk that puts it there (doc 09 §14.3)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const placementFixture = () =>
+		binFixture({
+			bins: [
+				binRow('receiving', { code: 'REC', isPickable: false, type: WarehouseBinType.DOCK }),
+				binRow('target', { code: 'A-01', isPickable: true }),
+				binRow('blocked', { code: 'B-01', isBlocked: true })
+			],
+			zones: [zoneRow('zone-1')],
+			ledger: { levels: { variant: { binId: 'receiving', quantity: '10.000000', reservedQuantity: '0.000000' } } }
+		});
+
+	it('declares a bin as the home bin without writing a movement', async () => {
+		// A declaration, not a move: nothing physically changed, so the ledger writes no row and the level
+		// row's own column is what reconciliation later measures the placement against.
+		const fixture = placementFixture();
+
+		const assigned = await fixture.service.assignHomeBin('target', {
+			variantId: 'variant',
+			warehouseId: WAREHOUSE
+		});
+
+		expect(assigned).toBe(true);
+		expect(fixture.capability?.declarations).toEqual([
+			{ warehouseId: WAREHOUSE, variantId: 'variant', binId: 'target' }
+		]);
+		expect(fixture.capability?.movements).toEqual([]);
+		expect(fixture.capability?.putAways).toEqual([]);
+		expect(fixture.capability?.level('variant')?.binId).toBe('target');
+	});
+
+	it('walks received units into a bin, and refuses a declaration with no variant to declare', async () => {
+		const fixture = placementFixture();
+
+		const walked = await fixture.service.putAway('target', {
+			variantId: 'variant',
+			warehouseId: WAREHOUSE,
+			quantity: '4',
+			fromBinId: 'receiving',
+			stockMovementId: 'movement-receipt'
+		});
+
+		expect(walked.binId).toBe('target');
+		expect(walked.transferOutMovementId).toBeDefined();
+		// The walk is recorded against the movement the units were received by, which is what makes the
+		// put-away explainable from the receipt rather than from a document of its own.
+		expect(fixture.capability?.putAways).toEqual([
+			{
+				warehouseId: WAREHOUSE,
+				variantId: 'variant',
+				binId: 'target',
+				quantity: '4',
+				fromBinId: 'receiving',
+				stockMovementId: 'movement-receipt',
+				referenceType: 'PUTAWAY',
+				referenceId: 'movement-receipt'
+			}
+		]);
+		expect(fixture.capability?.held('variant', 'target')).toBe('4.000000');
+		expect(fixture.capability?.level('variant')?.binId).toBe('target');
+
+		// A declaration that names no variant has nothing to be about, and is refused before the ledger is
+		// asked to write anything.
+		await expect(fixture.service.assignHomeBin('target', { warehouseId: WAREHOUSE } as never)).rejects.toThrow(
+			/variantId/
+		);
+		expect(fixture.capability?.declarations).toEqual([]);
+	});
+
+	it('refuses to place units in a position that is out of service', async () => {
+		const fixture = placementFixture();
+
+		await expect(
+			fixture.service.putAway('blocked', { variantId: 'variant', warehouseId: WAREHOUSE, quantity: '1' })
+		).rejects.toThrow(/^BIN_BLOCKED/);
+		expect(fixture.capability?.putAways).toEqual([]);
 	});
 });
 

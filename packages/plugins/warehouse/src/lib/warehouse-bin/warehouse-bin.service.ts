@@ -11,6 +11,7 @@ import {
 	IWarehouseBinBalance,
 	IWarehouseBinCapacityCheck,
 	IWarehouseBinRangeInput,
+	IWarehousePutAwayResult,
 	IWarehouseStockLedgerPort,
 	WAREHOUSE_BIN_CAPACITY_UNIT_REQUIRED,
 	WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED,
@@ -683,6 +684,105 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 		}
 
 		return await this.stockLedger.readBinBalances([id]);
+	}
+
+	/**
+	 * Names this bin as the bin a variant is kept in at its location.
+	 *
+	 * The declaration writes **no movement**, because nothing physically moved: it states where the stock
+	 * is expected to be, and the column it writes is the level row's own home bin — read by a pick to know
+	 * where to send the picker, and by the ledger to answer "where is this normally kept". When the
+	 * declaration disagrees with the placement, reconciliation (§14.10) reports it and the operator either
+	 * moves the units or re-declares the bin.
+	 *
+	 * The write goes through the inventory capability rather than through a level this package would have
+	 * to map: the level table is not this domain's, and two writers of one level is how a level drifts.
+	 *
+	 * @param id The bin being named.
+	 * @param input The level, or the variant and location, the declaration is about.
+	 * @returns Whether the declaration was written — false when the location does not stock the variant.
+	 * @throws BadRequestException when neither a level nor a variant and location are stated, or when no
+	 * inventory capability is registered.
+	 */
+	public async assignHomeBin(
+		id: ID,
+		input: { levelId?: ID; variantId?: ID; warehouseId?: ID }
+	): Promise<boolean> {
+		const bin = await this.findOneScoped(id);
+
+		if (!this.stockLedger) {
+			throw new BadRequestException(
+				'WAREHOUSE_STOCK_LEDGER_UNAVAILABLE: the inventory capability is not registered, so a home bin cannot be declared.'
+			);
+		}
+
+		if (!input?.variantId || !input?.warehouseId) {
+			throw new BadRequestException(
+				'A home bin is declared for one variant at one location: state both `variantId` and `warehouseId`.'
+			);
+		}
+
+		return await this.stockLedger.setHomeBin({
+			warehouseId: input.warehouseId,
+			variantId: input.variantId,
+			binId: bin.id
+		});
+	}
+
+	/**
+	 * Walks received units from the receiving area into this bin.
+	 *
+	 * The inverse journey of a pick: the units are already at the location, recorded by the receipt, and
+	 * this is the movement that says which address they live at. The ledger writes the arrival — and, when
+	 * the caller says the units were recorded in the receiving area's own bin, the leg out of it — and
+	 * names this bin as the variant's home in the same transaction, so a level never points at a bin the
+	 * ledger has not been told about.
+	 *
+	 * @param id The bin the units are placed into.
+	 * @param input The variant, the quantity and where the units are walking from.
+	 * @returns What the ledger wrote.
+	 * @throws BadRequestException when the bin is blocked, when a member is missing, or when no inventory
+	 * capability is registered.
+	 */
+	public async putAway(
+		id: ID,
+		input: {
+			variantId: ID;
+			warehouseId: ID;
+			quantity: DecimalString;
+			fromBinId?: ID;
+			stockMovementId?: ID;
+			referenceId?: ID;
+			reason?: string;
+		}
+	): Promise<IWarehousePutAwayResult> {
+		const bin = await this.findOneScoped(id);
+
+		if (bin.isBlocked) {
+			throw new BadRequestException(
+				`BIN_BLOCKED: bin ${bin.code} is out of service, so units cannot be placed in it.`
+			);
+		}
+
+		if (!this.stockLedger) {
+			throw new BadRequestException(
+				'WAREHOUSE_STOCK_LEDGER_UNAVAILABLE: the inventory capability is not registered, so the units cannot be walked into the bin.'
+			);
+		}
+
+		return await this.stockLedger.putAway({
+			warehouseId: input.warehouseId,
+			variantId: input.variantId,
+			binId: bin.id,
+			quantity: input.quantity,
+			...(input.fromBinId ? { fromBinId: input.fromBinId } : {}),
+			...(input.stockMovementId ? { stockMovementId: input.stockMovementId } : {}),
+			// The document the walk is recorded against is the receipt line's own movement when the caller
+			// has one, and the caller's own row otherwise: every quantity change names what caused it.
+			referenceType: 'PUTAWAY',
+			referenceId: input.stockMovementId ?? input.referenceId ?? bin.id,
+			...(input.reason ? { reason: input.reason } : {})
+		});
 	}
 
 	/**

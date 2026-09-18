@@ -13,16 +13,18 @@ import {
 	UseValidationPipe
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
-import { IBinReconciliationReport, IWarehouseBinCapacityCheck } from '../warehouse.types';
+import { IBinReconciliationReport, IWarehouseBinCapacityCheck, IWarehousePutAwayResult } from '../warehouse.types';
 import { WarehouseFeatures } from '../warehouse.features';
 import { WarehousePermissions } from '../warehouse.permissions';
 import { WarehouseBin } from './warehouse-bin.entity';
 import { WarehouseBinService } from './warehouse-bin.service';
 import {
+	AssignWarehouseBinDTO,
 	BlockWarehouseBinDTO,
 	CheckWarehouseBinCapacityDTO,
 	CreateWarehouseBinDTO,
 	CreateWarehouseBinRangeDTO,
+	PutAwayWarehouseBinDTO,
 	ReconcileWarehouseBinDTO,
 	ReparentWarehouseBinDTO,
 	UpdateWarehouseBinDTO,
@@ -242,6 +244,44 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 		void entity;
 
 		return await this.warehouseBinService.setBlocked(id, false);
+	}
+
+	/**
+	 * Declares this bin as the bin a variant is kept in at its location.
+	 *
+	 * No movement is written: nothing physically moved, and the declaration is what reconciliation later
+	 * checks the placement against.
+	 *
+	 * @param id The bin being named.
+	 * @param entity The variant and the location the declaration is about.
+	 * @returns Whether the declaration was written.
+	 */
+	@ApiOperation({ summary: 'Declare a bin as the home bin of a variant at a location' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The home bin was declared; no stock moved.' })
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
+	@Post(':id/assign')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async assign(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: AssignWarehouseBinDTO): Promise<boolean> {
+		return await this.warehouseBinService.assignHomeBin(id, entity);
+	}
+
+	/**
+	 * Walks received units from the receiving area into this bin.
+	 *
+	 * @param id The bin the units are placed into.
+	 * @param entity The variant, the quantity and where the units walk from.
+	 * @returns What the ledger wrote, including the level the walk produced.
+	 */
+	@ApiOperation({ summary: 'Put received units away into a bin' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The units were walked into the bin.' })
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
+	@Post(':id/put-away')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async putAway(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: PutAwayWarehouseBinDTO
+	): Promise<IWarehousePutAwayResult> {
+		return await this.warehouseBinService.putAway(id, entity);
 	}
 
 	/**

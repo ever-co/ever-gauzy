@@ -355,4 +355,56 @@ export class WarehouseBinResolver {
 
 		return subtree.filter((candidate) => String(candidate.parentId ?? '') === String(bin.id));
 	}
+
+	/**
+	 * Declares a bin as the home bin of a variant at a location.
+	 *
+	 * A declaration rather than a move: no movement is written, and reconciliation is what later reports
+	 * the declaration once it disagrees with the placement.
+	 *
+	 * @param id The bin being named.
+	 * @param input The variant and the location.
+	 * @returns The payload, with the caller-correctable refusals in `userErrors`.
+	 */
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
+	@Mutation('assignWarehouseBinHome')
+	async assignWarehouseBinHome(
+		@Args('id') id: ID,
+		@Args('input') input: { variantId: ID; warehouseId: ID; levelId?: ID; reason?: string }
+	) {
+		try {
+			return { assigned: await this.warehouseBinService.assignHomeBin(id, input), userErrors: [] };
+		} catch (error) {
+			return { assigned: false, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Walks received units from the receiving area into a bin.
+	 *
+	 * @param id The bin the units are placed into.
+	 * @param input The variant, the quantity and where the units walk from.
+	 * @returns The payload, with what the ledger wrote in `putAway`, or the refusal in `userErrors`.
+	 */
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
+	@Mutation('putAwayWarehouseBin')
+	async putAwayWarehouseBin(
+		@Args('id') id: ID,
+		@Args('input')
+		input: {
+			variantId: ID;
+			warehouseId: ID;
+			quantity: string;
+			fromBinId?: ID;
+			stockMovementId?: ID;
+			referenceId?: ID;
+			reason?: string;
+		}
+	) {
+		try {
+			return { putAway: await this.warehouseBinService.putAway(id, input as never), userErrors: [] };
+		} catch (error) {
+			return { putAway: null, userErrors: [toUserError(error)] };
+		}
+	}
 }

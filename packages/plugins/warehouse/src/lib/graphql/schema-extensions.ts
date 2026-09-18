@@ -672,6 +672,55 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	"One home-bin declaration: the variant and the location it is kept at."
+	input AssignWarehouseBinInput {
+		variantId: ID!
+		warehouseId: ID!
+		"The level row, when the caller has it."
+		levelId: ID
+		reason: String
+	}
+
+	"The outcome of declaring a home bin. Nothing moved, so there is no movement to report."
+	type AssignWarehouseBinPayload {
+		"Whether a level row was found and named."
+		assigned: Boolean!
+		userErrors: [UserError!]!
+	}
+
+	"One put-away: the units being placed, and where they walk from."
+	input PutAwayWarehouseBinInput {
+		variantId: ID!
+		warehouseId: ID!
+		"The positive quantity being placed, as an exact decimal string."
+		quantity: String!
+		"The bin the units walk from, when they were recorded in one."
+		fromBinId: ID
+		"The movement the units were received by."
+		stockMovementId: ID
+		"The row that asked for the walk."
+		referenceId: ID
+		reason: String
+	}
+
+	"What a put-away wrote."
+	type PutAwayResult {
+		"The leg out of the receiving area, when the units were recorded in a bin."
+		transferOutMovementId: ID
+		"The leg into the target bin."
+		transferInMovementId: ID!
+		"The bin the level row now names as the variant's home."
+		binId: ID!
+		"The level after the walk."
+		quantityAfter: Decimal!
+	}
+
+	"The outcome of a put-away."
+	type PutAwayWarehouseBinPayload {
+		putAway: PutAwayResult
+		userErrors: [UserError!]!
+	}
+
 	"The outcome of a mutation on a wave."
 	type PickWavePayload {
 		pickWave: PickWave
@@ -766,6 +815,10 @@ export const schemaExtensions = gql`
 		deleteWarehouseBin(id: ID!): WarehouseBinPayload!
 		"Reconciles the bins of a location against the movement ledger."
 		reconcileWarehouseBins(input: ReconcileBinsInput!): BinReconciliationPayload!
+		"Declares a bin as the home bin of a variant at a location. No movement is written."
+		assignWarehouseBinHome(id: ID!, input: AssignWarehouseBinInput!): AssignWarehouseBinPayload!
+		"Walks received units from the receiving area into a bin."
+		putAwayWarehouseBin(id: ID!, input: PutAwayWarehouseBinInput!): PutAwayWarehouseBinPayload!
 		"Creates a wave and the picking work it covers."
 		createPickWave(input: PickWaveInput!): PickWavePayload!
 		"Releases a wave to the floor."

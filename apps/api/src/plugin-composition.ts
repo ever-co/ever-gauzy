@@ -11,7 +11,12 @@ import { InventoryModule, StockAvailabilityService, StockLedgerService } from '@
 import { OrderLineFulfillmentService, OrderLineService, OrderModule } from '@gauzy/plugin-order';
 import { PricingModule, RecurringPriceService } from '@gauzy/plugin-pricing';
 import { PAYMENT_ORDER_LINE_REFUND, PaymentModule, ReturnRefundService } from '@gauzy/plugin-payment';
-import { PURCHASING_APPROVAL, PurchaseApprovalService, PurchasingModule } from '@gauzy/plugin-purchasing';
+import {
+	PURCHASING_APPROVAL,
+	PURCHASING_INVENTORY,
+	PurchaseApprovalService,
+	PurchasingModule
+} from '@gauzy/plugin-purchasing';
 import { ENTITLEMENT_CATALOG_PORT } from '@gauzy/plugin-entitlement';
 import {
 	RETURNS_ORDER_FULFILLMENT,
@@ -111,6 +116,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// it; a return restocks what came back through the same ledger, in the same instance.
 		{ provide: WAREHOUSE_STOCK_LEDGER, useExisting: StockLedgerService },
 		{ provide: RETURNS_STOCK_LEDGER, useExisting: StockLedgerService },
+		// A goods receipt posts the units it received and then walks them into a bin: the receiving side of
+		// the ledger is the same seam, and the put-away is the operation that writes the home bin a pick
+		// reads. Bound to the same instance as the two above, because one ledger serves all three.
+		{ provide: PURCHASING_INVENTORY, useExisting: StockLedgerService },
 		// A pick list is built from what the fulfilment rows say was shipped, and a return or an
 		// exchange needs an outbound shipment of its own.
 		{ provide: WAREHOUSE_FULFILLMENT, useExisting: WarehouseFulfillmentService },
@@ -129,6 +138,7 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		CART_STOCK_AVAILABILITY,
 		WAREHOUSE_STOCK_LEDGER,
 		RETURNS_STOCK_LEDGER,
+		PURCHASING_INVENTORY,
 		WAREHOUSE_FULFILLMENT,
 		RETURNS_SHIPMENT_GATEWAY,
 		RETURNS_REFUND_GATEWAY
