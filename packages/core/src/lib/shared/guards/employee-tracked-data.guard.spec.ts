@@ -31,7 +31,6 @@ describe('EmployeeTrackedDataGuard', () => {
 			})
 		} as unknown as jest.Mocked<DataSource>;
 
-		// Build real ManagedEmployeeService with mocked repositories
 		managedEmployeeService = new ManagedEmployeeService(
 			mockTeamEmployeeRepo as any,
 			mockProjectEmployeeRepo as any
@@ -39,7 +38,6 @@ describe('EmployeeTrackedDataGuard', () => {
 
 		guard = new EmployeeTrackedDataGuard(mockDataSource, managedEmployeeService);
 
-		// Reset RequestContext mocks
 		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
@@ -50,7 +48,7 @@ describe('EmployeeTrackedDataGuard', () => {
 		jest.restoreAllMocks();
 	});
 
-	function createMockContext(
+	function createMockCtx(
 		options: { organizationId?: string; query?: any; body?: any; params?: any } = {}
 	): ExecutionContext {
 		const query = options.query ?? (options.organizationId ? { organizationId: options.organizationId } : {});
@@ -66,37 +64,34 @@ describe('EmployeeTrackedDataGuard', () => {
 		} as unknown as ExecutionContext;
 	}
 
+	function mockOrgResponse(allowEmployeeToSeeTrackedData?: boolean): void {
+		mockOrganizationRepo.findOne.mockResolvedValue({
+			id: validOrgId,
+			...(allowEmployeeToSeeTrackedData !== undefined ? { allowEmployeeToSeeTrackedData } : {})
+		});
+	}
+
 	it('should allow if user has CHANGE_SELECTED_EMPLOYEE permission', async () => {
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((perm) => perm === PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
-		const context = createMockContext({ organizationId: validOrgId });
-
-		const result = await guard.canActivate(context);
-
-		expect(result).toBe(true);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((p) => p === PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		expect(await guard.canActivate(createMockCtx({ organizationId: validOrgId }))).toBe(true);
 		expect(mockDataSource.getRepository).not.toHaveBeenCalled();
 	});
 
 	it('should throw ForbiddenException if no organizationId can be resolved', async () => {
-		const context = createMockContext({});
-
-		await expect(guard.canActivate(context)).rejects.toThrow(
+		await expect(guard.canActivate(createMockCtx({}))).rejects.toThrow(
 			new ForbiddenException('Organization context is required to access tracked data')
 		);
 	});
 
 	it('should throw BadRequestException if organizationId is not a valid UUID', async () => {
-		const context = createMockContext({ organizationId: 'abc-not-a-uuid' });
-
-		await expect(guard.canActivate(context)).rejects.toThrow(
+		await expect(guard.canActivate(createMockCtx({ organizationId: 'invalid-uuid-string' }))).rejects.toThrow(
 			new BadRequestException('Invalid organizationId')
 		);
 	});
 
 	it('should throw ForbiddenException if organization is not found', async () => {
 		mockOrganizationRepo.findOne.mockResolvedValue(null);
-		const context = createMockContext({ organizationId: validOrgId });
-
-		await expect(guard.canActivate(context)).rejects.toThrow(
+		await expect(guard.canActivate(createMockCtx({ organizationId: validOrgId }))).rejects.toThrow(
 			new ForbiddenException('Organization not found or not accessible')
 		);
 		expect(mockOrganizationRepo.findOne).toHaveBeenCalledWith({
@@ -105,40 +100,19 @@ describe('EmployeeTrackedDataGuard', () => {
 		});
 	});
 
-	it('should allow if allowEmployeeToSeeTrackedData is true', async () => {
-		mockOrganizationRepo.findOne.mockResolvedValue({
-			id: validOrgId,
-			allowEmployeeToSeeTrackedData: true
-		});
-		const context = createMockContext({ organizationId: validOrgId });
+	it('should allow if allowEmployeeToSeeTrackedData is true or missing', async () => {
+		mockOrgResponse(true);
+		expect(await guard.canActivate(createMockCtx({ organizationId: validOrgId }))).toBe(true);
 
-		const result = await guard.canActivate(context);
-
-		expect(result).toBe(true);
+		mockOrgResponse(undefined);
+		expect(await guard.canActivate(createMockCtx({ organizationId: validOrgId }))).toBe(true);
 	});
 
-	it('should allow if allowEmployeeToSeeTrackedData is missing (default true behavior)', async () => {
-		mockOrganizationRepo.findOne.mockResolvedValue({
-			id: validOrgId
-		});
-		const context = createMockContext({ organizationId: validOrgId });
-
-		const result = await guard.canActivate(context);
-
-		expect(result).toBe(true);
-	});
-
-	it('should resolve organization from RequestContext.currentOrganizationId() if not in query/body/params', async () => {
+	it('should resolve organization from RequestContext.currentOrganizationId() if not provided', async () => {
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(validOrgId);
-		mockOrganizationRepo.findOne.mockResolvedValue({
-			id: validOrgId,
-			allowEmployeeToSeeTrackedData: true
-		});
-		const context = createMockContext({});
+		mockOrgResponse(true);
 
-		const result = await guard.canActivate(context);
-
-		expect(result).toBe(true);
+		expect(await guard.canActivate(createMockCtx({}))).toBe(true);
 		expect(mockOrganizationRepo.findOne).toHaveBeenCalledWith({
 			where: { id: validOrgId, tenantId: 'tenant-1' },
 			select: { id: true, allowEmployeeToSeeTrackedData: true }
@@ -146,105 +120,56 @@ describe('EmployeeTrackedDataGuard', () => {
 	});
 
 	it('should allow callers with no employee record when setting is false', async () => {
-		mockOrganizationRepo.findOne.mockResolvedValue({
-			id: validOrgId,
-			allowEmployeeToSeeTrackedData: false
-		});
+		mockOrgResponse(false);
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ employeeId: undefined } as any);
-		const context = createMockContext({ organizationId: validOrgId });
-
-		const result = await guard.canActivate(context);
-
-		expect(result).toBe(true);
+		expect(await guard.canActivate(createMockCtx({ organizationId: validOrgId }))).toBe(true);
 	});
 
 	it('should handle request with body undefined cleanly', async () => {
-		mockOrganizationRepo.findOne.mockResolvedValue({
-			id: validOrgId,
-			allowEmployeeToSeeTrackedData: true
-		});
-		const context = createMockContext({ organizationId: validOrgId, body: undefined });
-
-		const result = await guard.canActivate(context);
-
-		expect(result).toBe(true);
+		mockOrgResponse(true);
+		expect(await guard.canActivate(createMockCtx({ organizationId: validOrgId, body: undefined }))).toBe(true);
 	});
 
-	it('should allow a manager of the requested team when setting is false', async () => {
-		mockOrganizationRepo.findOne.mockResolvedValue({
-			id: validOrgId,
-			allowEmployeeToSeeTrackedData: false
-		});
-		// mock team repo to answer isManager = true for team 1
-		mockTeamEmployeeRepo.existsBy.mockImplementation(async (query) => {
-			if (query.employeeId === 'emp-1' && (query.organizationTeamId?.value === validTeamId1 || query.organizationTeamId === validTeamId1)) {
-				return true;
-			}
-			return false;
+	describe('Team Manager checks when allowEmployeeToSeeTrackedData is false', () => {
+		beforeEach(() => {
+			mockOrgResponse(false);
 		});
 
-		const context = createMockContext({
-			query: { organizationId: validOrgId, teamIds: [validTeamId1] }
+		it('should allow a manager of the requested team', async () => {
+			mockTeamEmployeeRepo.existsBy.mockImplementation(async (q) => {
+				return q.employeeId === 'emp-1' && (q.organizationTeamId?.value === validTeamId1 || q.organizationTeamId === validTeamId1);
+			});
+
+			const ctx = createMockCtx({ query: { organizationId: validOrgId, teamIds: [validTeamId1] } });
+			expect(await guard.canActivate(ctx)).toBe(true);
 		});
 
-		const result = await guard.canActivate(context);
+		it('should deny a manager requesting a different team', async () => {
+			mockTeamEmployeeRepo.existsBy.mockImplementation(async (q) => {
+				return q.employeeId === 'emp-1' && (q.organizationTeamId?.value === validTeamId1 || q.organizationTeamId === validTeamId1);
+			});
 
-		expect(result).toBe(true);
-	});
-
-	it('should deny a manager of a different team when setting is false', async () => {
-		mockOrganizationRepo.findOne.mockResolvedValue({
-			id: validOrgId,
-			allowEmployeeToSeeTrackedData: false
-		});
-		// emp-1 is manager of team 1, but request asks for team 2
-		mockTeamEmployeeRepo.existsBy.mockImplementation(async (query) => {
-			if (query.employeeId === 'emp-1' && (query.organizationTeamId?.value === validTeamId1 || query.organizationTeamId === validTeamId1)) {
-				return true;
-			}
-			return false;
+			const ctx = createMockCtx({ query: { organizationId: validOrgId, teamIds: [validTeamId2] } });
+			await expect(guard.canActivate(ctx)).rejects.toThrow(
+				new ForbiddenException('Employees are not allowed to view tracked data in this organization')
+			);
 		});
 
-		const context = createMockContext({
-			query: { organizationId: validOrgId, teamIds: [validTeamId2] }
+		it('should allow a manager of any active team in org when no scope params are specified', async () => {
+			mockTeamEmployeeRepo.existsBy.mockImplementation(async (q) => {
+				return q.employeeId === 'emp-1' && q.organizationId === validOrgId && q.isManager === true;
+			});
+
+			expect(await guard.canActivate(createMockCtx({ organizationId: validOrgId }))).toBe(true);
 		});
 
-		await expect(guard.canActivate(context)).rejects.toThrow(
-			new ForbiddenException('Employees are not allowed to view tracked data in this organization')
-		);
-	});
+		it('should deny a regular non-manager employee', async () => {
+			mockTeamEmployeeRepo.existsBy.mockResolvedValue(false);
+			mockProjectEmployeeRepo.existsBy.mockResolvedValue(false);
 
-	it('should allow a manager of any active team in the organization when no team/project parameters are specified', async () => {
-		mockOrganizationRepo.findOne.mockResolvedValue({
-			id: validOrgId,
-			allowEmployeeToSeeTrackedData: false
+			await expect(guard.canActivate(createMockCtx({ organizationId: validOrgId }))).rejects.toThrow(
+				new ForbiddenException('Employees are not allowed to view tracked data in this organization')
+			);
 		});
-		mockTeamEmployeeRepo.existsBy.mockImplementation(async (query) => {
-			if (query.employeeId === 'emp-1' && query.organizationId === validOrgId && query.isManager === true) {
-				return true;
-			}
-			return false;
-		});
-
-		const context = createMockContext({ organizationId: validOrgId });
-
-		const result = await guard.canActivate(context);
-
-		expect(result).toBe(true);
-	});
-
-	it('should throw ForbiddenException for a regular employee (not manager) when setting is false', async () => {
-		mockOrganizationRepo.findOne.mockResolvedValue({
-			id: validOrgId,
-			allowEmployeeToSeeTrackedData: false
-		});
-		mockTeamEmployeeRepo.existsBy.mockResolvedValue(false);
-		mockProjectEmployeeRepo.existsBy.mockResolvedValue(false);
-
-		const context = createMockContext({ organizationId: validOrgId });
-
-		await expect(guard.canActivate(context)).rejects.toThrow(
-			new ForbiddenException('Employees are not allowed to view tracked data in this organization')
-		);
 	});
 });
