@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { defer, from, Observable, Subject, throwError } from 'rxjs';
+import { defer, from, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, shareReplay, startWith, switchMap } from 'rxjs/operators';
 import {
 	IActivitiesStatistics,
@@ -377,6 +377,10 @@ export class TimesheetStatisticsCacheService {
 				// TTL; evict it so the next widget (or retry) hits the network again.
 				if (own.entry && this._cache.get(key) === own.entry) {
 					this._cache.delete(key);
+				}
+				if (error?.status === 403) {
+					// Handle 403 quietly when tracked data is disabled for regular employees
+					return of((key.includes('::counts::') ? {} : []) as unknown as T);
 				}
 				return throwError(() => error);
 			})

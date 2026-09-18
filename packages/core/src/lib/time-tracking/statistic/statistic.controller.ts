@@ -18,7 +18,7 @@ import { TimeTrackingStatisticQueryDTO } from './dto';
 import { StatisticService } from './statistic.service';
 
 @ApiTags('TimesheetStatistic')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, EmployeeTrackedDataGuard)
 @Permissions(
 	PermissionsEnum.ADMIN_DASHBOARD_VIEW,
 	PermissionsEnum.TIME_TRACKER,
@@ -172,7 +172,6 @@ export class StatisticController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
-	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/time-slots')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getEmployeeTimeSlotsStatistics(
@@ -200,7 +199,6 @@ export class StatisticController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
-	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/activities')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getActivitiesStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<IActivitiesStatistics[]> {

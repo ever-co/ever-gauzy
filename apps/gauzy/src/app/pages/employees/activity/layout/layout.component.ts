@@ -30,8 +30,15 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 		this._store.selectedOrganization$
 			.pipe(
 				tap((organization) => {
+					const employee = this._store.user?.employee;
+					const isManager =
+						employee?.isManager ||
+						employee?.teams?.some((t: any) => t.isManager || t.isTeamManager) ||
+						employee?.projects?.some((p: any) => p.isManager || p.isProjectManager);
+
 					const canViewActivity =
 						this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
+						isManager ||
 						organization?.allowEmployeeToSeeTrackedData !== false;
 
 					this.registerPageTabs(canViewActivity);
