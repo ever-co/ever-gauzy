@@ -7,6 +7,7 @@ import { MARKETPLACE_SETTINGS } from './marketplace.settings';
 import { CreateMarketplaceTables1791000000380 } from './database/migrations/1791000000380-CreateMarketplaceTables';
 import { AddSellerPayoutAccountForeignKeys1791000000420 } from './database/migrations/1791000000420-AddSellerPayoutAccountForeignKeys';
 import { AddMarketplaceCheckConstraints1791000000434 } from './database/migrations/1791000000434-AddMarketplaceCheckConstraints';
+import { AddMarketplaceAmendmentColumns1791000000435 } from './database/migrations/1791000000435-AddMarketplaceAmendmentColumns';
 import { Seller } from './seller/seller.entity';
 import { SellerOffering } from './seller-offering/seller-offering.entity';
 import { SellerTransaction } from './seller-transaction/seller-transaction.entity';
@@ -38,13 +39,15 @@ import { resolvers } from './graphql/resolvers';
 	/**
 	 * The migrations this plugin owns. Ordering follows each migration's own timestamp, never the order
 	 * plugins happen to be listed in — this one runs after the order and payment sets, because the
-	 * ledger it stores refers to their rows. The third states the rules a seller's money carries: a rate
-	 * is a fraction, a payout's instructed amount is its net less the fee and the reserve, and a
-	 * settlement's net is its gross less the commission and the fee.
+	 * ledger it stores refers to their rows. The third adds the seller scope to the six tables this
+	 * specification amends — the funding columns on `adjustment` and `promotion`, and a `sellerId` on
+	 * `fulfillment`, `order_return`, `product_price` and `warehouse` — together with their indexes,
+	 * their foreign keys and the three rules that come with them.
 	 */
 	migrations: [
 		CreateMarketplaceTables1791000000380,
 		AddSellerPayoutAccountForeignKeys1791000000420,
+		AddMarketplaceAmendmentColumns1791000000435,
 		AddMarketplaceCheckConstraints1791000000434
 	],
 	/**

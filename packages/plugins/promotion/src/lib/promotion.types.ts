@@ -286,6 +286,18 @@ export interface IPromotionCreateInput {
 	perCustomerUsageLimit?: number;
 	budgetAmount?: DecimalString;
 	isTaxInclusive?: boolean;
+	/**
+	 * Who bears the cost of every discount this promotion produces.
+	 *
+	 * Omitted means `PLATFORM`. A `SELLER` or `SPLIT` promotion must state `sellerId`, and a `SPLIT` one
+	 * must state `sellerFundingShare` as a fraction strictly between 0 and 1 — the service refuses the
+	 * write by name rather than letting the table's own rule answer with a database error.
+	 */
+	fundingType?: PromotionFunding;
+	/** The seller's share of a `SPLIT` promotion, as a fraction in `(0, 1)`. */
+	sellerFundingShare?: DecimalString;
+	/** The seller a `SELLER` or `SPLIT` promotion belongs to. */
+	sellerId?: ID;
 	metadata?: Record<string, unknown>;
 	/** The effect of the offer, applied as a whole set after the promotion is stored. */
 	actions?: Partial<IPromotionAction>[];
@@ -364,6 +376,24 @@ export interface ICampaignBudgetUsage extends IBasePerTenantAndOrganizationEntit
 }
 
 /**
+ * Who bears the cost of a promotion's discount.
+ *
+ * The funding is an attribute of the **offer**, not of the discount: a promotion is published by the
+ * platform or by one seller, and every discount it produces is recorded in the adjustment ledger with a
+ * `fundedBy` that says which. `PLATFORM` and `SELLER` each write one ledger row; `SPLIT` writes two — one
+ * per funder, whose amounts sum to the total — because each part is rounded once on its own and the
+ * residue never crosses the funding boundary.
+ */
+export enum PromotionFunding {
+	/** The platform pays: the seller is made whole and its commission basis does not move. */
+	PLATFORM = 'PLATFORM',
+	/** One seller pays: the discount reduces that seller's net and, on a discounted basis, its commission. */
+	SELLER = 'SELLER',
+	/** The platform and one seller each bear a share, `sellerFundingShare` being the seller's. */
+	SPLIT = 'SPLIT'
+}
+
+/**
  * A promotion. Its conditions are `rule` rows with owner type `PROMOTION`; its effect is the action
  * set; the money it moves is recorded in the core adjustment ledger.
  */
@@ -389,6 +419,29 @@ export interface IPromotion extends IBasePerTenantAndOrganizationEntityModel {
 	budgetAmount?: DecimalString;
 	budgetSpent: DecimalString;
 	isTaxInclusive: boolean;
+	/**
+	 * Who bears the cost of every discount this promotion produces.
+	 *
+	 * `PLATFORM` by default, which is what the offer means when nobody says otherwise. Required rather
+	 * than optional because the column is: a row always states its funding, and an interface that left it
+	 * open would let a writer omit it and rely on the default without saying so.
+	 */
+	fundingType: PromotionFunding;
+	/**
+	 * The seller's share of a `SPLIT` promotion, as a fraction in `(0, 1)`.
+	 *
+	 * `0` for every other funding type — the column is meaningless there and the table's own rule says
+	 * so — and the platform bears the remainder, so the two parts always sum to the whole.
+	 */
+	sellerFundingShare?: DecimalString;
+	/**
+	 * The seller a `SELLER` or `SPLIT` promotion belongs to.
+	 *
+	 * It is what makes the promotion's target set unambiguous: a seller-funded promotion applies only to
+	 * lines of that seller, so the discount can never land on another seller's goods. `PLATFORM`
+	 * promotions carry none, which is the second half of the table's own rule.
+	 */
+	sellerId?: ID;
 	metadata?: Record<string, unknown>;
 	campaign?: ICampaign;
 	actions?: IPromotionAction[];

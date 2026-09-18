@@ -191,6 +191,20 @@ export class OrderReturn extends TenantOrganizationBaseEntity implements IOrderR
 	warehouseId?: ID;
 
 	/**
+	 * The seller the goods are returned to, when the return covers one seller's lines.
+	 *
+	 * One seller per return, for the same reason a fulfilment carries one: the refund, the stock decision
+	 * and the seller's own ledger all have to agree about whose return this is, and a return spanning two
+	 * sellers' lines would make each of them answer differently. Held as an id rather than as a relation
+	 * because `seller` belongs to the marketplace package.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	sellerId?: ID;
+
+	/**
 	 * The governed reason this return was filed under.
 	 *
 	 * The property carries the trailing underscore the specification gives it, because the free-text

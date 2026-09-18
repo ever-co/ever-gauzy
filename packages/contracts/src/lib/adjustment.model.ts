@@ -55,6 +55,23 @@ export enum AdjustmentType {
 }
 
 /**
+ * Who bears the cost of an adjustment.
+ *
+ * A discount is funded by exactly one party **per row**, and the row is where the fact is recorded
+ * rather than the promotion that produced it: a promotion may be funded by the platform, by one seller,
+ * or split between them, and the split case is expressed as two rows — one per funder — so that each
+ * amount is rounded once on its own and the audit question "who paid for this discount" is answered by
+ * summing rows rather than by interpreting a ratio. The seller's own ledger reads this column to decide
+ * which of its two discount amounts a row becomes.
+ */
+export enum AdjustmentFunding {
+	/** The platform bears it: the seller is made whole and its commission basis does not move. */
+	PLATFORM = 'PLATFORM',
+	/** One seller bears it: it reduces that seller's net and, on a discounted basis, its commission. */
+	SELLER = 'SELLER'
+}
+
+/**
  * One signed monetary modification of one document.
  *
  * Every reduction or addition to an amount payable is a row here, whatever produced it. Nothing else
@@ -105,6 +122,25 @@ export interface IAdjustment extends IBasePerTenantAndOrganizationEntityModel {
 
 	/** The producer's own trace: which rule matched, which allocation was used, the derived tax. */
 	metadata?: Record<string, unknown>;
+
+	/**
+	 * Who bears the cost of this row.
+	 *
+	 * `PLATFORM` by default, which is what every row written before the marketplace existed is: the
+	 * platform's own discount, borne by the platform. A seller-funded promotional discount states
+	 * `SELLER` and names the seller in {@link sellerId}; the one rule the table states about the pair is
+	 * that a row funded by a seller names one.
+	 */
+	fundedBy?: AdjustmentFunding;
+
+	/**
+	 * The seller that bears the cost, when {@link fundedBy} is `SELLER`.
+	 *
+	 * The reference is held as an id rather than as a relation because the table this points at belongs
+	 * to the marketplace package and the kernel does not depend on it; the constraint onto `seller` is
+	 * added by the set that owns that table.
+	 */
+	sellerId?: ID;
 }
 
 /**

@@ -188,6 +188,30 @@ const KERNEL_MODULES = [
  */
 const CORE_ENTITY_MODULES = ['search'];
 
+/**
+ * Columns a package's entities declare and another package's migrations create.
+ *
+ * The rule is that the set owning a table creates its columns, and the check below enforces it table by
+ * table and package by package. The marketplace specification is the one deliberate exception: doc 20
+ * §13.7 is a table of amendments, and each of its columns is delivered by the set that owns the *feature*
+ * rather than the one that owns the table, because the column is marketplace behaviour recorded on a table
+ * that predates it. Naming them here — with the set that delivers each — keeps the exception explicit: a
+ * column that is neither in its own package's migrations nor in this map still fails, so the list grows
+ * only when a specification grows an amendment, and never by accident.
+ *
+ * `table → column → the set that creates it`.
+ */
+const CROSS_PACKAGE_AMENDMENTS = {
+	fulfillment: { sellerId: '@gauzy/plugin-marketplace (doc 20 §13.7)' },
+	order_return: { sellerId: '@gauzy/plugin-marketplace (doc 20 §13.7)' },
+	product_price: { sellerId: '@gauzy/plugin-marketplace (doc 20 §13.7)' },
+	promotion: {
+		fundingType: '@gauzy/plugin-marketplace (doc 20 §13.7)',
+		sellerFundingShare: '@gauzy/plugin-marketplace (doc 20 §13.7)',
+		sellerId: '@gauzy/plugin-marketplace (doc 20 §13.7)'
+	}
+};
+
 /* ------------------------------------------------------------------------------------------------
  * Harness
  * ---------------------------------------------------------------------------------------------- */
@@ -681,10 +705,32 @@ if (existsSync(pluginsDir)) {
 
 				const column = columnOf(property, args);
 				columnChecks++;
+
+				/*
+				 * A column this package's entities declare and **another** package's migrations create.
+				 *
+				 * The check above reads the table's own `CREATE TABLE` and the `ALTER TABLE` statements of
+				 * the package the entity lives in, which is the rule: the set that owns a table creates its
+				 * columns. The marketplace specification is the one place that is deliberately not true —
+				 * doc 20 §13.7 is a table of amendments, and every one of its columns is delivered by the
+				 * set that owns the *feature* rather than the one that owns the table, because the column is
+				 * marketplace behaviour recorded on a table that predates it (`fulfillment.sellerId`,
+				 * `product_price.sellerId`, the funding columns on `promotion`, `order_return.sellerId`).
+				 *
+				 * The list is the point, exactly as the acknowledged one-sided root fields are in the API
+				 * parity gate: an amendment has to be *named* here, with the set that delivers it, rather
+				 * than being accepted because some migration somewhere mentions the word. A column that is
+				 * neither in its own package's migrations nor listed below still fails.
+				 */
+				const acknowledged = (CROSS_PACKAGE_AMENDMENTS[table] ?? {})[column];
+				const created = new RegExp(`\\b${column}\\b`).test(definition);
+
 				check(
 					`${table}.${column} exists in its migration (from ${basename(file)})`,
-					new RegExp(`\\b${column}\\b`).test(definition),
-					`the entity declares the column but no migration creates it`
+					created || Boolean(acknowledged),
+					acknowledged
+						? `created by ${acknowledged}`
+						: `the entity declares the column but no migration creates it`
 				);
 			}
 		}

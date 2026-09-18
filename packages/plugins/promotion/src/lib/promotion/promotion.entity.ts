@@ -13,7 +13,16 @@ import {
 } from '@gauzy/core';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { MikroOrmPromotionRepository } from './repository/mikro-orm-promotion.repository';
-import { IPromotion, IPromotionAction, IPromotionUsage, ICoupon, ICampaign, PromotionStatus, PromotionType } from '../promotion.types';
+import {
+	IPromotion,
+	IPromotionAction,
+	IPromotionUsage,
+	ICoupon,
+	ICampaign,
+	PromotionFunding,
+	PromotionStatus,
+	PromotionType
+} from '../promotion.types';
 import { Campaign } from '../campaign/campaign.entity';
 import { PromotionAction } from '../promotion-action/promotion-action.entity';
 import { Coupon } from '../coupon/coupon.entity';
@@ -213,8 +222,54 @@ export class Promotion extends TenantOrganizationBaseEntity implements IPromotio
 	isTaxInclusive: boolean;
 
 	/**
-	 * Funding mode, revert-on-return policy, badge text and terms. Open-ended, so a JSON column
-	 * rather than a column per key.
+	 * Who bears the cost of every discount this promotion produces.
+	 *
+	 * The funding is an attribute of the **offer**: a promotion is published by the platform or by one
+	 * seller, and every discount it produces is recorded in the adjustment ledger with a `fundedBy` that
+	 * says which. Keeping the fact here as well is what lets the engine write the right ledger rows, and
+	 * what makes a seller-funded promotion's target set unambiguous — it applies only to lines of its own
+	 * seller.
+	 */
+	@ApiProperty({ type: () => String, enum: PromotionFunding, default: PromotionFunding.PLATFORM })
+	@IsEnum(PromotionFunding)
+	@MultiORMColumn({ type: 'varchar', length: 16, default: PromotionFunding.PLATFORM })
+	fundingType: PromotionFunding;
+
+	/**
+	 * The seller's share of a `SPLIT` promotion, as a fraction in `(0, 1)`.
+	 *
+	 * `0` for every other funding type, which the table's own rule states: a share is meaningful only
+	 * where two funders exist, and the platform bears the remainder of a split, so the two parts always
+	 * sum to the whole.
+	 */
+	@ApiPropertyOptional({ type: () => String, default: '0' })
+	@IsOptional()
+	@MultiORMColumn({
+		type: 'numeric',
+		precision: 9,
+		scale: 6,
+		default: 0,
+		transformer: new ColumnNumericTransformerPipe()
+	})
+	sellerFundingShare?: DecimalString;
+
+	/**
+	 * The seller a `SELLER` or `SPLIT` promotion belongs to.
+	 *
+	 * Held as an id rather than as a relation: `seller` belongs to the marketplace package, which
+	 * depends on this one, so the reference points one way and the constraint is added by the set that
+	 * owns that table. A `PLATFORM` promotion carries none — the second half of the same rule.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	sellerId?: ID;
+
+	/**
+	 * The offer's own presentation and policy: the revert-on-return policy, the badge text and the terms.
+	 * Open-ended, so a JSON column rather than a column per key.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()

@@ -51,6 +51,20 @@ export class Fulfillment extends TenantOrganizationBaseEntity implements IFulfil
 	@MultiORMColumn({ nullable: true })
 	warehouseId?: ID;
 
+	/**
+	 * The seller that shipped this, when one seller's goods are on it.
+	 *
+	 * One seller per shipment: a fulfilment that covered two sellers' lines would make the carrier label,
+	 * the shipping revenue and the seller-scoped reads disagree about whose goods moved. Held as an id
+	 * rather than as a relation because `seller` belongs to the marketplace package; the constraint onto
+	 * it is added by that package's set.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	sellerId?: ID;
+
 	/** The carrier or fulfilment provider key. It names a registered strategy, not an integration row. */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

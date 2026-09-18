@@ -33,9 +33,20 @@ export interface IOrderSplitLine {
 	/** `quantity × unitPrice`, before discounts. */
 	grossAmount: DecimalString;
 	taxAmount: DecimalString;
-	/** The seller-funded discount, non-positive. */
+	/**
+	 * The seller-funded discount, non-positive.
+	 *
+	 * It is read from the ledger rather than taken from the offer that produced it — every `adjustment` row
+	 * of this line with `fundedBy = SELLER` — because the same promotion may be funded by the platform, by
+	 * one seller or split between them, and only the rows say which. `SellerFundingService` is the reader
+	 * that answers it, and this is the member it fills.
+	 */
 	sellerDiscountAmount: DecimalString;
-	/** The platform-funded discount, non-positive; it never reduces the basis or the seller's net. */
+	/**
+	 * The platform-funded discount, non-positive; it never reduces the basis or the seller's net.
+	 *
+	 * The other half of the same read: the `PLATFORM`-funded rows of this line.
+	 */
 	platformDiscountAmount: DecimalString;
 }
 

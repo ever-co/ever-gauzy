@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsOptional, IsString, IsUUID, Length } from 'class-validator';
 import {
+	AdjustmentFunding,
 	AdjustmentOwnerType,
 	AdjustmentType,
 	CurrencyCode,
@@ -155,4 +156,32 @@ export class Adjustment extends TenantOrganizationBaseEntity implements IAdjustm
 	@IsOptional()
 	@JsonColumn<Record<string, unknown>>({ nullable: true })
 	metadata?: Record<string, unknown>;
+
+	/**
+	 * Who bears the cost of this row.
+	 *
+	 * The column exists because the question the discount layer asks last — *who paid for this* — must be
+	 * answerable from the ledger rather than from the offer that produced the row: the same promotion may
+	 * be funded by the platform, by one seller, or split between them, and the split is expressed as two
+	 * rows so that each amount is rounded once on its own. The default is `PLATFORM`, which is what every
+	 * row written before the marketplace existed means.
+	 */
+	@ApiProperty({ type: () => String, enum: AdjustmentFunding, default: AdjustmentFunding.PLATFORM })
+	@IsEnum(AdjustmentFunding)
+	@MultiORMColumn({ type: 'varchar', length: 16, default: AdjustmentFunding.PLATFORM })
+	fundedBy: AdjustmentFunding;
+
+	/**
+	 * The seller that bears the cost, when {@link fundedBy} is `SELLER`.
+	 *
+	 * Held as an id rather than as a relation: the table this points at belongs to the marketplace
+	 * package, and the kernel does not depend on a package that depends on it. The constraint onto
+	 * `seller` is added by the set that owns that table, and the table's own rule — a row funded by a
+	 * seller names one — is added with it.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	sellerId?: ID;
 }

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, EventBus, Money, RequestContext } from '@gauzy/core';
+import { CrudService, EventBus, Money, RequestContext, compareDecimalStrings } from '@gauzy/core';
 import { PromotionChangedEvent } from '../events';
 import { Promotion } from './promotion.entity';
 import { TypeOrmPromotionRepository } from './repository/type-orm-promotion.repository';
@@ -23,6 +23,7 @@ import {
 	PromotionActionTargetType,
 	PromotionActionType,
 	PromotionNotice,
+	PromotionFunding,
 	PromotionStatus,
 	PromotionType
 } from '../promotion.types';
@@ -156,6 +157,8 @@ export class PromotionService extends CrudService<Promotion> {
 			}
 		}
 
+		this.assertFunding(input.fundingType, input.sellerFundingShare, input.sellerId);
+
 		const promotion = await this.create({ ...input, code, ...this.scope } as never);
 
 		if (input.actions?.length) {
@@ -172,12 +175,79 @@ export class PromotionService extends CrudService<Promotion> {
 	 * @param input The fields to change.
 	 * @returns The stored promotion.
 	 * @throws NotFoundException when the promotion is not in the caller's organization.
+	 * @throws BadRequestException when the funding the change states does not describe a funder.
 	 */
 	async updatePromotion(id: ID, input: IPromotionUpdateInput): Promise<IPromotion> {
-		await this.findPromotionOrFail(id);
+		const current = await this.findPromotionOrFail(id);
+
+		/*
+		 * The rule is checked against the row the change produces, not against the fields the change
+		 * states: a promotion funded by a seller that is moved to `SPLIT` without a share, or a `SPLIT`
+		 * promotion whose share is cleared, would otherwise be written in a state the table's own rule
+		 * refuses — and the refusal would arrive as a database error rather than as a named one.
+		 */
+		this.assertFunding(
+			input.fundingType ?? current.fundingType,
+			input.sellerFundingShare ?? current.sellerFundingShare,
+			input.sellerId ?? current.sellerId
+		);
+
 		await this.update(id, { ...input } as never);
 
 		return this.findPromotionOrFail(id);
+	}
+
+	/**
+	 * Refuses funding that does not describe a funder.
+	 *
+	 * Three rules, and they are the same rule seen from three sides — **money is spent by somebody who
+	 * exists**: a promotion funded by a seller names that seller, a split promotion states the share the
+	 * seller bears (strictly between nothing and everything, because a "split" of zero or of all of it is
+	 * one of the other two fundings written the long way), and a promotion the platform funds names no
+	 * seller at all, because a seller on a platform-funded offer would make the ledger attribute a cost
+	 * the platform bears. The table carries the same two rules as check constraints on PostgreSQL and
+	 * MySQL; this is what turns them into a named refusal with a code a caller can act on, and what
+	 * carries them on the embedded dialect.
+	 *
+	 * @param fundingType Who bears the cost.
+	 * @param share The seller's share of a split, when one is stated.
+	 * @param sellerId The seller, when one is named.
+	 * @throws BadRequestException naming which of the three rules was broken.
+	 */
+	private assertFunding(
+		fundingType?: PromotionFunding,
+		share?: DecimalString,
+		sellerId?: ID
+	): void {
+		if (!fundingType || fundingType === PromotionFunding.PLATFORM) {
+			if (sellerId) {
+				throw new BadRequestException(
+					'PROMOTION_FUNDING_SELLER_UNEXPECTED: a promotion the platform funds names no seller, because the cost it bears is not a seller\'s to record.'
+				);
+			}
+
+			return;
+		}
+
+		if (!sellerId) {
+			throw new BadRequestException(
+				'PROMOTION_FUNDING_SELLER_REQUIRED: a promotion funded by a seller names the seller that bears the cost.'
+			);
+		}
+
+		if (fundingType !== PromotionFunding.SPLIT) {
+			return;
+		}
+
+		// The share arrives as an exact decimal string from the API and as a number from a column read,
+		// so it is compared through the money layer rather than by parsing it here.
+		const stated = share === undefined || share === null ? '0' : String(share);
+
+		if (compareDecimalStrings(stated, '0') <= 0 || compareDecimalStrings(stated, '1') >= 0) {
+			throw new BadRequestException(
+				`PROMOTION_FUNDING_SHARE_RANGE: a split promotion states the seller's share as a fraction greater than 0 and less than 1, and "${stated}" is not one.`
+			);
+		}
 	}
 
 	/**

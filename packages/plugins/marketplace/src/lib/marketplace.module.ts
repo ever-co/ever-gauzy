@@ -3,7 +3,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Seller } from './seller/seller.entity';
 import { SellerOffering } from './seller-offering/seller-offering.entity';
 import { SellerTransaction } from './seller-transaction/seller-transaction.entity';
-import { EventOutboxModule, RolePermissionModule } from '@gauzy/core';
+import { AdjustmentModule, EventOutboxModule, RolePermissionModule } from '@gauzy/core';
 import { Module } from '@nestjs/common';
 import { SellerModule } from './seller/seller.module';
 import { SellerOfferingModule } from './seller-offering/seller-offering.module';
@@ -13,6 +13,7 @@ import { SellerPayoutLineModule } from './seller-payout-line/seller-payout-line.
 import { SellerSettlementModule } from './seller-settlement/seller-settlement.module';
 import { SellerCommissionService } from './commission/seller-commission.service';
 import { SellerSplitService } from './split/seller-split.service';
+import { SellerFundingService } from './funding/seller-funding.service';
 import { resolvers } from './graphql/resolvers';
 import { TypeOrmSellerRepository } from './seller/repository/type-orm-seller.repository';
 import { TypeOrmSellerOfferingRepository } from './seller-offering/repository/type-orm-seller-offering.repository';
@@ -33,6 +34,10 @@ import { TypeOrmSellerTransactionRepository } from './seller-transaction/reposit
 		// the same registration every aggregate module performs for the entities it owns.
 		TypeOrmModule.forFeature([Seller, SellerOffering, SellerTransaction]),
 		MikroOrmModule.forFeature([Seller, SellerOffering, SellerTransaction]),
+		// The funding reader asks the kernel's ledger service which discounts a line carries and who bore
+		// them, so the module that provides it imports the kernel's adjustment module rather than mapping
+		// the ledger a second time.
+		AdjustmentModule,
 		EventOutboxModule,
 		// The resolver provided below carries the platform's permission guards, and a guard is resolved
 		// in the context of the module that hosts the handler it protects — so the module that hosts the
@@ -49,6 +54,7 @@ import { TypeOrmSellerTransactionRepository } from './seller-transaction/reposit
 	providers: [
 		SellerCommissionService,
 		SellerSplitService,
+		SellerFundingService,
 		TypeOrmSellerRepository,
 		TypeOrmSellerOfferingRepository,
 		TypeOrmSellerTransactionRepository,
@@ -67,7 +73,8 @@ import { TypeOrmSellerTransactionRepository } from './seller-transaction/reposit
 		SellerPayoutLineModule,
 		SellerSettlementModule,
 		SellerCommissionService,
-		SellerSplitService
+		SellerSplitService,
+		SellerFundingService
 	]
 })
 export class MarketplaceModule {}

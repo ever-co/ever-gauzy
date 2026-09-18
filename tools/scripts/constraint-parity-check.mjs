@@ -259,24 +259,6 @@ const DEFERRED = [
 		table: 'operation',
 		column: 'lockedAt',
 		why: 'the lease is still inside `operation.state`; §3.14 moves it to the `lockedAt`/`lockedBy`/`leaseExpiresAt` columns, and the rule belongs to those columns'
-	},
-	{
-		name: 'CHK_adjustment_funding',
-		table: 'adjustment',
-		column: 'fundedBy',
-		why: 'the marketplace’s funding columns on `adjustment` (`fundedBy`, `sellerId`) have not landed; doc 20 §4.5 is their specification'
-	},
-	{
-		name: 'CHK_promotion_funding_share',
-		table: 'promotion',
-		column: 'fundingType',
-		why: 'the marketplace’s funding columns on `promotion` (`fundingType`, `sellerFundingShare`, `sellerId`) have not landed; doc 20 §11.2 is their specification'
-	},
-	{
-		name: 'CHK_promotion_seller_funding',
-		table: 'promotion',
-		column: 'sellerId',
-		why: 'the marketplace’s `sellerId` on `promotion` has not landed; doc 20 §11.2 is its specification'
 	}
 ];
 

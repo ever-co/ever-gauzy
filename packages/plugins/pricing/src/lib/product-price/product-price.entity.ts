@@ -64,9 +64,12 @@ import { MikroOrmProductPriceRepository } from './repository/mikro-orm-product-p
 @ColumnIndex('IDX_price_open_scope', ['organizationId', 'currency', 'status'], {
 	where: '"variantId" IS NULL AND "deletedAt" IS NULL'
 })
-@ColumnIndex('UQ_price_tier', ['variantId', 'currency', 'priceListId', 'minQuantity', 'maxQuantity'], {
+@ColumnIndex('UQ_price_tier', ['variantId', 'currency', 'sellerId', 'priceListId', 'minQuantity', 'maxQuantity'], {
 	unique: true,
 	where: '"deletedAt" IS NULL'
+})
+@ColumnIndex('IDX_price_seller', ['sellerId', 'variantId', 'currency', 'status'], {
+	where: '"sellerId" IS NOT NULL AND "deletedAt" IS NULL'
 })
 @MultiORMEntity('product_price', { mikroOrmRepository: () => MikroOrmProductPriceRepository })
 export class ProductPrice extends TenantOrganizationBaseEntity {
@@ -79,6 +82,22 @@ export class ProductPrice extends TenantOrganizationBaseEntity {
 	@Length(3, 3)
 	@MultiORMColumn({ type: 'varchar', length: 3 })
 	currency: CurrencyCode;
+
+	/**
+	 * The seller whose price this is, when a seller set it.
+	 *
+	 * Null means the platform's own price, which is what every row written before the marketplace existed
+	 * is. A seller-scoped row is the seller's **override** for one variant on one list, and it is part of
+	 * the unique tuple above: without the seller in the tuple, a seller's row would collide with the
+	 * platform's for the same variant and currency and the second write would be refused rather than
+	 * stored. Held as an id rather than as a relation because `seller` belongs to the marketplace package,
+	 * whose set adds the constraint.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	sellerId?: ID;
 
 	/**
 	 * What one unit costs, exact, at the storage scale of a money column.
