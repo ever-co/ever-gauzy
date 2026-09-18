@@ -51,3 +51,57 @@
 :host ::ng-deep angular2-smart-table {
   @include ga-hub.rows();
 }
+
+// ── Type scale ───────────────────────────────────────────────────────────────
+// The read-only invoice / estimate was drawn at the template's bootstrap
+// defaults: an `h4` pair for the number (1.5rem), `font-weight-bold` labels at
+// 1rem, and `mb-5` (3rem) between blocks — so six fields and a four-line item
+// grid filled a screen and the record read louder than the page it opens from.
+// Everything here is the 12px set the rest of the app's records use; the item
+// grid keeps the density block above.
+:host {
+  font-size: 12px;
+  line-height: 1rem;
+
+  // The record's number, the one thing that identifies it.
+  h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  // Field labels ("Estimate Date:", "From:", "Tax:") — muted, so the values they
+  // name are what the eye lands on.
+  .font-weight-bold {
+    font-size: 12px;
+    font-weight: 600 !important;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  // The heading block keeps its own line; `h4` carries the record number.
+  .font-weight-bold h4 {
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  // Bootstrap's 3rem between blocks and 0.5rem between rows, at this scale.
+  .mb-5 {
+    margin-bottom: 1rem !important;
+  }
+
+  .mt-2 {
+    margin-top: 0.375rem !important;
+  }
+
+  .mt-3 {
+    margin-top: 0.75rem !important;
+  }
+
+  // Money and dates line up down their column.
+  .text-left,
+  .text-right {
+    font-variant-numeric: tabular-nums;
+  }
+}
