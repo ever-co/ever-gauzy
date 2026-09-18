@@ -24,6 +24,8 @@ import { ShippingProfileVariantController } from './shipping-profile-variant/shi
 import { ShippingProfileVariantService } from './shipping-profile-variant/shipping-profile-variant.service';
 import { TypeOrmShippingProfileVariantRepository } from './shipping-profile-variant/repository/type-orm-shipping-profile-variant.repository';
 import { MikroOrmShippingProfileVariantRepository } from './shipping-profile-variant/repository/mikro-orm-shipping-profile-variant.repository';
+import { WarehouseFulfillmentService } from './warehouse-fulfillment/warehouse-fulfillment.service';
+import { ReturnShipmentService } from './return-shipment/return-shipment.service';
 
 /**
  * The fulfilment module.
@@ -32,6 +34,11 @@ import { MikroOrmShippingProfileVariantRepository } from './shipping-profile-var
  * one reason: a fulfilment line maintains the order line's own quantity counters, because those counters
  * are what the order's materialised fulfilment status is derived from — and a second implementation of
  * that derivation would be a second answer to "how much of this line has shipped?".
+ *
+ * Two of the providers answer capabilities that belong to this domain but are asked for from outside
+ * it: the shipment side of the work a location does, and the leg a return travels on. Both are
+ * exported, because a capability an installation binds to a port has to be reachable from the module
+ * that declares the binding, and a service a module keeps to itself cannot be bound at all.
  */
 @Module({
 	controllers: [
@@ -63,14 +70,18 @@ import { MikroOrmShippingProfileVariantRepository } from './shipping-profile-var
 		MikroOrmShippingProfileRepository,
 		ShippingProfileVariantService,
 		TypeOrmShippingProfileVariantRepository,
-		MikroOrmShippingProfileVariantRepository
+		MikroOrmShippingProfileVariantRepository,
+		WarehouseFulfillmentService,
+		ReturnShipmentService
 	],
 	exports: [
 		FulfillmentService,
 		FulfillmentLineService,
 		ShippingOptionService,
 		ShippingProfileService,
-		ShippingProfileVariantService
+		ShippingProfileVariantService,
+		WarehouseFulfillmentService,
+		ReturnShipmentService
 	]
 })
 export class FulfillmentModule {}

@@ -68,6 +68,42 @@ export const schemaExtensions = gql`
 		AUTOMATIC
 	}
 
+	enum PaymentAccountHolderType {
+		CUSTOMER
+		SELLER
+		ORGANIZATION
+	}
+
+	enum PaymentAccountHolderStatus {
+		PENDING
+		ACTIVE
+		RESTRICTED
+		REJECTED
+		DISABLED
+	}
+
+	enum PaymentAccountVerificationStatus {
+		UNVERIFIED
+		PENDING
+		VERIFIED
+		REJECTED
+		EXPIRED
+	}
+
+	enum PaymentMethodTokenType {
+		CARD
+		BANK_ACCOUNT
+		WALLET
+		DIRECT_DEBIT
+	}
+
+	enum PaymentMethodTokenStatus {
+		ACTIVE
+		EXPIRED
+		REVOKED
+		FAILED
+	}
+
 	enum PaymentProviderSortField {
 		CODE
 		NAME
@@ -128,6 +164,25 @@ export const schemaExtensions = gql`
 		STATUS
 		RECEIVED_AT
 		PROCESSED_AT
+		CREATED_AT
+		UPDATED_AT
+	}
+
+	enum PaymentAccountHolderSortField {
+		TYPE
+		STATUS
+		VERIFICATION_STATUS
+		CREATED_AT
+		UPDATED_AT
+	}
+
+	enum PaymentMethodTokenSortField {
+		TYPE
+		BRAND
+		STATUS
+		IS_DEFAULT
+		EXPIRY_YEAR
+		LAST_USED_AT
 		CREATED_AT
 		UPDATED_AT
 	}
@@ -307,6 +362,57 @@ export const schemaExtensions = gql`
 		updatedAt: DateTime!
 	}
 
+	type PaymentAccountHolder {
+		id: ID!
+		contactId: ID
+		paymentProviderId: ID
+		providerKey: String!
+		externalAccountId: String
+		type: PaymentAccountHolderType!
+		status: PaymentAccountHolderStatus!
+		verificationStatus: PaymentAccountVerificationStatus!
+		country: String
+		defaultCurrency: String
+		mandateReference: String
+		mandateAcceptedAt: DateTime
+		metadata: JSON
+		methodTokens: [PaymentMethodToken!]
+		isActive: Boolean
+		isArchived: Boolean
+		archivedAt: DateTime
+		tenantId: ID
+		organizationId: ID
+		createdAt: DateTime!
+		updatedAt: DateTime!
+	}
+
+	type PaymentMethodToken {
+		id: ID!
+		accountHolderId: ID!
+		paymentProviderId: ID
+		providerKey: String!
+		token: String
+		type: PaymentMethodTokenType!
+		brand: String
+		last4: String
+		expiryMonth: Int
+		expiryYear: Int
+		holderName: String
+		billingAddressId: ID
+		isDefault: Boolean!
+		status: PaymentMethodTokenStatus!
+		lastUsedAt: DateTime
+		revokedAt: DateTime
+		metadata: JSON
+		isActive: Boolean
+		isArchived: Boolean
+		archivedAt: DateTime
+		tenantId: ID
+		organizationId: ID
+		createdAt: DateTime!
+		updatedAt: DateTime!
+	}
+
 	type PaymentProviderEdge {
 		cursor: String!
 		node: PaymentProvider!
@@ -345,6 +451,16 @@ export const schemaExtensions = gql`
 	type PaymentWebhookEventEdge {
 		cursor: String!
 		node: PaymentWebhookEvent!
+	}
+
+	type PaymentAccountHolderEdge {
+		cursor: String!
+		node: PaymentAccountHolder!
+	}
+
+	type PaymentMethodTokenEdge {
+		cursor: String!
+		node: PaymentMethodToken!
 	}
 
 	type PaymentProviderConnection {
@@ -399,6 +515,20 @@ export const schemaExtensions = gql`
 	type PaymentWebhookEventConnection {
 		items: [PaymentWebhookEvent!]!
 		edges: [PaymentWebhookEventEdge!]
+		total: Int!
+		pageInfo: PageInfo
+	}
+
+	type PaymentAccountHolderConnection {
+		items: [PaymentAccountHolder!]!
+		edges: [PaymentAccountHolderEdge!]
+		total: Int!
+		pageInfo: PageInfo
+	}
+
+	type PaymentMethodTokenConnection {
+		items: [PaymentMethodToken!]!
+		edges: [PaymentMethodTokenEdge!]
 		total: Int!
 		pageInfo: PageInfo
 	}
@@ -470,6 +600,28 @@ export const schemaExtensions = gql`
 		receivedAtTo: DateTime
 	}
 
+	input PaymentAccountHolderFilter {
+		id: ID
+		contactId: ID
+		paymentProviderId: ID
+		providerKey: String
+		type: PaymentAccountHolderType
+		status: PaymentAccountHolderStatus
+		verificationStatus: PaymentAccountVerificationStatus
+		defaultCurrency: String
+	}
+
+	input PaymentMethodTokenFilter {
+		id: ID
+		contactId: ID
+		accountHolderId: ID
+		paymentProviderId: ID
+		providerKey: String
+		type: PaymentMethodTokenType
+		status: PaymentMethodTokenStatus
+		isDefault: Boolean
+	}
+
 	input PaymentProviderSort {
 		field: PaymentProviderSortField!
 		direction: SortDirection
@@ -507,6 +659,16 @@ export const schemaExtensions = gql`
 
 	input PaymentWebhookEventSort {
 		field: PaymentWebhookEventSortField!
+		direction: SortDirection
+	}
+
+	input PaymentAccountHolderSort {
+		field: PaymentAccountHolderSortField!
+		direction: SortDirection
+	}
+
+	input PaymentMethodTokenSort {
+		field: PaymentMethodTokenSortField!
 		direction: SortDirection
 	}
 
@@ -682,6 +844,62 @@ export const schemaExtensions = gql`
 		idempotencyKey: String
 	}
 
+	input CreatePaymentAccountHolderInput {
+		contactId: ID
+		paymentProviderId: ID
+		providerKey: String!
+		type: PaymentAccountHolderType
+		country: String
+		defaultCurrency: String
+		metadata: JSON
+		idempotencyKey: String
+	}
+
+	input UpdatePaymentAccountHolderInput {
+		id: ID!
+		contactId: ID
+		paymentProviderId: ID
+		providerKey: String
+		verificationStatus: PaymentAccountVerificationStatus
+		country: String
+		defaultCurrency: String
+		mandateReference: String
+		mandateAcceptedAt: DateTime
+		metadata: JSON
+	}
+
+	input VerifyPaymentAccountHolderInput {
+		id: ID!
+		verificationStatus: PaymentAccountVerificationStatus!
+		status: PaymentAccountHolderStatus
+		reference: String
+		expiresAt: DateTime
+		note: String
+		idempotencyKey: String
+	}
+
+	input PaymentMethodTokenConfirmationInput {
+		token: String!
+		confirmedAt: DateTime!
+	}
+
+	input CreatePaymentMethodTokenInput {
+		accountHolderId: ID!
+		providerKey: String!
+		token: String!
+		providerConfirmation: PaymentMethodTokenConfirmationInput!
+		type: PaymentMethodTokenType
+		brand: String
+		last4: String
+		expiryMonth: Int
+		expiryYear: Int
+		holderName: String
+		billingAddressId: ID
+		isDefault: Boolean
+		metadata: JSON
+		idempotencyKey: String
+	}
+
 	type CreatePaymentProviderPayload {
 		paymentProvider: PaymentProvider
 		operation: Operation
@@ -805,6 +1023,52 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	type CreatePaymentAccountHolderPayload {
+		paymentAccountHolder: PaymentAccountHolder
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	type UpdatePaymentAccountHolderPayload {
+		paymentAccountHolder: PaymentAccountHolder
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	type VerifyPaymentAccountHolderPayload {
+		paymentAccountHolder: PaymentAccountHolder
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	type DeletePaymentAccountHolderPayload {
+		paymentAccountHolder: PaymentAccountHolder
+		deleted: Boolean!
+		revokedTokenCount: Int!
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	type CreatePaymentMethodTokenPayload {
+		paymentMethodToken: PaymentMethodToken
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	type SetDefaultPaymentMethodTokenPayload {
+		paymentMethodToken: PaymentMethodToken
+		previousDefaultId: ID
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	type RevokePaymentMethodTokenPayload {
+		paymentMethodToken: PaymentMethodToken
+		deleted: Boolean!
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
 	extend type Query {
 		paymentProviders(
 			filter: PaymentProviderFilter
@@ -864,6 +1128,22 @@ export const schemaExtensions = gql`
 			offset: Int
 		): PaymentWebhookEventConnection!
 		paymentWebhookEvent(id: ID!): PaymentWebhookEvent
+		paymentAccountHolders(
+			filter: PaymentAccountHolderFilter
+			sort: PaymentAccountHolderSort
+			page: PageInput
+			limit: Int
+			offset: Int
+		): PaymentAccountHolderConnection!
+		paymentAccountHolder(id: ID!): PaymentAccountHolder
+		paymentMethodTokens(
+			filter: PaymentMethodTokenFilter
+			sort: PaymentMethodTokenSort
+			page: PageInput
+			limit: Int
+			offset: Int
+		): PaymentMethodTokenConnection!
+		paymentMethodToken(id: ID!): PaymentMethodToken
 	}
 
 	extend type Mutation {
@@ -889,6 +1169,19 @@ export const schemaExtensions = gql`
 		reprocessPaymentWebhookEvent(
 			input: ReprocessPaymentWebhookEventInput!
 		): ReprocessPaymentWebhookEventPayload!
+		createPaymentAccountHolder(
+			input: CreatePaymentAccountHolderInput!
+		): CreatePaymentAccountHolderPayload!
+		updatePaymentAccountHolder(
+			input: UpdatePaymentAccountHolderInput!
+		): UpdatePaymentAccountHolderPayload!
+		verifyPaymentAccountHolder(
+			input: VerifyPaymentAccountHolderInput!
+		): VerifyPaymentAccountHolderPayload!
+		deletePaymentAccountHolder(id: ID!): DeletePaymentAccountHolderPayload!
+		createPaymentMethodToken(input: CreatePaymentMethodTokenInput!): CreatePaymentMethodTokenPayload!
+		setDefaultPaymentMethodToken(id: ID!): SetDefaultPaymentMethodTokenPayload!
+		revokePaymentMethodToken(id: ID!): RevokePaymentMethodTokenPayload!
 	}
 
 	extend type Subscription {

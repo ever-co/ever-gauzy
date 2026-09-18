@@ -5,6 +5,7 @@ import { MARKETPLACE_PERMISSIONS } from './marketplace.permissions';
 import { MARKETPLACE_FEATURES } from './marketplace.features';
 import { MARKETPLACE_SETTINGS } from './marketplace.settings';
 import { CreateMarketplaceTables1791000000380 } from './database/migrations/1791000000380-CreateMarketplaceTables';
+import { AddSellerPayoutAccountForeignKeys1791000000420 } from './database/migrations/1791000000420-AddSellerPayoutAccountForeignKeys';
 import { Seller } from './seller/seller.entity';
 import { SellerOffering } from './seller-offering/seller-offering.entity';
 import { SellerTransaction } from './seller-transaction/seller-transaction.entity';
@@ -38,7 +39,7 @@ import { resolvers } from './graphql/resolvers';
 	 * plugins happen to be listed in — this one runs after the order and payment sets, because the
 	 * ledger it stores refers to their rows.
 	 */
-	migrations: [CreateMarketplaceTables1791000000380],
+	migrations: [CreateMarketplaceTables1791000000380, AddSellerPayoutAccountForeignKeys1791000000420],
 	/**
 	 * What the platform unions into its permission catalogue, so a role can be granted a marketplace
 	 * permission exactly like a built-in one.

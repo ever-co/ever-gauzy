@@ -7,7 +7,7 @@ import {
 	IOrderLine,
 	IPagination
 } from '@gauzy/contracts';
-import { TenantAwareCrudService, compareDecimalStrings } from '@gauzy/core';
+import { RequestContext, TenantAwareCrudService, compareDecimalStrings } from '@gauzy/core';
 import { OrderLineService } from '@gauzy/plugin-order';
 import { Fulfillment } from './fulfillment.entity';
 import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.repository';
@@ -104,6 +104,61 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		}
 
 		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
+	 * Raises the leg the goods come back on.
+	 *
+	 * A return is a fulfilment whose direction is `RETURN`, and it is raised here rather than by the
+	 * domain that decided on it, because a shipment is this domain's row and its lifecycle is this
+	 * domain's rule. What it deliberately does **not** carry is lines, and that is the one place the
+	 * two creation paths differ:
+	 *
+	 * - **Nothing is picked for a return.** The lines of an outbound fulfilment are what a picking
+	 *   list is derived from and what the order line's counters are moved by, which is why `create`
+	 *   refuses a fulfilment with none. Goods coming back are not fetched from a bin: they arrive, and
+	 *   the quantity that arrived is recorded by the domain that received it, against its own lines.
+	 * - **The order line's counters must not move.** A return does not fulfil anything, so writing
+	 *   `fulfilledQuantity` for it would count the same units twice — once when they went out and once
+	 *   when they came back — and every later check measured against that counter would be wrong.
+	 *
+	 * The leg therefore starts `PENDING` at version one, like any other shipment, and moves through
+	 * the same lifecycle as any other: what has not moved cannot be delivered, and a leg that is
+	 * abandoned before anything was handed over is cancelled rather than deleted.
+	 *
+	 * The tenant and the organization are stamped from the request context rather than taken from the
+	 * caller: the leg belongs to whoever raised it, and a caller that could state another scope could
+	 * write a shipment its own reads would never find again.
+	 *
+	 * @param entity The leg to raise: the order the goods came from, and whatever else is already
+	 * known about the journey.
+	 * @returns The raised leg, pending.
+	 * @throws BadRequestException when no order was named.
+	 */
+	public async createReturnLeg(entity: {
+		orderId: ID;
+		warehouseId?: ID;
+		trackingNumber?: string;
+		carrier?: string;
+		service?: string;
+		providerId?: string;
+		metadata?: Record<string, unknown>;
+	}): Promise<Fulfillment> {
+		if (!entity?.orderId) {
+			throw new BadRequestException(
+				'FULFILLMENT_ORDER_REQUIRED: a return leg is raised against the order its goods came from.'
+			);
+		}
+
+		return await super.create({
+			...entity,
+			direction: FulfillmentDirection.RETURN,
+			status: FulfillmentStatusDetail.PENDING,
+			requiresShipping: true,
+			version: 1,
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		} as DeepPartial<Fulfillment>);
 	}
 
 	/**

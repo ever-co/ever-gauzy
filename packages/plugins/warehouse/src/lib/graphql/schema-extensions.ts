@@ -571,6 +571,16 @@ export const schemaExtensions = gql`
 		countedQuantity: Decimal!
 		difference: Decimal!
 		repaired: Boolean!
+		"Where the level row says the variant is kept, when it says."
+		homeBinId: ID
+		"The units the ledger holds at the location with no bin, which the step reports separately."
+		unplacedQuantity: Decimal
+		"The sum of binQuantity over the bins of the run."
+		placedQuantity: Decimal
+		"What the bin this line is about holds, as the ledger derives it."
+		declaredQuantity: Decimal
+		"The quantity the run relocated for this line, when it wrote a pair."
+		relocatedQuantity: Decimal
 	}
 
 	"What one reconciliation run did."
@@ -580,6 +590,10 @@ export const schemaExtensions = gql`
 		lines: [BinReconciliationLine!]!
 		driftCount: Int!
 		movementIds: [ID!]!
+		"The sum of placedQuantity over the run."
+		placedQuantity: Decimal
+		"The sum of unplacedQuantity over the run."
+		unplacedQuantity: Decimal
 	}
 
 	"The definition of a wave."

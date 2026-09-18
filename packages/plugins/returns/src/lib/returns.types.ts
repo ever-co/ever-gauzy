@@ -181,6 +181,15 @@ export interface IRefundRequest {
 	readonly returnId?: ID;
 	/** Exchange that produced the refund, when it came from one. */
 	readonly exchangeId?: ID;
+	/**
+	 * Claim that produced the refund, when it came from one.
+	 *
+	 * A claim is the third thing that can owe money back — after a return and an exchange — and it is
+	 * neither of the other two: it names a damaged or short delivery rather than goods sent back. The
+	 * refund it produces has to carry which of the three asked for it, because the attribution is what
+	 * lets a later report answer "what did this claim cost us" without reading the claim row again.
+	 */
+	readonly claimId?: ID;
 	/** Amount to refund, exact. */
 	readonly amount: DecimalString;
 	/** Currency of the amount. */

@@ -1,7 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { FeatureModule, RolePermissionModule, SequenceModule, TenantSettingModule } from '@gauzy/core';
+import {
+	FeatureModule,
+	RequestApprovalModule,
+	RolePermissionModule,
+	SequenceModule,
+	TenantSettingModule
+} from '@gauzy/core';
 import { resolvers } from './graphql/resolvers';
 import { GoodsReceiptLine } from './goods-receipt-line/goods-receipt-line.entity';
 import { GoodsReceiptLineController } from './goods-receipt-line/goods-receipt-line.controller';
@@ -18,6 +24,7 @@ import { PurchaseOrderLineController } from './purchase-order-line/purchase-orde
 import { PurchaseOrderLineService } from './purchase-order-line/purchase-order-line.service';
 import { MikroOrmPurchaseOrderLineRepository } from './purchase-order-line/repository/mikro-orm-purchase-order-line.repository';
 import { TypeOrmPurchaseOrderLineRepository } from './purchase-order-line/repository/type-orm-purchase-order-line.repository';
+import { PurchaseApprovalService } from './purchase-approval/purchase-approval.service';
 import { PurchaseOrder } from './purchase-order/purchase-order.entity';
 import { PurchaseOrderController } from './purchase-order/purchase-order.controller';
 import { PurchaseOrderService } from './purchase-order/purchase-order.service';
@@ -50,7 +57,9 @@ export const ALL_PURCHASING_ENTITIES = [
  * `TenantPermissionGuard` / `PermissionGuard` read the role-permission service. Nest imports are not
  * inherited downwards, so importing them in a parent module would not be enough. `TenantSettingModule`
  * is imported for the receipt service, which reads the organization's standing over-receipt allowance
- * from the platform's settings.
+ * from the platform's settings. `RequestApprovalModule` is imported so that the approval capability
+ * below can file a purchase order's request against the platform's own `request_approval` row, which
+ * is the one place an approval lives.
  *
  * The inventory capability is deliberately **not** imported. It is reached through the
  * `PURCHASING_INVENTORY` injection token, which is what lets this package be installed without the
@@ -71,7 +80,8 @@ export const ALL_PURCHASING_ENTITIES = [
 		FeatureModule,
 		RolePermissionModule,
 		SequenceModule,
-		TenantSettingModule
+		TenantSettingModule,
+		RequestApprovalModule
 	],
 	providers: [
 		PurchaseOrderService,
@@ -79,6 +89,7 @@ export const ALL_PURCHASING_ENTITIES = [
 		GoodsReceiptService,
 		GoodsReceiptLineService,
 		VendorProductTermService,
+		PurchaseApprovalService,
 		TypeOrmPurchaseOrderRepository,
 		MikroOrmPurchaseOrderRepository,
 		TypeOrmPurchaseOrderLineRepository,
@@ -99,7 +110,8 @@ export const ALL_PURCHASING_ENTITIES = [
 		PurchaseOrderLineService,
 		GoodsReceiptService,
 		GoodsReceiptLineService,
-		VendorProductTermService
+		VendorProductTermService,
+		PurchaseApprovalService
 	]
 })
 export class PurchasingModule {}

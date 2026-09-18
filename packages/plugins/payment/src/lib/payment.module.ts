@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { EventBusModule, Payment, RolePermissionModule } from '@gauzy/core';
+import { EventBusModule, Payment, PaymentInstrumentModule, RolePermissionModule } from '@gauzy/core';
 import { PaymentProvider } from './payment-provider/payment-provider.entity';
 import { PaymentCollection } from './payment-collection/payment-collection.entity';
 import { PaymentSession } from './payment-session/payment-session.entity';
@@ -18,6 +18,7 @@ import { RefundService } from './refund/refund.service';
 import { RefundLineService } from './refund-line/refund-line.service';
 import { RefundReasonService } from './refund-reason/refund-reason.service';
 import { PaymentWebhookEventService } from './payment-webhook-event/payment-webhook-event.service';
+import { ReturnRefundService } from './return-refund/return-refund.service';
 import { PaymentProviderController } from './payment-provider/payment-provider.controller';
 import { PaymentCollectionController } from './payment-collection/payment-collection.controller';
 import { PaymentSessionController } from './payment-session/payment-session.controller';
@@ -26,6 +27,10 @@ import { RefundController } from './refund/refund.controller';
 import { RefundLineController } from './refund-line/refund-line.controller';
 import { RefundReasonController } from './refund-reason/refund-reason.controller';
 import { PaymentWebhookEventController } from './payment-webhook-event/payment-webhook-event.controller';
+import { PaymentAccountHolderController } from './payment-account-holder/payment-account-holder.controller';
+import { PaymentMethodTokenController } from './payment-method-token/payment-method-token.controller';
+import { PaymentAccountHolderLifecycleService } from './payment-account-holder/payment-account-holder-lifecycle.service';
+import { PaymentMethodTokenLifecycleService } from './payment-method-token/payment-method-token-lifecycle.service';
 import { TypeOrmPaymentProviderRepository } from './payment-provider/repository/type-orm-payment-provider.repository';
 import { MikroOrmPaymentProviderRepository } from './payment-provider/repository/mikro-orm-payment-provider.repository';
 import { TypeOrmPaymentCollectionRepository } from './payment-collection/repository/type-orm-payment-collection.repository';
@@ -80,11 +85,19 @@ export const ALL_PAYMENT_ENTITIES = [
  * because the services publish the six payment events the subscription surface offers through the
  * platform bus rather than through a private one, which is what lets a subscriber outside this
  * package hear them.
+ *
+ * **`PaymentInstrumentModule` is imported for the remembered payer.** The two stored-instrument
+ * tables — the account at a provider and the instruments saved under it — are kernel tables: their
+ * entities, repositories and services live in core, and this package owns the surface over them. The
+ * module is imported rather than the services re-provided, so there is one instance of each service
+ * over one table, and its exports are what the controllers and resolvers below inject.
  */
 @Module({
 	imports: [
 		// The controllers below are guarded, and the guard resolves the caller's permissions.
 		RolePermissionModule,
+		// The remembered payer: `PaymentAccountHolderService` and `PaymentMethodTokenService`.
+		PaymentInstrumentModule,
 		TypeOrmModule.forFeature([...ALL_PAYMENT_ENTITIES, Payment]),
 		MikroOrmModule.forFeature(ALL_PAYMENT_ENTITIES),
 		EventBusModule
@@ -97,7 +110,9 @@ export const ALL_PAYMENT_ENTITIES = [
 		RefundController,
 		RefundLineController,
 		RefundReasonController,
-		PaymentWebhookEventController
+		PaymentWebhookEventController,
+		PaymentAccountHolderController,
+		PaymentMethodTokenController
 	],
 	providers: [
 		PaymentProviderService,
@@ -108,6 +123,10 @@ export const ALL_PAYMENT_ENTITIES = [
 		RefundLineService,
 		RefundReasonService,
 		PaymentWebhookEventService,
+		ReturnRefundService,
+		// The sequencing the two stored-instrument resources need, shared by both surfaces.
+		PaymentAccountHolderLifecycleService,
+		PaymentMethodTokenLifecycleService,
 		TypeOrmPaymentProviderRepository,
 		MikroOrmPaymentProviderRepository,
 		TypeOrmPaymentCollectionRepository,
@@ -134,7 +153,10 @@ export const ALL_PAYMENT_ENTITIES = [
 		RefundService,
 		RefundLineService,
 		RefundReasonService,
-		PaymentWebhookEventService
+		PaymentWebhookEventService,
+		ReturnRefundService,
+		PaymentAccountHolderLifecycleService,
+		PaymentMethodTokenLifecycleService
 	]
 })
 export class PaymentModule {}

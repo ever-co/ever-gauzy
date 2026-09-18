@@ -1,12 +1,14 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { DeleteResult, In } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DeleteResult, In, Repository } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext, TenantAwareCrudService, Warehouse } from '@gauzy/core';
 import { WarehouseZone } from '../warehouse-zone/warehouse-zone.entity';
 import { TypeOrmWarehouseZoneRepository } from '../warehouse-zone/repository/type-orm-warehouse-zone.repository';
 import {
 	IBinReconciliationLine,
 	IBinReconciliationReport,
+	IWarehouseBinBalance,
 	IWarehouseBinCapacityCheck,
 	IWarehouseBinRangeInput,
 	IWarehouseStockLedgerPort,
@@ -14,14 +16,19 @@ import {
 	WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED,
 	WAREHOUSE_STOCK_LEDGER,
 	WarehouseBinType,
-	WarehouseStockMovementKind
+	WarehouseZoneType
 } from '../warehouse.types';
 import {
 	QUANTITY_SCALE,
+	addQuantities,
 	fromQuantityUnits,
 	isGreaterThan,
+	isNegativeQuantity,
+	isPositiveQuantity,
+	isSameQuantity,
 	normalizeQuantity,
 	subtractQuantities,
+	sumQuantities,
 	toQuantityUnits
 } from '../warehouse.quantity';
 import { WarehouseBin } from './warehouse-bin.entity';
@@ -30,6 +37,20 @@ import { TypeOrmWarehouseBinRepository } from './repository/type-orm-warehouse-b
 
 /** How deep the bin hierarchy may go, counting the root as level one. */
 const MAX_BIN_DEPTH = 5;
+
+/**
+ * The provenance every correction a reconciliation writes carries.
+ *
+ * A relocation a count asked for is told apart from a manual bin move and from a replenishment by
+ * these two fields alone, which is what makes the nightly run's footprint auditable in a ledger that
+ * is otherwise append-only history.
+ */
+const RECONCILIATION_REFERENCE_TYPE = 'RECONCILIATION';
+const RECONCILIATION_REASON = 'RECONCILIATION';
+
+/** The key a bin caches its derived balances under, and the key the instant they were read at. */
+const BIN_BALANCES_KEY = 'balances';
+const BIN_BALANCE_UPDATED_AT_KEY = 'balanceUpdatedAt';
 
 /**
  * The positions inside a location: the tree, the closure it is walked through, and the count that
@@ -43,9 +64,11 @@ const MAX_BIN_DEPTH = 5;
  * one write behind reports stock under the wrong rack, and nothing would say so.
  *
  * The count is the other half. A bin's balance is derived from the movement ledger and is never stored
- * here, so reconciliation compares what the level rows claim with what the ledger recorded and
- * **writes the difference as a movement through the inventory capability**. This service never moves a
- * quantity itself: two writers of one level is how a level drifts.
+ * here, so reconciliation compares the location's total — every bin plus the units the ledger holds
+ * with no bin — against the quantity of the level row that declares where the variant is kept
+ * (INV-23), and **corrects placement with a relocation pair stated to the inventory capability**.
+ * This service never moves a quantity itself and never adjusts a level: a relocation is level-neutral
+ * by construction, and two writers of one level is how a level drifts.
  *
  * The capacity is the third. `capacityUnits` is a quantity *in a stated unit*, so this service refuses
  * a write that declares one without the other, converts a request into the capacity's own unit exactly
@@ -60,7 +83,13 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 		private readonly typeOrmWarehouseZoneRepository: TypeOrmWarehouseZoneRepository,
 		@Optional()
 		@Inject(WAREHOUSE_STOCK_LEDGER)
-		private readonly stockLedger?: IWarehouseStockLedgerPort
+		private readonly stockLedger?: IWarehouseStockLedgerPort,
+		// The location row is the kernel's, and this package only ever reads its `metadata` — the
+		// settings a count obeys (`requireFullPlacement`, `defaultBinId`) and nothing else. It is
+		// optional so the service still runs where the kernel's own entity is not registered.
+		@Optional()
+		@InjectRepository(Warehouse)
+		private readonly typeOrmWarehouseRepository?: Repository<Warehouse>
 	) {
 		super(typeOrmWarehouseBinRepository, mikroOrmWarehouseBinRepository);
 	}
@@ -657,16 +686,40 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	}
 
 	/**
-	 * Reconciles the bins of a location against the movement ledger.
+	 * Reconciles the placement of a location against the movement ledger and the level rows.
 	 *
-	 * What the level rows claim is in a bin and what the ledger recorded moving through it are two
-	 * different numbers computed from two different places, and the report is where they disagree. The
-	 * repair is a `COUNT` movement written through the inventory capability for each difference — this
-	 * service states what was found and the ledger decides the level, because the ledger is the only
-	 * authority for quantity.
+	 * The invariant is a **sum identity per variant** (doc 09 §15.1, INV-23), evaluated over the bins
+	 * of the run:
+	 *
+	 * ```text
+	 * placed            = Σ binQuantity(bin, variant) over the bins of the run
+	 * unplaced          = the units the ledger holds at the location with no bin of the run
+	 * placed + unplaced = level.quantity
+	 * ```
+	 *
+	 * A bin is never compared against the level row on its own. Stock sits in a bulk or a pick face as
+	 * legitimately as it sits at the address the level declares, so the only comparison that means
+	 * anything is the location's total against the level's quantity — and, because the level row *does*
+	 * declare one address, what the declared bin holds against the quantity the level declares for it.
+	 *
+	 * §14.10's table decides what the run does with what it finds, and every correction it writes is a
+	 * **relocation pair** stated to the inventory capability: the units leave the bin holding the
+	 * surplus — or the receiving/default bin, where units without an address physically sit, when the
+	 * surplus is unattributed — and arrive at the bin the level row declares. The location's `quantity`
+	 * and `reservedQuantity` are therefore the same before and after (INV-27) and a correction can
+	 * never be mistaken for a stock adjustment. A quantity disagreement between the ledger's total and
+	 * the level row is **reported and not adjusted here**, for the same reason: no relocation can change
+	 * a location's total, and setting a level to the ledger sum is the quantity-drift rule's business
+	 * (§10.5). No movement is written when the location has no second bin to move units between — the
+	 * report says what is wrong and no bin is ever invented to hold the difference.
+	 *
+	 * The correction is the gap between what the declared bin holds and what the level declares for it,
+	 * so the run is a fixpoint: a second run over the state it corrected finds nothing left to move. A
+	 * run the caller narrowed to some of the location's bins reports a declaration outside them and
+	 * writes nothing, because the partition it was asked about is the one it may act on.
 	 *
 	 * @param input The scope of the run and whether it should repair what it finds.
-	 * @returns What the run found, per bin and variant.
+	 * @returns What the run found, one line per affected variant, and the movements it wrote.
 	 * @throws BadRequestException when no inventory capability is registered.
 	 */
 	public async reconcile(input: {
@@ -675,72 +728,389 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 		binIds?: ID[];
 		repair?: boolean;
 	}): Promise<IBinReconciliationReport> {
-		if (!this.stockLedger) {
+		const ledger = this.stockLedger;
+
+		if (!ledger) {
 			throw new BadRequestException(
 				'WAREHOUSE_STOCK_LEDGER_UNAVAILABLE: the inventory capability is not registered, so a reconciliation has nothing to compare against.'
 			);
 		}
 
 		const binIds = await this.resolveReconciliationScope(input);
-		const ledgerBalances = await this.stockLedger.readBinBalances(binIds);
-		const claimedBalances = await this.stockLedger.readExpectedBinBalances({
+		const ledgerBalances = await ledger.readBinBalances(binIds);
+		const claimedBalances = await ledger.readExpectedBinBalances({
 			warehouseId: input.warehouseId,
 			binIds
 		});
+		const settings = await this.readLocationSettings(input.warehouseId);
+		const receivingBinId = await this.resolveReceivingBinId(input.warehouseId, settings.defaultBinId);
 
-		const claimed = new Map<string, DecimalString>();
-
-		for (const balance of claimedBalances) {
-			claimed.set(`${balance.binId ?? ''}:${balance.variantId}`, balance.quantity);
-		}
-
-		const lines: IBinReconciliationLine[] = [];
-		const movementIds: ID[] = [];
+		// What the ledger derived per bin of the run, by variant and then by bin: this is `placed`.
+		const placement = new Map<string, Map<string, DecimalString>>();
 
 		for (const balance of ledgerBalances) {
-			const key = `${balance.binId ?? ''}:${balance.variantId}`;
-			const expected = claimed.get(key) ?? '0';
-
-			if (toQuantityUnits(expected) === toQuantityUnits(balance.quantity)) {
+			if (!balance.binId) {
 				continue;
 			}
 
-			const difference = subtractQuantities(balance.quantity, expected);
-			let repaired = false;
+			const byBin = placement.get(String(balance.variantId)) ?? new Map<string, DecimalString>();
 
-			if (input.repair && balance.binId) {
-				const movement = await this.stockLedger.recordMovement({
-					warehouseId: input.warehouseId,
-					variantId: balance.variantId,
-					binId: balance.binId,
-					quantity: difference,
-					kind: WarehouseStockMovementKind.COUNT,
-					referenceType: 'WAREHOUSE_BIN_RECONCILIATION',
-					referenceId: balance.binId,
-					reason: `Bin reconciliation corrected a difference of ${difference}.`
-				});
+			byBin.set(String(balance.binId), normalizeQuantity(balance.quantity));
+			placement.set(String(balance.variantId), byBin);
+		}
 
-				movementIds.push(movement.movementId);
-				repaired = true;
+		// Every variant the run has something to say about: the ones the ledger holds in a bin of the
+		// run, and the ones a level row addresses to one of those bins. Sorted, so that two runs over
+		// one state report the same findings in the same order.
+		const variantIds = [
+			...new Set([...placement.keys(), ...claimedBalances.map((claim) => String(claim.variantId))])
+		].sort();
+
+		const lines: IBinReconciliationLine[] = [];
+		const movementIds: ID[] = [];
+		let placedTotal: DecimalString = '0.000000';
+		let unplacedTotal: DecimalString = '0.000000';
+		let driftCount = 0;
+
+		for (const variantId of variantIds) {
+			const bins = placement.get(variantId) ?? new Map<string, DecimalString>();
+			const placedQuantity = sumQuantities([...bins.values()]);
+			const locationBalance = await ledger.readBinBalance({ warehouseId: input.warehouseId, variantId });
+			// The ledger's own total for the pair, less what the bins of the run hold: the units it
+			// holds at the location with no address in scope. Over a whole location that is exactly the
+			// movements with no bin, which is `unplaced` of §14.10.
+			const unplacedQuantity = subtractQuantities(locationBalance?.quantity ?? '0', placedQuantity);
+			const countedQuantity = addQuantities(placedQuantity, unplacedQuantity);
+			const level = await ledger.resolveHomeBin({ warehouseId: input.warehouseId, variantId });
+			const expectedQuantity = normalizeQuantity(level?.quantity ?? '0');
+			const difference = subtractQuantities(countedQuantity, expectedQuantity);
+
+			// The address the finding is about: the bin the level row declares as home, the location's
+			// receiving/default bin when it declares none, and — when the location has neither — the bin
+			// of the run that holds the units, which is where they actually are.
+			const homeBinId = level?.binId;
+			const declaredBinId = homeBinId ?? receivingBinId ?? largestHolder(bins);
+			const declaredQuantity = declaredBinId
+				? await this.readBinQuantity(ledger, input.warehouseId, variantId, declaredBinId, bins)
+				: undefined;
+			// What the declared bin should hold: the level's quantity, less the units the location
+			// tolerates as unaddressed — unless it requires every unit to be placed.
+			const declaredTarget = settings.requireFullPlacement
+				? expectedQuantity
+				: subtractQuantities(expectedQuantity, unplacedQuantity);
+			const placementGap = declaredQuantity === undefined
+				? ('0.000000' as DecimalString)
+				: subtractQuantities(declaredTarget, declaredQuantity);
+
+			const unplaced = isPositiveQuantity(unplacedQuantity);
+			const quantityAgrees = isSameQuantity(difference, '0');
+			const placementAgrees = isSameQuantity(placementGap, '0');
+
+			placedTotal = addQuantities(placedTotal, placedQuantity);
+			unplacedTotal = addQuantities(unplacedTotal, unplacedQuantity);
+
+			if (quantityAgrees && placementAgrees && !unplaced) {
+				// §14.10, first row: the bins and the level row agree and every unit is addressed.
+				continue;
+			}
+
+			// A run narrowed to some of the location's bins reports a declaration that lies outside
+			// them and moves nothing: a correction that reached into a position the caller excluded
+			// would act on a partition the run was not asked about, which is how a count of one aisle
+			// ends up rearranging the building.
+			const declaredInScope = binIds.some((id) => String(id) === String(declaredBinId));
+			const correction =
+				input.repair && declaredBinId && declaredInScope
+					? await this.correctPlacement({
+							ledger,
+							warehouseId: input.warehouseId,
+							variantId,
+							bins,
+							declaredBinId,
+							receivingBinId,
+							declaredTarget,
+							unplacedQuantity,
+							gap: placementGap
+						})
+					: undefined;
+
+			if (correction) {
+				movementIds.push(...correction.movementIds);
+			}
+
+			if (!quantityAgrees || !placementAgrees) {
+				driftCount++;
 			}
 
 			lines.push({
-				binId: balance.binId as ID,
-				variantId: balance.variantId,
-				expectedQuantity: normalizeQuantity(expected),
-				countedQuantity: normalizeQuantity(balance.quantity),
-				difference: normalizeQuantity(difference),
-				repaired
+				binId: declaredBinId as ID,
+				variantId,
+				expectedQuantity,
+				countedQuantity,
+				difference,
+				repaired: Boolean(correction),
+				placedQuantity,
+				unplacedQuantity,
+				...(homeBinId ? { homeBinId } : {}),
+				...(declaredQuantity === undefined ? {} : { declaredQuantity }),
+				...(correction ? { relocatedQuantity: correction.quantity } : {})
 			});
 		}
+
+		await this.refreshBalanceSnapshots(input.warehouseId, binIds, ledgerBalances);
 
 		return {
 			warehouseId: input.warehouseId,
 			binIds,
 			lines,
-			driftCount: lines.length,
-			movementIds
+			driftCount,
+			movementIds,
+			placedQuantity: placedTotal,
+			unplacedQuantity: unplacedTotal
 		};
+	}
+
+	/**
+	 * Writes the one relocation pair a finding asks for, and nothing when no pair of bins could carry
+	 * it.
+	 *
+	 * The quantum is what the declared bin is short of — or holds beyond — what the level declares for
+	 * it, and never more than the source can account for: a correction that moved units no bin holds
+	 * would invent stock, which is the one thing a relocation must never do. The source is the bin
+	 * holding the surplus when a bin of the run holds units the level does not declare there; when the
+	 * units are unattributed they come from the receiving/default bin, which is where units without an
+	 * address physically sit, and there the unaddressed pool plus what that bin itself holds is what
+	 * bounds the move.
+	 *
+	 * @param input The finding, the ledger the pair is stated to, and the bins it may name.
+	 * @returns The pair's movement ids and the quantity it moved, or undefined when nothing could be
+	 * moved — a declared bin that is also the receiving bin, or a location holding no units the
+	 * correction could account for, is reported and left alone rather than given a fabricated bin.
+	 */
+	private async correctPlacement(input: {
+		ledger: IWarehouseStockLedgerPort;
+		warehouseId: ID;
+		variantId: ID;
+		bins: Map<string, DecimalString>;
+		declaredBinId: ID;
+		receivingBinId?: ID;
+		declaredTarget: DecimalString;
+		unplacedQuantity: DecimalString;
+		gap: DecimalString;
+	}): Promise<IPlacementCorrection | undefined> {
+		const { ledger, warehouseId, variantId, bins, declaredBinId, receivingBinId, declaredTarget, gap } = input;
+		let fromBinId: ID | undefined = declaredBinId;
+		let toBinId: ID | undefined = receivingBinId;
+		let quantity: DecimalString = isNegativeQuantity(gap)
+			? fromQuantityUnits(-toQuantityUnits(gap))
+			: '0.000000';
+
+		if (isPositiveQuantity(gap)) {
+			// The declared bin holds less than the level declares: the units are in another bin of the
+			// location when one of them holds more than the level claims for it, and unaddressed when
+			// none does.
+			const surplus = surplusBin(bins, declaredBinId, declaredTarget);
+			const source = surplus?.binId ?? receivingBinId;
+
+			if (source) {
+				const available = surplus
+					? surplus.quantity
+					: addQuantities(
+							input.unplacedQuantity,
+							await this.readBinQuantity(ledger, warehouseId, variantId, source, bins)
+						);
+
+				fromBinId = source;
+				toBinId = declaredBinId;
+				quantity = isGreaterThan(gap, available) ? available : gap;
+			}
+		}
+
+		if (!fromBinId || !toBinId || String(fromBinId) === String(toBinId) || !isPositiveQuantity(quantity)) {
+			return undefined;
+		}
+
+		const movements = await ledger.relocate({
+			warehouseId,
+			variantId,
+			fromBinId,
+			toBinId,
+			quantity,
+			referenceType: RECONCILIATION_REFERENCE_TYPE,
+			referenceId: declaredBinId,
+			reason: RECONCILIATION_REASON
+		});
+
+		return { movementIds: movements.map((movement) => movement.movementId), quantity };
+	}
+
+	/**
+	 * Reads what one bin holds of one variant, from the run's own read when it covered that bin and
+	 * from the ledger otherwise — the declared bin can lie outside the scope of a narrowed run.
+	 *
+	 * @param ledger The inventory capability.
+	 * @param warehouseId The location.
+	 * @param variantId The variant.
+	 * @param binId The bin.
+	 * @param bins What the run already read, by bin.
+	 * @returns The bin's derived quantity, zero when the ledger holds nothing for the pair.
+	 */
+	private async readBinQuantity(
+		ledger: IWarehouseStockLedgerPort,
+		warehouseId: ID,
+		variantId: ID,
+		binId: ID,
+		bins: Map<string, DecimalString>
+	): Promise<DecimalString> {
+		const known = bins.get(String(binId));
+
+		if (known !== undefined) {
+			return known;
+		}
+
+		const balance = await ledger.readBinBalance({ warehouseId, variantId, binId });
+
+		return normalizeQuantity(balance?.quantity ?? '0');
+	}
+
+	/**
+	 * Reads the settings a count obeys from the location's own metadata.
+	 *
+	 * `requireFullPlacement` decides whether units the ledger holds without an address are moved into
+	 * the bin the level declares, and it is `false` unless the tenant states otherwise: addressing
+	 * every unit is a decision a building makes, not a default the platform imposes. `defaultBinId`
+	 * names the bin those units physically sit in; a location that names none falls back to the first
+	 * bin of its receiving area.
+	 *
+	 * @param warehouseId The location.
+	 * @returns The two settings, with the documented defaults when the location states none or the
+	 * kernel's own entity is not registered in this installation.
+	 */
+	private async readLocationSettings(warehouseId: ID): Promise<{ requireFullPlacement: boolean; defaultBinId?: ID }> {
+		if (!this.typeOrmWarehouseRepository) {
+			return { requireFullPlacement: false };
+		}
+
+		const location = await this.typeOrmWarehouseRepository.findOne({
+			where: {
+				id: warehouseId,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			} as any
+		});
+		const metadata = readMetadata(location?.metadata);
+		const defaultBinId = metadata.defaultBinId;
+
+		return {
+			requireFullPlacement: metadata.requireFullPlacement === true,
+			...(typeof defaultBinId === 'string' && defaultBinId ? { defaultBinId: defaultBinId as ID } : {})
+		};
+	}
+
+	/**
+	 * Resolves the bin a location's unaddressed units sit in.
+	 *
+	 * The location names it in `metadata.defaultBinId`; when it names none, the first bin of its
+	 * receiving area is the same place under the name the building uses, because goods are unloaded
+	 * there and stay there until put-away addresses them. Nothing is ever created here: an invented
+	 * address is worse than a report that says the location has none.
+	 *
+	 * @param warehouseId The location.
+	 * @param defaultBinId The bin the location names, when it names one.
+	 * @returns The bin, or undefined when the location has neither.
+	 */
+	private async resolveReceivingBinId(warehouseId: ID, defaultBinId?: ID): Promise<ID | undefined> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		if (defaultBinId) {
+			const named = await this.typeOrmWarehouseBinRepository.findOne({
+				where: { id: defaultBinId, warehouseId, tenantId, organizationId }
+			});
+
+			if (named) {
+				return named.id;
+			}
+		}
+
+		const zones = await this.typeOrmWarehouseZoneRepository.find({
+			where: { warehouseId, type: WarehouseZoneType.RECEIVING, tenantId, organizationId },
+			order: { priority: 'DESC', code: 'ASC' }
+		});
+
+		for (const zone of zones ?? []) {
+			const bins = await this.typeOrmWarehouseBinRepository.find({
+				where: { warehouseId, zoneId: zone.id, tenantId, organizationId },
+				order: { sortOrder: 'ASC', code: 'ASC' }
+			});
+
+			if (bins?.length) {
+				return bins[0].id;
+			}
+		}
+
+		return undefined;
+	}
+
+	/**
+	 * Rewrites the balance snapshot a bin caches, which is a cache and never an authority.
+	 *
+	 * `warehouse_bin.metadata.balances` is the snapshot §14.10 keeps beside the derived figure so the
+	 * planning and reporting paths can read a balance without a range sum over the ledger. A snapshot
+	 * that disagrees with what the ledger derives is rewritten and nothing else happens: a snapshot is
+	 * not a movement, and writing one into the ledger would invent stock. The row's other metadata and
+	 * its version are left as they are — this is a refresh of a cache, not an operator's edit.
+	 *
+	 * @param warehouseId The location the bins belong to.
+	 * @param binIds The bins of the run.
+	 * @param balances What the ledger derived, per bin and variant.
+	 */
+	private async refreshBalanceSnapshots(
+		warehouseId: ID,
+		binIds: ID[],
+		balances: IWarehouseBinBalance[]
+	): Promise<void> {
+		if (!binIds.length) {
+			return;
+		}
+
+		const bins = await this.typeOrmWarehouseBinRepository.find({
+			where: {
+				id: In(binIds),
+				warehouseId,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			}
+		});
+		const derived = new Map<string, Record<string, DecimalString>>();
+
+		for (const balance of balances) {
+			if (!balance.binId) {
+				continue;
+			}
+
+			const snapshot = derived.get(String(balance.binId)) ?? {};
+
+			snapshot[String(balance.variantId)] = normalizeQuantity(balance.quantity);
+			derived.set(String(balance.binId), snapshot);
+		}
+
+		for (const bin of bins ?? []) {
+			const metadata = readMetadata(bin.metadata);
+			const current = derived.get(String(bin.id)) ?? {};
+
+			if (snapshotsAgree(metadata[BIN_BALANCES_KEY], current)) {
+				continue;
+			}
+
+			await this.typeOrmWarehouseBinRepository.update(bin.id, {
+				metadata: {
+					...metadata,
+					[BIN_BALANCES_KEY]: current,
+					[BIN_BALANCE_UPDATED_AT_KEY]: new Date().toISOString()
+				}
+			} as any);
+		}
 	}
 
 	/**
@@ -1064,6 +1434,131 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 
 		return bins.map((bin) => bin.id);
 	}
+}
+
+/** What one placement correction wrote: the ids of the pair's two rows and the quantity it moved. */
+interface IPlacementCorrection {
+	movementIds: ID[];
+	quantity: DecimalString;
+}
+
+/** A decimal quantity, as a metadata snapshot may state one. */
+const SNAPSHOT_QUANTITY_PATTERN = /^[+-]?(\d+(\.\d*)?|\.\d+)$/;
+
+/**
+ * @param bins What the bins of a run hold, by bin.
+ * @returns The bin holding the most of the variant, or undefined when every bin is empty.
+ */
+function largestHolder(bins: Map<string, DecimalString>): ID | undefined {
+	let holder: ID | undefined;
+	let held: DecimalString = '0.000000';
+
+	for (const [binId, quantity] of bins) {
+		if (!isPositiveQuantity(quantity) || !isGreaterThan(quantity, held)) {
+			continue;
+		}
+
+		holder = binId as ID;
+		held = quantity;
+	}
+
+	return holder;
+}
+
+/**
+ * The bin of a run holding units the level does not declare for it.
+ *
+ * A level row names one address, so it claims its quantity there and nothing anywhere else: a bin
+ * other than the declared one that holds units is holding a surplus the declaration does not account
+ * for, and it is the bin a correction moves them out of. When the declared bin itself holds more than
+ * the level declares, its own surplus is the finding rather than a source, so it is not a candidate
+ * here.
+ *
+ * @param bins What the bins of a run hold, by bin.
+ * @param declaredBinId The bin the level declares.
+ * @param declaredTarget What the level declares for it.
+ * @returns The bin with the largest surplus, or undefined when no bin holds one.
+ */
+function surplusBin(
+	bins: Map<string, DecimalString>,
+	declaredBinId: ID,
+	declaredTarget: DecimalString
+): { binId: ID; quantity: DecimalString } | undefined {
+	let surplus: { binId: ID; quantity: DecimalString } | undefined;
+
+	for (const [binId, quantity] of bins) {
+		if (String(binId) === String(declaredBinId) || !isPositiveQuantity(quantity)) {
+			continue;
+		}
+
+		if (surplus === undefined || isGreaterThan(quantity, surplus.quantity)) {
+			surplus = { binId: binId as ID, quantity: normalizeQuantity(quantity) };
+		}
+	}
+
+	return surplus;
+}
+
+/**
+ * Reads a `metadata` column as the object it holds.
+ *
+ * A JSON column is an object on one dialect and the text of one on another, and a count that read the
+ * text as a map would silently obey no setting at all — which is how a location that requires full
+ * placement stops requiring it without anybody editing it.
+ *
+ * @param value The column as the driver returned it.
+ * @returns The object it states, or an empty one when it states none.
+ */
+function readMetadata(value: unknown): Record<string, unknown> {
+	if (typeof value === 'string') {
+		try {
+			const parsed = JSON.parse(value);
+
+			return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+				? (parsed as Record<string, unknown>)
+				: {};
+		} catch {
+			return {};
+		}
+	}
+
+	return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+/**
+ * @param value One entry of a cached snapshot.
+ * @returns The quantity it states, or undefined when it states something that is not a quantity.
+ */
+function snapshotQuantity(value: unknown): DecimalString | undefined {
+	if (typeof value === 'number' && Number.isFinite(value)) {
+		return `${value}` as DecimalString;
+	}
+
+	if (typeof value === 'string' && SNAPSHOT_QUANTITY_PATTERN.test(value.trim())) {
+		return value.trim() as DecimalString;
+	}
+
+	return undefined;
+}
+
+/**
+ * @param cached What a bin caches under `balances`, as it was stored.
+ * @param derived What the ledger derives now, by variant.
+ * @returns True when the cache already states the derived figures and nothing else.
+ */
+function snapshotsAgree(cached: unknown, derived: Record<string, DecimalString>): boolean {
+	const stated = readMetadata(cached);
+	const variants = new Set([...Object.keys(stated), ...Object.keys(derived)]);
+
+	for (const variantId of variants) {
+		const quantity = snapshotQuantity(stated[variantId]);
+
+		if (quantity === undefined || !isSameQuantity(quantity, derived[variantId] ?? '0')) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /**

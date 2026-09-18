@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { FeatureModule, RolePermissionModule, SequenceModule } from '@gauzy/core';
+import { FeatureModule, RolePermissionModule, SequenceModule, Warehouse } from '@gauzy/core';
 import { CarrierManifestController } from './carrier-manifest/carrier-manifest.controller';
 import { CarrierManifest } from './carrier-manifest/carrier-manifest.entity';
 import { CarrierManifestService } from './carrier-manifest/carrier-manifest.service';
@@ -80,6 +80,11 @@ export const ALL_WAREHOUSE_ENTITIES = [
 	],
 	imports: [
 		TypeOrmModule.forFeature(ALL_WAREHOUSE_ENTITIES),
+		// The location row is the kernel's, and the only thing this plugin reads from it is its
+		// `metadata` — the settings a count obeys. It is registered so the bin service can inject the
+		// repository; it is deliberately absent from `ALL_WAREHOUSE_ENTITIES`, which is the list of
+		// tables this plugin owns and migrates.
+		TypeOrmModule.forFeature([Warehouse]),
 		MikroOrmModule.forFeature(ALL_WAREHOUSE_ENTITIES),
 		// Every controller here is `@UseGuards(..., FeatureFlagGuard)`: the guard is a provider of this
 		// module, so this module is what has to import the feature service it reads.

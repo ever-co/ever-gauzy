@@ -17,6 +17,12 @@ export * from './lib/stock-level/stock-level.types';
 export * from './lib/stock-level/stock-level.service';
 export * from './lib/stock-level/stock-level.module';
 
+export * from './lib/stock-availability/stock-availability.types';
+export * from './lib/stock-availability/stock-availability.service';
+
+export * from './lib/stock-ledger/stock-ledger.types';
+export * from './lib/stock-ledger/stock-ledger.service';
+
 export * from './lib/stock-movement/stock-movement.entity';
 export * from './lib/stock-movement/stock-movement.service';
 export * from './lib/stock-movement/stock-movement.controller';

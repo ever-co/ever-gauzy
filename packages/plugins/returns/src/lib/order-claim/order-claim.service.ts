@@ -325,6 +325,9 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 
 		return await this.refundGateway.createRefund({
 			orderId: claim.orderId,
+			// Which of the three post-purchase flows owes this money, so a refund that names no return
+			// and no exchange is still attributable to the claim that produced it.
+			claimId: claim.id,
 			amount: refundable.toStorageString(),
 			currency: claim.currency,
 			note

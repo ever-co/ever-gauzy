@@ -598,24 +598,68 @@ export interface ISubstitutionInput {
 	note?: string;
 }
 
-/** One counted balance of one bin, as a reconciliation reports it. */
+/**
+ * One placement finding of one reconciliation run, as the identity of §14.10 states it.
+ *
+ * The invariant is a **sum identity per variant** (INV-23), so the two quantities below are the two
+ * sides of it for the variant at the location the run covers, and neither of them is a per-bin
+ * figure:
+ *
+ * ```text
+ * placed   = Σ binQuantity(bin, variant) over the bins of the run
+ * unplaced = the units the ledger holds at the location with no bin of the run
+ * expected = level.quantity          counted = placed + unplaced
+ * ```
+ *
+ * `binId` is the address the finding is about: the bin the level row declares as home, the location's
+ * receiving/default bin when it declares none, and — when the location has neither — the bin of the
+ * run that holds the variant, which is where the units actually are. A bin is therefore never compared
+ * against the level row on its own: stock sits in a bulk or a pick face as legitimately as at the
+ * declared address, and only the declaration and the location's total are compared.
+ */
 export interface IBinReconciliationLine {
+	/** The address the finding is about: the declared home bin, else the bin that holds the units. */
 	binId: ID;
 	variantId: ID;
 	binCode?: string;
+	/** `level.quantity` — what the level row says the location holds, which is the side that wins. */
 	expectedQuantity: DecimalString;
+	/** `placed + unplaced` — what the ledger recorded for the variant at the location. */
 	countedQuantity: DecimalString;
+	/** `countedQuantity − expectedQuantity`, exactly as the identity states it. */
 	difference: DecimalString;
+	/** Whether the run wrote a relocation pair for this finding. */
 	repaired: boolean;
+	/** `Σ binQuantity(bin, variant)` over the bins of the run. */
+	placedQuantity?: DecimalString;
+	/** The units the ledger holds at the location with no bin of the run; `0` when every unit is addressed. */
+	unplacedQuantity?: DecimalString;
+	/** The bin the level row declares as home; absent when the level declares none. */
+	homeBinId?: ID;
+	/** What the ledger derives for `binId` itself, which is what the declaration is measured against. */
+	declaredQuantity?: DecimalString;
+	/** The quantity the run relocated for this finding; absent when it wrote no movement. */
+	relocatedQuantity?: DecimalString;
 }
 
-/** What one reconciliation run found. */
+/**
+ * What one reconciliation run found.
+ *
+ * `driftCount` counts the findings where the placement disagrees — the ledger's total against the
+ * level's quantity, or the declared bin against the quantity the level declares for it. A finding
+ * that only reports `unplacedQuantity` is not a drift: the units are inside the location and the
+ * totals agree, they are simply not addressed yet (§14.10, second row).
+ */
 export interface IBinReconciliationReport {
 	warehouseId: ID;
 	binIds: ID[];
 	lines: IBinReconciliationLine[];
 	driftCount: number;
 	movementIds: ID[];
+	/** `Σ placedQuantity` over the run. */
+	placedQuantity?: DecimalString;
+	/** `Σ unplacedQuantity` over the run: the units the ledger holds at the location with no bin of the run. */
+	unplacedQuantity?: DecimalString;
 }
 
 /**

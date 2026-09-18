@@ -488,7 +488,14 @@ export class StockLevelService {
 
 		// A level row is created with the documented defaults, never with a caller-supplied quantity:
 		// the opening quantity arrives as the movement that is being applied right now.
+		//
+		// The tenant and the organization come from the aggregate, which carries them because the product
+		// the aggregate belongs to does. They are stamped here rather than left to a subscriber because a
+		// row this package writes and this package reads has to be visible to its own scoped reads: the
+		// availability lookups filter on the tenant, so an unstamped level is a level nothing can find.
 		const created = manager.create(WarehouseProductVariant, {
+			tenantId: aggregate.tenantId,
+			organizationId: aggregate.organizationId,
 			warehouseProductId: aggregate.id,
 			variantId: input.variantId,
 			quantity: 0,
@@ -501,6 +508,37 @@ export class StockLevelService {
 			version: 1
 		} as any);
 		return await manager.save(WarehouseProductVariant, created);
+	}
+
+	/**
+	 * The tenant and organization a level row's own rows belong to.
+	 *
+	 * A level written before this package stamped its rows has neither, and a movement written for it has
+	 * to carry the scope anyway: the ledger is read through tenant-scoped queries, so an unstamped
+	 * movement is a movement the ledger cannot report and a reconciliation cannot count. The aggregate is
+	 * the authority — it is stamped from the product — so the level's own values are used when they are
+	 * there and the aggregate answers for the rows that predate the stamping.
+	 *
+	 * @param manager The transaction the write is running in.
+	 * @param level The level row the movement is being written for.
+	 * @returns The scope, either member of which may be absent when neither row carries one.
+	 */
+	private async scopeOfLevel(
+		manager: EntityManager,
+		level: WarehouseProductVariant
+	): Promise<{ tenantId?: ID; organizationId?: ID }> {
+		if (level.tenantId && level.organizationId) {
+			return { tenantId: level.tenantId, organizationId: level.organizationId };
+		}
+
+		const aggregate = level.warehouseProductId
+			? await manager.findOne(WarehouseProduct, { where: { id: level.warehouseProductId } })
+			: null;
+
+		return {
+			tenantId: level.tenantId ?? aggregate?.tenantId ?? undefined,
+			organizationId: level.organizationId ?? aggregate?.organizationId ?? undefined
+		};
 	}
 
 	/**
@@ -751,7 +789,15 @@ export class StockLevelService {
 		// The level is this writer's. Only now is the ledger row that explains it written, inside the
 		// same transaction, so the two are never apart: an attempt that lost the compare-and-set never
 		// reaches this line, and an attempt that won it always records its movement exactly once.
+		//
+		// The movement is stamped with the scope of the level it moves, for the same reason the level is
+		// stamped when it is created: every read of the ledger is tenant-scoped, so a movement without a
+		// tenant is a movement the ledger cannot report.
+		const scope = await this.scopeOfLevel(manager, level);
+
 		const movement = manager.create(StockMovement, {
+			tenantId: scope.tenantId,
+			organizationId: scope.organizationId,
 			warehouseId: input.warehouseId,
 			warehouseProductVariantId: level.id,
 			warehouseProductId: level.warehouseProductId,

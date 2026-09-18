@@ -46,3 +46,8 @@ export * from './lib/vendor-product-term/vendor-product-term.controller';
 export * from './lib/vendor-product-term/dto';
 export * from './lib/vendor-product-term/repository/type-orm-vendor-product-term.repository';
 export * from './lib/vendor-product-term/repository/mikro-orm-vendor-product-term.repository';
+
+// The approval capability this package consumes. It owns no table, so it has no entity, controller,
+// DTO or repository to export alongside it — only the service an installation binds the
+// `PURCHASING_APPROVAL` token to.
+export * from './lib/purchase-approval/purchase-approval.service';

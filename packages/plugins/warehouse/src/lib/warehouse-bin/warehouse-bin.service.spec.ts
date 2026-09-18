@@ -104,8 +104,9 @@ import {
 	IWarehouseStockLedgerPort,
 	WAREHOUSE_BIN_CAPACITY_UNIT_UNDECLARED,
 	WarehouseBinType,
-	WarehouseStockMovementKind
+	WarehouseZoneType
 } from '../warehouse.types';
+import { addQuantities, normalizeQuantity, subtractQuantities, sumQuantities } from '../warehouse.quantity';
 import { WarehouseBinService } from './warehouse-bin.service';
 
 /**
@@ -159,8 +160,10 @@ const pairKey = (pair: { id_ancestor: string; id_descendant: string }) =>
  *
  * @param tables The whole datastore.
  * @param tableName The table this repository reads and writes.
+ * @param writes Where the partial updates this repository receives are kept, so a test can tell a
+ * rewrite of a cached snapshot from a write that did not happen.
  */
-function repository(tables: ITables, tableName: 'bin' | 'zone') {
+function repository(tables: ITables, tableName: 'bin' | 'zone', writes: Array<{ id: string; partial: any }> = []) {
 	let sequence = 0;
 	const rows = () => tables[tableName];
 	const matches = (row: any, where: any = {}): boolean =>
@@ -246,6 +249,8 @@ function repository(tables: ITables, tableName: 'bin' | 'zone') {
 		update: async (criteria: any, partial: any) => {
 			const id = typeof criteria === 'string' ? criteria : criteria?.id;
 			const index = rows().findIndex((row) => row.id === id);
+
+			writes.push({ id, partial });
 
 			if (index >= 0) {
 				Object.assign(rows()[index], partial);
@@ -346,50 +351,213 @@ const zoneRow = (id: string, overrides: Record<string, unknown> = {}) => ({
 	...overrides
 });
 
-/** What the inventory capability answers with in a fixture, when one is registered. */
+/** What the inventory capability is holding in a fixture. */
 interface ILedgerSeed {
-	/** What the ledger recorded per bin, which is the authoritative derived balance. */
-	balances?: Array<{ binId: string; variantId: string; quantity: string; reservedQuantity?: string }>;
-	/** What the level rows claim sits in each bin, which is what a count compares against. */
-	claimed?: Array<{ binId: string; variantId: string; quantity: string }>;
-	/** Where a variant is normally kept, which is what allocation reads. */
-	home?: { binId?: string; quantity?: string };
+	/** The bins the ledger derives stock in, by variant: `binQuantity`, per bin. */
+	placement?: Record<string, Record<string, string>>;
+	/** The units the ledger holds at the location with no bin, by variant. */
+	unplaced?: Record<string, string>;
+	/** The level rows, by variant: the bin each declares as home and the quantity it holds. */
+	levels?: Record<string, { binId?: string; quantity: string; reservedQuantity?: string }>;
 }
 
 /**
- * A hand-written stand-in for the inventory capability the service reads balances from and writes
- * movements to. Every movement the service asks for is kept, so "the difference was written as a
- * count" is asserted against what was asked for rather than against a call count.
+ * A stateful stand-in for the inventory capability the service reads balances from and states its
+ * movements to.
  *
- * @param seed What the ledger recorded and what the level rows claim.
+ * The ledger is the platform's record of what happened, so the double models it as one rather than as
+ * a bag of answers. A relocation is applied to the placement it states — `TRANSFER_OUT` at the source
+ * bin and `TRANSFER_IN` at the destination, equal and opposite, `reservedDelta = 0` on both, which is
+ * the pair the provider writes — and a movement changes the level as well as the bin, which is exactly
+ * why a count can never close a placement difference and why a second run over a corrected state is
+ * the property that matters. The level's quantity and reservation are held apart from the placement so
+ * a test can assert they were untouched (INV-27).
+ *
+ * @param seed What the ledger holds before the run.
  */
 function ledger(seed: ILedgerSeed = {}) {
-	const movements: any[] = [];
+	const placement = new Map<string, Map<string, string>>();
+	const unplaced = new Map<string, string>();
+	const levels = new Map<string, { binId?: string; quantity: string; reservedQuantity: string }>();
+	/** Every `recordMovement` the service asked for: the repair that can never converge. */
+	const movements: Array<Record<string, unknown>> = [];
+	/** Every `relocate` the service asked for, as it stated it. */
+	const relocations: Array<Record<string, unknown>> = [];
+	/** The two rows each relocation is written as, which is what INV-27 is asserted against. */
+	const legs: Array<{
+		movementId: string;
+		binId: string;
+		variantId: string;
+		quantity: string;
+		reservedDelta: string;
+		referenceType: string;
+		referenceId: string;
+		reason?: string;
+	}> = [];
 	const asked: Array<Record<string, unknown>> = [];
+
+	for (const [variantId, bins] of Object.entries(seed.placement ?? {})) {
+		placement.set(
+			variantId,
+			new Map(Object.entries(bins).map(([binId, quantity]) => [binId, normalizeQuantity(quantity)]))
+		);
+	}
+
+	for (const [variantId, quantity] of Object.entries(seed.unplaced ?? {})) {
+		unplaced.set(variantId, normalizeQuantity(quantity));
+	}
+
+	for (const [variantId, level] of Object.entries(seed.levels ?? {})) {
+		levels.set(variantId, {
+			...(level.binId ? { binId: level.binId } : {}),
+			quantity: normalizeQuantity(level.quantity),
+			reservedQuantity: normalizeQuantity(level.reservedQuantity ?? '0')
+		});
+	}
+
+	const binsOf = (variantId: string) => placement.get(variantId) ?? new Map<string, string>();
+	const totalOf = (variantId: string) =>
+		addQuantities(sumQuantities([...binsOf(variantId).values()]), unplaced.get(variantId) ?? '0');
+	const recorded = (variantId: string) => placement.has(variantId) || unplaced.has(variantId);
+
 	const port: IWarehouseStockLedgerPort = {
-		readBinBalance: async (query) =>
-			(seed.balances ?? []).find(
-				(balance) =>
-					String(balance.binId) === String(query.binId) &&
-					String(balance.variantId) === String(query.variantId)
-			),
-		readBinBalances: async (binIds: any[]) =>
-			(seed.balances ?? []).filter((balance) => binIds.map(String).includes(String(balance.binId))),
+		readBinBalance: async (query) => {
+			const variantId = String(query.variantId);
+			const held = binsOf(variantId);
+
+			if (query.binId) {
+				const quantity = held.get(String(query.binId));
+
+				return quantity === undefined
+					? undefined
+					: { variantId: query.variantId, binId: query.binId, quantity };
+			}
+
+			return recorded(variantId) ? { variantId: query.variantId, quantity: totalOf(variantId) } : undefined;
+		},
+		readBinBalances: async (binIds: any[]) => {
+			const wanted = binIds.map(String);
+			const rows: Array<{ binId: string; variantId: string; quantity: string }> = [];
+
+			for (const [variantId, held] of placement) {
+				for (const [binId, quantity] of held) {
+					if (wanted.includes(binId)) {
+						rows.push({ binId, variantId, quantity });
+					}
+				}
+			}
+
+			return rows;
+		},
 		readExpectedBinBalances: async (query) => {
 			asked.push(query as Record<string, unknown>);
+			const wanted = query.binIds.map(String);
 
-			return (seed.claimed ?? []).filter((balance) => query.binIds.map(String).includes(String(balance.binId)));
+			return [...levels]
+				.filter(([, level]) => level.binId && wanted.includes(String(level.binId)))
+				.map(([variantId, level]) => ({
+					binId: level.binId as string,
+					variantId,
+					quantity: level.quantity
+				}));
 		},
-		resolveHomeBin: async () => seed.home,
+		resolveHomeBin: async (query) => {
+			const level = levels.get(String(query.variantId));
+
+			return level
+				? { ...(level.binId ? { binId: level.binId } : {}), quantity: level.quantity }
+				: undefined;
+		},
 		recordMovement: async (request) => {
-			movements.push(request);
+			movements.push(request as unknown as Record<string, unknown>);
+			const variantId = String(request.variantId);
+			const level = levels.get(variantId);
 
-			return { movementId: `movement-${movements.length}`, quantityAfter: '0.000000' };
+			// The provider moves the level and the bin by the same amount, and that is the whole
+			// defect: a bin-tagged count changes both sides of the difference it was meant to close.
+			if (level) {
+				level.quantity = addQuantities(level.quantity, request.quantity);
+			}
+
+			if (request.binId) {
+				const held = binsOf(variantId);
+
+				held.set(
+					String(request.binId),
+					addQuantities(held.get(String(request.binId)) ?? '0', request.quantity)
+				);
+				placement.set(variantId, held);
+			} else {
+				unplaced.set(variantId, addQuantities(unplaced.get(variantId) ?? '0', request.quantity));
+			}
+
+			return { movementId: `movement-${movements.length}`, quantityAfter: level?.quantity ?? '0.000000' };
 		},
-		relocate: async () => []
+		relocate: async (request) => {
+			relocations.push(request as unknown as Record<string, unknown>);
+			const variantId = String(request.variantId);
+			const held = binsOf(variantId);
+			const leaving = subtractQuantities('0', request.quantity);
+			const pair: Array<{ binId: string; quantity: string; leg: string }> = [
+				{ binId: String(request.fromBinId), quantity: leaving, leg: 'out' },
+				{ binId: String(request.toBinId), quantity: request.quantity, leg: 'in' }
+			];
+
+			for (const move of pair) {
+				held.set(move.binId, addQuantities(held.get(move.binId) ?? '0', move.quantity));
+			}
+
+			placement.set(variantId, held);
+
+			return pair.map((move) => {
+				const movementId = `relocation-${relocations.length}-${move.leg}`;
+
+				legs.push({
+					movementId,
+					binId: move.binId,
+					variantId,
+					quantity: move.quantity,
+					reservedDelta: '0.000000',
+					referenceType: String(request.referenceType),
+					referenceId: String(request.referenceId),
+					reason: request.reason
+				});
+
+				return { movementId, quantityAfter: totalOf(variantId) };
+			});
+		}
 	};
 
-	return { port, movements, asked };
+	return {
+		port,
+		movements,
+		relocations,
+		legs,
+		asked,
+		/** The level row as it stands, which no reconciliation may change. */
+		level: (variantId: string) => levels.get(variantId),
+		/** What the ledger derives for one bin of one variant. */
+		held: (variantId: string, binId: string) => binsOf(variantId).get(binId) ?? '0.000000'
+	};
+}
+
+/**
+ * A stand-in for the kernel's location row.
+ *
+ * The service reads one thing from it — `metadata`, where a location states whether every unit must be
+ * placed and which bin its unaddressed units sit in — so the double answers that read and nothing
+ * else.
+ *
+ * @param warehouse The row, when the fixture has one.
+ */
+function locationRepository(warehouse?: { metadata?: Record<string, unknown> }) {
+	return {
+		findOne: async (options: any = {}) =>
+			warehouse && String(options?.where?.id ?? WAREHOUSE) === WAREHOUSE
+				? { id: WAREHOUSE, metadata: warehouse.metadata }
+				: null,
+		update: async () => ({ affected: 0 })
+	};
 }
 
 /**
@@ -399,7 +567,8 @@ function ledger(seed: ILedgerSeed = {}) {
  * @param options.zones The areas the fixture starts with.
  * @param options.closure The closure pairs the fixture starts with.
  * @param options.pickLines The printed pick lines the fixture starts with.
- * @param options.ledger What the inventory capability answers with; absent means none is registered.
+ * @param options.ledger What the inventory capability holds; absent means none is registered.
+ * @param options.warehouse The location row, whose `metadata` carries a count's settings.
  */
 function binFixture(
 	options: {
@@ -408,6 +577,7 @@ function binFixture(
 		closure?: Array<{ id_ancestor: string; id_descendant: string }>;
 		pickLines?: any[];
 		ledger?: ILedgerSeed;
+		warehouse?: { metadata?: Record<string, unknown> };
 	} = {}
 ) {
 	const tables: ITables = {
@@ -416,18 +586,21 @@ function binFixture(
 		closure: [...(options.closure ?? [])],
 		pickLine: [...(options.pickLines ?? [])]
 	};
+	const binWrites: Array<{ id: string; partial: any }> = [];
 	const capability = options.ledger ? ledger(options.ledger) : undefined;
 	const service = new WarehouseBinService(
-		repository(tables, 'bin') as never,
+		repository(tables, 'bin', binWrites) as never,
 		{} as never,
 		repository(tables, 'zone') as never,
-		capability?.port as never
+		capability?.port as never,
+		locationRepository(options.warehouse) as never
 	);
 
 	return {
 		service,
 		tables,
 		capability,
+		binWrites,
 		store: (id: string) => tables.bin.find((row) => row.id === id),
 		ancestorsOf: (id: string): string[] =>
 			tables.closure.filter((pair) => pair.id_descendant === id).map((pair) => pair.id_ancestor),
@@ -1163,11 +1336,10 @@ describe('WarehouseBinService — reading the building (doc 09 §14.2, §14.3)',
 		const fixture = binFixture({
 			bins: [binRow('bin-1'), binRow('bin-2')],
 			ledger: {
-				balances: [
-					{ binId: 'bin-1', variantId: VARIANT, quantity: '7.000000' },
-					{ binId: 'bin-1', variantId: OTHER_VARIANT, quantity: '3.000000' },
-					{ binId: 'bin-2', variantId: VARIANT, quantity: '99.000000' }
-				]
+				placement: {
+					[VARIANT]: { 'bin-1': '7.000000', 'bin-2': '99.000000' },
+					[OTHER_VARIANT]: { 'bin-1': '3.000000' }
+				}
 			}
 		});
 
@@ -1192,7 +1364,7 @@ describe('WarehouseBinService — deleting a position (doc 09 §14.2 rule 4)', (
 		// The foreign key from a child is the bin itself, so deleting a rack would leave its shelves
 		// parented to nothing.
 		const { bins, closure } = chain(['rack', 'shelf']);
-		const fixture = binFixture({ bins, closure, ledger: { balances: [] } });
+		const fixture = binFixture({ bins, closure, ledger: {} });
 
 		await expect(fixture.service.delete('rack')).rejects.toThrow(/BIN_HAS_CHILDREN: the bin still holds 1/);
 		expect(fixture.tables.bin).toHaveLength(2);
@@ -1203,7 +1375,7 @@ describe('WarehouseBinService — deleting a position (doc 09 §14.2 rule 4)', (
 		// the stock was, and blocking it is the operation the operator actually wants.
 		const fixture = binFixture({
 			bins: [binRow('bin-1')],
-			ledger: { balances: [{ binId: 'bin-1', variantId: VARIANT, quantity: '-0.000001' }] }
+			ledger: { placement: { [VARIANT]: { 'bin-1': '-0.000001' } } }
 		});
 
 		await expect(fixture.service.delete('bin-1')).rejects.toThrow(/BIN_HAS_CONTENT/);
@@ -1215,7 +1387,7 @@ describe('WarehouseBinService — deleting a position (doc 09 §14.2 rule 4)', (
 		const fixture = binFixture({
 			bins,
 			closure,
-			ledger: { balances: [{ binId: 'shelf', variantId: VARIANT, quantity: '0.000000' }] }
+			ledger: { placement: { [VARIANT]: { shelf: '0.000000' } } }
 		});
 
 		await expect(fixture.service.delete('shelf')).resolves.toMatchObject({ affected: 1 });
@@ -1227,7 +1399,7 @@ describe('WarehouseBinService — deleting a position (doc 09 §14.2 rule 4)', (
 	it('deletes a position the ledger holds no balance row for at all', async () => {
 		// Control for the guard above: with a ledger registered and no rows for the position, the
 		// derived contents are empty and the delete proceeds.
-		const fixture = binFixture({ bins: [binRow('bin-1')], ledger: { balances: [] } });
+		const fixture = binFixture({ bins: [binRow('bin-1')], ledger: {} });
 
 		expect(await fixture.service.findContents('bin-1')).toEqual([]);
 		await expect(fixture.service.delete('bin-1')).resolves.toMatchObject({ affected: 1 });
@@ -1413,7 +1585,7 @@ describe('WarehouseBinService — a capacity is a quantity in a stated unit (doc
 	});
 });
 
-describe('WarehouseBinService — counting a position against the ledger (doc 09 §14.10, INV-23)', () => {
+describe('WarehouseBinService — reconciling placement against the ledger (doc 09 §14.10, INV-23, INV-27)', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
@@ -1431,12 +1603,12 @@ describe('WarehouseBinService — counting a position against the ledger (doc 09
 		);
 	});
 
-	it('reports nothing when what the level rows claim and what the ledger recorded agree', async () => {
+	it('reports nothing, and moves nothing, when the bins, the unplaced units and the level row agree', async () => {
 		const fixture = binFixture({
 			bins: [binRow('bin-1')],
 			ledger: {
-				balances: [{ binId: 'bin-1', variantId: VARIANT, quantity: '10.000000' }],
-				claimed: [{ binId: 'bin-1', variantId: VARIANT, quantity: '10.000000' }]
+				placement: { [VARIANT]: { 'bin-1': '10.000000' } },
+				levels: { [VARIANT]: { binId: 'bin-1', quantity: '10.000000' } }
 			}
 		});
 
@@ -1444,19 +1616,248 @@ describe('WarehouseBinService — counting a position against the ledger (doc 09
 
 		expect(report).toMatchObject({ warehouseId: WAREHOUSE, binIds: ['bin-1'], driftCount: 0, movementIds: [] });
 		expect(report.lines).toEqual([]);
+		expect(report.placedQuantity).toBe('10.000000');
+		expect(report.unplacedQuantity).toBe('0.000000');
+		expect(fixture.capability?.relocations).toEqual([]);
 		expect(fixture.capability?.movements).toEqual([]);
 	});
 
-	it('reports the difference between the two and writes it as a count when the caller asks for a repair', async () => {
-		// The repair is a `COUNT` movement written through the inventory capability: this service states
-		// what was found and the ledger decides the level, because the ledger is the only authority for
-		// quantity.
+	it('corrects a drifted position with one relocation pair and leaves the level exactly as it was', async () => {
+		// The units are inside the location and the totals agree; what disagrees is the declaration,
+		// which says the variant is kept in bin-2 while the ledger has them in bin-1. The correction is
+		// a relocation — equal and opposite, reservation-neutral, and the level is not touched (INV-27).
+		const fixture = binFixture({
+			bins: [binRow('bin-1'), binRow('bin-2')],
+			ledger: {
+				placement: { [VARIANT]: { 'bin-1': '10.000000' } },
+				levels: { [VARIANT]: { binId: 'bin-2', quantity: '10.000000', reservedQuantity: '4.000000' } }
+			}
+		});
+		const before = fixture.capability?.level(VARIANT);
+
+		const report = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+
+		expect(report.driftCount).toBe(1);
+		expect(report.lines).toHaveLength(1);
+		expect(report.lines[0]).toMatchObject({
+			binId: 'bin-2',
+			variantId: VARIANT,
+			expectedQuantity: '10.000000',
+			countedQuantity: '10.000000',
+			difference: '0.000000',
+			placedQuantity: '10.000000',
+			unplacedQuantity: '0.000000',
+			homeBinId: 'bin-2',
+			declaredQuantity: '0.000000',
+			relocatedQuantity: '10.000000',
+			repaired: true
+		});
+		expect(fixture.capability?.relocations).toEqual([
+			{
+				warehouseId: WAREHOUSE,
+				variantId: VARIANT,
+				fromBinId: 'bin-1',
+				toBinId: 'bin-2',
+				quantity: '10.000000',
+				referenceType: 'RECONCILIATION',
+				referenceId: 'bin-2',
+				reason: 'RECONCILIATION'
+			}
+		]);
+		expect(report.movementIds).toEqual(['relocation-1-out', 'relocation-1-in']);
+		// Two rows, equal and opposite, reservation-neutral, one provenance.
+		expect(fixture.capability?.legs.map((leg) => [leg.binId, leg.quantity])).toEqual([
+			['bin-1', '-10.000000'],
+			['bin-2', '10.000000']
+		]);
+		expect(fixture.capability?.legs.every((leg) => leg.reservedDelta === '0.000000')).toBe(true);
+		expect(
+			fixture.capability?.legs.every(
+				(leg) => leg.referenceType === 'RECONCILIATION' && leg.referenceId === 'bin-2'
+			)
+		).toBe(true);
+		// The level is the ledger sum for the location, and a relocation never changes it.
+		expect(fixture.capability?.level(VARIANT)).toEqual(before);
+		expect(fixture.capability?.level(VARIANT)).toMatchObject({
+			binId: 'bin-2',
+			quantity: '10.000000',
+			reservedQuantity: '4.000000'
+		});
+		// Not one movement of any kind, and none of the kind the repair used to write.
+		expect(fixture.capability?.movements).toEqual([]);
+	});
+
+	it('reports zero drift on a second run over the state it corrected', async () => {
+		// The property the step exists for. A repair that changed the level could not do this: a
+		// bin-tagged count moves the level and the bin by the same amount, so the difference it was
+		// meant to close is the difference it leaves behind, and every run drives the level further
+		// from the truth. A relocation moves the units and nothing else.
+		const fixture = binFixture({
+			bins: [binRow('bin-1'), binRow('bin-2')],
+			ledger: {
+				placement: { [VARIANT]: { 'bin-1': '10.000000' } },
+				levels: { [VARIANT]: { binId: 'bin-2', quantity: '10.000000' } }
+			}
+		});
+
+		const first = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+		const second = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+
+		expect(first.driftCount).toBe(1);
+		expect(first.movementIds).toHaveLength(2);
+		expect(second).toMatchObject({ driftCount: 0, movementIds: [] });
+		expect(second.lines).toEqual([]);
+		// Exactly one pair was written, by the first run.
+		expect(fixture.capability?.relocations).toHaveLength(1);
+		expect(fixture.capability?.movements).toEqual([]);
+		expect(fixture.capability?.level(VARIANT)).toMatchObject({
+			quantity: '10.000000',
+			reservedQuantity: '0.000000'
+		});
+	});
+
+	it('reports the unplaced units and leaves them where the ledger says they are', async () => {
+		// `placed + unplaced = level.quantity` holds and the units are inside the location: this is a
+		// report, not a drift, and the location has not asked for every unit to be addressed.
 		const fixture = binFixture({
 			bins: [binRow('bin-1')],
 			ledger: {
-				balances: [{ binId: 'bin-1', variantId: VARIANT, quantity: '7.000000' }],
-				claimed: [{ binId: 'bin-1', variantId: VARIANT, quantity: '10.000000' }]
+				placement: { [VARIANT]: { 'bin-1': '10.000000' } },
+				unplaced: { [VARIANT]: '5.000000' },
+				levels: { [VARIANT]: { binId: 'bin-1', quantity: '15.000000' } }
 			}
+		});
+
+		const report = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+
+		expect(report.driftCount).toBe(0);
+		expect(report.lines).toHaveLength(1);
+		expect(report.lines[0]).toMatchObject({
+			binId: 'bin-1',
+			variantId: VARIANT,
+			expectedQuantity: '15.000000',
+			countedQuantity: '15.000000',
+			difference: '0.000000',
+			placedQuantity: '10.000000',
+			unplacedQuantity: '5.000000',
+			repaired: false
+		});
+		expect(report.unplacedQuantity).toBe('5.000000');
+		expect(fixture.capability?.relocations).toEqual([]);
+		expect(fixture.capability?.movements).toEqual([]);
+	});
+
+	it('moves the unplaced units out of the bin the location names as its default when it requires full placement', async () => {
+		const fixture = binFixture({
+			bins: [binRow('bin-1'), binRow('receiving-bin', { zoneId: 'receiving-zone' })],
+			zones: [zoneRow('zone-1'), zoneRow('receiving-zone', { type: WarehouseZoneType.RECEIVING })],
+			warehouse: { metadata: { requireFullPlacement: true, defaultBinId: 'receiving-bin' } },
+			ledger: {
+				placement: { [VARIANT]: { 'bin-1': '10.000000' } },
+				unplaced: { [VARIANT]: '5.000000' },
+				levels: { [VARIANT]: { binId: 'bin-1', quantity: '15.000000' } }
+			}
+		});
+
+		const report = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+
+		expect(report.lines[0]).toMatchObject({
+			unplacedQuantity: '5.000000',
+			declaredQuantity: '10.000000',
+			relocatedQuantity: '5.000000',
+			repaired: true
+		});
+		// The surplus is unattributed — no bin holds units the level does not declare — so the units
+		// come from the bin they physically sit in, which is the location's default bin.
+		expect(fixture.capability?.relocations).toEqual([
+			{
+				warehouseId: WAREHOUSE,
+				variantId: VARIANT,
+				fromBinId: 'receiving-bin',
+				toBinId: 'bin-1',
+				quantity: '5.000000',
+				referenceType: 'RECONCILIATION',
+				referenceId: 'bin-1',
+				reason: 'RECONCILIATION'
+			}
+		]);
+		expect(fixture.capability?.level(VARIANT)).toMatchObject({ quantity: '15.000000' });
+
+		// A fixpoint as well: the declared bin now holds what the level declares, so the next run
+		// reports the unplaced units again and writes nothing more.
+		const second = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+
+		expect(second.driftCount).toBe(0);
+		expect(second.movementIds).toEqual([]);
+		expect(second.unplacedQuantity).toBe('5.000000');
+		expect(fixture.capability?.relocations).toHaveLength(1);
+	});
+
+	it('falls back to the first bin of the receiving area when the location names no default bin', async () => {
+		const fixture = binFixture({
+			bins: [binRow('bin-1'), binRow('receiving-bin', { zoneId: 'receiving-zone' })],
+			zones: [zoneRow('zone-1'), zoneRow('receiving-zone', { type: WarehouseZoneType.RECEIVING })],
+			warehouse: { metadata: { requireFullPlacement: true } },
+			ledger: {
+				placement: { [VARIANT]: { 'bin-1': '10.000000' } },
+				unplaced: { [VARIANT]: '5.000000' },
+				levels: { [VARIANT]: { binId: 'bin-1', quantity: '15.000000' } }
+			}
+		});
+
+		await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+
+		expect(fixture.capability?.relocations[0]).toMatchObject({
+			fromBinId: 'receiving-bin',
+			toBinId: 'bin-1',
+			quantity: '5.000000'
+		});
+	});
+
+	it('moves what a bin can account for and reports the rest instead of inventing units', async () => {
+		// The ledger holds four units in bin-1 and the level declares ten at bin-2. The four are a
+		// surplus bin-1 holds, so the correction moves them; the other six exist nowhere the ledger can
+		// point at, and the run reports them rather than writing a movement that would invent stock.
+		const fixture = binFixture({
+			bins: [binRow('bin-1'), binRow('bin-2')],
+			ledger: {
+				placement: { [VARIANT]: { 'bin-1': '4.000000' } },
+				levels: { [VARIANT]: { binId: 'bin-2', quantity: '10.000000' } }
+			}
+		});
+
+		const report = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+
+		expect(report.lines[0]).toMatchObject({
+			expectedQuantity: '10.000000',
+			countedQuantity: '4.000000',
+			difference: '-6.000000',
+			relocatedQuantity: '4.000000',
+			repaired: true
+		});
+		expect(fixture.capability?.relocations[0]).toMatchObject({
+			fromBinId: 'bin-1',
+			toBinId: 'bin-2',
+			quantity: '4.000000'
+		});
+
+		// The next run finds nothing left that a relocation could move, and still reports the six units
+		// the level claims and the ledger does not hold.
+		const second = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+
+		expect(second.driftCount).toBe(1);
+		expect(second.lines[0]).toMatchObject({ difference: '-6.000000', repaired: false });
+		expect(second.movementIds).toEqual([]);
+		expect(fixture.capability?.relocations).toHaveLength(1);
+		expect(fixture.capability?.movements).toEqual([]);
+	});
+
+	it('reports a location that declares no address at all and writes no movement for it', async () => {
+		// No level row names a home bin and the location has no receiving area: there is no second bin
+		// to move units between, so the finding is reported and nothing is invented to hold it.
+		const fixture = binFixture({
+			bins: [binRow('bin-1')],
+			ledger: { placement: { [VARIANT]: { 'bin-1': '10.000000' } } }
 		});
 
 		const report = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
@@ -1464,85 +1865,83 @@ describe('WarehouseBinService — counting a position against the ledger (doc 09
 		expect(report.driftCount).toBe(1);
 		expect(report.lines[0]).toMatchObject({
 			binId: 'bin-1',
-			variantId: VARIANT,
-			expectedQuantity: '10.000000',
-			countedQuantity: '7.000000',
-			difference: '-3.000000',
-			repaired: true
+			expectedQuantity: '0.000000',
+			countedQuantity: '10.000000',
+			difference: '10.000000',
+			repaired: false
 		});
-		expect(report.movementIds).toEqual(['movement-1']);
-		expect(fixture.capability?.movements[0]).toMatchObject({
-			warehouseId: WAREHOUSE,
-			variantId: VARIANT,
-			binId: 'bin-1',
-			quantity: '-3.000000',
-			kind: WarehouseStockMovementKind.COUNT,
-			referenceType: 'WAREHOUSE_BIN_RECONCILIATION',
-			referenceId: 'bin-1'
-		});
-	});
-
-	it('reports the difference without writing anything when the caller does not ask for a repair', async () => {
-		const fixture = binFixture({
-			bins: [binRow('bin-1')],
-			ledger: {
-				balances: [{ binId: 'bin-1', variantId: VARIANT, quantity: '12.000000' }],
-				claimed: [{ binId: 'bin-1', variantId: VARIANT, quantity: '10.000000' }]
-			}
-		});
-
-		const report = await fixture.service.reconcile({ warehouseId: WAREHOUSE });
-
-		expect(report.lines[0]).toMatchObject({ difference: '2.000000', repaired: false });
-		expect(report.movementIds).toEqual([]);
+		expect(report.lines[0].homeBinId).toBeUndefined();
+		expect(fixture.capability?.relocations).toEqual([]);
 		expect(fixture.capability?.movements).toEqual([]);
 	});
 
-	it('reports a claimed balance with no movement against a ledger that says the position is empty', async () => {
-		// A position whose level rows claim stock and whose ledger recorded none is the drift the step
-		// exists for, and it is reported in the direction the correction has to move.
+	it('rewrites the balance snapshot a bin caches, and writes no ledger row', async () => {
 		const fixture = binFixture({
-			bins: [binRow('bin-1')],
+			bins: [
+				binRow('bin-1', {
+					metadata: {
+						note: 'keep me',
+						balances: { [VARIANT]: '3.000000' },
+						balanceUpdatedAt: '2020-01-01T00:00:00.000Z'
+					}
+				})
+			],
 			ledger: {
-				balances: [{ binId: 'bin-1', variantId: VARIANT, quantity: '0.000000' }],
-				claimed: [{ binId: 'bin-1', variantId: VARIANT, quantity: '4.000000' }]
+				placement: { [VARIANT]: { 'bin-1': '10.000000' } },
+				levels: { [VARIANT]: { binId: 'bin-1', quantity: '10.000000' } }
 			}
 		});
 
 		const report = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
 
-		expect(report.lines[0]).toMatchObject({ expectedQuantity: '4.000000', countedQuantity: '0.000000', difference: '-4.000000' });
-		expect(fixture.capability?.movements[0]).toMatchObject({ quantity: '-4.000000' });
+		expect(report.lines).toEqual([]);
+		expect(fixture.store('bin-1').metadata).toMatchObject({
+			note: 'keep me',
+			balances: { [VARIANT]: '10.000000' }
+		});
+		expect(fixture.store('bin-1').metadata.balanceUpdatedAt).not.toBe('2020-01-01T00:00:00.000Z');
+		// A snapshot is a cache: refreshing it is not a movement, and nothing reaches the ledger.
+		expect(fixture.capability?.movements).toEqual([]);
+		expect(fixture.capability?.relocations).toEqual([]);
+
+		// A second run finds the cache already stating the derived figures and rewrites nothing.
+		const writes = fixture.binWrites.length;
+
+		await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+
+		expect(fixture.binWrites).toHaveLength(writes);
 	});
 
-	it('reports one line per position and variant that disagrees, and leaves the agreeing ones out', async () => {
+	it('reports a declaration outside the bins of a narrowed run and moves nothing for it', async () => {
+		// A run the caller narrowed to one area may not reach into another: the partition it was asked
+		// about is the one it corrects, and a count of one aisle must not rearrange the building.
 		const fixture = binFixture({
-			bins: [binRow('bin-1'), binRow('bin-2')],
+			bins: [binRow('bin-1', { zoneId: 'zone-1' }), binRow('bin-2', { zoneId: 'zone-2' })],
+			zones: [zoneRow('zone-1'), zoneRow('zone-2')],
 			ledger: {
-				balances: [
-					{ binId: 'bin-1', variantId: VARIANT, quantity: '7.000000' },
-					{ binId: 'bin-1', variantId: OTHER_VARIANT, quantity: '3.000000' },
-					{ binId: 'bin-2', variantId: VARIANT, quantity: '5.000000' }
-				],
-				claimed: [
-					{ binId: 'bin-1', variantId: VARIANT, quantity: '7.000000' },
-					{ binId: 'bin-1', variantId: OTHER_VARIANT, quantity: '1.000000' },
-					{ binId: 'bin-2', variantId: VARIANT, quantity: '5.000000' }
-				]
+				placement: { [VARIANT]: { 'bin-1': '10.000000' } },
+				levels: { [VARIANT]: { binId: 'bin-2', quantity: '10.000000' } }
 			}
 		});
 
-		const report = await fixture.service.reconcile({ warehouseId: WAREHOUSE, repair: true });
+		const report = await fixture.service.reconcile({ warehouseId: WAREHOUSE, zoneId: 'zone-1', repair: true });
 
+		expect(report.binIds).toEqual(['bin-1']);
 		expect(report.driftCount).toBe(1);
-		expect(report.lines.map((line) => `${line.binId}:${line.variantId}`)).toEqual([`bin-1:${OTHER_VARIANT}`]);
-		expect(fixture.capability?.movements).toHaveLength(1);
+		expect(report.lines[0]).toMatchObject({
+			binId: 'bin-2',
+			homeBinId: 'bin-2',
+			declaredQuantity: '0.000000',
+			repaired: false
+		});
+		expect(fixture.capability?.relocations).toEqual([]);
+		expect(fixture.capability?.movements).toEqual([]);
 	});
 
 	it('counts exactly the positions of the location, or exactly the ones the caller names', async () => {
 		const fixture = binFixture({
 			bins: [binRow('bin-1'), binRow('bin-2'), binRow('elsewhere', { warehouseId: OTHER_WAREHOUSE })],
-			ledger: { balances: [], claimed: [] }
+			ledger: {}
 		});
 
 		const whole = await fixture.service.reconcile({ warehouseId: WAREHOUSE });
@@ -1555,7 +1954,7 @@ describe('WarehouseBinService — counting a position against the ledger (doc 09
 	it('asks the ledger only for the positions in scope, so a count cannot read the whole building', async () => {
 		const fixture = binFixture({
 			bins: [binRow('bin-1'), binRow('bin-2')],
-			ledger: { balances: [], claimed: [] }
+			ledger: {}
 		});
 
 		await fixture.service.reconcile({ warehouseId: WAREHOUSE, binIds: ['bin-1'] });

@@ -3,6 +3,7 @@
  */
 export * from './lib/fulfillment.plugin';
 export * from './lib/fulfillment.module';
+export * from './lib/fulfillment.types';
 export * from './lib/fulfillment.quantity';
 export * from './lib/fulfillment.permissions';
 export * from './lib/fulfillment.features';
@@ -39,6 +40,9 @@ export * from './lib/fulfillment-line/fulfillment-line.controller';
 export * from './lib/fulfillment-line/dto';
 export * from './lib/fulfillment-line/repository/type-orm-fulfillment-line.repository';
 export * from './lib/fulfillment-line/repository/mikro-orm-fulfillment-line.repository';
+
+export * from './lib/warehouse-fulfillment/warehouse-fulfillment.service';
+export * from './lib/return-shipment/return-shipment.service';
 
 export * from './lib/shipping-option/shipping-option.entity';
 export * from './lib/shipping-option/shipping-option.service';

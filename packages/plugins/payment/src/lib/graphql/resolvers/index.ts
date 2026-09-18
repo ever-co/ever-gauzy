@@ -1,5 +1,7 @@
+import { PaymentAccountHolderResolver } from './payment-account-holder.resolver';
 import { PaymentCaptureResolver } from './payment-capture.resolver';
 import { PaymentCollectionResolver } from './payment-collection.resolver';
+import { PaymentMethodTokenResolver } from './payment-method-token.resolver';
 import { PaymentProviderResolver } from './payment-provider.resolver';
 import { PaymentSessionResolver } from './payment-session.resolver';
 import { PaymentWebhookEventResolver } from './payment-webhook-event.resolver';
@@ -26,7 +28,9 @@ export const resolvers = [
 	RefundResolver,
 	RefundLineResolver,
 	RefundReasonResolver,
-	PaymentWebhookEventResolver
+	PaymentWebhookEventResolver,
+	PaymentAccountHolderResolver,
+	PaymentMethodTokenResolver
 ];
 
 export {
@@ -37,5 +41,7 @@ export {
 	RefundResolver,
 	RefundLineResolver,
 	RefundReasonResolver,
-	PaymentWebhookEventResolver
+	PaymentWebhookEventResolver,
+	PaymentAccountHolderResolver,
+	PaymentMethodTokenResolver
 };

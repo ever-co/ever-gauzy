@@ -91,6 +91,14 @@ export function isPositiveQuantity(value: DecimalString | number | null | undefi
 }
 
 /**
+ * @param value The quantity.
+ * @returns True when the quantity is less than zero.
+ */
+export function isNegativeQuantity(value: DecimalString | number | null | undefined): boolean {
+	return toQuantityUnits(value) < 0n;
+}
+
+/**
  * @param left One quantity.
  * @param right Another quantity.
  * @returns The exact sum, as a decimal string.

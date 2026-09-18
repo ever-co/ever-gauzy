@@ -1160,6 +1160,18 @@ describe('StockLevelService — resolving the level (doc 09 §4.1 steps 1–2)',
 		expect(fixture.store.aggregateFor()).toMatchObject({ warehouseId: WAREHOUSE, productId: PRODUCT, quantity: 7 });
 	});
 
+	it('stamps the level and the movement with the scope of the aggregate they belong to', async () => {
+		// Both tables are read through tenant-scoped queries — the availability lookups filter on the
+		// tenant, and so do the ledger reads — so a row written without a scope is a row nothing in this
+		// package can find, including the reconciliation that compares the two.
+		const fixture = levelFixture({ seedLevel: false, withAggregate: false });
+
+		await fixture.service.applyMovement(movement({ quantityDelta: 4 }) as never);
+
+		expect(fixture.store.levelFor()).toMatchObject({ tenantId: TENANT, organizationId: ORG });
+		expect(fixture.tables.stock_movement[0]).toMatchObject({ tenantId: TENANT, organizationId: ORG });
+	});
+
 	it('refuses a movement for a product that does not exist', async () => {
 		const fixture = levelFixture({ seedLevel: false, withAggregate: false });
 

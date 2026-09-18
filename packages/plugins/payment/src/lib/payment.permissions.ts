@@ -1,3 +1,4 @@
+import { PermissionsEnum } from '@gauzy/contracts';
 import { PluginPermissionContribution } from '@gauzy/plugin';
 
 /**
@@ -12,6 +13,14 @@ import { PluginPermissionContribution } from '@gauzy/plugin';
  * Two axes are deliberate. `PAYMENT_SESSIONS_CAPTURE` is separate from `PAYMENT_SESSIONS_AUTHORIZE`
  * because taking money is not the same act as reserving it, and `REFUNDS_APPROVE` is separate from
  * `REFUNDS_CREATE` because a refund above an agent's limit is somebody else's decision.
+ *
+ * The five remembered-payer values are the one place this map **reuses a platform code** rather than
+ * minting one. The account at a provider and the instruments saved under it are kernel tables: their
+ * permissions belong with them, in the platform catalogue, alongside the tables themselves, so the
+ * role that may read a saved instrument is decided where the instrument is declared rather than in
+ * whichever capability happens to expose it. The keys are stated here because this is the file whose
+ * guards name them, and the values are the platform's own — the arrangement the warehouse package
+ * uses for the codes the fulfilment domain publishes.
  */
 export const PaymentPermission = {
 	/** Read provider registrations and their non-secret configuration. */
@@ -39,7 +48,17 @@ export const PaymentPermission = {
 	/** Read the inbound provider callback log. */
 	PAYMENT_CALLBACKS_VIEW: 'PAYMENT_CALLBACKS_VIEW',
 	/** Re-process a failed or ignored provider callback. */
-	PAYMENT_CALLBACKS_REPROCESS: 'PAYMENT_CALLBACKS_REPROCESS'
+	PAYMENT_CALLBACKS_REPROCESS: 'PAYMENT_CALLBACKS_REPROCESS',
+	/** Read a party's accounts at a provider and the instruments saved under them. */
+	PAYMENT_ACCOUNT_HOLDERS_VIEW: PermissionsEnum.PAYMENT_ACCOUNT_HOLDERS_VIEW,
+	/** Record, verify, edit and disable an account at a provider. */
+	PAYMENT_ACCOUNT_HOLDERS_EDIT: PermissionsEnum.PAYMENT_ACCOUNT_HOLDERS_EDIT,
+	/** Read the saved instruments of an account at a provider. */
+	PAYMENT_METHOD_TOKENS_VIEW: PermissionsEnum.PAYMENT_METHOD_TOKENS_VIEW,
+	/** Save an instrument from a provider-issued token, default it, and revoke it. */
+	PAYMENT_METHOD_TOKENS_EDIT: PermissionsEnum.PAYMENT_METHOD_TOKENS_EDIT,
+	/** Charge a saved instrument with nobody present, and read its stored reference. */
+	PAYMENT_METHOD_TOKENS_CHARGE: PermissionsEnum.PAYMENT_METHOD_TOKENS_CHARGE
 } as const;
 
 /**

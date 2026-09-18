@@ -500,6 +500,18 @@ describe('OrderClaimService — a refund claim settles in money (doc 10 §12.1)'
 		expect(fixture.refundCalls[0].amount).toBe('10.010000');
 	});
 
+	it('names the claim as what the refund is attributed to', async () => {
+		// A claim refund is money going back for a damaged or short delivery, and the claim is the only
+		// record of why. The payment side treats a claim as attribution on its own — precisely so a
+		// refund can be recorded when no captured payment can carry it — and it can only do that if the
+		// request names the claim.
+		const fixture = claimFixture({ lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }] });
+
+		await fixture.service.approve('claim-1', '25.00');
+
+		expect(fixture.refundCalls[0]).toMatchObject({ orderId: ORDER, claimId: 'claim-1' });
+	});
+
 	it('records the amount the capability actually refunded, not the one that was requested', async () => {
 		// The port documents that the amount refunded "may be less than the amount requested", and what is
 		// recorded on the claim is what actually left.

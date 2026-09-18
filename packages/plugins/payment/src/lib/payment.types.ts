@@ -1,4 +1,12 @@
-import { DecimalString, IBasePerTenantAndOrganizationEntityModel, ID, IPagination } from '@gauzy/contracts';
+import {
+	CurrencyCode,
+	DecimalString,
+	IBasePerTenantAndOrganizationEntityModel,
+	ID,
+	IPagination,
+	IPaymentAccountHolder,
+	IPaymentMethodToken
+} from '@gauzy/contracts';
 
 /**
  * The payment domain's value sets and in-memory shapes.
@@ -343,6 +351,58 @@ export type IRefundCreateInput = Partial<IRefund> & Pick<IRefund, 'orderId' | 'a
 export type IRefundUpdateInput = Partial<IRefund>;
 
 /**
+ * One request to record the money a return or a claim pays back.
+ *
+ * This is the refund as the domain that asks for it states it: the order the money goes back for, the
+ * flow that caused it when there is one, the exact amount and its currency, and the governed reason
+ * an operator picked. It is deliberately narrower than the refund this package writes — no payment,
+ * no line breakdown and no status — because the caller knows none of those, and the entry point that
+ * answers it decides what the refund is attributed to before it is written.
+ */
+export interface IReturnRefundRequest {
+	/** The order the money goes back for. */
+	readonly orderId: ID;
+	/** The return that caused it, when it came from one. */
+	readonly returnId?: ID;
+	/** The exchange that caused it, when it came from one. */
+	readonly exchangeId?: ID;
+	/**
+	 * The claim that caused it, when it came from one.
+	 *
+	 * A claim is the third flow that can owe money back — after a return and an exchange — and it
+	 * names a damaged or short delivery rather than goods sent back. It is **attribution on its own**:
+	 * a claim refund is recorded even when no captured payment can carry it, because the money it
+	 * gives back may have arrived by means no payment row records, and refusing it would leave the
+	 * claim unsettled with nothing to point at.
+	 */
+	readonly claimId?: ID;
+	/** Amount to pay back, exact. */
+	readonly amount: DecimalString;
+	/** Currency of the amount. */
+	readonly currency: CurrencyCode;
+	/** The governed reason the refund cites, when the operator picked one. */
+	readonly reasonId?: ID;
+	/** Free-text note kept beside the refund. */
+	readonly note?: string;
+}
+
+/**
+ * What the refund entry point answers with.
+ *
+ * The row it wrote is named by the identifier the caller knows it by, and the amount and the currency
+ * are read back from the stored refund rather than echoed from the request: an amount the platform
+ * rounded, or refused to pay in full, must be answered as it was recorded.
+ */
+export interface IReturnRefundResult {
+	/** The refund that was written. */
+	readonly refundId: ID;
+	/** Amount actually paid back. */
+	readonly amount: DecimalString;
+	/** Currency of the amount. */
+	readonly currency: CurrencyCode;
+}
+
+/**
  * The writable surface of a refund line: what came back, and for how much. The currency is the
  * refund's, and the refund a line belongs to is named by the row it is written with.
  */
@@ -551,3 +611,10 @@ export type IRefundReasonPagination = IPagination<IRefundReason>;
  * Paginated inbound callbacks.
  */
 export type IPaymentWebhookEventPagination = IPagination<IPaymentWebhookEvent>;
+
+/**
+ * The paging shapes of the remembered payer, in the vocabulary of every other resource here.
+ */
+export type IPaymentAccountHolderPagination = IPagination<IPaymentAccountHolder>;
+
+export type IPaymentMethodTokenPagination = IPagination<IPaymentMethodToken>;

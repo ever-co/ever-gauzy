@@ -1,5 +1,14 @@
 import { Between } from 'typeorm';
-import { ID } from '@gauzy/contracts';
+import {
+	ID,
+	IPaymentAccountHolder,
+	IPaymentMethodToken,
+	PaymentAccountHolderStatus,
+	PaymentAccountHolderType,
+	PaymentAccountVerificationStatus,
+	PaymentMethodTokenStatus,
+	PaymentMethodTokenType
+} from '@gauzy/contracts';
 import {
 	IPaymentCapture,
 	IPaymentCollection,
@@ -607,3 +616,190 @@ export function withDateRange(
 
 	return where;
 }
+
+/* ------------------------------------------------------------------------------------------------
+ * The remembered payer: the account at a provider, and the instruments saved under it
+ * ---------------------------------------------------------------------------------------------- */
+
+/**
+ * The orderings the account connection understands, exactly as the SDL declares them.
+ */
+export const PAYMENT_ACCOUNT_HOLDER_SORT_FIELDS: Record<string, string> = {
+	TYPE: 'type',
+	STATUS: 'status',
+	VERIFICATION_STATUS: 'verificationStatus',
+	CREATED_AT: 'createdAt',
+	UPDATED_AT: 'updatedAt'
+};
+
+/**
+ * The orderings the instrument connection understands.
+ */
+export const PAYMENT_METHOD_TOKEN_SORT_FIELDS: Record<string, string> = {
+	TYPE: 'type',
+	BRAND: 'brand',
+	STATUS: 'status',
+	IS_DEFAULT: 'isDefault',
+	EXPIRY_YEAR: 'expiryYear',
+	LAST_USED_AT: 'lastUsedAt',
+	CREATED_AT: 'createdAt',
+	UPDATED_AT: 'updatedAt'
+};
+
+/**
+ * An account filter, mirroring the narrowing the REST list accepts.
+ */
+export interface IPaymentAccountHolderFilter {
+	readonly id?: ID;
+	readonly contactId?: ID;
+	readonly paymentProviderId?: ID;
+	readonly providerKey?: string;
+	readonly type?: PaymentAccountHolderType;
+	readonly status?: PaymentAccountHolderStatus;
+	readonly verificationStatus?: PaymentAccountVerificationStatus;
+	readonly defaultCurrency?: string;
+}
+
+/**
+ * An instrument filter, mirroring the narrowing the REST list accepts.
+ *
+ * `contactId` and `accountHolderId` are the two spellings of "whose instruments": the resolver
+ * resolves the first into the second through the party's accounts, exactly as the list route does.
+ */
+export interface IPaymentMethodTokenFilter {
+	readonly id?: ID;
+	readonly contactId?: ID;
+	readonly accountHolderId?: ID;
+	readonly paymentProviderId?: ID;
+	readonly providerKey?: string;
+	readonly type?: PaymentMethodTokenType;
+	readonly status?: PaymentMethodTokenStatus;
+	readonly isDefault?: boolean;
+}
+
+/**
+ * The create and update inputs of an account, as the SDL declares them.
+ */
+export interface ICreatePaymentAccountHolderGraphInput {
+	readonly contactId?: ID;
+	readonly paymentProviderId?: ID;
+	readonly providerKey: string;
+	readonly type?: PaymentAccountHolderType;
+	readonly country?: string;
+	readonly defaultCurrency?: string;
+	readonly metadata?: Record<string, unknown>;
+	readonly idempotencyKey?: string;
+}
+
+export interface IUpdatePaymentAccountHolderGraphInput {
+	readonly id: ID;
+	readonly contactId?: ID;
+	readonly paymentProviderId?: ID;
+	readonly providerKey?: string;
+	readonly verificationStatus?: PaymentAccountVerificationStatus;
+	readonly country?: string;
+	readonly defaultCurrency?: string;
+	readonly mandateReference?: string;
+	readonly mandateAcceptedAt?: Date;
+	readonly metadata?: Record<string, unknown>;
+}
+
+/**
+ * The verification input, as the SDL declares it: the verdict, the status it may move to, the
+ * provider's reference when onboarding completed, and the evidence around it.
+ */
+export interface IVerifyPaymentAccountHolderGraphInput {
+	readonly id: ID;
+	readonly verificationStatus: PaymentAccountVerificationStatus;
+	readonly status?: PaymentAccountHolderStatus;
+	readonly reference?: string;
+	readonly expiresAt?: Date;
+	readonly note?: string;
+	readonly idempotencyKey?: string;
+}
+
+/**
+ * What the provider itself answered when the platform re-read the instrument at the provider.
+ */
+export interface IPaymentMethodTokenConfirmationGraphInput {
+	readonly token: string;
+	readonly confirmedAt: Date;
+}
+
+/**
+ * The create input of an instrument, as the SDL declares it.
+ *
+ * No member of this input — and no member of any input in this schema — carries card data. The
+ * reference is the provider's own, and the confirmation is what makes it the provider's rather than a
+ * value the caller composed.
+ */
+export interface ICreatePaymentMethodTokenGraphInput {
+	readonly accountHolderId: ID;
+	readonly providerKey: string;
+	readonly token: string;
+	readonly providerConfirmation: IPaymentMethodTokenConfirmationGraphInput;
+	readonly type?: PaymentMethodTokenType;
+	readonly brand?: string;
+	readonly last4?: string;
+	readonly expiryMonth?: number;
+	readonly expiryYear?: number;
+	readonly holderName?: string;
+	readonly billingAddressId?: ID;
+	readonly isDefault?: boolean;
+	readonly metadata?: Record<string, unknown>;
+	readonly idempotencyKey?: string;
+}
+
+/**
+ * A page of accounts at a provider.
+ */
+export type IPaymentAccountHolderConnection = IConnection<IPaymentAccountHolder>;
+
+/**
+ * A page of saved instruments.
+ */
+export type IPaymentMethodTokenConnection = IConnection<IPaymentMethodToken>;
+
+/**
+ * The answer of an account creation.
+ */
+export type ICreatePaymentAccountHolderPayload = IResourcePayload<IPaymentAccountHolder, 'paymentAccountHolder'>;
+
+/**
+ * The answer of an account update.
+ */
+export type IUpdatePaymentAccountHolderPayload = IResourcePayload<IPaymentAccountHolder, 'paymentAccountHolder'>;
+
+/**
+ * The answer of a verification: the account carries both the verdict and the status it moved to.
+ */
+export type IVerifyPaymentAccountHolderPayload = IResourcePayload<IPaymentAccountHolder, 'paymentAccountHolder'>;
+
+/**
+ * The answer of a disabling. `deleted` reports that the account is out of service — not that its row
+ * is gone — and the count is how many instruments the close revoked with it.
+ */
+export type IDeletePaymentAccountHolderPayload = IResourcePayload<IPaymentAccountHolder, 'paymentAccountHolder'> & {
+	readonly deleted: boolean;
+	readonly revokedTokenCount: number;
+};
+
+/**
+ * The answer of an instrument creation.
+ */
+export type ICreatePaymentMethodTokenPayload = IResourcePayload<IPaymentMethodToken, 'paymentMethodToken'>;
+
+/**
+ * The answer of a default change, naming the instrument it displaced.
+ */
+export type ISetDefaultPaymentMethodTokenPayload = IResourcePayload<IPaymentMethodToken, 'paymentMethodToken'> & {
+	readonly previousDefaultId?: ID;
+};
+
+/**
+ * The answer of a revocation. `deleted` reports that the instrument may no longer be charged — its row
+ * survives, because the charge history that references it has to keep resolving.
+ */
+export type IRevokePaymentMethodTokenPayload = IResourcePayload<IPaymentMethodToken, 'paymentMethodToken'> & {
+	readonly deleted: boolean;
+};
