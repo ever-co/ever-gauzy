@@ -31,6 +31,12 @@ import { MikroOrmContactGroupMemberRepository } from './repository/mikro-orm-con
  *
  * **`RolePermissionModule` is imported for the guards**, so that this module — which hosts the
  * membership controller and resolver — can reach the permission lookup they inject.
+ *
+ * **The announcement path is imported, not declared here.** `ContactGroupModule` provides and exports
+ * `ContactGroupEventPublisher`, and this module already imports it, so the membership service injects
+ * the same publisher the group's own writes announce through. Declaring a second one here would mean
+ * two publishers over one catalogue and two announcement paths over one fact — and it is the same
+ * one-way dependency that decides where the routes and the field resolvers live.
  */
 @Module({
 	imports: [

@@ -1,0 +1,130 @@
+# The product domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/products` routes already serve — the list, the one row,
+# the count, the create, the edit, the removal, the two lifecycle moves and the four image operations
+# — under the same guard chain, so a client that reaches the capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered
+# list methods read live rows only, and offering an argument that cannot be honoured would be worse
+# than not offering it.
+
+extend type Query {
+	"""
+	The products of the caller's tenant, newest first.
+
+	`language` is the GraphQL spelling of the `language` request header the REST list route reads and
+	of the `local/:langCode` path segment its per-language sibling carries. The rows are the same rows
+	with the translation for that language merged onto them, which is what makes `name` and
+	`description` readable on them, and a caller that states no language is answered in English —
+	the same fallback the delivered routes apply.
+	"""
+	products(
+		filter: ProductFilter
+		sort: [ProductSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		language: String
+	): ProductConnection!
+
+	"""
+	One product, or null when there is none.
+
+	`language` selects which of the two delivered reads by id the request means: without it the field
+	answers the row `GET /products/:id` answers, and with it the row `GET /products/local/:langCode/:id`
+	answers, which is that same row with its translation merged.
+	"""
+	product(id: ID!, language: String): Product
+
+	"""
+	How many products the caller's tenant holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+	inventory has to keep apart. The delivered count route narrows by a `where` fragment carried in the
+	query string, which is a shape no schema can state, so the field states no narrowing of its own
+	rather than an argument it could not honour.
+	"""
+	productCount: Int
+}
+
+extend type Mutation {
+	"""
+	Records a product, with the translations and the option groups the delivered create path builds
+	rows from. The tenant the new row belongs to is stamped from the credential and is never stated by
+	the caller, so a product cannot be written into a tenant the caller is not acting in; the
+	organization it is filed under is the one the caller states, which is what the delivered route
+	reads.
+	"""
+	createProduct(input: CreateProductInput!): Product!
+
+	"""
+	Changes the facts of a product that exists, and the option groups and options it offers.
+
+	The members are the ones the delivered edit path carries into the row. It reads the row first and
+	writes the members stated here onto it, so a product that is not there is a miss rather than a
+	write.
+	"""
+	updateProduct(input: UpdateProductInput!): Product!
+
+	"""
+	Removes a product, together with the rows only it explains: its variants and their setting and
+	price rows, and its option groups with their options and translations. A variant left behind
+	without its setting and price cannot be priced, sold or counted.
+	"""
+	deleteProduct(id: ID!): Boolean!
+
+	"""
+	Withdraws a product without removing the row.
+
+	Soft removal is a different operation from the removal above and is the one to reach for when the
+	product has been sold: the order lines that name it keep resolving, and the row is what they are
+	explained by. `softDeleteProduct` answers the withdrawn row; the product is recoverable until it
+	is removed outright.
+	"""
+	softDeleteProduct(id: ID!): Product!
+
+	"""
+	Puts a withdrawn product back. A product that is not withdrawn is refused rather than silently
+	left as it is.
+	"""
+	recoverProduct(id: ID!): Product!
+
+	"""
+	Adds images to the product's gallery.
+
+	An image is named by the identifier of its asset row: the asset itself is stored by the image
+	domain, and the delivered gallery write stores the membership — which is the pair of identifiers —
+	so a member carrying a whole asset would offer members nothing honours.
+	"""
+	addProductGalleryImages(productId: ID!, imageIds: [ID!]!): Product!
+
+	"""
+	Makes one image the product's cover. The image is named by its asset identifier, on the same terms
+	as the gallery write above.
+	"""
+	setProductAsFeatured(productId: ID!, imageId: ID!): Product!
+
+	"""
+	Takes one image out of the product's gallery. The asset itself is kept: it may still be another
+	product's cover, or a member of another product's gallery. An image a variant of this product
+	carries is refused rather than detached.
+	"""
+	deleteProductGalleryImage(productId: ID!, imageId: ID!): Product!
+
+	"""
+	Withdraws the product's cover. The asset itself is kept, as it is for a gallery image.
+	"""
+	deleteProductFeaturedImage(productId: ID!): Product!
+}

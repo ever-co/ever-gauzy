@@ -1,9 +1,9 @@
 # The contact-group domain's root fields.
 #
-# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
-# for the whole platform, so a domain adds fields to it and never declares its own. The names are the
-# ones the GraphQL API specification fixes for this resource, mutation by mutation, so the REST surface
-# and this one expose the same capabilities under the same words.
+# `Query`, `Mutation` and `Subscription` are declared by the kernel and extended here: a root operation
+# type exists once for the whole platform, so a domain adds fields to it and never declares its own. The
+# names are the ones the GraphQL API specification fixes for this resource, mutation by mutation, so the
+# REST surface and this one expose the same capabilities under the same words.
 #
 # Three fields the endpoint table would suggest are deliberately absent, because each would describe a
 # capability this delivery cannot honour: an expansion of the group's rules (the rule kernel declares no
@@ -51,4 +51,16 @@ extend type Mutation {
 	maintains is not removable at all.
 	"""
 	deleteContactGroup(id: ID!): ContactGroup!
+}
+
+extend type Subscription {
+	"""
+	Every change to a contact group of the caller's tenant: the group being created, edited or
+	soft-deleted, and its membership being granted or withdrawn. The stream is narrowed by `groupId`
+	and by `action`; both only ever narrow what the credential may already read.
+
+	A subscription is a notification and never a system of record: an event produced while the client
+	is disconnected is not replayed, and a client that must not miss one registers a webhook.
+	"""
+	contactGroupChanged(groupId: ID, action: String): ContactGroup!
 }

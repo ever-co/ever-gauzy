@@ -11,6 +11,7 @@ import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ContactGroup } from './contact-group.entity';
+import { ContactGroupEventPublisher } from './contact-group-event.publisher';
 import { TypeOrmContactGroupRepository } from './repository/type-orm-contact-group.repository';
 import { MikroOrmContactGroupRepository } from './repository/mikro-orm-contact-group.repository';
 
@@ -45,6 +46,13 @@ import { MikroOrmContactGroupRepository } from './repository/mikro-orm-contact-g
  *
  * A group is deleted softly and never hard-deleted: a price list, a promotion and a rule may all name
  * it, and the rows that do keep working while it is recoverable.
+ *
+ * **Every write that changes a group announces it, and it is announced from here.** The REST route and
+ * the GraphQL mutation that perform the same write both call this service, so announcing here is what
+ * makes the two surfaces indistinguishable to a subscriber; a caller cannot tell which protocol wrote a
+ * row by whether it received an event. The announcement is made after the write has succeeded, with the
+ * row in its post-write state, and the publisher is what knows how a subscriber is reached — see
+ * {@link ContactGroupEventPublisher}.
  */
 @Injectable()
 export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
@@ -57,7 +65,13 @@ export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
 
 	constructor(
 		readonly typeOrmContactGroupRepository: TypeOrmContactGroupRepository,
-		readonly mikroOrmContactGroupRepository: MikroOrmContactGroupRepository
+		readonly mikroOrmContactGroupRepository: MikroOrmContactGroupRepository,
+		/**
+		 * The domain's own announcement path. A required collaborator rather than an optional one: a
+		 * write that silently stops announcing is exactly the drift the subscription surface cannot
+		 * detect, and this service is the only place both protocols pass through.
+		 */
+		private readonly contactGroupEventPublisher: ContactGroupEventPublisher
 	) {
 		super(typeOrmContactGroupRepository, mikroOrmContactGroupRepository);
 	}
@@ -85,7 +99,7 @@ export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
 
 		await this.assertCodeAvailable(code);
 
-		return this.create({
+		const group: IContactGroup = await this.create({
 			...(input ?? {}),
 			code,
 			name: String(input?.name ?? '').trim(),
@@ -96,6 +110,10 @@ export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
 			isSystem: false,
 			...this.scope
 		} as never);
+
+		await this.contactGroupEventPublisher.groupChanged(group, 'created');
+
+		return group;
 	}
 
 	/**
@@ -114,7 +132,7 @@ export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
 
 		await this.assertCodeAvailable(code);
 
-		return this.create({
+		const group: IContactGroup = await this.create({
 			...(input ?? {}),
 			code,
 			name: String(input?.name ?? '').trim(),
@@ -123,6 +141,12 @@ export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
 			isSystem: true,
 			...this.scope
 		} as never);
+
+		// A subscriber cannot tell which entry point created a group, and must not have to: the fact
+		// announced is that the group exists, whichever path wrote it.
+		await this.contactGroupEventPublisher.groupChanged(group, 'created');
+
+		return group;
 	}
 
 	/**
@@ -283,7 +307,13 @@ export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
 			...(input.metadata !== undefined ? { metadata: input.metadata } : {})
 		} as never);
 
-		return this.findGroupOrFail(id);
+		const stored = await this.findGroupOrFail(id);
+
+		// The post-write row is what is announced, and a change of kind is an edit like any other: a
+		// subscriber that caches a group's membership rule has to re-read a group that became a segment.
+		await this.contactGroupEventPublisher.groupChanged(stored, 'updated');
+
+		return stored;
 	}
 
 	/**
@@ -309,7 +339,26 @@ export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
 
 		await this.softDelete(id);
 
-		return this.findGroupOrFail(id);
+		// The fact is announced from the row the removal acted on, and before this method's own re-read:
+		// a removed row is absent to that read, so an announcement placed after it would be the one thing
+		// that never happens when the read is what refuses. `deleted` is what tells a subscriber the group
+		// is gone — the payload is the group as it stood when it was removed.
+		await this.contactGroupEventPublisher.groupChanged(group, 'deleted');
+
+		// The row read before the removal is the answer, and **not** a second read of it. `deletedAt` is
+		// the column the removal writes and every read of this service excludes the rows that carry one,
+		// so a re-read here after the write could only ever refuse: the route would have removed the group
+		// and then answered `CONTACT_GROUP_NOT_FOUND` for the row it had just removed. The stored group is
+		// what the method documents that it returns, and it is also the payload a caller needs in order to
+		// see what the withdrawal carried.
+		//
+		// The instant is stated on that row as well, because a response that says a row was removed and
+		// carries a null removal instant reads as the opposite of what happened. It is the same request's
+		// removal — the column the store wrote and this value differ, at most, by the milliseconds between
+		// the two — and the row in the store remains the authority.
+		group.deletedAt = new Date();
+
+		return group;
 	}
 
 	/**

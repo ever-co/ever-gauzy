@@ -48,6 +48,77 @@ type Query {
   paymentTermSchedule(id: ID!, total: String!, basisDate: String!, currencyDecimals: Int, currency: String): PaymentTermSchedule!
 
   """
+  The product categories of the caller's tenant, in the taxonomy's own sibling order.
+  """
+  productCategories(filter: ProductCategoryFilter, sort: [ProductCategorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ProductCategoryConnection!
+
+  """One category of the caller's tenant, or null when there is none."""
+  productCategory(id: ID!): ProductCategory
+
+  """How many categories the caller's tenant has."""
+  productCategoryCount: Int!
+
+  """The options of the caller's tenant."""
+  productOptions(filter: ProductOptionFilter, sort: [ProductOptionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ProductOptionConnection!
+
+  """One option of the caller's tenant, or null when there is none."""
+  productOption(id: ID!): ProductOption
+
+  """
+  How many options the caller's tenant holds.
+  
+  Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+  non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+  inventory has to keep apart. The delivered count route binds its query string to the store's own
+  `where`, a shape no schema can state, so the field offers no narrowing of its own rather than an
+  argument the resolver could not pass on.
+  """
+  productOptionCount: Int
+
+  """The settings of the caller's tenant."""
+  productVariantSettings(filter: ProductVariantSettingFilter, sort: [ProductVariantSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ProductVariantSettingConnection!
+
+  """One setting, or null when there is none."""
+  productVariantSetting(id: ID!): ProductVariantSetting
+
+  """
+  How many settings the caller's tenant holds.
+  
+  Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+  non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+  inventory has to keep apart. The delivered count route binds its query string to the store's own
+  `where`, a shape no schema can state, so the field offers no narrowing of its own rather than an
+  argument the resolver could not pass on.
+  """
+  productVariantSettingCount: Int
+
+  """The product types of the caller's tenant, newest first."""
+  productTypes(filter: ProductTypeFilter, sort: [ProductTypeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ProductTypeConnection!
+
+  """One product type of the caller's tenant, or null when there is none."""
+  productType(id: ID!): ProductType
+
+  """How many product types the caller's tenant has."""
+  productTypeCount: Int!
+
+  """The prices of the caller's tenant."""
+  productVariantPrices(filter: ProductVariantPriceFilter, sort: [ProductVariantPriceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ProductVariantPriceConnection!
+
+  """One price of the caller's tenant, or null when there is none."""
+  productVariantPrice(id: ID!): ProductVariantPrice
+
+  """
+  How many prices the caller's tenant holds.
+  
+  Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+  non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+  inventory has to keep apart. The delivered count route binds its query string to the store's own
+  `where`, a shape no schema can state, so the field offers no narrowing of its own rather than an
+  argument the resolver could not pass on.
+  """
+  productVariantPriceCount: Int
+
+  """
   The variants of the caller's tenant, newest first.
   
   The variants of one product are these rows narrowed to that product, which is what the REST
@@ -57,6 +128,49 @@ type Query {
 
   """One variant, or null when there is none."""
   productVariant(id: ID!): ProductVariant
+
+  """
+  How many variants the caller's tenant holds.
+  
+  Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+  non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+  inventory has to keep apart. The delivered count route binds its query string to the store's own
+  `where`, a shape no schema can state, so the field offers no narrowing of its own rather than an
+  argument the resolver could not pass on. It is not the connection's `totalCount` either: that is
+  the count of the rows the connection narrowed to, and this is the count of the caller's rows.
+  """
+  productVariantCount: Int
+
+  """
+  The products of the caller's tenant, newest first.
+  
+  `language` is the GraphQL spelling of the `language` request header the REST list route reads and
+  of the `local/:langCode` path segment its per-language sibling carries. The rows are the same rows
+  with the translation for that language merged onto them, which is what makes `name` and
+  `description` readable on them, and a caller that states no language is answered in English —
+  the same fallback the delivered routes apply.
+  """
+  products(filter: ProductFilter, sort: [ProductSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, language: String): ProductConnection!
+
+  """
+  One product, or null when there is none.
+  
+  `language` selects which of the two delivered reads by id the request means: without it the field
+  answers the row `GET /products/:id` answers, and with it the row `GET /products/local/:langCode/:id`
+  answers, which is that same row with its translation merged.
+  """
+  product(id: ID!, language: String): Product
+
+  """
+  How many products the caller's tenant holds.
+  
+  Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+  non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+  inventory has to keep apart. The delivered count route narrows by a `where` fragment carried in the
+  query string, which is a shape no schema can state, so the field states no narrowing of its own
+  rather than an argument it could not honour.
+  """
+  productCount: Int
 
   """The regions of the caller's organization, newest first."""
   regions(filter: RegionFilter, sort: [RegionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): RegionConnection!
@@ -682,6 +796,142 @@ type Mutation {
   archivePaymentTerm(id: ID!): Boolean!
 
   """
+  Files a category, with the text of every language the caller states for it.
+  """
+  createProductCategory(input: CreateProductCategoryInput!): ProductCategory!
+
+  """
+  Replaces a category. A member the caller leaves out is written as the column's default rather than
+  left as it is, because the delivered update removes the row and persists the stated body under the
+  verified path identifier — see `UpdateProductCategoryInput`.
+  """
+  updateProductCategory(input: UpdateProductCategoryInput!): ProductCategory!
+
+  """
+  Removes a category outright, together with the translation rows that belong to it. A category a
+  product still points at is the store's own constraint to refuse; this field does not pre-empt it.
+  """
+  deleteProductCategory(id: ID!): Boolean!
+
+  """
+  Withdraws a category without removing it: the row keeps its identifier and its products keep
+  pointing at it, and the delivered list stops answering it.
+  """
+  softDeleteProductCategory(id: ID!): ProductCategory!
+
+  """Puts a withdrawn category back."""
+  recoverProductCategory(id: ID!): ProductCategory!
+
+  """Files an option, with the group it answers for."""
+  createProductOption(input: CreateProductOptionInput!): ProductOption!
+
+  """
+  Changes the descriptive facts of an option. A member the caller leaves out is left as it is.
+  """
+  updateProductOption(input: UpdateProductOptionInput!): ProductOption!
+
+  """
+  Removes an option outright: the row is gone and nothing reads it back.
+  
+  The two removals this resource serves are not the same operation, so both are stated rather than
+  one of them being left to a client to discover on the other protocol.
+  """
+  deleteProductOption(id: ID!): Boolean!
+
+  """
+  Softly removes an option: the row stays in the table, marked as removed, and the restore below
+  reads it back. The answer is the row as it now stands, which is what the delivered route answers
+  with.
+  """
+  softDeleteProductOption(id: ID!): ProductOption!
+
+  """
+  Restores an option that was softly removed, clearing the marker the removal set.
+  """
+  recoverProductOption(id: ID!): ProductOption!
+
+  """Opens a capability record for a variant."""
+  createProductVariantSetting(input: CreateProductVariantSettingInput!): ProductVariantSetting!
+
+  """Changes the capabilities a variant is recorded under."""
+  updateProductVariantSetting(input: UpdateProductVariantSettingInput!): ProductVariantSetting!
+
+  """
+  Removes a setting outright: the row is gone and nothing reads it back.
+  
+  The two removals this resource serves are not the same operation, so both are stated rather than
+  one of them being left to a client to discover on the other protocol.
+  """
+  deleteProductVariantSetting(id: ID!): Boolean!
+
+  """
+  Softly removes a setting: the row stays in the table, marked as removed, and the restore below
+  reads it back. The answer is the row as it now stands, which is what the delivered route answers
+  with.
+  """
+  softDeleteProductVariantSetting(id: ID!): ProductVariantSetting!
+
+  """
+  Restores a setting that was softly removed, clearing the marker the removal set.
+  """
+  recoverProductVariantSetting(id: ID!): ProductVariantSetting!
+
+  """
+  Declares a type, with the text of every language the caller states for it.
+  """
+  createProductType(input: CreateProductTypeInput!): ProductType!
+
+  """
+  Replaces a type. A column member the caller leaves out is written as its default rather than left
+  as it is, because the delivered update removes the row and persists the stated body under the
+  verified path identifier; `translations` is the exception the delivered service carries over — see
+  `UpdateProductTypeInput`.
+  """
+  updateProductType(input: UpdateProductTypeInput!): ProductType!
+
+  """
+  Removes a type outright, together with the translation rows that belong to it. A product still
+  classified under it is the store's own constraint to refuse; this field does not pre-empt it.
+  """
+  deleteProductType(id: ID!): Boolean!
+
+  """
+  Withdraws a type without removing it: the row keeps its identifier and its products keep their
+  classification, and the delivered list stops answering it.
+  """
+  softDeleteProductType(id: ID!): ProductType!
+
+  """Puts a withdrawn type back."""
+  recoverProductType(id: ID!): ProductType!
+
+  """
+  Prices a variant: an amount and the currency it is stated in, for the cost and for the sale.
+  """
+  createProductVariantPrice(input: CreateProductVariantPriceInput!): ProductVariantPrice!
+
+  """Changes a price. A member the caller leaves out is left as it is."""
+  updateProductVariantPrice(input: UpdateProductVariantPriceInput!): ProductVariantPrice!
+
+  """
+  Removes a price outright: the row is gone and nothing reads it back.
+  
+  The two removals this resource serves are not the same operation, so both are stated rather than
+  one of them being left to a client to discover on the other protocol.
+  """
+  deleteProductVariantPrice(id: ID!): Boolean!
+
+  """
+  Softly removes a price: the row stays in the table, marked as removed, and the restore below reads
+  it back. The answer is the row as it now stands, which is what the delivered route answers with.
+  """
+  softDeleteProductVariantPrice(id: ID!): ProductVariantPrice!
+
+  """
+  Restores a price that was softly removed, clearing the marker the removal set.
+  """
+  recoverProductVariantPrice(id: ID!): ProductVariantPrice!
+
+  """
   Generates one variant per option combination. Each variant is stored with its own setting row and
   its own price row, because a variant without them cannot be priced, sold or counted.
   """
@@ -700,6 +950,74 @@ type Mutation {
   cover, another variant's image, or a member of the product's gallery.
   """
   deleteProductVariantFeaturedImage(variantId: ID!): ProductVariant!
+
+  """
+  Records a product, with the translations and the option groups the delivered create path builds
+  rows from. The tenant the new row belongs to is stamped from the credential and is never stated by
+  the caller, so a product cannot be written into a tenant the caller is not acting in; the
+  organization it is filed under is the one the caller states, which is what the delivered route
+  reads.
+  """
+  createProduct(input: CreateProductInput!): Product!
+
+  """
+  Changes the facts of a product that exists, and the option groups and options it offers.
+  
+  The members are the ones the delivered edit path carries into the row. It reads the row first and
+  writes the members stated here onto it, so a product that is not there is a miss rather than a
+  write.
+  """
+  updateProduct(input: UpdateProductInput!): Product!
+
+  """
+  Removes a product, together with the rows only it explains: its variants and their setting and
+  price rows, and its option groups with their options and translations. A variant left behind
+  without its setting and price cannot be priced, sold or counted.
+  """
+  deleteProduct(id: ID!): Boolean!
+
+  """
+  Withdraws a product without removing the row.
+  
+  Soft removal is a different operation from the removal above and is the one to reach for when the
+  product has been sold: the order lines that name it keep resolving, and the row is what they are
+  explained by. `softDeleteProduct` answers the withdrawn row; the product is recoverable until it
+  is removed outright.
+  """
+  softDeleteProduct(id: ID!): Product!
+
+  """
+  Puts a withdrawn product back. A product that is not withdrawn is refused rather than silently
+  left as it is.
+  """
+  recoverProduct(id: ID!): Product!
+
+  """
+  Adds images to the product's gallery.
+  
+  An image is named by the identifier of its asset row: the asset itself is stored by the image
+  domain, and the delivered gallery write stores the membership — which is the pair of identifiers —
+  so a member carrying a whole asset would offer members nothing honours.
+  """
+  addProductGalleryImages(productId: ID!, imageIds: [ID!]!): Product!
+
+  """
+  Makes one image the product's cover. The image is named by its asset identifier, on the same terms
+  as the gallery write above.
+  """
+  setProductAsFeatured(productId: ID!, imageId: ID!): Product!
+
+  """
+  Takes one image out of the product's gallery. The asset itself is kept: it may still be another
+  product's cover, or a member of another product's gallery. An image a variant of this product
+  carries is refused rather than detached.
+  """
+  deleteProductGalleryImage(productId: ID!, imageId: ID!): Product!
+
+  """
+  Withdraws the product's cover. The asset itself is kept, as it is for a gallery image.
+  """
+  deleteProductFeaturedImage(productId: ID!): Product!
 
   """
   Opens a commercial geography. The currency is checked against the platform's currency master
@@ -1810,6 +2128,16 @@ type Subscription {
   is disconnected is not replayed, and a client that must not miss one registers a webhook.
   """
   channelChanged(channelId: ID, action: String): Channel!
+
+  """
+  Every change to a contact group of the caller's tenant: the group being created, edited or
+  soft-deleted, and its membership being granted or withdrawn. The stream is narrowed by `groupId`
+  and by `action`; both only ever narrow what the credential may already read.
+  
+  A subscription is a notification and never a system of record: an event produced while the client
+  is disconnected is not replayed, and a client that must not miss one registers a webhook.
+  """
+  contactGroupChanged(groupId: ID, action: String): ContactGroup!
 
   """
   A stream of the platform's events, selected by name. One event is delivered per message, so a
@@ -3164,6 +3492,873 @@ input UpdatePaymentTermLinesInput {
   lines: [PaymentTermLineInput!]!
 }
 
+"""One node of the product taxonomy."""
+type ProductCategory {
+  id: ID!
+
+  """
+  The category's name in the requested language, merged from its translation.
+  """
+  name: String
+
+  """
+  The category's description in the requested language, merged from its translation.
+  """
+  description: String
+
+  """
+  A denormalised thumbnail URL, kept for lists that must not join the asset table.
+  """
+  imageUrl: String
+
+  """The asset the navigation shows for the category."""
+  imageId: ID
+  image: ImageAsset
+
+  """
+  The parent category. Null on a root, which is every category that has no parent.
+  """
+  parentId: ID
+
+  """
+  The URL-safe identity of the category, unique within the organization among the live rows.
+  """
+  slug: String
+
+  """The ordering of this category among its siblings."""
+  sortOrder: Int!
+
+  """Whether the category belongs to the featured navigation."""
+  isFeatured: Boolean!
+
+  """
+  The lifecycle of the category, as the kernel extension's own value: `DRAFT`, `ACTIVE` or
+  `ARCHIVED`. The value set is deliberately the same one the product's own lifecycle column uses, so
+  one navigation filter covers both.
+  """
+  status: String!
+
+  """
+  When the category was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+  routes — the two removals this resource serves — and this column is the whole of what they write,
+  so without it a caller could not tell a live row from a withdrawn one on the answer to the write
+  that withdrew it.
+  """
+  deletedAt: DateTime
+
+  """
+  Tenant extras, for example a navigation icon set or an external taxonomy id.
+  """
+  metadata: JSON
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+}
+
+"""The boundary of one page of categories."""
+type ProductCategoryEdge {
+  node: ProductCategory!
+  cursor: String!
+}
+
+"""
+One page of categories, with the total the filters select and the boundary cursors.
+"""
+type ProductCategoryConnection {
+  nodes: [ProductCategory!]!
+  edges: [ProductCategoryEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a category list may be sorted by."""
+enum ProductCategorySortField {
+  createdAt
+  updatedAt
+  name
+  slug
+  sortOrder
+  status
+  isFeatured
+}
+
+"""
+The order the categories are returned in. At most three keys are accepted.
+"""
+input ProductCategorySort {
+  field: ProductCategorySortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a category list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`name` and `description` are filterable because the delivered reader merges them onto the row before
+the connection sees it: narrowing a storefront's taxonomy by the name in one language is the read the
+merged member exists for. A row for which no translation matched carries neither, which is what
+`isNull` states and what an `eq` never matches.
+"""
+input ProductCategoryFilter {
+  id: IDFilter
+  name: StringFilter
+  description: StringFilter
+  imageUrl: StringFilter
+  imageId: IDFilter
+  parentId: IDFilter
+  slug: StringFilter
+  sortOrder: NumberFilter
+  isFeatured: BooleanFilter
+  status: StringFilter
+  metadata: JSONFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [ProductCategoryFilter!]
+  or: [ProductCategoryFilter!]
+  not: ProductCategoryFilter
+}
+
+"""
+One language's copy of a category's descriptive facts.
+
+The rows are the category's own: a translation carries the category it belongs to, so the write
+states the language and the text, never which category — the parent of the write is the category the
+call is made on.
+"""
+input ProductCategoryTranslationInput {
+  """The language this text is written in."""
+  languageCode: String!
+  name: String!
+  description: String
+}
+
+"""
+What a caller states when it files a category.
+
+The organization is stated because the delivered create does not derive one: the tenant is stamped
+from the credential, never from an argument, but the organization is a member the caller names and the
+delivered route validates against the caller's own memberships. There is no member for the tenant,
+for the same reason there is none on any other write here.
+
+The category's product list is not a member either. The relation is not a column of this row and the
+delivered write does not cascade it, so a body stating it would be accepted and then dropped; a
+product is filed under a category by writing the product's own `productCategoryId`.
+"""
+input CreateProductCategoryInput {
+  organizationId: ID!
+
+  """
+  The text of the category, one member per language. A category with none has no name yet.
+  """
+  translations: [ProductCategoryTranslationInput!]
+
+  """The asset to show for the category, by identifier."""
+  imageId: ID
+  imageUrl: String
+
+  """The parent to file the category under. Omit for a root."""
+  parentId: ID
+  slug: String
+  sortOrder: Int
+  isFeatured: Boolean
+  status: String
+  metadata: JSON
+}
+
+"""
+What a caller states when it edits a category that exists.
+
+**A member that is absent is written as the column's default, not left as it is.** The delivered
+update replaces the row: the service reads the category to prove it is the caller's, removes it, and
+persists the stated body under the verified path identifier. `translations` is the sharpest case of
+that — the translation rows are removed with their category and the delivered service does not carry
+them over, so a body that omits them withdraws every language the category had. Stating this here is
+what keeps a client from reading "absent" as "unchanged".
+"""
+input UpdateProductCategoryInput {
+  id: ID!
+  organizationId: ID!
+  translations: [ProductCategoryTranslationInput!]
+  imageId: ID
+  imageUrl: String
+  parentId: ID
+  slug: String
+  sortOrder: Int
+  isFeatured: Boolean
+  status: String
+  metadata: JSON
+}
+
+"""One value a product is offered in, such as a colour or a size."""
+type ProductOption {
+  id: ID!
+
+  """
+  The option's text, untranslated. The per-language copies are the translation rows below.
+  """
+  name: String!
+
+  """
+  The operator's short code for the option, when the catalogue names one.
+  """
+  code: String
+
+  """
+  The group this option is filed under, as the identifier every delivered row carries.
+  """
+  groupId: ID
+
+  """
+  The same fact as a row: the group named above, with its own product and translations.
+  """
+  group: ProductOptionGroup
+
+  """
+  The option's per-language text, joined with the row rather than merged onto it.
+  
+  Null and empty are different facts here and the two are kept apart: an option that has no
+  translation answers an empty collection, and a row a write has just answered with — which has not
+  been read back with its translations — answers null.
+  """
+  translations: [ProductOptionTranslation!]
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+}
+
+"""One language's copy of an option's text."""
+type ProductOptionTranslation {
+  id: ID!
+
+  """The option's name in this language."""
+  name: String!
+
+  """
+  The option's description in this language, when the catalogue carries one.
+  """
+  description: String
+
+  """
+  The language this row is written in, as the platform's own language code.
+  """
+  languageCode: String!
+
+  """The option this row is a translation of."""
+  referenceId: ID
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+}
+
+"""
+A set of options a product offers together, such as all of its colours or all of its sizes.
+"""
+type ProductOptionGroup {
+  id: ID!
+
+  """The group's text, untranslated, as on the option."""
+  name: String!
+
+  """The product this group belongs to."""
+  productId: ID
+  product: Product
+
+  """The options filed under this group."""
+  options: [ProductOption!]
+
+  """
+  The group's per-language text, joined with the row. Null on a row that was not read with it.
+  """
+  translations: [ProductOptionGroupTranslation!]
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+}
+
+"""One language's copy of an option group's name."""
+type ProductOptionGroupTranslation {
+  id: ID!
+
+  """The group's name in this language."""
+  name: String!
+
+  """
+  The language this row is written in, as the platform's own language code.
+  """
+  languageCode: String!
+
+  """The group this row is a translation of."""
+  referenceId: ID
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+}
+
+"""The boundary of one page of options."""
+type ProductOptionEdge {
+  node: ProductOption!
+  cursor: String!
+}
+
+"""
+One page of options, with the total the filters select and the boundary cursors.
+"""
+type ProductOptionConnection {
+  nodes: [ProductOption!]!
+  edges: [ProductOptionEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields an option list may be sorted by.
+
+`groupId` is not among them. A relation key narrows a list, which is what the filter is for; the
+options of one group in a chosen order are that filter plus a sort key stated here.
+"""
+enum ProductOptionSortField {
+  createdAt
+  updatedAt
+  name
+  code
+}
+
+"""
+The order the options are returned in. At most three keys are accepted.
+"""
+input ProductOptionSort {
+  field: ProductOptionSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields an option list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`groupId` is stated as a filter rather than served as a root field of its own: the options of one
+group are these rows narrowed to that group, and a second root field for them would be a second
+surface that could disagree with this one.
+
+`name` and `code` narrow the option's own columns, never the translated text. A translation is a
+collection of rows, and the query protocol compares columns: the way to read the options whose French
+name is `Rouge` is to read the translations, not to state a filter this surface could not evaluate.
+"""
+input ProductOptionFilter {
+  id: IDFilter
+  name: StringFilter
+  code: StringFilter
+  groupId: IDFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [ProductOptionFilter!]
+  or: [ProductOptionFilter!]
+  not: ProductOptionFilter
+}
+
+"""
+What a caller states when it files an option.
+
+`name` is stated rather than optional because the column is: it carries no default and cannot be
+absent, so an option without one is a row the store refuses — requiring it here states that fact where
+a caller can read it instead of leaving it to a driver error.
+
+`code` and `groupId` are optional, as their columns are: an option the catalogue has no short name for
+is a row, and so is one that is not filed under a group.
+
+The tenant is not among the members. The delivered route stamps the tenant of the credential onto the
+row it writes, so a caller cannot state a scope it is not acting in. The organization is optional
+because the delivered route takes it from the body and nothing else supplies it.
+
+`translations` is deliberately absent, and its absence is the honest half of this input: the rows live
+in their own table with their own service methods, and the delivered create does not cascade to them.
+A member here would be accepted and silently dropped, which is worse than a member that does not
+exist. The option's per-language text is written by the product's own write, which is the operation
+that owns the option set as a whole.
+"""
+input CreateProductOptionInput {
+  name: String!
+  code: String
+  groupId: ID
+  organizationId: ID
+}
+
+"""
+What a caller may change on an option that exists. A member that is absent is left as it is.
+
+That is the delivered update's own behaviour rather than a promise made here: the route writes the
+members the body states and touches no others, so "absent" and "unchanged" coincide.
+
+`groupId` stated as `null` is therefore a different statement from omitting it — it files the option
+under no group — and the delivered route honours both, because the column is nullable and the write
+distinguishes the two.
+"""
+input UpdateProductOptionInput {
+  id: ID!
+  name: String
+  code: String
+  groupId: ID
+  organizationId: ID
+}
+
+"""The capability record of one variant."""
+type ProductVariantSetting {
+  id: ID!
+  isSubscription: Boolean!
+  isPurchaseAutomatically: Boolean!
+  canBeSold: Boolean!
+  canBePurchased: Boolean!
+  canBeCharged: Boolean!
+  canBeRented: Boolean!
+  isEquipment: Boolean!
+  trackInventory: Boolean!
+
+  """
+  The variant this row is the setting of. The foreign key is on the setting, which is the owning
+  side of the pairing; the variant reaches back through it rather than carrying one of its own.
+  """
+  productVariantId: ID
+  productVariant: ProductVariant
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+}
+
+"""The boundary of one page of settings."""
+type ProductVariantSettingEdge {
+  node: ProductVariantSetting!
+  cursor: String!
+}
+
+"""
+One page of settings, with the total the filters select and the boundary cursors.
+"""
+type ProductVariantSettingConnection {
+  nodes: [ProductVariantSetting!]!
+  edges: [ProductVariantSettingEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields a setting list may be sorted by.
+
+The two timestamps and the flags. A flag is a column with two values and therefore an order — the
+rows that carry it and the rows that do not — and offering a subset of a resource's own members
+would be a line no caller could predict. `productVariantId` is not among them: a relation key narrows
+a list, which is what the filter is for, and the order of variants is read from the variant
+connection rather than from this one.
+"""
+enum ProductVariantSettingSortField {
+  createdAt
+  updatedAt
+  isSubscription
+  isPurchaseAutomatically
+  canBeSold
+  canBePurchased
+  canBeCharged
+  canBeRented
+  isEquipment
+  trackInventory
+}
+
+"""
+The order the settings are returned in. At most three keys are accepted.
+"""
+input ProductVariantSettingSort {
+  field: ProductVariantSettingSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a setting list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`productVariantId` is stated as a filter rather than served as a root field of its own: the setting
+of one variant is one of these rows narrowed to that variant, and a second root field for it would
+be a second surface that could disagree with this one.
+"""
+input ProductVariantSettingFilter {
+  id: IDFilter
+  isSubscription: BooleanFilter
+  isPurchaseAutomatically: BooleanFilter
+  canBeSold: BooleanFilter
+  canBePurchased: BooleanFilter
+  canBeCharged: BooleanFilter
+  canBeRented: BooleanFilter
+  isEquipment: BooleanFilter
+  trackInventory: BooleanFilter
+  productVariantId: IDFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [ProductVariantSettingFilter!]
+  or: [ProductVariantSettingFilter!]
+  not: ProductVariantSettingFilter
+}
+
+"""
+What a caller states when it opens a setting.
+
+The variant, the organization and the flags, and every one of them optional: a setting's columns all
+carry a default, so a create that names nothing is the row the platform's own default-row operation
+writes, and requiring a member here would refuse a caller the delivered route serves.
+
+The tenant is not among the members. The delivered route stamps the tenant of the credential onto
+the row it writes, so a caller cannot state a scope it is not acting in; the organization is among
+them because the route takes it from the body and nothing else supplies it.
+
+`id` is not among them: a create that names an existing row is the update route stated on the create
+route, and a caller that means to change a row has the update field for it.
+"""
+input CreateProductVariantSettingInput {
+  productVariantId: ID
+  organizationId: ID
+  isSubscription: Boolean
+  isPurchaseAutomatically: Boolean
+  canBeSold: Boolean
+  canBePurchased: Boolean
+  canBeCharged: Boolean
+  canBeRented: Boolean
+  isEquipment: Boolean
+  trackInventory: Boolean
+}
+
+"""
+What a caller may change on a setting that exists. A member that is absent is left as it is.
+
+Every member but `id` is optional, which is the shape the delivered update route has: it writes the
+members the body states and leaves the rest of the row alone.
+"""
+input UpdateProductVariantSettingInput {
+  id: ID!
+  productVariantId: ID
+  organizationId: ID
+  isSubscription: Boolean
+  isPurchaseAutomatically: Boolean
+  canBeSold: Boolean
+  canBePurchased: Boolean
+  canBeCharged: Boolean
+  canBeRented: Boolean
+  isEquipment: Boolean
+  trackInventory: Boolean
+}
+
+"""One operator-facing classification of a product."""
+type ProductType {
+  id: ID!
+
+  """
+  The type's name in the requested language, merged from its translation.
+  """
+  name: String
+
+  """
+  The type's description in the requested language, merged from its translation.
+  """
+  description: String
+
+  """
+  The icon the back office draws beside the type, as the icon set's own name (`car-outline`). It is
+  carried as its value rather than declared as a schema enum: the value set belongs to the interface
+  library the console is built from and grows with it, so a closed enum here would make every new
+  icon a schema change — and the delivered route validates the member against that same set.
+  """
+  icon: String
+
+  """
+  When the type was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+  routes — the two removals this resource serves — and this column is the whole of what they write,
+  so without it a caller could not tell a live row from a withdrawn one on the answer to the write
+  that withdrew it.
+  """
+  deletedAt: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+}
+
+"""The boundary of one page of product types."""
+type ProductTypeEdge {
+  node: ProductType!
+  cursor: String!
+}
+
+"""
+One page of product types, with the total the filters select and the boundary cursors.
+"""
+type ProductTypeConnection {
+  nodes: [ProductType!]!
+  edges: [ProductTypeEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a product type list may be sorted by."""
+enum ProductTypeSortField {
+  createdAt
+  updatedAt
+  name
+  icon
+}
+
+"""
+The order the product types are returned in. At most three keys are accepted.
+"""
+input ProductTypeSort {
+  field: ProductTypeSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a product type list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+`name` and `description` are filterable because the delivered reader merges them onto the row before
+the connection sees it: narrowing a back-office list by the name in one language is the read the
+merged member exists for. A row for which no translation matched carries neither, which is what
+`isNull` states and what an `eq` never matches.
+"""
+input ProductTypeFilter {
+  id: IDFilter
+  name: StringFilter
+  description: StringFilter
+  icon: StringFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [ProductTypeFilter!]
+  or: [ProductTypeFilter!]
+  not: ProductTypeFilter
+}
+
+"""
+One language's copy of a type's descriptive facts.
+
+The rows are the type's own: a translation carries the type it belongs to, so the write states the
+language and the text, never which type — the parent of the write is the type the call is made on.
+"""
+input ProductTypeTranslationInput {
+  """The language this text is written in."""
+  languageCode: String!
+  name: String!
+  description: String
+}
+
+"""
+What a caller states when it declares a type.
+
+The organization is stated because the delivered create does not derive one: the tenant is stamped
+from the credential, never from an argument, but the organization is a member the caller names and the
+delivered route validates against the caller's own memberships. There is no member for the tenant, for
+the same reason there is none on any other write here.
+
+The type's product list is not a member either. The relation is not a column of this row and the
+delivered write does not cascade it, so a body stating it would be accepted and then dropped; a
+product is classified under a type by writing the product's own `productTypeId`.
+"""
+input CreateProductTypeInput {
+  organizationId: ID!
+
+  """
+  The text of the type, one member per language. A type with none has no name yet.
+  """
+  translations: [ProductTypeTranslationInput!]
+  icon: String
+}
+
+"""
+What a caller states when it edits a type that exists.
+
+The update replaces the row: the service reads the type to prove it is the caller's, removes it and
+persists the stated body under the verified path identifier, so a member the caller leaves out is
+written as the column's default rather than left as it is. `translations` is the one exception, and it
+is the reason this paragraph exists: the delivered service carries the existing rows over when the
+body omits them, because the rows are removed with their type and a caller editing the icon must not
+lose every language by not restating them. An explicit empty list is a caller asking for them to be
+cleared, and is honoured as such.
+"""
+input UpdateProductTypeInput {
+  id: ID!
+  organizationId: ID!
+  translations: [ProductTypeTranslationInput!]
+  icon: String
+}
+
+"""
+What one unit of a variant costs and what it is sold for, each with the currency it is stated in.
+"""
+type ProductVariantPrice {
+  id: ID!
+
+  """
+  The unit cost: what one unit of the variant costs the operator.
+  
+  The column is an integer, and the amount is carried as the platform's exact-decimal scalar because
+  the family money is compared in is the exact one. Nothing is rescaled or converted on the way out:
+  this is the value the column stores, in the currency named beside it.
+  """
+  unitCost: Decimal!
+
+  """The ISO 4217 code of the currency `unitCost` is expressed in."""
+  unitCostCurrency: String!
+
+  """The retail price: what one unit of the variant is sold for."""
+  retailPrice: Decimal!
+
+  """The ISO 4217 code of the currency `retailPrice` is expressed in."""
+  retailPriceCurrency: String!
+
+  """
+  The variant this row prices, as the identifier.
+  
+  Nullable, and genuinely so: the foreign key is nullable in the table and the delivered generator
+  relies on that — it writes the price row first and attaches it to the variant afterwards.
+  """
+  productVariantId: ID
+
+  """The variant named above, when the row was read with it."""
+  productVariant: ProductVariant
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+}
+
+"""The boundary of one page of prices."""
+type ProductVariantPriceEdge {
+  node: ProductVariantPrice!
+  cursor: String!
+}
+
+"""
+One page of prices, with the total the filters select and the boundary cursors.
+"""
+type ProductVariantPriceConnection {
+  nodes: [ProductVariantPrice!]!
+  edges: [ProductVariantPriceEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields a price list may be sorted by.
+
+The two timestamps and the two amounts. A price list ordered by what a unit costs is the read the
+columns exist for, and one ordered by when the row was written is how a change is found again.
+
+The two currency codes are not sort keys: the order of a currency code is the order of its spelling,
+which is not a fact about a price. A list of one currency is that currency stated as a filter.
+"""
+enum ProductVariantPriceSortField {
+  createdAt
+  updatedAt
+  unitCost
+  retailPrice
+}
+
+"""The order the prices are returned in. At most three keys are accepted."""
+input ProductVariantPriceSort {
+  field: ProductVariantPriceSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a price list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+The two amounts are stated through the decimal family, which is the family money is compared in: a
+bound a caller writes is an exact amount and is compared as one rather than through a binary fraction.
+**The columns are integers**, so an equality states the amount as the column holds it — a whole number,
+which is what every row this platform writes carries; the range operators are the ones a price list is
+searched with and need no such care.
+
+`unitCostCurrency` and `retailPriceCurrency` are stated as text rather than as an enum. The vocabulary
+is the platform's own currency list, which the entity types the columns with; re-declaring it here
+would claim a vocabulary this domain does not own, and the two declarations would diverge the day a
+currency is added.
+
+`productVariantId` is stated as a filter rather than served as a root field of its own: the price of
+one variant is one of these rows narrowed to that variant, and a second root field for it would be a
+second surface that could disagree with this one.
+"""
+input ProductVariantPriceFilter {
+  id: IDFilter
+  unitCost: DecimalFilter
+  unitCostCurrency: StringFilter
+  retailPrice: DecimalFilter
+  retailPriceCurrency: StringFilter
+  productVariantId: IDFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [ProductVariantPriceFilter!]
+  or: [ProductVariantPriceFilter!]
+  not: ProductVariantPriceFilter
+}
+
+"""
+What a caller states when it prices a variant.
+
+Every member is optional, because every column behind them either carries a default or is nullable:
+the amounts default to zero and the currencies to the platform's own, and the variant and the
+organization are nullable. A create that names nothing is therefore the row of zeros in the default
+currency that the delivered default-price operation writes, and requiring a member here would refuse a
+caller the delivered route serves.
+
+`productVariantId` is among the members and optional for the same reason the column is: the delivered
+generator writes the price row first and attaches it to the variant afterwards, so a schema that
+required the variant here would refuse the order the platform itself writes in.
+
+The tenant is not among the members. The delivered route stamps the tenant of the credential onto the
+row it writes, so a caller cannot state a scope it is not acting in.
+"""
+input CreateProductVariantPriceInput {
+  unitCost: Decimal
+  unitCostCurrency: String
+  retailPrice: Decimal
+  retailPriceCurrency: String
+  productVariantId: ID
+  organizationId: ID
+}
+
+"""
+What a caller may change on a price that exists. A member that is absent is left as it is.
+
+That is the delivered update's own behaviour rather than a promise made here: the route writes the
+members the body states and touches no others, so "absent" and "unchanged" coincide. An amount stated
+as the same number in a different currency is a different price and not an edit of this one — both
+halves of the pair are members, so a caller that means to move a price to another currency states both.
+"""
+input UpdateProductVariantPriceInput {
+  id: ID!
+  unitCost: Decimal
+  unitCostCurrency: String
+  retailPrice: Decimal
+  retailPriceCurrency: String
+  productVariantId: ID
+  organizationId: ID
+}
+
 """One buyable configuration of a product."""
 type ProductVariant {
   id: ID!
@@ -3365,6 +4560,189 @@ type Product {
   isArchived: Boolean
   tenantId: ID
   organizationId: ID
+}
+
+"""The boundary of one page of products."""
+type ProductEdge {
+  node: Product!
+  cursor: String!
+}
+
+"""
+One page of products, with the total the filters select and the boundary cursors.
+"""
+type ProductConnection {
+  nodes: [Product!]!
+  edges: [ProductEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a product list may be sorted by."""
+enum ProductSortField {
+  createdAt
+  updatedAt
+  code
+  name
+  enabled
+}
+
+"""
+The order the products are returned in. At most three keys are accepted.
+"""
+input ProductSort {
+  field: ProductSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a product list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+"""
+input ProductFilter {
+  id: IDFilter
+  code: StringFilter
+  enabled: BooleanFilter
+  imageUrl: StringFilter
+
+  """
+  The product's name in the requested language, as the delivered list read merges it.
+  """
+  name: StringFilter
+
+  """
+  The product's description in the requested language, as the delivered list read merges it.
+  """
+  description: StringFilter
+  featuredImageId: IDFilter
+  productTypeId: IDFilter
+  productCategoryId: IDFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [ProductFilter!]
+  or: [ProductFilter!]
+  not: ProductFilter
+}
+
+"""
+One translation of a product's own name and description.
+
+`name` is required rather than accepted and refused later: the translation row's column is not
+nullable, so a translation without a name cannot be stored at all.
+"""
+input ProductTranslationInput {
+  languageCode: String!
+  name: String!
+  description: String
+}
+
+"""One translation of an option's name."""
+input ProductOptionTranslationInput {
+  languageCode: String!
+  name: String!
+  description: String
+}
+
+"""One translation of the group an option belongs to."""
+input ProductOptionGroupTranslationInput {
+  languageCode: String!
+  name: String!
+}
+
+"""
+One choice a product offers inside a group.
+
+`id` is absent on an option the caller is adding and present on one that exists: the delivered paths
+branch on exactly that, storing a row when no identifier is stated and reading the existing one when
+it is. `code` is optional because the operator's own shorthand for an option has no column behind it
+that requires a value; `name` is required because the row cannot be stored without one.
+"""
+input ProductOptionInput {
+  id: ID
+  name: String!
+  code: String
+  translations: [ProductOptionTranslationInput!]
+}
+
+"""
+A set of choices a product offers — the size, the colour — with the options it holds.
+
+`id` selects the same branch as it does on an option: an absent identifier is a group being added, a
+stated one is a group being changed or withdrawn.
+"""
+input ProductOptionGroupInput {
+  id: ID
+  name: String!
+  options: [ProductOptionInput!]
+  translations: [ProductOptionGroupTranslationInput!]
+}
+
+"""
+What a caller states when it records a product.
+
+The tenant is not a member: the delivered create stamps the caller's own tenant onto the row and
+overwrites anything a body states, so a member here would promise a scope the write refuses. The
+organization is a member, because the delivered create takes it from the body and the row's
+organization column is what the write stores.
+"""
+input CreateProductInput {
+  """
+  The operator-facing code, unique within the organization. The delivered create requires it.
+  """
+  code: String!
+
+  """The organization the product is filed under."""
+  organizationId: ID
+
+  """
+  Whether the product may be sold. A disabled product stays readable and cannot be ordered.
+  """
+  enabled: Boolean
+
+  """
+  A denormalised thumbnail URL, for the lists that must not join the asset table.
+  """
+  imageUrl: String
+
+  """The asset the storefront shows as the product's cover."""
+  featuredImageId: ID
+
+  """The operator's classification of the product."""
+  productTypeId: ID
+
+  """The merchandising grouping the product belongs to."""
+  productCategoryId: ID
+
+  """The facets to attach to the product."""
+  tagIds: [ID!]
+
+  """The product's name and description, one row per language."""
+  translations: [ProductTranslationInput!]
+
+  """
+  The option groups the product offers, stored with their options and translations.
+  """
+  optionGroupCreateInputs: [ProductOptionGroupInput!]!
+}
+
+"""
+What a caller may change on a product that exists.
+
+Every member is optional except the group list both delivered paths read unconditionally, and a
+member that is absent is left as it is. The group lists are the three directions of one edit — the
+groups to add, the groups to change and the groups to withdraw — and the option list is the options
+to withdraw from the groups that stay.
+"""
+input UpdateProductInput {
+  id: ID!
+  productTypeId: ID
+  productCategoryId: ID
+  tagIds: [ID!]
+  translations: [ProductTranslationInput!]
+  optionGroupCreateInputs: [ProductOptionGroupInput!]!
+  optionGroupUpdateInputs: [ProductOptionGroupInput!]
+  optionGroupDeleteInputs: [ProductOptionGroupInput!]
+  optionDeleteInputs: [ProductOptionInput!]
 }
 
 """

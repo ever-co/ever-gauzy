@@ -10,6 +10,7 @@ import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ContactGroupService } from '../contact-group/contact-group.service';
+import { ContactGroupEventPublisher } from '../contact-group/contact-group-event.publisher';
 import { ContactGroupMember } from './contact-group-member.entity';
 import { TypeOrmContactGroupMemberRepository } from './repository/type-orm-contact-group-member.repository';
 import { MikroOrmContactGroupMemberRepository } from './repository/mikro-orm-contact-group-member.repository';
@@ -35,6 +36,13 @@ import { MikroOrmContactGroupMemberRepository } from './repository/mikro-orm-con
  * by every read here — the caller has to ask explicitly to see one — and the materialiser writes only
  * `RULE` and `IMPORT` rows, because a materialiser that could write `MANUAL` rows would be a
  * re-evaluation that quietly adopts an operator's work.
+ *
+ * **The membership write is announced from here rather than from the surfaces that call it.** The REST
+ * membership route and the two membership mutations perform the same writes through this service, so
+ * announcing here is what keeps a subscriber from being able to tell which protocol wrote a row. The
+ * publisher itself is declared by the group module — this module imports that one, so a publisher
+ * declared here could not be reached by the group's own writes, while one declared there is reachable
+ * from both without closing a cycle.
  */
 @Injectable()
 export class ContactGroupMemberService extends TenantAwareCrudService<ContactGroupMember> {
@@ -49,7 +57,13 @@ export class ContactGroupMemberService extends TenantAwareCrudService<ContactGro
 		 * group exist inside the caller's scope, and does its kind allow a hand-written membership? The
 		 * dependency runs one way — the group service never reads membership — so no cycle is created.
 		 */
-		private readonly contactGroupService: ContactGroupService
+		private readonly contactGroupService: ContactGroupService,
+		/**
+		 * The domain's announcement path, reached through the group module for the reason the class note
+		 * states. A required collaborator: a membership write that stopped announcing would leave the
+		 * subscription silently describing a membership the platform no longer has.
+		 */
+		private readonly contactGroupEventPublisher: ContactGroupEventPublisher
 	) {
 		super(typeOrmContactGroupMemberRepository, mikroOrmContactGroupMemberRepository);
 	}
@@ -79,7 +93,11 @@ export class ContactGroupMemberService extends TenantAwareCrudService<ContactGro
 
 		this.contactGroupService.assertMembershipWritable(group);
 
-		return this.writeMember(groupId, input, ContactGroupSource.MANUAL);
+		const member = await this.writeMember(groupId, input, ContactGroupSource.MANUAL);
+
+		await this.contactGroupEventPublisher.membersAssigned(group, [member.customerId], ContactGroupSource.MANUAL);
+
+		return member;
 	}
 
 	/**
@@ -141,6 +159,16 @@ export class ContactGroupMemberService extends TenantAwareCrudService<ContactGro
 			members.push(await this.writeMember(groupId, input, ContactGroupSource.MANUAL));
 		}
 
+		// One fact for the whole write, carrying the parties it named: the catalogue states the event as
+		// `customerIds[]` with a single `source`, and a stream that fired once per party would make a
+		// bulk import a broadcast. The list was validated as a whole before any of it was written, so
+		// either every membership here was granted or the announcement never runs.
+		await this.contactGroupEventPublisher.membersAssigned(
+			group,
+			members.map((member) => member.customerId),
+			ContactGroupSource.MANUAL
+		);
+
 		return members;
 	}
 
@@ -170,7 +198,13 @@ export class ContactGroupMemberService extends TenantAwareCrudService<ContactGro
 			);
 		}
 
+		// The group is resolved before the removal, so the announcement below can name the group the
+		// membership left without a read that could fail after the row is already gone.
+		const group = await this.contactGroupService.findGroupOrFail(groupId);
+
 		await this.softDelete(existing.id);
+
+		await this.contactGroupEventPublisher.membersUnassigned(group, [existing.customerId], source);
 
 		return existing;
 	}

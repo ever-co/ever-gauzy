@@ -4,9 +4,10 @@
 # once for the whole platform, so a domain adds fields to it and never declares its own.
 #
 # Every field below is one the delivered REST routes already serve — the list, the one row, the
-# generation of a product's variants, the edit, the removal and the withdrawal of the featured image
-# — under the same guard and with the same scope, so a client that reaches the capability over one
-# protocol is not given a narrower or a wider one than the client that reaches it over the other.
+# count, the generation of a product's variants, the edit, the removal and the withdrawal of the
+# featured image — under the same guard and with the same scope, so a client that reaches the
+# capability over one protocol is not given a narrower or a wider one than the client that reaches it
+# over the other.
 #
 # The list is a connection rather than a bare array. It takes the same query protocol the REST list
 # route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
@@ -38,6 +39,18 @@ extend type Query {
 	One variant, or null when there is none.
 	"""
 	productVariant(id: ID!): ProductVariant
+
+	"""
+	How many variants the caller's tenant holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+	inventory has to keep apart. The delivered count route binds its query string to the store's own
+	`where`, a shape no schema can state, so the field offers no narrowing of its own rather than an
+	argument the resolver could not pass on. It is not the connection's `totalCount` either: that is
+	the count of the rows the connection narrowed to, and this is the count of the caller's rows.
+	"""
+	productVariantCount: Int
 }
 
 extend type Mutation {

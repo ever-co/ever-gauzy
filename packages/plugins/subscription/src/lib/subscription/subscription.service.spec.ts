@@ -1806,6 +1806,26 @@ describe('SubscriptionService — a failure is a state, not an exception (doc 11
 		expect(fixture.orderCalls).toEqual([]);
 	});
 
+	it('reports an unusable instrument with the cycle’s own payer code, which is what dunning keys on', async () => {
+		// A revoked — or expired, or missing — instrument is terminal: the customer has to supply
+		// another one, and the code that action is keyed on is this domain's own (doc 10, "the
+		// instrument becomes unusable while a subscription points at it"). The capability's own code for
+		// the same guard names the row it read rather than the action the customer takes, so it is not
+		// what enters dunning or triggers the "update your payment method" notification.
+		const fixture = subscriptionFixture({
+			instrumentRefusal: { reasonCode: 'PAYMENT_METHOD_TOKEN_REVOKED', reason: 'the card was removed' }
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({
+			status: SubscriptionBillingStatus.FAILED,
+			errorCode: 'SUBSCRIPTION_PAYMENT_METHOD_MISSING',
+			message: 'the card was removed'
+		});
+		expect(fixture.orderCalls).toEqual([]);
+	});
+
 	it('fails the cycle with the capability’s own reason when the remembered payer is refused', async () => {
 		const fixture = subscriptionFixture({
 			instrumentRefusal: { reasonCode: 'PAYMENT_INSTRUMENT_REVOKED', reason: 'the card was removed' }

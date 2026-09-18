@@ -1,8 +1,20 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { AdjustmentModule, SequenceModule, TaxLineModule, RolePermissionModule } from '@gauzy/core';
+import {
+	AdjustmentModule,
+	ChannelModule,
+	IdempotencyModule,
+	Product,
+	ProductTranslation,
+	ProductVariant,
+	SequenceModule,
+	TaxLineModule,
+	RolePermissionModule
+} from '@gauzy/core';
 import { CartModule } from '@gauzy/plugin-cart';
+import { PricingModule } from '@gauzy/plugin-pricing';
+import { TaxModule } from '@gauzy/plugin-tax';
 import { ALL_ORDER_ENTITIES } from './entities';
 import { OrderController } from './order/order.controller';
 import { OrderService } from './order/order.service';
@@ -51,6 +63,7 @@ import { TypeOrmOrderHistoryRepository } from './order-history/repository/type-o
 import { MikroOrmOrderHistoryRepository } from './order-history/repository/mikro-orm-order-history.repository';
 import { OrderCheckoutHandler } from './checkout/order-checkout.handler';
 import { OrderTotalsService } from './order-totals/order-totals.service';
+import { SubscriptionOrderService } from './subscription-order/subscription-order.service';
 
 /**
  * The order module.
@@ -64,6 +77,15 @@ import { OrderTotalsService } from './order-totals/order-totals.service';
  * The cart module is imported for one reason: completing a cart produces an order, and the handler that
  * does it must be able to read the cart it is completing. The dependency is one-way — the cart package
  * never imports this one.
+ *
+ * Four more modules are imported for the order a recurring cycle raises. `ChannelModule` answers which
+ * channel and region a renewal that names no originating order is raised in, `PricingModule` answers
+ * whether the prices it carries already contain tax, `TaxModule` rates its lines, and
+ * `IdempotencyModule` is the platform's retry-safe request store the cycle's own key is claimed under
+ * — because a retried attempt at one cycle must not raise a second order. The product, its
+ * translations and its variants are the catalogue's own tables and are registered here rather than
+ * read across a package boundary: an order line has to state a title and a tax category, and only the
+ * catalogue's rows say what they are.
  */
 @Module({
 	controllers: [
@@ -82,11 +104,15 @@ import { OrderTotalsService } from './order-totals/order-totals.service';
 	imports: [
 		// The controllers below are guarded, and the guard resolves the caller's permissions.
 		RolePermissionModule,
-		TypeOrmModule.forFeature(ALL_ORDER_ENTITIES),
-		MikroOrmModule.forFeature(ALL_ORDER_ENTITIES),
+		TypeOrmModule.forFeature([...ALL_ORDER_ENTITIES, Product, ProductTranslation, ProductVariant]),
+		MikroOrmModule.forFeature([...ALL_ORDER_ENTITIES, Product, ProductTranslation, ProductVariant]),
 		AdjustmentModule,
 		TaxLineModule,
 		SequenceModule,
+		ChannelModule,
+		IdempotencyModule,
+		PricingModule,
+		TaxModule,
 		CartModule
 	],
 	providers: [
@@ -95,6 +121,7 @@ import { OrderTotalsService } from './order-totals/order-totals.service';
 		MikroOrmOrderRepository,
 		OrderTotalsService,
 		OrderCheckoutHandler,
+		SubscriptionOrderService,
 		OrderLineService,
 		TypeOrmOrderLineRepository,
 		MikroOrmOrderLineRepository,
@@ -140,7 +167,8 @@ import { OrderTotalsService } from './order-totals/order-totals.service';
 		OrderTransactionService,
 		OrderCreditLineService,
 		OrderHistoryService,
-		OrderCheckoutHandler
+		OrderCheckoutHandler,
+		SubscriptionOrderService
 	]
 })
 export class OrderModule {}

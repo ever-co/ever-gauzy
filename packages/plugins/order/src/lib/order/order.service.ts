@@ -99,12 +99,12 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 * afterwards, editing either one cannot change the other.
 	 *
 	 * @param cart The cart, with its totals already recomputed and validated by the cart package.
-	 * @param options The checkout request.
+	 * @param options The checkout request, and the order a recurrence came from when there was one.
 	 * @returns The placed and confirmed order.
 	 */
 	public async createFromCart(
 		cart: ICommerceCart & { lines?: DeepPartial<OrderLine>[]; shippingMethods?: DeepPartial<OrderShippingMethod>[] },
-		options: { idempotencyKey?: string; source?: string } = {}
+		options: { idempotencyKey?: string; source?: string; parentOrderId?: ID } = {}
 	): Promise<Order> {
 		if (cart.orderId) {
 			throw new BadRequestException(
@@ -122,6 +122,9 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			currencyDecimals: cart.currencyDecimals,
 			locale: cart.locale,
 			cartId: cart.id,
+			// The order a recurrence came from. A cart does not carry one — the lineage is a fact about
+			// the order, not about the basket it was built from — so the caller that knows it states it.
+			parentOrderId: options.parentOrderId,
 			source: options.source ?? 'CHANNEL',
 			isDraft: false,
 			metadata: { ...(cart.metadata ?? {}), idempotencyKey: options.idempotencyKey }

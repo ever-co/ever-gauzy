@@ -28,6 +28,18 @@ import { ContactBuyerResolver } from './../contact-buyer/contact-buyer.resolver'
 import { ContactBuyerModule } from './../contact-buyer/contact-buyer.module';
 import { ProductVariantResolver } from './../product-variant/product-variant.resolver';
 import { ProductVariantModule } from './../product-variant/product-variant.module';
+import { ProductResolver } from './../product/product.resolver';
+import { ProductModule } from './../product/product.module';
+import { ProductCategoryResolver } from './../product-category/product-category.resolver';
+import { ProductCategoryModule } from './../product-category/product-category.module';
+import { ProductTypeResolver } from './../product-type/product-type.resolver';
+import { ProductTypeModule } from './../product-type/product-type.module';
+import { ProductOptionResolver } from './../product-option/product-option.resolver';
+import { ProductOptionModule } from './../product-option/product-option-module';
+import { ProductVariantPriceResolver } from './../product-variant-price/product-variant-price.resolver';
+import { ProductVariantPriceModule } from './../product-variant-price/product-variant-price-module';
+import { ProductVariantSettingResolver } from './../product-setting/product-setting.resolver';
+import { ProductVariantSettingModule } from './../product-setting/product-setting.module';
 
 /**
  * Resolvers the platform itself ships.
@@ -60,7 +72,17 @@ const CORE_RESOLVERS: Array<Type<any>> = [
 	ContactBuyerResolver,
 	// The catalogue's buyable unit. A variant is served over REST by `/api/product-variants`, so the
 	// same capability is served here rather than over REST alone.
-	ProductVariantResolver
+	ProductVariantResolver,
+	// The rest of the catalogue: the product, its category and type, its options, and the two rows that
+	// hang off a variant — its price and its setting. Each was served over REST and nowhere else, so each
+	// is a capability the one GraphQL endpoint was missing. Every one of them mirrors its own controller's
+	// routes, including the guard chain and the permission each route carries.
+	ProductResolver,
+	ProductCategoryResolver,
+	ProductTypeResolver,
+	ProductOptionResolver,
+	ProductVariantPriceResolver,
+	ProductVariantSettingResolver
 ];
 
 /**
@@ -103,8 +125,16 @@ const CORE_RESOLVER_MODULES: Array<Type<any>> = [
 	ContactCredentialModule,
 	ContactBuyerModule,
 	// The variant module provides the service, the command bus the two write fields dispatch through
-	// and the product service the generator reads its product from.
-	ProductVariantModule
+	// and the product service the generator reads its product from. The catalogue modules beside it do
+	// the same for their own resolvers: each is imported here because a module's imports are not
+	// inherited, so the module that hosts a resolver is the module that has to reach its services.
+	ProductVariantModule,
+	ProductModule,
+	ProductCategoryModule,
+	ProductTypeModule,
+	ProductOptionModule,
+	ProductVariantPriceModule,
+	ProductVariantSettingModule
 ];
 
 /**

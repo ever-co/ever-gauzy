@@ -1,0 +1,92 @@
+# The product option domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/product-options` routes already serve, under the same
+# guard and with the same scope, so a client that reaches a capability over one protocol is not given
+# a narrower or a wider one than the client that reaches it over the other. The controller declares no
+# route of its own: the list, the one row, the count, the creation, the edit, the two removals and the
+# restore are the ones every resource of this platform is mounted with, and they are all mirrored here,
+# because a capability the REST surface serves and this one does not is the whole of what the
+# two-protocol rule forbids.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. The paginated list route has no field of its own:
+# the page is what the connection answers with, so a second field for it would be a second surface
+# that could disagree with this one. The count does have one — a bare number is not a connection, and
+# `totalCount` is not that number: it is the count of the rows the connection narrowed to, while the
+# count route counts the caller's own rows. `withDeleted` is deliberately absent: the delivered list
+# method reads live rows only, and offering an argument that cannot be honoured would be worse than
+# not offering it.
+#
+# The list states no order of its own and the delivered method therefore answers in the store's, so the
+# connection's default is the one that makes a cursor walk total — see `ProductOptionSortField` and the
+# resolver's declared default — rather than a reproduction of an order the route never declared.
+
+extend type Query {
+	"""
+	The options of the caller's tenant.
+	"""
+	productOptions(
+		filter: ProductOptionFilter
+		sort: [ProductOptionSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ProductOptionConnection!
+
+	"""
+	One option of the caller's tenant, or null when there is none.
+	"""
+	productOption(id: ID!): ProductOption
+
+	"""
+	How many options the caller's tenant holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+	inventory has to keep apart. The delivered count route binds its query string to the store's own
+	`where`, a shape no schema can state, so the field offers no narrowing of its own rather than an
+	argument the resolver could not pass on.
+	"""
+	productOptionCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files an option, with the group it answers for.
+	"""
+	createProductOption(input: CreateProductOptionInput!): ProductOption!
+
+	"""
+	Changes the descriptive facts of an option. A member the caller leaves out is left as it is.
+	"""
+	updateProductOption(input: UpdateProductOptionInput!): ProductOption!
+
+	"""
+	Removes an option outright: the row is gone and nothing reads it back.
+
+	The two removals this resource serves are not the same operation, so both are stated rather than
+	one of them being left to a client to discover on the other protocol.
+	"""
+	deleteProductOption(id: ID!): Boolean!
+
+	"""
+	Softly removes an option: the row stays in the table, marked as removed, and the restore below
+	reads it back. The answer is the row as it now stands, which is what the delivered route answers
+	with.
+	"""
+	softDeleteProductOption(id: ID!): ProductOption!
+
+	"""
+	Restores an option that was softly removed, clearing the marker the removal set.
+	"""
+	recoverProductOption(id: ID!): ProductOption!
+}

@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { GraphqlSubscriptionModule } from '../graphql/subscriptions';
 import { ContactGroup } from './contact-group.entity';
 import { ContactGroupService } from './contact-group.service';
 import { ContactGroupController } from './contact-group.controller';
 import { ContactGroupResolver } from './contact-group.resolver';
+import { ContactGroupEventPublisher } from './contact-group-event.publisher';
 import { TypeOrmContactGroupRepository } from './repository/type-orm-contact-group.repository';
 import { MikroOrmContactGroupRepository } from './repository/mikro-orm-contact-group.repository';
 
@@ -31,19 +33,33 @@ import { MikroOrmContactGroupRepository } from './repository/mikro-orm-contact-g
  * split for its own sake.** `ContactGroupMemberModule` imports this one, so injecting the pivot's service
  * here would close a cycle; the membership routes and the `members` / `memberCount` field resolvers are
  * therefore declared there, beside the service that owns the fact.
+ *
+ * **`GraphqlSubscriptionModule` is imported for the publisher, and the publisher is exported.** The
+ * group's own writes announce through it, and so do the membership writes: `ContactGroupMemberModule`
+ * imports this module, so a publisher declared here is reachable by both services while the dependency
+ * between the two modules stays one way. A publisher declared in the membership module instead could
+ * not be reached by the group's writes, and re-declaring one there would give the process a second
+ * catalogue declaration and a second announcement path over the same fact.
  */
 @Module({
-	imports: [TypeOrmModule.forFeature([ContactGroup]), MikroOrmModule.forFeature([ContactGroup]), RolePermissionModule],
+	imports: [
+		TypeOrmModule.forFeature([ContactGroup]),
+		MikroOrmModule.forFeature([ContactGroup]),
+		RolePermissionModule,
+		GraphqlSubscriptionModule
+	],
 	controllers: [ContactGroupController],
 	providers: [
 		ContactGroupService,
 		ContactGroupResolver,
+		ContactGroupEventPublisher,
 		TypeOrmContactGroupRepository,
 		MikroOrmContactGroupRepository
 	],
 	exports: [
 		ContactGroupService,
 		ContactGroupResolver,
+		ContactGroupEventPublisher,
 		TypeOrmContactGroupRepository,
 		MikroOrmContactGroupRepository
 	]

@@ -141,6 +141,20 @@ export class ProductVariantResolver {
 	}
 
 	/**
+	 * How many variants the caller's tenant has.
+	 *
+	 * The same call the count route makes, with the same absence of narrowing. That route binds its
+	 * query string to the store's own `where` and hands it to `countBy`; the connection protocol has
+	 * no argument of that shape, so the field passes none and counts the caller's own rows — the
+	 * tenant is applied to the criterion by the service, from the credential rather than from the
+	 * caller, which is what the route's bare call counts too.
+	 */
+	@Query('productVariantCount')
+	async productVariantCount(): Promise<number> {
+		return await this.productVariantService.countBy();
+	}
+
+	/**
 	 * Generates one variant per option combination.
 	 *
 	 * The product is read first, and the scope the generated rows are stamped with is the product's

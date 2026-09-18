@@ -75,6 +75,27 @@ const CHARGED_SETUP_FEES = 'chargedSetupFeePlanIds';
 const PENDING_CREDIT = 'pendingCredit';
 
 /**
+ * The codes that mean the instrument a subscription points at can no longer be charged.
+ *
+ * A revocation and an expiry are terminal states of a row, and a miss is a row that is not there at
+ * all; whichever one a cycle meets, the action the platform takes is the same — the customer supplies
+ * another instrument — and that action is keyed on this domain's own code. The orders specification
+ * states it for exactly this case ("the instrument becomes unusable while a subscription points at
+ * it": the attempt fails with `SUBSCRIPTION_PAYMENT_METHOD_MISSING`, the code that enters dunning and
+ * triggers the "update your payment method" notification).
+ *
+ * Every other answer the capability gives names a different condition with a different next step — a
+ * restricted account, an ambiguous default instrument, a currency the account does not settle in — so
+ * it is reported verbatim rather than flattened into the one code, and so is a code this domain does
+ * not know.
+ */
+const UNUSABLE_INSTRUMENT_CODES: ReadonlyArray<string> = [
+	'PAYMENT_METHOD_TOKEN_REVOKED',
+	'PAYMENT_METHOD_TOKEN_EXPIRED',
+	'PAYMENT_METHOD_TOKEN_NOT_FOUND'
+];
+
+/**
  * The subscription lifecycle and the recurring billing run.
  *
  * Four rules make this service what it is, and each of them exists because the alternative is a
@@ -1628,7 +1649,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			return {
 				...remembered,
 				refusal: {
-					code: resolved?.reasonCode ?? 'SUBSCRIPTION_PAYMENT_METHOD_MISSING',
+					code: this.cycleCodeOf(resolved?.reasonCode),
 					message: resolved?.reason ?? 'The remembered payer may not be charged.'
 				}
 			};
@@ -1638,6 +1659,17 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			accountHolderId: resolved.accountHolderId ?? remembered.accountHolderId,
 			paymentMethodTokenId: resolved.paymentMethodTokenId ?? remembered.paymentMethodTokenId
 		};
+	}
+
+	/**
+	 * @param reasonCode The code the stored-instrument capability refused with, when it refused.
+	 * @returns The code the cycle carries: this domain's own when the instrument itself is unusable,
+	 * and the capability's own for every other refusal.
+	 */
+	private cycleCodeOf(reasonCode?: string): string {
+		return reasonCode && !UNUSABLE_INSTRUMENT_CODES.includes(reasonCode)
+			? reasonCode
+			: 'SUBSCRIPTION_PAYMENT_METHOD_MISSING';
 	}
 
 	/**

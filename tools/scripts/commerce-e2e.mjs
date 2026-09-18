@@ -44,6 +44,15 @@ const RESOURCES = [
 	// call answered `500`. A sweep that only checks that a resource is mounted does not see that, which is
 	// why the list is read here rather than only the products it hangs from.
 	{ path: '/api/product-variants', capability: 'catalog' },
+	// The rest of the catalogue's own resources, read for the same reason: each is a capability the
+	// catalogue's GraphQL surface must answer for, and a resource that is mounted but cannot be read is
+	// invisible to a sweep that only looks for a route.
+	{ path: '/api/products', capability: 'catalog' },
+	{ path: '/api/product-categories', capability: 'catalog' },
+	{ path: '/api/product-types', capability: 'catalog' },
+	{ path: '/api/product-options', capability: 'catalog' },
+	{ path: '/api/product-variant-price', capability: 'catalog' },
+	{ path: '/api/product-variant-settings', capability: 'catalog' },
 	{ path: '/api/product-prices', capability: 'pricing' },
 	{ path: '/api/tax-rates', capability: 'tax' },
 	{ path: '/api/stock-levels', capability: 'inventory' },
@@ -59,7 +68,10 @@ const RESOURCES = [
 	{ path: '/api/purchase-orders', capability: 'purchasing' },
 	{ path: '/api/entitlements', capability: 'entitlement' },
 	{ path: '/api/sellers', capability: 'marketplace' },
-	{ path: '/api/search/index-definitions', capability: 'search' }
+	{ path: '/api/search/index-definitions', capability: 'search' },
+	// The party-data kernel the commerce packages target: a group is what a price list, a promotion and a
+	// shipping rule are addressed to, so the resource is swept here rather than assumed.
+	{ path: '/api/contact-groups', capability: 'contact' }
 ];
 
 /** Root fields the kernel itself must serve over the one GraphQL endpoint. */
@@ -328,9 +340,14 @@ async function main() {
 	const missing = [];
 	const aliases = {
 		// A resource whose GraphQL root field is named for the concept rather than for the route.
-		'/api/search/index-definitions': 'searchIndexDefinitions'
+		'/api/search/index-definitions': 'searchIndexDefinitions',
+		// The delivered route is singular and the concept is plural: `/api/product-variant-price` is the
+		// price of a variant, and the schema names the collection for what it collects.
+		'/api/product-variant-price': 'productVariantPrices'
 	};
-	for (const resource of [...RESOURCES.map((entry) => entry.path), ...Object.keys(aliases)]) {
+	// An alias key may also name a resource the sweep reads, so the two lists are unioned rather than
+	// concatenated: a resource in both is one check, not two.
+	for (const resource of [...new Set([...RESOURCES.map((entry) => entry.path), ...Object.keys(aliases)])]) {
 		const expected = aliases[resource] ?? rootFieldFor(resource);
 		if (!fields.includes(expected)) missing.push(`${resource} → ${expected}`);
 	}

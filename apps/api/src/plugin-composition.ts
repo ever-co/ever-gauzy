@@ -8,7 +8,12 @@ import {
 	WarehouseFulfillmentService
 } from '@gauzy/plugin-fulfillment';
 import { InventoryModule, StockAvailabilityService, StockLedgerService } from '@gauzy/plugin-inventory';
-import { OrderLineFulfillmentService, OrderLineService, OrderModule } from '@gauzy/plugin-order';
+import {
+	OrderLineFulfillmentService,
+	OrderLineService,
+	OrderModule,
+	SubscriptionOrderService
+} from '@gauzy/plugin-order';
 import { PricingModule, RecurringPriceService } from '@gauzy/plugin-pricing';
 import { PAYMENT_ORDER_LINE_REFUND, PaymentModule, ReturnRefundService } from '@gauzy/plugin-payment';
 import {
@@ -24,7 +29,12 @@ import {
 	RETURNS_SHIPMENT_GATEWAY,
 	RETURNS_STOCK_LEDGER
 } from '@gauzy/plugin-returns';
-import { SUBSCRIPTION_CATALOG, SUBSCRIPTION_INSTRUMENTS, SUBSCRIPTION_PRICING } from '@gauzy/plugin-subscription';
+import {
+	SUBSCRIPTION_CATALOG,
+	SUBSCRIPTION_INSTRUMENTS,
+	SUBSCRIPTION_ORDER_GATEWAY,
+	SUBSCRIPTION_PRICING
+} from '@gauzy/plugin-subscription';
 import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-warehouse';
 
 /**
@@ -109,6 +119,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// A renewal with nobody present has to ask whether the payer the subscription remembers may
 		// still be charged, and the tables that answer it are the kernel's.
 		{ provide: SUBSCRIPTION_INSTRUMENTS, useExisting: PaymentInstrumentEligibilityService },
+		// A billing period raises the order it bills through the ordinary order path, and the package
+		// that owns orders is the one that raises it: the cycle states its lines, its amount and its
+		// payer, and receives an order back.
+		{ provide: SUBSCRIPTION_ORDER_GATEWAY, useExisting: SubscriptionOrderService },
 		// The cart asks what may be sold before it accepts a line, and the inventory package owns the
 		// level rows the answer is derived from.
 		{ provide: CART_STOCK_AVAILABILITY, useExisting: StockAvailabilityService },
@@ -135,6 +149,7 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		ENTITLEMENT_CATALOG_PORT,
 		PURCHASING_APPROVAL,
 		SUBSCRIPTION_INSTRUMENTS,
+		SUBSCRIPTION_ORDER_GATEWAY,
 		CART_STOCK_AVAILABILITY,
 		WAREHOUSE_STOCK_LEDGER,
 		RETURNS_STOCK_LEDGER,

@@ -47,10 +47,6 @@ const ROOT = process.argv[2] ? resolve(process.argv[2]) : resolve(HERE, '..', '.
  * stops being true.
  */
 const AWAITING_PROVIDER = {
-	SUBSCRIPTION_ORDER_GATEWAY: {
-		owner: '@gauzy/plugin-order',
-		needs: 'Raising the order a billing period produces, and the proration order a mid-period change produces.'
-	},
 	SELLER_MEMBERSHIP_RESOLVER: {
 		owner: 'the installation',
 		needs:

@@ -46,3 +46,204 @@ type Product {
 	tenantId: ID
 	organizationId: ID
 }
+
+# The list surface.
+#
+# A product is read in pages, so the domain declares the connection the kernel's `PageInfo` completes
+# and the two declarations a page is narrowed and ordered by. They are the resolver's other half:
+# `PRODUCT_FILTERABLE` and `PRODUCT_SORTABLE` in `product.resolver.ts` are the same two declarations
+# in TypeScript, and keeping the three in one place is what makes a field that is filterable in the
+# schema but unknown to the evaluator — or the reverse — impossible to introduce quietly.
+#
+# `name` and `description` are filterable, and `name` sortable, although neither is a column: the
+# delivered list read merges the translation for the requested language onto the row before it
+# answers, so both members are on the rows a connection narrows, and a catalogue that cannot select
+# on a name cannot answer the question it exists for.
+
+"""
+The boundary of one page of products.
+"""
+type ProductEdge {
+	node: Product!
+	cursor: String!
+}
+
+"""
+One page of products, with the total the filters select and the boundary cursors.
+"""
+type ProductConnection {
+	nodes: [Product!]!
+	edges: [ProductEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a product list may be sorted by.
+"""
+enum ProductSortField {
+	createdAt
+	updatedAt
+	code
+	name
+	enabled
+}
+
+"""
+The order the products are returned in. At most three keys are accepted.
+"""
+input ProductSort {
+	field: ProductSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a product list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+"""
+input ProductFilter {
+	id: IDFilter
+	code: StringFilter
+	enabled: BooleanFilter
+	imageUrl: StringFilter
+	"The product's name in the requested language, as the delivered list read merges it."
+	name: StringFilter
+	"The product's description in the requested language, as the delivered list read merges it."
+	description: StringFilter
+	featuredImageId: IDFilter
+	productTypeId: IDFilter
+	productCategoryId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ProductFilter!]
+	or: [ProductFilter!]
+	not: ProductFilter
+}
+
+# The write surface.
+#
+# `CreateProductInput` and `UpdateProductInput` declare the members the delivered write paths carry
+# into the row, and nothing else. Two consequences are deliberate:
+#
+# - A member that names a related row is stated as that row's identifier. The delivered paths persist
+#   the reference — the foreign key, or the pair of identifiers a pivot row is made of — and never the
+#   object beside it, so an input member carrying a whole related object would offer members nothing
+#   honours.
+# - `UpdateProductInput` is not the create input with every member optional, because the delivered
+#   edit is not the delivered create. The edit reads the row and writes the product type, the category,
+#   the tags, the translations and the option groups it offers; the descriptive columns are the create
+#   path's to set. Declaring a column here would let a client believe it had renamed a product that
+#   the edit never touched, which is worse than a member that is absent.
+#
+# The option-group lists are the structural member both paths build rows from rather than assign: a
+# group is stored with its options and their translations. `optionGroupCreateInputs` is required on
+# both write inputs because both delivered paths read it unconditionally, so a schema that made it
+# optional would describe a call the route cannot answer.
+
+"""
+One translation of a product's own name and description.
+
+`name` is required rather than accepted and refused later: the translation row's column is not
+nullable, so a translation without a name cannot be stored at all.
+"""
+input ProductTranslationInput {
+	languageCode: String!
+	name: String!
+	description: String
+}
+
+"""
+One translation of an option's name.
+"""
+input ProductOptionTranslationInput {
+	languageCode: String!
+	name: String!
+	description: String
+}
+
+"""
+One translation of the group an option belongs to.
+"""
+input ProductOptionGroupTranslationInput {
+	languageCode: String!
+	name: String!
+}
+
+"""
+One choice a product offers inside a group.
+
+`id` is absent on an option the caller is adding and present on one that exists: the delivered paths
+branch on exactly that, storing a row when no identifier is stated and reading the existing one when
+it is. `code` is optional because the operator's own shorthand for an option has no column behind it
+that requires a value; `name` is required because the row cannot be stored without one.
+"""
+input ProductOptionInput {
+	id: ID
+	name: String!
+	code: String
+	translations: [ProductOptionTranslationInput!]
+}
+
+"""
+A set of choices a product offers — the size, the colour — with the options it holds.
+
+`id` selects the same branch as it does on an option: an absent identifier is a group being added, a
+stated one is a group being changed or withdrawn.
+"""
+input ProductOptionGroupInput {
+	id: ID
+	name: String!
+	options: [ProductOptionInput!]
+	translations: [ProductOptionGroupTranslationInput!]
+}
+
+"""
+What a caller states when it records a product.
+
+The tenant is not a member: the delivered create stamps the caller's own tenant onto the row and
+overwrites anything a body states, so a member here would promise a scope the write refuses. The
+organization is a member, because the delivered create takes it from the body and the row's
+organization column is what the write stores.
+"""
+input CreateProductInput {
+	"The operator-facing code, unique within the organization. The delivered create requires it."
+	code: String!
+	"The organization the product is filed under."
+	organizationId: ID
+	"Whether the product may be sold. A disabled product stays readable and cannot be ordered."
+	enabled: Boolean
+	"A denormalised thumbnail URL, for the lists that must not join the asset table."
+	imageUrl: String
+	"The asset the storefront shows as the product's cover."
+	featuredImageId: ID
+	"The operator's classification of the product."
+	productTypeId: ID
+	"The merchandising grouping the product belongs to."
+	productCategoryId: ID
+	"The facets to attach to the product."
+	tagIds: [ID!]
+	"The product's name and description, one row per language."
+	translations: [ProductTranslationInput!]
+	"The option groups the product offers, stored with their options and translations."
+	optionGroupCreateInputs: [ProductOptionGroupInput!]!
+}
+
+"""
+What a caller may change on a product that exists.
+
+Every member is optional except the group list both delivered paths read unconditionally, and a
+member that is absent is left as it is. The group lists are the three directions of one edit — the
+groups to add, the groups to change and the groups to withdraw — and the option list is the options
+to withdraw from the groups that stay.
+"""
+input UpdateProductInput {
+	id: ID!
+	productTypeId: ID
+	productCategoryId: ID
+	tagIds: [ID!]
+	translations: [ProductTranslationInput!]
+	optionGroupCreateInputs: [ProductOptionGroupInput!]!
+	optionGroupUpdateInputs: [ProductOptionGroupInput!]
+	optionGroupDeleteInputs: [ProductOptionGroupInput!]
+	optionDeleteInputs: [ProductOptionInput!]
+}

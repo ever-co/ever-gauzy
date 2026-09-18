@@ -1,5 +1,6 @@
 export * from './contact-group.entity';
 export * from './contact-group.service';
+export * from './contact-group-event.publisher';
 export * from './contact-group.controller';
 export * from './contact-group.resolver';
 export * from './contact-group.module';

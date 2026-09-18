@@ -49,7 +49,13 @@ jest.mock('../core/context/request-context', () => ({
 }));
 
 import { ContactGroupSource, ContactGroupType } from '@gauzy/contracts';
+import { SubscriptionCatalogue } from '../graphql/subscriptions/subscription-catalogue';
 import { ContactGroupService } from '../contact-group/contact-group.service';
+import {
+	CONTACT_GROUP_EVENT_NAMES,
+	ContactGroupEventPublisher,
+	IContactGroupChangedEnvelope
+} from '../contact-group/contact-group-event.publisher';
 import { ContactGroupMemberService } from './contact-group-member.service';
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
@@ -64,13 +70,37 @@ const HOUR = 60 * 60 * 1000;
 type Row = Record<string, any>;
 
 /**
+ * The real publisher over a fan-out that records what it was handed.
+ *
+ * The real one, because what the membership cases pin is the envelope a subscriber receives — the
+ * catalogue's own event name, the topic it travels on and the payload it carries — and not that some
+ * collaborator was called with something.
+ */
+function recordings() {
+	const published: Array<{ eventName: string; tenantId: string; envelope: IContactGroupChangedEnvelope }> = [];
+	const pubSub = {
+		publish: jest.fn(async (eventName: string, tenantId: string, envelope: IContactGroupChangedEnvelope) => {
+			published.push({ eventName, tenantId, envelope });
+
+			return true;
+		})
+	};
+	const catalogue = new SubscriptionCatalogue();
+	const publisher = new ContactGroupEventPublisher(pubSub as never, catalogue);
+
+	publisher.onModuleInit();
+
+	return { published, pubSub, catalogue, publisher };
+}
+
+/**
  * An in-memory stand-in for the two tables and the repositories the services write through.
  *
  * The `where` the service states is applied, so a read that stopped narrowing is caught here. `order` is
  * not modelled: no case in this suite depends on the order of a list, and a double that sorted would be
  * asserting its own comparator.
  */
-function world(seed: { groups?: Row[]; members?: Row[] } = {}) {
+function world(seed: { groups?: Row[]; members?: Row[] } = {}, publisher = recordings().publisher) {
 	const tables: Record<string, Row[]> = {
 		contact_group: [...(seed.groups ?? [])],
 		contact_group_member: [...(seed.members ?? [])]
@@ -131,11 +161,12 @@ function world(seed: { groups?: Row[]; members?: Row[] } = {}) {
 
 	const groupRepository = repository('contact_group');
 	const memberRepository = repository('contact_group_member');
-	const groupService = new ContactGroupService(groupRepository as never, {} as never);
+	const groupService = new ContactGroupService(groupRepository as never, {} as never, publisher as never);
 	const memberService = new ContactGroupMemberService(
 		memberRepository as never,
 		{} as never,
-		groupService
+		groupService,
+		publisher as never
 	);
 
 	return {
@@ -445,5 +476,90 @@ describe('ContactGroupMemberService — provenance is what may remove a row', ()
 		await memberService.replaceMembersOfSource(GROUP, ContactGroupSource.IMPORT, [OTHER_CUSTOMER]);
 
 		expect(member('member-1')?.deletedAt).toBeInstanceOf(Date);
+	});
+});
+
+describe('ContactGroupMemberService — every membership write announces the fact the subscription carries', () => {
+	it('announces an assignment under the catalogue’s own event name and payload', async () => {
+		const announced = recordings();
+		const { memberService } = world({ groups: [groupRow(GROUP)] }, announced.publisher);
+
+		await memberService.addMember(GROUP, { customerId: CUSTOMER });
+
+		expect(announced.published).toHaveLength(1);
+
+		const [fact] = announced.published;
+
+		expect(fact.eventName).toBe(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_ASSIGNED);
+		expect(fact.tenantId).toBe(TENANT);
+		// The payload is the one the event catalogue states for this event — `groupId`, `customerIds[]`,
+		// `source` — and not a second shape invented for the stream.
+		expect(fact.envelope.data).toEqual({
+			groupId: GROUP,
+			customerIds: [CUSTOMER],
+			source: ContactGroupSource.MANUAL
+		});
+		expect(fact.envelope).toMatchObject({
+			name: 'contact_group.assigned',
+			action: 'assigned',
+			tenantId: TENANT,
+			organizationId: ORG,
+			channelId: null,
+			aggregate: { type: 'ContactGroup', id: GROUP },
+			customerIds: [CUSTOMER],
+			source: ContactGroupSource.MANUAL
+		});
+		// The group a subscriber resolves travels with the fact, so a selection needs no second read.
+		expect((fact.envelope.group as Row).id).toBe(GROUP);
+	});
+
+	it('announces a whole list as one fact, carrying the parties it named', async () => {
+		const announced = recordings();
+		const { memberService } = world({ groups: [groupRow(GROUP)] }, announced.publisher);
+
+		await memberService.addMembers(GROUP, [{ customerId: 'contact-3' }, { customerId: 'contact-4' }]);
+
+		expect(announced.published).toHaveLength(1);
+		expect(announced.published[0].eventName).toBe(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_ASSIGNED);
+		expect(announced.published[0].envelope.customerIds).toEqual(['contact-3', 'contact-4']);
+		expect(announced.published[0].envelope.data).toEqual({
+			groupId: GROUP,
+			customerIds: ['contact-3', 'contact-4'],
+			source: ContactGroupSource.MANUAL
+		});
+	});
+
+	it('announces a withdrawal under the catalogue’s own event name, with the provenance it removed', async () => {
+		const announced = recordings();
+		const { memberService } = world(
+			{ groups: [groupRow(GROUP)], members: [memberRow('member-1', { source: ContactGroupSource.IMPORT })] },
+			announced.publisher
+		);
+
+		await memberService.removeMember(GROUP, CUSTOMER, ContactGroupSource.IMPORT);
+
+		expect(announced.published).toHaveLength(1);
+		expect(announced.published[0].eventName).toBe(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_UNASSIGNED);
+		expect(announced.published[0].envelope).toMatchObject({
+			name: 'contact_group.unassigned',
+			action: 'unassigned',
+			aggregate: { type: 'ContactGroup', id: GROUP },
+			customerIds: [CUSTOMER],
+			source: ContactGroupSource.IMPORT
+		});
+	});
+
+	it('announces nothing for a membership write that was refused', async () => {
+		const announced = recordings();
+		const { memberService } = world(
+			{ groups: [groupRow(RULE_GROUP, { type: ContactGroupType.RULE_BASED })] },
+			announced.publisher
+		);
+
+		await refusalOf(() => memberService.addMember(RULE_GROUP, { customerId: CUSTOMER }));
+
+		// A refusal is not a change: a subscriber told about a membership the platform refused would
+		// price a party into a segment it is not in.
+		expect(announced.published).toEqual([]);
 	});
 });

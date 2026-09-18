@@ -50,13 +50,43 @@ jest.mock('../core/context/request-context', () => ({
 }));
 
 import { ContactGroupType } from '@gauzy/contracts';
+import { SubscriptionCatalogue } from '../graphql/subscriptions/subscription-catalogue';
 import { ContactGroupService } from './contact-group.service';
+import {
+	CONTACT_GROUP_EVENT_NAMES,
+	ContactGroupEventPublisher,
+	IContactGroupChangedEnvelope
+} from './contact-group-event.publisher';
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const ORG = '00000000-0000-4000-8000-000000000002';
 const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
 
 type Row = Record<string, any>;
+
+/**
+ * The real publisher over a fan-out that records what it was handed.
+ *
+ * The real one, because what the announcement cases pin is the envelope a subscriber receives — its
+ * event name, the topic it travels on and the payload it carries — and not that some collaborator was
+ * called with something.
+ */
+function recordings() {
+	const published: Array<{ eventName: string; tenantId: string; envelope: IContactGroupChangedEnvelope }> = [];
+	const pubSub = {
+		publish: jest.fn(async (eventName: string, tenantId: string, envelope: IContactGroupChangedEnvelope) => {
+			published.push({ eventName, tenantId, envelope });
+
+			return true;
+		})
+	};
+	const catalogue = new SubscriptionCatalogue();
+	const publisher = new ContactGroupEventPublisher(pubSub as never, catalogue);
+
+	publisher.onModuleInit();
+
+	return { published, pubSub, catalogue, publisher };
+}
 
 /**
  * An in-memory stand-in for the table and the repository the service writes through.
@@ -66,7 +96,7 @@ type Row = Record<string, any>;
  * without `deletedAt` is live; the double does not model the repository's own soft-delete filter, which
  * is why the suite asserts on the column after a removal rather than on the read.
  */
-function world(seed: Row[] = []) {
+function world(seed: Row[] = [], publisher = recordings().publisher) {
 	const tables: Record<string, Row[]> = { contact_group: [...seed] };
 	const reads: Row[] = [];
 	let sequence = 0;
@@ -126,7 +156,7 @@ function world(seed: Row[] = []) {
 		tables,
 		reads,
 		repository,
-		service: new ContactGroupService(repository as never, {} as never),
+		service: new ContactGroupService(repository as never, {} as never, publisher as never),
 		group: (id: string) => tables.contact_group.find((row) => row.id === id)
 	};
 }
@@ -398,5 +428,105 @@ describe('ContactGroupService — the list an operator reads', () => {
 		expect((await service.listGroups({ search: 'walk-in' })).map((group) => group.id)).toEqual(['group-2']);
 		expect((await service.listGroups({ search: 'guests' })).map((group) => group.id)).toEqual(['group-3']);
 		expect(await service.listGroups({ search: 'nothing matches this' })).toEqual([]);
+	});
+});
+
+describe('ContactGroupService — every write announces the fact the subscription carries', () => {
+	it('announces a created group on the topic its event and tenant name', async () => {
+		const announced = recordings();
+		const { service } = world([], announced.publisher);
+
+		const created = await service.createGroup({ name: 'Wholesale', code: 'WHOLESALE' });
+
+		expect(announced.published).toHaveLength(1);
+
+		const [fact] = announced.published;
+
+		expect(fact.eventName).toBe(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED);
+		expect(fact.tenantId).toBe(TENANT);
+		expect(fact.envelope).toMatchObject({
+			name: 'contact_group.changed',
+			action: 'created',
+			tenantId: TENANT,
+			organizationId: ORG,
+			channelId: null,
+			aggregate: { type: 'ContactGroup', id: created.id },
+			group: created,
+			data: created
+		});
+	});
+
+	it('announces an updated group with the row the write stored', async () => {
+		const announced = recordings();
+		const { service } = world([groupRow('group-1')], announced.publisher);
+
+		const updated = await service.updateGroup('group-1', { name: 'Renamed' });
+
+		expect(announced.published).toHaveLength(1);
+		expect(announced.published[0].eventName).toBe(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED);
+		expect(announced.published[0].envelope).toMatchObject({
+			action: 'updated',
+			group: updated,
+			aggregate: { type: 'ContactGroup', id: 'group-1' }
+		});
+		expect((announced.published[0].envelope.group as Row).name).toBe('Renamed');
+	});
+
+	it('announces a removed group from the row the removal acted on', async () => {
+		const announced = recordings();
+		const { service, group } = world([groupRow('group-1')], announced.publisher);
+
+		await service.removeGroup('group-1');
+
+		expect(announced.published).toHaveLength(1);
+		expect(announced.published[0].eventName).toBe(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED);
+		expect(announced.published[0].envelope).toMatchObject({
+			action: 'deleted',
+			aggregate: { type: 'ContactGroup', id: 'group-1' }
+		});
+		// The removal happened, and the announcement was made before the method's own re-read: a removed
+		// row is absent to the reads this service performs, so a subscriber must not depend on that read
+		// having succeeded.
+		expect((announced.published[0].envelope.group as Row).id).toBe('group-1');
+		expect(group('group-1')?.deletedAt).toBeInstanceOf(Date);
+	});
+
+	it('announces a group the platform seeds, which no request created', async () => {
+		const announced = recordings();
+		const { service } = world([], announced.publisher);
+
+		const seeded = await service.createSystemGroup({ name: 'Guests', code: 'GUESTS' });
+
+		expect(announced.published).toHaveLength(1);
+		expect(announced.published[0].envelope).toMatchObject({ action: 'created', group: seeded });
+		expect((seeded as Row).isSystem).toBe(true);
+	});
+
+	it('announces nothing for a write that was refused', async () => {
+		const announced = recordings();
+		const { service } = world([groupRow('group-1', { isSystem: true })], announced.publisher);
+
+		await refusalOf(() => service.removeGroup('group-1'));
+
+		// A refusal is not a change: a subscriber told about a removal that did not happen would cache
+		// a group the platform still has.
+		expect(announced.published).toEqual([]);
+	});
+
+	it('publishes on the credential’s tenant, never on a tenant a row claims', async () => {
+		const announced = recordings();
+
+		// A row whose tenancy disagrees with the request is not a state the write paths can produce —
+		// every read here is scoped to the caller — and the publisher still cannot be steered by one:
+		// the credential's tenant is what the topic names, which is what makes the topic a boundary
+		// rather than a routing hint.
+		await announced.publisher.groupChanged(
+			{ ...groupRow('group-1'), tenantId: '00000000-0000-4000-8000-000000000009' } as never,
+			'updated'
+		);
+
+		expect(announced.published).toHaveLength(1);
+		expect(announced.published[0].tenantId).toBe(TENANT);
+		expect(announced.published[0].eventName).toBe(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED);
 	});
 });

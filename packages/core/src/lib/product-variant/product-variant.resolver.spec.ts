@@ -18,9 +18,9 @@ import { ProductVariantResolver } from './product-variant.resolver';
 /**
  * The buyable unit of the catalogue over GraphQL.
  *
- * The delivered REST routes serve a variant list, one variant, the generation of a product's
- * variants, an edit, a removal and the withdrawal of the featured image. This suite pins the half of
- * the two-protocol doctrine that is easy to get quietly wrong:
+ * The delivered REST routes serve a variant list, one variant, the count, the generation of a
+ * product's variants, an edit, a removal and the withdrawal of the featured image. This suite pins
+ * the half of the two-protocol doctrine that is easy to get quietly wrong:
  *
  * - every one of those capabilities is a root field of the one composed schema, and the list is a
  *   connection with the platform's own cursor codec behind it, so a cursor obtained over REST
@@ -28,7 +28,9 @@ import { ProductVariantResolver } from './product-variant.resolver';
  * - every field reaches the same service method or the same command the REST route reaches, so a
  *   client does not choose a better surface by choosing a protocol;
  * - **the guard is the controller's guard and no permission is stated**, because a resolver that
- *   demanded one would refuse a caller the REST route serves;
+ *   demanded one would refuse a caller the REST route serves — and the count route is held to that
+ *   same parity field by field, since a count narrower than its route is a capability the other
+ *   protocol does not have;
  * - a variant that is not there is `null` on the one-row field rather than a refusal, and the edit
  *   reads the row first so a missing variant is a miss rather than a write that creates one.
  */
@@ -77,6 +79,7 @@ function surfaces() {
 		findAllProductVariants: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
 		findOne: jest.fn().mockResolvedValue(ROWS[0]),
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
+		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		updateVariant: jest.fn().mockResolvedValue(ROWS[0]),
 		deleteFeaturedImage: jest.fn().mockResolvedValue({ ...ROWS[0], imageId: null })
 	};
@@ -141,9 +144,48 @@ function rootFields(operation: 'Query' | 'Mutation'): string[] {
 	return Object.keys(root?.getFields() ?? {});
 }
 
+/** The handlers of the controller, as functions, inherited ones included. */
+function handlersOf(controller: typeof ProductVariantController): Record<string, object> {
+	return controller.prototype as unknown as Record<string, object>;
+}
+
+/**
+ * The permission one route runs under: what its handler states, else what its controller states.
+ *
+ * This is the rule the guards themselves apply — the reflector's `getAllAndOverride` over
+ * `[handler, class]` — restated here, so a field is held to its own route's metadata rather than to
+ * a second copy of the same list written out in this file.
+ */
+function permissionOfRoute(controller: typeof ProductVariantController, handler: string): unknown {
+	return (
+		Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(controller)[handler]) ??
+		Reflect.getMetadata(PERMISSIONS_METADATA, controller)
+	);
+}
+
+/**
+ * The guards one route actually runs under: the controller's chain followed by whatever the handler
+ * states of its own, which is the order the guard context creator concatenates them in.
+ */
+function guardsOfRoute(controller: typeof ProductVariantController, handler: string): unknown[] {
+	const declared = Reflect.getMetadata('__guards__', controller) ?? [];
+	const restated = Reflect.getMetadata('__guards__', handlersOf(controller)[handler]) ?? [];
+
+	return Array.from(new Set([...declared, ...restated]));
+}
+
+/** The permission one resolver field runs under. */
+function permissionOfField(field: string): unknown {
+	const fields = ProductVariantResolver.prototype as unknown as Record<string, object>;
+
+	return Reflect.getMetadata(PERMISSIONS_METADATA, fields[field]);
+}
+
 describe('ProductVariantResolver — the SDL declares the capabilities the REST routes serve', () => {
-	it('declares the variant connection query and the one-row query', () => {
-		expect(rootFields('Query')).toEqual(expect.arrayContaining(['productVariants', 'productVariant']));
+	it('declares the variant connection query, the one-row query and the count', () => {
+		expect(rootFields('Query')).toEqual(
+			expect.arrayContaining(['productVariants', 'productVariant', 'productVariantCount'])
+		);
 	});
 
 	it('declares one mutation per delivered write route', () => {
@@ -181,6 +223,21 @@ describe('ProductVariantResolver — the SDL declares the capabilities the REST 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list methods read live rows only, so the connection does not offer `withDeleted`.
 		expect(printSchema(schema)).not.toMatch(/productVariants\([^)]*withDeleted/);
+	});
+
+	it('states the count as a nullable number and offers it no narrowing', () => {
+		const printed = printSchema(schema);
+
+		// A count is an aggregate the resource may have no answer for, so the field is nullable: a
+		// non-null field would state an absence as a zero, and a client reporting inventory has to
+		// keep those two apart.
+		expect(printed).toMatch(/productVariantCount: Int\n/);
+		expect(printed).not.toMatch(/productVariantCount: Int!/);
+
+		// The delivered count route narrows by the `where` fragment its query string carries, which
+		// is not a shape this protocol states, so the field takes no argument rather than one the
+		// resolver could not pass on.
+		expect(printed).not.toMatch(/productVariantCount\(/);
 	});
 });
 
@@ -270,6 +327,16 @@ describe('ProductVariantResolver — one concept, two protocols, the same operat
 		expect(await resolver.productVariant(OTHER_VARIANT)).toBeNull();
 	});
 
+	it('counts through the same service method the count route calls, with the route’s own options', async () => {
+		const { resolver, productVariantService } = surfaces();
+
+		expect(await resolver.productVariantCount()).toBe(2);
+		// The inherited route hands `countBy` the `where` fragment it bound from its query string and
+		// asks for no narrowing of its own when the caller states none — which is the call this field
+		// makes, because the connection protocol has no argument that fragment could arrive in.
+		expect(productVariantService.countBy).toHaveBeenCalledWith();
+	});
+
 	it('generates the variants through the command the REST route dispatches, scoped by the product', async () => {
 		const { resolver, productService, commandBus } = surfaces();
 
@@ -344,5 +411,50 @@ describe('ProductVariantResolver — the guard stack is the controller’s', () 
 	it('states no permission on the resolver and none on the controller', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductVariantResolver)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductVariantController)).toBeUndefined();
+	});
+
+	it('runs the count route under the guard chain the resolver states', () => {
+		const stated = Reflect.getMetadata('__guards__', ProductVariantResolver) ?? [];
+
+		// The count route is the one the CRUD base mounts: it states no guard and no permission of its
+		// own, so the controller's class-level chain is the whole of its scope — and the resolver
+		// states the same chain, which is the parity claim a count narrower or wider than its route
+		// would break.
+		expect(guardsOfRoute(ProductVariantController, 'getCount').sort()).toEqual([...stated].sort());
+		expect(Reflect.getMetadata('__guards__', handlersOf(ProductVariantController)['getCount'])).toBeUndefined();
+
+		// A class-level permission would apply to a handler that states none, so the parity is
+		// asserted over the two readings rather than over the handler alone: neither surface states
+		// one, and the count field states none either.
+		expect(permissionOfRoute(ProductVariantController, 'getCount')).toBeUndefined();
+		expect(permissionOfField('productVariantCount')).toBeUndefined();
+	});
+
+	it('holds every field of this surface to its own route’s permission', () => {
+		const routes: Array<[string, string]> = [
+			['productVariants', 'findAll'],
+			['productVariant', 'findById'],
+			['productVariantCount', 'getCount'],
+			['createProductVariants', 'createProductVariants'],
+			['updateProductVariant', 'update'],
+			['deleteProductVariant', 'delete'],
+			['deleteProductVariantFeaturedImage', 'deleteFeaturedImage']
+		];
+
+		const stated = Object.fromEntries(routes.map(([field]) => [field, permissionOfField(field)]));
+		const expected = Object.fromEntries(
+			routes.map(([field, handler]) => [field, permissionOfRoute(ProductVariantController, handler)])
+		);
+
+		for (const [, handler] of routes) {
+			// A route that is not served at all would make the comparison below meaningless, so the
+			// handlers are asserted to be there before the two readings are compared.
+			expect(typeof handlersOf(ProductVariantController)[handler]).toBe('function');
+		}
+
+		// Every one of them is `undefined`, which is the answer here and not an empty assertion: this
+		// resource is mounted without a permission, so a field that acquired one would be the
+		// asymmetry the two-protocol rule forbids.
+		expect(stated).toEqual(expected);
 	});
 });

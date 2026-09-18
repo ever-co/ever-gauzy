@@ -1,0 +1,94 @@
+# The product category domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered REST routes already serve, under the same guard and with the
+# same permission, so a client that reaches a capability over one protocol is not given a narrower or
+# a wider one than the client that reaches it over the other.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered
+# list method reads live rows only, and offering an argument that cannot be honoured would be worse
+# than not offering it.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same
+# rows under the same filters, one of them sliced by `take`/`skip` and the other not. That is one
+# capability, so it is one root field: `productCategories`, mirroring `GET /`, which is the route that
+# reads the whole filtered set the connection protocol is applied to. A second root field for the
+# paginated spelling would be a second surface that could disagree with this one, and the connection's
+# own `limit`/`offset` already are the page it performs.
+#
+# `productCategoryCount` takes no filter, and that is a statement rather than an omission. The
+# delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak; a `filter` argument here would either be handed to a service
+# call that cannot accept it or be evaluated over a second code path that could disagree with the
+# connection's `totalCount`. What it answers is the count of the caller's own rows, which is the call
+# the route makes when it is given no options.
+#
+# `productCategory` carries `ORG_PRODUCT_CATEGORIES_EDIT`, not the view permission, because the
+# delivered `GET /:id` route carries it: the route is inherited from the base controller without a
+# permission of its own, so the controller's class-level edit permission is the one it runs under.
+# Stating anything else here would give GraphQL a scope REST does not have. The asymmetry between
+# reading one category and listing them is the controller's to resolve, and resolving it in one
+# surface only is exactly what this delivery exists to prevent.
+
+extend type Query {
+	"""
+	The product categories of the caller's tenant, in the taxonomy's own sibling order.
+	"""
+	productCategories(
+		filter: ProductCategoryFilter
+		sort: [ProductCategorySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ProductCategoryConnection!
+
+	"""
+	One category of the caller's tenant, or null when there is none.
+	"""
+	productCategory(id: ID!): ProductCategory
+
+	"""
+	How many categories the caller's tenant has.
+	"""
+	productCategoryCount: Int!
+}
+
+extend type Mutation {
+	"""
+	Files a category, with the text of every language the caller states for it.
+	"""
+	createProductCategory(input: CreateProductCategoryInput!): ProductCategory!
+
+	"""
+	Replaces a category. A member the caller leaves out is written as the column's default rather than
+	left as it is, because the delivered update removes the row and persists the stated body under the
+	verified path identifier — see `UpdateProductCategoryInput`.
+	"""
+	updateProductCategory(input: UpdateProductCategoryInput!): ProductCategory!
+
+	"""
+	Removes a category outright, together with the translation rows that belong to it. A category a
+	product still points at is the store's own constraint to refuse; this field does not pre-empt it.
+	"""
+	deleteProductCategory(id: ID!): Boolean!
+
+	"""
+	Withdraws a category without removing it: the row keeps its identifier and its products keep
+	pointing at it, and the delivered list stops answering it.
+	"""
+	softDeleteProductCategory(id: ID!): ProductCategory!
+
+	"""
+	Puts a withdrawn category back.
+	"""
+	recoverProductCategory(id: ID!): ProductCategory!
+}

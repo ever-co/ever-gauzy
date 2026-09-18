@@ -187,6 +187,13 @@ function comparable(value: unknown): string | number | boolean | null {
 /**
  * Compares two values of one field under a direction.
  *
+ * **An absent value is the largest value**, in both directions: a null sorts after every present
+ * value ascending, and before every present value descending. That is one rule rather than two, it is
+ * the rule the platform's own store applies on the primary dialect, and — because a cursor walk is
+ * only stable if the order it walks is — it is stated here rather than left to whichever store an
+ * installation runs: the alternative, a dialect-dependent placement, would make the same walk return
+ * different rows on two installations and would let the GraphQL answer disagree with the REST one.
+ *
  * @param left The row's value.
  * @param right The requested value.
  * @returns A negative, zero or positive number.
@@ -198,8 +205,6 @@ function compare(left: unknown, right: unknown): number {
 	if (a === null && b === null) {
 		return 0;
 	}
-	// An absent value sorts last in both directions, which is what a client that asked for the
-	// column expects to find at the end of the walk rather than interleaved with the values.
 	if (a === null) {
 		return 1;
 	}
@@ -234,31 +239,86 @@ function patternToRegExp(pattern: string, caseInsensitive: boolean): RegExp {
 }
 
 /**
+ * One side of a comparison on a date field, as epoch milliseconds.
+ *
+ * A store returns a `timestamp` column as a `Date` and the wire carries an instant as RFC 3339 text,
+ * so the two sides of one comparison arrive in two different shapes. This brings either of them to
+ * the one scale they can be compared on. A value that is not an instant at all — a text column that
+ * merely looks like one, or a value a caller stated in a shape the calendar cannot read — is
+ * answered with `undefined`, and the caller falls back to comparing it as it stands rather than
+ * silently treating it as the epoch.
+ *
+ * @param value The row's value, or the value the caller stated.
+ * @returns The instant in milliseconds, or undefined when the value is not one.
+ */
+function instantMillis(value: unknown): number | undefined {
+	if (value instanceof Date) {
+		return value.getTime();
+	}
+
+	if (typeof value === 'number') {
+		return Number.isFinite(value) ? value : undefined;
+	}
+
+	if (typeof value === 'string') {
+		const parsed = Date.parse(value.trim());
+
+		return Number.isFinite(parsed) ? parsed : undefined;
+	}
+
+	return undefined;
+}
+
+/**
  * Whether one row matches one condition.
  *
  * @param value The row's value for the field.
  * @param condition The condition.
- * @param kind The field's kind, which decides nothing here but is carried for the error message.
+ * @param kind The field's kind: a `DATE` field's two sides are compared as instants, everything else
+ * as it stands.
  * @param field The field name, for the error message.
  * @returns True when the row satisfies the condition.
  */
 function matchesCondition(value: unknown, condition: ConnectionCondition, kind: ConnectionFieldKind, field: string): boolean {
 	const members = Object.entries(condition).filter(([, stated]) => stated !== undefined && stated !== null);
 
+	/**
+	 * One side of a comparison, on the scale the field's kind is compared on.
+	 *
+	 * **This is not a nicety.** A date column reaches this function as a `Date` and a caller states an
+	 * instant as RFC 3339 text, so comparing the two as they arrive compared epoch milliseconds against
+	 * a calendar date: `createdAt: { eq: "2026-03-01T10:00:00.000Z" }` matched no row at all, and the
+	 * range operators answered nonsense. Both sides are therefore rendered as instants when the field
+	 * is a date, which is the one scale an instant has.
+	 */
+	const onScale = (candidate: unknown): unknown => {
+		if (kind !== 'DATE') {
+			return candidate;
+		}
+
+		const instant = instantMillis(candidate);
+
+		return instant === undefined ? candidate : instant;
+	};
+
 	for (const [operator, stated] of members) {
 		switch (operator) {
 			case 'eq':
-				if (compare(value, stated) !== 0) return false;
+				if (compare(onScale(value), onScale(stated)) !== 0) return false;
 				break;
 			case 'ne':
-				if (value === null || value === undefined || compare(value, stated) === 0) return false;
+				if (value === null || value === undefined || compare(onScale(value), onScale(stated)) === 0) return false;
 				break;
 			case 'in':
-				if (!Array.isArray(stated) || !stated.some((candidate) => compare(value, candidate) === 0)) return false;
+				if (!Array.isArray(stated) || !stated.some((candidate) => compare(onScale(value), onScale(candidate)) === 0)) {
+					return false;
+				}
 				break;
 			case 'nin':
 				if (value === null || value === undefined) return false;
-				if (Array.isArray(stated) && stated.some((candidate) => compare(value, candidate) === 0)) return false;
+				if (Array.isArray(stated) && stated.some((candidate) => compare(onScale(value), onScale(candidate)) === 0)) {
+					return false;
+				}
 				break;
 			case 'like':
 				if (typeof value !== 'string' || !patternToRegExp(String(stated), false).test(value)) return false;
@@ -267,16 +327,16 @@ function matchesCondition(value: unknown, condition: ConnectionCondition, kind: 
 				if (typeof value !== 'string' || !patternToRegExp(String(stated), true).test(value)) return false;
 				break;
 			case 'gt':
-				if (value === null || value === undefined || compare(value, stated) <= 0) return false;
+				if (value === null || value === undefined || compare(onScale(value), onScale(stated)) <= 0) return false;
 				break;
 			case 'gte':
-				if (value === null || value === undefined || compare(value, stated) < 0) return false;
+				if (value === null || value === undefined || compare(onScale(value), onScale(stated)) < 0) return false;
 				break;
 			case 'lt':
-				if (value === null || value === undefined || compare(value, stated) >= 0) return false;
+				if (value === null || value === undefined || compare(onScale(value), onScale(stated)) >= 0) return false;
 				break;
 			case 'lte':
-				if (value === null || value === undefined || compare(value, stated) > 0) return false;
+				if (value === null || value === undefined || compare(onScale(value), onScale(stated)) > 0) return false;
 				break;
 			case 'between': {
 				if (!Array.isArray(stated) || stated.length !== 2) {
@@ -285,7 +345,9 @@ function matchesCondition(value: unknown, condition: ConnectionCondition, kind: 
 					);
 				}
 				if (value === null || value === undefined) return false;
-				if (compare(value, stated[0]) < 0 || compare(value, stated[1]) > 0) return false;
+				if (compare(onScale(value), onScale(stated[0])) < 0 || compare(onScale(value), onScale(stated[1])) > 0) {
+					return false;
+				}
 				break;
 			}
 			case 'isNull':
