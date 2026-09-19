@@ -1,0 +1,121 @@
+# The broadcast domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/broadcasts` routes already serve, under the same guard
+# chain and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other. Nothing here decides
+# anything: each read calls the same `BroadcastService` method the route behind it calls, and each write
+# dispatches the same command.
+#
+# **This is the resource whose delivered reads narrow by who is asking.** The list read and the node read
+# both apply the visibility rule the object type documents — the publisher sees their own, everyone sees
+# an organization-wide message, the members of the record see a message filed against it, the audience
+# rules admit the callers they name, and an external-view message is answered to nobody holding only a
+# credential. So the connection's rows are the rows the caller may see, its `totalCount` is that set's
+# size rather than the store's, and a `null` from the node field covers both "there is no such row" and
+# "there is one and it is not yours to read". That is the delivered reader's behaviour on both protocols
+# and is not restated, narrowed or widened here.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list route
+# takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers
+# with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over one
+# surface resumes on the other. `withDeleted` is deliberately absent: the delivered list read answers live
+# rows only, and offering an argument that cannot be honoured would be worse than not offering it.
+#
+# The controller declares its list once — there is no paginated spelling of it — so the connection is the
+# whole of the list surface. The count and the two lifecycle moves are inherited from the CRUD base and
+# run under the controller's class-level declaration, which is none: this controller carries no
+# permission on its class, and the three fields state none for the same reason. `broadcastCount` takes no
+# filter, and that is a statement rather than an omission: the delivered count route passes its query
+# string through as the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a service call that cannot accept it or be evaluated over a
+# second code path that could disagree with the connection's `totalCount` — and the count it answers is
+# the store's own, taken before the visibility rule the list read applies, which is why it is nullable
+# rather than presented as the size of the connection's set. It is nullable in any case because a count
+# is an aggregate a resource may legitimately have no answer for, and a non-null field would turn "not
+# answered" into a fabricated zero.
+
+extend type Query {
+	"""
+	The messages the caller may read, newest publication first.
+	"""
+	broadcasts(
+		filter: BroadcastFilter
+		sort: [BroadcastSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): BroadcastConnection!
+
+	"""
+	One message the caller may read, or null when there is none — or none they may read.
+	"""
+	broadcast(id: ID!): Broadcast
+
+	"""
+	How many messages the caller's tenant holds, before the visibility rule the reads apply.
+
+	**The delivered count route is declared by the CRUD base and shadowed by this controller's own
+	by-identifier read.** Nest registers a controller's own methods before the base class's, so the
+	`GET /:id` this controller declares is matched before the inherited `GET /count` path — and a request
+	to the count path is answered as a by-identifier read of a record whose identifier is the word
+	`count`. This field mirrors the route the controller declares rather than reproducing that collision:
+	it makes the same `countBy` call the handler makes, so a client asking how many messages exist is
+	answered instead of refused, and the ordering is the controller's to resolve rather than something
+	this surface can fix by staying silent about a capability the resource has.
+	"""
+	broadcastCount: Int
+}
+
+extend type Mutation {
+	"""
+	Publishes a message.
+
+	The write is dispatched as the same command the REST create route dispatches, which is what makes it
+	the same publication rather than a second one: the handler stamps the caller's own employee and tenant
+	onto the row, defaults the publication instant to now when the body states none, records the activity
+	entry, and tells the audience the visibility rule selects. A message published over this protocol is
+	therefore one the audience is notified about exactly as a REST caller's is.
+	"""
+	createBroadcast(input: CreateBroadcastInput!): Broadcast!
+
+	"""
+	Changes a message that exists.
+
+	The same command the REST edit route dispatches, with the same body: a member the caller leaves out is
+	left as it is, the polymorphic pair is not a member at all, and the write refuses a caller who is
+	neither the message's publisher nor a holder of the change-employee permission — see
+	`UpdateBroadcastInput`. The delivered write relabels its own failures as bad requests; that wrapper is
+	the handler's translation of the failure and not part of the write, so it is not restated here.
+	"""
+	updateBroadcast(input: UpdateBroadcastInput!): Broadcast!
+
+	"""
+	Removes a message outright.
+
+	This is the hard removal, and it is the one to reach for only for a row published in error: the
+	employee-notification rows a delivery produced are the store's own to cascade or to leave pointing at
+	an identifier that no longer resolves, and a message the audience has already read is withdrawn
+	instead.
+	"""
+	deleteBroadcast(id: ID!): Boolean!
+
+	"""
+	Withdraws a message without removing the row.
+
+	The delivered list stops answering it and the notifications that reference it keep resolving the
+	identifier they hold. The answer is the withdrawn row, whose `deletedAt` says when it happened.
+	"""
+	softDeleteBroadcast(id: ID!): Broadcast!
+
+	"""
+	Puts a withdrawn message back.
+	"""
+	recoverBroadcast(id: ID!): Broadcast!
+}

@@ -6,7 +6,24 @@
 # every image at once.
 #
 # `size` is a numeric column and is exposed as a `Float`, which is correct for a byte count and
-# wrong for money; no money is ever read from this type.
+# wrong for money; no money is ever read from this type. Its filter is exact for the same reason the
+# column is: a byte count compared through a binary fraction is a bound that selects the wrong rows.
+#
+# **This file holds the whole domain, not only the object type.** The reads below are the ones the
+# delivered `/api/image-assets` routes serve, and the two inputs are what its two writes accept. The
+# one thing the domain does *not* state is the upload: see `image-asset.api.gql` for why that route
+# has no field here.
+#
+# **Three relations of the row are absent, and each for the delivered reader's own reason.** A
+# product's featured image, its gallery and an equipment record all point *at* this row rather than
+# the other way, and the delivered reads join none of them: a member for any would be null on every
+# row a caller reads here, which is worse than an absent member because a client would select it,
+# read `null` and conclude the image is unused. What an image is used by is reached from the rows
+# that carry the reference — `Product.featuredImageId` among them — and the delivered removal is what
+# refuses an image that is still in use.
+#
+# `deletedAt` is carried because withdrawing and restoring are delivered routes — the lifecycle pair
+# this resource inherits from the CRUD base — and this column is the whole of what they write.
 
 """
 A stored image.
@@ -39,6 +56,134 @@ type ImageAsset {
 	updatedAt: DateTime
 	isActive: Boolean
 	isArchived: Boolean
+	"""
+	When the image was withdrawn, or null while it is live. The withdrawal and the restoration are
+	delivered routes; this is the column they write. A withdrawn image is still pointed at by whatever
+	referenced it — withdrawing it does not remove those references, and the removal is what refuses an
+	image still in use.
+	"""
+	deletedAt: DateTime
 	tenantId: ID
 	organizationId: ID
+}
+
+"""
+The boundary of one page of images.
+"""
+type ImageAssetEdge {
+	node: ImageAsset!
+	cursor: String!
+}
+
+"""
+One page of images, with the total the filters select and the boundary cursors.
+"""
+type ImageAssetConnection {
+	nodes: [ImageAsset!]!
+	edges: [ImageAssetEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an image list may be sorted by.
+"""
+enum ImageAssetSortField {
+	createdAt
+	updatedAt
+	name
+	size
+	isFeatured
+}
+
+"""
+The order the images are returned in. At most three keys are accepted.
+"""
+input ImageAssetSort {
+	field: ImageAssetSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an image list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows
+the rows the service returned rather than translating the filter into a query. `size` is a
+`DecimalFilter` because the column behind it is `numeric`: a bound compared through a binary fraction
+would select the wrong rows, and a gallery is routinely narrowed to "everything under a limit".
+"""
+input ImageAssetFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	name: StringFilter
+	url: StringFilter
+	thumb: StringFilter
+	width: NumberFilter
+	height: NumberFilter
+	size: DecimalFilter
+	isFeatured: BooleanFilter
+	externalProviderId: StringFilter
+	storageProvider: StringFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ImageAssetFilter!]
+	or: [ImageAssetFilter!]
+	not: ImageAssetFilter
+}
+
+"""
+What a caller states when it records an image whose bytes are already somewhere.
+
+The address is required because the row is the address: this write records where an image lives, and
+the store marks the column non-empty. The organization is optional, which is the delivered route's
+own contract — the creation is inherited from the CRUD base and binds its body to a partial entity,
+so nothing validates a member the row does not itself require — and there is no member for the tenant,
+because the service stamps the caller's own tenant.
+
+**This is not the upload.** The delivered upload route produces the address, the thumbnail, the byte
+count and the provider name from a multipart body, and none of them can be stated here; a caller
+reaching this input is recording an image the platform already holds, or one held elsewhere.
+"""
+input CreateImageAssetInput {
+	organizationId: ID
+	"The original file name, for an operator to recognise the asset by."
+	name: String
+	"The path the asset is served from."
+	url: String!
+	"The smaller rendition's path, when one exists."
+	thumb: String
+	width: Int
+	height: Int
+	"The size in bytes, when it is known."
+	size: Float
+	isFeatured: Boolean
+	"The identifier the storage provider knows the asset by."
+	externalProviderId: String
+	"Which provider holds the bytes."
+	storageProvider: String
+}
+
+"""
+What a caller states when it changes an image that exists.
+
+**A member the caller leaves out is left as it is.** The delivered edit is the CRUD base's partial
+column update — it hands the store the members the body carries and writes them — so the identifier
+is the only required member and the rest are stated only when they change.
+"""
+input UpdateImageAssetInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	url: String
+	thumb: String
+	width: Int
+	height: Int
+	size: Float
+	isFeatured: Boolean
+	externalProviderId: String
+	storageProvider: String
 }

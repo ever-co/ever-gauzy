@@ -1,0 +1,79 @@
+# The email history domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/email` routes already serve, under the same guard chain
+# and with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other. The controller states one
+# permission on its class and none on any handler — the resend included, which restates the two guards
+# and no permission — so every field here states that one.
+#
+# **There is no node read.** The controller serves its rows once and reads no single row: the resource is
+# a ledger of what was sent, and the delivered API answers it as a list and reaches one row only to edit
+# it or to send it again. A node field here would be a capability REST does not have, which is the
+# asymmetry the two-protocol rule forbids — so a caller that means one message narrows the connection by
+# its identifier instead, which is the same question asked in the shape the delivered resource answers
+# it.
+#
+# **There is no count field either, and no creation and no removal.** The controller serves no count
+# route, no create and no delete: a row is written by the platform's own send paths — an invitation, an
+# invoice, a password reset — rather than by a caller of this resource, and it is kept as the record of
+# what was sent. Inventing any of the three here would be inventing a capability rather than delivering
+# one.
+#
+# **The resend is a mutation, and it is the one field here with an effect outside the store.** It reads
+# the named row, resolves the transport for the organization, sends the message again and writes the
+# outcome back onto the row — so the answer is the row the write produced, carrying the status the
+# attempt ended in. The `filter` argument some other resources offer on their count has no counterpart
+# here, because there is no count.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is behind
+# the one capability. The REST routes are not gated by that code — they are the door that stays open,
+# which is what keeps an operator able to read the mail ledger and resend a message without the GraphQL
+# surface — so a disabled capability is answered `Cannot query field <name>` here while those routes
+# answer as they always did.
+
+extend type Query {
+	"""
+	The messages the caller's organization has sent, newest first, as the ledger of what went out.
+
+	The delivered read narrows by the organization and the tenant the request states and by nothing else,
+	so the filters below are how a caller asks after one recipient, one subject or one outcome — which is
+	also how one message is read back, since this resource serves no node route.
+	"""
+	emailHistories(
+		filter: EmailHistoryFilter
+		sort: [EmailHistorySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EmailHistoryConnection!
+}
+
+extend type Mutation {
+	"""
+	Changes a sent message.
+
+	The delivered body declares one member, so this input declares one: a message is a record of what was
+	sent, and the only fact about it the API lets a caller restate is whether it is still active. The
+	answer is the row the write produced, read back through the same reader the list uses.
+	"""
+	updateEmailHistory(input: UpdateEmailHistoryInput!): EmailHistory!
+
+	"""
+	Sends a message again, to the address the named row carries, and answers the row with the outcome of
+	the attempt written onto it.
+
+	The delivered handler reads the organization out of its body and the message out of its path, and the
+	answer is the row the attempt produced: the same message with its delivery status restated. The
+	transport is resolved for the organization the caller names, which is why that one member is stated
+	rather than derived — an organization that has configured its own transport sends through it.
+	"""
+	resendEmailHistory(id: ID!, input: ResendEmailHistoryInput): EmailHistory!
+}

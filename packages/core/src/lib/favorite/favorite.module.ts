@@ -8,6 +8,7 @@ import { TypeOrmFavoriteRepository } from './repository/type-orm-favorite.reposi
 import { MikroOrmFavoriteRepository } from './repository/mikro-orm-favorite.repository';
 import { FavoriteService } from './favorite.service';
 import { FavoriteController } from './favorite.controller';
+import { FavoriteResolver } from './favorite.resolver';
 import { GlobalFavoriteModule } from './global-favorite-service.module';
 
 @Module({
@@ -19,7 +20,15 @@ import { GlobalFavoriteModule } from './global-favorite-service.module';
 		GlobalFavoriteModule
 	],
 	controllers: [FavoriteController],
-	providers: [FavoriteService, TypeOrmFavoriteRepository, MikroOrmFavoriteRepository],
+	providers: [
+		FavoriteService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject
+		// services its own module can reach, and this module already reaches the one it needs. Nothing
+		// is re-exported for it — the resolver injects no command bus, so this module hands nothing on.
+		FavoriteResolver,
+		TypeOrmFavoriteRepository,
+		MikroOrmFavoriteRepository
+	],
 	exports: [FavoriteService, TypeOrmFavoriteRepository, MikroOrmFavoriteRepository]
 })
 export class FavoriteModule {}

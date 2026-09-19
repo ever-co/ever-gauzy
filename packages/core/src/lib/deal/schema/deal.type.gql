@@ -1,0 +1,163 @@
+# The deal's GraphQL types.
+#
+# A deal is one opportunity being pursued: the value it carries, the stage of a pipeline it currently
+# sits at, and — when it is for a known party — the party it is for. It is the row a sales board is
+# made of, and the row a pipeline's stage ordering is a statement about.
+#
+# **`probability` is an integer on the deal's own five-point scale, not a percentage.** The delivered
+# column is an `int` and the delivered validator bounds it to 0–5, so the scale is the schema's own
+# rather than a fraction a client would have to multiply: stating it as a `Float` share would invite a
+# caller to send `0.4` and be refused by the write it reaches. The SDL states the scale here because
+# nothing else can — the column carries no unit.
+#
+# **The two relations are carried as identifiers, and neither is a field of this type.** `stage` and
+# `client` are both owned by this row (`Deal` holds `stageId` and `clientId`), so the identifiers
+# always travel; the *rows* they point at travel only when a REST caller names them in `relations`,
+# and the connection's own read names none. A `stage` or `client` member here would therefore be
+# absent on every row this surface answers — worse than an absent member, because a client would
+# select it, read `null` and conclude the deal has no stage. Each is reached from the domain that
+# owns it: a stage from the pipeline it belongs to, a party from the organization-contact record.
+#
+# `deletedAt` is carried because withdrawing and restoring are delivered routes and this column is the
+# whole of what they write; without it the answer to the write that withdrew a deal could not say so.
+
+"""
+One opportunity being pursued: its value, the stage it sits at, and the party it is for.
+"""
+type Deal {
+	id: ID!
+	"The working title of the deal, as entered."
+	title: String!
+	"""
+	How likely the deal is to close, as an integer on the deal's own five-point scale: `0` is the
+	weakest and `5` the strongest. It is a bucketed judgement, not a percentage — the delivered
+	column is an `int` and the delivered validator bounds it to that scale.
+	"""
+	probability: Int!
+	"The stage of a pipeline the deal currently sits at. The stage row owns the pipeline it belongs to."
+	stageId: ID!
+	"The party the deal is for. Null on a deal that is not attached to one."
+	clientId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the deal was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of deals.
+"""
+type DealEdge {
+	node: Deal!
+	cursor: String!
+}
+
+"""
+One page of deals, with the total the filters select and the boundary cursors.
+"""
+type DealConnection {
+	nodes: [Deal!]!
+	edges: [DealEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a deal list may be sorted by.
+"""
+enum DealSortField {
+	createdAt
+	updatedAt
+	title
+	probability
+	stageId
+	clientId
+}
+
+"""
+The order the deals are returned in. At most three keys are accepted.
+"""
+input DealSort {
+	field: DealSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a deal list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows
+the rows the service returned rather than translating the filter into a query: a member the read does
+not select would be a filter that silently selects nothing. `deletedAt` is filterable so a caller can
+ask the one question the list read cannot — which rows have been withdrawn — while the read itself
+answers live rows only, exactly as the delivered route does.
+"""
+input DealFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	title: StringFilter
+	probability: NumberFilter
+	stageId: IDFilter
+	clientId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [DealFilter!]
+	or: [DealFilter!]
+	not: DealFilter
+}
+
+"""
+What a caller states when it files a deal.
+
+The organization is required because the delivered create validates it: `POST /deals` binds a DTO
+that intersects the organization base, and that base refuses a body naming neither an organization nor
+a sent-to destination. There is no member for the tenant, because the service stamps the caller's own
+tenant onto the row and overwrites whatever a body states.
+
+The party and the stage are stated as identifiers. The delivered body accepts the whole relation
+object as well, but the row is what holds the foreign key: an identifier is what the write actually
+persists, and a client that has the stage or the party in hand already has its id.
+"""
+input CreateDealInput {
+	organizationId: ID!
+	title: String!
+	"The deal's probability on its own five-point scale, 0 to 5."
+	probability: Int!
+	"The stage of a pipeline to file the deal at."
+	stageId: ID!
+	clientId: ID
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+What a caller states when it changes a deal that exists.
+
+**A member the caller leaves out is left as it is.** The delivered edit is the CRUD base's partial
+column update — it hands the store the members the body carries and writes them — so the identifier
+is the only required member and the rest are stated only when they change. That is the opposite of
+the catalogue's own category write, which replaces the row, and the difference is the delivered
+service's rather than this surface's.
+"""
+input UpdateDealInput {
+	id: ID!
+	organizationId: ID
+	title: String
+	probability: Int
+	stageId: ID
+	clientId: ID
+	isActive: Boolean
+	isArchived: Boolean
+}

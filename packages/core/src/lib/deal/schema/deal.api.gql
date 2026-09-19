@@ -1,0 +1,92 @@
+# The deal domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/deals` routes already serve, under the same guard and
+# with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other.
+#
+# **The controller's class-level permission is the edit one and its read routes inherit it.**
+# `DealController` states `VIEW_SALES_PIPELINES` on the class and overrides only three handlers — the
+# list, the one-row read and the create — so the create is the single route that raises itself to
+# `EDIT_SALES_PIPELINES` while the list, the one-row read and everything inherited from the CRUD base
+# — the count, the page, the edit, the removal and the two lifecycle moves — run under the class
+# permission. The fields below restate exactly that, including where it reads oddly: an edit, a
+# removal and a withdrawal of a deal are all reachable with the view grant and the creation is not.
+# That asymmetry is the controller's, and resolving it on one surface only is what the two-protocol
+# rule forbids.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. The `pagination` route has no field of its own: the
+# page is what the connection answers with, so a second root field for the paginated spelling would
+# be a second surface that could disagree with this one.
+#
+# The count has a field and no argument. The delivered count route passes its query string through as
+# the store's own `where`, a shape the connection protocol does not speak, so a `filter` argument
+# here would either be handed to a call that cannot take it or evaluated over a second code path that
+# could disagree with `totalCount`. What it answers is the count of the caller's own rows, which is
+# what the route counts when it is given no options.
+
+extend type Query {
+	"""
+	The deals of the caller's tenant, newest first.
+	"""
+	deals(
+		filter: DealFilter
+		sort: [DealSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): DealConnection!
+
+	"""
+	One deal of the caller's tenant, or null when there is none.
+	"""
+	deal(id: ID!): Deal
+
+	"""
+	How many deals the caller's tenant holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero.
+	"""
+	dealCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a deal. This is the one write of the resource that runs under the edit permission, because
+	it is the one write whose route states one.
+	"""
+	createDeal(input: CreateDealInput!): Deal!
+
+	"""
+	Changes the facts of a deal. A member the caller leaves out is left as it is, because the
+	delivered edit is a partial column update rather than a replacement of the row.
+	"""
+	updateDeal(input: UpdateDealInput!): Deal!
+
+	"""
+	Removes a deal outright. The two removals this resource serves are not the same operation, so both
+	are stated rather than one of them being left to a client to discover on the other protocol.
+	"""
+	deleteDeal(id: ID!): Boolean!
+
+	"""
+	Withdraws a deal without removing it: the row keeps its identifier and the answer is the row as it
+	now stands, which is what the delivered route answers with.
+	"""
+	softDeleteDeal(id: ID!): Deal!
+
+	"""
+	Puts a withdrawn deal back, clearing the marker the withdrawal set.
+	"""
+	recoverDeal(id: ID!): Deal!
+}

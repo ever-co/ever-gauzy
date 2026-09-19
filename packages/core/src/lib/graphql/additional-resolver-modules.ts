@@ -139,6 +139,54 @@ export function resolveAdditionalResolverModules(): Function[] {
 			.OrganizationRecurringExpenseModule,
 		require('../income/income.module').IncomeModule,
 		// The supplier master an expense points at, which sits beside those resources and belongs to them.
-		require('../organization-vendor/organization-vendor.module').OrganizationVendorModule
+		require('../organization-vendor/organization-vendor.module').OrganizationVendorModule,
+		// The equipment an employee is issued and the events and announcements the platform sends.
+		require('../equipment/equipment.module').EquipmentModule,
+		require('../equipment-sharing/equipment-sharing.module').EquipmentSharingModule,
+		require('../equipment-sharing-policy/equipment-sharing-policy.module').EquipmentSharingPolicyModule,
+		require('../event-types/event-type.module').EventTypeModule,
+		require('../broadcast/broadcast.module').BroadcastModule,
+		// The sales pipeline and the reference data beside it.
+		require('../deal/deal.module').DealModule,
+		require('../pipeline/pipeline.module').PipelineModule,
+		require('../merchant/merchant.module').MerchantModule,
+		require('../warehouse/warehouse.module').WarehouseModule,
+		require('../skills/skill.module').SkillModule,
+		require('../language/language.module').LanguageModule,
+		require('../official-holiday/official-holiday.module').OfficialHolidayModule,
+		require('../resource-link/resource-link.module').ResourceLinkModule,
+		require('../shared-entity/shared-entity.module').SharedEntityModule,
+		require('../image-asset/image-asset.module').ImageAssetModule,
+		// The access and account periphery: what the platform recorded, what it asked for approval of,
+		// what a person marked, wrote or was mentioned in, and what they were invited to.
+		require('../activity-log/activity-log.module').ActivityLogModule,
+		require('../api-call-log/api-call-log.module').ApiCallLogModule,
+		require('../entity-subscription/entity-subscription.module').EntitySubscriptionModule,
+		require('../request-approval/request-approval.module').RequestApprovalModule,
+		require('../approval-policy/approval-policy.module').ApprovalPolicyModule,
+		require('../terms-acceptance/terms-acceptance.module').TermsAcceptanceModule,
+		require('../invite/invite.module').InviteModule,
+		require('../favorite/favorite.module').FavoriteModule,
+		require('../reaction/reaction.module').ReactionModule,
+		require('../comment/comment.module').CommentModule,
+		require('../mention/mention.module').MentionModule,
+		// The platform's own services: a registered client, the templates accounting renders, the messages
+		// it sent, a payroll run with its lines, the import ledger, and the two reads a signed-out caller
+		// reaches with a token.
+		require('../auth/oauth-client/oauth-client.module').OAuthClientModule,
+		require('../accounting-template/accounting-template.module').AccountingTemplateModule,
+		require('../email-history/email-history.module').EmailHistoryModule,
+		require('../payroll-run/payroll-run.module').PayrollRunModule,
+		require('../export-import/import-history/import-history.module').ImportHistoryModule,
+		require('../estimate-email/estimate-email.module').EstimateEmailModule,
+		require('../invoice-estimate-history/invoice-estimate-history.module').InvoiceEstimateHistoryModule,
+		require('../email-check/email-check.module').EmailCheckModule,
+		// Recruiting: the candidacy, the five rows filed against it, the sitting with its verdicts,
+		// vocabulary and panel, and the criterion ratings.
+		require('../candidate/candidate.module').CandidateModule,
+		require('../candidate-feedbacks/candidate-feedbacks.module').CandidateFeedbacksModule,
+		require('../candidate-interview/candidate-interview.module').CandidateInterviewModule,
+		require('../candidate-interviewers/candidate-interviewers.module').CandidateInterviewersModule,
+		require('../candidate-criterions-rating/candidate-criterion-rating.module').CandidateCriterionsRatingModule
 	];
 }

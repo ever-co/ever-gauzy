@@ -1,0 +1,114 @@
+# The pipeline domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/pipelines` routes already serve, under the same guard
+# and with the same permission, so a client that reaches a capability over one route is not given a
+# narrower or a wider one than the client that reaches it over the other.
+#
+# **The class permission is the edit one and the read routes override it.** `PipelineController`
+# states `EDIT_SALES_PIPELINES` on the class, and its four read handlers — the page, the list, the
+# one-row read and the deals of one pipeline — each state `VIEW_SALES_PIPELINES` of their own, so the
+# class permission is what the inherited count, removal and the two lifecycle moves run under. The
+# fields below restate exactly that: reading one pipeline needs the view grant, asking how many there
+# are needs the edit one, and both are the controller's asymmetry rather than this surface's.
+#
+# The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
+# `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection, so
+# a cursor obtained over REST resumes here. The `pagination` route has no field of its own — the page
+# is what the connection answers with — and the count has one with no argument, because a count is
+# not a connection and `totalCount` counts the rows the connection narrowed to rather than the
+# caller's own rows.
+#
+# **`pipelineDeals` is a root field of its own rather than a filter on `pipelines`, and the reason is
+# the pivot.** `GET /pipelines/:pipelineId/deals` does not narrow the pipeline list: it reads *deal*
+# rows whose stage belongs to the pipeline, which is a join through the stage pivot that neither the
+# pipeline list read nor the deal list read performs. The delivered read also fixes an order of its
+# own — the position of each deal's stage on the board — which is a column of the joined stage rather
+# than of the deal row; the connection therefore declares no order of its own for this field and
+# keeps the one the read returned, and its cursor names the row's identifier, which is the one key
+# that is already total. Its filter vocabulary is the deal connection's own, imported rather than
+# restated, so a cursor minted on `deals` resumes here.
+
+extend type Query {
+	"""
+	The pipelines of the caller's tenant, newest first.
+	"""
+	pipelines(
+		filter: PipelineFilter
+		sort: [PipelineSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): PipelineConnection!
+
+	"""
+	One pipeline of the caller's tenant, or null when there is none.
+	"""
+	pipeline(id: ID!): Pipeline
+
+	"""
+	How many pipelines the caller's tenant holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero.
+	"""
+	pipelineCount: Int
+
+	"""
+	The deals whose stage belongs to one pipeline, in the board's own stage order.
+
+	A pipeline that is not there, or one of another tenant, answers an empty page rather than a
+	refusal: that is what the delivered read does, because it catches the failure and answers an empty
+	result set — and turning that into an error here would tell a caller something the REST route does
+	not.
+	"""
+	pipelineDeals(
+		pipelineId: ID!
+		filter: DealFilter
+		sort: [DealSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): DealConnection!
+}
+
+extend type Mutation {
+	"""
+	Files a pipeline, with the stages it starts with.
+	"""
+	createPipeline(input: CreatePipelineInput!): Pipeline!
+
+	"""
+	Replaces a pipeline's facts and its whole stage set. A stage the body does not name is removed —
+	see `UpdatePipelineInput`.
+	"""
+	updatePipeline(input: UpdatePipelineInput!): Pipeline!
+
+	"""
+	Removes a pipeline outright, with the stages that belong to it: the stage relation cascades at the
+	store. The two removals this resource serves are stated separately rather than one of them being
+	left to a client to discover on the other protocol.
+	"""
+	deletePipeline(id: ID!): Boolean!
+
+	"""
+	Withdraws a pipeline without removing it. The answer is the row as it now stands, which is what
+	the delivered route answers with.
+	"""
+	softDeletePipeline(id: ID!): Pipeline!
+
+	"""
+	Puts a withdrawn pipeline back, clearing the marker the withdrawal set.
+	"""
+	recoverPipeline(id: ID!): Pipeline!
+}

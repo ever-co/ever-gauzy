@@ -1,0 +1,99 @@
+# The language domain's GraphQL types.
+#
+# A language is installation-wide reference data: the platform's own list of what a caller may read an
+# interface, a document or a translation in. It is deliberately not tenant-scoped — the table carries
+# no tenancy column at all — because the vocabulary of languages is the same for every tenant, and a
+# per-tenant copy of it would be a copy that could disagree with the next tenant's.
+#
+# **`is_system` is spelled as the column is, and that is not a style choice.** The default field
+# resolver reads the row's own property, and the connection's filter evaluator reads the same
+# property by the name the filter states; the property is `is_system`. A camelCase member would read
+# a property no row carries, so the member would answer `null` on every row and the filter would
+# select nothing — silently, and in a way no schema check could see. The platform's own employee type
+# carries its snake_case columns the same way, for the same reason.
+#
+# The base entity's archive and soft-delete columns are deliberately **not** members. This resource
+# serves no write at all — its controller declares two reads and nothing else — so there is no route
+# that could set `isArchived`, `archivedAt` or `deletedAt`, and a member for one would be a marker
+# with no operation behind it. `isActive` is carried, because it is the flag the platform's own
+# reference-data seeding writes and a client that lists languages reads it to tell a retired entry
+# from a live one.
+
+"""
+One language the platform knows, as installation-wide reference data.
+"""
+type Language {
+	id: ID!
+	"The language's own name."
+	name: String
+	"The language's code, unique across the platform."
+	code: String
+	"Whether the platform itself seeded the row, as opposed to an installation adding one."
+	is_system: Boolean
+	description: String
+	"The colour the language is shown in, where a client renders one."
+	color: String
+	"Whether the row is active."
+	isActive: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of languages.
+"""
+type LanguageEdge {
+	node: Language!
+	cursor: String!
+}
+
+"""
+One page of languages, with the total the filters select and the boundary cursors.
+"""
+type LanguageConnection {
+	nodes: [Language!]!
+	edges: [LanguageEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a language list may be sorted by.
+"""
+enum LanguageSortField {
+	createdAt
+	updatedAt
+	name
+	code
+}
+
+"""
+The order the languages are returned in. At most three keys are accepted.
+"""
+input LanguageSort {
+	field: LanguageSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a language list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows
+the rows the service returned rather than translating the filter into a query. `is_system` is spelled
+as the column is, for the reason the object type states.
+"""
+input LanguageFilter {
+	id: IDFilter
+	name: StringFilter
+	code: StringFilter
+	is_system: BooleanFilter
+	description: StringFilter
+	color: StringFilter
+	isActive: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [LanguageFilter!]
+	or: [LanguageFilter!]
+	not: LanguageFilter
+}

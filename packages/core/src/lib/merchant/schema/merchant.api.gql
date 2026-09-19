@@ -1,0 +1,85 @@
+# The merchant domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/merchants` routes already serve, under the same guard
+# and with the same permission, so a client that reaches a capability over one protocol is not given
+# a narrower or a wider one than the client that reaches it over the other.
+#
+# **The reads state the view permission and the writes inherit the class's edit one.**
+# `MerchantController` states `ORG_INVENTORY_PRODUCT_EDIT` on the class and overrides its four read
+# handlers — the count, the page, the list and the one-row read — with `ORG_INVENTORY_VIEW` of their
+# own. The creation, the edit and the three inherited routes therefore run under the class permission,
+# and the fields below restate exactly that split rather than tidying it into one permission.
+#
+# The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
+# `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection, so
+# a cursor obtained over REST resumes here. The `pagination` route has no field of its own — the page
+# is what the connection answers with, so a second root field for the paginated spelling would be a
+# second surface that could disagree with this one.
+#
+# The count has a field and no argument: the delivered count route passes its query string through as
+# the store's own `where`, which the connection protocol does not speak, so a `filter` argument here
+# would either be handed to a call that cannot take it or evaluated over a second code path that could
+# disagree with `totalCount`. A count is not a connection, so the field is a nullable `Int` rather
+# than a page — and a non-null field would turn "not answered" into a fabricated zero.
+
+extend type Query {
+	"""
+	The stores of the caller's tenant, newest first.
+	"""
+	merchants(
+		filter: MerchantFilter
+		sort: [MerchantSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): MerchantConnection!
+
+	"""
+	One store of the caller's tenant, or null when there is none.
+	"""
+	merchant(id: ID!): Merchant
+
+	"""
+	How many stores the caller's tenant holds.
+	"""
+	merchantCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a store, with the contact, the logo and the two pivots it is given.
+	"""
+	createMerchant(input: CreateMerchantInput!): Merchant!
+
+	"""
+	Changes a store that exists. The columns the body carries are written and the ones it does not are
+	left as they are — see `UpdateMerchantInput`.
+	"""
+	updateMerchant(input: UpdateMerchantInput!): Merchant!
+
+	"""
+	Removes a store outright. The two removals this resource serves are not the same operation, so both
+	are stated rather than one of them being left to a client to discover on the other protocol: this
+	one removes the row, and its warehouses and tags keep their own rows — the pivots that attached them
+	to this store are what cascades.
+	"""
+	deleteMerchant(id: ID!): Boolean!
+
+	"""
+	Withdraws a store without removing it. The answer is the row as it now stands, which is what the
+	delivered route answers with.
+	"""
+	softDeleteMerchant(id: ID!): Merchant!
+
+	"""
+	Puts a withdrawn store back, clearing the marker the withdrawal set.
+	"""
+	recoverMerchant(id: ID!): Merchant!
+}

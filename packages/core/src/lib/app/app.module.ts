@@ -57,6 +57,7 @@ import { EmailHistoryModule } from '../email-history/email-history.module';
 import { EmailResetModule } from '../email-reset/email-reset.module';
 import { EmailTemplateModule } from '../email-template/email-template.module';
 import { EmployeeAppointmentModule } from '../employee-appointment/employee-appointment.module';
+import { EmployeeAvailabilityModule } from '../employee-availability/employee-availability.module';
 import { EmployeeAwardModule } from '../employee-award/employee-award.module';
 import { EmployeeLevelModule } from '../employee-level/employee-level.module';
 import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
@@ -431,6 +432,11 @@ if (environment.THROTTLE_ENABLED) {
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
 		EmployeeAppointmentModule,
+		// The availability resource's module, which nothing imported until its GraphQL surface existed: a
+		// module that is not in the application's graph is not mounted, so its REST routes answered 404 and
+		// its resolver was never scanned — the endpoint carried the fields its SDL declares and resolved
+		// every one of them to null, with no error anywhere. Naming it here is what mounts both surfaces.
+		EmployeeAvailabilityModule,
 		AppointmentEmployeesModule,
 		RoleModule,
 		OrganizationModule,

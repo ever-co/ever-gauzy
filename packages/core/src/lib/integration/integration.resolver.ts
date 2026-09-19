@@ -154,7 +154,12 @@ export class IntegrationResolver {
 		// that states neither asks for the flag to be ignored, which is the empty member.
 		const input = {
 			integrationTypeId,
-			searchQuery,
+			// The delivered reader calls `toLowerCase()` on this member on one of its two branches without
+			// asking whether it was stated, so an absent search is stated as the empty one — which is what
+			// the route's own DTO produces for a query string that names no search, and which narrows to
+			// every row exactly as that route does. Passing nothing made the reader dereference it, which
+			// is a 500 on a list route that answers 200 over REST.
+			searchQuery: searchQuery ?? '',
 			filter: isPaid === undefined || isPaid === null ? undefined : String(isPaid)
 		} as IIntegrationFilter;
 

@@ -1,0 +1,199 @@
+# The accounting template's object type.
+#
+# An accounting template is the document an invoice, an estimate or a receipt is rendered through: a
+# type, a language, an organization and two copies of the same document — the MJML source a human edits
+# and the HTML the platform compiled from it. The trio (type, language, organization) is the address the
+# delivered lookup resolves a template by, which is why all three are carried beside the identifier.
+#
+# **`mjml` is the source and `hbs` is the compiled body**, named as the columns are named. They are two
+# facts about one template rather than one fact spelled twice: a caller editing the document reads the
+# source, and a caller rendering it reads the compiled body. Neither is the delivered route's answer
+# alone — `GET /` and `GET /:id` both carry the whole row — so both are members.
+#
+# **`organization` is not carried.** The delivered list read joins it on one ORM branch and not on the
+# other, and the node read joins nothing at all, so a member for the relation would be present or absent
+# depending on which installation and which route produced the row. That is exactly the kind of member
+# this schema refuses: one whose presence a client cannot predict. `organizationId` is carried, and the
+# organization's own type is reachable from the organization surface rather than through a template that
+# happens to point at it.
+#
+# `templateType` is carried as its delivered value rather than declared as a schema enum. The vocabulary
+# is `AccountingTemplateTypeEnum` in the platform's contract package — `invoice`, `estimate` and
+# `receipt` — which types the column and which the delivered body validation reads; declaring it again
+# here would be a second declaration of a value set this domain does not own. The values are stated in
+# the description so a client does not have to guess them.
+#
+# `deletedAt` is carried because withdrawing and restoring are delivered routes: the CRUD base's own
+# `DELETE /:id/soft` and `PUT /:id/recover` are mounted on this controller, and this column is the whole
+# of what they write. Without it the answer to the write that withdrew a template would not say so.
+
+"""
+One accounting template: the document one type of record is rendered through, in one language, for one
+organization.
+"""
+type AccountingTemplate {
+	id: ID!
+	"The template's name. The delivered save writes the template type here."
+	name: String
+	"The language this copy is written in."
+	languageCode: String
+	"""
+	Which record this template renders: `invoice`, `estimate` or `receipt`. The value set is the
+	platform's own accounting template vocabulary, shared with the delivered body validation.
+	"""
+	templateType: String
+	"The MJML source of the document — what an editor reads and writes."
+	mjml: String
+	"The HTML the platform compiled from the source — what a renderer reads."
+	hbs: String
+	"""
+	The organization this copy belongs to, or null on a copy that belongs to no organization at all.
+	An organization-less copy with an organization-less tenant is one of the templates the platform
+	ships, and the delivered lookup falls back to it for every tenant.
+	"""
+	organizationId: ID
+	"The tenant this copy belongs to, or null on a copy the platform itself ships."
+	tenantId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are the CRUD base's
+	own routes and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of accounting templates.
+"""
+type AccountingTemplateEdge {
+	node: AccountingTemplate!
+	cursor: String!
+}
+
+"""
+One page of accounting templates, with the total the filters select and the boundary cursors.
+"""
+type AccountingTemplateConnection {
+	nodes: [AccountingTemplate!]!
+	edges: [AccountingTemplateEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an accounting template list may be sorted by.
+"""
+enum AccountingTemplateSortField {
+	createdAt
+	updatedAt
+	name
+	languageCode
+	templateType
+}
+
+"""
+The order the accounting template list is returned in. At most three keys are accepted.
+"""
+input AccountingTemplateSort {
+	field: AccountingTemplateSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an accounting template list may be narrowed by. `and` is the default; `or` requires any of
+its members and `not` excludes the rows that match it.
+
+`organizationId: { isNull: true }` is the copy that belongs to no organization, and
+`tenantId: { isNull: true }` is the copy the platform itself ships — the pair the delivered lookup falls
+back to for every tenant.
+
+`mjml` and `hbs` are not filterable. They are document columns, and a condition on one would scan a
+whole template's source for a pattern: a question no delivered read asks, answered against markup rather
+than against a template.
+"""
+input AccountingTemplateFilter {
+	id: IDFilter
+	name: StringFilter
+	languageCode: StringFilter
+	templateType: StringFilter
+	organizationId: IDFilter
+	tenantId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [AccountingTemplateFilter!]
+	or: [AccountingTemplateFilter!]
+	not: AccountingTemplateFilter
+}
+
+"""
+What a caller states when it files a template.
+
+The tenant is not a member: the tenant a row is written into comes from the credential on every write on
+this platform, and a member naming one would promise a scope the write does not honour. `organizationId`
+is a member and is nullable, because its absence is a statement rather than an omission — a copy that
+names no organization is a candidate the delivered lookup falls back to.
+"""
+input CreateAccountingTemplateInput {
+	"The template's name, as the delivered list read answers it."
+	name: String
+	"The language this copy is written in."
+	languageCode: String
+	"Which record this template renders: `invoice`, `estimate` or `receipt`."
+	templateType: String
+	"The MJML source of the document."
+	mjml: String
+	"The compiled HTML, when the caller states one rather than a source to compile."
+	hbs: String
+	"The organization this copy belongs to. Omit for a copy that belongs to none."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a template that exists.
+
+The members are the delivered body's own, and the delivered edit does not patch: it hands the store the
+stated columns beside the path identifier, so **a member the caller leaves out is written as the
+column's default rather than left as it is**. Reading the row first and then stating every member is
+what a caller that means "change one thing" has to do.
+"""
+input UpdateAccountingTemplateInput {
+	id: ID!
+	name: String
+	languageCode: String
+	templateType: String
+	mjml: String
+	organizationId: ID
+}
+
+"""
+What a caller states when it saves the document of one template.
+
+The three addressing members are required because the delivered body requires them: the save resolves
+the copy to write by its type, its language and its organization, and a request that named none of them
+would have no row to resolve. The tenant is not a member, for the same reason it is on no other write
+here.
+"""
+input SaveAccountingTemplateInput {
+	"Which record this template renders: `invoice`, `estimate` or `receipt`."
+	templateType: String!
+	"The language this copy is written in."
+	languageCode: String!
+	"The organization this copy belongs to."
+	organizationId: ID!
+	"The MJML source to store. The compiled body is derived from it."
+	mjml: String!
+}
+
+"""
+A document converted for preview, as the delivered preview route answers it.
+
+The conversion is answered rather than kept: there is no row behind this type, which is why it carries
+the rendered document and nothing else.
+"""
+type AccountingTemplatePreview {
+	"The document with its markup compiled and its sample values rendered."
+	html: String!
+}

@@ -1,0 +1,141 @@
+# The warehouse domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/warehouses` routes already serve, under the same guard
+# and with the same permission, so a client that reaches a capability over one protocol is not given
+# a narrower or a wider one than the client that reaches it over the other.
+#
+# **One controller serves two resources, and this file states both.** `/api/warehouses` carries the
+# location's own routes — the list, the page, the count, the one-row read, the filing, the edit and
+# the three inherited writes — and, on the same controller, four routes that read and write the
+# *stock levels* of one location. The level is a row of its own with its own entity, so the fields for
+# it are named for it rather than folded into the location's.
+#
+# **The class permission is the edit one and the four read routes override it.**
+# `WarehouseController` states `ORG_INVENTORY_PRODUCT_EDIT` on the class, and its count, page, list,
+# one-row read and inventory read each state `ORG_INVENTORY_VIEW` of their own — so the location's
+# filing, its edit and the three inherited writes run under the class permission, and so do all four
+# inventory routes, which declare none of their own. The fields below restate exactly that.
+#
+# The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
+# `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection, so
+# a cursor obtained over REST resumes here. The `pagination` route folds into it — the page is what the
+# connection answers with — and the count is a nullable `Int` with no argument, because a count is not
+# a connection and the delivered count route's query string is the store's own `where`, a shape no
+# schema can state.
+#
+# **`warehouseInventory` is a root field of its own rather than a filter on `warehouses`, and the
+# reason is that it is not a list of locations at all.** `GET /warehouses/inventory/:warehouseId`
+# answers the *level* rows of one location, joined to the product each counts and to the variant levels
+# under it — a join neither the location list read nor the location one-row read performs. A filter on
+# the location connection could not express it: narrowing a list of locations by a location's own
+# identifier answers one location, not its stock. The two quantity routes beside it write a level
+# rather than a location, and follow it for the same reason.
+
+extend type Query {
+	"""
+	The stock locations of the caller's tenant, newest first.
+	"""
+	warehouses(
+		filter: WarehouseFilter
+		sort: [WarehouseSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): WarehouseConnection!
+
+	"""
+	One stock location of the caller's tenant, or null when there is none.
+	"""
+	warehouse(id: ID!): Warehouse
+
+	"""
+	How many stock locations the caller's tenant holds.
+	"""
+	warehouseCount: Int
+
+	"""
+	The stock levels held at one location, each joined to the product it counts and to the variant
+	levels under it.
+
+	The delivered read declares no order of its own — it hands the store a criterion and takes the
+	rows as they come back — so the connection states one, as it does for the location list.
+	"""
+	warehouseInventory(
+		warehouseId: ID!
+		filter: WarehouseProductFilter
+		sort: [WarehouseProductSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): WarehouseProductConnection!
+}
+
+extend type Mutation {
+	"""
+	Files a stock location, with the contact, the logo and the tag pivot it is given.
+	"""
+	createWarehouse(input: CreateWarehouseInput!): Warehouse!
+
+	"""
+	Changes a stock location that exists: the columns the body carries are written and the ones it does
+	not are left as they are.
+	"""
+	updateWarehouse(input: UpdateWarehouseInput!): Warehouse!
+
+	"""
+	Removes a stock location outright. The stock levels held there are rows of their own and cascade at
+	the store, which is why a caller that means "stop using this location" reaches for the soft removal
+	below instead.
+	"""
+	deleteWarehouse(id: ID!): Boolean!
+
+	"""
+	Withdraws a stock location without removing it. The answer is the row as it now stands, which is
+	what the delivered route answers with.
+	"""
+	softDeleteWarehouse(id: ID!): Warehouse!
+
+	"""
+	Puts a withdrawn stock location back, clearing the marker the withdrawal set.
+	"""
+	recoverWarehouse(id: ID!): Warehouse!
+
+	"""
+	Opens a stock level for each product named, at one location, with a variant level under it for every
+	variant the product has.
+
+	The answer is the level rows the write created. The delivered route answers the page envelope the
+	bulk write produces — a list of rows and their count — and the list's own length is that count, so
+	the field answers the rows rather than restating it.
+
+	A product that is not there, or a location that is not, is refused: the delivered write raises a
+	miss rather than answering an empty set, so the field lets that refusal through.
+	"""
+	addWarehouseProducts(warehouseId: ID!, input: AddWarehouseProductsInput!): [WarehouseProduct!]!
+
+	"""
+	Sets the quantity held at one product level of a location.
+
+	The delivered write loads the level, sets the quantity and saves it back — it does not add to it —
+	so the argument is the quantity the level is to hold, not a change to apply.
+	"""
+	updateWarehouseProductQuantity(warehouseProductId: ID!, count: Decimal!): WarehouseProduct!
+
+	"""
+	Sets the quantity held at one variant level, and rolls the sum of the level's variants back up into
+	the product level above it — one write moves both rows, which is what keeps the cached product
+	quantity and the variant levels it is the sum of from drifting apart.
+	"""
+	updateWarehouseProductVariantQuantity(warehouseProductVariantId: ID!, count: Decimal!): WarehouseProductVariant!
+}

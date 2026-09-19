@@ -1,0 +1,105 @@
+# The image asset domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/image-assets` routes already serve, under the same
+# guard and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other.
+#
+# **One delivered route has no field here, and it is the upload.** `POST /image-assets/upload/:folder`
+# is the capability this domain is mostly *for* — and it is not expressible as a field, for reasons
+# that are structural rather than a matter of taste. The route is a multipart request: its handler
+# takes no address, no byte count and no thumbnail from the body at all, but four facts the delivery
+# pipeline produces — the stored key, the original file name, the size in bytes and the name of the
+# provider that took the bytes. Behind them the route sanitises the folder, scopes the destination to
+# the caller's tenant, filters the upload to raster images, re-reads the stored bytes to reject markup
+# that would execute when the file is served, generates a thumbnail through the image library and
+# deletes the stored file when that check rejects it. A GraphQL field over a JSON body has no file
+# part to hand any of that, and the endpoint carries no upload scalar and no upload middleware to
+# invent one from: a field here would have to accept an address the caller had already put somewhere,
+# which is exactly what `createImageAsset` below does and is a *different* capability from the one the
+# route serves. The gap is stated rather than papered over, and the write that *is* expressible is
+# stated in full.
+#
+# **The class permission pair is the add one, and the removal raises itself.** `ImageAssetController`
+# states `ALL_ORG_EDIT` with `MEDIA_GALLERY_ADD` on the class, and then three of its handlers state a
+# pair of their own: the four reads the view pair, and the removal the delete pair. Everything else —
+# the creation and the three routes inherited from the CRUD base — runs under the class pair, which is
+# why the edit and the lifecycle pair state the *add* permission rather than an edit one. The fields
+# below restate exactly that, including where it reads oddly.
+#
+# The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
+# `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection, so
+# a cursor obtained over REST resumes here. The `pagination` route has no field of its own — the page
+# is what the connection answers with — and the count is a nullable `Int` with no argument, because a
+# count is not a connection and the delivered count route's query string is the store's own `where`.
+#
+# **The removal answers the row rather than a flag, and it is the one removal of the resource that
+# can refuse.** `DELETE /image-assets/:id` does not reach the CRUD base: it reads the asset with the
+# two product relations loaded and refuses with a `400` when either of them still points at it, so an
+# image a product is using cannot be removed out from under it. The field answers the row the removal
+# took, which is what the delivered route answers, and it lets that refusal through rather than
+# turning it into a `false` — "it was removed" and "it is still in use" are different facts and a
+# boolean cannot carry both.
+
+extend type Query {
+	"""
+	The images of the caller's tenant, newest first.
+	"""
+	imageAssets(
+		filter: ImageAssetFilter
+		sort: [ImageAssetSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ImageAssetConnection!
+
+	"""
+	One image of the caller's tenant, or null when there is none.
+	"""
+	imageAsset(id: ID!): ImageAsset
+
+	"""
+	How many images the caller's tenant holds.
+	"""
+	imageAssetCount: Int
+}
+
+extend type Mutation {
+	"""
+	Records an image whose bytes are already held. This is the delivered create route and not the
+	upload: see the note above for why the upload has no field.
+	"""
+	createImageAsset(input: CreateImageAssetInput!): ImageAsset!
+
+	"""
+	Changes an image. A member the caller leaves out is left as it is, because the delivered edit is a
+	partial column update rather than a replacement of the row.
+	"""
+	updateImageAsset(input: UpdateImageAssetInput!): ImageAsset!
+
+	"""
+	Removes an image outright, with the derived renditions that belong to it. A `400` is raised when a
+	product still points at the image, and that refusal is let through.
+
+	The two removals this resource serves are not the same operation, so both are stated: this one
+	removes the row, and the withdrawal below keeps it and clears whatever marker it set.
+	"""
+	deleteImageAsset(id: ID!): ImageAsset!
+
+	"""
+	Withdraws an image without removing it. The answer is the row as it now stands, which is what the
+	delivered route answers with.
+	"""
+	softDeleteImageAsset(id: ID!): ImageAsset!
+
+	"""
+	Puts a withdrawn image back, clearing the marker the withdrawal set.
+	"""
+	recoverImageAsset(id: ID!): ImageAsset!
+}

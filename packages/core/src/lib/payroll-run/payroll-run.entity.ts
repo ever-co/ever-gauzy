@@ -133,6 +133,12 @@ export class PayrollRun extends TenantOrganizationBaseEntity implements IPayroll
 	 * Who approved the run. Payroll is money leaving the company, so the sign-off is recorded
 	 * separately from the base entity's generic `updatedByUserId`.
 	 */
+	// 🛑 The join column is named, and that is not decoration. Without a name the mapper derives the foreign
+	// key column from the relation (`approvedById`) while the relation-id mapping below declares
+	// `approvedByUserId` — two spellings of one column, of which only the second exists on the table. Every
+	// read then selected `PayrollRun.approvedById` and answered `no such column` on the store, on both
+	// protocols: `GET /api/payroll-run` answered 500 and so did the GraphQL field beside it. Naming the
+	// column makes the two mappings agree with the column the migrations create.
 	@MultiORMManyToOne(() => User, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
@@ -140,7 +146,7 @@ export class PayrollRun extends TenantOrganizationBaseEntity implements IPayroll
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
-	@JoinColumn()
+	@JoinColumn({ name: 'approvedByUserId' })
 	approvedBy?: IUser;
 
 	@ApiPropertyOptional({ type: () => String })

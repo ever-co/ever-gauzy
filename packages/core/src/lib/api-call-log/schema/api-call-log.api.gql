@@ -1,0 +1,58 @@
+# The API call log domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **Two fields, and they are the controller's two routes.** `ApiCallLogController` declares a list read
+# and a removal, and inherits nothing — it does not extend the CRUD base. There is therefore no count
+# field and no node field: neither capability has a route behind it, and a log row is read in context —
+# one operation's rows, one caller's rows, one status — rather than one row at a time.
+#
+# The controller carries `@Permissions(ALL_ORG_VIEW, API_CALL_LOG_READ)` on its class and states nothing
+# on either route, so both routes run under that pair; both fields below state the same pair, in the same
+# order, rather than a narrower one either of them might look like it deserves.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained
+# over one surface resumes on the other.
+#
+# **`deleteApiCallLog` answers whether the removal happened, and the two removals it can perform are one
+# capability.** The delivered route reads a `forceDelete` flag out of its query string and dispatches
+# `service.delete` when it is set and `service.softDelete` when it is not; the two answers it produces —
+# the store's delete result and the withdrawn row — are two shapes one schema field cannot carry under
+# one name, and a caller that asked for a withdrawal can read the row's `deletedAt` back from the
+# connection. The flag is an argument here rather than a second field, because a second field would be
+# the same route stated twice and could disagree with this one about the flag's default.
+
+extend type Query {
+	"""
+	The API call logs of the caller's tenant, most recent request first.
+	"""
+	apiCallLogs(
+		filter: ApiCallLogFilter
+		sort: [ApiCallLogSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ApiCallLogConnection!
+}
+
+extend type Mutation {
+	"""
+	Removes one recorded call, or withdraws it.
+
+	With no `forceDelete` — and with it stated as `false` — the row is marked and stays readable through
+	the `deletedAt` filter. With it stated as `true` the row is removed from the store outright.
+	"""
+	deleteApiCallLog(
+		"The row to remove."
+		id: ID!
+		"Remove the row outright rather than withdrawing it. Omit for a withdrawal, which is the route's own default."
+		forceDelete: Boolean
+	): Boolean!
+}

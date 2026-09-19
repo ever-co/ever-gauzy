@@ -1,0 +1,87 @@
+# The skill domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The guard chain is the controller's, and the controller's is one guard and no permission.**
+# `SkillController` states `TenantPermissionGuard` on the class and declares no `@Permissions`
+# anywhere — not on the name route it owns and not on any of the routes it inherits from the CRUD base
+# — so every one of its routes is tenant-guarded and otherwise unpermissioned. No field below states a
+# permission, and the class states none either: a permission here would demand a grant no route asks
+# for, which is exactly the asymmetry the two-protocol rule forbids. Tightening this resource is a
+# change to make in both places at once, and it is not this delivery's to make.
+#
+# The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
+# `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection, so
+# a cursor obtained over REST resumes here. The `pagination` route folds into it — the page is what
+# the connection answers with — and the count is a nullable `Int` with no argument, because a count is
+# not a connection and the delivered count route's query string is the store's own `where`.
+#
+# **The name route is a filter rather than a root field of its own.** `GET /skills/getByName/:name`
+# reads one skill by its name and joins nothing the list read does not: its answer is the row a
+# `name` filter over the connection selects, so stating it twice would be two surfaces that could
+# disagree. One difference is worth writing down rather than hiding, and it is a difference the
+# delivery does not reproduce: the delivered name route builds its own query and names no tenant in
+# it, so it answers a skill of any tenant, while the connection's read is the tenant-scoped list read
+# and answers only the caller's own rows. Adding a root field that reached across tenants would be a
+# widening nobody asked for, so the filter is narrower than that one route and the narrowing is
+# stated here.
+
+extend type Query {
+	"""
+	The skills of the caller's tenant, newest first.
+	"""
+	skills(
+		filter: SkillFilter
+		sort: [SkillSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): SkillConnection!
+
+	"""
+	One skill of the caller's tenant, or null when there is none.
+	"""
+	skill(id: ID!): Skill
+
+	"""
+	How many skills the caller's tenant holds.
+	"""
+	skillCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a skill. The name and the colour are required because the store requires them: both columns
+	are `NOT NULL` and carry no default.
+	"""
+	createSkill(input: CreateSkillInput!): Skill!
+
+	"""
+	Changes a skill. A member the caller leaves out is left as it is, because the delivered edit is a
+	partial column update rather than a replacement of the row.
+	"""
+	updateSkill(input: UpdateSkillInput!): Skill!
+
+	"""
+	Removes a skill outright. The employees and organizations that pointed at it keep their own rows —
+	the pivots that attached them are what cascades — which is why a caller that means "stop offering
+	this skill" reaches for the soft removal below instead.
+	"""
+	deleteSkill(id: ID!): Boolean!
+
+	"""
+	Withdraws a skill without removing it. The answer is the row as it now stands, which is what the
+	delivered route answers with.
+	"""
+	softDeleteSkill(id: ID!): Skill!
+
+	"""
+	Puts a withdrawn skill back, clearing the marker the withdrawal set.
+	"""
+	recoverSkill(id: ID!): Skill!
+}

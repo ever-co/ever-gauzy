@@ -1,0 +1,126 @@
+# The mention domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **No field here states a permission, and that is the parity rather than an omission.** The delivered
+# controller carries `TenantPermissionGuard` and `PermissionGuard` on the class and no `@Permissions`
+# anywhere: it declares no handler of its own, so its whole route set is the nine routes it inherits
+# from the CRUD base, and not one of those nine states a permission either. Every route this resource
+# serves is therefore tenant-guarded and otherwise unpermissioned, and a field that demanded a
+# permission would refuse a caller the REST route serves — the asymmetry the two-protocol rule
+# forbids. Tightening the resource is a change to make in both places at once, and it is not this
+# delivery's to make.
+#
+# Every field below is one of those nine routes, under the same guard chain and with the same
+# permission — none — so a client that reaches a capability over one protocol is not given a narrower
+# or a wider one than the client that reaches it over the other.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered
+# list method reads live rows only, and offering an argument that cannot be honoured would be worse
+# than not offering it. The `relations` such a route can be given are absent for the same reason: this
+# read names none, so neither employee is joined and the object type carries their identifiers.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same
+# rows under the same filters, one of them sliced by `take`/`skip` and the other not. That is one
+# capability, so it is one root field: `mentions`, mirroring `GET /`, which is the route whose whole
+# filtered set the connection protocol is applied to. A second root field for the paginated spelling
+# would be a second surface that could disagree with this one, and the connection's own
+# `limit`/`offset` already are the page it performs.
+#
+# There is no root field beyond the nine, and that is a statement about the delivered routes rather
+# than a pruning of them: this controller declares no handler of its own, so it has no sub-route that
+# could be folded into the connection as a filter — the fold the doctrine requires is vacuous here.
+#
+# `mentionCount` takes no filter, and that is a statement rather than an omission. The delivered count
+# route passes its query string through as the store's own `where`, which the connection protocol does
+# not speak; a `filter` argument here would either be handed to a service call that cannot accept it or
+# be evaluated over a second code path that could disagree with the connection's `totalCount`. What it
+# answers is the count of the caller's own rows, which is the call the route makes when it is given no
+# options. It is nullable because an aggregate a resource has no answer for must not be answered as a
+# fabricated zero.
+#
+# `createMention` is the one field whose route is not the base class's own insert. `MentionService`
+# overrides `create`, and the inherited `POST /` reaches that override through the base controller, so
+# the field calls the same override rather than the base method: the override stamps the tenant and the
+# authoring employee from the credential, publishes a subscription for the mentioned employee and
+# raises a notification for them, and a mention filed over GraphQL is therefore subscribed and
+# notified exactly as one filed over REST. Reaching the base insert instead would file the row and
+# silently skip both effects, which is the divergence this surface exists to prevent.
+
+extend type Query {
+	"""
+	The mentions of the caller's tenant, newest first.
+	"""
+	mentions(
+		filter: MentionFilter
+		sort: [MentionSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): MentionConnection!
+
+	"""
+	One mention of the caller's tenant, or null when there is none.
+	"""
+	mention(id: ID!): Mention
+
+	"""
+	How many mentions the caller's tenant records.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero. The delivered count route binds its
+	query string to the store's own `where`, a shape no schema can state, so the field offers no
+	narrowing of its own rather than an argument the resolver could not pass on.
+	"""
+	mentionCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a mention, and raises the subscription and the notification the delivered filing raises
+	beside it.
+
+	The tenant and the employee who did the mentioning are stamped from the credential and are never
+	stated by the caller; the organization and the mentioned employee are, because the subscription and
+	the notification are addressed to them.
+	"""
+	createMention(input: CreateMentionInput!): Mention!
+
+	"""
+	Changes a mention that exists.
+
+	**A member the caller leaves out is left as it is.** The delivered route reads the row the
+	identifier names — proving it is the caller's own — and writes the members the body states to it,
+	so this is a column update and not a replacement; see `UpdateMentionInput`.
+
+	The answer is the row the write produced, read back through the read the node query performs. The
+	delivered route answers the store's own update result — a statement about the write, `{ affected }`
+	— which is not a row, and a field declared as the object type cannot answer it.
+	"""
+	updateMention(input: UpdateMentionInput!): Mention!
+
+	"""
+	Removes a mention outright. The answer says whether the removal happened rather than returning the
+	removed row, because the delivered route answers the store's delete result.
+	"""
+	deleteMention(id: ID!): Boolean!
+
+	"""
+	Withdraws a mention without removing it: the row keeps its identifier and the recovery below reads
+	it back, and the delivered list stops answering it.
+	"""
+	softDeleteMention(id: ID!): Mention!
+
+	"""
+	Puts a withdrawn mention back, clearing the marker the withdrawal set.
+	"""
+	recoverMention(id: ID!): Mention!
+}

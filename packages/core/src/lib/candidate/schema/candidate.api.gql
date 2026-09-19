@@ -1,0 +1,611 @@
+# The recruiting domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/candidate*` routes already serve, under the same guard
+# chain and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other. The guards and the
+# permissions are read from each controller's own metadata in the resolvers, and each resolver's spec
+# compares the two rather than restating a list that could agree with the resolver while disagreeing
+# with the controller.
+#
+# **Why this domain matters.** A candidate is a person on the way to becoming an engagement, and the
+# rows this domain serves are the only place the platform records who is being hired, what they are
+# being assessed on, who sat on the panel and what each of them concluded. The employee surface can
+# read the row a hired candidate became; nothing else can read the pipeline that produced it.
+#
+# **The list is a connection, and a sub-route of the list is a filter.** Every resource below serves a
+# list, and each list answers in the platform's connection shape — the same filters, the same
+# operators, the same caps, the same opaque cursors and the same `total` the REST query protocol
+# states — so a cursor obtained over one surface resumes on the other. Three delivered sub-routes read
+# one parent's rows rather than the whole tenant's: the interviews of a candidate, the feedbacks of an
+# interview and the panel, technologies, qualities and criteria of an interview or a verdict. None of
+# them joins a pivot the list read does not: each is the same read with one more predicate, over a
+# column the row carries. Each therefore folds into its own connection's filter — `candidateId`,
+# `interviewId`, `feedbackId` — rather than becoming a root field of its own, which would be a second
+# surface that could disagree with the first about the same rows.
+#
+# **`GET /pagination` has no root field anywhere in this domain.** It answers the same rows under the
+# same narrowing as the list, sliced by `take`/`skip`, and the connection's own `limit`/`offset` are
+# already that slice.
+#
+# **Every count route gets a field of its own, with no argument.** A bare number is not a connection
+# and `totalCount` is not that number — it is the count of the rows the connection narrowed to, while
+# the count route counts the caller's own rows. The delivered count routes pass their query string
+# straight through as the store's own `where`, which the connection protocol does not speak, so the
+# fields state no filter they could not honour; the answer is the count of the caller's own rows, which
+# is what each route answers when it is given no options. Each is nullable because the delivered
+# `countBy` answers the store's number and a store that cannot answer is not a fabricated zero.
+#
+# **The lifecycle routes count, and each spelling of removal is its own field.** Every controller in
+# this domain inherits `DELETE /:id`, `DELETE /:id/soft` and `PUT /:id/recover` from the CRUD base
+# beside the routes it declares itself. Three operations, three fields, because a client that could not
+# tell them apart could not tell whether the rows that point at a withdrawn candidate survived.
+#
+# **`rating` is a number and the schema says its scale, and money is an exact decimal.** A candidate's,
+# a verdict's, a sitting's, a technology's and a quality's rating are `Decimal`, because those columns
+# are `numeric`; a criterion's rating is `Int!`, because that column is an integer. The two rate columns
+# on a candidacy are money and are `Decimal` and never `Float`.
+
+extend type Query {
+	# -----------------------------------------------------------------------------------------
+	# The candidate
+	# -----------------------------------------------------------------------------------------
+
+	"""
+	The candidacies of the caller's tenant, in no order of their own: the delivered read applies none,
+	so the connection applies the platform's — newest first, the identifier last so a cursor walk over
+	them is stable.
+	"""
+	candidates(
+		filter: CandidateFilter
+		sort: [CandidateSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateConnection!
+
+	"One candidacy of the caller's tenant, or null when there is none."
+	candidate(id: ID!): Candidate
+
+	"How many candidacies the caller's tenant holds."
+	candidateCount: Int
+
+	# -----------------------------------------------------------------------------------------
+	# The candidacy's own facts
+	# -----------------------------------------------------------------------------------------
+
+	"The documents filed under the candidacies of the caller's tenant. `candidateId` narrows them to one person's file."
+	candidateDocuments(
+		filter: CandidateDocumentFilter
+		sort: [CandidateDocumentSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateDocumentConnection!
+
+	"One document, or null when there is none."
+	candidateDocument(id: ID!): CandidateDocument
+
+	"How many documents the caller's tenant holds."
+	candidateDocumentCount: Int
+
+	"The courses of study filed under the candidacies of the caller's tenant. `candidateId` narrows them to one person's file."
+	candidateEducations(
+		filter: CandidateEducationFilter
+		sort: [CandidateEducationSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateEducationConnection!
+
+	"One course of study, or null when there is none."
+	candidateEducation(id: ID!): CandidateEducation
+
+	"How many courses of study the caller's tenant holds."
+	candidateEducationCount: Int
+
+	"The prior engagements filed under the candidacies of the caller's tenant. `candidateId` narrows them to one person's file."
+	candidateExperiences(
+		filter: CandidateExperienceFilter
+		sort: [CandidateExperienceSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateExperienceConnection!
+
+	"One prior engagement, or null when there is none."
+	candidateExperience(id: ID!): CandidateExperience
+
+	"How many prior engagements the caller's tenant holds."
+	candidateExperienceCount: Int
+
+	"The skills filed under the candidacies of the caller's tenant. `candidateId` narrows them to one person's file."
+	candidateSkills(
+		filter: CandidateSkillFilter
+		sort: [CandidateSkillSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateSkillConnection!
+
+	"One skill, or null when there is none."
+	candidateSkill(id: ID!): CandidateSkill
+
+	"How many skills the caller's tenant holds."
+	candidateSkillCount: Int
+
+	"""
+	The origins the caller's tenant records, which is a vocabulary rather than one person's file: the
+	row a candidacy points at through its own `sourceId` is read from `candidateSource(id)`.
+	"""
+	candidateSources(
+		filter: CandidateSourceFilter
+		sort: [CandidateSourceSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateSourceConnection!
+
+	"One origin, or null when there is none."
+	candidateSource(id: ID!): CandidateSource
+
+	"How many origins the caller's tenant records."
+	candidateSourceCount: Int
+
+	# -----------------------------------------------------------------------------------------
+	# The interview and the vocabulary it carries
+	# -----------------------------------------------------------------------------------------
+
+	"The interviews of the caller's tenant. `candidateId` narrows them to the sittings of one candidacy."
+	candidateInterviews(
+		filter: CandidateInterviewFilter
+		sort: [CandidateInterviewSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateInterviewConnection!
+
+	"One interview, or null when there is none."
+	candidateInterview(id: ID!): CandidateInterview
+
+	"How many interviews the caller's tenant holds."
+	candidateInterviewCount: Int
+
+	"The panel seats of the caller's tenant. `interviewId` narrows them to the panel of one sitting."
+	candidateInterviewers(
+		filter: CandidateInterviewerFilter
+		sort: [CandidateInterviewerSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateInterviewerConnection!
+
+	"One panel seat, or null when there is none."
+	candidateInterviewer(id: ID!): CandidateInterviewer
+
+	"How many panel seats the caller's tenant holds."
+	candidateInterviewerCount: Int
+
+	"The technologies the panels assess. `interviewId` narrows them to the vocabulary of one sitting."
+	candidateTechnologies(
+		filter: CandidateTechnologyFilter
+		sort: [CandidateTechnologySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateTechnologyConnection!
+
+	"One technology, or null when there is none."
+	candidateTechnology(id: ID!): CandidateTechnology
+
+	"How many technologies the caller's tenant records."
+	candidateTechnologyCount: Int
+
+	"The personal qualities the panels assess. `interviewId` narrows them to the vocabulary of one sitting."
+	candidatePersonalQualities(
+		filter: CandidatePersonalQualityFilter
+		sort: [CandidatePersonalQualitySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidatePersonalQualityConnection!
+
+	"One personal quality, or null when there is none."
+	candidatePersonalQuality(id: ID!): CandidatePersonalQuality
+
+	"How many personal qualities the caller's tenant records."
+	candidatePersonalQualityCount: Int
+
+	# -----------------------------------------------------------------------------------------
+	# The panel's verdicts
+	# -----------------------------------------------------------------------------------------
+
+	"The verdicts of the caller's tenant. `interviewId` narrows them to one sitting and `candidateId` to one candidacy."
+	candidateFeedbacks(
+		filter: CandidateFeedbackFilter
+		sort: [CandidateFeedbackSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateFeedbackConnection!
+
+	"One verdict, or null when there is none."
+	candidateFeedback(id: ID!): CandidateFeedback
+
+	"How many verdicts the caller's tenant holds."
+	candidateFeedbackCount: Int
+
+	"The criterion ratings of the caller's tenant. `feedbackId` narrows them to the criteria of one verdict."
+	candidateCriterionsRatings(
+		filter: CandidateCriterionsRatingFilter
+		sort: [CandidateCriterionsRatingSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CandidateCriterionsRatingConnection!
+
+	"One criterion rating, or null when there is none."
+	candidateCriterionsRating(id: ID!): CandidateCriterionsRating
+
+	"How many criterion ratings the caller's tenant holds."
+	candidateCriterionsRatingCount: Int
+}
+
+extend type Mutation {
+	# -----------------------------------------------------------------------------------------
+	# The candidate
+	# -----------------------------------------------------------------------------------------
+
+	"""
+	Files a candidacy, and the account it belongs to.
+
+	The delivered create always files an account — it resolves the candidate role, hashes the stated
+	password and adds the new account to the organization — so the account's members are required here
+	for the same reason they are required there.
+	"""
+	createCandidate(input: CreateCandidateInput!): Candidate!
+
+	"""
+	Files several candidacies in one call, each with the payload `createCandidate` takes.
+
+	The delivered route answers the rows it created rather than a page of them, so the field does the
+	same: a client that files five candidacies and reads back four has learned something the page
+	envelope would have hidden.
+	"""
+	createCandidatesBulk(input: [CreateCandidateInput!]!): [Candidate!]!
+
+	"Edits a candidacy. A member the caller leaves out is left as it is."
+	updateCandidate(input: UpdateCandidateInput!): Candidate!
+
+	"""
+	Moves a candidacy along the pipeline — the delivered route at `PUT /:id/:status`.
+
+	The field answers the row the move produced, which is what both delivered handlers answer: the
+	hire files the engagement and the account's new role and answers the updated candidacy, and the
+	rejection writes the state, sends the message and answers the row.
+	"""
+	updateCandidateStatus(id: ID!, status: CandidatePipelineAction!): Candidate!
+
+	"Removes a candidacy outright. The rows that point at it are the store's own constraint to answer for."
+	deleteCandidate(id: ID!): Boolean!
+
+	"Withdraws a candidacy without removing it: the account, the contact and the interviews keep the identifier they point at."
+	softDeleteCandidate(id: ID!): Candidate!
+
+	"Puts a withdrawn candidacy back."
+	recoverCandidate(id: ID!): Candidate!
+
+	# -----------------------------------------------------------------------------------------
+	# The candidacy's own facts
+	# -----------------------------------------------------------------------------------------
+
+	"Files a document under a candidacy."
+	createCandidateDocument(input: CreateCandidateDocumentInput!): CandidateDocument!
+
+	"Edits a document. A member the caller leaves out is left as it is."
+	updateCandidateDocument(input: UpdateCandidateDocumentInput!): CandidateDocument!
+
+	"Removes a document outright."
+	deleteCandidateDocument(id: ID!): Boolean!
+
+	"Withdraws a document without removing it."
+	softDeleteCandidateDocument(id: ID!): CandidateDocument!
+
+	"Puts a withdrawn document back."
+	recoverCandidateDocument(id: ID!): CandidateDocument!
+
+	"Files a course of study under a candidacy."
+	createCandidateEducation(input: CreateCandidateEducationInput!): CandidateEducation!
+
+	"Edits a course of study. A member the caller leaves out is left as it is."
+	updateCandidateEducation(input: UpdateCandidateEducationInput!): CandidateEducation!
+
+	"Removes a course of study outright."
+	deleteCandidateEducation(id: ID!): Boolean!
+
+	"Withdraws a course of study without removing it."
+	softDeleteCandidateEducation(id: ID!): CandidateEducation!
+
+	"Puts a withdrawn course of study back."
+	recoverCandidateEducation(id: ID!): CandidateEducation!
+
+	"Files a prior engagement under a candidacy."
+	createCandidateExperience(input: CreateCandidateExperienceInput!): CandidateExperience!
+
+	"Edits a prior engagement. A member the caller leaves out is left as it is."
+	updateCandidateExperience(input: UpdateCandidateExperienceInput!): CandidateExperience!
+
+	"Removes a prior engagement outright."
+	deleteCandidateExperience(id: ID!): Boolean!
+
+	"Withdraws a prior engagement without removing it."
+	softDeleteCandidateExperience(id: ID!): CandidateExperience!
+
+	"Puts a withdrawn prior engagement back."
+	recoverCandidateExperience(id: ID!): CandidateExperience!
+
+	"Files a skill under a candidacy."
+	createCandidateSkill(input: CreateCandidateSkillInput!): CandidateSkill!
+
+	"Edits a skill. A member the caller leaves out is left as it is."
+	updateCandidateSkill(input: UpdateCandidateSkillInput!): CandidateSkill!
+
+	"Removes a skill outright."
+	deleteCandidateSkill(id: ID!): Boolean!
+
+	"Withdraws a skill without removing it."
+	softDeleteCandidateSkill(id: ID!): CandidateSkill!
+
+	"Puts a withdrawn skill back."
+	recoverCandidateSkill(id: ID!): CandidateSkill!
+
+	"Files an origin into the vocabulary the candidacies point at."
+	createCandidateSource(input: CreateCandidateSourceInput!): CandidateSource!
+
+	"Edits an origin. A member the caller leaves out is left as it is."
+	updateCandidateSource(input: UpdateCandidateSourceInput!): CandidateSource!
+
+	"Removes an origin outright. A candidacy that still points at it is the store's own constraint to refuse."
+	deleteCandidateSource(id: ID!): Boolean!
+
+	"Withdraws an origin without removing it: the candidacies that point at it keep the identifier."
+	softDeleteCandidateSource(id: ID!): CandidateSource!
+
+	"Puts a withdrawn origin back."
+	recoverCandidateSource(id: ID!): CandidateSource!
+
+	# -----------------------------------------------------------------------------------------
+	# The interview and the vocabulary it carries
+	# -----------------------------------------------------------------------------------------
+
+	"Schedules a sitting."
+	createCandidateInterview(input: CreateCandidateInterviewInput!): CandidateInterview!
+
+	"Edits a sitting. A member the caller leaves out is left as it is."
+	updateCandidateInterview(input: UpdateCandidateInterviewInput!): CandidateInterview!
+
+	"Removes a sitting outright. The feedbacks, the panel and the two vocabularies that point at it are the store's own constraint to answer for."
+	deleteCandidateInterview(id: ID!): Boolean!
+
+	"Withdraws a sitting without removing it."
+	softDeleteCandidateInterview(id: ID!): CandidateInterview!
+
+	"Puts a withdrawn sitting back."
+	recoverCandidateInterview(id: ID!): CandidateInterview!
+
+	"Puts one engagement on one panel."
+	createCandidateInterviewer(input: CreateCandidateInterviewerInput!): CandidateInterviewer!
+
+	"Edits one panel seat. A member the caller leaves out is left as it is."
+	updateCandidateInterviewer(input: UpdateCandidateInterviewerInput!): CandidateInterviewer!
+
+	"Removes one panel seat outright."
+	deleteCandidateInterviewer(id: ID!): Boolean!
+
+	"Withdraws one panel seat without removing it."
+	softDeleteCandidateInterviewer(id: ID!): CandidateInterviewer!
+
+	"Puts a withdrawn panel seat back."
+	recoverCandidateInterviewer(id: ID!): CandidateInterviewer!
+
+	"""
+	Puts several engagements on one panel in one call, and answers the rows it created.
+
+	The delivered route answers the rows its handler wrote, in the order it wrote them, so the field
+	does the same.
+	"""
+	createCandidateInterviewersBulk(input: CreateCandidateInterviewersBulkInput!): [CandidateInterviewer!]!
+
+	"""
+	Clears one sitting's panel.
+
+	The delivered route answers nothing at all, so the field answers the fact that the write was
+	accepted — which is what the route's own `200` states, and all it states.
+	"""
+	deleteCandidateInterviewersByInterview(interviewId: ID!): Boolean!
+
+	"""
+	Removes every panel seat one set of engagements holds.
+
+	The delivered route reads the engagements out of its query string and answers nothing; the field
+	states them as the identifiers the delivered handler reads, and answers the fact that the write was
+	accepted.
+	"""
+	deleteCandidateInterviewersByEmployee(employeeIds: [ID!]!): Boolean!
+
+	"Files one technology under a sitting."
+	createCandidateTechnology(input: CreateCandidateTechnologyInput!): CandidateTechnology!
+
+	"Edits a technology. A member the caller leaves out is left as it is."
+	updateCandidateTechnology(input: UpdateCandidateTechnologyInput!): CandidateTechnology!
+
+	"Removes a technology outright. The criteria rated against it are the store's own constraint to answer for."
+	deleteCandidateTechnology(id: ID!): Boolean!
+
+	"Withdraws a technology without removing it."
+	softDeleteCandidateTechnology(id: ID!): CandidateTechnology!
+
+	"Puts a withdrawn technology back."
+	recoverCandidateTechnology(id: ID!): CandidateTechnology!
+
+	"Files several technologies under one sitting, and answers the rows it created."
+	createCandidateTechnologiesBulk(interviewId: ID!, technologies: [String!]!): [CandidateTechnology!]!
+
+	"""
+	Writes a new number on each of a verdict's technology criteria.
+
+	The delivered handler dispatches one update per row without awaiting them and answers nothing, so
+	the field states that the write was accepted rather than a page it would have to read before the
+	writes it has just started have landed.
+	"""
+	updateCandidateTechnologiesBulk(technologies: [CandidateTechnologyRatingInput!]!): Boolean!
+
+	"""
+	Removes technologies from one sitting, or clears the sitting's whole technology vocabulary when the
+	caller states no row.
+
+	The delivered handler reads exactly that: the named rows when they are stated, and otherwise every
+	row of the sitting.
+	"""
+	deleteCandidateTechnologiesBulk(interviewId: ID!, technologies: [ID!]): Boolean!
+
+	"Files one personal quality under a sitting."
+	createCandidatePersonalQuality(input: CreateCandidatePersonalQualityInput!): CandidatePersonalQuality!
+
+	"Edits a personal quality. A member the caller leaves out is left as it is."
+	updateCandidatePersonalQuality(input: UpdateCandidatePersonalQualityInput!): CandidatePersonalQuality!
+
+	"Removes a personal quality outright. The criteria rated against it are the store's own constraint to answer for."
+	deleteCandidatePersonalQuality(id: ID!): Boolean!
+
+	"Withdraws a personal quality without removing it."
+	softDeleteCandidatePersonalQuality(id: ID!): CandidatePersonalQuality!
+
+	"Puts a withdrawn personal quality back."
+	recoverCandidatePersonalQuality(id: ID!): CandidatePersonalQuality!
+
+	"Files several personal qualities under one sitting, and answers the rows it created."
+	createCandidatePersonalQualitiesBulk(interviewId: ID!, personalQualities: [String!]!): [CandidatePersonalQuality!]!
+
+	"""
+	Removes personal qualities from one sitting, or clears the sitting's whole quality vocabulary when
+	the caller states no row.
+	"""
+	deleteCandidatePersonalQualitiesBulk(interviewId: ID!, personalQualities: [ID!]): Boolean!
+
+	# -----------------------------------------------------------------------------------------
+	# The panel's verdicts
+	# -----------------------------------------------------------------------------------------
+
+	"Files a verdict."
+	createCandidateFeedback(input: CreateCandidateFeedbackInput!): CandidateFeedback!
+
+	"""
+	Edits a verdict, and recomputes the sitting's average from the verdicts that remain — which is what
+	the delivered handler does when the body names the sitting; see `UpdateCandidateFeedbackInput`.
+	"""
+	updateCandidateFeedback(input: UpdateCandidateFeedbackInput!): CandidateFeedback!
+
+	"""
+	Removes a verdict outright, through the plain removal the controller inherits.
+
+	This is *not* the same operation as the verdict-scoped removal below: this one leaves the sitting's
+	average as it stands, and that one recomputes it.
+	"""
+	deleteCandidateFeedback(id: ID!): Boolean!
+
+	"""
+	Removes one verdict from one sitting and recomputes that sitting's average from the verdicts that
+	remain, which is the whole of what the delivered route does.
+	"""
+	deleteCandidateFeedbackByInterview(interviewId: ID!, feedbackId: ID!): Boolean!
+
+	"Withdraws a verdict without removing it."
+	softDeleteCandidateFeedback(id: ID!): CandidateFeedback!
+
+	"Puts a withdrawn verdict back."
+	recoverCandidateFeedback(id: ID!): CandidateFeedback!
+
+	"Files one criterion rating under a verdict."
+	createCandidateCriterionsRating(input: CreateCandidateCriterionsRatingInput!): CandidateCriterionsRating!
+
+	"Edits one criterion rating. A member the caller leaves out is left as it is."
+	updateCandidateCriterionsRating(input: UpdateCandidateCriterionsRatingInput!): CandidateCriterionsRating!
+
+	"Removes one criterion rating outright."
+	deleteCandidateCriterionsRating(id: ID!): Boolean!
+
+	"Withdraws one criterion rating without removing it."
+	softDeleteCandidateCriterionsRating(id: ID!): CandidateCriterionsRating!
+
+	"Puts a withdrawn criterion rating back."
+	recoverCandidateCriterionsRating(id: ID!): CandidateCriterionsRating!
+
+	"Files a whole verdict's criteria in one call, and answers the rows it created."
+	createCandidateCriterionsRatingsBulk(input: CreateCandidateCriterionsRatingsBulkInput!): [CandidateCriterionsRating!]!
+
+	"""
+	Writes a new number on each of a verdict's criteria in one call.
+
+	The delivered handler pairs the numbers with the rows by position and saves the rows, so the field
+	answers the rows the write produced — which is what the delivered handler answers.
+	"""
+	updateCandidateCriterionsRatingsBulk(input: UpdateCandidateCriterionsRatingsBulkInput!): [CandidateCriterionsRating!]!
+
+	"""
+	Removes every criterion rating of one verdict.
+
+	The delivered handler answers nothing, so the field answers the fact that the write was accepted.
+	"""
+	deleteCandidateCriterionsRatingsByFeedback(feedbackId: ID!): Boolean!
+}

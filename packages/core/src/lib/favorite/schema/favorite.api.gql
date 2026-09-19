@@ -1,0 +1,159 @@
+# The favorite domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **No field here states a permission, and no field carries `PermissionGuard` either — that is the
+# parity rather than an omission.** The delivered controller carries `TenantPermissionGuard` on the
+# class and `PermissionGuard` nowhere at all: it is not on the class, and no route states it of its
+# own. Neither is `@Permissions` stated anywhere — not on the four routes the controller declares and
+# not on the seven it inherits from the CRUD base — so every one of its routes asks for a credential
+# and a tenant and for no particular grant. A field that demanded a permission, or that added the
+# permission guard to its chain, would refuse or re-scope a caller the REST route serves, which is the
+# asymmetry the two-protocol rule forbids; tightening the resource is a change to make in both places
+# at once, and it is not this delivery's to make.
+#
+# Every field below is one the delivered `/api/favorite` routes already serve, under the same guard
+# chain and with the same permission — none — so a client that reaches a capability over one protocol
+# is not given a narrower or a wider one than the client that reaches it over the other.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered
+# list method reads live rows only, and offering an argument that cannot be honoured would be worse
+# than not offering it. The `relations` the REST list accepts are absent for the same reason: this
+# read names none, so a `employee` argument here could not be honoured by it.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same
+# rows under the same filters, one of them sliced by `take`/`skip` and the other not. That is one
+# capability, so it is one root field: `favorites`, mirroring `GET /`, which is the route whose whole
+# filtered set the connection protocol is applied to. A second root field for the paginated spelling
+# would be a second surface that could disagree with this one, and the connection's own `limit`/`offset`
+# already are the page it performs.
+#
+# `favoriteCount` takes no filter, and that is a statement rather than an omission. The delivered count
+# route passes its query string through as the store's own `where`, which the connection protocol does
+# not speak; a `filter` argument here would either be handed to a service call that cannot accept it or
+# be evaluated over a second code path that could disagree with the connection's `totalCount`. What it
+# answers is the count of the caller's own rows, which is the call the route makes when it is given no
+# options.
+#
+# **`favoritesByEmployee` is a root field of its own rather than a filter on `favorites`, and the
+# reason is who is asking.** The delivered `GET /employee` read resolves the caller's OWN employee from
+# the credential and overwrites the criterion's employee with it, so an `employeeId` filter on the
+# connection above could not express it: that filter names an employee the caller chooses, while this
+# read narrows by the identity the request already carries. A narrowing by who is asking is not a fact
+# about the rows, so no filter over them can state it — and folding the read into the connection would
+# let a caller read another employee's list by naming them, which is exactly what the delivered read
+# refuses to allow.
+#
+# **`GET /type` is deliberately not surfaced, and it is a capability this delivery could not express.**
+# The read behind that route takes the domain name out of its `entity` parameter, resolves *that*
+# domain's service at runtime through the discovery registry, and answers *that* domain's rows — a
+# favorite read that returns products on one call and tasks on the next. One schema field has one type,
+# and the read has two faithful renderings, neither of which is available here: a union of every
+# domain's type, which would couple this domain to all of them and to every one added later, or an
+# untyped `JSON` document, which no client can select a field from and which would therefore be a
+# field in name only. Presenting either would be worse than stating the gap, so the capability is
+# reported as one the surface does not carry rather than approximated.
+
+extend type Query {
+	"""
+	The markers of the caller's tenant, newest first.
+	"""
+	favorites(
+		filter: FavoriteFilter
+		sort: [FavoriteSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): FavoriteConnection!
+
+	"""
+	One marker of the caller's tenant, or null when there is none.
+	"""
+	favorite(id: ID!): Favorite
+
+	"""
+	How many markers the caller's tenant records.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero. The delivered count route binds its
+	query string to the store's own `where`, a shape no schema can state, so the field offers no
+	narrowing of its own rather than an argument the resolver could not pass on.
+	"""
+	favoriteCount: Int
+
+	"""
+	The markers of the caller's OWN employee record, newest first.
+
+	This is a root field of its own rather than a filter on `favorites` because the delivered read
+	resolves the employee from the credential and overwrites the criterion's employee with it: the
+	narrowing is by who is asking, which no condition on the rows can state, and the field therefore
+	takes no employee argument — naming one would be an argument the read ignores and a reader would
+	reasonably read as honoured.
+
+	The arguments are the connection protocol's own, because the delivered route binds the same query
+	DTO the list route binds and this surface has no query string to hand it: `filter` narrows the rows
+	the read returned, `sort`/`page` walk them, and the total is the size of the set the filters
+	selected. A caller whose credential carries no employee identity is answered by the read itself —
+	that read falls back to the employee the request stated, and this field states none — so the
+	refusal such a caller meets is the delivered read's own and not a set this surface invents.
+	"""
+	favoritesByEmployee(
+		filter: FavoriteFilter
+		sort: [FavoriteSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): FavoriteConnection!
+}
+
+extend type Mutation {
+	"""
+	Marks a row as a favorite.
+
+	The tenant the marker belongs to is stamped from the credential and is never stated by the caller;
+	the employee is the caller's own record when the credential carries one, and `employeeId` is the
+	fallback that files an organization-level marker.
+	"""
+	createFavorite(input: CreateFavoriteInput!): Favorite!
+
+	"""
+	Changes a marker that exists.
+
+	A member the caller leaves out is left as it is, because the delivered edit is a partial update
+	rather than a replacement — see `UpdateFavoriteInput`.
+	"""
+	updateFavorite(input: UpdateFavoriteInput!): Favorite!
+
+	"""
+	Removes a marker outright.
+
+	The answer says whether the removal happened rather than returning the removed row, because the
+	delivered route answers the store's delete result. No extra scope is stated here: the delivered
+	service refuses a caller who does not own the row and lets an administrator through, and it decides
+	that from the credential, so the field restates none of it.
+	"""
+	deleteFavorite(id: ID!): Boolean!
+
+	"""
+	Withdraws a marker without removing it: the row keeps its identifier and the marked row keeps
+	pointing at it, and the delivered list stops answering it.
+	"""
+	softDeleteFavorite(id: ID!): Favorite!
+
+	"""
+	Puts a withdrawn marker back, clearing the marker the withdrawal set.
+	"""
+	recoverFavorite(id: ID!): Favorite!
+}

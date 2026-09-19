@@ -1,0 +1,79 @@
+# The estimate email's object types.
+#
+# A row records one invitation to accept or reject an estimate: the address it was sent to, when the
+# invitation stops being valid, and the tenant, organization and message that travel with it.
+#
+# **`token` is not a member, and that is the whole secret decision here.** The column holds a signed
+# value — a JWT carrying the invoice, the organization, the tenant and the recipient — and it is the
+# credential the delivered validation route is *validated by*: presenting it is what proves the caller is
+# the recipient of that invitation. Echoing it back into a schema would make a bearer credential a
+# projectable member of the record it authenticates, which is a member any later read of this resource
+# would inherit. The caller already holds the token it presented; no delivered read has to answer it back.
+#
+# **`tenant` and `organization` are members, and they are the delivered projection's own two relations.**
+# The validation read names them in its `select` and the delivered query accepts them as a `relations`
+# member, so it is the client's choice whether they are joined — which is why the query below states that
+# choice as an argument rather than pretending the relations always travel. Each carries only the members
+# the delivered select names: the tenant's name and logo, and the organization's name, official name and
+# brand colour, which is what an estimate page renders at the top of the document. The types themselves
+# belong to the tenant and organization domains, and this file references them rather than restating any
+# part of them.
+#
+# `convertAcceptedEstimates` is carried because it is the row's own copy of the organization's policy at
+# the moment the invitation was sent, which is what the recipient's page reads when it decides what to
+# offer. `expireDate` is carried for the same reason: the delivered read refuses an invitation past it, so
+# a caller holding a row can see how long it has.
+#
+# `deletedAt` and the audit columns are not carried. No delivered route withdraws an estimate email — the
+# resource serves the validation read and nothing else — so the marker is null on every row this surface
+# can reach, and bookkeeping about the write is not a fact about the invitation.
+
+"""
+One invitation to accept or reject an estimate, as the delivered validation read answers it.
+"""
+type EstimateEmail {
+	id: ID!
+	"The address the invitation was sent to. Part of what the token is verified against."
+	email: String!
+	"When the invitation stops being valid. The validation read refuses a row past this instant."
+	expireDate: DateTime!
+	"""
+	The organization's policy on accepted estimates, as it stood when the invitation was sent — the
+	recipient's page reads this to decide what to offer.
+	"""
+	convertAcceptedEstimates: Boolean
+	"The organization the estimate belongs to."
+	organizationId: ID
+	"The tenant the estimate belongs to."
+	tenantId: ID
+	"""
+	The tenant, joined only when the caller names it in `relations`. It carries the two members the
+	delivered select names — the tenant's name and its logo — because those are what the invitation page
+	renders above the document.
+	"""
+	tenant: Tenant
+	"""
+	The organization, joined only when the caller names it in `relations`. It carries the three members
+	the delivered select names: the name and official name the document is headed with, and the brand
+	colour it is styled in.
+	"""
+	organization: Organization
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The relations the delivered validation read will join.
+
+An enumeration rather than a bare string list, because the delivered query DTO validates the same two
+names with the same enum and refuses anything else: only relations whose columns the read's own `select`
+constrains may be named, so a caller cannot ask for a relation the answer would then carry in full.
+"""
+enum EstimateEmailRelation {
+	"The tenant the invitation was sent under, with the name and logo the page renders."
+	tenant
+	"The organization the estimate belongs to, with the names and brand colour the page renders."
+	organization
+}

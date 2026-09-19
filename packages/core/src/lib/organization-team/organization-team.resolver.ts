@@ -244,9 +244,11 @@ export class OrganizationTeamResolver {
 		@Args('offset', { type: () => Int, nullable: true }) offset?: number
 	): Promise<GraphqlConnection<IOrganizationTeam>> {
 		// The same read the route performs, with the route's own defaults for a query string that states
-		// nothing: no criterion, no relations, no page. Nothing here names whose teams are read, because
-		// the read resolves that from the credential.
-		const options = {} as BaseQueryDTO<OrganizationTeam>;
+		// nothing — and **the criterion it states is an empty object rather than none**: the DTO's own
+		// transform turns an unstated `where` into `{}` before the service sees it, and the service reads
+		// that criterion to decide which of its two reads to run. Nothing here names whose teams are read,
+		// because the read resolves that from the credential.
+		const options = { where: {} } as BaseQueryDTO<OrganizationTeam>;
 		const { items }: IPagination<IOrganizationTeam> = await this.organizationTeamService.findMyTeams(options);
 
 		return buildConnection<IOrganizationTeam>({

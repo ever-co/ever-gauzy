@@ -9,6 +9,7 @@ import { EmployeeAvailabilityResolver } from './employee-availability.resolver';
 import { EmployeeAvailability } from './employee-availability.entity';
 import { TypeOrmEmployeeAvailabilityRepository } from './repository/type-orm-employee-availability.repository';
 import { MikroOrmEmployeeAvailabilityRepository } from './repository/mikro-orm-employee-availability.repository';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 /**
  * Where an employee's availability lives.
@@ -25,7 +26,12 @@ import { MikroOrmEmployeeAvailabilityRepository } from './repository/mikro-orm-e
 	imports: [
 		TypeOrmModule.forFeature([EmployeeAvailability]),
 		MikroOrmModule.forFeature([EmployeeAvailability]),
-		CqrsModule
+		CqrsModule,
+		// The permission guards the controller and the resolver carry are providers of whichever module
+		// hosts the handler they protect, and their own dependency is the permission lookup — so this
+		// module has to reach it. It went unnoticed while the module was in no graph at all: the routes
+		// were not mounted and the resolver was not scanned, so nothing ever asked for the guard.
+		RolePermissionModule
 	],
 	providers: [
 		EmployeeAvailabilityService,

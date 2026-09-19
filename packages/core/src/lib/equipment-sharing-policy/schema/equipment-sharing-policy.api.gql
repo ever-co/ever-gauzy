@@ -1,0 +1,116 @@
+# The equipment-sharing-policy domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/equipment-sharing-policy` routes already serve, under the
+# same guard chain and with the same permission, so a client that reaches a capability over one protocol
+# is not given a narrower or a wider one than the client that reaches it over the other. Nothing here
+# decides anything: each field calls the same `EquipmentSharingPolicyService` method the route behind it
+# calls, with the same payload.
+#
+# **The permission is a pair on every field, and it is a pair the controller states rather than one this
+# surface invented.** The class states `ALL_ORG_EDIT` beside the resource's own edit permission and every
+# route then states its own pair beside it — the two reads state `ALL_ORG_VIEW` beside the resource's own
+# view permission, the create states `ALL_ORG_EDIT` beside the add permission, and the count and the two
+# lifecycle moves, which are inherited from the CRUD base, run under the class-level pair alone. Each
+# field states exactly what its route states: the all-organization permission is the controller's own
+# grant for reaching across the tenant's organizations, kept beside the resource's permission rather than
+# replaced by it.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained
+# over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered list read
+# answers live rows only, and offering an argument that cannot be honoured would be worse than not
+# offering it.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same rows
+# under the same filters, one of them sliced by `take`/`skip` and the other not. That is one capability,
+# so it is one root field: `equipmentSharingPolicies`, mirroring `GET /`, which is the route that reads
+# the whole filtered set the connection protocol is applied to. The paginated spelling interprets no
+# other narrowing on the way — it hands its query DTO to the same paginating reader — so nothing is lost
+# by the fold, and the connection's own `limit`/`offset` already are the page it performs.
+#
+# `equipmentSharingPolicyCount` takes no filter, and that is a statement rather than an omission: the
+# delivered count route passes its query string through as the store's own `where`, which the connection
+# protocol does not speak, so a `filter` argument here would either be handed to a service call that
+# cannot accept it or be evaluated over a second code path that could disagree with the connection's
+# `totalCount`. It is nullable because a count is an aggregate a resource may legitimately have no answer
+# for, and a non-null field would turn "not answered" into a fabricated zero.
+#
+# The controller serves no sub-route of its own beyond the paginated spelling, and neither of its writes
+# is a lifecycle move of its own — the withdrawal and the restoration are the CRUD base's — so this
+# resource has no root field beyond the list, the row, the count and the three writes.
+
+extend type Query {
+	"""
+	The sharing policies of the caller's organization, in name order.
+	"""
+	equipmentSharingPolicies(
+		filter: EquipmentSharingPolicyFilter
+		sort: [EquipmentSharingPolicySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EquipmentSharingPolicyConnection!
+
+	"""
+	One policy of the caller's tenant, or null when there is none.
+	"""
+	equipmentSharingPolicy(id: ID!): EquipmentSharingPolicy
+
+	"""
+	How many policies the caller's tenant holds.
+	"""
+	equipmentSharingPolicyCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a policy.
+
+	The same service call the REST create route makes, with the same payload. The tenant the new row
+	belongs to is stamped from the credential and is never stated by the caller, so a policy cannot be
+	written into a tenant the caller is not acting in.
+	"""
+	createEquipmentSharingPolicy(input: CreateEquipmentSharingPolicyInput!): EquipmentSharingPolicy!
+
+	"""
+	Changes a policy that exists.
+
+	The same service method the REST edit route calls, which reads the row before it writes: a policy of
+	another tenant, or one that is not there, is answered with the miss rather than with a write against
+	a row the caller does not own. A member the caller leaves out is left as it is — the delivered write
+	updates the columns the body states rather than replacing the row — and the answer is the row read
+	back, because the store's own answer to a partial update is a statement about the write rather than a
+	row.
+	"""
+	updateEquipmentSharingPolicy(input: UpdateEquipmentSharingPolicyInput!): EquipmentSharingPolicy!
+
+	"""
+	Removes a policy outright.
+
+	This is the hard removal, and it is the one to reach for only for a row filed in error: the sharing
+	periods that point at a policy are the store's own to refuse or to cascade, and this field does not
+	pre-empt that decision.
+	"""
+	deleteEquipmentSharingPolicy(id: ID!): Boolean!
+
+	"""
+	Withdraws a policy without removing the row.
+
+	The delivered list stops answering it and the periods that point at it keep resolving the identifier
+	they hold. The answer is the withdrawn row, whose `deletedAt` says when it happened.
+	"""
+	softDeleteEquipmentSharingPolicy(id: ID!): EquipmentSharingPolicy!
+
+	"""
+	Puts a withdrawn policy back.
+	"""
+	recoverEquipmentSharingPolicy(id: ID!): EquipmentSharingPolicy!
+}

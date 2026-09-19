@@ -1,0 +1,45 @@
+# The language domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **There is one field, and there is no mutation.** `LanguageController` is a plain class rather than
+# a CRUD controller: it declares two reads — the list and a read by name — and no route of it writes,
+# so there is no creation, no edit, no removal and no lifecycle pair to mirror. A mutation here would
+# be a capability with no REST route behind it, which is the one thing this delivery exists not to
+# add. The read by name joins nothing the list read does not, so it folds into the connection's
+# `name` filter rather than becoming a root field that could disagree with it.
+#
+# **Both delivered routes are `@Public()`, and the field below is deliberately not.** The marker is
+# read by the global authentication guard the bootstrap installs, which returns before it
+# authenticates the caller — so a marked field would execute with no user on the request, and the
+# request context that the capability gate resolves from would carry no tenant. The gate would then
+# fall back to the deployment's configured state for `FEATURE_GRAPHQL`, which this installation does
+# not name, and refuse the field to every caller, including a tenant that has the capability switched
+# on. That is the failure the platform already observed on its two reference-data resolvers when they
+# were gated, and it is why those two are named on the gate's allow-list rather than gated. The
+# delivery does not edit that list and will not ship a field nobody can read, so this surface is
+# served to a caller who presents a credential and is narrower than the two routes it mirrors. The
+# narrowing is stated here rather than worked around: the alternative is a field that answers
+# `Cannot query field languages` to everybody.
+#
+# The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
+# `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection.
+# There is no count field, because this controller serves no count route.
+
+extend type Query {
+	"""
+	The languages the platform knows.
+	"""
+	languages(
+		filter: LanguageFilter
+		sort: [LanguageSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): LanguageConnection!
+}

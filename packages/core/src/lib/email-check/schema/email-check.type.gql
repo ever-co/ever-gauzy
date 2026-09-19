@@ -1,0 +1,24 @@
+# The email check's object type.
+#
+# The delivered route answers one fact and nothing else: whether an account with the address it was given
+# exists on this installation. The type below is that answer, and it is a type rather than a bare boolean
+# for the reason every answer here is: a root field returns a named type, and `exists` is the member's own
+# name in the delivered response body.
+#
+# **Nothing about the account is carried, and nothing could be.** The delivered read counts the rows whose
+# address matches and answers the count's truth; it selects no row and reads no column, so there is no
+# name, no identifier, no role and no tenant to carry even if this surface wanted to. That is the point of
+# the operation: a caller that must not learn whose account it is asking about can still ask whether one
+# exists.
+#
+# The answer is not a secret and not a capability either. It is the same fact the delivered route already
+# answers to any holder of a valid API key pair, and it is stated as a boolean rather than as a count for
+# the same reason: "there is an account" and "there are seventeen accounts" are different disclosures.
+
+"""
+Whether an account with the given address exists on this installation.
+"""
+type EmailCheckResult {
+	"True when at least one account carries the address that was checked."
+	exists: Boolean!
+}

@@ -1,0 +1,41 @@
+# The terms-acceptance document's object type.
+#
+# This is not a row of any table. The delivered route answers the published legal corpus directly — the
+# documents a new account must accept, as currently published — so the type is the corpus entry rather
+# than an entity: which document, which version of it, the digest of the exact source that version names,
+# the locale it is shown in, where it can be read, what to call it, and when it takes effect.
+#
+# **`sha256` is the member that matters, and it is why the shape exists at all.** It is the digest of the
+# document source as published, so the value a form displays and the value the form posts back are the
+# same object: the server re-checks every claim against the corpus before it records an acceptance, which
+# is what turns a checkbox from a claim into evidence. A client that hashed the text itself would be
+# answering a digest over its own rendering rather than over the published source, and the two are not
+# the same bytes.
+#
+# The three trailing members are optional in the corpus entry: a document may be published without a
+# human title, without an effective date and without a URL for this deployment to link to. They are
+# nullable here for exactly that reason rather than because the route sometimes omits them.
+
+"""
+One legal document a new account must accept, as the corpus publishes it.
+"""
+type TermsAcceptanceDocument {
+	"The stable document identifier, `<document>:<product>`."
+	documentId: String!
+	"The published version of the document."
+	version: String!
+	"""
+	The lowercase hex digest of the exact document source this version publishes.
+	
+	This is the value a form displays and posts back, and the value the server checks a claim against.
+	"""
+	sha256: String!
+	"The locale of the rendering that is being shown."
+	locale: String!
+	"Where the person can read the document, when the deployment publishes a link for it."
+	url: String
+	"A human title for the checkbox or the modal, when the corpus carries one."
+	title: String
+	"The date this version takes effect, when the corpus declares one."
+	effectiveDate: String
+}
