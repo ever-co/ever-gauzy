@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { GoalLevelEnum, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -22,6 +22,8 @@ export class GoalLevelSelectComponent {
 	@Input() orgName: string;
 	@Input() enableHelperText = false;
 	@Input() alignedGoal = false;
+	/** The field under the pointer or holding focus (`'objective-level'`, `-owner`, `-lead`), `''` when none. */
+	@Output() helperTextChange = new EventEmitter<string>();
 
 	goalLevelEnum = GoalLevelEnum;
 
@@ -36,6 +38,17 @@ export class GoalLevelSelectComponent {
 				tenantId
 			})
 		).items;
+	}
+
+	/**
+	 * Shows the given field's help beside it when this component draws the help itself, and reports the
+	 * field either way, for a dialog that draws the help in a column of its own.
+	 */
+	showHelper(field: string) {
+		if (this.enableHelperText) {
+			this.helperText = field;
+		}
+		this.helperTextChange.emit(field);
 	}
 
 	selectEmployee(event, control) {
