@@ -60,6 +60,7 @@ $row-columns: minmax(0, 1fr) 7rem 2.75rem 1.75rem;
   // in a tinted box in the middle of the meta row.
   .button-container {
     display: flex;
+    order: -1;
   }
 
   .action {

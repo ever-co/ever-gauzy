@@ -3,7 +3,17 @@
 	<nb-card-header class="header">
 		<div class="header-row">
 			<h4 class="title">{{ goal.name }}</h4>
+			<!-- Close ahead of Delete in the markup, so the dialog's initial focus lands on Close rather than on
+			     the destructive action; `order` still shows Delete to its left. -->
 			<div class="header-actions">
+				<button
+					type="button"
+					class="cancel"
+					[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+					(click)="closeDialog(false)"
+				>
+					<i class="fas fa-times" aria-hidden="true"></i>
+				</button>
 				<div class="button-container">
 					<button
 						type="button"
@@ -19,14 +29,6 @@
 						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 					</button>
 				</div>
-				<button
-					type="button"
-					class="cancel"
-					[attr.aria-label]="'BUTTONS.CLOSE' | translate"
-					(click)="closeDialog(false)"
-				>
-					<i class="fas fa-times" aria-hidden="true"></i>
-				</button>
 			</div>
 		</div>
 		<div class="meta">
