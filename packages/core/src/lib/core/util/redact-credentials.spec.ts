@@ -14,7 +14,7 @@ import {
  * returned an empty string would pass the first check alone.
  */
 describe('redactUrlCredentials', () => {
-	const SECRET = 'S3cr3t-Redis-Pass';
+	const SECRET = 'dummy-redis-password';
 
 	it('redacts a password-only userinfo (the REDIS_URL shape used in production)', () => {
 		const url = `redis://:${SECRET}@192.168.1.174:6380`;
@@ -100,7 +100,7 @@ describe('redactKeyValueList', () => {
 });
 
 describe('redactUrlErrorInput', () => {
-	const SECRET = 'S3cr3t-Redis-Pass';
+	const SECRET = 'dummy-redis-password';
 
 	/** A real ERR_INVALID_URL, as thrown by `new URL()` (and by the Redis client) for a malformed REDIS_URL. */
 	const invalidUrlError = (): Error => {

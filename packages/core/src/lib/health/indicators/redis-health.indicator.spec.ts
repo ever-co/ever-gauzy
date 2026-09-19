@@ -1,5 +1,5 @@
-import { inspect } from 'util';
 import { createClient } from 'redis';
+import { captureRedisBootLogs } from '../../core/testing/boot-logging/redis-boot-log.fixtures';
 import { RedisHealthIndicator } from './redis-health.indicator';
 
 jest.mock('redis', () => ({ createClient: jest.fn() }));
@@ -11,43 +11,14 @@ jest.mock('redis', () => ({ createClient: jest.fn() }));
  * and port only.
  */
 describe('RedisHealthIndicator boot logging', () => {
-	const SECRET = 'redis-password-sentinel-7f3a91';
-	const REDIS_ENV_KEYS = [
-		'REDIS_ENABLED',
-		'REDIS_URL',
-		'REDIS_HOST',
-		'REDIS_PORT',
-		'REDIS_USER',
-		'REDIS_PASSWORD',
-		'REDIS_TLS'
-	];
-
-	let savedEnv: Record<string, string | undefined>;
-	let output: string[];
-	let spies: jest.SpyInstance[];
+	const SECRET = 'dummy-health-check-password';
+	const logs = captureRedisBootLogs();
 
 	beforeEach(() => {
-		savedEnv = Object.fromEntries(REDIS_ENV_KEYS.map((key) => [key, process.env[key]]));
-		REDIS_ENV_KEYS.forEach((key) => delete process.env[key]);
-
-		output = [];
-		spies = (['log', 'info', 'warn', 'error', 'debug'] as const).map((method) =>
-			jest.spyOn(console, method).mockImplementation((...args: unknown[]) => {
-				output.push(args.map((arg) => (typeof arg === 'string' ? arg : inspect(arg, { depth: 5 }))).join(' '));
-			})
-		);
-
 		(createClient as jest.Mock).mockReset().mockReturnValue({
 			on: jest.fn().mockReturnThis(),
 			connect: jest.fn().mockResolvedValue(undefined)
 		});
-	});
-
-	afterEach(() => {
-		spies.forEach((spy) => spy.mockRestore());
-		REDIS_ENV_KEYS.forEach((key) =>
-			savedEnv[key] === undefined ? delete process.env[key] : (process.env[key] = savedEnv[key])
-		);
 	});
 
 	/** The constructor fires `startRedis()` without awaiting it; let it run to completion. */
@@ -67,8 +38,8 @@ describe('RedisHealthIndicator boot logging', () => {
 		expect((createClient as jest.Mock).mock.calls[0][0]).toMatchObject({ password: SECRET });
 
 		// Control: the diagnostic line is still emitted, so the absence check below is meaningful.
-		expect(output).toContain('REDIS_URL: redis://:***@192.168.1.174:6380');
-		expect(output.join('\n')).not.toContain(SECRET);
+		expect(logs.lines).toContain('REDIS_URL: redis://:***@192.168.1.174:6380');
+		expect(logs.lines.join('\n')).not.toContain(SECRET);
 	});
 
 	it('never logs the password of a URL built from REDIS_HOST/REDIS_USER/REDIS_PASSWORD', async () => {
@@ -81,8 +52,8 @@ describe('RedisHealthIndicator boot logging', () => {
 		await bootIndicator();
 
 		expect((createClient as jest.Mock).mock.calls[0][0]).toMatchObject({ password: SECRET });
-		expect(output).toContain('REDIS_URL: redis://default:***@cache.internal:6379');
-		expect(output.join('\n')).not.toContain(SECRET);
+		expect(logs.lines).toContain('REDIS_URL: redis://default:***@cache.internal:6379');
+		expect(logs.lines.join('\n')).not.toContain(SECRET);
 	});
 
 	it('never logs the password through the error path when REDIS_URL is malformed', async () => {
@@ -94,7 +65,7 @@ describe('RedisHealthIndicator boot logging', () => {
 
 		expect(createClient).not.toHaveBeenCalled();
 		// Control: the error really was logged, so the absence check below is meaningful.
-		expect(output.some((line) => line.startsWith('Redis Health Connect Error:'))).toBe(true);
-		expect(output.join('\n')).not.toContain(SECRET);
+		expect(logs.lines.some((line) => line.startsWith('Redis Health Connect Error:'))).toBe(true);
+		expect(logs.lines.join('\n')).not.toContain(SECRET);
 	});
 });
