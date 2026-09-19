@@ -40,6 +40,22 @@ import { ProductVariantPriceResolver } from './../product-variant-price/product-
 import { ProductVariantPriceModule } from './../product-variant-price/product-variant-price-module';
 import { ProductVariantSettingResolver } from './../product-setting/product-setting.resolver';
 import { ProductVariantSettingModule } from './../product-setting/product-setting.module';
+import { TagResolver } from './../tags/tag.resolver';
+import { TagModule } from './../tags/tag.module';
+import { TagTypeResolver } from './../tag-type/tag-type.resolver';
+import { TagTypeModule } from './../tag-type/tag-type.module';
+import { CurrencyResolver } from './../currency/currency.resolver';
+import { CurrencyModule } from './../currency/currency.module';
+import { CountryResolver } from './../country/country.resolver';
+import { CountryModule } from './../country/country.module';
+import { FeatureToggleResolver } from './../feature/feature-toggle.resolver';
+import { FeatureModule } from './../feature/feature.module';
+import { TenantSettingResolver } from './../tenant/tenant-setting/tenant-setting.resolver';
+import { TenantSettingModule } from './../tenant/tenant-setting/tenant-setting.module';
+import { ContactResolver } from './../contact/contact.resolver';
+import { ContactModule } from './../contact/contact.module';
+import { OrganizationContactResolver } from './../organization-contact/organization-contact.resolver';
+import { OrganizationContactModule } from './../organization-contact/organization-contact.module';
 
 /**
  * Resolvers the platform itself ships.
@@ -82,8 +98,39 @@ const CORE_RESOLVERS: Array<Type<any>> = [
 	ProductTypeResolver,
 	ProductOptionResolver,
 	ProductVariantPriceResolver,
-	ProductVariantSettingResolver
+	ProductVariantSettingResolver,
+	// The facets the catalogue attaches to a product, and the classification a facet belongs to.
+	TagResolver,
+	TagTypeResolver,
+	// The reference data every amount and every address resolves against.
+	CurrencyResolver,
+	CountryResolver,
+	// The configuration the rest of the programme reads: which capabilities are served at all, and what
+	// the tenant's settings say about how they behave.
+	FeatureToggleResolver,
+	TenantSettingResolver,
+	// The party records an order, an invoice and a subscription all point at: the customer and the
+	// organization's own contact row beside the group, buyer, credential and address resources.
+	ContactResolver,
+	OrganizationContactResolver
 ];
+
+/**
+ * 🛑 The invoice resolvers are deliberately **not** in the list above, and the reason is a module cycle
+ * rather than a preference.
+ *
+ * `InvoiceModule` and `EstimateEmailModule` already need each other's service and both state it, so this
+ * module importing the invoice modules makes a third participant in a cycle that is already closed: the
+ * boot then fails inside `InvoiceModule` with a circular dependency it cannot name precisely — a provider
+ * read while its own module registration is still in flight.
+ *
+ * `InvoiceResolver` and `InvoiceItemResolver` are therefore declared by `InvoiceModule` and
+ * `InvoiceItemModule` themselves, beside the services they call, and those two modules are named by the
+ * Apollo configuration's `additionalResolverModules` (`packages/core/src/lib/graphql/graphql-helper.ts`)
+ * so the endpoint scans them for resolvers exactly as it scans a plugin's module. A domain this module
+ * can import is hosted here; a domain it cannot import is scanned there — and either way its fields
+ * resolve rather than answering null with no error anywhere, which is what an unscanned resolver does.
+ */
 
 /**
  * The domain modules that own the platform's core resolvers.
@@ -134,7 +181,18 @@ const CORE_RESOLVER_MODULES: Array<Type<any>> = [
 	ProductTypeModule,
 	ProductOptionModule,
 	ProductVariantPriceModule,
-	ProductVariantSettingModule
+	ProductVariantSettingModule,
+	TagModule,
+	TagTypeModule,
+	CurrencyModule,
+	CountryModule,
+	// `FeatureModule` is imported for its service as well as for its resolver: the feature gate on the
+	// GraphQL surface is a guard, and a guard is a provider of whichever module hosts the handler it
+	// protects — so the module that hosts these resolvers has to reach the feature service itself.
+	FeatureModule,
+	TenantSettingModule,
+	ContactModule,
+	OrganizationContactModule
 ];
 
 /**

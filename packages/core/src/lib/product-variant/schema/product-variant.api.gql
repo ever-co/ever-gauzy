@@ -71,6 +71,20 @@ extend type Mutation {
 	deleteProductVariant(id: ID!): Boolean!
 
 	"""
+	Withdraws a variant without removing its rows.
+
+	The routes of this resource are the ones a `CrudController` delivers, and its two softer write routes are
+	among them: a withdrawal is recoverable, which is what makes it the operation to reach for when a variant
+	stops being sold but its order lines must keep resolving.
+	"""
+	softDeleteProductVariant(id: ID!): ProductVariant!
+
+	"""
+	Brings a withdrawn variant back.
+	"""
+	recoverProductVariant(id: ID!): ProductVariant!
+
+	"""
 	Withdraws the variant's featured image. The asset itself is kept: it may still be the product's
 	cover, another variant's image, or a member of the product's gallery.
 	"""

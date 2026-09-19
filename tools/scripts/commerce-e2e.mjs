@@ -71,7 +71,24 @@ const RESOURCES = [
 	{ path: '/api/search/index-definitions', capability: 'search' },
 	// The party-data kernel the commerce packages target: a group is what a price list, a promotion and a
 	// shipping rule are addressed to, so the resource is swept here rather than assumed.
-	{ path: '/api/contact-groups', capability: 'contact' }
+	{ path: '/api/contact-groups', capability: 'contact' },
+	// The facets the catalogue attaches to a product, and the classification a facet belongs to.
+	{ path: '/api/tags', capability: 'catalog' },
+	{ path: '/api/tag-types', capability: 'catalog' },
+	// The reference data every amount and every address on the platform resolves against.
+	{ path: '/api/currency', capability: 'kernel' },
+	{ path: '/api/country', capability: 'kernel' },
+	// The configuration the rest of the programme reads: which capabilities are served at all, and what
+	// the tenant's settings say about how they behave.
+	{ path: '/api/feature/toggle', capability: 'kernel' },
+	{ path: '/api/tenant-setting', capability: 'kernel' },
+	{ path: '/api/tenant-ui-preferences', capability: 'kernel' },
+	// The parties an order, an invoice and a subscription all point at.
+	{ path: '/api/contact', capability: 'contact' },
+	{ path: '/api/organization-contact', capability: 'contact' },
+	// What a buyer is sent and what a seller is owed.
+	{ path: '/api/invoices', capability: 'invoice' },
+	{ path: '/api/invoice-item', capability: 'invoice' }
 ];
 
 /** Root fields the kernel itself must serve over the one GraphQL endpoint. */
@@ -342,8 +359,17 @@ async function main() {
 		// A resource whose GraphQL root field is named for the concept rather than for the route.
 		'/api/search/index-definitions': 'searchIndexDefinitions',
 		// The delivered route is singular and the concept is plural: `/api/product-variant-price` is the
-		// price of a variant, and the schema names the collection for what it collects.
-		'/api/product-variant-price': 'productVariantPrices'
+		// price of a variant, and the schema names the collection for what it collects. The reference
+		// resources below are the same case: a route named for an installation-wide table, and a field
+		// named for the rows it answers.
+		'/api/product-variant-price': 'productVariantPrices',
+		'/api/currency': 'currencies',
+		'/api/country': 'countries',
+		'/api/feature/toggle': 'featureToggles',
+		'/api/tenant-setting': 'tenantSettings',
+		'/api/contact': 'contacts',
+		'/api/organization-contact': 'organizationContacts',
+		'/api/invoice-item': 'invoiceItems'
 	};
 	// An alias key may also name a resource the sweep reads, so the two lists are unioned rather than
 	// concatenated: a resource in both is one check, not two.

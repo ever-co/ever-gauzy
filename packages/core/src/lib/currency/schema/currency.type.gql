@@ -1,0 +1,170 @@
+# The currency's object type.
+#
+# A currency row is the platform's reference data for one currency: its ISO 4217 code, the name it is
+# written as, and the facts the money layer reads when an amount is rendered or rounded — the
+# minor-unit exponent, the symbol and where it sits, and the rounding mode and cash step. Every amount
+# and every price on this platform resolves against this one table, so it stays a kernel resource and
+# a domain refers to it rather than declaring its own.
+#
+# **This is a global lookup, not a tenant row**, and the object type says so by carrying no tenancy
+# member: the delivered table has no `tenantId` and no `organizationId`, because a currency's decimal
+# places, symbol and rounding mode are properties of the currency and not of whoever is looking at it.
+#
+# **A code is a code and a count is a count.** `isoCode` is the three-letter alpha-3 code and
+# `currency` is the name that code is written as; neither is an amount, so neither is a `Float` and
+# neither is a pre-formatted string. `decimalPlaces` is how many minor-unit digits the currency has,
+# which is a whole number by definition and is therefore an `Int`. `roundingIncrement` is the one
+# member here that is a quantity rather than a fact about one, and it is carried as the platform's
+# exact-decimal scalar because the column behind it is `numeric(20,6)` — a cash-rounding step read as
+# a binary fraction is a step that does not divide a cent evenly.
+#
+# `symbolPosition` and `roundingMode` are carried as their own values rather than declared as schema
+# enums. Their vocabularies are the money layer's — `MoneySymbolPosition` and `RoundingMode`, which
+# type the columns and which the rounding strategy switches on — and SDL cannot reference a TypeScript
+# enum, so an enum declared here would be a second declaration of a value set that already exists and
+# would diverge the day the money layer adds a mode. The catalogue domains beside this one carry their
+# own borrowed vocabularies the same way.
+#
+# Two groups of base-row members are deliberately absent, and each for its own reason:
+#
+# - `deletedAt` is not carried. That is a statement about the delivered routes rather than about the
+#   column: no route of this resource writes a withdrawal mark — the controller serves one list and
+#   nothing else — so the member would be absent on every row this surface can answer.
+# - the `createdByUserId`, `updatedByUserId` and `deletedByUserId` stamps are not carried either. They
+#   name the writer of a row written through the platform's own write path, and this resource has no
+#   write path to name.
+
+"""
+One currency of the platform's master: its ISO 4217 code, the name it is written as, and the facts an
+amount in it is rendered and rounded by.
+"""
+type Currency {
+	id: ID!
+	"The ISO 4217 alpha-3 code: the row's identity as a currency, and the code every amount names."
+	isoCode: String!
+	"The currency's name, as the platform writes it."
+	currency: String!
+	"""
+	How many minor-unit digits the currency has: `2` for most, `0` for the currencies with no minor unit
+	and `3` for the few with a thousandth. A count, so it is an `Int` and never a decimal.
+	"""
+	decimalPlaces: Int!
+	"The display symbol, absent for a currency this table has not been told a symbol for."
+	symbol: String
+	"""
+	Whether the symbol precedes or follows the amount — `PREFIX` or `SUFFIX`. Carried as its own value
+	rather than declared as an enum: the vocabulary is the money layer's, and it is the same one the
+	column is typed with.
+	"""
+	symbolPosition: String!
+	"Whether a space separates the symbol from the amount."
+	symbolSpace: Boolean!
+	"""
+	How a value that is not exact at the currency's scale is resolved — `HALF_UP`, `HALF_EVEN`, `UP`,
+	`DOWN` or `NONE`, the last of which makes an inexact value an error rather than a silent truncation.
+	Carried as its own value, for the same reason as `symbolPosition`.
+	"""
+	roundingMode: String!
+	"""
+	The cash-rounding step applied at the payment boundary, as an exact decimal; `0` disables it. The
+	column is `numeric(20,6)`, which is the shape the platform's exact-decimal scalar is the wire form
+	of, so a step read here and the same step read over REST are the same decimal.
+	"""
+	roundingIncrement: Decimal!
+	"""
+	Whether the currency can settle a payment. False for the unit-of-account and metal codes, which are
+	quoted against but never tendered — the distinction a checkout needs before it offers a currency.
+	"""
+	isTender: Boolean!
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of currencies.
+"""
+type CurrencyEdge {
+	node: Currency!
+	cursor: String!
+}
+
+"""
+One page of currencies, with the total the filters select and the boundary cursors.
+"""
+type CurrencyConnection {
+	nodes: [Currency!]!
+	edges: [CurrencyEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a currency list may be sorted by.
+
+The code and the name are the two orders a currency master is actually read in: by code, which is the
+row's identity and the order an operator reconciles a report against, and by name, which is the order
+a picker shows. The two timestamps are how a change to the master is found again.
+
+The formatting members are not sort keys. The order of a symbol, of a rounding mode or of a
+cash-rounding step is the order of a spelling, which is not a fact about a currency; a list of the
+currencies that round a particular way, or that can be tendered at all, is that fact stated as a
+filter.
+"""
+enum CurrencySortField {
+	createdAt
+	updatedAt
+	isoCode
+	currency
+}
+
+"""
+The order the currencies are returned in. At most three keys are accepted.
+"""
+input CurrencySort {
+	field: CurrencySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a currency list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every fact the object type carries is filterable, because each of them is one a caller selects
+currencies by: the code and the name identify one, `decimalPlaces`, `symbolPosition`, `symbolSpace`
+and `roundingMode` say how an amount in it is written and rounded, and `isTender` says whether it can
+settle a payment at all. `roundingIncrement` is stated through the decimal family, which is the family
+money is compared in.
+
+`isActive` and `isArchived` are filterable too, and `isActive` is the sharpest case of why: the table
+declares `(isActive, decimalPlaces)` and `(isActive, isTender)` as composite indexes, which are
+exactly the two reads a checkout makes — the currencies still in use, and how many decimals and
+whether each can be tendered — so narrowing the master to its live rows is a read this resource exists
+to serve rather than one a client should have to page the whole table to perform.
+"""
+input CurrencyFilter {
+	id: IDFilter
+	isoCode: StringFilter
+	currency: StringFilter
+	decimalPlaces: NumberFilter
+	symbol: StringFilter
+	symbolPosition: StringFilter
+	symbolSpace: BooleanFilter
+	roundingMode: StringFilter
+	roundingIncrement: DecimalFilter
+	isTender: BooleanFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CurrencyFilter!]
+	or: [CurrencyFilter!]
+	not: CurrencyFilter
+}
+
+# There is no `CreateCurrencyInput` and no `UpdateCurrencyInput` in this file, and their absence is the
+# delivery rather than an omission. The delivered controller serves one read route and no write route
+# of any kind, so a write input would describe a capability neither protocol has; the master is
+# written by the platform's own seeding and migration path, which is what makes it the reference data
+# every other resource can rely on being present.

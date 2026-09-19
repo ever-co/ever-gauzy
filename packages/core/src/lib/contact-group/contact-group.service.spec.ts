@@ -33,6 +33,16 @@ jest.mock('../core/crud/tenant-aware-crud.service', () => {
 		async softDelete(id: any): Promise<any> {
 			return this.typeOrmRepository.update(id, { deletedAt: new Date() });
 		}
+
+		async softRemove(id: any): Promise<any> {
+			// The base class's own spelling: it reads the row in order to remove it and answers with it,
+			// which is the shape the service's override announces from.
+			const row = (await this.typeOrmRepository.find({ where: { id } }))[0] ?? null;
+
+			await this.typeOrmRepository.update(id, { deletedAt: new Date() });
+
+			return row;
+		}
 	}
 
 	return { TenantAwareCrudService };
@@ -500,6 +510,71 @@ describe('ContactGroupService — every write announces the fact the subscriptio
 		expect(announced.published).toHaveLength(1);
 		expect(announced.published[0].envelope).toMatchObject({ action: 'created', group: seeded });
 		expect((seeded as Row).isSystem).toBe(true);
+	});
+
+	it('announces a removal asked for through the CRUD base’s own soft delete', async () => {
+		const announced = recordings();
+		const { service, group } = world([groupRow('group-1')], announced.publisher);
+
+		// The route the CRUD base maps for a soft removal reaches this method, so a removal performed
+		// through it is a removal a subscriber has to hear about: the announcement belongs to the write
+		// and not to the one handler that happens to funnel into the domain's own removal today.
+		await service.softDelete('group-1');
+
+		expect(announced.published).toHaveLength(1);
+		expect(announced.published[0].eventName).toBe(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED);
+		expect(announced.published[0].envelope).toMatchObject({
+			action: 'deleted',
+			aggregate: { type: 'ContactGroup', id: 'group-1' }
+		});
+		expect(group('group-1')?.deletedAt).toBeInstanceOf(Date);
+	});
+
+	it('announces a removal asked for through the base’s soft remove, the other spelling of the write', async () => {
+		const announced = recordings();
+		const { service, group } = world([groupRow('group-1')], announced.publisher);
+
+		await service.softRemove('group-1');
+
+		expect(announced.published).toHaveLength(1);
+		expect(announced.published[0].envelope).toMatchObject({
+			action: 'deleted',
+			group: expect.objectContaining({ id: 'group-1' })
+		});
+		expect(group('group-1')?.deletedAt).toBeInstanceOf(Date);
+	});
+
+	it('announces every removal path exactly once, and none of them twice', async () => {
+		const announced = recordings();
+		const { service } = world(
+			[groupRow('group-1'), groupRow('group-2'), groupRow('group-3')],
+			announced.publisher
+		);
+
+		await service.removeGroup('group-1');
+		await service.softDelete('group-2');
+		await service.softRemove('group-3');
+
+		// One fact per removal: a removal announced twice would have a subscriber drop a group it has
+		// already dropped, and a removal announced not at all is the silent withdrawal the subscription
+		// exists to prevent.
+		expect(announced.published).toHaveLength(3);
+		expect(announced.published.map((fact) => fact.envelope.action)).toEqual(['deleted', 'deleted', 'deleted']);
+		expect(new Set(announced.published.map((fact) => (fact.envelope.group as Row).id))).toEqual(
+			new Set(['group-1', 'group-2', 'group-3'])
+		);
+	});
+
+	it('announces nothing for a removal whose row this service cannot resolve', async () => {
+		const announced = recordings();
+		const { service } = world([], announced.publisher);
+
+		// The write is the base class's and refuses what it always refused; the read that feeds the
+		// announcement only says what the fact would carry, so a row it cannot name is announced as
+		// nothing rather than as an envelope about a group nobody could read.
+		await service.softDelete('missing');
+
+		expect(announced.published).toEqual([]);
 	});
 
 	it('announces nothing for a write that was refused', async () => {

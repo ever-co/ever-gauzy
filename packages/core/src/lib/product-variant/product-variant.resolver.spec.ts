@@ -81,7 +81,10 @@ function surfaces() {
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		updateVariant: jest.fn().mockResolvedValue(ROWS[0]),
-		deleteFeaturedImage: jest.fn().mockResolvedValue({ ...ROWS[0], imageId: null })
+		deleteFeaturedImage: jest.fn().mockResolvedValue({ ...ROWS[0], imageId: null }),
+		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-03-02T10:00:00.000Z') }),
+		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
+		delete: jest.fn().mockResolvedValue({ affected: 1 })
 	};
 	const productService = { findOneByIdString: jest.fn().mockResolvedValue({ id: PRODUCT, tenantId: TENANT, organizationId: ORGANIZATION }) };
 	const commandBus = { execute: jest.fn().mockResolvedValue([ROWS[0]]) };
@@ -189,11 +192,16 @@ describe('ProductVariantResolver — the SDL declares the capabilities the REST 
 	});
 
 	it('declares one mutation per delivered write route', () => {
+		// The two softer routes are among them: this resource's controller is a `CrudController`, which
+		// delivers `DELETE /:id/soft` and `PUT /:id/recover` beside the hard delete, and parity is
+		// capability parity rather than a preference for the shape that is easier to write.
 		expect(rootFields('Mutation')).toEqual(
 			expect.arrayContaining([
 				'createProductVariants',
 				'updateProductVariant',
 				'deleteProductVariant',
+				'softDeleteProductVariant',
+				'recoverProductVariant',
 				'deleteProductVariantFeaturedImage'
 			])
 		);
@@ -383,6 +391,21 @@ describe('ProductVariantResolver — one concept, two protocols, the same operat
 		expect(await resolver.deleteProductVariant(VARIANT)).toBe(true);
 		expect(commandBus.execute).toHaveBeenCalledTimes(1);
 		expect(commandBus.execute.mock.calls[0][0].productVariantId).toBe(VARIANT);
+	});
+
+	it('withdraws and restores through the service methods the inherited routes call', async () => {
+		// The softer pair is not the hard delete: a withdrawal keeps every row and the restore undoes it,
+		// which is why the two are the operations a catalogue reaches for when a variant stops selling.
+		const { resolver, productVariantService } = surfaces();
+
+		await resolver.softDeleteProductVariant(VARIANT);
+		expect(productVariantService.softRemove).toHaveBeenCalledWith(VARIANT);
+
+		await resolver.recoverProductVariant(VARIANT);
+		expect(productVariantService.softRecover).toHaveBeenCalledWith(VARIANT);
+
+		// Neither one is the delete, and the delete is not either of them.
+		expect(productVariantService.delete).not.toHaveBeenCalled();
 	});
 
 	it('surfaces a refusal as a 4xx that is not a 404', async () => {

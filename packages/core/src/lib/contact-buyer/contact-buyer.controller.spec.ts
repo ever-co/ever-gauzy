@@ -27,7 +27,10 @@
  */
 jest.mock('../shared/guards', () => ({
 	PermissionGuard: class PermissionGuard {},
-	TenantPermissionGuard: class TenantPermissionGuard {}
+	TenantPermissionGuard: class TenantPermissionGuard {},
+	// The gate on the GraphQL surface: a resolver carries the feature guard its module's resolvers
+	// are declared under, and a spec that doubles the guard barrel has to double that one too.
+	FeatureFlagGuard: class FeatureFlagGuard {}
 }));
 
 jest.mock('../core/crud/tenant-aware-crud.service', () => {

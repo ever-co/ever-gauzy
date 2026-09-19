@@ -63,8 +63,12 @@ export class TenantUiPreferencesController {
 /**
  * Anything that is not a known {@link PreferredUiEnum} value (an unset row, a stale value from
  * an older build) resolves to Angular — the flavour that always exists.
+ *
+ * Exported because the GraphQL view of this resource answers with the same normalisation, and one
+ * definition of "what an unusable stored value means" is what keeps the two surfaces from answering
+ * the same question differently.
  */
-function normalizePreferredUi(value: unknown): PreferredUiEnum {
+export function normalizePreferredUi(value: unknown): PreferredUiEnum {
 	return Object.values(PreferredUiEnum).includes(value as PreferredUiEnum)
 		? (value as PreferredUiEnum)
 		: PreferredUiEnum.ANGULAR;

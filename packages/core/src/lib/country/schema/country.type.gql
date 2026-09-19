@@ -1,0 +1,113 @@
+# The country's object type.
+#
+# A country row is the platform's reference data for one country: its ISO 3166-1 alpha-2 code and the
+# name it is written as. It is what an address resolves its country against and what a commercial
+# geography's served-country set points at, so a postal address and a region read the same two facts
+# from the same table — which is why the table is a kernel resource and a domain refers to it rather
+# than declaring its own.
+#
+# **This is a global lookup, not a tenant row**, and the object type says so by carrying no tenancy
+# member: the delivered table has no `tenantId` and no `organizationId`, because a country's code and
+# name are properties of the country and not of whoever is looking at it.
+#
+# **The name member is `country`, not `name`.** That is the column's own name and the member the REST
+# surface answers, so a client reads one spelling on both protocols; a `name` member here would be a
+# second name for one fact, and the two would have to be kept in step by hand.
+#
+# Two groups of base-row members are deliberately absent, and each for its own reason:
+#
+# - `deletedAt` is not carried. No route of this resource writes anything — the controller serves one
+#   list and nothing else — so a withdrawal mark would be absent on every row this surface can answer.
+# - the `createdByUserId`, `updatedByUserId` and `deletedByUserId` stamps are not carried either. They
+#   name the writer of a row written through the platform's own write path, and this resource has no
+#   write path to name.
+
+"""
+One country of the platform's master: its ISO 3166-1 code and the name it is written as.
+"""
+type Country {
+	id: ID!
+	"The ISO 3166-1 alpha-2 code: the row's identity as a country, and the code an address states."
+	isoCode: String!
+	"The country's name, as the platform writes it."
+	country: String!
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of countries.
+"""
+type CountryEdge {
+	node: Country!
+	cursor: String!
+}
+
+"""
+One page of countries, with the total the filters select and the boundary cursors.
+"""
+type CountryConnection {
+	nodes: [Country!]!
+	edges: [CountryEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a country list may be sorted by.
+
+The code and the name, which are the two orders this table is read in: by code, which is the row's
+identity and the order a form's country picker offers a counterparty the code for, and by name, which
+is the order a person reads a picker in. The two timestamps are how a change to the master is found
+again.
+
+There is nothing else to offer. A country row is a code and a name; the two lifecycle flags below are
+a state a row is in rather than a quantity, and a list of the countries that have been retired is that
+state stated as a filter.
+"""
+enum CountrySortField {
+	createdAt
+	updatedAt
+	isoCode
+	country
+}
+
+"""
+The order the countries are returned in. At most three keys are accepted.
+"""
+input CountrySort {
+	field: CountrySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a country list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Both facts the object type carries are filterable — the code identifies one country and the name is
+how a searcher reaches it without knowing the code — and so are the two lifecycle flags. A client that
+can read a flag and cannot narrow by it has to page the whole master to find the retired rows, and
+"what is still in use?" is the question this table is most often opened to answer. Neither flag is
+written by a route of this resource: a caller reads them here and they are set by the path that
+maintains the master.
+"""
+input CountryFilter {
+	id: IDFilter
+	isoCode: StringFilter
+	country: StringFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CountryFilter!]
+	or: [CountryFilter!]
+	not: CountryFilter
+}
+
+# There is no `CreateCountryInput` and no `UpdateCountryInput` in this file, and their absence is the
+# delivery rather than an omission. The delivered controller serves one read route and no write route
+# of any kind, so a write input would describe a capability neither protocol has; the master is
+# written by the platform's own seeding and migration path, which is what makes it the reference data
+# every address and every region can rely on being present.

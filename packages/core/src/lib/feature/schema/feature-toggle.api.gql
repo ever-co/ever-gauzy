@@ -1,0 +1,99 @@
+# The feature gate's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/feature/toggle` routes already serve, under the same
+# guard and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other. The guard and the
+# permission are read from `FeatureToggleController`'s own metadata in the resolver, and the resolver's
+# spec compares the two rather than restating a list that could agree with the resolver while
+# disagreeing with the controller.
+#
+# **Two connections, because the resource answers two rows.** `features` is the catalogue — the list
+# route `GET /feature/toggle`, which the controller serves without narrowing. `featureToggles` is the
+# tenant's switchboard — what `GET /feature/toggle/organizations` serves, and what the whole platform
+# reads to decide whether a capability is served. They are different tables with different columns and
+# different scopes, so they are two lists rather than one list stated twice; a single connection over
+# either would have to drop the other's answers.
+#
+# **A sub-route is a filter, never a root field.** `GET /feature/toggle/parent` answers the roots of
+# the same catalogue, which is `features(filter: { parentId: { isNull: true } })`, and the
+# `tenantId`/`organizationId` parameters of `GET /feature/toggle/organizations` are filters over
+# `featureToggles`. A root field per narrowing would be a second surface that could disagree with this
+# one about the same rows.
+#
+# **There is no node query and no count, because the controller serves neither.** `FeatureToggleController`
+# is not a CRUD controller: it declares no `GET /:id` and no `GET /count`, so a `featureToggle(id)` or a
+# `featureToggleCount` here would be a capability REST does not have — the reverse of the gap this
+# delivery exists to close. Where a caller needs one catalogue entry it narrows the connection by `id`;
+# where it needs a total, `totalCount` is the count of the rows the filters selected.
+#
+# **The toggle write is the capability the gate itself depends on.** `toggleFeature` dispatches the same
+# `FeatureToggleUpdateCommand` `POST /feature/toggle` dispatches, and that command is what rewrites the
+# rows `FeatureFlagGuard` resolves. It is the one write whose effect is visible on every other surface,
+# which is why it is mirrored exactly rather than approximated.
+#
+# **The GraphQL view of these fields is behind the capability the catalogue declares for GraphQL.**
+# `FEATURE_GRAPHQL` is the code the commerce catalogue introduces for "the GraphQL endpoint and its
+# resolvers, under the same guards and permissions as REST". The REST routes of this resource are not
+# gated by it — they are the door that stays open, which is what keeps a tenant that switched GraphQL
+# off able to switch it back on — and the resolver therefore carries `FeatureFlagGuard` with that code
+# on the class, one gate over every field below. A tenant that switched the capability off is answered
+# `Cannot query field <name>`, the same 404-shaped refusal a disabled capability's REST routes answer.
+#
+# `featureToggleDefinitions` is `@Public()`, mirroring its route: `GET /feature/toggle/definition`
+# declares `@Public()` and no guard of its own, so it is the one read here that asks for no credential
+# and no permission. The gate above still applies to it, because the gate is a property of the surface
+# and not of the field: a capability that is switched off is not served over the GraphQL door, which is
+# what the wiring is for.
+
+extend type Query {
+	"""
+	The catalogue of capabilities of this installation, in the order the delivered parent route fixes
+	for the same rows.
+	"""
+	features(
+		filter: FeatureFilter
+		sort: [FeatureSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): FeatureConnection!
+
+	"""
+	The caller's tenant's toggle rows: which capability is on, for which scope. A tenant-wide row and
+	an organization's own row are both answered, and `organizationId` is what tells them apart.
+	"""
+	featureToggles(
+		filter: FeatureToggleFilter
+		sort: [FeatureToggleSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): FeatureToggleConnection!
+
+	"""
+	The toggle definitions this installation's provider declares for the platform's own codes, as the
+	public definition route answers them.
+	"""
+	featureToggleDefinitions: [FeatureToggleDefinition!]!
+}
+
+extend type Mutation {
+	"""
+	Switches a capability on or off for a scope, and answers whether the write was performed.
+
+	The answer is the delivered route's own: the command behind it reports success as a boolean rather
+	than returning the row, so this field states the same fact in the same shape.
+	"""
+	toggleFeature(input: UpdateFeatureToggleInput!): Boolean!
+}

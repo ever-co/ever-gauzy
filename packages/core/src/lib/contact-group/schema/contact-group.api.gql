@@ -51,6 +51,15 @@ extend type Mutation {
 	maintains is not removable at all.
 	"""
 	deleteContactGroup(id: ID!): ContactGroup!
+
+	"""
+	Soft-deletes a group under the spelling the soft-delete route uses. Removal here is soft under either
+	spelling — both routes reach one operation — so this field and `deleteContactGroup` are the same
+	call, and a group the platform maintains is refused by both. It is stated as its own field because a
+	client that reads the route reaches the capability the route promises, rather than having to know
+	that the other spelling of the removal is the same one.
+	"""
+	softDeleteContactGroup(id: ID!): ContactGroup!
 }
 
 extend type Subscription {

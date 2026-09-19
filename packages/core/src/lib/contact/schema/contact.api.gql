@@ -1,0 +1,105 @@
+# The customer record's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/contact` routes already serve, under the same guard
+# chain and with the same scope, so a client that reaches a capability over one protocol is not given
+# a narrower or a wider one than the client that reaches it over the other. The controller declares
+# one route of its own — the list — and inherits the rest from the CRUD base: the one row, the count,
+# the creation, the edit, the removal and the two lifecycle moves. All of them are mirrored here,
+# because a capability the REST surface serves and this one does not is the whole of what the
+# two-protocol rule forbids.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. The paginated list route has no field of its own:
+# the page is what the connection answers with, so a second field for it would be a second surface
+# that could disagree with this one. The count does have one, and it is a bare nullable `Int`: a
+# number is not a connection, and `totalCount` is not that number — it counts the rows the connection
+# narrowed to, while the count route counts the caller's own rows.
+#
+# Two names this resource's row of the GraphQL specification carries are deliberately absent, and
+# they are reported rather than faked: `contactByEmail` has no route that reads a contact by address
+# — the row has no address column at all, the party's is `OrganizationContact.primaryEmail` — and
+# `bulkCreateContacts` has no bulk route on this controller. A field with no capability behind it is
+# a promise, and promises live in the coverage table rather than in a resolver.
+#
+# The lifecycle pair is named for the routes it mirrors and not for the specification's shorthand:
+# `DELETE /contact/:id/soft` and `PUT /contact/:id/recover` are the delivered operations, and the
+# surname of each field is the verb the route itself uses, exactly as the catalogue delivery named
+# its own pair.
+
+extend type Query {
+	"""
+	The contacts of the caller's tenant, newest first.
+	"""
+	contacts(
+		filter: ContactFilter
+		sort: [ContactSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ContactConnection!
+
+	"""
+	One contact of the caller's tenant, or null when there is none.
+	"""
+	contact(id: ID!): Contact
+
+	"""
+	How many contacts the caller's tenant holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+	on a party list has to keep apart. The delivered count route binds its query string to the store's
+	own `where`, a shape no schema can state, so the field offers no narrowing of its own rather than
+	an argument the resolver could not pass on.
+	"""
+	contactCount: Int
+}
+
+extend type Mutation {
+	"""
+	Records a contact.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the
+	caller, so a contact cannot be written into a tenant the caller is not acting in. The organization
+	is stated, because it is a column of this row and the delivered route writes the value it is
+	given.
+	"""
+	createContact(input: CreateContactInput!): Contact!
+
+	"""
+	Changes the facts of a contact that exists. A member the caller leaves out is left as it is, which
+	is what the delivered partial update does.
+	"""
+	updateContact(input: UpdateContactInput!): Contact!
+
+	"""
+	Removes a contact outright: the row is gone and nothing reads it back.
+
+	The two removals this resource serves are not the same operation, so both are stated rather than
+	one of them being left to a client to discover on the other protocol. The party that pointed at
+	the removed row keeps its own attributes — its `contactId` is nulled by the database — which is
+	why a caller that means "withdraw this record" reaches for the soft removal below instead.
+	"""
+	deleteContact(id: ID!): Boolean!
+
+	"""
+	Withdraws a contact without removing it: the row stays in the table, marked as removed, and the
+	recovery below reads it back. The answer is the row as it now stands, which is what the delivered
+	route answers with.
+	"""
+	softDeleteContact(id: ID!): Contact!
+
+	"""
+	Puts a withdrawn contact back, clearing the marker the withdrawal set.
+	"""
+	recoverContact(id: ID!): Contact!
+}

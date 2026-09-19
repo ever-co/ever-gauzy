@@ -203,6 +203,29 @@ export class ProductVariantResolver {
 	}
 
 	/**
+	 * Withdraws a variant without removing its rows.
+	 *
+	 * The route it mirrors is the inherited `DELETE /:id/soft`, which carries no permission of its own, so a
+	 * permission stated here would refuse a caller that route serves. The write is the service's own
+	 * `softRemove`, which is what the route calls — a withdrawal is not a deletion, and the two are
+	 * deliberately different operations on this resource.
+	 */
+	@Mutation('softDeleteProductVariant')
+	async softDeleteProductVariant(@Args('id', { type: () => ID }) id: Id): Promise<IProductVariant> {
+		return await this.productVariantService.softRemove(id);
+	}
+
+	/**
+	 * Brings a withdrawn variant back.
+	 *
+	 * The counterpart of the withdrawal, mirroring the inherited `PUT /:id/recover` route.
+	 */
+	@Mutation('recoverProductVariant')
+	async recoverProductVariant(@Args('id', { type: () => ID }) id: Id): Promise<IProductVariant> {
+		return await this.productVariantService.softRecover(id);
+	}
+
+	/**
 	 * Withdraws the variant's featured image.
 	 */
 	@Mutation('deleteProductVariantFeaturedImage')

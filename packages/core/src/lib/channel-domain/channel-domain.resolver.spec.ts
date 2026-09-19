@@ -17,7 +17,11 @@ import { ChannelDomainResolver } from './channel-domain.resolver';
 /** The guard doubles, and the reason they exist, are stated in `channel.controller.spec.ts`. */
 jest.mock('../shared/guards', () => ({
 	PermissionGuard: class PermissionGuard {},
-	TenantPermissionGuard: class TenantPermissionGuard {}
+	TenantPermissionGuard: class TenantPermissionGuard {},
+	// Answered for, and applied by nothing here: the entity barrel this suite loads first reaches a
+	// module whose resolver applies this third guard, and a decorator evaluated against an undefined
+	// token fails the suite at load rather than at an assertion.
+	FeatureFlagGuard: class FeatureFlagGuard {}
 }));
 
 jest.mock('../core/crud/tenant-aware-crud.service', () => {

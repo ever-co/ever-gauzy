@@ -7,6 +7,12 @@ import {
 	IContactGroupFindInput,
 	IContactGroupUpdateInput
 } from '@gauzy/contracts';
+import { FindOptionsWhere, SaveOptions, UpdateResult } from 'typeorm';
+// Type-only, so the two type modules are not part of this service's runtime graph: the removal
+// overrides below narrow the signatures the CRUD base declares, and a test that doubles the base
+// class does not have to load them to call the service.
+import type { IFindOneOptions } from '../core/crud/icrud.service';
+import type { LegacyFindOneOptions } from '../core/utils';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
@@ -53,6 +59,13 @@ import { MikroOrmContactGroupRepository } from './repository/mikro-orm-contact-g
  * row by whether it received an event. The announcement is made after the write has succeeded, with the
  * row in its post-write state, and the publisher is what knows how a subscriber is reached — see
  * {@link ContactGroupEventPublisher}.
+ *
+ * **A removal announces wherever it is asked for, because the announcement lives on the write.** This
+ * service removes a group through two spellings — the CRUD base's soft delete and its soft remove — and
+ * the domain's own removal is a third name over the first of them. A subscriber told about a group
+ * removed through one of them and left unwatching the others would see a group disappear with nothing
+ * to explain it, which is worse than a subscription that says nothing at all; all three therefore
+ * announce through {@link announceRemoval}, and none of them announces twice.
  */
 @Injectable()
 export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
@@ -337,13 +350,10 @@ export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
 			);
 		}
 
-		await this.softDelete(id);
-
-		// The fact is announced from the row the removal acted on, and before this method's own re-read:
-		// a removed row is absent to that read, so an announcement placed after it would be the one thing
-		// that never happens when the read is what refuses. `deleted` is what tells a subscriber the group
-		// is gone — the payload is the group as it stood when it was removed.
-		await this.contactGroupEventPublisher.groupChanged(group, 'deleted');
+		// The write is the service's one removal, and it is what announces: a removal performed here is
+		// never the one that stays silent, and it is announced exactly once because no caller announces
+		// beside it.
+		await this.removeAndAnnounce(id, group);
 
 		// The row read before the removal is the answer, and **not** a second read of it. `deletedAt` is
 		// the column the removal writes and every read of this service excludes the rows that carry one,
@@ -359,6 +369,58 @@ export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
 		group.deletedAt = new Date();
 
 		return group;
+	}
+
+	/**
+	 * Soft-deletes a group by the criteria the CRUD base's own removal accepts.
+	 *
+	 * The base class's `DELETE /:id/soft` handler reaches this method, and this domain's controller
+	 * restates that handler and routes it to {@link removeGroup}: a controller that left it inherited
+	 * would remove the row here, so the announcement is made on the write both paths reach rather than on
+	 * one of its callers. That is what makes the guarantee a property of the service instead of a
+	 * property of which route decorator a controller happened to keep.
+	 *
+	 * The row is read before the write, and the announcement is made after it: the base method's own
+	 * answer is an `UpdateResult` in one dialect and the row in the other, so the group a subscriber is
+	 * told about has to be read here, and reading it before the write is what lets the payload carry the
+	 * group as it stood rather than a row the removal instant has since touched. A read that finds
+	 * nothing announces nothing — the write still refuses exactly what it refused before, because a
+	 * refusal is not a change.
+	 *
+	 * @param criteria The group id, or the criteria naming it.
+	 * @param options The read options the base method honours.
+	 * @returns The base method's own answer, unchanged.
+	 */
+	public async softDelete(
+		criteria: string | number | FindOptionsWhere<ContactGroup>,
+		options?: LegacyFindOneOptions<ContactGroup>
+	): Promise<UpdateResult | ContactGroup> {
+		return this.removeAndAnnounce(criteria, await this.removalSubject(criteria), options);
+	}
+
+	/**
+	 * Soft-removes a group, which is the other spelling of the removal the CRUD base's routes reach.
+	 *
+	 * The same rule as {@link softDelete}: every removal this service performs announces exactly once,
+	 * whichever method it was asked through, so no protocol can take a group away without a subscriber
+	 * hearing about it. The row announced is the one the base write itself read in order to remove it —
+	 * no second read is needed here, because that spelling answers with the row.
+	 *
+	 * @param id The group to soft-remove.
+	 * @param options The read options the base method honours.
+	 * @param saveOptions The save options the base method honours.
+	 * @returns The removed group, as the base method answers it.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<ContactGroup>,
+		saveOptions?: SaveOptions
+	): Promise<ContactGroup> {
+		const removed = await super.softRemove(id, options, saveOptions);
+
+		await this.announceRemoval(removed);
+
+		return removed;
 	}
 
 	/**
@@ -380,6 +442,78 @@ export class ContactGroupService extends TenantAwareCrudService<ContactGroup> {
 				`${ApiErrorCode.CONTACT_GROUP_MEMBER_INVALID}: '${group.code}' is rule-based, and its membership is computed from its rules rather than written.`
 			);
 		}
+	}
+
+	/**
+	 * Performs one soft removal and announces it, which is how the domain's own removal and the CRUD
+	 * base's soft delete reach the one announcement.
+	 *
+	 * The announcement is made after the write has succeeded: a write that was refused is not a change,
+	 * and a subscriber told about a removal that did not happen would cache a group the platform still
+	 * has. The group announced is the one the caller resolved as it stood before the write — the base
+	 * method's own answer is an `UpdateResult` in one dialect and the row in the other, so the row has to
+	 * be read by the caller that has it.
+	 *
+	 * @param criteria The group id, or the criteria naming it.
+	 * @param group The group as it stood before the write, when the caller resolved it.
+	 * @param options The read options the base method honours.
+	 * @returns The base method's own answer.
+	 */
+	private async removeAndAnnounce(
+		criteria: string | number | FindOptionsWhere<ContactGroup>,
+		group: IContactGroup | null,
+		options?: LegacyFindOneOptions<ContactGroup>
+	): Promise<UpdateResult | ContactGroup> {
+		const removed = await super.softDelete(criteria, options);
+
+		await this.announceRemoval(group);
+
+		return removed;
+	}
+
+	/**
+	 * Announces one removal, which is the only place a removal is announced.
+	 *
+	 * Every removal path of this service ends here — the domain's own removal and the CRUD base's soft
+	 * delete through {@link removeAndAnnounce}, and the base's soft remove with the row its own write
+	 * answers with — so the announcement cannot be forgotten by a new caller and cannot be made twice by
+	 * an old one. A row the caller could not resolve announces nothing: the write still refuses what it
+	 * refused before, and an envelope about a group nobody could read would be a fact with no subject.
+	 *
+	 * @param group The group as it stood when it was removed, or null when the caller could not resolve
+	 * one.
+	 */
+	private async announceRemoval(group: IContactGroup | null): Promise<void> {
+		if (!group) {
+			return;
+		}
+
+		// `deleted` is what tells a subscriber the group is gone, and the payload is the group as it
+		// stood when it was removed.
+		await this.contactGroupEventPublisher.groupChanged(group, 'deleted');
+	}
+
+	/**
+	 * The group a removal names, as it stood before the write, or null when the caller's scope holds
+	 * none.
+	 *
+	 * A miss is not a refusal here: the write refuses what it has always refused, and this read exists
+	 * only to say what the announcement carries. The read is the service's own scoped one, so the row a
+	 * subscriber is told about is a row the caller could have read.
+	 *
+	 * @param criteria The group id, or the criteria naming it.
+	 * @returns The group, or null.
+	 */
+	private async removalSubject(
+		criteria: string | number | FindOptionsWhere<ContactGroup>
+	): Promise<ContactGroup | null> {
+		if (typeof criteria === 'string' || typeof criteria === 'number') {
+			return (await this.findGroup(String(criteria))) as ContactGroup | null;
+		}
+
+		const groups: ContactGroup[] = await this.find({ where: { ...(criteria ?? {}), ...this.scope } } as never);
+
+		return groups.length ? groups[0] : null;
 	}
 
 	/**

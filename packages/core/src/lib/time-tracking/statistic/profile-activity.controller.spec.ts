@@ -5,7 +5,7 @@ jest.mock('../../organization-project/organization-project.module', () => ({
 jest.mock('../../role-permission/role-permission.module', () => ({
 	RolePermissionModule: class RolePermissionModule {}
 }));
-jest.mock('../../shared/guards', () => ({ TenantPermissionGuard: class TenantPermissionGuard {} }));
+jest.mock('../../shared/guards', () => ({ TenantPermissionGuard: class TenantPermissionGuard {}, FeatureFlagGuard: class FeatureFlagGuard {} }));
 jest.mock('../../tasks/task.module', () => ({ TaskModule: class TaskModule {} }));
 jest.mock('../../user/user.module', () => ({ UserModule: class UserModule {} }));
 jest.mock('../activity/activity.module', () => ({ ActivityModule: class ActivityModule {} }));

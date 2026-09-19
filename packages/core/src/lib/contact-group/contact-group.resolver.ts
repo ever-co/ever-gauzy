@@ -234,6 +234,22 @@ export class ContactGroupResolver {
 	}
 
 	/**
+	 * Soft-deletes a group, under the spelling the soft-delete route uses.
+	 *
+	 * The route this field mirrors is the soft-delete route the CRUD base maps, which this domain's
+	 * controller restates and routes to the domain's own removal — the same method `deleteContactGroup`
+	 * calls, because removal here is soft under either spelling and one operation is not made two by
+	 * having two names. Naming the field after the route is what keeps the two surfaces level: a client
+	 * that reads `DELETE /contact-groups/:id/soft` finds the capability under this field, carrying the
+	 * permission that route carries.
+	 */
+	@Mutation('softDeleteContactGroup')
+	@Permissions(PermissionsEnum.CONTACT_GROUPS_DELETE)
+	async softDeleteContactGroup(@Args('id', { type: () => ID }) id: Id): Promise<IContactGroup> {
+		return this.contactGroupService.removeGroup(id);
+	}
+
+	/**
 	 * Streams every change to a contact group of the caller's tenant: the group appearing, being edited
 	 * or being removed, and its membership being granted or withdrawn.
 	 *

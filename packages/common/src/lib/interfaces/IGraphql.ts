@@ -64,6 +64,18 @@ export interface GraphQLApiConfigurationOptions {
 	 * The module containing resolvers for the GraphQL API.
 	 */
 	resolverModule: Function;
+
+	/**
+	 * Further modules Apollo scans for resolvers, beside `resolverModule` and the configured plugins.
+	 *
+	 * A module that declares a resolver and is never scanned contributes nothing, silently: the schema
+	 * still carries every field its SDL declares and each one answers null with no error anywhere. The
+	 * host module covers the resolvers the platform lists itself; this is for a domain whose module
+	 * cannot be imported *by* the host — a domain already inside a module cycle of its own, where
+	 * adding the host as a participant fails the boot — so the domain declares its resolvers in its own
+	 * module, beside the services they call, and names that module here instead.
+	 */
+	additionalResolverModules?: Function[];
 }
 
 /**

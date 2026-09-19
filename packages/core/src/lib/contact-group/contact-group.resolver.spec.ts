@@ -15,6 +15,7 @@ import { CursorCodec } from '../api/cursor';
 import { GraphqlPubSub } from '../graphql/subscriptions/graphql-pubsub.service';
 import { SubscriptionCatalogue } from '../graphql/subscriptions/subscription-catalogue';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { ContactGroupController } from './contact-group.controller';
 import { ContactGroupResolver } from './contact-group.resolver';
 import {
 	CONTACT_GROUP_EVENT_NAMES,
@@ -57,8 +58,9 @@ jest.mock('../core/context/request-context', () => ({
  *   obtained over REST resumes here and a refusal is the query protocol's own code;
  * - a mutation delegates to the same service method the REST route calls, with the same scope — a client
  *   does not choose a better surface by choosing a protocol;
- * - the three writes carry the three separate permissions the catalogue assigns them, so a role that may
- *   create a group cannot delete one by asking GraphQL instead of REST;
+ * - every field carries the permission its own route runs under, read from the controller's metadata by
+ *   the rule the guards apply, so a role that may create a group cannot delete one by asking GraphQL
+ *   instead of REST, and no field states a permission its route does not carry;
  * - both protocols are tenant- and permission-guarded, asserted against the metadata a guard reads.
  */
 
@@ -192,6 +194,25 @@ function rootFields(operation: 'Query' | 'Mutation' | 'Subscription'): string[] 
 	return Object.keys(root?.getFields() ?? {});
 }
 
+/** The handlers of one controller, as functions, inherited ones included. */
+function handlersOf(controller: typeof ContactGroupController): Record<string, object> {
+	return controller.prototype as unknown as Record<string, object>;
+}
+
+/**
+ * The permission one route runs under: what its handler states, else what its controller states.
+ *
+ * This is the rule the guards themselves apply — the reflector's `getAllAndOverride` over
+ * `[handler, class]` — restated here, so a field is held to the controller's own metadata rather than
+ * to a second copy of the same list written out in this file.
+ */
+function permissionOfRoute(controller: typeof ContactGroupController, handler: string): unknown {
+	return (
+		Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(controller)[handler]) ??
+		Reflect.getMetadata(PERMISSIONS_METADATA, controller)
+	);
+}
+
 beforeEach(() => {
 	mockTenantId = TENANT;
 	mockOrganizationId = ORGANIZATION;
@@ -204,7 +225,12 @@ describe('ContactGroupResolver — the SDL declares the root fields the specific
 
 	it('declares every group mutation the specification names', () => {
 		expect(rootFields('Mutation')).toEqual(
-			expect.arrayContaining(['createContactGroup', 'updateContactGroup', 'deleteContactGroup'])
+			expect.arrayContaining([
+				'createContactGroup',
+				'updateContactGroup',
+				'deleteContactGroup',
+				'softDeleteContactGroup'
+			])
 		);
 	});
 
@@ -379,6 +405,17 @@ describe('ContactGroupResolver — one concept, two protocols, the same writes',
 		expect(isRefusal(error)).toBe(true);
 		expect((error as Error).message).toContain('CONTACT_GROUP_SYSTEM');
 	});
+
+	it('removes through the soft-delete spelling the same call that route makes', async () => {
+		const { resolver, contactGroupService } = surfaces();
+
+		await resolver.softDeleteContactGroup(OTHER_GROUP);
+
+		// The route is the CRUD base's soft-delete route, restated by the controller and routed to the
+		// domain's own removal, so the field calls exactly what its handler calls — the same method the
+		// other removal field calls, because removal here is soft under either spelling.
+		expect(contactGroupService.removeGroup).toHaveBeenCalledWith(OTHER_GROUP);
+	});
 });
 
 describe('ContactGroupResolver — subscriptions (§10.2, §10.4)', () => {
@@ -537,7 +574,8 @@ describe('ContactGroupResolver — the guard stack and the permission every root
 			['contactGroup', PermissionsEnum.CONTACT_GROUPS_VIEW],
 			['createContactGroup', PermissionsEnum.CONTACT_GROUPS_CREATE],
 			['updateContactGroup', PermissionsEnum.CONTACT_GROUPS_EDIT],
-			['deleteContactGroup', PermissionsEnum.CONTACT_GROUPS_DELETE]
+			['deleteContactGroup', PermissionsEnum.CONTACT_GROUPS_DELETE],
+			['softDeleteContactGroup', PermissionsEnum.CONTACT_GROUPS_DELETE]
 		];
 
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ContactGroupResolver)).toEqual([
@@ -549,13 +587,37 @@ describe('ContactGroupResolver — the guard stack and the permission every root
 		}
 	});
 
+	it('states on every field the permission its own route runs under', () => {
+		const routes: Array<[string, string]> = [
+			['contactGroups', 'findAll'],
+			['contactGroup', 'findById'],
+			['createContactGroup', 'create'],
+			['updateContactGroup', 'update'],
+			['deleteContactGroup', 'delete'],
+			['softDeleteContactGroup', 'softRemove']
+		];
+
+		const fields = ContactGroupResolver.prototype as unknown as Record<string, object>;
+		const stated = Object.fromEntries(
+			routes.map(([field]) => [field, Reflect.getMetadata(PERMISSIONS_METADATA, fields[field])])
+		);
+		const expected = Object.fromEntries(
+			routes.map(([field, handler]) => [field, permissionOfRoute(ContactGroupController, handler)])
+		);
+
+		// The permissions are the controller's own metadata, applied the way the guards apply it, so a
+		// field that widened or narrowed a route would be caught here rather than by a second list that
+		// agrees with the resolver because it was copied from it.
+		expect(stated).toEqual(expected);
+	});
+
 	it('refuses every write to a caller who holds only the read permission', () => {
 		// "No credential" at the level a unit test can observe: the class-level chain refuses a request
 		// that presents none, and the metadata below is what the permission guard reads. A write field
 		// that carried the read permission — or none — would be reachable by every caller that may look.
 		const proto = ContactGroupResolver.prototype;
 
-		for (const field of ['createContactGroup', 'updateContactGroup', 'deleteContactGroup']) {
+		for (const field of ['createContactGroup', 'updateContactGroup', 'deleteContactGroup', 'softDeleteContactGroup']) {
 			const stated = Reflect.getMetadata(PERMISSIONS_METADATA, proto[field]) ?? [];
 
 			expect(stated).not.toContain(PermissionsEnum.CONTACT_GROUPS_VIEW);

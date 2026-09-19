@@ -126,8 +126,10 @@ export async function createGraphqlModuleOptions(
 				'If-None-Match'
 			].join(', ')
 		},
-		// Every plugin module as well as the host, so the resolvers those modules declare are found.
-		include: [options.resolverModule, ...pluginResolverModules],
+		// Every plugin module as well as the host, so the resolvers those modules declare are found —
+		// and the domains the host cannot import, which declare their resolvers in their own module and
+		// are named by the configuration rather than by the host's own import list.
+		include: [options.resolverModule, ...(options.additionalResolverModules ?? []), ...pluginResolverModules],
 		// No stack, in any environment. The server's own default is to attach `extensions.stacktrace`
 		// whenever the surface is not in production, which is a second, unversioned envelope beside the
 		// platform's: a client that switches on `extensions.code` finds a stack where it expected a

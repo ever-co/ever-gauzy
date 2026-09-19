@@ -19,7 +19,11 @@ import { CHANNEL_EVENT_NAMES } from '../channel/channel-event.publisher';
 /** The guard doubles, and the reason they exist, are stated in the channel controller suite. */
 jest.mock('../shared/guards', () => ({
 	PermissionGuard: class PermissionGuard {},
-	TenantPermissionGuard: class TenantPermissionGuard {}
+	TenantPermissionGuard: class TenantPermissionGuard {},
+	// Answered for, and applied by nothing here: the entity barrel this suite loads first reaches a
+	// module whose resolver applies this third guard, and a decorator evaluated against an undefined
+	// token fails the suite at load rather than at an assertion.
+	FeatureFlagGuard: class FeatureFlagGuard {}
 }));
 
 jest.mock('../core/crud/tenant-aware-crud.service', () => {

@@ -1,0 +1,178 @@
+# The invoice domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/invoices` routes already serve, under the same guard
+# chain and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other. The two document
+# renders are Queries rather than Mutations because the routes behind them are reads (`GET
+# /download/:id` and `GET /payment/download/:id`): nothing is written, and the answer is the document.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered
+# list read answers live rows only, and offering an argument that cannot be honoured would be worse
+# than not offering it.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same
+# rows under the same filters, one of them sliced by `take`/`skip` and the other not. That is one
+# capability, so it is one root field: `invoices`, mirroring `GET /`, which is the route that reads
+# the whole filtered set the connection protocol is applied to. The narrowing the paginated spelling
+# interprets on the way — the invoice-date window, the due-date window and the amount window — is
+# stated here as `between` on `invoiceDate`, `dueDate` and `totalValue`, which is the same narrowing
+# in the connection protocol's own vocabulary, so no caller loses a question by asking it here.
+#
+# `invoiceCount` takes no filter, and that is a statement rather than an omission. The delivered count
+# route passes its query string through as the store's own `where`, which the connection protocol does
+# not speak; a `filter` argument here would either be handed to a service call that cannot accept it or
+# be evaluated over a second code path that could disagree with the connection's `totalCount`. What it
+# answers is the count of the caller's own rows, which is the call the route makes when it is given no
+# options. It is nullable because a count is an aggregate a resource may legitimately have no answer
+# for, and a non-null field would turn "not answered" into a fabricated zero.
+#
+# `invoice`, `invoiceCount` and the two document renders carry `INVOICES_VIEW` and every write carries
+# `INVOICES_EDIT`, which is what the delivered controller states: the read routes state the view
+# permission on the handler, and the write routes inherit the edit permission from the controller
+# class. The two lifecycle routes the controller inherits from the CRUD base — the withdrawal and the
+# restoration — state no permission of their own and therefore run under that same class-level edit
+# permission, and the two fields for them state it as well rather than stating nothing: a field is
+# never wider than the route it mirrors.
+#
+# `highestInvoiceNumber` mirrors `GET /highest`, the only look-up of its own the controller serves. A
+# client taking the next number of the series reads it here; the route declares an invoice as its
+# answer while it actually returns the aggregate row, and this surface states that row — see
+# `InvoiceNumberSeries`.
+
+extend type Query {
+	"""
+	The invoices and estimates of the caller's tenant, newest first.
+	"""
+	invoices(
+		filter: InvoiceFilter
+		sort: [InvoiceSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): InvoiceConnection!
+
+	"""
+	One invoice or estimate of the caller's tenant, or null when there is none.
+
+	A document that is not there answers `null` rather than a refusal: GraphQL has one answer for "no
+	such row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+	other protocol's vocabulary.
+	"""
+	invoice(id: ID!): Invoice
+
+	"""
+	How many invoices and estimates the caller's tenant holds.
+	"""
+	invoiceCount: Int
+
+	"""
+	The highest number the caller's tenant's series has reached, or zero when it has issued none.
+	"""
+	highestInvoiceNumber: InvoiceNumberSeries!
+
+	"""
+	The document as a PDF, for the caller's own language.
+
+	The language is the request's: the delivered route reads it from the `language` header and this
+	field reads the same header off the same request, so one document is rendered in one language over
+	either protocol. Null when the delivered renderer produced nothing — it logs a failure rather than
+	raising it, and the route answers an empty body in that case.
+	"""
+	downloadInvoicePdf(id: ID!): InvoiceDocument
+
+	"""
+	The document's payment record as a PDF, for the caller's own language, on the same terms as the
+	document render above.
+	"""
+	downloadInvoicePaymentPdf(id: ID!): InvoiceDocument
+}
+
+extend type Mutation {
+	"""
+	Raises an invoice or an estimate.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the
+	caller, so a document cannot be written into a tenant the caller is not acting in; the organization
+	it is issued from and filed under is the one the caller states, which is what the delivered route
+	reads.
+	"""
+	createInvoice(input: CreateInvoiceInput!): Invoice!
+
+	"""
+	Changes a document that exists.
+
+	The members the delivered body validation requires are required here for the same reason; a member
+	the caller leaves out is left as it is, because the delivered write is the platform's upsert — see
+	`UpdateInvoiceInput`, which also states what an identifier naming no row does.
+	"""
+	updateInvoice(input: UpdateInvoiceInput!): Invoice!
+
+	"""
+	Records the buyer's answer to an estimate.
+
+	The delivered route's body is exactly the one member, and it is required: an estimate is answered
+	accepted or rejected, and a body that states neither has answered nothing.
+	"""
+	updateInvoiceEstimate(id: ID!, isAccepted: Boolean!): Invoice!
+
+	"""
+	Moves a document along: its status, its settlement, its note, the recipient it was sent to.
+
+	The delivered route states only the members the caller names and writes those onto the document,
+	so a step never clears a member the caller did not mention. The identifier is the path's, as it is
+	on the route, and the body carries only the steps.
+	"""
+	updateInvoiceAction(id: ID!, input: UpdateInvoiceActionInput!): Invoice!
+
+	"""
+	Sends the document to a recipient, as an email carrying the rendered document.
+
+	The answer is `true` once the dispatch has run, which is the whole of what the delivered route
+	establishes: it answers an accepted status and no body. The delivered dispatcher logs a failure
+	rather than raising it, so this field cannot claim delivery — a client that must know a message
+	arrived has to hear it from the recipient. Its language and its origin are the request's own
+	headers, as they are on the route.
+	"""
+	sendInvoiceEmail(input: SendInvoiceEmailInput!): Boolean!
+
+	"""
+	Generates the document's public link and answers the document with the token written onto it.
+
+	The link is the pair of the document's identifier and its `token`, which the answer carries;
+	reading the public document itself is the public share resource's own surface rather than this
+	domain's.
+	"""
+	generateInvoiceLink(id: ID!): Invoice!
+
+	"""
+	Removes a document outright.
+
+	This is the hard removal, and it is the one to reach for only for a document that was raised in
+	error: the payments applied against a document and the lines that explain it are the store's own
+	rows to refuse or to cascade, and a document a buyer holds is withdrawn instead.
+	"""
+	deleteInvoice(id: ID!): Boolean!
+
+	"""
+	Withdraws a document without removing the row.
+
+	The rows that name the document keep resolving, and the delivered list stops answering it. The
+	answer is the withdrawn document; it is recoverable until it is removed outright.
+	"""
+	softDeleteInvoice(id: ID!): Invoice!
+
+	"""
+	Puts a withdrawn document back.
+	"""
+	recoverInvoice(id: ID!): Invoice!
+}

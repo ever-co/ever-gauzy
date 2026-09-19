@@ -1,0 +1,41 @@
+# The country domain's root fields.
+#
+# `Query` is declared by the kernel and extended here; `Mutation` is not extended at all, and that is
+# the delivery rather than an omission. The delivered controller serves exactly one route —
+# `GET /api/country`, which answers the whole master — and no route of it writes: there is no create,
+# no update and no removal, because the rows are the platform's own seeded reference data and the path
+# that maintains them is the seeding and migration path that owns them. A mutation here would be a
+# capability the REST surface does not have, which is the one thing this surface may not invent.
+#
+# The route is public, and so is this field. The controller carries the platform's `Public()` marker
+# and declares no guard and no permission — a country master is read by every client, including one
+# that has no credential yet — and the resolver behind this field states the same, so neither protocol
+# asks for a grant the other does not.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST surface
+# speaks — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers
+# with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over
+# one surface resumes on the other.
+#
+# `countries` is the whole surface: one root field, because the controller serves one route. There is
+# no node field, because the controller has no `GET /:id`; there is no count field, because it has no
+# `GET /count`. What a caller reads one country by is this connection narrowed by `isoCode` — a filter
+# rather than a second root field, because a second root field for one row of the same set is a second
+# surface that could disagree with this one.
+
+extend type Query {
+	"""
+	The platform's country master, by ISO 3166-1 code.
+	"""
+	countries(
+		filter: CountryFilter
+		sort: [CountrySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): CountryConnection!
+}
