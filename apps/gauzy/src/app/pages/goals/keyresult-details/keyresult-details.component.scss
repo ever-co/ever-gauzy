@@ -1,97 +1,374 @@
 @use 'gauzy/_gauzy-dialogs' as *;
-@use 'gauzy/_gauzy-table' as *;
 
-.minmax-width-60vw {
-  width: 645px;
+// The key result details dialog, on the scale of the objective details dialog
+// it opens from: the name and close on one header row with owner, deadline and
+// objective under it; the figures as a row of tiles; the progress chart; the
+// updates as a list of rows; and Delete / Save as the footer. Every custom
+// property carries a fallback — `--gauzy-*` is undefined in material-light /
+// material-dark, where a `var()` without one is dropped.
+$control-font-size: 12px;
+$inset: 1rem;
+$divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+$muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+$text: var(--gauzy-text-color-1, inherit);
+$radius: var(--gauzy-radius-sm, 0.375rem);
+$recessed: var(--gauzy-card-2, rgba(126, 126, 143, 0.06));
+$tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+
+// Was a fixed 645px, which squeezed the chart's axis into rotated labels.
+.kr-dialog {
+  width: min(calc(100vw - 2rem), 52rem);
 }
 
-.main-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+:host {
+  nb-card {
+    background-color: var(--gauzy-card-1, var(--card-background-color));
+  }
 
-:host ngx-avatar::ng-deep {
-  .inner-wrapper {
-    background-color: nb-theme(color-primary-transparent-100);
-    border-radius: nb-theme(button-rectangle-border-radius);
-    padding: 3px 9px 3px 3px;
+  nb-card-header.header {
+    padding: 0.875rem $inset 0.75rem;
+    border-bottom: $divider;
+  }
+
+  .header-row {
     display: flex;
-    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .title {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: $text;
+    overflow-wrap: anywhere;
+  }
+
+  // A real button, so the close is reachable from the keyboard, named for a
+  // screen reader, and where the dialog puts its initial focus — before, that
+  // landed on Delete, the first focusable thing in the card.
+  .cancel {
+    flex: 0 0 auto;
+    width: auto;
+    margin: 0;
+    padding: 0.25rem;
+    border: 0;
+    background: none;
+    line-height: 1;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    .image-container {
-      width: 28px;
-      img {
-        height: 18px;
-        width: 18px;
-        margin: 0 3px 3px 3px;
-      }
+    gap: 0.5rem 1rem;
+    margin-top: 0.625rem;
+    font-size: $control-font-size;
+    line-height: 1rem;
+    color: $muted;
+
+    b {
+      font-weight: 600;
+      color: $text;
+    }
+  }
+
+  .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+
+    nb-icon {
+      flex: 0 0 auto;
+      width: 0.875rem;
+      height: 0.875rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  // The owner as a small chip with a 20px avatar; both wrappers are named so
+  // the image out-ranks the avatar's own 48px default.
+  ngx-avatar ::ng-deep {
+    .inner-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.1875rem 0.5rem 0.1875rem 0.1875rem;
+      border-radius: 999px;
+      background-color: nb-theme(color-primary-transparent-100);
+    }
+
+    .image-outer-wrapper,
+    .image-outer-wrapper .image-container,
+    .image-outer-wrapper .image-container img {
+      width: 1.25rem;
+      height: 1.25rem;
+      min-width: 0;
+      margin: 0;
+    }
+
+    .image-outer-wrapper .image-container img {
+      display: block;
+      object-fit: cover;
+    }
+
+    .names-wrapper {
+      margin: 0;
     }
 
     .link-text {
+      font-size: $control-font-size;
+      font-weight: 500;
+      line-height: 1rem;
       color: nb-theme(text-primary-color);
-      font-weight: normal;
-      font-size: 12px;
-      font-weight: 400;
-      line-height: 15px;
-      letter-spacing: 0em;
-      text-align: left;
     }
   }
-}
 
-// `--gauzy-card-*` is undefined in material-light / material-dark (see
-// `themes.scss`: those two register against Nebular's own parent themes and so
-// never inherit the `gauzy-card-*` keys). A `var()` with no fallback makes the
-// browser drop the WHOLE declaration there, which left these panels unpainted,
-// so every use below carries one.
-.button-container {
-  background: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
-  padding: 5px;
-  border-radius: nb-theme(button-rectangle-border-radius);
-}
-.custom-card,
-.custom-footer {
-  background: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
-}
-.custom-header,
-.custom-footer {
-  padding: 0px 10px;
-}
+  // Room for the spinner while the key result's task or KPI loads.
+  nb-card-body {
+    min-height: 12rem;
+    padding: $inset;
+  }
 
-.custom-card {
-  padding: 0px;
-}
-.custom-badge {
-  position: absolute;
-  right: 0;
-  margin: -10px 20px;
-}
+  // Initial, target and progress as tiles, which share the row between them
+  // (progress alone, for a true / false key result, takes all of it).
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 0.5rem;
+    margin: 0 0 $inset;
+  }
 
-.subtitle {
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 16px;
-  letter-spacing: 0em;
-  text-align: left;
-}
+  .stat {
+    min-width: 0;
+    padding: 0.625rem 0.75rem;
+    border: $divider;
+    border-radius: $radius;
+    background-color: $recessed;
 
-.smallText {
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 15px;
-  letter-spacing: 0em;
-  text-align: left;
-}
+    dt {
+      margin: 0 0 0.25rem;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1rem;
+      color: $muted;
+    }
 
-// The key-result summary panel. Its class comes from Bootstrap 4, whose
-// `.border` is literally `border: 1px solid #dee2e6 !important` — a light grey
-// hairline drawn identically in all eight themes, i.e. a visible pale box on
-// the near-black cards of `dark` / `cosmic` / `gauzy-dark` / `material-dark`.
-// Restated here from a theme token; `!important` only to out-rank Bootstrap's
-// own, and the same 1px so nothing re-flows.
-.border {
-  border: 1px solid nb-theme(border-basic-color-3) !important;
-  border-radius: nb-theme(border-radius);
-  margin: 3rem 0;
+    dd {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.25rem;
+      color: $text;
+      overflow-wrap: anywhere;
+    }
+
+    .unit {
+      margin-inline-start: 0.125rem;
+      font-size: $control-font-size;
+      font-weight: 400;
+      color: $muted;
+    }
+  }
+
+  .stat-bar {
+    display: block;
+    margin-top: 0.5rem;
+
+    ::ng-deep .progress-container {
+      height: 4px !important;
+      border-radius: 999px;
+      background-color: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+    }
+
+    ::ng-deep .progress-value {
+      border-radius: 999px;
+
+      span {
+        display: none;
+      }
+    }
+  }
+
+  .chart {
+    margin-bottom: $inset;
+    padding: 0.75rem;
+    border: $divider;
+    border-radius: $radius;
+  }
+
+  .main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-title {
+    margin: 0;
+    font-size: $control-font-size;
+    font-weight: 600;
+    line-height: 1rem;
+    color: $text;
+  }
+
+  .main-header .button-container button {
+    margin: 0;
+  }
+
+  // Why Add New is missing, as a tinted note with a warning edge; the theme's
+  // alert was coming through as unstyled bold text, as wide as that text and
+  // past the dialog's edge on a phone.
+  .notices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .notices nb-alert {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid nb-theme(color-warning-transparent-300);
+    border-inline-start: 3px solid nb-theme(color-warning-default);
+    border-radius: $radius;
+    background-color: nb-theme(color-warning-transparent-100);
+    font-size: $control-font-size;
+    font-weight: 500;
+    line-height: 1rem;
+    color: $text;
+  }
+
+  // One bordered list, newest first. It does not scroll on its own: the dialog
+  // body already does, and a second scroller inside it traps the wheel.
+  .update-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: $divider;
+    border-radius: $radius;
+  }
+
+  .update {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr) auto 6.5rem;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: $divider;
+    font-size: $control-font-size;
+    line-height: 1rem;
+    color: $muted;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    b {
+      font-weight: 600;
+      color: $text;
+    }
+
+    // On a phone the date and value take one line, status and progress the next.
+    @media (max-width: 575.98px) {
+      grid-template-columns: minmax(0, 1fr) auto;
+      row-gap: 0.375rem;
+    }
+  }
+
+  .update-progress {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .status-pill {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background-color: $tint;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1rem;
+    color: $text;
+    text-transform: capitalize;
+    white-space: nowrap;
+
+    &[data-status='on track'] {
+      background-color: nb-theme(color-success-transparent-200);
+      color: nb-theme(color-success-default);
+    }
+
+    &[data-status='needs attention'] {
+      background-color: nb-theme(color-warning-transparent-200);
+      color: nb-theme(color-warning-default);
+    }
+
+    &[data-status='off track'] {
+      background-color: nb-theme(color-danger-transparent-200);
+      color: nb-theme(color-danger-default);
+    }
+  }
+
+  // The change from the previous update, in place of a badge pinned over the
+  // corner of each update card.
+  .change {
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &.up {
+      color: nb-theme(color-success-default);
+    }
+
+    &.down {
+      color: nb-theme(color-danger-default);
+    }
+  }
+
+  .empty-state {
+    padding: 1.5rem $inset;
+    border: 1px dashed var(--gauzy-border-default-color, rgba(126, 126, 143, 0.3));
+    border-radius: $radius;
+    font-size: $control-font-size;
+    line-height: 1rem;
+    text-align: center;
+    color: $muted;
+  }
+
+  // Delete on the leading edge, away from Save on the trailing one.
+  nb-card-footer.footer {
+    padding: 0.75rem $inset;
+    border-top: $divider;
+  }
+
+  .footer-actions {
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+
+    button {
+      margin: 0;
+    }
+  }
+
+  .action {
+    padding: 0.375rem;
+  }
 }
