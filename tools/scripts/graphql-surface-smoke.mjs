@@ -46,17 +46,15 @@ const SKIPPED = new Map([
  * An entry here is a defect that has been looked at and belongs to the resource rather than to this
  * delivery — and the evidence for that is stated with it. The list exists so the smoke stays a check
  * rather than a report nobody reads: a failure that is not written down here fails the run.
+ *
+ * It is empty, and the one entry it held is worth recording rather than deleting: `merchants` failed
+ * here for as long as `MerchantService` carried no `@Injectable()`, so the container built it with no
+ * arguments and its inherited store was `undefined`. Every read of the resource answered `Cannot read
+ * properties of undefined (reading 'metadata')` — over REST and over GraphQL alike, because both reach
+ * the one service — which is exactly the shape of failure a surface sweep cannot attribute. The
+ * decorator is the fix and `tools/scripts/service-injectable-check.mjs` is the gate that keeps it.
  */
-const ACKNOWLEDGED = new Map([
-	[
-		'merchants',
-		'the resource itself: `GET /api/merchants` answers the same 400 with the same message "Cannot read ' +
-			'properties of undefined (reading \'metadata\')", so the store reader behind both protocols is what ' +
-			'is missing its mapping, not the field beside it. The module now registers the repository pair the ' +
-			'service is built over and the failure is unchanged, which is why this is recorded rather than ' +
-			'patched again here.'
-	]
-]);
+const ACKNOWLEDGED = new Map([]);
 
 /** Arguments the smoke knows how to fill, by the type the document declares for them. */
 const FILLED = ['organizationId', 'tenantId', 'employeeId', 'projectId', 'teamId'];
