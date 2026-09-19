@@ -3,7 +3,12 @@ import { ActivatedRoute, Router, QueryParamsHandling } from '@angular/router';
 import { tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PageTabRegistryService, PageTabsetPageId, RouteUtil, Store } from '@gauzy/ui-core/core';
+import {
+	EmployeeTrackedDataAccessService,
+	PageTabRegistryService,
+	PageTabsetPageId,
+	RouteUtil
+} from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -18,7 +23,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	private readonly _router = inject(Router);
 	private readonly _pageTabRegistryService = inject(PageTabRegistryService);
-	private readonly _store = inject(Store);
+	private readonly _employeeTrackedDataAccessService = inject(EmployeeTrackedDataAccessService);
 
 	constructor(
 		private readonly _route: ActivatedRoute,
@@ -27,22 +32,14 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
-		this._store.selectedOrganization$
+		// The organization setting allowEmployeeToSeeTrackedData can hide these pages from employees.
+		// The API decides (admins, users without an employee record and team/project managers keep access):
+		// tabs stay hidden while it answers, and a hidden result leaves for the dashboard.
+		this._employeeTrackedDataAccessService.access$
 			.pipe(
-				tap((organization) => {
-					const employee = this._store.user?.employee;
-					const isManager =
-						employee?.isManager ||
-						employee?.teams?.some((t: any) => t.isManager || t.isTeamManager) ||
-						employee?.projects?.some((p: any) => p.isManager || p.isProjectManager);
-
-					const canViewActivity =
-						this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
-						isManager ||
-						organization?.allowEmployeeToSeeTrackedData !== false;
-
-					this.registerPageTabs(canViewActivity);
-					if (!canViewActivity) {
+				tap((access) => {
+					this.registerPageTabs(access === 'allowed');
+					if (access === 'hidden') {
 						this._router.navigate(['/pages/dashboard']);
 					}
 				}),

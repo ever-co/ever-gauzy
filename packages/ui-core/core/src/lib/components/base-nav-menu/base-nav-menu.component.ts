@@ -11,6 +11,7 @@ import { FavoriteStoreService } from '../../services/favorite/favorite-store.ser
 import { NavMenuBuilderService } from '../../services/nav-builder/nav-menu-builder.service';
 import { NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types';
 import { SidebarMenuService } from '../../services/nav-builder/sidebar-menu.service';
+import { EmployeeTrackedDataAccessService } from '../../services/timesheet/employee-tracked-data-access.service';
 import { Store } from '../../services/store/store.service';
 
 @UntilDestroy()
@@ -24,6 +25,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	protected readonly _sidebarMenuService = inject(SidebarMenuService);
 	protected readonly _favoriteStoreService = inject(FavoriteStoreService);
 	protected readonly _dashboardStoreService = inject(DashboardStoreService);
+	protected readonly _employeeTrackedDataAccessService = inject(EmployeeTrackedDataAccessService);
 
 	private _favoriteItems: NavMenuSectionItem[] = [];
 	private _customDashboards: IDashboard[] = [];
@@ -47,7 +49,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 			),
 			this._store.featureOrganizations$,
 			this._store.featureTenant$,
-			this._store.userRolePermissions$
+			this._store.userRolePermissions$,
+			this._employeeTrackedDataAccessService.access$
 		])
 			.pipe(
 				debounceTime(50),
@@ -991,21 +994,13 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 		];
 	}
 
+	/**
+	 * Whether the organization setting `allowEmployeeToSeeTrackedData` hides tracked-data pages from the
+	 * current user. The API decides, with the same exemptions as its guard (admins, users without an
+	 * employee record, team/project managers).
+	 */
 	protected isEmployeeTrackedDataHidden(): boolean {
-		const org = this._store.selectedOrganization;
-		if (org?.allowEmployeeToSeeTrackedData === false) {
-			const canChange = this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
-			const employee = this._store.user?.employee;
-			const isManager =
-				employee?.isManager ||
-				employee?.teams?.some((t: any) => t.isManager || t.isTeamManager) ||
-				employee?.projects?.some((p: any) => p.isManager || p.isProjectManager);
-
-			if (!canChange && !isManager) {
-				return true;
-			}
-		}
-		return false;
+		return this._employeeTrackedDataAccessService.hidden;
 	}
 
 	/**

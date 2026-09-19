@@ -22,6 +22,7 @@ import {
 import { isNotEmpty, toUtcOffset } from '@gauzy/ui-core/common';
 import { IDashboardWidgetContext } from './dashboard-widget-context';
 import { TimesheetStatisticsService } from '../timesheet/timesheet-statistics.service';
+import { EmployeeTrackedDataAccessService } from '../timesheet/employee-tracked-data-access.service';
 
 /** Date format the timesheet statistics API expects. */
 const API_DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
@@ -164,7 +165,10 @@ export function normalizeDurationPercentage(activities: IActivitiesStatistics[])
  * whenever `invalidate()` fires, so a widget can simply hold one subscription
  * and receive fresh data after a manual refresh.
  *
- * Errors are NOT swallowed — widgets need them to render an error state. As
+ * Errors are NOT swallowed — widgets need them to render an error state. The one
+ * exception is the 403 the API returns while the organization setting
+ * `allowEmployeeToSeeTrackedData` hides tracked data from the employee: it
+ * resolves to empty data (see {@link EmployeeTrackedDataAccessService}). As
  * usual in RxJS an error terminates the subscription, which has one consequence
  * callers MUST honour: once a stream has errored it is dead and will no longer
  * react to {@link TimesheetStatisticsCacheService.invalidate}. A widget's
@@ -175,6 +179,7 @@ export function normalizeDurationPercentage(activities: IActivitiesStatistics[])
 @Injectable({ providedIn: 'root' })
 export class TimesheetStatisticsCacheService {
 	private readonly _timesheetStatisticsService = inject(TimesheetStatisticsService);
+	private readonly _employeeTrackedDataAccessService = inject(EmployeeTrackedDataAccessService);
 
 	private readonly _cache = new Map<string, ICacheEntry>();
 	private readonly _invalidated$ = new Subject<void>();
@@ -378,8 +383,9 @@ export class TimesheetStatisticsCacheService {
 				if (own.entry && this._cache.get(key) === own.entry) {
 					this._cache.delete(key);
 				}
-				if (error?.status === 403) {
-					// Handle 403 quietly when tracked data is disabled for regular employees
+				if (this._employeeTrackedDataAccessService.isHiddenDataError(error)) {
+					// The organization hides tracked data from this employee: show empty widgets, not an error.
+					// Any other error (including other 403s) still reaches the widgets.
 					return of((key.includes('::counts::') ? {} : []) as unknown as T);
 				}
 				return throwError(() => error);
