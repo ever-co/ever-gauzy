@@ -14,9 +14,26 @@
   transform: scale(0.9);
 }
 
+// `transform: scale(0.6)` shrank the anchor's PAINT but not its box, so each
+// action kept a full-size hit area and its glyph came out blurred and off-centre.
+// Sized as a real 1.5rem icon button instead — and the Font Awesome `<i>` inside
+// it has to be sized WITH the box: it inherits 28px from the grid's action cell,
+// which is what overflowed the chip when the scale came off.
 :host ::ng-deep angular2-smart-table .angular2-smart-actions a {
-  transform: scale(0.6);
-  border-radius: var(--border-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  margin: 0 0.125rem;
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  line-height: 1;
+
+  i {
+    font-size: 0.8125rem;
+    line-height: 1;
+  }
 }
 
 :host ::ng-deep angular2-smart-table .angular2-smart-actions a:nth-child(1) {
@@ -150,6 +167,39 @@ nb-card-header {
   textarea[nbInput] {
     min-height: 5rem;
     resize: vertical;
+  }
+
+  // Every control in the form at the app's 2rem / 12px set — its labels were
+  // already 12px, while the fields under them stayed at Nebular's 2.375rem / 13px.
+  // Scoped to `.form`: the invoice-items grid below is a sibling (`.items`) and
+  // keeps the smaller inline editors its rows are built on.
+  input[nbInput],
+  textarea[nbInput] {
+    font-size: 12px;
+    line-height: 1rem;
+  }
+
+  input[nbInput] {
+    height: 2rem;
+    // `!important` against the shared `dialog()` mixin (`gauzy/_gauzy-dialogs`),
+    // which pins every input on the page to a 2.375rem `min-height` with
+    // `!important` of its own.
+    min-height: 2rem !important;
+    padding: 0 0.75rem;
+  }
+
+  ::ng-deep nb-select .select-button {
+    height: 2rem;
+    min-height: 2rem !important;
+    padding-block: 0;
+    padding-inline-start: 0.75rem !important;
+    font-size: 12px;
+    line-height: 1rem;
+  }
+
+  ::ng-deep .ng-select .ng-select-container {
+    min-height: 2rem !important;
+    font-size: 12px;
   }
 }
 
