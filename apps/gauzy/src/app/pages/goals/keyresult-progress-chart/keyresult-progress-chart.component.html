@@ -1,3 +1,7 @@
+<!-- Created only once its data and options exist: built earlier, the chart took Chart.js's default 2:1 aspect
+     ratio, which the options arriving later (`maintainAspectRatio: false`) never re-sized, so it filled 480px of
+     the dialog's width. -->
+@if (data && options) {
 <canvas
 	baseChart
 	[nbSpinner]="loading"
@@ -8,3 +12,4 @@
 	[data]="data"
 	[options]="options"
 ></canvas>
+}

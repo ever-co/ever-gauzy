@@ -1,4 +1,10 @@
-.progress-chart {
-  height: 300px;
+// Chart.js sizes a responsive chart from its canvas's parent, which here is
+// this host: an inline element by default, with no height to measure, so the
+// chart grew to a size of its own. A positioned block of fixed height is the
+// container Chart.js documents; 15rem holds the axes, both lines and the legend.
+:host {
+  display: block;
+  position: relative;
   width: 100%;
+  height: 15rem;
 }
