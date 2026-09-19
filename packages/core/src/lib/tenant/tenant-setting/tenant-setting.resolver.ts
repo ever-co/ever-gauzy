@@ -3,7 +3,6 @@ import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
 import {
-	FeatureEnum,
 	ID as Id,
 	IPagination,
 	ITenantSetting,
@@ -24,6 +23,7 @@ import {
 import { RequestContext } from '../../core/context';
 import { Permissions } from '../../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
 import {
@@ -33,21 +33,6 @@ import {
 	TenantSettingSaveCommand
 } from './commands';
 import { normalizePreferredUi } from './tenant-ui-preferences.controller';
-
-/**
- * The code the commerce catalogue declares for this surface.
- *
- * `FEATURE_GRAPHQL` is the catalogue's own entry for "the GraphQL endpoint and its resolvers, under
- * the same guards and permissions as REST", and it is what makes the gate below a rule rather than an
- * invention: the capability this resolver serves is the one the catalogue names.
- *
- * It is carried as text because that is what it is. The compiled `FeatureEnum` belongs to the platform
- * and the catalogue's module states why a package does not edit it to register a code; `feature.code`
- * is a `varchar` holding this text and the guard compares text, so the value — not a cast of one — is
- * what is assigned here. The cast into the shape the guard reads its metadata in is the same one the
- * plugin feature modules make for their own codes.
- */
-const FEATURE_GRAPHQL = 'FEATURE_GRAPHQL' as unknown as FeatureEnum;
 
 /** The members `UpdateTenantSettingInput` declares in the schema. */
 export interface IUpdateTenantSettingInput {

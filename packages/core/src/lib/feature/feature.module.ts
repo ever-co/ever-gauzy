@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { forwardRef, Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -27,7 +27,17 @@ import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-fe
  * `FeatureService` and `FeatureOrganizationService` are already exported, and they are what both the
  * resolver and `FeatureFlagGuard` inject — the guard's own dependency is the reason this module is
  * public API at all (see `packages/core/src/index.ts`).
+ *
+ * **The module is global, and that is a consequence of the gate being platform-wide.** Every GraphQL
+ * resolver carries `FeatureFlagGuard`, and a guard is a provider of whichever module hosts the handler
+ * it protects — so every module that declares a resolver would otherwise have to import this one, which
+ * is one import in each of them and a new chance of a module cycle in each of them. The guard's own
+ * dependency is a service, not a policy, so there is nothing to gain from making twenty modules state
+ * the same edge: the service is declared once, exported, and available wherever a guard runs. The
+ * dependency direction is unchanged — this module imports the role-permission module, never the other
+ * way round — so the global declaration adds no cycle that an import would not have added.
  */
+@Global()
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Feature, FeatureOrganization]),

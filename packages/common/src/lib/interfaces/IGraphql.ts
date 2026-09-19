@@ -74,8 +74,13 @@ export interface GraphQLApiConfigurationOptions {
 	 * cannot be imported *by* the host — a domain already inside a module cycle of its own, where
 	 * adding the host as a participant fails the boot — so the domain declares its resolvers in its own
 	 * module, beside the services they call, and names that module here instead.
+	 *
+	 * A function is accepted as well as an array, and a deployment that names a domain the core barrel
+	 * must not load at evaluation time should use one: the function is called while the GraphQL module
+	 * is assembled rather than while the file that declares it is imported, which is what keeps a
+	 * module-scope import of that domain out of the core zone entirely.
 	 */
-	additionalResolverModules?: Function[];
+	additionalResolverModules?: Function[] | (() => Function[]);
 }
 
 /**

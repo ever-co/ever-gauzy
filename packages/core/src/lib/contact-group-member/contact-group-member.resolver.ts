@@ -1,8 +1,10 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Mutation, Parent, ResolveField, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { ContactGroupSource, IContactGroup, IContactGroupMember, ID as Id, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ContactGroupService } from '../contact-group/contact-group.service';
 import { ContactGroupMemberService } from './contact-group-member.service';
 
@@ -63,9 +65,16 @@ export interface IRemoveContactGroupMembersInput {
  * **The count is the pivot's answer, not a row count.** A membership whose window has closed is absent
  * to every reader, so counting rows would report members the platform does not have — which is why
  * `memberCount` is the length of the liveness-filtered membership list and not a `COUNT` over the table.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('ContactGroup')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.CONTACT_GROUPS_VIEW)
 export class ContactGroupMemberResolver {
 	constructor(

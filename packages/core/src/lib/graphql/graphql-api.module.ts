@@ -52,10 +52,6 @@ import { FeatureToggleResolver } from './../feature/feature-toggle.resolver';
 import { FeatureModule } from './../feature/feature.module';
 import { TenantSettingResolver } from './../tenant/tenant-setting/tenant-setting.resolver';
 import { TenantSettingModule } from './../tenant/tenant-setting/tenant-setting.module';
-import { ContactResolver } from './../contact/contact.resolver';
-import { ContactModule } from './../contact/contact.module';
-import { OrganizationContactResolver } from './../organization-contact/organization-contact.resolver';
-import { OrganizationContactModule } from './../organization-contact/organization-contact.module';
 
 /**
  * Resolvers the platform itself ships.
@@ -109,10 +105,9 @@ const CORE_RESOLVERS: Array<Type<any>> = [
 	// the tenant's settings say about how they behave.
 	FeatureToggleResolver,
 	TenantSettingResolver,
-	// The party records an order, an invoice and a subscription all point at: the customer and the
-	// organization's own contact row beside the group, buyer, credential and address resources.
-	ContactResolver,
-	OrganizationContactResolver
+	// The party records an order, an invoice and a subscription all point at — the customer and the
+	// organization's own contact row — are declared by their own modules and scanned from them; see
+	// `additional-resolver-modules.ts` for why the host cannot import them.
 ];
 
 /**
@@ -191,8 +186,6 @@ const CORE_RESOLVER_MODULES: Array<Type<any>> = [
 	// protects — so the module that hosts these resolvers has to reach the feature service itself.
 	FeatureModule,
 	TenantSettingModule,
-	ContactModule,
-	OrganizationContactModule
 ];
 
 /**

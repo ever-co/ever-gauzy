@@ -1,11 +1,13 @@
 import { NotFoundException, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { Unit } from './unit.entity';
 import { UnitService } from './unit.service';
 import { MEASUREMENT_PERMISSIONS } from './measurement.permissions';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 
 /** The members `CreateUnitInput` declares in the schema. */
 export interface ICreateUnitInput {
@@ -36,9 +38,16 @@ export interface IUpdateUnitInput {
  * same operation `POST /api/units/convert` performs: the arithmetic happens once, on exact decimals,
  * and two units of different families are refused rather than combined into a number that means
  * nothing.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('Unit')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(MEASUREMENT_PERMISSIONS.UNITS_VIEW)
 export class UnitResolver {
 	constructor(private readonly unitService: UnitService) {}

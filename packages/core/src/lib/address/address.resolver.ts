@@ -1,5 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { AddressOwnerType, IAddressBook, ID as Id, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -9,7 +10,8 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { AddressRoleEnum } from '../address-role/address-role.enums';
 import { AddressService } from './address.service';
 
@@ -137,9 +139,16 @@ const ADDRESS_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  *
  * **`withDeleted` is deliberately absent.** A repository option the delivered list methods do not
  * expose, and an argument that cannot be honoured is worse than an absent one.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('Address')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
 export class AddressResolver {
 	constructor(private readonly addressService: AddressService) {}

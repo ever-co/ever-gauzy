@@ -16,9 +16,11 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
+import { FeatureFlag } from '@gauzy/common';
 import { RequestContext } from '../core/context/request-context';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Product } from './product.entity';
 import { ProductService } from './product.service';
 import { ProductCreateCommand, ProductDeleteCommand, ProductUpdateCommand } from './commands';
@@ -146,9 +148,16 @@ const PRODUCT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * inherits from the CRUD base — mirror routes that carry *no* permission, so they carry none either:
  * a field that demanded one would refuse here a caller the REST route serves, and tightening the
  * resource is a change to make in both places at once.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('Product')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 export class ProductResolver {
 	constructor(private readonly productService: ProductService, private readonly commandBus: CommandBus) {}
 

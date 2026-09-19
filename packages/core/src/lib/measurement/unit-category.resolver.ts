@@ -1,10 +1,12 @@
 import { NotFoundException, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { UnitCategory } from './unit-category.entity';
 import { UnitCategoryService } from './unit-category.service';
 import { MEASUREMENT_PERMISSIONS } from './measurement.permissions';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 
 /** The members `CreateUnitCategoryInput` declares in the schema. */
 export interface ICreateUnitCategoryInput {
@@ -38,9 +40,16 @@ export interface IUpdateUnitCategoryInput {
  * `organizationId` arrives on both inputs because the schema declares it, and it is never trusted:
  * the service scopes every read to the caller's tenant and organization, so an input naming another
  * organization cannot reach a row of one.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('UnitCategory')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(MEASUREMENT_PERMISSIONS.UNITS_VIEW)
 export class UnitCategoryResolver {
 	constructor(private readonly unitCategoryService: UnitCategoryService) {}

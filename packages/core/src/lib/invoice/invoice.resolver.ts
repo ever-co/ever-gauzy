@@ -1,6 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import {
 	DecimalString,
 	ID as Id,
@@ -19,8 +20,9 @@ import {
 } from '../api/graphql-connection';
 import { FindOptionsQueryDTO } from '../core/crud';
 import { RequestContext } from '../core/context';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Invoice } from './invoice.entity';
 import { InvoiceService } from './invoice.service';
 import {
@@ -221,6 +223,25 @@ const INVOICE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * controller's class-level edit permission, and the two fields state that same permission rather than
  * stating nothing.
  *
+ * **The gate is the catalogue's, and it is declared once for every field.** `FeatureFlagGuard` is
+ * appended to the chain above — after the controller's two, so a caller with no credential is refused
+ * as a credential problem before a tenant's switches are consulted — and the code it reads is
+ * `FEATURE_GRAPHQL`, the commerce catalogue's own entry for "the GraphQL endpoint and its resolvers,
+ * under the same guards and permissions as REST". The code is imported rather than restated here
+ * because the value has to agree with the catalogue's `code` and nothing checks one string against
+ * another: a literal that drifted names a code no catalogue row carries, which the guard resolves as
+ * disabled, so every field below would answer `Cannot query field <name>` for every caller with
+ * nothing red anywhere. One statement on the class is what puts every field behind it — the guard
+ * reads the metadata with `getAllAndOverride` over the handler and then the class — and its effect is
+ * the REST one in this protocol's vocabulary: a tenant that switched the capability off is answered
+ * `Cannot query field <name>`, the same refusal a disabled capability's routes answer with a 404.
+ * Nothing ad-hoc is done inside a field, because a gate stated in one place and enforced in another is
+ * a gate that can be removed from one of them.
+ *
+ * This resolver is scanned from this domain's own module rather than from the GraphQL host — the host
+ * cannot import `InvoiceModule` without closing the cycle it already sits in with `EstimateEmailModule`
+ * — which is why `InvoiceModule` is also where the guard's own dependency has to be reachable.
+ *
  * **The amounts are the row's own.** Nothing here rescales, rounds or reformats an amount: the
  * columns are read through the platform's numeric transformer and the values travel as they were
  * read, which is why the object type states them as the exact-decimal family rather than as a
@@ -228,7 +249,8 @@ const INVOICE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * performs any.
  */
 @Resolver('Invoice')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.INVOICES_EDIT)
 export class InvoiceResolver {
 	constructor(private readonly invoiceService: InvoiceService, private readonly commandBus: CommandBus) {}

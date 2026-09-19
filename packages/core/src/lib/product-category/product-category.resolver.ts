@@ -15,10 +15,12 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
+import { FeatureFlag } from '@gauzy/common';
 import { BaseQueryDTO } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
 import { ProductCategoryCreateCommand } from './commands';
@@ -120,9 +122,16 @@ const PRODUCT_CATEGORY_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * mirrors. The node query is the case that reads oddly and is nevertheless the parity: the delivered
  * `GET /:id` is inherited without a permission of its own, so it runs under the controller's
  * class-level edit permission, and this field states the same one.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('ProductCategory')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
 export class ProductCategoryResolver {
 	constructor(

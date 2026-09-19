@@ -11,8 +11,7 @@ import { RequestContextMiddleware } from './context';
 import { FileStorageModule } from './file-storage';
 import { GraphqlModule } from '../graphql/graphql.module';
 import { GraphqlApiModule } from '../graphql/graphql-api.module';
-import { InvoiceModule } from '../invoice/invoice.module';
-import { InvoiceItemModule } from '../invoice-item/invoice-item.module';
+import { resolveAdditionalResolverModules } from '../graphql/additional-resolver-modules';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
@@ -63,10 +62,11 @@ import { DatabaseModule } from '../database/database.module';
 			resolverModule: GraphqlApiModule,
 			// The domains the host module cannot import, and therefore cannot host: the invoice modules
 			// already sit in a service cycle with each other's neighbour, so they declare their resolvers
-			// themselves and the endpoint scans them where they are. Naming them here is what binds them —
-			// a module that declares a resolver and is never scanned answers null on every field it owns,
-			// with no error anywhere in the schema or the log.
-			additionalResolverModules: [InvoiceModule, InvoiceItemModule],
+			// themselves and the endpoint scans them where they are. The list is a function because the
+			// classes are required when the GraphQL module is assembled rather than when this file is
+			// imported — an import here would load the invoice zone during the core barrel's own
+			// evaluation, which is how the token module came to be read before it was defined.
+			additionalResolverModules: resolveAdditionalResolverModules,
 			// The deployment's own attach point and ceilings travel with the rest of the options. Every
 			// key is optional: an installation that configures none gets an empty plugin array and the
 			// platform's default limits, and the environment can override each of them.

@@ -1,6 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { ID as Id, IPagination, IProductTypeTranslatable, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -12,7 +13,8 @@ import {
 import { BaseQueryDTO } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductType } from './product-type.entity';
 import { ProductTypeService } from './product-type.service';
 import { ProductTypeCreateCommand } from './commands';
@@ -89,9 +91,16 @@ const PRODUCT_TYPE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * mirrors. The node query is the case that reads oddly and is nevertheless the parity: the delivered
  * `GET /:id` is inherited without a permission of its own, so it runs under the controller's
  * class-level edit permission, and this field states the same one.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('ProductType')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.ORG_PRODUCT_TYPES_EDIT)
 export class ProductTypeResolver {
 	constructor(

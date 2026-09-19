@@ -1,11 +1,13 @@
 import { NotFoundException, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { CurrencyCode, DecimalString } from '@gauzy/contracts';
 import { PaymentTerm } from './payment-term.entity';
 import { IPaymentTermSchedule, PaymentTermService } from './payment-term.service';
 import { PAYMENT_TERM_PERMISSIONS } from './payment-term.permissions';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { PaymentDueBasis, PaymentTermLineType } from './payment-term.enums';
 
 /** One instalment as `PaymentTermLineInput` declares it. */
@@ -54,9 +56,16 @@ export interface IUpdatePaymentTermLinesInput {
  * under the same guard chain and the same permissions. The schedule field is the same derivation
  * `POST /api/payment-terms/:id/schedule` performs — nothing is written, and the answer depends on the
  * amount and basis date the caller supplies.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('PaymentTerm')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PAYMENT_TERM_PERMISSIONS.PAYMENT_TERMS_VIEW)
 export class PaymentTermResolver {
 	constructor(private readonly paymentTermService: PaymentTermService) {}

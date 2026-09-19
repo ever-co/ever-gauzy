@@ -1,6 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import {
 	DecimalString,
 	ID as Id,
@@ -16,8 +17,9 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemService } from './invoice-item.service';
 import { InvoiceItemBulkCreateCommand } from './commands';
@@ -122,9 +124,29 @@ const INVOICE_ITEM_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * this delivery exists to prevent. The bulk write below is the one exception, and it is the
  * controller's exception rather than this resolver's: that route states `PermissionGuard` with the
  * invoice edit permission, so the field states the same guard and the same permission.
+ *
+ * **The whole surface is behind the capability the catalogue declares for GraphQL.** `FeatureFlagGuard`
+ * is appended to the controller's guard — after the tenant guard, so a caller with no credential is
+ * refused as a credential problem before a tenant's switches are consulted — and the code it reads is
+ * `FEATURE_GRAPHQL`, the commerce catalogue's own entry for "the GraphQL endpoint and its resolvers,
+ * under the same guards and permissions as REST". The code is imported rather than restated here
+ * because the value has to agree with the catalogue's `code` and nothing checks one string against
+ * another: a literal that drifted names a code no catalogue row carries, which the guard resolves as
+ * disabled, so every field below would answer `Cannot query field <name>` for every caller with
+ * nothing red anywhere. It is declared once on the class, which is where the guard reads it — with
+ * `getAllAndOverride` over the handler and then the class — so every field is behind it, and its
+ * effect is the REST one in this protocol's vocabulary: a tenant that switched the capability off is
+ * answered `Cannot query field <name>`, the same refusal a disabled capability's routes answer with a
+ * 404.
+ *
+ * This resolver is scanned from this domain's own module rather than from the GraphQL host — the host
+ * cannot import `InvoiceItemModule` without becoming a third participant in the cycle `InvoiceModule`
+ * and `EstimateEmailModule` already close — which is why `InvoiceItemModule` is also where the guard's
+ * own dependency has to be reachable.
  */
 @Resolver('InvoiceItem')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 export class InvoiceItemResolver {
 	constructor(private readonly invoiceItemService: InvoiceItemService, private readonly commandBus: CommandBus) {}
 

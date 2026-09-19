@@ -7,12 +7,13 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { NotFoundException } from '@nestjs/common';
+import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { TagTypeController } from './tag-type.controller';
 import { TagTypeResolver } from './tag-type.resolver';
 
@@ -437,20 +438,29 @@ describe('TagTypeResolver — one concept, two protocols, the same operations', 
 });
 
 describe('TagTypeResolver — the guard stack and the permission are the controller’s', () => {
-	it('guards the resolver the way the controller is guarded', () => {
+	it('guards the resolver the way the controller is guarded, plus the gate', () => {
 		// This controller carries both guards on the class, so its writes need no guard of their own —
-		// and neither do the fields below.
-		expect(Reflect.getMetadata('__guards__', TagTypeResolver)).toEqual(
-			Reflect.getMetadata('__guards__', TagTypeController)
-		);
-		expect(Reflect.getMetadata('__guards__', TagTypeResolver)).toEqual([TenantPermissionGuard, PermissionGuard]);
+		// and neither do the fields below. The gate on the endpoint itself is the one addition, and it
+		// is not a scope: it narrows nothing of what the routes serve.
+		expect(Reflect.getMetadata('__guards__', TagTypeResolver)).toEqual([
+			...Reflect.getMetadata('__guards__', TagTypeController),
+			FeatureFlagGuard
+		]);
+		expect(Reflect.getMetadata('__guards__', TagTypeResolver)).toEqual([
+			TenantPermissionGuard,
+			PermissionGuard,
+			FeatureFlagGuard
+		]);
 	});
 
 	it('runs every field under the guard chain its own route runs under', () => {
 		for (const [field, handler] of ROUTE_OF_FIELD) {
-			// The controller's chain and the field's are the same set, which is the whole parity claim:
-			// a field that added a guard of its own would narrow GraphQL below REST and is caught here.
-			expect(guardsOfField(field).sort()).toEqual(guardsOfRoute(TagTypeController, handler).sort());
+			// The controller's chain plus the gate on the endpoint itself and the field's are the same
+			// set, which is the whole parity claim: a field that added a guard of its own would narrow
+			// GraphQL below REST and is caught here.
+			expect(guardsOfField(field).sort()).toEqual(
+				[...guardsOfRoute(TagTypeController, handler), FeatureFlagGuard].sort()
+			);
 		}
 	});
 
@@ -499,5 +509,66 @@ describe('TagTypeResolver — the guard stack and the permission are the control
 			PermissionsEnum.ALL_ORG_EDIT,
 			PermissionsEnum.ORG_TAG_TYPES_EDIT
 		]);
+	});
+});
+
+/** The code the commerce catalogue declares for this surface, as the guard’s metadata carries it. */
+const FEATURE_GRAPHQL = 'FEATURE_GRAPHQL';
+
+/**
+ * The gate, over a scripted cache and a scripted feature service.
+ *
+ * The guard under test is the real one and the metadata it reads is the metadata this resolver
+ * declares, which is the point: a spec that asserted the decorator alone would keep passing if the
+ * guard stopped reading that key.
+ *
+ * @param enabled Whether the capability is switched on for the caller’s scope.
+ * @returns The guard and the service it resolves through.
+ */
+function gate(enabled: boolean) {
+	const cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn(), del: jest.fn() };
+	const featureService = { isFeatureEnabled: jest.fn().mockResolvedValue(enabled) };
+
+	return {
+		guard: new FeatureFlagGuard(cache as never, new Reflector(), featureService as never),
+		featureService
+	};
+}
+
+/** A GraphQL execution context for one field, which is what the guard has to read without crashing. */
+function graphqlContext(field: string): ExecutionContext {
+	return {
+		getHandler: () => (TagTypeResolver.prototype as never)[field],
+		getClass: () => TagTypeResolver,
+		getType: () => 'graphql',
+		getArgByIndex: () => ({ fieldName: field })
+	} as unknown as ExecutionContext;
+}
+
+describe('TagTypeResolver — a capability that is switched off is not served', () => {
+	it('declares the capability the commerce catalogue declares for this surface, on the class', () => {
+		// One statement, read by the guard with `getAllAndOverride` over the handler and then the class,
+		// so every field is behind it.
+		expect(Reflect.getMetadata(FEATURE_METADATA, TagTypeResolver)).toBe(FEATURE_GRAPHQL);
+		expect(Reflect.getMetadata('__guards__', TagTypeResolver)).toContain(FeatureFlagGuard);
+	});
+
+	it('refuses a field whose capability is switched off, and names the field it refused', async () => {
+		const { guard, featureService } = gate(false);
+
+		const refusal = await guard.canActivate(graphqlContext('tagTypes')).catch((thrown) => thrown);
+
+		// The code the guard resolved is the one this resolver declared, not a second copy of it.
+		expect(featureService.isFeatureEnabled).toHaveBeenCalledWith(FEATURE_GRAPHQL);
+		expect(refusal).toBeInstanceOf(NotFoundException);
+		// A disabled capability answers the way a missing one does, and says which field was refused.
+		expect((refusal as Error).message).toContain('tagTypes');
+		expect((refusal as NotFoundException).getStatus()).toBe(404);
+	});
+
+	it('serves the field once the capability is switched on', async () => {
+		const { guard } = gate(true);
+
+		await expect(guard.canActivate(graphqlContext('tagTypes'))).resolves.toBe(true);
 	});
 });

@@ -7,14 +7,16 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { NotFoundException } from '@nestjs/common';
+import { ExecutionContext, NotFoundException } from '@nestjs/common';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { CqrsModule } from '@nestjs/cqrs';
+import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureModule } from '../feature/feature.module';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { InvoiceItemController } from './invoice-item.controller';
 import { InvoiceItemModule } from './invoice-item.module';
 import { InvoiceItemResolver } from './invoice-item.resolver';
@@ -37,7 +39,11 @@ import { InvoiceItemBulkCreateCommand } from './commands';
  *   carries the tenant guard and no class-level permission, so no field states one except the bulk
  *   write, whose own route is the one route that states `PermissionGuard` and the invoice edit
  *   permission;
- * - every amount and the quantity are exact decimals and never floating-point numbers.
+ * - every amount and the quantity are exact decimals and never floating-point numbers;
+ * - **the whole surface is behind the capability the catalogue declares for GraphQL**, so a tenant
+ *   that switched that capability off is refused the way a disabled capability's routes are — and the
+ *   refusal names the field, because the guard reads a GraphQL execution context rather than crashing
+ *   on one.
  */
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
@@ -47,6 +53,9 @@ const OTHER_INVOICE = '00000000-0000-4000-8000-000000000011';
 const LINE = '00000000-0000-4000-8000-000000000020';
 const OTHER_LINE = '00000000-0000-4000-8000-000000000021';
 const PRODUCT = '00000000-0000-4000-8000-000000000030';
+
+/** The code the commerce catalogue declares for this surface, as the guard's metadata carries it. */
+const FEATURE_GRAPHQL = 'FEATURE_GRAPHQL';
 
 /** The rows a scripted service answers with, in the order the delivered list read returns them. */
 const ROWS = [
@@ -234,6 +243,34 @@ function guardsOfField(field: string): unknown[] {
 /** The guards one route's handler carries of its own, beside the controller's chain. */
 function guardsOfHandler(controller: typeof InvoiceItemController, handler: string): unknown[] {
 	return Reflect.getMetadata('__guards__', handlersOf(controller)[handler]) ?? [];
+}
+
+/**
+ * The gate, over a scripted cache and a scripted feature service.
+ *
+ * The guard under test is the real one and the metadata it reads is the metadata this resolver
+ * declares, which is the point: a spec that asserted the decorator alone would keep passing if the
+ * guard stopped reading that key.
+ *
+ * @param enabled Whether the capability is switched on for the caller's scope.
+ * @returns The guard and the service it resolves through.
+ */
+function gate(enabled: boolean) {
+	const cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn(), del: jest.fn() };
+	const featureService = { isFeatureEnabled: jest.fn().mockResolvedValue(enabled) };
+	const guard = new FeatureFlagGuard(cache as never, new Reflector(), featureService as never);
+
+	return { guard, featureService };
+}
+
+/** A GraphQL execution context for one field, which is what the guard has to read without crashing. */
+function graphqlContext(field: string): ExecutionContext {
+	return {
+		getHandler: () => (InvoiceItemResolver.prototype as never)[field],
+		getClass: () => InvoiceItemResolver,
+		getType: () => 'graphql',
+		getArgByIndex: () => ({ fieldName: field })
+	} as unknown as ExecutionContext;
 }
 
 /**
@@ -642,12 +679,15 @@ describe('InvoiceItemResolver — every amount and the quantity are exact', () =
 });
 
 describe('InvoiceItemResolver — the guard stack and the permissions are the controller’s', () => {
-	it('guards the resolver the way the controller is guarded, on the tenant alone', () => {
+	it('guards the resolver the way the controller is guarded, on the tenant alone, plus the gate', () => {
 		const resolverGuards = Reflect.getMetadata('__guards__', InvoiceItemResolver) ?? [];
 		const controllerGuards = Reflect.getMetadata('__guards__', InvoiceItemController) ?? [];
 
-		expect(resolverGuards).toEqual([TenantPermissionGuard]);
 		expect(controllerGuards).toEqual([TenantPermissionGuard]);
+		// The one guard the resolver states beyond the controller's is the gate, and it is appended
+		// rather than substituted: the tenant guard still runs first, so a caller with no credential is
+		// refused as a credential problem before a tenant's switches are read.
+		expect(resolverGuards).toEqual([TenantPermissionGuard, FeatureFlagGuard]);
 		// The permission guard is stated by the bulk route's handler rather than by the controller, so
 		// neither surface demands a permission the other does not before that route's own guard runs.
 		expect(controllerGuards).not.toEqual(expect.arrayContaining([PermissionGuard]));
@@ -700,6 +740,44 @@ describe('InvoiceItemResolver — the guard stack and the permissions are the co
 	});
 });
 
+describe('InvoiceItemResolver — a capability that is switched off is not served', () => {
+	it('declares the capability the commerce catalogue declares for this surface, on the class', () => {
+		// One statement, read by the guard with `getAllAndOverride` over the handler and then the class,
+		// so every field is behind it.
+		expect(Reflect.getMetadata(FEATURE_METADATA, InvoiceItemResolver)).toBe(FEATURE_GRAPHQL);
+		expect(Reflect.getMetadata('__guards__', InvoiceItemResolver)).toContain(FeatureFlagGuard);
+	});
+
+	it('refuses a field whose capability is switched off, and names the field it refused', async () => {
+		const { guard, featureService } = gate(false);
+
+		const refusal = await guard.canActivate(graphqlContext('invoiceItems')).catch((thrown) => thrown);
+
+		// The code the guard resolved is the one this resolver declared, not a second copy of it.
+		expect(featureService.isFeatureEnabled).toHaveBeenCalledWith(FEATURE_GRAPHQL);
+		expect(refusal).toBeInstanceOf(NotFoundException);
+		// A disabled capability answers the way a missing one does, and says which field was refused.
+		expect((refusal as Error).message).toContain('invoiceItems');
+		expect((refusal as NotFoundException).getStatus()).toBe(404);
+	});
+
+	it('refuses the bulk write itself while the capability is off', async () => {
+		const { guard } = gate(false);
+
+		// Nothing on this surface is exempt, the writes included: the door that switches the capability
+		// back on is the REST route, which this code does not gate.
+		await expect(guard.canActivate(graphqlContext('createInvoiceItemsInBulk'))).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+	});
+
+	it('serves the field once the capability is switched on', async () => {
+		const { guard } = gate(true);
+
+		await expect(guard.canActivate(graphqlContext('invoiceItem'))).resolves.toBe(true);
+	});
+});
+
 describe('InvoiceItemModule — the resolver is declared where its dependencies are reachable', () => {
 	it('declares the resolver as a provider of the module that owns the service', () => {
 		const providers = (Reflect.getMetadata(MODULE_METADATA.PROVIDERS, InvoiceItemModule) ?? []) as unknown[];
@@ -715,5 +793,20 @@ describe('InvoiceItemModule — the resolver is declared where its dependencies 
 
 		expect(exported).toContain(InvoiceItemService);
 		expect(exported).toContain(CqrsModule);
+	});
+
+	it('reaches the module that provides the feature service the gate resolves through', () => {
+		// The gate is a guard, and a guard is a provider of whichever module declares the handler it
+		// protects — so this module is what has to reach `FeatureService`, and the API boot fails on an
+		// unresolved dependency without it. The entry is stated plainly rather than deferred: nothing the
+		// feature side loads reaches this module, so there is no cycle for a `forwardRef` to break.
+		const imports = (Reflect.getMetadata(MODULE_METADATA.IMPORTS, InvoiceItemModule) ?? []) as Array<{
+			forwardRef?: () => unknown;
+		}>;
+		const resolved = imports.map((entry) =>
+			entry && typeof entry.forwardRef === 'function' ? entry.forwardRef() : entry
+		);
+
+		expect(resolved).toContain(FeatureModule);
 	});
 });

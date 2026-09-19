@@ -1,5 +1,6 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
@@ -10,7 +11,8 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { TagType } from './tag-type.entity';
 import { TagTypeService } from './tag-type.service';
 
@@ -76,9 +78,16 @@ const TAG_TYPE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * it inherits from the CRUD base state no permission of their own and therefore run under the guards
  * alone, so the fields mirroring them state none either. A field that demanded a permission the route
  * does not would refuse here a caller REST serves.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('TagType')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 export class TagTypeResolver {
 	constructor(private readonly tagTypeService: TagTypeService) {}
 

@@ -1,5 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { IContactCredentialPublic, ID as Id, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -9,7 +10,8 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import { ContactCredentialService } from './contact-credential.service';
 
@@ -86,9 +88,16 @@ const CONTACT_CREDENTIAL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * verification and reset rows the endpoint table names all assume one. Issuing a token for a contact
  * would be inventing a second authentication path, which this delivery does not do; what it delivers is
  * the staff-facing surface of the resource, on the permissions the catalogue assigns it.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('ContactCredential')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.CONTACT_CREDENTIALS_VIEW)
 export class ContactCredentialResolver {
 	constructor(

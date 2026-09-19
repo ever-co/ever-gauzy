@@ -1,6 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { ID as Id, IPagination, ITag, PermissionsEnum } from '@gauzy/contracts';
 import { FindOptionsWhere } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -13,7 +14,8 @@ import {
 } from '../api/graphql-connection';
 import { RequestContext } from '../core/context';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Tag } from './tag.entity';
 import { TagService } from './tag.service';
 import { TagListCommand } from './commands';
@@ -101,9 +103,16 @@ const TAG_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * from the CRUD base — and therefore states none either. A field that demanded a permission the route
  * does not would refuse here a caller REST serves, and tightening the resource is a change to make in
  * both places at once.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('Tag')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 export class TagResolver {
 	constructor(
 		private readonly tagService: TagService,

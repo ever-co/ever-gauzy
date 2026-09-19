@@ -1,5 +1,6 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { IPagination, ID as Id } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
@@ -9,7 +10,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Contact } from './contact.entity';
 import { ContactService } from './contact.service';
 
@@ -102,9 +104,16 @@ const CONTACT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * the row and the relations its caller named, and the connection joins none of them: the type
  * carries what always travels, and the party that points at this row is reached from the row that
  * owns the foreign key.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('Contact')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 export class ContactResolver {
 	constructor(private readonly contactService: ContactService) {}
 

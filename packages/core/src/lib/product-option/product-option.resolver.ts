@@ -1,5 +1,6 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { IPagination, ID as Id } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
@@ -9,7 +10,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductOption } from './product-option.entity';
 import { ProductOptionService } from './product-option.service';
 
@@ -83,9 +85,16 @@ const PRODUCT_OPTION_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * **The group is not served here.** No delivered route reads a group as a resource, so there is no
  * root field for one; the group is reachable as the type `groupId` names, which is stated in the SDL
  * rather than invented as a capability here.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('ProductOption')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 export class ProductOptionResolver {
 	constructor(private readonly productOptionService: ProductOptionService) {}
 

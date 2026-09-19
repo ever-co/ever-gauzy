@@ -1,5 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { ContactGroupType, IContactGroup, ID as Id, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -10,7 +11,8 @@ import {
 } from '../api/graphql-connection';
 import { RequestContext } from '../core/context/request-context';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GraphqlPubSub } from '../graphql/subscriptions/graphql-pubsub.service';
 import { ContactGroupService } from './contact-group.service';
 import {
@@ -155,9 +157,16 @@ async function* mergeSubscriptionStreams<T>(
  * granted or withdrawn — because a client that caches a group's effect has to see all three, and a
  * client that wants one of them narrows by `action`. The events themselves are the catalogue's and are
  * published by the service layer, so a subscriber cannot tell which protocol wrote a row.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('ContactGroup')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.CONTACT_GROUPS_VIEW)
 export class ContactGroupResolver {
 	constructor(

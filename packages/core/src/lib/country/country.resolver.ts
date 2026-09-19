@@ -1,5 +1,6 @@
+import { UseGuards } from '@nestjs/common';
 import { Args, Int, Query, Resolver } from '@nestjs/graphql';
-import { Public } from '@gauzy/common';
+import { FeatureFlag, Public } from '@gauzy/common';
 import { IPagination } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -8,6 +9,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
+import { FeatureFlagGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Country } from './country.entity';
 import { CountryService } from './country.service';
 
@@ -69,9 +72,17 @@ const COUNTRY_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * there is no node field, no count field and no mutation between them: each of the three would be a
  * capability with no REST route behind it, and an installation that reads one country reads it through
  * the connection narrowed by `isoCode`.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('Country')
 @Public()
+@UseGuards(FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 export class CountryResolver {
 	constructor(private readonly countryService: CountryService) {}
 

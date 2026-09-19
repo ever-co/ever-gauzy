@@ -1,5 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { ChannelStatus, IChannel, IChannelRegion, ID as Id, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -10,7 +11,8 @@ import {
 } from '../api/graphql-connection';
 import { RequestContext } from '../core/context/request-context';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GraphqlPubSub } from '../graphql/subscriptions/graphql-pubsub.service';
 import { ChannelService } from './channel.service';
 import { ChannelRegionService } from '../channel-region/channel-region.service';
@@ -104,9 +106,16 @@ const CHANNEL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * connection arguments, and the delivered list methods read live rows only — a repository option
  * they do not expose and this delivery may not add. Offering an argument that cannot be honoured
  * would be the one thing worse than not offering it.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('Channel')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.CHANNELS_VIEW)
 export class ChannelResolver {
 	constructor(

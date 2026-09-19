@@ -1,11 +1,13 @@
 import { NotFoundException, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { IRole, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { ApiErrorCode } from './../core/errors/api-error-codes';
 import { ApiException } from './../core/errors/api-exception';
 import { Permissions } from './../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { RoleService } from './role.service';
 
 /** The members `CreateRoleInput` declares in the schema. */
@@ -35,9 +37,16 @@ export interface IUpdateRoleInput {
  * that tenant by `TenantAwareCrudService`, so an input naming another tenant cannot reach a row of
  * one — the guard refuses the mismatch before this resolver runs, and the service would overwrite
  * the value in any case.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('Role')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 export class RoleEntityResolver {
 	constructor(private readonly roleService: RoleService) {}

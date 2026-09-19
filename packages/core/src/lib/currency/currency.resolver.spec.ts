@@ -8,8 +8,11 @@ import '../core/entities/internal';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildSchema, printSchema } from 'graphql';
-import { PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
+import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { FEATURE_METADATA, PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { FeatureFlagGuard } from '../shared/guards';
 import { CurrencyController } from './currency.controller';
 import { CurrencyResolver } from './currency.resolver';
 
@@ -502,14 +505,16 @@ describe('CurrencyResolver — one resource, two protocols, the same read', () =
 });
 
 describe('CurrencyResolver — the guard stack and the permission are the controller’s', () => {
-	it('guards the resolver the way the controller is guarded, which is not at all', () => {
+	it('guards the resolver the way the controller is guarded, plus the gate', () => {
 		const resolverGuards = Reflect.getMetadata('__guards__', CurrencyResolver) ?? [];
 		const controllerGuards = Reflect.getMetadata('__guards__', CurrencyController) ?? [];
 
-		// The delivered route is public reference data: the controller declares no guard, so a guard
-		// here would refuse a caller REST serves. Neither chain exists, which is the parity.
+		// The delivered route is public reference data: the controller declares no guard, so a scope
+		// guard here would refuse a caller REST serves. The one guard the resolver carries is the gate
+		// on the endpoint itself — the catalogue's capability, not a scope — and it narrows nothing of
+		// what the route serves.
 		expect(controllerGuards).toEqual([]);
-		expect(resolverGuards).toEqual([]);
+		expect(resolverGuards).toEqual([FeatureFlagGuard]);
 	});
 
 	it('states the controller’s own public marker, because the openness is the controller’s declaration', () => {
@@ -546,5 +551,66 @@ describe('CurrencyResolver — the guard stack and the permission are the contro
 		// resource is mounted without a permission, so a field that acquired one would be the
 		// asymmetry the two-protocol rule forbids.
 		expect(stated).toEqual(expected);
+	});
+});
+
+/** The code the commerce catalogue declares for this surface, as the guard’s metadata carries it. */
+const FEATURE_GRAPHQL = 'FEATURE_GRAPHQL';
+
+/**
+ * The gate, over a scripted cache and a scripted feature service.
+ *
+ * The guard under test is the real one and the metadata it reads is the metadata this resolver
+ * declares, which is the point: a spec that asserted the decorator alone would keep passing if the
+ * guard stopped reading that key.
+ *
+ * @param enabled Whether the capability is switched on for the caller’s scope.
+ * @returns The guard and the service it resolves through.
+ */
+function gate(enabled: boolean) {
+	const cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn(), del: jest.fn() };
+	const featureService = { isFeatureEnabled: jest.fn().mockResolvedValue(enabled) };
+
+	return {
+		guard: new FeatureFlagGuard(cache as never, new Reflector(), featureService as never),
+		featureService
+	};
+}
+
+/** A GraphQL execution context for one field, which is what the guard has to read without crashing. */
+function graphqlContext(field: string): ExecutionContext {
+	return {
+		getHandler: () => (CurrencyResolver.prototype as never)[field],
+		getClass: () => CurrencyResolver,
+		getType: () => 'graphql',
+		getArgByIndex: () => ({ fieldName: field })
+	} as unknown as ExecutionContext;
+}
+
+describe('CurrencyResolver — a capability that is switched off is not served', () => {
+	it('declares the capability the commerce catalogue declares for this surface, on the class', () => {
+		// One statement, read by the guard with `getAllAndOverride` over the handler and then the class,
+		// so every field is behind it.
+		expect(Reflect.getMetadata(FEATURE_METADATA, CurrencyResolver)).toBe(FEATURE_GRAPHQL);
+		expect(Reflect.getMetadata('__guards__', CurrencyResolver)).toContain(FeatureFlagGuard);
+	});
+
+	it('refuses a field whose capability is switched off, and names the field it refused', async () => {
+		const { guard, featureService } = gate(false);
+
+		const refusal = await guard.canActivate(graphqlContext('currencies')).catch((thrown) => thrown);
+
+		// The code the guard resolved is the one this resolver declared, not a second copy of it.
+		expect(featureService.isFeatureEnabled).toHaveBeenCalledWith(FEATURE_GRAPHQL);
+		expect(refusal).toBeInstanceOf(NotFoundException);
+		// A disabled capability answers the way a missing one does, and says which field was refused.
+		expect((refusal as Error).message).toContain('currencies');
+		expect((refusal as NotFoundException).getStatus()).toBe(404);
+	});
+
+	it('serves the field once the capability is switched on', async () => {
+		const { guard } = gate(true);
+
+		await expect(guard.canActivate(graphqlContext('currencies'))).resolves.toBe(true);
 	});
 });

@@ -1,5 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { IRegion, IRegionCountry, ID as Id, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -10,7 +11,8 @@ import {
 } from '../api/graphql-connection';
 import { RequestContext } from '../core/context/request-context';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GraphqlPubSub } from '../graphql/subscriptions/graphql-pubsub.service';
 import { CHANNEL_EVENT_NAMES, ChannelEventPublisher, IRegionChangedEnvelope } from '../channel/channel-event.publisher';
 import { RegionService } from './region.service';
@@ -76,9 +78,16 @@ const REGION_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * under the same guard chain and the same permission. The two set operations are mutations here for
  * the same reason they are `PUT` routes there: a region's country set is saved as a set, so a client
  * cannot leave it half-applied by choosing a protocol.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('Region')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.REGIONS_VIEW)
 export class RegionResolver {
 	constructor(

@@ -7,12 +7,13 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { NotFoundException } from '@nestjs/common';
+import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
-import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ProductCategoryController } from './product-category.controller';
 import { ProductCategoryResolver } from './product-category.resolver';
 import { ProductCategoryCreateCommand } from './commands';
@@ -474,11 +475,14 @@ describe('ProductCategoryResolver — the guard stack and the permission are the
 		const routes = ['findAll', 'findById', 'getCount', 'create', 'update', 'delete', 'softRemove', 'softRecover'];
 
 		for (const handler of routes) {
-			// The controller's chain and the resolver's are the same set, which is the whole parity claim:
-			// a route that added a guard of its own would narrow REST below GraphQL and is caught here.
-			// `findAll` restates `PermissionGuard` beside the class that already carries it, which is the
-			// one route where the two lists differ in length and not in scope.
-			expect(guardsOfRoute(ProductCategoryController, handler).sort()).toEqual([...stated].sort());
+			// The controller's chain plus the gate on the endpoint itself and the resolver's are the same
+			// set, which is the whole parity claim: a route that added a guard of its own would narrow
+			// REST below GraphQL and is caught here. `findAll` restates `PermissionGuard` beside the class
+			// that already carries it, which is the one route where the two lists differ in length and not
+			// in scope.
+			expect([...guardsOfRoute(ProductCategoryController, handler), FeatureFlagGuard].sort()).toEqual(
+				[...stated].sort()
+			);
 		}
 	});
 
@@ -525,5 +529,66 @@ describe('ProductCategoryResolver — the guard stack and the permission are the
 		for (const field of ['productCategories', 'productCategoryCount']) {
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW]);
 		}
+	});
+});
+
+/** The code the commerce catalogue declares for this surface, as the guard’s metadata carries it. */
+const FEATURE_GRAPHQL = 'FEATURE_GRAPHQL';
+
+/**
+ * The gate, over a scripted cache and a scripted feature service.
+ *
+ * The guard under test is the real one and the metadata it reads is the metadata this resolver
+ * declares, which is the point: a spec that asserted the decorator alone would keep passing if the
+ * guard stopped reading that key.
+ *
+ * @param enabled Whether the capability is switched on for the caller’s scope.
+ * @returns The guard and the service it resolves through.
+ */
+function gate(enabled: boolean) {
+	const cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn(), del: jest.fn() };
+	const featureService = { isFeatureEnabled: jest.fn().mockResolvedValue(enabled) };
+
+	return {
+		guard: new FeatureFlagGuard(cache as never, new Reflector(), featureService as never),
+		featureService
+	};
+}
+
+/** A GraphQL execution context for one field, which is what the guard has to read without crashing. */
+function graphqlContext(field: string): ExecutionContext {
+	return {
+		getHandler: () => (ProductCategoryResolver.prototype as never)[field],
+		getClass: () => ProductCategoryResolver,
+		getType: () => 'graphql',
+		getArgByIndex: () => ({ fieldName: field })
+	} as unknown as ExecutionContext;
+}
+
+describe('ProductCategoryResolver — a capability that is switched off is not served', () => {
+	it('declares the capability the commerce catalogue declares for this surface, on the class', () => {
+		// One statement, read by the guard with `getAllAndOverride` over the handler and then the class,
+		// so every field is behind it.
+		expect(Reflect.getMetadata(FEATURE_METADATA, ProductCategoryResolver)).toBe(FEATURE_GRAPHQL);
+		expect(Reflect.getMetadata('__guards__', ProductCategoryResolver)).toContain(FeatureFlagGuard);
+	});
+
+	it('refuses a field whose capability is switched off, and names the field it refused', async () => {
+		const { guard, featureService } = gate(false);
+
+		const refusal = await guard.canActivate(graphqlContext('productCategories')).catch((thrown) => thrown);
+
+		// The code the guard resolved is the one this resolver declared, not a second copy of it.
+		expect(featureService.isFeatureEnabled).toHaveBeenCalledWith(FEATURE_GRAPHQL);
+		expect(refusal).toBeInstanceOf(NotFoundException);
+		// A disabled capability answers the way a missing one does, and says which field was refused.
+		expect((refusal as Error).message).toContain('productCategories');
+		expect((refusal as NotFoundException).getStatus()).toBe(404);
+	});
+
+	it('serves the field once the capability is switched on', async () => {
+		const { guard } = gate(true);
+
+		await expect(guard.canActivate(graphqlContext('productCategories'))).resolves.toBe(true);
 	});
 });

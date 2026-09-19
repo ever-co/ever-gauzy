@@ -1,11 +1,13 @@
 import { ParseEnumPipe, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { PermissionsEnum, ID } from '@gauzy/contracts';
 import { AddressRole } from './address-role.entity';
 import { AddressRoleService } from './address-role.service';
 import { AddressRoleEnum } from './address-role.enums';
 import { Permissions } from '../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 
 /** The members `CreateAddressRoleInput` declares in the schema. */
 export interface ICreateAddressRoleInput {
@@ -23,9 +25,16 @@ export interface ICreateAddressRoleInput {
  * under the same guard chain and the same permission — the address book's own. A role is a dimension of
  * the address book rather than a resource with access rules of its own, and this surface says so by
  * guarding with `ORG_CONTACT_*` rather than inventing a pair.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('AddressRole')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
 export class AddressRoleResolver {
 	constructor(private readonly addressRoleService: AddressRoleService) {}

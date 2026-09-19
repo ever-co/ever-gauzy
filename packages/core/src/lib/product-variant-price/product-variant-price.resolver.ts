@@ -1,5 +1,6 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { FeatureFlag } from '@gauzy/common';
 import { DecimalString, IPagination, ID as Id } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
@@ -9,7 +10,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductVariantPrice } from './product-variant-price.entity';
 import { ProductVariantPriceService } from './product-variant-price.service';
 
@@ -81,9 +83,16 @@ const PRODUCT_VARIANT_PRICE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * here a caller the REST route serves — two surfaces of one concept with two scopes is exactly what
  * this delivery exists to prevent. Tightening the resource is a change to make in both places at once,
  * and it is not this delivery's to make.
+ *
+ * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+ * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
+ * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
+ * class, which is why the gate is stated on the class rather than restated on each field — and why it is
+ * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('ProductVariantPrice')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 export class ProductVariantPriceResolver {
 	constructor(private readonly productVariantPriceService: ProductVariantPriceService) {}
 
