@@ -184,6 +184,7 @@ import { WarehouseModule } from '../warehouse/warehouse.module';
 import { AppBootstrapLogger } from './app-bootstrap-logger';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { describeUnleashConfig } from './unleash-config-log';
 
 const { unleashConfig } = environment;
 
@@ -208,7 +209,8 @@ if (unleashConfig.url) {
 		};
 	}
 
-	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);
+	// The Unleash API key travels in `customHeaders.Authorization` - never serialize the config as-is.
+	console.log(describeUnleashConfig(unleashInstanceConfig));
 
 	const instance = initializeUnleash(unleashInstanceConfig);
 
