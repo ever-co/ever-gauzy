@@ -8,27 +8,39 @@
 	<nb-card-body>
 		<nb-stepper #stepper orientation="horizontal" [linear]="true">
 			<nb-step label="Select a Preset">
-				@for (template of goalTemplates; track template; let index = $index) {
-				<nb-accordion class="mt-3">
-					<nb-accordion-item [expanded]="index == 0 ? true : false">
-						<nb-accordion-item-header>
-							{{ template.name }}
-						</nb-accordion-item-header>
-						<nb-accordion-item-body>
-							@for (keyResult of template.keyResults; track keyResult) {
-							<p>
-								{{ keyResult.name }}
-							</p>
-							}
-							<div class="text-right">
-								<button nbButton status="success" (click)="nextStep(template)">
-									{{ 'BUTTONS.SELECT_AND_CONTINUE' | translate }}
-								</button>
-							</div>
-						</nb-accordion-item-body>
-					</nb-accordion-item>
-				</nb-accordion>
-				}
+				<div class="presets">
+					@for (template of goalTemplates; track template; let index = $index) {
+					<nb-accordion class="preset">
+						<nb-accordion-item [expanded]="index == 0 ? true : false">
+							<nb-accordion-item-header>
+								<span class="preset-name">{{ template.name }}</span>
+								@if (template.level) {
+								<span class="preset-level">
+									{{ 'GOALS_PAGE.LEVELS.' + template.level.toUpperCase() | translate }}
+								</span>
+								}
+							</nb-accordion-item-header>
+							<nb-accordion-item-body>
+								<div class="preset-caption">{{ 'GOALS_PAGE.KEY_RESULTS' | translate }}</div>
+								<ul class="preset-key-results">
+									@for (keyResult of template.keyResults; track keyResult) {
+									<li>
+										<nb-icon icon="checkmark-circle-2-outline" aria-hidden="true"></nb-icon>
+										<span>{{ keyResult.name }}</span>
+									</li>
+									}
+								</ul>
+								<div class="preset-actions">
+									<button nbButton status="success" size="small" (click)="nextStep(template)">
+										{{ 'BUTTONS.SELECT_AND_CONTINUE' | translate }}
+										<nb-icon icon="arrow-forward-outline"></nb-icon>
+									</button>
+								</div>
+							</nb-accordion-item-body>
+						</nb-accordion-item>
+					</nb-accordion>
+					}
+				</div>
 			</nb-step>
 			<nb-step label="Additional Details">
 				<form [formGroup]="form">
