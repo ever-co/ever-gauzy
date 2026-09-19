@@ -6,7 +6,9 @@
 					| translate: { name: invoice.toContact.name }
 			}}
 		</h5>
-		<span class="cancel"><i class="fas fa-times" (click)="cancel()"></i></span>
+		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="cancel()">
+			<i class="fas fa-times" aria-hidden="true"></i>
+		</button>
 	</nb-card-header>
 	<nb-card-body class="py-5 px-5">
 		<div class="shadow py-5 px-5">
