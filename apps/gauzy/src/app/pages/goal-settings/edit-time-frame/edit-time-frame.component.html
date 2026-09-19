@@ -8,7 +8,9 @@
       ) | translate
       }}
     </div>
-    <span class="cancel"><i class="fas fa-times" (click)="closeDialog(null)"></i></span>
+    <button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog(null)">
+      <i class="fas fa-times" aria-hidden="true"></i>
+    </button>
   </nb-card-header>
   <nb-card-body>
     <div class="row">

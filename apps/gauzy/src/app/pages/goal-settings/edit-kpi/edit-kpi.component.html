@@ -3,7 +3,9 @@
 		<div class="title">
 			{{ (selectedKPI ? 'GOALS_PAGE.SETTINGS.EDIT_KPI' : 'GOALS_PAGE.SETTINGS.ADD_KPI') | translate }}
 		</div>
-		<span class="cancel"><i class="fas fa-times" (click)="closeDialog(null)"></i></span>
+		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog(null)">
+			<i class="fas fa-times" aria-hidden="true"></i>
+		</button>
 	</nb-card-header>
 	<nb-card-body>
 		<!-- The form on one 6-column grid, with the hover helper text as a fixed column
@@ -11,7 +13,13 @@
 		     holding the other 5, so half the dialog was empty space. -->
 		<div class="kpi-layout">
 			<form class="kpi-form" [formGroup]="kpiForm">
-				<div class="field span-6" (mouseenter)="helper = 'kpi-title'" (mouseleave)="helperText(null)">
+				<div
+					class="field span-6"
+					(mouseenter)="helper = 'kpi-title'"
+					(focusin)="helper = 'kpi-title'"
+					(mouseleave)="helperText(null)"
+					(focusout)="helperText(null)"
+				>
 					<label for="kpi-title" class="label">
 						{{ 'FORM.LABELS.NAME' | translate }}
 					</label>
@@ -25,7 +33,13 @@
 					/>
 				</div>
 
-				<div class="field span-6" (mouseenter)="helper = 'kpi-description'" (mouseleave)="helperText(null)">
+				<div
+					class="field span-6"
+					(mouseenter)="helper = 'kpi-description'"
+					(focusin)="helper = 'kpi-description'"
+					(mouseleave)="helperText(null)"
+					(focusout)="helperText(null)"
+				>
 					<label for="kpi-description" class="label">
 						{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
 					</label>
@@ -38,7 +52,13 @@
 					></textarea>
 				</div>
 
-				<div class="field span-3" (mouseenter)="helper = 'kpi-type'" (mouseleave)="helperText(null)">
+				<div
+					class="field span-3"
+					(mouseenter)="helper = 'kpi-type'"
+					(focusin)="helper = 'kpi-type'"
+					(mouseleave)="helperText(null)"
+					(focusout)="helperText(null)"
+				>
 					<label for="kpi-type" class="label">
 						{{ 'GOALS_PAGE.FORM.LABELS.KPI_METRIC' | translate }}
 					</label>
@@ -58,7 +78,13 @@
 				</div>
 				}
 
-				<div class="field span-6" (mouseenter)="helper = 'kpi-lead'" (mouseleave)="helperText(null)">
+				<div
+					class="field span-6"
+					(mouseenter)="helper = 'kpi-lead'"
+					(focusin)="helper = 'kpi-lead'"
+					(mouseleave)="helperText(null)"
+					(focusout)="helperText(null)"
+				>
 					<label for="kpi-lead" class="label">{{ 'GOALS_PAGE.FORM.LABELS.LEAD' | translate }}</label>
 					<!-- A plain select over the shared employee picker: that one only renders
 					     once the date-range service emits, which this page never does, so the
@@ -120,7 +146,7 @@
 				</div>
 			</form>
 
-			<!-- Follows the pointer from field to field, and falls back to what a KPI is. -->
+			<!-- Follows the pointer or the keyboard focus from field to field, and falls back to what a KPI is. -->
 			<aside class="kpi-help">
 				@if (helper === 'kpi-title') {
 				<div [innerHTML]="'GOALS_PAGE.HELPER_TEXT.KPI_NAME' | translate"></div>

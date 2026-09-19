@@ -40,8 +40,23 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
       color: var(--gauzy-text-color-1, inherit);
     }
 
+    // A real button, so the close is reachable from the keyboard and named for a
+    // screen reader; the browser's button chrome is stripped so it still reads
+    // as the bare icon it was.
     .cancel {
       width: auto;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      line-height: 1;
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: 2px solid nb-theme(color-primary-default);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
     }
   }
 
