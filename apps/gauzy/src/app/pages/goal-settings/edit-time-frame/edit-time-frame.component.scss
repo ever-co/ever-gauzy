@@ -63,12 +63,21 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
     padding: $inset;
   }
 
-  // The presets column and the form, with a hairline between them.
+  // The presets column and the form, with a hairline between them: beside the
+  // form from bootstrap's `md` up, and under the presets once the two columns
+  // stack below it. Logical properties already follow the reading direction, so
+  // no `nb-ltr` / `nb-rtl` pair.
   .col-md-4 {
-    @include nb-ltr(border-inline-end, $divider);
-    @include nb-rtl(border-inline-start, $divider);
-    @include nb-ltr(padding-inline-end, $inset);
-    @include nb-rtl(padding-inline-start, $inset);
+    @media (min-width: 768px) {
+      border-inline-end: $divider;
+      padding-inline-end: $inset;
+    }
+
+    @media (max-width: 767.98px) {
+      margin-bottom: $inset;
+      padding-bottom: $inset;
+      border-bottom: $divider;
+    }
   }
 
   .subtitle {
