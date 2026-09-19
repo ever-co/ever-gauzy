@@ -59,11 +59,39 @@ describe('AlterEmployeeBillingRateColumnsToNumeric1790000014000', () => {
 			await migration.up(queryRunner);
 
 			const sql = executed.map(({ sql }) => sql);
-			expect(sql).toContain('ALTER TABLE "employee" ADD COLUMN "billRateValue__tmp" numeric(10,2)');
-			expect(sql).toContain('ALTER TABLE "employee" RENAME COLUMN "billRateValue__tmp" TO "billRateValue"');
-			expect(sql).toContain('ALTER TABLE "employee" ADD COLUMN "minimumBillingRate__tmp" numeric(10,2)');
+			expect(sql).toEqual([
+				'ALTER TABLE "employee" ADD COLUMN "billRateValue__tmp" numeric(10,2)',
+				'UPDATE "employee" SET "billRateValue__tmp" = "billRateValue"',
+				'ALTER TABLE "employee" DROP COLUMN "billRateValue"',
+				'ALTER TABLE "employee" RENAME COLUMN "billRateValue__tmp" TO "billRateValue"',
+				'ALTER TABLE "employee" ADD COLUMN "minimumBillingRate__tmp" numeric(10,2)',
+				'UPDATE "employee" SET "minimumBillingRate__tmp" = "minimumBillingRate"',
+				'ALTER TABLE "employee" DROP COLUMN "minimumBillingRate"',
+				'ALTER TABLE "employee" RENAME COLUMN "minimumBillingRate__tmp" TO "minimumBillingRate"'
+			]);
 			expect(sql.some((statement) => /reWeeklyLimit/.test(statement))).toBe(false);
 			expect(sql.some((statement) => /CREATE TABLE/.test(statement))).toBe(false);
+		}
+	);
+
+	it.each([DatabaseTypeEnum.sqlite, DatabaseTypeEnum.betterSqlite3])(
+		'rounds sqlite money columns to integers on rollback for %s',
+		async (type) => {
+			const { queryRunner, executed } = createQueryRunner(type);
+
+			await migration.down(queryRunner);
+
+			const sql = executed.map(({ sql }) => sql);
+			expect(sql).toEqual([
+				'ALTER TABLE "employee" ADD COLUMN "billRateValue__tmp" integer',
+				'UPDATE "employee" SET "billRateValue__tmp" = CAST(ROUND("billRateValue") AS INTEGER)',
+				'ALTER TABLE "employee" DROP COLUMN "billRateValue"',
+				'ALTER TABLE "employee" RENAME COLUMN "billRateValue__tmp" TO "billRateValue"',
+				'ALTER TABLE "employee" ADD COLUMN "minimumBillingRate__tmp" integer',
+				'UPDATE "employee" SET "minimumBillingRate__tmp" = CAST(ROUND("minimumBillingRate") AS INTEGER)',
+				'ALTER TABLE "employee" DROP COLUMN "minimumBillingRate"',
+				'ALTER TABLE "employee" RENAME COLUMN "minimumBillingRate__tmp" TO "minimumBillingRate"'
+			]);
 		}
 	);
 });

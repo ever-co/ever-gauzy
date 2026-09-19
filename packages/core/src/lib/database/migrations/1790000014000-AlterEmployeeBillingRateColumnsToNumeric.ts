@@ -144,8 +144,10 @@ export class AlterEmployeeBillingRateColumnsToNumeric1790000014000 implements Mi
 		declaredType: string
 	): Promise<void> {
 		const temporary = `${column}__tmp`;
+		const copyExpression =
+			declaredType === 'integer' ? `CAST(ROUND("${column}") AS INTEGER)` : `"${column}"`;
 		await queryRunner.query(`ALTER TABLE "employee" ADD COLUMN "${temporary}" ${declaredType}`);
-		await queryRunner.query(`UPDATE "employee" SET "${temporary}" = "${column}"`);
+		await queryRunner.query(`UPDATE "employee" SET "${temporary}" = ${copyExpression}`);
 		await queryRunner.query(`ALTER TABLE "employee" DROP COLUMN "${column}"`);
 		await queryRunner.query(`ALTER TABLE "employee" RENAME COLUMN "${temporary}" TO "${column}"`);
 	}

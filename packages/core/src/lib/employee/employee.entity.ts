@@ -94,10 +94,20 @@ import {
 	TypeOrmEmployeeEntityCustomFields
 } from '../core/entities/custom-entity-fields/employee';
 import { Trimmed } from '../shared/decorators';
-import { ColumnNumericTransformerPipe } from '../shared/pipes';
+import { ColumnNumericTransformerPipe, roundToScale } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { OrganizationProjectModuleEmployee } from '../organization-project-module/organization-project-module-employee.entity';
+
+const billingRateColumn = () => ({
+	nullable: true,
+	type: 'numeric' as const,
+	precision: 10,
+	scale: 2,
+	transformer: new ColumnNumericTransformerPipe(2)
+});
+
+const toBillingRate = (params: TransformFnParams) => roundToScale(params.value ?? 0);
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, Taggable, HasCustomFields {
@@ -140,27 +150,15 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Transform((params: TransformFnParams) => parseFloat(parseFloat(params.value || 0).toFixed(2)))
-	@MultiORMColumn({
-		nullable: true,
-		type: 'numeric',
-		precision: 10,
-		scale: 2,
-		transformer: new ColumnNumericTransformerPipe()
-	})
+	@Transform(toBillingRate)
+	@MultiORMColumn(billingRateColumn())
 	billRateValue?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Transform((params: TransformFnParams) => parseFloat(parseFloat(params.value || 0).toFixed(2)))
-	@MultiORMColumn({
-		nullable: true,
-		type: 'numeric',
-		precision: 10,
-		scale: 2,
-		transformer: new ColumnNumericTransformerPipe()
-	})
+	@Transform(toBillingRate)
+	@MultiORMColumn(billingRateColumn())
 	minimumBillingRate?: number;
 
 	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum, example: CurrenciesEnum.USD })
