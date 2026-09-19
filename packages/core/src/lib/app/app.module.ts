@@ -46,6 +46,7 @@ import { RequestContext } from '../core/context/request-context';
 import { CoreModule } from '../core/core.module';
 import { TransformInterceptor } from '../core/interceptors';
 import { SeederModule } from '../core/seeds/seeder.module';
+import { REDACTED_CREDENTIAL, redactUrlCredentials } from '../core/util/redact-credentials';
 import { CountryModule } from '../country/country.module';
 import { CurrencyModule } from '../currency/currency.module';
 import { CustomSmtpModule } from '../custom-smtp/custom-smtp.module';
@@ -208,7 +209,17 @@ if (unleashConfig.url) {
 		};
 	}
 
-	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);
+	// The Unleash API key travels in `customHeaders.Authorization` - log the header names only, never their values.
+	const { customHeaders, ...loggableUnleashConfig } = unleashInstanceConfig;
+	console.log(
+		`Using Unleash Config: ${JSON.stringify({
+			...loggableUnleashConfig,
+			url: redactUrlCredentials(loggableUnleashConfig.url),
+			...(customHeaders && {
+				customHeaders: Object.fromEntries(Object.keys(customHeaders).map((name) => [name, REDACTED_CREDENTIAL]))
+			})
+		})}`
+	);
 
 	const instance = initializeUnleash(unleashInstanceConfig);
 

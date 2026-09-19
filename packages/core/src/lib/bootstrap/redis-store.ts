@@ -2,6 +2,7 @@ import * as expressSession from 'express-session';
 import { createClient } from 'redis';
 import RedisStore from 'connect-redis';
 import { environment } from '@gauzy/config';
+import { redactUrlCredentials } from '../core/util/redact-credentials';
 
 /**
  * Sets up the Redis client with connection options and logs key events.
@@ -71,7 +72,8 @@ export async function configureRedisSession(app: any): Promise<void> {
 					return `${redisProtocol}://${auth}${REDIS_HOST}:${REDIS_PORT}`;
 				})();
 
-			console.log('REDIS_URL: ', url);
+			// Never log the raw URL: it carries the Redis password in its userinfo section.
+			console.log('REDIS_URL: ', redactUrlCredentials(url));
 
 			const parsedUrl = new URL(url);
 			const isTls = parsedUrl.protocol === 'rediss:';
