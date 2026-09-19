@@ -12,13 +12,13 @@ import {
 	ITasksStatistics
 } from '@gauzy/contracts';
 import { Permissions } from './../../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { EmployeeTrackedDataGuard, PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TimeTrackingStatisticQueryDTO } from './dto';
 import { StatisticService } from './statistic.service';
 
 @ApiTags('TimesheetStatistic')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, EmployeeTrackedDataGuard)
 @Permissions(
 	PermissionsEnum.ADMIN_DASHBOARD_VIEW,
 	PermissionsEnum.TIME_TRACKER,

@@ -4,7 +4,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { OrganizationPolicyTarget, Permissions } from './../../shared/decorators';
-import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard, EmployeeTrackedDataGuard } from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
 import { TimeSlot } from './time-slot.entity';
@@ -33,6 +33,7 @@ export class TimeSlotController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async findAll(@Query() options: TimeSlotQueryDTO): Promise<ITimeSlot[]> {

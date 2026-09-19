@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute, QueryParamsHandling } from '@angular/router';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { ActivatedRoute, Router, QueryParamsHandling } from '@angular/router';
 import { tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PageTabRegistryService, PageTabsetPageId, RouteUtil } from '@gauzy/ui-core/core';
+import { PageTabRegistryService, PageTabsetPageId, RouteUtil, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,17 +16,39 @@ import { PageTabRegistryService, PageTabsetPageId, RouteUtil } from '@gauzy/ui-c
 export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	public title: string;
 	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	private readonly _router = inject(Router);
+	private readonly _pageTabRegistryService = inject(PageTabRegistryService);
+	private readonly _store = inject(Store);
 
 	constructor(
 		private readonly _route: ActivatedRoute,
 		private readonly _cdr: ChangeDetectorRef,
-		private readonly _routeUtil: RouteUtil,
-		private readonly _pageTabRegistryService: PageTabRegistryService
+		private readonly _routeUtil: RouteUtil
 	) {}
 
 	ngOnInit(): void {
-		// Register the page tabs
-		this.registerPageTabs();
+		this._store.selectedOrganization$
+			.pipe(
+				tap((organization) => {
+					const employee = this._store.user?.employee;
+					const isManager =
+						employee?.isManager ||
+						employee?.teams?.some((t: any) => t.isManager || t.isTeamManager) ||
+						employee?.projects?.some((p: any) => p.isManager || p.isProjectManager);
+
+					const canViewActivity =
+						this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
+						isManager ||
+						organization?.allowEmployeeToSeeTrackedData !== false;
+
+					this.registerPageTabs(canViewActivity);
+					if (!canViewActivity) {
+						this._router.navigate(['/pages/dashboard']);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		this._routeUtil.data$
 			.pipe(
@@ -46,7 +68,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	 *
 	 * @returns {void}
 	 */
-	registerPageTabs(): void {
+	registerPageTabs(canViewActivity: boolean): void {
 		// Register the time-activity tab
 		this._pageTabRegistryService.registerPageTab({
 			tabsetId: this.tabsetId, // The identifier for the tabset
@@ -58,6 +80,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 			queryParamsHandling: 'merge' as QueryParamsHandling,
 			activeLinkOptions: { exact: false }, // The options for the active link
 			order: 1, // The order of the tab
+			hide: !canViewActivity,
 			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
 		});
 
@@ -72,6 +95,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 			queryParamsHandling: 'merge' as QueryParamsHandling,
 			activeLinkOptions: { exact: false }, // The options for the active link
 			order: 2, // The order of the tab
+			hide: !canViewActivity,
 			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
 		});
 
@@ -84,7 +108,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 			route: '/pages/employees/activity/videos', // The route for the tab
 			queryParamsHandling: 'merge' as QueryParamsHandling,
 			activeLinkOptions: { exact: false }, // The options for the active link
-			hide: !this._route.snapshot.data.videoAvailability,
+			hide: !this._route.snapshot.data.videoAvailability || !canViewActivity,
 			order: 3, // The order of the tab
 			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
 		});
@@ -100,6 +124,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 			queryParamsHandling: 'merge' as QueryParamsHandling,
 			activeLinkOptions: { exact: false }, // The options for the active link
 			order: 4, // The order of the tab
+			hide: !canViewActivity,
 			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
 		});
 
@@ -114,6 +139,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 			queryParamsHandling: 'merge' as QueryParamsHandling,
 			activeLinkOptions: { exact: false }, // The options for the active link
 			order: 5, // The order of the tab
+			hide: !canViewActivity,
 			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
 		});
 	}

@@ -533,7 +533,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						data: {
 							translationKey: 'MENU.TIME_ACTIVITY',
 							permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKER],
-							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY
+							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY,
+							hide: () => this.isEmployeeTrackedDataHidden()
 						}
 					},
 					{
@@ -545,7 +546,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						data: {
 							translationKey: 'MENU.TIMESHEETS',
 							permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKER],
-							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMESHEETS
+							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMESHEETS,
+							hide: () => this.isEmployeeTrackedDataHidden()
 						}
 					},
 					{
@@ -971,7 +973,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				link: '/pages/reports',
 				data: {
 					translationKey: 'MENU.REPORTS',
-					featureKey: FeatureEnum.FEATURE_REPORT
+					featureKey: FeatureEnum.FEATURE_REPORT,
+					hide: () => this.isEmployeeTrackedDataHidden()
 				},
 				items: [
 					{
@@ -986,6 +989,23 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				]
 			}
 		];
+	}
+
+	protected isEmployeeTrackedDataHidden(): boolean {
+		const org = this._store.selectedOrganization;
+		if (org?.allowEmployeeToSeeTrackedData === false) {
+			const canChange = this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+			const employee = this._store.user?.employee;
+			const isManager =
+				employee?.isManager ||
+				employee?.teams?.some((t: any) => t.isManager || t.isTeamManager) ||
+				employee?.projects?.some((p: any) => p.isManager || p.isProjectManager);
+
+			if (!canChange && !isManager) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
