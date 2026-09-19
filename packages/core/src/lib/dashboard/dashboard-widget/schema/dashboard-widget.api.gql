@@ -1,0 +1,112 @@
+# The dashboard widget's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# The widgets a dashboard is assembled from are served by their own controller under
+# `/api/dashboard-widget`, and this surface states that controller's routes rather than folding them
+# into the dashboard's own type: the widget has its own guards, its own permissions and its own CRUD
+# shape, and restating them under the dashboard would be a second copy of them.
+#
+# Every field below is one of those delivered routes, reaching the same `DashboardWidgetService` method
+# or dispatching the same command the route dispatches.
+#
+# **The guard chain and the permissions are the controller's, read from its metadata and not
+# restated.** `DashboardWidgetController` declares `TenantPermissionGuard` and `PermissionGuard` on the
+# class together with `DASHBOARD_READ`, and each route it defines states its own grant — the
+# organization-wide view pair on its two reads, the organization-wide edit permission on its three
+# writes. The four routes it inherits from the CRUD base — the count, the paginated spelling of the
+# list, the withdrawal and the restoration — state nothing of their own and therefore run under the
+# class-level read permission, which is what the fields mirroring them state.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST surface
+# speaks — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers
+# with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over
+# one surface resumes on the other.
+#
+# The controller serves its list twice — `GET /` and the inherited `GET /pagination` — and the two
+# answer the same rows under the same filters, one of them sliced by `take`/`skip` and the other not.
+# That is one capability, so it is one root field: `dashboardWidgets`, mirroring `GET /`, which is the
+# route that reads the whole filtered set the connection protocol is applied to.
+#
+# The widgets of one dashboard are that list narrowed by `filter: { dashboardId: { eq: … } }` — the
+# column the placement carries — rather than a second root field, so the canvas a client assembles and
+# the list it browses cannot come to disagree about what a dashboard holds.
+#
+# `dashboardWidgetCount` takes no argument, and that is a statement rather than an omission: the
+# inherited count route binds its query string to the store's own `where`, which the connection
+# protocol does not speak, so the field states no narrowing of its own. It is nullable because the
+# count its route answers is — the delivered handler is typed `number | void`.
+#
+# `deleteDashboardWidget` answers a boolean rather than the store's delete result: what the delivered
+# route establishes is that the removal ran, and `{ affected }` is a statement about the write rather
+# than a row this surface could carry.
+#
+# The write inputs state the members the delivered DTOs state. The DTO's own validation runs in the
+# REST route's validation pipe and is not re-run here — the fields hand the same body to the same
+# command — so the guarantee both protocols share is the one the service itself makes: the tenant and,
+# when the caller names none, the employee are stamped from the credential.
+
+extend type Query {
+	"""
+	The widgets of the caller's tenant, in the order the dashboards place them.
+	"""
+	dashboardWidgets(
+		filter: DashboardWidgetFilter
+		sort: [DashboardWidgetSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): DashboardWidgetConnection!
+
+	"""
+	One widget of the caller's tenant, or null when there is none.
+
+	A placement that is not there answers `null` rather than a refusal: GraphQL has one answer for "no
+	such row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+	other protocol's vocabulary.
+	"""
+	dashboardWidget(id: ID!): DashboardWidget
+
+	"""
+	How many widgets the caller's tenant holds.
+	"""
+	dashboardWidgetCount: Int
+}
+
+extend type Mutation {
+	"""
+	Places a widget on a dashboard.
+
+	The delivered write resolves the tenant from the credential and the employee from the caller when the
+	body names none, and it writes an activity-log entry for the row it created, which the field inherits
+	by dispatching the same command rather than by repeating the write.
+	"""
+	createDashboardWidget(input: CreateDashboardWidgetInput!): DashboardWidget!
+
+	"""
+	Changes a placement that exists. A member the caller leaves out is left as it is.
+	"""
+	updateDashboardWidget(input: UpdateDashboardWidgetInput!): DashboardWidget!
+
+	"""
+	Removes a placement outright. The answer is whether the removal ran, which is the whole of what the
+	delivered route establishes.
+	"""
+	deleteDashboardWidget(id: ID!): Boolean!
+
+	"""
+	Withdraws a placement without removing it: the row keeps its identifier and stops being answered by
+	the list, and the restoration below brings it back.
+	"""
+	softDeleteDashboardWidget(id: ID!): DashboardWidget!
+
+	"""
+	Puts a withdrawn placement back.
+	"""
+	recoverDashboardWidget(id: ID!): DashboardWidget!
+}

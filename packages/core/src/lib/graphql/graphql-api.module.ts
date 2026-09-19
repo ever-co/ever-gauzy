@@ -52,6 +52,17 @@ import { FeatureToggleResolver } from './../feature/feature-toggle.resolver';
 import { FeatureModule } from './../feature/feature.module';
 import { TenantSettingResolver } from './../tenant/tenant-setting/tenant-setting.resolver';
 import { TenantSettingModule } from './../tenant/tenant-setting/tenant-setting.module';
+import { RolePermissionResolver } from './../role-permission/role-permission.resolver';
+import { PaymentResolver } from './../payment/payment.resolver';
+import { PaymentModule } from './../payment/payment.module';
+import { EmailTemplateResolver } from './../email-template/email-template.resolver';
+import { EmailTemplateModule } from './../email-template/email-template.module';
+import { ReportResolver } from './../reports/report.resolver';
+import { ReportModule } from './../reports/report.module';
+import { DashboardResolver } from './../dashboard/dashboard.resolver';
+import { DashboardModule } from './../dashboard/dashboard.module';
+import { DashboardWidgetResolver } from './../dashboard/dashboard-widget/dashboard-widget.resolver';
+import { DashboardWidgetModule } from './../dashboard/dashboard-widget/dashboard-widget.module';
 
 /**
  * Resolvers the platform itself ships.
@@ -108,6 +119,22 @@ const CORE_RESOLVERS: Array<Type<any>> = [
 	// The party records an order, an invoice and a subscription all point at — the customer and the
 	// organization's own contact row — are declared by their own modules and scanned from them; see
 	// `additional-resolver-modules.ts` for why the host cannot import them.
+	//
+	// The access-control resource beside the kernel's own role, and the payment ledger every invoice,
+	// payroll run and expense on this platform records what it was paid with.
+	RolePermissionResolver,
+	PaymentResolver,
+	// What the platform sends and how a message is composed. The reset flow beside it is scanned from its
+	// own module: it imports the user, employee, auth and email-send zones, which the host cannot take on.
+	EmailTemplateResolver,
+	// The reads a seller, a finance operator and an administrator ask for: the report catalogue and the
+	// widgets a dashboard is assembled from. The aggregates over the platform's own records are scanned
+	// from their own module instead — `StatsModule` reads across employees, teams, tenants, users,
+	// invoices, payments, tasks and tracked time at once, so it sits in the middle of every one of those
+	// graphs and cannot be pulled into the barrel that is already inside them.
+	ReportResolver,
+	DashboardResolver,
+	DashboardWidgetResolver
 ];
 
 /**
@@ -186,6 +213,14 @@ const CORE_RESOLVER_MODULES: Array<Type<any>> = [
 	// protects — so the module that hosts these resolvers has to reach the feature service itself.
 	FeatureModule,
 	TenantSettingModule,
+	// The access-control, payment, messaging and reporting domains. Each is imported because a module's
+	// imports are not inherited: the module that hosts a resolver has to reach the services it calls.
+	RolePermissionModule,
+	PaymentModule,
+	EmailTemplateModule,
+	ReportModule,
+	DashboardModule,
+	DashboardWidgetModule,
 ];
 
 /**

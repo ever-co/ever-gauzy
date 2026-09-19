@@ -1,0 +1,111 @@
+# The report catalogue's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered REST routes already serve, reaching the same service method
+# or the same find-or-create the route reaches, so a client that reads the catalogue over one protocol
+# is not given a narrower or a wider one than the client that reads it over the other. The routes are
+# served by two controllers of one module — `ReportController` under `/api/report` and
+# `ReportCategoryController` under `/api/report/category` — and this surface states both, because a
+# client assembling a menu reads the headings and the reports together.
+#
+# **Neither controller declares a guard or a permission.** The report catalogue is reference data the
+# platform seeds and every authenticated screen reads, and the two controllers carry no `@UseGuards`,
+# no `@Permissions` and no `Public()` marker: nothing refuses a caller, and nothing in particular
+# admits one either. This surface mirrors exactly that — the resolver states no permission and no
+# authorization guard, and it does **not** state `@Public()` either, because `@Public()` is a
+# deliberate claim a route makes and inventing it here would state an openness decision the catalogue
+# has not taken. The one guard this surface adds is the GraphQL capability's own, and it is stated so
+# that the endpoint's switch reaches these fields like every other.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST surface
+# speaks — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers
+# with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over
+# one surface resumes on the other.
+#
+# **The menu sub-route is a filter of this connection, not a second root field.** `GET
+# /api/report/menu-items` answers the reports of one organization that have an enabled menu row —
+# which is the same rows the list returns, narrowed. That narrowing is
+# `filter: { showInMenu: { eq: true } }`, evaluated over the very rows the delivered list computed the
+# flag on, so the two routes are one capability stated once rather than two surfaces that could come
+# to disagree about which reports a menu holds.
+#
+# **`organizationId` is an argument of the list, and it is the route's own query parameter rather than
+# an invention.** The delivered read joins the menu rows of one organization and sets `showInMenu` from
+# that join; it cannot answer the menu question without being told which organization's menu is being
+# asked about, and `GET /api/report` binds exactly this member from its query string. It is not a
+# filter member because the catalogue row carries no organization column for a filter to be evaluated
+# against — the organization is a dimension of the menu row, not of the report. A caller that names no
+# organization is answered the way the route answers it: every row with `showInMenu: false`. The update
+# below states the organization for the same reason, and there it is required, because the write
+# cannot resolve a menu row without it.
+#
+# There is no node field, and that is the delivery rather than an omission: neither controller serves a
+# `GET /:id`. One report is this connection narrowed by `slug` or by `id` — a filter rather than a
+# second root field, because a second root field for one row of the same set is a second surface that
+# could disagree with this one. There is no count field either, for the same reason: neither controller
+# serves a `GET /count`.
+#
+# The one mutation is the menu write. Neither controller serves a create, an update or a removal for a
+# report or a category — those rows are the platform's own seeded reference data, and the path that
+# maintains them is the seeding and migration path that owns them — so this surface states no mutation
+# for them. A mutation here would be a capability the REST surface does not have, which is the one
+# thing this surface may not invent.
+
+extend type Query {
+	"""
+	The reports of the platform's catalogue, and whether the named organization's menu shows each one.
+
+	Omit `organizationId` and every row answers `showInMenu: false`, which is the answer the delivered
+	read gives the same query string. The reports the menu shows are this field narrowed to
+	`filter: { showInMenu: { eq: true } }`, which is the delivered `GET /api/report/menu-items` route
+	stated as a filter of the one list rather than as a second root field.
+	"""
+	reports(
+		"The organization whose menu is being read. Omitting it answers `showInMenu: false` throughout."
+		organizationId: ID
+		filter: ReportFilter
+		sort: [ReportSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ReportConnection!
+
+	"""
+	The headings of the report catalogue.
+
+	The categories a report may be filed under, which is the other half of the menu a client assembles.
+	"""
+	reportCategories(
+		filter: ReportCategoryFilter
+		sort: [ReportCategorySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ReportCategoryConnection!
+}
+
+extend type Mutation {
+	"""
+	Switches a report on or off in an organization's menu.
+
+	The delivered write is a find-or-create: it looks the menu row up by the report and the
+	organization of the caller's tenant and saves the stated flag onto it, and it creates the row when
+	there is none. The answer is that row, so a caller that switched a report on reads back the
+	membership it just wrote rather than a statement about the write.
+
+	A body that names no report or no organization is refused by the delivered write with a `400`, which
+	is why both members are required here: an input that let a caller omit them would let it make a
+	request the route can only refuse.
+	"""
+	updateReportMenu(input: UpdateReportMenuInput!): ReportOrganization!
+}

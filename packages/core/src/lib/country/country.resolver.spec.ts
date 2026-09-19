@@ -461,16 +461,18 @@ describe('CountryResolver — one resource, two protocols, the same read', () =>
 });
 
 describe('CountryResolver — the guard stack and the permission are the controller’s', () => {
-	it('guards the resolver the way the controller is guarded, plus the gate', () => {
+	it('guards the resolver the way the controller is guarded, and carries no gate', () => {
 		const resolverGuards = Reflect.getMetadata('__guards__', CountryResolver) ?? [];
 		const controllerGuards = Reflect.getMetadata('__guards__', CountryController) ?? [];
 
-		// The delivered route is public reference data: the controller declares no guard, so a scope
-		// guard here would refuse a caller REST serves. The one guard the resolver carries is the gate
-		// on the endpoint itself — the catalogue's capability, not a scope — and it narrows nothing of
-		// what the route serves.
+		// The delivered route is public reference data: the controller declares no guard, so no guard
+		// belongs here — a scope guard would refuse a caller REST serves, and the *gate* is refused for a
+		// different reason: it is tenant-scoped, a `@Public()` handler runs without the tenant context it
+		// reads, and a country is installation-wide data whose table has no tenancy column at all. The
+		// exemption is recorded, with this reason, in the check that holds the rule for every other
+		// resolver (`tools/scripts/graphql-feature-gate-check.mjs`).
 		expect(controllerGuards).toEqual([]);
-		expect(resolverGuards).toEqual([FeatureFlagGuard]);
+		expect(resolverGuards).toEqual([]);
 	});
 
 	it('states the controller’s own public marker, because the openness is the controller’s declaration', () => {
@@ -543,28 +545,30 @@ function graphqlContext(field: string): ExecutionContext {
 	} as unknown as ExecutionContext;
 }
 
-describe('CountryResolver — a capability that is switched off is not served', () => {
-	it('declares the capability the commerce catalogue declares for this surface, on the class', () => {
-		// One statement, read by the guard with `getAllAndOverride` over the handler and then the class,
-		// so every field is behind it.
-		expect(Reflect.getMetadata(FEATURE_METADATA, CountryResolver)).toBe(FEATURE_GRAPHQL);
-		expect(Reflect.getMetadata('__guards__', CountryResolver)).toContain(FeatureFlagGuard);
+describe('CountryResolver — why this surface carries no feature gate', () => {
+	it('declares no capability on the class, because the question has no answer for reference data', () => {
+		// A country is installation-wide: the row carries no tenant and the table no tenancy column, so
+		// there is no scope whose rows could give a different answer — and the gate reads the caller's
+		// scope, which a public handler does not establish.
+		expect(Reflect.getMetadata(FEATURE_METADATA, CountryResolver)).toBeUndefined();
+		expect(Reflect.getMetadata('__guards__', CountryResolver) ?? []).not.toContain(FeatureFlagGuard);
 	});
 
-	it('refuses a field whose capability is switched off, and names the field it refused', async () => {
+	it('is still refused by the gate when the gate is asked with the scope it reads — the behaviour the exemption exists for', async () => {
 		const { guard, featureService } = gate(false);
 
 		const refusal = await guard.canActivate(graphqlContext('countries')).catch((thrown) => thrown);
 
-		// The code the guard resolved is the one this resolver declared, not a second copy of it.
+		// A `@Public()` handler runs without the tenant guard that establishes the context the gate reads,
+		// so a gate installed here answered "disabled" for every caller — including the tenants that have
+		// the capability switched on. That is the observation this case pins, and the reason the exemption
+		// is recorded rather than the decorator being restored.
 		expect(featureService.isFeatureEnabled).toHaveBeenCalledWith(FEATURE_GRAPHQL);
 		expect(refusal).toBeInstanceOf(NotFoundException);
-		// A disabled capability answers the way a missing one does, and says which field was refused.
-		expect((refusal as Error).message).toContain('countries');
 		expect((refusal as NotFoundException).getStatus()).toBe(404);
 	});
 
-	it('serves the field once the capability is switched on', async () => {
+	it('serves the field when the capability resolves on, which is what an installation with the code on gets', async () => {
 		const { guard } = gate(true);
 
 		await expect(guard.canActivate(graphqlContext('countries'))).resolves.toBe(true);

@@ -1,0 +1,165 @@
+# The email template domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/email-template` routes already serve, under the same
+# guard chain and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other. The controller
+# states no permission on any of its handlers — the class carries one, and
+# `PermissionGuard` reads the handler and then the class — so every field here states the class's one,
+# including the two lifecycle fields whose routes the controller inherits from the CRUD base.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other.
+#
+# **The connection mirrors `GET /email-template`, and not its `/pagination` sibling**, because those
+# two routes do not answer the same rows: `GET /` reads the caller's own copies *and* the
+# organization-less copies the whole tenant falls back to, while `/pagination` binds the query string
+# straight to the store and answers the caller's own copies alone. A paginated spelling of a smaller
+# set is a different capability rather than a second page of this one, and the connection's own
+# `limit`/`offset` already are the page the larger read is sliced into.
+#
+# **The tenant predicate is the caller's own**, stated the way a well-formed REST request states it.
+# The delivered reader applies a tenant to its query only when the query DTO names one — the value it
+# substitutes is the credential's — and it always adds the copies that belong to no tenant at all beside
+# them. Naming the caller's tenant is therefore not a narrowing this surface invents: it is the
+# narrowing every client of the REST route sends, and the one that keeps one tenant's rows out of
+# another's page.
+#
+# **Two reads are not the list and are not narrowed lists.** `emailTemplateContent` mirrors
+# `GET /email-template/template`, which resolves what a message will actually say for a name, in a
+# language, for an organization, through the copy fallback; it answers a subject-and-source pair rather
+# than any row, so it is not a filter over the connection and cannot be one. `emailTemplatePreview`
+# mirrors `POST /email-template/template/preview`, which converts a document and writes nothing: it is
+# a `POST` because it carries a document in a body, not because it changes anything, and it dispatches a
+# query — so it is a field of `Query` here, and a client that must not repeat a write reads it on the
+# operation whose whole contract is that it has no effect.
+#
+# The count does have a field of its own, and it is a bare nullable `Int`: a number is not a connection,
+# and `totalCount` is not that number. The count route stamps the caller's tenant onto the criterion and
+# counts the rows that carry it, while the connection's total counts the rows the filters selected —
+# which include the copies belonging to no tenant at all. A client that reported one of the two as the
+# other would report a catalogue size that no read agrees with.
+
+extend type Query {
+	"""
+	The message parts of the caller's tenant, with the organization-less copies the whole tenant falls
+	back to, in the order of the address they are read by.
+	"""
+	emailTemplates(
+		filter: EmailTemplateFilter
+		sort: [EmailTemplateSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EmailTemplateConnection!
+
+	"""
+	One message part of the caller's tenant, or null when there is none.
+
+	The criterion is the delivered node route's own, and it is narrower than the list's: the row is read
+	under the caller's tenant, so a copy that belongs to no tenant — one the connection above answers —
+	has no node read at all. That asymmetry is the controller's, and resolving it on one surface only is
+	exactly what the two-protocol rule forbids; a caller that means such a copy states it as a filter.
+	"""
+	emailTemplate(id: ID!): EmailTemplate
+
+	"""
+	How many message parts the caller's tenant holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero — two facts a client that reports on
+	a message catalogue has to keep apart. The delivered count route binds its query string to the
+	store's own `where`, a shape no schema can state, so the field offers no narrowing of its own rather
+	than an argument the resolver could not pass on; what it counts is the rows stamped with the caller's
+	tenant, which is a smaller set than the connection's total — see the note above.
+	"""
+	emailTemplateCount: Int
+
+	"""
+	The subject text and the body source that will be used for one template, in one language, for one
+	organization — resolved through the delivered fallback: the organization's own copy of each part
+	first, then the tenant-wide copy, then the English copy of either.
+
+	The organization is required rather than optional. The delivered reader's first lookup names the
+	organization and the tenant together, and a lookup that named no organization would be answered with
+	the first matching copy of any organization — so the fallback to the tenant-wide copy is what this
+	field answers when the organization has no copy of its own, not what an omitted argument would
+	select.
+
+	`languageCode` defaults to the language the request names, exactly as the delivered route's `language`
+	header does, which is itself English when the request names none.
+	"""
+	emailTemplateContent(
+		"The template to resolve, without the `/subject` or `/html` surname."
+		name: String!
+		"The language to resolve it in. Defaults to the language of the request."
+		languageCode: String
+		"The organization to resolve it for."
+		organizationId: ID!
+	): EmailTemplateContent!
+
+	"""
+	Converts a document — MJML, Handlebars, or plain text — into the HTML a preview shows, with the
+	placeholders rendered from sample values.
+
+	Nothing is written and nothing is stored: the delivered route dispatches a query, and the conversion
+	is answered rather than kept.
+	"""
+	emailTemplatePreview(
+		"The document to convert."
+		data: String!
+	): EmailTemplatePreview!
+}
+
+extend type Mutation {
+	"""
+	Files one part of one message, with the body as the caller states it.
+
+	The part is addressed by `name` and `languageCode`, and an absent `organizationId` files the
+	tenant-wide copy every organization of the tenant is answered with. The delivered create compiles
+	nothing: a caller holding only MJML source wants `saveEmailTemplate` below, which stores the source
+	and derives the compiled body from it.
+	"""
+	createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
+
+	"""
+	Changes the facts of a message part that exists. A member the caller leaves out is left as it is, and
+	`organizationId: null` moves the copy to the tenant-wide one — see `UpdateEmailTemplateInput`.
+	"""
+	updateEmailTemplate(input: UpdateEmailTemplateInput!): EmailTemplate!
+
+	"""
+	Removes a message part outright. The copy is gone and nothing reads it back; the organization that
+	was falling back to it is answered by the copy above it in the chain, which is why a caller that
+	means "withdraw this copy" reaches for the soft removal below instead.
+	"""
+	deleteEmailTemplate(id: ID!): Boolean!
+
+	"""
+	Withdraws a copy without removing it: the row keeps its identifier and the delivered reads stop
+	answering it.
+	"""
+	softDeleteEmailTemplate(id: ID!): EmailTemplate!
+
+	"""
+	Puts a withdrawn copy back.
+	"""
+	recoverEmailTemplate(id: ID!): EmailTemplate!
+
+	"""
+	Saves both parts of one message for one language: the subject text and the MJML source of the body,
+	with the compiled body derived from the source.
+
+	This is the write the platform's own template editor reaches, and it is the only one that compiles —
+	`createEmailTemplate` and `updateEmailTemplate` store the columns they are given.
+	"""
+	saveEmailTemplate(input: SaveEmailTemplateInput!): EmailTemplate!
+}

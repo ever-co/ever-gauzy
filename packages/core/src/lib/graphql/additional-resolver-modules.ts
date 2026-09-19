@@ -3,7 +3,7 @@
  *
  * The host module (`graphql-api.module.ts`) imports the domain modules whose resolvers it hosts, which is
  * the ordinary arrangement: the resolver is a provider of the host, and the host reaches the services it
- * needs by importing them. Three domains are the exception, and for the same underlying reason — the host
+ * needs by importing them. Seven domains are the exception, and for the same underlying reason — the host
  * importing them pulls a zone into the core barrel's own evaluation that is not yet defined at that point.
  *
  * - `InvoiceModule` and `InvoiceItemModule` already sit in a service cycle with each other's neighbour, so
@@ -14,6 +14,9 @@
  *   module while the graph is still being built when the entry point is a token repository. Every spec that
  *   imports the application module enters exactly there, so the host importing them fails those specs
  *   before anything they test is loaded.
+ * - `UserModule`, `UserOrganizationModule` and `EmailResetModule` are the same zone by another road: a user
+ *   membership reaches the organization module, which reaches the channel module, which reaches the host
+ *   module — so the host importing one of them closes a circle it is already standing in.
  *
  * Their resolvers are therefore declared by their own modules, and naming those modules in the Apollo
  * `include` list is what makes the endpoint scan them where they live — the same arrangement a plugin's
@@ -33,6 +36,18 @@ export function resolveAdditionalResolverModules(): Function[] {
 		require('../invoice/invoice.module').InvoiceModule,
 		require('../invoice-item/invoice-item.module').InvoiceItemModule,
 		require('../contact/contact.module').ContactModule,
-		require('../organization-contact/organization-contact.module').OrganizationContactModule
+		require('../organization-contact/organization-contact.module').OrganizationContactModule,
+		// The identity zone: a user membership reaches the organization module, which reaches the
+		// channel module, which reaches the host module — and the host importing any of them closes the
+		// circle it is already inside. Their resolvers are declared by their own modules.
+		require('../user/user.module').UserModule,
+		require('../user-organization/user-organization.module').UserOrganizationModule,
+		// The reset flow imports the user, employee, auth and email-send modules, which is the same zone
+		// by another road.
+		require('../email-reset/email-reset.module').EmailResetModule,
+		// The aggregates read across the whole platform — employees, teams, tenants, users, invoices,
+		// payments, tasks and tracked time — so this module sits in the middle of every one of those
+		// graphs and cannot be pulled into the barrel that is already inside them.
+		require('../stats/stats.module').StatsModule
 	];
 }

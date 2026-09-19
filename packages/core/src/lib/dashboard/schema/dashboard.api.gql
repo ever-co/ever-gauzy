@@ -1,0 +1,122 @@
+# The dashboard domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/dashboard` routes already serve, reaching the same
+# `DashboardService` method or dispatching the same command the route dispatches, so a client that
+# works with dashboards over one protocol is not given a narrower or a wider one than the client that
+# works with them over the other.
+#
+# **The guard chain and the permissions are the controller's, read from its metadata and not
+# restated.** `DashboardController` declares `TenantPermissionGuard` and `PermissionGuard` on the
+# class together with `DASHBOARD_READ`, and each of the routes it defines states its own pair; the
+# four routes it inherits — the count, the paginated spelling of the list, the withdrawal and the
+# restoration — state nothing of their own and therefore run under the class-level read permission.
+# Each field below carries what its own route carries, which is why the two lifecycle mutations state
+# the *read* permission: that is the grant their routes actually run under, and stating the edit
+# permission here would widen the REST route's scope on this surface alone.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST surface
+# speaks — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers
+# with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over
+# one surface resumes on the other.
+#
+# The controller serves its list twice — `GET /` and the inherited `GET /pagination` — and the two
+# answer the same rows under the same filters, one of them sliced by `take`/`skip` and the other not.
+# That is one capability, so it is one root field: `dashboards`, mirroring `GET /`, which is the route
+# that reads the whole filtered set the connection protocol is applied to. A second root field for the
+# paginated spelling would be a second surface that could disagree with this one, and the connection's
+# own `limit`/`offset` already are the page it performs.
+#
+# `dashboardCount` takes no argument, and that is a statement rather than an omission: the inherited
+# count route binds its query string to the store's own `where`, which the connection protocol does
+# not speak, so the field states no narrowing of its own. It is nullable because the count its route
+# answers is — the delivered handler is typed `number | void` — and a non-null field answering nothing
+# would be a failure where the route answers a value.
+#
+# `deleteDashboard` answers a boolean rather than the store's delete result: what the delivered route
+# establishes is that the removal ran, and `{ affected }` is a statement about the write rather than a
+# row this surface could carry. The service's own refusals — a dashboard of another user is `403`, one
+# that is not there is `404` — travel as they do over REST.
+#
+# The widgets a dashboard is assembled from are their own resource with their own routes
+# (`/api/dashboard-widget`), and they are this domain's sibling resolver rather than fields here: the
+# widget controller is a controller of its own with its own guards and permissions, and mirroring it
+# under this type would state a second copy of them.
+#
+# The write inputs state the members the delivered DTOs state. The DTO's own validation runs in the
+# REST route's validation pipe and is not re-run here — the fields hand the same body to the same
+# command — so the guarantees both protocols share are the ones the service itself enforces: the
+# tenant stamped from the credential, and the ownership check that refuses an edit or a removal to
+# anyone but the dashboard's creator.
+
+extend type Query {
+	"""
+	The dashboards of the caller's tenant, the default one first.
+	"""
+	dashboards(
+		filter: DashboardFilter
+		sort: [DashboardSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): DashboardConnection!
+
+	"""
+	One dashboard of the caller's tenant, or null when there is none.
+
+	A dashboard that is not there answers `null` rather than a refusal: GraphQL has one answer for "no
+	such row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+	other protocol's vocabulary.
+	"""
+	dashboard(id: ID!): Dashboard
+
+	"""
+	How many dashboards the caller's tenant holds.
+	"""
+	dashboardCount: Int
+}
+
+extend type Mutation {
+	"""
+	Creates a dashboard.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller.
+	The delivered create also writes an activity-log entry for the row it created, which the field
+	inherits by dispatching the same command rather than by repeating the write.
+	"""
+	createDashboard(input: CreateDashboardInput!): Dashboard!
+
+	"""
+	Changes a dashboard that exists.
+
+	Only the user who created the dashboard may change it: the delivered service refuses everyone else
+	with a `403`, and the field inherits that refusal because it calls the same service. A body that
+	promotes this dashboard to be the default demotes the creator's other defaults in the same step.
+	"""
+	updateDashboard(input: UpdateDashboardInput!): Dashboard!
+
+	"""
+	Removes a dashboard outright.
+
+	Only the user who created the dashboard may remove it, on the same terms as the edit above. The
+	answer is whether the removal ran, which is the whole of what the delivered route establishes.
+	"""
+	deleteDashboard(id: ID!): Boolean!
+
+	"""
+	Withdraws a dashboard without removing it: the row keeps its identifier and stops being answered by
+	the list, and the restoration below brings it back.
+	"""
+	softDeleteDashboard(id: ID!): Dashboard!
+
+	"""
+	Puts a withdrawn dashboard back.
+	"""
+	recoverDashboard(id: ID!): Dashboard!
+}

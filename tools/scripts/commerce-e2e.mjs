@@ -88,7 +88,25 @@ const RESOURCES = [
 	{ path: '/api/organization-contact', capability: 'contact' },
 	// What a buyer is sent and what a seller is owed.
 	{ path: '/api/invoices', capability: 'invoice' },
-	{ path: '/api/invoice-item', capability: 'invoice' }
+	{ path: '/api/invoice-item', capability: 'invoice' },
+	// The actor every permission and every audit column names, and the membership that scopes a caller
+	// to one organization.
+	{ path: '/api/user', capability: 'identity' },
+	{ path: '/api/user-organization', capability: 'identity' },
+	// The access-control resources beside the kernel's own role.
+	{ path: '/api/roles', capability: 'access' },
+	{ path: '/api/role-permissions', capability: 'access' },
+	// The payment ledger an invoice, a payroll run and an expense all write through.
+	{ path: '/api/payments', capability: 'payment' },
+	// What the platform sends, and the reads an operator asks for.
+	{ path: '/api/email-template', capability: 'messaging' },
+	{ path: '/api/report', capability: 'reporting' },
+	{ path: '/api/dashboard', capability: 'reporting' },
+	{ path: '/api/dashboard-widget', capability: 'reporting' }
+	// 🛑 `/api/stats/global` is deliberately not swept. Its capability is an environment setting rather
+	// than a catalogue row — `FEATURE_OPEN_STATS=true`, which no toggle endpoint can switch on — so a
+	// sweep would report the deployment's own decision as a missing route. Its GraphQL field is gated by
+	// the same code, and `stats.resolver.spec.ts` pins that parity where the switch can be stated.
 ];
 
 /** Root fields the kernel itself must serve over the one GraphQL endpoint. */
@@ -369,7 +387,16 @@ async function main() {
 		'/api/tenant-setting': 'tenantSettings',
 		'/api/contact': 'contacts',
 		'/api/organization-contact': 'organizationContacts',
-		'/api/invoice-item': 'invoiceItems'
+		'/api/invoice-item': 'invoiceItems',
+		'/api/user': 'users',
+		'/api/user-organization': 'userOrganizations',
+		'/api/email-template': 'emailTemplates',
+		'/api/report': 'reports',
+		'/api/dashboard': 'dashboards',
+		'/api/dashboard-widget': 'dashboardWidgets',
+		// `roles` is the caller's own role — the kernel field the schema already had — so the tenant's
+		// role list is the field that answers this route's rows.
+		'/api/roles': 'tenantRoles'
 	};
 	// An alias key may also name a resource the sweep reads, so the two lists are unioned rather than
 	// concatenated: a resource in both is one check, not two.

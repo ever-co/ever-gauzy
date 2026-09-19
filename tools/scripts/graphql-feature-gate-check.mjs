@@ -68,14 +68,25 @@ const SHARED_CODE = 'FEATURE_GRAPHQL';
  * The list is keyed by the path relative to `packages/core/src/lib`, and each entry states the reason
  * in the same breath as the file, so nobody has to reconstruct it later.
  *
- * **It is empty, and that is the state to keep it in.** The two entries it held — the invoice resolver
- * and the invoice-item resolver, which were gated by the change that owns those domains rather than by
- * the wave that introduced this rule — have both landed, and the check now reports them as gated like
- * every other resolver. An entry added here is a decision to leave one resolver outside the gate, which
- * is a hole in the switch an operator reaches for; it belongs here only with a reason that says why the
- * hole cannot be closed.
+ * **It holds two entries, and both are reference data rather than tenant data.** The currency and country
+ * resolvers are `@Public()`: the platform's delivered routes for them are open, and a `@Public()` handler
+ * runs without the tenant guard that establishes the request context the gate reads. A gate installed on
+ * them therefore answered "disabled" for *every* caller — observed on a running installation, where the two
+ * surfaces were refused to a tenant that has the capability switched on — and the question has no answer
+ * for them anyway: both tables are installation-wide and carry no tenancy column, so there is no scope
+ * whose rows could disagree. An entry is a decision to leave one resolver outside the switch and belongs
+ * here only with a reason of that kind; a resolver over tenant data does not qualify.
  */
-const ALLOWED = new Map([]);
+const ALLOWED = new Map([
+	[
+		'currency/currency.resolver.ts',
+		'public reference data with no tenancy column: the gate is tenant-scoped and a @Public() handler has no scope to evaluate it against'
+	],
+	[
+		'country/country.resolver.ts',
+		'public reference data with no tenancy column: the gate is tenant-scoped and a @Public() handler has no scope to evaluate it against'
+	]
+]);
 
 /** Reads a file, or the empty string when it cannot be read. */
 function read(file) {

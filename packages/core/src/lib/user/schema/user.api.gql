@@ -1,0 +1,179 @@
+# The user's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/user` routes already serve, under the same guard chain
+# and with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other. The controller declares
+# thirteen routes of its own — the list, the paginated list, the count, one account, the current
+# account, an account by address, the creation, the edit, the removal, the tenant reset and the three
+# preference writes — and inherits the two lifecycle moves; every one of them is mirrored here except
+# the paginated list, whose page is what the connection answers with.
+#
+# **A field may not be narrower than its route, and one of these routes is not guarded at all.**
+# `GET /me` carries no `@UseGuards` and no `@Permissions`: the bootstrap's global authentication guard
+# is the whole of its scope, because the account a caller may read is the one its own credential names,
+# so there is no second scope to state. `me` therefore states none either, and the resolver class
+# carries no tenant or permission guard — the controller carries neither at class level, and a
+# resolver that added one would refuse GraphQL callers the REST route serves. Every other field states
+# exactly what its own route states: the two protocol guards with the permission the handler declares,
+# or the tenant guard alone where that is all the route has.
+#
+# No class-level permission covers any of these handlers, so each field states its own rather than
+# repeating one scope from the class: the reads and the removal carry one permission, the creation and
+# the edit another, the three preference writes and the two inherited lifecycle moves carry none at
+# all, and the reset carries the one that may erase a tenant's data.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `GET /pagination` has no field of its own: it answers
+# the same rows under the same filters, sliced, and the page is what the connection answers with.
+#
+# **A question these fields cannot ask is reported rather than faked.** `GET /me` accepts
+# `includeEmployee`, `includeOrganization` and a `relations` list, and no field here offers them: the
+# members they add are a relation the delivered read joins only when a caller names it, and no
+# `Employee` type exists in this schema to answer one with — an argument whose effect is invisible is
+# worse than an argument that is absent. The employee a user is is read from the employee domain by
+# `userId`, which is where the delivered join starts from too.
+#
+# The reset is stated as a field because the route delivers it, under the permission the route carries
+# and no other: erasing a tenant's data is a capability the REST surface already grants to whoever
+# holds it, and leaving it off this surface would make GraphQL the narrower protocol rather than the
+# safer one.
+
+extend type Query {
+	"""
+	The accounts of the caller's tenant, newest first.
+	"""
+	users(
+		filter: UserFilter
+		sort: [UserSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): UserConnection!
+
+	"""
+	One account of the caller's tenant, or null when there is none.
+	"""
+	user(id: ID!): User
+
+	"""
+	One account of the caller's tenant, by the address it signs in with, or null when there is none.
+
+	The address is how an operator reaches an account whose identifier they do not hold, and the read
+	behind this field is the platform's own address look-up — the method the route calls, under the
+	guards and the permission the route carries, so the scope it runs in is the route's rather than a
+	second one stated here.
+	"""
+	userByEmail(email: String!): User
+
+	"""
+	The account the caller's own credential names.
+
+	Deliberately unguarded beyond authentication: reading the account one is already signed in as is not
+	a capability a permission grants, and the route this mirrors states none. The answer is never null —
+	the credential that reached this field is the proof the row exists — so a non-null field is the
+	honest shape rather than a convenience.
+	"""
+	me: User!
+
+	"""
+	How many accounts the caller's tenant holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero. The delivered count route binds its
+	query string to the store's own `where`, a shape no schema can state, so the field offers no
+	narrowing of its own rather than an argument the resolver could not pass on.
+	"""
+	userCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files an account.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller.
+	The role is resolved from the database rather than trusted from the body, and granting one the caller
+	may not grant is refused by the delivered handler rather than here.
+	"""
+	createUser(input: CreateUserInput!): User!
+
+	"""
+	Edits an account that exists.
+
+	The same write the delivered route performs, with the identifier in both places the route carries it
+	— the path and the body — because the service reads the body's. The delivered service answers the
+	row it read back after the write, so this field answers a row and not the store's update result.
+	"""
+	updateUser(input: UpdateUserInput!): User!
+
+	"""
+	Writes the caller's own preferred language.
+
+	The account written is the caller's: the route carries no identifier and the service takes the one
+	the credential names, so this field cannot be pointed at anybody else. The delivered route answers
+	the store's update result — a statement about the write rather than a row — so the answer here is the
+	caller's own row read back, which is the fact a client asked for.
+	"""
+	updatePreferredLanguage(preferredLanguage: String!): User!
+
+	"""
+	Writes the caller's own preferred list layout, for the same reason and with the same answer as the
+	language above.
+	"""
+	updatePreferredComponentLayout(preferredComponentLayout: String!): User!
+
+	"""
+	Merges one or more per-feature interface patches into the caller's own stored preferences and answers
+	the result.
+
+	The patch is a document keyed by feature — a feature that is already stored keeps every key the patch
+	does not name, and a feature stated as null is removed — so it is carried as the kernel's `JSON`
+	scalar rather than as an input object: a free-form map keyed by feature is not a shape an input type
+	can state, and an input type that listed today's feature keys would refuse tomorrow's.
+	"""
+	updateUserUiPreferences(patch: JSON!): JSON!
+
+	"""
+	Removes an account outright.
+
+	Answering whether the removal happened rather than the removed row: the delivered route answers the
+	store's delete result, which is a statement about the write. The delivered service refuses a caller
+	that names somebody else's account unless it holds the permission that may, so the check is not
+	restated here.
+	"""
+	deleteUser(id: ID!): Boolean!
+
+	"""
+	Withdraws an account without removing it: the row keeps its identifier, and the recovery below reads
+	it back. The answer is the row as it now stands, which is what the delivered route answers with.
+	"""
+	softDeleteUser(id: ID!): User!
+
+	"""
+	Puts a withdrawn account back, clearing the marker the withdrawal set.
+	"""
+	recoverUser(id: ID!): User!
+
+	"""
+	Erases the caller's data from every table of the tenant and leaves them in their first organization.
+
+	**This is not a withdrawal.** The delivered service deletes the rows of every organization the caller
+	belongs to except the first — including the rows of other people that belong to those organizations
+	— and clears the caller's own third-party identity and preferences. It is refused outright in a demo
+	environment. The field exists because the route delivers it and carries the same permission the
+	route carries; nothing about reaching it over this protocol is wider than reaching it over the other.
+
+	The delivered route answers the organization the caller is left in, which is a type this schema does
+	not declare, so the field answers whether the reset happened. The organization itself is read from
+	the organization's own surface.
+	"""
+	factoryReset: Boolean!
+}

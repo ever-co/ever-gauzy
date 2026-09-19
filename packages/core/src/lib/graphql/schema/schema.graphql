@@ -64,6 +64,105 @@ type Query {
   currencies(filter: CurrencyFilter, sort: [CurrencySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CurrencyConnection!
 
   """
+  The widgets of the caller's tenant, in the order the dashboards place them.
+  """
+  dashboardWidgets(filter: DashboardWidgetFilter, sort: [DashboardWidgetSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): DashboardWidgetConnection!
+
+  """
+  One widget of the caller's tenant, or null when there is none.
+  
+  A placement that is not there answers `null` rather than a refusal: GraphQL has one answer for "no
+  such row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+  other protocol's vocabulary.
+  """
+  dashboardWidget(id: ID!): DashboardWidget
+
+  """How many widgets the caller's tenant holds."""
+  dashboardWidgetCount: Int
+
+  """The dashboards of the caller's tenant, the default one first."""
+  dashboards(filter: DashboardFilter, sort: [DashboardSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): DashboardConnection!
+
+  """
+  One dashboard of the caller's tenant, or null when there is none.
+  
+  A dashboard that is not there answers `null` rather than a refusal: GraphQL has one answer for "no
+  such row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+  other protocol's vocabulary.
+  """
+  dashboard(id: ID!): Dashboard
+
+  """How many dashboards the caller's tenant holds."""
+  dashboardCount: Int
+
+  """
+  The message parts of the caller's tenant, with the organization-less copies the whole tenant falls
+  back to, in the order of the address they are read by.
+  """
+  emailTemplates(filter: EmailTemplateFilter, sort: [EmailTemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmailTemplateConnection!
+
+  """
+  One message part of the caller's tenant, or null when there is none.
+  
+  The criterion is the delivered node route's own, and it is narrower than the list's: the row is read
+  under the caller's tenant, so a copy that belongs to no tenant — one the connection above answers —
+  has no node read at all. That asymmetry is the controller's, and resolving it on one surface only is
+  exactly what the two-protocol rule forbids; a caller that means such a copy states it as a filter.
+  """
+  emailTemplate(id: ID!): EmailTemplate
+
+  """
+  How many message parts the caller's tenant holds.
+  
+  Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+  non-null field would turn "not answered" into a fabricated zero — two facts a client that reports on
+  a message catalogue has to keep apart. The delivered count route binds its query string to the
+  store's own `where`, a shape no schema can state, so the field offers no narrowing of its own rather
+  than an argument the resolver could not pass on; what it counts is the rows stamped with the caller's
+  tenant, which is a smaller set than the connection's total — see the note above.
+  """
+  emailTemplateCount: Int
+
+  """
+  The subject text and the body source that will be used for one template, in one language, for one
+  organization — resolved through the delivered fallback: the organization's own copy of each part
+  first, then the tenant-wide copy, then the English copy of either.
+  
+  The organization is required rather than optional. The delivered reader's first lookup names the
+  organization and the tenant together, and a lookup that named no organization would be answered with
+  the first matching copy of any organization — so the fallback to the tenant-wide copy is what this
+  field answers when the organization has no copy of its own, not what an omitted argument would
+  select.
+  
+  `languageCode` defaults to the language the request names, exactly as the delivered route's `language`
+  header does, which is itself English when the request names none.
+  """
+  emailTemplateContent(
+    """The template to resolve, without the `/subject` or `/html` surname."""
+    name: String!
+
+    """
+    The language to resolve it in. Defaults to the language of the request.
+    """
+    languageCode: String
+
+    """The organization to resolve it for."""
+    organizationId: ID!
+  ): EmailTemplateContent!
+
+  """
+  Converts a document — MJML, Handlebars, or plain text — into the HTML a preview shows, with the
+  placeholders rendered from sample values.
+  
+  Nothing is written and nothing is stored: the delivered route dispatches a query, and the conversion
+  is answered rather than kept.
+  """
+  emailTemplatePreview(
+    """The document to convert."""
+    data: String!
+  ): EmailTemplatePreview!
+
+  """
   The catalogue of capabilities of this installation, in the order the delivered parent route fixes
   for the same rows.
   """
@@ -166,6 +265,21 @@ type Query {
   paymentTerms: [PaymentTerm!]!
   paymentTerm(id: ID!): PaymentTerm
   paymentTermSchedule(id: ID!, total: String!, basisDate: String!, currencyDecimals: Int, currency: String): PaymentTermSchedule!
+
+  """The payments of the caller's tenant, newest movement first."""
+  payments(filter: PaymentFilter, sort: [PaymentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): PaymentConnection!
+
+  """
+  One payment of the caller's tenant, or null when there is none.
+  
+  A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+  row" on a field that may have none, and the REST route's `404` is that same fact stated in the other
+  protocol's vocabulary.
+  """
+  payment(id: ID!): Payment
+
+  """How many payments the caller's tenant holds."""
+  paymentCount: Int
 
   """
   The product categories of the caller's tenant, in the taxonomy's own sibling order.
@@ -297,8 +411,111 @@ type Query {
 
   """One region of the caller's organization, or null when there is none."""
   region(id: ID!): Region
+
+  """
+  The reports of the platform's catalogue, and whether the named organization's menu shows each one.
+  
+  Omit `organizationId` and every row answers `showInMenu: false`, which is the answer the delivered
+  read gives the same query string. The reports the menu shows are this field narrowed to
+  `filter: { showInMenu: { eq: true } }`, which is the delivered `GET /api/report/menu-items` route
+  stated as a filter of the one list rather than as a second root field.
+  """
+  reports(
+    """
+    The organization whose menu is being read. Omitting it answers `showInMenu: false` throughout.
+    """
+    organizationId: ID
+    filter: ReportFilter
+    sort: [ReportSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): ReportConnection!
+
+  """
+  The headings of the report catalogue.
+  
+  The categories a report may be filed under, which is the other half of the menu a client assembles.
+  """
+  reportCategories(filter: ReportCategoryFilter, sort: [ReportCategorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ReportCategoryConnection!
+
+  """
+  The role permissions the caller may read, in the catalogue's own order.
+  
+  The rows are the ones the delivered list reader answers for this caller — every row of the tenant
+  for a super administrator, every row but the super administrator's own for a holder of
+  `CHANGE_ROLES_PERMISSIONS`, and the acting role's own rows for anybody else — narrowed by `filter`
+  and paged by the connection protocol. The permissions of one role are this same field narrowed by
+  `roleId`, which is the narrowing the delivered route expresses through its own query string.
+  """
+  rolePermissions(filter: RolePermissionFilter, sort: [RolePermissionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): RolePermissionConnection!
+
+  """
+  One role permission of the caller's tenant, or null when there is none.
+  """
+  rolePermission(id: ID!): RolePermission
+
+  """
+  The permissions of the role the caller is acting in.
+  
+  This is the delivered `GET /role-permissions/me` read, and it is the one read of this resource that
+  asks for no permission: the route that serves it states an empty permission set, and the field
+  states the same one, so a caller that may not administer roles at all is still answered its own
+  rows. The rows are narrowed by the delivered reader to the enabled ones — a permission this role
+  does not carry is not answered here, which is what makes the answer usable as the list of what the
+  credential may do.
+  """
+  myRolePermissions: [RolePermission!]!
+
+  """
+  How many role permissions the caller's tenant has.
+  
+  The delivered count route's own answer: every row of the tenant, whatever role it belongs to and
+  whatever the caller may read through the list above — which is why the two numbers differ, and why
+  neither is a substitute for the other.
+  """
+  rolePermissionCount: Int
   roles: Role!
   role(id: ID!): Role
+
+  """
+  The roles of the caller's tenant.
+  
+  The order is the resource's own: by name, which is what a role is and what an administrator selects
+  between, with the identifier as the last key so the order is total and a cursor walk over it is
+  stable.
+  """
+  tenantRoles(filter: RoleFilter, sort: [RoleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): RoleConnection!
+
+  """
+  The role the delivered options look-up answers, or null when this tenant has none.
+  
+  `name` is the only member the route's own query DTO narrows by, and it defaults to the employee
+  role exactly as that DTO defaults it, because that default is what the route answers a caller that
+  states nothing. The answer is one role rather than a page of them, which is why this is a field of
+  its own and not a filter on the connection above — see the note at the top of this document.
+  """
+  roleByOptions(name: String): Role
+
+  """How many roles the caller's tenant has."""
+  roleCount: Int
+
+  """
+  The platform's own aggregates: how much of everything this installation holds.
+  
+  The answer is computed on the request from the records the other domains own, so it is a document
+  of totals rather than a row. It carries no argument: there is nothing to narrow, order or page.
+  
+  The delivered read is scoped by the caller's own credential where there is one — the services it
+  aggregates apply the tenant of the request context — and covers the installation's whole tables
+  where there is none, which is the state a public caller is in. This field inherits that behaviour
+  rather than restating it, because it makes the same call the route makes.
+  """
+  globalStats: GlobalStats!
 
   """The tag types of the caller's tenant."""
   tagTypes(filter: TagTypeFilter, sort: [TagTypeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): TagTypeConnection!
@@ -349,6 +566,70 @@ type Query {
 
   """The UI flavour this tenant's users are served."""
   tenantUiPreferences: TenantUiPreferences!
+
+  """The memberships of the caller's tenant, newest first."""
+  userOrganizations(filter: UserOrganizationFilter, sort: [UserOrganizationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): UserOrganizationConnection!
+
+  """One membership of the caller's tenant, or null when there is none."""
+  userOrganization(id: ID!): UserOrganization
+
+  """
+  How many memberships the caller's tenant holds.
+  
+  Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+  non-null field would turn "not answered" into a fabricated zero. The delivered count route binds its
+  query string to the store's own `where`, a shape no schema can state, so the field offers no
+  narrowing of its own rather than an argument the resolver could not pass on.
+  """
+  userOrganizationCount: Int
+
+  """
+  How many organizations the person of one membership belongs to.
+  
+  The delivered route takes the membership's identifier, reads the row, and counts the live
+  memberships the account it names holds — so the answer is a fact about the person, asked from the
+  membership, which is why it is a field of its own and not a filter on the connection above. A
+  membership that is not there is refused rather than answered as a zero: the delivered route raises
+  instead of returning, and this field carries the same refusal through rather than flattening a
+  missing row into a count of nothing.
+  """
+  userOrganizationOrganizationsCount(userOrganizationId: ID!): Int
+
+  """The accounts of the caller's tenant, newest first."""
+  users(filter: UserFilter, sort: [UserSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): UserConnection!
+
+  """One account of the caller's tenant, or null when there is none."""
+  user(id: ID!): User
+
+  """
+  One account of the caller's tenant, by the address it signs in with, or null when there is none.
+  
+  The address is how an operator reaches an account whose identifier they do not hold, and the read
+  behind this field is the platform's own address look-up — the method the route calls, under the
+  guards and the permission the route carries, so the scope it runs in is the route's rather than a
+  second one stated here.
+  """
+  userByEmail(email: String!): User
+
+  """
+  The account the caller's own credential names.
+  
+  Deliberately unguarded beyond authentication: reading the account one is already signed in as is not
+  a capability a permission grants, and the route this mirrors states none. The answer is never null —
+  the credential that reached this field is the proof the row exists — so a non-null field is the
+  honest shape rather than a convenience.
+  """
+  me: User!
+
+  """
+  How many accounts the caller's tenant holds.
+  
+  Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+  non-null field would turn "not answered" into a fabricated zero. The delivered count route binds its
+  query string to the store's own `where`, a shape no schema can state, so the field offers no
+  narrowing of its own rather than an argument the resolver could not pass on.
+  """
+  userCount: Int
   collections(filter: CollectionFilter, page: PageInput, limit: Int, offset: Int): CollectionConnection!
   collection(id: ID!): Collection
   collectionBySlug(slug: String!): Collection
@@ -1000,6 +1281,138 @@ type Mutation {
   recoverContact(id: ID!): Contact!
 
   """
+  Places a widget on a dashboard.
+  
+  The delivered write resolves the tenant from the credential and the employee from the caller when the
+  body names none, and it writes an activity-log entry for the row it created, which the field inherits
+  by dispatching the same command rather than by repeating the write.
+  """
+  createDashboardWidget(input: CreateDashboardWidgetInput!): DashboardWidget!
+
+  """
+  Changes a placement that exists. A member the caller leaves out is left as it is.
+  """
+  updateDashboardWidget(input: UpdateDashboardWidgetInput!): DashboardWidget!
+
+  """
+  Removes a placement outright. The answer is whether the removal ran, which is the whole of what the
+  delivered route establishes.
+  """
+  deleteDashboardWidget(id: ID!): Boolean!
+
+  """
+  Withdraws a placement without removing it: the row keeps its identifier and stops being answered by
+  the list, and the restoration below brings it back.
+  """
+  softDeleteDashboardWidget(id: ID!): DashboardWidget!
+
+  """Puts a withdrawn placement back."""
+  recoverDashboardWidget(id: ID!): DashboardWidget!
+
+  """
+  Creates a dashboard.
+  
+  The tenant the new row belongs to is stamped from the credential and is never stated by the caller.
+  The delivered create also writes an activity-log entry for the row it created, which the field
+  inherits by dispatching the same command rather than by repeating the write.
+  """
+  createDashboard(input: CreateDashboardInput!): Dashboard!
+
+  """
+  Changes a dashboard that exists.
+  
+  Only the user who created the dashboard may change it: the delivered service refuses everyone else
+  with a `403`, and the field inherits that refusal because it calls the same service. A body that
+  promotes this dashboard to be the default demotes the creator's other defaults in the same step.
+  """
+  updateDashboard(input: UpdateDashboardInput!): Dashboard!
+
+  """
+  Removes a dashboard outright.
+  
+  Only the user who created the dashboard may remove it, on the same terms as the edit above. The
+  answer is whether the removal ran, which is the whole of what the delivered route establishes.
+  """
+  deleteDashboard(id: ID!): Boolean!
+
+  """
+  Withdraws a dashboard without removing it: the row keeps its identifier and stops being answered by
+  the list, and the restoration below brings it back.
+  """
+  softDeleteDashboard(id: ID!): Dashboard!
+
+  """Puts a withdrawn dashboard back."""
+  recoverDashboard(id: ID!): Dashboard!
+
+  """
+  Asks for the address on the caller's own account to be changed, and mails a code to the new address.
+  
+  The same service method the delivered route calls, with the same language: the route reads the
+  `language` request header, `RequestContext.getLanguageCode()` reads the same header off the same
+  request, and the mailed message is written in it.
+  
+  The answer says the request was received and says nothing else — not whether the address was already
+  taken, not whether the mail went out. A caller that learns either of those from this answer has
+  learned it about an address that may not be its own, which is what the delivered handler's own
+  `finally` prevents.
+  """
+  requestEmailReset(input: RequestEmailResetInput!): EmailResetOutcome!
+
+  """
+  Presents the code mailed to the new address.
+  
+  The same service method the delivered route calls. The account and the address it is being changed
+  from are read from the credential rather than stated, so the code is matched against the caller's own
+  attempt.
+  
+  The answer is the same acknowledgement the request answers with, and for the same reason: the
+  delivered handler answers it in a `finally`, so a caller cannot use this field to find out whether a
+  code was live, whether it matched, or whether the address had meanwhile been taken by somebody else.
+  """
+  verifyEmailReset(input: VerifyEmailResetInput!): EmailResetOutcome!
+
+  """
+  Files one part of one message, with the body as the caller states it.
+  
+  The part is addressed by `name` and `languageCode`, and an absent `organizationId` files the
+  tenant-wide copy every organization of the tenant is answered with. The delivered create compiles
+  nothing: a caller holding only MJML source wants `saveEmailTemplate` below, which stores the source
+  and derives the compiled body from it.
+  """
+  createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
+
+  """
+  Changes the facts of a message part that exists. A member the caller leaves out is left as it is, and
+  `organizationId: null` moves the copy to the tenant-wide one — see `UpdateEmailTemplateInput`.
+  """
+  updateEmailTemplate(input: UpdateEmailTemplateInput!): EmailTemplate!
+
+  """
+  Removes a message part outright. The copy is gone and nothing reads it back; the organization that
+  was falling back to it is answered by the copy above it in the chain, which is why a caller that
+  means "withdraw this copy" reaches for the soft removal below instead.
+  """
+  deleteEmailTemplate(id: ID!): Boolean!
+
+  """
+  Withdraws a copy without removing it: the row keeps its identifier and the delivered reads stop
+  answering it.
+  """
+  softDeleteEmailTemplate(id: ID!): EmailTemplate!
+
+  """Puts a withdrawn copy back."""
+  recoverEmailTemplate(id: ID!): EmailTemplate!
+
+  """
+  Saves both parts of one message for one language: the subject text and the MJML source of the body,
+  with the compiled body derived from the source.
+  
+  This is the write the platform's own template editor reaches, and it is the only one that compiles —
+  `createEmailTemplate` and `updateEmailTemplate` store the columns they are given.
+  """
+  saveEmailTemplate(input: SaveEmailTemplateInput!): EmailTemplate!
+
+  """
   Switches a capability on or off for a scope, and answers whether the write was performed.
   
   The answer is the delivered route's own: the command behind it reports success as a boolean rather
@@ -1187,6 +1600,58 @@ type Mutation {
   updatePaymentTerm(input: UpdatePaymentTermInput!): PaymentTerm!
   updatePaymentTermLines(input: UpdatePaymentTermLinesInput!): PaymentTerm!
   archivePaymentTerm(id: ID!): Boolean!
+
+  """
+  Records a money movement.
+  
+  The tenant the new row belongs to is stamped from the credential and is never stated by the caller,
+  so a payment cannot be written into a tenant the caller is not acting in. The amount is the exact
+  decimal the column stores, which is the one member the delivered body validation requires beside the
+  organization.
+  """
+  createPayment(input: CreatePaymentInput!): Payment!
+
+  """
+  Changes a movement that exists.
+  
+  The delivered edit reaches the same write the create does, carrying the identifier in the path and
+  the body together, so a member the caller leaves out is left as it is — see `UpdatePaymentInput`,
+  which also states what an identifier naming no row does. The delivered route relabels every failure
+  of this write as a bad request; this field answers the failure the service raised instead, so a
+  caller reads what actually happened rather than a label.
+  """
+  updatePayment(input: UpdatePaymentInput!): Payment!
+
+  """
+  Removes a movement outright.
+  
+  This is the hard removal, and it is the one to reach for only for a row recorded in error: the
+  capture and refund rows that point at a movement are the store's own to refuse or to cascade, and a
+  movement a document already accounts for is withdrawn instead.
+  """
+  deletePayment(id: ID!): Boolean!
+
+  """
+  Withdraws a movement without removing the row.
+  
+  The delivered list stops answering it and the rows that reference it keep resolving the identifier
+  they hold. The answer is the withdrawn row; it is recoverable until it is removed outright.
+  """
+  softDeletePayment(id: ID!): Payment!
+
+  """Puts a withdrawn movement back."""
+  recoverPayment(id: ID!): Payment!
+
+  """
+  Sends a receipt for one movement, as an email carrying the amount it acknowledges.
+  
+  The answer is the boolean the delivered dispatch answers, which is the whole of what the route
+  establishes: `true` once the message was handed to the mailer and `false` when the dispatch refused
+  it, which the delivered method reports rather than raising. The language and the origin are the
+  request's own headers, as they are on the route, so a caller cannot state one origin over one
+  protocol and a different one over the other.
+  """
+  sendPaymentReceipt(input: SendPaymentReceiptInput!): Boolean!
 
   """
   Files a category, with the text of every language the caller states for it.
@@ -1451,8 +1916,81 @@ type Mutation {
   ones left out are withdrawn in one transaction.
   """
   replaceRegionCountries(input: ReplaceRegionCountriesInput!): [RegionCountry!]!
+
+  """
+  Switches a report on or off in an organization's menu.
+  
+  The delivered write is a find-or-create: it looks the menu row up by the report and the
+  organization of the caller's tenant and saves the stated flag onto it, and it creates the row when
+  there is none. The answer is that row, so a caller that switched a report on reads back the
+  membership it just wrote rather than a statement about the write.
+  
+  A body that names no report or no organization is refused by the delivered write with a `400`, which
+  is why both members are required here: an input that let a caller omit them would let it make a
+  request the route can only refuse.
+  """
+  updateReportMenu(input: UpdateReportMenuInput!): ReportOrganization!
+
+  """
+  Adds a permission row for a role.
+  
+  The write is the delivered one, with its own refusal rules: nobody, not even a super
+  administrator, may grant themselves a permission through this field, and an administrator may not
+  touch the super administrator's own rows. Those rules are the service's, and it refuses here
+  exactly as it refuses over REST. The row is filed under the caller's tenant, which the service
+  stamps from the credential rather than reading from the input.
+  """
+  createRolePermission(input: CreateRolePermissionInput!): RolePermission!
+
+  """
+  Changes the permission a row names and whether the role carries it.
+  
+  The delivered route names the row in its path and carries the members in its body, and its service
+  applies the same refusal rules as the create above; the answer is the row the write produced, read
+  back through the same service, because the delivered result is the store's own statement about the
+  write rather than a row.
+  """
+  updateRolePermission(input: UpdateRolePermissionInput!): RolePermission!
+
+  """
+  Removes a role permission outright: the row is gone and nothing reads it back.
+  
+  The delivered removal applies the same rules the two writes above do — the super administrator's own
+  rows are refused — and that refusal is the service's rather than this field's.
+  """
+  deleteRolePermission(id: ID!): Boolean!
+
+  """
+  Withdraws a role permission without removing it: the row keeps its identifier, and the delivered
+  reads stop answering it, because every one of them excludes a row a withdrawal has marked.
+  """
+  softDeleteRolePermission(id: ID!): RolePermission!
+
+  """
+  Puts a withdrawn role permission back, clearing the marker the withdrawal set.
+  """
+  recoverRolePermission(id: ID!): RolePermission!
   createRole(input: CreateRoleInput!): Role!
   updateRole(input: UpdateRoleInput!): Role!
+
+  """
+  Removes a role outright.
+  
+  The delivered removal narrows its own criteria before it runs — a system role is not selected, and
+  neither is a name of the platform's own set — so this field does not pre-empt that rule: it reports
+  that the removal ran, which is the same fact the REST route states with its own result, and a
+  caller that must know whether a row went reads it back through `tenantRoles`.
+  """
+  deleteRole(id: ID!): Boolean!
+
+  """
+  Withdraws a role without removing it: the row keeps its identifier and the permission rows that
+  point at it keep resolving, and the delivered list stops answering it.
+  """
+  softDeleteRole(id: ID!): Role!
+
+  """Puts a withdrawn role back."""
+  recoverRole(id: ID!): Role!
 
   """Declares a group."""
   createTagType(input: CreateTagTypeInput!): TagType!
@@ -1556,6 +2094,130 @@ type Mutation {
 
   """Changes the UI flavour this tenant's users are served."""
   updateTenantUiPreferences(input: UpdateTenantUiPreferencesInput!): TenantUiPreferences!
+
+  """
+  Puts a person inside an organization.
+  
+  The tenant the new row belongs to is stamped from the credential and is never stated by the caller,
+  so a membership cannot be written into a tenant the caller is not acting in. Both identifiers are
+  required: a membership is the pivot between exactly two rows.
+  """
+  createUserOrganization(input: CreateUserOrganizationInput!): UserOrganization!
+
+  """
+  Changes the flags of a membership that exists.
+  
+  The delivered edit is a partial column update against the identifier the path names, so a member the
+  caller leaves out is left as it is. The answer is the row the write produced, read back through the
+  same service: the delivered route answers the store's own update result — a statement about the
+  write — which is not a row and not what a field named `updateUserOrganization` may return.
+  """
+  updateUserOrganization(input: UpdateUserOrganizationInput!): UserOrganization!
+
+  """
+  Removes a person from an organization.
+  
+  The same command the REST route dispatches, and the delivered handler is deliberately more than a
+  row deletion: it removes the person outright when this was their last membership, refuses the
+  platform's own default accounts in a demo environment, and reserves removing a super administrator
+  for a super administrator. None of that is restated here — the command is the whole of it on both
+  protocols.
+  
+  Answering whether the removal happened rather than the removed row: which of the handler's two
+  outcomes occurred is not a row either way, and a client that needs the row reads it before the call.
+  """
+  deleteUserOrganization(id: ID!): Boolean!
+
+  """
+  Withdraws a membership without removing it: the row keeps its identifier, and the recovery below
+  reads it back. The answer is the row as it now stands, which is what the delivered route answers
+  with.
+  """
+  softDeleteUserOrganization(id: ID!): UserOrganization!
+
+  """
+  Puts a withdrawn membership back, clearing the marker the withdrawal set.
+  """
+  recoverUserOrganization(id: ID!): UserOrganization!
+
+  """
+  Files an account.
+  
+  The tenant the new row belongs to is stamped from the credential and is never stated by the caller.
+  The role is resolved from the database rather than trusted from the body, and granting one the caller
+  may not grant is refused by the delivered handler rather than here.
+  """
+  createUser(input: CreateUserInput!): User!
+
+  """
+  Edits an account that exists.
+  
+  The same write the delivered route performs, with the identifier in both places the route carries it
+  — the path and the body — because the service reads the body's. The delivered service answers the
+  row it read back after the write, so this field answers a row and not the store's update result.
+  """
+  updateUser(input: UpdateUserInput!): User!
+
+  """
+  Writes the caller's own preferred language.
+  
+  The account written is the caller's: the route carries no identifier and the service takes the one
+  the credential names, so this field cannot be pointed at anybody else. The delivered route answers
+  the store's update result — a statement about the write rather than a row — so the answer here is the
+  caller's own row read back, which is the fact a client asked for.
+  """
+  updatePreferredLanguage(preferredLanguage: String!): User!
+
+  """
+  Writes the caller's own preferred list layout, for the same reason and with the same answer as the
+  language above.
+  """
+  updatePreferredComponentLayout(preferredComponentLayout: String!): User!
+
+  """
+  Merges one or more per-feature interface patches into the caller's own stored preferences and answers
+  the result.
+  
+  The patch is a document keyed by feature — a feature that is already stored keeps every key the patch
+  does not name, and a feature stated as null is removed — so it is carried as the kernel's `JSON`
+  scalar rather than as an input object: a free-form map keyed by feature is not a shape an input type
+  can state, and an input type that listed today's feature keys would refuse tomorrow's.
+  """
+  updateUserUiPreferences(patch: JSON!): JSON!
+
+  """
+  Removes an account outright.
+  
+  Answering whether the removal happened rather than the removed row: the delivered route answers the
+  store's delete result, which is a statement about the write. The delivered service refuses a caller
+  that names somebody else's account unless it holds the permission that may, so the check is not
+  restated here.
+  """
+  deleteUser(id: ID!): Boolean!
+
+  """
+  Withdraws an account without removing it: the row keeps its identifier, and the recovery below reads
+  it back. The answer is the row as it now stands, which is what the delivered route answers with.
+  """
+  softDeleteUser(id: ID!): User!
+
+  """Puts a withdrawn account back, clearing the marker the withdrawal set."""
+  recoverUser(id: ID!): User!
+
+  """
+  Erases the caller's data from every table of the tenant and leaves them in their first organization.
+  
+  **This is not a withdrawal.** The delivered service deletes the rows of every organization the caller
+  belongs to except the first — including the rows of other people that belong to those organizations
+  — and clears the caller's own third-party identity and preferences. It is refused outright in a demo
+  environment. The field exists because the route delivers it and carries the same permission the
+  route carries; nothing about reaching it over this protocol is wider than reaching it over the other.
+  
+  The delivered route answers the organization the caller is left in, which is a type this schema does
+  not declare, so the field answers whether the reset happened. The organization itself is read from
+  the organization's own surface.
+  """
+  factoryReset: Boolean!
   createCollection(input: CreateCollectionInput!): Collection!
   updateCollection(id: ID!, input: UpdateCollectionInput!): Collection!
   deleteCollection(id: ID!): Boolean!
@@ -3902,6 +4564,627 @@ input CurrencyFilter {
 }
 
 """
+One widget placed on a dashboard: what it renders, where it sits and how it is configured.
+"""
+type DashboardWidget {
+  id: ID!
+
+  """The widget's display name, as the dashboard prints it."""
+  name: String!
+
+  """The placement's position among the dashboard's widgets."""
+  order: Int
+
+  """The placement's size, in the units the dashboard's own grid uses."""
+  size: Int
+
+  """The colour the placement is rendered in."""
+  color: String
+
+  """
+  Whether the placement is shown. A hidden placement keeps its row and its configuration.
+  """
+  isVisible: Boolean
+
+  """
+  The placement's own settings. Its shape belongs to the widget the placement renders, so it travels
+  as the document it is.
+  """
+  options: JSON
+
+  """The dashboard the placement sits on."""
+  dashboardId: ID
+
+  """
+  The employee the placement is scoped to, stamped from the credential when the caller names none.
+  """
+  employeeId: ID
+
+  """The project the placement reports on, when it reports on one."""
+  projectId: ID
+
+  """The team the placement reports on, when it reports on one."""
+  organizationTeamId: ID
+  tenantId: ID
+  organizationId: ID
+
+  """
+  Whether the row is active. A removal sets `deletedAt`; it does not clear this flag.
+  """
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+
+  """
+  When the placement was withdrawn, or null while it is live. The two lifecycle routes write this alone.
+  """
+  deletedAt: DateTime
+}
+
+"""The boundary of one page of dashboard widgets."""
+type DashboardWidgetEdge {
+  node: DashboardWidget!
+  cursor: String!
+}
+
+"""
+One page of dashboard widgets, with the total the filters select and the boundary cursors.
+"""
+type DashboardWidgetConnection {
+  nodes: [DashboardWidget!]!
+  edges: [DashboardWidgetEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a widget list may be sorted by."""
+enum DashboardWidgetSortField {
+  createdAt
+  updatedAt
+  name
+  order
+  isVisible
+}
+
+"""
+The order the widgets are returned in. At most three keys are accepted.
+"""
+input DashboardWidgetSort {
+  field: DashboardWidgetSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a widget list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+`dashboardId` is the member a client assembles a dashboard's canvas with, which is the read this
+resource exists for: the widgets of one dashboard are this connection narrowed by that column rather
+than a second root field over the same rows.
+"""
+input DashboardWidgetFilter {
+  id: IDFilter
+  name: StringFilter
+  order: NumberFilter
+  size: NumberFilter
+  color: StringFilter
+  isVisible: BooleanFilter
+  options: JSONFilter
+  dashboardId: IDFilter
+  employeeId: IDFilter
+  projectId: IDFilter
+  organizationTeamId: IDFilter
+  tenantId: IDFilter
+  organizationId: IDFilter
+  isActive: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [DashboardWidgetFilter!]
+  or: [DashboardWidgetFilter!]
+  not: DashboardWidgetFilter
+}
+
+"""
+What a caller states when it places a widget.
+
+The members are the ones the delivered create DTO declares. The employee is stated only to place a
+widget for somebody else: the delivered write stamps the caller's own employee when the member is
+absent. The tenant is not a member — the write stamps the caller's own — and neither are the audit
+columns, which the platform's own bookkeeping owns.
+"""
+input CreateDashboardWidgetInput {
+  """The widget's display name."""
+  name: String!
+
+  """The position among the dashboard's widgets."""
+  order: Int
+  size: Int
+  color: String
+
+  """Whether the placement is shown."""
+  isVisible: Boolean
+
+  """The placement's own settings, as the widget's own document."""
+  options: JSON
+
+  """The dashboard to place the widget on."""
+  dashboardId: ID
+
+  """
+  The employee to place the widget for. Defaults to the caller's own employee.
+  """
+  employeeId: ID
+  projectId: ID
+  organizationTeamId: ID
+  organizationId: ID
+}
+
+"""
+What a caller states when it changes a placement that exists.
+
+The identifier is the path's, so it is stated once and only here. Every other member is optional, and
+**a member the caller leaves out is left as it is**: the delivered edit is the create's own service
+call carrying the identifier, which updates the columns the body names rather than replacing the row.
+"""
+input UpdateDashboardWidgetInput {
+  id: ID!
+  name: String
+  order: Int
+  size: Int
+  color: String
+  isVisible: Boolean
+  options: JSON
+  dashboardId: ID
+  employeeId: ID
+  projectId: ID
+  organizationTeamId: ID
+  organizationId: ID
+}
+
+"""
+One dashboard: a named arrangement of widgets, owned by the person who created it.
+"""
+type Dashboard {
+  id: ID!
+
+  """The dashboard's display name."""
+  name: String!
+
+  """
+  The dashboard's identifier, unique within the organization. It is what the layout and the personal
+  preferences are keyed by.
+  """
+  identifier: String!
+
+  """One line describing what the dashboard is for."""
+  description: String
+
+  """
+  The serialised layout: which widgets the dashboard shows, where they sit and what each is
+  configured with. Either document version the builder has shipped, carried through unchanged.
+  """
+  contentHtml: JSON
+
+  """
+  Whether this is the employee's default dashboard.
+  
+  At most one dashboard of one person is the default: the delivered update demotes the others in the
+  same step it promotes this one.
+  """
+  isDefault: Boolean!
+
+  """The employee the dashboard was built for."""
+  employeeId: ID
+  tenantId: ID
+  organizationId: ID
+
+  """
+  The user who created the dashboard. Only that user may change or remove it, which is what the
+  delivered service refuses everyone else with.
+  """
+  createdByUserId: ID
+
+  """
+  Whether the row is active. A removal sets `deletedAt`; it does not clear this flag.
+  """
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+
+  """
+  When the dashboard was withdrawn, or null while it is live. The two lifecycle routes write this alone.
+  """
+  deletedAt: DateTime
+}
+
+"""The boundary of one page of dashboards."""
+type DashboardEdge {
+  node: Dashboard!
+  cursor: String!
+}
+
+"""
+One page of dashboards, with the total the filters select and the boundary cursors.
+"""
+type DashboardConnection {
+  nodes: [Dashboard!]!
+  edges: [DashboardEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a dashboard list may be sorted by."""
+enum DashboardSortField {
+  createdAt
+  updatedAt
+  name
+  identifier
+  isDefault
+}
+
+"""
+The order the dashboards are returned in. At most three keys are accepted.
+"""
+input DashboardSort {
+  field: DashboardSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a dashboard list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`contentHtml` is filterable as a document, which is what the `JSON` kind's `contains` operator is for:
+a client asking which dashboards place a given widget asks it of the layout rather than of a column
+the dashboard does not have.
+"""
+input DashboardFilter {
+  id: IDFilter
+  name: StringFilter
+  identifier: StringFilter
+  description: StringFilter
+  contentHtml: JSONFilter
+  isDefault: BooleanFilter
+  employeeId: IDFilter
+  createdByUserId: IDFilter
+  tenantId: IDFilter
+  organizationId: IDFilter
+  isActive: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [DashboardFilter!]
+  or: [DashboardFilter!]
+  not: DashboardFilter
+}
+
+"""
+What a caller states when it creates a dashboard.
+
+The members are the ones the delivered create DTO declares, and two absences are deliberate.
+`isDefault` is excluded because the DTO excludes it — creation never promotes a dashboard — and it is
+the update that re-allows it. The tenant is excluded because the delivered service stamps the caller's
+own tenant onto the row; stating one here would promise a scope the write does not honour.
+"""
+input CreateDashboardInput {
+  """The dashboard's display name."""
+  name: String!
+
+  """The identifier the layout and the preferences are keyed by."""
+  identifier: String!
+  description: String
+
+  """
+  The serialised layout document, for a dashboard created with its arrangement already known.
+  """
+  contentHtml: JSON
+
+  """The employee the dashboard is built for."""
+  employeeId: ID
+
+  """The organization to file the dashboard under."""
+  organizationId: ID
+}
+
+"""
+What a caller states when it changes a dashboard that exists.
+
+The identifier is the path's, so it is stated once and only here. Every other member is optional, and
+**a member the caller leaves out is left as it is**: the delivered edit is the create's own service
+call carrying the identifier, which updates the columns the body names rather than replacing the row.
+"""
+input UpdateDashboardInput {
+  id: ID!
+  name: String
+  identifier: String
+  description: String
+  contentHtml: JSON
+
+  """
+  Whether this becomes the employee's default dashboard. Promoting one demotes the person's other
+  defaults in the same step, so at most one is ever default.
+  """
+  isDefault: Boolean
+  employeeId: ID
+  organizationId: ID
+}
+
+"""
+What the request and the verification both answer.
+
+The two members are always the same pair, and that is the design rather than an accident: the delivered
+handlers answer this shape in a `finally`, so a caller is told the request was received and is told
+nothing about what was done with it. A caller that could tell "the code was right" from "the code was
+wrong" by the answer alone could use this endpoint to probe which addresses exist and which codes are
+live, which is exactly what the shape exists to prevent.
+"""
+type EmailResetOutcome {
+  """
+  The status the delivered handler states in the body: `200` on both routes.
+  """
+  status: Int!
+
+  """
+  The message the delivered handler states in the body: `OK` on both routes.
+  """
+  message: String!
+}
+
+"""
+What a caller states when it asks for the address on its account to be changed.
+
+The subject of the request is not a member. Both delivered routes act on the caller — the user is read
+from the credential, never from the body — so an address is the only thing there is to state, and a
+member naming the account would promise a scope the write does not honour. The language the
+acknowledgement and the mailed code are written in is the request's own language rather than a member,
+exactly as the delivered route reads it from the `language` header.
+"""
+input RequestEmailResetInput {
+  """
+  The address the account is to be changed to. The code is mailed to this address.
+  """
+  email: String!
+}
+
+"""
+What a caller states when it presents the code mailed to the new address.
+
+The code is the only member for the same reason: the delivered read matches it against the caller's own
+address and identifier, so naming either of those would be naming something the write already knows.
+"""
+input VerifyEmailResetInput {
+  """The code mailed to the address the change was requested for."""
+  code: String!
+}
+
+"""One part of one message, in one language."""
+type EmailTemplate {
+  id: ID!
+
+  """
+  The address of the part: `<template>/<type>`, for example `password/html` or `password/subject`.
+  The surname is not decoration — the two parts of one message are two rows, and this member is how a
+  reader tells them apart.
+  """
+  name: String!
+
+  """The language this copy is written in."""
+  languageCode: String!
+
+  """
+  The label the delivered surface derives from `name` for display. It is nullable because it is not a
+  column: the entity produces it from `name` on load, and a row read through a path that does not run
+  that hook carries none.
+  """
+  title: String
+
+  """The compiled part: the text of a subject, or the HTML of a body."""
+  hbs: String!
+
+  """
+  The MJML source `hbs` was compiled from, or null on a part filed without one.
+  """
+  mjml: String
+
+  """
+  The tenant this copy belongs to, or null on a copy that belongs to no tenant at all.
+  """
+  tenantId: ID
+
+  """
+  The organization this copy belongs to, or null when it is the tenant-wide copy: the platform
+  answers an organization-less row to every organization of the tenant, and the copies seeded from the
+  platform's own template folder carry no organization and no tenant either. A caller states one with
+  `organizationId: { isNull: true }` in the filter below.
+  """
+  organizationId: ID
+
+  """
+  When the copy was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+  routes — the two removals this resource serves — and this column is the whole of what they write, so
+  without it a caller could not tell a live copy from a withdrawn one on the answer to the write that
+  withdrew it.
+  """
+  deletedAt: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+}
+
+"""The boundary of one page of templates."""
+type EmailTemplateEdge {
+  node: EmailTemplate!
+  cursor: String!
+}
+
+"""
+One page of templates, with the total the filters select and the boundary cursors.
+"""
+type EmailTemplateConnection {
+  nodes: [EmailTemplate!]!
+  edges: [EmailTemplateEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a template list may be sorted by."""
+enum EmailTemplateSortField {
+  createdAt
+  updatedAt
+  name
+  languageCode
+}
+
+"""
+The order the templates are returned in. At most three keys are accepted.
+"""
+input EmailTemplateSort {
+  field: EmailTemplateSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a template list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+**`organizationId: { isNull: true }` is how a caller states the tenant-wide copy.** Such a row is the
+copy the platform answers to every organization of its tenant, and a filter that could not say so
+would leave the row that decides what most messages actually say unstateable — which is why the member
+is an `IDFilter` rather than an `ID`.
+
+`tenantId` is filterable for the same reason in the other direction. The copies seeded from the
+platform's own template folder carry no tenant either, so `tenantId: { isNull: true }` separates the
+copy that belongs to no tenant at all from an organization-less copy a tenant filed for itself, and a
+caller that means one of the two no longer has to read both and guess. Neither key reaches outside the
+set the reader answered: the tenant a read runs under comes from the credential, never from a filter,
+so these two members narrow that set rather than widening it.
+
+`deletedAt` is deliberately absent: the delivered list read answers live rows only, so the column is
+absent on every row this connection holds and a condition on it could only ever be a condition no row
+matches. The member is carried on the object type because the two lifecycle writes answer the row they
+changed.
+"""
+input EmailTemplateFilter {
+  id: IDFilter
+  name: StringFilter
+  languageCode: StringFilter
+  tenantId: IDFilter
+  organizationId: IDFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [EmailTemplateFilter!]
+  or: [EmailTemplateFilter!]
+  not: EmailTemplateFilter
+}
+
+"""
+One message part as the delivered lookup answers it: the subject text and the body source that will be
+used for a name, in a language, for an organization.
+
+The two members are the two parts of one message, resolved separately and each through its own
+fallback: the organization's own copy of that part when it has one, then the tenant-wide copy, then the
+English copy of either. They are nullable because a part the fallback chain could not reach any row for
+is answered as no text at all rather than as a fabricated empty one — the difference between "this
+message has no body" and "this message has an empty body" is one a sender has to be able to see.
+"""
+type EmailTemplateContent {
+  """The text of the `<name>/subject` part of the message."""
+  subject: String
+
+  """
+  The MJML source of the `<name>/html` part — the source the platform compiles the HTML body from,
+  not the compiled HTML itself. It is null on a copy that was filed from a source carrying only the
+  compiled body.
+  """
+  template: String
+}
+
+"""
+A document converted for preview, as the delivered preview route answers it.
+"""
+type EmailTemplatePreview {
+  """
+  The document with its markup compiled and its placeholders rendered with sample values.
+  """
+  html: String!
+}
+
+"""
+What a caller states when it files a template part.
+
+The tenant is not a member: the tenant a row is written into comes from the credential on every write
+on this platform, and a member naming one would promise a scope the write does not honour.
+`organizationId` is a member and is nullable, because its absence is a statement rather than an
+omission — an absent organization files the tenant-wide copy the whole tenant falls back to.
+"""
+input CreateEmailTemplateInput {
+  """The address of the part: `<template>/<type>`."""
+  name: String!
+
+  """The language this copy is written in."""
+  languageCode: String!
+
+  """
+  The compiled part. The delivered create stores what it is given and compiles nothing, so a caller
+  holding only MJML source wants `saveEmailTemplate` rather than this field.
+  """
+  hbs: String!
+
+  """The MJML source, when the caller holds one."""
+  mjml: String
+
+  """
+  The organization the copy is filed for. Omit it to file the tenant-wide copy.
+  """
+  organizationId: ID
+}
+
+"""
+What a caller states when it edits a template part that exists.
+
+**A member that is absent is left as it is, and a member stated as null is written as null.** The
+delivered edit is a partial column update — the service writes the members it is given and touches no
+other column — so a body that omits `mjml` keeps the source that is there. GraphQL keeps the two apart
+for exactly this reason: omitting `organizationId` leaves the copy where it is, while stating
+`organizationId: null` moves it to the tenant-wide copy every organization of the tenant is answered
+with, which is a different request from saying nothing about it.
+"""
+input UpdateEmailTemplateInput {
+  id: ID!
+  name: String
+  languageCode: String
+  hbs: String
+  mjml: String
+  organizationId: ID
+}
+
+"""
+What a caller states when it saves a part of a message through the delivered save route.
+
+`subject` and `mjml` are the two halves that route compiles: `subject` is stored as the part's compiled
+text and `mjml` as its source, with the compiled body derived from the source. That is the difference
+between this write and `createEmailTemplate` above, which stores what it is given.
+"""
+input SaveEmailTemplateInput {
+  """
+  The template the part belongs to, without the `/subject` or `/html` surname.
+  """
+  name: String!
+  languageCode: String!
+
+  """The MJML source of the body. The compiled HTML is derived from it."""
+  mjml: String!
+
+  """The text of the subject part."""
+  subject: String!
+
+  """
+  The organization the parts are saved for. Omit it to write the tenant-wide copies.
+  """
+  organizationId: ID
+}
+
+"""
 One catalogue entry: a capability the platform can describe and a tenant can switch.
 
 The row is installation-wide — it has no tenant and no organization column — so the same entry is
@@ -5847,6 +7130,458 @@ input UpdatePaymentTermLinesInput {
   lines: [PaymentTermLineInput!]!
 }
 
+"""
+One money movement: what was paid, in which currency, against which document.
+"""
+type Payment {
+  id: ID!
+
+  """
+  The date the money moved. Null on a row written without one, which is a row no ledger order can place.
+  """
+  paymentDate: DateTime
+
+  """The amount that moved, in the row's own `currency`."""
+  amount: Decimal
+
+  """
+  The note kept with the movement, for the operator rather than for the payer.
+  """
+  note: String
+
+  """
+  The ISO 4217 code `amount` and the four lifecycle amounts below are expressed in.
+  """
+  currency: String!
+
+  """
+  How the money moved, as the contracts' own value: `BANK_TRANSFER`, `CASH`, `CHEQUE`,
+  `CREDIT_CARD`, `DEBIT` or `ONLINE`.
+  """
+  paymentMethod: String
+
+  """Whether the movement is past its due date."""
+  overdue: Boolean
+
+  """
+  The order this payment settles; null on a payment recorded against an invoice, an expense or a project instead.
+  """
+  orderId: ID
+
+  """The collection this payment belongs to, when it came from a checkout."""
+  paymentCollectionId: ID
+
+  """The session that produced it."""
+  paymentSessionId: ID
+
+  """The provider that processed it; null on a manual or offline payment."""
+  paymentProviderId: ID
+
+  """
+  Where the movement stands, as the kernel extension's own value — `CAPTURED` on an ordinary
+  recorded payment, and the other states the capture, cancellation and refund rows move it through.
+  It is derived from the amounts below and is never written by a caller, so it is not a member of any
+  write input on this surface.
+  """
+  status: String!
+
+  """
+  The provider's charge id. With `paymentProviderId` it is the key a repeated provider callback
+  collides on, which is what stops a duplicate callback from recording a second payment.
+  """
+  externalId: String
+
+  """The human reference printed on the statement or handed to the payer."""
+  reference: String
+
+  """
+  The amount the provider authorised; null on a manual payment, which has no authorisation step.
+  """
+  authorizedAmount: Decimal
+
+  """
+  The amount actually captured. On a provider-backed payment the delivered service keeps it equal to
+  `amount` once the row reaches `CAPTURED`, so the accounting figure and the provider's cannot
+  disagree.
+  """
+  capturedAmount: Decimal!
+
+  """The amount refunded against this payment."""
+  refundedAmount: Decimal!
+
+  """The amount of the authorisation released without capture."""
+  canceledAmount: Decimal!
+
+  """
+  The currency the provider settles this payment in; null means settlement is in the payment's own
+  currency, which is the ordinary case.
+  """
+  settlementCurrency: String
+
+  """
+  The amount settled, in `settlementCurrency`; null while `settlementCurrency` is null.
+  """
+  settlementAmount: Decimal
+
+  """
+  The rate applied at settlement: one unit of the payment's currency equals `fxRate` units of
+  `settlementCurrency`. It is a rate rather than an amount, and it is carried in the same exact family
+  because the column is `numeric(20,10)`: a binary fraction could not hold the scale it is stored at.
+  It is a snapshot, never re-derived from the exchange-rate table, so a later rate change cannot
+  rewrite what was settled.
+  """
+  fxRate: Decimal
+
+  """
+  The exchange-rate row the rate was read from, when it came from one; null for an identity
+  conversion and for a rate a provider quoted.
+  """
+  fxRateId: ID
+
+  """The instant the rate was taken, which is the instant the lookups ran."""
+  fxCapturedAt: DateTime
+
+  """When the authorisation was taken."""
+  authorizedAt: DateTime
+
+  """When the capture settled."""
+  capturedAt: DateTime
+
+  """When the authorisation was released."""
+  canceledAt: DateTime
+
+  """
+  Provider response fragments, card brand and last four, reconciliation notes.
+  """
+  metadata: JSON
+
+  """
+  The employee the movement is recorded against, as the identifier of the employee's own row.
+  """
+  employeeId: ID
+
+  """
+  The invoice the movement is applied against, as the identifier of the document's own row.
+  """
+  invoiceId: ID
+
+  """
+  The project the movement belongs to, as the identifier of the project's own row.
+  """
+  projectId: ID
+
+  """
+  The contact the movement is recorded against, as the identifier of the contact's own row.
+  """
+  organizationContactId: ID
+
+  """
+  When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+  routes — the two removals this resource serves — and this column is the whole of what they write, so
+  without it a caller could not tell a live row from a withdrawn one on the answer to the write that
+  withdrew it.
+  """
+  deletedAt: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+}
+
+"""The boundary of one page of payments."""
+type PaymentEdge {
+  node: Payment!
+  cursor: String!
+}
+
+"""
+One page of payments, with the total the filters select and the boundary cursors.
+"""
+type PaymentConnection {
+  nodes: [Payment!]!
+  edges: [PaymentEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields a payment list may be sorted by.
+
+The two timestamps are how a change is found again; `paymentDate` is the ledger's own order, which is
+the order a statement of movements is read in; `amount` is what a movement list is taken by; and
+`status` is offered because a work list is taken in status groups — the values sort as their spelling,
+which groups like with like.
+
+The flags and the identifiers are not sort keys: a boolean or an identifier order is not an order a
+ledger is read in, and the questions those columns answer are filters. The amounts other than `amount`
+are filtered rather than sorted for the same reason — a refund total is a question about one row, not
+an order for a page of them.
+"""
+enum PaymentSortField {
+  createdAt
+  updatedAt
+  paymentDate
+  amount
+  status
+}
+
+"""
+The order the payments are returned in. At most three keys are accepted.
+"""
+input PaymentSort {
+  field: PaymentSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a payment list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the set is what it is: the delivered list read
+answers those columns, so each one narrows rows the connection was handed. The amounts are stated
+through the decimal family, which is the family money is compared in; **the values are the row's own**,
+so an equality states the amount as the read produces it (`100.5`, not a padded string), while the
+range operators — which are what a ledger is actually searched with — need no such care.
+
+`deletedAt` is deliberately absent although the object carries it: the delivered list read answers live
+rows only, so a condition on that column could only ever match the empty set, and an argument that
+cannot be honoured is worse than an argument that is not offered. The tenant and the organization are
+absent for a different reason — both are applied to the criterion from the credential rather than from
+the caller, so a member here would suggest a scope decision the caller does not have.
+"""
+input PaymentFilter {
+  id: IDFilter
+  paymentDate: DateTimeFilter
+  amount: DecimalFilter
+  note: StringFilter
+  currency: StringFilter
+  paymentMethod: StringFilter
+  overdue: BooleanFilter
+  orderId: IDFilter
+  paymentCollectionId: IDFilter
+  paymentSessionId: IDFilter
+  paymentProviderId: IDFilter
+  status: StringFilter
+  externalId: StringFilter
+  reference: StringFilter
+  authorizedAmount: DecimalFilter
+  capturedAmount: DecimalFilter
+  refundedAmount: DecimalFilter
+  canceledAmount: DecimalFilter
+  settlementCurrency: StringFilter
+  settlementAmount: DecimalFilter
+  fxRate: DecimalFilter
+  fxRateId: IDFilter
+  fxCapturedAt: DateTimeFilter
+  authorizedAt: DateTimeFilter
+  capturedAt: DateTimeFilter
+  canceledAt: DateTimeFilter
+  metadata: JSONFilter
+  employeeId: IDFilter
+  invoiceId: IDFilter
+  projectId: IDFilter
+  organizationContactId: IDFilter
+  isArchived: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [PaymentFilter!]
+  or: [PaymentFilter!]
+  not: PaymentFilter
+}
+
+"""
+What a caller states when it records a money movement.
+
+`amount` is stated as the exact decimal and is the one member the delivered body validation requires
+beside the organization: the column is `numeric`, and a JSON number — which is what the REST body
+carries the same quantity as — is a binary fraction that cannot hold a cent.
+
+The organization is stated as an identifier and is *not* required, because the delivered validation
+requires an organization only when the body names neither the organization object nor a `sentTo` — and
+the object spelling is a type this schema does not declare, so the identifier is what this surface
+offers and the condition stays the delivered validator's rather than being restated as a non-null
+member that would refuse a body the route serves.
+"""
+input CreatePaymentInput {
+  """The amount that moved, in the currency below."""
+  amount: Decimal!
+
+  """The ISO 4217 code the amount is expressed in."""
+  currency: String
+
+  """The date the money moved."""
+  paymentDate: DateTime
+
+  """How the money moved."""
+  paymentMethod: String
+
+  """Whether the movement is past its due date."""
+  overdue: Boolean
+
+  """The note kept with the movement."""
+  note: String
+
+  """The organization the movement is filed under."""
+  organizationId: ID
+
+  """The employee the movement is recorded against."""
+  employeeId: ID
+
+  """The invoice the movement is applied against."""
+  invoiceId: ID
+
+  """The project the movement belongs to."""
+  projectId: ID
+
+  """The contact the movement is recorded against."""
+  organizationContactId: ID
+
+  """
+  The facets attached to the movement, by identifier. The pivot is written from these.
+  """
+  tagIds: [ID!]
+}
+
+"""
+What a caller states when it changes a movement that exists.
+
+**The delivered edit is the platform's own upsert, and it is reached through the same write the create
+is.** The route reads the row's identifier from the path, spreads the body beside it and calls the
+delivered create, so a member the caller leaves out is left as it is — the write touches the members
+the body states and no others — and two consequences follow from that same fact and are worth stating
+plainly:
+
+- An identifier that names a row of another tenant is refused outright, which is the ownership guard
+  the delivered write applies before it persists anything.
+- An identifier that names no row at all is **stored as a new row** rather than refused, because an
+  upsert is what the delivered write is. A client that means "change this movement" reads it first, or
+  reaches for the mutation above only with an identifier it obtained from this surface.
+
+`employeeId` is not a member, because the delivered edit body does not carry it — the delivered DTO
+drops that member on the edit and keeps it on the create.
+"""
+input UpdatePaymentInput {
+  id: ID!
+
+  """The amount that moved, in the currency below."""
+  amount: Decimal!
+
+  """The ISO 4217 code the amount is expressed in."""
+  currency: String
+
+  """The date the money moved."""
+  paymentDate: DateTime
+
+  """How the money moved."""
+  paymentMethod: String
+
+  """Whether the movement is past its due date."""
+  overdue: Boolean
+
+  """The note kept with the movement."""
+  note: String
+
+  """The organization the movement is filed under."""
+  organizationId: ID
+
+  """The invoice the movement is applied against."""
+  invoiceId: ID
+
+  """The project the movement belongs to."""
+  projectId: ID
+
+  """The contact the movement is recorded against."""
+  organizationContactId: ID
+
+  """
+  The facets attached to the movement, by identifier. The pivot is written from these.
+  """
+  tagIds: [ID!]
+}
+
+"""
+The recipient of a receipt, as the delivered dispatch reads the recipient off the invoice.
+
+Two members, and both are read: the address the message is sent to and the name it is addressed to.
+"""
+input PaymentReceiptContactInput {
+  """The address the receipt is sent to."""
+  primaryEmail: String!
+
+  """The name the receipt addresses."""
+  name: String!
+}
+
+"""
+The organization a receipt is issued by, as the delivered dispatch reads it.
+
+The three members are the three the delivered path reads off the posted organization: the two the
+message prints, and the tenant the delivery record the dispatch writes behind the receipt is filed
+under.
+"""
+input PaymentReceiptOrganizationInput {
+  """
+  The organization's own identifier, which the delivery record is filed against.
+  """
+  id: ID!
+
+  """The organization's name, which the receipt prints."""
+  name: String!
+
+  """The tenant the delivery record is filed under."""
+  tenantId: ID
+}
+
+"""
+What a receipt states about the document it settles.
+
+The number is carried in the same exact family the document's own numbering member is carried in, so
+the number a client read off the invoice is the number it states here without a conversion in between.
+"""
+input PaymentReceiptInvoiceInput {
+  """The number of the document the receipt is for."""
+  invoiceNumber: Decimal!
+
+  """The recipient the receipt is addressed to."""
+  toContact: PaymentReceiptContactInput!
+
+  """The organization the receipt is issued by."""
+  fromOrganization: PaymentReceiptOrganizationInput!
+}
+
+"""
+What a receipt states about the money it acknowledges.
+
+The amount is the exact decimal of the movement: it is the figure the receipt prints, and a receipt
+that prints a rounded figure acknowledges an amount that was never paid.
+"""
+input PaymentReceiptPaymentInput {
+  """The amount the receipt acknowledges."""
+  amount: Decimal!
+
+  """The ISO 4217 code the amount is printed in."""
+  currency: String!
+}
+
+"""
+What a caller states when it sends a receipt for one payment.
+
+The delivered route reads two facts from the request's own headers rather than from its body — the
+language the message is written in and the origin the link it carries is built from — and this surface
+reads the same two facts off the same request, so a receipt sent over either protocol is the same
+message. Nothing here states them, because a caller cannot state one origin over one protocol and a
+different one over the other.
+"""
+input SendPaymentReceiptInput {
+  """The document the receipt is for."""
+  invoice: PaymentReceiptInvoiceInput!
+
+  """The movement the receipt acknowledges."""
+  payment: PaymentReceiptPaymentInput!
+}
+
 """One node of the product taxonomy."""
 type ProductCategory {
   id: ID!
@@ -7300,6 +9035,360 @@ input ReplaceRegionCountriesInput {
   countries: [RegionCountryInput!]!
 }
 
+"""
+One report of the platform's catalogue: what a client offers, and whether this organization shows it.
+"""
+type Report {
+  id: ID!
+
+  """The report's display name, as the navigation prints it."""
+  name: String
+
+  """The URL-safe identity of the report, and how a route addresses it."""
+  slug: String
+
+  """One line describing what the report answers."""
+  description: String
+
+  """The stored image key. `imageUrl` is the URL a client renders."""
+  image: String
+
+  """
+  The URL the delivered subscriber resolves from `image` as the row is loaded.
+  """
+  imageUrl: String
+
+  """The icon class the navigation renders beside the name."""
+  iconClass: String
+
+  """
+  Whether the calling organization's menu shows this report.
+  
+  Computed by the delivered read from the organization's own menu row: `true` means an enabled,
+  active and unarchived menu row exists for it, and `false` means none does — including the case
+  where the caller named no organization at all, which is the answer the route gives that same
+  query string.
+  """
+  showInMenu: Boolean!
+
+  """
+  The category the report is filed under, by identifier. The categories are `reportCategories`.
+  """
+  categoryId: ID
+
+  """
+  Whether the catalogue row is active. No route of this resource writes it.
+  """
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""
+One category of the report catalogue: the heading a group of reports is listed under.
+"""
+type ReportCategory {
+  id: ID!
+
+  """The heading's display name."""
+  name: String
+
+  """The icon class the navigation renders beside the heading."""
+  iconClass: String
+
+  """
+  Whether the catalogue row is active. No route of this resource writes it.
+  """
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""
+One organization's menu row for one report: the pair that decides whether the report is offered.
+
+A row is not a report and not an organization — it is the membership between them, and it carries the
+flag the report list reads to compute `showInMenu`.
+"""
+type ReportOrganization {
+  id: ID!
+
+  """The report this menu row is about."""
+  reportId: ID
+
+  """Whether the report is switched on in the organization's menu."""
+  isEnabled: Boolean
+  tenantId: ID
+  organizationId: ID
+
+  """
+  Whether the menu row is active. It is one of the conditions the report list reads.
+  """
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""The boundary of one page of reports."""
+type ReportEdge {
+  node: Report!
+  cursor: String!
+}
+
+"""
+One page of reports, with the total the filters select and the boundary cursors.
+"""
+type ReportConnection {
+  nodes: [Report!]!
+  edges: [ReportEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The boundary of one page of report categories."""
+type ReportCategoryEdge {
+  node: ReportCategory!
+  cursor: String!
+}
+
+"""
+One page of report categories, with the total the filters select and the boundary cursors.
+"""
+type ReportCategoryConnection {
+  nodes: [ReportCategory!]!
+  edges: [ReportCategoryEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a report list may be sorted by."""
+enum ReportSortField {
+  createdAt
+  updatedAt
+  name
+  slug
+}
+
+"""
+The order the reports are returned in. At most three keys are accepted.
+"""
+input ReportSort {
+  field: ReportSortField!
+  direction: SortDirection!
+}
+
+"""The fields a category list may be sorted by."""
+enum ReportCategorySortField {
+  createdAt
+  updatedAt
+  name
+}
+
+"""
+The order the categories are returned in. At most three keys are accepted.
+"""
+input ReportCategorySort {
+  field: ReportCategorySortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a report list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`showInMenu` is filterable because that is how the delivered menu sub-route is expressed here: the
+reports the menu shows are this one list narrowed to `showInMenu: { eq: true }`, which is the same
+selection the menu route performs with its own join rather than a second root field over the same
+rows.
+
+There is no member for the organization. The catalogue row carries no organization column — the
+organization is a dimension of the *menu* row — so an organization filter here could only be
+evaluated against a member the row does not have; the organization is an argument of the root field,
+see `report.api.gql`.
+"""
+input ReportFilter {
+  id: IDFilter
+  name: StringFilter
+  slug: StringFilter
+  description: StringFilter
+  image: StringFilter
+  imageUrl: StringFilter
+  iconClass: StringFilter
+  showInMenu: BooleanFilter
+  categoryId: IDFilter
+  isActive: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [ReportFilter!]
+  or: [ReportFilter!]
+  not: ReportFilter
+}
+
+"""
+The fields a category list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+"""
+input ReportCategoryFilter {
+  id: IDFilter
+  name: StringFilter
+  iconClass: StringFilter
+  isActive: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [ReportCategoryFilter!]
+  or: [ReportCategoryFilter!]
+  not: ReportCategoryFilter
+}
+
+"""
+What a caller states when it switches a report on or off in an organization's menu.
+
+`reportId` and `organizationId` are required because the delivered write requires them: it looks the
+menu row up by that pair and answers `400` for a body that names neither, and stating them here is
+what keeps a caller from issuing a request that cannot succeed.
+
+The tenant is deliberately **not** a member. The delivered write resolves it from the credential and
+falls back to the body, then builds the row it saves from that same body — so a caller-stated tenant
+would be a way to write another tenant's menu row through a surface that never asked for one. The
+route accepts such a body only because its body is unvalidated; this surface states the members the
+write is for.
+"""
+input UpdateReportMenuInput {
+  """The report whose menu row is being switched."""
+  reportId: ID!
+
+  """The organization whose menu is being written."""
+  organizationId: ID!
+
+  """
+  Whether the report is shown. Omit it to leave the row's own value as it is.
+  """
+  isEnabled: Boolean
+}
+
+"""
+What a caller states when it adds a permission to a role.
+
+The role is named by its identifier: the delivered body admits either the identifier or a whole role
+object, and the one the service resolves is always the identifier — it reads `roleId` first and
+refuses the write when neither is stated, which is the fail-closed rule this input states by requiring
+the identifier outright.
+
+There is no member for the tenant, for the same reason there is none on any other write in this
+schema: the tenant is stamped from the credential and a body that stated one would be overwritten. Nor
+is there one for an organization: a role permission belongs to a role, and a role belongs to a tenant.
+"""
+input CreateRolePermissionInput {
+  """The permission, named exactly as the platform's catalogue names it."""
+  permission: String!
+
+  """Whether the role carries it."""
+  enabled: Boolean!
+
+  """The role the row belongs to."""
+  roleId: ID!
+}
+
+"""
+What a caller states when it edits a role permission that exists.
+
+The identifier names the row, which is the one member the delivered route carries in its path rather
+than in its body: the other three are the same shape the create above takes, because the delivered
+update DTO is the create's own.
+"""
+input UpdateRolePermissionInput {
+  id: ID!
+  permission: String!
+  enabled: Boolean!
+  roleId: ID!
+}
+
+type RolePermission {
+  id: ID!
+
+  """
+  The permission this row grants or withholds, named exactly as the platform's catalogue names it.
+  """
+  permission: String!
+
+  """
+  Whether the role carries the permission. A row exists for every permission of the catalogue.
+  """
+  enabled: Boolean!
+
+  """Free text an administrator may keep beside the row."""
+  description: String
+
+  """The role the row belongs to."""
+  roleId: ID!
+  tenantId: ID
+
+  """When the row was withdrawn, or null while it is live."""
+  deletedAt: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+}
+
+"""The boundary of one page of role permissions."""
+type RolePermissionEdge {
+  node: RolePermission!
+  cursor: String!
+}
+
+"""
+One page of role permissions, with the total the filters select and the boundary cursors.
+"""
+type RolePermissionConnection {
+  nodes: [RolePermission!]!
+  edges: [RolePermissionEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a role permission list may be sorted by."""
+enum RolePermissionSortField {
+  createdAt
+  updatedAt
+  permission
+  enabled
+}
+
+"""
+The order the role permissions are returned in. At most three keys are accepted.
+"""
+input RolePermissionSort {
+  field: RolePermissionSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a role permission list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+`roleId` is the member a caller reaches for: the permissions of one role are the rows of that role,
+and the delivered list route expresses the same narrowing through the `roleId` its own query string
+binds to the store. `permission` and `enabled` are here because a client that renders a role's
+catalogue filters it by what the row grants and by what it names.
+
+`tenantId` is deliberately absent, although it is a column: the tenant a read runs under comes from
+the credential and never from a filter, and the read this connection is built over is already scoped
+by it.
+"""
+input RolePermissionFilter {
+  id: IDFilter
+  permission: StringFilter
+  enabled: BooleanFilter
+  roleId: IDFilter
+  description: StringFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [RolePermissionFilter!]
+  or: [RolePermissionFilter!]
+  not: RolePermissionFilter
+}
+
 input CreateRoleInput {
   name: String!
   tenantId: String!
@@ -7315,6 +9404,152 @@ type Role {
   id: ID!
   name: String!
   tenantId: String!
+
+  """
+  Whether the platform provisioned the role. The delivered removal does not select a system role.
+  """
+  isSystem: Boolean
+
+  """When the role was withdrawn, or null while it is live."""
+  deletedAt: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  isActive: Boolean
+  isArchived: Boolean
+}
+
+"""The boundary of one page of roles."""
+type RoleEdge {
+  node: Role!
+  cursor: String!
+}
+
+"""
+One page of roles, with the total the filters select and the boundary cursors.
+"""
+type RoleConnection {
+  nodes: [Role!]!
+  edges: [RoleEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields a role list may be sorted by."""
+enum RoleSortField {
+  createdAt
+  updatedAt
+  name
+  isSystem
+}
+
+"""The order the roles are returned in. At most three keys are accepted."""
+input RoleSort {
+  field: RoleSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a role list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+`name` is the member that matters: a role *is* its name, and the two delivered reads that take a
+narrowing — the list route's own clients and the options look-up — narrow by it. `isSystem` is here
+because that distinction is what an administrator selects between when it decides which roles its own
+removal reaches.
+
+`tenantId` is deliberately absent, although it is a column. The tenant a read runs under comes from
+the credential and never from a filter, and the list read this connection is built over is already
+scoped by it: a member here would state a narrowing the caller may not perform and could not change
+the rows either way.
+"""
+input RoleFilter {
+  id: IDFilter
+  name: StringFilter
+  isSystem: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [RoleFilter!]
+  or: [RoleFilter!]
+  not: RoleFilter
+}
+
+"""
+The platform's own aggregates, as the statistics resource computes and answers them.
+
+Every member is computed on the request: the counts are the number of rows the owning service's own
+count answers, and the two amounts are the sums its own aggregation answers. Nothing here is stored, so
+nothing here is cached or versioned, and two calls a second apart may legitimately disagree.
+"""
+type GlobalStats {
+  """How many tenants the count of the tenant service answers."""
+  tenants: Int!
+
+  """How many employees the count of the employee service answers."""
+  employees: Int!
+
+  """How many tasks the count of the task service answers."""
+  tasks: Int!
+
+  """How many teams the count of the organization-team service answers."""
+  teams: Int!
+
+  """How many organizations the count of the organization service answers."""
+  organizations: Int!
+
+  """
+  The user aggregate: the total the user service counts, and how many of them signed in during the last month.
+  """
+  users: UserStats!
+
+  """
+  The invoice aggregate: how many documents that are not estimates the invoice service counted, and
+  what their total value adds up to.
+  """
+  invoices: InvoiceStats!
+
+  """
+  The payment aggregate: how many payment rows the payment service counted, and what their amounts add up to.
+  """
+  payments: PaymentStats!
+
+  """
+  The overall tracked time in hours, as the statistic service computes it: the summed duration of the
+  platform's time logs, divided by 3600. A duration rather than an amount, so it carries its fraction.
+  """
+  hours: Float!
+}
+
+"""
+The user aggregate: the total, and how many of them were active recently.
+"""
+type UserStats {
+  """How many users the count of the user service answers."""
+  count: Int!
+
+  """How many users signed in during the last 30 days."""
+  lastMonthActiveUsers: Int!
+}
+
+"""The invoice aggregate over the documents that are not estimates."""
+type InvoiceStats {
+  """
+  How many invoices the count answers. Estimates are not among them: the delivered aggregate selects the documents whose `isEstimate` is false.
+  """
+  count: Int!
+
+  """
+  What the total value of those invoices adds up to, as an exact decimal.
+  """
+  amount: Decimal!
+}
+
+"""The payment aggregate over the recorded payments."""
+type PaymentStats {
+  """How many payment rows the count answers."""
+  count: Int!
+
+  """What the recorded amounts add up to, as an exact decimal."""
+  amount: Decimal!
 }
 
 """One grouping of labels."""
@@ -7879,6 +10114,411 @@ type TenantUiPreferences {
 input UpdateTenantUiPreferencesInput {
   """The flavour to serve. Omit to leave the preference as it is."""
   preferredUi: String
+}
+
+"""
+One person's membership of one organization: the row that scopes a caller to an organization.
+"""
+type UserOrganization {
+  id: ID!
+  tenantId: ID
+
+  """
+  The organization this membership grants access to. The organization row is read from the organization domain by this identifier.
+  """
+  organizationId: ID
+
+  """
+  The account this membership belongs to. The account row is read from this surface's own `user(id)` by this identifier.
+  """
+  userId: ID
+
+  """
+  Whether this is the membership the person's session opens in.
+  
+  A person belongs to several organizations and acts in one at a time, and this flag is which one. It
+  is the only fact the row carries that is not an identifier.
+  """
+  isDefault: Boolean!
+
+  """
+  Whether the membership currently grants what it says.
+  
+  The removal handler and the per-person organization count both read this flag, which is why the two
+  writes below can state it: suspending a membership is a write to this column and there is no route
+  of its own for it.
+  """
+  isActive: Boolean
+  isArchived: Boolean
+
+  """
+  When the membership was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+  routes, and this column is the whole of what they write.
+  """
+  deletedAt: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""The boundary of one page of memberships."""
+type UserOrganizationEdge {
+  node: UserOrganization!
+  cursor: String!
+}
+
+"""
+One page of memberships, with the total the filters select and the boundary cursors.
+"""
+type UserOrganizationConnection {
+  nodes: [UserOrganization!]!
+  edges: [UserOrganizationEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields a membership list may be sorted by.
+
+The two timestamps and the flag. The identifiers are not here: a list of one person's memberships or
+of one organization's members is that identifier stated as a filter, which is both narrower and cheaper
+than an order.
+"""
+enum UserOrganizationSortField {
+  createdAt
+  updatedAt
+  isDefault
+}
+
+"""
+The order the memberships are returned in. At most three keys are accepted.
+"""
+input UserOrganizationSort {
+  field: UserOrganizationSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a membership list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a value the delivered list read answers on the row, because the connection narrows the
+rows the service returned. The two relation members the type does not carry have no filter either: a
+filter on `user.email` would be a narrowing the rows this read returns cannot be evaluated against.
+"""
+input UserOrganizationFilter {
+  id: IDFilter
+  organizationId: IDFilter
+  userId: IDFilter
+  isDefault: BooleanFilter
+  isActive: BooleanFilter
+  isArchived: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [UserOrganizationFilter!]
+  or: [UserOrganizationFilter!]
+  not: UserOrganizationFilter
+}
+
+"""
+What a caller states when it puts a person inside an organization.
+
+Both identifiers are required, because a membership is the pivot between exactly two rows and one
+without either is not a membership. There is no member for the tenant: the service stamps the caller's
+own tenant onto the row and overwrites whatever a body states.
+
+`isActive` and `isDefault` are members because both are facts about the membership that the delivered
+writes store and the delivered reads act on. The base's `isArchived`, its soft-delete marker and its
+three audit-user columns are not: the two lifecycle routes are what move the marker, and an input that
+could set an audit column would be a way to write a fact the platform's own bookkeeping owns.
+"""
+input CreateUserOrganizationInput {
+  organizationId: ID!
+  userId: ID!
+
+  """Whether the membership is the one the person's session opens in."""
+  isDefault: Boolean
+
+  """Whether the membership grants what it says. Defaults to true."""
+  isActive: Boolean
+}
+
+"""
+What a caller states when it changes a membership that exists.
+
+Every member but the criterion is optional, and a member the caller leaves out is left as it is: the
+delivered edit is a partial column update against the identifier the path names, not a replacement of
+the row. The identifier is not among the mutable members — a membership that could be re-pointed at
+another person or another organization would be a way to move access without a trace.
+"""
+input UpdateUserOrganizationInput {
+  id: ID!
+  isDefault: Boolean
+  isActive: Boolean
+}
+
+"""
+One person's account: who they are, how they are reached, and what they sign in as.
+"""
+type User {
+  id: ID!
+  tenantId: ID
+
+  """
+  The identity this account signs in as at a third-party provider, when it signs in through one.
+  Null on an account that only signs in with a password.
+  """
+  thirdPartyId: String
+  firstName: String
+  lastName: String
+
+  """
+  The full name, merged from the two parts by the delivered reader before it answers. Null on a row
+  that states neither part.
+  """
+  name: String
+
+  """
+  The email address, which is also one of the two ways this account signs in.
+  """
+  email: String
+  phoneNumber: String
+
+  """
+  The handle, where the account states one. The other way this account signs in.
+  """
+  username: String
+
+  """The zone this person's times are shown in."""
+  timeZone: String
+
+  """
+  How a time is rendered for this person, as the kernel's own `TimeFormatEnum` value. Carried as its
+  value rather than as a schema enum, because the vocabulary belongs to the platform.
+  """
+  timeFormat: String
+
+  """
+  The avatar URL. A column of this row, refreshed on every load from the asset `imageId` names.
+  """
+  imageUrl: String
+
+  """
+  The avatar asset. The asset row itself is read from the asset domain by this identifier; the URL a
+  client shows is `imageUrl`, which the delivered reader keeps in step with it.
+  """
+  imageId: ID
+
+  """The language this person reads and is answered in."""
+  preferredLanguage: String
+
+  """The layout this person's lists open in."""
+  preferredComponentLayout: String
+
+  """
+  Per-user, per-feature interface state, keyed by feature. Written only through
+  `updateUserUiPreferences`, which merges one key at a time.
+  """
+  uiPreferences: JSON
+
+  """When this person last signed in. Null before the first sign-in."""
+  lastLoginAt: DateTime
+
+  """
+  Whether the account's email address has been verified.
+  
+  Carried as the derived fact rather than as the stamp it is derived from: the delivered reader
+  computes it from `emailVerifiedAt` on every load, and that column is one of the six the delivered
+  answer excludes.
+  """
+  isEmailVerified: Boolean
+
+  """
+  The role this account acts under. The role row is read from the role domain by this identifier; the
+  delivered read of this resource joins no relation.
+  """
+  roleId: ID
+
+  """
+  The team this person's session opens in. The team row is read from the team domain by this identifier.
+  """
+  defaultTeamId: ID
+
+  """
+  The team this person was last in. The team row is read from the team domain by this identifier.
+  """
+  lastTeamId: ID
+
+  """
+  The organization this person's session opens in. The organization row is read from the organization domain by this identifier.
+  """
+  defaultOrganizationId: ID
+
+  """
+  The organization this person was last in. The organization row is read from the organization domain by this identifier.
+  """
+  lastOrganizationId: ID
+
+  """
+  Whether the account is active. A removal sets `deletedAt`; it does not clear this flag.
+  """
+  isActive: Boolean
+  isArchived: Boolean
+
+  """
+  When the account was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+  routes, and this column is the whole of what they write — so without it a caller could not tell a
+  live account from a withdrawn one on the answer to the write that withdrew it.
+  """
+  deletedAt: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""The boundary of one page of users."""
+type UserEdge {
+  node: User!
+  cursor: String!
+}
+
+"""
+One page of users, with the total the filters select and the boundary cursors.
+"""
+type UserConnection {
+  nodes: [User!]!
+  edges: [UserEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields a user list may be sorted by.
+
+The two timestamps, the three parts of a name, the address a person is looked up by, the handle they
+sign in with, and the last sign-in — which is the order an access review reads the list in. The
+identifiers are not here: a list of the accounts holding one role is that role stated as a filter,
+which is both narrower and cheaper than an order.
+"""
+enum UserSortField {
+  createdAt
+  updatedAt
+  name
+  firstName
+  lastName
+  email
+  username
+  lastLoginAt
+}
+
+"""The order the users are returned in. At most three keys are accepted."""
+input UserSort {
+  field: UserSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a user list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a value the delivered list read answers on the row, because the connection narrows the
+rows the service returned: a member the read does not select would be a filter that silently selects
+nothing. The six excluded columns have no member, and their absence is the point — a filter on `hash`
+would answer which digest a password produced, which is the same disclosure the read refuses, asked
+sideways.
+
+`name` and `isEmailVerified` are filterable although neither is a column, because the delivered reader
+merges both onto the row before the connection sees it — the name from the two name columns, the flag
+from the verification stamp — so narrowing by either is a question the read answers.
+"""
+input UserFilter {
+  id: IDFilter
+  thirdPartyId: StringFilter
+  name: StringFilter
+  firstName: StringFilter
+  lastName: StringFilter
+  email: StringFilter
+  phoneNumber: StringFilter
+  username: StringFilter
+  timeZone: StringFilter
+  timeFormat: StringFilter
+  imageUrl: StringFilter
+  imageId: IDFilter
+  preferredLanguage: StringFilter
+  preferredComponentLayout: StringFilter
+  uiPreferences: JSONFilter
+  lastLoginAt: DateTimeFilter
+  isEmailVerified: BooleanFilter
+  roleId: IDFilter
+  defaultTeamId: IDFilter
+  lastTeamId: IDFilter
+  defaultOrganizationId: IDFilter
+  lastOrganizationId: IDFilter
+  isActive: BooleanFilter
+  isArchived: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [UserFilter!]
+  or: [UserFilter!]
+  not: UserFilter
+}
+
+"""
+What a caller states when it files an account.
+
+The members are the ones the delivered body validates: the address is required, because an account
+without one cannot be reached or signed into, and the role, the two name parts, the avatar URL and the
+language are optional. There is no member for the tenant, which the service stamps from the credential
+and overwrites whatever a body states, and none for the organization either — a user is a row of a
+tenant and not of an organization; which organizations the account belongs to is the membership
+resource's fact.
+"""
+input CreateUserInput {
+  email: String!
+
+  """
+  The role the account acts under. Resolved from the database, and refused when the caller may not grant it.
+  """
+  roleId: ID
+  firstName: String
+  lastName: String
+  imageUrl: String
+  preferredLanguage: String
+}
+
+"""
+What a caller states when it edits an account that exists.
+
+Every other member is optional, and a member the caller leaves out is left as it is: the delivered edit
+is a partial column update against the criterion the path names, not a replacement of the row.
+
+**`hash` carries the new password, in clear text**, under the name the delivered body states it by —
+the service hashes it before the write. It is an input member and never an output one: no field of
+`User` answers a digest back, and this is the only place the schema spells the word at all. The
+credential columns the delivered read excludes stay excluded either way; this member writes a
+replacement, it does not read the old one.
+
+The two preferred-interface columns are deliberately not members. Each has a route of its own that
+writes it for the caller's own account and nothing else, and a general edit that could set them would
+be a second, wider path to the same two facts.
+"""
+input UpdateUserInput {
+  id: ID!
+  email: String
+  roleId: ID
+  firstName: String
+  lastName: String
+  imageUrl: String
+  preferredLanguage: String
+
+  """
+  The new password, in clear text. Hashed by the service before it is stored.
+  """
+  hash: String
+  defaultOrganizationId: ID
+  defaultTeamId: ID
+  lastOrganizationId: ID
+  lastTeamId: ID
+  imageId: ID
+  isActive: Boolean
 }
 
 type ProductReview {
