@@ -43,31 +43,16 @@
 				</div>
 			</nb-step>
 			<nb-step label="Additional Details">
-				<form [formGroup]="form">
-					<label for="objective-deadline" class="label mt-3">
-						{{ 'GOALS_PAGE.FORM.LABELS.DEADLINE' | translate }}
-					</label>
-					@if (timeFrames.length > 0) {
-					<nb-select
-						id="objective-deadline"
-						placeholder="{{ 'GOALS_PAGE.FORM.LABELS.DEADLINE' | translate }}"
-						fullWidth
-						formControlName="deadline"
-					>
-						@for (deadline of timeFrames; track deadline) {
-						<nb-option [value]="deadline.name">
-							{{ deadline.name }}
-						</nb-option>
-						}
-					</nb-select>
-					}
-					<p>
-						@if (timeFrames.length == 0) {
-						<button id="objective-deadline" status="primary" nbButton (click)="openSetTimeFrame()">
-							{{ 'GOALS_PAGE.BUTTONS.ADD_TIME_FRAME' | translate }}
-						</button>
-						}
-					</p>
+				<!-- The preset this objective is built from, so the second step still says what it is creating. -->
+				@if (selectedGoalTemplate) {
+				<div class="selected-preset">
+					<span class="preset-name">{{ selectedGoalTemplate.name }}</span>
+					<span class="preset-meta">
+						{{ 'GOALS_PAGE.KEY_RESULTS' | translate }}: {{ selectedGoalTemplate.keyResults?.length || 0 }}
+					</span>
+				</div>
+				}
+				<form class="details-form" [formGroup]="form">
 					<ga-goal-level-select
 						[orgId]="orgId"
 						[orgName]="orgName"
@@ -76,6 +61,35 @@
 						[employees]="employees"
 					>
 					</ga-goal-level-select>
+					<div class="field">
+						<label for="objective-deadline" class="label">
+							{{ 'GOALS_PAGE.FORM.LABELS.DEADLINE' | translate }}
+						</label>
+						@if (timeFrames.length > 0) {
+						<nb-select
+							id="objective-deadline"
+							placeholder="{{ 'GOALS_PAGE.FORM.LABELS.DEADLINE' | translate }}"
+							fullWidth
+							formControlName="deadline"
+						>
+							@for (deadline of timeFrames; track deadline) {
+							<nb-option [value]="deadline.name">
+								{{ deadline.name }}
+							</nb-option>
+							}
+						</nb-select>
+						} @else {
+						<button
+							type="button"
+							id="objective-deadline"
+							class="add-time-frame"
+							(click)="openSetTimeFrame()"
+						>
+							<i class="fas fa-plus" aria-hidden="true"></i>
+							{{ 'GOALS_PAGE.BUTTONS.ADD_TIME_FRAME' | translate }}
+						</button>
+						}
+					</div>
 				</form>
 			</nb-step>
 		</nb-stepper>
@@ -93,7 +107,14 @@
 			<!-- Not `BUTTONS.BACK`, whose English string is all capitals. -->
 			{{ 'BUTTONS.PREVIOUS' | translate }}
 		</button>
-		<button type="submit" nbButton status="success" size="small" (click)="createGoal()">
+		<button
+			type="submit"
+			nbButton
+			status="success"
+			size="small"
+			[disabled]="form.invalid"
+			(click)="createGoal()"
+		>
 			{{ 'BUTTONS.CREATE' | translate }}
 		</button>
 		}
