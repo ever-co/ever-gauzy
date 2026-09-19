@@ -1,6 +1,7 @@
 import { inspect } from 'util';
 import {
 	REDACTED_CREDENTIAL,
+	redactHeaderValues,
 	redactKeyValueList,
 	redactUrlCredentials,
 	redactUrlErrorInput
@@ -145,6 +146,21 @@ describe('redactUrlErrorInput', () => {
 		expect(redacted.message).toBe(`URL parsing failed for redis://:${REDACTED_CREDENTIAL}@host:6380`);
 	});
 
+	it('never returns a partially redacted error when only some fields can be rewritten', () => {
+		// `input` is writable, but a copy of the URL sits in a read-only `message`.
+		const error = Object.assign(new Error('placeholder'), { input: `redis://:${SECRET}@host:6380` });
+		Object.defineProperty(error, 'message', {
+			value: `Invalid URL: redis://:${SECRET}@host:6380`,
+			writable: false
+		});
+
+		const redacted = redactUrlErrorInput(error);
+
+		expect(redacted).not.toBe(error);
+		expect(inspect(redacted)).not.toContain(SECRET);
+		expect(redacted.message).toBe(`URL parsing failed for redis://:${REDACTED_CREDENTIAL}@host:6380`);
+	});
+
 	it('returns values without a string input untouched', () => {
 		const plain = new Error('Connection is closed.');
 
@@ -152,5 +168,26 @@ describe('redactUrlErrorInput', () => {
 		expect(plain.message).toBe('Connection is closed.');
 		expect(redactUrlErrorInput(undefined)).toBeUndefined();
 		expect(redactUrlErrorInput('a string')).toBe('a string');
+	});
+
+	it('returns an error whose URL carries no credentials untouched', () => {
+		const error = Object.assign(new Error('Invalid URL'), { input: 'redis://bad host:6380' });
+
+		expect(redactUrlErrorInput(error)).toBe(error);
+		expect(error.input).toBe('redis://bad host:6380');
+	});
+});
+
+describe('redactHeaderValues', () => {
+	it('keeps the header names and redacts every value', () => {
+		const redacted = redactHeaderValues({ Authorization: 'dummy-api-key', 'X-Team': 'dummy-team-key' });
+
+		expect(redacted).toEqual({ Authorization: REDACTED_CREDENTIAL, 'X-Team': REDACTED_CREDENTIAL });
+		expect(JSON.stringify(redacted)).not.toContain('dummy-');
+	});
+
+	it('returns undefined when there are no headers', () => {
+		expect(redactHeaderValues(undefined)).toBeUndefined();
+		expect(redactHeaderValues(null)).toBeUndefined();
 	});
 });

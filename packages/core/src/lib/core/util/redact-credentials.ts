@@ -71,8 +71,13 @@ export function redactUrlCredentials(url: string | null | undefined): string {
  * and any copy of the value in `message` or `stack`) and returned, so the call site keeps logging
  * the same error object with its stack.
  *
+ * If any of those fields cannot be rewritten - a frozen error, a read-only `stack` - a plain
+ * summary error carrying only the redacted URL is returned instead: a partially redacted original
+ * must never reach the log.
+ *
  * @param error - Whatever a `catch` received. Values without a string `input` are returned untouched.
- * @returns The same value, with any embedded URL credentials replaced by {@link REDACTED_CREDENTIAL}.
+ * @returns The same value, with any embedded URL credentials replaced by {@link REDACTED_CREDENTIAL},
+ *          or a redacted summary error when the original could not be fully redacted.
  */
 export function redactUrlErrorInput<T>(error: T): T {
 	if (!error || typeof error !== 'object') return error;
@@ -83,6 +88,11 @@ export function redactUrlErrorInput<T>(error: T): T {
 	const raw = candidate.input;
 	const redacted = redactUrlCredentials(raw);
 
+	// Nothing in the URL is a credential, so there is nothing to hide.
+	if (redacted === raw) return error;
+
+	const summary = () => new Error(`URL parsing failed for ${redacted}`) as unknown as T;
+
 	try {
 		candidate.input = redacted;
 		for (const key of ['message', 'stack'] as const) {
@@ -92,15 +102,31 @@ export function redactUrlErrorInput<T>(error: T): T {
 			}
 		}
 	} catch {
-		// Fall through: a frozen or non-writable error is handled by the check below.
+		// Some field could not be rewritten; the ones that were may hide that others were not.
+		return summary();
 	}
 
-	// If the error could not be redacted in place, log a plain summary instead of the original.
-	if (candidate.input !== redacted) {
-		return new Error(`URL parsing failed for ${redacted}`) as unknown as T;
-	}
+	// A write can also be ignored without throwing; confirm the raw URL is really gone everywhere.
+	const stillLeaks = [candidate.input, candidate.message, candidate.stack].some(
+		(value) => typeof value === 'string' && value.includes(raw)
+	);
 
-	return error;
+	return stillLeaks ? summary() : error;
+}
+
+/**
+ * Returns a copy of an HTTP header map with every value replaced by {@link REDACTED_CREDENTIAL},
+ * keeping the header names so a log line still shows which headers are configured.
+ *
+ * @param headers - The header map, e.g. `{ Authorization: '<api key>' }`.
+ * @returns The redacted copy, or `undefined` when there are no headers.
+ */
+export function redactHeaderValues(
+	headers: Record<string, unknown> | null | undefined
+): Record<string, string> | undefined {
+	if (!headers) return undefined;
+
+	return Object.fromEntries(Object.keys(headers).map((name) => [name, REDACTED_CREDENTIAL]));
 }
 
 /**

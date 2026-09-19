@@ -14,27 +14,28 @@ export const REDIS_ENV_KEYS = [
 ] as const;
 
 /**
- * Registers `beforeEach`/`afterEach` hooks that give each test a clean Redis environment and
- * capture everything written through `console.*` while it runs.
+ * Registers `beforeEach`/`afterEach` hooks that give each test a clean copy of the given
+ * environment variables and capture everything written through `console.*` while it runs.
  *
  * Each captured line is the console call's arguments joined with a space, with non-string
  * arguments rendered through `util.inspect` - the same rendering Node uses when it prints them -
  * so an assertion on `lines` sees what would really reach stdout, including an error's own
  * properties such as `ERR_INVALID_URL.input`.
  *
- * The Redis variables are unset before each test and restored after it, so a developer's own
- * `REDIS_URL` can neither leak into nor be clobbered by these tests.
+ * The variables are unset before each test and restored after it, so a developer's own settings
+ * can neither leak into nor be clobbered by these tests.
  *
+ * @param envKeys - The environment variables the code under test reads.
  * @returns A live view of the lines captured during the current test.
  */
-export function captureRedisBootLogs(): { readonly lines: string[] } {
+export function captureBootLogs(envKeys: readonly string[]): { readonly lines: string[] } {
 	const captured = { lines: [] as string[] };
 	let savedEnv: Record<string, string | undefined>;
 	let spies: jest.SpyInstance[];
 
 	beforeEach(() => {
-		savedEnv = Object.fromEntries(REDIS_ENV_KEYS.map((key) => [key, process.env[key]]));
-		REDIS_ENV_KEYS.forEach((key) => delete process.env[key]);
+		savedEnv = Object.fromEntries(envKeys.map((key) => [key, process.env[key]]));
+		envKeys.forEach((key) => delete process.env[key]);
 
 		captured.lines = [];
 		spies = (['log', 'info', 'warn', 'error', 'debug'] as const).map((method) =>
@@ -48,7 +49,7 @@ export function captureRedisBootLogs(): { readonly lines: string[] } {
 
 	afterEach(() => {
 		spies.forEach((spy) => spy.mockRestore());
-		REDIS_ENV_KEYS.forEach((key) => {
+		envKeys.forEach((key) => {
 			if (savedEnv[key] === undefined) {
 				delete process.env[key];
 			} else {

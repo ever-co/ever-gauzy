@@ -1,5 +1,5 @@
 import { createClient } from 'redis';
-import { captureRedisBootLogs } from '../core/testing/boot-logging/redis-boot-log.fixtures';
+import { captureBootLogs, REDIS_ENV_KEYS } from '../core/testing/boot-logging/boot-log.fixtures';
 import { configureRedisSession } from './redis-store';
 
 jest.mock('redis', () => ({ createClient: jest.fn() }));
@@ -16,7 +16,7 @@ jest.mock('@gauzy/config', () => ({
  */
 describe('configureRedisSession boot logging', () => {
 	const SECRET = 'dummy-session-store-password';
-	const logs = captureRedisBootLogs();
+	const logs = captureBootLogs(REDIS_ENV_KEYS);
 
 	beforeEach(() => {
 		(createClient as jest.Mock).mockReset().mockReturnValue({
