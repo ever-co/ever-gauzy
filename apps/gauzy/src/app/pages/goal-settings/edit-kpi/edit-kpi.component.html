@@ -146,8 +146,9 @@
 				</div>
 			</form>
 
-			<!-- Follows the pointer or the keyboard focus from field to field, and falls back to what a KPI is. -->
-			<aside class="kpi-help">
+			<!-- Follows the pointer or the keyboard focus from field to field, and falls back to what a KPI is.
+			     A polite live region, so a screen reader reads the new help as focus moves. -->
+			<aside class="kpi-help" aria-live="polite" aria-atomic="true">
 				@if (helper === 'kpi-title') {
 				<div [innerHTML]="'GOALS_PAGE.HELPER_TEXT.KPI_NAME' | translate"></div>
 				} @else if (helper === 'kpi-description') {
