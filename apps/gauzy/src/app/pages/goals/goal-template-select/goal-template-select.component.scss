@@ -1,16 +1,166 @@
-.max-width-50vw {
-  width: 50vw;
-  height: 80vh !important;
+@use 'gauzy/_gauzy-dialogs' as *;
+
+// The Create from Preset wizard, on the scale of the app's other dialogs: a
+// header row with the title and close, a two-step indicator with its step
+// names, and a footer whose buttons sit on the trailing edge. Every custom
+// property carries a fallback — `--gauzy-*` is undefined in material-light /
+// material-dark, where a `var()` without one is dropped.
+$control-font-size: 12px;
+$inset: 1rem;
+$divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+
+// Was a flat 50vw by 80vh (`size="large"` on top), i.e. a 720px-tall sheet on
+// this screen for a list of five one-line presets. It now takes the height its
+// step needs, up to the viewport, and scrolls its body past that.
+.preset-dialog {
+  width: min(calc(100vw - 2rem), 40rem);
+  max-height: calc(100vh - 4rem);
 }
 
-.margin-stepper {
-  margin: 0 3vw;
-}
+:host {
+  nb-card {
+    // Fallback required: `--gauzy-card-1` is undefined in material-light and
+    // material-dark, and a `var()` with no fallback drops the declaration.
+    background-color: var(--gauzy-card-1, var(--card-background-color));
+  }
 
-// Scoped to this dialog. Written bare, `::ng-deep` with no `:host` ahead of it
-// is emitted as a plain global rule, so this wizard's 10vw stepper inset was
-// applied to every `nb-stepper` in the app — the contact wizard among them —
-// from the moment this component's styles loaded.
-:host ::ng-deep nb-stepper > .header {
-  margin: 0 10vw !important;
+  // The wizard had no title at all — only a close icon in an empty header.
+  nb-card-header.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.875rem $inset;
+    border-bottom: $divider;
+
+    .title {
+      margin: 0;
+      font-size: $control-font-size;
+      font-weight: 600;
+      line-height: 1rem;
+      color: var(--gauzy-text-color-1, inherit);
+    }
+
+    // A real button, so the close is reachable from the keyboard and named for
+    // a screen reader; the browser's button chrome is stripped so it still
+    // reads as the bare icon.
+    .cancel {
+      width: auto;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      line-height: 1;
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: 2px solid nb-theme(color-primary-default);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+    }
+  }
+
+  // A floor, so stepping from the presets to the fields does not collapse the
+  // dialog under the pointer.
+  nb-card-body {
+    min-height: 18rem;
+    padding: $inset;
+  }
+
+  nb-stepper {
+    display: block;
+  }
+
+  // The step indicator as the contact wizard draws it: a circled number beside
+  // each step's name, joined by a hairline. The names are hidden app-wide by
+  // the global stepper override (`gauzy/_gauzy-overrides.scss`); this wizard
+  // has two, so it switches them back on. Anchored on `.preset-dialog` and the
+  // body: Nebular's own `.horizontal .header .step { flex-direction: column }`
+  // carries three encapsulation attributes, (0,6,0), and out-ranked these at
+  // `nb-card-body` alone.
+  .preset-dialog nb-card-body ::ng-deep nb-stepper > .header {
+    margin: 0 0 $inset !important;
+    padding-bottom: $inset;
+    border-bottom: $divider;
+  }
+
+  .preset-dialog nb-card-body ::ng-deep nb-stepper.horizontal > .header .step {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    margin: 0;
+  }
+
+  .preset-dialog nb-card-body ::ng-deep nb-stepper > .header .step .label {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    font-size: $control-font-size;
+    font-weight: 400;
+    line-height: 1rem;
+    letter-spacing: normal;
+    color: nb-theme(text-hint-color);
+  }
+
+  .preset-dialog nb-card-body ::ng-deep nb-stepper > .header .step.selected .label,
+  .preset-dialog nb-card-body ::ng-deep nb-stepper > .header .step.completed .label {
+    color: nb-theme(text-basic-color);
+  }
+
+  .preset-dialog nb-card-body ::ng-deep nb-stepper > .header .step.selected .label {
+    font-weight: 600;
+  }
+
+  // A circle rather than the theme's rounded square: a step marker, not a control.
+  .preset-dialog nb-card-body ::ng-deep nb-stepper > .header .step .label-index {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: 0 0 auto;
+    border-radius: 50%;
+  }
+
+  // The connector carries `height`/`margin` with `!important` globally, so the
+  // hairline answers in kind, from a more specific selector. The walked-past
+  // connector is matched by a separate, more specific global rule, hence the
+  // second block.
+  .preset-dialog nb-card-body ::ng-deep nb-stepper > .header .connector {
+    flex: 1 1 auto;
+    min-width: 1rem;
+    height: 1px !important;
+    margin: 0 0.75rem !important;
+    border-radius: 0;
+  }
+
+  .preset-dialog nb-card-body ::ng-deep nb-stepper > .header .step.selected + .connector,
+  .preset-dialog nb-card-body ::ng-deep nb-stepper > .header .step.completed + .connector {
+    height: 1px !important;
+    margin: 0 0.75rem !important;
+    border-radius: 0;
+  }
+
+  // `.horizontal` for the specificity to beat the theme's own padding rule.
+  .preset-dialog nb-card-body ::ng-deep nb-stepper.horizontal .step-content {
+    padding: 0;
+  }
+
+  // Buttons on the trailing edge; on step 2 the way back sits on the leading one.
+  nb-card-footer.footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem $inset;
+    border-top: $divider;
+
+    button {
+      margin: 0;
+    }
+
+    .back {
+      margin-inline-end: auto;
+    }
+  }
 }
