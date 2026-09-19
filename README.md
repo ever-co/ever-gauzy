@@ -306,6 +306,15 @@ Notes:
 
 Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/details/Ever%20Gauzy/).
 
+#### Deploy on Easypanel
+
+[Easypanel](https://easypanel.io) is a self-hosted Docker deployment platform, and Ever Gauzy has a one-click deployment template there:
+
+[![Deploy on Easypanel][easypanel-btn]][easypanel-deploy]
+
+[easypanel-btn]: https://easypanel.io/img/deploy-on-easypanel-40.svg
+[easypanel-deploy]: https://easypanel.io/templates/ever-gauzy
+
 ## 💌 Contact Us
 
 -   [Ever.co Website Contact Us page](https://ever.co/contacts)
