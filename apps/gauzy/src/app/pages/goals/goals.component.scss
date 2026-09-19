@@ -95,6 +95,9 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
     border-radius: var(--border-radius);
     overflow: hidden;
     box-shadow: unset;
+    // The rows answer to the accordion's width (see the `@container` below), so
+    // an objective and its key results switch layout together.
+    container-type: inline-size;
   }
 
   // Nebular's own header is 1.25rem/1.5rem of padding around 15px text.
@@ -195,6 +198,23 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
   nb-accordion-item-body.add-key-result ::ng-deep .item-body {
     border-top: $divider;
     padding: $row-padding-y $row-inset;
+  }
+}
+
+// Percentage and bar hold 16.25rem of every row, and the chevron slot and the
+// key results' indent take another 5.5rem off the accordion: at this width a
+// key result's name is down to about 8rem, and below it the name would shrink
+// to nothing while the bar ran past the row's end, where `overflow: hidden`
+// clips it. So the name takes a line of its own, with the percentage and a bar
+// that fills the rest of the row under it.
+@container (max-width: 30rem) {
+  :host .goal-row {
+    grid-template-columns: $percent-width minmax(0, 1fr);
+    row-gap: 0.5rem;
+  }
+
+  :host .goal-name {
+    grid-column: 1 / -1;
   }
 }
 

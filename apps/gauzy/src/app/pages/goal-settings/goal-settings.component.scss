@@ -60,6 +60,9 @@ $control-column: 14rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  // The rows below answer to the panel's width, which the sidebar narrows as
+  // much as the window does.
+  container-type: inline-size;
 
   .settings-group {
     display: flex;
@@ -135,6 +138,22 @@ $control-column: 14rem;
     padding-inline-start: $control-padding-x !important;
     font-size: $control-font-size;
     line-height: 1rem;
+  }
+}
+
+// On a narrow panel the fixed control column would squeeze the label towards
+// nothing, so the label goes over its control; the control keeps the width the
+// column gave it.
+@container (max-width: 32rem) {
+  :host .settings-form {
+    .settings-row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.5rem;
+    }
+
+    .settings-control {
+      max-width: $control-column;
+    }
   }
 }
 
