@@ -1,0 +1,87 @@
+# The organization award domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **No field here states a permission, and that is the parity rather than an omission.** The delivered
+# controller carries `TenantPermissionGuard` on the class and no `@Permissions` anywhere — not on the
+# four routes it declares and not on the five it inherits from the CRUD base — so every one of its
+# routes is tenant-guarded and otherwise unpermissioned. A field that demanded a permission would
+# refuse a caller the REST route serves, which is the asymmetry the two-protocol rule forbids;
+# tightening the resource is a change to make in both places at once, and it is not this delivery's to
+# make.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered
+# list method reads live rows only, and offering an argument that cannot be honoured would be worse
+# than not offering it.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same
+# rows under the same filters, one of them sliced by `take`/`skip` and the other not. That is one
+# capability, so it is one root field: `organizationAwards`, mirroring `GET /`. A second root field for
+# the paginated spelling would be a second surface that could disagree with this one, and the
+# connection's own `limit`/`offset` already are the page it performs.
+#
+# `organizationAwardCount` takes no filter, and that is a statement rather than an omission. The
+# delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak; a `filter` argument here would either be handed to a service call
+# that cannot accept it or be evaluated over a second code path that could disagree with the
+# connection's `totalCount`.
+
+extend type Query {
+	"""
+	The awards of the caller's tenant, newest first.
+	"""
+	organizationAwards(
+		filter: OrganizationAwardFilter
+		sort: [OrganizationAwardSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationAwardConnection!
+
+	"""
+	One award of the caller's tenant, or null when there is none.
+	"""
+	organizationAward(id: ID!): OrganizationAward
+
+	"""
+	How many awards the caller's tenant records.
+	"""
+	organizationAwardCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files an award.
+	"""
+	createOrganizationAward(input: CreateOrganizationAwardInput!): OrganizationAward!
+
+	"""
+	Changes the stated facts of an award. A member the caller leaves out is left as it is, because the
+	delivered edit is a partial column update rather than a replacement of the row.
+	"""
+	updateOrganizationAward(input: UpdateOrganizationAwardInput!): OrganizationAward!
+
+	"""
+	Removes an award outright.
+	"""
+	deleteOrganizationAward(id: ID!): Boolean!
+
+	"""
+	Withdraws an award without removing it: the row keeps its identifier and the organization keeps it,
+	and the delivered list stops answering it.
+	"""
+	softDeleteOrganizationAward(id: ID!): OrganizationAward!
+
+	"""
+	Puts a withdrawn award back.
+	"""
+	recoverOrganizationAward(id: ID!): OrganizationAward!
+}

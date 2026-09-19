@@ -48,6 +48,56 @@ export function resolveAdditionalResolverModules(): Function[] {
 		// The aggregates read across the whole platform — employees, teams, tenants, users, invoices,
 		// payments, tasks and tracked time — so this module sits in the middle of every one of those
 		// graphs and cannot be pulled into the barrel that is already inside them.
-		require('../stats/stats.module').StatsModule
+		require('../stats/stats.module').StatsModule,
+		// The organization zone: the aggregate itself and the seven resources the platform serves beside
+		// it. Each reaches the organization graph, which is the graph the tenant, auth and refresh-token
+		// modules are reached from — so they are scanned where they live rather than imported by the host.
+		require('../organization/organization.module').OrganizationModule,
+		require('../organization-award/organization-award.module').OrganizationAwardModule,
+		require('../organization-document/organization-document.module').OrganizationDocumentModule,
+		require('../organization-employment-type/organization-employment-type.module')
+			.OrganizationEmploymentTypeModule,
+		require('../organization-language/organization-language.module').OrganizationLanguageModule,
+		require('../organization-position/organization-position.module').OrganizationPositionModule,
+		require('../organization-strategic-initiative/organization-strategic-initiative.module')
+			.OrganizationStrategicInitiativeModule,
+		require('../organization-task-setting/organization-task-setting.module').OrganizationTaskSettingModule,
+		// The tenant itself and the keys a machine caller authenticates with, beside the integration rows
+		// an outbound sync is configured in: the same zone by another road.
+		require('../tenant/tenant.module').TenantModule,
+		require('../tenant-api-key/tenant-api-key.module').TenantApiKeyModule,
+		require('../integration/integration.module').IntegrationModule,
+		require('../integration-setting/integration-setting.module').IntegrationSettingModule,
+		require('../integration-entity-setting/integration-entity-setting.module').IntegrationEntitySettingModule,
+		require('../integration-entity-setting-tied/integration-entity-setting-tied.module')
+			.IntegrationEntitySettingTiedModule,
+		require('../integration-tenant/integration-tenant.module').IntegrationTenantModule,
+		// The people the platform sells and ships through: the employee aggregate, the resources the
+		// platform serves beside it, and the statistics computed over them. The aggregate reaches the user
+		// and organization modules, which is the identity zone again, so the whole set is scanned where it
+		// lives.
+		require('../employee/employee.module').EmployeeModule,
+		require('../employee-appointment/employee-appointment.module').EmployeeAppointmentModule,
+		require('../employee-availability/employee-availability.module').EmployeeAvailabilityModule,
+		require('../availability-slots/availability-slots.module').AvailabilitySlotsModule,
+		require('../employee-award/employee-award.module').EmployeeAwardModule,
+		require('../employee-level/employee-level.module').EmployeeLevelModule,
+		require('../employee-notification/employee-notification.module').EmployeeNotificationModule,
+		require('../employee-notification-setting/employee-notification-setting.module')
+			.EmployeeNotificationSettingModule,
+		require('../employee-recent-visit/employee-recent-visit.module').EmployeeRecentVisitModule,
+		require('../employee-setting/employee-setting.module').EmployeeSettingModule,
+		require('../employee-statistics/employee-statistics.module').EmployeeStatisticsModule,
+		require('../appointment-employees/appointment-employees.module').AppointmentEmployeesModule,
+		// The work-tracking domain: a task, the vocabularies a task points at, the plans it is scheduled
+		// into and the views that select it. It reaches the tag and organization graphs, so it is scanned
+		// here too rather than pulled into the barrel those graphs are already inside.
+		require('../tasks/task.module').TaskModule,
+		require('../tasks/task-metadata-bootstrap/task-metadata-bootstrap.module').TaskMetadataBootstrapModule,
+		require('../tasks/estimation/task-estimation.module').TaskEstimationModule,
+		require('../tasks/linked-issue/task-linked-issue.module').TaskLinkedIssueModule,
+		require('../tasks/views/view.module').TaskViewModule,
+		require('../tasks/daily-plan/daily-plan.module').DailyPlanModule,
+		require('../tasks/screening-tasks/screening-tasks.module').ScreeningTasksModule
 	];
 }

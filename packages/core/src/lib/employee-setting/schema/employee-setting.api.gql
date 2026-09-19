@@ -1,0 +1,98 @@
+# The employee setting domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/employee-settings` routes already serve, under the same
+# guard and with the same scope, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other.
+#
+# **The scope is the tenant guard alone, and that is the controller's own statement rather than a
+# simplification.** `EmployeeSettingController` carries `TenantPermissionGuard` at class level and no
+# `@Permissions` on the class or on any handler, so every route it serves runs under that guard and
+# nothing else. No field below states a permission, and none of them could: there is no permission on
+# the controller to mirror. Requiring one here would make GraphQL the narrower door for this resource;
+# requiring none where the controller required one would make it the wider one.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. The delivered list read states no order of its own,
+# so the connection applies the platform's: newest first, the identifier last so the order is total and
+# a walk over it is stable. `withDeleted` is deliberately absent: the delivered list method reads live
+# rows only, and offering an argument that cannot be honoured would be worse than not offering it.
+#
+# **`GET /pagination` has no root field.** It answers the same rows under the same narrowing as
+# `GET /` — one of them sliced by `take`/`skip` and the other not — and the connection's own
+# `limit`/`offset` already are that slice. A second root field for the paginated spelling would be a
+# second surface that could disagree with this one about the same rows.
+#
+# **The count route gets a field of its own, and it takes no argument.** A bare number is not a
+# connection, and `totalCount` is not that number: it is the count of the rows the connection narrowed
+# to, while `GET /count` counts the caller's own rows. That route binds its query string to the store's
+# own `where`, a shape the connection protocol does not speak, so a `filter` argument here would either
+# be handed to a call that cannot accept it or be evaluated over a second code path that could disagree
+# with the connection's own total. The field is nullable because a count is an aggregate a resource may
+# have no answer for, and a non-null field would turn "not answered" into a fabricated zero.
+#
+# **The two removals are not the same operation, so both are stated.** `DELETE /:id` removes the row
+# outright; `DELETE /:id/soft` withdraws it, keeping the identifier the employee's other rows may point
+# at; `PUT /:id/recover` puts a withdrawn row back. Three operations, three fields, because a client
+# that could not tell them apart could not tell whether a setting it filed survived.
+
+extend type Query {
+	"""
+	The settings of the caller's tenant, newest first.
+	"""
+	employeeSettings(
+		filter: EmployeeSettingFilter
+		sort: [EmployeeSettingSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EmployeeSettingConnection!
+
+	"""
+	One setting of the caller's tenant, or null when there is none.
+	"""
+	employeeSetting(id: ID!): EmployeeSetting
+
+	"""
+	How many settings the caller's tenant holds.
+	"""
+	employeeSettingCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a setting.
+	"""
+	createEmployeeSetting(input: CreateEmployeeSettingInput!): EmployeeSetting!
+
+	"""
+	Changes a setting that exists. A member the caller leaves out is left as it is, because the
+	delivered update writes the members the body states over the row it verified rather than replacing
+	it — see `UpdateEmployeeSettingInput`.
+	"""
+	updateEmployeeSetting(input: UpdateEmployeeSettingInput!): EmployeeSetting!
+
+	"""
+	Removes a setting outright: the row is gone and nothing reads it back.
+	"""
+	deleteEmployeeSetting(id: ID!): Boolean!
+
+	"""
+	Withdraws a setting without removing it: the row keeps its identifier, and the delivered list stops
+	answering it.
+	"""
+	softDeleteEmployeeSetting(id: ID!): EmployeeSetting!
+
+	"""
+	Puts a withdrawn setting back.
+	"""
+	recoverEmployeeSetting(id: ID!): EmployeeSetting!
+}

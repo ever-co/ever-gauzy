@@ -1,0 +1,150 @@
+# The organization language's object type.
+#
+# An organization language is a row of the language register: which language the organization works in,
+# what it calls that language in its own words, and how well it works in it. It is filed under the
+# organization, which is what makes it a sub-resource of the organization rather than a second copy of
+# the platform's language reference table.
+#
+# `languageCode` is the join column and is carried as text rather than as a relation. The delivered
+# reads join the `language` relation only when a REST caller names it in its query string, and this
+# surface never names it — so a `language: Language` member here would always answer null. The code is
+# what a caller who already knows which language it means actually states, and the reference row behind
+# it is read from the language surface.
+#
+# `level` is carried as text rather than declared as a schema enum. It is the organization's own
+# description of how well it works in the language — a proficiency band the platform stores as a
+# string — so an enum declared here would close a vocabulary the delivered write leaves open, and a
+# value an installation already holds would stop being readable.
+#
+# The base row's identifiers, timestamps and lifecycle columns are carried in full: withdrawing and
+# restoring are delivered routes whose whole effect is the `deletedAt` column.
+
+"""
+One language an organization works in, as the organization describes it.
+"""
+type OrganizationLanguage {
+	id: ID!
+	"The language's code: the identifier every other surface names the language by."
+	languageCode: String!
+	"The name the organization calls the language."
+	name: String!
+	"The organization's own description of how well it works in the language."
+	level: String!
+	"The organization the row is filed under, by identifier."
+	organizationId: ID
+	"The tenant the row belongs to, by identifier."
+	tenantId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	"When the row was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"When the row was filed."
+	createdAt: DateTime
+	"When the row was last changed."
+	updatedAt: DateTime
+	"Whether the row is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the row is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"The person who filed the row, by identifier. The user row is not joined by this surface's read."
+	createdByUserId: ID
+	"The person who last changed the row, by identifier. The user row is not joined by this surface's read."
+	updatedByUserId: ID
+	"The person who withdrew the row, by identifier. The user row is not joined by this surface's read."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of organization languages.
+"""
+type OrganizationLanguageEdge {
+	node: OrganizationLanguage!
+	cursor: String!
+}
+
+"""
+One page of organization languages, with the total the filters select and the boundary cursors.
+"""
+type OrganizationLanguageConnection {
+	nodes: [OrganizationLanguage!]!
+	edges: [OrganizationLanguageEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an organization-language list may be sorted by.
+"""
+enum OrganizationLanguageSortField {
+	createdAt
+	updatedAt
+	name
+	languageCode
+	level
+}
+
+"""
+The order the organization languages are returned in. At most three keys are accepted.
+"""
+input OrganizationLanguageSort {
+	field: OrganizationLanguageSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an organization-language list may be narrowed by.
+
+Everything the row carries is here, because everything the row carries is a column of it: the register
+is a short list read by code or by name, and there is no relation behind any of these three members.
+"""
+input OrganizationLanguageFilter {
+	id: IDFilter
+	languageCode: StringFilter
+	name: StringFilter
+	level: StringFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	and: [OrganizationLanguageFilter!]
+	or: [OrganizationLanguageFilter!]
+	not: OrganizationLanguageFilter
+}
+
+"""
+What a caller states when it files a language.
+
+The organization is stated because the delivered create does not derive one: the tenant is stamped
+from the credential, never from an argument, but the organization is a member the caller names and the
+delivered route validates against the caller's own memberships. There is no member for the tenant, for
+the same reason there is none on any other write here.
+
+The relation is stated as `languageCode` rather than as a nested `language` object, which is the shape
+the delivered column has and the shape a caller already holds: the code is the identity of the language,
+and the reference row behind it is the platform's.
+"""
+input CreateOrganizationLanguageInput {
+	organizationId: ID!
+	languageCode: String!
+	name: String!
+	level: String!
+}
+
+"""
+What a caller states when it edits a row that exists.
+
+The identifier is the only member stated outside the body, and it is stated because the delivered
+route carries it in the path. The delivered edit is a partial column update rather than a replacement
+of the row, so a member the caller leaves out is left as it is.
+"""
+input UpdateOrganizationLanguageInput {
+	id: ID!
+	organizationId: ID
+	languageCode: String
+	name: String
+	level: String
+}

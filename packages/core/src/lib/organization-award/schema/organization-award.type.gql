@@ -1,0 +1,140 @@
+# The organization award's object type.
+#
+# An award is a recognition the organization records about itself: a title and the year it was given
+# in, filed under the organization so a public profile can list them. The row carries nothing else of
+# its own, which is what makes this object type two members and the base row.
+#
+# `year` is carried as text rather than as an `Int`. The column is text, and it holds what the
+# organization wrote — a calendar year, a financial year, a season — so declaring it a number here
+# would refuse the values the delivered write already stores. It is not the order the connection
+# returns awards in, for the same reason: text that merely looks like a year is not a chronology.
+#
+# Nothing else is carried. The row has no eager relation and no relation column of its own, and the
+# delivered list read joins only the relations a REST caller names in its query string — which this
+# surface never names. The base row's identifiers, timestamps and lifecycle columns are carried in
+# full, because they are what every surface of this platform answers about a row.
+
+"""
+One award an organization records about itself.
+"""
+type OrganizationAward {
+	id: ID!
+	"The award's title, as the organization wrote it."
+	name: String!
+	"""
+	The period the award belongs to, as the organization wrote it. Text rather than a number: the
+	column is text and holds whatever the organization stated, a financial year as readily as a
+	calendar one.
+	"""
+	year: String!
+	"The organization the award is filed under, by identifier."
+	organizationId: ID
+	"The tenant the award belongs to, by identifier."
+	tenantId: ID
+	"""
+	When the award was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	"When the award was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"When the award was filed."
+	createdAt: DateTime
+	"When the award was last changed."
+	updatedAt: DateTime
+	"Whether the award is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the award is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"The person who filed the award, by identifier. The user row is not joined by this surface's read."
+	createdByUserId: ID
+	"The person who last changed the award, by identifier. The user row is not joined by this surface's read."
+	updatedByUserId: ID
+	"The person who withdrew the award, by identifier. The user row is not joined by this surface's read."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of awards.
+"""
+type OrganizationAwardEdge {
+	node: OrganizationAward!
+	cursor: String!
+}
+
+"""
+One page of awards, with the total the filters select and the boundary cursors.
+"""
+type OrganizationAwardConnection {
+	nodes: [OrganizationAward!]!
+	edges: [OrganizationAwardEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an award list may be sorted by.
+"""
+enum OrganizationAwardSortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"""
+The order the awards are returned in. At most three keys are accepted.
+"""
+input OrganizationAwardSort {
+	field: OrganizationAwardSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an award list may be narrowed by.
+
+`year` is filterable and not sortable: an equality or a pattern on it is a question a caller asks, and
+an ordering over text that only sometimes looks like a year is not one this surface can answer
+honestly.
+"""
+input OrganizationAwardFilter {
+	id: IDFilter
+	name: StringFilter
+	year: StringFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	and: [OrganizationAwardFilter!]
+	or: [OrganizationAwardFilter!]
+	not: OrganizationAwardFilter
+}
+
+"""
+What a caller states when it files an award.
+
+The organization is stated because the delivered create does not derive one: the tenant is stamped
+from the credential, never from an argument, but the organization is a member the caller names and the
+delivered route validates against the caller's own memberships. There is no member for the tenant, for
+the same reason there is none on any other write here.
+"""
+input CreateOrganizationAwardInput {
+	organizationId: ID!
+	name: String!
+	"The period the award belongs to, as the organization writes it."
+	year: String!
+}
+
+"""
+What a caller states when it edits an award that exists.
+
+The identifier is the only member stated outside the body, and it is stated because the delivered
+route carries it in the path. The delivered edit is a partial column update rather than a replacement
+of the row, so a member the caller leaves out is left as it is.
+"""
+input UpdateOrganizationAwardInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	year: String
+}

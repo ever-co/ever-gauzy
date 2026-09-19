@@ -1,0 +1,47 @@
+# The organization task setting domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **There is no connection here, and that is the resource rather than an omission.** The delivered
+# controller does not extend the CRUD base: it serves a read of one organization's settings, a create
+# and an edit, and nothing else. A task setting is one row per organization — not a set a caller walks
+# — so a list root field would be a capability the REST surface does not have, and the connection
+# protocol has nothing to apply itself to.
+#
+# The read takes the organization as a required argument because the delivered route requires it: its
+# handler refuses a request that names no organization with a `400`, and the read it performs resolves
+# the row by organization, by the caller's tenant, and by the two lifecycle flags. The argument is
+# required here for the same reason it is required there — a read that named no organization would
+# either be a scan of every organization's settings or a call the service cannot make.
+#
+# **The permissions are the controller's, and they are pairs.** Each of the three routes states two
+# permissions rather than one — the organization permission that governs organization settings, and the
+# task-setting permission that governs this resource — and the permission guard authorizes a caller that
+# holds *any* of the permissions a route states. This surface states the same two on the same three
+# fields, in the same order, so the two protocols admit the same callers.
+
+extend type Query {
+	"""
+	The task settings the delivered read resolves for one organization: the row scoped to the
+	organization itself, or null when none was ever filed.
+	"""
+	organizationTaskSetting(organizationId: ID!): OrganizationTaskSetting
+}
+
+extend type Mutation {
+	"""
+	Files the task settings for an organization.
+	"""
+	createOrganizationTaskSetting(
+		input: CreateOrganizationTaskSettingInput!
+	): OrganizationTaskSetting!
+
+	"""
+	Changes the settings of one task-setting row. The identifier is the criterion; the body states the
+	settings, and every setting is optional because every column behind it carries a default.
+	"""
+	updateOrganizationTaskSetting(
+		input: UpdateOrganizationTaskSettingInput!
+	): OrganizationTaskSetting!
+}

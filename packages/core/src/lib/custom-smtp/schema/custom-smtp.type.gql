@@ -1,0 +1,190 @@
+# The SMTP configuration's object types.
+#
+# An organization either sends mail through the installation's own transport or through its own: a host,
+# a port, a transport security flag, the address messages are sent from, and the credentials to
+# authenticate with. The read that resolves it is deliberately forgiving — it answers the
+# installation-wide configuration when the organization has none, so a caller is never left without an
+# answer — which is why the type below carries an identifier that may be absent: a row has one, and the
+# installation default does not.
+#
+# **The credentials are not members, and that is the whole secret decision here.** The delivered API
+# answers `username` and `password` as *masked* values: the entity excludes both from serialization and
+# re-exposes masked copies of them, so a REST client reads a credential it can recognise but not use.
+# The row a resolver holds is the entity that masking ran on — its `username` and `password` properties
+# still carry what was stored — so a GraphQL member for either would resolve off that property and
+# answer the cleartext the delivered projection withholds. It is refused, and so is the masked copy: that
+# copy is produced on the response path rather than held by the row, so a member for it would answer a
+# value that depends on which reader produced the row — present on a row a load produced, absent on one a
+# write answered.
+#
+# The installation default is the second reason the same members are refused rather than merely
+# omitted: its credentials are the installation's own transport account, read from server-side
+# configuration, and nothing in the delivered API answers them either.
+#
+# The two shapes are carried as one type because they answer one question. A caller that must know which
+# of the two it received reads `id`: present is the organization's own configuration, absent is the
+# installation's. A second type for the default would be a second surface for one fact, and a client
+# would have to branch before it could read a host name.
+#
+# `port` is carried as a whole number and `secure` as a flag. The delivered read normalises neither: what
+# it answers is what the row or the installation's configuration holds, and the transport decides from
+# there how the connection is secured.
+
+"""
+The SMTP transport an organization's mail is sent through, or the installation's own when the
+organization has none.
+"""
+type SmtpSetting {
+	"""
+	The configuration row's identifier, absent when the answer is the installation's own transport
+	rather than a row.
+	"""
+	id: ID
+	"The address messages are sent from."
+	fromAddress: String
+	"The transport host. Absent only when the installation's own configuration does not name one."
+	host: String
+	"The transport port."
+	port: Int
+	"Whether the connection is secured from the first byte rather than upgraded to it."
+	secure: Boolean
+	"Whether an operator has validated this configuration by using it."
+	isValidate: Boolean
+	"The organization the configuration belongs to. Absent on the installation-wide answer."
+	organizationId: ID
+	"The tenant the configuration belongs to. Stamped from the credential, never stated by a caller."
+	tenantId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are the CRUD base's
+	own routes and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of configurations.
+"""
+type SmtpSettingEdge {
+	node: SmtpSetting!
+	cursor: String!
+}
+
+"""
+One page of configurations, with the total the filters select and the boundary cursors.
+"""
+type SmtpSettingConnection {
+	nodes: [SmtpSetting!]!
+	edges: [SmtpSettingEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a configuration list may be sorted by.
+"""
+enum SmtpSettingSortField {
+	createdAt
+	updatedAt
+	host
+	port
+	isValidate
+}
+
+"""
+The order the configurations are returned in. At most three keys are accepted.
+"""
+input SmtpSettingSort {
+	field: SmtpSettingSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a configuration list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+`organizationId: { isNull: true }` is the installation-wide configuration — the row that answers for
+every organization that has none of its own, and the one every new installation is seeded with. The
+credentials are not filterable, for the same reason they are not members: a filter is a comparison
+against the row's own value, so `username: { like: '%…%' }` would answer whether a credential matches,
+one character at a time.
+"""
+input SmtpSettingFilter {
+	id: IDFilter
+	fromAddress: StringFilter
+	host: StringFilter
+	port: NumberFilter
+	secure: BooleanFilter
+	isValidate: BooleanFilter
+	organizationId: IDFilter
+	tenantId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [SmtpSettingFilter!]
+	or: [SmtpSettingFilter!]
+	not: SmtpSettingFilter
+}
+
+"""
+What a caller states when it files a configuration.
+
+The credentials are members here and nowhere else: the delivered body requires them — a transport that
+cannot authenticate is not a configuration — and they travel one way, into the store.
+"""
+input CreateSmtpSettingInput {
+	"The address messages are sent from."
+	fromAddress: String
+	"The transport host."
+	host: String!
+	"The transport port."
+	port: Int!
+	"Whether the connection is secured from the first byte rather than upgraded to it."
+	secure: Boolean!
+	"Whether the caller states the configuration as already validated."
+	isValidate: Boolean
+	"The account the transport authenticates as."
+	username: String!
+	"The account's secret."
+	password: String!
+	"The organization the configuration belongs to. Omit for the installation-wide one."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a configuration that exists.
+
+The delivered edit binds the creation body and the identifier from the path, so every member is stated
+here as the creation input states it and the identifier is added: the delivered edit replaces the
+writable columns rather than patching around them.
+"""
+input UpdateSmtpSettingInput {
+	id: ID!
+	fromAddress: String
+	host: String!
+	port: Int!
+	secure: Boolean!
+	isValidate: Boolean
+	username: String!
+	password: String!
+	organizationId: ID
+}
+
+"""
+A configuration as the validator states it: the same members a creation states, because verifying a
+transport is using one.
+
+Every member is required here for the same reason it is on the delivered body: the validator opens a
+connection with what it is given, and a configuration missing its credentials is refused by the
+delivered route's own validation rather than verified and reported as failing.
+"""
+input ValidateSmtpSettingInput {
+	fromAddress: String
+	host: String!
+	port: Int!
+	secure: Boolean!
+	username: String!
+	password: String!
+}

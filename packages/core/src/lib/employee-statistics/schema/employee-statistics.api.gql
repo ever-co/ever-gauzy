@@ -1,0 +1,104 @@
+# The employee-statistics domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **These four fields are computed answers, and they are root fields of their own because there is no
+# resource for them to hang off.** A statistic is not a row: it has no identifier, nothing to withdraw
+# and nothing to recover, and the controller serves four `GET` routes and no write at all. So this file
+# extends `Query` and never `Mutation`, and it declares no node field and no count field — not because
+# they were forgotten, but because the controller has no `GET /:id` and no `GET /count` for either to
+# mirror. Where a client needs one figure it reads the field that answers it; where it needs the rows a
+# figure was computed from, those belong to the domains that store them.
+#
+# **Every field is under the tenant guard and no permission**, which is exactly what the controller
+# carries: `EmployeeStatisticsController` declares `TenantPermissionGuard` on the class and no
+# `@Permissions` anywhere, on the class or on a handler. The fields below therefore state no permission
+# at all — a resolver that demanded one would refuse a caller the REST route serves, and the four
+# routes are the same four capabilities.
+#
+# **What each field mirrors, route for route:**
+#
+# - `employeeStatisticsAggregate` mirrors `GET /aggregate`, which reads the working roster of one
+#   organization over a range and aggregates the incomes, the expenses and the bonus policy over it.
+#   It answers three views of one calculation — the organization's total, the same figures per employee
+#   and the same figures per day — which is why one field answers all three rather than three fields
+#   recomputing the same thing.
+# - `employeeStatisticsSeries` mirrors `GET /months/:id`, whose employee is a path parameter and whose
+#   `valueDate` is read out of its `data` query parameter. It answers four twelve-month series.
+# - `employeeMonthlyStatistics` mirrors `GET /months`, which answers one row per month of a range.
+# - `employeeStatisticsHistory` mirrors `GET /history`, which answers the individual lines a total was
+#   computed from, selected by which of the four sources the caller asks for.
+#
+# The last two are close enough to be confused and are deliberately two fields: the monthly field
+# answers one aggregate row per month, and the history field answers the lines themselves. A caller
+# that wants a month's figure reads the first; a caller that wants to know what is in it reads the
+# second.
+#
+# **A range is stated where the delivered answer computes with it, and omitted where the delivered
+# answer has a default.** The aggregate computes its periods from the two dates, so it takes them; the
+# monthly and history reads default each end of their range to the current month, in the delivered
+# handler, so their dates are optional here and an absent one is the same statement it is there. The
+# organization is required where the delivered read cannot answer without it — the aggregate resolves
+# its roster through it — and optional where the delivered read only narrows by it.
+
+extend type Query {
+	"""
+	What one organization's employees earned, spent and are owed over a range, as a total, per employee
+	and per day of the range.
+	"""
+	employeeStatisticsAggregate(
+		"The organization whose roster is aggregated. The delivered read resolves the roster through it and has no default for it."
+		organizationId: ID!
+		"The start of the range. The aggregate computes its periods from the two dates."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+	): EmployeeStatisticsAggregate!
+
+	"""
+	One employee's income, expense, profit and bonus, one entry per month of the delivered twelve-month
+	walk.
+	"""
+	employeeStatisticsSeries(
+		"The employee whose series is read."
+		employeeId: ID!
+		"The date the walk is anchored to. Omit it and the delivered read answers the walk from the current month."
+		valueDate: DateTime
+	): EmployeeStatisticsSeries!
+
+	"""
+	One employee's statistics, one row per month of a range, newest first.
+	"""
+	employeeMonthlyStatistics(
+		"The employee whose months are read."
+		employeeId: ID!
+		"The start of the range. Omit it and the delivered handler defaults it to the start of the current month."
+		startDate: DateTime
+		"The end of the range. Omit it and the delivered handler defaults it to the end of the current month."
+		endDate: DateTime
+		"The organization the incomes and expenses are narrowed to, where the caller states one."
+		organizationId: ID
+	): [EmployeeMonthlyStatistic!]!
+
+	"""
+	The individual income and expense lines behind an employee's totals, selected by source.
+
+	`type` is one of the six the delivered handler switches on — `INCOME`, `BONUS_INCOME`,
+	`NON_BONUS_INCOME`, `EXPENSES`, `EXPENSES_WITHOUT_SALARY` or `PROFIT` — and a value the handler does
+	not recognise is answered with an empty list, which is the delivered behaviour rather than a refusal
+	invented here.
+	"""
+	employeeStatisticsHistory(
+		"The employee whose lines are read."
+		employeeId: ID!
+		"Which of the sources the lines are drawn from."
+		type: String!
+		"The start of the range. Omit it and the delivered handler defaults it to the start of the current month."
+		startDate: DateTime
+		"The end of the range. Omit it and the delivered handler defaults it to the end of the current month."
+		endDate: DateTime
+		"The organization the lines are narrowed to, where the caller states one."
+		organizationId: ID
+	): [EmployeeStatisticsHistoryEntry!]!
+}

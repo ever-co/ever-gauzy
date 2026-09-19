@@ -1,0 +1,130 @@
+# The integration entity setting's object types.
+#
+# One row is one decision: *this* kind of row — projects, tasks, issues, time logs, … — is or is not
+# synchronised through *this* configured integration. The delivered read loads the two facts a client
+# needs to place the row — the configured integration it belongs to, and the tied rows underneath it —
+# so both are carried here rather than left to a second call.
+#
+# `tiedEntities` is the second level of the same decision: a row type that is synchronised *because*
+# another one is (`integration_entity_setting_tied`), which is how a provider that has no first-class
+# notion of a task still receives them. The collection is carried because the delivered read loads it,
+# and its own resource — declared beside this one — serves the writes that maintain it directly.
+#
+# `entity` is the domain's own closed vocabulary, declared once by the integration catalogue and
+# referenced here: the set of row types a provider can synchronise is the platform's, not a caller's.
+#
+# The one member the row declares and this type does not carry is the write-side `integration`
+# relation's inverse: a configured integration's own `entitySettings` collection is reachable through
+# this connection, narrowed by `integrationId`, which is what a reader of the configured integration
+# actually asks — and carrying it on both types would make one fact answerable in two places.
+
+"""
+One row type's synchronisation decision for one configured integration.
+"""
+type IntegrationEntitySetting {
+	id: ID!
+	"The kind of row this decision is about."
+	entity: IntegrationEntity!
+	"Whether rows of that kind are synchronised through this integration."
+	sync: Boolean!
+	"The configured integration this decision belongs to, as the delivered read loads it."
+	integration: IntegrationTenant
+	"The same integration, by identifier."
+	integrationId: ID
+	"The rows that are synchronised because this one is. Loaded by the delivered read."
+	tiedEntities: [IntegrationEntitySettingTied!]!
+	"The tenant the row belongs to. Stamped from the credential, never stated by a caller."
+	tenantId: ID
+	"The organization the decision applies to."
+	organizationId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are routes every
+	resource on this platform inherits, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of synchronisation decisions.
+"""
+type IntegrationEntitySettingEdge {
+	node: IntegrationEntitySetting!
+	cursor: String!
+}
+
+"""
+One page of synchronisation decisions, with the total the filters select and the boundary cursors.
+"""
+type IntegrationEntitySettingConnection {
+	nodes: [IntegrationEntitySetting!]!
+	edges: [IntegrationEntitySettingEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a decision list may be sorted by.
+"""
+enum IntegrationEntitySettingSortField {
+	createdAt
+	updatedAt
+	entity
+	sync
+}
+
+"""
+The order the decisions are returned in. At most three keys are accepted.
+"""
+input IntegrationEntitySettingSort {
+	field: IntegrationEntitySettingSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a decision list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`integrationId` is the member a reader of one configured integration states; the delivered read takes
+it as its own path parameter and this surface states it as the argument it is, so the narrowing is
+applied by the store rather than to its answer. It is carried here as well because the rows this
+connection holds are the rows of one integration, and a caller that wants to be sure of that can say
+so — the two agree by construction.
+"""
+input IntegrationEntitySettingFilter {
+	id: IDFilter
+	entity: StringFilter
+	sync: BooleanFilter
+	integrationId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [IntegrationEntitySettingFilter!]
+	or: [IntegrationEntitySettingFilter!]
+	not: IntegrationEntitySettingFilter
+}
+
+"""
+One synchronisation decision as a write states it.
+
+The delivered write accepts one of these or a list of them and stores what it is given, so the surface
+states the list — a GraphQL input is one shape, and the list is the shape the delivered handler folds a
+single object into anyway. `tiedEntities` is a member because the delivered write cascades it: a
+decision and the rows that hang off it are written together.
+"""
+input IntegrationEntitySettingInput {
+	"The kind of row this decision is about."
+	entity: IntegrationEntity!
+	"Whether rows of that kind are synchronised through this integration."
+	sync: Boolean!
+	"The configured integration the decision belongs to. The delivered write also takes it in the path."
+	integrationId: ID
+	"The organization the decision applies to."
+	organizationId: ID
+	"The rows that are synchronised because this one is."
+	tiedEntities: [IntegrationEntitySettingTiedInput!]
+}

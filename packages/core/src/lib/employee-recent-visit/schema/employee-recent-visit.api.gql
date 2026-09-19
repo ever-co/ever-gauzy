@@ -1,0 +1,59 @@
+# The employee recent-visit domain's root fields.
+#
+# `Query` is declared by the kernel and extended here: a root operation type exists once for the whole
+# platform, so a domain adds fields to it and never declares its own. There is no `extend type Mutation`
+# in this file, and that is a statement rather than an omission — see below.
+#
+# The one field below is the one the delivered `/api/employee-recent-visit` route already serves, under
+# the same guard and with the same permission, so a client that reaches the capability over one protocol
+# is not given a narrower or a wider one than the client that reaches it over the other. The guard chain
+# and the permission are read from `EmployeeRecentVisitController`'s own metadata in the resolver, and the
+# resolver's spec compares the two rather than restating a list that could agree with the resolver while
+# disagreeing with the controller.
+#
+# **This controller states its scope once, on the class.** `TenantPermissionGuard` and `PermissionGuard`
+# are declared at class level, and beside them an empty `@Permissions()` — a statement, because both
+# guards read an empty list as "no permission required". The route states no permission and no guard of
+# its own, so the field below states none either.
+#
+# **There is no node query, no count and no write, because the controller serves none of them.**
+# `EmployeeRecentVisitController` is not a CRUD controller: it declares exactly one route, `GET /`, so a
+# `employeeRecentVisit(id)` here would mirror a `GET /:id` that does not exist, an
+# `employeeRecentVisitCount` would mirror a `GET /count` that does not exist, and any mutation at all
+# would mirror a write that does not exist. Each of them would be a capability REST does not have — the
+# reverse of the gap this delivery exists to close. Where a caller needs one visit it narrows the
+# connection by `id`; where it needs a total, `totalCount` is the count of the rows the filters selected.
+# The connection below is therefore the whole of this surface, and the spec asserts that it is.
+#
+# **A parameter of the route is a filter, never a root field.** The delivered read binds an
+# `organizationId`, an `entity`, an `entityId`, an `employeeId`, an `isActive` and an `isArchived` from its
+# query string, and each of them is a member of `EmployeeRecentVisitFilter` rather than a field of its own,
+# so the narrowings REST offers are the filters this one connection accepts.
+#
+# **`totalCount` is the count of the rows this read answered, not of every visit in the store.** The
+# delivered read fixes its own page — a hundred rows unless the caller states otherwise, in `visitedAt`
+# order — so the set this connection is applied to is that bounded answer, and the total is the size of it
+# after the filters select from it. A number that pretended to count beyond the set the delivered read
+# answers would be a second count of the same question, and it would disagree with the first.
+
+extend type Query {
+	"""
+	The recent visits of the caller's own employee record, most recent first, as the delivered read
+	answers them.
+
+	`totalCount` is the count of the rows that read answered rather than the count of every visit the
+	store holds: the read answers a bounded set, and the connection's filter, order and page are applied
+	over exactly that set.
+	"""
+	employeeRecentVisits(
+		filter: EmployeeRecentVisitFilter
+		sort: [EmployeeRecentVisitSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EmployeeRecentVisitConnection!
+}

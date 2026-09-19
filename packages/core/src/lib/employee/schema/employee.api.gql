@@ -1,0 +1,210 @@
+# The employee domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/employee` routes already serve, under the same guard and
+# with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other. The guard and the permission
+# are read from `EmployeeController`'s own metadata in the resolver, and the resolver's spec compares
+# the two rather than restating a list that could agree with the resolver while disagreeing with the
+# controller.
+#
+# **Why this resource matters more than its size suggests.** An employee is what a sale is attributed
+# to, what a picking task is assigned to and what a commission belongs to: the commerce packages point
+# at this identifier, and until this surface existed a client that speaks GraphQL could not read the
+# row they point at. That is the gap this file closes, and it is closed by mirroring the routes rather
+# than by inventing a view of them.
+#
+# **Three lists, because the controller serves three different reads of this resource.** They are not
+# three spellings of one list and none of them is a filter of another:
+#
+# - `employees` mirrors `GET /`, which reads the tenant's rows and constrains the account behind each
+#   one to a live account, and selects nothing from the account.
+# - `workingEmployees` mirrors `GET /working`, which is a different service call with a predicate of
+#   its own — an engagement counts as working when it had started by the end of the range and had not
+#   ended before the range began — and a scope of its own, because the read narrows to the caller's own
+#   engagement for a caller who may not select an employee.
+# - `employeeMembers` mirrors `GET /members`, which reads one organization's roster, joins membership
+#   when the caller names a team or a project, and projects six columns of the row.
+#
+# A filter on `employees` cannot express either of the other two: the connection protocol narrows the
+# rows a read returned, and neither predicate is a fact about those rows. Declaring them as filters
+# would produce a field that silently answers too much, which is worse than a second root field that
+# states which read it performs. What each connection *can* narrow is stated per field, in its own
+# filter input, and the two narrower reads declare only the fields their own projection carries.
+#
+# **`GET /pagination` has no root field.** It answers the same rows under the same narrowing as
+# `GET /`, one of them sliced by `take`/`skip` and the other not, and the connection's own
+# `limit`/`offset` already are that slice. A second root field for the paginated spelling would be a
+# second surface that could disagree with this one about the same rows.
+#
+# **The count route gets a field of its own, and the working count is the case that reads oddly.** A
+# bare number is not a connection, and `totalCount` is not that number — it is the count of the rows
+# the connection narrowed to, while `GET /count` counts the caller's own rows. `employeeCount`
+# therefore states no argument, which is what its route answers when it is given no options.
+#
+# `workingEmployeeCount` does state arguments, and that is a departure stated rather than an oversight.
+# Its route is not a count of the caller's own rows but the count of a *computed selection*: the
+# delivered handler reads `organizationId` and `forRange` out of the request and hands them to the same
+# predicate `GET /working` runs. A field with no argument would have to invent an organization and a
+# range, and would then answer a different question from its route — or, for an organization it cannot
+# name, nothing at all. The identifiers it takes are the ones the route itself requires; the count of
+# the caller's own rows is `employeeCount` above, and it is argument-less as the convention requires.
+#
+# **`employee` is the node query, and its scope is the route's own, which is not a permission.** The
+# delivered `GET /:id` declares an empty permission list — deliberately, because it does not run under
+# the controller's class-level edit permission — and it enforces its scope in the handler instead: a
+# caller that may not change the selected employee is answered its *own* engagement whatever identifier
+# it names, and a caller with no engagement at all is refused. This field mirrors that handler exactly,
+# including the refusal, rather than restating it as a permission: a field that narrowed an
+# administration caller's read, or widened a plain employee's, would be a second answer to the same
+# question.
+#
+# **The lifecycle routes count, and each of the two spellings of removal is its own field.** `DELETE
+# /:id` removes the row; `DELETE /:id/soft` withdraws it, keeping the identifier other rows point at;
+# `PUT /:id/recover` puts a withdrawn row back. Three operations, three fields, because a client that
+# could not tell them apart could not tell whether the sales attributed to an employee survived.
+#
+# **The write fields state the organization where their route binds one.** `DELETE /:id`,
+# `DELETE /:id/soft` and `PUT /:id/recover` each read an organization out of the request and hand it to
+# the service as part of the narrowing, so the fields take the same optional identifier: stating it asks
+# the same question the route asks, and omitting it runs the same call the route runs when the caller
+# states none.
+#
+# **The one statement this surface cannot make is the origin header.** `POST /` and `POST /bulk` read
+# the request's `origin` and hand it to the handler, which uses it to build the link in the welcome mail
+# a newly filed account receives. The resolver reads the same header off the same request, so the
+# behaviour is mirrored rather than approximated; where there is no request there is no header, and the
+# handler's own default is what the command then carries.
+
+extend type Query {
+	"""
+	The engagements of the caller's tenant, in no order of their own: the delivered read applies none,
+	so the connection applies the platform's — newest first, the identifier last so a cursor walk over
+	them is stable.
+	"""
+	employees(
+		filter: EmployeeFilter
+		sort: [EmployeeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EmployeeConnection!
+
+	"""
+	One engagement of the caller's tenant, or null when there is none — and the caller's own engagement
+	whatever identifier it names, unless it may change the selected employee, which is the delivered
+	route's own scope.
+	"""
+	employee(id: ID!): Employee
+
+	"""
+	How many engagements the caller's tenant holds.
+	"""
+	employeeCount: Int
+
+	"""
+	The engagements of one organization that count as working over a range: started by the range's end
+	and not ended before its range began. Narrowed to the caller's own engagement unless it may select
+	an employee, which is the delivered read's own scope rather than a permission stated here.
+	"""
+	workingEmployees(
+		"The organization whose roster is read. The delivered read has no default for it."
+		organizationId: ID!
+		"The end of the range. Omit it and the read answers every live engagement of the organization."
+		startDate: DateTime
+		"The end of the range. Omit it and the read answers every live engagement of the organization."
+		endDate: DateTime
+		filter: WorkingEmployeeFilter
+		sort: [WorkingEmployeeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EmployeeConnection!
+
+	"""
+	How many engagements of one organization count as working over a range. The delivered count route
+	requires the organization and reads the range from the same input the list does, so the field
+	states both; see the note above on why this count is not argument-less.
+	"""
+	workingEmployeeCount(organizationId: ID!, startDate: DateTime, endDate: DateTime): Int
+
+	"""
+	One organization's live roster, projected to the columns a picker needs. Narrowed by a team or a
+	project when the caller names one, which is a join the delivered read performs and the connection
+	cannot: the rows it returned do not carry either membership.
+	"""
+	employeeMembers(
+		"The organization whose roster is read."
+		organizationId: ID!
+		"The team to narrow the roster to. Omit it for the whole organization."
+		organizationTeamId: ID
+		"The project to narrow the roster to. Omit it for the whole organization."
+		organizationProjectId: ID
+		filter: EmployeeMemberFilter
+		sort: [EmployeeMemberSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EmployeeConnection!
+}
+
+extend type Mutation {
+	"""
+	Files an engagement, and the account it belongs to when the caller states one instead of an
+	existing account's identifier.
+	"""
+	createEmployee(input: CreateEmployeeInput!): Employee!
+
+	"""
+	Files several engagements in one call, each with the payload `createEmployee` takes.
+
+	The delivered route answers the rows it created rather than a page of them, so the field does the
+	same: a client that files five engagements and reads back four has learned something the page
+	envelope would have hidden.
+	"""
+	createEmployeesBulk(input: [CreateEmployeeInput!]!): [Employee!]!
+
+	"""
+	Edits an engagement that exists. A member the caller leaves out is left as it is; the account
+	behind the engagement is not a member, because it is edited through its own surface.
+	"""
+	updateEmployee(input: UpdateEmployeeInput!): Employee!
+
+	"""
+	Edits an engagement's own profile — the facts the employee owns — under the profile permission
+	alone, which is what makes this a separate field from `updateEmployee` rather than the same one
+	with a different guard.
+	"""
+	updateEmployeeProfile(input: UpdateEmployeeProfileInput!): Employee!
+
+	"""
+	Removes an engagement outright. The rows that point at it are the store's own constraint to answer
+	for; this field does not pre-empt it.
+	"""
+	deleteEmployee(id: ID!, organizationId: ID): Boolean!
+
+	"""
+	Withdraws an engagement without removing it: the row keeps its identifier, and the times, expenses
+	and sales attributed to it keep pointing at the same person.
+	"""
+	softDeleteEmployee(id: ID!, organizationId: ID): Employee!
+
+	"""
+	Puts a withdrawn engagement back.
+	"""
+	recoverEmployee(id: ID!, organizationId: ID): Employee!
+}

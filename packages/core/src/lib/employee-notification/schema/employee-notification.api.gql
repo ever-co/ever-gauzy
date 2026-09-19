@@ -1,0 +1,131 @@
+# The employee notification domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/employee-notification` routes already serve, under the
+# same guard and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other. The guard chain
+# and the permission are read from `EmployeeNotificationController`'s own metadata in the resolver, and
+# the resolver's spec compares the two rather than restating a list that could agree with the resolver
+# while disagreeing with the controller.
+#
+# **This controller states its scope once, on the class.** `TenantPermissionGuard` and `PermissionGuard`
+# are declared at class level, and beside them an empty `@Permissions()` — which is a statement rather
+# than an omission: both guards read an empty list as "no permission required", so every route of this
+# resource asks for a credential and a tenant and for no particular grant. No handler states a
+# permission or a guard of its own, which is why no field below states one either.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered
+# list method reads live rows only, and offering an argument that cannot be honoured would be worse
+# than not offering it.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same
+# rows under the same filters, one of them sliced by `take`/`skip` and the other not. That is one
+# capability, so it is one root field: `employeeNotifications`, mirroring `GET /`, which is the route
+# that reads the whole filtered set the connection protocol is applied to. A second root field for the
+# paginated spelling would be a second surface that could disagree with this one, and the connection's
+# own `limit`/`offset` already are the page it performs.
+#
+# `employeeNotificationCount` takes no filter, and that is a statement rather than an omission. The
+# delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak; a `filter` argument here would either be handed to a service call
+# that cannot accept it or be evaluated over a second code path that could disagree with the
+# connection's `totalCount`. What it answers is the count of the caller's own rows, which is the call
+# the route makes when it is given no options — and it is nullable because an aggregate the resource
+# has no answer for must not be answered as a zero.
+
+extend type Query {
+	"""
+	The notifications of the caller's tenant, newest first.
+	"""
+	employeeNotifications(
+		filter: EmployeeNotificationFilter
+		sort: [EmployeeNotificationSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EmployeeNotificationConnection!
+
+	"""
+	One notification of the caller's tenant, or null when there is none.
+	"""
+	employeeNotification(id: ID!): EmployeeNotification
+
+	"""
+	How many notifications the caller's tenant has.
+	"""
+	employeeNotificationCount: Int
+}
+
+extend type Mutation {
+	"""
+	Marks every unread notification of the caller's own employee record as read, and reports what the
+	write did.
+
+	**This answer is not a resource.** Nothing in the schema names a row it could be read back from: the
+	write states how many notifications it changed and whether it succeeded, and both members are the
+	delivered answer's own. It is a write, so it is a root field of its own under `Mutation` rather than
+	a projection of `EmployeeNotification` — and it is separately named, so a client cannot mistake it
+	for a row.
+
+	The receiver is never an argument. The delivered service reads the caller's own employee record from
+	the credential, so a caller can only mark its own notifications read; a caller with no employee
+	record or no tenant is answered a successful no-op with a count of zero rather than an update over
+	a scope it did not name.
+	"""
+	markAllEmployeeNotificationsAsRead: EmployeeNotificationMarkAllAsReadResult!
+
+	"""
+	Files a notification for a receiver.
+
+	`PUT /:id` and this field's sibling below edit a notification that exists; filing one is the other
+	capability, and it is the route that decides whether the receiver wants it at all: the delivered
+	service consults the receiver's notification settings and, when that kind of notification has been
+	switched off, creates nothing. **That is a write the delivered service declines to perform**, and it
+	is stated here rather than carried in the answer: the field is the non-null row the write answers
+	when it writes, and the decision not to write belongs to the receiver's own setting, so no payload
+	type is invented to report it.
+	"""
+	createEmployeeNotification(input: CreateEmployeeNotificationInput!): EmployeeNotification!
+
+	"""
+	Edits a notification that exists.
+
+	The delivered update is a partial column write rather than a replacement: a member the caller leaves
+	out is left as it is, and the write answers the store's update result rather than a row — which is
+	why this field answers the row the write left behind, read through the same read the node field
+	performs. A notification of another tenant, or one that is not there, is answered with the miss
+	rather than with a write under an identifier the caller does not own.
+
+	This field mirrors the inherited `PUT /:id`. `PUT /mark-all-read` is declared by this resource's own
+	controller and wins that literal path, and the inherited route still serves every other identifier,
+	so both capabilities are served over REST and both are stated here.
+	"""
+	updateEmployeeNotification(input: UpdateEmployeeNotificationInput!): EmployeeNotification!
+
+	"""
+	Removes a notification outright. The delivered route answers the store's delete result — a statement
+	about the write rather than a row — so this field answers `true` once the removal was performed, which
+	is the fact a client branches on.
+	"""
+	deleteEmployeeNotification(id: ID!): Boolean!
+
+	"""
+	Withdraws a notification without removing it: the row keeps its identifier and the delivered list
+	stops answering it.
+	"""
+	softDeleteEmployeeNotification(id: ID!): EmployeeNotification!
+
+	"""
+	Puts a withdrawn notification back.
+	"""
+	recoverEmployeeNotification(id: ID!): EmployeeNotification!
+}

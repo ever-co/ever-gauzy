@@ -1,0 +1,127 @@
+# The employee availability domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/employee-availability` routes already serve, under the
+# same guard chain and with the same permission, so a client that reaches a capability over one
+# protocol is not given a narrower or a wider one than the client that reaches it over the other.
+#
+# **The guard chain and the permission pair are the controller's class metadata, and five of the
+# fields below carry nothing else.** The controller is guarded at class level by
+# `TenantPermissionGuard` and `PermissionGuard` and states the pair `EMPLOYEE_AVAILABILITY_UPDATE`,
+# `EMPLOYEE_AVAILABILITY_DELETE` there; the list, the two creates and the update state their own
+# permission on their own handlers, and the node query, the count and the three lifecycle routes state
+# none — those four routes are inherited from the CRUD base, so the class pair is the whole of what
+# they run under, and it is what the corresponding fields run under too. Reading one availability row
+# and listing them requiring different grants is the controller's asymmetry, and resolving it on one
+# surface only is exactly what this delivery exists to prevent.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol every other
+# connection takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` —
+# and answers with the same shape the kernel's `PageInfo` gives them, so a cursor obtained over one
+# surface resumes on the other. `withDeleted` is deliberately absent: the delivered list method reads
+# live rows only, and offering an argument that cannot be honoured would be worse than not offering
+# it.
+#
+# The controller serves its list twice — `GET /` and the `GET /pagination` it inherits — and the two
+# answer the same rows under the same filters, one of them sliced by a page and the other not. That is
+# one capability, so it is one root field: `employeeAvailabilities`, mirroring `GET /`, which is the
+# route that reads the whole filtered set the connection protocol is applied to. A second root field
+# for the paginated spelling would be a second surface that could disagree with this one, and the
+# connection's own `limit`/`offset` already are the page it performs.
+#
+# `employeeAvailabilityCount` takes no filter, and that is a statement rather than an omission. The
+# delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak; a `filter` argument here would either be handed to a service call
+# that cannot accept it or be evaluated over a second code path that could disagree with the
+# connection's `totalCount`. It is nullable because a count is an aggregate a resource may legitimately
+# have no answer for, and a non-null field would turn "not answered" into a fabricated zero.
+
+extend type Query {
+	"""
+	The availability rows of the caller's tenant, newest first.
+
+	When the caller states no sort, the order is the platform's own: newest first, then the identifier,
+	because the delivered read states no order of its own and a cursor walk needs a total one.
+	"""
+	employeeAvailabilities(
+		filter: EmployeeAvailabilityFilter
+		sort: [EmployeeAvailabilitySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EmployeeAvailabilityConnection!
+
+	"""
+	One availability row of the caller's tenant, or null when there is none.
+
+	A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+	row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+	other protocol's vocabulary.
+	"""
+	employeeAvailability(id: ID!): EmployeeAvailability
+
+	"""
+	How many availability rows the caller's tenant holds.
+	"""
+	employeeAvailabilityCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files one availability row.
+
+	The write is the command the REST route dispatches, so the tenant the new row belongs to is stamped
+	from the credential rather than stated by the caller, and the status is stored through the column's
+	own transformer exactly as it is over REST.
+	"""
+	createEmployeeAvailability(input: CreateEmployeeAvailabilityInput!): EmployeeAvailability!
+
+	"""
+	Files several availability rows at once.
+
+	The write is the command the `POST /bulk` route dispatches, and the answer is the list of rows the
+	write created — what the delivered command answers, rather than a statement about the write. The
+	tenant is stamped from the credential for every row, so no member of the input can place a row in a
+	tenant the caller is not acting in.
+	"""
+	createEmployeeAvailabilities(input: [CreateEmployeeAvailabilityInput!]!): [EmployeeAvailability!]!
+
+	"""
+	Changes an availability row that exists.
+
+	**A member that is absent is left as it is, and this is the opposite of what the create above does
+	with the same vocabulary.** The delivered service reads the row under the caller's own tenant and
+	then writes the columns the caller stated, so a member the body omits keeps the value the row already
+	has — see `UpdateEmployeeAvailabilityInput`. The identifier travels inside the input because the
+	delivered route takes it from the path and the write reads it from the body.
+
+	The answer is the row as it stands after the write. The delivered call answers the store's own result
+	rather than a row, so the field reads the row back through the same read the one-row query performs.
+	"""
+	updateEmployeeAvailability(input: UpdateEmployeeAvailabilityInput!): EmployeeAvailability!
+
+	"""
+	Removes an availability row outright.
+
+	The delivered route answers the store's own delete result rather than a row, so this field answers
+	whether the removal ran — the fact that call establishes.
+	"""
+	deleteEmployeeAvailability(id: ID!): Boolean!
+
+	"""
+	Withdraws an availability row without removing it: the row keeps its identifier and the delivered
+	list stops answering it.
+	"""
+	softDeleteEmployeeAvailability(id: ID!): EmployeeAvailability!
+
+	"""
+	Puts a withdrawn availability row back.
+	"""
+	recoverEmployeeAvailability(id: ID!): EmployeeAvailability!
+}

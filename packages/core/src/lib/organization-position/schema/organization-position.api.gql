@@ -1,0 +1,84 @@
+# The organization position domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The controller declares two routes and inherits seven.** Its list and its edit are its own; the
+# count, the paginated list, the one-row read, the create, the removal and the two lifecycle moves come
+# from the CRUD base it extends. Inherited is not the same as absent — Nest registers an inherited
+# handler with the decorators it carries — so this surface mirrors all nine, and the two list routes
+# fold into one connection because they answer one question.
+#
+# **No field here states a permission, and that is the parity rather than an omission.** The delivered
+# controller carries `TenantPermissionGuard` on the class and no `@Permissions` anywhere — not on the
+# two routes it declares and not on any of the seven it inherits — so every one of its routes is
+# tenant-guarded and otherwise unpermissioned. A field that demanded a permission would refuse a caller
+# the REST route serves, which is the asymmetry the two-protocol rule forbids; tightening the resource
+# is a change to make in both places at once, and it is not this delivery's to make.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection. `withDeleted` is
+# deliberately absent: the delivered list method reads live rows only, and offering an argument that
+# cannot be honoured would be worse than not offering it.
+#
+# `organizationPositionCount` takes no filter, and that is a statement rather than an omission. The
+# delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak.
+
+extend type Query {
+	"""
+	The positions of the caller's tenant, newest first.
+	"""
+	organizationPositions(
+		filter: OrganizationPositionFilter
+		sort: [OrganizationPositionSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationPositionConnection!
+
+	"""
+	One position of the caller's tenant, or null when there is none.
+	"""
+	organizationPosition(id: ID!): OrganizationPosition
+
+	"""
+	How many positions the caller's tenant keeps.
+	"""
+	organizationPositionCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a position.
+	"""
+	createOrganizationPosition(input: CreateOrganizationPositionInput!): OrganizationPosition!
+
+	"""
+	Changes the stated facts of a position. The delivered edit writes through the create path — it is an
+	upsert rather than a replacement of the row — so a member the caller leaves out is left as it is.
+	"""
+	updateOrganizationPosition(input: UpdateOrganizationPositionInput!): OrganizationPosition!
+
+	"""
+	Removes a position outright. Who is filed under it is the store's own constraint to refuse; this
+	field does not pre-empt it.
+	"""
+	deleteOrganizationPosition(id: ID!): Boolean!
+
+	"""
+	Withdraws a position without removing it: the row keeps its identifier and the people filed under it
+	keep pointing at it, and the delivered list stops answering it.
+	"""
+	softDeleteOrganizationPosition(id: ID!): OrganizationPosition!
+
+	"""
+	Puts a withdrawn position back.
+	"""
+	recoverOrganizationPosition(id: ID!): OrganizationPosition!
+}
