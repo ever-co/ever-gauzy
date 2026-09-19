@@ -1,296 +1,212 @@
-<nb-card class="min-width-60vw card-scroll">
-  <nb-card-header>
-    <div class="d-flex flex-column">
-      <span class="cancel"
-        ><i class="fas fa-times" (click)="closeDialog(false)"></i
-      ></span>
-      <h4 class="subtitle">{{ goal.name }}</h4>
-    </div>
-    <div class="row mt-3 d-flex align-items-center">
-      <ngx-avatar class="ml-3" [src]="src" [name]="ownerName">
-      </ngx-avatar>
-      <span class="smallText ml-3 mt-1"
-        >{{ 'GOALS_PAGE.SESSION' | translate }}:
-        {{ goal.deadline }}</span
-        >
-        <span class="ml-5 mt-1">
-          <div class="button-container">
-            <button
-              status="basic"
-              nbButton
-              size="tiny"
-              class="action"
-              (click)="deleteGoal()"
-              [nbTooltip]="'BUTTONS.DELETE' | translate"
-              >
-              <nb-icon
-                status="danger"
-                icon="trash-2-outline"
-              ></nb-icon>
-            </button>
-          </div>
-        </span>
-      </div>
-      <div class="row mt-3">
-        <p class="ml-3">
-          {{
-          goal.description != ''
-          ? goal.description
-          : ('GOALS_PAGE.NO_DESCRIPTION' | translate)
-          }}
-        </p>
-      </div>
-      <div class="row mt-3 align-items-center">
-        <div class="col-md-12 d-flex align-items-center">
-          <span class="mr-3 smallText">{{
-            'GOALS_PAGE.PROGRESS' | translate
-          }}</span>
-          <span>{{ goal.progress }}%</span>
-          <nb-progress-bar
-            class="ml-3"
-            nbTooltip="{{ 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }}"
-            [value]="goal.progress"
-					[status]="
-						goal.progress < 50
-							? 'warning'
-							: goal.progress < 75
-							? 'info'
-							: 'success'
-					"
-            size="small"
-            >
-          </nb-progress-bar>
-        </div>
-      </div>
-    </nb-card-header>
-    <nb-card-body class="p-0 card-body-content">
-      <nb-tabset>
-        <nb-tab tabTitle="{{ 'GOALS_PAGE.KEY_RESULTS' | translate }}">
-          @if (goal.keyResults.length == 0) {
-            <div class="card-key-result">
-              {{ 'GOALS_PAGE.MESSAGE.NO_KEY_RESULT' | translate }}
-            </div>
-          }
-          @for (keyResult of goal.keyResults; track keyResult; let i = $index) {
-            <div class="card-key-result">
-              <div
-                class="w-100 d-flex align-items-center justify-content-between keyResult"
-                >
-                <span class="p-1 smallText flex-fill">{{
-                  keyResult.name
-                }}</span>
-                <div class="w-25 d-flex align-items-center">
-                  <span class="mr-1"
-                    >{{ keyResult.progress }}%</span
-                    >
-                    <nb-progress-bar
-									nbTooltip="{{
-										'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
-											| translate
-												: {
-														weight: calculateKeyResultWeight(
-															keyResult.weight
-														)
-												  }
-									}}"
-                    class="mt-1"
-									[status]="
-										keyResult.progress < 50
-											? 'warning'
-											: keyResult.progress < 75
-											? 'info'
-											: 'success'
-									"
-                    [value]="keyResult.progress"
-                    size="tiny"
-                  ></nb-progress-bar>
-                </div>
-                <div class="border ml-1">
-                  <nb-actions>
-                    <nb-action
-										nbTooltip="{{
-											'KEY_RESULT_PAGE.TOOLTIPS.DETAILS'
-												| translate
-										}}"
-                      (click)="keyResultDetails(i, keyResult)"
-                      icon="eye"
-                      size="tiny"
-                    ></nb-action>
-                  </nb-actions>
-                </div>
-              </div>
-            </div>
-          }
-        </nb-tab>
-        <nb-tab tabTitle="{{ 'GOALS_PAGE.UPDATES' | translate }}">
-          @if (updates.length == 0) {
-            <div class="card-key-result">
-              {{ 'GOALS_PAGE.MESSAGE.NO_UPDATES' | translate }}
-            </div>
-          }
-          @if (updates.length > 0) {
-            <div>
-              @for (update of updates; track update) {
-                <nb-card class="custom-card">
-                  <nb-card-header class="custom-header">
-                    <div
-                      class="d-flex align-items-center justify-content-between"
-                      >
-                      <ngx-avatar [src]="src" [name]="ownerName">
-                      </ngx-avatar>
-                      <span class="smallText">{{
-                        update.createdAt | date
-                      }}</span>
-                    </div>
-                  </nb-card-header>
-                  <nb-card-footer class="custom-footer pt-2">
-                    <div
-                      class="d-flex align-items-center justify-content-between"
-                      >
-                      <span>
-                        {{ 'GOALS_PAGE.UPDATE' | translate }}:
-                        <span class="font-weight-bold">{{
-                          update.update
-                        }}</span>
-                      </span>
-                      <span>
-                        {{ update.status }}
-                      </span>
-                      <span>
-                        {{ 'GOALS_PAGE.PROGRESS' | translate }} :
-                        <span class="font-weight-bold"
-                          >{{ update.progress }}%</span
-                          >
-                        </span>
-                      </div>
-                    </nb-card-footer>
-                  </nb-card>
-                }
-              </div>
-            }
-          </nb-tab>
-          <nb-tab tabTitle="Alignments">
-            @if (!goal.alignedKeyResult) {
-              <div class="card-key-result">
-                {{ 'GOALS_PAGE.MESSAGE.NO_ALIGNMENT' | translate }}
-              </div>
-            }
-            @if (!!goal.alignedKeyResult) {
-              <nb-card>
-                <nb-card-header
-                  class="w-100 d-flex align-items-center justify-content-between"
-                  >
-                  <span class="smallText"
-                    >{{ goal.alignedKeyResult.goal.name }}
-                  </span>
-                  <span class="w-25 d-flex align-items-center">
-                    <span
-                      >{{
-                      goal.alignedKeyResult.goal.progress
-                      }}%</span
-                      >
-                      <nb-progress-bar
-                        class="mt-1"
-								[status]="
-									goal.alignedKeyResult.goal.progress < 50
-										? 'warning'
-										: goal.alignedKeyResult.progress < 75
-										? 'info'
-										: 'success'
-								"
-                        [value]="goal.alignedKeyResult.goal.progress"
-                        size="tiny"
-                      ></nb-progress-bar></span
-                    ></nb-card-header>
-                    <nb-card-body>
-                      <nb-card class="ml-2">
-                        <nb-card-header class="row"
-                          ><span class="col-md-6">{{
-                          goal.alignedKeyResult.name
-                          }}</span
-                          ><span class="col-md-4"
-                          ><nb-progress-bar
-                          class="mt-1"
-										[status]="
-											goal.alignedKeyResult.progress < 50
-												? 'warning'
-												: goal.alignedKeyResult
-														.progress < 75
-												? 'info'
-												: 'success'
-										"
-                          [value]="goal.alignedKeyResult.progress"
-                          size="tiny"
-                          >{{
-                          goal.alignedKeyResult.progress
-                          }}%</nb-progress-bar
-                          >
-                        </span>
-                        <span class="col-md-2">
-                          <nb-actions>
-                            <nb-action
-											(click)="
-												keyResultDetails(
-													null,
-													goal.alignedKeyResult
-												)
-											"
-                              icon="eye"
-                            ></nb-action>
-                          </nb-actions> </span
-                        ></nb-card-header>
-                        <nb-card-body>
-                          <nb-card class="ml-2">
-                            <nb-card-header class="row"
-                              ><span class="col-md-6">{{
-                              goal.name
-                            }}</span>
-                            <span class="col-md-6"
-                              ><nb-progress-bar
-                              class="mt-1"
-												[status]="
-													goal.progress < 50
-														? 'warning'
-														: goal.progress < 75
-														? 'info'
-														: 'success'
-												"
-                              [value]="goal.progress"
-                              size="tiny"
-                              >{{
-                              goal.progress
-                              }}%</nb-progress-bar
-                              ></span
-                              ></nb-card-header
-                              >
-                            </nb-card>
-                          </nb-card-body>
-                        </nb-card>
-                      </nb-card-body>
-                    </nb-card>
-                  }
-                </nb-tab>
-              </nb-tabset>
-            </nb-card-body>
-            <nb-card-footer>
-              <nb-card>
-                <nb-card-body class="p-0 row">
-                  <div class="col-9">
-                    <label class="smallText">
-                      {{ 'GOALS_PAGE.COMMENTS' | translate }}
-                    </label>
-                    <textarea
-                      nbInput
-                      fullWidth
-                      [placeholder]="'BUTTONS.ADD_COMMENT' | translate"
-                    ></textarea>
-                  </div>
-                  <div class="col-3 btn-comment">
-                    <button nbButton status="info">
-                      {{ 'BUTTONS.ADD_COMMENT' | translate }}
-                    </button>
-                  </div>
-                </nb-card-body>
-              </nb-card>
-            </nb-card-footer>
-          </nb-card>
+<nb-card class="details-dialog">
+	<!-- The objective's name with its actions on one row, then who owns it and for which time frame. -->
+	<nb-card-header class="header">
+		<div class="header-row">
+			<h4 class="title">{{ goal.name }}</h4>
+			<div class="header-actions">
+				<div class="button-container">
+					<button
+						type="button"
+						status="basic"
+						nbButton
+						ghost
+						size="tiny"
+						class="action"
+						(click)="deleteGoal()"
+						[nbTooltip]="'BUTTONS.DELETE' | translate"
+						[attr.aria-label]="'BUTTONS.DELETE' | translate"
+					>
+						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+					</button>
+				</div>
+				<button
+					type="button"
+					class="cancel"
+					[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+					(click)="closeDialog(false)"
+				>
+					<i class="fas fa-times" aria-hidden="true"></i>
+				</button>
+			</div>
+		</div>
+		<div class="meta">
+			<ngx-avatar [src]="src" [name]="ownerName"></ngx-avatar>
+			<span class="session">
+				<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+				{{ 'GOALS_PAGE.SESSION' | translate }}: <b>{{ goal.deadline }}</b>
+			</span>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body>
+		<section class="summary">
+			<!-- Trimmed: an objective created from a preset is saved with a description of one space. -->
+			<p class="description" [class.empty]="!goal.description?.trim()">
+				{{ goal.description?.trim() ? goal.description : ('GOALS_PAGE.NO_DESCRIPTION' | translate) }}
+			</p>
+			<div class="progress-row">
+				<span class="progress-label">{{ 'GOALS_PAGE.PROGRESS' | translate }}</span>
+				<nb-progress-bar
+					class="goal-progress"
+					nbTooltip="{{ 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }}"
+					[value]="goal.progress"
+					[status]="goal.progress < 50 ? 'warning' : goal.progress < 75 ? 'info' : 'success'"
+					size="tiny"
+				>
+				</nb-progress-bar>
+				<span class="progress-value">{{ goal.progress }}%</span>
+			</div>
+		</section>
+
+		<nb-tabset>
+			<nb-tab tabTitle="{{ 'GOALS_PAGE.KEY_RESULTS' | translate }}">
+				@if (goal.keyResults.length == 0) {
+				<div class="empty-state">
+					{{ 'GOALS_PAGE.MESSAGE.NO_KEY_RESULT' | translate }}
+				</div>
+				} @else {
+				<ul class="rows">
+					@for (keyResult of goal.keyResults; track keyResult; let i = $index) {
+					<li class="row-item keyResult">
+						<span class="row-name">{{ keyResult.name }}</span>
+						<nb-progress-bar
+							class="row-bar"
+							nbTooltip="{{
+								'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
+									| translate : { weight: calculateKeyResultWeight(keyResult.weight) }
+							}}"
+							[status]="
+								keyResult.progress < 50 ? 'warning' : keyResult.progress < 75 ? 'info' : 'success'
+							"
+							[value]="keyResult.progress"
+							size="tiny"
+						></nb-progress-bar>
+						<span class="row-percent">{{ keyResult.progress }}%</span>
+						<button
+							type="button"
+							class="icon-button"
+							[nbTooltip]="'KEY_RESULT_PAGE.TOOLTIPS.DETAILS' | translate"
+							[attr.aria-label]="'KEY_RESULT_PAGE.TOOLTIPS.DETAILS' | translate"
+							(click)="keyResultDetails(i, keyResult)"
+						>
+							<nb-icon icon="eye-outline" aria-hidden="true"></nb-icon>
+						</button>
+					</li>
+					}
+				</ul>
+				}
+			</nb-tab>
+			<nb-tab tabTitle="{{ 'GOALS_PAGE.UPDATES' | translate }}">
+				@if (updates.length == 0) {
+				<div class="empty-state">
+					{{ 'GOALS_PAGE.MESSAGE.NO_UPDATES' | translate }}
+				</div>
+				} @else {
+				<ul class="rows">
+					@for (update of updates; track update) {
+					<li class="update">
+						<div class="update-head">
+							<ngx-avatar [src]="src" [name]="ownerName"></ngx-avatar>
+							<span class="update-date">{{ update.createdAt | date }}</span>
+						</div>
+						<div class="update-body">
+							<span>
+								{{ 'GOALS_PAGE.UPDATE' | translate }}: <b>{{ update.update }}</b>
+							</span>
+							@if (update.status) {
+							<span class="update-status">{{ update.status }}</span>
+							}
+							<span>
+								{{ 'GOALS_PAGE.PROGRESS' | translate }}: <b>{{ update.progress }}%</b>
+							</span>
+						</div>
+					</li>
+					}
+				</ul>
+				}
+			</nb-tab>
+			<nb-tab tabTitle="Alignments">
+				@if (!goal.alignedKeyResult) {
+				<div class="empty-state">
+					{{ 'GOALS_PAGE.MESSAGE.NO_ALIGNMENT' | translate }}
+				</div>
+				} @else {
+				<!-- The chain this objective hangs from, one indented row per level: the aligned objective, its
+				     key result, then this objective. -->
+				<ul class="rows alignment">
+					<li class="row-item">
+						<span class="row-name">{{ goal.alignedKeyResult.goal.name }}</span>
+						<nb-progress-bar
+							class="row-bar"
+							[status]="
+								goal.alignedKeyResult.goal.progress < 50
+									? 'warning'
+									: goal.alignedKeyResult.goal.progress < 75
+									? 'info'
+									: 'success'
+							"
+							[value]="goal.alignedKeyResult.goal.progress"
+							size="tiny"
+						></nb-progress-bar>
+						<span class="row-percent">{{ goal.alignedKeyResult.goal.progress }}%</span>
+						<span class="icon-slot"></span>
+					</li>
+					<li class="row-item level-1">
+						<span class="row-name">{{ goal.alignedKeyResult.name }}</span>
+						<nb-progress-bar
+							class="row-bar"
+							[status]="
+								goal.alignedKeyResult.progress < 50
+									? 'warning'
+									: goal.alignedKeyResult.progress < 75
+									? 'info'
+									: 'success'
+							"
+							[value]="goal.alignedKeyResult.progress"
+							size="tiny"
+						></nb-progress-bar>
+						<span class="row-percent">{{ goal.alignedKeyResult.progress }}%</span>
+						<button
+							type="button"
+							class="icon-button"
+							[nbTooltip]="'KEY_RESULT_PAGE.TOOLTIPS.DETAILS' | translate"
+							[attr.aria-label]="'KEY_RESULT_PAGE.TOOLTIPS.DETAILS' | translate"
+							(click)="keyResultDetails(null, goal.alignedKeyResult)"
+						>
+							<nb-icon icon="eye-outline" aria-hidden="true"></nb-icon>
+						</button>
+					</li>
+					<li class="row-item level-2">
+						<span class="row-name">{{ goal.name }}</span>
+						<nb-progress-bar
+							class="row-bar"
+							[status]="goal.progress < 50 ? 'warning' : goal.progress < 75 ? 'info' : 'success'"
+							[value]="goal.progress"
+							size="tiny"
+						></nb-progress-bar>
+						<span class="row-percent">{{ goal.progress }}%</span>
+						<span class="icon-slot"></span>
+					</li>
+				</ul>
+				}
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>
+
+	<nb-card-footer class="comments">
+		<label for="goal-comment" class="label">
+			{{ 'GOALS_PAGE.COMMENTS' | translate }}
+		</label>
+		<div class="comment-row">
+			<textarea
+				id="goal-comment"
+				nbInput
+				fullWidth
+				[placeholder]="'BUTTONS.ADD_COMMENT' | translate"
+			></textarea>
+			<button nbButton status="primary" size="small">
+				{{ 'BUTTONS.ADD_COMMENT' | translate }}
+			</button>
+		</div>
+	</nb-card-footer>
+</nb-card>
