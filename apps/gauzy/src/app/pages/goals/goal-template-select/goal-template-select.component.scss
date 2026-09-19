@@ -7,6 +7,10 @@
   margin: 0 3vw;
 }
 
-::ng-deep nb-stepper .header {
+// Scoped to this dialog. Written bare, `::ng-deep` with no `:host` ahead of it
+// is emitted as a plain global rule, so this wizard's 10vw stepper inset was
+// applied to every `nb-stepper` in the app — the contact wizard among them —
+// from the moment this component's styles loaded.
+:host ::ng-deep nb-stepper > .header {
   margin: 0 10vw !important;
 }
