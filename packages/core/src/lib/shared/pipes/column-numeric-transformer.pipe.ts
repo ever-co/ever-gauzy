@@ -7,7 +7,7 @@ import { isNotNullOrUndefined } from '@gauzy/utils';
  * `toFixed` (e.g. `1.005` → `1.01`, not `1.00`; `-1.005` → `-1.01`).
  *
  * Returns `NaN` when `Number(value)` is not finite, rather than a made-up `0`. Callers parse input
- * first (`Number('')` is `0`), as `ColumnNumericTransformerPipe.to()` and the employee DTO do.
+ * first (`Number('')` is `0`), as `ColumnNumericTransformerPipe.to()` and `toBillingRate` do.
  */
 export function roundToScale(value: unknown, scale = 2): number {
 	const n = Number(value);
@@ -28,7 +28,7 @@ export function roundToScale(value: unknown, scale = 2): number {
 }
 
 /**
- * A number as is, a string through `parseFloat` (as the employee DTO transform does), anything
+ * A number as is, a string through `parseFloat` (as `toBillingRate` does), anything
  * else `NaN`.
  */
 function parseNumeric(value: unknown): number {
@@ -64,6 +64,11 @@ export class ColumnNumericTransformerPipe implements ValueTransformer {
 		}
 		if (this.scale == null) {
 			return value as number;
+		}
+		// Raw input from routes that skip DTO validation (create, bulk, import): a blank string means
+		// "no value", like null. (Validated routes turn '' into 0 before it gets here.)
+		if (typeof value === 'string' && value.trim() === '') {
+			return null;
 		}
 		// Refuse anything that does not parse instead of storing 0: 'abc' must not become a rate.
 		const rounded = roundToScale(parseNumeric(value), this.scale);

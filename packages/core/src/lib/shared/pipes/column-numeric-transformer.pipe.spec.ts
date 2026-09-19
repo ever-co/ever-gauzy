@@ -57,12 +57,29 @@ describe('ColumnNumericTransformerPipe scale-aware persistence', () => {
 		expect(money.to('12abc')).toBe(12);
 	});
 
-	it.each(['abc', '', 'Infinity', true, {}, [], NaN])(
+	it.each(['', '   '])('stores a blank string %p as null, like a cleared field', (value) => {
+		expect(money.to(value)).toBeNull();
+	});
+
+	it.each(['abc', 'Infinity', true, {}, [], NaN])(
 		'refuses %p instead of storing 0 (routes that skip DTO validation)',
 		(value) => {
 			expect(() => money.to(value)).toThrow(BadRequestException);
 		}
 	);
+
+	it('reads Postgres/MySQL decimal strings back as rounded numbers', () => {
+		expect(money.from('10.49')).toBe(10.49);
+		expect(money.from('2147483647.00')).toBe(2147483647);
+		expect(money.from('10.499')).toBe(10.5);
+		expect(money.from('abc')).toBeNull();
+		expect(money.from(null)).toBeNull();
+	});
+
+	it('keeps 0 as 0 on write', () => {
+		expect(money.to(0)).toBe(0);
+		expect(money.to('0')).toBe(0);
+	});
 
 	it('does not round when no scale is configured', () => {
 		expect(new ColumnNumericTransformerPipe().to(10.499)).toBe(10.499);
