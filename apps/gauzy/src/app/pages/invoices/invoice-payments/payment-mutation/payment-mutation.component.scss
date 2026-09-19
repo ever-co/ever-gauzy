@@ -2,6 +2,8 @@
 
 // The Record / Edit Payment dialog, on the app's dialog scale: a header row, 12px
 // labels over 2rem controls, and a footer whose buttons sit on the trailing edge.
+// The Send Receipt dialog (`payment-receipt-mutation`) shares this sheet and its
+// `.header` / `.footer` classes.
 // Fallbacks on every custom property — `--gauzy-*` is undefined in
 // material-light / material-dark, where a `var()` without one is dropped.
 $control-height: 2rem;
@@ -29,7 +31,10 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
     padding: 0.875rem $inset;
     border-bottom: $divider;
 
+    // `margin: 0` for the receipt dialog's `<h5>` title, which would otherwise
+    // keep Bootstrap's 0.5rem bottom margin and sit off the row's centre line.
     .title {
+      margin: 0;
       font-size: $control-font-size;
       font-weight: 600;
       line-height: 1rem;
