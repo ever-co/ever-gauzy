@@ -32,7 +32,7 @@ const URL_SCHEME_PATTERN = /^([a-zA-Z][a-zA-Z0-9+.-]*:\/\/)/;
  * - A URL without an `@` has no userinfo and is returned unchanged.
  *
  * The userinfo is taken to end at the LAST `@`, and the value is never handed to `new URL()`:
- * a password containing an unencoded `@`, `/` or `#` would make the WHATWG parser split the
+ * a password containing an unencoded `@`, `/` or `#` would make the URL parser split the
  * authority in the wrong place and let part of the secret through. The trade-off is that an `@`
  * inside a path or query over-redacts - which is safe, where under-redacting is not.
  *
@@ -59,6 +59,48 @@ export function redactUrlCredentials(url: string | null | undefined): string {
 	const redactedUserinfo = colon === -1 ? REDACTED_CREDENTIAL : `${userinfo.slice(0, colon)}:${REDACTED_CREDENTIAL}`;
 
 	return `${scheme}${redactedUserinfo}@${rest}`;
+}
+
+/**
+ * Redacts the URL that a URL-parsing error carries, so the error can be logged safely.
+ *
+ * Node's `ERR_INVALID_URL` - thrown by `new URL()`, including inside the Redis client when it parses
+ * its `url` option - stores the offending value verbatim on `error.input`, and `console.error(error)`
+ * prints it. A malformed `REDIS_URL` would therefore leak its password through the error path even
+ * though the diagnostic `REDIS_URL:` line is redacted. The error is redacted in place (its `input`,
+ * and any copy of the value in `message` or `stack`) and returned, so the call site keeps logging
+ * the same error object with its stack.
+ *
+ * @param error - Whatever a `catch` received. Values without a string `input` are returned untouched.
+ * @returns The same value, with any embedded URL credentials replaced by {@link REDACTED_CREDENTIAL}.
+ */
+export function redactUrlErrorInput<T>(error: T): T {
+	if (!error || typeof error !== 'object') return error;
+
+	const candidate = error as { input?: unknown; message?: unknown; stack?: unknown };
+	if (typeof candidate.input !== 'string' || !candidate.input) return error;
+
+	const raw = candidate.input;
+	const redacted = redactUrlCredentials(raw);
+
+	try {
+		candidate.input = redacted;
+		for (const key of ['message', 'stack'] as const) {
+			const value = candidate[key];
+			if (typeof value === 'string' && value.includes(raw)) {
+				candidate[key] = value.split(raw).join(redacted);
+			}
+		}
+	} catch {
+		// Fall through: a frozen or non-writable error is handled by the check below.
+	}
+
+	// If the error could not be redacted in place, log a plain summary instead of the original.
+	if (candidate.input !== redacted) {
+		return new Error(`URL parsing failed for ${redacted}`) as unknown as T;
+	}
+
+	return error;
 }
 
 /**

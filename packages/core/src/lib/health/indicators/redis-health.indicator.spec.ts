@@ -11,7 +11,7 @@ jest.mock('redis', () => ({ createClient: jest.fn() }));
  * and port only.
  */
 describe('RedisHealthIndicator boot logging', () => {
-	const SECRET = 'valkey-password-sentinel-7f3a91';
+	const SECRET = 'redis-password-sentinel-7f3a91';
 	const REDIS_ENV_KEYS = [
 		'REDIS_ENABLED',
 		'REDIS_URL',
@@ -82,6 +82,19 @@ describe('RedisHealthIndicator boot logging', () => {
 
 		expect((createClient as jest.Mock).mock.calls[0][0]).toMatchObject({ password: SECRET });
 		expect(output).toContain('REDIS_URL: redis://default:***@cache.internal:6379');
+		expect(output.join('\n')).not.toContain(SECRET);
+	});
+
+	it('never logs the password through the error path when REDIS_URL is malformed', async () => {
+		process.env.REDIS_ENABLED = 'true';
+		// A space in the host makes new URL() throw ERR_INVALID_URL, which carries the whole URL on error.input.
+		process.env.REDIS_URL = `redis://:${SECRET}@bad host:6380`;
+
+		await bootIndicator();
+
+		expect(createClient).not.toHaveBeenCalled();
+		// Control: the error really was logged, so the absence check below is meaningful.
+		expect(output.some((line) => line.startsWith('Redis Health Connect Error:'))).toBe(true);
 		expect(output.join('\n')).not.toContain(SECRET);
 	});
 });

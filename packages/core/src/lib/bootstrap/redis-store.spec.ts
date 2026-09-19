@@ -15,7 +15,7 @@ jest.mock('@gauzy/config', () => ({
  * must now carry the host and port only.
  */
 describe('configureRedisSession boot logging', () => {
-	const SECRET = 'valkey-password-sentinel-2c9d44';
+	const SECRET = 'redis-password-sentinel-2c9d44';
 	const REDIS_ENV_KEYS = [
 		'REDIS_ENABLED',
 		'REDIS_URL',
@@ -69,6 +69,22 @@ describe('configureRedisSession boot logging', () => {
 
 		// Control: the diagnostic line is still emitted, so the absence check below is meaningful.
 		expect(output).toContain('REDIS_URL:  redis://:***@192.168.1.174:6380');
+		expect(output.join('\n')).not.toContain(SECRET);
+	});
+
+	it('never logs the password through the error path when REDIS_URL is malformed', async () => {
+		process.env.REDIS_ENABLED = 'true';
+		// A space in the host makes new URL() throw ERR_INVALID_URL, which carries the whole URL on error.input.
+		process.env.REDIS_URL = `redis://:${SECRET}@bad host:6380`;
+		const app = { use: jest.fn() };
+
+		await configureRedisSession(app);
+
+		// Falls back to the in-memory session store.
+		expect(createClient).not.toHaveBeenCalled();
+		expect(app.use).toHaveBeenCalledTimes(1);
+		// Control: the error really was logged, so the absence check below is meaningful.
+		expect(output.some((line) => line.startsWith('Failed to initialize Redis session store:'))).toBe(true);
 		expect(output.join('\n')).not.toContain(SECRET);
 	});
 });

@@ -1,4 +1,10 @@
-import { REDACTED_CREDENTIAL, redactKeyValueList, redactUrlCredentials } from './redact-credentials';
+import { inspect } from 'util';
+import {
+	REDACTED_CREDENTIAL,
+	redactKeyValueList,
+	redactUrlCredentials,
+	redactUrlErrorInput
+} from './redact-credentials';
 
 /**
  * The API used to print `REDIS_URL` - password included - to stdout at boot, where anyone with
@@ -8,7 +14,7 @@ import { REDACTED_CREDENTIAL, redactKeyValueList, redactUrlCredentials } from '.
  * returned an empty string would pass the first check alone.
  */
 describe('redactUrlCredentials', () => {
-	const SECRET = 'S3cr3t-Valkey-Pass';
+	const SECRET = 'S3cr3t-Redis-Pass';
 
 	it('redacts a password-only userinfo (the REDIS_URL shape used in production)', () => {
 		const url = `redis://:${SECRET}@192.168.1.174:6380`;
@@ -76,9 +82,9 @@ describe('redactKeyValueList', () => {
 	});
 
 	it('redacts a value that itself contains "="', () => {
-		const redacted = redactKeyValueList('authorization=Basic dXNlcjpwYXNz==');
+		const redacted = redactKeyValueList('authorization=Basic token-value==');
 
-		expect(redacted).not.toContain('dXNlcjpwYXNz');
+		expect(redacted).not.toContain('token-value');
 		expect(redacted).toBe(`authorization=${REDACTED_CREDENTIAL}`);
 	});
 
@@ -90,5 +96,61 @@ describe('redactKeyValueList', () => {
 		expect(redactKeyValueList(undefined)).toBe('');
 		expect(redactKeyValueList(null)).toBe('');
 		expect(redactKeyValueList('')).toBe('');
+	});
+});
+
+describe('redactUrlErrorInput', () => {
+	const SECRET = 'S3cr3t-Redis-Pass';
+
+	/** A real ERR_INVALID_URL, as thrown by `new URL()` (and by the Redis client) for a malformed REDIS_URL. */
+	const invalidUrlError = (): Error => {
+		try {
+			new URL(`redis://:${SECRET}@bad host:6380`);
+		} catch (error) {
+			return error as Error;
+		}
+		throw new Error('expected new URL() to throw for a host containing a space');
+	};
+
+	it('removes the password Node stores on ERR_INVALID_URL.input, keeping the error and the host', () => {
+		const error = invalidUrlError();
+		// Control: the original error really does carry the secret when printed.
+		expect(inspect(error)).toContain(SECRET);
+
+		const redacted = redactUrlErrorInput(error);
+
+		expect(redacted).toBe(error);
+		expect(inspect(redacted)).not.toContain(SECRET);
+		expect((redacted as Error & { input: string }).input).toBe(`redis://:${REDACTED_CREDENTIAL}@bad host:6380`);
+	});
+
+	it('also redacts a copy of the URL in the message and stack', () => {
+		const error = Object.assign(new Error(`Invalid URL: redis://:${SECRET}@host:6380`), {
+			input: `redis://:${SECRET}@host:6380`
+		});
+
+		const redacted = redactUrlErrorInput(error);
+
+		expect(redacted.message).toBe(`Invalid URL: redis://:${REDACTED_CREDENTIAL}@host:6380`);
+		expect(redacted.stack).not.toContain(SECRET);
+		expect(inspect(redacted)).not.toContain(SECRET);
+	});
+
+	it('replaces an error that cannot be redacted in place with a redacted summary', () => {
+		const error = Object.freeze(Object.assign(new Error('Invalid URL'), { input: `redis://:${SECRET}@host:6380` }));
+
+		const redacted = redactUrlErrorInput(error);
+
+		expect(inspect(redacted)).not.toContain(SECRET);
+		expect(redacted.message).toBe(`URL parsing failed for redis://:${REDACTED_CREDENTIAL}@host:6380`);
+	});
+
+	it('returns values without a string input untouched', () => {
+		const plain = new Error('Connection is closed.');
+
+		expect(redactUrlErrorInput(plain)).toBe(plain);
+		expect(plain.message).toBe('Connection is closed.');
+		expect(redactUrlErrorInput(undefined)).toBeUndefined();
+		expect(redactUrlErrorInput('a string')).toBe('a string');
 	});
 });

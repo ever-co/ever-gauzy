@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HealthIndicatorResult } from '@nestjs/terminus';
 import { v4 as uuid } from 'uuid';
 import { createClient } from 'redis';
-import { redactUrlCredentials } from '../../core/util/redact-credentials';
+import { redactUrlCredentials, redactUrlErrorInput } from '../../core/util/redact-credentials';
 
 @Injectable()
 export class RedisHealthIndicator {
@@ -148,7 +148,7 @@ export class RedisHealthIndicator {
 			console.log('Redis connected successfully.');
 			return true;
 		} catch (error) {
-			console.error('Redis Health Connect Error:', error);
+			console.error('Redis Health Connect Error:', redactUrlErrorInput(error));
 			return false;
 		}
 	}

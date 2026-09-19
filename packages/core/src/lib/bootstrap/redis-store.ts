@@ -2,7 +2,7 @@ import * as expressSession from 'express-session';
 import { createClient } from 'redis';
 import RedisStore from 'connect-redis';
 import { environment } from '@gauzy/config';
-import { redactUrlCredentials } from '../core/util/redact-credentials';
+import { redactUrlCredentials, redactUrlErrorInput } from '../core/util/redact-credentials';
 
 /**
  * Sets up the Redis client with connection options and logs key events.
@@ -114,7 +114,7 @@ export async function configureRedisSession(app: any): Promise<void> {
 				// Ping Redis
 				console.log('Redis Session Store Client Sessions Ping: ', await redisClient.ping());
 			} catch (error) {
-				console.error('Failed to connect to Redis:', error);
+				console.error('Failed to connect to Redis:', redactUrlErrorInput(error));
 			}
 
 			const redisStore = new RedisStore({
@@ -138,7 +138,7 @@ export async function configureRedisSession(app: any): Promise<void> {
 
 			redisWorked = true;
 		} catch (error) {
-			console.error('Failed to initialize Redis session store:', error);
+			console.error('Failed to initialize Redis session store:', redactUrlErrorInput(error));
 		}
 	}
 
