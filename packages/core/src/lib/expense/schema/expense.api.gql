@@ -1,0 +1,166 @@
+# The expense domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/expense` routes already serve, under the same guard
+# chain and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other. Nothing here decides
+# anything: each field calls the same `ExpenseService` method, dispatches the same command or executes
+# the same query the route behind it does, with the same payload and the same request facts, which is
+# the whole of what a resolver on this platform owns.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered
+# list read answers live rows only, and offering an argument that cannot be honoured would be worse
+# than not offering it.
+#
+# The controller serves its list twice — `GET /` and the inherited `GET /pagination` — and the two
+# answer the same rows under the same filters, one of them sliced by `take`/`skip` and the other not.
+# That is one capability, so it is one root field: `expenses`, mirroring `GET /`, which is the route
+# that reads the whole filtered set the connection protocol is applied to. Three of the paginated
+# spelling's four narrowings survive into the connection's own vocabulary — the note pattern as
+# `ilike` on `notes`, the purpose pattern as `ilike` on `purpose`, and the date window as `between` on
+# `valueDate` — so no caller loses those questions by asking them here. The fourth is a tag
+# membership, and it is not offered: the delivered list read loads no relations, so a condition on a
+# tags collection could only ever match the empty set.
+#
+# `expense` and `expenseCount` carry the view permission, as their delivered routes do. Every write of
+# this resource carries the class-level edit permission instead, because that is the permission its own
+# route runs under: the create, the edit and the removal are declared on the controller without a
+# permission of their own, and the withdrawal and the restoration are inherited from the CRUD base,
+# which states none either. Stating anything else here would give GraphQL a scope REST does not have.
+# `expenseCount` takes no filter, and that is a statement rather than an omission: the delivered count
+# route passes its query string through as the store's own `where`, which the connection protocol does
+# not speak, so a `filter` argument here would either be handed to a service call that cannot accept it
+# or be evaluated over a second code path that could disagree with the connection's `totalCount`. It is
+# nullable because a count is an aggregate a resource may legitimately have no answer for, and a
+# non-null field would turn "not answered" into a fabricated zero.
+#
+# **The two split reads are root fields of their own rather than filters on `expenses`, and the reason
+# is the reads rather than a preference.** The employee's own costs and the organization's shared ones
+# arrive in one answer that the connection's `filter` cannot express: the delivered query joins the two
+# criteria, counts the organization's employees, and divides the amount of every row the platform
+# splits by that count. So the rows it answers carry a figure no stored row holds, and the figure is
+# carried as the computation it is — see `ExpenseSplitRow`. `mySplitExpenses` mirrors `GET /me`, whose
+# employee is resolved from the credential, so it states no employee argument; `splitExpensesByEmployee`
+# mirrors `GET /include-split/:employeeId`, whose employee is the path segment. The date both routes
+# read out of their `data` parameter is stated, and the `relations` that parameter also carries is not:
+# the row type this surface answers declares no relation, so there is nothing for one to load.
+#
+# **Two delivered reads are deliberately not here, and the reasons are properties of those routes
+# rather than an omission.**
+#
+# The report route answers one of three different nestings of the expense rows depending on the
+# grouping it was asked for — by date, by employee and by project — and two of the three nest through
+# an employee row and a project row, which this schema does not declare: each belongs to the resource
+# that owns it, and neither is a member this surface may invent. Its per-row percentage is worse than
+# incompletely typed: the delivered mapper computes it from a member no expense row carries, so the
+# figure it answers is not a number at all, and a field carrying a rate this surface cannot state as a
+# `Decimal` may not be offered. Its contract also declares a group total that the delivered mapper
+# never sets, so a member for it would answer null on every row of every grouping.
+#
+# The daily-chart route answers a series whose one member is a string on the days that have expenses
+# and the number zero on the days that have none, and the string is the day's total rounded to a single
+# decimal place. That is two shapes in one member, and the figure is a chart drawing rather than an
+# amount: money on this platform travels at its currency's own scale, an amount rounded to one decimal
+# place is not an amount the ledger holds, and `Float` is not a family money is carried in at all.
+# Delivering either would mean inventing types for other resources and stating money as something it is
+# not, so both are left to REST.
+
+extend type Query {
+	"""
+	The expenses of the caller's tenant, newest cost first.
+	"""
+	expenses(
+		filter: ExpenseFilter
+		sort: [ExpenseSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ExpenseConnection!
+
+	"""
+	One expense of the caller's tenant, or null when there is none.
+
+	A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+	row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+	other protocol's vocabulary.
+	"""
+	expense(id: ID!): Expense
+
+	"""
+	How many expenses the caller's tenant holds.
+	"""
+	expenseCount: Int
+
+	"""
+	The expenses of one employee, including the organization's split expenses.
+
+	The employee is the path segment of the delivered route. `filterDate` is the date whose month
+	narrows the read, which is the value that route reads out of its `data` parameter; omit it and the
+	read answers every month, as the route does when the parameter carries none.
+	"""
+	splitExpensesByEmployee(employeeId: ID!, filterDate: DateTime): [ExpenseSplitRow!]!
+
+	"""
+	The caller's own expenses, including the organization's split expenses.
+
+	The employee is resolved from the credential, as the delivered route resolves it, so a caller
+	cannot ask this question about anyone else. `filterDate` narrows the read to one month, as it does
+	above.
+	"""
+	mySplitExpenses(filterDate: DateTime): [ExpenseSplitRow!]!
+}
+
+extend type Mutation {
+	"""
+	Records a cost.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the
+	caller, so an expense cannot be written into a tenant the caller is not acting in. The amount is
+	the exact decimal the column stores, and it and the currency are the two members the delivered body
+	validation requires.
+	"""
+	createExpense(input: CreateExpenseInput!): Expense!
+
+	"""
+	Changes a cost that exists.
+
+	The delivered edit reaches the same write the create does, carrying the identifier in the path and
+	the body together, so a member the caller leaves out is left as it is — see `UpdateExpenseInput`,
+	which also states what an identifier naming no row does. The delivered route relabels every failure
+	of this write as a bad request; this field answers the failure the service raised instead, so a
+	caller reads what actually happened rather than a label.
+	"""
+	updateExpense(input: UpdateExpenseInput!): Expense!
+
+	"""
+	Removes an expense outright.
+
+	This is the hard removal, and it is the one to reach for only for a row recorded in error: a cost a
+	document already accounts for is withdrawn instead. The employee is the optional query member the
+	delivered route reads, and the row it names is the one whose recorded average the delivered handler
+	refreshes beside the removal; a caller that states none gets the removal without the refresh.
+	"""
+	deleteExpense(id: ID!, employeeId: ID): Boolean!
+
+	"""
+	Withdraws an expense without removing the row.
+
+	The delivered list stops answering it and the rows that reference it keep resolving the identifier
+	they hold. The answer is the withdrawn row; it is recoverable until it is removed outright.
+	"""
+	softDeleteExpense(id: ID!): Expense!
+
+	"""
+	Puts a withdrawn expense back.
+	"""
+	recoverExpense(id: ID!): Expense!
+}

@@ -5,6 +5,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { ExpenseController } from './expense.controller';
+import { ExpenseResolver } from './expense.resolver';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 import { EmployeeStatisticsModule } from './../employee-statistics/employee-statistics.module';
@@ -30,7 +31,17 @@ import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.reposi
 		CqrsModule
 	],
 	controllers: [ExpenseController],
-	providers: [ExpenseService, ExpenseMapService, TypeOrmExpenseRepository, MikroOrmExpenseRepository, ...CommandHandlers, ...QueryHandlers],
+	providers: [
+		ExpenseService,
+		ExpenseMapService,
+		// The GraphQL surface is declared beside the service it calls, so the host that scans this
+		// module for resolvers reaches everything the resolver injects.
+		ExpenseResolver,
+		TypeOrmExpenseRepository,
+		MikroOrmExpenseRepository,
+		...CommandHandlers,
+		...QueryHandlers
+	],
 	exports: [ExpenseService, ExpenseMapService]
 })
 export class ExpenseModule {}

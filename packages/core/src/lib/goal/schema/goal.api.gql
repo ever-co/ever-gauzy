@@ -1,0 +1,115 @@
+# The goal domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/goals` routes already serve, under the same guard and
+# with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other. The guard chain is the
+# controller's own, read from its metadata in the resolver and compared against it in the resolver's
+# spec rather than restated from a second list: `GoalController` carries `TenantPermissionGuard` on
+# the class and states no permission at all — not on the four routes it declares and not on any of the
+# five it inherits from the CRUD base — so every field here runs under the same tenant guard and
+# demands no permission, because a field that demanded one would refuse a caller the REST route
+# serves.
+#
+# **The list is the connection, and the connection reproduces the order the route states.** The
+# delivered list read is the one reader in this tree that names an order of its own —
+# `order: { createdAt: 'ASC' }` — so the connection's own default order is that order rather than one
+# invented here, with the identifier as the last key so that two objectives filed in the same
+# millisecond still have one order between them and a cursor walk over them is stable. The controller
+# serves the same rows a second time through the inherited `GET /pagination`; that is one capability,
+# so it is this one field, and the connection's own `limit`/`offset` already are the page the
+# paginated spelling performs.
+#
+# **A sub-route that is the list narrowed is a filter, and the one node read is a field of its own.**
+# `GET /goals/:id` is served by the CRUD base and answers one row, so it is `goal(id)`; the count is
+# served by the CRUD base too and answers a number, so it is `goalCount`. Nothing else in this
+# controller narrows the list.
+#
+# **A count route gets a nullable `Int` field with no argument.** The delivered count route binds its
+# query string to the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a call that cannot accept it or evaluated over a second code
+# path that could disagree with the connection's `totalCount`. It is nullable because an aggregate the
+# resource may legitimately have no answer for must not be reported as a fabricated zero.
+#
+# **The lifecycle routes count.** Every resource in this tree is removable, withdrawable and
+# restorable; all three are delivered routes, so all three are fields. Withdrawing writes `deletedAt`,
+# which is why the object type carries that column: without it the answer to the write that withdrew a
+# row would not say so.
+#
+# **What the surface cannot carry, and why.** The delivered list read forwards the `relations` a REST
+# caller names in its query string, and the connection protocol has no argument of that shape — a
+# filter narrows rows, it does not choose what is joined — so this surface's rows carry the relation
+# identifiers the table itself holds and no relation objects. The key results under an objective are
+# read from their own surface with `goalId` in `filter`.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+# the GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is
+# behind the one capability. The REST routes are not gated by that code — they are the door that stays
+# open — so a tenant that switched the capability off is answered `Cannot query field <name>` here and
+# served as it always was there.
+
+extend type Query {
+	"""
+	The objectives of the caller's tenant, oldest first, which is the order the delivered list route
+	reads them in.
+	"""
+	goals(
+		filter: GoalFilter
+		sort: [GoalSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): GoalConnection!
+
+	"""
+	One objective of the caller's tenant, or null when there is none.
+	"""
+	goal(id: ID!): Goal
+
+	"""
+	How many objectives the caller's tenant holds.
+	"""
+	goalCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files an objective, and answers the row it wrote.
+	"""
+	createGoal(input: CreateGoalInput!): Goal!
+
+	"""
+	Edits an objective that exists. The delivered route reads the row before it writes — so an
+	objective of another tenant, or one that is not there, is answered with the miss rather than with a
+	write that would recreate the row under an identifier the caller does not own — and then merges the
+	stated members onto it. A member the caller leaves out is left as it is; see
+	`UpdateGoalInput`.
+	"""
+	updateGoal(input: UpdateGoalInput!): Goal!
+
+	"""
+	Removes an objective outright, with the key results the delivered cascade takes with it. A
+	reference the store's own constraints refuse is the store's to refuse; this field does not
+	pre-empt it, and the delivered route answers the store's delete result rather than a row, which is
+	why this field answers whether the removal was performed.
+	"""
+	deleteGoal(id: ID!): Boolean!
+
+	"""
+	Withdraws an objective without removing it: the row keeps its identifier, its key results keep
+	pointing at it, and the delivered list stops answering it. The answer is the withdrawn row, whose
+	`deletedAt` says when it happened.
+	"""
+	softDeleteGoal(id: ID!): Goal!
+
+	"""
+	Puts a withdrawn objective back.
+	"""
+	recoverGoal(id: ID!): Goal!
+}

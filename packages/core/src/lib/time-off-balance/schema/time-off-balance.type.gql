@@ -1,0 +1,218 @@
+# The leave balance's object type, its filter, its sort, and the bodies its four operations take.
+#
+# A balance is one employee's leave ledger under one policy for one year, and the five day counts on it
+# are one arithmetic rather than five facts: `remaining` is `accrued + carriedForward - taken -
+# carriedOut`, kept by the delivered writes and never written by a caller. `carriedOut` is what makes
+# the ledger honest across a year boundary — once days are rolled into the next year they stop counting
+# as remaining in this one, instead of being available twice.
+#
+# **Every quantity here is a number of days, and none of them is money.** The entity stores each as a
+# `numeric(10,2)` column behind a numeric transformer, and the exact `Decimal` scalar is what the rest
+# of the platform carries such a column as: a bare decimal column comes back from the store as a string,
+# and a binary fraction cannot hold half a day exactly. A day count is fractional because half a day is
+# a real entitlement, so the type is decimal rather than whole.
+#
+# **The policy is carried as an object, and the employee is not.** That is a statement about what the
+# delivered reads select, not a preference: the list read loads the policy beside every row
+# (`relations: { policy: true }`), so the member is filled on both list fields; the employee is loaded
+# by no read of this resource — the allocation, the deduction, the reversal and the carry-forward all
+# read their rows without it — so what always travels is the foreign key, `employeeId`, and the
+# engagement itself is read from the employee's own surface. The four write fields answer rows the
+# delivered writes read without the policy, so the member is null there, which is exactly what the REST
+# answers to those routes carry as well.
+#
+# The lifecycle columns are carried because the delivered reads return them: `deletedAt` is the whole of
+# what withdrawing writes, and a client that could not read it could not tell a live ledger row from a
+# withdrawn one.
+
+"""
+One employee's leave balance under one policy for one year.
+
+Every count is a number of **days**, fractional because half a day is an entitlement the platform
+grants, and exact because the ledger has to agree with itself.
+"""
+type TimeOffBalance {
+	id: ID!
+	"The year the balance is tracked for."
+	year: Int!
+	"Days accrued so far this year."
+	accrued: Decimal!
+	"Days taken through approved time off requests."
+	taken: Decimal!
+	"Days carried forward into this year from the previous one."
+	carriedForward: Decimal!
+	"Days already rolled out of this year into the next one."
+	carriedOut: Decimal!
+	"""
+	The days still available, and a computation rather than a column a caller may write:
+	`accrued + carriedForward - taken - carriedOut`, never below zero. It is what the delivered writes
+	recompute on every allocation, deduction, reversal and carry-forward.
+	"""
+	remaining: Decimal!
+	"The employee the balance belongs to. Read the engagement itself from the employee's own surface."
+	employeeId: ID!
+	"The policy the balance is tracked against."
+	policyId: ID!
+	"""
+	The policy itself, filled by the list read, which loads it beside every row. The writes answer rows
+	read without it, exactly as their REST answers carry no policy object either.
+	"""
+	policy: TimeOffPolicy
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	"When the row was withdrawn, or null while it is live."
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of balances.
+"""
+type TimeOffBalanceEdge {
+	node: TimeOffBalance!
+	cursor: String!
+}
+
+"""
+One page of balances, with the total the filters select and the boundary cursors.
+"""
+type TimeOffBalanceConnection {
+	nodes: [TimeOffBalance!]!
+	edges: [TimeOffBalanceEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a balance list may be sorted by.
+"""
+enum TimeOffBalanceSortField {
+	year
+	accrued
+	taken
+	carriedForward
+	carriedOut
+	remaining
+	createdAt
+	updatedAt
+}
+
+"""
+The order the balances are returned in. At most three keys are accepted.
+"""
+input TimeOffBalanceSort {
+	field: TimeOffBalanceSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a balance list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the day counts compare as exact decimals and the year
+as a whole number. The policy is not a member: the row carries a policy object at `policy`, and the
+protocol narrows by comparing a value, so `policyId` is how a caller asks for one policy's balances.
+"""
+input TimeOffBalanceFilter {
+	id: IDFilter
+	year: NumberFilter
+	accrued: DecimalFilter
+	taken: DecimalFilter
+	carriedForward: DecimalFilter
+	carriedOut: DecimalFilter
+	remaining: DecimalFilter
+	employeeId: IDFilter
+	policyId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TimeOffBalanceFilter!]
+	or: [TimeOffBalanceFilter!]
+	not: TimeOffBalanceFilter
+}
+
+"""
+What a caller states when it allocates accrued days.
+
+The organization is stated because the delivered write verifies the employee and the policy against it
+and will not touch either from another one; the tenant is stamped from the credential, as it is on every
+write of this platform, and is therefore not a member.
+
+`accrued` **replaces** the stored figure rather than being added to it, which is what makes re-running
+an allocation for a period idempotent.
+"""
+input AllocateTimeOffBalanceInput {
+	"The organization the employee and the policy must belong to."
+	organizationId: ID!
+	"The employee the balance belongs to."
+	employeeId: ID!
+	"The policy the balance is tracked against."
+	policyId: ID!
+	"The year the balance is tracked for."
+	year: Int!
+	"The days accrued for the period. Replaces the stored value."
+	accrued: Decimal!
+}
+
+"""
+What a caller states when it spends days from a balance, or gives them back.
+
+`days` is always positive on both operations — the field decides the direction — so a negative value can
+never turn a deduction into a grant. The two operations share one body because they move the same
+column by the same amount in the two directions, and the delivered service states the same split: the
+input is one, and which of the two writes receives it is the field's own.
+"""
+input AdjustTimeOffBalanceInput {
+	"The organization the employee and the policy must belong to."
+	organizationId: ID!
+	"The employee the balance belongs to."
+	employeeId: ID!
+	"The policy the balance is tracked against."
+	policyId: ID!
+	"The year the balance is tracked for."
+	year: Int!
+	"How many days to move. Always positive; the field decides the direction."
+	days: Decimal!
+}
+
+"""
+What a caller states when it rolls one policy's unused days into the next year.
+
+The organization is stated for the same reason the allocation states it: the delivered write verifies
+the policy against it. The cap is optional and the delivered rule is stated rather than restated: an
+explicit cap wins, otherwise the policy's own `maxCarryForwardDays` applies, and `0` or an omitted cap
+means no cap at all.
+"""
+input CarryForwardTimeOffBalanceInput {
+	"The organization the policy must belong to."
+	organizationId: ID!
+	"The policy whose balances are rolled over."
+	policyId: ID!
+	"The year the days are moved out of."
+	fromYear: Int!
+	"The year the days are moved into. It must be later than `fromYear`."
+	toYear: Int!
+	"An explicit cap on the days rolled over per employee. Omitted or 0 falls back to the policy's own cap."
+	maxCarryForwardDays: Decimal
+}
+
+"""
+What a carry-forward answers.
+
+A count rather than a row, and deliberately: the delivered write walks every employee's balance for the
+policy and writes two rows per employee, so there is no single balance it would be honest to answer
+instead. A caller that wants the resulting rows reads them back through `timeOffBalances`.
+"""
+type TimeOffCarryForwardResult {
+	"How many employee balances were rolled over."
+	carried: Int!
+}

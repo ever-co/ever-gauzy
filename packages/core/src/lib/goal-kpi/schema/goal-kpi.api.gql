@@ -1,0 +1,98 @@
+# The goal KPI domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/goal-kpi` routes already serve, under the same guard and
+# with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other. `GoalKpiController` carries
+# `TenantPermissionGuard` on the class and states no permission at all — not on the four routes it
+# declares and not on any of the five it inherits from the CRUD base — so every field here runs under
+# the same tenant guard and demands no permission. The resolver's spec reads those two facts off the
+# controller's own metadata and compares them with the resolver's rather than restating them.
+#
+# **The list is the connection.** The controller serves its list twice — `GET /` and the inherited
+# `GET /pagination` — and the two answer the same rows under the same filters, one of them sliced by
+# `take`/`skip` and the other not. That is one capability, so it is one field: `goalKpis`, mirroring
+# `GET /`, which is the route that reads the whole filtered set the connection protocol is applied to.
+# A second root field for the paginated spelling would be a second surface that could disagree with
+# this one, and the connection's own `limit`/`offset` already are the page it performs.
+#
+# **The delivered list read joins the lead, and the surface still carries the identifier.** That read
+# is the only one of the nine that names a relation of its own; the node read, the count and the five
+# writes answer rows that carry neither, so an object member would be present on exactly one route of
+# the nine. `leadId` is the column the table always holds, and the employee it names is read from the
+# employee surface.
+#
+# **A count route gets a nullable `Int` field with no argument.** The delivered count route binds its
+# query string to the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a call that cannot accept it or evaluated over a second code
+# path that could disagree with the connection's `totalCount`. It is nullable because an aggregate the
+# resource may legitimately have no answer for must not be reported as a fabricated zero.
+#
+# **The lifecycle routes count.** Removals, withdrawals and restorations are all delivered routes, so
+# all three are fields, and the object type carries `deletedAt` because that column is the whole of
+# what the withdrawal writes.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+# the GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is
+# behind the one capability. The REST routes are not gated by that code — they are the door that stays
+# open — so a tenant that switched the capability off is answered `Cannot query field <name>` here and
+# served as it always was there.
+
+extend type Query {
+	"""
+	The measures of the caller's tenant, newest first.
+	"""
+	goalKpis(
+		filter: GoalKPIFilter
+		sort: [GoalKPISort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): GoalKPIConnection!
+
+	"""
+	One measure of the caller's tenant, or null when there is none.
+	"""
+	goalKpi(id: ID!): GoalKPI
+
+	"""
+	How many measures the caller's tenant holds.
+	"""
+	goalKpiCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a measure, and answers the row it wrote.
+	"""
+	createGoalKpi(input: CreateGoalKPIInput!): GoalKPI!
+
+	"""
+	Changes a measure. The delivered route is an update-through-create, so a member the caller leaves
+	out is left as it is; see `UpdateGoalKPIInput`.
+	"""
+	updateGoalKpi(input: UpdateGoalKPIInput!): GoalKPI!
+
+	"""
+	Removes a measure outright. The delivered route answers the store's delete result rather than a row,
+	so this field answers whether the removal was performed.
+	"""
+	deleteGoalKpi(id: ID!): Boolean!
+
+	"""
+	Withdraws a measure without removing it: the row keeps its identifier, the key results that track it
+	keep pointing at it, and the delivered list stops answering it.
+	"""
+	softDeleteGoalKpi(id: ID!): GoalKPI!
+
+	"""
+	Puts a withdrawn measure back.
+	"""
+	recoverGoalKpi(id: ID!): GoalKPI!
+}

@@ -1,0 +1,107 @@
+# The organization sprint domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/organization-sprint` routes already serve, under the same
+# guard chain and with the same permission — read from the controller's own metadata rather than
+# restated — so a client that reaches a capability over one protocol is not given a narrower or a wider
+# one than the client that reaches it over the other.
+#
+# **The guard chain is the controller's two guards, and the permission is stated field by field.** The
+# controller carries `TenantPermissionGuard` and `PermissionGuard` on the class and states
+# `ALL_ORG_EDIT` there, so the resolver carries the same two guards and the same class-level permission,
+# and each field then states the permission its own route runs under. The count is the reading worth
+# spelling out, because the obvious answer is the wrong one: `GET /count` is inherited from the CRUD
+# base with no permission of its own, so it runs under the controller's class-level `ALL_ORG_EDIT` — and
+# the field states that, not the view permission its read siblings state. A field that stated the view
+# permission there would serve, over this protocol, a caller the REST route refuses.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained
+# over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered read
+# answers live rows only.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same
+# rows under the same filters, one of them sliced by `take`/`skip` and the other not. That is one
+# capability, so it is one root field: `organizationSprints`, mirroring `GET /`, which is the route that
+# reads the whole filtered set the connection protocol is applied to. A second root field for the
+# paginated spelling would be a second surface that could disagree with this one, and the connection's
+# own `limit` and `offset` already are the page it performs.
+#
+# `organizationSprintCount` takes no filter, and that is a statement rather than an omission: the
+# delivered count route passes its query string through as the store's own `where`, which the connection
+# protocol does not speak. It is nullable, because a count is an aggregate a resource may legitimately
+# have no answer for, and a non-null field would turn "not answered" into a fabricated zero — two facts
+# a client that reports on a project's cadence has to keep apart.
+
+extend type Query {
+	"""
+	The sprints of the caller's tenant, newest first.
+	"""
+	organizationSprints(
+		filter: OrganizationSprintFilter
+		sort: [OrganizationSprintSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationSprintConnection!
+
+	"""
+	One sprint of the caller's tenant, or null when there is none.
+	"""
+	organizationSprint(id: ID!): OrganizationSprint
+
+	"""
+	How many sprints the caller's tenant holds.
+	"""
+	organizationSprintCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a sprint under a project, with the people who work it.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller.
+	The organization and the project are stated, because the delivered body validates both and the
+	handler files the row under them.
+	"""
+	createOrganizationSprint(input: CreateOrganizationSprintInput!): OrganizationSprint!
+
+	"""
+	Changes a sprint that exists.
+
+	The identifier is the criterion and is not repeated in the payload, which is the shape the delivered
+	route itself has: the path names the row and the body carries the facts. The delivered handler reads
+	the row before it writes and answers it afterwards, so a sprint of another tenant, or one that is not
+	there, is a miss rather than a write under an identifier the caller does not own.
+	"""
+	updateOrganizationSprint(input: UpdateOrganizationSprintInput!): OrganizationSprint!
+
+	"""
+	Removes a sprint outright: the row is gone and nothing reads it back.
+
+	The two lifecycle moves this resource serves are not the same operation, so both are stated rather
+	than one of them being left to a client to discover on the other protocol. What hangs off the
+	removed row — the membership rows and the task links — is the store's own constraint to cascade or
+	to refuse; this field does not pre-empt it.
+	"""
+	deleteOrganizationSprint(id: ID!): Boolean!
+
+	"""
+	Withdraws a sprint without removing it: the row stays in the table, marked as removed, and the
+	recovery below reads it back. The answer is the row as it now stands, which is what the delivered
+	route answers with.
+	"""
+	softDeleteOrganizationSprint(id: ID!): OrganizationSprint!
+
+	"""
+	Puts a withdrawn sprint back, clearing the marker the withdrawal set.
+	"""
+	recoverOrganizationSprint(id: ID!): OrganizationSprint!
+}

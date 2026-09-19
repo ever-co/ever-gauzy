@@ -1,0 +1,151 @@
+# The team row's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/organization-team` routes already serve, under the same
+# guard chain and with the same permission — read from the controller's own metadata rather than
+# restated — so a client that reaches a capability over one protocol is not given a narrower or a
+# wider one than the client that reaches it over the other. The reads and the two inherited lifecycle
+# moves state the controller's class-level pair; the three writes the controller declares state the
+# permission their own route states, and the removal of a user from the teams they belong to states
+# the one its route states beside it.
+#
+# **The connection is both list routes.** The controller serves its list three times, and two of the
+# three are one capability: `GET /` and `GET /pagination` answer the same rows under the same filters,
+# one of them sliced by `take`/`skip` and the other not, so they are one root field — `organizationTeams`
+# — and the page it performs is the connection's own `limit` and `offset`. A second root field for the
+# paginated spelling would be a second surface that could disagree with this one.
+#
+# **`myOrganizationTeams` is a root field of its own rather than an argument on the connection.** The
+# delivered `GET /me` route reads through `findMyTeams`, whose narrowing is a fact about the caller
+# rather than about the row: a caller that may not choose whose teams are read is answered the teams
+# its own employee is an active member of, resolved from the credential. A filter narrows rows, and
+# this narrows by who is asking, so there is nothing on the connection that could state it — and the
+# field names no employee, because a caller cannot ask for someone else's teams here.
+#
+# **The one-row field is the statistics read, not the plain finder.** The delivered `GET /:id` route
+# does not call the CRUD finder: it dispatches `GetOrganizationTeamStatisticQuery`, whose handler
+# reaches the service's statistics read, and this field dispatches that same query. The route's query
+# DTO is `OrganizationTeamStatisticDTO`, which carries a date window, a relation list and the
+# last-worked-task flag; the field states no arguments of its own, so the delivered defaults apply —
+# nothing is joined and no task sync is asked for.
+#
+# `organizationTeamCount` takes no filter, and that is a statement rather than an omission. The
+# delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak; a `filter` argument here would either be handed to a call that
+# cannot accept it or be evaluated over a second code path that could disagree with the connection's
+# `totalCount`. It answers the count of the caller's own rows, which is what the route counts when it
+# is given no options.
+
+extend type Query {
+	"""
+	The teams of the caller's tenant, in the order the delivered list read answers them.
+	"""
+	organizationTeams(
+		filter: OrganizationTeamFilter
+		sort: [OrganizationTeamSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationTeamConnection!
+
+	"""
+	The teams of the caller, read through the delivered reader that resolves them from the credential.
+
+	A root field of its own because its narrowing is a fact about the caller and not about the row: the
+	delivered read answers a caller that may not choose whose teams are read the teams its own employee
+	is an active member of. No argument names an employee here, so a caller cannot read anyone else's
+	teams through this field.
+	"""
+	myOrganizationTeams(
+		filter: OrganizationTeamFilter
+		sort: [OrganizationTeamSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationTeamConnection!
+
+	"""
+	One team of the caller's tenant, or null when there is none.
+
+	The read behind it is the delivered statistics read, dispatched as the same query the `GET /:id`
+	route dispatches, and the field states no arguments of its own — so the route's own defaults apply
+	and nothing is joined beyond the relation the entity always carries.
+	"""
+	organizationTeam(id: ID!): OrganizationTeam
+
+	"""
+	How many teams the caller's tenant has.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero. The delivered count route binds
+	its query string to the store's own `where`, a shape no schema can state, so the field offers no
+	narrowing of its own rather than an argument the resolver could not pass on.
+	"""
+	organizationTeamCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a team, with the membership and the attachments the caller states.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller.
+	The organization is stated, because the delivered body checks it against the caller's own
+	memberships. Filing a team is more than an insert: the delivered write stores the membership as the
+	team-employee rows the caller's lists name, subscribes the people it added and provisions the team's
+	task statuses, priorities, sizes and issue types.
+	"""
+	createOrganizationTeam(input: CreateOrganizationTeamInput!): OrganizationTeam!
+
+	"""
+	Changes a team that exists.
+
+	The identifier names the row and the facts carry what changes, which is the shape the delivered
+	route has: the path names the row and the body is the payload. The delivered write reads the row
+	before it writes, and refuses a row the caller does not manage, so a team that is not there is
+	answered with that refusal rather than with a write under an identifier the caller does not own.
+	"""
+	updateOrganizationTeam(input: UpdateOrganizationTeamInput!): OrganizationTeam!
+
+	"""
+	Removes a team outright, with the membership rows that belong to it.
+
+	The delivered answer is the removal result — its signature admits the row beside it — and the one
+	member a caller reads from either is that the removal happened, which is what this field answers. A
+	team that is not there, or one the caller does not manage, is refused by the service before that
+	line rather than answered with a negative.
+	"""
+	deleteOrganizationTeam(id: ID!, options: OrganizationTeamDeleteInput): Boolean!
+
+	"""
+	Removes one user from the teams they joined as a member.
+
+	The delivered read resolves the user's employee, unassigns that employee from the tasks their teams
+	carry and removes the membership rows they hold as a plain member — the facts a caller needs, the
+	removal among them, being what the answer states. A caller naming a user other than itself is
+	refused unless it holds the permission to change the selected employee, which is the same refusal
+	the route gives.
+	"""
+	removeUserFromOrganizationTeams(userId: ID!): Boolean!
+
+	"""
+	Withdraws a team without removing it: the row keeps its identifier, the work filed under it keeps
+	pointing at it, and the list stops answering it. The answer is the row as it now stands, which is
+	what the delivered route answers with.
+	"""
+	softDeleteOrganizationTeam(id: ID!): OrganizationTeam!
+
+	"""
+	Puts a withdrawn team back, clearing the marker the withdrawal set.
+	"""
+	recoverOrganizationTeam(id: ID!): OrganizationTeam!
+}

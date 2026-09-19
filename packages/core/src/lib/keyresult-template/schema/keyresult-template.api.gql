@@ -1,0 +1,110 @@
+# The key result template domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/key-result-templates` routes already serve, under the
+# same guard and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other.
+# `KeyresultTemplateController` carries `TenantPermissionGuard` on the class and states no permission
+# at all — not on the two routes it declares and not on any of the seven it inherits from the CRUD
+# base — so every field here runs under the same tenant guard and demands no permission. The
+# resolver's spec reads those two facts off the controller's own metadata and compares them with the
+# resolver's.
+#
+# **The controller declares two routes and inherits seven, and all nine are served.** The two it
+# declares are the list and the filing; the seven it inherits are the node, the count, the paginated
+# spelling of the list, the edit, the removal and the two lifecycle moves. Every one of them has a
+# field here, because a capability the controller serves is a capability this surface serves.
+#
+# **The list is the connection.** The controller serves its list twice — `GET /` and the inherited
+# `GET /pagination` — and the two answer the same rows under the same filters. That is one capability,
+# so it is one field, and the connection's own `limit`/`offset` already are the page the paginated
+# spelling performs.
+#
+# **A catalogue entry belongs to a goal template, and that is a filter rather than a route.** The
+# delivered surface serves no sub-route for one goal template's key results; `goalId` is a column of
+# this row, so the narrowing is stated in `filter` — the same way the goal template's own surface
+# points here. The KPI template an entry suggests is named by `kpiId` for the same reason.
+#
+# **The inherited edit answers a statement rather than a row, so the field reads the row back.** The
+# delivered `PUT /:id` calls the CRUD base's partial column update, which answers the store's own
+# update result. A field named `update…` may not return a statement about a write, so the row is read
+# back through the same reader the node query uses. The read that precedes the write is the base's own
+# — it is what turns an entry of another tenant, or one that is not there, into a miss instead of a
+# write.
+#
+# **A count route gets a nullable `Int` field with no argument.** The delivered count route binds its
+# query string to the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a call that cannot accept it or evaluated over a second code
+# path that could disagree with the connection's `totalCount`. It is nullable because an aggregate the
+# resource may legitimately have no answer for must not be reported as a fabricated zero.
+#
+# **The lifecycle routes count.** Removals, withdrawals and restorations are all delivered routes, so
+# all three are fields, and the object type carries `deletedAt` because that column is the whole of
+# what the withdrawal writes.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+# the GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is
+# behind the one capability. The REST routes are not gated by that code — they are the door that stays
+# open — so a tenant that switched the capability off is answered `Cannot query field <name>` here and
+# served as it always was there.
+
+extend type Query {
+	"""
+	The catalogue entries of the caller's tenant, newest first. One goal template's key results are
+	this connection narrowed by `goalId`.
+	"""
+	keyResultTemplates(
+		filter: KeyResultTemplateFilter
+		sort: [KeyResultTemplateSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): KeyResultTemplateConnection!
+
+	"""
+	One catalogue entry of the caller's tenant, or null when there is none.
+	"""
+	keyResultTemplate(id: ID!): KeyResultTemplate
+
+	"""
+	How many catalogue entries the caller's tenant holds.
+	"""
+	keyResultTemplateCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a catalogue entry, and answers the row it wrote.
+	"""
+	createKeyResultTemplate(input: CreateKeyResultTemplateInput!): KeyResultTemplate!
+
+	"""
+	Changes a catalogue entry, and answers the row the write produced. A member the caller leaves out is
+	left as it is, because the delivered edit is a partial column update rather than a replacement; see
+	`UpdateKeyResultTemplateInput`.
+	"""
+	updateKeyResultTemplate(input: UpdateKeyResultTemplateInput!): KeyResultTemplate!
+
+	"""
+	Removes a catalogue entry outright. The delivered route answers the store's delete result rather
+	than a row, so this field answers whether the removal was performed.
+	"""
+	deleteKeyResultTemplate(id: ID!): Boolean!
+
+	"""
+	Withdraws a catalogue entry without removing it. The answer is the withdrawn row, whose `deletedAt`
+	says when it happened.
+	"""
+	softDeleteKeyResultTemplate(id: ID!): KeyResultTemplate!
+
+	"""
+	Puts a withdrawn catalogue entry back.
+	"""
+	recoverKeyResultTemplate(id: ID!): KeyResultTemplate!
+}

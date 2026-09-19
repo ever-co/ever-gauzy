@@ -1,0 +1,114 @@
+# The expense-category domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/expense-categories` routes already serve, under the same
+# guard chain and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other. Nothing here
+# decides anything: each field calls the same `ExpenseCategoriesService` method or dispatches the same
+# command the route behind it does, which is the whole of what a resolver on this platform owns.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained
+# over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered list read
+# answers live rows only, and offering an argument that cannot be honoured would be worse than not
+# offering it.
+#
+# The controller serves its list twice — `GET /` and the inherited `GET /pagination` — and the two
+# answer the same rows under the same filters, one of them sliced by `take`/`skip` and the other not.
+# That is one capability, so it is one root field: `expenseCategories`, mirroring `GET /`. A second root
+# field for the paginated spelling would be a second surface that could disagree with this one.
+#
+# `expenseCategory` and `expenseCategoryCount` carry the class-level edit permission, not the view one,
+# because the delivered routes they mirror carry it: the node read and the count are inherited from the
+# base controller without a permission of their own, so the controller's class-level permission is the
+# one they run under. Stating anything else here would give GraphQL a scope REST does not have. The
+# asymmetry between listing the vocabulary and reading one entry of it is the controller's to resolve,
+# and resolving it in one surface only is exactly what this delivery exists to prevent. The count takes
+# no filter, and that is a statement rather than an omission: the delivered count route passes its query
+# string through as the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a service call that cannot accept it or be evaluated over a
+# second code path that could disagree with the connection's `totalCount`. It is nullable because a
+# count is an aggregate a resource may legitimately have no answer for, and a non-null field would turn
+# "not answered" into a fabricated zero.
+#
+# The three writes carry the edit permission, and so do the two lifecycle fields: the create and the
+# edit are declared on the controller with the class-level permission as their whole scope, and the
+# removal, the withdrawal and the restoration are inherited from the CRUD base, which states no
+# permission of its own. A field that demanded less would be a way around the permission model, and one
+# that demanded more would refuse a caller the REST route serves.
+
+extend type Query {
+	"""
+	The categories of the caller's tenant, in the vocabulary's own name order.
+	"""
+	expenseCategories(
+		filter: ExpenseCategoryFilter
+		sort: [ExpenseCategorySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ExpenseCategoryConnection!
+
+	"""
+	One category of the caller's tenant, or null when there is none.
+
+	A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+	row" on a field that may have none, and the REST route's `404` is that same fact stated in the other
+	protocol's vocabulary.
+	"""
+	expenseCategory(id: ID!): ExpenseCategory
+
+	"""
+	How many categories the caller's tenant holds.
+	"""
+	expenseCategoryCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a category into the tenant's vocabulary.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller,
+	so a category cannot be written into a tenant the caller is not acting in. The name is the one
+	member the delivered body validation requires.
+	"""
+	createExpenseCategory(input: CreateExpenseCategoryInput!): ExpenseCategory!
+
+	"""
+	Renames a category, or files it under another organization.
+
+	The delivered edit reaches the same write the create does, carrying the identifier in the path and
+	the body together, so a member the caller leaves out is left as it is — see
+	`UpdateExpenseCategoryInput`, which also states what an identifier naming no row does.
+	"""
+	updateExpenseCategory(input: UpdateExpenseCategoryInput!): ExpenseCategory!
+
+	"""
+	Removes a category outright.
+
+	This is the hard removal, and it is the one to reach for only for an entry filed in error: a category
+	an expense still points at is the store's own constraint to refuse, and this field does not pre-empt
+	it.
+	"""
+	deleteExpenseCategory(id: ID!): Boolean!
+
+	"""
+	Withdraws a category without removing the row.
+
+	The delivered list stops answering it and the expenses filed under it keep resolving the identifier
+	they hold. The answer is the withdrawn row; it is recoverable until it is removed outright.
+	"""
+	softDeleteExpenseCategory(id: ID!): ExpenseCategory!
+
+	"""
+	Puts a withdrawn category back.
+	"""
+	recoverExpenseCategory(id: ID!): ExpenseCategory!
+}

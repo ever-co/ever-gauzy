@@ -5,7 +5,11 @@ jest.mock('../../organization-project/organization-project.module', () => ({
 jest.mock('../../role-permission/role-permission.module', () => ({
 	RolePermissionModule: class RolePermissionModule {}
 }));
-jest.mock('../../shared/guards', () => ({ TenantPermissionGuard: class TenantPermissionGuard {}, FeatureFlagGuard: class FeatureFlagGuard {} }));
+jest.mock('../../shared/guards', () => ({
+	TenantPermissionGuard: class TenantPermissionGuard {},
+	PermissionGuard: class PermissionGuard {},
+	FeatureFlagGuard: class FeatureFlagGuard {}
+}));
 jest.mock('../../tasks/task.module', () => ({ TaskModule: class TaskModule {} }));
 jest.mock('../../user/user.module', () => ({ UserModule: class UserModule {} }));
 jest.mock('../activity/activity.module', () => ({ ActivityModule: class ActivityModule {} }));
@@ -39,8 +43,10 @@ import { TimeLogModule } from '../time-log/time-log.module';
 import { TimeSlotModule } from '../time-slot/time-slot.module';
 import { ProfileActivityQueryDTO } from './dto/profile-activity-query.dto';
 import { ProfileActivityController } from './profile-activity.controller';
+import { ProfileActivityResolver } from './profile-activity.resolver';
 import { StatisticController } from './statistic.controller';
 import { StatisticModule } from './statistic.module';
+import { StatisticResolver } from './statistic.resolver';
 import { StatisticService } from './statistic.service';
 
 const API_TAGS_METADATA = 'swagger/apiUseTags';
@@ -147,7 +153,13 @@ describe('ProfileActivityController', () => {
 			ActivityModule,
 			TimeLogModule
 		]);
-		expect(Reflect.getMetadata(MODULE_METADATA.PROVIDERS, StatisticModule)).toEqual([StatisticService]);
+		expect(Reflect.getMetadata(MODULE_METADATA.PROVIDERS, StatisticModule)).toEqual([
+			StatisticService,
+			// The GraphQL view of the same two surfaces, declared beside the service they inject
+			// because a resolver can only inject what its own module reaches.
+			StatisticResolver,
+			ProfileActivityResolver
+		]);
 		expect(Reflect.getMetadata(MODULE_METADATA.EXPORTS, StatisticModule)).toEqual([StatisticService]);
 	});
 });

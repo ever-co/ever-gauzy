@@ -1,0 +1,97 @@
+# The goal general setting domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/goal-general-setting` routes already serve, under the
+# same guard and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other.
+# `GoalGeneralSettingController` carries `TenantPermissionGuard` on the class and states no permission
+# at all — not on the three routes it declares and not on any of the six it inherits from the CRUD
+# base — so every field here runs under the same tenant guard and demands no permission. The
+# resolver's spec reads those two facts off the controller's own metadata and compares them with the
+# resolver's.
+#
+# **The list is the connection.** The controller serves its list twice — `GET /` and the inherited
+# `GET /pagination` — and the two answer the same rows under the same filters. That is one capability,
+# so it is one field, and the connection's own `limit`/`offset` already are the page the paginated
+# spelling performs. The node read and the count are the other two inherited reads, and each is a
+# field of its own.
+#
+# **The removal is inherited, and it is still a route.** The controller declares no `DELETE`; the CRUD
+# base's removal is served at this resource's prefix, so it is a field here for the same reason the
+# list is.
+#
+# **A count route gets a nullable `Int` field with no argument.** The delivered count route binds its
+# query string to the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a call that cannot accept it or evaluated over a second code
+# path that could disagree with the connection's `totalCount`. It is nullable because an aggregate the
+# resource may legitimately have no answer for must not be reported as a fabricated zero.
+#
+# **The lifecycle routes count.** Removals, withdrawals and restorations are all delivered routes, so
+# all three are fields, and the object type carries `deletedAt` because that column is the whole of
+# what the withdrawal writes.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+# the GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is
+# behind the one capability. The REST routes are not gated by that code — they are the door that stays
+# open — so a tenant that switched the capability off is answered `Cannot query field <name>` here and
+# served as it always was there.
+
+extend type Query {
+	"""
+	The policies of the caller's tenant, newest first. An organization's own policy is this connection
+	narrowed by `organizationId`.
+	"""
+	goalGeneralSettings(
+		filter: GoalGeneralSettingFilter
+		sort: [GoalGeneralSettingSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): GoalGeneralSettingConnection!
+
+	"""
+	One policy of the caller's tenant, or null when there is none.
+	"""
+	goalGeneralSetting(id: ID!): GoalGeneralSetting
+
+	"""
+	How many policies the caller's tenant holds.
+	"""
+	goalGeneralSettingCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a policy, and answers the row it wrote.
+	"""
+	createGoalGeneralSetting(input: CreateGoalGeneralSettingInput!): GoalGeneralSetting!
+
+	"""
+	Changes a policy. The delivered route is an update-through-create, so a member the caller leaves out
+	is left as it is; see `UpdateGoalGeneralSettingInput`.
+	"""
+	updateGoalGeneralSetting(input: UpdateGoalGeneralSettingInput!): GoalGeneralSetting!
+
+	"""
+	Removes a policy outright. The delivered route answers the store's delete result rather than a row,
+	so this field answers whether the removal was performed.
+	"""
+	deleteGoalGeneralSetting(id: ID!): Boolean!
+
+	"""
+	Withdraws a policy without removing it. The answer is the withdrawn row, whose `deletedAt` says when
+	it happened.
+	"""
+	softDeleteGoalGeneralSetting(id: ID!): GoalGeneralSetting!
+
+	"""
+	Puts a withdrawn policy back.
+	"""
+	recoverGoalGeneralSetting(id: ID!): GoalGeneralSetting!
+}

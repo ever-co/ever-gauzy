@@ -1,0 +1,136 @@
+# The join request domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# The domain is served by `/api/organization-team-join`, whose controller declares five routes and
+# inherits none: the queue of requests of the caller's tenant, the ask itself, the presentation of the
+# mailed code, a resend of that code, and the acceptance or rejection of one request. Every one of them
+# is mirrored below, and the parity is field by field rather than uniform, which is the point:
+#
+# - the queue and the move are served under `TenantPermissionGuard` and `PermissionGuard`, each with the
+#   permission pair its own route states — `ALL_ORG_VIEW` with `ORG_TEAM_JOIN_REQUEST_VIEW` for the
+#   queue, `ORG_TEAM_JOIN_REQUEST_VIEW` with `ORG_TEAM_JOIN_REQUEST_EDIT` for the move. The two fields
+#   state those pairs and the same two guard classes, because a field that demanded less would be a way
+#   around the permission model and one that demanded more would refuse a caller the route serves;
+# - the ask, the presentation and the resend are `@Public()` routes — the address that asks to join
+#   holds no credential yet, so the controller states no guard and no permission on them — and the
+#   three fields state none either. Nothing is stated on them beyond the capability that gates this
+#   whole endpoint, which is the class's own statement rather than theirs.
+#
+# The controller serves no list twice: there is no `/pagination` route beside the queue, and no `GET
+# /:id`, so there is one read field here and no node query. The queue is a connection rather than a
+# bare array: it takes the same query protocol the REST list route takes — the same filters in
+# `filter`, the same keys in `sort`, the same page in `page` — and answers with the same shape the
+# kernel's `PageInfo` gives every other connection, so a cursor obtained over one surface resumes on
+# the other. `withDeleted` is deliberately absent: the delivered list method reads live rows only.
+#
+# **The three `@Public()` fields are behind the same tenant-scoped capability as every other field
+# here.** `FEATURE_GRAPHQL` is resolved by `FeatureFlagGuard` from `FEATURE_METADATA`, and that
+# resolution is scoped to the request: `FeatureService.isFeatureEnabled` answers from the caller's own
+# toggle rows when the request carries a tenant, and from the deployment's configured state when it
+# does not — and `FEATURE_GRAPHQL` is not a code that configuration names, so a request that carries no
+# tenant scope resolves the capability as disabled and is refused. The delivery cannot express
+# otherwise: a field cannot be more open than the gate over it, and nothing narrower is stated on those
+# three fields, because a guard or a permission there would refuse a caller the REST route serves.
+#
+# **The action is a closed set rather than a free string.** `PUT /:id/:action` takes the move as a path
+# segment, and the delivered writer switches on exactly two of the three members of the contracts
+# vocabulary — see `OrganizationTeamJoinRequestAction` for why a third value would be answered as
+# though the move had been made.
+
+extend type Query {
+	"""
+	The join requests of the caller's tenant, newest first.
+
+	The same service method the delivered list route calls, with the route's own defaults for an
+	unstated request: the route binds its query DTO to the query string — a `where`, the relations to
+	join, the page and the soft-delete flag — and this surface has no query string to bind, so the read
+	runs with none of them and the connection protocol's `filter` is applied to the rows the service
+	returns. The tenant is applied to the criterion by the service, from the credential rather than from
+	the caller, so a filter naming another tenant narrows to nothing rather than reading across tenants.
+	"""
+	organizationTeamJoinRequests(
+		filter: OrganizationTeamJoinRequestFilter
+		sort: [OrganizationTeamJoinRequestSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationTeamJoinRequestConnection!
+}
+
+extend type Mutation {
+	"""
+	Asks to join one organization team, and mails a confirmation code to the address that asks.
+
+	The same command the delivered route dispatches, carrying the same language: the route reads the
+	`language` request header through its own decorator, and `RequestContext.getLanguageCode()` reads
+	that same header off the same request — the bootstrap mounts a request context on the GraphQL
+	endpoint as well as on the prefixed routes — so a caller asking the same question over either
+	protocol is mailed the same message in the same language.
+
+	The answer is the acknowledgement rather than the row, which is what the delivered handler answers
+	and all it answers: it produces the pair in a `finally`, so it is answered for every outcome,
+	including the ones the handler swallowed. A caller that learned from this answer whether the
+	address had already asked to join the team would have learned it about an address that may not be
+	its own, which is exactly what the delivered shape prevents.
+	"""
+	createOrganizationTeamJoinRequest(input: CreateOrganizationTeamJoinRequestInput!): OrganizationTeamJoinRequestOutcome!
+
+	"""
+	Presents the confirmation code or token mailed to the address that asked to join.
+
+	The same service method the delivered route calls, with the route's own DTO as the input. The read
+	it performs resolves the pending request of that address in that team — one that has not lapsed and
+	whose state is still unset — matched by the code or by the token, and marks it `REQUESTED`; the
+	answer is the row it resolved, with its identifier removed: the delivered reader deletes that member
+	before it answers, so a caller holding a code cannot then look the row up by identifier. The address
+	and the team are the two members every answer is guaranteed to carry — what travels beside them
+	depends on the persistence layer an installation runs, because the read selects those two on one and
+	serialises the row it loaded on the other — so a caller that needs the row itself reads it back
+	through `organizationTeamJoinRequests`.
+
+	A miss is a refusal rather than an empty answer. The delivered service answers a request that is not
+	there, has lapsed, or has already moved with a bare `400`, and this field lets that refusal through
+	rather than turning it into a null: "no such pending request" and "the code was wrong" are the same
+	answer here on purpose, because telling them apart would confirm which codes are live.
+	"""
+	validateOrganizationTeamJoinRequest(input: ValidateOrganizationTeamJoinRequestInput!): OrganizationTeamJoinRequest!
+
+	"""
+	Mails a fresh confirmation code for a request that is still pending.
+
+	The same service method the delivered route calls, and with the same single argument: the route
+	passes the body and no language, so the message is written in whatever language the mailer falls back
+	to rather than in the caller's. Passing the caller's language here would make this surface disagree
+	with the REST one about the message a caller is sent, and the two-protocol rule is parity rather
+	than improvement.
+
+	The answer is the acknowledgement, produced by the delivered method's `finally`: like the ask, it is
+	answered whatever happened, so a caller is told the request was received and is told nothing about
+	whether a pending row was found or whether a message went out.
+	"""
+	resendOrganizationTeamJoinRequestCode(input: ResendOrganizationTeamJoinRequestCodeInput!): OrganizationTeamJoinRequestOutcome!
+
+	"""
+	Accepts or rejects one join request.
+
+	The same service method the delivered route calls, with the same three arguments: the identifier
+	names the row, the action names the move, and the language is read the way the route's own
+	`@I18nLang()` reads it — the i18n resolver this installation configures is a header resolver over
+	the `language` header, which is the header `RequestContext.getLanguageCode()` reads, with the same
+	English fallback.
+
+	The delivered method answers nothing at all, so this field answers whether the call ran, which is
+	the most the route's answer carries. `true` is not a statement that the request moved: the delivered
+	move is conditional, and leaves the row exactly as it was when the applicant is already a member of
+	the team, or when the address has no employee record in the tenant. A caller that needs the row as
+	it now stands reads it back through `organizationTeamJoinRequests`, which is where this surface
+	reads the row.
+	"""
+	acceptOrganizationTeamJoinRequest(id: ID!, action: OrganizationTeamJoinRequestAction!): Boolean!
+}

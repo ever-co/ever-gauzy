@@ -98,6 +98,47 @@ export function resolveAdditionalResolverModules(): Function[] {
 		require('../tasks/linked-issue/task-linked-issue.module').TaskLinkedIssueModule,
 		require('../tasks/views/view.module').TaskViewModule,
 		require('../tasks/daily-plan/daily-plan.module').DailyPlanModule,
-		require('../tasks/screening-tasks/screening-tasks.module').ScreeningTasksModule
+		require('../tasks/screening-tasks/screening-tasks.module').ScreeningTasksModule,
+		// The tracked time and the time off beside it. `TimeTrackingModule` is the umbrella the nine
+		// time-tracking resource modules hang from, and the scan follows a named module's transitive
+		// imports — so one entry covers the timesheet, the log, the timer, the slots, the activities, the
+		// custom tracking, the screenshots, the statistics and the timesheet change requests together.
+		require('../time-tracking/time-tracking.module').TimeTrackingModule,
+		require('../time-off-balance/time-off-balance.module').TimeOffBalanceModule,
+		require('../time-off-policy/time-off-policy.module').TimeOffPolicyModule,
+		require('../time-off-request/time-off-request.module').TimeOffRequestModule,
+		// The project and team group. Four of these seven are reachable through the modules already named
+		// above, but reachability by graph accident is not a statement: all seven are named, so a resolver
+		// is discovered because the configuration says so rather than because some other module happens to
+		// import the one it lives in.
+		require('../organization-project/organization-project.module').OrganizationProjectModule,
+		require('../organization-project-module/organization-project-module.module').OrganizationProjectModuleModule,
+		require('../organization-sprint/organization-sprint.module').OrganizationSprintModule,
+		require('../organization-team/organization-team.module').OrganizationTeamModule,
+		require('../organization-team-employee/organization-team-employee.module').OrganizationTeamEmployeeModule,
+		require('../organization-team-join-request/organization-team-join-request.module')
+			.OrganizationTeamJoinRequestModule,
+		require('../organization-department/organization-department.module').OrganizationDepartmentModule,
+		// The goals an organization sets and the results it measures them by, with the templates and the
+		// vocabulary rows beside them.
+		require('../goal/goal.module').GoalModule,
+		require('../goal-kpi/goal-kpi.module').GoalKpiModule,
+		require('../goal-kpi-template/goal-kpi-template.module').GoalKpiTemplateModule,
+		require('../goal-template/goal-template.module').GoalTemplateModule,
+		require('../goal-time-frame/goal-time-frame.module').GoalTimeFrameModule,
+		require('../goal-general-setting/goal-general-setting.module').GoalGeneralSettingModule,
+		require('../keyresult/keyresult.module').KeyResultModule,
+		require('../keyresult-template/keyresult-template.module').KeyresultTemplateModule,
+		require('../keyresult-update/keyresult-update.module').KeyResultUpdateModule,
+		// What the organization spends: the expense rows, the categories they are filed under, the two
+		// recurring families and the income beside them.
+		require('../expense/expense.module').ExpenseModule,
+		require('../expense-categories/expense-categories.module').ExpenseCategoriesModule,
+		require('../employee-recurring-expense/employee-recurring-expense.module').EmployeeRecurringExpenseModule,
+		require('../organization-recurring-expense/organization-recurring-expense.module')
+			.OrganizationRecurringExpenseModule,
+		require('../income/income.module').IncomeModule,
+		// The supplier master an expense points at, which sits beside those resources and belongs to them.
+		require('../organization-vendor/organization-vendor.module').OrganizationVendorModule
 	];
 }

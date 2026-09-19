@@ -1,0 +1,116 @@
+# The time-off policy domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/time-off-policy` routes already serve, under the same
+# guard chain and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other.
+#
+# **Five of the eight fields mirror routes this controller inherits, and their permission is the
+# class's.** `TimeOffPolicyController` extends the platform's CRUD base, so the count, the node read and
+# the three lifecycle moves are served without a permission of their own and therefore run under the
+# controller's class-level edit permission. The fields state that same permission rather than inventing
+# a narrower one: reading one policy here really does require the edit grant, exactly as it does over
+# REST, and resolving that asymmetry is a change to make in both places at once or in neither.
+#
+# **The list is a connection, and the controller serves its list twice.** `GET /` answers the filtered
+# set and the `GET pagination` this controller overrides answers it sliced by a page; that is one
+# capability stated twice, so it is one root field. The connection mirrors `GET /` — the route that
+# reads the whole filtered set the connection protocol is applied to — and its own `page`, `first`/
+# `after`, `last`/`before`, `limit`/`offset` are the page the paginated spelling performs. A second
+# root field for that spelling would be a second surface that could disagree with this one.
+#
+# **The count takes no filter, and that is a statement rather than an omission.** The inherited count
+# route passes its query string through as the store's own `where`, which the connection protocol does
+# not speak; a `filter` argument here would either be handed to a call that cannot accept it or be
+# evaluated over a second code path that could disagree with the connection's own `totalCount`. What it
+# answers is the count of the caller's own rows, which is the call the route makes when it is given no
+# options. It is nullable because a count is an aggregate a resource may legitimately have no answer
+# for, and a non-null field would turn "not answered" into a fabricated zero.
+#
+# **The three lifecycle moves are three fields.** Removal, withdrawal and recovery answer three
+# different questions — a client that could not tell them apart could not tell whether the balances and
+# requests other rows point at a policy survived — and the delivered controller serves all three, so all
+# three are stated here rather than folded into one "delete" with a mode.
+#
+# **A day count is stated in days, and it is not money.** The entitlement figures on this resource are
+# numbers of days, stored as `numeric(10,2)` columns behind a numeric transformer, which is why they are
+# carried as the exact `Decimal` scalar: half a day is a real entitlement, and a binary fraction cannot
+# hold it exactly. No member of this domain is an amount of money.
+
+extend type Query {
+	"""
+	The policies of the caller's tenant, newest first.
+
+	When the caller states no sort, the order is the platform's own — newest first, then the identifier,
+	because the delivered read states no order of its own and a cursor walk needs a total one.
+	"""
+	timeOffPolicies(
+		filter: TimeOffPolicyFilter
+		sort: [TimeOffPolicySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TimeOffPolicyConnection!
+
+	"""
+	One policy of the caller's tenant, or null when there is none.
+
+	This field carries the edit permission, not the view permission its read sibling carries, because
+	the delivered `GET /:id` route it mirrors is inherited without a permission of its own and therefore
+	runs under the controller's class-level edit permission. Reading one policy and listing them
+	requiring different grants is the controller's own asymmetry; widening it here, on one surface only,
+	is what the two-protocol rule forbids.
+	"""
+	timeOffPolicy(id: ID!): TimeOffPolicy
+
+	"""
+	How many policies the caller's tenant holds.
+	"""
+	timeOffPolicyCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a policy.
+
+	The membership is stated as identifiers, and the delivered write resolves them against the caller's
+	own organization before it stores anything, so an employee of another organization is not a member
+	however it is named.
+	"""
+	createTimeOffPolicy(input: CreateTimeOffPolicyInput!): TimeOffPolicy!
+
+	"""
+	Edits a policy that exists.
+
+	The delivered write verifies the row against the caller's own tenant and organization and edits it in
+	place rather than removing and re-creating it, which is what keeps the identifier every balance and
+	every request points at. A body without an organization is refused by the write, which is why the
+	input requires one.
+	"""
+	updateTimeOffPolicy(input: UpdateTimeOffPolicyInput!): TimeOffPolicy!
+
+	"""
+	Removes a policy outright.
+
+	The delivered route answers the store's own delete result rather than a row, so this field answers
+	whether the removal ran — the one fact that call establishes.
+	"""
+	deleteTimeOffPolicy(id: ID!): Boolean!
+
+	"""
+	Withdraws a policy without removing it: the row keeps its identifier and the delivered list stops
+	answering it.
+	"""
+	softDeleteTimeOffPolicy(id: ID!): TimeOffPolicy!
+
+	"""
+	Puts a withdrawn policy back.
+	"""
+	recoverTimeOffPolicy(id: ID!): TimeOffPolicy!
+}

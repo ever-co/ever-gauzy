@@ -1,0 +1,199 @@
+# The project module domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/organization-project-modules` routes already serve, under
+# the same guard chain and with the same permission, so a client that reaches a capability over one
+# protocol is not given a narrower or a wider one than the client that reaches it over the other. The
+# guard chain and the permission are read from `OrganizationProjectModuleController`'s own metadata in the
+# resolver and compared against it in the resolver's spec, rather than restated as a second list that
+# could agree with the resolver while disagreeing with the controller. That parity is field by field and
+# it is not uniform, which is the point:
+#
+# - the four reads the controller declares state the view permission beside the module's own read
+#   permission, and they are mirrored under both;
+# - the create, the edit and the removal state the edit permission beside the verb of their own route,
+#   and they are mirrored under both;
+# - the count and the two lifecycle moves are inherited from the platform's CRUD base, whose handlers
+#   declare no permission of their own — so they run under the controller's class-level edit permission,
+#   and the fields that mirror them state that permission rather than the read permission their
+#   neighbours carry. Widening one of them here, on this surface only, would be a scope REST does not
+#   have.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list route
+# takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers
+# with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over one
+# surface resumes on the other. `GET /pagination` has no field of its own: it is the same rows under the
+# same filters, and the page it slices by `take`/`skip` is what the connection's `page`, `limit` and
+# `offset` state. `withDeleted` is deliberately absent: the delivered list method reads live rows only,
+# and offering an argument that cannot be honoured would be worse than not offering it.
+#
+# **The three further reads are root fields of their own rather than filters on the connection**, and
+# that is a decision about the delivered reads rather than a second spelling of the same one. Each joins
+# a pivot the list read does not — the caller's own membership of a module, the caller's teams' modules,
+# and the modules one named employee works — and a pivot is not a column of this row, so a filter could
+# not state it: a filter narrows rows, and these narrow by who is asking. `employeeProjectModules`
+# resolves the employee from the credential, or from the selection a caller with the permission to change
+# it may name; `teamProjectModules` joins the caller's teams; and `organizationProjectModulesByEmployee`
+# joins the member pivot by the employee the field names.
+#
+# **`totalCount` on those three is the count of the rows the read answered**, not of every matching row
+# in the store: each read fixes a page of its own — ten rows on one store, the whole matching set on the
+# other — and the connection's filter, order and page are then applied over exactly the answer. A number
+# that pretended to count beyond the set the delivered read answers would be a second count of the same
+# question, and it would disagree with the first.
+#
+# `organizationProjectModuleCount` takes no argument, and that is a statement rather than an omission.
+# The delivered count route binds its query string to the store's own `where`, a shape no schema can
+# state; a `filter` here would either be handed to a service call that cannot accept it or be evaluated
+# over a second code path that could disagree with the connection's `totalCount`. It is nullable because
+# a count is an aggregate a resource may legitimately have no answer for, and a non-null field would turn
+# "not answered" into a fabricated zero.
+#
+# **The three writes dispatch the commands the delivered routes dispatch**, because a write here is more
+# than a row: the create reads the employees it is given as members of the module's organization, builds
+# the module-employee pivot, files the stated tasks under the module and writes an activity log beside
+# it, and the edit moves members and managers and reconciles the task set the same way. A field that
+# reached for the service instead would write a row the rest of the platform never finished assembling.
+# The edit answers with the row read back: the delivered write answers with the row or with the
+# platform's update-result envelope, and the one member a caller reads from that envelope is the count of
+# rows the write reached, which is not a member this schema declares. Answering with the row is the same
+# operation stated in the shape a client reads next anyway.
+
+extend type Query {
+	"""
+	The project modules of the caller's tenant, newest first.
+	"""
+	organizationProjectModules(
+		filter: OrganizationProjectModuleFilter
+		sort: [OrganizationProjectModuleSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationProjectModuleConnection!
+
+	"""
+	One project module of the caller's tenant, or null when there is none.
+
+	The parent module of a module is this field with the child's own `parentId`.
+	"""
+	organizationProjectModule(id: ID!): OrganizationProjectModule
+
+	"""
+	How many modules the caller's tenant holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero — two facts a client that reports on
+	a plan has to keep apart. The delivered count route binds its query string to the store's own `where`,
+	a shape no schema can state, so the field offers no narrowing of its own rather than an argument the
+	resolver could not pass on.
+	"""
+	organizationProjectModuleCount: Int
+
+	"""
+	The modules the caller is a member of, read through the delivered reader that resolves the employee
+	from the credential — a narrowing no filter can state, because a filter narrows rows and this narrows
+	by who is asking.
+
+	`totalCount` is the count of the rows this read answered rather than of every module in the store.
+	"""
+	employeeProjectModules(
+		filter: OrganizationProjectModuleFilter
+		sort: [OrganizationProjectModuleSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationProjectModuleConnection!
+
+	"""
+	The modules the caller's own teams share, read through the delivered reader that joins the team
+	membership pivot the list read does not.
+
+	`totalCount` is the count of the rows this read answered rather than of every module in the store.
+	"""
+	teamProjectModules(
+		filter: OrganizationProjectModuleFilter
+		sort: [OrganizationProjectModuleSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationProjectModuleConnection!
+
+	"""
+	The modules one employee works, read through the delivered reader that joins the module-member pivot
+	by the employee this field names.
+
+	The organization is stated because the delivered read is scoped by it: the route's own query DTO
+	requires it, and the read narrows the rows on that column rather than falling back to a scope of its
+	own — a field that omitted it would answer a criterion of `undefined`, which is not a scope any
+	caller asked for.
+
+	`totalCount` is the count of the rows this read answered rather than of every module in the store.
+	"""
+	organizationProjectModulesByEmployee(
+		employeeId: ID!
+		organizationId: ID!
+		filter: OrganizationProjectModuleFilter
+		sort: [OrganizationProjectModuleSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationProjectModuleConnection!
+}
+
+extend type Mutation {
+	"""
+	Files a module, with the employees it is assigned to and the tasks filed under it in the same write.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller.
+	The organization is stated, because the delivered body validates it against the caller's own
+	memberships and the write reads the employee lists as members of that organization.
+	"""
+	createOrganizationProjectModule(input: CreateOrganizationProjectModuleInput!): OrganizationProjectModule!
+
+	"""
+	Changes a module that exists, and the members, the managers and the tasks it carries.
+
+	The identifier is the criterion and is not repeated in the payload, which is the shape the delivered
+	route has: `:id` names the row and the body carries the facts. A member the caller leaves out is left
+	as it is; a list the caller states is the set the write applies — see `UpdateOrganizationProjectModuleInput`.
+	"""
+	updateOrganizationProjectModule(input: UpdateOrganizationProjectModuleInput!): OrganizationProjectModule!
+
+	"""
+	Removes a module outright, together with the records the store cascades from it.
+
+	The two removals this resource serves are not the same operation, so both are stated rather than one
+	of them being left to a client to discover on the other protocol.
+	"""
+	deleteOrganizationProjectModule(id: ID!): Boolean!
+
+	"""
+	Withdraws a module without removing it: the row keeps its identifier, the tasks filed under it keep
+	pointing at it, and the delivered list stops answering it. The answer is the row as it now stands,
+	which is what the delivered route answers with.
+	"""
+	softDeleteOrganizationProjectModule(id: ID!): OrganizationProjectModule!
+
+	"""
+	Puts a withdrawn module back, clearing the marker the withdrawal set.
+	"""
+	recoverOrganizationProjectModule(id: ID!): OrganizationProjectModule!
+}

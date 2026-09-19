@@ -1,0 +1,63 @@
+# The profile-activity object types.
+#
+# Every type in this file is a **computed answer** over the time logs of one engagement, and none of
+# them is a row. The delivered read is one aggregate over the logs of the period; what it answers is how
+# many local days carried activity, how long the activity lasted, the first and the last of those days,
+# and — on request — the same total once per local day. The platform stores no summary row, which is why
+# these types have no identifier, no version and no lifecycle, and why the file declares no input type
+# at all: the caller states a period, not a record.
+#
+# **Durations are seconds and are `Float`.** The delivered read works in milliseconds as exact integers
+# and divides by a thousand only when it answers, so a total can be a fraction of a second and is never
+# rounded; `Float` is what holds that without inventing a precision the read did not state. A day's
+# duration is the same value restricted to one local day, and the days' durations sum to the total.
+#
+# **A calendar position is a `String` here and a count is `Int`.** A local day is answered as the
+# `YYYY-MM-DD` label the read groups by rather than as an instant, because the day it names is a local
+# calendar day in the caller's zone and an instant would have to be re-resolved against that zone to
+# mean the same thing. The number of days that carried activity is a count, so it is an `Int`.
+#
+# **Money does not appear on this surface.** The answer is time: what the time is worth is a rate the
+# invoicing domain states, and this surface does not compute one.
+
+"""
+The days a period was worked on, and how long the work lasted.
+"""
+type ProfileActivityDay {
+	"The local calendar day, as `YYYY-MM-DD` in the zone the period was resolved against."
+	date: String!
+	"The time tracked on that day. Seconds, and the sum of the days is the period's total."
+	duration: Float!
+}
+
+"""
+The period a profile-activity answer was computed over, as the caller stated it.
+"""
+type ProfileActivityPeriod {
+	"The first local calendar day of the period, inclusive, as the caller stated it."
+	startDate: String!
+	"The local calendar day the period ends on, exclusive, as the caller stated it."
+	endDate: String!
+	"The zone the two days were resolved against."
+	timeZone: String!
+}
+
+"""
+One employee's activity over a period of local calendar days.
+"""
+type ProfileActivity {
+	"The engagement the summary belongs to. The engagement's own row is read from the employee surface by this identifier."
+	employeeId: ID!
+	"How many of the period's local days carried activity. A count of days, and zero for a period in which nothing was tracked."
+	activeDays: Int!
+	"The time tracked over the period. Seconds, summed over the period's days."
+	totalDuration: Float!
+	"The first local calendar day of the period that carried activity, as `YYYY-MM-DD`. Absent when no day did."
+	firstActiveOn: String
+	"The last local calendar day of the period that carried activity, as `YYYY-MM-DD`. Absent when no day did."
+	lastActiveOn: String
+	"The period the answer was computed over, restated as the caller gave it."
+	period: ProfileActivityPeriod!
+	"The per-day breakdown, ordered by day. Present only when the caller asked for it; a caller that did not is answered the summary alone, which is what the delivered read does rather than an empty list it never computed."
+	daily: [ProfileActivityDay!]
+}

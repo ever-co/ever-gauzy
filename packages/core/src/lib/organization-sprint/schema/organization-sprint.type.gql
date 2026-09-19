@@ -1,0 +1,276 @@
+# The organization sprint's object type.
+#
+# A sprint is the window of work one team commits to inside one project: the name it is spoken of by,
+# what the window is for, the pair of dates it runs between, how many days it is meant to last, and the
+# day its own week is read from. The row is filed under an organization and belongs to a tenant, so the
+# two identifiers travel with it, and everything a sprint gathers — the people working it, the tasks
+# planned into it — hangs off it rather than living on it.
+#
+# **The row states its own window, and the unit is stated where the member is.** `startDate` and
+# `endDate` are the two boundary instants and `length` is the number of **days** the window is meant to
+# span. The three are the row's own columns rather than a derived pair: a sprint whose window was moved
+# by hand carries the dates it was moved to, and a sprint whose length was never restated keeps the
+# number it was filed with. Nothing on this row is an amount, so no member of this type is a `Decimal`:
+# a date is an instant, a length is a count of days, and money belongs to the money layer.
+#
+# **Two vocabularies are carried as their own values rather than declared as enums here.** `status`
+# walks a sprint through its life — a draft, one that has not opened yet, the active one, a completed
+# one — and its value set is `OrganizationSprintStatusEnum`; `dayStart` is the day the sprint's own week
+# begins on, and its value set is `SprintStartDayEnum`. Both live in the contracts package, both type
+# their column, and the delivered write validates a body against them. An enum declared in this file
+# would be a second declaration of a value set this domain does not own, and it would diverge from the
+# first the day a status is added; carrying the value is what keeps the two protocols stating the same
+# set. `dayStart` is an `Int` because that is what the vocabulary's values are: 1 is Sunday through 7 is
+# Saturday.
+#
+# **Every relation is carried as an identifier, because the delivered reads join none.** The delivered
+# list read is handed the `relations` its `data` query parameter carries and the one-row read is handed
+# the query string its route binds; this surface states none on either, which is what a REST caller that
+# names none is served. `projectId` is therefore the project a sprint is filed under, and the project
+# row is read from the project surface. The sprint's members and its tasks are not carried at all, and
+# the reason is that neither is a column of this row: the members are rows of the sprint-membership
+# pivot, which the delivered reads join only when a caller names them, and a task names its sprint with
+# `Task.organizationSprintId` rather than the sprint naming the task. A member here for either would be
+# absent from exactly the answers this surface serves, and a client would read null and conclude the
+# sprint has nobody working it.
+
+"""
+One window of work inside one project.
+"""
+type OrganizationSprint {
+	id: ID!
+	"""
+	The sprint's name, as it is spoken of in the project. The column is not nullable, so a row always
+	names itself.
+	"""
+	name: String!
+	"What the window is for: the outcome the team is trying to reach before it closes."
+	goal: String
+	"""
+	The length of the sprint's window **in days**. The column carries a default of seven, which is the
+	length a sprint is filed with when the caller states none.
+	"""
+	length: Int!
+	"When the sprint's window opens, or null while the row records no opening date."
+	startDate: DateTime
+	"When the sprint's window closes, or null while the row records no closing date."
+	endDate: DateTime
+	"""
+	Where the sprint is in its life — `draft`, `upcoming`, `active` or `completed`. Carried as its own
+	value rather than declared as an enum: the vocabulary is the platform's
+	`OrganizationSprintStatusEnum`, which types the column and which the delivered write validates
+	against, so a second declaration here could disagree with it.
+	"""
+	status: String
+	"""
+	Which day the sprint's own week starts on, in the platform's numbering: 1 is Sunday through 7 is
+	Saturday. Carried as its own value for the same reason `status` is — the vocabulary is the
+	platform's `SprintStartDayEnum` and the delivered write validates against it.
+	"""
+	dayStart: Int
+	"""
+	The sprint's progress as one structured document: the state and the metrics a board reads without
+	recounting the tasks of the sprint. Authored and updated as a whole document rather than derived
+	from the task rows, which is why it is carried whole.
+	"""
+	sprintProgress: JSON
+	"""
+	The project the sprint is filed under, by identifier. The project row itself is a row of the
+	project domain, the delivered reads do not join it, and the identifier is what this row carries —
+	so the row is read from the project surface rather than through a member here that would answer
+	null.
+	"""
+	projectId: ID
+	"The organization the sprint is filed under, by identifier. The organization row is read from the organization surface."
+	organizationId: ID
+	"The tenant the sprint belongs to, by identifier. The tenant row is read from the tenant surface."
+	tenantId: ID
+	"""
+	When the sprint was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two lifecycle moves this resource serves — and this column is the whole of what they
+	write, so without it a caller could not tell a live row from a withdrawn one on the answer to the
+	write that withdrew it.
+	"""
+	deletedAt: DateTime
+	"When the sprint was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"When the sprint was filed."
+	createdAt: DateTime
+	"When the sprint was last changed."
+	updatedAt: DateTime
+	"Whether the sprint is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the sprint is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"The person who filed the sprint, by identifier. The user row is not joined by this surface's read."
+	createdByUserId: ID
+	"The person who last changed the sprint, by identifier. The user row is not joined by this surface's read."
+	updatedByUserId: ID
+	"The person who withdrew the sprint, by identifier. The user row is not joined by this surface's read."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of sprints.
+"""
+type OrganizationSprintEdge {
+	node: OrganizationSprint!
+	cursor: String!
+}
+
+"""
+One page of sprints, with the total the filters select and the boundary cursors.
+"""
+type OrganizationSprintConnection {
+	nodes: [OrganizationSprint!]!
+	edges: [OrganizationSprintEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a sprint list may be sorted by.
+"""
+enum OrganizationSprintSortField {
+	createdAt
+	updatedAt
+	name
+	startDate
+	endDate
+	status
+	length
+}
+
+"""
+The order the sprints are returned in. At most three keys are accepted.
+"""
+input OrganizationSprintSort {
+	field: OrganizationSprintSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a sprint list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row the delivered read answers, because the connection narrows the rows
+the service returned: a member the read does not select would be a filter that silently selects
+nothing. The membership pivot and the task links are in neither, and that is a statement rather than an
+omission — the delivered list read joins the relations its `data` query parameter names, this surface
+names none, so a filter on the people working a sprint or on the tasks planned into it would be
+evaluated against a row that carries none of them and would select nothing at all, which is the worst
+answer a filter can give. `status` and `dayStart` are here because they are the two questions a list of
+sprints is actually narrowed by, and both are compared as the values the columns store.
+"""
+input OrganizationSprintFilter {
+	id: IDFilter
+	name: StringFilter
+	goal: StringFilter
+	"How many days long the sprint's window is."
+	length: NumberFilter
+	"When the sprint's window opens."
+	startDate: DateTimeFilter
+	"When the sprint's window closes."
+	endDate: DateTimeFilter
+	status: StringFilter
+	"Which day the sprint's own week starts on: 1 is Sunday through 7 is Saturday."
+	dayStart: NumberFilter
+	sprintProgress: JSONFilter
+	projectId: IDFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	and: [OrganizationSprintFilter!]
+	or: [OrganizationSprintFilter!]
+	not: OrganizationSprintFilter
+}
+
+"""
+What a caller states when it files a sprint.
+
+The members are the ones the delivered create body validates, and the handler reads every one of them.
+Five of them are **required**, which is the delivered body's own statement rather than this file's:
+`name` because the column is not nullable, `projectId` because the validator behind it refuses an absent
+value outright, and `organizationId`, `length` and `status` because the validation the delivered body
+runs is conditioned only on the caller naming the organization row or a recipient instead — which this
+surface offers no member for — so a REST caller that leaves one of them out is refused before the
+handler runs, even though the columns behind `length` and `status` carry defaults. `goal`, the two
+dates, `dayStart` and the progress document are optional, and a caller that states none of them files a
+sprint whose columns are as the store defaults them.
+
+`memberIds` and `managerIds` are the two relations the delivered write reads: the employees named are
+looked up in the caller's own organization and stored as the sprint's membership rows, with the ones
+named as managers marked as such. They are stated as identifiers because that is what the delivered
+write persists — the pivot is written from the identifiers rather than from rows carried beside them.
+`projectId` is the other relation column of this row, and naming it is what files the sprint under a
+project.
+
+The tenant is never a member: the delivered handler takes it from the credential and overwrites
+whatever a body carries, so there is no way for a caller to file a sprint into a tenant it is not acting
+in. The base row's own bookkeeping — the withdrawal marker, the archive date, the two lifecycle flags
+and the record's own timestamps — is not stated either: withdrawing and restoring are delivered routes
+whose whole effect is that one column, and the rest are columns the platform maintains rather than
+facts a caller files a sprint with.
+"""
+input CreateOrganizationSprintInput {
+	organizationId: ID!
+	projectId: ID!
+	name: String!
+	goal: String
+	"The length of the sprint's window **in days**. The delivered body requires it; the column defaults to seven."
+	length: Int!
+	startDate: DateTime
+	endDate: DateTime
+	"""
+	Where the sprint starts in its life: `draft`, `upcoming`, `active` or `completed`. The vocabulary is
+	the platform's `OrganizationSprintStatusEnum`, and the delivered body requires the member.
+	"""
+	status: String!
+	"Which day the sprint's own week starts on: 1 is Sunday through 7 is Saturday."
+	dayStart: Int
+	"The progress document, as the caller states it."
+	sprintProgress: JSON
+	"The employees the sprint is worked by, by identifier."
+	memberIds: [ID!]
+	"The employees who manage the sprint, by identifier. A manager is a member as well."
+	managerIds: [ID!]
+}
+
+"""
+What a caller states when it changes a sprint that exists.
+
+Every member is optional here, which is the shape the delivered edit body has: it is the create body
+made partial, so a member the caller leaves out is not validated and not stated. The identifier is the
+one member stated outside the body, because the delivered route carries it in the path — and the
+delivered handler reads the row it names before it writes, so a sprint of another tenant, or one that
+is not there, is a miss rather than a write under an identifier the caller does not own.
+
+**The delivered write reaches the row only when a member or a manager is stated.** The handler resolves
+the named employees first and writes the stated facts and the membership set together in the one call it
+makes once that set is non-empty, so a body that states a name and nobody is answered with the row
+unchanged rather than written — and the employees a caller leaves out of a stated set are removed from
+the sprint, because a stated set replaces the membership rather than adding to it. The answer is the row
+as it stands afterwards either way, which is what the handler reads back once the write has run.
+"""
+input UpdateOrganizationSprintInput {
+	id: ID!
+	organizationId: ID
+	projectId: ID
+	name: String
+	goal: String
+	"The length of the sprint's window **in days**."
+	length: Int
+	startDate: DateTime
+	endDate: DateTime
+	"The lifecycle state. The vocabulary is the platform's `OrganizationSprintStatusEnum`."
+	status: String
+	"Which day the sprint's own week starts on: 1 is Sunday through 7 is Saturday."
+	dayStart: Int
+	sprintProgress: JSON
+	"The employees the sprint is worked by, by identifier. Stating any member replaces the set."
+	memberIds: [ID!]
+	"The employees who manage the sprint, by identifier. A manager is a member as well."
+	managerIds: [ID!]
+}

@@ -1,0 +1,106 @@
+# The timesheet domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/timesheet` routes already serve, under the same guard
+# and with the same permission, so a client that reaches a capability over one protocol is not given
+# a narrower or a wider one than the client that reaches it over the other. The guard and the
+# permission are read from `TimeSheetController`'s own metadata in the resolver, and the resolver's
+# spec compares the two rather than restating a list that could agree with the resolver while
+# disagreeing with the controller.
+#
+# **Why this resource is the one that needed a surface first.** A timesheet is the period an
+# organization settles: it is what the tracked time of one employee over one range is collected into,
+# what an approver moves through draft, review, denial and approval, what the platform submits and
+# what is later billed. Until this file existed, a client that speaks GraphQL could read the time
+# logs and the slots but not the document they are settled on — and the two writes below, which are
+# the only way a period is approved or submitted at all, had no GraphQL spelling.
+#
+# **The list is the connection, and it carries the selectors its own read takes.** The delivered read
+# narrows in the store rather than over the rows it answers: the organization, the two ends of the
+# range (which default to the current month), the statuses and the employees are all part of the query
+# it runs. A connection filter is applied to the rows a read has already returned, so a caller that
+# stated the organization only in `filter` would be answered the rows of no organization at all —
+# which is why the organization, the range, the statuses and the employees are arguments here, and
+# why the connection's own `filter` then narrows the answer. The two vocabularies overlap because the
+# selectors are columns of the row the read returns; the working-employees list of the employee domain
+# states the same arrangement for the same reason.
+#
+# **`GET /pagination` has no root field** — this controller serves no such route, and the connection's
+# own `limit`/`offset` already are a page.
+#
+# **`timesheetCount` is the count route's own answer, argument-less as the convention requires.** A
+# bare number is not a connection, and `totalCount` is not that number: `totalCount` counts the rows
+# this connection narrowed to, while `GET /count` counts the caller's own rows within the range its
+# own query string names. The route binds that query string to the store's own narrowing, which the
+# connection protocol has no argument of that shape to state, so the field passes the empty request
+# the route passes when its query string is empty.
+#
+# **Both writes answer the rows rather than a page of them**, which is what their routes answer. A
+# client that moved five timesheets and read back four has learned something a page envelope would
+# have hidden, and that is the same reason the employee bulk create answers the rows it filed.
+#
+# **What this surface deliberately does not offer.** The delivered status body also carries a
+# `tenantId`; the handler reads the tenant from the credential and falls back to the body only when
+# there is none, so a member for it here could never change the write. The delivered list query DTO
+# carries `relations`; this surface's type carries no relation object for a loaded row to fill, so an
+# argument naming one would have an effect no caller could observe. Both are the same rule: an
+# argument whose effect is invisible is worse than an argument that is absent.
+
+extend type Query {
+	"""
+	The timesheets of the caller's tenant within a range, newest first.
+
+	The read is the delivered list route's own, so it narrows to the caller's own timesheets when the
+	caller may not change the selected employee — a scope the read applies from the credential and this
+	field does not restate.
+	"""
+	timesheets(
+		"The organization the rows belong to. The delivered read narrows by it in the store, so a caller that states none is answered the rows of no organization."
+		organizationId: ID
+		"The start of the range. Omit it and the delivered read answers the current month."
+		startDate: DateTime
+		"The end of the range. Omit it and the delivered read answers the current month."
+		endDate: DateTime
+		"The statuses to answer. Omit it and every status is answered; a value the vocabulary does not carry is ignored by the read rather than refused."
+		status: [String!]
+		"The employees to answer for. The delivered read replaces this with the caller's own employee when the caller may not change the selected employee."
+		employeeIds: [ID!]
+		filter: TimesheetFilter
+		sort: [TimesheetSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TimesheetConnection!
+
+	"""
+	One timesheet of the caller's tenant, or null when there is none.
+	"""
+	timesheet(id: ID!): Timesheet
+
+	"""
+	How many timesheets the caller's tenant holds within a range. Argument-less, and narrowed by the
+	read's own defaults and by the credential, exactly as the count route is when it is given no
+	options.
+	"""
+	timesheetCount: Int
+}
+
+extend type Mutation {
+	"""
+	Moves one or more timesheets to a new status. Approving one records the approver and the instant,
+	which the delivered handler owns.
+	"""
+	updateTimesheetStatus(input: UpdateTimesheetStatusInput!): [Timesheet!]!
+
+	"""
+	Submits one or more timesheets to their approver, or withdraws them again: the delivered write is
+	one route whose status member selects the direction.
+	"""
+	submitTimesheet(input: SubmitTimesheetInput!): [Timesheet!]!
+}

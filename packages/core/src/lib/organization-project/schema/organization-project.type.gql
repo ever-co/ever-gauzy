@@ -1,0 +1,407 @@
+# The project row's GraphQL types.
+#
+# A project is the unit of work the rest of the platform is filed against: a task, a time log, an
+# expense, an invoice line, a sprint and a payment each name one, and the settings a client changes to
+# govern how those tasks behave — whether they sync, whether they sync on a label, which tag carries
+# that label, after how many days they are archived or closed, which view they open in — live on this
+# row rather than on a table beside it. The type therefore states the row in full, because a client
+# that reads a project over this protocol and the same project over REST has to read the same members.
+#
+# **A relation the delivered reads do not join is carried as its identifier column.** `imageId`,
+# `organizationContactId` and `defaultAssigneeId` are the three foreign keys the row itself holds, so
+# they travel with every read of the row; the rows behind them are read from the surfaces that own
+# them — the party as `organizationContact(id)`, the assignee as `employee(id)`, the asset as
+# `ImageAsset`. `image` is the one relation declared `eager` on the entity, so it is joined by every
+# read of the full row and the member is answered rather than absent.
+#
+# **The collections are absent.** `members`, `teams`, `tags`, `tasks`, `timeLogs`, `invoiceItems`,
+# `organizationSprints`, `payments`, `expenses`, `activities`, `statuses`, `relatedIssueTypes`,
+# `priorities`, `sizes`, `versions`, `views` and `modules` are joined only by the reads whose caller
+# names them in `relations`, and the list read this surface answers names none of them. A member for
+# one of those would answer null on exactly the rows this surface serves, which is worse than no
+# member at all: who works a project is answered by the project row's member count and by the
+# employee look-up, and the tags and teams a project carries are read from the tag and team surfaces.
+#
+# **Money is `Decimal` and never `Float`** — serialised as a string with six fractional digits,
+# matching the wire format of the `numeric` columns the platform stores amounts in, because a binary
+# fraction cannot hold a cent exactly. `budget` is such an amount, and `budgetType` states its unit:
+# money when that member is `cost`, a number of hours when it is `hours`. `archiveTasksIn` and
+# `closeTasksIn` are the two durations on this row, stated **in days**, and a duration genuinely has a
+# fractional part without being an amount, so the two are `Float` — exactly as the task surface
+# carries its own estimate and planned work time.
+#
+# The vocabularies this row stores — `billing` (`ProjectBillingEnum`), `budgetType`
+# (`OrganizationProjectBudgetTypeEnum`), `owner` (`ProjectOwnerEnum`), `status` (`ProjectStatusEnum`),
+# `taskListType` (`TaskListTypeEnum`) and `currency` (`CurrenciesEnum`) — are carried as their values
+# rather than declared as enums here, because each of them types a column the platform reads
+# elsewhere as well: the task surface reads the list type, the time-tracking and invoicing paths read
+# the status, and the money layer owns the currency. An enum declared in this file would claim a
+# vocabulary this domain does not own, and the next domain that needs the same value set would collide
+# with this file rather than reuse it.
+#
+# `customFields` is the row's own embedded document: the tenant-defined extras the platform registers
+# against this entity at boot. It travels through the kernel's `JSON` scalar unchanged, so what a
+# writer stored is what a reader receives. The synced read also computes a count of the issues the
+# linked repository holds; that figure is derived by the read rather than held by the row, so it is
+# not a member here — this type states the row.
+
+"""
+One project: the unit of work a task, a time log, an expense, an invoice line, a sprint and a payment
+are filed under, together with the settings that govern how its tasks behave.
+"""
+type OrganizationProject {
+	id: ID!
+	"The tenant the project belongs to, by identifier. The row is read from the tenant surface."
+	tenantId: ID
+	"The organization the project is filed under, by identifier. The row is read from the organization surface."
+	organizationId: ID
+	"The project's name. A project that names nothing names no unit of work, so the column is not nullable."
+	name: String!
+	"When the project is planned to start, when a schedule was stated."
+	startDate: DateTime
+	"When the project is planned to end, when a schedule was stated."
+	endDate: DateTime
+	"Which basis the project is billed on. The vocabulary is the platform's `ProjectBillingEnum`."
+	billing: String
+	"The ISO 4217 code of the currency `budget` is stated in."
+	currency: String
+	"Whether the project is visible to everyone in the organization rather than to the people working it."
+	public: Boolean
+	"Whose project it is taken to be. The vocabulary is the platform's `ProjectOwnerEnum`."
+	owner: String
+	"How the project's tasks are listed. The vocabulary is the platform's `TaskListTypeEnum`."
+	taskListType: String
+	"A short code the project is known by inside the organization."
+	code: String
+	"""
+	The long-form description. The delivered writes sanitise this member through the platform's
+	server-side allowlist before it is stored, so the answer here is the sanitised text rather than
+	what the caller sent.
+	"""
+	description: String
+	"The colour the project is shown with in lists and calendars."
+	color: String
+	"Whether the time recorded against the project is billable."
+	billable: Boolean
+	"Whether the project is billed as a flat amount rather than by the time recorded against it."
+	billingFlat: Boolean
+	"Whether the project is open source, and therefore tracked as such in the organization's reports."
+	openSource: Boolean
+	"The project's own web address, when it publishes one."
+	projectUrl: String
+	"The project's repository or home page, when it is open source."
+	openSourceProjectUrl: String
+	"""
+	The amount the project was budgeted for. Its unit is `budgetType`: money when that is `cost`, hours
+	when it is `hours`. An amount, so it is an exact decimal and never a float.
+	"""
+	budget: Decimal
+	"Whether `budget` is an amount of money (`cost`) or a number of hours (`hours`)."
+	budgetType: String
+	"A denormalised avatar URL, kept for the lists that must not join the asset table."
+	imageUrl: String
+	"The avatar asset, by identifier. The identifier always travels; the asset row is joined eagerly beside it."
+	imageId: ID
+	"The avatar asset itself. The relation is declared eager on the entity, so it travels on every read of the row."
+	image: ImageAsset
+	"The icon the project is shown with, when a client asks for one rather than for the avatar."
+	icon: String
+	"""
+	The project's lifecycle: `open`, `in-progress`, `completed`, `cancelled` or `custom`, as
+	`ProjectStatusEnum` names them. Carried as its value: the time-tracking and invoicing paths read
+	the same column, so the vocabulary is not this domain's to close.
+	"""
+	status: String
+	"Whether the project's tasks are kept in step with the linked repository automatically."
+	isTasksAutoSync: Boolean
+	"Whether a task label triggers the synchronisation of that task."
+	isTasksAutoSyncOnLabel: Boolean
+	"The label a task must carry for the synchronisation on label to pick it up."
+	syncTag: String
+	"""
+	How many days after their last change the project's tasks are archived automatically. A duration in
+	days, and the column is an exact decimal, so it is carried as a `Float` — a fractional interval a
+	write accepts is one this surface has to be able to answer.
+	"""
+	archiveTasksIn: Float
+	"How many days after their last change the project's tasks are closed automatically, in days."
+	closeTasksIn: Float
+	"""
+	How many people work the project, as the row records it. A figure the row carries rather than one
+	this surface counts, which is why it is an `Int` and not a connection's `totalCount`.
+	"""
+	membersCount: Int
+	"""
+	The party the project is delivered for, by identifier. The row carries the column; the party itself
+	is read as `organizationContact(id)`, because the delivered list read does not join it.
+	"""
+	organizationContactId: ID
+	"The employee a task of this project is assigned to when its own assignee is not stated, by identifier."
+	defaultAssigneeId: ID
+	"The tenant-defined extras the platform registers against this entity, as the row stores them."
+	customFields: JSON
+	"Whether the row is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the row is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are two of the
+	delivered writes this domain serves, and this column is the whole of what they change: without it
+	the answer to the write that withdrew a row could not say that it did.
+	"""
+	deletedAt: DateTime
+	"When the project was filed."
+	createdAt: DateTime
+	"When the project was last changed."
+	updatedAt: DateTime
+	"The person who filed the project, by identifier. The user row is not joined by this surface's read."
+	createdByUserId: ID
+	"The person who last changed the project, by identifier. The user row is not joined by this surface's read."
+	updatedByUserId: ID
+	"The person who withdrew the project, by identifier. The user row is not joined by this surface's read."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of projects.
+"""
+type OrganizationProjectEdge {
+	node: OrganizationProject!
+	cursor: String!
+}
+
+"""
+One page of projects, with the total the filters select and the boundary cursors.
+
+**On the synced page the total counts the rows that read answered, not every linked project in the
+store.** That read fixes a page of its own — ten rows unless the caller states otherwise — so the
+connection's `totalCount` is the size of the set it returned after the filters select from it, which
+is the same statement the connection's page makes over the same rows.
+"""
+type OrganizationProjectConnection {
+	nodes: [OrganizationProject!]!
+	edges: [OrganizationProjectEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a project list may be sorted by.
+"""
+enum OrganizationProjectSortField {
+	createdAt
+	updatedAt
+	name
+	startDate
+	endDate
+	budget
+	status
+	taskListType
+}
+
+"""
+The order the projects are returned in. At most three keys are accepted.
+"""
+input OrganizationProjectSort {
+	field: OrganizationProjectSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a project list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows
+the rows the service returned: a member the read does not select would be a filter that silently
+selects nothing, which is the worst answer a filter can give. The relations the row points at are
+absent for the same reason — `members`, `teams`, `tags` and `organizationContact` are pivots and rows
+this read never joins, so a filter on one of them would be evaluated against a row that carries none
+and would select nothing at all. The tenant is not a member either: the read applies it to the
+criterion from the credential, so a filter on it would be a second statement of the same scope.
+
+`description` is absent although it is a column: it is the long-form rich text the delivered writes
+sanitise, and a list is not narrowed by a fragment of markup. It is carried on the type, and a caller
+that needs it reads the row.
+"""
+input OrganizationProjectFilter {
+	id: IDFilter
+	name: StringFilter
+	startDate: DateTimeFilter
+	endDate: DateTimeFilter
+	billing: StringFilter
+	currency: StringFilter
+	public: BooleanFilter
+	owner: StringFilter
+	taskListType: StringFilter
+	code: StringFilter
+	color: StringFilter
+	billable: BooleanFilter
+	billingFlat: BooleanFilter
+	openSource: BooleanFilter
+	projectUrl: StringFilter
+	openSourceProjectUrl: StringFilter
+	budget: DecimalFilter
+	budgetType: StringFilter
+	imageUrl: StringFilter
+	icon: StringFilter
+	status: StringFilter
+	isTasksAutoSync: BooleanFilter
+	isTasksAutoSyncOnLabel: BooleanFilter
+	syncTag: StringFilter
+	archiveTasksIn: NumberFilter
+	closeTasksIn: NumberFilter
+	membersCount: NumberFilter
+	organizationId: IDFilter
+	organizationContactId: IDFilter
+	imageId: IDFilter
+	defaultAssigneeId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	and: [OrganizationProjectFilter!]
+	or: [OrganizationProjectFilter!]
+	not: OrganizationProjectFilter
+}
+
+"""
+What a caller states when it files a project.
+
+Every member is one the delivered create body validates, and that is the whole of the list: the input
+states the descriptive facts the route carries and nothing else. Three groups are deliberately
+absent:
+
+- the tenant is never stated, because a write's tenant comes from the credential;
+- `tagIds` is not declared. The delivered body does not validate it — the members it validates for
+  relations are the two employee lists below — so a tag list here would be a member this surface
+  accepts and the REST contract does not. Tags are attached from the tag surface, which owns the
+  pivot;
+- the commercial terms that live on the same row — `budget`, `currency`, `status`, `owner`, the two
+  dates and the settings beside them — are readable and filterable on the type above but are written
+  by no declared body of this resource, so a member for one would be a promise the REST contract does
+  not make.
+
+`name` is required because the delivered body is validated from the entity's own members and the
+column is not nullable. `organizationId` is required because the member that stands for the caller's
+organization is validated against the caller's own memberships, and the row cannot be filed into a
+scope the caller does not state.
+
+The two employee lists are the relations the delivered write maps onto the row it stores: an employee
+named as a manager is written to the project's member pivot with the manager role, and one named as a
+member is written with none. A related row is named by its identifier and never by the row beside it,
+because an identifier is what the write persists.
+"""
+input CreateOrganizationProjectInput {
+	"The organization the project is filed under, by identifier."
+	organizationId: ID!
+	"The project's name. A project that names nothing names no unit of work."
+	name: String!
+	"The avatar asset to file the project with, by identifier."
+	imageId: ID
+	"Which basis the project is billed on. The vocabulary is the platform's `ProjectBillingEnum`."
+	billing: String
+	"Whether the budget to be stated later is money (`cost`) or hours (`hours`)."
+	budgetType: String
+	"How the project's tasks are listed. The vocabulary is the platform's `TaskListTypeEnum`."
+	taskListType: String
+	"The employees the project is worked by, by identifier."
+	memberIds: [ID!]
+	"The employees who manage the project, by identifier. A manager is also a member of the project."
+	managerIds: [ID!]
+}
+
+"""
+What a caller states when it changes a project that exists.
+
+The members are the create input's, with the criterion stated, and every one of them is optional
+because the delivered edit body is the create body with each member relaxed: a member the caller
+leaves out is left as it is rather than cleared. `organizationId` stays required, because the read
+that finds the row is scoped by it and the write would otherwise have no scope to find the row in.
+
+The identifier is the only member stated outside the body, and it is stated because the delivered
+route carries it in the path: `:id` names the row and the body carries the facts.
+
+The two employee lists are read together by the delivered write: a body that states one of them and
+not the other is refused there, because the write walks the pair to rebuild the project's member
+pivot. This surface states the pair as the route reads it and does not invent an empty list for the
+member that was left out — papering over that here would be a second write path with a different
+meaning from the one REST performs.
+"""
+input UpdateOrganizationProjectInput {
+	id: ID!
+	"The organization the project is filed under, by identifier."
+	organizationId: ID!
+	name: String
+	imageId: ID
+	billing: String
+	budgetType: String
+	taskListType: String
+	memberIds: [ID!]
+	managerIds: [ID!]
+}
+
+"""
+What a caller states when it changes which view a project's tasks open in.
+
+The body the delivered route reads is the task-mode DTO, and these are its members: the project's
+organization, which scopes the row the write finds, and the list type itself. The list type is
+required there because the column's own validation states it, so it is required here — a write that
+stated no view would be refused over REST and must not be accepted here.
+"""
+input OrganizationProjectTaskViewModeInput {
+	"The organization the project is filed under, by identifier."
+	organizationId: ID!
+	"How the project's tasks are listed. The vocabulary is the platform's `TaskListTypeEnum`."
+	taskListType: String!
+}
+
+"""
+What a caller states when it changes how a project's tasks synchronise.
+
+The body the delivered route reads is the project-setting DTO, and these are its members: the
+organization that scopes the write, the two synchronisation flags, the label the second of them
+matches on, and the tenant-defined extras. Every member is optional except the organization, because
+the delivered body leaves each of them relaxed and the scope is what the read that finds the row
+needs.
+
+A member the caller leaves out is left as it is: the delivered write reads the row, writes the
+members stated onto it and answers with the row read back, so an absent flag is not an instruction to
+turn anything off.
+"""
+input OrganizationProjectSettingInput {
+	"The organization the project is filed under, by identifier."
+	organizationId: ID!
+	"Whether the project's tasks are kept in step with the linked repository automatically."
+	isTasksAutoSync: Boolean
+	"Whether a task label triggers the synchronisation of that task."
+	isTasksAutoSyncOnLabel: Boolean
+	"The label a task must carry for the synchronisation on label to pick it up."
+	syncTag: String
+	"The tenant-defined extras to write onto the row, as the registered custom fields name them."
+	customFields: JSON
+}
+
+"""
+What a caller states when it moves a set of projects into or out of one employee's list.
+
+One payload for both directions because the fact is one: the employee either gains the named projects
+or loses them, and the delivered write applies both lists in the one call. The employee is named by
+its identifier — the write keys the member pivot by it — and the organization is stated because the
+write is scoped by it and the service refuses a call that states none.
+
+A list the caller does not state is left out rather than sent empty: the delivered write reads
+"nothing to add" and "an empty list to add" as the same instruction, and leaving it out says so once
+rather than twice.
+"""
+input UpdateOrganizationProjectByEmployeeInput {
+	"The organization the projects are filed under, by identifier."
+	organizationId: ID!
+	"The employee whose list of projects changes."
+	memberId: ID!
+	"The projects the employee gains, by identifier."
+	addedProjectIds: [ID!]
+	"The projects the employee loses, by identifier."
+	removedProjectIds: [ID!]
+}

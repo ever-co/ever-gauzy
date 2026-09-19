@@ -1,0 +1,136 @@
+# The timer's object types.
+#
+# A timer is not a stored row, so there is no entity type here to mirror — only the two shapes the two
+# computed reads answer, the state those shapes are stated in, and the body the three writes take.
+#
+# **The two answers are two types rather than one, because the two reads fill different members.**
+# `ITimerStatus` is the interface both delivered reads answer with, and neither fills all of it: the
+# single-status read computes the duration and the running flag and never states which of the three
+# states the timer is in, and the worked read computes all four. One type would therefore carry a
+# member that is null on one of its two root fields and filled on the other — a member whose presence
+# depends on which question was asked — which is worse than two types that each state exactly what
+# their own read produces.
+#
+# **A duration is in seconds, everywhere in this domain, and never an amount of money.** The delivered
+# status read sums the `duration` column of each time log — the entity computes that column as the
+# difference between the log's two ends in seconds — and, for a log that is still open, adds the whole
+# seconds elapsed since it started. The member's description states the unit because a client cannot
+# see it from the schema, and a number of seconds read as milliseconds is a timer that lies.
+#
+# `lastWorkedTask` is deliberately absent from both types. The delivered status reads never fill it:
+# they compute the duration, the running flag, the state and the log behind them, and nothing on the
+# timer's own surface reads a task beside the log. The member is filled elsewhere in the platform, from
+# a log that has been loaded with its task relation, so a field for it here would answer null on every
+# row of every answer this surface produces.
+
+"""
+The caller's timer as it stands over the period the delivered read was anchored to.
+"""
+type TimerStatus {
+	"""
+	The seconds the timer accounts for over the period: the sum of the completed logs' durations, plus,
+	while a log is open, the seconds elapsed since it started. Seconds, never money.
+	"""
+	duration: Int!
+	"Whether a log is open right now, which is the running flag of the log the state was derived from."
+	running: Boolean!
+	"""
+	The log the state was derived from — the latest log of the period, open or completed — or null when
+	the period holds none. The row behind it is a time log and is read through the surface that owns it.
+	"""
+	lastLogId: ID
+}
+
+"""
+One employee's worked state, as the worked read computed it.
+"""
+type TimerWorkedStatus {
+	"""
+	The employee the state belongs to. The delivered read answers one state per employee it considered
+	and the log behind each state is the member that names which employee that is, so this is read from
+	the log's own column rather than from the answer — without it the list could not be attributed.
+	"""
+	employeeId: ID!
+	"The seconds the employee's last log ran. Seconds, never money."
+	duration: Int!
+	"Whether that log is still open."
+	running: Boolean!
+	"The state the delivered read computed from the log's running flag and how long ago it stopped."
+	timerStatus: TimerState!
+	"""
+	The employee's last log, which the delivered read always has: it selects one log per employee and
+	requires that log to have both ends. The row behind it is read through the surface that owns it.
+	"""
+	lastLogId: ID!
+}
+
+"""
+The three states the delivered worked read computes.
+
+The values are the strings that read writes — `running` while a log is open, `pause` when the last log
+stopped during the current day, `idle` when it stopped on an earlier one — and they are stated in that
+case rather than upper-cased, because the platform's own answers carry them as they are: an enum whose
+values differed from the computed strings would be a vocabulary nothing else in the platform speaks,
+and the resolver would have to translate between the two.
+"""
+enum TimerState {
+	running
+	pause
+	idle
+}
+
+"""
+What a caller states when it starts, stops or toggles the timer.
+
+One input for the three writes, because the two bodies their routes bind declare the same members —
+see the note in `timer.api.gql`.
+
+**The tenant is deliberately not a member.** The delivered writes stamp it from the credential and
+never read it from a body, so a member here would promise a scope the write refuses; the same holds
+for the organization *row* the route's DTO admits beside the identifier, which this surface states as
+the identifier alone.
+
+**`sentTo` is not a member either.** The DTO the timer's routes bind inherits it from the base query
+DTO, and no timer write reads it: it selects a recipient for the notification mail some other
+resource's writes send, so a caller stating it here would be stating something no part of these three
+writes consults.
+"""
+input TimerToggleInput {
+	"The organization the log is written in."
+	organizationId: ID
+	"The source the log is attributed to, by value (`DESKTOP`, `BROWSER`, `MOBILE`, …)."
+	source: String
+	"The kind of log to open, by value (`TRACKED`, `MANUAL`, `IDLE`, `RESUMED`)."
+	logType: String
+	"Whether the recorded time is billable."
+	isBillable: Boolean
+	"What the log is about, in the caller's own words."
+	description: String
+	"The client version that opened the log, recorded as the log's version column."
+	version: String
+	"The team the log is attributed to."
+	organizationTeamId: ID
+	"The client the log is attributed to."
+	organizationContactId: ID
+	"The project the log is attributed to."
+	projectId: ID
+	"The task the log is attributed to."
+	taskId: ID
+	"""
+	When the timer started. Omit it and the delivered write takes the instant it is handling the call.
+	"""
+	startedAt: DateTime
+	"""
+	When the timer stopped. Omit it and the delivered write takes the instant it is handling the call —
+	except for a timer tracked from a desktop client, whose stop instant is derived from the last time
+	slot that client recorded rather than from the request.
+	"""
+	stoppedAt: DateTime
+	"""
+	Whether the stop should also close the manual time slot the log is covered by. Read by the stop
+	write and by nothing else.
+	"""
+	manualTimeSlot: Boolean
+	"The tags to file the log under, by the tag identifiers' text form."
+	tags: [String!]
+}
