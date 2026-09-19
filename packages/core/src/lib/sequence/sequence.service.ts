@@ -4,6 +4,7 @@ import { isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
 import { IAllocatedNumber, ID, ISequence, IdempotencyOutcome, JsonData, SequenceResetPolicy } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import { stableStringify } from '../idempotency/idempotency.policy';
 import { Sequence } from './sequence.entity';
@@ -247,6 +248,287 @@ export class SequenceService extends CrudService<Sequence> {
 		} as Partial<Sequence>);
 
 		return this.typeOrmSequenceRepository.save(created);
+	}
+
+	/**
+	 * Lists the numbering series of the caller's organization.
+	 *
+	 * The read is scoped the way the allocation is scoped: the tenant and the organization are read
+	 * from the credential and never from the caller, so one organization's administrator is never
+	 * handed another organization's counters. The order is the series' own — by key — because that is
+	 * the order an operator reads a numbering configuration in.
+	 *
+	 * @param filter Optional narrowing by series key and by channel.
+	 * @returns The series of the caller's organization, by key.
+	 */
+	async listSeries(filter: { key?: string; channelId?: ID } = {}): Promise<Sequence[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		const series: Sequence[] = await this.find({
+			where: {
+				...(filter.key ? { key: filter.key } : {}),
+				...(filter.channelId ? { channelId: filter.channelId } : {}),
+				...(tenantId ? { tenantId } : {}),
+				...(organizationId ? { organizationId } : {})
+			} as any,
+			order: { key: 'ASC' }
+		} as any);
+
+		return series ?? [];
+	}
+
+	/**
+	 * Reads one series of the caller's organization.
+	 *
+	 * @param id The series id.
+	 * @returns The series.
+	 * @throws NotFoundException when no series of that id is in the caller's scope — the same answer a
+	 * series that does not exist gets, because a caller is never told that another organization holds
+	 * the identifier it asked about.
+	 */
+	async findSeriesOrFail(id: ID): Promise<Sequence> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		const series: Sequence[] = await this.find({
+			where: {
+				id,
+				...(tenantId ? { tenantId } : {}),
+				...(organizationId ? { organizationId } : {})
+			} as any
+		} as any);
+
+		if (!series?.length) {
+			throw new NotFoundException(
+				`${ApiErrorCode.RESOURCE_NOT_FOUND}: no numbering series '${String(id)}' exists in this organization.`
+			);
+		}
+
+		return series[0];
+	}
+
+	/**
+	 * Creates a series.
+	 *
+	 * **`key` and `channelId` are the series' identity, and both are stated once.** Together they are
+	 * what an allocation resolves the series by, and the table's two partial unique indexes make a
+	 * second live row for one pair impossible — which is what stops one key from having two counters.
+	 * The lookup below is the readable answer to that collision; the indexes are the guarantee, because
+	 * two concurrent creates can both pass a check and only one can pass an index.
+	 *
+	 * **`nextValue` is the one state member a create accepts, and it is accepted deliberately.** An
+	 * installation that adopts numbering an external system has already stepped states the counter the
+	 * new series must continue from, and `ensure` takes it for the same reason. No later write accepts
+	 * it: re-stating a counter that documents have been numbered from is how an installation comes to
+	 * issue a number twice.
+	 *
+	 * @param input The series as the caller states it.
+	 * @returns The stored series.
+	 * @throws BadRequestException when the key is absent, or when the scope already holds a series for
+	 * the key and channel.
+	 */
+	async createSeries(input: Partial<ISequence> & { key: string }): Promise<Sequence> {
+		const key = input?.key ? String(input.key).trim() : '';
+
+		if (!key) {
+			throw new BadRequestException(
+				`${ApiErrorCode.VALIDATION_REQUIRED_FIELD}: a series is stated with a key — the word every allocation resolves it by — and none was presented.`
+			);
+		}
+
+		const channelId = input.channelId ?? null;
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const scope = { ...(tenantId ? { tenantId } : {}), ...(organizationId ? { organizationId } : {}) };
+
+		// Read through the reader the allocator locks through, so "the series of this key in this scope"
+		// is one statement rather than two: the channel is the member that has to be asked for as
+		// `IS NULL`, because `channelId = NULL` matches nothing in any dialect. Outside a transaction
+		// the lock that reader states is inert, which is why the unique indexes carry the guarantee.
+		const existing = await this.lockSeries(this.typeOrmSequenceRepository.manager, {
+			key,
+			channelId,
+			...scope
+		});
+
+		if (existing) {
+			throw new BadRequestException(
+				`${ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION}: a numbering series for '${key}' ${
+					channelId ? 'on this channel' : 'organization-wide'
+				} already exists. Change that series rather than creating a second one for the same key, because a second counter issues numbers the first has already issued.`
+			);
+		}
+
+		// The same write path `ensure` uses, so a series an operator creates and a series a seed run
+		// ensures are the same row shape in the same table. **The members are stated one by one rather
+		// than spread from the payload**, because a spread would let a body carrying an `id` — or a
+		// `deletedAt`, or a `lastResetAt` — reach a row this write is not allowed to touch: with an id
+		// the save becomes an update, and an id naming another organization's series is the one thing a
+		// scoped create must never reach.
+		const created = this.typeOrmSequenceRepository.create({
+			key,
+			channelId: channelId as any,
+			prefix: input.prefix,
+			// Stated rather than left to the column's own default: the delivered column defaults to `1`
+			// and the documented width is `6`, so relying on the default would create a series that
+			// formats numbers differently from every series the seeder creates.
+			padding: input.padding ?? 6,
+			nextValue: input.nextValue ?? 1,
+			step: input.step ?? 1,
+			resetPolicy: input.resetPolicy ?? SequenceResetPolicy.NEVER,
+			description: input.description,
+			...scope
+		} as Partial<Sequence>);
+
+		return this.typeOrmSequenceRepository.save(created);
+	}
+
+	/**
+	 * Changes the configuration of a series.
+	 *
+	 * **What a caller may change is the shape of the numbers the series produces** — its prefix, its
+	 * width, its step, its restart policy, the note kept beside it and whether it is active at all.
+	 * **What a caller may not change is what the series has already counted**: `nextValue` is the value
+	 * the next document will be numbered with and `lastResetAt` is the period the series last restarted
+	 * in. Neither is a column an edit writes, and a body that states one is refused by name rather than
+	 * ignored, because a caller that believes it edited a counter has a bug it would otherwise never
+	 * see — and because a counter written from outside the allocator is how two documents come to carry
+	 * one number.
+	 *
+	 * **`key` and `channelId` are refused for the other half of the same reason.** They are the
+	 * series' identity and the scope of its counter: renaming the key leaves the counter reachable
+	 * under no name at all, and moving the channel hands one sales surface's numbers to another. An
+	 * installation that needs a series under another key or scope creates it there and lets the
+	 * existing counter keep its documents.
+	 *
+	 * @param id The series to change.
+	 * @param input The configuration to change.
+	 * @returns The stored series.
+	 * @throws BadRequestException when the body states a member this write does not accept.
+	 * @throws NotFoundException when the series is not in the caller's scope.
+	 */
+	async updateSeries(id: ID, input: Partial<ISequence>): Promise<Sequence> {
+		await this.findSeriesOrFail(id);
+
+		const stated = (input ?? {}) as unknown as Record<string, unknown>;
+
+		if (stated['key'] !== undefined && stated['key'] !== null) {
+			throw new BadRequestException(
+				`${ApiErrorCode.PRECONDITION_REQUIRED}: a series' key is written once — it is the word every allocation resolves the series by, and renaming it would leave the counter reachable under no name at all.`
+			);
+		}
+
+		if (stated['channelId'] !== undefined && stated['channelId'] !== null) {
+			throw new BadRequestException(
+				`${ApiErrorCode.PRECONDITION_REQUIRED}: a series' channel is written once — it is the scope its counter belongs to, and moving it would hand one sales surface's numbers to another.`
+			);
+		}
+
+		for (const member of ['nextValue', 'lastResetAt'] as const) {
+			if (stated[member] !== undefined && stated[member] !== null) {
+				throw new BadRequestException(
+					`${ApiErrorCode.PRECONDITION_REQUIRED}: '${member}' is the series' state rather than its configuration, and an edit does not write it. The next value moves by allocating a number, and backwards only through a restart the series' own policy allows.`
+				);
+			}
+		}
+
+		await this.update(id, {
+			...(stated['prefix'] !== undefined ? { prefix: stated['prefix'] } : {}),
+			...(stated['padding'] !== undefined ? { padding: stated['padding'] } : {}),
+			...(stated['step'] !== undefined ? { step: stated['step'] } : {}),
+			...(stated['resetPolicy'] !== undefined ? { resetPolicy: stated['resetPolicy'] } : {}),
+			...(stated['description'] !== undefined ? { description: stated['description'] } : {}),
+			...(stated['isActive'] !== undefined ? { isActive: stated['isActive'] } : {})
+		} as any);
+
+		return this.findSeriesOrFail(id);
+	}
+
+	/**
+	 * Restarts a series, when its own policy says a restart is due.
+	 *
+	 * **This is the move the allocator performs, performed on demand — not a column write.** A series
+	 * holds both the shape of the numbers it produces and the value the next one will carry, and the
+	 * kernel's only operation that moves that value backwards is the restart its `resetPolicy`
+	 * describes: the counter is rewound to the value a period starts at, the moment is recorded in
+	 * `lastResetAt`, and both are written under the same row lock the allocator takes and inside the
+	 * same kind of transaction — so an allocation running beside this one is serialised against it
+	 * exactly as it is against the allocator's own restart, and two restarts cannot both rewind a
+	 * counter.
+	 *
+	 * **What it refuses is the kernel's own answer, reported rather than overruled.** The restart the
+	 * kernel performs is the one `applyResetIfDue` decides, and it performs none in three cases, each
+	 * of which this operation states to the caller:
+	 *
+	 * - the policy is `NEVER`, so the series declares that it never restarts and there is nothing to
+	 *   restart;
+	 * - no period is recorded for it yet, and the kernel's first contact with a policy records the
+	 *   period rather than discarding the counter an operator configured;
+	 * - it has already restarted inside the period this moment falls in, and a restart happens at most
+	 *   once per period, because a second one would hand out values the period has already handed out.
+	 *
+	 * **Nothing here refuses while documents of the series exist, because nothing in the kernel could.**
+	 * A series is a key, and the domains that number documents from it are not known to it: orders,
+	 * returns, purchase orders and stock documents all allocate from their own keys without the series
+	 * reading any of their tables. What makes a number unique is the numbered document's own
+	 * uniqueness constraint — the enforcement the schema chapter names — and a restart is the
+	 * configuration stating that a new period starts counting again, which is a decision about
+	 * numbering rather than a defect in it.
+	 *
+	 * @param id The series to restart.
+	 * @param options.at The moment the restart is recorded at; defaults to now. Supplied by tests and
+	 * by a seeding or migration path that replays a restart at the moment it happened; both delivered
+	 * routes perform the move at the moment it is asked for.
+	 * @returns The stored series, rewound, with the restart recorded.
+	 * @throws BadRequestException when no restart is due, naming which of the kernel's own reasons
+	 * applies.
+	 * @throws NotFoundException when the series is not in the caller's scope.
+	 */
+	async resetSeries(id: ID, options: { at?: Date } = {}): Promise<Sequence> {
+		const at = options.at ?? new Date();
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		return this.typeOrmSequenceRepository.manager.transaction(async (manager) => {
+			const series = await this.lockSeries(manager, {
+				id,
+				...(tenantId ? { tenantId } : {}),
+				...(organizationId ? { organizationId } : {})
+			});
+
+			if (!series) {
+				throw new NotFoundException(
+					`${ApiErrorCode.RESOURCE_NOT_FOUND}: no numbering series '${String(id)}' exists in this organization.`
+				);
+			}
+
+			// Whether a period was recorded has to be read before the decision, because the kernel's
+			// first-contact path records one as it declines to restart.
+			const hadPeriod = Boolean(series.lastResetAt);
+			const restarted = this.applyResetIfDue(series, at);
+
+			if (!restarted) {
+				throw new BadRequestException(
+					`${ApiErrorCode.PRECONDITION_REQUIRED}: no restart is due for the series '${
+						series.key
+					}' — ${
+						series.resetPolicy === SequenceResetPolicy.NEVER
+							? 'its reset policy is NEVER, so it never restarts'
+							: hadPeriod
+							? 'it has already restarted inside the period this moment falls in'
+							: 'no period is recorded for it yet, and its next allocation records one without discarding the counter'
+					}.`
+				);
+			}
+
+			// Stamped after the rewind so the restart and its stamp commit together, as they do on the
+			// allocation path — the value a period starts at and the record of when it started are one
+			// fact, and a row carrying one without the other would restart twice in a period.
+			series.lastResetAt = at;
+
+			return manager.save(Sequence, series);
+		});
 	}
 
 	/**

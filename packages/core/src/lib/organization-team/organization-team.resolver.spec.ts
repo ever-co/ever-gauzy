@@ -469,7 +469,7 @@ describe('OrganizationTeamResolver — the connection contract', () => {
 		const connection = await resolver.organizationTeams(undefined, undefined, undefined, 20);
 
 		// The read is the one the REST list route performs when its query string states nothing.
-		expect(organizationTeamService.findAll).toHaveBeenCalledWith({});
+		expect(organizationTeamService.findAll).toHaveBeenCalledWith({ where: {} });
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);
@@ -494,7 +494,7 @@ describe('OrganizationTeamResolver — the connection contract', () => {
 
 		// The read the `GET /me` route performs, with the route's own defaults for an unstated query
 		// string: the narrowing by who is asking is the read's own and is not stated here.
-		expect(organizationTeamService.findMyTeams).toHaveBeenCalledWith({});
+		expect(organizationTeamService.findMyTeams).toHaveBeenCalledWith({ where: {} });
 		expect(organizationTeamService.findAll).not.toHaveBeenCalled();
 		expect(connection.totalCount).toBe(2);
 	});

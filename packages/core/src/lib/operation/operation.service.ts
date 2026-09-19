@@ -1,5 +1,6 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IOperationError, IOperationState, OperationStatus, OperationStepStatus } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
@@ -8,6 +9,7 @@ import { isUniqueViolation } from '../core/errors/unique-violation';
 import { Operation } from './operation.entity';
 import { OperationStep } from './operation-step.entity';
 import { OperationRegistry } from './operation.registry';
+import { OperationEventPublisher } from './operation-event.publisher';
 import {
 	IOperationExecutionOptions,
 	IOperationExecutionResult,
@@ -42,9 +44,15 @@ const LIVE_STATUSES: OperationStatus[] = [
  * The state machine.
  *
  * It is the union of the two forms the platform documents — the transition table and the runtime
- * diagram — and both are admitted deliberately: a step failure moves `RUNNING` to `COMPENSATING`
- * directly, while a manual retry-into-compensation goes through `FAILED`. Anything else is refused,
- * because a status an operator cannot explain is worse than a loud error.
+ * diagram — plus the moves an operator makes through {@link OperationService.retry}, and all three
+ * are admitted deliberately: a step failure moves `RUNNING` to `COMPENSATING` directly, while a
+ * manual retry-into-compensation goes through `FAILED`, and a retry of an operation whose undo is
+ * owed puts it back on that walk (`COMPENSATED` → `FAILED`) rather than leaving it finished while
+ * its compensators still have work. The last group is the only one no step of the runtime writes:
+ * a retry is not the runtime deciding, it is an operator asking for the plan again, and the edges it
+ * needs are stated here so the one move an operator can make is as explainable as the rest.
+ *
+ * Anything else is refused, because a status an operator cannot explain is worse than a loud error.
  */
 const LEGAL_TRANSITIONS: Record<OperationStatus, OperationStatus[]> = {
 	[OperationStatus.PENDING]: [OperationStatus.RUNNING, OperationStatus.CANCELED],
@@ -55,10 +63,12 @@ const LEGAL_TRANSITIONS: Record<OperationStatus, OperationStatus[]> = {
 		OperationStatus.COMPENSATING,
 		OperationStatus.CANCELED
 	],
-	[OperationStatus.FAILED]: [OperationStatus.COMPENSATING, OperationStatus.CANCELED],
+	// The operator's retry: the undo is outstanding and the compensation walk is what may run on it.
+	[OperationStatus.FAILED]: [OperationStatus.COMPENSATING, OperationStatus.CANCELED, OperationStatus.PENDING],
 	[OperationStatus.COMPENSATING]: [OperationStatus.COMPENSATED, OperationStatus.FAILED],
 	[OperationStatus.COMPLETED]: [],
-	[OperationStatus.COMPENSATED]: [],
+	// The operator's retry: an operation whose compensation failed still owes its undo.
+	[OperationStatus.COMPENSATED]: [OperationStatus.FAILED, OperationStatus.PENDING],
 	[OperationStatus.CANCELED]: []
 };
 
@@ -97,6 +107,12 @@ export class OperationLeaseLostError extends ConflictException {
  * drives it through `execute`, `resume`, `cancel` and `compensate`. What it guarantees is that a step
  * outcome is persisted before the next step starts, that the completed steps of a failed operation
  * are undone in reverse, and that only one worker at a time is executing a given operation.
+ *
+ * **It is also where the three streamed facts are produced.** A step moving, an operation completing
+ * and an operation failing are announced from the two places every one of those writes already goes
+ * through — {@link saveStep} and {@link settle} — rather than from the surfaces around it, so the
+ * REST route and the GraphQL mutation that perform the same write announce it identically and a
+ * subscriber cannot tell which protocol wrote the row.
  */
 @Injectable()
 export class OperationService extends CrudService<Operation> {
@@ -128,7 +144,8 @@ export class OperationService extends CrudService<Operation> {
 		readonly mikroOrmOperationRepository: MikroOrmOperationRepository,
 		readonly typeOrmOperationStepRepository: TypeOrmOperationStepRepository,
 		readonly mikroOrmOperationStepRepository: MikroOrmOperationStepRepository,
-		readonly registry: OperationRegistry
+		readonly registry: OperationRegistry,
+		readonly operationEventPublisher: OperationEventPublisher
 	) {
 		super(typeOrmOperationRepository, mikroOrmOperationRepository);
 	}
@@ -449,6 +466,96 @@ export class OperationService extends CrudService<Operation> {
 	}
 
 	/**
+	 * Re-drives an operation that failed, under a fresh attempt budget.
+	 *
+	 * A resume continues an operation nobody finished; a retry is an operator saying the work may run
+	 * again, and the two differ in exactly one thing: the budget. The steps the retry will run — every
+	 * step the walk finds outstanding, plus the compensators that gave up — have their attempt counters
+	 * reset, so the retry does not immediately exhaust the same budget the previous pass did.
+	 *
+	 * **Which walk runs falls out of the persisted step statuses, and that is the point.** An
+	 * operation whose compensation finished has every completed step undone, so re-running it starts
+	 * at the first step the walk finds outstanding — the plan again, on a clean aggregate. An
+	 * operation that owes an undo is handed back to the compensation walk instead, because a step
+	 * whose compensator gave up has already applied its effect and re-invoking the *step* is not what
+	 * finishing that operation means. Nothing here decides which of the two it is: the rows do, by
+	 * the same rule `execute` applies to every other pass.
+	 *
+	 * Two states are refused rather than re-driven. A completed operation has nothing to retry, and an
+	 * operation a caller cancelled is not a failure: resurrecting work somebody deliberately abandoned
+	 * is not what this door is for. An operation the runtime is still driving is refused as well — a
+	 * retry releases the lease it finds, so driving one would take it away from the worker holding it,
+	 * and the move for continuing an operation that has not stopped is `resume`, which waits for the
+	 * lease instead of clearing it.
+	 *
+	 * @param operationId The operation id.
+	 * @param options Lease, worker identity and step budget for this pass.
+	 * @returns What the retry's pass did.
+	 * @throws ConflictException when the operation completed, was cancelled by a caller, or is still
+	 * being driven.
+	 * @throws NotFoundException when the operation does not exist.
+	 */
+	async retry(operationId: ID, options: IOperationExecutionOptions = {}): Promise<IOperationExecutionResult> {
+		const operation = await this.require(operationId);
+
+		if (operation.status === OperationStatus.COMPLETED) {
+			throw new ConflictException(`The operation "${operationId}" is completed and has nothing to retry.`);
+		}
+
+		if (operation.status === OperationStatus.CANCELED || operation.state?.cancelRequested) {
+			throw new ConflictException(
+				`The operation "${operationId}" was cancelled by a caller, and a retry does not undo that.`
+			);
+		}
+
+		if (operation.status === OperationStatus.RUNNING || operation.status === OperationStatus.COMPENSATING) {
+			throw new ConflictException(
+				`The operation "${operationId}" is ${operation.status.toLowerCase()} and has not stopped; resume it instead.`
+			);
+		}
+
+		const steps = await this.findSteps(operationId);
+		const unpaid = steps.filter((step) => step.status === OperationStepStatus.COMPENSATION_FAILED);
+
+		if (unpaid.length > 0) {
+			// The undo is the outstanding work: the compensators that gave up get the fresh budget, and
+			// the operation is stated as owing one — which is the status the platform gives a step whose
+			// compensation failed, and the one `execute` hands straight to the compensation walk.
+			for (const step of unpaid) {
+				await this.saveStep(step, { attemptCount: 0, lastError: null });
+			}
+
+			await this.settle(operation, OperationStatus.FAILED, {});
+
+			return this.execute(operationId, options);
+		}
+
+		for (const step of steps) {
+			// A step the runtime will not invoke again on this walk keeps what it has: its record is the
+			// plan's history, and a retry has nothing to grant it.
+			if (step.status === OperationStepStatus.COMPLETED || step.status === OperationStepStatus.SKIPPED) {
+				continue;
+			}
+
+			// Everything else is outstanding, and everything outstanding gets the fresh budget: `runStep`
+			// counts the attempts a step has already made against its own budget, so a step whose budget
+			// was spent could not run again without this — whether it failed, was left in flight by a
+			// worker that died, or had its effect undone by the compensation walk.
+			await this.saveStep(step, {
+				// A step that failed applied nothing, so it is simply pending again; a step whose effect
+				// was undone keeps that record until it is applied again.
+				...(step.status === OperationStepStatus.FAILED ? { status: OperationStepStatus.PENDING } : {}),
+				attemptCount: 0,
+				lastError: null
+			});
+		}
+
+		await this.settle(operation, OperationStatus.PENDING, {});
+
+		return this.execute(operationId, options);
+	}
+
+	/**
 	 * Requests cancellation.
 	 *
 	 * A cancellation is a request the runtime observes between steps, not a kill: an operation that
@@ -553,7 +660,7 @@ export class OperationService extends CrudService<Operation> {
 			if (!stepDefinition?.compensate) {
 				// A non-compensable step is recorded as skipped and listed in the result, so an operator
 				// can see exactly what was left behind instead of assuming the undo was complete.
-				await this.saveStep(step, { status: OperationStepStatus.SKIPPED });
+				await this.saveStep(step, { status: OperationStepStatus.SKIPPED }, operation);
 				skipped.push(step.name);
 				continue;
 			}
@@ -597,6 +704,137 @@ export class OperationService extends CrudService<Operation> {
 	 */
 	async findById(id: ID): Promise<Operation | null> {
 		return this.typeOrmOperationRepository.findOne({ where: { id } as any });
+	}
+
+	/**
+	 * The tenant the caller is acting in, which every management read below is narrowed by.
+	 *
+	 * **The tenant and not the organization, which is the platform's own reading of a resource's
+	 * scope.** `TenantAwareCrudService` narrows by `tenantId` (plus the caller's employee where the
+	 * table carries one) and by nothing else, and an operation is a row of that shape. Narrowing by
+	 * the organization as well would hide the rows the kernel is free to write without one: an
+	 * operation a step of another operation started runs in a worker, and a worker has no
+	 * organization in its context unless the job carried one — and a management queue that silently
+	 * drops rows is worse than one an operator of the tenant reads. The permission is a tenant-level
+	 * one for the same reason: `OPERATIONS_VIEW` is granted to a role, not to an organization.
+	 *
+	 * The row's own tenancy is the `tenantId` column, which the partial indexes over this table
+	 * already carry, so the narrowing costs no join. A member that no credential resolved is left out
+	 * rather than written as `undefined`, because a repository handed an explicit `undefined` asks for
+	 * the rows whose column *is* null — a different question from "do not narrow on this column" — and
+	 * the reads that require a tenant refuse instead of asking it (see {@link scopeOfTheCaller}).
+	 */
+	protected get scope(): Partial<Pick<Operation, 'tenantId'>> {
+		const tenantId = RequestContext.currentTenantId();
+
+		return {
+			...(tenantId ? { tenantId } : {})
+		};
+	}
+
+	/**
+	 * The operations of the caller's own scope, narrowed by the caller's own criterion.
+	 *
+	 * The management read of this resource, and the one the REST list route and the GraphQL connection
+	 * both answer from: one read, one scope, two protocols. The default order is the queue's own —
+	 * newest first, the operation an operator has just started or the one that just failed — and it is
+	 * the read's rather than a surface's, so the two surfaces list the same rows in the same order. A
+	 * caller that states its own `order` keeps it.
+	 *
+	 * @param options Find options, as the caller states them.
+	 * @returns The operations the caller's scope holds.
+	 */
+	async listOperations(options: FindManyOptions<Operation> = {}): Promise<Operation[]> {
+		const scope = this.scopeOfTheCaller();
+
+		if (!scope) {
+			return [];
+		}
+
+		return this.find({
+			order: { createdAt: 'DESC' },
+			...options,
+			where: withScope(options.where, scope)
+		} as never);
+	}
+
+	/**
+	 * The operations of one aggregate, newest first.
+	 *
+	 * The exclusivity rule's own read, widened: at most one of these is live at a time, and the rest is
+	 * the aggregate's history — which is what an operator looking at a cart, an order or a subscription
+	 * asks for, and what the single-live-operation lock leaves behind when it refuses a second one.
+	 *
+	 * @param aggregateType The aggregate kind, for example `order`.
+	 * @param aggregateId Id of the aggregate.
+	 * @returns The operations of that aggregate, newest first.
+	 */
+	async findByAggregate(aggregateType: string, aggregateId: ID): Promise<Operation[]> {
+		const scope = this.scopeOfTheCaller();
+
+		if (!scope) {
+			return [];
+		}
+
+		return this.find({
+			where: { aggregateType, aggregateId, ...scope },
+			order: { createdAt: 'DESC' }
+		} as never);
+	}
+
+	/**
+	 * Reads one operation of the caller's own scope, answering null when there is none.
+	 *
+	 * @param id The operation id.
+	 * @returns The operation, or null.
+	 */
+	async findOperation(id: ID): Promise<Operation | null> {
+		const scope = this.scopeOfTheCaller();
+
+		if (!scope) {
+			return null;
+		}
+
+		const operations = await this.find({ where: { id, ...scope } } as never);
+
+		return operations.length > 0 ? operations[0] : null;
+	}
+
+	/**
+	 * The scope of the caller, or `undefined` when no credential resolved one.
+	 *
+	 * The management reads answer nothing without it rather than everything: they are reachable only
+	 * through a guarded surface, so a caller that reaches them with no tenant is a caller whose
+	 * guards did not run — and a read that invented a scope for it would be a second authorisation
+	 * model sitting beside the guards.
+	 *
+	 * @returns The scope, or undefined.
+	 */
+	private scopeOfTheCaller(): FindOptionsWhere<Operation> | undefined {
+		const scope = this.scope;
+
+		return scope.tenantId ? (scope as FindOptionsWhere<Operation>) : undefined;
+	}
+
+	/**
+	 * The steps of several operations, in execution order.
+	 *
+	 * The batched spelling of {@link findSteps}, for a reader that answers the steps of many operations
+	 * in one response — a connection of operations, each selecting its own plan. One query for the set
+	 * rather than one per row is what keeps a page of them from being a page of round trips.
+	 *
+	 * @param operationIds The operations whose steps are read.
+	 * @returns The steps of all of them, ascending by `order`.
+	 */
+	async findStepsForOperations(operationIds: readonly ID[]): Promise<OperationStep[]> {
+		if (!operationIds.length) {
+			return [];
+		}
+
+		return this.typeOrmOperationStepRepository.find({
+			where: { operationId: In([...operationIds]) } as any,
+			order: { order: 'ASC' } as any
+		});
 	}
 
 	/**
@@ -693,7 +931,7 @@ export class OperationService extends CrudService<Operation> {
 
 		// The row says RUNNING before the handler is invoked, so a crash mid-step is visible as a step
 		// that was attempted rather than one that never started.
-		await this.saveStep(step, { status: OperationStepStatus.RUNNING, startedAt: new Date() });
+		await this.saveStep(step, { status: OperationStepStatus.RUNNING, startedAt: new Date() }, operation);
 
 		while (attempt < maxAttempts) {
 			attempt += 1;
@@ -715,15 +953,19 @@ export class OperationService extends CrudService<Operation> {
 
 				// The output and the compensator's data are persisted in one write: a step that applied
 				// an effect must never be recorded as successful without what it takes to undo it.
-				await this.saveStep(step, {
-					status: OperationStepStatus.COMPLETED,
-					attemptCount: attempt,
-					input,
-					output: outcome.output ?? {},
-					compensationData: outcome.compensationData ?? null,
-					finishedAt: new Date(),
-					lastError: null
-				});
+				await this.saveStep(
+					step,
+					{
+						status: OperationStepStatus.COMPLETED,
+						attemptCount: attempt,
+						input,
+						output: outcome.output ?? {},
+						compensationData: outcome.compensationData ?? null,
+						finishedAt: new Date(),
+						lastError: null
+					},
+					current
+				);
 
 				return { operation: await this.recordStepSuccess(current, step, variables) };
 			} catch (error) {
@@ -744,12 +986,16 @@ export class OperationService extends CrudService<Operation> {
 			retryable: false
 		};
 
-		await this.saveStep(step, {
-			status: OperationStepStatus.FAILED,
-			attemptCount: attempt,
-			finishedAt: new Date(),
-			lastError: JSON.stringify(failure)
-		});
+		await this.saveStep(
+			step,
+			{
+				status: OperationStepStatus.FAILED,
+				attemptCount: attempt,
+				finishedAt: new Date(),
+				lastError: JSON.stringify(failure)
+			},
+			current
+		);
 
 		Object.assign(current, {
 			lastError: JSON.stringify(failure),
@@ -786,7 +1032,7 @@ export class OperationService extends CrudService<Operation> {
 		let attempt = 0;
 		let failure: IOperationError | undefined;
 
-		await this.saveStep(step, { status: OperationStepStatus.COMPENSATING });
+		await this.saveStep(step, { status: OperationStepStatus.COMPENSATING }, operation);
 
 		while (attempt < maxAttempts) {
 			attempt += 1;
@@ -802,12 +1048,16 @@ export class OperationService extends CrudService<Operation> {
 					step.name
 				);
 
-				await this.saveStep(step, {
-					status: OperationStepStatus.COMPENSATED,
-					attemptCount: attempt,
-					finishedAt: new Date(),
-					lastError: null
-				});
+				await this.saveStep(
+					step,
+					{
+						status: OperationStepStatus.COMPENSATED,
+						attemptCount: attempt,
+						finishedAt: new Date(),
+						lastError: null
+					},
+					operation
+				);
 
 				return true;
 			} catch (error) {
@@ -823,12 +1073,16 @@ export class OperationService extends CrudService<Operation> {
 
 		// The aggregate is dirty for exactly this step, and both the step row and the operation's
 		// result say so.
-		await this.saveStep(step, {
-			status: OperationStepStatus.COMPENSATION_FAILED,
-			attemptCount: attempt,
-			finishedAt: new Date(),
-			lastError: JSON.stringify(failure)
-		});
+		await this.saveStep(
+			step,
+			{
+				status: OperationStepStatus.COMPENSATION_FAILED,
+				attemptCount: attempt,
+				finishedAt: new Date(),
+				lastError: JSON.stringify(failure)
+			},
+			operation
+		);
 
 		return false;
 	}
@@ -869,6 +1123,11 @@ export class OperationService extends CrudService<Operation> {
 	/**
 	 * Writes a status transition, refusing an illegal one.
 	 *
+	 * Every status an operation settles into passes through here, which is why the two operation-level
+	 * facts are announced from this one place: an operation that reached a terminal status says so
+	 * once, whichever walk brought it there, and the announcement is made after the write rather than
+	 * before it — a subscriber is told what happened, never what is about to.
+	 *
 	 * @param operation The operation.
 	 * @param status The status to move to.
 	 * @param patch Columns to write with the status.
@@ -888,7 +1147,52 @@ export class OperationService extends CrudService<Operation> {
 
 		// A settled operation holds no lease: leaving one behind would make a finished operation look
 		// busy to the recovery scan, and the table's own `CHK_operation_status_terminal` refuses it.
-		return this.saveOperation(operation, { ...patch, status, ...OperationService.NO_LEASE });
+		const saved = await this.saveOperation(operation, { ...patch, status, ...OperationService.NO_LEASE });
+
+		if (saved.status !== from) {
+			await this.announceSettlement(saved);
+		}
+
+		return saved;
+	}
+
+	/**
+	 * Announces where an operation has arrived, when the move is one a subscriber can act on.
+	 *
+	 * Three statuses are facts a client waits for: an operation that completed, an operation that
+	 * entered the compensation walk, and an operation that finished compensating or was cancelled.
+	 * The rest of the machine is progress rather than outcome — a plan that became executable again
+	 * is reported by the retry's own answer and by the step stream — so it is deliberately silent.
+	 *
+	 * A cancellation arrives on the failure stream, and that is the honest reading of the three facts
+	 * the design names: there is no `operationCanceled` stream, and an operation a caller cancelled is
+	 * one that will not do what it was started to do. The payload says which it was — its `status` is
+	 * `CANCELED` — so a client never has to infer it from the stream's name.
+	 *
+	 * @param operation The settled operation.
+	 */
+	private async announceSettlement(operation: Operation): Promise<void> {
+		switch (operation.status) {
+			case OperationStatus.COMPLETED:
+				await this.operationEventPublisher.operationCompleted(operation);
+				return;
+			case OperationStatus.COMPENSATING:
+				await this.operationEventPublisher.operationFailed(operation, 'compensating');
+				return;
+			case OperationStatus.FAILED:
+				await this.operationEventPublisher.operationFailed(operation, 'failed');
+				return;
+			case OperationStatus.COMPENSATED:
+				await this.operationEventPublisher.operationFailed(operation, 'compensated');
+				return;
+			case OperationStatus.CANCELED:
+				await this.operationEventPublisher.operationFailed(operation, 'canceled');
+				return;
+			default:
+				// `PENDING` and `RUNNING` are the two the runtime moves an operation through on its way
+				// to one of the facts above, and neither is a fact of its own.
+				return;
+		}
 	}
 
 	/**
@@ -1126,14 +1430,32 @@ export class OperationService extends CrudService<Operation> {
 	/**
 	 * Writes a step row.
 	 *
+	 * The one place a step moves, which is why the step-changed fact is announced from here rather
+	 * than from each of the callers: every write of a step status — a start, a success, a failure, the
+	 * compensation walk — passes through this method, so no path can move a step without a subscriber
+	 * hearing about it, and none can announce one twice.
+	 *
 	 * @param step The step, mutated in place so callers see what was stored.
 	 * @param values The columns to write.
+	 * @param operation The operation the step belongs to, when the caller holds it. A write that
+	 * states no operation is a bookkeeping write — a budget reset — rather than a move, and announces
+	 * nothing: the step did not run, so there is no fact.
 	 * @returns The saved step.
 	 */
-	private async saveStep(step: OperationStep, values: Record<string, unknown>): Promise<OperationStep> {
+	private async saveStep(
+		step: OperationStep,
+		values: Record<string, unknown>,
+		operation?: Operation
+	): Promise<OperationStep> {
 		Object.assign(step, values);
 
-		return this.typeOrmOperationStepRepository.save(step);
+		const saved = await this.typeOrmOperationStepRepository.save(step);
+
+		if (operation) {
+			await this.operationEventPublisher.operationStepChanged(operation, saved, stepActionOf(saved.status));
+		}
+
+		return saved;
 	}
 
 	/**
@@ -1276,4 +1598,54 @@ function stepBackoff(policy: IStepRetryPolicy | undefined, attempt: number): num
 	const jitter = policy.jitter ? capped * policy.jitter * (Math.random() * 2 - 1) : 0;
 
 	return Math.max(0, Math.round(capped + jitter));
+}
+
+/**
+ * The action a step's status states, as the streamed fact spells it.
+ *
+ * Stated as one map rather than as a word at each call site, because the action is what a subscriber
+ * narrows the stream by: a step that moved and the word for the move have to agree, and one table is
+ * the only shape in which they can.
+ */
+const STEP_ACTIONS: Record<OperationStepStatus, string> = {
+	[OperationStepStatus.PENDING]: 'pending',
+	[OperationStepStatus.RUNNING]: 'started',
+	[OperationStepStatus.COMPLETED]: 'completed',
+	[OperationStepStatus.FAILED]: 'failed',
+	[OperationStepStatus.SKIPPED]: 'skipped',
+	[OperationStepStatus.COMPENSATING]: 'compensating',
+	[OperationStepStatus.COMPENSATED]: 'compensated',
+	[OperationStepStatus.COMPENSATION_FAILED]: 'compensation-failed'
+};
+
+/**
+ * The action for a step's status.
+ *
+ * @param status The status the step was written with.
+ * @returns The action `operation.step-changed` carries for it.
+ */
+function stepActionOf(status: OperationStepStatus): string {
+	return STEP_ACTIONS[status] ?? 'changed';
+}
+
+/**
+ * Adds the caller's scope to a criterion.
+ *
+ * A criterion may be one object or a list of them — the store reads a list as a disjunction — and
+ * every member of it has to be scoped, because an alternative that escaped the scope would be a way
+ * to read another tenant's row by writing the right `or`.
+ *
+ * @param where The criterion the caller stated.
+ * @param scope The scope to add to it.
+ * @returns The criterion, scoped.
+ */
+function withScope(
+	where: FindOptionsWhere<Operation> | FindOptionsWhere<Operation>[] | undefined,
+	scope: FindOptionsWhere<Operation>
+): FindOptionsWhere<Operation> | FindOptionsWhere<Operation>[] {
+	if (Array.isArray(where)) {
+		return where.map((alternative) => ({ ...alternative, ...scope }));
+	}
+
+	return { ...(where ?? {}), ...scope };
 }

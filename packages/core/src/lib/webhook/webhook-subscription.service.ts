@@ -6,6 +6,7 @@ import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { isUniqueViolation } from '../core/errors/unique-violation';
 import { WebhookSubscription } from './webhook-subscription.entity';
+import { WebhookEventPublisher } from './webhook-event.publisher';
 import { TypeOrmWebhookSubscriptionRepository } from './repository/type-orm-webhook-subscription.repository';
 import { MikroOrmWebhookSubscriptionRepository } from './repository/mikro-orm-webhook-subscription.repository';
 
@@ -37,13 +38,46 @@ export interface IRedactedWebhookSubscription extends Omit<IWebhookSubscription,
 }
 
 /**
+ * The subscription and the secret that was generated for it.
+ *
+ * The secret is a member of this answer and of no type: it is readable at the two moments it is
+ * generated — creation and rotation — and this is how those two operations hand it over. Everything
+ * else the platform answers about a subscription carries the fingerprint instead.
+ */
+export interface IWebhookSubscriptionCredential {
+	/** The subscription, with its secret replaced by a fingerprint. */
+	subscription: IRedactedWebhookSubscription;
+	/** The plaintext secret, which no later read can produce again. */
+	secret: string;
+	/** When the previous secret stops being accepted; absent on a creation, where there is none. */
+	previousSecretValidUntil?: string;
+}
+
+/**
+ * The narrowing a subscription list accepts.
+ *
+ * The two members the endpoint table names for the route: whether the endpoint is switched on, and
+ * which channel it listens to. Both are columns, so both narrow the read rather than the answer.
+ */
+export interface IWebhookSubscriptionNarrowing {
+	readonly isActive?: boolean;
+	readonly channelId?: ID;
+}
+
+/**
  * Manages outbound delivery endpoints.
  *
  * The secret never leaves this service in readable form except at the two moments it is genuinely
  * needed: when the operator creates or rotates it, and when the delivery runtime signs a payload.
- * Everything else â€” validation of the endpoint, the per-organization uniqueness of a URL, the
- * failure counters and the automatic disable â€” is state the delivery path depends on, so it lives
+ * Everything else — validation of the endpoint, the per-organization uniqueness of a URL, the
+ * failure counters and the automatic disable — is state the delivery path depends on, so it lives
  * here rather than in the worker that happens to call it.
+ *
+ * **This service is where a switched-off subscription is announced.** The operator's own switch and
+ * the circuit breaker's auto-disable both write `isActive = false` here, and both are announced from
+ * here — so a subscriber learns that a subscription it watches is gone whichever of the two decided
+ * it, and whichever protocol asked for it. Announcing in a controller or a resolver instead would
+ * give the platform two producers of one fact and leave the other surface silent.
  */
 @Injectable()
 export class WebhookSubscriptionService extends CrudService<WebhookSubscription> {
@@ -64,7 +98,8 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	constructor(
 		readonly typeOrmWebhookSubscriptionRepository: TypeOrmWebhookSubscriptionRepository,
 		readonly mikroOrmWebhookSubscriptionRepository: MikroOrmWebhookSubscriptionRepository,
-		private readonly encryptionService: EncryptionService
+		private readonly encryptionService: EncryptionService,
+		private readonly webhookEventPublisher: WebhookEventPublisher
 	) {
 		super(typeOrmWebhookSubscriptionRepository, mikroOrmWebhookSubscriptionRepository);
 	}
@@ -77,8 +112,7 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	 * @throws BadRequestException when the endpoint or the event list is unusable.
 	 * @throws ConflictException when the endpoint is already subscribed.
 	 */
-	async createSubscription(input: IWebhookSubscriptionInput
-	): Promise<{ subscription: IRedactedWebhookSubscription; secret: string }> {
+	async createSubscription(input: IWebhookSubscriptionInput): Promise<IWebhookSubscriptionCredential> {
 		this.assertEvents(input.events);
 		this.assertUrlAllowed(input.url, input.metadata);
 
@@ -162,12 +196,17 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	 * losing deliveries; the delivery runtime signs with both while it lasts.
 	 *
 	 * @param id The subscription id.
-	 * @returns The subscription and the new secret, which is the only time it is readable.
+	 * @returns The subscription, the new secret and the instant the previous one stops being accepted.
+	 * The secret is readable only here and at creation; the expiry is answered beside it because an
+	 * operator handing a partner a new secret has to be able to say how long the old one still works.
 	 * @throws NotFoundException when the subscription does not exist.
 	 */
-	async rotateSecret(id: ID): Promise<{ subscription: IRedactedWebhookSubscription; secret: string }> {
+	async rotateSecret(id: ID): Promise<IWebhookSubscriptionCredential> {
 		const subscription = await this.getSubscription(id);
 		const secret = this.generateSecret();
+		const previousSecretValidUntil = new Date(
+			Date.now() + WebhookSubscriptionService.SECRET_ROTATION_GRACE_MS
+		).toISOString();
 
 		Object.assign(subscription, {
 			secret: this.encryptionService.encrypt(secret),
@@ -176,13 +215,13 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 				// Both values travel together: the delivery runtime reads the expiry to decide whether the
 				// previous secret is still part of the signature header.
 				previousSecret: subscription.secret,
-				previousSecretExpiresAt: new Date(Date.now() + WebhookSubscriptionService.SECRET_ROTATION_GRACE_MS).toISOString()
+				previousSecretExpiresAt: previousSecretValidUntil
 			}
 		});
 
 		const saved = await this.typeOrmWebhookSubscriptionRepository.save(subscription);
 
-		return { subscription: this.redact(saved), secret };
+		return { subscription: this.redact(saved), secret, previousSecretValidUntil };
 	}
 
 	/**
@@ -222,25 +261,34 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 			}
 		});
 
-		return this.redact(await this.typeOrmWebhookSubscriptionRepository.save(subscription));
+		const stored = this.redact(await this.typeOrmWebhookSubscriptionRepository.save(subscription));
+
+		// Announced from here rather than from the route, so the operator's switch and the circuit
+		// breaker's auto-disable produce one fact with one shape, and the retry worker that sees a
+		// disabled endpoint is told the same thing the operator who switched it off is.
+		await this.webhookEventPublisher.subscriptionDisabled(stored, reason);
+
+		return stored;
 	}
 
 	/**
 	 * Records the outcome of one attempt.
 	 *
-	 * A success resets the failure counter â€” the counter is "consecutive failures", which is what makes
-	 * it a usable signal â€” and a failure increments it. Crossing the threshold disables the endpoint,
+	 * A success resets the failure counter — the counter is "consecutive failures", which is what makes
+	 * it a usable signal — and a failure increments it. Crossing the threshold disables the endpoint,
 	 * and a `410 Gone` disables it immediately: the receiver is telling the platform the endpoint is
 	 * gone, and retrying that is pointless.
 	 *
 	 * @param id The subscription id.
 	 * @param outcome What the endpoint answered.
-	 * @returns The updated subscription.
+	 * @returns The updated subscription. A write that crosses the auto-disable threshold is also where
+	 * the switch-off is announced, because this is the only place that decision is made.
 	 * @throws NotFoundException when the subscription does not exist.
 	 */
 	async recordAttempt(id: ID, outcome: { delivered: boolean; status?: number }): Promise<WebhookSubscription> {
 		const subscription = await this.getSubscription(id);
 		const at = new Date();
+		let autoDisableReason: string | undefined;
 
 		if (outcome.delivered) {
 			Object.assign(subscription, { failureCount: 0, lastSuccessAt: at });
@@ -248,16 +296,26 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 			const failureCount = (subscription.failureCount ?? 0) + 1;
 			const gone = outcome.status === 410;
 
-			Object.assign(subscription, {
-				failureCount,
-				lastFailureAt: at,
-				...(gone || failureCount >= WebhookSubscriptionService.AUTO_DISABLE_FAILURE_COUNT
-					? { isActive: false, disabledAt: at }
-					: {})
-			});
+			if (gone || failureCount >= WebhookSubscriptionService.AUTO_DISABLE_FAILURE_COUNT) {
+				// The reason is stated here rather than left to the caller: the fact is a fact about
+				// *this* write, and the threshold that produced it is this service's own constant.
+				autoDisableReason = gone
+					? 'The endpoint answered 410 Gone.'
+					: `The endpoint refused ${failureCount} consecutive deliveries.`;
+
+				Object.assign(subscription, { isActive: false, disabledAt: at });
+			}
+
+			Object.assign(subscription, { failureCount, lastFailureAt: at });
 		}
 
-		return this.typeOrmWebhookSubscriptionRepository.save(subscription);
+		const saved = await this.typeOrmWebhookSubscriptionRepository.save(subscription);
+
+		if (autoDisableReason) {
+			await this.webhookEventPublisher.subscriptionDisabled(this.redact(saved), autoDisableReason);
+		}
+
+		return saved;
 	}
 
 	/**
@@ -278,17 +336,43 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	}
 
 	/**
+	 * Reads a subscription as either protocol may answer with it.
+	 *
+	 * The secret is replaced by its fingerprint here rather than in each surface, because the raw row
+	 * carries the encrypted secret and a node read that handed it over would be the one route through
+	 * which a caller could read a subscription's stored material.
+	 *
+	 * @param id The subscription id.
+	 * @returns The subscription, secrets replaced by fingerprints.
+	 * @throws NotFoundException when the subscription does not exist.
+	 */
+	async getRedactedSubscription(id: ID): Promise<IRedactedWebhookSubscription> {
+		return this.redact(await this.getSubscription(id));
+	}
+
+	/**
 	 * Lists the subscriptions of the current organization.
 	 *
+	 * @param narrowing The columns to narrow on, when the caller stated any.
 	 * @returns The subscriptions, secrets replaced by fingerprints.
 	 */
-	async listSubscriptions(): Promise<IRedactedWebhookSubscription[]> {
-		const subscriptions = await this.typeOrmWebhookSubscriptionRepository.find({
-			where: {
-				tenantId: RequestContext.currentTenantId(),
-				organizationId: RequestContext.currentOrganizationId()
-			} as any
-		});
+	async listSubscriptions(narrowing: IWebhookSubscriptionNarrowing = {}): Promise<IRedactedWebhookSubscription[]> {
+		const where: Record<string, unknown> = {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+
+		for (const [column, value] of Object.entries(narrowing)) {
+			// A member that was not stated is left out rather than written as `undefined`: a repository
+			// handed an explicit `undefined` asks the store for a row whose column *is* null, which is a
+			// different question from "do not narrow on this column". `isActive` is the one member whose
+			// `false` is a question rather than an absence, so it is kept when it is stated.
+			if (value !== undefined && value !== null) {
+				where[column] = value;
+			}
+		}
+
+		const subscriptions = await this.typeOrmWebhookSubscriptionRepository.find({ where: where as never });
 
 		return subscriptions.map((subscription) => this.redact(subscription));
 	}
@@ -400,8 +484,8 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	 *
 	 * A pattern is dot-separated: `order.placed` matches exactly that event, `order.*` matches one
 	 * more segment, `*` matches any event at any depth, and `*.payment.*` matches a payment event
-	 * under any aggregate. A `*` segment matches exactly one segment â€” including the whole name only
-	 * in the single-segment form â€” which is what makes `order.*` unusable as an accidental catch-all.
+	 * under any aggregate. A `*` segment matches exactly one segment — including the whole name only
+	 * in the single-segment form — which is what makes `order.*` unusable as an accidental catch-all.
 	 *
 	 * @param pattern The subscribed pattern.
 	 * @param eventName The event name.
@@ -461,7 +545,7 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	 * Rejects an endpoint the platform must not call.
 	 *
 	 * HTTPS is required, and the only escape is the explicit `metadata.allowInsecure = true` that a
-	 * development installation may set â€” which is refused outright once the platform runs in
+	 * development installation may set — which is refused outright once the platform runs in
 	 * production, because an unencrypted webhook leaks every payload it carries.
 	 *
 	 * @param url The endpoint.

@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ID, IWebhookAttemptResult, JsonData, WebhookDeliveryStatus, WebhookHeader } from '@gauzy/contracts';
+import { ID, IWebhookAttemptResult, IWebhookDelivery, JsonData, WebhookDeliveryStatus, WebhookHeader } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { isUniqueViolation } from '../core/errors/unique-violation';
 import { WebhookDelivery } from './webhook-delivery.entity';
 import { WebhookSubscription } from './webhook-subscription.entity';
 import { WebhookSubscriptionService } from './webhook-subscription.service';
+import { WebhookEventPublisher } from './webhook-event.publisher';
 import { signWebhookPayload } from './webhook-signature';
 import { TypeOrmWebhookDeliveryRepository } from './repository/type-orm-webhook-delivery.repository';
 import { MikroOrmWebhookDeliveryRepository } from './repository/mikro-orm-webhook-delivery.repository';
@@ -35,20 +36,78 @@ export interface IWebhookDeliveryAttempt {
 }
 
 /**
+ * The attempt a delivery row currently records.
+ *
+ * The platform's own webhook contract names one attempt as `<deliveryId>.<attempt>` — it is the
+ * `X-Delivery` header value a receiver deduplicates on — so an attempt is a concept rather than a
+ * row, and this is it: the identity the receiver saw, and the outcome of the attempt the row last
+ * made. Nothing else is stored per attempt, and nothing here claims to be a history.
+ */
+export interface IWebhookAttempt {
+	/** The attempt identity: `<deliveryId>.<attempt>`, which is what `X-Delivery` carried. */
+	readonly id: string;
+	/** The delivery the attempt belongs to. */
+	readonly deliveryId: ID;
+	/** The 1-based attempt number. */
+	readonly attempt: number;
+	/** True when the endpoint answered 2xx. */
+	readonly delivered: boolean;
+	/** HTTP status of the attempt, absent when the request never completed. */
+	readonly responseStatus?: number;
+	/** The receiver's response body, truncated for triage. */
+	readonly responseBody?: string;
+	readonly durationMs?: number;
+	/** Transport, TLS or timeout error of the attempt. */
+	readonly lastError?: string;
+}
+
+/**
+ * A delivery as either protocol may answer with it.
+ *
+ * One member of the stored row is withheld, and it is the row's own payload: the exact body that will
+ * be, or was, sent. It is a domain event envelope verbatim — carrying whatever the producing domain
+ * put in `data`, a customer identifier among it — while the delivery log is read under the permission
+ * that configures integrations rather than under the permission the event's own domain demands, and a
+ * redelivery resends the stored bytes rather than anything a caller states. Nothing an operator does
+ * with this resource needs to read one, so the projection does not carry one.
+ */
+export interface IRedactedWebhookDelivery extends Omit<IWebhookDelivery, 'payload'> {
+	/** The attempt the row records, or null when it has not been attempted yet. */
+	readonly lastAttempt: IWebhookAttempt | null;
+}
+
+/**
+ * The narrowing a delivery list accepts.
+ *
+ * Every member is a column of the row, and the four are the ones a work list is taken by: the
+ * endpoint that is behind, one event, a status group, and one event id when a partner quotes it.
+ */
+export interface IWebhookDeliveryNarrowing {
+	readonly subscriptionId?: ID;
+	readonly eventId?: ID;
+	readonly eventName?: string;
+	readonly status?: WebhookDeliveryStatus;
+}
+
+/**
  * Signs payloads, posts them, and schedules the next attempt.
  *
  * Delivery is at-least-once and every attempt is a row: the outcome is recorded whether the endpoint
  * answered, refused or never replied, and the retry schedule is written onto the row as
  * `nextAttemptAt` rather than recomputed from a formula. Nothing here follows a redirect, and nothing
- * here waits forever â€” a slow endpoint must not consume the worker that also serves every other
+ * here waits forever — a slow endpoint must not consume the worker that also serves every other
  * subscriber.
+ *
+ * **This service is where a refused attempt is announced.** It is the only writer of a delivery
+ * outcome, so both protocols and the retry job produce one fact with one shape from here — and the
+ * operator's own redelivery of a row goes through the same write rather than around it.
  */
 @Injectable()
 export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	/**
 	 * The retry ladder, in milliseconds.
 	 *
-	 * The first attempt is immediate, then 5 s, 30 s, 2 min, 10 min, 1 h and 6 h â€” seven attempts in
+	 * The first attempt is immediate, then 5 s, 30 s, 2 min, 10 min, 1 h and 6 h — seven attempts in
 	 * total, after which the delivery is dead-lettered. It is data written onto the row, so an
 	 * operator reading `nextAttemptAt` sees the schedule rather than having to derive it.
 	 */
@@ -81,7 +140,8 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	constructor(
 		readonly typeOrmWebhookDeliveryRepository: TypeOrmWebhookDeliveryRepository,
 		readonly mikroOrmWebhookDeliveryRepository: MikroOrmWebhookDeliveryRepository,
-		private readonly subscriptions: WebhookSubscriptionService
+		private readonly subscriptions: WebhookSubscriptionService,
+		private readonly webhookEventPublisher: WebhookEventPublisher
 	) {
 		super(typeOrmWebhookDeliveryRepository, mikroOrmWebhookDeliveryRepository);
 	}
@@ -130,7 +190,7 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 	/**
 	 * Makes one attempt and records what happened.
 	 *
-	 * The payload is read from the row rather than rebuilt, so a retry â€” or a replay months later â€”
+	 * The payload is read from the row rather than rebuilt, so a retry — or a replay months later —
 	 * sends exactly what was originally intended.
 	 *
 	 * @param deliveryId The delivery row id.
@@ -177,7 +237,54 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 			status: result.responseStatus
 		});
 
-		return { delivery: await this.recordOutcome(delivery, attempt, result), result, skipped: false };
+		const recorded = await this.recordOutcome(delivery, attempt, result);
+
+		// A refused attempt is announced from here and nowhere else: this is the only place a delivery
+		// fails, whichever protocol or job asked for the attempt, and the row announced is the
+		// projection the API answers with rather than the stored row. The skipped path above announces
+		// nothing — an endpoint that was never called has not refused anything.
+		if (recorded.status !== WebhookDeliveryStatus.DELIVERED) {
+			await this.webhookEventPublisher.deliveryFailed(this.redact(recorded), attempt);
+		}
+
+		return { delivery: recorded, result, skipped: false };
+	}
+
+	/**
+	 * Puts a delivery back in the queue for another attempt.
+	 *
+	 * This is the redelivery an operator asks for, and it deliberately does not make the attempt
+	 * itself: the platform's retry job is what calls an endpoint, so neither the API process nor this
+	 * service ever blocks on an HTTP call, and *when* the endpoint is called is the worker's to decide.
+	 * The row is reset rather than duplicated — the attempt counter starts again, the recorded outcome
+	 * of the previous attempt is cleared, and the stored payload is untouched, so what goes out is
+	 * byte-for-byte what was intended the first time.
+	 *
+	 * A row is requeued whatever status it reached, the terminal one included: a dead delivery is
+	 * precisely the row an operator redelivers once the receiver has been fixed, and a delivered one is
+	 * redelivered when the receiver reports it never arrived. The refusal a caller reads for a row that
+	 * cannot be redelivered is the one this method raises for a row that does not exist; there is no
+	 * second one, because there is no status from which a redelivery is wrong.
+	 *
+	 * @param id The delivery row id.
+	 * @returns The requeued delivery.
+	 * @throws NotFoundException when the delivery does not exist.
+	 */
+	async requeue(id: ID): Promise<WebhookDelivery> {
+		const delivery = await this.getDelivery(id);
+
+		return this.saveDelivery(delivery, {
+			status: WebhookDeliveryStatus.PENDING,
+			attemptCount: 0,
+			responseStatus: null,
+			responseBody: null,
+			durationMs: null,
+			deliveredAt: null,
+			lastError: null,
+			// Due immediately: the operator asked for this attempt now, so the retry scan picks the row
+			// up on its next pass rather than waiting out a ladder the row is no longer walking.
+			nextAttemptAt: new Date()
+		});
 	}
 
 	/**
@@ -214,6 +321,82 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 		}
 
 		return delivery;
+	}
+
+	/**
+	 * Reads a delivery as either protocol may answer with it.
+	 *
+	 * The stored body is withheld here rather than in each surface, because the raw row carries it and
+	 * a node read that handed it over would be the one route through which a caller could read a
+	 * domain event envelope the delivery log is not meant to republish.
+	 *
+	 * @param id The delivery id.
+	 * @returns The delivery, with the stored body withheld.
+	 * @throws NotFoundException when it does not exist.
+	 */
+	async getRedactedDelivery(id: ID): Promise<IRedactedWebhookDelivery> {
+		return this.redact(await this.getDelivery(id));
+	}
+
+	/**
+	 * Replaces a delivery's stored body with the attempt it records.
+	 *
+	 * @param delivery The stored delivery.
+	 * @returns The projection the API may return.
+	 */
+	redact(delivery: WebhookDelivery): IRedactedWebhookDelivery {
+		const { payload, ...rest } = delivery as WebhookDelivery & { payload?: unknown };
+		const attempt = delivery.attemptCount ?? 0;
+
+		return {
+			...(rest as Omit<IWebhookDelivery, 'payload'>),
+			// The attempt is derived rather than stored: the row keeps the attempt counter and the
+			// outcome of the attempt it last made, and the identity a receiver deduplicated on is the
+			// two of them joined — the same value the `X-Delivery` header carried on that attempt.
+			lastAttempt:
+				attempt > 0
+					? {
+							id: `${delivery.id}.${attempt}`,
+							deliveryId: delivery.id,
+							attempt,
+							delivered: delivery.status === WebhookDeliveryStatus.DELIVERED,
+							responseStatus: delivery.responseStatus,
+							responseBody: delivery.responseBody,
+							durationMs: delivery.durationMs,
+							lastError: delivery.lastError
+					  }
+					: null
+		};
+	}
+
+	/**
+	 * Lists the deliveries of the current organization, as either protocol may answer with them.
+	 *
+	 * The rows are projected here rather than in each surface, for the same reason the node read is:
+	 * the stored body is withheld by the projection, and a list that handed it over would be the one
+	 * read through which a caller could collect a tenant's event payloads wholesale.
+	 *
+	 * @param narrowing The columns to narrow on, when the caller stated any.
+	 * @returns The deliveries, with the stored body withheld.
+	 */
+	async listDeliveries(narrowing: IWebhookDeliveryNarrowing = {}): Promise<IRedactedWebhookDelivery[]> {
+		const where: Record<string, unknown> = {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+
+		for (const [column, value] of Object.entries(narrowing)) {
+			// A member that was not stated is left out rather than written as `undefined`: a repository
+			// handed an explicit `undefined` asks the store for a row whose column *is* null, which is a
+			// different question from "do not narrow on this column".
+			if (value !== undefined && value !== null) {
+				where[column] = value;
+			}
+		}
+
+		const deliveries = await this.typeOrmWebhookDeliveryRepository.find({ where: where as never });
+
+		return deliveries.map((delivery) => this.redact(delivery));
 	}
 
 	/**

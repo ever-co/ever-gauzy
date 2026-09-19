@@ -1,0 +1,128 @@
+# The reliability kernel's root fields.
+#
+# `Query`, `Mutation` and `Subscription` are declared by the kernel and extended here: a root
+# operation type exists once for the whole platform, so a domain adds fields to it and never declares
+# its own. The names below are the ones `17-graphql-api-specification.md` §3.3 fixes for this
+# resource pair, and they are the complete set: a field that is not here does not exist, which is why
+# the catalogue's own promise and this file are read together.
+#
+# Every field is one the delivered REST routes serve, under the same guard chain, with the same
+# permission and over the same service, so a caller does not choose a better surface by choosing a
+# protocol. Nothing here decides anything: each field calls the same `EventOutboxService` method the
+# route behind it calls — including the two moves, whose announcements are published from that
+# service rather than from either surface.
+#
+# **The two reads of the pair are one connection each, and the node read of the outbox row is named
+# for the type rather than for the resource.** `eventOutbox` is the row set and `eventOutboxRecord` is
+# one row of it, which is the only naming that lets both exist: a row is an `EventOutboxRecord`, and a
+# field called `eventOutboxRow` would name the same concept twice.
+#
+# **No count field is declared, and none is missing.** A count exists where the resource serves a
+# count route and answers a bare number; neither `/events/outbox` nor `/events/deliveries` serves one,
+# and the number a caller wants is the connection's own `totalCount` for the filters it stated, which
+# is the figure the REST envelope reports as `total`. A count field here would be a second evaluation
+# path that could disagree with it.
+#
+# **The list is a connection rather than a bare array.** It takes the same query protocol the REST
+# list route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` —
+# and answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered
+# reads answer live rows only, and offering an argument that cannot be honoured would be worse than
+# not offering it.
+
+extend type Query {
+	"""
+	The outbox rows of the caller's tenant, the row whose turn comes first at the head.
+
+	Read this to answer what is waiting and what has been waiting longest — the two questions the
+	backlog runbook asks — and narrow it by `status`, `eventName` or `aggregateId` rather than by
+	reading the whole queue.
+	"""
+	eventOutbox(
+		filter: EventOutboxRecordFilter
+		sort: [EventOutboxRecordSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EventOutboxRecordConnection!
+
+	"""
+	One outbox row of the caller's tenant, or null when there is none.
+
+	The row carries the event's body and the last dispatch error. The delivery records of that row are
+	the `eventDeliveries` connection narrowed by this row's `eventId`, which is what the REST detail
+	read's `expand=deliveries` attaches and what a delivery record names: a record outlives the event
+	row, so the event id — not the row's primary key — is the key that survives.
+	"""
+	eventOutboxRecord(id: ID!): EventOutboxRecord
+
+	"""
+	The delivery records of the caller's tenant, newest first.
+
+	One record per `(event, consumer)` pair, which is the ledger that makes at-least-once dispatch
+	safe: a record is written before the consumer is invoked and completed after it returns, so a
+	consumer that already acknowledged an event has a `PUBLISHED` row and a consumer that crashed has
+	a `PENDING` one. Narrow it by `status` and `consumerKey` to answer which consumer stopped applying
+	events, or by `eventId` to read one event's whole fan-out.
+	"""
+	eventDeliveries(
+		filter: EventDeliveryFilter
+		sort: [EventDeliverySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EventDeliveryConnection!
+
+	"""
+	One delivery record of the caller's tenant, or null when there is none.
+	"""
+	eventDelivery(id: ID!): EventDelivery
+}
+
+extend type Mutation {
+	"""
+	Re-drives one consumer's record for an event: the operator's first move.
+
+	The attempt budget is reset to zero, the last error is cleared and the acknowledgement is
+	withdrawn, so the retry scan claims the record exactly as it claims one whose consumer crashed
+	mid-delivery. Nothing is re-published here and no consumer is invoked in this call — the record is
+	the queue, and the scan that reads `PENDING` rows is what re-drives it — which is also why the move
+	is safe to repeat. The answer is the record as it stands afterwards.
+	"""
+	replayEventDelivery(id: ID!): EventDelivery!
+
+	"""
+	Dead-letters one consumer's record for an event: the operator's second move.
+
+	The record is stopped with the caller's reason, which is written onto its `lastError` and is the
+	diagnosis the next operator reads. The move is a deliberate decision to lose one reaction to a
+	real fact, so it is recorded rather than performed silently. The answer is the record as it stands
+	afterwards.
+	"""
+	markEventDeliveryDead(input: MarkEventDeliveryDeadInput!): EventDelivery!
+}
+
+extend type Subscription {
+	"""
+	Every operator move on a delivery record of the caller's tenant.
+
+	The stream carries the record in its post-move state and the move that produced it (`replayed` or
+	`marked-dead`), and it is narrowed by `deliveryId` and by `action`; both only ever narrow what the
+	credential may already read. Its producer is the service both protocols move a record through, so
+	a subscriber cannot tell which protocol made the move.
+
+	**This is an operator's stream and not a consumer's.** It exists for the staff who watch the
+	reliability machinery, and no subscription subscribes to another subscription's delivery. A
+	subscription is a notification and never a system of record: a move made while the client is
+	disconnected is not replayed, and a client that must not miss one reads the delivery records.
+	"""
+	eventDeliveryChanged(deliveryId: ID, action: String): EventDelivery!
+}

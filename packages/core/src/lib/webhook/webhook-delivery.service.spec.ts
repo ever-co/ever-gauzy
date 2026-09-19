@@ -233,7 +233,11 @@ function deliveries(subscription: Row = {}) {
 	const service = new WebhookDeliveryService(
 		table as unknown as TypeOrmWebhookDeliveryRepository,
 		{} as never,
-		subscriptionService as unknown as WebhookSubscriptionService
+		subscriptionService as unknown as WebhookSubscriptionService,
+		// The publisher is doubled rather than left out: a refused attempt is announced from the
+		// service, and a suite about the attempt is not a suite about the fan-out. What it announces is
+		// asserted where the two surfaces are, in `webhook.resolver.spec.ts`.
+		{ deliveryFailed: jest.fn().mockResolvedValue(true) } as never
 	);
 
 	return { service, table, attempts };

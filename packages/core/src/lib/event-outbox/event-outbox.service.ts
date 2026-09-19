@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { EntityManager, FindOptionsWhere, IsNull } from 'typeorm';
 import { randomUUID } from 'node:crypto';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
@@ -12,9 +12,15 @@ import {
 } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { isUniqueViolation } from '../core/errors/unique-violation';
 import { EventDelivery } from './event-delivery.entity';
 import { EventOutbox } from './event-outbox.entity';
+import {
+	EVENT_DELIVERY_ACTIONS,
+	EventDeliveryAction,
+	EventDeliveryEventPublisher
+} from './event-delivery.publisher';
 import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';
 import { TypeOrmEventOutboxRepository } from './repository/type-orm-event-outbox.repository';
 import { MikroOrmEventDeliveryRepository } from './repository/mikro-orm-event-delivery.repository';
@@ -68,6 +74,31 @@ export interface IOutboxDeliveryOutcome {
 }
 
 /**
+ * The narrowing the diagnostic outbox list accepts.
+ *
+ * Three members and no more, because three are the questions an operator asks of the queue: what is
+ * still waiting, what one event name is doing, and what happened to one aggregate.
+ */
+export interface IOutboxRowQuery {
+	status?: EventOutboxStatus;
+	eventName?: string;
+	aggregateId?: ID;
+}
+
+/**
+ * The narrowing the diagnostic delivery list accepts.
+ *
+ * `consumerKey` is the member the dead-letter runbook groups by — one consumer failing broadly is a
+ * regression in that consumer, many consumers failing on one event is a bad payload — and `eventId`
+ * is its other half.
+ */
+export interface IDeliveryRowQuery {
+	status?: EventOutboxStatus;
+	consumerKey?: string;
+	eventId?: ID;
+}
+
+/**
  * Writes events, hands them to consumers, and keeps the record of who received what.
  *
  * The write path is `append`, and it **requires** the caller's transaction manager: there is no
@@ -110,7 +141,25 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 		readonly typeOrmEventOutboxRepository: TypeOrmEventOutboxRepository,
 		readonly mikroOrmEventOutboxRepository: MikroOrmEventOutboxRepository,
 		readonly typeOrmEventDeliveryRepository: TypeOrmEventDeliveryRepository,
-		readonly mikroOrmEventDeliveryRepository: MikroOrmEventDeliveryRepository
+		readonly mikroOrmEventDeliveryRepository: MikroOrmEventDeliveryRepository,
+		/**
+		 * Where the two operator moves are announced.
+		 *
+		 * **The producers live here rather than in the routes**, which is the one place this kernel
+		 * departs from the shape the channel domain uses: a route and a GraphQL field would each have to
+		 * remember to announce, and a third caller would silently not. Both surfaces reach a move
+		 * through this service, so both announce through this one call and a subscriber cannot tell
+		 * which protocol moved the row.
+		 *
+		 * It is injected optionally because absence is a legitimate shape rather than a wiring fault:
+		 * every state this service writes is asserted on its own — the dispatch path and the retry
+		 * ladder are tested without a subscription surface behind them — and a process that hosts no
+		 * GraphQL endpoint (a worker, a seeding run, a suite) writes exactly the same rows and
+		 * announces nothing. `EventOutboxModule` declares the publisher as a provider, so a process
+		 * that does serve the endpoint always has one, which its own suite asserts.
+		 */
+		@Optional()
+		private readonly deliveryPublisher?: EventDeliveryEventPublisher
 	) {
 		super(typeOrmEventOutboxRepository, mikroOrmEventOutboxRepository);
 	}
@@ -490,6 +539,140 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	}
 
 	/**
+	 * The outbox rows of the caller's own scope, in the queue's own order.
+	 *
+	 * The order is the queue's rather than the ledger's: `availableAt` is when a row is next due —
+	 * the instant it was appended for a row nobody has attempted, the end of its lease for a claimed
+	 * one, the end of its backoff for a failed one — so the first row is the row whose turn comes
+	 * first. That is what makes the listing answer the backlog runbook's two questions
+	 * (`12-events-webhooks-and-workflows.md` §14.5): what is waiting, and what has been waiting
+	 * longest. `sequence` breaks a tie inside one partition and the identifier makes the order total,
+	 * because a cursor walk is only stable if the order it walks is.
+	 *
+	 * There is no store-side `where` to push the narrowing into and no page to push either: the
+	 * connection protocol is applied to the rows this read answers, which is what makes the REST list
+	 * and the GraphQL connection the same set of rows under the same filters.
+	 *
+	 * @param query The status, event name or aggregate to narrow to.
+	 * @returns The rows, due first.
+	 */
+	async listOutboxRows(query: IOutboxRowQuery = {}): Promise<EventOutbox[]> {
+		return this.typeOrmEventOutboxRepository.find({
+			where: this.rowsOfTheCaller<EventOutbox>({
+				...(query.status ? { status: query.status } : {}),
+				...(query.eventName ? { eventName: query.eventName } : {}),
+				...(query.aggregateId ? { aggregateId: query.aggregateId } : {})
+			}),
+			order: { availableAt: 'ASC', sequence: 'ASC', id: 'ASC' }
+		} as never);
+	}
+
+	/**
+	 * Reads one outbox row of the caller's own scope.
+	 *
+	 * The dispatcher's own reads deliberately do not scope — they run in a system context, where there
+	 * is no caller to scope to — so this is the diagnostic read that does, and it is the one the
+	 * routes and the resolvers call.
+	 *
+	 * @param id The row id.
+	 * @returns The row, or null when it is not the caller's.
+	 */
+	async findOutboxRow(id: ID): Promise<EventOutbox | null> {
+		return this.typeOrmEventOutboxRepository.findOne({
+			where: this.rowsOfTheCaller<EventOutbox>({ id })
+		});
+	}
+
+	/**
+	 * The delivery records of the caller's own scope, newest first.
+	 *
+	 * The order is the dead-letter listing's: the runbook opens the newest record and reads its event
+	 * name, attempt count and error, so a listing that answered oldest-first would make the reader
+	 * walk to the end of every page to find what just broke.
+	 *
+	 * @param query The status, consumer key or event to narrow to.
+	 * @returns The records, newest first.
+	 */
+	async listDeliveryRows(query: IDeliveryRowQuery = {}): Promise<EventDelivery[]> {
+		return this.typeOrmEventDeliveryRepository.find({
+			where: this.rowsOfTheCaller<EventDelivery>({
+				...(query.status ? { status: query.status } : {}),
+				...(query.consumerKey ? { consumerKey: query.consumerKey } : {}),
+				...(query.eventId ? { eventId: query.eventId } : {})
+			}),
+			order: { createdAt: 'DESC', id: 'DESC' }
+		} as never);
+	}
+
+	/**
+	 * Reads one delivery record of the caller's own scope.
+	 *
+	 * @param id The record id.
+	 * @returns The record, or null when it is not the caller's.
+	 */
+	async findDeliveryRow(id: ID): Promise<EventDelivery | null> {
+		return this.typeOrmEventDeliveryRepository.findOne({
+			where: this.rowsOfTheCaller<EventDelivery>({ id })
+		});
+	}
+
+	/**
+	 * Re-drives one consumer's delivery record: the operator's first move.
+	 *
+	 * The move writes the state a fresh record is written in — the attempt budget back to zero, the
+	 * last error cleared and the acknowledgement withdrawn — so the retry scan claims it exactly as it
+	 * claims a record whose consumer crashed mid-delivery. Nothing is re-published here and no
+	 * consumer is invoked: the record *is* the queue, and the scan that reads `PENDING` rows is what
+	 * re-drives it. That is also what makes the move safe to repeat, and why it resets the budget
+	 * rather than incrementing anything.
+	 *
+	 * @param id The record id.
+	 * @returns The record as it stands after the move.
+	 * @throws NotFoundException when the record does not exist inside the caller's own scope.
+	 */
+	async replayDelivery(id: ID): Promise<EventDelivery> {
+		await this.deliveryOfTheCaller(id);
+
+		await this.typeOrmEventDeliveryRepository.update({ id } as any, {
+			status: EventOutboxStatus.PENDING,
+			attemptCount: 0,
+			lastError: null,
+			// A record that is waiting to be re-driven has not been acknowledged, whatever it recorded
+			// before: leaving the instant on it would answer a `PENDING` row that claims a delivery.
+			deliveredAt: null
+		} as any);
+
+		return this.announce(id, EVENT_DELIVERY_ACTIONS.REPLAYED);
+	}
+
+	/**
+	 * Dead-letters one consumer's record by hand: the operator's second move.
+	 *
+	 * The write is the kernel's own dead-letter write, and it is called rather than restated: an
+	 * operator's decision and a spent attempt budget produce the same terminal row, and a second
+	 * statement writing `DEAD` is how the two come to disagree. What this move adds is what a *route*
+	 * owes — the caller's own scope, checked before anything is written, and the announcement — and
+	 * the reason, which lands on the row's `lastError` and is the diagnosis an operator reads later.
+	 *
+	 * The acknowledgement instant is left as the row has it. Dead-lettering records a decision about
+	 * the *retry* of a fact, not a claim that the consumer never saw it, and the kernel's own
+	 * dead-letter write leaves that column alone; a move that cleared it would be editing a fact it
+	 * was not asked about.
+	 *
+	 * @param id The record id.
+	 * @param reason Why the record is being stopped.
+	 * @returns The record as it stands after the move.
+	 * @throws NotFoundException when the record does not exist inside the caller's own scope.
+	 */
+	async deadLetterDelivery(id: ID, reason: string): Promise<EventDelivery> {
+		await this.deliveryOfTheCaller(id);
+
+		await this.markDeliveryDead(id, reason);
+
+		return this.announce(id, EVENT_DELIVERY_ACTIONS.MARKED_DEAD);
+	}
+
+	/**
 	 * The highest sequence a consumer has already acknowledged for a partition.
 	 *
 	 * This is the order gate: a consumer that receives `n + 2` while `n + 1` is still in flight
@@ -509,6 +692,83 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			.getRawOne();
 
 		return Number(raw?.max ?? 0);
+	}
+
+	/**
+	 * The criterion that limits a diagnostic read or a move to the caller's own rows.
+	 *
+	 * The outbox is infrastructure, but it is not tenant-less: every row carries the tenant of the
+	 * write that appended it, and neither route may answer — or move — another tenant's record. A row
+	 * written outside a request carries no tenant at all, and it is therefore invisible here rather
+	 * than visible to everyone: a record nobody owns is not a record every caller owns.
+	 *
+	 * The organization is read the way the platform reads a shared row. An event appended with no
+	 * organization is the tenant-wide fact, so the criterion is the caller's own organization **or**
+	 * the absence of one; equality alone would hide every tenant-level event from every operator of
+	 * the tenant it belongs to.
+	 *
+	 * @param narrowing The filters the read adds to the scope.
+	 * @returns The two criteria a TypeORM `where` array ORs together.
+	 */
+	private rowsOfTheCaller<T>(narrowing: FindOptionsWhere<T> = {}): FindOptionsWhere<T>[] {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		return [
+			{ ...narrowing, tenantId, organizationId } as FindOptionsWhere<T>,
+			{ ...narrowing, tenantId, organizationId: IsNull() } as FindOptionsWhere<T>
+		];
+	}
+
+	/**
+	 * The one record a move is about, inside the caller's own scope.
+	 *
+	 * @param id The record id.
+	 * @returns The record.
+	 * @throws NotFoundException when it does not exist inside the caller's own scope. A record of
+	 * another tenant is answered exactly as a record that does not exist, which is the same answer the
+	 * REST node read gives for both and never a hint that the row is there.
+	 */
+	private async deliveryOfTheCaller(id: ID): Promise<EventDelivery> {
+		const delivery = await this.findDeliveryRow(id);
+
+		if (!delivery) {
+			throw new NotFoundException(
+				`${ApiErrorCode.RESOURCE_NOT_FOUND}: delivery '${String(id)}' could not be found.`
+			);
+		}
+
+		return delivery;
+	}
+
+	/**
+	 * The record as it stands after a move, and the announcement of that move.
+	 *
+	 * The answer is the row the store now holds rather than the object the statement was built from:
+	 * the move's whole point is the state it leaves behind, and the columns it did not touch are the
+	 * store's to report.
+	 *
+	 * @param id The record id.
+	 * @param action The move that was made.
+	 * @returns The record as it stands.
+	 * @throws NotFoundException when the record vanished between the move and this read.
+	 */
+	private async announce(id: ID, action: EventDeliveryAction): Promise<EventDelivery> {
+		const delivery = await this.findDeliveryById(id);
+
+		if (!delivery) {
+			// The record was removed between the move and this read, so there is no row to answer with
+			// and the miss is reported as a miss rather than as the row the statement was built from.
+			throw new NotFoundException(
+				`${ApiErrorCode.RESOURCE_NOT_FOUND}: delivery '${String(id)}' could not be found.`
+			);
+		}
+
+		// Absent only in a process that hosts no subscription surface; the move itself is already
+		// written, and the record — not the notification — is the source of truth.
+		await this.deliveryPublisher?.deliveryChanged(delivery, action);
+
+		return delivery;
 	}
 
 	/**

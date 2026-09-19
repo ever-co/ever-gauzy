@@ -1,0 +1,95 @@
+# The numbering domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/sequences` routes already serve, under the same guard
+# chain and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other. Nothing here decides
+# anything: each field calls the same `SequenceService` method the route behind it calls.
+#
+# **The set is the design's own, and it is small on purpose.** `17-graphql-api-specification.md` §3.3
+# declares this resource's complete set of root fields — the connection, the node read and three
+# mutations — and §3.1 makes parity capability parity, so the REST surface delivered beside this one
+# serves those five operations and no others. In particular there is no `deleteSequence`, and the
+# route for one is not delivered either: a series *is* its counter, so removing the row answers every
+# later allocation for its key "no series is configured", and creating the series again starts at one
+# and issues numbers the removed row had already issued. A series that must stop numbering is retired
+# with `updateSequence(input: { id, isActive: false })`, which keeps the counter and the documents
+# numbered from it. There is likewise no `sequenceCount`: no count route is delivered for this
+# resource, and a field answering a question no route asks would be the wider door §5.1 forbids.
+#
+# The list is a connection rather than a bare array, and it takes the same query protocol every other
+# connection takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` —
+# so a cursor obtained here resumes on any other connection and the refusals are the query protocol's
+# own codes. `withDeleted` is deliberately absent: the delivered reads answer live rows only, and a
+# series is retired rather than withdrawn, so the argument could not be honoured.
+
+extend type Query {
+	"""
+	The numbering series of the caller's organization, by key.
+
+	A series is configuration an administrator reads whole — an installation holds a handful of keys,
+	not a ledger — but the connection is offered all the same, because the same filters, the same sort
+	and the same cursor walk are what make this resource's list reachable the way every other
+	resource's list is.
+	"""
+	sequences(
+		filter: SequenceFilter
+		sort: [SequenceSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): SequenceConnection!
+
+	"""
+	One numbering series of the caller's organization, or null when there is none.
+
+	A row that is not there answers `null` rather than a refusal — and so does a row of another
+	organization, because a caller is never told that a series it may not read exists. That is the REST
+	route's `404` stated in this protocol's vocabulary.
+	"""
+	sequence(id: ID!): Sequence
+}
+
+extend type Mutation {
+	"""
+	Opens a numbering series.
+
+	`key` and the channel are the series' identity and are stated here once; the counter is stated here
+	too, which is the one write that may state it — a series an installation adopts continues numbering
+	an external system has already begun, and it has to know where to continue from. The tenant and the
+	organization are stamped from the credential.
+	"""
+	createSequence(input: CreateSequenceInput!): Sequence!
+
+	"""
+	Changes the configuration of a series: the shape of the numbers it produces, the note kept beside
+	it, and whether it numbers documents at all.
+
+	The counter is not among the members this write accepts — see `UpdateSequenceInput` for why — so an
+	edit can never renumber a document the installation has already issued. Stating `isActive: false`
+	retires the series: the counter stays and an allocation answers with a reason instead of a number.
+	"""
+	updateSequence(input: UpdateSequenceInput!): Sequence!
+
+	"""
+	Restarts a series, when its own policy says a restart is due.
+
+	**This is the move the allocator performs, performed on demand — not a column write.** The counter
+	is rewound to the value a period starts at and the moment is recorded, under the same row lock the
+	allocator takes and inside the same kind of transaction, so an allocation running beside this one
+	is serialised against it exactly as it is against the allocator's own restart.
+
+	It declines with the kernel's own reason when no restart is due: the series' policy is `NEVER`, it
+	has already restarted inside the period this moment falls in, or no period is recorded for it yet —
+	in which case its next allocation records one without discarding the configured counter. Nothing
+	here counts the documents that carry the series' numbers, because nothing in the kernel does: a
+	series is a key, and the domains that number their documents from it are not known to it.
+	"""
+	resetSequence(id: ID!): Sequence!
+}

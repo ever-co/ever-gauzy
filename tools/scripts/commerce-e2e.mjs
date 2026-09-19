@@ -102,7 +102,16 @@ const RESOURCES = [
 	{ path: '/api/email-template', capability: 'messaging' },
 	{ path: '/api/report', capability: 'reporting' },
 	{ path: '/api/dashboard', capability: 'reporting' },
-	{ path: '/api/dashboard-widget', capability: 'reporting' }
+	{ path: '/api/dashboard-widget', capability: 'reporting' },
+	// The four infrastructure kernels. Each had a service, an entity and a module and no controller, so
+	// nothing proved it was reachable at all; the sweep reads them here rather than assuming the surface
+	// that was added beside them answers.
+	{ path: '/api/webhooks/subscriptions', capability: 'webhooks' },
+	{ path: '/api/webhooks/deliveries', capability: 'webhooks' },
+	{ path: '/api/operations', capability: 'operations' },
+	{ path: '/api/events/outbox', capability: 'reliability' },
+	{ path: '/api/events/deliveries', capability: 'reliability' },
+	{ path: '/api/sequences', capability: 'numbering' }
 	// 🛑 `/api/stats/global` is deliberately not swept. Its capability is an environment setting rather
 	// than a catalogue row — `FEATURE_OPEN_STATS=true`, which no toggle endpoint can switch on — so a
 	// sweep would report the deployment's own decision as a missing route. Its GraphQL field is gated by
@@ -396,7 +405,19 @@ async function main() {
 		'/api/dashboard-widget': 'dashboardWidgets',
 		// `roles` is the caller's own role — the kernel field the schema already had — so the tenant's
 		// role list is the field that answers this route's rows.
-		'/api/roles': 'tenantRoles'
+		'/api/roles': 'tenantRoles',
+		// The nested routes of the kernels. The convention derives a root field from the last path
+		// segment, and none of these six may use it: `/api/webhooks/subscriptions` would derive the
+		// catalogue's own `subscriptions`, `/api/webhooks/deliveries` and `/api/events/deliveries` would
+		// collide with each other, `/api/events/outbox` would derive `outbox`, and a series that *is* its
+		// counter is named `sequences` rather than `sequence`. The alias is what makes the sweep assert
+		// the field the design names instead of the field a rule would guess.
+		'/api/webhooks/subscriptions': 'webhookSubscriptions',
+		'/api/webhooks/deliveries': 'webhookDeliveries',
+		'/api/events/outbox': 'eventOutbox',
+		'/api/events/deliveries': 'eventDeliveries',
+		'/api/operations': 'operations',
+		'/api/sequences': 'sequences'
 	};
 	// An alias key may also name a resource the sweep reads, so the two lists are unioned rather than
 	// concatenated: a resource in both is one check, not two.

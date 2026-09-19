@@ -84,7 +84,11 @@ function subscriptions() {
 	const service = new WebhookSubscriptionService(
 		table as unknown as TypeOrmWebhookSubscriptionRepository,
 		{} as never,
-		new EncryptionService()
+		new EncryptionService(),
+		// The publisher is doubled rather than left out: the switch-off is announced from the service,
+		// and a suite about the switch is not a suite about the fan-out. What it announces is asserted
+		// where the two surfaces are, in `webhook.resolver.spec.ts`.
+		{ subscriptionDisabled: jest.fn().mockResolvedValue(true) } as never
 	);
 
 	return { service, table };

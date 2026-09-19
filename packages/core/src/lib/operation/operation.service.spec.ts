@@ -1,4 +1,5 @@
 import { ConflictException } from '@nestjs/common';
+import { RequestContext } from '../core/context/request-context';
 import { IOperationDefinition, IOperationStepDefinition, IStepRetryPolicy } from './operation.contract';
 import { Operation } from './operation.entity';
 import { OperationStep } from './operation-step.entity';
@@ -268,6 +269,13 @@ interface Trace {
 	inputs: Row[];
 }
 
+/** What the service announced, so a case can assert on the facts it produced. */
+interface Announcements {
+	stepChanged: jest.Mock;
+	completed: jest.Mock;
+	failed: jest.Mock;
+}
+
 /** The harness: the service, the tables it writes to, and the trace its handlers leave. */
 function runtime() {
 	const db = new Database(
@@ -282,12 +290,28 @@ function runtime() {
 	const trace: Trace = { invoked: [], compensated: [], keys: [], inputs: [] };
 	const registry = new OperationRegistry();
 
+	// The publisher the service announces through. It is scripted rather than mocked away, so a case
+	// can assert which facts a pass produced and in which order — the announcements are made by the
+	// service, and a suite that could not see them would not be covering the producers at all.
+	const announcements: Announcements = {
+		stepChanged: jest.fn().mockResolvedValue(true),
+		completed: jest.fn().mockResolvedValue(true),
+		failed: jest.fn().mockResolvedValue(true)
+	};
+
+	const publisher = {
+		operationStepChanged: announcements.stepChanged,
+		operationCompleted: announcements.completed,
+		operationFailed: announcements.failed
+	};
+
 	const service = new OperationService(
 		repositoryFor(db.tableOf(Operation), db) as unknown as TypeOrmOperationRepository,
 		{} as never,
 		repositoryFor(db.tableOf(OperationStep), db) as unknown as TypeOrmOperationStepRepository,
 		{} as never,
-		registry
+		registry,
+		publisher as never
 	);
 
 	/** A plan over the named steps, with one step failing and one compensator giving up. */
@@ -349,6 +373,7 @@ function runtime() {
 		service,
 		registry,
 		trace,
+		announcements,
 		define,
 		operations: db.tableOf(Operation),
 		steps: db.tableOf(OperationStep)
@@ -809,5 +834,324 @@ describe('cancelling an operation', () => {
 		await service.execute(operation.id as string);
 
 		await expect(service.cancel(operation.id as string)).rejects.toBeInstanceOf(ConflictException);
+	});
+});
+
+describe('retrying an operation that failed', () => {
+	it('re-arms the failed step under a fresh budget, and the plan runs again', async () => {
+		const { service, registry, trace, steps, define } = runtime();
+
+		registry.register(TYPE, define(['charge'], { failFirstAttemptAt: 'charge' }));
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		const failed = await service.execute(operation.id as string);
+
+		expect(failed.operation.status).toBe('COMPENSATED');
+		expect(trace.invoked).toEqual(['charge']);
+
+		const retried = await service.retry(operation.id as string);
+
+		// The same step, invoked a second time because the attempt budget it exhausted is the one the
+		// retry replaced — and the stable idempotency key is what makes that safe.
+		expect(trace.invoked).toEqual(['charge', 'charge']);
+		expect(trace.keys[0]).toBe(trace.keys[1]);
+		expect(retried.operation.status).toBe('COMPLETED');
+		expect(steps.rows.find((row) => row.name === 'charge')?.attemptCount).toBe(1);
+	});
+
+	it('runs the whole plan again when the undo already happened, which is the only correct restart', async () => {
+		const { service, registry, trace } = runtime();
+		let confirmations = 0;
+
+		registry.register(TYPE, {
+			steps: ['reserve', 'charge', 'confirm'].map((name, index) => ({
+				name,
+				order: index + 1,
+				invoke: async () => {
+					trace.invoked.push(name);
+					confirmations += name === 'confirm' ? 1 : 0;
+
+					// The confirmation timed out once, which is the failure this case retries.
+					if (name === 'confirm' && confirmations === 1) {
+						throw new Error('the confirmation timed out');
+					}
+
+					return { compensationData: { step: name } };
+				},
+				compensate: async () => {
+					trace.compensated.push(name);
+				}
+			}))
+		});
+
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		await service.execute(operation.id as string);
+
+		// Both completed steps were undone, so the aggregate is clean and the plan starts from the top.
+		expect(trace.compensated).toEqual(['charge', 'reserve']);
+
+		const retried = await service.retry(operation.id as string);
+
+		expect(trace.invoked).toEqual(['reserve', 'charge', 'confirm', 'reserve', 'charge', 'confirm']);
+		expect(retried.operation.status).toBe('COMPLETED');
+	});
+
+	it('hands an operation whose compensation gave up back to the compensation walk', async () => {
+		const { service, registry, trace, steps } = runtime();
+		let compensatorWorks = false;
+
+		registry.register(TYPE, {
+			steps: [
+				{
+					name: 'reserve',
+					order: 1,
+					invoke: async () => ({ compensationData: { reservationId: 'R1' } }),
+					compensate: async () => {
+						trace.compensated.push('reserve');
+
+						if (!compensatorWorks) {
+							throw new Error('the reservation service is down');
+						}
+					}
+				},
+				{
+					name: 'charge',
+					order: 2,
+					invoke: async () => {
+						throw Object.assign(new Error('declined'), { code: 'PAYMENT_DECLINED', retryable: false });
+					}
+				}
+			]
+		});
+
+		const { operation } = await service.start({ type: TYPE, input: {} });
+		const failed = await service.execute(operation.id as string);
+
+		expect(failed.operation.status).toBe('COMPENSATED');
+		expect(steps.rows.find((row) => row.name === 'reserve')?.status).toBe('COMPENSATION_FAILED');
+
+		// The dependency the compensator needed is back, and a retry gives it a fresh budget.
+		compensatorWorks = true;
+
+		const retried = await service.retry(operation.id as string);
+
+		// The step that failed forwards is *not* re-invoked: the outstanding work of this operation is
+		// the undo, and the runtime's own rule is what says so.
+		expect(trace.compensated).toEqual(['reserve', 'reserve']);
+		expect(retried.operation.status).toBe('COMPENSATED');
+		expect(steps.rows.find((row) => row.name === 'reserve')?.status).toBe('COMPENSATED');
+		expect((retried.operation.result as Row).compensationFailures).toEqual([]);
+	});
+
+	it('refuses a retry of an operation that completed', async () => {
+		const { service, registry, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		await service.execute(operation.id as string);
+
+		await expect(service.retry(operation.id as string)).rejects.toBeInstanceOf(ConflictException);
+	});
+
+	it('refuses to resurrect work a caller cancelled', async () => {
+		const { service, registry, trace, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		await service.cancel(operation.id as string, { reason: 'the customer withdrew' });
+
+		await expect(service.retry(operation.id as string)).rejects.toBeInstanceOf(ConflictException);
+		expect(trace.invoked).toEqual([]);
+	});
+
+	it('refuses to take an operation the runtime is still driving', async () => {
+		const { service, registry, trace, define } = runtime();
+
+		registry.register(TYPE, define(['reserve', 'charge']));
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		// The step budget ran out mid-plan, so the operation is running and its lease is free: a retry
+		// here would clear a lease a worker may take at any moment.
+		const running = await service.execute(operation.id as string, { maxSteps: 1 });
+		expect(running.operation.status).toBe('RUNNING');
+
+		await expect(service.retry(operation.id as string)).rejects.toBeInstanceOf(ConflictException);
+		expect(trace.invoked).toEqual(['reserve']);
+
+		// `resume` is the move for an operation that has not stopped, and it drives the same plan.
+		const resumed = await service.resume(operation.id as string);
+
+		expect(resumed.operation.status).toBe('COMPLETED');
+		expect(trace.invoked).toEqual(['reserve', 'charge']);
+	});
+});
+
+describe('announcing the facts a subscriber waits for', () => {
+	it('announces a step moving exactly once per write, with the action its status states', async () => {
+		const { service, registry, announcements, define } = runtime();
+
+		registry.register(TYPE, define(['reserve', 'charge']));
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		await service.execute(operation.id as string);
+
+		// One fact per step write — started then completed, for each of the two steps — and nothing for
+		// the bookkeeping that is not a move.
+		expect(announcements.stepChanged.mock.calls.map((call) => `${call[1].name}:${call[2]}`)).toEqual([
+			'reserve:started',
+			'reserve:completed',
+			'charge:started',
+			'charge:completed'
+		]);
+		// The operation the fact belongs to travels with it, so a subscriber never has to look it up to
+		// know what moved.
+		expect(announcements.stepChanged.mock.calls[0][0].id).toBe(operation.id);
+	});
+
+	it('announces the operation completing, and not the compensation that never ran', async () => {
+		const { service, registry, announcements, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		await service.execute(operation.id as string);
+
+		expect(announcements.completed).toHaveBeenCalledTimes(1);
+		expect(announcements.completed.mock.calls[0][0].status).toBe('COMPLETED');
+		expect(announcements.failed).not.toHaveBeenCalled();
+	});
+
+	it('announces an operation entering compensation and then settling it', async () => {
+		const { service, registry, announcements, define } = runtime();
+
+		registry.register(TYPE, define(['reserve', 'charge'], { failsAt: 'charge' }));
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		await service.execute(operation.id as string);
+
+		// Two facts about one failure, and the payload's status is what distinguishes them: the undo
+		// began, and the undo finished.
+		expect(announcements.failed.mock.calls.map((call) => call[1])).toEqual(['compensating', 'compensated']);
+		expect(announcements.completed).not.toHaveBeenCalled();
+	});
+
+	it('announces a cancellation on the failure stream, with the status that says which it was', async () => {
+		const { service, registry, announcements, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		const canceled = await service.cancel(operation.id as string, { reason: 'the customer withdrew' });
+
+		expect(canceled.status).toBe('CANCELED');
+		expect(announcements.failed).toHaveBeenCalledTimes(1);
+		expect(announcements.failed.mock.calls[0][1]).toBe('canceled');
+	});
+
+	it('announces nothing when a step’s budget is reset by a retry, because nothing moved', async () => {
+		const { service, registry, announcements, define } = runtime();
+
+		registry.register(TYPE, define(['charge'], { failFirstAttemptAt: 'charge' }));
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		await service.execute(operation.id as string);
+		announcements.stepChanged.mockClear();
+
+		await service.retry(operation.id as string);
+
+		// Only the step's second real run is announced: the reset of its attempt counter is not a move.
+		expect(announcements.stepChanged.mock.calls.map((call) => `${call[1].name}:${call[2]}`)).toEqual([
+			'charge:started',
+			'charge:completed'
+		]);
+	});
+});
+
+describe('reading the queue inside the caller’s own scope', () => {
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	it('answers only the operations of the caller’s own tenant, and refuses the reads that name none', async () => {
+		const { service, registry, operations, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+		await service.start({ type: TYPE, input: {}, tenantId: 'tenant-a', organizationId: 'organization-a' });
+		await service.start({ type: TYPE, input: {}, tenantId: 'tenant-b', organizationId: 'organization-b' });
+
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-a' as never);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('organization-a' as never);
+
+		const rows = await service.listOperations();
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0].tenantId).toBe('tenant-a');
+
+		// The same scope narrows the two other management reads, so a caller cannot reach another
+		// tenant's operation by naming its id or its aggregate.
+		const foreign = operations.rows.find((row) => row.tenantId === 'tenant-b') as Row;
+
+		expect(await service.findOperation(foreign.id)).toBeNull();
+		expect(await service.findByAggregate(TYPE, foreign.aggregateId as string)).toEqual([]);
+	});
+
+	it('answers a row of the caller’s tenant whose operation names no organization', async () => {
+		const { service, registry, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+		// A child operation, started by a step of another: the worker that ran the step had no
+		// organization in its context, so the row carries none.
+		await service.start({ type: TYPE, input: {}, tenantId: 'tenant-a' });
+
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-a' as never);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('organization-a' as never);
+
+		// The scope is the tenant's, which is the platform's own reading of a resource: a queue that
+		// dropped this row would hide work that is running for the caller's tenant.
+		expect(await service.listOperations()).toHaveLength(1);
+	});
+
+	it('answers nothing at all when no credential resolved a tenant', async () => {
+		const { service, registry, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+		const { operation } = await service.start({ type: TYPE, input: {}, tenantId: 'tenant-a' });
+
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(undefined as never);
+
+		// A management read with no scope answers nothing rather than everything: these are reachable
+		// only through a guarded surface, and a read that invented a scope would be a second
+		// authorisation model beside the guards.
+		expect(await service.listOperations()).toEqual([]);
+		expect(await service.findOperation(operation.id as string)).toBeNull();
+		expect(await service.findByAggregate(TYPE, 'cart-1')).toEqual([]);
+
+		// The runtime's own reads are untouched by the scope: a worker drives the operation it claimed,
+		// and `require` is what the state machine works through.
+		expect((await service.findById(operation.id as string))?.id).toBe(operation.id);
+	});
+
+	it('reads the steps of several operations in one query, in execution order', async () => {
+		const { service, registry, define } = runtime();
+
+		registry.register(TYPE, define(['reserve', 'charge']));
+		const first = await service.start({ type: TYPE, input: {} });
+		const second = await service.start({ type: TYPE, input: {} });
+
+		const steps = await service.findStepsForOperations([first.operation.id, second.operation.id]);
+
+		expect(steps).toHaveLength(4);
+		// One query for the set, read in the plan's own order: the reader that asked for these rows
+		// groups them by operation, and within an operation they are still ascending by `order`.
+		expect(steps.map((step) => step.name)).toEqual(['reserve', 'reserve', 'charge', 'charge']);
+		expect(steps.filter((step) => step.operationId === first.operation.id).map((step) => step.name)).toEqual([
+			'reserve',
+			'charge'
+		]);
+		// A read of no operations asks the store nothing rather than everything.
+		expect(await service.findStepsForOperations([])).toEqual([]);
 	});
 });

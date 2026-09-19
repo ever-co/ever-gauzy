@@ -943,6 +943,41 @@ type Query {
     relations: [EstimateEmailRelation!]
   ): EstimateEmail!
 
+  """
+  The outbox rows of the caller's tenant, the row whose turn comes first at the head.
+  
+  Read this to answer what is waiting and what has been waiting longest — the two questions the
+  backlog runbook asks — and narrow it by `status`, `eventName` or `aggregateId` rather than by
+  reading the whole queue.
+  """
+  eventOutbox(filter: EventOutboxRecordFilter, sort: [EventOutboxRecordSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EventOutboxRecordConnection!
+
+  """
+  One outbox row of the caller's tenant, or null when there is none.
+  
+  The row carries the event's body and the last dispatch error. The delivery records of that row are
+  the `eventDeliveries` connection narrowed by this row's `eventId`, which is what the REST detail
+  read's `expand=deliveries` attaches and what a delivery record names: a record outlives the event
+  row, so the event id — not the row's primary key — is the key that survives.
+  """
+  eventOutboxRecord(id: ID!): EventOutboxRecord
+
+  """
+  The delivery records of the caller's tenant, newest first.
+  
+  One record per `(event, consumer)` pair, which is the ledger that makes at-least-once dispatch
+  safe: a record is written before the consumer is invoked and completed after it returns, so a
+  consumer that already acknowledged an event has a `PUBLISHED` row and a consumer that crashed has
+  a `PENDING` one. Narrow it by `status` and `consumerKey` to answer which consumer stopped applying
+  events, or by `eventId` to read one event's whole fan-out.
+  """
+  eventDeliveries(filter: EventDeliveryFilter, sort: [EventDeliverySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EventDeliveryConnection!
+
+  """
+  One delivery record of the caller's tenant, or null when there is none.
+  """
+  eventDelivery(id: ID!): EventDelivery
+
   """The meeting lengths of the caller's tenant, in title order."""
   eventTypes(filter: EventTypeFilter, sort: [EventTypeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EventTypeConnection!
 
@@ -1482,6 +1517,27 @@ type Query {
   One official holiday of the caller's tenant, or null when there is none.
   """
   officialHoliday(id: ID!): OfficialHoliday
+
+  """The operations of the caller's tenant, newest first."""
+  operations(filter: OperationFilter, sort: [OperationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OperationConnection!
+
+  """
+  One operation of the caller's tenant, or null when there is none.
+  
+  A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+  row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+  other protocol's vocabulary.
+  """
+  operation(id: ID!): Operation
+
+  """
+  The operations of one aggregate, newest first.
+  
+  At most one of them is live at a time — the runtime's exclusivity rule — so what this usually
+  answers is the run in flight followed by the attempts that came before it, which is what an
+  operator investigating an aggregate reads.
+  """
+  operationsByAggregate(aggregateType: String!, aggregateId: ID!): [Operation!]!
 
   """The awards of the caller's tenant, newest first."""
   organizationAwards(filter: OrganizationAwardFilter, sort: [OrganizationAwardSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationAwardConnection!
@@ -2278,6 +2334,25 @@ type Query {
 
   """How many roles the caller's tenant has."""
   roleCount: Int
+
+  """
+  The numbering series of the caller's organization, by key.
+  
+  A series is configuration an administrator reads whole — an installation holds a handful of keys,
+  not a ledger — but the connection is offered all the same, because the same filters, the same sort
+  and the same cursor walk are what make this resource's list reachable the way every other
+  resource's list is.
+  """
+  sequences(filter: SequenceFilter, sort: [SequenceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): SequenceConnection!
+
+  """
+  One numbering series of the caller's organization, or null when there is none.
+  
+  A row that is not there answers `null` rather than a refusal — and so does a row of another
+  organization, because a caller is never told that a series it may not read exists. That is the REST
+  route's `404` stated in this protocol's vocabulary.
+  """
+  sequence(id: ID!): Sequence
 
   """The shares of the caller's tenant, newest first."""
   sharedEntities(filter: SharedEntityFilter, sort: [SharedEntitySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): SharedEntityConnection!
@@ -4157,6 +4232,35 @@ type Query {
   rows as they come back — so the connection states one, as it does for the location list.
   """
   warehouseInventory(warehouseId: ID!, filter: WarehouseProductFilter, sort: [WarehouseProductSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): WarehouseProductConnection!
+
+  """
+  The subscriptions of the caller's organization, newest first.
+  
+  A subscription's secret is answered as a fingerprint and never as material, on this field as on
+  every other read of the resource.
+  """
+  webhookSubscriptions(filter: WebhookSubscriptionFilter, sort: [WebhookSubscriptionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): WebhookSubscriptionConnection!
+
+  """
+  One subscription of the caller's organization, or null when there is none.
+  
+  A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+  row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+  other protocol's vocabulary.
+  """
+  webhookSubscription(id: ID!): WebhookSubscription
+
+  """
+  The delivery log of the caller's organization, newest first.
+  
+  The stored body of a delivery is not a member of the type this field answers; what the endpoint
+  answered, how long it took and why it failed are. A subscription's deliveries are this same
+  connection narrowed by `filter: { subscriptionId: … }`.
+  """
+  webhookDeliveries(filter: WebhookDeliveryFilter, sort: [WebhookDeliverySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): WebhookDeliveryConnection!
+
+  """One delivery of the caller's organization, or null when there is none."""
+  webhookDelivery(id: ID!): WebhookDelivery
   collections(filter: CollectionFilter, page: PageInput, limit: Int, offset: Int): CollectionConnection!
   collection(id: ID!): Collection
   collectionBySlug(slug: String!): Collection
@@ -6136,6 +6240,27 @@ type Mutation {
   recoverEquipment(id: ID!): Equipment!
 
   """
+  Re-drives one consumer's record for an event: the operator's first move.
+  
+  The attempt budget is reset to zero, the last error is cleared and the acknowledgement is
+  withdrawn, so the retry scan claims the record exactly as it claims one whose consumer crashed
+  mid-delivery. Nothing is re-published here and no consumer is invoked in this call — the record is
+  the queue, and the scan that reads `PENDING` rows is what re-drives it — which is also why the move
+  is safe to repeat. The answer is the record as it stands afterwards.
+  """
+  replayEventDelivery(id: ID!): EventDelivery!
+
+  """
+  Dead-letters one consumer's record for an event: the operator's second move.
+  
+  The record is stopped with the caller's reason, which is written onto its `lastError` and is the
+  diagnosis the next operator reads. The move is a deliberate decision to lose one reaction to a
+  real fact, so it is recorded rather than performed silently. The answer is the record as it stands
+  afterwards.
+  """
+  markEventDeliveryDead(input: MarkEventDeliveryDeadInput!): EventDelivery!
+
+  """
   Files a meeting length.
   
   The write is dispatched as the same command the REST create route dispatches, with the same payload —
@@ -7034,6 +7159,35 @@ type Mutation {
   removal rather than for a soft one.
   """
   deleteOfficialHoliday(id: ID!): Boolean!
+
+  """
+  Requests cancellation, which compensates what the operation already applied.
+  
+  A cancellation is a request the runtime observes at its next checkpoint rather than a kill, so the
+  answer is the operation as the request left it — already settled when it had applied nothing, and
+  compensating when it had. A completed operation is refused: there is nothing left to cancel.
+  """
+  cancelOperation(id: ID!, reason: String): Operation!
+
+  """
+  Re-drives an operation that failed, under a fresh attempt budget.
+  
+  The steps a failed attempt left have their attempt counters reset, and where the retry continues
+  falls out of the persisted step statuses: an operation whose compensation finished re-runs its
+  plan on a clean aggregate, and one that still owes an undo is handed back to the compensation
+  walk. A completed operation, and one a caller cancelled, are refused — this door does not resurrect
+  work somebody deliberately abandoned.
+  """
+  retryOperation(id: ID!): Operation!
+
+  """
+  Continues an interrupted operation.
+  
+  Recovery needs no external state: the persisted step statuses say where to continue, so resuming
+  is executing under a fresh lease. An operation that already reached a terminal status is answered
+  unchanged, because there is no move left to make.
+  """
+  resumeOperation(id: ID!): Operation!
 
   """Files an award."""
   createOrganizationAward(input: CreateOrganizationAwardInput!): OrganizationAward!
@@ -8291,6 +8445,42 @@ type Mutation {
   recoverRole(id: ID!): Role!
 
   """
+  Opens a numbering series.
+  
+  `key` and the channel are the series' identity and are stated here once; the counter is stated here
+  too, which is the one write that may state it — a series an installation adopts continues numbering
+  an external system has already begun, and it has to know where to continue from. The tenant and the
+  organization are stamped from the credential.
+  """
+  createSequence(input: CreateSequenceInput!): Sequence!
+
+  """
+  Changes the configuration of a series: the shape of the numbers it produces, the note kept beside
+  it, and whether it numbers documents at all.
+  
+  The counter is not among the members this write accepts — see `UpdateSequenceInput` for why — so an
+  edit can never renumber a document the installation has already issued. Stating `isActive: false`
+  retires the series: the counter stays and an allocation answers with a reason instead of a number.
+  """
+  updateSequence(input: UpdateSequenceInput!): Sequence!
+
+  """
+  Restarts a series, when its own policy says a restart is due.
+  
+  **This is the move the allocator performs, performed on demand — not a column write.** The counter
+  is rewound to the value a period starts at and the moment is recorded, under the same row lock the
+  allocator takes and inside the same kind of transaction, so an allocation running beside this one
+  is serialised against it exactly as it is against the allocator's own restart.
+  
+  It declines with the kernel's own reason when no restart is due: the series' policy is `NEVER`, it
+  has already restarted inside the period this moment falls in, or no period is recorded for it yet —
+  in which case its next allocation records one without discarding the configured counter. Nothing
+  here counts the documents that carry the series' numbers, because nothing in the kernel does: a
+  series is a key, and the domains that number their documents from it are not known to it.
+  """
+  resetSequence(id: ID!): Sequence!
+
+  """
   Creates a share over one record of the caller's tenant, minting its token.
   """
   createSharedEntity(input: CreateSharedEntityInput!): SharedEntity!
@@ -9173,6 +9363,72 @@ type Mutation {
   quantity and the variant levels it is the sum of from drifting apart.
   """
   updateWarehouseProductVariantQuantity(warehouseProductVariantId: ID!, count: Decimal!): WarehouseProductVariant!
+
+  """
+  Subscribes an endpoint and generates its signing secret.
+  
+  The secret is answered here and never again: every later read of the subscription answers a
+  fingerprint. The endpoint must use HTTPS, and the events must name at least one pattern, because a
+  subscription that could never deliver anything is refused rather than stored.
+  """
+  createWebhookSubscription(input: CreateWebhookSubscriptionInput!): WebhookSubscriptionCredential!
+
+  """
+  Changes the mutable facts of a subscription: its endpoint, its event selection, its channel and the
+  descriptive members. A member the caller omits is left as it is.
+  
+  The switch, the counters and the secret are not among them — each has an operation of its own,
+  because each is a different decision from editing an endpoint.
+  """
+  updateWebhookSubscription(input: UpdateWebhookSubscriptionInput!): WebhookSubscription!
+
+  """
+  Removes a subscription and, by the table's own cascade, its delivery log.
+  
+  Removal is the only way to stop a subscription for good: disabling keeps the row, its counters and
+  its history, which is what an incident needs.
+  """
+  deleteWebhookSubscription(id: ID!): Boolean!
+
+  """
+  Generates a new signing secret.
+  
+  The previous secret stays valid for a grace window, so the endpoint can be reconfigured without
+  losing deliveries; the instant it stops being accepted is answered beside the new one. This is the
+  second and last moment a plaintext secret exists.
+  """
+  rotateWebhookSecret(id: ID!): WebhookSubscriptionCredential!
+
+  """
+  Switches a subscription back on and resets its failure counter.
+  
+  The reset is the point: keeping the count that switched the endpoint off would switch it off again
+  on its first hiccup. Events produced while it was off are not replayed — a gap is redelivered
+  deliberately, through `redeliverWebhook`, rather than by accident.
+  """
+  enableWebhookSubscription(id: ID!): WebhookSubscription!
+
+  """
+  Switches a subscription off.
+  
+  Disabling is immediate and loses nothing already queued: the deliveries already written walk their
+  retry schedule to its end and dead-letter on their own. The switch is announced to subscribers of
+  `webhookSubscriptionDisabled`, whichever protocol threw it.
+  """
+  disableWebhookSubscription(id: ID!, reason: String): WebhookSubscription!
+
+  """
+  Requeues one delivery for another attempt.
+  
+  The row is reset rather than duplicated and the payload it already holds is what goes out again, so
+  a redelivery reproduces the original request rather than a newer projection of the same event. A
+  delivery is requeued whatever status it reached, the terminal one included: a dead delivery is
+  precisely the row an operator redelivers once the receiver has been fixed.
+  
+  The answer is the requeued row, not an attempt's outcome: the retry worker is what calls an
+  endpoint, so neither this field nor the route behind it ever blocks on a partner's server.
+  """
+  redeliverWebhook(id: ID!): WebhookDelivery!
   createCollection(input: CreateCollectionInput!): Collection!
   updateCollection(id: ID!, input: UpdateCollectionInput!): Collection!
   deleteCollection(id: ID!): Boolean!
@@ -13334,6 +13590,21 @@ type Subscription {
   contactGroupChanged(groupId: ID, action: String): ContactGroup!
 
   """
+  Every operator move on a delivery record of the caller's tenant.
+  
+  The stream carries the record in its post-move state and the move that produced it (`replayed` or
+  `marked-dead`), and it is narrowed by `deliveryId` and by `action`; both only ever narrow what the
+  credential may already read. Its producer is the service both protocols move a record through, so
+  a subscriber cannot tell which protocol made the move.
+  
+  **This is an operator's stream and not a consumer's.** It exists for the staff who watch the
+  reliability machinery, and no subscription subscribes to another subscription's delivery. A
+  subscription is a notification and never a system of record: a move made while the client is
+  disconnected is not replayed, and a client that must not miss one reads the delivery records.
+  """
+  eventDeliveryChanged(deliveryId: ID, action: String): EventDelivery!
+
+  """
   A stream of the platform's events, selected by name. One event is delivered per message, so a
   payload never merges unrelated facts. A subscription is a notification and never a system of
   record: an event produced while a client is disconnected is not replayed, and a client that must
@@ -13357,6 +13628,34 @@ type Subscription {
   ): EventEnvelope
 
   """
+  A step of an operation of the caller's tenant moving: it started, succeeded, failed, or was
+  compensated during the undo walk.
+  
+  The payload is the operation in its state at delivery, so a subscriber follows a run without
+  polling. Narrowing by `operationId` and by `stepName` only ever narrows what the credential may
+  already read: the caller without `OPERATIONS_VIEW` is refused by the guard before the stream is
+  opened, and the tenant is taken from the credential rather than from an argument.
+  """
+  operationStepChanged(operationId: ID, stepName: String): Operation!
+
+  """
+  An operation of the caller's tenant reaching `COMPLETED`: every step of its plan ran.
+  """
+  operationCompleted(operationId: ID): Operation!
+
+  """
+  An operation of the caller's tenant that will not complete: it entered the compensation walk, or it
+  settled compensated, failed or cancelled.
+  
+  The payload says which of the four it was — its `status` — and the step list says what was left
+  behind, so a client never has to infer the outcome from the stream's name.
+  
+  A subscription is a notification and never a system of record: an event produced while the client
+  is disconnected is not replayed, and a client that must not miss one reads the operation by id.
+  """
+  operationFailed(operationId: ID): Operation!
+
+  """
   Every change to a region of the caller's tenant: a creation, an edit, a default change, a
   retirement, or a country-set replacement. The stream is narrowed by `regionId` and by `action`;
   both only ever narrow what the credential may already read.
@@ -13365,6 +13664,29 @@ type Subscription {
   is disconnected is not replayed, and a client that must not miss one registers a webhook.
   """
   regionChanged(regionId: ID, action: String): Region!
+
+  """
+  Every attempt an endpoint of the caller's tenant has refused, as it is refused.
+  
+  The stream is narrowed by `subscriptionId`, which only ever narrows what the credential may already
+  read. A delivery that reaches `DEAD` is announced too, so an integration owner that is only told
+  about the retryable failures does not miss the moment its events stop arriving.
+  
+  A subscription is a notification and never a system of record: an event produced while the client
+  is disconnected is not replayed, and a client that must not miss one registers a webhook — which is
+  the resource this one is about.
+  """
+  webhookDeliveryFailed(subscriptionId: ID): WebhookDelivery!
+
+  """
+  Every subscription of the caller's tenant that has been switched off, whether by an operator or by
+  the auto-disable rule.
+  
+  This is the fact an integration owner cannot poll for cheaply, which is why it is one of the two
+  facts this domain streams. The row is answered with its secret replaced by a fingerprint, as it is
+  on every other read.
+  """
+  webhookSubscriptionDisabled(subscriptionId: ID): WebhookSubscription!
   collectionChanged(id: ID): Collection!
   productPublished(productId: ID, channelId: ID): ProductPublication!
   productUnpublished(productId: ID, channelId: ID): ProductPublication!
@@ -19616,6 +19938,299 @@ enum EstimateEmailRelation {
 }
 
 """
+One durable event: the state change it describes, projected, and where its dispatch stands.
+"""
+type EventOutboxRecord {
+  id: ID!
+
+  """
+  Stable event identity, generated by the writer rather than by the database. It is what the delivery
+  records, the webhook signature and a replay all carry, and it is *not* the row's primary key: a
+  delivery record outlives the event row and names this one.
+  """
+  eventId: ID!
+
+  """`<aggregate>.<action>`, for example `order.placed`."""
+  eventName: String!
+
+  """The aggregate that changed, for example `order`."""
+  aggregateType: String!
+
+  """The instance of the aggregate that changed."""
+  aggregateId: ID!
+
+  """
+  The event body: the projection the catalogue declares for this event name, never an entity dump.
+  Non-null, because the column is non-null with an empty-object default.
+  """
+  payload: JSON!
+
+  """
+  What travelled beside the body: the correlation id, the causation id, the actor and the channel.
+  Null when the row was written outside a request, which is the only case that produces one.
+  """
+  headers: JSON
+
+  """
+  Where dispatch stands, as the contracts' own value: `PENDING`, `PUBLISHED`, `FAILED` or `DEAD`.
+  `FAILED` means a further attempt is scheduled, not that the event was abandoned — `DEAD` is the
+  terminal state.
+  """
+  status: String!
+
+  """
+  How many dispatch attempts were made. The claim that leases the row increments it.
+  """
+  attemptCount: Int!
+
+  """
+  When dispatch is next due. It is the lease and the backoff in one column: claiming a row pushes it
+  forward for the lease window, so a dispatcher that dies mid-pass leaves rows another worker picks
+  up when the window expires.
+  """
+  availableAt: DateTime!
+
+  """When dispatch completed; null while the event has not been dispatched."""
+  publishedAt: DateTime
+
+  """The last dispatch error, as the dispatcher recorded it."""
+  lastError: String
+
+  """The ordering key, normally `<aggregateType>:<aggregateId>`."""
+  partitionKey: String
+
+  """
+  The position of this event inside its partition, allocated inside the writing transaction. It is
+  monotonic within the key above and meaningless across keys.
+  """
+  sequence: Int!
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""The boundary of one page of outbox rows."""
+type EventOutboxRecordEdge {
+  node: EventOutboxRecord!
+  cursor: String!
+}
+
+"""
+One page of outbox rows, with the total the filters select and the boundary cursors.
+"""
+type EventOutboxRecordConnection {
+  nodes: [EventOutboxRecord!]!
+  edges: [EventOutboxRecordEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields an outbox list may be sorted by.
+
+`availableAt` is the queue's own order — the row whose turn comes first — and it is the order the
+listing means when the caller states none. The two timestamps are how a change is found again,
+`sequence` is how one aggregate's events are put back in order, and `attemptCount` is how the events
+that keep failing are found. The flags and the identifiers are not sort keys: an identifier or a
+boolean order is not an order a queue is read in, and the questions those columns answer are filters.
+"""
+enum EventOutboxRecordSortField {
+  createdAt
+  updatedAt
+  availableAt
+  publishedAt
+  sequence
+  attemptCount
+}
+
+"""
+The order the outbox rows are returned in. At most three keys are accepted.
+"""
+input EventOutboxRecordSort {
+  field: EventOutboxRecordSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields an outbox list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row. The two documents are stated through the JSON family, which is
+the only family that can compare them: `contains` answers "which events mention this aggregate"
+without the surface claiming to know the body's shape.
+
+`deletedAt` is deliberately absent although the row carries it: the delivered read answers live rows
+only, so a condition on that column could only ever match the empty set, and an argument that cannot
+be honoured is worse than an argument that is not offered. The tenant and the organization are absent
+for a different reason — both are applied to the criterion from the credential rather than from the
+caller, so a member here would suggest a scope decision the caller does not have.
+"""
+input EventOutboxRecordFilter {
+  id: IDFilter
+  eventId: IDFilter
+  eventName: StringFilter
+  aggregateType: StringFilter
+  aggregateId: IDFilter
+  payload: JSONFilter
+  headers: JSONFilter
+  status: StringFilter
+  attemptCount: NumberFilter
+  availableAt: DateTimeFilter
+  publishedAt: DateTimeFilter
+  lastError: StringFilter
+  partitionKey: StringFilter
+  sequence: NumberFilter
+  isActive: BooleanFilter
+  isArchived: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [EventOutboxRecordFilter!]
+  or: [EventOutboxRecordFilter!]
+  not: EventOutboxRecordFilter
+}
+
+"""What one consumer did with one event."""
+type EventDelivery {
+  id: ID!
+
+  """
+  The `eventId` of the outbox row this record is about. There is deliberately no foreign key behind
+  it: the record outlives the event row, and it is the record — not the event — that says what a
+  consumer actually did.
+  """
+  eventId: ID!
+
+  """
+  The consumer, namespaced by its kind: `subscriber:<key>`, `job:<queueName>` or
+  `webhook:<subscriptionId>`. The prefix is what keeps a subscriber, a queued job and an outbound
+  endpoint from ever colliding on one event.
+  """
+  consumerKey: String!
+
+  """
+  Where this consumer stands, in the same vocabulary the outbox row uses: `PENDING` before the
+  consumer is invoked, `PUBLISHED` once it acknowledged the event, `FAILED` while a further attempt
+  is scheduled, and `DEAD` when the budget is spent or an operator stopped it.
+  """
+  status: String!
+
+  """
+  How many times the consumer was invoked. Reset by a replay, which is what a replay is for.
+  """
+  attemptCount: Int!
+
+  """When the consumer acknowledged the event; null while it has not."""
+  deliveredAt: DateTime
+
+  """
+  The last error the consumer raised, or the reason an operator stopped it.
+  """
+  lastError: String
+
+  """
+  Copied from the outbox row, so the retry scan keeps per-aggregate order without a join.
+  """
+  partitionKey: String
+
+  """
+  Copied from the outbox row; a strict consumer compares it against the last it processed.
+  """
+  sequence: Int
+  isActive: Boolean
+  isArchived: Boolean
+  tenantId: ID
+  organizationId: ID
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""The boundary of one page of delivery records."""
+type EventDeliveryEdge {
+  node: EventDelivery!
+  cursor: String!
+}
+
+"""
+One page of delivery records, with the total the filters select and the boundary cursors.
+"""
+type EventDeliveryConnection {
+  nodes: [EventDelivery!]!
+  edges: [EventDeliveryEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields a delivery list may be sorted by.
+
+`createdAt` is the order the listing means — the newest record first, which is the record an operator
+opens to read what just broke — and it is the instant the record was written, before the consumer
+ran. `deliveredAt` is when one finally succeeded, `attemptCount` is how hard the machinery tried, and
+`sequence` is the position the record carries from its event.
+"""
+enum EventDeliverySortField {
+  createdAt
+  updatedAt
+  deliveredAt
+  attemptCount
+  sequence
+}
+
+"""
+The order the delivery records are returned in. At most three keys are accepted.
+"""
+input EventDeliverySort {
+  field: EventDeliverySortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a delivery list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`consumerKey` is the member the dead-letter runbook groups by — one consumer failing broadly is a
+regression in that consumer, many consumers failing on one event is a bad payload — and `eventId` is
+the other half of that question. Every other member is a column of the record; the tenant and the
+organization are applied from the credential, and a soft-deleted record is not answered at all,
+which is why neither that column nor a condition on it appears here.
+"""
+input EventDeliveryFilter {
+  id: IDFilter
+  eventId: IDFilter
+  consumerKey: StringFilter
+  status: StringFilter
+  attemptCount: NumberFilter
+  deliveredAt: DateTimeFilter
+  lastError: StringFilter
+  partitionKey: StringFilter
+  sequence: NumberFilter
+  isActive: BooleanFilter
+  isArchived: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [EventDeliveryFilter!]
+  or: [EventDeliveryFilter!]
+  not: EventDeliveryFilter
+}
+
+"""
+What a caller states when it stops one delivery record.
+
+The reason is the operator's own words and is written onto the record's `lastError`. A record
+belonging to another tenant is answered exactly as a record that does not exist.
+"""
+input MarkEventDeliveryDeadInput {
+  """The record to stop."""
+  id: ID!
+
+  """Why it is being stopped."""
+  reason: String!
+}
+
+"""
 One length of meeting the organization offers, with the name it offers it under.
 """
 type EventType {
@@ -25653,6 +26268,85 @@ input UpdateOfficialHolidayInput {
   isRecurring: Boolean
   isActive: Boolean
   isArchived: Boolean
+}
+
+"""
+The boundary of one page of operations.
+
+The cursor is the platform's own: it is produced and consumed by the same codec the REST list route
+uses, so a cursor obtained over one surface resumes on the other.
+"""
+type OperationEdge {
+  node: Operation!
+  cursor: String!
+}
+
+"""
+One page of operations, with the total the filters select and the boundary cursors.
+"""
+type OperationConnection {
+  nodes: [Operation!]!
+  edges: [OperationEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""The fields an operation may be sorted by."""
+enum OperationSortField {
+  createdAt
+  updatedAt
+  startedAt
+  finishedAt
+  deadlineAt
+  type
+  status
+}
+
+"""
+The order the operations are returned in. At most three keys are accepted.
+"""
+input OperationSort {
+  field: OperationSortField!
+  direction: SortDirection!
+}
+
+"""Comparison on a status."""
+input OperationStatusFilter {
+  eq: OperationStatus
+  ne: OperationStatus
+  in: [OperationStatus!]
+  nin: [OperationStatus!]
+  isNull: Boolean
+}
+
+"""
+The fields an operation list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+The lease columns are deliberately absent: `lockedBy` is an internal worker identity and
+`leaseExpiresAt` answers "is this operation stuck", which the deadline and the status already say in
+the vocabulary an operator reads. The tenant is absent for the reason every resource's filter omits
+it — it is applied to the criterion from the credential, never from the caller — and the
+organization is absent because the reads are not scoped by one: an operation a step of another
+operation started carries no organization, and the resource's scope is the tenant's.
+"""
+input OperationFilter {
+  id: IDFilter
+  type: StringFilter
+  status: OperationStatusFilter
+  aggregateType: StringFilter
+  aggregateId: IDFilter
+  parentOperationId: IDFilter
+  correlationId: IDFilter
+  idempotencyKey: StringFilter
+  deadlineAt: DateTimeFilter
+  startedAt: DateTimeFilter
+  finishedAt: DateTimeFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [OperationFilter!]
+  or: [OperationFilter!]
+  not: OperationFilter
 }
 
 """One award an organization records about itself."""
@@ -34042,6 +34736,262 @@ input RoleFilter {
 }
 
 """
+One numbering series: the counter a key allocates from, and the shape of the numbers it produces.
+"""
+type Sequence {
+  id: ID!
+
+  """
+  The tenant the series belongs to, which the caller's credential states and never the caller.
+  """
+  tenantId: ID
+
+  """
+  The organization whose documents the series numbers. A series is never read across organizations.
+  """
+  organizationId: ID
+
+  """
+  Series key, upper snake case, for example `ORDER` or `PURCHASE_ORDER`. It is the word every
+  allocation resolves the series by, and it is written once: an edit that renamed it would leave the
+  counter reachable under no name at all.
+  """
+  key: String!
+
+  """
+  The channel the counter belongs to, or null for the organization-wide series.
+  `null` is not "no channel is configured" — it is a scope of its own, and it is the series an
+  allocation falls back to when a channel has none. One organization therefore holds at most one
+  organization-wide series and one series per channel under one key, which is what the table's two
+  partial unique indexes state.
+  """
+  channelId: ID
+
+  """Text placed before the number, for example `SO-`."""
+  prefix: String
+
+  """
+  Minimum number of digits; a shorter value is left-padded with zeroes. A value that outgrows the
+  width is never truncated — a number a person quotes is not silently shortened.
+  """
+  padding: Int!
+
+  """
+  **The state, not the configuration.** The value the next allocation hands out. It moves when a
+  number is allocated, and backwards only through the restart the series' own policy describes —
+  which is what `resetSequence` performs and what an edit refuses to write.
+  """
+  nextValue: Int!
+
+  """
+  The increment each allocation applies. Larger than one when a range is reserved for an external
+  system: the allocation hands out one value and advances by this much, so the values in between are
+  the reserved block.
+  """
+  step: Int!
+
+  """When the series restarts, and the reason `lastResetAt` exists."""
+  resetPolicy: SequenceResetPolicy!
+
+  """
+  **The state, not the configuration.** The moment the series last restarted, or null when it never
+  has. The restart check compares the period this falls in with the period an allocation happens in,
+  and a series restarts at most once per period — which is why a manual restart is refused inside a
+  period that has already been restarted.
+  """
+  lastResetAt: DateTime
+
+  """Free-text note for operators."""
+  description: String
+
+  """
+  Whether the series numbers documents at all. Retiring a series is this member and not a removal:
+  the counter and the documents numbered from it stay, and an allocation answers with a reason
+  instead of a number.
+  """
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""When a series restarts."""
+enum SequenceResetPolicy {
+  """
+  The series never restarts; it continues for the life of the organization.
+  """
+  NEVER
+
+  """The series restarts on the first day of each calendar year, in UTC."""
+  YEARLY
+
+  """The series restarts on the first day of each calendar month, in UTC."""
+  MONTHLY
+
+  """The series restarts at the start of each calendar day, in UTC."""
+  DAILY
+}
+
+"""The boundary of one page of series."""
+type SequenceEdge {
+  node: Sequence!
+  cursor: String!
+}
+
+"""
+One page of series, with the total the filters select and the boundary cursors.
+"""
+type SequenceConnection {
+  nodes: [Sequence!]!
+  edges: [SequenceEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields a series list may be sorted by.
+
+`key` is how a numbering configuration is read — the series of one key together, whichever scope each
+belongs to — and the two timestamps are how a change is found again. `nextValue` is offered because
+"where does this counter stand" is the question an operator brings to this resource, and `resetPolicy`
+because a work list of the series that restart is read in policy groups. The identifiers are not sort
+keys: an order by identifier is not an order anyone reads a configuration in, and the questions those
+columns answer are filters.
+"""
+enum SequenceSortField {
+  key
+  nextValue
+  resetPolicy
+  createdAt
+  updatedAt
+}
+
+"""The order the series are returned in. At most three keys are accepted."""
+input SequenceSort {
+  field: SequenceSortField!
+  direction: SortDirection!
+}
+
+"""Comparison on the restart policy."""
+input SequenceResetPolicyFilter {
+  eq: SequenceResetPolicy
+  ne: SequenceResetPolicy
+  in: [SequenceResetPolicy!]
+  nin: [SequenceResetPolicy!]
+  isNull: Boolean
+}
+
+"""
+The fields a series list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the set is what it is — the delivered list read
+answers those columns, so each one narrows rows the connection was handed. `key` and `channelId` are
+the two members the endpoint table names for this resource's list route, stated here in the
+connection's own vocabulary so a caller who narrows over REST narrows the same way here. The tenant
+and the organization are absent because both are applied to the read from the credential rather than
+from the caller: a member here would suggest a scope decision the caller does not have.
+"""
+input SequenceFilter {
+  id: IDFilter
+  key: StringFilter
+  channelId: IDFilter
+  prefix: StringFilter
+  padding: NumberFilter
+  nextValue: NumberFilter
+  step: NumberFilter
+  resetPolicy: SequenceResetPolicyFilter
+  lastResetAt: DateTimeFilter
+  description: StringFilter
+  isActive: BooleanFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [SequenceFilter!]
+  or: [SequenceFilter!]
+  not: SequenceFilter
+}
+
+"""What a caller states when it opens a series."""
+input CreateSequenceInput {
+  """Series key, upper snake case, for example `ORDER`."""
+  key: String!
+
+  """
+  The channel the counter belongs to. Absent means the organization-wide series.
+  """
+  channelId: ID
+
+  """Text placed before the number, for example `SO-`."""
+  prefix: String
+
+  """
+  Minimum number of digits. Defaults to the width a document number is quoted at.
+  """
+  padding: Int
+
+  """
+  The value the first allocation hands out. Stated when the series continues numbering an external
+  system has already begun, and stated once: from here on the counter moves by allocating a number.
+  """
+  nextValue: Int
+
+  """
+  The increment each allocation applies. Larger than one when a range is reserved for an external
+  system.
+  """
+  step: Int
+
+  """
+  When the series restarts. `NEVER` when the caller states none, which is the honest default.
+  """
+  resetPolicy: SequenceResetPolicy
+
+  """Free-text note for operators."""
+  description: String
+}
+
+"""
+What a caller may change on a series that exists.
+
+**The members this input does not declare are the contract.** `nextValue` and `lastResetAt` are the
+series' state — the value the next document will be numbered with and the period it last restarted in
+— and an edit that could write either would renumber documents the installation has already issued.
+`key` and `channelId` are absent for the neighbouring reason: they are the series' identity and the
+scope of its counter.
+
+A `nextValue` a REST body states is refused as an unknown field by the route's own validation rather
+than stripped, so a caller is told its edit was not applied instead of being answered `200` for a
+write that changed nothing it asked for. Over this protocol the refusal is the schema's: an input
+member that is not declared cannot be stated.
+
+`isActive` is a member, and it is the retirement path: an allocation refuses a series that is not
+active, so an operator who must stop numbering from a key retires the series instead of removing it —
+the counter stays, and stating `true` puts it back to work.
+"""
+input UpdateSequenceInput {
+  id: ID!
+
+  """Text placed before the number, for example `SO-`."""
+  prefix: String
+
+  """Minimum number of digits; a shorter value is left-padded with zeroes."""
+  padding: Int
+
+  """The increment each allocation applies."""
+  step: Int
+
+  """When the series restarts."""
+  resetPolicy: SequenceResetPolicy
+
+  """Free-text note for operators."""
+  description: String
+
+  """
+  Whether the series numbers documents at all. `false` retires it without removing its counter.
+  """
+  isActive: Boolean
+}
+
+"""
 The capability that lets one record be read by whoever holds the token, within the stated rules.
 """
 type SharedEntity {
@@ -40998,6 +41948,449 @@ does not have.
 input AddWarehouseProductsInput {
   """The products to open a level for, at the location the field names."""
   productIds: [ID!]!
+}
+
+"""
+An outbound delivery endpoint: where a consumer outside the platform receives events.
+
+A subscription matches an event name against its `events` patterns at dispatch time, so a domain that
+writes to the outbox is immediately subscribable without this table being told about it. One
+subscription per `(organization, url)`, because a duplicate endpoint would double-deliver every
+matching event; and an endpoint that keeps refusing is switched off rather than left to be hammered.
+"""
+type WebhookSubscription {
+  id: ID!
+  tenantId: ID
+  organizationId: ID
+
+  """The operator-facing name of the endpoint."""
+  name: String!
+
+  """
+  Absolute HTTPS endpoint. The platform refuses to call anything else, in production.
+  """
+  url: String!
+
+  """
+  The event names or patterns this endpoint receives: `order.placed` matches exactly that event,
+  `order.*` matches one more segment, `*` matches any event at any depth, and `*.payment.*` matches a
+  payment event under any aggregate. The list is never empty — a subscription that could never
+  deliver anything is refused rather than stored.
+  """
+  events: [String!]!
+
+  """The channel this subscription listens to; null means every channel."""
+  channelId: ID
+
+  """Free-text note for operators."""
+  description: String
+
+  """
+  Static extra headers sent with every delivery, for a routing key a receiver needs. Non-secret by
+  contract, and never allowed to override a reserved delivery header.
+  """
+  headers: JSON
+
+  """
+  The payload version this endpoint receives; the platform's own version when it pins none.
+  """
+  apiVersion: String
+
+  """Consecutive refusals; reset by a success and by the enable operation."""
+  failureCount: Int!
+
+  """When the endpoint last accepted a delivery."""
+  lastSuccessAt: DateTime
+
+  """When the endpoint last refused one."""
+  lastFailureAt: DateTime
+
+  """
+  When the switch was thrown, by an operator or by the auto-disable rule.
+  """
+  disabledAt: DateTime
+
+  """
+  The operator switch. A disabled subscription is never selected for a delivery.
+  """
+  isActive: Boolean
+
+  """
+  Operator metadata. It carries the previous secret's *ciphertext* and its expiry during a rotation
+  grace window, along with the reason the last disable recorded — never a readable secret.
+  """
+  metadata: JSON
+
+  """
+  A short digest of the signing secret: enough to tell two subscriptions apart, and useless for
+  signing. It is what every read of this resource answers in the secret's place.
+  """
+  secretFingerprint: String!
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""The boundary of one page of subscriptions."""
+type WebhookSubscriptionEdge {
+  node: WebhookSubscription!
+  cursor: String!
+}
+
+"""
+One page of subscriptions, with the total the filters select and the boundary cursors.
+"""
+type WebhookSubscriptionConnection {
+  nodes: [WebhookSubscription!]!
+  edges: [WebhookSubscriptionEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields a subscription list may be sorted by.
+
+A webhook list is read as a fleet: what was added most recently, what is failing most, and what has
+not been heard from in the longest. The identifiers and the event patterns are not sort keys — those
+are filters — and neither is the secret, in any form.
+"""
+enum WebhookSubscriptionSortField {
+  createdAt
+  updatedAt
+  name
+  failureCount
+  lastSuccessAt
+  lastFailureAt
+  isActive
+}
+
+"""
+The order the subscriptions are returned in. At most three keys are accepted.
+"""
+input WebhookSubscriptionSort {
+  field: WebhookSubscriptionSortField!
+  direction: SortDirection!
+}
+
+"""
+The fields a subscription list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the set is what it is. The secret is deliberately
+absent although the row carries it: a condition on a value no read answers could only ever be a
+condition a client cannot verify, and the fingerprint is a digest rather than something a caller
+filters on. The tenant and the organization are absent because both are applied to the criterion from
+the credential rather than from the caller.
+"""
+input WebhookSubscriptionFilter {
+  id: IDFilter
+  name: StringFilter
+  url: StringFilter
+  events: JSONFilter
+  channelId: IDFilter
+  description: StringFilter
+  headers: JSONFilter
+  apiVersion: StringFilter
+  failureCount: NumberFilter
+  lastSuccessAt: DateTimeFilter
+  lastFailureAt: DateTimeFilter
+  disabledAt: DateTimeFilter
+  isActive: BooleanFilter
+  metadata: JSONFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [WebhookSubscriptionFilter!]
+  or: [WebhookSubscriptionFilter!]
+  not: WebhookSubscriptionFilter
+}
+
+"""
+One delivery of one event to one subscription.
+
+`(subscriptionId, eventId)` is unique, which is what makes the dispatcher idempotent: a re-run of the
+dispatch pass finds this row instead of creating a second one, so an event is never delivered twice
+because a pass was retried. The row holds the body that was decided on and never regenerates it, so a
+redelivery sends exactly what was originally intended.
+
+The body itself is deliberately not a member; see the note at the head of this document.
+"""
+type WebhookDelivery {
+  id: ID!
+  tenantId: ID
+  organizationId: ID
+
+  """The subscription the delivery belongs to."""
+  subscriptionId: ID!
+
+  """The event this delivery carries, as the outbox recorded it."""
+  eventId: ID!
+
+  """
+  Denormalised event name, so a delivery list is readable without the outbox row.
+  """
+  eventName: String!
+
+  """
+  Where the delivery stands. `DEAD` is terminal and is reached only when nothing is left to try.
+  """
+  status: WebhookDeliveryStatus!
+
+  """Times the endpoint was called."""
+  attemptCount: Int!
+
+  """
+  HTTP status the endpoint answered with, absent when the request never completed.
+  """
+  responseStatus: Int
+
+  """The receiver's response body, truncated, kept for triage."""
+  responseBody: String
+
+  """How long the last attempt took, in milliseconds."""
+  durationMs: Int
+
+  """When the next attempt is due; null once the delivery is settled."""
+  nextAttemptAt: DateTime
+
+  """When the endpoint acknowledged the delivery."""
+  deliveredAt: DateTime
+
+  """The transport, TLS or timeout error of the last attempt."""
+  lastError: String
+
+  """
+  The attempt the row records, or null when it has not been attempted yet. One attempt rather than a
+  history: the row keeps the counter and the outcome of the attempt it last made, and what a receiver
+  deduplicated on is the two of them joined.
+  """
+  lastAttempt: WebhookAttempt
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""Where a delivery stands."""
+enum WebhookDeliveryStatus {
+  """
+  Written and not yet attempted, or awaiting the instant the next attempt is due.
+  """
+  PENDING
+
+  """
+  The endpoint answered `2xx`; the delivery is settled and the subscription's failure count resets.
+  """
+  DELIVERED
+
+  """The last attempt was refused and a further one is scheduled."""
+  FAILED
+
+  """
+  Nothing left to try: the schedule ran out, or the endpoint answered in a way that will not change.
+  """
+  DEAD
+}
+
+"""
+One attempt of one delivery.
+
+The platform's webhook contract names an attempt `<deliveryId>.<attempt>` — that is the `X-Delivery`
+header value a receiver deduplicates on — so an attempt is a concept rather than a row, and this is
+it: the identity the receiver saw and the outcome the delivery row kept. Nothing else is stored per
+attempt, and nothing here claims to be a history of them.
+"""
+type WebhookAttempt {
+  """
+  The attempt identity the receiver saw in `X-Delivery`: `<deliveryId>.<attempt>`.
+  """
+  id: ID!
+
+  """The delivery the attempt belongs to."""
+  deliveryId: ID!
+
+  """The 1-based attempt number, which is the `X-Attempt` header value."""
+  attempt: Int!
+
+  """Whether the endpoint answered `2xx`."""
+  delivered: Boolean!
+
+  """HTTP status of the attempt, absent when the request never completed."""
+  responseStatus: Int
+
+  """The receiver's response body, truncated for triage."""
+  responseBody: String
+
+  """How long the attempt took, in milliseconds."""
+  durationMs: Int
+
+  """The transport, TLS or timeout error, when there was no answer."""
+  lastError: String
+}
+
+"""The boundary of one page of deliveries."""
+type WebhookDeliveryEdge {
+  node: WebhookDelivery!
+  cursor: String!
+}
+
+"""
+One page of deliveries, with the total the filters select and the boundary cursors.
+"""
+type WebhookDeliveryConnection {
+  nodes: [WebhookDelivery!]!
+  edges: [WebhookDeliveryEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields a delivery list may be sorted by.
+
+The two timestamps are how a delivery is found again, `nextAttemptAt` is the work list's own order —
+what is due first stands first, and the rows already settled carry no instant and trail it — and the
+rest answer the questions a queue is inspected with.
+"""
+enum WebhookDeliverySortField {
+  createdAt
+  updatedAt
+  nextAttemptAt
+  deliveredAt
+  attemptCount
+  responseStatus
+  eventName
+  status
+}
+
+"""
+The order the deliveries are returned in. At most three keys are accepted.
+"""
+input WebhookDeliverySort {
+  field: WebhookDeliverySortField!
+  direction: SortDirection!
+}
+
+"""Comparison on the delivery status."""
+input WebhookDeliveryStatusFilter {
+  eq: WebhookDeliveryStatus
+  ne: WebhookDeliveryStatus
+  in: [WebhookDeliveryStatus!]
+  nin: [WebhookDeliveryStatus!]
+  isNull: Boolean
+}
+
+"""
+The fields a delivery list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, and the one column the row carries that is absent here is the
+stored body — for the reason stated at the head of this document, and because a condition on a value
+this surface does not answer could only ever be a condition a client cannot verify.
+"""
+input WebhookDeliveryFilter {
+  id: IDFilter
+  subscriptionId: IDFilter
+  eventId: IDFilter
+  eventName: StringFilter
+  status: WebhookDeliveryStatusFilter
+  attemptCount: NumberFilter
+  responseStatus: NumberFilter
+  responseBody: StringFilter
+  durationMs: NumberFilter
+  nextAttemptAt: DateTimeFilter
+  deliveredAt: DateTimeFilter
+  lastError: StringFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [WebhookDeliveryFilter!]
+  or: [WebhookDeliveryFilter!]
+  not: WebhookDeliveryFilter
+}
+
+"""What a caller states when it subscribes an endpoint."""
+input CreateWebhookSubscriptionInput {
+  """The operator-facing name of the endpoint."""
+  name: String!
+
+  """Absolute HTTPS endpoint."""
+  url: String!
+
+  """
+  The event names or patterns the endpoint receives. At least one is required.
+  """
+  events: [String!]!
+
+  """The channel to listen to; omit for every channel."""
+  channelId: ID
+
+  """Free-text note for operators."""
+  description: String
+
+  """
+  Static extra headers sent with every delivery; a reserved header name is ignored, never honoured.
+  """
+  headers: JSON
+
+  """The payload version this endpoint expects."""
+  apiVersion: String
+
+  """
+  Operator metadata, including the development-only `allowInsecure` the endpoint check reads.
+  """
+  metadata: JSON
+}
+
+"""
+What a caller may change on a subscription that exists.
+
+Every member is optional: the delivered write touches the members the body states and leaves the rest
+as they are. `channelId: null` is a statement rather than an absence — it widens the subscription back
+to every channel — and an omitted member leaves the current channel alone.
+"""
+input UpdateWebhookSubscriptionInput {
+  id: ID!
+
+  """The operator-facing name of the endpoint."""
+  name: String
+
+  """Absolute HTTPS endpoint."""
+  url: String
+
+  """
+  The event names or patterns the endpoint receives, replacing the set whole.
+  """
+  events: [String!]
+
+  """The channel to listen to; an explicit null listens to every channel."""
+  channelId: ID
+
+  """Free-text note for operators."""
+  description: String
+
+  """Static extra headers, replacing the set whole."""
+  headers: JSON
+
+  """The payload version this endpoint expects."""
+  apiVersion: String
+
+  """Operator metadata, replaced whole."""
+  metadata: JSON
+}
+
+"""
+The subscription and the secret that was generated for it.
+
+The secret is readable at exactly two moments — creation and rotation — and this is how those two
+operations hand it over. It is an answer rather than a type member on purpose: a member would be
+selectable by any read of the resource, and a secret that any read can produce is not a secret.
+`previousSecretValidUntil` is stated on a rotation and absent on a creation, where there is no
+previous secret to keep working.
+"""
+type WebhookSubscriptionCredential {
+  """The subscription, with its secret replaced by a fingerprint."""
+  subscription: WebhookSubscription!
+
+  """The plaintext secret, which no later read can produce again."""
+  secret: String!
+
+  """When the previous secret stops being accepted, on a rotation."""
+  previousSecretValidUntil: DateTime
 }
 
 type ProductReview {

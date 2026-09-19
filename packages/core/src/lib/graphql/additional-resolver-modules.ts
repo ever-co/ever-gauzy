@@ -187,6 +187,13 @@ export function resolveAdditionalResolverModules(): Function[] {
 		require('../candidate-feedbacks/candidate-feedbacks.module').CandidateFeedbacksModule,
 		require('../candidate-interview/candidate-interview.module').CandidateInterviewModule,
 		require('../candidate-interviewers/candidate-interviewers.module').CandidateInterviewersModule,
-		require('../candidate-criterions-rating/candidate-criterion-rating.module').CandidateCriterionsRatingModule
+		require('../candidate-criterions-rating/candidate-criterion-rating.module').CandidateCriterionsRatingModule,
+		// The infrastructure kernels, whose REST surfaces and GraphQL surfaces landed together: a webhook
+		// and its deliveries, and the numbering series every numbered document on the platform draws from.
+		require('../webhook/webhook.module').WebhookModule,
+		require('../sequence/sequence.module').SequenceModule,
+		// The durable operation an API request can be turned into, and the outbox its facts leave through.
+		require('../operation/operation.module').OperationModule,
+		require('../event-outbox/event-outbox.module').EventOutboxModule
 	];
 }
