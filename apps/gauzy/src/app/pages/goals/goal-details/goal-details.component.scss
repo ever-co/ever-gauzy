@@ -15,10 +15,11 @@ $radius: var(--gauzy-radius-sm, 0.375rem);
 $recessed: var(--gauzy-card-2, rgba(126, 126, 143, 0.06));
 // One grid for every row in the tabs, so bars and percentages line up down the
 // list: name, bar, percentage, and the row's action.
-$row-columns: minmax(0, 1fr) 7rem 2.75rem 1.75rem;
+$row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
 
+// 56rem: at 42rem the key-result names wrapped beside a short bar.
 .details-dialog {
-  width: min(calc(100vw - 2rem), 42rem);
+  width: min(calc(100vw - 2rem), 56rem);
 }
 
 :host {
@@ -282,7 +283,7 @@ $row-columns: minmax(0, 1fr) 7rem 2.75rem 1.75rem;
       border-bottom: 0;
     }
 
-    // On a phone the 7rem bar left the name a column a few words wide: the
+    // On a phone the fixed bar left the name a column a few words wide: the
     // name takes its own line, with bar, percentage and action under it.
     @media (max-width: 575.98px) {
       grid-template-columns: minmax(0, 1fr) 2.75rem 1.75rem;
