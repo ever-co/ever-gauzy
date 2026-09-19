@@ -25,39 +25,42 @@
 	<nb-card-body>
 		@if (!loading) {
 		@let unit = keyResult.type == keyResultTypeEnum.KPI ? kpi?.unit : keyResult.unit;
-		<!-- The figures first: where it started, where it is headed, and how far along it is. -->
-		<dl class="stats">
+		<!-- The figures first: where it started, where it is headed, and how far along it is — the last on
+		     one line, label then bar then percentage, as in the objective dialog this opens from. -->
+		<section class="summary">
 			@if (keyResult.type !== keyResultTypeEnum.TRUE_OR_FALSE) {
-			<div class="stat">
-				<dt>{{ 'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE' | translate }}</dt>
-				<dd>
-					{{ keyResult.initialValue }}
-					@if (unit) {
-					<span class="unit">{{ unit }}</span>
-					}
-				</dd>
-			</div>
-			<div class="stat">
-				<dt>{{ 'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE' | translate }}</dt>
-				<dd>
-					{{ keyResult.targetValue }}
-					@if (unit) {
-					<span class="unit">{{ unit }}</span>
-					}
-				</dd>
-			</div>
+			<dl class="values">
+				<div class="value">
+					<dt>{{ 'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE' | translate }}</dt>
+					<dd>
+						{{ keyResult.initialValue }}
+						@if (unit) {
+						<span class="unit">{{ unit }}</span>
+						}
+					</dd>
+				</div>
+				<div class="value">
+					<dt>{{ 'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE' | translate }}</dt>
+					<dd>
+						{{ keyResult.targetValue }}
+						@if (unit) {
+						<span class="unit">{{ unit }}</span>
+						}
+					</dd>
+				</div>
+			</dl>
 			}
-			<div class="stat">
-				<dt>{{ 'GOALS_PAGE.PROGRESS' | translate }}</dt>
-				<dd>{{ keyResult.progress }}%</dd>
+			<div class="progress-row">
+				<span class="progress-label">{{ 'GOALS_PAGE.PROGRESS' | translate }}</span>
 				<nb-progress-bar
-					class="stat-bar"
+					class="kr-progress"
 					[value]="keyResult.progress"
 					[status]="keyResult.progress < 50 ? 'warning' : keyResult.progress < 75 ? 'info' : 'success'"
 					size="tiny"
 				></nb-progress-bar>
+				<span class="progress-value">{{ keyResult.progress }}%</span>
 			</div>
-		</dl>
+		</section>
 
 		<section class="chart">
 			<ga-keyresult-progress-chart
