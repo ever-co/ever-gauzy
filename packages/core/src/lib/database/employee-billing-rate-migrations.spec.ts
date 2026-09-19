@@ -28,26 +28,46 @@ describe('AlterEmployeeBillingRateColumnsToNumeric1790000014000', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('widens postgres money columns to numeric(14,2) and leaves weekly hours alone', async () => {
+	it('widens postgres money columns to numeric(14,2) in one bounded-wait ALTER and leaves weekly hours alone', async () => {
 		const { queryRunner, executed } = createQueryRunner(DatabaseTypeEnum.postgres);
 
 		await migration.up(queryRunner);
 
 		expect(executed.map(({ sql }) => sql)).toEqual([
-			'ALTER TABLE "employee" ALTER COLUMN "billRateValue" TYPE numeric(14,2) USING "billRateValue"::numeric(14,2)',
-			'ALTER TABLE "employee" ALTER COLUMN "minimumBillingRate" TYPE numeric(14,2) USING "minimumBillingRate"::numeric(14,2)'
+			`SET LOCAL lock_timeout = '5s'`,
+			'ALTER TABLE "employee" ALTER COLUMN "billRateValue" TYPE numeric(14,2) USING "billRateValue"::numeric(14,2), ALTER COLUMN "minimumBillingRate" TYPE numeric(14,2) USING "minimumBillingRate"::numeric(14,2)'
 		]);
 		expect(executed.some(({ sql }) => /reWeeklyLimit/.test(sql))).toBe(false);
 	});
 
-	it('widens mysql money columns to decimal(14,2)', async () => {
+	it('rounds postgres money columns back to integers in one ALTER on rollback', async () => {
+		const { queryRunner, executed } = createQueryRunner(DatabaseTypeEnum.postgres);
+
+		await migration.down(queryRunner);
+
+		expect(executed.map(({ sql }) => sql)).toEqual([
+			`SET LOCAL lock_timeout = '5s'`,
+			'ALTER TABLE "employee" ALTER COLUMN "billRateValue" TYPE integer USING ROUND("billRateValue")::integer, ALTER COLUMN "minimumBillingRate" TYPE integer USING ROUND("minimumBillingRate")::integer'
+		]);
+	});
+
+	it('widens mysql money columns to decimal(14,2) in one statement', async () => {
 		const { queryRunner, executed } = createQueryRunner(DatabaseTypeEnum.mysql);
 
 		await migration.up(queryRunner);
 
 		expect(executed.map(({ sql }) => sql)).toEqual([
-			'ALTER TABLE `employee` MODIFY `billRateValue` decimal(14,2) NULL',
-			'ALTER TABLE `employee` MODIFY `minimumBillingRate` decimal(14,2) NULL'
+			'ALTER TABLE `employee` MODIFY `billRateValue` decimal(14,2) NULL, MODIFY `minimumBillingRate` decimal(14,2) NULL'
+		]);
+	});
+
+	it('restores mysql money columns to int in one statement on rollback', async () => {
+		const { queryRunner, executed } = createQueryRunner(DatabaseTypeEnum.mysql);
+
+		await migration.down(queryRunner);
+
+		expect(executed.map(({ sql }) => sql)).toEqual([
+			'ALTER TABLE `employee` MODIFY `billRateValue` int NULL, MODIFY `minimumBillingRate` int NULL'
 		]);
 	});
 

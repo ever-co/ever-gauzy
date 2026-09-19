@@ -7,6 +7,9 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * rate like `10.49` was truncated to `10` (issue #10199). Money columns become `numeric(14,2)` /
  * `decimal(14,2)` so cents survive. Weekly hour limit (`reWeeklyLimit`) is left as integer.
  *
+ * Postgres and MySQL change both columns in ONE `ALTER TABLE`: one table rewrite instead of two on
+ * Postgres, and no half-applied state on MySQL (its DDL commits implicitly).
+ *
  * SQLite cannot `ALTER COLUMN … TYPE`. Rebuilds that restated the full `employee` DDL have
  * silently dropped columns before, so this uses ADD / UPDATE / DROP / RENAME instead (SQLite ≥
  * 3.35; bundled better-sqlite3 ships 3.51).
@@ -70,11 +73,11 @@ export class AlterEmployeeBillingRateColumnsToNumeric1790000014000 implements Mi
 	 * @param queryRunner
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		for (const column of this.moneyColumns) {
-			await queryRunner.query(
-				`ALTER TABLE "employee" ALTER COLUMN "${column}" TYPE numeric(14,2) USING "${column}"::numeric(14,2)`
-			);
-		}
+		await this.postgresLimitLockWait(queryRunner);
+		const alterations = this.moneyColumns.map(
+			(column) => `ALTER COLUMN "${column}" TYPE numeric(14,2) USING "${column}"::numeric(14,2)`
+		);
+		await queryRunner.query(`ALTER TABLE "employee" ${alterations.join(', ')}`);
 	}
 
 	/**
@@ -83,11 +86,11 @@ export class AlterEmployeeBillingRateColumnsToNumeric1790000014000 implements Mi
 	 * @param queryRunner
 	 */
 	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		for (const column of this.moneyColumns) {
-			await queryRunner.query(
-				`ALTER TABLE "employee" ALTER COLUMN "${column}" TYPE integer USING ROUND("${column}")::integer`
-			);
-		}
+		await this.postgresLimitLockWait(queryRunner);
+		const alterations = this.moneyColumns.map(
+			(column) => `ALTER COLUMN "${column}" TYPE integer USING ROUND("${column}")::integer`
+		);
+		await queryRunner.query(`ALTER TABLE "employee" ${alterations.join(', ')}`);
 	}
 
 	/**
@@ -118,9 +121,8 @@ export class AlterEmployeeBillingRateColumnsToNumeric1790000014000 implements Mi
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		for (const column of this.moneyColumns) {
-			await queryRunner.query(`ALTER TABLE \`employee\` MODIFY \`${column}\` decimal(14,2) NULL`);
-		}
+		const alterations = this.moneyColumns.map((column) => `MODIFY \`${column}\` decimal(14,2) NULL`);
+		await queryRunner.query(`ALTER TABLE \`employee\` ${alterations.join(', ')}`);
 	}
 
 	/**
@@ -129,9 +131,20 @@ export class AlterEmployeeBillingRateColumnsToNumeric1790000014000 implements Mi
 	 * @param queryRunner
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		for (const column of this.moneyColumns) {
-			await queryRunner.query(`ALTER TABLE \`employee\` MODIFY \`${column}\` int NULL`);
-		}
+		const alterations = this.moneyColumns.map((column) => `MODIFY \`${column}\` int NULL`);
+		await queryRunner.query(`ALTER TABLE \`employee\` ${alterations.join(', ')}`);
+	}
+
+	/**
+	 * `ALTER COLUMN … TYPE` needs an ACCESS EXCLUSIVE lock on `employee`, which almost every request
+	 * reads. While it waits for a long-running transaction, every later query on the table queues
+	 * behind it, with no upper bound. Give up after 5 s instead: the migration rolls back, requests
+	 * flow again, and the API's TypeORM connection retry (every few seconds) runs it again.
+	 * With `migrationsTransactionMode: 'each'`, which every Gauzy entry point uses, `SET LOCAL` lasts
+	 * only until this migration's transaction ends.
+	 */
+	private async postgresLimitLockWait(queryRunner: QueryRunner): Promise<void> {
+		await queryRunner.query(`SET LOCAL lock_timeout = '5s'`);
 	}
 
 	/**
