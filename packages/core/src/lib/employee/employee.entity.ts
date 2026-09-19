@@ -112,8 +112,8 @@ const billingRateColumn = () => ({
  * previous `parseInt` transform did) instead of silently storing 0.
  */
 const toBillingRate = ({ value }: TransformFnParams) => {
-	const n = typeof value === 'number' ? value : parseFloat(value || 0);
-	return Number.isFinite(n) ? roundToScale(n) : NaN;
+	const n = typeof value === 'number' ? value : Number.parseFloat(value || 0);
+	return Number.isFinite(n) ? roundToScale(n) : Number.NaN;
 };
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })

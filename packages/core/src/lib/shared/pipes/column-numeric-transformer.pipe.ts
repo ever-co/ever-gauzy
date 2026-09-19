@@ -12,7 +12,7 @@ import { isNotNullOrUndefined } from '@gauzy/utils';
 export function roundToScale(value: unknown, scale = 2): number {
 	const n = Number(value);
 	if (!Number.isFinite(n)) {
-		return NaN;
+		return Number.NaN;
 	}
 	const magnitude = Math.abs(n);
 	// Past 2^53 at this scale a double has no fractional digits left to round; shifting would only drift or overflow.
@@ -25,6 +25,17 @@ export function roundToScale(value: unknown, scale = 2): number {
 		rounded = Math.round(magnitude * 10 ** scale) / 10 ** scale;
 	}
 	return n < 0 && rounded !== 0 ? -rounded : rounded;
+}
+
+/**
+ * A number as is, a string through `parseFloat` (as the employee DTO transform does), anything
+ * else `NaN`.
+ */
+function parseNumeric(value: unknown): number {
+	if (typeof value === 'number') {
+		return value;
+	}
+	return typeof value === 'string' ? Number.parseFloat(value) : Number.NaN;
 }
 
 /**
@@ -42,21 +53,20 @@ export class ColumnNumericTransformerPipe implements ValueTransformer {
 	 * Converts a number for storage in the database.
 	 * If the value is not defined, it returns null.
 	 *
-	 * @param value - The number to convert.
+	 * @param value - The number to convert. Typed `unknown`: routes that skip DTO validation (e.g.
+	 * employee create) pass the raw request value through.
 	 * @returns The number itself, or null if undefined.
 	 * @throws BadRequestException when a `scale` is set and the value is not a finite number.
 	 */
-	to(value: number): number | null {
+	to(value: unknown): number | null {
 		if (!isNotNullOrUndefined(value)) {
 			return null;
 		}
 		if (this.scale == null) {
-			return value;
+			return value as number;
 		}
-		// Parse strings like the DTO transform does, and refuse anything else instead of storing 0:
-		// routes that skip DTO validation (e.g. employee create) must not turn 'abc' into a rate.
-		const n = typeof value === 'number' ? value : typeof value === 'string' ? parseFloat(value) : NaN;
-		const rounded = roundToScale(n, this.scale);
+		// Refuse anything that does not parse instead of storing 0: 'abc' must not become a rate.
+		const rounded = roundToScale(parseNumeric(value), this.scale);
 		if (!Number.isFinite(rounded)) {
 			throw new BadRequestException('Invalid numeric value: expected a finite number.');
 		}
@@ -73,7 +83,7 @@ export class ColumnNumericTransformerPipe implements ValueTransformer {
 		if (!isNotNullOrUndefined(value)) {
 			return null;
 		}
-		const parsed = parseFloat(value as string);
+		const parsed = Number.parseFloat(value as string);
 		if (!Number.isFinite(parsed)) {
 			return null;
 		}

@@ -53,14 +53,14 @@ describe('ColumnNumericTransformerPipe scale-aware persistence', () => {
 	});
 
 	it('parses numeric strings the way the DTO transform does', () => {
-		expect(money.to('10.49' as unknown as number)).toBe(10.49);
-		expect(money.to('12abc' as unknown as number)).toBe(12);
+		expect(money.to('10.49')).toBe(10.49);
+		expect(money.to('12abc')).toBe(12);
 	});
 
 	it.each(['abc', '', 'Infinity', true, {}, [], NaN])(
 		'refuses %p instead of storing 0 (routes that skip DTO validation)',
 		(value) => {
-			expect(() => money.to(value as unknown as number)).toThrow(BadRequestException);
+			expect(() => money.to(value)).toThrow(BadRequestException);
 		}
 	);
 
