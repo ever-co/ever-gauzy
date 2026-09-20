@@ -24,6 +24,7 @@ import {
 	IZapierConfig
 } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
+import { ISocialAuthClientsConfig } from './social-auth.helper';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -99,12 +100,29 @@ export interface IEnvironment {
 	THROTTLE_TTL?: number;
 	THROTTLE_LIMIT?: number;
 
+	/**
+	 * Whether the deployment sits behind Cloudflare, so the `CF-Connecting-IP` request header may be
+	 * used as the rate-limit bucket key. OFF unless explicitly enabled: the header is client-writable
+	 * on any deployment Cloudflare does not front, and trusting it lets an attacker mint a fresh
+	 * throttle bucket per request (GHSA-86mw-2crg-vmhc).
+	 */
+	THROTTLE_TRUST_CF_CONNECTING_IP?: boolean;
+
+	/**
+	 * Identifier-scoped brute-force control. Counts consecutive authentication failures per account
+	 * identifier (not per IP), so rotating source addresses does not reset the counter.
+	 */
+	AUTH_MAX_FAILED_ATTEMPTS?: number;
+	AUTH_LOCKOUT_SECONDS?: number;
+
 	fileSystem: FileSystem;
 	awsConfig?: IAwsConfig;
 	wasabi?: IWasabiConfig;
 	cloudinary?: ICloudinaryConfig;
 	digitalOcean?: IDigitalOceanConfig;
 	github: IGithubIntegrationConfig /** Github Configuration */;
+	/** OAuth clients accepted by the email-based social sign-in routes (GHSA-58x4-7mw9-gmqg). */
+	socialAuth?: ISocialAuthClientsConfig;
 	jira: IJiraIntegrationConfig /** Jira Configuration */;
 	fiverrConfig: IFiverrConfig;
 	auth0Config: IAuth0Config;

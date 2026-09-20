@@ -4,9 +4,11 @@ import {
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	IAiTranscribeOptions,
+	createAiProviderSdkFetch,
 	createCatalogueCache,
 	fetchCatalogueJson,
 	importEsm,
+	isPrivateAiProviderEndpointAllowed,
 	prettifyModelId,
 	selfHostedCatalogue,
 	transcribeViaOpenAiCompatible,
@@ -52,7 +54,12 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 		load: async (baseUrl, resolved) => {
 			const body = await fetchCatalogueJson<{ data?: { id: string }[] }>(
 				`${trimTrailingSlash(baseUrl)}/models`,
-				resolved?.apiKey ? { headers: { authorization: `Bearer ${resolved.apiKey}` } } : undefined
+				{
+					...(resolved?.apiKey ? { headers: { authorization: `Bearer ${resolved.apiKey}` } } : {}),
+					// The operator's own address or the built-in default may be private; a tenant's may
+					// not unless the deployment opted in (GHSA-w3mx-m5cr-3gxp).
+					allowPrivateHost: isPrivateAiProviderEndpointAllowed(resolved)
+				}
 			);
 			return (body.data ?? [])
 				.filter((m) => typeof m?.id === 'string' && !NON_CHAT_PATTERNS.some((pattern) => pattern.test(m.id)))
@@ -83,7 +90,8 @@ const transcribeAudio = async (
 		model: options?.model || DEFAULT_SPEECH_MODEL,
 		language: options?.language,
 		providerLabel: 'OpenAI-compatible',
-		providerId: PROVIDER_ID
+		providerId: PROVIDER_ID,
+		allowPrivateHost: isPrivateAiProviderEndpointAllowed(credentials)
 	});
 };
 
@@ -133,6 +141,8 @@ export const openAiCompatibleProviderDefinition: IAiChatProviderDefinition = {
 		const provider = createOpenAICompatible({
 			name: PROVIDER_ID,
 			baseURL: credentials.baseUrl,
+			// A tenant base URL gets the SSRF egress guard on chat traffic too (GHSA-w3mx-m5cr-3gxp).
+			fetch: createAiProviderSdkFetch(credentials),
 			...(credentials.apiKey ? { apiKey: credentials.apiKey } : {})
 		});
 		return provider.chatModel(modelId);

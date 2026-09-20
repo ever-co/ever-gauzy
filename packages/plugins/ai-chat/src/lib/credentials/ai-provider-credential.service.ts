@@ -13,6 +13,8 @@ import { AiProviderCredential } from './ai-provider-credential.entity';
 import { AiProviderCredentialEncryptionService } from './ai-provider-credential-encryption.service';
 import { MikroOrmAiProviderCredentialRepository } from './repositories/mikro-orm-ai-provider-credential.repository';
 import { TypeOrmAiProviderCredentialRepository } from './repositories/type-orm-ai-provider-credential.repository';
+import { assertSafeAiProviderBaseUrl } from './base-url.validator';
+import { getUnsafeAiProviderBaseUrlReason } from '../ssrf';
 
 /** OpenRouter's PKCE code→key exchange endpoint (see https://openrouter.ai/docs/use-cases/oauth-pke). */
 const OPENROUTER_KEY_EXCHANGE_URL = 'https://openrouter.ai/api/v1/auth/keys';
@@ -69,6 +71,26 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 
 		if (!success || !record || !record.enabled) {
 			return null;
+		}
+
+		// SSRF: re-validate the STORED base URL, not just the one on its way in. This method is the
+		// single choke point every sink goes through — `AiChatService.resolveCredentials` (chat,
+		// catalogue, dictation) and `DocsAiService.resolveCredentials` (indexing, classification, OCR)
+		// both read the tenant credential here — so a row written before this guard existed, or by an
+		// older release, is refused here rather than at each of those call sites. The whole credential
+		// is dropped rather than the URL alone: stripping the base URL would send a key issued for a
+		// proxy to the vendor's real host (GHSA-w3mx-m5cr-3gxp).
+		if (record.baseUrl) {
+			const reason = getUnsafeAiProviderBaseUrlReason(record.baseUrl);
+			if (reason) {
+				// Never logs the URL: this line ends up in shared log storage and the host is exactly
+				// what the tenant was probing for.
+				this.logger.warn(
+					`Ignoring stored credential for provider '${providerId}' (tenant '${tenantId}'): ` +
+						`its base URL is not an allowed outbound target (${reason}).`
+				);
+				return null;
+			}
 		}
 
 		// A row without a key is only usable for providers that run without one (local servers): the
@@ -248,6 +270,12 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 		if (!existing && !input.apiKey) {
 			this.assertKeyOptional(providerId);
 		}
+		// SSRF: refuse an internal/metadata endpoint before it is ever persisted. Checked on the
+		// INCOMING value only — an existing row that fails is caught on read instead, so upgrading does
+		// not make an unrelated edit (renaming the default model) impossible to save.
+		if (input.baseUrl) {
+			assertSafeAiProviderBaseUrl(input.baseUrl);
+		}
 		this.assertBaseUrlSatisfied(providerId, input.baseUrl ?? existing?.baseUrl);
 
 		// Encrypt the incoming API key; keep the stored one when omitted.
@@ -337,6 +365,11 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 			payload.apiKey = this.encryptionService.encrypt(input.apiKey);
 		} else {
 			delete payload.apiKey;
+		}
+
+		// SSRF: same store-time guard as `upsert`. `null` clears the URL and needs no check.
+		if (input.baseUrl) {
+			assertSafeAiProviderBaseUrl(input.baseUrl);
 		}
 
 		// An explicit `null` CLEARS the URL — validate what will actually be stored, not the old value.

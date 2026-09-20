@@ -2032,6 +2032,7 @@
 		"EXPECTED": "Expected",
 		"UPDATES": "Updates",
 		"UPDATE": "Update",
+		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
@@ -2048,6 +2049,8 @@
 		"GOAL_TEMPLATES": "Goal Templates",
 		"CREATE_NEW_MENU": "Create New",
 		"CREATE_FROM_PRESET": "Create from Preset",
+		"SELECT_A_PRESET": "Select a Preset",
+		"ADDITIONAL_DETAILS": "Additional Details",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Служители",
 			"TEAMS": "Отбори",
@@ -2077,7 +2080,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
-			"NO_ALIGNMENT": "No Alignments yet."
+			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organization",
@@ -2530,6 +2534,8 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
 				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Честота на снимки",
 				"SCREENSHOT_FREQUENCY_INFO": "Посочете честотата на актуализация или интервали на време за синхронизация.",
 				"RANDOM_SCREENSHOT": "Случайна снимка",
@@ -4961,7 +4967,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Скрийншоти",
 			"OF": "от",
-			"TIME_LOG": "Времеви запис"
+			"TIME_LOG": "Времеви запис",
+			"TAKEN_AT": "Скрийншот, направен в {{ time }}",
+			"POSITION": "Скрийншот {{ position }} от {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Предупреждение. Таймерът работи, можете да премахнете скрийншоти само ако спрете таймера или вътре в приложението Таймер",
 		"DELETE_CONFIRM": "Сигурни ли сте, че искате да изтриете тези скрийншоти и времеви запис?",

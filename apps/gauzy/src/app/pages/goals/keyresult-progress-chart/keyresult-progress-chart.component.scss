@@ -1,4 +1,34 @@
-.progress-chart {
-  height: 300px;
+// Chart.js sizes a responsive chart from its canvas's parent. That used to be
+// this host: an inline element by default, with no height to measure, so the
+// chart grew to a size of its own. A positioned block of fixed height is the
+// container Chart.js documents; 15rem holds the axes, both lines and the legend.
+:host {
+  display: block;
+  position: relative;
   width: 100%;
+  height: 15rem;
+}
+
+// The canvas's parent now, so it has to carry that container's shape too.
+// Positioned for Chart.js and for the spinner overlay, which hangs off this
+// wrapper rather than the canvas so it survives the frames with no canvas.
+.chart-host {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+// Where the chart would be when there is no time frame to draw it against, or
+// the lookup failed: a quiet line in the middle, not an empty 15rem hole.
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.125rem;
+  text-align: center;
+  color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
 }

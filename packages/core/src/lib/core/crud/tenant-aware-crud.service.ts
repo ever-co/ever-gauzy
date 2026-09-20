@@ -9,6 +9,7 @@ import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
 import { assertCriteriaHasPredicate } from './criteria.helper';
+import { assertGraphNotForeign } from './nested-graph-ownership.helper';
 import { ICrudService, IPartialEntity } from './icrud.service';
 import { ITryRequest } from './try-request';
 
@@ -85,7 +86,30 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			} as unknown as FindOptionsWhere<T>;
 		}
 
+		// A caller who may not act for other employees, but has no employee record of their own.
+		if (!isNotEmpty(employeeId) && hasEmployeeColumn && !canChangeEmployee) {
+			return this.findConditionsWithoutOwnEmployee();
+		}
+
 		return {} as FindOptionsWhere<T>;
+	}
+
+	/**
+	 * Conditions for a caller who lacks CHANGE_SELECTED_EMPLOYEE and has no employee record, on an
+	 * entity with an `employeeId` column.
+	 *
+	 * The default keeps the historical tenant-wide scope. A service whose rows are strictly personal
+	 * overrides this with {@link neverMatchingEmployeeCondition}.
+	 */
+	protected findConditionsWithoutOwnEmployee(): FindOptionsWhere<T> {
+		return {} as FindOptionsWhere<T>;
+	}
+
+	/**
+	 * A condition that matches no row (`employeeId IN ()` renders as `0=1`).
+	 */
+	protected neverMatchingEmployeeCondition(): FindOptionsWhere<T> {
+		return { employeeId: In([]) } as unknown as FindOptionsWhere<T>;
 	}
 
 	/**
@@ -458,6 +482,26 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
+	 * Extends the root-id check to the nested objects and ids of the payload (cascaded relations,
+	 * re-parented one-to-many children, owner / many-to-many links). See {@link assertGraphNotForeign}.
+	 *
+	 * The lookups go through TypeORM for both ORMs: both are initialised on the same database, and the
+	 * check only reads. For MikroORM the same payload shape reaches `assign()` / `em.create()`, which
+	 * resolve nested objects by primary key as well.
+	 *
+	 * @param entities - The payloads about to be persisted.
+	 * @param tenantId - The caller's tenant.
+	 */
+	protected async assertNestedGraphNotForeign(entities: IPartialEntity<T>[], tenantId: ID | null): Promise<void> {
+		await assertGraphNotForeign(
+			this.typeOrmRepository.manager,
+			this.typeOrmRepository.metadata,
+			entities as unknown[],
+			tenantId
+		);
+	}
+
+	/**
 	 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 	 * Note that it copies only properties that are present in entity schema.
 	 *
@@ -468,6 +512,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 		await this.assertNotForeignRow(entity, tenantId);
+		await this.assertNestedGraphNotForeign([entity], tenantId);
 
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
 		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
@@ -500,6 +545,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	public async createMany(entities: IPartialEntity<T>[]): Promise<T[]> {
 		const tenantId = RequestContext.currentTenantId();
 		await this.assertNotForeignRows(entities, tenantId);
+		await this.assertNestedGraphNotForeign(entities, tenantId);
 		const employeeId = RequestContext.currentEmployeeId();
 
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
@@ -528,6 +574,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const tenantId = RequestContext.currentTenantId();
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
 		await this.assertNotForeignRow(entity, tenantId);
+		await this.assertNestedGraphNotForeign([entity], tenantId);
 
 		return await super.save({
 			...entity,
@@ -564,6 +611,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	public async saveMany(entities: IPartialEntity<T>[]): Promise<T[]> {
 		const tenantId = RequestContext.currentTenantId();
 		await this.assertNotForeignRows(entities, tenantId);
+		await this.assertNestedGraphNotForeign(entities, tenantId);
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
 
 		const enriched = entities.map((entity) => ({

@@ -110,6 +110,7 @@ export * from './lib/job-execution.model';
 export * from './lib/job-matching.model';
 export * from './lib/job-search-category.model';
 export * from './lib/job-search-occupation.model';
+export * from './lib/known-default-secrets';
 export * from './lib/language.model';
 export * from './lib/make-com.model';
 export * from './lib/marketplace.model';

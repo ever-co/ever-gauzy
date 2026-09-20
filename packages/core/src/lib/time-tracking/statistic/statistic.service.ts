@@ -51,7 +51,7 @@ import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-em
 import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activity.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
-import { ManagedEmployeeService } from '../../employee/managed-employee.service';
+import { ManagedEmployeeService, NO_ACCESSIBLE_EMPLOYEE_ID } from '../../employee/managed-employee.service';
 import { debugInDevelopment } from '../../logger';
 import { moment as timezoneMoment } from '../../core/moment-extend';
 import {
@@ -3134,14 +3134,8 @@ export class StatisticService {
 				let { employeeIds = [], projectIds = [], teamIds = [], activityLevel, logType, source } = request;
 				const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 
-				const user = RequestContext.currentUser();
 				const isOnlyMeSelected: boolean = request.onlyMe;
-				const hasChangeSelectedEmployeePermission = RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				);
-				if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
-					employeeIds = [user.employeeId];
-				}
+				employeeIds = this.restrictToAccessibleEmployees(employeeIds, isOnlyMeSelected);
 
 				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate || moment().startOf('week')),
@@ -3204,14 +3198,8 @@ export class StatisticService {
 				let { employeeIds = [], projectIds = [], teamIds = [], activityLevel, logType, source } = request;
 				const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 
-				const user = RequestContext.currentUser();
 				const isOnlyMeSelected: boolean = request.onlyMe;
-				const hasChangeSelectedEmployeePermission = RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				);
-				if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
-					employeeIds = [user.employeeId];
-				}
+				employeeIds = this.restrictToAccessibleEmployees(employeeIds, isOnlyMeSelected);
 
 				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate || moment().startOf('week')),
@@ -3269,6 +3257,37 @@ export class StatisticService {
 	 * @param request The request object containing filter parameters.
 	 * @returns The modified TypeORM WhereExpressionBuilder instance with applied filtering conditions.
 	 */
+	/**
+	 * The employee ids a statistics query may read, for the hand-rolled filters in this service that do not
+	 * go through {@link ManagedEmployeeService}.
+	 *
+	 * A caller who may act for other employees keeps whatever the request asked for. Everyone else is pinned
+	 * to their own employee record — and a request that carries no employee identity at all is pinned to
+	 * {@link NO_ACCESSIBLE_EMPLOYEE_ID}, which matches nothing. Leaving the ids untouched there would drop
+	 * the predicate entirely and answer with every employee in the organization.
+	 *
+	 * @param employeeIds The employee ids the request asked for.
+	 * @param isOnlyMeSelected Whether the request explicitly asked for the caller own data.
+	 * @returns The employee ids to filter by.
+	 */
+	protected restrictToAccessibleEmployees(employeeIds: ID[] = [], isOnlyMeSelected: boolean = false): ID[] {
+		const user = RequestContext.currentUser();
+
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) && !isOnlyMeSelected) {
+			return employeeIds;
+		}
+		if (user?.employeeId) {
+			return [user.employeeId];
+		}
+		// An authenticated caller with no employee identity sees nothing unless their role is an
+		// organization-wide viewer. A request with no user at all (a public share link, an internal call) is
+		// left to the scoping its own caller applies, exactly as before.
+		if (user && !RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+			return [NO_ACCESSIBLE_EMPLOYEE_ID];
+		}
+		return employeeIds;
+	}
+
 	private getFilterQuery(
 		query: SelectQueryBuilder<TimeLog>,
 		qb: WhereExpressionBuilder,
@@ -3287,18 +3306,10 @@ export class StatisticService {
 			onlyMe: isOnlyMeSelected // Determine if the request specifies to retrieve data for the current user only
 		} = request;
 
-		const user = RequestContext.currentUser(); // Retrieve the current user
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		);
-
 		// Set employeeIds based on user conditions and permissions
-		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
-			employeeIds = [user.employeeId];
-		}
+		employeeIds = this.restrictToAccessibleEmployees(employeeIds, isOnlyMeSelected);
 
 		// Use consistent date range formatting
 		const { start, end } = getDateRangeFormat(

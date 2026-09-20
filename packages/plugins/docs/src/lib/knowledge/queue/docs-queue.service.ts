@@ -106,6 +106,9 @@ export class DocsQueueService implements OnModuleInit {
 			return this.dispatchInline(jobName, payload, jobId, Number(options.delay) || 0);
 		}
 
+		// Built first: the id is optional, and inlining the conditional would nest template literals.
+		const correlationSuffix = payload.correlationId ? `, correlationId ${payload.correlationId}` : '';
+
 		try {
 			await this.schedulerQueueService.enqueue({
 				queueName: DOCS_PROCESSING_QUEUE,
@@ -122,7 +125,8 @@ export class DocsQueueService implements OnModuleInit {
 				}
 			});
 			this.logger.log(
-				`Enqueued ${jobName} for document ${payload.documentId} (tenant ${payload.tenantId}, reason ${payload.reason})`
+				`Enqueued ${jobName} for document ${payload.documentId} (tenant ${payload.tenantId}, ` +
+					`reason ${payload.reason}${correlationSuffix})`
 			);
 			return true;
 		} catch (error) {
@@ -183,12 +187,7 @@ export class DocsQueueService implements OnModuleInit {
 	 * @returns True — accepted. (A coalesced duplicate is also "accepted": the stage is
 	 *          already running for that document.)
 	 */
-	private dispatchInline<T extends IDocsJobBase>(
-		jobName: string,
-		payload: T,
-		jobId: string,
-		delayMs = 0
-	): boolean {
+	private dispatchInline<T extends IDocsJobBase>(jobName: string, payload: T, jobId: string, delayMs = 0): boolean {
 		// `docs.reconcile` carries no document; key the guard on the stage alone.
 		const key = payload?.documentId ? this.jobIdFor(jobName, payload.documentId) : jobName;
 
@@ -200,10 +199,13 @@ export class DocsQueueService implements OnModuleInit {
 		}
 		this.inFlight.add(key);
 
+		// Built first: both parts are optional, and inlining them would nest template literals.
+		const correlationSuffix = payload?.correlationId ? `, correlationId ${payload.correlationId}` : '';
+		const delaySuffix = delayMs > 0 ? `, delayed ${delayMs}ms` : '';
+
 		this.logger.log(
 			`Dispatching ${jobName} inline for document ${payload?.documentId ?? 'n/a'} ` +
-				`(tenant ${payload?.tenantId}, reason ${payload?.reason}` +
-				`${delayMs > 0 ? `, delayed ${delayMs}ms` : ''})`
+				`(tenant ${payload?.tenantId}, reason ${payload?.reason}${correlationSuffix}${delaySuffix})`
 		);
 
 		// `setImmediate`/`setTimeout` (not `await`) so the request path returns straight away;

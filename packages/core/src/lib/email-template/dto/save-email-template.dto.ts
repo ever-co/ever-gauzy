@@ -19,9 +19,11 @@ export class SaveEmailTemplateDTO extends TenantOrganizationBaseDTO
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
+    @IsString()
     readonly mjml: string;
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
+    @IsString()
     readonly subject: string;
 }

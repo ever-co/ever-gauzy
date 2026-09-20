@@ -84,7 +84,7 @@ export { CreateEntitySubscriptionEvent } from './lib/entity-subscription/events/
 export { FeatureModule } from './lib/feature/feature.module';
 export { FeatureService } from './lib/feature/feature.service';
 export { FeatureOrganizationService } from './lib/feature/feature-organization.service';
-export { RoleModule, RoleService } from './lib/role';
+export { RoleAuthorizationService, RoleModule, RoleService } from './lib/role';
 export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
 // The approval machinery is public API for the same reason as `FeatureModule` above: a package that
 // wants a decision recorded on a document it owns has to file the request against the platform's own
@@ -185,6 +185,19 @@ export * from './lib/database/database.module';
 // entity is registered for export automatically, which is right for authored records and wrong for
 // tables the platform rebuilds after an import.
 export { isExportSkipped, SKIP_EXPORT_METADATA, SkipExport, skipExport } from './lib/export-import/skip-export.decorator';
+// Column-level counterpart: mark a credential column so the CSV export writes it masked. Public for
+// the same reason — plugin entities carry credentials too, and `csv-writer` reads properties
+// directly, so class-transformer's `@Exclude` does not reach them (GHSA-j5h5-r956-rxc3).
+export {
+	EXPORT_REDACT_METADATA,
+	ExportRedacted,
+	exportRedacted,
+	getExportRedactedProperties,
+	maskEmbeddedSecret,
+	redactForExport,
+	ExportEntityClass,
+	IExportRedactOptions
+} from './lib/export-import/export-redact.decorator';
 export { ExpenseCreateCommand, ExpenseModule, ExpenseService } from './lib/expense';
 export {
 	ExpenseCategoriesModule,
@@ -271,3 +284,4 @@ export * from './lib/operation';
 export * from './lib/webhook';
 export * from './lib/job-execution';
 export * from './lib/job-dead-letter';
+export * from './lib/auth/purpose-token';

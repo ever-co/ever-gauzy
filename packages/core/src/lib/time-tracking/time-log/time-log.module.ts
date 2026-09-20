@@ -7,6 +7,9 @@ import { EmployeeModule } from './../../employee/employee.module';
 import { OrganizationProjectModule } from './../../organization-project/organization-project.module';
 import { OrganizationContactModule } from './../../organization-contact/organization-contact.module';
 import { CommandHandlers } from './commands/handlers';
+import { Organization } from './../../organization/organization.entity';
+import { TypeOrmOrganizationRepository } from './../../organization/repository/type-orm-organization.repository';
+import { MikroOrmOrganizationRepository } from './../../organization/repository/mikro-orm-organization.repository';
 import { TimeLog } from './time-log.entity';
 import { TimeLogController } from './time-log.controller';
 import { TimeLogService } from './time-log.service';
@@ -18,8 +21,10 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
 @Module({
 	controllers: [TimeLogController],
 	imports: [
-		TypeOrmModule.forFeature([TimeLog]),
-		MikroOrmModule.forFeature([TimeLog]),
+		// `Organization` is registered here so that `OrganizationPermissionGuard`, which this
+		// controller applies, can read the organization time-tracking policy columns.
+		TypeOrmModule.forFeature([TimeLog, Organization]),
+		MikroOrmModule.forFeature([TimeLog, Organization]),
 		RolePermissionModule,
 		forwardRef(() => EmployeeModule),
 		forwardRef(() => OrganizationProjectModule),
@@ -35,6 +40,8 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
 		TimeLogResolver,
 		TypeOrmTimeLogRepository,
 		MikroOrmTimeLogRepository,
+		TypeOrmOrganizationRepository,
+		MikroOrmOrganizationRepository,
 		...CommandHandlers
 	],
 	exports: [TimeLogService, TypeOrmTimeLogRepository, MikroOrmTimeLogRepository]

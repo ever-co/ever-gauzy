@@ -34,6 +34,7 @@ import {
 } from './../../core/utils';
 import { parseTypeORMFindCountOptions } from './utils';
 import { assertCriteriaHasPredicate } from './criteria.helper';
+import { assertSensitiveRelationsAllowed } from '../util/sensitive-relations.helper';
 import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
 import {
 	ICountByOptions,
@@ -97,6 +98,52 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
+	 * Enforces the sensitive-relation permission table on a read whose `relations` option may have
+	 * come from the client.
+	 *
+	 * `SensitiveRelationsInterceptor` declares this protection per controller, but it is mounted on a
+	 * handful of the controllers that accept `relations` — and every tenant-scoped entity exposes an
+	 * `organization` relation, so one unguarded controller is enough to reach the protected rows
+	 * (GHSA-c3cj-m3xm-7j5h). Asserting it here, on the path every read goes through, makes the table
+	 * hold for entities and controllers that never opted in, present and future.
+	 *
+	 * TypeORM's `loadRelationIds` option is checked too. It loads the ids of the named relations (or of
+	 * EVERY relation, when set to `true`) and is honoured by the read methods, which pass the option
+	 * object through to the repository, so on an `Organization` read it would list the ids of the very
+	 * rows the table protects. No client uses it, so it is checked strictly.
+	 *
+	 * @param options - The find-options about to be issued; ignored when it carries neither `relations`
+	 *                  nor `loadRelationIds`.
+	 * @throws ForbiddenException when a requested relation requires a permission the caller lacks.
+	 */
+	protected assertRelationsPermitted(options?: unknown): void {
+		if (!options || typeof options !== 'object') {
+			return;
+		}
+		const metadata = this.typeOrmRepository?.metadata;
+
+		// `relations` is carried by both the TypeORM and the MikroORM option shapes; the union itself
+		// does not declare it, hence the read through a widened type.
+		const { relations, loadRelationIds } = options as { relations?: unknown; loadRelationIds?: unknown };
+		if (relations) {
+			assertSensitiveRelationsAllowed(metadata, relations);
+		}
+
+		if (loadRelationIds) {
+			const named =
+				typeof loadRelationIds === 'object' ? (loadRelationIds as { relations?: unknown }).relations : undefined;
+			// Only a real array names its relations exactly: TypeORM filters with `relations.indexOf(propertyPath)`,
+			// so a STRING (`?loadRelationIds[relations]=all-payments-list`) matches every relation whose name is a
+			// substring of it, and a missing or null list loads them all. Anything but an array is therefore
+			// checked as a request for the ids of every relation.
+			assertSensitiveRelationsAllowed(
+				metadata,
+				Array.isArray(named) ? named : (metadata?.relations ?? []).map((relation) => relation.propertyPath)
+			);
+		}
+	}
+
+	/**
 	 * Count the number of entities based on the provided options.
 	 *
 	 * @param options - Options for counting entities.
@@ -144,6 +191,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findAll(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
+		this.assertRelationsPermitted(options);
+
 		let total: number;
 		let items: T[];
 
@@ -172,6 +221,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
+		this.assertRelationsPermitted(options);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
@@ -193,6 +244,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async paginate(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
+		this.assertRelationsPermitted(options);
+
 		try {
 			let total: number;
 			let items: T[];
@@ -249,6 +302,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneOrFailByIdString(id: string, options?: IFindOneOptions<T>): Promise<ITryRequest<T>> {
+		// Asserted outside the try: the catch below turns any throw into `{ success: false }`, which
+		// would swallow the ForbiddenException instead of refusing the read.
+		this.assertRelationsPermitted(options);
+
 		try {
 			// A lookup "by id" with no id must not become a lookup for ANY row: TypeORM omits an
 			// undefined where value (and used to omit null), so `where: { id }` degraded to
@@ -302,6 +359,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneOrFailByOptions(options: IFindOneOptions<T>): Promise<ITryRequest<T>> {
+		// See findOneOrFailByIdString: the catch below would swallow the ForbiddenException.
+		this.assertRelationsPermitted(options);
+
 		try {
 			let record: T;
 			switch (this.ormType) {
@@ -386,6 +446,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneByIdString(id: ID, options?: IFindOneOptions<T>): Promise<T> {
+		this.assertRelationsPermitted(options);
+
 		// See findOneOrFailByIdString: an empty id must fail closed, never match an arbitrary row.
 		if (!id) {
 			throw new NotFoundException(`The requested record was not found`);
@@ -445,6 +507,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @throws NotFoundException when no record matches.
 	 */
 	public async findOneByOptions(options: IFindOneOptions<T>): Promise<T> {
+		this.assertRelationsPermitted(options);
+
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
@@ -803,9 +867,16 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns A promise that resolves to the softly removed entity.
 	 */
 	public async softRemove(id: ID, options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
+		// The inherited `DELETE :id/soft` route hands over its rest parameter, an ARRAY; never treat it
+		// as find options.
+		options = toFindOneOptions<T>(options);
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
+					// Resolve through `findOneByIdString` first: `TenantAwareCrudService` overrides it to add
+					// the caller's tenant, which the raw repository lookup below does not. Without it the
+					// MikroORM branch soft-deleted a row of ANY tenant by id.
+					await this.findOneByIdString(id, options);
 					// Convert the filter to MikroORM-specific where and options
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
 					const entity = (await this.mikroOrmRepository.findOne(
@@ -842,9 +913,16 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns A promise that resolves with the recovered entity.
 	 */
 	public async softRecover(id: ID, options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
+		// The row to recover IS soft-deleted, so the lookup must include deleted rows: without
+		// `withDeleted` every inherited `PUT :id/recover` route answered 404 for the very row it was
+		// meant to restore. The inherited route also hands over its rest parameter, an ARRAY; never treat
+		// it as find options.
+		options = { ...toFindOneOptions<T>(options), withDeleted: true } as IFindOneOptions<T>;
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
+					// Tenant-scoped existence check first — see softRemove.
+					await this.findOneByIdString(id, options);
 					// Convert the filter to MikroORM-specific where and options
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
 					// Find the soft-deleted entity with relations
@@ -960,4 +1038,19 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		// If using other ORM types, return the entity as is
 		return entity;
 	}
+}
+
+/**
+ * Narrows the `options` argument of `softRemove` / `softRecover` to real find options.
+ *
+ * `CrudController` forwards its `...options` rest parameter, which Nest fills with an empty ARRAY, so the
+ * value is not an options object at all on the inherited routes.
+ *
+ * @param options - The value received as find options.
+ * @returns The options object, or `undefined` when none was given.
+ */
+function toFindOneOptions<T>(options: unknown): IFindOneOptions<T> | undefined {
+	return options && typeof options === 'object' && !Array.isArray(options)
+		? (options as IFindOneOptions<T>)
+		: undefined;
 }

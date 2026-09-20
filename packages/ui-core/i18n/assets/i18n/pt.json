@@ -1956,6 +1956,7 @@
 		"EXPECTED": "Esperado",
 		"UPDATES": "Atualizações",
 		"UPDATE": "Atualizar",
+		"ALIGNMENTS": "Alinhamentos",
 		"COMMENTS": "Comentários",
 		"KEY_RESULTS": "Resultados Chave",
 		"GROUP_BY": "Agrupe por",
@@ -1972,6 +1973,8 @@
 		"GOAL_TEMPLATES": "Modelos de Objetivos",
 		"CREATE_NEW_MENU": "Criar Novo",
 		"CREATE_FROM_PRESET": "Criar a partir de um predefinido",
+		"SELECT_A_PRESET": "Selecionar um predefinido",
+		"ADDITIONAL_DETAILS": "Detalhes adicionais",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Funcionários",
 			"TEAMS": "Equipes",
@@ -2001,7 +2004,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Não há resultados-chave para exibir.",
 			"NO_UPDATES": "Ainda não há atualizações.",
-			"NO_ALIGNMENT": "Ainda não há alinhamentos."
+			"NO_ALIGNMENT": "Ainda não há alinhamentos.",
+			"NO_PROGRESS_DATA": "Ainda não há dados de progresso para o gráfico."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organização",
@@ -2457,6 +2461,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Duração do diálogo de contagem regressiva da prova de atividade, representa a quantidade de minutos dada para comprovar a atividade.",
 				"ENABLE_DETECTION_INACTIVITY": "Permitir a detecção da inatividade do funcionário",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Ativado - o sistema detectará a inatividade e exibirá um aviso. Desativado - nenhum aviso será exibido quando um funcionário estiver inativo.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Frequência de Capturas de Tela",
 				"SCREENSHOT_FREQUENCY_INFO": "Especifique a frequência de atualização ou os intervalos de tempo para sincronização.",
 				"RANDOM_SCREENSHOT": "Captura de Tela Aleatória",
@@ -4912,7 +4918,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Capturas de tela",
 			"OF": "da",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Captura de tela feita às {{ time }}",
+			"POSITION": "Captura de tela {{ position }} de {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Aviso. O cronômetro está em execução, você só pode remover capturas de tela se parar o cronômetro ou dentro do aplicativo Timer.",
 		"DELETE_CONFIRM": "Você tem certeza de que quer deletar essas capturas de tela e registros de tempo?",

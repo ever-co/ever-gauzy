@@ -6,6 +6,7 @@ import {
 	IAiTranscribeOptions,
 	createCatalogueCache,
 	fetchCatalogueJson,
+	isPrivateAiProviderEndpointAllowed,
 	prettifyModelId,
 	selfHostedCatalogue,
 	transcribeViaOpenAiCompatible,
@@ -54,7 +55,13 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 		load: async (baseUrl, resolved) => {
 			const body = await fetchCatalogueJson<{ data?: { id: string; task?: string }[] }>(
 				`${trimTrailingSlash(baseUrl)}/models`,
-				resolved?.apiKey ? { headers: { authorization: `Bearer ${resolved.apiKey}` } } : undefined
+				{
+					...(resolved?.apiKey ? { headers: { authorization: `Bearer ${resolved.apiKey}` } } : {}),
+					// The operator's own address may be private; a tenant credential may not reach one —
+					// its own URL or the built-in local default — unless the deployment opted in
+					// (GHSA-w3mx-m5cr-3gxp).
+					allowPrivateHost: isPrivateAiProviderEndpointAllowed(resolved)
+				}
 			);
 			return (body.data ?? [])
 				// Speaches tags each model with a `task`; keep the ASR ones. A model that carries NO
@@ -83,7 +90,8 @@ const transcribeAudio = async (
 		model: options?.model || DEFAULT_SPEECH_MODEL,
 		language: options?.language,
 		providerLabel: 'Speaches',
-		providerId: PROVIDER_ID
+		providerId: PROVIDER_ID,
+		allowPrivateHost: isPrivateAiProviderEndpointAllowed(credentials)
 	});
 
 /**

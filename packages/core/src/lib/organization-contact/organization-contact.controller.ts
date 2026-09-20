@@ -1,4 +1,17 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -21,7 +34,7 @@ import { OrganizationContactService } from './organization-contact.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
-import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { AbstractValidationPipe, ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateOrganizationContactDTO, UpdateOrganizationContactDTO } from './dto';
 
 @ApiTags('OrganizationContact')
@@ -213,5 +226,76 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		@Body() entity: UpdateOrganizationContactDTO
 	): Promise<IOrganizationContact> {
 		return await this.commandBus.execute(new OrganizationContactUpdateCommand(id, entity));
+	}
+
+	/**
+	 * DELETE organization contact by id
+	 *
+	 * Overrides the inherited `CrudController.delete()` route only to attach the permission gate.
+	 * Same permission as create/update; the contacts page shows delete only to ORG_CONTACT_EDIT
+	 * (GHSA-v79w-54p2-wmh5).
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'The record has been successfully deleted'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * SOFT DELETE organization contact by id
+	 *
+	 * Overrides the inherited `CrudController.softRemove()` route only to attach the permission gate.
+	 * Same permission as create/update; the contacts page shows delete only to ORG_CONTACT_EDIT
+	 * (GHSA-v79w-54p2-wmh5).
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'Record soft deleted successfully'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationContact> {
+		return super.softRemove(id, ...options);
+	}
+
+	/**
+	 * RESTORE a soft-deleted organization contact by id
+	 *
+	 * Overrides the inherited `CrudController.softRecover()` route only to attach the permission gate.
+	 * Same permission as create/update; the contacts page shows delete only to ORG_CONTACT_EDIT
+	 * (GHSA-v79w-54p2-wmh5).
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'Record restored successfully'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationContact> {
+		return super.softRecover(id, ...options);
 	}
 }

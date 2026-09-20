@@ -37,7 +37,16 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	hideEmployee = false;
 	hideTeam = false;
 	hideOrg = false;
+	/** The field whose help the aside is showing; resolved by `showHelper()` from the three sources below. */
 	helperText = '';
+	/**
+	 * The field the pointer is over, the field holding keyboard focus, and the field the level picker reports
+	 * (it resolves its own hover and focus before emitting). Tracked apart: held in one value, ending any one
+	 * interaction cleared the help while another was still on a field.
+	 */
+	private hoveredField = '';
+	private focusedField = '';
+	private levelField = '';
 	settings: IGoalGeneralSetting;
 	teams: IOrganizationTeam[] = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
@@ -146,6 +155,33 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 				this.timeFrames = timeFrames.filter((elm) => elm);
 			}
 		});
+	}
+
+	/** Records the field the pointer moved onto, or `''` when it left one. */
+	hoverHelper(field: string) {
+		this.hoveredField = field;
+		this.showHelper();
+	}
+
+	/** Records the field that took keyboard focus, or `''` when it lost it. */
+	focusHelper(field: string) {
+		this.focusedField = field;
+		this.showHelper();
+	}
+
+	/** Records whichever of Level, Owner or Lead the level picker is reporting, or `''` when it reports none. */
+	levelHelper(field: string) {
+		this.levelField = field;
+		this.showHelper();
+	}
+
+	/**
+	 * Picks the help the aside shows. The pointer wins while it is over a field, so hovering one field while
+	 * another holds focus still reads as before; the help falls back to whatever is left and only clears once
+	 * every interaction has ended.
+	 */
+	private showHelper() {
+		this.helperText = this.hoveredField || this.levelField || this.focusedField;
 	}
 
 	async openSetTimeFrame() {

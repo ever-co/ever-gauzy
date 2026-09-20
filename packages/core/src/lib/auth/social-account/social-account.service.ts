@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
-import { ISocialAccount, ISocialAccountBase, IUser } from '@gauzy/contracts';
+import { ISocialAccount, ISocialAccountBase, IUser, ProviderEnum } from '@gauzy/contracts';
 import { UserService } from '../../user/user.service';
 import { TenantAwareCrudService } from '../../core/crud';
 import { MultiORMEnum } from '../../core/utils';
+import { isNonEmptyString } from '../purpose-token';
 import { SocialAccount } from './social-account.entity';
 import { TypeOrmSocialAccountRepository } from './repository/type-orm-social-account.repository';
 import { MikroOrmSocialAccountRepository } from './repository/mikro-orm-social-account.repository';
@@ -31,11 +32,58 @@ export class SocialAccountService extends TenantAwareCrudService<SocialAccount> 
 	}
 
 	/**
+	 * Links a provider account to ONE user, in that user's tenant, unless the link already exists.
+	 *
+	 * The social sign-in routes are public, so there is no request tenant: `save()` would overwrite
+	 * the tenant with `undefined` and store a tenant-less link. The tenant is taken from the user.
+	 */
+	async linkSocialAccountToUser(input: {
+		provider: ProviderEnum;
+		providerAccountId: string;
+		user: IUser;
+	}): Promise<ISocialAccount> {
+		const { provider, providerAccountId, user } = input;
+		if (!provider || !isNonEmptyString(providerAccountId) || !isNonEmptyString(user?.id)) {
+			throw new BadRequestException('Could not create this account');
+		}
+
+		const tenantId = user.tenantId ?? null;
+		const where = { provider, providerAccountId, userId: user.id, tenantId, isActive: true, isArchived: false };
+
+		const existing =
+			this.ormType === MultiORMEnum.MikroORM
+				? ((await this.mikroOrmRepository.findOne(where as any)) as SocialAccount)
+				: await this.typeOrmRepository.findOne({ where });
+		if (existing) {
+			return existing;
+		}
+
+		try {
+			return await this.saveWithoutEnrichment({
+				provider,
+				providerAccountId,
+				user: { id: user.id },
+				userId: user.id,
+				...(tenantId ? { tenant: { id: tenantId } } : {}),
+				tenantId
+			} as any);
+		} catch (error) {
+			throw new BadRequestException('Could not create this account');
+		}
+	}
+
+	/**
 	 * Finds a social account by provider and providerAccountId.
 	 * Uses ORM switch to support both TypeORM and MikroORM, returning null when not found.
 	 */
 	async findAccountByProvider(input: ISocialAccountBase): Promise<SocialAccount | null> {
 		const { provider, providerAccountId } = input;
+
+		// An empty value would be dropped from the `where` by the ORM and match ANY account of the
+		// provider (or any account at all) — GHSA-58x4-7mw9-gmqg.
+		if (!provider || !isNonEmptyString(providerAccountId)) {
+			return null;
+		}
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {

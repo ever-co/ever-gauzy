@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
+import { EmployeeModule } from '../../employee/employee.module';
 import { CustomTrackingController } from './custom-tracking.controller';
 import { CustomTrackingResolver } from './custom-tracking.resolver';
 import { CustomTrackingService } from './custom-tracking.service';
@@ -23,6 +24,7 @@ import { MikroOrmTimeSlotSessionRepository } from '../time-slot-session/reposito
 		TypeOrmModule.forFeature([TimeSlot, TimeLog, TimeSlotSession]),
 		MikroOrmModule.forFeature([TimeSlot, TimeLog, TimeSlotSession]),
 		RolePermissionModule,
+		forwardRef(() => EmployeeModule),
 		forwardRef(() => TimeSlotModule),
 		forwardRef(() => TimeLogModule),
 		CqrsModule

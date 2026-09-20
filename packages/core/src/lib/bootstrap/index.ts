@@ -63,6 +63,7 @@ import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
 import { configureRedisSession } from './redis-store';
 import { setupSwagger } from './swagger';
+import { resolveTrustProxy } from './trust-proxy';
 import { validateApplicationSecrets } from './validate-secrets';
 
 /**
@@ -99,8 +100,13 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Register custom entity fields for Mikro ORM
 	await registerMikroOrmCustomFields(config);
 
-	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html)
-	app.set('trust proxy', true);
+	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html).
+	//
+	// This used to be an unconditional `true`, which trusts the whole X-Forwarded-For chain: `req.ip`
+	// then resolves to whatever the CLIENT put at the head of that header, so the login rate limiter
+	// keyed on it handed out a fresh bucket per request (GHSA-86mw-2crg-vmhc). The hop count is now
+	// operator-configurable via TRUST_PROXY and defaults to one hop.
+	app.set('trust proxy', resolveTrustProxy(process.env.TRUST_PROXY));
 
 	// Starts listening for shutdown hooks
 	app.enableShutdownHooks();
@@ -187,8 +193,18 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			'Idempotency-Key',
 			'If-Match',
 			// A conditional read states the version it already has.
-			'If-None-Match'
-		].join(', ')
+			'If-None-Match',
+			// TASK 9 (improvement roadmap) — Unified Observability and Correlation IDs: lets a
+			// cross-origin browser client send its own correlation id (`RequestContextMiddleware`
+			// already trusted it server-side; this only affects whether the BROWSER is allowed to
+			// set the header on the request).
+			'X-Correlation-Id'
+		].join(', '),
+		// A response header is invisible to browser JS unless explicitly exposed (CORS's own
+		// default allowlist is a handful of simple headers, and this isn't one) — without this, a
+		// cross-origin caller that did NOT send its own `x-correlation-id` had a value written to the
+		// response but no way to read it back via `fetch`/`XMLHttpRequest`.
+		exposedHeaders: ['X-Correlation-Id']
 	});
 
 	// TODO: enable csurf is not good idea because it was deprecated.

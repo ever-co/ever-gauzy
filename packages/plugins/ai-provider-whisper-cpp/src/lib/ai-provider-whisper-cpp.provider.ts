@@ -3,6 +3,7 @@ import {
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	IAiTranscribeOptions,
+	isPrivateAiProviderEndpointAllowed,
 	transcribeMultipart,
 	trimTrailingSlash
 } from '@gauzy/plugin-ai-chat';
@@ -53,7 +54,8 @@ const transcribeAudio = async (
 		headers: credentials.apiKey ? { authorization: `Bearer ${credentials.apiKey}` } : {},
 		apiKey: credentials.apiKey,
 		providerLabel: 'whisper.cpp',
-		providerId: PROVIDER_ID
+		providerId: PROVIDER_ID,
+		allowPrivateHost: isPrivateAiProviderEndpointAllowed(credentials)
 	});
 
 /**

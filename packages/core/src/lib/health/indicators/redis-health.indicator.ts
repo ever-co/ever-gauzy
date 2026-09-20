@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HealthIndicatorResult } from '@nestjs/terminus';
 import { v4 as uuid } from 'uuid';
 import { createClient } from 'redis';
+import { redactUrlCredentials, redactUrlErrorInput } from '../../core/util/redact-credentials';
 
 @Injectable()
 export class RedisHealthIndicator {
@@ -106,7 +107,8 @@ export class RedisHealthIndicator {
 				return `${redisProtocol}://${auth}${REDIS_HOST}:${REDIS_PORT}`;
 			})();
 
-		console.log('REDIS_URL:', redisUrl);
+		// Never log the raw URL: it carries the Redis password in its userinfo section.
+		console.log('REDIS_URL:', redactUrlCredentials(redisUrl));
 
 		try {
 			// Parse Redis URL
@@ -146,7 +148,7 @@ export class RedisHealthIndicator {
 			console.log('Redis connected successfully.');
 			return true;
 		} catch (error) {
-			console.error('Redis Health Connect Error:', error);
+			console.error('Redis Health Connect Error:', redactUrlErrorInput(error));
 			return false;
 		}
 	}
