@@ -3,6 +3,7 @@ import * as chalk from 'chalk';
 import { environment } from '@gauzy/config';
 import { SeedDataService } from '../core/seeds/seed-data.service';
 import { UserService } from '../user/user.service';
+import { getPublishedSeedAccounts } from '../bootstrap/validate-secrets';
 
 @Injectable()
 export class AppService {
@@ -20,10 +21,40 @@ export class AppService {
 
 		if (this.userCount > 0) {
 			// If users already exist, skip default seeding
+			await this.warnAboutPublishedSeedPasswords();
 			return;
 		}
 
 		await this.seedDataService.runDefaultSeed(true);
+	}
+
+	/**
+	 * Warns (never refuses) when a seeded default account of an existing database still signs in with
+	 * its published password. The seed guard only protects NEW databases, so an install seeded before
+	 * it existed keeps `admin@ever.co` / `admin` until someone rotates it (GHSA-4r2r-mv32-3468).
+	 * Skipped on the demo, which publishes these credentials by design. Never throws.
+	 */
+	private async warnAboutPublishedSeedPasswords(): Promise<void> {
+		if (environment.demo === true || process.env.DEMO === 'true') {
+			return;
+		}
+		try {
+			const accounts = await this.userService.findAccountsUsingPasswords(getPublishedSeedAccounts());
+			if (accounts.length === 0) {
+				return;
+			}
+			console.error(chalk.bgRed.whiteBright.bold(` INSECURE ACCOUNTS: ${accounts.join(', ')} `));
+			console.error(
+				chalk.red(
+					`${accounts.join(', ')} still ${accounts.length === 1 ? 'uses its' : 'use their'} published default ` +
+						'password from the Gauzy README. Anyone who can reach the login page can sign in as ' +
+						`${accounts.length === 1 ? 'it' : 'them'}. Change ${accounts.length === 1 ? 'that password' : 'those passwords'} ` +
+						'now (or deactivate the account).'
+				)
+			);
+		} catch (error: any) {
+			console.warn(chalk.yellow(`Could not check seeded accounts for published passwords: ${error?.message ?? error}`));
+		}
 	}
 
 	/*

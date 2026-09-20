@@ -1333,8 +1333,26 @@ export class OAuth2AuthorizationServer {
 			return;
 		}
 
+		// The account is re-resolved on every refresh so a deactivated or archived user cannot keep
+		// minting access tokens with a refresh token issued before (GHSA-3cgp-wmrg-4fqg). Fail closed
+		// when no provider is wired: account status could not be checked.
+		const userInfoProvider = this.userInfoProvider;
+		if (!userInfoProvider) {
+			this.securityLogger.error('User info provider not configured; refusing refresh_token grant');
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError('server_error', 'User information service not available'),
+				500
+			);
+			return;
+		}
+
 		// Refresh tokens
-		const newTokenPair = await this.tokenManager.refreshAccessToken(params.refresh_token, params.client_id);
+		const newTokenPair = await this.tokenManager.refreshAccessToken(
+			params.refresh_token,
+			params.client_id,
+			(userId: string) => userInfoProvider(userId)
+		);
 		if (!newTokenPair) {
 			this.errorHandler.handleOAuthError(
 				res,

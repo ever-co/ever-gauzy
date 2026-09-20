@@ -41,6 +41,8 @@ import {
 	DialogErrorHandler,
 	DialogOpenFile,
 	DialogStopServerExitConfirmation,
+	desktopSecretsToEnv,
+	ensureDesktopSecrets,
 	ErrorEventManager,
 	ErrorReport,
 	ErrorReportRepository,
@@ -389,6 +391,13 @@ const initializeAppWindowManager = () => {
 const getEnvApi = () => {
 	const config = serverConfig.setting;
 	serverConfig.update();
+	// Per-install random signing/session secrets, generated on first start and replacing a stored
+	// published default on upgrade. Persisted before the API starts so restarts keep the same keys
+	// (GHSA-39j7-x845-4w3c).
+	const { secret, changed } = ensureDesktopSecrets(config?.secret);
+	if (changed) {
+		serverConfig.setting = { secret };
+	}
 	const addsConfig = LocalStore.getAdditionalConfig();
 	const provider = config.db === 'better-sqlite' ? 'better-sqlite3' : config.db;
 	return {
@@ -406,8 +415,7 @@ const getEnvApi = () => {
 		DEBUG: process.env.NODE_ENV !== 'production' ? 'true' : 'false',
 		API_PORT: String(config.port),
 		...addsConfig,
-		JWT_SECRET: config.secret?.jwt,
-		JWT_REFRESH_TOKEN_SECRET: config.secret?.refresh_token
+		...desktopSecretsToEnv(secret)
 	};
 };
 

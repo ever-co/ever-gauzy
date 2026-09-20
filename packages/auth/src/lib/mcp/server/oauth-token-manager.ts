@@ -183,8 +183,19 @@ export class OAuth2TokenManager {
 
 	/**
 	 * Refresh access token using refresh token
+	 *
+	 * @param refreshTokenString - The refresh token presented by the client.
+	 * @param clientId - The authenticated client.
+	 * @param resolveUser - Re-reads the token's user; `null` means the account can no longer sign in
+	 * (deactivated, archived or deleted). Account status is otherwise checked only at login, so
+	 * without this a refresh token kept minting access tokens for a deactivated user for its whole
+	 * 30-day lifetime (GHSA-3cgp-wmrg-4fqg). Such a refresh token is revoked.
 	 */
-	async refreshAccessToken(refreshTokenString: string, clientId: string): Promise<TokenPair | null> {
+	async refreshAccessToken(
+		refreshTokenString: string,
+		clientId: string,
+		resolveUser?: (userId: string) => Promise<unknown | null>
+	): Promise<TokenPair | null> {
 		try {
 			// Verify refresh token
 			const payload = await this.verifyToken(refreshTokenString);
@@ -212,6 +223,19 @@ export class OAuth2TokenManager {
 				this.securityLogger.warn(`Refresh token expired: ${payload.jti}`);
 				this.refreshTokens.delete(payload.jti);
 				return null;
+			}
+
+			// Re-check the account on every refresh, not only when the refresh token was issued.
+			// The refresh is refused but the token is NOT revoked: the only wired provider
+			// (apps/mcp-auth getMcpUserInfo) returns null for a transient lookup failure just as it
+			// does for a deactivated account, so revoking here would let one database blip
+			// permanently sign an active user out. Refusing already blocks every use of it.
+			if (resolveUser) {
+				const user = await resolveUser(refreshTokenMeta.userId);
+				if (!user) {
+					this.securityLogger.warn(`Refresh denied, user is not active: ${refreshTokenMeta.userId}`);
+					return null;
+				}
 			}
 
 			// Generate new access token

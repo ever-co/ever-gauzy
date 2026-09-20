@@ -1,16 +1,18 @@
 import * as chalk from 'chalk';
-import { environment } from '@gauzy/config';
+import { environment, isGeneratedSecret } from '@gauzy/config';
+import { isKnownDefaultSecret } from '@gauzy/contracts';
 
 /**
- * Known default/placeholder secret values shipped in the repository. Running a real deployment with
- * any of these is unsafe: the values are public, so anyone can forge authentication tokens and
- * sessions and impersonate any user (GHSA-chm8-2ggf-pgjq).
+ * The authentication/session secrets checked at startup. Each is weak when it is unset, blank, one
+ * of the published `KNOWN_DEFAULT_SECRETS` (whichever key it was published for — `refreshSecretKey`
+ * as JWT_SECRET is just as public), or the per-process random value `@gauzy/config` substitutes when
+ * the variable is unset (GHSA-chm8-2ggf-pgjq, GHSA-39j7-x845-4w3c).
  */
-const KNOWN_DEFAULT_SECRETS: ReadonlyArray<{ key: string; value: string }> = [
-	{ key: 'JWT_SECRET', value: 'secretKey' },
-	{ key: 'JWT_REFRESH_TOKEN_SECRET', value: 'refreshSecretKey' },
-	{ key: 'JWT_VERIFICATION_TOKEN_SECRET', value: 'verificationSecretKey' },
-	{ key: 'EXPRESS_SESSION_SECRET', value: 'gauzy' }
+const CHECKED_SECRETS: ReadonlyArray<string> = [
+	'JWT_SECRET',
+	'JWT_REFRESH_TOKEN_SECRET',
+	'JWT_VERIFICATION_TOKEN_SECRET',
+	'EXPRESS_SESSION_SECRET'
 ];
 
 /**
@@ -21,19 +23,22 @@ const KNOWN_DEFAULT_SECRETS: ReadonlyArray<{ key: string; value: string }> = [
  * - Additionally refuses to start in a real production deployment (`NODE_ENV=production` and
  *   `DEMO !== 'true'`), unless the operator explicitly opts out via `ALLOW_INSECURE_JWT_SECRET=true`.
  *
- * The daily-reset demo (`DEMO=true`) and local development are intentionally exempted from the hard
- * failure so they keep working out of the box, while still being warned.
+ * Outside DEMO an unset secret no longer means a published literal: `@gauzy/config` substitutes a
+ * random per-process value (see `resolveSecret`), which this guard still reports as "unset". The
+ * daily-reset demo (`DEMO=true`) keeps the published fallback for now and is exempted from the hard
+ * failure, as is local development, while both are still warned.
  *
  * @throws Error in production (non-demo) when weak secrets are detected and the override is not set.
  */
 export function validateApplicationSecrets(): void {
 	const env = environment as unknown as Record<string, unknown>;
 
-	const weak = KNOWN_DEFAULT_SECRETS.filter(({ key, value }) => {
+	const weak = CHECKED_SECRETS.filter((key) => {
+		const inUse = (env[key] as string | undefined) ?? process.env[key];
 		// Trim so whitespace-only values (e.g. " ") are treated as unset rather than a "strong" secret.
-		const current = String((env[key] as string | undefined) ?? process.env[key] ?? '').trim();
-		return !current || current === value;
-	}).map(({ key }) => key);
+		const current = String(inUse ?? '').trim();
+		return !current || isKnownDefaultSecret(current) || isGeneratedSecret(key, inUse);
+	});
 
 	if (weak.length === 0) {
 		return;
@@ -41,7 +46,8 @@ export function validateApplicationSecrets(): void {
 
 	const guidance =
 		'Generate strong, unique values (e.g. `openssl rand -hex 64`) and provide them via environment ' +
-		'variables before deploying. Default/empty secrets let anyone forge authentication tokens and sessions.';
+		'variables before deploying. Default secrets let anyone forge authentication tokens and sessions; ' +
+		'unset secrets are replaced by a random value that lives only as long as this process.';
 
 	// eslint-disable-next-line no-console
 	console.error(chalk.bgRed.whiteBright.bold(` INSECURE SECRETS: ${weak.join(', ')} `));
@@ -84,6 +90,24 @@ const KNOWN_DEFAULT_SEED_CREDENTIALS: ReadonlyArray<{ key: string; value: string
 	{ key: 'DEMO_ADMIN_PASSWORD', value: 'admin', account: 'local.admin@ever.co (ADMIN)' },
 	{ key: 'DEMO_EMPLOYEE_PASSWORD', value: '12345678', account: 'employee@ever.co (EMPLOYEE)' }
 ];
+
+/**
+ * The seeded default accounts paired with their PUBLISHED passwords, for checking an existing
+ * database: an install seeded before the seed guard existed, and never rotated, still has them
+ * (GHSA-4r2r-mv32-3468). Emails come from the live config, since that is what was seeded.
+ */
+export function getPublishedSeedAccounts(): Array<{ email: string; password: string }> {
+	const credentials = (environment.demoCredentialConfig ?? {}) as Record<string, string | undefined>;
+	const emails: Record<string, string | undefined> = {
+		DEMO_SUPER_ADMIN_PASSWORD: credentials.superAdminEmail,
+		DEMO_ADMIN_PASSWORD: credentials.adminEmail,
+		DEMO_EMPLOYEE_PASSWORD: credentials.employeeEmail
+	};
+
+	return KNOWN_DEFAULT_SEED_CREDENTIALS.map(({ key, value }) => ({ email: emails[key] ?? '', password: value })).filter(
+		({ email }) => !!email
+	);
+}
 
 /**
  * Resolves the password the seeder would actually use for one of the default accounts.
@@ -129,11 +153,15 @@ export interface SeedCredentialOptions {
  *   production build, and `DEMO !== 'true'`), unless the operator opts out via
  *   `ALLOW_INSECURE_SEED_CREDENTIALS=true`.
  *
- * Exemptions, and why they are safe:
+ * Exemptions:
  * - `DEMO=true` — the daily-reset demo is meant to be logged into with the documented credentials;
  * - `IS_ELECTRON` — the desktop Gauzy Server spawns this API locally against a private database,
  *   and the desktop README tells the user to sign in as `admin@ever.co`. Refusing to boot there
- *   would break the desktop product without closing any network-reachable hole.
+ *   would break the desktop product. This exemption is NOT harmless: every desktop launcher binds
+ *   the API to `0.0.0.0` (remote timers connect to it), so the published seed passwords are
+ *   reachable from the LAN — or further, if the port is forwarded — until the user rotates them.
+ *   It stays only until the desktop apps seed random per-install passwords and show them in the
+ *   setup UI (GHSA-4r2r-mv32-3468 residual).
  *
  * This only runs when a seed is about to run. The boot-time seed runs only against a database with
  * no users, so an existing deployment is never refused by it.

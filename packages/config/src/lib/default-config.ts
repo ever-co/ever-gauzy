@@ -6,6 +6,7 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { DEFAULT_API_HOST, DEFAULT_API_PORT, DEFAULT_API_BASE_URL, DEFAULT_GRAPHQL_API_PATH } from '@gauzy/constants';
 import {} from '@gauzy/contracts';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, dbKnexConnectionConfig } from './database';
+import { resolveSecret } from './environments/secret-resolver';
 
 process.cwd();
 
@@ -90,9 +91,10 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 		User: []
 	},
 	authOptions: {
-		expressSessionSecret: process.env.EXPRESS_SESSION_SECRET || 'gauzy',
+		// Same resolver as `environment`, so both surfaces agree on the per-process value (GHSA-39j7-x845-4w3c).
+		expressSessionSecret: resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy'),
 		userPasswordBcryptSaltRounds: 12,
-		jwtSecret: process.env.JWT_SECRET || 'secretKey'
+		jwtSecret: resolveSecret('JWT_SECRET', 'secretKey')
 	},
 	assetOptions: {
 		assetPath: assetPath,

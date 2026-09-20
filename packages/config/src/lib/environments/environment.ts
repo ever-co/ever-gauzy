@@ -10,6 +10,7 @@ dotenv.config({ quiet: true });
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { IEnvironment, IGauzyFeatures } from './ienvironment';
 import { isEnvFlagEnabled, isFeatureEnabled, parseNonNegativeInt } from './environment.helper';
+import { resolveSecret } from './secret-resolver';
 
 if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
 	require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
@@ -27,19 +28,24 @@ export const environment: IEnvironment = {
 		LOG_LEVEL: 'debug'
 	},
 
-	EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET || 'gauzy',
+	/**
+	 * Token-signing and session secrets never fall back to a published literal outside DEMO: unset
+	 * means a random per-process value (and a refused boot in production). See resolveSecret()
+	 * (GHSA-39j7-x845-4w3c).
+	 */
+	EXPRESS_SESSION_SECRET: resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy'),
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
-	JWT_SECRET: process.env.JWT_SECRET || 'secretKey',
+	JWT_SECRET: resolveSecret('JWT_SECRET', 'secretKey'),
 	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
-	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
+	JWT_REFRESH_TOKEN_SECRET: resolveSecret('JWT_REFRESH_TOKEN_SECRET', 'refreshSecretKey'),
 	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options
 	 */
-	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
+	JWT_VERIFICATION_TOKEN_SECRET: resolveSecret('JWT_VERIFICATION_TOKEN_SECRET', 'verificationSecretKey'),
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
 
 	/**

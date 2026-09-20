@@ -67,6 +67,14 @@ import {
  */
 const ACTIVE_ACCOUNT = { isActive: true, isArchived: false } as const;
 
+/**
+ * How many rows {@link UserService.findAccountsUsingPasswords} reads and verifies. That check runs on
+ * the boot path, `user.email` carries a plain (non-unique) index, and a password verification costs
+ * tens to hundreds of milliseconds by design — so the work has to be capped rather than scale with the
+ * number of tenants that happen to hold the same seeded address (GHSA-4r2r-mv32-3468).
+ */
+const MAX_ACCOUNTS_CHECKED = 10;
+
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
 	constructor(
@@ -881,6 +889,63 @@ export class UserService extends TenantAwareCrudService<User> {
 		} catch (error) {
 			throw new UnauthorizedException();
 		}
+	}
+
+	/**
+	 * Returns the emails of the given accounts whose stored password still verifies against the given
+	 * password. One query for all candidates; used at boot to warn about seeded accounts that still
+	 * use their published default password (GHSA-4r2r-mv32-3468).
+	 *
+	 * Best effort, and deliberately bounded: `email` is not unique across tenants, so the same seeded
+	 * address can exist many times, while one verification is expensive on purpose (scrypt, or bcrypt
+	 * at 12 rounds for a legacy hash). This runs before the API starts listening, so at most
+	 * {@link MAX_ACCOUNTS_CHECKED} rows are read and verified — enough for a warning, and it cannot
+	 * hold up a boot.
+	 *
+	 * @param candidates Account emails, each with the password to test.
+	 * @returns The matching emails (an email is reported once even if it exists in several tenants).
+	 */
+	public async findAccountsUsingPasswords(
+		candidates: ReadonlyArray<{ email: string; password: string }>
+	): Promise<string[]> {
+		const emails = [...new Set(candidates.map(({ email }) => email).filter(Boolean))];
+		if (emails.length === 0) {
+			return [];
+		}
+
+		let rows: Array<Pick<User, 'email' | 'hash'>>;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				// Raw entities, not `serialize()`d: serialization strips `hash`.
+				rows = await this.mikroOrmUserRepository.find({ email: { $in: emails } } as any, {
+					limit: MAX_ACCOUNTS_CHECKED
+				});
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				rows = await this.typeOrmUserRepository.find({
+					where: { email: In(emails) },
+					select: { id: true, email: true, hash: true },
+					take: MAX_ACCOUNTS_CHECKED
+				});
+				break;
+		}
+
+		const matches = new Set<string>();
+		// Sliced as well as limited in the query, so the expensive part stays bounded whatever the
+		// repository returns.
+		for (const { email, hash } of rows.slice(0, MAX_ACCOUNTS_CHECKED)) {
+			if (!hash || matches.has(email)) {
+				continue;
+			}
+			for (const candidate of candidates) {
+				if (candidate.email === email && (await this._passwordHashService.verify(candidate.password, hash))) {
+					matches.add(email);
+					break;
+				}
+			}
+		}
+		return [...matches];
 	}
 
 	/**
