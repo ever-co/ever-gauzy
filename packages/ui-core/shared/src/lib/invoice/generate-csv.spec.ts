@@ -57,8 +57,11 @@ describe('buildCsv', () => {
 		expect(line).toBe('"{""a"":1}","Ada"');
 	});
 
-	it('accepts a pre-joined header line, as the invoices page used to pass', () => {
-		expect(buildCsv([{ a: '1' }], 'A,B').split('\r\n')[0]).toBe('A,B');
+	it('encodes a pre-joined header line instead of writing it through, as it used to', () => {
+		// The invoices page passed `headers.join(',')` before this change, and that string reached the
+		// file verbatim — the one path that skipped quoting and neutralization. An untyped caller still
+		// passing one now gets the same columns, encoded.
+		expect(buildCsv([{ a: '1' }], 'A,=1+1' as unknown as string[]).split('\r\n')[0]).toBe(`"A","'=1+1"`);
 	});
 });
 

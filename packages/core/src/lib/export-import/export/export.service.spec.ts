@@ -31,6 +31,7 @@ import * as csv from 'csv-writer';
 import * as csvParser from 'csv-parser';
 import { ExportRedacted } from '../export-redact.decorator';
 import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
+import { EXPORT_MANIFEST_FILE, usesSpreadsheetSafeCells } from '../export-manifest';
 import { ExportService, IExportJob } from './export.service';
 
 const requestStore = new AsyncLocalStorage<{ tenantId: string }>();
@@ -386,7 +387,7 @@ describe('ExportService', () => {
 			await writer.writeRecords(items);
 		}
 
-		/** Reads a CSV back the way `ImportService` does. */
+		/** Reads a CSV back the way `ImportService` does for a marked archive. */
 		function parse(csvPath: string, unescape = true): Promise<Record<string, string>[]> {
 			return new Promise((resolve, reject) => {
 				const rows: Record<string, string>[] = [];
@@ -480,6 +481,27 @@ describe('ExportService', () => {
 			const [parsed] = await parse(path.join(job.csvDir, 'round_trip.csv'));
 
 			expect(parsed).toEqual(row);
+		});
+
+		it('marks a data archive as escaped and leaves the import template unmarked', async () => {
+			const { job } = await runExport(service, TENANT_A);
+
+			const manifest = JSON.parse(await readFromArchive(job.archivePath, EXPORT_MANIFEST_FILE));
+			expect(manifest).toMatchObject({
+				format: 'gauzy-export',
+				version: 1,
+				spreadsheetSafeCells: true
+			});
+			// This marker is the ONLY thing that tells the importer it may reverse the escape.
+			expect(await usesSpreadsheetSafeCells(job.csvDir)).toBe(true);
+
+			// CONTROL: `/export/template` writes header-only CSVs an operator fills in by hand, so
+			// nothing in it was ever escaped and the importer must not decode it.
+			const templateJob = await service.createExportJob();
+			jobs.push(templateJob);
+			await service.exportSpecificTablesSchema(templateJob);
+			expect(fs.existsSync(path.join(templateJob.csvDir, 'integration_setting.csv'))).toBe(true);
+			expect(await usesSpreadsheetSafeCells(templateJob.csvDir)).toBe(false);
 		});
 	});
 });

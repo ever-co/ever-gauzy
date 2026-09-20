@@ -12,6 +12,7 @@ import { isFunction, isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
 import { ExportEntityClass, redactForExport } from '../export-redact.decorator';
 import { toSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
+import { writeExportManifest } from '../export-manifest';
 
 import { IColumnRelationMetadata, IRepositoryModel, RepositoriesService } from '../repositories/repositories.service';
 
@@ -357,6 +358,10 @@ export class ExportService {
 	async exportTables(job: IExportJob, organizationId: string): Promise<boolean> {
 		const repositories = await this.getRepositories();
 
+		// Marks the archive as one whose cells carry the spreadsheet-formula escape, so the import side
+		// knows it may reverse that escape — and leaves an archive without the marker untouched.
+		await writeExportManifest(job.csvDir);
+
 		for await (const item of repositories) {
 			await this.getAsCsv(
 				job,
@@ -387,6 +392,10 @@ export class ExportService {
 	 */
 	async exportSpecificTables(job: IExportJob, names: string[], organizationId?: string): Promise<boolean> {
 		const repositories = await this.getRepositories();
+
+		// Same marker as a full export: these CSVs are escaped the same way. `/export/template` is
+		// deliberately NOT marked — an operator fills it in by hand, so nothing there was ever escaped.
+		await writeExportManifest(job.csvDir);
 
 		for await (const item of repositories) {
 			const nameFile = item.repository.metadata.tableName;

@@ -65,21 +65,35 @@ function toCsvField(value: unknown): string {
 }
 
 /**
+ * The header line: every title is encoded like any other cell.
+ *
+ * The parameter is typed `string[]` and both callers pass one. A pre-joined line used to be accepted
+ * and written through verbatim, which was the one path reaching the file without quoting or
+ * neutralization; such a line is split here instead, so an untyped JavaScript caller still gets a
+ * safe file.
+ *
+ * @param headers - Column titles, one per column.
+ */
+function toHeaderLine(headers: string[]): string {
+	const titles = Array.isArray(headers) ? headers : String(headers).split(',');
+	return titles.map((title) => toCsvField(title)).join(',');
+}
+
+/**
  * Builds the CSV text: a header line, then one line per row, with the columns taken from the keys of
  * the first row.
  *
  * @param data - Rows to export.
- * @param headers - Column titles, one per column; a pre-joined header line is accepted as is.
+ * @param headers - Column titles, one per column.
  */
-export function buildCsv(data: any[], headers: string[] | string): string {
+export function buildCsv(data: any[], headers: string[]): string {
 	const columns = Object.keys(data[0] ?? {});
 	const lines = data.map((row) => columns.map((column) => toCsvField(row[column])).join(','));
-	const headerLine = Array.isArray(headers) ? headers.map((title) => toCsvField(title)).join(',') : headers;
-	lines.unshift(headerLine);
+	lines.unshift(toHeaderLine(headers));
 	return lines.join('\r\n');
 }
 
-export async function generateCsv(data: any[], headers: string[] | string, fileName: string) {
+export async function generateCsv(data: any[], headers: string[], fileName: string) {
 	const BOM = '﻿';
 	const csvArray = BOM + buildCsv(data, headers);
 	const blob = new Blob([csvArray], { type: 'text/csv;charset=utf-8' });

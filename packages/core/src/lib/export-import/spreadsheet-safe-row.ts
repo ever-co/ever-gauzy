@@ -55,8 +55,10 @@ export function toSpreadsheetSafeCsvRow(row: Record<string, unknown>): Record<st
  * Undoes {@link toSpreadsheetSafeCsvRow} on one row parsed back out of an export CSV, so that
  * export → import round-trips exactly. `csv-parser` yields strings only.
  *
- * Note: an archive made before the escape existed that holds a value such as `'=x` (a literal quote
- * followed by a formula trigger) loses that one leading quote on import; `'Twas` and `'-12` do not.
+ * 🛑 Only ever call this for an archive whose manifest says its cells were escaped (see
+ * `usesSpreadsheetSafeCells` in `../export-manifest`). Applied to an archive nobody escaped — a dump
+ * from an older Gauzy, a filled-in `/export/template`, a CSV set built by external tooling — it
+ * would silently strip the leading quote from a legitimate value such as `'=x`.
  *
  * @param row - One row as parsed by `csv-parser`.
  * @returns A new row with the escape removed from every value that carries it.
