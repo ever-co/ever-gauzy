@@ -32,20 +32,35 @@ export const environment: IEnvironment = {
 	 * Token-signing and session secrets never fall back to a published literal outside DEMO: unset
 	 * means a random per-process value (and a refused boot in production). See resolveSecret()
 	 * (GHSA-39j7-x845-4w3c).
+	 *
+	 * They are GETTERS, so the value is resolved when it is first used rather than when this module
+	 * is imported. `apps/api/src/main.ts` calls `loadEnv()` (which reads `.env.local` and friends)
+	 * only AFTER its imports have run, so an eagerly resolved secret would be decided before those
+	 * files are loaded — this copy would generate a random value while a copy imported later saw the
+	 * configured one, and tokens signed by one would not verify in the other. With the published
+	 * literal that clash was invisible, because both copies ended up on the same literal.
 	 */
-	EXPRESS_SESSION_SECRET: resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy'),
+	get EXPRESS_SESSION_SECRET(): string {
+		return resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy');
+	},
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
-	JWT_SECRET: resolveSecret('JWT_SECRET', 'secretKey'),
+	get JWT_SECRET(): string {
+		return resolveSecret('JWT_SECRET', 'secretKey');
+	},
 	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
-	JWT_REFRESH_TOKEN_SECRET: resolveSecret('JWT_REFRESH_TOKEN_SECRET', 'refreshSecretKey'),
+	get JWT_REFRESH_TOKEN_SECRET(): string {
+		return resolveSecret('JWT_REFRESH_TOKEN_SECRET', 'refreshSecretKey');
+	},
 	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options
 	 */
-	JWT_VERIFICATION_TOKEN_SECRET: resolveSecret('JWT_VERIFICATION_TOKEN_SECRET', 'verificationSecretKey'),
+	get JWT_VERIFICATION_TOKEN_SECRET(): string {
+		return resolveSecret('JWT_VERIFICATION_TOKEN_SECRET', 'verificationSecretKey');
+	},
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
 
 	/**

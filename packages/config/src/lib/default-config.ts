@@ -91,10 +91,16 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 		User: []
 	},
 	authOptions: {
-		// Same resolver as `environment`, so both surfaces agree on the per-process value (GHSA-39j7-x845-4w3c).
-		expressSessionSecret: resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy'),
+		// Same resolver as `environment`, so both surfaces agree on the per-process value, and read
+		// lazily for the same reason: the API loads its env files after its imports have run, so an
+		// eagerly resolved secret would be decided before `.env.local` exists (GHSA-39j7-x845-4w3c).
+		get expressSessionSecret(): string {
+			return resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy');
+		},
 		userPasswordBcryptSaltRounds: 12,
-		jwtSecret: resolveSecret('JWT_SECRET', 'secretKey')
+		get jwtSecret(): string {
+			return resolveSecret('JWT_SECRET', 'secretKey');
+		}
 	},
 	assetOptions: {
 		assetPath: assetPath,

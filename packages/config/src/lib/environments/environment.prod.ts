@@ -67,19 +67,30 @@ export const environment: IEnvironment = {
 		LOG_LEVEL: 'debug'
 	},
 
-	EXPRESS_SESSION_SECRET: resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy'), // Never a published literal outside DEMO (GHSA-39j7-x845-4w3c)
+	// Getters, so the value is read when it is first used rather than when this module is imported:
+	// the API loads its env files after its imports have run, so an eagerly read secret can be
+	// decided before they are loaded (GHSA-39j7-x845-4w3c).
+	get EXPRESS_SESSION_SECRET(): string {
+		return resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy'); // Never a published literal outside DEMO
+	},
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
-	JWT_SECRET: process.env.JWT_SECRET!, // Validated at startup — must be set in production
+	get JWT_SECRET(): string {
+		return process.env.JWT_SECRET!; // Validated at startup — must be set in production
+	},
 	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
-	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET!, // Validated at startup — must be set in production
+	get JWT_REFRESH_TOKEN_SECRET(): string {
+		return process.env.JWT_REFRESH_TOKEN_SECRET!; // Validated at startup — must be set in production
+	},
 	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options
 	 */
-	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET!, // Validated at startup — must be set in production
+	get JWT_VERIFICATION_TOKEN_SECRET(): string {
+		return process.env.JWT_VERIFICATION_TOKEN_SECRET!; // Validated at startup — must be set in production
+	},
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
 
 	/**

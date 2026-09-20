@@ -194,6 +194,26 @@ describe('resolveSecret (GHSA-39j7-x845-4w3c)', () => {
 			expect(defaultConfiguration.authOptions.jwtSecret).toBe(environment.JWT_SECRET);
 			expect(defaultConfiguration.authOptions.expressSessionSecret).toBe(environment.EXPRESS_SESSION_SECRET);
 		});
+
+		// The API's entry point calls loadEnv() (which reads .env.local and friends) only AFTER its
+		// imports have run, so this module can be evaluated while JWT_SECRET is still unset. Resolving
+		// eagerly there decided the secret too early: this copy generated a random value, a copy
+		// imported after loadEnv() read the configured one, and tokens signed with one were rejected by
+		// the other — a 401 on every authenticated request. The published literal used to hide it,
+		// because both copies then landed on the same literal.
+		it('reads a secret configured AFTER this module was imported (load order)', () => {
+			const { environment } = loadFresh<typeof import('./environment')>('./environment');
+			const { defaultConfiguration } = loadFresh<typeof import('../default-config')>('../default-config');
+
+			// Imported with nothing set: a random per-process value, as above.
+			expect(environment.JWT_SECRET).toMatch(/^[0-9a-f]{128}$/);
+
+			// ...then the env file is loaded, exactly as loadEnv() does at startup.
+			process.env.JWT_SECRET = 'configured-by-load-env';
+
+			expect(environment.JWT_SECRET).toBe('configured-by-load-env');
+			expect(defaultConfiguration.authOptions.jwtSecret).toBe('configured-by-load-env');
+		});
 	});
 
 	it('KNOWN_DEFAULT_SECRETS covers every literal the repository has shipped as a secret', () => {
