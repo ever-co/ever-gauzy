@@ -65,7 +65,7 @@ describe('MultiORMColumn hidden (GHSA-hh83-hq74-gh9f)', () => {
 			});
 			await orm.getSchemaGenerator().createSchema();
 			const em = orm.em.fork();
-			em.create(HiddenFixture, { id: 'row-1', email: 'ada@example.com', secret: 's3cret', visibleSecret: 's3cret' });
+			em.create(HiddenFixture, { id: 'row-1', email: 'ada@example.com', secret: 'secret-value', visibleSecret: 'secret-value' });
 			await em.flush();
 		});
 
@@ -81,7 +81,7 @@ describe('MultiORMColumn hidden (GHSA-hh83-hq74-gh9f)', () => {
 
 		it('still loads the column: the entity carries it for server-side reads', async () => {
 			const row = await orm.em.fork().findOneOrFail(HiddenFixture, { id: 'row-1' });
-			expect(row.secret).toBe('s3cret');
+			expect(row.secret).toBe('secret-value');
 		});
 
 		it('drops it from toJSON(), the shape CrudService.serialize() returns', async () => {
@@ -90,7 +90,7 @@ describe('MultiORMColumn hidden (GHSA-hh83-hq74-gh9f)', () => {
 
 			expect(json).not.toHaveProperty('secret');
 			// CONTROL: without `hidden`, the value is serialized verbatim.
-			expect(json.visibleSecret).toBe('s3cret');
+			expect(json.visibleSecret).toBe('secret-value');
 			expect(json.email).toBe('ada@example.com');
 		});
 	});

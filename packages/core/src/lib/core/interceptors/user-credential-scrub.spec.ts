@@ -115,7 +115,7 @@ describe('user credential scrub (GHSA-hh83-hq74-gh9f)', () => {
 		const hashOnlyShapeTest = (value: Record<string, unknown>) => 'email' in value && 'hash' in value;
 
 		it.each([['emailToken', 'hashed-email-token'], ['refreshToken', 'hashed-refresh']])(
-			'CONTROL: the hash-only shape test did not recognise a user carrying only %s',
+			'CONTROL: the hash-only shape test did not recognize a user carrying only %s',
 			(key, value) => {
 				expect(hashOnlyShapeTest({ id: 'u-1', email: 'ada@example.com', [key]: value })).toBe(false);
 			}
