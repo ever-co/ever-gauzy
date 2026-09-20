@@ -159,11 +159,12 @@
 				</div>
 				}
 
-				<div class="field span-6">
-					<div class="d-flex flex-row align-items-center">
-						<nb-toggle id="updated-value" formControlName="assignAsObjective" status="primary"></nb-toggle>
-						<span class="ml-3">{{ 'KEY_RESULT_PAGE.FORM.LABELS.ASSIGN_AS_OBJECTIVE' | translate }}</span>
-					</div>
+				<!-- Turning this on adds the objective fields below, so it reads as the switch it is. -->
+				<div class="field span-6 toggle-field">
+					<nb-toggle id="updated-value" formControlName="assignAsObjective" status="primary"></nb-toggle>
+					<span class="toggle-label">
+						{{ 'KEY_RESULT_PAGE.FORM.LABELS.ASSIGN_AS_OBJECTIVE' | translate }}
+					</span>
 				</div>
 
 				<ga-goal-level-select

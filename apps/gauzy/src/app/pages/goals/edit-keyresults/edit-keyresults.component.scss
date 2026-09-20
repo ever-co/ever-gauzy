@@ -165,6 +165,24 @@ $side-by-side-min: 53rem;
     }
   }
 
+  // The switch and its label on one line, with the rule that separates the key
+  // result from the objective it can also become.
+  .toggle-field {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-top: 0.25rem;
+    padding-top: 0.875rem;
+    border-top: $divider;
+  }
+
+  .toggle-label {
+    font-size: $control-font-size;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
   // A note beside the form, not a second column of body copy.
   .key-result-help {
     flex: 0 0 14rem;
