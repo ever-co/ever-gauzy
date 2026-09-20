@@ -580,6 +580,92 @@ describe('OrganizationPermissionGuard', () => {
 			}
 		});
 
+		it('denies a tenant-less SUPER_ADMIN even on a route with no policy target', async () => {
+			// The exemption is granted before any tenant-scoped lookup, so it must not be granted to a
+			// request whose tenant cannot be resolved at all (nothing downstream can scope such a call).
+			const previous = (env as any).allowSuperAdminRole;
+			const { guard, createQueryBuilder } = createGuard();
+			asCaller({ role: RolesEnum.SUPER_ADMIN, employeeId: null, isSuperAdmin: true, tenantId: null });
+			(env as any).allowSuperAdminRole = true;
+
+			try {
+				const context = createContext([PermissionsEnum.ALLOW_MANUAL_TIME], {
+					body: { organizationId: 'org-allow' }
+				});
+
+				await expect(guard.canActivate(context)).resolves.toBe(false);
+				expect(createQueryBuilder).not.toHaveBeenCalled();
+			} finally {
+				(env as any).allowSuperAdminRole = previous;
+			}
+		});
+
+		// GHSA-6qvm-3wg4-26w4: every tenant owner is a SUPER_ADMIN. The early return used to skip the
+		// tenant-scoped target lookup, which is the only ownership check on PUT /timesheet/time-slot/:id.
+		// CONTROL: with the pre-fix `return true` restored, the foreign-record arm resolves to `true`.
+		describe('on a route that addresses a record by id', () => {
+			const target = { entity: TimeLogStub, param: 'id' };
+
+			const asExemptSuperAdmin = () => {
+				asCaller({ role: RolesEnum.SUPER_ADMIN, employeeId: null, isSuperAdmin: true });
+				(env as any).allowSuperAdminRole = true;
+			};
+
+			let previous: unknown;
+			beforeEach(() => {
+				previous = (env as any).allowSuperAdminRole;
+			});
+			afterEach(() => {
+				(env as any).allowSuperAdminRole = previous;
+			});
+
+			it('denies a record of another tenant', async () => {
+				const { guard, findTarget } = createGuard();
+				asExemptSuperAdmin();
+
+				const context = createContext(
+					[PermissionsEnum.ALLOW_MODIFY_TIME],
+					{ params: { id: 'log-foreign' }, body: {} },
+					target
+				);
+
+				await expect(guard.canActivate(context)).resolves.toBe(false);
+				expect(findTarget).toHaveBeenCalledWith(TimeLogStub, {
+					where: { id: 'log-foreign', tenantId: TENANT_ID },
+					select: { id: true, organizationId: true }
+				});
+			});
+
+			it('still exempts a record of its own tenant from the organization policy', async () => {
+				const { guard, createQueryBuilder } = createGuard();
+				asExemptSuperAdmin();
+
+				// The record's organization has allowModifyTime off: the policy stays exempt.
+				const context = createContext(
+					[PermissionsEnum.ALLOW_MODIFY_TIME],
+					{ params: { id: 'log-in-deny' }, body: {} },
+					target
+				);
+
+				await expect(guard.canActivate(context)).resolves.toBe(true);
+				expect(createQueryBuilder).not.toHaveBeenCalled();
+			});
+
+			it('denies when the request has no tenant', async () => {
+				const { guard } = createGuard();
+				asCaller({ role: RolesEnum.SUPER_ADMIN, employeeId: null, isSuperAdmin: true, tenantId: null });
+				(env as any).allowSuperAdminRole = true;
+
+				const context = createContext(
+					[PermissionsEnum.ALLOW_MODIFY_TIME],
+					{ params: { id: 'log-in-allow' }, body: {} },
+					target
+				);
+
+				await expect(guard.canActivate(context)).resolves.toBe(false);
+			});
+		});
+
 		it('enforces the policy for SUPER_ADMIN when allowSuperAdminRole is off', async () => {
 			const previous = (env as any).allowSuperAdminRole;
 			const { guard } = createGuard();

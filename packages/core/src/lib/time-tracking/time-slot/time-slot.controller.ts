@@ -14,7 +14,7 @@ import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
 import { TimeSlot } from './time-slot.entity';
 import { TimeSlotService } from './time-slot.service';
-import { DeleteTimeSlotDTO, TimeSlotQueryDTO } from './dto';
+import { DeleteTimeSlotDTO, TimeSlotQueryDTO, UpdateTimeSlotDTO } from './dto';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -106,7 +106,8 @@ export class TimeSlotController {
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
 	@OrganizationPolicyTarget(TimeSlot)
 	@Put('/:id')
-	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() request: ITimeSlot): Promise<ITimeSlot> {
+	@UseValidationPipe({ whitelist: true })
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() request: UpdateTimeSlotDTO): Promise<ITimeSlot> {
 		return await this._commandBus.execute(new UpdateTimeSlotCommand(id, request));
 	}
 

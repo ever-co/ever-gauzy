@@ -278,7 +278,7 @@ export class TimeLogController {
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
 	async addManualTime(
-		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: CreateManualTimeLogDTO
+		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true, whitelist: true })) entity: CreateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this._timeLogService.addManualTime(entity);
 	}
@@ -304,7 +304,7 @@ export class TimeLogController {
 	@OrganizationPolicyTarget(TimeLog)
 	async updateManualTime(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: UpdateManualTimeLogDTO
+		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true, whitelist: true })) entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this._timeLogService.updateManualTime(id, entity);
 	}

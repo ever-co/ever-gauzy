@@ -12,7 +12,7 @@
 import '../../core/entities/internal';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommandBus } from '@nestjs/cqrs';
-import { IGetTimeLogReportInput } from '@gauzy/contracts';
+import { IGetTimeLogReportInput, IManualTimeInput } from '@gauzy/contracts';
 import { moment } from '../../core/moment-extend';
 import { getDateRangeFormat, MultiORMEnum } from '../../core/utils';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
@@ -22,7 +22,9 @@ import {
 	nextMacrotask,
 	RecordingQueryBuilder
 } from '../testing/recording-query-builder';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
+import { TimeLogCreateCommand, IGetConflictTimeLogCommand } from './commands';
 import { TimeLogService } from './time-log.service';
 
 const TENANT_ID = '5a1c2f0e-6d3b-4c8a-9e2f-1b7d4a6c8e90';
@@ -163,6 +165,29 @@ describe('TimeLogService', () => {
 			expect(parameters).toEqual(expect.objectContaining({ employeeIds: [TARGET_EMPLOYEE_ID] }));
 		});
 
+		// GHSA-6qvm-3wg4-26w4: the employee predicate is only added when `employeeIds` is non-empty, and
+		// the narrowing above only runs for a caller who HAS an employee record. A caller with neither
+		// the permission nor an employee (a custom role holding TIME_TRACKER) therefore read the whole
+		// organization, or the employees they named in the body. CONTROL: the two arms below, where the
+		// same caller state with an employee record still produces the ordinary employee predicate.
+		it.each<[string, (input: IGetTimeLogReportInput) => Promise<unknown>]>(reportMethods)(
+			'%s matches nothing for a caller with neither CHANGE_SELECTED_EMPLOYEE nor an employee record',
+			async (_name, run) => {
+				mockRequestContext({
+					tenantId: TENANT_ID,
+					user: { id: USER_ID, employeeId: null },
+					canChangeSelectedEmployee: false
+				});
+
+				await run(request);
+
+				const { conditions, parameters } = executedFilters(builder);
+				expect(conditions).toEqual(['1 = 0']);
+				expect(parameters).not.toHaveProperty('employeeIds');
+				expect(canManageEmployees).not.toHaveBeenCalled();
+			}
+		);
+
 		it('honours onlyMe without consulting the manager check', async () => {
 			actAs({ canChangeSelectedEmployee: false });
 
@@ -172,6 +197,87 @@ describe('TimeLogService', () => {
 			const { conditions, parameters } = executedFilters(builder);
 			expect(conditions).toEqual(expect.arrayContaining(scopingConditions));
 			expect(parameters).toEqual(expect.objectContaining({ employeeIds: [CURRENT_EMPLOYEE_ID] }));
+		});
+	});
+
+	/**
+	 * The organization the manual-time routes act under is the EMPLOYEE's, not the body's: the
+	 * `futureDateAllowed` policy they check belongs to `employee.organization`, so honouring a body
+	 * organizationId of the same tenant judged the write by one organization's rules and then
+	 * persisted it — log, slots and timesheet — under another's, and (on update) let a sibling
+	 * organization's time slots count as conflicting, i.e. be deleted.
+	 */
+	describe('manual time organization scope', () => {
+		const EMPLOYEE_ORGANIZATION_ID = 'a7f1c6de-0f3e-4f4b-9b1a-2c4d6e8f0a1b';
+		const BODY_ORGANIZATION_ID = 'b8e2d7cf-1a4f-4c5d-8e2b-3d5f7a9c1b2e';
+
+		let manualService: TimeLogService;
+		let execute: jest.Mock;
+
+		const request = {
+			employeeId: TARGET_EMPLOYEE_ID,
+			organizationId: BODY_ORGANIZATION_ID,
+			startedAt: new Date('2026-01-05T09:00:00.000Z'),
+			stoppedAt: new Date('2026-01-05T10:00:00.000Z')
+		} as IManualTimeInput;
+
+		const commandsOfType = <T>(type: new (...args: any[]) => T): T[] =>
+			execute.mock.calls.map(([command]) => command).filter((command) => command instanceof type);
+
+		beforeEach(async () => {
+			execute = jest.fn().mockResolvedValue([]);
+
+			const module: TestingModule = await Test.createTestingModule({ providers: [TimeLogService] })
+				.useMocker((token) => {
+					if (token === TypeOrmEmployeeRepository) {
+						return {
+							findOne: jest.fn().mockResolvedValue({
+								id: TARGET_EMPLOYEE_ID,
+								organizationId: EMPLOYEE_ORGANIZATION_ID,
+								organization: { id: EMPLOYEE_ORGANIZATION_ID, futureDateAllowed: true }
+							})
+						};
+					}
+					if (token === CommandBus) {
+						return { execute };
+					}
+					if (token === TypeOrmTimeLogRepository) {
+						return { metadata: { tableName: 'time_log' }, createQueryBuilder: () => builder };
+					}
+					return {};
+				})
+				.compile();
+
+			manualService = module.get<TimeLogService>(TimeLogService);
+			Object.defineProperty(manualService, 'ormType', { value: MultiORMEnum.TypeORM });
+			mockRequestContext({
+				tenantId: TENANT_ID,
+				user: { id: USER_ID, employeeId: CURRENT_EMPLOYEE_ID },
+				canChangeSelectedEmployee: true
+			});
+		});
+
+		it("addManualTime persists the employee's organization, not the body's", async () => {
+			await manualService.addManualTime(request);
+
+			// CONTROL: the body named a different organization of the same tenant.
+			expect(request.organizationId).toBe(BODY_ORGANIZATION_ID);
+			expect(commandsOfType(IGetConflictTimeLogCommand)[0].input).toMatchObject({
+				organizationId: EMPLOYEE_ORGANIZATION_ID
+			});
+			expect(commandsOfType(TimeLogCreateCommand)[0].input).toMatchObject({
+				organizationId: EMPLOYEE_ORGANIZATION_ID
+			});
+		});
+
+		it("updateManualTime looks for conflicts in the employee's organization", async () => {
+			jest.spyOn(manualService, 'findOneByIdString').mockResolvedValue({ id: 'log-1' } as any);
+
+			await manualService.updateManualTime('log-1', { ...request });
+
+			expect(commandsOfType(IGetConflictTimeLogCommand)[0].input).toMatchObject({
+				organizationId: EMPLOYEE_ORGANIZATION_ID
+			});
 		});
 	});
 });
