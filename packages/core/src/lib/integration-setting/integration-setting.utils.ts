@@ -1,3 +1,4 @@
+import { IntegrationEnum } from '@gauzy/contracts';
 import { isNotEmpty, isObject } from '@gauzy/utils';
 import { maskSecret } from '../core/decorators/is-secret';
 
@@ -28,6 +29,37 @@ export const nonSecretSettingKeys = [
 	'organizationId',
 	'tenantId'
 ];
+
+/**
+ * The integration settings a client may rewrite through the generic `PUT /integration-setting/:id`,
+ * keyed by the owning integration tenant's `name` (its provider).
+ *
+ * Allowlist on purpose: every other setting row is written by the integration itself — OAuth
+ * tokens, `installation_id`, `setup_action`, `sync_tag`, account / workspace / instance ids — and
+ * the server TRUSTS those values. Rewriting GitHub's `installation_id` through the generic route,
+ * for example, pointed a tenant's integration at another tenant's GitHub App installation and
+ * skipped every check the install flow makes (GHSA-4rwq-65wh-45h4).
+ *
+ * The only first-party caller is the Gauzy AI settings card (integration-ai-ui), which edits
+ * exactly these four keys. A new user-editable setting has to be added here explicitly.
+ */
+export const userEditableIntegrationSettings: Readonly<Record<string, readonly string[]>> = Object.freeze({
+	[IntegrationEnum.GAUZY_AI]: Object.freeze(['apiKey', 'apiSecret', 'openAiSecretKey', 'openAiOrganizationId'])
+});
+
+/**
+ * Whether a setting may be rewritten by a client through the generic integration-setting route.
+ *
+ * @param provider - The owning integration tenant's `name` (an {@link IntegrationEnum} value).
+ * @param settingsName - The setting's name.
+ * @returns `true` only for settings on the {@link userEditableIntegrationSettings} allowlist.
+ */
+export function isUserEditableIntegrationSetting(provider: string | null | undefined, settingsName: string): boolean {
+	if (!provider || !settingsName || !Object.prototype.hasOwnProperty.call(userEditableIntegrationSettings, provider)) {
+		return false;
+	}
+	return userEditableIntegrationSettings[provider].includes(settingsName);
+}
 
 /**
  * Wrap specified keys in an object with a specific character.

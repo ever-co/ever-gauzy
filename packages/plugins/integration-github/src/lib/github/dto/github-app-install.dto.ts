@@ -28,12 +28,24 @@ export class GithubOAuthDTO extends TenantOrganizationBaseDTO implements IGithub
 export class GithubInstallStateDTO extends TenantOrganizationBaseDTO {}
 
 /**
+ * The only accepted spelling of a GitHub App installation id: a positive decimal integer with no
+ * sign, leading zeros or whitespace (GitHub ids are 64-bit, so at most 20 digits).
+ *
+ * The cross-tenant uniqueness check compares `settingsValue` as an exact string, so '0123', '123 '
+ * or '+123' would otherwise bind installation 123 a second time under a different spelling
+ * (GHSA-4rwq-65wh-45h4). With a single canonical form the stored value equals `String(id)`,
+ * which is also what the webhook routing compares against.
+ */
+export const GITHUB_INSTALLATION_ID_PATTERN = /^[1-9][0-9]{0,19}$/;
+
+/**
  *
  */
 export class GithubAppInstallDTO implements IGithubAppInstallInput {
 	@ApiPropertyOptional({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
+	@Matches(GITHUB_INSTALLATION_ID_PATTERN, { message: 'installation_id must be a valid GitHub App installation id' })
 	readonly installation_id: string;
 
 	@ApiPropertyOptional({ type: () => String })

@@ -1,9 +1,12 @@
 import {
 	Controller,
+	ForbiddenException,
+	HttpCode,
 	HttpStatus,
 	Get,
 	Query,
 	Param,
+	Post,
 	UseGuards,
 	InternalServerErrorException,
 	Put,
@@ -14,13 +17,14 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
-import { ID, IIntegrationTenant, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IIntegrationTenant, IIntegrationTenantCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from '../core/crud';
 import { TenantOrganizationBaseDTO } from '../core/dto';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { RelationsQueryDTO } from './../shared/dto';
+import { isUserEditableIntegrationSetting } from './../integration-setting/integration-setting.utils';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationTenantService } from './integration-tenant.service';
 import { IntegrationTenantQueryDTO, UpdateIntegrationTenantDTO } from './dto';
@@ -101,6 +105,48 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 			// Throw an InternalServerErrorException with a generic error message
 			throw new InternalServerErrorException('An error occurred while fetching the integration entity');
 		}
+	}
+
+	/**
+	 * Create an integration tenant.
+	 *
+	 * Overrides `CrudController.create()`, which accepted the raw body: `IntegrationTenantService`
+	 * cascade-inserts whatever `settings` the body carries, and those settings are exactly the
+	 * values the server TRUSTS afterwards — GitHub's `installation_id`, OAuth access and refresh
+	 * tokens, account / workspace / instance ids. That made this inherited route a second way to
+	 * bind another tenant's GitHub App installation, skipping the install flow's state nonce and
+	 * its cross-tenant uniqueness check exactly as the generic `PUT /integration-setting/:id` did
+	 * (GHSA-4rwq-65wh-45h4). Integrations write their own settings server-side (through
+	 * `IntegrationTenantUpdateOrCreateCommand`), so a client may only bring settings that are on
+	 * the user-editable allowlist.
+	 *
+	 * @param input - The integration tenant to create.
+	 * @returns The created integration tenant.
+	 */
+	@ApiOperation({ summary: 'Create an integration tenant.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The integration tenant has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'The setting is managed by the server and cannot be set by a client'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post('/')
+	async create(@Body() input: IIntegrationTenantCreateInput): Promise<IIntegrationTenant> {
+		// Fail closed: anything under `settings` that is not a plain array of allowlisted settings is refused.
+		const settings = input?.settings == null ? [] : Array.isArray(input.settings) ? input.settings : [null];
+
+		for (const setting of settings) {
+			if (!isUserEditableIntegrationSetting(input?.name, setting?.settingsName)) {
+				throw new ForbiddenException(
+					'This integration setting is managed by the server and cannot be set by a client.'
+				);
+			}
+		}
+
+		return await this._integrationTenantService.create(input);
 	}
 
 	/**
