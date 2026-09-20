@@ -1,7 +1,10 @@
 import { ExecutionContext, Logger, NotFoundException } from '@nestjs/common';
 import { ModuleRef, Reflector } from '@nestjs/core';
+import { IdempotencyStatus } from '@gauzy/contracts';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
+import { IDEMPOTENT_METADATA_KEY, IDEMPOTENCY_KEY_HEADER } from '../idempotency/idempotency.policy';
+import { IdempotencyService } from '../idempotency/idempotency.service';
 import { VersionGuard } from './version.guard';
 import { IF_MATCH_HEADER, VERSION_EXPECTATION_PROPERTY, VERSIONED_METADATA_KEY } from './version.util';
 import type { IVersionedOptions } from './versioned.decorator';
@@ -419,5 +422,145 @@ describe('the record the request names', () => {
 		// Control: a read changes nothing, so it must not pay for a second query — and an opted-in list
 		// route that read its row on every GET would be a cost with no protection behind it.
 		expect(get).not.toHaveBeenCalled();
+	});
+});
+
+
+/**
+ * A route that carries both conventions.
+ *
+ * Nest runs every guard before every interceptor, so on a route that declares `@Versioned()` *and*
+ * `@Idempotent()` this guard decides before the retry-safety kernel does. Left in that order it
+ * decided against the one caller the other kernel exists for: a client that lost the response to its
+ * write retries the byte-identical request, and the `If-Match` it states is the version from before
+ * the write it never saw the answer to. The record has moved on, so the precondition failed and the
+ * caller was told to read the record again and reapply a change it had already made.
+ *
+ * The cases here are the two halves of the resolution: a settled key yields, and everything else
+ * still meets the precondition exactly as it did.
+ */
+describe('a route that carries retry safety as well as a version', () => {
+	/** The guard, with a reflector that answers each convention's metadata key on its own. */
+	function guardForBoth(
+		versioned: IVersionedOptions | undefined,
+		idempotent: { scope?: string } | undefined,
+		record: any,
+		reader?: any
+	) {
+		const reflector = new Reflector();
+		jest.spyOn(reflector, 'getAllAndOverride').mockImplementation((key: any) =>
+			key === IDEMPOTENT_METADATA_KEY ? (idempotent as any) : (versioned as any)
+		);
+
+		const findByKey = jest.fn(async () => {
+			if (record instanceof Error) {
+				throw record;
+			}
+
+			return record;
+		});
+
+		const moduleRef = { get: () => undefined } as unknown as ModuleRef;
+		const get = jest.spyOn(moduleRef, 'get').mockImplementation((token: any) => {
+			if (token === IdempotencyService) {
+				return { findByKey } as any;
+			}
+
+			return reader;
+		});
+
+		return { guard: new VersionGuard(reflector, moduleRef), findByKey, get };
+	}
+
+	/** A write whose `If-Match` is the version from before the attempt it lost the answer to. */
+	const staleRetry = () => ({
+		method: 'PUT',
+		params: { id: 'invoice-1' },
+		headers: { [IF_MATCH_HEADER]: '"3"', [IDEMPOTENCY_KEY_HEADER]: 'retry-key-12345678' }
+	});
+
+	it('answers a settled retry from the record rather than refusing it as a conflict', async () => {
+		const reader = readerAnswering({ version: 4 });
+		const { guard, findByKey } = guardForBoth(
+			{ resource: InvoiceService },
+			{ scope: 'invoice.update' },
+			{ status: IdempotencyStatus.COMPLETED },
+			reader
+		);
+		const request: any = staleRetry();
+
+		// Without this the caller was told `409 ENTITY_VERSION_CONFLICT` for a write it had already
+		// made, and re-reading and reapplying — which is what that code instructs — would have applied
+		// the change twice.
+		expect(await guard.canActivate(httpContext(request))).toBe(true);
+		expect(findByKey).toHaveBeenCalledWith('invoice.update', 'retry-key-12345678');
+		// Nothing is loosened: the handler does not run for a settled key, so no expectation is left
+		// behind for a write that will not happen. The interceptor replays the stored response.
+		expect(request).not.toHaveProperty(VERSION_EXPECTATION_PROPERTY);
+	});
+
+	it('yields for a key whose first attempt failed, because that answer is stored too', async () => {
+		const reader = readerAnswering({ version: 4 });
+		const { guard } = guardForBoth(
+			{ resource: InvoiceService },
+			{ scope: 'invoice.update' },
+			{ status: IdempotencyStatus.FAILED },
+			reader
+		);
+
+		expect(await guard.canActivate(httpContext(staleRetry()))).toBe(true);
+	});
+
+	it('still refuses a stale write while the first attempt is in progress', async () => {
+		const reader = readerAnswering({ version: 4 });
+		const { guard } = guardForBoth(
+			{ resource: InvoiceService },
+			{ scope: 'invoice.update' },
+			{ status: IdempotencyStatus.IN_PROGRESS },
+			reader
+		);
+
+		// A record still in progress is a concurrent attempt rather than a repeat of a finished one:
+		// the write it races has not landed, so the version it states is still the version to compare.
+		const refusal = await refusalFrom(() => guard.canActivate(httpContext(staleRetry())));
+
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+	});
+
+	it('still refuses a stale write when the key is new', async () => {
+		const reader = readerAnswering({ version: 4 });
+		const { guard } = guardForBoth({ resource: InvoiceService }, { scope: 'invoice.update' }, null, reader);
+		const refusal = await refusalFrom(() => guard.canActivate(httpContext(staleRetry())));
+
+		// Control: the yield is for a retry, not for anyone who sends a key. A first attempt that
+		// states a version the record no longer holds is exactly what the precondition is for.
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+	});
+
+	it('does not look for a record when the route declares no retry safety', async () => {
+		const reader = readerAnswering({ version: 4 });
+		const { guard, findByKey } = guardForBoth({ resource: InvoiceService }, undefined, null, reader);
+
+		await refusalFrom(() => guard.canActivate(httpContext(staleRetry())));
+
+		expect(findByKey).not.toHaveBeenCalled();
+	});
+
+	it('applies the precondition as usual when the store cannot be read, and says so', async () => {
+		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+		const reader = readerAnswering({ version: 4 });
+		const { guard } = guardForBoth(
+			{ resource: InvoiceService },
+			{ scope: 'invoice.update' },
+			new Error('connection terminated unexpectedly'),
+			reader
+		);
+
+		// A store that cannot be read is not a reason to let a stale write through — the conditional
+		// update is the half that cannot be skipped, and this half stays as strict as it was.
+		const refusal = await refusalFrom(() => guard.canActivate(httpContext(staleRetry())));
+
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('idempotency record'));
 	});
 });

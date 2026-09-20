@@ -1,9 +1,16 @@
 import { ExecutionContext, Injectable, Logger, NotFoundException, CanActivate } from '@nestjs/common';
 import { ModuleRef, Reflector } from '@nestjs/core';
-import type { ID } from '@gauzy/contracts';
+import { IdempotencyStatus, type ID } from '@gauzy/contracts';
 import { executionRequest, readRequestHeader } from '../core/context/execution-context.util';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
+import {
+	IDEMPOTENT_METADATA_KEY,
+	IDEMPOTENCY_KEY_HEADER,
+	idempotencyKeyFromResolverArgs,
+	normalizeIdempotencyKey
+} from '../idempotency/idempotency.policy';
+import { IdempotencyService } from '../idempotency/idempotency.service';
 import {
 	IF_MATCH_HEADER,
 	VERSIONED_METADATA_KEY,
@@ -32,6 +39,24 @@ import type { IVersionedOptions } from './versioned.decorator';
  * The guard reads the record only when the route names a `resource`. Without one it validates the
  * header and leaves the comparison to the write, which is the same guarantee with a slightly later
  * answer.
+ *
+ * ## Why retry safety is answered before the version is
+ *
+ * A route may carry both conventions, and on that route the two kernels disagree about what a
+ * *retry* is. Nest runs every guard before every interceptor, so without the check below this guard
+ * decided first — and it decided against exactly the caller the other kernel exists for. A client
+ * that lost the response to its first attempt retries the byte-identical request: the same
+ * `Idempotency-Key`, and the same `If-Match` it read before the write it never saw the answer to.
+ * The record has moved on, so the version precondition failed and the caller was told `409
+ * ENTITY_VERSION_CONFLICT` for a write it had already made. Re-reading and reapplying — which is
+ * what that code instructs — would then have applied the change twice, which is the one thing the
+ * key was presented to prevent.
+ *
+ * So a request whose key already has a settled record yields: the version is not compared, and the
+ * idempotency interceptor answers from the record instead. Nothing is loosened by that, because a
+ * settled record means the handler does not run at all — the interceptor either replays the stored
+ * response or refuses the key as reused. The precondition is skipped only where there is no write
+ * left for it to guard.
  */
 @Injectable()
 export class VersionGuard implements CanActivate {
@@ -41,6 +66,81 @@ export class VersionGuard implements CanActivate {
 		private readonly reflector: Reflector,
 		private readonly moduleRef: ModuleRef
 	) {}
+
+	/**
+	 * The retry-safety store, resolved lazily.
+	 *
+	 * `@Versioned()` mounts this guard from framework providers only, so it cannot declare a
+	 * constructor dependency on a service whose module the route's own module may not import. The
+	 * lookup is non-strict for the same reason `readRow` is, and a missing service is not a refusal:
+	 * an installation that does not run the idempotency kernel simply has no record to yield to.
+	 *
+	 * @returns The service, or undefined when the kernel is not installed.
+	 */
+	private idempotency(): IdempotencyService | undefined {
+		if (this.idempotencyService === undefined) {
+			try {
+				this.idempotencyService = this.moduleRef.get(IdempotencyService, { strict: false }) ?? null;
+			} catch {
+				this.idempotencyService = null;
+			}
+		}
+
+		return this.idempotencyService ?? undefined;
+	}
+
+	/** Resolved once per process: `null` once a lookup has failed, so it is not retried per request. */
+	private idempotencyService: IdempotencyService | null | undefined;
+
+	/**
+	 * Whether this request is a retry the other kernel has already answered.
+	 *
+	 * Only a *settled* record counts. A record still in progress is a concurrent attempt rather than a
+	 * repeat of a finished one, and the write it is racing has not landed yet — the version it states
+	 * is still the version it should be compared against, so that request is left to the ordinary
+	 * precondition and the interceptor tells it to come back.
+	 *
+	 * @param context The execution context.
+	 * @param request The request.
+	 * @param isGraphql Whether the operation arrived over GraphQL.
+	 * @returns True when the handler will not run, so there is no write for the version to guard.
+	 */
+	private async isSettledRetry(context: ExecutionContext, request: any, isGraphql: boolean): Promise<boolean> {
+		const idempotent = this.reflector.getAllAndOverride<{ scope?: string } | undefined>(
+			IDEMPOTENT_METADATA_KEY,
+			[context.getHandler(), context.getClass()]
+		);
+
+		if (!idempotent?.scope) {
+			return false;
+		}
+
+		const key = normalizeIdempotencyKey(
+			isGraphql
+				? idempotencyKeyFromResolverArgs(context.getArgByIndex?.(1))
+				: readRequestHeader(request, IDEMPOTENCY_KEY_HEADER)
+		);
+
+		if (!key) {
+			return false;
+		}
+
+		try {
+			const record = await this.idempotency()?.findByKey(idempotent.scope, key);
+
+			return record?.status === IdempotencyStatus.COMPLETED || record?.status === IdempotencyStatus.FAILED;
+		} catch (error) {
+			// A store that cannot be read is not a reason to refuse a write. The precondition still
+			// applies, and the conditional update is the half that cannot be skipped.
+			this.logger.warn(
+				`The idempotency record for ${idempotent.scope} could not be read; the version precondition is applied as usual. ${
+					(error as Error)?.message ?? error
+				}`
+			);
+
+			return false;
+		}
+	}
 
 	/**
 	 * Decides whether the request may reach its handler.
@@ -63,6 +163,13 @@ export class VersionGuard implements CanActivate {
 
 		const request = executionRequest(context);
 		const isGraphql = context.getType<'http' | 'graphql' | string>() === 'graphql';
+
+		// Retry safety is answered first — see the class comment. The handler does not run for a
+		// settled key, so there is no write left for the precondition to guard.
+		if (await this.isSettledRetry(context, request, isGraphql)) {
+			return true;
+		}
+
 		const method = String(request?.method ?? '').toUpperCase();
 		// A GraphQL operation travels over POST whichever root type it selects, so the method says
 		// nothing about whether it writes: the resolver's own declaration is the only honest source.
