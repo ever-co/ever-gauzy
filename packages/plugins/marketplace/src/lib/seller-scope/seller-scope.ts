@@ -60,7 +60,11 @@ export function applySellerScope<T>(queryBuilder: T, scope: ISellerScope, alias 
 		andWhere(clause: string, parameters?: Record<string, any>): T;
 	};
 
-	return builder.andWhere(`${alias}."sellerId" = :sellerScopeId`, { sellerScopeId: scope.sellerId });
+	// `alias.sellerId` rather than `alias."sellerId"`: a raw fragment is passed to the driver
+	// untouched, and MySQL reads the double quotes as a string literal — so every seller-scoped read
+	// raised there instead of narrowing. The builder resolves the property itself and quotes it for
+	// whichever dialect is configured.
+	return builder.andWhere(`${alias}.sellerId = :sellerScopeId`, { sellerScopeId: scope.sellerId });
 }
 
 /**

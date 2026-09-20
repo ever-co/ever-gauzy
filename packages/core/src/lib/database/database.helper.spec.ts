@@ -133,6 +133,9 @@ describe('reading how many rows a write changed', () => {
 		expect(readAffectedRows([[], 4])).toBe(4);
 		// The MySQL driver's own header.
 		expect(readAffectedRows([{ affectedRows: 5 }])).toBe(5);
+		// `better-sqlite3`'s own result object, in both the bare and the wrapped shape.
+		expect(readAffectedRows({ changes: 6, lastInsertRowid: 12 })).toBe(6);
+		expect(readAffectedRows([{ changes: 7 }])).toBe(7);
 	});
 
 	it('answers zero rather than a guess when the shape carries no count', () => {

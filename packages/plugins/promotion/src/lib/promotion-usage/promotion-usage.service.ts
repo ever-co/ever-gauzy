@@ -207,8 +207,10 @@ export class PromotionUsageService extends CrudService<PromotionUsage> {
 		const rows = (await this.typeOrmPromotionUsageRepository
 			.createQueryBuilder('usage')
 			.where('usage.status = :status', { status: PromotionUsageStatus.RESERVED })
-			.andWhere('usage."usedAt" <= :cutoff', { cutoff })
-			.andWhere('usage."organizationId" = :organizationId', { organizationId: this.scope.organizationId })
+			// The property form, not a quoted identifier: a raw fragment reaches the driver untouched,
+			// and MySQL reads `"usedAt"` as the string `usedAt` rather than as the column.
+			.andWhere('usage.usedAt <= :cutoff', { cutoff })
+			.andWhere('usage.organizationId = :organizationId', { organizationId: this.scope.organizationId })
 			.getMany()) as unknown as IPromotionUsage[];
 
 		return rows;
