@@ -16,8 +16,6 @@ import { FeatureFlag } from '@gauzy/common';
 import { SubscriptionPermissions } from '../../subscription.permissions';
 import {
 	ISubscription,
-	ISubscriptionBilling,
-	ISubscriptionItem,
 	ISubscriptionBillingOutcome
 } from '../../subscription.types';
 import { Subscription } from '../../subscription/subscription.entity';

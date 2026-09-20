@@ -19,7 +19,6 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { EmployeeService } from '../employee/employee.service';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';

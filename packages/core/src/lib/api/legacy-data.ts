@@ -5,7 +5,6 @@ import {
 	ApiQueryError,
 	FilterNode,
 	PageRequest,
-	SortKey,
 	resolveMaxPageSize,
 	resolveDefaultPageSize
 } from './query-ast';

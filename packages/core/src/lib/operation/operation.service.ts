@@ -2,7 +2,7 @@ import { ConflictException, Injectable, Logger, NotFoundException } from '@nestj
 import { randomUUID } from 'node:crypto';
 import { FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { ID, IOperationError, IOperationState, OperationStatus, OperationStepStatus } from '@gauzy/contracts';
+import { ID, IOperationError, OperationStatus, OperationStepStatus } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { isUniqueViolation } from '../core/errors/unique-violation';

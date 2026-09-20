@@ -18,7 +18,6 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';

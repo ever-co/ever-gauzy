@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, In } from 'typeorm';
+import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { CurrencyCode, DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
 	Money,

@@ -3,7 +3,6 @@ import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { RequestContext, SequenceService, TenantAwareCrudService, TenantSettingService } from '@gauzy/core';
 import {
 	GoodsReceiptStatus,
-	IGoodsReceipt,
 	IGoodsReceiptInput,
 	IGoodsReceiptLineInput,
 	IInventoryPort,

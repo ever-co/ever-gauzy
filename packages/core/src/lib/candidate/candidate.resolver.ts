@@ -7,7 +7,6 @@ import {
 	ICandidateCreateInput,
 	ICandidateUpdateInput,
 	IPagination,
-	LanguagesEnum,
 	PermissionsEnum,
 	CandidateStatusType
 } from '@gauzy/contracts';

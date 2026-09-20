@@ -37,7 +37,7 @@ import {
 } from '@gauzy/core';
 import { Seller } from './seller.entity';
 import { SellerService } from './seller.service';
-import { CreateSellerDTO, SellerDTO, UpdateSellerDTO } from './dto';
+import { CreateSellerDTO, UpdateSellerDTO } from './dto';
 import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 import { ISellerScope } from '../seller-scope/seller-scope';
 

@@ -4,7 +4,6 @@ import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
 import {
 	StockCountLineStatus,
-	StockCountMode,
 	StockCountStatus,
 	StockMovementReferenceType,
 	StockMovementType,

@@ -7,7 +7,6 @@ import {
 	IOrganizationProjectModule,
 	IOrganizationProjectModuleCreateInput,
 	IOrganizationProjectModuleFindInput,
-	IOrganizationProjectModuleUpdateInput,
 	IPagination,
 	ITask,
 	PermissionsEnum

@@ -2,7 +2,6 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
-	ICustomSmtp,
 	ICustomSmtpCreateInput,
 	ICustomSmtpFindInput,
 	ICustomSmtpUpdateInput,

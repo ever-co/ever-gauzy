@@ -2,7 +2,6 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
 	ID as Id,
-	IEmployeeNotification,
 	IEmployeeNotificationCreateInput,
 	IEmployeeNotificationUpdateInput,
 	IMarkAllAsReadResponse,

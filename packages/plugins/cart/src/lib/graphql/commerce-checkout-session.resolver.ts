@@ -13,7 +13,6 @@ import {
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
-import { CommerceCart } from '../commerce-cart/commerce-cart.entity';
 import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
 import { CommerceCheckoutSession } from '../commerce-checkout-session/commerce-checkout-session.entity';
 import { CommerceCheckoutSessionService } from '../commerce-checkout-session/commerce-checkout-session.service';

@@ -1,4 +1,3 @@
-import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEmail, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { CommerceCartStatus, ICommerceCart, ID } from '@gauzy/contracts';

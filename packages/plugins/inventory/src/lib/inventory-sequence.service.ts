@@ -9,7 +9,7 @@
  */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { RequestContext, Sequence } from '@gauzy/core';
 import { DatabaseTypeEnum } from '@gauzy/config';
 

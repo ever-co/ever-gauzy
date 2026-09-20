@@ -4,7 +4,6 @@ import { FeatureFlag } from '@gauzy/common';
 import {
 	ID as Id,
 	IPagination,
-	IWarehouse,
 	IWarehouseProduct,
 	IWarehouseProductCreateInput,
 	IWarehouseProductVariant,

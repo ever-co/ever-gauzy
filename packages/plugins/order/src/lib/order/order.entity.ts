@@ -1,4 +1,3 @@
-import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsBoolean,
@@ -37,7 +36,7 @@ import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository
  * An order: the immutable commercial record.
  *
  * Once placed, nothing here is edited in place. `status`, the two materialised statuses, the totals and
- * the version move only through the paths that own them â€” `OrderStateMachine` for the lifecycle,
+ * the version move only through the paths that own them — `OrderStateMachine` for the lifecycle,
  * `OrderTotalsService` for the money, and an applied `order_change` for anything a person changes.
  * That is why every mutable-looking column on this entity is described as a cache of a ledger or of
  * the order's own lines.
@@ -49,7 +48,7 @@ export class Order extends TenantOrganizationBaseEntity implements IOrder {
 	 *
 	 * The sequence is the platform's numbering capability, not a counter of this package's own: it is
 	 * gapless enough to be defensible in an audit, it is safe under concurrency, and every document a
-	 * person quotes â€” a return, a purchase order, an invoice â€” is numbered by the same mechanism.
+	 * person quotes — a return, a purchase order, an invoice — is numbered by the same mechanism.
 	 * Unique per organization and channel.
 	 */
 	@ApiProperty({ type: () => String })

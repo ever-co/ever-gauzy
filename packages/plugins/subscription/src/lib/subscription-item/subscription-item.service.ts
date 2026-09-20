@@ -3,7 +3,6 @@ import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import {
 	ISubscriptionCatalogPort,
-	ISubscriptionItem,
 	ISubscriptionItemInput,
 	ISubscriptionPricingPort,
 	SUBSCRIPTION_CATALOG,

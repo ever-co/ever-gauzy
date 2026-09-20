@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDate, IsOptional, IsString, IsUUID, Length, MaxLength } from 'class-validator';
 import { ID } from '@gauzy/contracts';
 

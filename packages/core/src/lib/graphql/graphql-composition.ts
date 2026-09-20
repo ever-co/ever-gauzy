@@ -1,7 +1,6 @@
 import {
 	DefinitionNode,
 	DocumentNode,
-	GraphQLArgument,
 	GraphQLEnumType,
 	GraphQLField,
 	GraphQLInputField,

@@ -11,7 +11,6 @@ import {
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
-import { Entitlement } from '../../entitlement/entitlement.entity';
 import { EntitlementService } from '../../entitlement/entitlement.service';
 import { EntitlementActivation } from '../../entitlement-activation/entitlement-activation.entity';
 import { EntitlementActivationService } from '../../entitlement-activation/entitlement-activation.service';

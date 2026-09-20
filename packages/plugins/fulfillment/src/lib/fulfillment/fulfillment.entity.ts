@@ -1,4 +1,3 @@
-import { JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { FulfillmentDirection, FulfillmentStatusDetail, ID, IFulfillment } from '@gauzy/contracts';
@@ -7,7 +6,6 @@ import {
 	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
-	MultiORMManyToOne,
 	MultiORMOneToMany,
 	TenantOrganizationBaseEntity,
 	VersionedColumn

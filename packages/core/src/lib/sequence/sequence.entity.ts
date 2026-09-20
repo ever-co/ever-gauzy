@@ -1,4 +1,3 @@
-import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { ISequence, SequenceResetPolicy, ID } from '@gauzy/contracts';

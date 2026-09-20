@@ -93,7 +93,7 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
  *
  * `status` is written here and nowhere else. Every service that wants to move an order asks this class,
  * which is what keeps a rule like "a delivered order is never cancelled, a return is created instead"
- * from being re-implemented â€” and re-implemented slightly differently â€” in each of them.
+ * from being re-implemented — and re-implemented slightly differently — in each of them.
  */
 export class OrderStateMachine {
 	/**

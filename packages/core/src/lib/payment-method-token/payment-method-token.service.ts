@@ -3,7 +3,6 @@ import { EntityManager } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ID,
-	IPaymentAccountHolder,
 	IPaymentMethodToken,
 	IPaymentMethodTokenCreateInput,
 	IPaymentMethodTokenUpdateInput,

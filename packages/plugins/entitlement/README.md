@@ -12,7 +12,7 @@ thing being sold, and no other domain reads them. It is enabled by a tenant as a
 | Concept | What it is |
 |---|---|
 | **Entitlement** | The right itself: who holds it, what granted it, over what term, how many seats it carries, how many activations it permits, and whether it has been revoked |
-| **Activation** | One device, instance or named user occupying a slot of an entitlement â€” the scarce resource an activation limit counts |
+| **Activation** | One device, instance or named user occupying a slot of an entitlement — the scarce resource an activation limit counts |
 | **Licence key** | The credential a customer types into the product: issued against an entitlement, shown once, stored as a digest |
 
 ## Tables
@@ -31,7 +31,7 @@ past `endsAt + gracePeriodDays`, or whose live activations already fill its `qua
 activation with a stable code, and the refusal is answered rather than hidden.
 
 **A licence key leaves the service exactly once.** The plaintext is returned in the response to the
-issuance call and never again: only its SHA-256 digest â€” the lookup column â€” and, when the operator
+issuance call and never again: only its SHA-256 digest — the lookup column — and, when the operator
 asked to be able to re-display it, a ciphertext, are stored. Nothing logs, exports or publishes it.
 
 **Seat arithmetic is a count, not a counter.** The number of seats in use is the number of live

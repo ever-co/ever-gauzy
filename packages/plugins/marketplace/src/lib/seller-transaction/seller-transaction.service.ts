@@ -5,7 +5,6 @@ import {
 	ID,
 	IPagination,
 	ISellerSplitReconciliation,
-	ISellerTransaction,
 	SellerHoldReason,
 	SellerTransactionKind,
 	SellerTransactionStatus

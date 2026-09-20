@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsUUID, ValidateNested } from 'class-validator';
+import { IsArray, IsNumber, IsUUID, ValidateNested } from 'class-validator';
 import { ID } from '@gauzy/contracts';
 
 /** One line as it is dispatched. */

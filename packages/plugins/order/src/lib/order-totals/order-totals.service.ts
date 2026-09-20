@@ -21,7 +21,6 @@ import { OrderLine } from '../order-line/order-line.entity';
 import { OrderLineService } from '../order-line/order-line.service';
 import { OrderShippingMethod } from '../order-shipping-method/order-shipping-method.entity';
 import { OrderShippingMethodService } from '../order-shipping-method/order-shipping-method.service';
-import { OrderSummary } from '../order-summary/order-summary.entity';
 import { OrderSummaryService } from '../order-summary/order-summary.service';
 import { OrderTransaction } from '../order-transaction/order-transaction.entity';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';

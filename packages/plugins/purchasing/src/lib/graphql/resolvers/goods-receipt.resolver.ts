@@ -4,7 +4,7 @@ import { ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
-import { toFailedGoodsReceiptPayload, toGoodsReceiptPayload, toUserError } from '../wire';
+import { toFailedGoodsReceiptPayload, toGoodsReceiptPayload } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { GoodsReceiptStatus, IGoodsReceipt, IGoodsReceiptLine, IGoodsReceiptLineInput } from '../../purchasing.types';
 import { PurchasingPermissions } from '../../purchasing.permissions';

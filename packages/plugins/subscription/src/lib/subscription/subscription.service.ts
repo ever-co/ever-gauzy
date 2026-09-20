@@ -4,7 +4,6 @@ import { DeepPartial } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	AdjustmentType,
-	CurrencyCode,
 	DecimalString,
 	ID,
 	IdempotencyOutcome
@@ -35,7 +34,6 @@ import {
 } from '../subscription.types';
 import {
 	DEFAULT_MINIMUM_PRORATION_CHARGE,
-	ISubscriptionCadence,
 	ISubscriptionPeriod,
 	addDays,
 	applyRecurringDiscount,

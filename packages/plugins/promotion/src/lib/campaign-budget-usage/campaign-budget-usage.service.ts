@@ -1,4 +1,3 @@
-import { JoinColumn, RelationId } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { CrudService, RequestContext } from '@gauzy/core';
 import { ID } from '@gauzy/contracts';

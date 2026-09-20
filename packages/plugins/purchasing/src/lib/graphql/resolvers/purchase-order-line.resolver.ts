@@ -3,7 +3,7 @@ import { Args, Parent, ResolveField, Resolver } from '@nestjs/graphql';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
-import { IGoodsReceipt, IPurchaseOrder, IPurchaseOrderLine, PurchaseBillingPolicy } from '../../purchasing.types';
+import { IPurchaseOrder, IPurchaseOrderLine, PurchaseBillingPolicy } from '../../purchasing.types';
 import { PurchasingPermissions } from '../../purchasing.permissions';
 import { isGreaterThanQuantity, negateQuantity, sumQuantity } from '../../purchasing.quantity';
 import { PurchaseOrderLine } from '../../purchase-order-line/purchase-order-line.entity';

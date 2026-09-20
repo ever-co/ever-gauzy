@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsDateString, IsEnum, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { CurrencyCode, DecimalString, ID, SellerPayoutMode, SellerPayoutStatus } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';

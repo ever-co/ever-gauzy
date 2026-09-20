@@ -1,10 +1,8 @@
-import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, Length, MaxLength } from 'class-validator';
 import {
 	ChannelStatus,
 	CurrencyCode,
-	ID,
 	IRegion,
 	IRegionCountry,
 	IChannelRegion,

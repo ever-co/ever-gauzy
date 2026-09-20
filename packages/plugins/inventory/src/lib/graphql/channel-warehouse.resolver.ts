@@ -6,11 +6,10 @@
  * resolver is schema-first, matching the platform’s existing resolvers: the schema literal declares
  * the types and this class binds them to the service.
  */
-import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { InventoryPermission } from './../inventory.permissions';

@@ -6,7 +6,6 @@ import {
 	IsNotEmpty,
 	IsNumber,
 	IsOptional,
-	IsPositive,
 	IsString,
 	IsUUID,
 	ValidateNested

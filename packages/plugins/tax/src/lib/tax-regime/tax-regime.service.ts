@@ -2,7 +2,6 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
-import { TaxRate } from '../tax-rate/tax-rate.entity';
 import { TypeOrmTaxRateRepository } from '../tax-rate/repository/type-orm-tax-rate.repository';
 import {
 	IResolvedTaxRegime,

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { LessThanOrEqual } from 'typeorm';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { Money, RequestContext, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
+import { Money, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
 import { SubscriptionBillingStatus } from '../subscription.types';
 import { currentScope } from '../subscription.scope';
 import { normalizeDecimal } from '../subscription.cycle';

@@ -1,5 +1,5 @@
 import type { CommissionBasis, CurrencyCode, DecimalString, ICommissionTier, ID } from '@gauzy/contracts';
-import type { BulkMode, BulkRequest } from '@gauzy/core';
+import type { BulkRequest } from '@gauzy/core';
 
 /**
  * The offering batch, as the two surfaces declare it.

@@ -7,7 +7,7 @@ import { CurrencyCode } from './money.model';
  *
  * An order is the immutable commercial record: once placed, it is changed only through an
  * `order_change`, which is why every mutable-looking column on it is a cache of a ledger or of its
- * lines. The table is `order`, never `commerce_order` â€” the concept exists in ERP, CRM and accounting,
+ * lines. The table is `order`, never `commerce_order` — the concept exists in ERP, CRM and accounting,
  * and the bare name carries the meaning exactly.
  */
 

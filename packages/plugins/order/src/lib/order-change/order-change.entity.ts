@@ -1,6 +1,6 @@
 import { JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ID, IOrderChange, OrderChangeStatus, OrderChangeType } from '@gauzy/contracts';
 import {
 	ColumnIndex,

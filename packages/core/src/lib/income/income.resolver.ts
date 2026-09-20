@@ -2,7 +2,7 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { DecimalString, ID as Id, IIncome, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { DecimalString, ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -10,7 +10,6 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { BaseQueryDTO } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { EmployeeService } from '../employee/employee.service';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
