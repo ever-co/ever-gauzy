@@ -49,6 +49,27 @@ function isUserShaped(value: Record<string, unknown>): boolean {
 }
 
 /**
+ * Scrubs ONE node and reports the values that still have to be walked.
+ *
+ * An array holds no keys of its own, so only its items are handed back; a user-shaped object loses
+ * its credential columns first, so they are never returned as children either.
+ *
+ * @param node A plain object or array from the response body (mutated in place).
+ * @returns The node's child values, to be walked in turn.
+ */
+function scrubNode(node: Record<string, unknown> | unknown[]): unknown[] {
+	if (Array.isArray(node)) {
+		return node;
+	}
+	if (isUserShaped(node)) {
+		for (const key of USER_CREDENTIAL_KEYS) {
+			delete node[key];
+		}
+	}
+	return Object.values(node);
+}
+
+/**
  * Last line of defense for GHSA-hh83-hq74-gh9f: removes the credential columns from every
  * `User`-shaped object in an already-serialized response body (mutated in place).
  *
@@ -76,13 +97,7 @@ export function scrubUserCredentials<T>(data: T): T {
 		}
 		seen.add(node);
 
-		if (!Array.isArray(node) && isUserShaped(node)) {
-			for (const key of USER_CREDENTIAL_KEYS) {
-				delete node[key];
-			}
-		}
-		const children: unknown[] = Array.isArray(node) ? node : Object.values(node);
-		for (const child of children) {
+		for (const child of scrubNode(node)) {
 			if (isWalkable(child)) {
 				stack.push(child);
 			}

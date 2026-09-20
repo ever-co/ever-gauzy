@@ -192,6 +192,17 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			relations: { role: true }
 		});
 
+		// The role the body asks for, read in every form it can carry it (`roleId`, `role` as an id
+		// string or `{ id }`). Validated BEFORE the inviter's own role is looked at, so a malformed or
+		// self-contradicting payload is refused for every caller and not just for the ones that reach
+		// the fallback below — an EMPLOYEE inviter is force-assigned the EMPLOYEE role, but that is an
+		// authorization decision and must not double as a licence to ignore bad input.
+		// `extractRoleIds` itself throws on a role key that is present but references nothing.
+		const requestedRoleIds = extractRoleIds(input);
+		if (requestedRoleIds.length > 1) {
+			throw new BadRequestException('The role and roleId fields must reference the same role.');
+		}
+
 		// Invited Role
 		let role: IRole;
 
@@ -203,10 +214,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				where: { name: RolesEnum.EMPLOYEE }
 			});
 		} catch (error) {
-			// If the current role is not an 'EMPLOYEE' role, fallback to the requested role. It is read in
-			// every form the body can carry it (`roleId`, `role` as an id string or `{ id }`), and exactly
-			// one role must be named: a second, unchecked identifier must not ride along (GHSA-x4mv-fhwj-g3rp).
-			const requestedRoleIds = extractRoleIds(input);
+			// If the current role is not an 'EMPLOYEE' role, fallback to the requested role. Exactly one
+			// role must be named: a second, unchecked identifier must not ride along, and an invitation
+			// cannot be issued for no role at all (GHSA-x4mv-fhwj-g3rp).
 			if (requestedRoleIds.length !== 1) {
 				throw new BadRequestException('Exactly one valid role must be specified for the invitation.');
 			}

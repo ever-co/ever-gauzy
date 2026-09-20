@@ -122,4 +122,30 @@ describe('InviteService.createBulk role (GHSA-x4mv-fhwj-g3rp)', () => {
 			jest.restoreAllMocks();
 		}
 	});
+
+	/**
+	 * The EMPLOYEE branch is force-assigned the EMPLOYEE role, so a bad payload was never a privilege
+	 * escalation here — but it was silently accepted, and the same body answered 400 for every other
+	 * inviter. Input validation now runs before the branch, so the answer no longer depends on who asks.
+	 */
+	it('refuses a malformed or self-contradicting body from an EMPLOYEE inviter too', async () => {
+		for (const body of [
+			{ roleId: 'role-employee', role: { id: 'role-super-admin' } },
+			{ roleId: 'role-manager', role: 'role-super-admin' },
+			{ role: {} },
+			{ roleId: '' }
+		]) {
+			const { service } = build('role-employee');
+			await expect(invitesOf(service, body)).rejects.toBeInstanceOf(BadRequestException);
+			jest.restoreAllMocks();
+		}
+	});
+
+	it('still lets an EMPLOYEE inviter send a body with no role at all', async () => {
+		const { service } = build('role-employee');
+
+		const [invite] = await invitesOf(service, {});
+
+		expect(invite.roleId).toBe('role-employee');
+	});
 });
