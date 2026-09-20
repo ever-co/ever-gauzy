@@ -1,8 +1,19 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, IsNotEmpty, IsBoolean } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, IsNumber, IsNotEmpty, IsBoolean, IsUUID } from 'class-validator';
+import { ID } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
 
 export abstract class InvoiceItemDTO extends TenantOrganizationBaseDTO {
+	/**
+	 * An existing item edited in place through the invoice. Declared so a whitelisted invoice update
+	 * keeps it (a stripped id turns the edit into an insert and unlinks the original item). Whose item
+	 * it names is checked by TenantAwareCrudService's nested-graph ownership check.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	readonly id?: ID;
+
 	@ApiProperty({ type: () => String, readOnly: true })
 	@IsOptional()
 	@IsString()

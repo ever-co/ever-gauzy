@@ -24,6 +24,7 @@ import {
 	IZapierConfig
 } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
+import { ISocialAuthClientsConfig } from './social-auth.helper';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -120,6 +121,8 @@ export interface IEnvironment {
 	cloudinary?: ICloudinaryConfig;
 	digitalOcean?: IDigitalOceanConfig;
 	github: IGithubIntegrationConfig /** Github Configuration */;
+	/** OAuth clients accepted by the email-based social sign-in routes (GHSA-58x4-7mw9-gmqg). */
+	socialAuth?: ISocialAuthClientsConfig;
 	jira: IJiraIntegrationConfig /** Jira Configuration */;
 	fiverrConfig: IFiverrConfig;
 	auth0Config: IAuth0Config;

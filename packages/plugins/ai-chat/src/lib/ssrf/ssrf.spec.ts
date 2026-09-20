@@ -143,10 +143,24 @@ describe('AI provider base URL — SSRF egress guard', () => {
 				'an operator `*_BASE_URL` (environment source)',
 				{ apiKey: 'k', baseUrl: 'http://10.0.0.5/v1', source: 'environment' }
 			],
-			['a platform credential', { apiKey: 'k', baseUrl: 'http://10.0.0.5/v1', source: 'platform' }],
+			['a platform credential', { apiKey: 'k', baseUrl: 'http://10.0.0.5/v1', source: 'platform' }]
+		])('allows %s without the opt-in — none of it is tenant input', (_label, credentials) => {
+			expect(isPrivateAiProviderEndpointAllowed(credentials as never)).toBe(true);
+		});
+
+		/**
+		 * GHSA-w3mx-m5cr-3gxp residual: saving a key-less row for Speaches/LocalAI/whisper.cpp, with
+		 * no base URL at all, made the server request that provider's built-in LOOPBACK default. The
+		 * tenant cannot pick the host, but it is a tenant action that starts the request, so the
+		 * deployment flag decides — the same answer as for a URL the tenant typed.
+		 */
+		it.each([
 			['a tenant row with NO base URL (built-in default address)', { apiKey: '', source: 'tenant' }],
 			['a tenant row with a blank base URL', { apiKey: '', baseUrl: '   ', source: 'tenant' }]
-		])('allows %s without the opt-in — none of it is tenant input', (_label, credentials) => {
+		])('treats %s as tenant-controlled, default-deny', (_label, credentials) => {
+			expect(isPrivateAiProviderEndpointAllowed(credentials as never)).toBe(false);
+
+			process.env[ALLOW_PRIVATE_BASE_URLS_ENV] = 'true';
 			expect(isPrivateAiProviderEndpointAllowed(credentials as never)).toBe(true);
 		});
 
@@ -366,12 +380,68 @@ describe('AI provider base URL — SSRF egress guard', () => {
 				'an operator environment credential',
 				{ apiKey: 'k', baseUrl: 'http://10.0.0.5/v1', source: 'environment' }
 			],
-			['a platform credential', { apiKey: 'k', baseUrl: 'http://10.0.0.5/v1', source: 'platform' }],
-			['a tenant key that uses the vendor host', { apiKey: 'k', source: 'tenant' }],
-			['a tenant key with a blank base URL', { apiKey: 'k', baseUrl: '  ', source: 'tenant' }]
+			['a platform credential', { apiKey: 'k', baseUrl: 'http://10.0.0.5/v1', source: 'platform' }]
 		] as const)('leaves %s on the SDK default transport', (_label, credentials) => {
 			expect(createAiProviderSdkFetch(credentials)).toBeUndefined();
 			expect(createAiProviderSdkFetch(null)).toBeUndefined();
+		});
+
+		/**
+		 * GHSA-w3mx-m5cr-3gxp residual: a tenant row with no base URL used to get the unguarded global
+		 * `fetch` (`undefined`), so LocalAI chat reached `http://localhost:8080/v1` from the API pod.
+		 * It now gets a guard — one that judges only the host class, because the address is the
+		 * provider's own default and no tenant-chosen name is resolved.
+		 */
+		it.each([
+			['a tenant key that uses the vendor host', { apiKey: 'k', source: 'tenant' }],
+			['a tenant key with a blank base URL', { apiKey: 'k', baseUrl: '  ', source: 'tenant' }]
+		] as const)('guards %s, whose address is the provider default', (_label, credentials) => {
+			expect(createAiProviderSdkFetch(credentials)).toBeDefined();
+		});
+
+		it('refuses a local provider default (loopback) for a tenant row with no base URL', async () => {
+			const mock = okFetch();
+			const sdkFetch = createAiProviderSdkFetch({ apiKey: '', source: 'tenant' });
+
+			await expect(sdkFetch!('http://localhost:8080/v1/chat/completions', { method: 'POST' })).rejects.toThrow(
+				SsrfBlockedError
+			);
+			expect(mock).not.toHaveBeenCalled();
+		});
+
+		it('positive control: the same call goes through on a deployment that opted in', async () => {
+			const mock = okFetch();
+			process.env[ALLOW_PRIVATE_BASE_URLS_ENV] = 'true';
+
+			await expect(
+				createAiProviderSdkFetch({ apiKey: '', source: 'tenant' })!('http://localhost:8080/v1/chat/completions')
+			).resolves.toBeInstanceOf(Response);
+			expect(mock).toHaveBeenCalledTimes(1);
+		});
+
+		it('positive control: an operator base URL keeps the SDK default transport, private or not', async () => {
+			const mock = okFetch();
+			expect(
+				createAiProviderSdkFetch({ apiKey: 'k', baseUrl: 'http://localhost:8080/v1', source: 'environment' })
+			).toBeUndefined();
+			expect(mock).not.toHaveBeenCalled();
+		});
+
+		it('positive control: a vendor host for a tenant key goes out untouched, with no DNS pre-flight', async () => {
+			const mock = okFetch();
+			const resolver = jest.fn();
+			const sdkFetch = createAiProviderSdkFetch({ apiKey: 'k', source: 'tenant' }, { resolver });
+
+			await expect(
+				sdkFetch!('https://api.openai.com/v1/chat/completions', { method: 'POST', body: '{"stream":true}' })
+			).resolves.toBeInstanceOf(Response);
+
+			expect(resolver).not.toHaveBeenCalled();
+			expect(mock).toHaveBeenCalledTimes(1);
+			const [url, init] = mock.mock.calls[0];
+			expect(url).toBe('https://api.openai.com/v1/chat/completions');
+			// Untouched: no `redirect: 'error'` is forced onto vendor traffic the tenant did not aim.
+			expect(init).toEqual({ method: 'POST', body: '{"stream":true}' });
 		});
 
 		it('refuses a tenant base URL whose public-looking host resolves to an internal address', async () => {

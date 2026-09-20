@@ -8,6 +8,7 @@ import { CustomSmtp } from '../core/entities/internal';
 import { SMTPUtils } from './utils';
 import { TypeOrmEmailTemplateRepository } from './../email-template/repository/type-orm-email-template.repository';
 import { TypeOrmCustomSmtpRepository } from './../custom-smtp/repository/type-orm-custom-smtp.repository';
+import { toTemplateSource } from './../email-template/compile-mjml';
 
 @Injectable()
 export class EmailTemplateRenderService {
@@ -92,7 +93,9 @@ export class EmailTemplateRenderService {
 				return '';
 			}
 
-			const template = Handlebars.compile(emailTemplate.hbs);
+			// `hbs` is tenant-editable; Handlebars.compile() must only ever get a string, never an AST
+			// object (GHSA-48h9-vwf5-h8m7).
+			const template = Handlebars.compile(toTemplateSource(emailTemplate.hbs));
 			const html = template(locals);
 			return html;
 		} catch (error) {

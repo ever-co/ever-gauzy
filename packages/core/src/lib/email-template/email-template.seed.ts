@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { DataSource } from 'typeorm';
 import { EmailTemplate } from './email-template.entity';
-import * as mjml2html from 'mjml';
+import { compileMjml } from './compile-mjml';
 import * as path from 'path';
 
 /**
@@ -99,7 +99,7 @@ const pathToEmailTemplate = async (
 		switch (fileExtension) {
 			case 'mjml':
 				template.mjml = fileContent;
-				template.hbs = mjml2html(fileContent).html;
+				template.hbs = compileMjml(fileContent).html;
 				break;
 			case 'hbs':
 				template.hbs = fileContent;

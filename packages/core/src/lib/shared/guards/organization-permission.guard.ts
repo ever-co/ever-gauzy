@@ -119,7 +119,11 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 		// Check if super admin role is allowed from the .env file
 		if (env.allowSuperAdminRole && RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])) {
-			return true;
+			// The exemption covers the organization POLICY only. On a route that addresses a record by
+			// id, the tenant-scoped target lookup is also the ownership check: every tenant owner is a
+			// SUPER_ADMIN, so returning early here let one reach another tenant's record by its UUID
+			// (GHSA-6qvm-3wg4-26w4). The record still has to exist in the caller's tenant.
+			return await this.superAdminTargetIsInTenant(context);
 		}
 
 		const tenantId = RequestContext.currentTenantId();
@@ -160,6 +164,40 @@ export class OrganizationPermissionGuard implements CanActivate {
 		}
 
 		return isAuthorized;
+	}
+
+	/**
+	 * For an exempt SUPER_ADMIN: allows the request unless the route declares an
+	 * `@OrganizationPolicyTarget()` whose record is missing from the caller's tenant.
+	 *
+	 * @param context The execution context.
+	 * @returns true when the route has no policy target, or its record belongs to the caller's tenant.
+	 */
+	private async superAdminTargetIsInTenant(context: ExecutionContext): Promise<boolean> {
+		// The tenant is resolved BEFORE the no-target shortcut: an exemption granted without one would
+		// hand the route to a caller whose tenant scoping cannot be evaluated anywhere downstream.
+		const tenantId = RequestContext.currentTenantId();
+
+		if (isEmpty(tenantId)) {
+			console.log('OrganizationPermissionGuard: no tenant on the request, access denied');
+			return false;
+		}
+
+		const target = this._reflector.get<IOrganizationPolicyTarget | undefined>(
+			ORGANIZATION_POLICY_TARGET_METADATA,
+			context.getHandler()
+		);
+
+		if (!target) {
+			return true;
+		}
+
+		if (!(await this.findTargetOrganizationId(context, tenantId, target))) {
+			console.log('OrganizationPermissionGuard: the target record is not in the caller tenant, access denied');
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

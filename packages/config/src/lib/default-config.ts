@@ -6,6 +6,7 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { DEFAULT_API_HOST, DEFAULT_API_PORT, DEFAULT_API_BASE_URL, DEFAULT_GRAPHQL_API_PATH } from '@gauzy/constants';
 import {} from '@gauzy/contracts';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, dbKnexConnectionConfig } from './database';
+import { resolveSecret } from './environments/secret-resolver';
 
 process.cwd();
 
@@ -90,9 +91,16 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 		User: []
 	},
 	authOptions: {
-		expressSessionSecret: process.env.EXPRESS_SESSION_SECRET || 'gauzy',
+		// Same resolver as `environment`, so both surfaces agree on the per-process value, and read
+		// lazily for the same reason: the API loads its env files after its imports have run, so an
+		// eagerly resolved secret would be decided before `.env.local` exists (GHSA-39j7-x845-4w3c).
+		get expressSessionSecret(): string {
+			return resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy');
+		},
 		userPasswordBcryptSaltRounds: 12,
-		jwtSecret: process.env.JWT_SECRET || 'secretKey'
+		get jwtSecret(): string {
+			return resolveSecret('JWT_SECRET', 'secretKey');
+		}
 	},
 	assetOptions: {
 		assetPath: assetPath,

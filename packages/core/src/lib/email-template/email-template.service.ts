@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import * as mjml2html from 'mjml';
 import { EmailTemplateEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { EmailTemplate } from './email-template.entity';
@@ -10,6 +9,7 @@ import { scopeEmailTemplateWhere } from './email-template.scope';
 import { MultiORMEnum } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { compileMjml } from './compile-mjml';
 import { MikroOrmEmailTemplateRepository } from './repository/mikro-orm-email-template.repository';
 import { TypeOrmEmailTemplateRepository } from './repository/type-orm-email-template.repository';
 
@@ -179,7 +179,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 					entity = {
 						...emailTemplate,
 						mjml: content.mjml,
-						hbs: mjml2html(content.mjml).html
+						hbs: compileMjml(content.mjml).html
 					};
 					break;
 			}
@@ -197,7 +197,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 					break;
 				case 'html':
 					entity.mjml = content.mjml;
-					entity.hbs = mjml2html(content.mjml).html;
+					entity.hbs = compileMjml(content.mjml).html;
 					break;
 			}
 			await super.create(entity);

@@ -143,6 +143,7 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.startWeekOn = WeekDaysEnum.MONDAY;
 		defaultOrganization.tenant = tenant;
 		defaultOrganization.valueDate = moment().add(faker.number.int(10), 'days').toDate();
+		defaultOrganization.allowEmployeeToSeeTrackedData = true;
 
 		defaultOrganizations.push(defaultOrganization);
 	}
@@ -262,6 +263,7 @@ const generateRandomOrganization = async (
 	organization.startWeekOn = WeekDaysEnum.MONDAY;
 	organization.tenant = tenant;
 	organization.valueDate = moment().add(faker.number.int(10), 'days').toDate();
+	organization.allowEmployeeToSeeTrackedData = true;
 
 	return organization;
 };

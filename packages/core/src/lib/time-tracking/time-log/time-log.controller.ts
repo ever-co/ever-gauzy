@@ -17,7 +17,12 @@ import { ITimeLog, PermissionsEnum, ID } from '@gauzy/contracts';
 import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
 import { OrganizationPolicyTarget, Permissions } from './../../shared/decorators';
-import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
+import {
+	OrganizationPermissionGuard,
+	PermissionGuard,
+	TenantBaseGuard,
+	EmployeeTrackedDataGuard
+} from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { GetTimeLogConflictQueryDTO, TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
@@ -68,6 +73,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found for the provided options'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/daily')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getDailyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
@@ -88,6 +94,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found for the provided options'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/daily-chart')
 	@UseValidationPipe({ whitelist: true })
 	async getDailyReportChartData(@Query() options: TimeLogQueryDTO): Promise<any | null> {
@@ -108,6 +115,7 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/owed-report')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getOwedAmountReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
@@ -128,6 +136,7 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/owed-charts')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getOwedAmountReportChartData(@Query() options: TimeLogQueryDTO): Promise<any | null> {
@@ -148,6 +157,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found for the specified options'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('report/weekly')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getWeeklyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
@@ -168,6 +178,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found for the specified options'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('time-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getTimeLimitReport(@Query() options: TimeLogLimitQueryDTO): Promise<any | null> {
@@ -188,6 +199,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Project budget limit not found.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('project-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getProjectBudgetLimit(@Query() options: TimeLogQueryDTO) {
@@ -208,6 +220,7 @@ export class TimeLogController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Client budget limit not found.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('client-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async clientBudgetLimit(@Query() options: TimeLogQueryDTO) {
@@ -229,6 +242,7 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get()
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getLogs(@Query() options: TimeLogQueryDTO): Promise<ITimeLog[]> {
@@ -264,7 +278,7 @@ export class TimeLogController {
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MANUAL_TIME)
 	async addManualTime(
-		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: CreateManualTimeLogDTO
+		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true, whitelist: true })) entity: CreateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this._timeLogService.addManualTime(entity);
 	}
@@ -290,7 +304,7 @@ export class TimeLogController {
 	@OrganizationPolicyTarget(TimeLog)
 	async updateManualTime(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: UpdateManualTimeLogDTO
+		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true, whitelist: true })) entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this._timeLogService.updateManualTime(id, entity);
 	}
