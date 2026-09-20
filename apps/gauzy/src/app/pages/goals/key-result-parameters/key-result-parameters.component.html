@@ -72,7 +72,6 @@
         <nb-tab tabTitle="{{ 'KEY_RESULT_PAGE.FORM.LABELS.TYPE' | translate }}">
           <form [formGroup]="typeForm">
             <ga-keyresult-type-select
-              [enableHelperText]="false"
               [parentFormGroup]="typeForm"
               [orgId]="data.orgId"
               [KPIs]="KPIs"
