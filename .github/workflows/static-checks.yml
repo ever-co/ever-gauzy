@@ -1,7 +1,7 @@
 name: 'Static Checks'
 
-# Two checks that nothing in CI did before, added after a duplicated `transformIgnorePatterns`
-# key sat in `packages/core/jest.config.ts` undetected (TS1117):
+# Three checks that nothing in CI did before. The first two were added after a duplicated
+# `transformIgnorePatterns` key sat in `packages/core/jest.config.ts` undetected (TS1117):
 #
 #   * `typecheck-configs` — `tsc --noEmit` over every jest.config.ts, sub-second for the compile
 #     itself and under a minute for the whole job. This one is REAL: it is green today and it
@@ -11,6 +11,12 @@ name: 'Static Checks'
 #     #10117 the workspace reports roughly 2,650 errors and 6,100 warnings, so a blocking lint
 #     gate would wedge every PR on day one. The tracking task lives in the agent workspace at
 #     `knowledge/TASKS.md` ("Burn down the ESLint backlog").
+#   * `platform-gates` — the structural rules the platform-extensions programme added under
+#     `tools/scripts/`. They existed and were green, and nothing in CI ran a single one of them,
+#     so the rules they state could be broken by any pull request without a word. Each reads the
+#     source tree with `node:fs` alone — no install, no compiler, no database — which is why this
+#     job needs nothing but Node and finishes in seconds. REAL: green today, and it fails the job
+#     if it stops being.
 #
 # Promote `lint` to blocking only once `nx run-many -t lint` is actually green.
 
@@ -146,3 +152,62 @@ jobs:
               echo "Full output is in the \`Run ESLint (report only)\` step above."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+  platform-gates:
+    name: platform-gates
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Read-only job; the checkout credential does not need to outlive the step.
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # No `yarn install`, for the same reason `typecheck-configs` above does without one: every
+      # script below imports `node:fs`, `node:path` and `node:url` and nothing else. Against the
+      # hours a cold install costs on this fleet, that is the whole trade.
+      #
+      # Each gate is its own step so the run page names which rule broke, rather than one step that
+      # says a loop exited non-zero. `if: always()` on every step after the first so one red gate
+      # still lets the rest report — otherwise the first failure hides the others and each fix costs
+      # another full run to find the next one.
+      - name: Plugin package contract
+        run: node tools/scripts/plugin-contract-check.mjs
+
+      - name: Capability port bindings
+        if: always()
+        run: node tools/scripts/port-binding-check.mjs
+
+      - name: Permission contributions
+        if: always()
+        run: node tools/scripts/permission-contribution-check.mjs
+
+      - name: REST and GraphQL surface parity
+        if: always()
+        run: node tools/scripts/api-parity-check.mjs
+
+      - name: GraphQL feature gates
+        if: always()
+        run: node tools/scripts/graphql-feature-gate-check.mjs
+
+      - name: Constraint parity across dialects
+        if: always()
+        run: node tools/scripts/constraint-parity-check.mjs
+
+      - name: SQLite table rebuilds
+        if: always()
+        run: node tools/scripts/sqlite-rebuild-check.mjs
+
+      - name: Nullable reads
+        if: always()
+        run: node tools/scripts/nullable-read-check.mjs
+
+      - name: Injectable CRUD services
+        if: always()
+        run: node tools/scripts/service-injectable-check.mjs
