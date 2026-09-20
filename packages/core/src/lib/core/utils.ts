@@ -244,17 +244,33 @@ export function getDateRangeFormat(startDate: moment.Moment, endDate: moment.Mom
 }
 
 /**
+ * Resolves the time zone a report groups its dates by.
+ *
+ * `moment().tz(undefined)` and `moment().tz('')` return `undefined` instead of a moment, so a request
+ * without a time zone turns the next `.format()` into "Cannot read properties of undefined". Falls back
+ * to the server zone, the same default the group-by command handlers use, so the day buckets of a report
+ * and the keys its rows are grouped under always come from one and the same zone.
+ *
+ * An unknown zone name is passed through: moment-timezone logs it and leaves the moment in UTC, which is
+ * what it did before this helper existed.
+ *
+ * @param timeZone - The time zone named by the request, if any.
+ * @returns A usable time zone name.
+ */
+export function resolveTimeZone(timeZone?: string): string {
+	return typeof timeZone === 'string' && timeZone.trim() !== '' ? timeZone : moment.tz.guess();
+}
+
+/**
  * Get all dates between two dates using Moment.js.
  *
  * @param startDate - The start date.
  * @param endDate - The end date.
+ * @param timeZone - The time zone to build the days in; defaults to the server zone.
  * @returns An array of string representations of dates.
  */
-export function getDaysBetweenDates(
-	startDate: string | Date,
-	endDate: string | Date,
-	timeZone: string = moment.tz.guess()
-): string[] {
+export function getDaysBetweenDates(startDate: string | Date, endDate: string | Date, timeZone?: string): string[] {
+	timeZone = resolveTimeZone(timeZone);
 	// Convert start and end dates to the specified timezone
 	const start = moment.utc(startDate, 'YYYY-MM-DD HH:mm:ss').clone().tz(timeZone);
 	const end = moment.utc(endDate, 'YYYY-MM-DD HH:mm:ss').clone().tz(timeZone);
@@ -436,8 +452,8 @@ export const flatten = (input: any): any => {
 					const newKey = Array.isArray(value)
 						? key
 						: nestedKeys.length > 0
-						? `${key}.${nestedKeys.join('.')}`
-						: key;
+							? `${key}.${nestedKeys.join('.')}`
+							: key;
 					return acc.concat(newKey);
 				}
 			}, []) || []

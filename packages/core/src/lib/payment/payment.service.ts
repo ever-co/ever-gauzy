@@ -17,7 +17,7 @@ import { Payment } from './payment.entity';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { LIKE_OPERATOR } from '../core/util';
-import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum } from '../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum, resolveTimeZone } from '../core/utils';
 import { EmailService } from './../email-send/email.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
@@ -113,7 +113,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 						? {
 								take: request.limit,
 								skip: (request.page || 0) * request.limit
-						  }
+							}
 						: {}),
 					select: {
 						project: {
@@ -193,7 +193,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 						? {
 								take: request.limit,
 								skip: (request.page || 0) * request.limit
-						  }
+							}
 						: {}),
 					order: {
 						// Order results by the 'startedAt' field in ascending order
@@ -213,7 +213,9 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		}
 
 		// Gets an array of days between the given start date, end date and timezone.
-		const { startDate, endDate, timeZone } = request;
+		const { startDate, endDate } = request;
+		// A request without a time zone would make the grouping below format an undefined moment
+		const timeZone = resolveTimeZone(request.timeZone);
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
 
 		// Group payments by date and calculate sum
