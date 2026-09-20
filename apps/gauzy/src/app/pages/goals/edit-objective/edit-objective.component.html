@@ -1,8 +1,8 @@
 <nb-card class="objective-dialog">
 	<nb-card-header class="header">
-		<div class="title">
+		<h4 class="title">
 			{{ (!!data ? 'GOALS_PAGE.EDIT_OBJECTIVE' : 'GOALS_PAGE.ADD_NEW_OBJECTIVE') | translate }}
-		</div>
+		</h4>
 		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog()">
 			<i class="fas fa-times" aria-hidden="true"></i>
 		</button>
@@ -10,15 +10,17 @@
 
 	<nb-card-body>
 		<!-- The form on a two-column grid, with the hover / focus help as a fixed column beside it: the form used
-		     to sit in 7 bootstrap columns with the help floating in the other 5, one field per row. -->
+		     to sit in 7 bootstrap columns with the help floating in the other 5, one field per row. Hover and
+		     focus go to separate handlers, resolved together in the component: assigned to `helperText`
+		     directly, leaving a field with the pointer wiped out the help the keyboard was still on. -->
 		<div class="objective-layout">
 			<form class="objective-form" [formGroup]="form">
 				<div
 					class="field span-2"
-					(mouseenter)="helperText = 'objective-title'"
-					(focusin)="helperText = 'objective-title'"
-					(mouseleave)="helperText = ''"
-					(focusout)="helperText = ''"
+					(mouseenter)="hoverHelper('objective-title')"
+					(mouseleave)="hoverHelper('')"
+					(focusin)="focusHelper('objective-title')"
+					(focusout)="focusHelper('')"
 				>
 					<label for="objective-title" class="label">
 						{{ 'FORM.LABELS.NAME' | translate }}
@@ -35,10 +37,10 @@
 
 				<div
 					class="field span-2"
-					(mouseenter)="helperText = 'objective-description'"
-					(focusin)="helperText = 'objective-description'"
-					(mouseleave)="helperText = ''"
-					(focusout)="helperText = ''"
+					(mouseenter)="hoverHelper('objective-description')"
+					(mouseleave)="hoverHelper('')"
+					(focusin)="focusHelper('objective-description')"
+					(focusout)="focusHelper('')"
 				>
 					<label for="objective-description" class="label">
 						{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
@@ -63,16 +65,16 @@
 					[employees]="employees"
 					[orgName]="orgName"
 					[enableHelperText]="false"
-					(helperTextChange)="helperText = $event"
+					(helperTextChange)="levelHelper($event)"
 				>
 				</ga-goal-level-select>
 
 				<div
 					class="field"
-					(mouseenter)="helperText = 'objective-deadline'"
-					(focusin)="helperText = 'objective-deadline'"
-					(mouseleave)="helperText = ''"
-					(focusout)="helperText = ''"
+					(mouseenter)="hoverHelper('objective-deadline')"
+					(mouseleave)="hoverHelper('')"
+					(focusin)="focusHelper('objective-deadline')"
+					(focusout)="focusHelper('')"
 				>
 					<label for="objective-deadline" class="label">
 						{{ 'GOALS_PAGE.FORM.LABELS.DEADLINE' | translate }}

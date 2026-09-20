@@ -1,15 +1,18 @@
 @if (alignedGoal ? !!parentFormGroup.value.assignAsObjective : true) {
 <!-- Each field reports itself through `helperTextChange` on hover and on keyboard focus, so a dialog can show
-     its help in a column of its own. With `enableHelperText` this component draws that help itself, beside
-     the field. `goal-level-field` marks the three fields for dialogs that lay them out on their own grid. -->
+     its help in a column of its own. Hover and focus go to separate handlers because the component resolves
+     them together: with both bound to one setter, leaving a field with the pointer cleared the help the
+     keyboard was still on, and vice versa. With `enableHelperText` this component draws that help itself,
+     beside the field. `goal-level-field` marks the three fields for dialogs that lay them out on their own
+     grid. -->
 <div [formGroup]="parentFormGroup">
 	<div class="goal-level-field" [class.row]="enableHelperText">
 		<div
 			[class.col-md-7]="enableHelperText"
-			(mouseenter)="showHelper('objective-level')"
-			(focusin)="showHelper('objective-level')"
-			(mouseleave)="showHelper('')"
-			(focusout)="showHelper('')"
+			(mouseenter)="hoverHelper('objective-level')"
+			(mouseleave)="hoverHelper('')"
+			(focusin)="focusHelper('objective-level')"
+			(focusout)="focusHelper('')"
 		>
 			<label for="objective-level" class="label mt-3">
 				{{ 'GOALS_PAGE.FORM.LABELS.LEVEL' | translate }}
@@ -46,10 +49,10 @@
 	<div class="goal-level-field" [class.row]="enableHelperText">
 		<div
 			[class.col-md-7]="enableHelperText"
-			(mouseenter)="showHelper('objective-owner')"
-			(focusin)="showHelper('objective-owner')"
-			(mouseleave)="showHelper('')"
-			(focusout)="showHelper('')"
+			(mouseenter)="hoverHelper('objective-owner')"
+			(mouseleave)="hoverHelper('')"
+			(focusin)="focusHelper('objective-owner')"
+			(focusout)="focusHelper('')"
 		>
 			<label for="objective-owner" class="label mt-3">
 				{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
@@ -108,10 +111,10 @@
 	<div class="goal-level-field" [class.row]="enableHelperText">
 		<div
 			[class.col-md-7]="enableHelperText"
-			(mouseenter)="showHelper('objective-lead')"
-			(focusin)="showHelper('objective-lead')"
-			(mouseleave)="showHelper('')"
-			(focusout)="showHelper('')"
+			(mouseenter)="hoverHelper('objective-lead')"
+			(mouseleave)="hoverHelper('')"
+			(focusin)="focusHelper('objective-lead')"
+			(focusout)="focusHelper('')"
 		>
 			<label for="objective-lead" class="label mt-3">
 				{{ 'GOALS_PAGE.FORM.LABELS.LEAD_OPTIONAL' | translate }}

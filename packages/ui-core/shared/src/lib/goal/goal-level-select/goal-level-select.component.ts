@@ -27,6 +27,13 @@ export class GoalLevelSelectComponent {
 
 	goalLevelEnum = GoalLevelEnum;
 
+	/**
+	 * The field the pointer is over and the field holding keyboard focus, tracked apart: held in one value,
+	 * ending either interaction cleared the help while the other was still on the field.
+	 */
+	private hoveredField = '';
+	private focusedField = '';
+
 	constructor(private readonly organizationTeamsService: OrganizationTeamsService, private readonly store: Store) {}
 
 	async getTeams() {
@@ -38,6 +45,27 @@ export class GoalLevelSelectComponent {
 				tenantId
 			})
 		).items;
+	}
+
+	/** Records the field the pointer moved onto, or `''` when it left one, then shows whichever help wins. */
+	hoverHelper(field: string) {
+		this.hoveredField = field;
+		this.showHelper(this.currentField());
+	}
+
+	/** Records the field that took keyboard focus, or `''` when it lost it, then shows whichever help wins. */
+	focusHelper(field: string) {
+		this.focusedField = field;
+		this.showHelper(this.currentField());
+	}
+
+	/**
+	 * The field the help should be on. The pointer wins while it is over a field, so hovering one field while
+	 * another holds focus still reads as it did; the help falls back to the focused field and only clears
+	 * once both interactions have ended.
+	 */
+	private currentField(): string {
+		return this.hoveredField || this.focusedField;
 	}
 
 	/**
