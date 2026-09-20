@@ -264,12 +264,20 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	async create(@Body() entity: CreateEmailTemplateDTO): Promise<EmailTemplate> {
 		const payload = (entity ?? {}) as CreateEmailTemplateDTO;
 		const { organizationId } = payload;
-		return await this.emailTemplateService.create({
+		const created = await this.emailTemplateService.create({
 			...stripEmailTemplateScopeFields(payload),
 			// Checked against the caller's memberships by `CreateEmailTemplateDTO`.
 			...(organizationId ? { organizationId } : {}),
 			tenantId: RequestContext.currentTenantId()
 		} as DeepPartial<EmailTemplate>);
+
+		// Answer with the row as it was STORED, read back through the tenant-scoped lookup, rather than
+		// echoing the request body back with an id attached. The client then sees the scope fields the
+		// server pinned instead of the ones it sent, and nothing that was never persisted. It also keeps
+		// the request body out of the response, which is what CodeQL's js/reflected-xss flags here (not
+		// exploitable — the response is JSON and helmet sets `X-Content-Type-Options: nosniff` — but the
+		// echo has no value worth defending).
+		return (await this.findById(created.id)) as EmailTemplate;
 	}
 
 	/**
