@@ -1,7 +1,8 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
 // The Add / Edit Key Result dialog, on the same scale as the objective and KPI
-// dialogs: a header row, 12px labels over 2rem controls, and a footer whose
+// dialogs: a header row, 12px labels over 2rem controls on a six-column grid,
+// the hover / focus help as a quiet column beside the form, and a footer whose
 // buttons sit on the trailing edge. Every custom property carries a fallback —
 // `--gauzy-*` is undefined in material-light / material-dark, where a `var()`
 // without one is dropped.
@@ -11,12 +12,21 @@ $control-padding-x: 0.75rem;
 $inset: 1rem;
 $divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
 $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
-// Below this the form goes to one column.
+// Below this the six columns leave the paired fields too narrow beside the
+// 14rem help column, so the help moves under the form.
+$stack-below: 991.98px;
+// Below this the form itself goes to one column.
 $single-column-below: 575.98px;
+// 2 x 1rem body padding + a 36rem form + the 1rem layout gap + the 14rem help.
+$side-by-side-min: 53rem;
 
 // Was a fixed 645px, one field per row, which ran the form 830px down the page.
 .key-result-dialog {
-  width: min(calc(100vw - 2rem), 44rem);
+  width: clamp($side-by-side-min, 60vw, 58rem);
+
+  @media (max-width: $stack-below) {
+    width: min(calc(100vw - 2rem), 40rem);
+  }
 }
 
 :host {
@@ -67,12 +77,25 @@ $single-column-below: 575.98px;
     padding: $inset;
   }
 
+  .key-result-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: $inset;
+
+    @media (max-width: $stack-below) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
   // Name and Description across the grid, then the type's own fields, the two
   // people, the deadlines, and the objective switch.
   .key-result-form {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 0.875rem 0.75rem;
+    flex: 1 1 auto;
+    min-width: 0;
     align-content: start;
 
     @media (max-width: $single-column-below) {
@@ -142,16 +165,37 @@ $single-column-below: 575.98px;
     }
   }
 
-  // The general help, still a line above the form at this point.
-  .helper-text {
-    margin: 0;
+  // A note beside the form, not a second column of body copy.
+  .key-result-help {
+    flex: 0 0 14rem;
+    align-self: stretch;
+    padding-inline-start: $inset;
+    border-inline-start: $divider;
     font-size: $control-font-size;
     line-height: 1.125rem;
     color: $muted;
 
+    // `inherit` against the theme's paragraph type, which would set the help at
+    // 14px inside a 12px column.
+    ::ng-deep p {
+      margin: 0;
+      font-size: inherit;
+      line-height: inherit;
+    }
+
     ::ng-deep b {
       color: var(--gauzy-text-color-1, inherit);
       font-weight: 600;
+    }
+
+    // Under the form the hairline moves to the top edge; `flex: none` so the
+    // 14rem basis does not turn into a height in the column.
+    @media (max-width: $stack-below) {
+      flex: none;
+      padding-inline-start: 0;
+      padding-top: $inset;
+      border-inline-start: 0;
+      border-top: $divider;
     }
   }
 

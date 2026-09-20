@@ -9,156 +9,195 @@
 	</nb-card-header>
 
 	<nb-card-body>
-		<form class="key-result-form" [formGroup]="keyResultsForm">
-			<p class="helper-text" [innerHTML]="'KEY_RESULT_PAGE.HELPER_TEXT.KEY_RESULT_GENERAL' | translate"></p>
-
-			<div class="field span-6">
-				<label for="key-result-title" class="label">
-					{{ 'FORM.LABELS.NAME' | translate }}
-				</label>
-				<input
-					type="text"
-					id="key-result-title"
-					nbInput
-					fullWidth
-					formControlName="name"
-					placeholder="{{ 'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.NAME' | translate }}"
-				/>
-			</div>
-
-			<div class="field span-6">
-				<label for="key-result-description" class="label">
-					{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
-				</label>
-				<textarea
-					id="key-result-description"
-					nbInput
-					fullWidth
-					formControlName="description"
-					placeholder="{{ 'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.DESCRIPTION' | translate }}"
-				></textarea>
-			</div>
-
-			<ga-keyresult-type-select
-				[parentFormGroup]="keyResultsForm"
-				[numberUnits]="numberUnitsEnum"
-				[orgId]="orgId"
-				[settings]="settings"
-				[KPIs]="KPIs"
-			></ga-keyresult-type-select>
-
-			<div class="field span-3">
-				<label for="key-result-owner" class="label">
-					{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
-				</label>
-				<ga-employee-multi-select
-					[multiple]="false"
-					[allEmployees]="employees"
-					[selectedEmployeeIds]="keyResultsForm.value.ownerId"
-					[label]="false"
-					(selectedChange)="selectEmployee($event, 'owner')"
-					id="key-result-owner"
-					placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}"
-					class="header-selector employee-selector"
-				></ga-employee-multi-select>
-			</div>
-
-			<div class="field span-3">
-				<label for="key-result-lead" class="label">
-					{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}
-				</label>
-				<ga-employee-multi-select
-					[multiple]="false"
-					[allEmployees]="employees"
-					[selectedEmployeeIds]="keyResultsForm.value.leadId"
-					[label]="false"
-					(selectedChange)="selectEmployee($event, 'lead')"
-					id="key-result-lead"
-					placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}"
-					class="header-selector employee-selector"
-				></ga-employee-multi-select>
-			</div>
-
-			<div class="field span-3">
-				<label for="key-result-deadline" class="label">
-					{{ 'KEY_RESULT_PAGE.FORM.LABELS.DEADLINE' | translate }}
-				</label>
-				<nb-select
-					(selectedChange)="deadlineValidators()"
-					id="key-result-deadline"
-					fullWidth
-					formControlName="deadline"
+		<!-- The form on a six-column grid with the help as a column beside it, as in the objective dialog: it
+		     used to run one field per row down 645px, with the general help as a paragraph on top. Hover and
+		     focus go to separate handlers, resolved together in the component, so leaving a field with the
+		     pointer does not wipe out the help the keyboard is still on. -->
+		<div class="key-result-layout">
+			<form class="key-result-form" [formGroup]="keyResultsForm">
+				<div
+					class="field span-6"
+					(mouseenter)="hoverHelper('key-result-title')"
+					(mouseleave)="hoverHelper('')"
+					(focusin)="focusHelper('key-result-title')"
+					(focusout)="focusHelper('')"
 				>
-					@for (deadline of keyResultDeadlineEnum | keyvalue; track deadline) {
-					<nb-option [value]="deadline.value">
-						{{ 'KEY_RESULT_PAGE.DEADLINE.' + deadline.key | translate }}
-					</nb-option>
-					}
-				</nb-select>
-			</div>
-
-			@if (keyResultsForm.value.deadline == keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE) {
-			<div class="field span-3">
-				<label for="soft-deadline" class="label">
-					{{ 'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE' | translate }}
-				</label>
-				<input
-					nbInput
-					id="soft-deadline"
-					fullWidth
-					placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE' | translate }}"
-					[nbDatepicker]="softDeadlinePicker"
-					formControlName="softDeadline"
-				/>
-				<nb-datepicker
-					#softDeadlinePicker
-					[min]="minDate"
-					[max]="keyResultsForm.value.hardDeadline ? keyResultsForm.value.hardDeadline : null"
-				></nb-datepicker>
-			</div>
-			} @if (keyResultsForm.value.deadline == keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE ||
-			keyResultsForm.value.deadline == keyResultDeadlineEnum.HARD_DEADLINE) {
-			<div class="field span-3">
-				<label for="hard-deadline" class="label">
-					{{ 'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE' | translate }}
-				</label>
-				<input
-					nbInput
-					id="hard-deadline"
-					fullWidth
-					placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE' | translate }}"
-					[nbDatepicker]="hardDeadlinePicker"
-					formControlName="hardDeadline"
-				/>
-				<nb-datepicker
-					#hardDeadlinePicker
-					[min]="keyResultsForm.value.softDeadline ? keyResultsForm.value.softDeadline : minDate"
-				></nb-datepicker>
-			</div>
-			}
-
-			<div class="field span-6">
-				<div class="d-flex flex-row align-items-center">
-					<nb-toggle id="updated-value" formControlName="assignAsObjective" status="primary"></nb-toggle>
-					<span class="ml-3">{{ 'KEY_RESULT_PAGE.FORM.LABELS.ASSIGN_AS_OBJECTIVE' | translate }}</span>
+					<label for="key-result-title" class="label">
+						{{ 'FORM.LABELS.NAME' | translate }}
+					</label>
+					<input
+						type="text"
+						id="key-result-title"
+						nbInput
+						fullWidth
+						formControlName="name"
+						placeholder="{{ 'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.NAME' | translate }}"
+					/>
 				</div>
-			</div>
 
-			<ga-goal-level-select
-				[parentFormGroup]="keyResultsForm"
-				[orgId]="orgId"
-				[teams]="teams"
-				[hideOrg]="hideOrg"
-				[hideEmployee]="hideEmployee"
-				[hideTeam]="hideTeam"
-				[helperText]="helperText"
-				[employees]="employees"
-				[orgName]="orgName"
-				[alignedGoal]="true"
-				[enableHelperText]="true"
-			>
-			</ga-goal-level-select>
-		</form>
+				<div class="field span-6">
+					<label for="key-result-description" class="label">
+						{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
+					</label>
+					<textarea
+						id="key-result-description"
+						nbInput
+						fullWidth
+						formControlName="description"
+						placeholder="{{ 'KEY_RESULT_PAGE.FORM.PLACEHOLDERS.DESCRIPTION' | translate }}"
+					></textarea>
+				</div>
+
+				<!-- Type, and whatever that type needs: its fields are items of this grid. -->
+				<ga-keyresult-type-select
+					[parentFormGroup]="keyResultsForm"
+					[numberUnits]="numberUnitsEnum"
+					[orgId]="orgId"
+					[settings]="settings"
+					[KPIs]="KPIs"
+				></ga-keyresult-type-select>
+
+				<div
+					class="field span-3"
+					(mouseenter)="hoverHelper('key-result-owner')"
+					(mouseleave)="hoverHelper('')"
+					(focusin)="focusHelper('key-result-owner')"
+					(focusout)="focusHelper('')"
+				>
+					<label for="key-result-owner" class="label">
+						{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
+					</label>
+					<ga-employee-multi-select
+						[multiple]="false"
+						[allEmployees]="employees"
+						[selectedEmployeeIds]="keyResultsForm.value.ownerId"
+						[label]="false"
+						(selectedChange)="selectEmployee($event, 'owner')"
+						id="key-result-owner"
+						placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}"
+						class="header-selector employee-selector"
+					></ga-employee-multi-select>
+				</div>
+
+				<div
+					class="field span-3"
+					(mouseenter)="hoverHelper('key-result-lead')"
+					(mouseleave)="hoverHelper('')"
+					(focusin)="focusHelper('key-result-lead')"
+					(focusout)="focusHelper('')"
+				>
+					<label for="key-result-lead" class="label">
+						{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}
+					</label>
+					<ga-employee-multi-select
+						[multiple]="false"
+						[allEmployees]="employees"
+						[selectedEmployeeIds]="keyResultsForm.value.leadId"
+						[label]="false"
+						(selectedChange)="selectEmployee($event, 'lead')"
+						id="key-result-lead"
+						placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}"
+						class="header-selector employee-selector"
+					></ga-employee-multi-select>
+				</div>
+
+				<div class="field span-3">
+					<label for="key-result-deadline" class="label">
+						{{ 'KEY_RESULT_PAGE.FORM.LABELS.DEADLINE' | translate }}
+					</label>
+					<nb-select
+						(selectedChange)="deadlineValidators()"
+						id="key-result-deadline"
+						fullWidth
+						formControlName="deadline"
+					>
+						@for (deadline of keyResultDeadlineEnum | keyvalue; track deadline) {
+						<nb-option [value]="deadline.value">
+							{{ 'KEY_RESULT_PAGE.DEADLINE.' + deadline.key | translate }}
+						</nb-option>
+						}
+					</nb-select>
+				</div>
+
+				@if (keyResultsForm.value.deadline == keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE) {
+				<div class="field span-3">
+					<label for="soft-deadline" class="label">
+						{{ 'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE' | translate }}
+					</label>
+					<input
+						nbInput
+						id="soft-deadline"
+						fullWidth
+						placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE' | translate }}"
+						[nbDatepicker]="softDeadlinePicker"
+						formControlName="softDeadline"
+					/>
+					<nb-datepicker
+						#softDeadlinePicker
+						[min]="minDate"
+						[max]="keyResultsForm.value.hardDeadline ? keyResultsForm.value.hardDeadline : null"
+					></nb-datepicker>
+				</div>
+				} @if (keyResultsForm.value.deadline == keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE ||
+				keyResultsForm.value.deadline == keyResultDeadlineEnum.HARD_DEADLINE) {
+				<div class="field span-3">
+					<label for="hard-deadline" class="label">
+						{{ 'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE' | translate }}
+					</label>
+					<input
+						nbInput
+						id="hard-deadline"
+						fullWidth
+						placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE' | translate }}"
+						[nbDatepicker]="hardDeadlinePicker"
+						formControlName="hardDeadline"
+					/>
+					<nb-datepicker
+						#hardDeadlinePicker
+						[min]="keyResultsForm.value.softDeadline ? keyResultsForm.value.softDeadline : minDate"
+					></nb-datepicker>
+				</div>
+				}
+
+				<div class="field span-6">
+					<div class="d-flex flex-row align-items-center">
+						<nb-toggle id="updated-value" formControlName="assignAsObjective" status="primary"></nb-toggle>
+						<span class="ml-3">{{ 'KEY_RESULT_PAGE.FORM.LABELS.ASSIGN_AS_OBJECTIVE' | translate }}</span>
+					</div>
+				</div>
+
+				<ga-goal-level-select
+					[parentFormGroup]="keyResultsForm"
+					[orgId]="orgId"
+					[teams]="teams"
+					[hideOrg]="hideOrg"
+					[hideEmployee]="hideEmployee"
+					[hideTeam]="hideTeam"
+					[employees]="employees"
+					[orgName]="orgName"
+					[alignedGoal]="true"
+					[enableHelperText]="false"
+					(helperTextChange)="levelHelper($event)"
+				>
+				</ga-goal-level-select>
+			</form>
+
+			<!-- Follows the pointer or the keyboard focus from field to field, and falls back to what a Key
+			     Result is. A polite live region, so a screen reader reads the new help as focus moves. -->
+			<aside class="key-result-help" aria-live="polite" aria-atomic="true">
+				@switch (helperText) { @case ('key-result-owner') {
+				<p>{{ 'KEY_RESULT_PAGE.HELPER_TEXT.KEY_RESULT_OWNER' | translate }}</p>
+				} @case ('key-result-lead') {
+				<p>{{ 'KEY_RESULT_PAGE.HELPER_TEXT.KEY_RESULT_LEAD' | translate }}</p>
+				} @case ('objective-level') {
+				<p>{{ 'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_LEVEL' | translate }}</p>
+				} @case ('objective-owner') {
+				<p>{{ 'GOALS_PAGE.HELPER_TEXT.OBJECTIVE_OWNER' | translate }}</p>
+				} @default {
+				<p [innerHTML]="'KEY_RESULT_PAGE.HELPER_TEXT.KEY_RESULT_GENERAL' | translate"></p>
+				} }
+			</aside>
+		</div>
 	</nb-card-body>
 
 	<nb-card-footer class="footer">
