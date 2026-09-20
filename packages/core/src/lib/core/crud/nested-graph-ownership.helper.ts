@@ -5,31 +5,11 @@ import { RelationMetadata } from 'typeorm/metadata/RelationMetadata';
 import { ID } from '@gauzy/contracts';
 
 /**
- * How many levels of nested objects below the root are followed. Real payloads nest two or three
- * levels deep (invoice → items, integration setting → tied entities); anything deeper is still
- * checked up to this depth and not persisted any differently by the check.
+ * How many levels of nested objects below the root are walked. Real payloads nest two or three
+ * levels deep (invoice → items, integration setting → tied entities); a payload that would still
+ * persist rows below this depth is refused (400), because nothing down there can be checked.
  */
 export const GRAPH_CHECK_MAX_DEPTH = 5;
-
-/**
- * Columns of an EXISTING user that a cascade from another entity must never write. `Candidate.user`
- * cascades, so a nested `user: { id, hash }` rewrote any account's password — even a super admin's
- * of the same tenant, which a tenant check alone cannot stop (GHSA-jh6m-9fxr-rx3c). A new user
- * inserted through a cascade (candidate sign-up) keeps them.
- */
-export const CASCADE_PROTECTED_USER_FIELDS: readonly string[] = Object.freeze([
-	'hash',
-	'refreshToken',
-	'code',
-	'codeExpireAt',
-	'emailToken',
-	'emailVerifiedAt',
-	'email',
-	'username',
-	'thirdPartyId',
-	'role',
-	'roleId'
-]);
 
 interface IGraphNode {
 	metadata: EntityMetadata;
@@ -102,9 +82,10 @@ const isTenantScoped = (metadata: EntityMetadata): boolean =>
  *     global row is linked but never written;
  *   - may not be re-parented (one-to-many / inverse one-to-one) unless it already belongs to this
  *     parent — adopting it would be a write into a row no tenant owns.
- * - Objects persisted through a cascade are recursed into (bounded depth, visited set), stamped with
- *   the caller's tenant (a nested `tenantId` would otherwise place — or move — the row into another
- *   tenant), and, for an existing User, stripped of {@link CASCADE_PROTECTED_USER_FIELDS}.
+ * - Objects persisted through a cascade are recursed into (visited set, and a payload that would
+ *   persist below {@link GRAPH_CHECK_MAX_DEPTH} is refused rather than left unchecked) and stamped
+ *   with the caller's tenant (a nested `tenantId` would otherwise place — or move — the row into
+ *   another tenant). An EXISTING `User` is reduced to `{ id }`: it is linked, never written.
  *
  * Nested objects are only replaced (with a copy) when fields have to be removed; tenant stamping is
  * done in place so the caller still sees ids TypeORM generates on save.
@@ -144,51 +125,109 @@ export async function assertGraphNotForeign(
 
 			for (const ref of refs) {
 				const row = ref.id !== undefined ? rows.get(rowKey(ref.id)) : undefined;
+				const persisted = resolveReference(ref, row, scoped, tenantId);
+				const depth = ref.node.depth + 1;
 
-				if (row) {
-					const rowTenantId = row.tenantId ?? null;
-					if (rowTenantId !== null && rowKey(rowTenantId) !== rowKey(tenantId)) {
-						throw new ForbiddenException('A related record belongs to another tenant');
-					}
-					if (rowTenantId === null) {
-						if (reparentsTarget(relation)) {
-							const parentId = ref.node.entity?.id;
-							if (!parentId || row.parentId == null || rowKey(row.parentId) !== rowKey(parentId)) {
-								throw new ForbiddenException('A related record is not owned by this tenant');
-							}
-						} else if (cascadesInto(relation) && isObject(ref.value) && hasFieldsBeyondId(ref.value)) {
-							// Keep the link to the global row, but never write into it.
-							replaceValue(ref, { id: ref.id });
-							continue;
-						}
-					}
-				}
-
-				if (!cascadesInto(relation) || !isObject(ref.value)) {
+				if (!persisted || visited.has(persisted)) {
 					continue;
 				}
 
-				let persisted = ref.value;
-				if (row && target.name === 'User') {
-					persisted = withoutFields(persisted, CASCADE_PROTECTED_USER_FIELDS);
-					if (persisted !== ref.value) {
-						replaceValue(ref, persisted);
+				if (depth >= GRAPH_CHECK_MAX_DEPTH) {
+					// Nothing below this level is walked, so nothing may be persisted below it either:
+					// save() would cascade (or re-parent) those rows with no ownership check at all.
+					if (hasRelationPayload(target, persisted)) {
+						throw new BadRequestException(
+							`Nested payload in "${ref.relation.propertyPath}" is deeper than ${GRAPH_CHECK_MAX_DEPTH} levels`
+						);
 					}
+					continue;
 				}
 
-				if (scoped && (!row || row.tenantId != null || 'tenantId' in persisted || 'tenant' in persisted)) {
-					stampTenant(persisted, tenantId);
-				}
-
-				if (ref.node.depth + 1 < GRAPH_CHECK_MAX_DEPTH && !visited.has(persisted)) {
-					visited.add(persisted);
-					next.push({ metadata: target, entity: persisted, depth: ref.node.depth + 1 });
-				}
+				visited.add(persisted);
+				next.push({ metadata: target, entity: persisted, depth });
 			}
 		}
 
 		level = next;
 	}
+}
+
+/**
+ * Applies the ownership rules to ONE reference and returns the object the walk should descend into
+ * — `undefined` when the reference is only a link (nothing of it is persisted) or had to be reduced
+ * to one. Throws when the reference may not be persisted at all.
+ *
+ * @param ref - The nested object / id and the relation that carries it.
+ * @param row - The stored row it names, when it names one.
+ * @param scoped - Whether the target entity is tenant scoped (see {@link isTenantScoped}).
+ * @param tenantId - The caller's tenant.
+ */
+function resolveReference(
+	ref: IGraphRef,
+	row: IStoredRow | undefined,
+	scoped: boolean,
+	tenantId: ID
+): Record<string, any> | undefined {
+	const { relation } = ref;
+
+	if (row) {
+		const rowTenantId = row.tenantId ?? null;
+
+		if (rowTenantId !== null && rowKey(rowTenantId) !== rowKey(tenantId)) {
+			throw new ForbiddenException('A related record belongs to another tenant');
+		}
+
+		if (rowTenantId === null && !isGlobalRowWritable(ref, row)) {
+			// Keep the link to the global row, but never write into it.
+			replaceValue(ref, { id: ref.id });
+			return undefined;
+		}
+	}
+
+	if (!cascadesInto(relation) || !isObject(ref.value)) {
+		return undefined;
+	}
+
+	// An EXISTING user is LINKED through another entity's cascade, never written into. Removing only
+	// the credential columns still left `user: { id, firstName }` renaming any account of the tenant —
+	// a tenant check alone cannot stop that, since the victim is a legitimate member of the caller's
+	// tenant (GHSA-jh6m-9fxr-rx3c). A NEW user inserted through a cascade (candidate sign-up) is not
+	// reduced and keeps every field.
+	if (row && relation.inverseEntityMetadata.name === 'User') {
+		if (hasFieldsBeyondId(ref.value)) {
+			replaceValue(ref, { id: ref.id });
+		}
+		return undefined;
+	}
+
+	const persisted = ref.value;
+
+	if (scoped && (!row || row.tenantId != null || 'tenantId' in persisted || 'tenant' in persisted)) {
+		stampTenant(persisted, tenantId);
+	}
+
+	return persisted;
+}
+
+/**
+ * Rules for a stored row that belongs to NO tenant (global languages, system issue types and
+ * priorities, global tags): it may be linked, but re-parenting it is a write into a row no tenant
+ * owns — refused unless it already hangs off this very parent.
+ *
+ * @returns false when a cascading payload has to be reduced to a plain link.
+ */
+function isGlobalRowWritable(ref: IGraphRef, row: IStoredRow): boolean {
+	const { relation } = ref;
+
+	if (reparentsTarget(relation)) {
+		const parentId = ref.node.entity?.id;
+		if (!parentId || row.parentId == null || rowKey(row.parentId) !== rowKey(parentId)) {
+			throw new ForbiddenException('A related record is not owned by this tenant');
+		}
+		return true;
+	}
+
+	return !(cascadesInto(relation) && isObject(ref.value) && hasFieldsBeyondId(ref.value));
 }
 
 /**
@@ -260,8 +299,9 @@ async function loadStoredRows(
 		for (const row of raw) {
 			rows.set(rowKey(row.id), { tenantId: row.tenantId ?? null, parentId: row.parentId ?? null });
 		}
-	} catch (error) {
-		// An id the database cannot even parse (e.g. not a UUID) cannot be proven harmless.
+	} catch {
+		// An id the database cannot even parse (e.g. not a UUID) cannot be proven harmless. The driver
+		// error itself is deliberately not surfaced: it would echo the query back to the caller.
 		throw new BadRequestException(`Invalid reference in "${relation.propertyPath}"`);
 	}
 
@@ -272,16 +312,16 @@ function hasFieldsBeyondId(value: Record<string, any>): boolean {
 	return Object.keys(value).some((key) => key !== 'id' && value[key] !== undefined);
 }
 
-/** Returns a copy without the given fields, or the object itself when it carries none of them. */
-function withoutFields(value: Record<string, any>, fields: readonly string[]): Record<string, any> {
-	if (!fields.some((field) => field in value)) {
-		return value;
-	}
-	const copy = { ...value };
-	for (const field of fields) {
-		delete copy[field];
-	}
-	return copy;
+/**
+ * Whether the object carries request data for any relation of its entity — i.e. whether persisting
+ * it would reach further rows. A loaded MikroORM Collection is not request data (see
+ * {@link collectReferences}).
+ */
+function hasRelationPayload(metadata: EntityMetadata, entity: Record<string, any>): boolean {
+	return metadata.relations.some((relation) => {
+		const raw = entity[relation.propertyName];
+		return raw !== undefined && raw !== null && typeof raw.getItems !== 'function';
+	});
 }
 
 function stampTenant(value: Record<string, any>, tenantId: ID): void {

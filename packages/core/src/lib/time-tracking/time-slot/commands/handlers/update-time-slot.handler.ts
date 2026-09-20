@@ -46,14 +46,9 @@ export class UpdateTimeSlotHandler implements ICommandHandler<UpdateTimeSlotComm
 		// A body employeeId only narrows the lookup, and only for callers who may act for any employee
 		// of the tenant. Everyone else is pinned to their own employee; without one there is no slot
 		// they may edit (an absent filter would match every employee's slot).
-		let employeeId: ID;
-		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			employeeId = input.employeeId;
-		} else {
-			employeeId = RequestContext.currentUser()?.employeeId;
-			if (!employeeId) {
-				return null;
-			}
+		const employeeId = this.resolveEmployeeScope(input.employeeId);
+		if (employeeId === null) {
+			return null;
 		}
 
 		const where = {
@@ -62,57 +57,94 @@ export class UpdateTimeSlotHandler implements ICommandHandler<UpdateTimeSlotComm
 			id
 		};
 
-		let timeSlot = await this.typeOrmTimeSlotRepository.findOne({ where });
+		const timeSlot = await this.typeOrmTimeSlotRepository.findOne({ where });
 
-		if (timeSlot) {
-			const changes: Partial<ITimeSlot> = {};
-			for (const field of UPDATABLE_TIME_SLOT_FIELDS) {
-				if (input[field] !== undefined) {
-					changes[field] = input[field];
-				}
-			}
-
-			if (changes.startedAt) {
-				changes.startedAt = moment(changes.startedAt)
-					//.set('minute', 0)
-					.set('millisecond', 0)
-					.toDate();
-			}
-
-			if (Array.isArray(input.activities) && input.activities.length) {
-				// Activities are saved on their own and attached to THIS slot. Their ids, relation objects
-				// and scope columns come from the slot, never from the body.
-				const activities = await scopeActivitiesForWrite(
-					input.activities.map((activity) => ({ ...activity })),
-					this.typeOrmActivityRepository,
-					{ tenantId, employeeId: timeSlot.employeeId }
-				);
-				const newActivities = activities.map((activity) => {
-					const entity = new Activity(activity);
-					entity.employeeId = timeSlot.employeeId;
-					entity.organizationId = timeSlot.organizationId;
-					entity.tenantId = tenantId;
-					entity.timeSlotId = timeSlot.id;
-					return entity;
-				});
-				await this.typeOrmActivityRepository.save(newActivities);
-			}
-
-			if (Object.keys(changes).length) {
-				await this.typeOrmTimeSlotRepository.update({ id: timeSlot.id, tenantId }, changes);
-			}
-
-			timeSlot = await this.typeOrmTimeSlotRepository.findOne({
-				where,
-				relations: {
-					timeLogs: true,
-					screenshots: true,
-					activities: true
-				}
-			});
-			return timeSlot;
-		} else {
+		if (!timeSlot) {
 			return null;
 		}
+
+		if (Array.isArray(input.activities) && input.activities.length) {
+			await this.saveActivities(input.activities, timeSlot, tenantId);
+		}
+
+		const changes = this.collectChanges(input);
+
+		if (Object.keys(changes).length) {
+			await this.typeOrmTimeSlotRepository.update({ id: timeSlot.id, tenantId }, changes);
+		}
+
+		return await this.typeOrmTimeSlotRepository.findOne({
+			where,
+			relations: {
+				timeLogs: true,
+				screenshots: true,
+				activities: true
+			}
+		});
+	}
+
+	/**
+	 * The employee the lookup is narrowed to: the body's for a caller who may act for any employee of
+	 * the tenant, the caller's own otherwise. `null` means the request may not edit any slot at all.
+	 *
+	 * @param requestedEmployeeId - The employeeId carried by the request body.
+	 */
+	private resolveEmployeeScope(requestedEmployeeId: ID | undefined): ID | undefined | null {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return requestedEmployeeId;
+		}
+		return RequestContext.currentUser()?.employeeId || null;
+	}
+
+	/**
+	 * The changes the body is allowed to make, taken from {@link UPDATABLE_TIME_SLOT_FIELDS} only, so
+	 * tenantId / organizationId / employeeId and the relation arrays can never be mass-assigned.
+	 *
+	 * @param input - The request body.
+	 */
+	private collectChanges(input: Partial<ITimeSlot>): Partial<ITimeSlot> {
+		const changes: Partial<ITimeSlot> = {};
+
+		for (const field of UPDATABLE_TIME_SLOT_FIELDS) {
+			if (input[field] !== undefined) {
+				changes[field] = input[field];
+			}
+		}
+
+		if (changes.startedAt) {
+			changes.startedAt = moment(changes.startedAt)
+				//.set('minute', 0)
+				.set('millisecond', 0)
+				.toDate();
+		}
+
+		return changes;
+	}
+
+	/**
+	 * Saves the body's activities on their own and attaches them to THIS slot: their ids, relation
+	 * objects and scope columns come from the slot, never from the body.
+	 *
+	 * @param activities - The activities carried by the request body.
+	 * @param timeSlot - The slot they are attached to.
+	 * @param tenantId - The caller's tenant.
+	 */
+	private async saveActivities(activities: ITimeSlot['activities'], timeSlot: TimeSlot, tenantId: ID): Promise<void> {
+		const scoped = await scopeActivitiesForWrite(
+			activities.map((activity) => ({ ...activity })),
+			this.typeOrmActivityRepository,
+			{ tenantId, employeeId: timeSlot.employeeId }
+		);
+
+		const entities = scoped.map((activity) => {
+			const entity = new Activity(activity);
+			entity.employeeId = timeSlot.employeeId;
+			entity.organizationId = timeSlot.organizationId;
+			entity.tenantId = tenantId;
+			entity.timeSlotId = timeSlot.id;
+			return entity;
+		});
+
+		await this.typeOrmActivityRepository.save(entities);
 	}
 }

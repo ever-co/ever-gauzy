@@ -76,6 +76,15 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			employeeIds = [user.employeeId];
 		}
 
+		// Fail closed for a caller who may not act for other employees and has no employee record of
+		// their own: the employee predicate below is only applied when `employeeIds` is non-empty, so
+		// such a caller would read the whole organization's slots — or the body-supplied employees'
+		// (GHSA-6qvm-3wg4-26w4). The CRUD reads already match nothing in that state
+		// (findConditionsWithoutOwnEmployee); this hand-built query carries the same rule.
+		if (!hasChangeSelectedEmployeePermission && !user?.employeeId) {
+			return [];
+		}
+
 		// Calculate start and end dates using a utility function
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('day')),

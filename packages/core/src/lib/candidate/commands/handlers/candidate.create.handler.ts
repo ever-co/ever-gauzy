@@ -48,12 +48,18 @@ export class CandidateCreateHandler implements ICommandHandler<CandidateCreateCo
 				})
 			);
 
-			// 2. Create candidate for specific user
+			// 2. Create candidate for specific user.
+			//
+			// `Candidate.user` cascades, and the nested-graph check reduces an EXISTING user to `{ id }`
+			// so a cascade can never write into an account (GHSA-jh6m-9fxr-rx3c). The user was just
+			// created here, so the link is all this needs — but the response must still carry the user
+			// the caller asked for (the UI reads `candidate.user.firstName`), hence the re-attach below.
 			const candidate = await this._candidateService.create({
 				...input,
 				status: CandidateStatusEnum.APPLIED,
 				user
 			});
+			candidate.user = user;
 
 			// 3. Assign organization to the candidate user
 			if (candidate.organizationId) {

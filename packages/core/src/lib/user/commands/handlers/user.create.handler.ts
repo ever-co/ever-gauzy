@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IUser } from '@gauzy/contracts';
+import { ID, IUser, IUserCreateInput } from '@gauzy/contracts';
 import { UserCreateCommand } from '../user.create.command';
 import { UserService } from '../../user.service';
 
@@ -14,7 +14,17 @@ export class UserCreateHandler implements ICommandHandler<UserCreateCommand> {
 	 * @returns A Promise resolving to the created IUser object.
 	 */
 	public async execute(command: UserCreateCommand): Promise<IUser> {
-		const { input } = command;
+		const { id, ...input } = (command.input ?? {}) as IUserCreateInput & { id?: ID };
+
+		// A create never adopts an existing row. `CrudService.create()` upserts when the payload carries
+		// a primary key, so a body id turned "create a user" into "overwrite that user": POST /candidate
+		// and POST /employee hash the body `password` into the payload, so `user: { id: <an admin of my
+		// tenant> }` reset that account's password and demoted its role — a takeover the tenant check
+		// cannot see, since the victim is a member of the caller's own tenant (GHSA-jh6m-9fxr-rx3c).
+		// Every caller of this command means to INSERT a user, so the id is dropped rather than refused.
+		if (id) {
+			console.log('UserCreateHandler: ignoring the body-supplied user id on a create');
+		}
 
 		// Creating a SUPER_ADMIN is reserved to callers who may edit super admins — the same boundary
 		// the register handler and invite creation enforce. Both the flat `roleId` and the `role`

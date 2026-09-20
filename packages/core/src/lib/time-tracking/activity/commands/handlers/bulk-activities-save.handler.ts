@@ -63,11 +63,13 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 		);
 
 		// Body-supplied activity ids / time slot ids are kept only when they are the employee's own:
-		// save() upserts by primary key alone and would otherwise overwrite any tenant's activity.
+		// save() upserts by primary key alone and would otherwise overwrite any tenant's activity. The
+		// request-level `projectId` is applied BEFORE the check, so it is tenant-scoped like the
+		// per-activity ones rather than overriding them unchecked.
 		const validActivities = await scopeActivitiesForWrite(
 			activities
 				.filter((activity: IActivity) => Object.keys(activity).length !== 0)
-				.map((activity: IActivity) => ({ ...activity })),
+				.map((activity: IActivity) => ({ ...activity, ...(projectId ? { projectId } : {}) })),
 			this.typeOrmActivityRepository,
 			{ tenantId, employeeId }
 		);
@@ -79,7 +81,6 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 					// runs for every Activity write path (bulk save, single create, imports).
 					new Activity({
 						...activity,
-						...(projectId ? { projectId } : {}),
 						employeeId,
 						organizationId,
 						tenantId

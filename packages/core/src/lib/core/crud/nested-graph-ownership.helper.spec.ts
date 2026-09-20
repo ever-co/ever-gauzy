@@ -7,7 +7,7 @@ import { RequestContext } from '../context';
 import { MultiORMEnum } from '../utils';
 import { CrudService } from './crud.service';
 import { TenantAwareCrudService } from './tenant-aware-crud.service';
-import { assertGraphNotForeign, CASCADE_PROTECTED_USER_FIELDS } from './nested-graph-ownership.helper';
+import { assertGraphNotForeign, GRAPH_CHECK_MAX_DEPTH } from './nested-graph-ownership.helper';
 import { TimeLogService } from '../../time-tracking/time-log/time-log.service';
 import { TimeSlotService } from '../../time-tracking/time-slot/time-slot.service';
 
@@ -92,6 +92,21 @@ const KindSchema = new EntitySchema<any>({
 	columns: { ...tenantColumns, name: { type: 'varchar', nullable: true } }
 });
 
+/** Self-referencing cascade, to nest a payload deeper than the walk follows. */
+const NodeSchema = new EntitySchema<any>({
+	name: 'Node',
+	tableName: 'node',
+	columns: {
+		...tenantColumns,
+		name: { type: 'varchar', nullable: true },
+		parentId: { type: 'varchar', nullable: true }
+	},
+	relations: {
+		children: { type: 'one-to-many', target: 'Node', inverseSide: 'parent', cascade: true },
+		parent: { type: 'many-to-one', target: 'Node', inverseSide: 'children', joinColumn: { name: 'parentId' } }
+	}
+});
+
 const UserSchema = new EntitySchema<any>({
 	name: 'User',
 	tableName: 'user',
@@ -112,6 +127,7 @@ describe('assertGraphNotForeign (GHSA-jh6m-9fxr-rx3c)', () => {
 	let tags: Repository<any>;
 	let kinds: Repository<any>;
 	let users: Repository<any>;
+	let nodes: Repository<any>;
 
 	/** The check, exactly as TenantAwareCrudService runs it, for tenant A. */
 	const check = (payload: any, tenantId: string | null = TENANT_A) =>
@@ -121,7 +137,16 @@ describe('assertGraphNotForeign (GHSA-jh6m-9fxr-rx3c)', () => {
 		dataSource = new DataSource({
 			type: 'better-sqlite3',
 			database: ':memory:',
-			entities: [ParentSchema, ChildSchema, GrandChildSchema, PlainChildSchema, TagSchema, KindSchema, UserSchema],
+			entities: [
+				ParentSchema,
+				ChildSchema,
+				GrandChildSchema,
+				PlainChildSchema,
+				TagSchema,
+				KindSchema,
+				UserSchema,
+				NodeSchema
+			],
 			synchronize: true,
 			logging: false
 		});
@@ -133,6 +158,7 @@ describe('assertGraphNotForeign (GHSA-jh6m-9fxr-rx3c)', () => {
 		tags = dataSource.getRepository('Tag');
 		kinds = dataSource.getRepository('Kind');
 		users = dataSource.getRepository('User');
+		nodes = dataSource.getRepository('Node');
 	});
 
 	afterEach(async () => {
@@ -315,9 +341,23 @@ describe('assertGraphNotForeign (GHSA-jh6m-9fxr-rx3c)', () => {
 			expect(await users.findOneBy({ id: admin.id })).toMatchObject({ hash: 'attacker-hash', email: 'x@evil' });
 		});
 
-		it("never writes an existing user's credentials, even inside the tenant", async () => {
+		it('CONTROL: a plain save also renames another user of the same tenant', async () => {
 			const { ownParent } = await seed();
-			const admin = await users.save({ tenantId: TENANT_A, email: 'admin@a', hash: 'admin-hash' });
+			const admin = await users.save({ tenantId: TENANT_A, email: 'admin@a', firstName: 'Admin' });
+
+			await parents.save({ id: ownParent.id, user: { id: admin.id, firstName: 'Renamed' } });
+
+			expect(await users.findOneBy({ id: admin.id })).toMatchObject({ firstName: 'Renamed' });
+		});
+
+		it('links an existing user but never writes into it, not even a profile field', async () => {
+			const { ownParent } = await seed();
+			const admin = await users.save({
+				tenantId: TENANT_A,
+				email: 'admin@a',
+				hash: 'admin-hash',
+				firstName: 'Admin'
+			});
 			const original = { id: admin.id, hash: 'attacker-hash', email: 'x@evil', firstName: 'Renamed' };
 			const payload: any = { id: ownParent.id, user: original };
 
@@ -327,11 +367,13 @@ describe('assertGraphNotForeign (GHSA-jh6m-9fxr-rx3c)', () => {
 			expect(await users.findOneBy({ id: admin.id })).toMatchObject({
 				hash: 'admin-hash',
 				email: 'admin@a',
-				firstName: 'Renamed'
+				firstName: 'Admin'
 			});
-			// The caller's object is not mutated; the payload got a copy.
+			// The link itself still lands, and the caller's own object is not mutated.
+			expect((await parents.findOne({ where: { id: ownParent.id }, relations: { user: true } })).user).toMatchObject(
+				{ id: admin.id }
+			);
 			expect(original.hash).toBe('attacker-hash');
-			expect(CASCADE_PROTECTED_USER_FIELDS).toEqual(expect.arrayContaining(['hash', 'email', 'role', 'roleId']));
 		});
 
 		it("refuses another tenant's user", async () => {
@@ -354,6 +396,38 @@ describe('assertGraphNotForeign (GHSA-jh6m-9fxr-rx3c)', () => {
 				email: 'new@a',
 				tenantId: TENANT_A
 			});
+		});
+	});
+
+	describe('payloads deeper than the walk follows', () => {
+		/** A chain of `levels` nested cascading children below the root, each a distinct object. */
+		const chain = (levels: number, deepest: Record<string, any> = { name: 'leaf' }): any => {
+			let payload: any = deepest;
+			for (let level = 0; level < levels; level++) {
+				payload = { children: [payload] };
+			}
+			return { tenantId: TENANT_A, ...payload };
+		};
+
+		const checkNode = (payload: any) =>
+			assertGraphNotForeign(dataSource.manager, nodes.metadata, [payload], TENANT_A);
+
+		it('still checks the row sitting AT the limit', async () => {
+			const foreign = await nodes.save({ tenantId: TENANT_B, name: 'theirs' });
+
+			await expect(checkNode(chain(GRAPH_CHECK_MAX_DEPTH, { id: foreign.id, name: 'mine' }))).rejects.toThrow(
+				ForbiddenException
+			);
+		});
+
+		it('accepts a payload that stops at the limit', async () => {
+			await expect(checkNode(chain(GRAPH_CHECK_MAX_DEPTH))).resolves.toBeUndefined();
+		});
+
+		it('refuses a payload that would still persist rows below the limit', async () => {
+			// The row below the limit would be cascaded (or re-parented) with no ownership check at all,
+			// so the payload is refused rather than waved through.
+			await expect(checkNode(chain(GRAPH_CHECK_MAX_DEPTH + 1))).rejects.toThrow(BadRequestException);
 		});
 	});
 

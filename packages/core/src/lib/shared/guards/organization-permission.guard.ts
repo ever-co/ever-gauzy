@@ -174,6 +174,15 @@ export class OrganizationPermissionGuard implements CanActivate {
 	 * @returns true when the route has no policy target, or its record belongs to the caller's tenant.
 	 */
 	private async superAdminTargetIsInTenant(context: ExecutionContext): Promise<boolean> {
+		// The tenant is resolved BEFORE the no-target shortcut: an exemption granted without one would
+		// hand the route to a caller whose tenant scoping cannot be evaluated anywhere downstream.
+		const tenantId = RequestContext.currentTenantId();
+
+		if (isEmpty(tenantId)) {
+			console.log('OrganizationPermissionGuard: no tenant on the request, access denied');
+			return false;
+		}
+
 		const target = this._reflector.get<IOrganizationPolicyTarget | undefined>(
 			ORGANIZATION_POLICY_TARGET_METADATA,
 			context.getHandler()
@@ -181,13 +190,6 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 		if (!target) {
 			return true;
-		}
-
-		const tenantId = RequestContext.currentTenantId();
-
-		if (isEmpty(tenantId)) {
-			console.log('OrganizationPermissionGuard: no tenant on the request, access denied');
-			return false;
 		}
 
 		if (!(await this.findTargetOrganizationId(context, tenantId, target))) {

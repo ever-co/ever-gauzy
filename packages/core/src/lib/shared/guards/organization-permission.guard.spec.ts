@@ -580,6 +580,26 @@ describe('OrganizationPermissionGuard', () => {
 			}
 		});
 
+		it('denies a tenant-less SUPER_ADMIN even on a route with no policy target', async () => {
+			// The exemption is granted before any tenant-scoped lookup, so it must not be granted to a
+			// request whose tenant cannot be resolved at all (nothing downstream can scope such a call).
+			const previous = (env as any).allowSuperAdminRole;
+			const { guard, createQueryBuilder } = createGuard();
+			asCaller({ role: RolesEnum.SUPER_ADMIN, employeeId: null, isSuperAdmin: true, tenantId: null });
+			(env as any).allowSuperAdminRole = true;
+
+			try {
+				const context = createContext([PermissionsEnum.ALLOW_MANUAL_TIME], {
+					body: { organizationId: 'org-allow' }
+				});
+
+				await expect(guard.canActivate(context)).resolves.toBe(false);
+				expect(createQueryBuilder).not.toHaveBeenCalled();
+			} finally {
+				(env as any).allowSuperAdminRole = previous;
+			}
+		});
+
 		// GHSA-6qvm-3wg4-26w4: every tenant owner is a SUPER_ADMIN. The early return used to skip the
 		// tenant-scoped target lookup, which is the only ownership check on PUT /timesheet/time-slot/:id.
 		// CONTROL: with the pre-fix `return true` restored, the foreign-record arm resolves to `true`.

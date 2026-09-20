@@ -20,6 +20,26 @@ const TimeSlotSchema = new EntitySchema<any>({
 	}
 });
 
+const ProjectSchema = new EntitySchema<any>({
+	name: 'OrganizationProject',
+	tableName: 'organization_project',
+	columns: {
+		id: { primary: true, type: 'varchar', generated: 'uuid' },
+		tenantId: { type: 'varchar', nullable: true },
+		name: { type: 'varchar', nullable: true }
+	}
+});
+
+const TaskSchema = new EntitySchema<any>({
+	name: 'Task',
+	tableName: 'task',
+	columns: {
+		id: { primary: true, type: 'varchar', generated: 'uuid' },
+		tenantId: { type: 'varchar', nullable: true },
+		title: { type: 'varchar', nullable: true }
+	}
+});
+
 const ActivitySchema = new EntitySchema<any>({
 	name: 'Activity',
 	tableName: 'activity',
@@ -29,10 +49,14 @@ const ActivitySchema = new EntitySchema<any>({
 		employeeId: { type: 'varchar', nullable: true },
 		title: { type: 'varchar', nullable: true },
 		timeSlotId: { type: 'varchar', nullable: true },
+		projectId: { type: 'varchar', nullable: true },
+		taskId: { type: 'varchar', nullable: true },
 		deletedAt: { type: 'datetime', nullable: true, deleteDate: true }
 	},
 	relations: {
-		timeSlot: { type: 'many-to-one', target: 'TimeSlot', joinColumn: { name: 'timeSlotId' } }
+		timeSlot: { type: 'many-to-one', target: 'TimeSlot', joinColumn: { name: 'timeSlotId' } },
+		project: { type: 'many-to-one', target: 'OrganizationProject', joinColumn: { name: 'projectId' } },
+		task: { type: 'many-to-one', target: 'Task', joinColumn: { name: 'taskId' } }
 	}
 });
 
@@ -44,6 +68,9 @@ describe('scopeActivitiesForWrite (GHSA-6qvm-3wg4-26w4)', () => {
 	let ownActivity: any;
 	let ownSlot: any;
 	let foreignSlot: any;
+	let ownProject: any;
+	let foreignProject: any;
+	let foreignTask: any;
 
 	const SCOPE = { tenantId: TENANT_A, employeeId: 'employee-a' };
 
@@ -51,7 +78,7 @@ describe('scopeActivitiesForWrite (GHSA-6qvm-3wg4-26w4)', () => {
 		dataSource = new DataSource({
 			type: 'better-sqlite3',
 			database: ':memory:',
-			entities: [TimeSlotSchema, ActivitySchema],
+			entities: [TimeSlotSchema, ProjectSchema, TaskSchema, ActivitySchema],
 			synchronize: true,
 			logging: false
 		});
@@ -62,6 +89,9 @@ describe('scopeActivitiesForWrite (GHSA-6qvm-3wg4-26w4)', () => {
 		foreignSlot = await slots.save({ tenantId: TENANT_B, employeeId: 'employee-b' });
 		ownActivity = await activities.save({ tenantId: TENANT_A, employeeId: 'employee-a', title: 'own' });
 		foreignActivity = await activities.save({ tenantId: TENANT_B, employeeId: 'employee-b', title: 'theirs' });
+		ownProject = await dataSource.getRepository('OrganizationProject').save({ tenantId: TENANT_A, name: 'ours' });
+		foreignProject = await dataSource.getRepository('OrganizationProject').save({ tenantId: TENANT_B, name: 'theirs' });
+		foreignTask = await dataSource.getRepository('Task').save({ tenantId: TENANT_B, title: 'theirs' });
 	});
 
 	afterEach(async () => {
@@ -116,6 +146,34 @@ describe('scopeActivitiesForWrite (GHSA-6qvm-3wg4-26w4)', () => {
 		);
 
 		expect(scoped).toEqual({ title: 'x' });
+	});
+
+	it("keeps the tenant's own project and drops another tenant's project and task", async () => {
+		// A foreign projectId is stored verbatim by the raw save() and joined back on read, which hands
+		// the caller a project of the victim tenant; the nested-graph check never sees a plain FK.
+		const scoped = await scopeActivitiesForWrite(
+			[
+				{ title: 'mine', projectId: ownProject.id },
+				{ title: 'theirs', projectId: foreignProject.id, taskId: foreignTask.id }
+			] as any[],
+			activities,
+			SCOPE
+		);
+
+		expect(scoped).toEqual([{ title: 'mine', projectId: ownProject.id }, { title: 'theirs' }]);
+	});
+
+	it('folds a project relation object into the id and scopes it the same way', async () => {
+		const scoped = await scopeActivitiesForWrite(
+			[
+				{ title: 'mine', project: { id: ownProject.id } },
+				{ title: 'theirs', project: { id: foreignProject.id } }
+			] as any[],
+			activities,
+			SCOPE
+		);
+
+		expect(scoped).toEqual([{ title: 'mine', projectId: ownProject.id }, { title: 'theirs' }]);
 	});
 
 	it('keeps no id at all without an employee to scope by', async () => {

@@ -163,6 +163,29 @@ describe('TimeLogService', () => {
 			expect(parameters).toEqual(expect.objectContaining({ employeeIds: [TARGET_EMPLOYEE_ID] }));
 		});
 
+		// GHSA-6qvm-3wg4-26w4: the employee predicate is only added when `employeeIds` is non-empty, and
+		// the narrowing above only runs for a caller who HAS an employee record. A caller with neither
+		// the permission nor an employee (a custom role holding TIME_TRACKER) therefore read the whole
+		// organization, or the employees they named in the body. CONTROL: the two arms below, where the
+		// same caller state with an employee record still produces the ordinary employee predicate.
+		it.each<[string, (input: IGetTimeLogReportInput) => Promise<unknown>]>(reportMethods)(
+			'%s matches nothing for a caller with neither CHANGE_SELECTED_EMPLOYEE nor an employee record',
+			async (_name, run) => {
+				mockRequestContext({
+					tenantId: TENANT_ID,
+					user: { id: USER_ID, employeeId: null },
+					canChangeSelectedEmployee: false
+				});
+
+				await run(request);
+
+				const { conditions, parameters } = executedFilters(builder);
+				expect(conditions).toEqual(['1 = 0']);
+				expect(parameters).not.toHaveProperty('employeeIds');
+				expect(canManageEmployees).not.toHaveBeenCalled();
+			}
+		);
+
 		it('honours onlyMe without consulting the manager check', async () => {
 			actAs({ canChangeSelectedEmployee: false });
 
