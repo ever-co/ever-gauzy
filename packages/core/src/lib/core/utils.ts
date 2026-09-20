@@ -946,12 +946,24 @@ export function parseOrderOptions(order: FindOptionsOrder<any>) {
 
 /**
  * Transforms a FindOperator object into a query condition suitable for database operations.
- * It handles simple conditions such as 'equal', 'in' and 'between',
- * as well as complex conditions like recursive 'not' operators and range queries with 'between'.
+ *
+ * **Every operator TypeORM can produce is translated, and one it cannot express is refused rather
+ * than dropped.** The reason is what an untranslated operator used to mean: the default branch
+ * warned to the console and answered `{}`, and an empty condition on a property is not a narrower
+ * read — it is *no condition at all*. So under `DB_ORM=mikro-orm` a sweep predicated on
+ * `LessThan(expiresAt)` selected every row in the table, a search predicated on `Like('%term%')`
+ * matched everything, and a tax read predicated on an effective-date range returned rates that are
+ * not in force. The read succeeded, returned rows, and was wrong — which is the failure that costs
+ * the most to find, because nothing anywhere reports it.
+ *
+ * `raw` and `jsonContains` have no MikroORM equivalent at all: the first is a SQL fragment the other
+ * ORM never sees, and the second is a dialect-specific JSON predicate. Both raise, because a caller
+ * that reaches one of them on this ORM has to be told, and telling it by returning every row is not
+ * telling it.
  *
  * @param operator A FindOperator object containing the type of condition and its corresponding value.
  * @returns A query condition in the format of a Record<string, any> that represents the translated condition.
- *
+ * @throws Error when the operator has no MikroORM equivalent, rather than widening the read.
  */
 export function processFindOperator<T>(operator: FindOperator<T>) {
 	switch (operator.type) {
@@ -961,13 +973,23 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 		case 'not': {
 			// If the nested value is also a FindOperator, process it recursively
 			if (operator.child && operator.child instanceof FindOperator) {
-				return { $ne: processFindOperator(operator.child) };
-			} else {
-				const nested = operator.value || null;
-				return { $ne: nested };
+				const child = processFindOperator(operator.child);
+
+				// `Not(IsNull())` is `$ne: null`, and so is `Not(<scalar>)`. A child that translated to a
+				// condition *object* — `Not(In([...]))`, `Not(Like('%x%'))` — is negated with `$not`:
+				// `{ $ne: { $in: [...] } }` compares the column against an object and matches nothing.
+				return child !== null && typeof child === 'object' ? { $not: child } : { $ne: child };
 			}
+
+			// `|| null` here turned `Not(0)`, `Not(false)` and `Not('')` into `IS NOT NULL`, which is a
+			// different question and one that is true for almost every row.
+			return { $ne: operator.value === undefined ? null : operator.value };
 		}
 		case 'in': {
+			return { $in: operator.value };
+		}
+		case 'any': {
+			// `Any([...])` is `= ANY(array)`, which is membership — the same question `$in` asks.
 			return { $in: operator.value };
 		}
 		case 'equal': {
@@ -986,11 +1008,46 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 		case 'moreThan': {
 			return { $gt: operator.value };
 		}
-		// Add additional cases for other operator types if needed
+		case 'lessThanOrEqual': {
+			return { $lte: operator.value };
+		}
+		case 'lessThan': {
+			return { $lt: operator.value };
+		}
+		case 'like': {
+			// The caller's value already carries its own `%` wildcards, in both ORMs.
+			return { $like: operator.value };
+		}
+		case 'ilike': {
+			return { $ilike: operator.value };
+		}
+		case 'arrayContains': {
+			return { $contains: operator.value };
+		}
+		case 'arrayContainedBy': {
+			return { $contained: operator.value };
+		}
+		case 'arrayOverlap': {
+			return { $overlap: operator.value };
+		}
+		case 'and': {
+			// `And(a, b)` is several conditions on one property, which MikroORM spells as one object
+			// carrying both — `{ $gte: 1, $lte: 5 }` — rather than as a list.
+			const parts = (Array.isArray(operator.value) ? operator.value : [operator.value]).map(
+				(part: unknown) => (part instanceof FindOperator ? processFindOperator(part) : { $eq: part })
+			);
+
+			return Object.assign({}, ...parts);
+		}
 		default: {
-			// Handle unknown or unimplemented operator types
-			console.warn(`Unsupported FindOperator type: ${operator.type}`);
-			return {};
+			// `raw` and `jsonContains` land here, and so would any operator a future TypeORM adds. An
+			// empty condition would be answered as "every row", so the caller is told instead.
+			throw new Error(
+				`UNSUPPORTED_FIND_OPERATOR: "${operator.type}" has no MikroORM equivalent, so the read it ` +
+					`predicates cannot be translated. Answering it without the predicate would return every ` +
+					`row; express the condition with a supported operator, or keep this read on the TypeORM ` +
+					`repository.`
+			);
 		}
 	}
 }

@@ -1,10 +1,12 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
+import { IsNull } from 'typeorm';
 import { ID, IWebhookSubscription, JsonData } from '@gauzy/contracts';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { isUniqueViolation } from '../core/errors/unique-violation';
+import { refusalForEndpointHost } from './webhook-endpoint-policy';
 import { WebhookSubscription } from './webhook-subscription.entity';
 import { WebhookEventPublisher } from './webhook-event.publisher';
 import { TypeOrmWebhookSubscriptionRepository } from './repository/type-orm-webhook-subscription.repository';
@@ -61,6 +63,23 @@ export interface IWebhookSubscriptionCredential {
  */
 export interface IWebhookSubscriptionNarrowing {
 	readonly isActive?: boolean;
+	readonly channelId?: ID;
+}
+
+/**
+ * The scope an event carries, stated rather than taken from a request.
+ *
+ * The dispatcher runs in a queue worker, where there is no caller and therefore no request context to
+ * read a tenant from. The event itself is the only thing that knows whose fact it is, so the scope
+ * travels as an argument — and a lookup that is handed no tenant answers with nothing rather than
+ * with every tenant's endpoints, which is the difference between a fan-out and a data leak.
+ */
+export interface IWebhookSubscriptionScope {
+	/** The tenant the event belongs to. Without one, nothing matches. */
+	readonly tenantId?: ID;
+	/** The organization the event belongs to; absent for a tenant-wide fact. */
+	readonly organizationId?: ID;
+	/** The channel the fact belongs to, when it is channel scoped. */
 	readonly channelId?: ID;
 }
 
@@ -397,11 +416,80 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 			} as any
 		});
 
-		return subscriptions.filter(
-			(subscription) =>
-				!subscription.disabledAt &&
-				(!subscription.channelId || !channelId || subscription.channelId === channelId) &&
-				WebhookSubscriptionService.matchesEvent(subscription.events, eventName)
+		return subscriptions.filter((subscription) =>
+			WebhookSubscriptionService.selects(subscription, eventName, channelId)
+		);
+	}
+
+	/**
+	 * The active subscriptions of a stated scope that should receive an event.
+	 *
+	 * The same selection as `findMatching`, for the one caller that cannot supply a request context:
+	 * the outbox dispatcher, which runs in a queue worker long after the request that appended the
+	 * event has ended. The scope is therefore read from the event rather than from the caller, and the
+	 * per-row decision is the same static predicate both reads use — so a subscription's patterns, its
+	 * channel and its disabled switch mean one thing whichever read asked.
+	 *
+	 * **A scope with no tenant matches nothing.** A background caller that lost its scope would
+	 * otherwise ask the store for every subscription of every tenant and post one tenant's payloads to
+	 * another tenant's endpoint. Answering with nothing is the safe reading of a question that was not
+	 * asked properly, and it mirrors what the outbox's own diagnostic reads do with a row nobody owns.
+	 *
+	 * **An event with no organization is the tenant-wide fact**, so every subscription of the tenant is
+	 * selected; an event that names one selects that organization's subscriptions and the tenant-wide
+	 * endpoints beside them. That is the same reading of a nullable organization the platform applies
+	 * to a shared row everywhere else, rather than a rule this fan-out invented.
+	 *
+	 * @param eventName The event name.
+	 * @param scope The tenant, organization and channel the event carries.
+	 * @returns The matching subscriptions, empty when the scope names no tenant.
+	 */
+	async findMatchingInScope(eventName: string, scope: IWebhookSubscriptionScope): Promise<WebhookSubscription[]> {
+		const { tenantId, organizationId, channelId } = scope;
+
+		if (!tenantId) {
+			return [];
+		}
+
+		// Two criteria ORed rather than one, because TypeORM reads an `organizationId` of `undefined` as
+		// "do not narrow on this column" and an explicit null as "this column is null": the first would
+		// hand back every organization's endpoints, and the second alone would hide every tenant-wide
+		// endpoint from an event that names an organization.
+		const where = organizationId
+			? [
+					{ isActive: true, tenantId, organizationId },
+					{ isActive: true, tenantId, organizationId: IsNull() }
+			  ]
+			: [{ isActive: true, tenantId }];
+
+		const subscriptions = await this.typeOrmWebhookSubscriptionRepository.find({ where: where as never });
+
+		return subscriptions.filter((subscription) =>
+			WebhookSubscriptionService.selects(subscription, eventName, channelId)
+		);
+	}
+
+	/**
+	 * Whether one subscription should receive one event.
+	 *
+	 * The per-row half of both matching reads, kept as one predicate so the two can never drift: a
+	 * second copy of these three rules is how a subscription comes to receive an event over one path
+	 * and not over the other, with nothing anywhere reporting the difference.
+	 *
+	 * A subscription that names no channel listens to every channel, and an event that carries no
+	 * channel is not channel scoped and therefore reaches every subscription — the narrowing applies
+	 * only when both sides state one.
+	 *
+	 * @param subscription The stored subscription.
+	 * @param eventName The event name.
+	 * @param channelId The channel the fact belongs to, when it is channel scoped.
+	 * @returns True when the event should be delivered to this subscription.
+	 */
+	static selects(subscription: WebhookSubscription, eventName: string, channelId?: ID): boolean {
+		return (
+			!subscription.disabledAt &&
+			(!subscription.channelId || !channelId || subscription.channelId === channelId) &&
+			WebhookSubscriptionService.matchesEvent(subscription.events, eventName)
 		);
 	}
 
@@ -548,6 +636,14 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	 * development installation may set — which is refused outright once the platform runs in
 	 * production, because an unencrypted webhook leaks every payload it carries.
 	 *
+	 * **The scheme was the only thing this checked**, and the scheme is not what makes an endpoint
+	 * safe to call. A tenant user who may create a subscription could point one at
+	 * `https://169.254.169.254/`, at a database admin port on the pod network, or at a service mesh's
+	 * control plane, and then read four kilobytes of each response back out through the delivery log
+	 * — a read API the same user already has. `refusalForEndpointHost` is the rule about *where* an
+	 * endpoint may point; the delivery path applies it again against the address the host actually
+	 * resolves to, because a name can answer differently a minute later.
+	 *
 	 * @param url The endpoint.
 	 * @param metadata The subscription metadata.
 	 * @throws BadRequestException when the endpoint is not allowed.
@@ -559,6 +655,12 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 			parsed = new URL(url);
 		} catch {
 			throw new BadRequestException('A webhook endpoint must be an absolute URL.');
+		}
+
+		const refusal = refusalForEndpointHost(parsed);
+
+		if (refusal) {
+			throw new BadRequestException(refusal);
 		}
 
 		if (parsed.protocol === 'https:') {

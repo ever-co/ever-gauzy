@@ -107,13 +107,14 @@ export const toPositionalStatement = (sql: string, parameters: Record<string, un
 /**
  * How many rows a statement changed, whichever driver answered.
  *
- * The four drivers disagree completely about what a write returns. `pg` answers an object carrying
+ * The drivers disagree completely about what a write returns. `pg` answers an object carrying
  * `rowCount`; TypeORM's MySQL driver answers `[ResultSetHeader]` whose `affectedRows` is the count;
  * TypeORM's raw `query` on MySQL and on SQLite answers `[rows, affected]` for a statement that
- * changes rows; and MikroORM's `Connection.execute(..., 'run')` answers the count itself. A service
- * that reads one of those shapes is a service that reports "nothing changed" on the other three —
- * and a conditional `UPDATE` whose affected-row count reads as zero is indistinguishable from a
- * refusal, which is how a write that landed is reported to the caller as a conflict.
+ * changes rows; `better-sqlite3` answers its own `{ changes, lastInsertRowid }`; and MikroORM's
+ * `Connection.execute(..., 'run')` answers the count itself. A service that reads one of those
+ * shapes is a service that reports "nothing changed" on the others — and a conditional `UPDATE`
+ * whose affected-row count reads as zero is indistinguishable from a refusal, which is how a write
+ * that landed is reported to the caller as a conflict.
  *
  * @param result Whatever the driver returned.
  * @returns The affected-row count, or 0 when the shape carries none.
@@ -131,18 +132,23 @@ export const readAffectedRows = (result: unknown): number => {
 			return second;
 		}
 
-		const header = first as { affectedRows?: unknown; changedRows?: unknown } | undefined;
+		const header = first as { affectedRows?: unknown; changes?: unknown } | undefined;
 
-		if (typeof header?.affectedRows === 'number') {
-			return header.affectedRows;
+		for (const value of [header?.affectedRows, header?.changes]) {
+			if (typeof value === 'number') {
+				return value;
+			}
 		}
 
 		return 0;
 	}
 
-	const candidate = result as { affected?: unknown; rowCount?: unknown; affectedRows?: unknown } | null | undefined;
+	const candidate = result as
+		| { affected?: unknown; rowCount?: unknown; affectedRows?: unknown; changes?: unknown }
+		| null
+		| undefined;
 
-	for (const value of [candidate?.affected, candidate?.rowCount, candidate?.affectedRows]) {
+	for (const value of [candidate?.affected, candidate?.rowCount, candidate?.affectedRows, candidate?.changes]) {
 		if (typeof value === 'number') {
 			return value;
 		}

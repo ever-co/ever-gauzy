@@ -18,8 +18,10 @@ import { DataSource, EntityManager } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import {
+	prepareSQLQuery,
 	Product,
 	ProductVariant,
+	quoteIdentifier,
 	RequestContext,
 	WarehouseProduct,
 	WarehouseProductVariant,
@@ -1141,8 +1143,11 @@ export class StockLevelService {
 		if (!input.binId) {
 			return undefined;
 		}
+		// `prepareSQLQuery` rewrites the identifiers for MySQL, which reads a double quote as the start
+		// of a string literal rather than of a column name; the placeholder was already chosen per
+		// dialect, and the two halves have to agree.
 		const rows: Array<{ warehouseId: string }> = await manager.query(
-			`SELECT "warehouseId" FROM "warehouse_bin" WHERE "id" = ${this.placeholder(manager)}`,
+			prepareSQLQuery(`SELECT "warehouseId" FROM "warehouse_bin" WHERE "id" = ${this.placeholder(manager)}`),
 			[input.binId]
 		);
 		const bin = rows && rows[0];
@@ -1182,15 +1187,30 @@ export class StockLevelService {
 		if (!level.warehouseProductId) {
 			return;
 		}
+		// **The identifiers are quoted for the configured dialect, and the deltas are bound.** Written
+		// as `"quantity" + 5`, MySQL reads `"quantity"` as the *string* `quantity`, which it coerces to
+		// `0` in an arithmetic context — so the statement assigned the delta over the aggregate instead
+		// of adding it to it, reported one row changed, and reset the version counter to 1 on the way
+		// past. The aggregate was destroyed silently, and the counter that would have let a reader
+		// notice was destroyed with it.
+		//
+		// A `set()` callback's return value is raw SQL that nothing downstream rewrites, so the quoting
+		// is decided here; the two deltas stop being interpolated at the same time, because a number
+		// pasted into a statement is a number the driver never checks.
+		const quantity = quoteIdentifier('quantity');
+		const reservedQuantity = quoteIdentifier('reservedQuantity');
+		const version = quoteIdentifier('version');
+
 		await manager
 			.createQueryBuilder()
 			.update(WarehouseProduct)
 			.set({
-				quantity: () => `"quantity" + ${quantityDelta}`,
-				reservedQuantity: () => `"reservedQuantity" + ${reservedDelta}`,
-				version: () => '"version" + 1'
+				quantity: () => `${quantity} + :quantityDelta`,
+				reservedQuantity: () => `${reservedQuantity} + :reservedDelta`,
+				version: () => `${version} + 1`
 			})
 			.where('id = :id', { id: level.warehouseProductId })
+			.setParameters({ quantityDelta, reservedDelta })
 			.execute();
 	}
 

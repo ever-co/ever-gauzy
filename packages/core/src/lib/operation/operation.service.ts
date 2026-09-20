@@ -322,9 +322,13 @@ export class OperationService extends CrudService<Operation> {
 			.where('operation.status IN (:...live)', {
 				live: [OperationStatus.PENDING, OperationStatus.RUNNING, OperationStatus.COMPENSATING]
 			})
-			.andWhere('operation."leaseExpiresAt" IS NOT NULL')
-			.andWhere('operation."leaseExpiresAt" < :cutoff', { cutoff })
-			.orderBy('operation."leaseExpiresAt"', 'ASC')
+			// `operation.leaseExpiresAt` rather than `operation."leaseExpiresAt"`: the builder resolves
+			// a property name to the column and quotes it for the configured dialect, while a raw
+			// fragment is passed through untouched — and MySQL reads those quotes as a string literal,
+			// so the sweep raised a syntax error there and never ran.
+			.andWhere('operation.leaseExpiresAt IS NOT NULL')
+			.andWhere('operation.leaseExpiresAt < :cutoff', { cutoff })
+			.orderBy('operation.leaseExpiresAt', 'ASC')
 			.take(options.limit ?? 100)
 			.getMany();
 	}

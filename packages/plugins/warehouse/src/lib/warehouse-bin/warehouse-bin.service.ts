@@ -2,7 +2,13 @@ import { BadRequestException, Inject, Injectable, NotFoundException, Optional } 
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, In, Repository } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, Warehouse } from '@gauzy/core';
+import {
+	prepareSQLQuery,
+	RequestContext,
+	TenantAwareCrudService,
+	toPositionalStatement,
+	Warehouse
+} from '@gauzy/core';
 import { WarehouseZone } from '../warehouse-zone/warehouse-zone.entity';
 import { TypeOrmWarehouseZoneRepository } from '../warehouse-zone/repository/type-orm-warehouse-zone.repository';
 import {
@@ -1220,9 +1226,9 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @returns The descendant ids.
 	 */
 	public async descendantIds(id: ID): Promise<ID[]> {
-		const rows: Array<{ id_descendant: string }> = await this.typeOrmWarehouseBinRepository.query(
-			`SELECT "id_descendant" FROM "warehouse_bin_closure" WHERE "id_ancestor" = ?`,
-			[id]
+		const rows: Array<{ id_descendant: string }> = await this.runClosureStatement(
+			`SELECT "id_descendant" FROM "warehouse_bin_closure" WHERE "id_ancestor" = :ancestorId`,
+			{ ancestorId: id }
 		);
 
 		return rows.map((row) => row.id_descendant as ID);
@@ -1235,12 +1241,42 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @returns The ancestor ids.
 	 */
 	public async ancestorIds(id: ID): Promise<ID[]> {
-		const rows: Array<{ id_ancestor: string }> = await this.typeOrmWarehouseBinRepository.query(
-			`SELECT "id_ancestor" FROM "warehouse_bin_closure" WHERE "id_descendant" = ?`,
-			[id]
+		const rows: Array<{ id_ancestor: string }> = await this.runClosureStatement(
+			`SELECT "id_ancestor" FROM "warehouse_bin_closure" WHERE "id_descendant" = :descendantId`,
+			{ descendantId: id }
 		);
 
 		return rows.map((row) => row.id_ancestor as ID);
+	}
+
+	/**
+	 * Runs one statement against the closure table, on whichever dialect is configured.
+	 *
+	 * **The six statements in this file ran on SQLite and on nothing else.** They wrote their
+	 * identifiers in double quotes, which MySQL reads as a string literal rather than a column, and
+	 * they wrote their parameters as `?`, which Postgres does not bind at all. The closure table is
+	 * what every ancestor and descendant read in this service goes through — placement, moves, the
+	 * capacity roll-up — so a warehouse tree on either of those two dialects failed on the first
+	 * query and stayed failed.
+	 *
+	 * Nothing below `QueryBuilder` rewrites either spelling, so both are rewritten here: the
+	 * identifiers by `prepareSQLQuery`, which is what the rest of this platform uses, and the named
+	 * parameters by `toPositionalStatement`, which binds them in the form the configured driver
+	 * expects. The statements above are written once, in the one spelling a reader can check against
+	 * the migration that created the table.
+	 *
+	 * The closure table is deliberately not an entity — the ORM's tree strategy owns its contents, and
+	 * a second declared writer could disagree with it — so these reads cannot go through a repository
+	 * and a raw statement is the only form available.
+	 *
+	 * @param sql The statement, with `:name` parameters and double-quoted identifiers.
+	 * @param parameters The values, keyed by name.
+	 * @returns Whatever the driver answered.
+	 */
+	private async runClosureStatement(sql: string, parameters: Record<string, unknown>): Promise<any> {
+		const bound = toPositionalStatement(prepareSQLQuery(sql), parameters);
+
+		return this.typeOrmWarehouseBinRepository.query(bound.sql, bound.parameters);
 	}
 
 	/**
@@ -1329,11 +1365,14 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			return;
 		}
 
-		const placeholders = ids.map(() => '?').join(', ');
+		// The list is variable-length, so the names are generated with it and bound by the same
+		// rewrite every other statement here goes through.
+		const named = ids.map((_id, index) => `:id${index}`).join(', ');
+		const values = Object.fromEntries(ids.map((value, index) => [`id${index}`, value]));
 
-		await this.typeOrmWarehouseBinRepository.query(
-			`DELETE FROM "warehouse_bin_closure" WHERE "id_descendant" IN (${placeholders})`,
-			ids
+		await this.runClosureStatement(
+			`DELETE FROM "warehouse_bin_closure" WHERE "id_descendant" IN (${named})`,
+			values
 		);
 	}
 
@@ -1344,18 +1383,18 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 */
 	private async insertClosurePairs(pairs: Array<[ID, ID]>): Promise<void> {
 		for (const [ancestorId, descendantId] of pairs) {
-			const existing: Array<{ id_ancestor: string }> = await this.typeOrmWarehouseBinRepository.query(
-				`SELECT "id_ancestor" FROM "warehouse_bin_closure" WHERE "id_ancestor" = ? AND "id_descendant" = ?`,
-				[ancestorId, descendantId]
+			const existing: Array<{ id_ancestor: string }> = await this.runClosureStatement(
+				`SELECT "id_ancestor" FROM "warehouse_bin_closure" WHERE "id_ancestor" = :ancestorId AND "id_descendant" = :descendantId`,
+				{ ancestorId, descendantId }
 			);
 
 			if (existing.length) {
 				continue;
 			}
 
-			await this.typeOrmWarehouseBinRepository.query(
-				`INSERT INTO "warehouse_bin_closure" ("id_ancestor", "id_descendant") VALUES (?, ?)`,
-				[ancestorId, descendantId]
+			await this.runClosureStatement(
+				`INSERT INTO "warehouse_bin_closure" ("id_ancestor", "id_descendant") VALUES (:ancestorId, :descendantId)`,
+				{ ancestorId, descendantId }
 			);
 		}
 	}
@@ -1496,9 +1535,9 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @throws BadRequestException when a printed pick line names its code.
 	 */
 	private async assertCodeIsNotPrinted(binId: ID): Promise<void> {
-		const rows: Array<{ total: number | string }> = await this.typeOrmWarehouseBinRepository.query(
-			`SELECT COUNT(*) AS total FROM "pick_list_line" WHERE "binId" = ? AND "deletedAt" IS NULL`,
-			[binId]
+		const rows: Array<{ total: number | string }> = await this.runClosureStatement(
+			`SELECT COUNT(*) AS total FROM "pick_list_line" WHERE "binId" = :binId AND "deletedAt" IS NULL`,
+			{ binId: binId }
 		);
 
 		const total = Number(rows?.[0]?.total ?? 0);

@@ -160,7 +160,13 @@ export class EventConsumerRegistry {
 			eventId: event.id,
 			consumerKey,
 			partitionKey: event.partitionKey,
-			sequence: event.sequence
+			sequence: event.sequence,
+			// The envelope's scope rather than the request context's, because the dispatcher runs in a
+			// queue worker where there is no request: a record written without a tenant is invisible to
+			// the delivery listing and to the two operator moves, which is the dead-letter runbook not
+			// working rather than a cosmetic gap. Inside a request the two agree.
+			tenantId: event.tenantId,
+			organizationId: event.organizationId
 		});
 
 		if (!claim.claimed) {

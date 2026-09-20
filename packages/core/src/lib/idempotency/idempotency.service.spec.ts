@@ -781,8 +781,7 @@ describe('the operator surface', () => {
 });
 
 describe('the calls the dual-ORM surface cannot carry', () => {
-	it('keeps the sweep on the repository, because the converter drops the range it selects on', () => {
-		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+	it('translates the range the sweep selects on, so the predicate survives either ORM', () => {
 		const now = new Date('2026-03-01T10:00:00Z');
 
 		const converted = parseTypeORMFindToMikroOrm({
@@ -792,19 +791,17 @@ describe('the calls the dual-ORM surface cannot carry', () => {
 			}
 		}).where as Row;
 
-		// `In` translates and `LessThan` does not: the converter's `processFindOperator` handles
-		// isNull, not, in, equal, between, moreThan and moreThanOrEqual, and sends every other operator
-		// to a default branch that warns and answers an empty condition. Control: the `In` half is
+		// This case used to pin the opposite: `processFindOperator` handled isNull, not, in, equal,
+		// between, moreThan and moreThanOrEqual, and sent every other operator to a default branch that
+		// warned to the console and answered an *empty* condition. An empty condition on a property is
+		// not a narrower read — it is no condition at all — so on the dual-ORM path the expiry predicate
+		// vanished and the sweep would have deleted rows whose stored response was still inside its
+		// window, which is the first of the two eligibility rules this kernel keeps.
+		//
+		// The converter now knows the operator, so the predicate survives. Control: the `In` half is
 		// asserted too, so this case cannot pass by the converter having failed outright.
 		expect(converted['status']).toEqual({ $in: [IdempotencyStatus.COMPLETED, IdempotencyStatus.FAILED] });
-		expect(warn).toHaveBeenCalledWith(expect.stringContaining('lessThan'));
-		// The empty condition is the whole reason `purgeExpired` — both of its reads and both of its
-		// deletes — and the single-row clear still call the TypeORM repository: on the dual-ORM path
-		// the expiry predicate would vanish, and the sweep would delete rows whose stored response is
-		// still inside its window, which is the first of the two eligibility rules this kernel keeps.
-		// Should the converter ever learn `lessThan`, this assertion fails and those calls become
-		// portable; that is the point of pinning it here rather than in a comment alone.
-		expect(converted['expiresAt']).toEqual({});
+		expect(converted['expiresAt']).toEqual({ $lt: now });
 	});
 
 	it('keeps the claim\'s insert on the repository, because the CRUD write path buries the lost race', async () => {

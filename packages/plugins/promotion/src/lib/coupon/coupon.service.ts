@@ -1,8 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { isMySQL } from '@gauzy/config';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, EventBus, RequestContext } from '@gauzy/core';
+import {
+	booleanLiteral,
+	CrudService,
+	currentTimestampExpression,
+	EventBus,
+	quoteIdentifier,
+	readAffectedRows,
+	RequestContext,
+	toPositionalStatement
+} from '@gauzy/core';
 import { CouponRedeemedEvent } from '../events';
 import { Coupon } from './coupon.entity';
 import { TypeOrmCouponRepository } from './repository/type-orm-coupon.repository';
@@ -237,17 +245,29 @@ export class CouponService extends CrudService<Coupon> {
 	 * @returns True when a use was taken.
 	 */
 	async redeem(couponId: ID, amount: DecimalString = '0'): Promise<boolean> {
-		const q = (identifier: string) => (isMySQL() ? `\`${identifier}\`` : `"${identifier}"`);
-		const now = isMySQL() ? 'CURRENT_TIMESTAMP(6)' : 'now()';
+		const q = quoteIdentifier;
+		const now = currentTimestampExpression();
+		const tenantId = RequestContext.currentTenantId();
 		const sql =
 			`UPDATE ${q('coupon')} SET ${q('usageCount')} = ${q('usageCount')} + 1 ` +
-			`WHERE ${q('id')} = :couponId AND ${q('isActive')} = ${isMySQL() ? '1' : 'true'} ` +
+			`WHERE ${q('id')} = :couponId AND ${q('isActive')} = ${booleanLiteral(true)} ` +
+			// A code belongs to the tenant that issued it, and a conditional statement that does not
+			// say so is one an identifier from another tenant can satisfy.
+			(tenantId ? `AND ${q('tenantId')} = :tenantId ` : '') +
+			`AND ${q('deletedAt')} IS NULL ` +
 			`AND (${q('usageLimit')} IS NULL OR ${q('usageCount')} < ${q('usageLimit')}) ` +
 			`AND (${q('startsAt')} IS NULL OR ${q('startsAt')} <= ${now}) ` +
 			`AND (${q('endsAt')} IS NULL OR ${q('endsAt')} > ${now})`;
 
-		const result: unknown = await this.typeOrmCouponRepository.query(sql, [couponId]);
-		const consumed = Array.isArray(result) ? Number(result[1] ?? 0) > 0 : Number(result ?? 0) > 0;
+		// **The statement was written with `:couponId` and handed an array.** Nothing below
+		// `QueryBuilder` substitutes a named parameter — `Repository.query()` passes the statement to
+		// the driver as it stands — so Postgres and MySQL raised a syntax error at the colon and
+		// neither SQLite driver could bind an array to a statement declaring no `?`. Redemption
+		// therefore failed on every dialect, and the failure was a thrown driver error rather than a
+		// refusal, so a checkout that presented a valid code got a 500.
+		const bound = toPositionalStatement(sql, { couponId, ...(tenantId ? { tenantId } : {}) });
+		const result: unknown = await this.typeOrmCouponRepository.query(bound.sql, bound.parameters);
+		const consumed = readAffectedRows(result) > 0;
 
 		if (consumed) {
 			// The event is emitted only after the counter accepted the use, so a subscriber that reports
@@ -271,15 +291,23 @@ export class CouponService extends CrudService<Coupon> {
 		// no UPDATE — so a statement that writes has to be built by the builder of the ORM it is written
 		// for, exactly as the conditional statement in `redeem` is. The column is quoted for the active
 		// dialect, which is what lets the one statement run on Postgres, MySQL and SQLite alike.
-		const usageCount = isMySQL() ? '`usageCount`' : '"usageCount"';
+		const usageCount = quoteIdentifier('usageCount');
+		const tenantId = RequestContext.currentTenantId();
 
-		await this.typeOrmCouponRepository
+		const reverted = this.typeOrmCouponRepository
 			.createQueryBuilder()
 			.update(Coupon)
 			.set({ usageCount: () => `${usageCount} - 1` })
 			.where(`${usageCount} > 0`)
-			.andWhere('id = :couponId', { couponId })
-			.execute();
+			.andWhere('id = :couponId', { couponId });
+
+		// The same scope the redemption carries: a reversal is a write on the same row, and a write
+		// that names only an identifier is one another tenant's identifier can reach.
+		if (tenantId) {
+			reverted.andWhere('tenantId = :tenantId', { tenantId });
+		}
+
+		await reverted.execute();
 
 		return true;
 	}
