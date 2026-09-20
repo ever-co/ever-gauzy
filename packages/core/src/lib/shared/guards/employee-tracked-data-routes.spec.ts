@@ -121,7 +121,14 @@ const EXEMPT: [Function, string, Record<string, string>][] = [
 		}
 	],
 	[TimeSlotController, 'TimeSlotController', { findById: 'desktop screenshot retry queue reads its own slot by id' }],
-	[StatisticController, 'StatisticController', { getTasksStatistics: "the desktop timer's task picker" }]
+	[
+		StatisticController,
+		'StatisticController',
+		{
+			getTasksStatistics: "the desktop timer's task picker",
+			getTrackedDataAccess: 'it answers whether this guard would block the caller'
+		}
+	]
 ];
 
 describe('EmployeeTrackedDataGuard route coverage', () => {
@@ -139,6 +146,26 @@ describe('EmployeeTrackedDataGuard route coverage', () => {
 			expect(route).toBeDefined();
 			expect(isGuarded(controller, route)).toBe(false);
 		});
+	});
+
+	it('classifies every read route, so a new one cannot be left unguarded by accident', () => {
+		const classified = new Set([
+			...GUARDED.flatMap(([, , handlers]) => handlers),
+			...EXEMPT.flatMap(([, , handlers]) => Object.keys(handlers))
+		]);
+		const controllers = new Map<Function, string>([...GUARDED, ...EXEMPT].map(([c, n]) => [c, n]));
+		const unclassified: string[] = [];
+
+		for (const [controller, controllerName] of controllers) {
+			for (const route of collectRoutes(controller)) {
+				if (route.method === RequestMethod.GET && !classified.has(route.name)) {
+					unclassified.push(`${controllerName}.${route.name}`);
+				}
+			}
+		}
+
+		// Add the handler to GUARDED, or to EXEMPT with the reason it may stay open
+		expect(unclassified).toEqual([]);
 	});
 
 	it('never guards a write route: recording must keep working while the setting is off', () => {

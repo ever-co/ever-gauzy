@@ -4,7 +4,12 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { OrganizationPolicyTarget, Permissions } from './../../shared/decorators';
-import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard, EmployeeTrackedDataGuard } from '../../shared/guards';
+import {
+	EmployeeTrackedDataGuard,
+	OrganizationPermissionGuard,
+	PermissionGuard,
+	TenantPermissionGuard
+} from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
 import { TimeSlot } from './time-slot.entity';

@@ -13,8 +13,8 @@ import { RequestContext } from '../../core/context';
  *
  * Allows the request when:
  * 1. The caller has `CHANGE_SELECTED_EMPLOYEE` permission (Admin / Super Admin), OR
- * 2. The caller has no employee record (they have no tracked data of their own, so their role-based
- *    access is unchanged), OR
+ * 2. The caller has no employee record in the tenant — read from the database, not from the token claim
+ *    (they have no tracked data of their own, so their role-based access is unchanged), OR
  * 3. The setting is not `false` in every organization the request touches that exists in the caller's
  *    tenant: the caller's own organization, and each `organizationId` the request names, OR
  * 4. The caller manages an active team or project in each organization where the setting is `false`.
@@ -70,12 +70,6 @@ export async function canViewTrackedData(
 		return true;
 	}
 
-	// No employee record: no tracked data of their own, role-based access applies unchanged
-	const employeeId: ID = RequestContext.currentUser()?.employeeId;
-	if (!employeeId) {
-		return true;
-	}
-
 	const requested = requestedOrganizationIds
 		.filter((value) => value !== undefined && value !== null && value !== '')
 		.map((value) => {
@@ -91,19 +85,48 @@ export async function canViewTrackedData(
 		throw new ForbiddenException('Tenant context is required to access tracked data');
 	}
 
-	// The caller's own organization: where their tracked data lives, and the one whose setting applies even
-	// when a route reads by record id or scopes by a field this guard does not see. JwtStrategy validates the
-	// token's organization against the employee record, so it needs no second lookup.
-	let ownOrganizationId: ID = RequestContext.currentOrganizationId();
-	if (!ownOrganizationId) {
-		const employee = await dataSource.getRepository('Employee').findOne({
-			where: { id: employeeId, tenantId },
-			select: { id: true, organizationId: true }
-		});
-		ownOrganizationId = employee?.organizationId;
+	// Who the caller is as an employee, and in which organizations their tracked data lives. Those
+	// organizations' settings apply even when a route reads by record id or scopes by a field this guard
+	// does not see.
+	const employeeRepository = dataSource.getRepository('Employee');
+	const tokenEmployeeId: ID = RequestContext.currentUser()?.employeeId;
+	let employeeIds: ID[] = [];
+	let ownOrganizationIds: ID[] = [];
+
+	if (tokenEmployeeId) {
+		employeeIds = [tokenEmployeeId];
+		// JwtStrategy validates the token's organization against the employee record, so it needs no lookup
+		const tokenOrganizationId: ID = RequestContext.currentOrganizationId();
+		if (tokenOrganizationId) {
+			ownOrganizationIds = [tokenOrganizationId];
+		} else {
+			const employee = await employeeRepository.findOne({
+				where: { id: tokenEmployeeId, tenantId },
+				select: { id: true, organizationId: true }
+			});
+			ownOrganizationIds = [employee?.organizationId];
+		}
+	} else {
+		// The token carries no employee claim, but it is minted per organization: a user who is an employee
+		// elsewhere in the tenant can hold one (POST /auth/switch-organization issues it for an organization
+		// where they have no employee record). Ask the database instead of exempting on the claim alone.
+		const userId = RequestContext.currentUserId();
+		// A null `userId` would be dropped into `IS NULL` by TypeORM rather than matching nothing
+		const employees = userId
+			? await employeeRepository.find({
+					where: { userId, tenantId },
+					select: { id: true, organizationId: true }
+				})
+			: [];
+		if (!employees.length) {
+			// Really no employee record: no tracked data of their own, role-based access applies unchanged
+			return true;
+		}
+		employeeIds = employees.map((employee) => employee.id);
+		ownOrganizationIds = employees.map((employee) => employee.organizationId);
 	}
 
-	const organizationIds: ID[] = [...new Set<ID>([ownOrganizationId, ...requested].filter(Boolean))];
+	const organizationIds: ID[] = [...new Set<ID>([...ownOrganizationIds, ...requested].filter(Boolean))];
 	if (!organizationIds.length) {
 		// No organization to apply a setting to; the route's own scoping and validation answer as before
 		return true;
@@ -121,7 +144,7 @@ export async function canViewTrackedData(
 			continue;
 		}
 		// Setting is off: managers of a team or project in this organization keep their access
-		if (!(await isManagerInOrganization(dataSource, employeeId, organization.id, tenantId))) {
+		if (!(await isManagerInOrganization(dataSource, employeeIds, organization.id, tenantId))) {
 			return false;
 		}
 	}
@@ -138,11 +161,17 @@ export async function canViewTrackedData(
  */
 async function isManagerInOrganization(
 	dataSource: DataSource,
-	employeeId: ID,
+	employeeIds: ID[],
 	organizationId: ID,
 	tenantId: ID
 ): Promise<boolean> {
-	const membership = { employeeId, organizationId, tenantId, isActive: true, isArchived: false };
+	const membership = {
+		employeeId: In(employeeIds),
+		organizationId,
+		tenantId,
+		isActive: true,
+		isArchived: false
+	};
 	const teamEmployeeRepository = dataSource.getRepository('OrganizationTeamEmployee');
 
 	if (await teamEmployeeRepository.existsBy({ ...membership, isManager: true })) {

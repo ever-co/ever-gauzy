@@ -17,6 +17,7 @@ describe('EmployeeTrackedDataGuard', () => {
 	const ORG_B = '0d9e8f7a-6b5c-4d3e-9f21-a0b1c2d3e4f5';
 	const ORG_OTHER_TENANT = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
 	const EMPLOYEE = 'c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f';
+	const USER = 'd4e5f6a7-b8c9-4d0e-8f1a-2b3c4d5e6f70';
 
 	const HIDDEN_MESSAGE = 'Employees are not allowed to view tracked data in this organization';
 
@@ -27,15 +28,23 @@ describe('EmployeeTrackedDataGuard', () => {
 		OrganizationProjectEmployee: any[];
 	};
 	let dataSource: DataSource;
+	let repositories: Record<string, { findOne: jest.Mock; find: jest.Mock; existsBy: jest.Mock }>;
 	let getRepository: jest.Mock;
 	let guard: EmployeeTrackedDataGuard;
 
+	const isFindOperator = (value: any): boolean => typeof value?.type === 'string' && 'value' in value;
+
 	const matches = (row: any, where: Record<string, unknown>) =>
-		Object.entries(where).every(([key, value]) =>
-			value && typeof value === 'object'
-				? matches(row[key] ?? {}, value as Record<string, unknown>)
-				: row[key] === value
-		);
+		Object.entries(where).every(([key, value]: [string, any]) => {
+			if (isFindOperator(value)) {
+				// In([...])
+				return [].concat(value.value).includes(row[key]);
+			}
+			if (value && typeof value === 'object') {
+				return matches(row[key] ?? {}, value as Record<string, unknown>);
+			}
+			return row[key] === value;
+		});
 
 	const membership = (overrides: Record<string, unknown> = {}) => ({
 		employeeId: EMPLOYEE,
@@ -65,21 +74,24 @@ describe('EmployeeTrackedDataGuard', () => {
 
 	beforeEach(() => {
 		rows = {
-			Employee: [{ id: EMPLOYEE, tenantId: TENANT, organizationId: ORG_A }],
+			Employee: [{ id: EMPLOYEE, userId: USER, tenantId: TENANT, organizationId: ORG_A }],
 			Organization: [],
 			OrganizationTeamEmployee: [],
 			OrganizationProjectEmployee: []
 		};
 		setOrganizations({ [ORG_A]: true, [ORG_B]: true, [ORG_OTHER_TENANT]: true });
 
-		getRepository = jest.fn((name: keyof typeof rows) => ({
-			findOne: jest.fn(async ({ where }) => rows[name].find((row) => matches(row, where)) ?? null),
-			find: jest.fn(async ({ where }) => {
-				const { id, ...rest } = where;
-				return rows[name].filter((row) => id.value.includes(row.id) && matches(row, rest));
-			}),
-			existsBy: jest.fn(async (where) => rows[name].some((row) => matches(row, where)))
-		}));
+		repositories = Object.fromEntries(
+			Object.keys(rows).map((name) => [
+				name,
+				{
+					findOne: jest.fn(async ({ where }) => rows[name].find((row) => matches(row, where)) ?? null),
+					find: jest.fn(async ({ where }) => rows[name].filter((row) => matches(row, where))),
+					existsBy: jest.fn(async (where) => rows[name].some((row) => matches(row, where)))
+				}
+			])
+		);
+		getRepository = jest.fn((name: string) => repositories[name]);
 		dataSource = { getRepository } as unknown as DataSource;
 		guard = new EmployeeTrackedDataGuard(dataSource);
 
@@ -87,7 +99,12 @@ describe('EmployeeTrackedDataGuard', () => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		// No organization claim on the token by default, so the employee record resolves the organization
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
-		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ employeeId: EMPLOYEE, tenantId: TENANT } as any);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER);
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+			id: USER,
+			employeeId: EMPLOYEE,
+			tenantId: TENANT
+		} as any);
 	});
 
 	afterEach(() => {
@@ -109,13 +126,34 @@ describe('EmployeeTrackedDataGuard', () => {
 			expect(getRepository).not.toHaveBeenCalled();
 		});
 
-		it('allows callers without an employee record (role-based access), whatever the request names', async () => {
+		it('allows a caller who has no employee record in the tenant (role-based access)', async () => {
 			setOrganizations({ [ORG_A]: false });
-			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ tenantId: TENANT } as any);
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: USER, tenantId: TENANT } as any);
+			rows.Employee = [];
 
 			await expect(guard.canActivate(createContext({ query: { organizationId: ORG_A } }))).resolves.toBe(true);
 			await expect(guard.canActivate(createContext())).resolves.toBe(true);
-			expect(getRepository).not.toHaveBeenCalled();
+		});
+
+		it('does not exempt a token without an employee claim while the user is an employee in the tenant', async () => {
+			// POST /auth/switch-organization mints such a token for an organization where the user has no
+			// employee record; the setting of the organization their employee record lives in still applies
+			setOrganizations({ [ORG_A]: false, [ORG_B]: true });
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: USER, tenantId: TENANT } as any);
+			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG_B);
+
+			await expect(guard.canActivate(createContext({ query: { organizationId: ORG_B } }))).rejects.toThrow(
+				new ForbiddenException(HIDDEN_MESSAGE)
+			);
+		});
+
+		it('still exempts such a token when the user manages a team in the restricted organization', async () => {
+			setOrganizations({ [ORG_A]: false, [ORG_B]: true });
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: USER, tenantId: TENANT } as any);
+			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG_B);
+			rows.OrganizationTeamEmployee = [membership()];
+
+			await expect(guard.canActivate(createContext({ query: { organizationId: ORG_B } }))).resolves.toBe(true);
 		});
 	});
 
@@ -131,7 +169,8 @@ describe('EmployeeTrackedDataGuard', () => {
 		it('takes the organization from the token without an employee lookup when the token carries one', async () => {
 			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG_A);
 			await expect(guard.canActivate(createContext())).resolves.toBe(true);
-			expect(getRepository).not.toHaveBeenCalledWith('Employee');
+			expect(repositories.Employee.findOne).not.toHaveBeenCalled();
+			expect(repositories.Employee.find).not.toHaveBeenCalled();
 		});
 
 		it('treats a missing value as on', async () => {
@@ -229,9 +268,9 @@ describe('EmployeeTrackedDataGuard', () => {
 
 	describe('organizations that carry no setting do not change the answer', () => {
 		it('ignores an organization of another tenant while the own organization allows it (as on develop)', async () => {
-			await expect(guard.canActivate(createContext({ query: { organizationId: ORG_OTHER_TENANT } }))).resolves.toBe(
-				true
-			);
+			await expect(
+				guard.canActivate(createContext({ query: { organizationId: ORG_OTHER_TENANT } }))
+			).resolves.toBe(true);
 		});
 
 		it('still blocks when the own organization has the setting off', async () => {
@@ -242,7 +281,7 @@ describe('EmployeeTrackedDataGuard', () => {
 		});
 
 		it('allows when neither the token nor the employee record names an organization', async () => {
-			rows.Employee = [{ id: EMPLOYEE, tenantId: OTHER_TENANT, organizationId: ORG_A }];
+			rows.Employee = [{ id: EMPLOYEE, userId: USER, tenantId: OTHER_TENANT, organizationId: ORG_A }];
 			await expect(guard.canActivate(createContext())).resolves.toBe(true);
 		});
 

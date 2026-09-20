@@ -58,9 +58,9 @@ export class EmployeeTrackedDataAccessService {
 	}
 
 	/**
-	 * Whether an HTTP error is the 403 the API returns while the setting hides tracked data.
-	 * Checks the selected organization synchronously, so callers can stay quiet about it even before
-	 * {@link access$} has settled.
+	 * Whether an HTTP error is a 403 raised while the organization hides tracked data from this employee.
+	 * It reads the selected organization synchronously, so callers can stay quiet about it even before
+	 * {@link access$} has settled — at the cost of also absorbing any other 403 they hit meanwhile.
 	 */
 	isHiddenDataError(error: unknown): boolean {
 		return (
@@ -89,7 +89,8 @@ export class EmployeeTrackedDataAccessService {
 			.pipe(
 				map((response): EmployeeTrackedDataAccess => (response?.allowed === true ? 'allowed' : 'hidden')),
 				retry({ count: 2, delay: 2000 }),
-				// A failed probe keeps navigation hidden, but stays short of the settled 'hidden' that redirects
+				// A failed probe leaves navigation as it is: the API enforces the setting on every request, so a
+				// network error must not hide pages from a manager or redirect anyone
 				catchError(() => of('pending' as const)),
 				startWith('pending' as const)
 			);

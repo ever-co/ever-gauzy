@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { ActivatedRoute, Router, QueryParamsHandling } from '@angular/router';
-import { distinctUntilChanged, filter, tap } from 'rxjs';
+import { distinctUntilChanged, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PermissionsEnum } from '@gauzy/contracts';
 import {
@@ -34,14 +34,13 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {
 		// The organization setting allowEmployeeToSeeTrackedData can hide these pages from employees.
 		// The API decides (admins, users without an employee record and team/project managers keep access).
-		// Only settled answers are acted on: the tab registry is read once by the tabset, so re-registering
-		// while the answer is still pending would flip it for a user who turns out to be allowed.
+		// The tabs are registered right away and only a settled 'hidden' takes them away, because the tabset
+		// reads the registry once: a user the API allows must never wait on the answer to get their tabs.
 		this._employeeTrackedDataAccessService.access$
 			.pipe(
-				filter((access) => access !== 'pending'),
 				distinctUntilChanged(),
 				tap((access) => {
-					this.registerPageTabs(access === 'allowed');
+					this.registerPageTabs(access !== 'hidden');
 					if (access === 'hidden') {
 						this._router.navigate(['/pages/dashboard']);
 					}
