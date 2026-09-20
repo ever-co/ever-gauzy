@@ -1,3 +1,4 @@
+// cspell:ignore JWTs
 import { Algorithm, JwtPayload, sign, SignOptions, verify } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { ACCESS_TOKEN_TYPE } from '../access-token/type.token';

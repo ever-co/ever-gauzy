@@ -1,3 +1,4 @@
+// cspell:ignore tokeninfo
 import { ProviderEnum } from '@gauzy/contracts';
 import { environment, ISocialAuthClientsConfig, ISocialAuthOAuthApp } from '@gauzy/config';
 import { HttpService } from '@nestjs/axios';

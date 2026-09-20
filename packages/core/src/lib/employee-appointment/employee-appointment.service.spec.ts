@@ -1,3 +1,4 @@
+// cspell:ignore appt
 import '../core/entities/internal';
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';

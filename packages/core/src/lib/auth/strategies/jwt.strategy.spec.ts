@@ -1,3 +1,4 @@
+// cspell:ignore verif
 import { UnauthorizedException } from '@nestjs/common';
 
 // The strategy only needs these for DI metadata; loading the real modules drags in the whole core

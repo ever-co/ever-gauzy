@@ -1,3 +1,4 @@
+// cspell:ignore onboarded
 import {
 	SocialAuthService,
 	OAuthAppAuthorizationRequest,
@@ -854,7 +855,7 @@ export class AuthService extends SocialAuthService {
 		// Audience-verified AND email-verified, or a generic 401.
 		const identity = await this.verifyOAuthToken(inputProvider, token);
 
-		// Defence in depth: `verifyOAuthToken` already guarantees both. An absent value here would be
+		// Defense in depth: `verifyOAuthToken` already guarantees both. An absent value here would be
 		// dropped from the `where` clauses below and match every user / every link.
 		if (!identity?.email || !identity?.id) {
 			throw new UnauthorizedException(SOCIAL_AUTH_FAILED_MESSAGE);

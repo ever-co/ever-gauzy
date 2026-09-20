@@ -1,8 +1,9 @@
+// cspell:ignore changeme
 /**
  * OAuth clients whose provider ACCESS tokens the API accepts on the email-based social sign-in
  * routes (`/auth/signin.email.social`, `/auth/signup.link.account`).
  *
- * A bare provider access token only proves that SOME application was authorised by the provider
+ * A bare provider access token only proves that SOME application was authorized by the provider
  * account. Before it can stand in for a Gauzy login, the API has to confirm it was issued to one
  * of OUR OAuth clients (GHSA-58x4-7mw9-gmqg); these lists are that allow-list. Introspecting a
  * GitHub or Facebook token requires the client secret of the app it was issued to, so those

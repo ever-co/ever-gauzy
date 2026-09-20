@@ -1,3 +1,4 @@
+// cspell:ignore EAAB googleusercontent tokeninfo
 import { UnauthorizedException } from '@nestjs/common';
 import { ProviderEnum } from '@gauzy/contracts';
 import {
@@ -381,7 +382,7 @@ describe('normalizeSocialIdentity (GHSA-58x4-7mw9-gmqg)', () => {
 			expect(matched.map((u) => u.id).sort()).toEqual(['attacker', 'super-admin', 'victim']);
 		});
 
-		it('the normaliser stops that identity before any query, and a verified one matches one user', async () => {
+		it('the normalizer stops that identity before any query, and a verified one matches one user', async () => {
 			expect(() => normalizeSocialIdentity(ProviderEnum.FACEBOOK, { id: '99' })).toThrow(UnauthorizedException);
 
 			const identity = normalizeSocialIdentity(ProviderEnum.FACEBOOK, { id: '99', email: 'Victim@Ever.co' });
