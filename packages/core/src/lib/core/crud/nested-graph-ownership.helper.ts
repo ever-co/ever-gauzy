@@ -115,41 +115,63 @@ export async function assertGraphNotForeign(
 	}
 
 	while (level.length) {
-		const refsByRelation = collectReferences(level);
 		const next: IGraphNode[] = [];
 
-		for (const [relation, refs] of refsByRelation) {
-			const target = relation.inverseEntityMetadata;
-			const scoped = isTenantScoped(target);
-			const rows = scoped ? await loadStoredRows(manager, relation, refs) : new Map<string, IStoredRow>();
-
-			for (const ref of refs) {
-				const row = ref.id !== undefined ? rows.get(rowKey(ref.id)) : undefined;
-				const persisted = resolveReference(ref, row, scoped, tenantId);
-				const depth = ref.node.depth + 1;
-
-				if (!persisted || visited.has(persisted)) {
-					continue;
-				}
-
-				if (depth >= GRAPH_CHECK_MAX_DEPTH) {
-					// Nothing below this level is walked, so nothing may be persisted below it either:
-					// save() would cascade (or re-parent) those rows with no ownership check at all.
-					if (hasRelationPayload(target, persisted)) {
-						throw new BadRequestException(
-							`Nested payload in "${ref.relation.propertyPath}" is deeper than ${GRAPH_CHECK_MAX_DEPTH} levels`
-						);
-					}
-					continue;
-				}
-
-				visited.add(persisted);
-				next.push({ metadata: target, entity: persisted, depth });
-			}
+		for (const [relation, refs] of collectReferences(level)) {
+			next.push(...(await walkRelation(manager, relation, refs, tenantId, visited)));
 		}
 
 		level = next;
 	}
+}
+
+/**
+ * Checks every reference carried by ONE relation (one batched lookup) and returns the nodes the next
+ * level has to walk.
+ *
+ * @param manager - The TypeORM entity manager used for the lookup.
+ * @param relation - The relation the references were collected from.
+ * @param refs - The nested objects / ids that relation carries at this level.
+ * @param tenantId - The caller's tenant.
+ * @param visited - Objects already queued, so a cyclic payload is walked once.
+ */
+async function walkRelation(
+	manager: EntityManager,
+	relation: RelationMetadata,
+	refs: IGraphRef[],
+	tenantId: ID,
+	visited: WeakSet<object>
+): Promise<IGraphNode[]> {
+	const target = relation.inverseEntityMetadata;
+	const scoped = isTenantScoped(target);
+	const rows = scoped ? await loadStoredRows(manager, relation, refs) : new Map<string, IStoredRow>();
+	const next: IGraphNode[] = [];
+
+	for (const ref of refs) {
+		const row = ref.id !== undefined ? rows.get(rowKey(ref.id)) : undefined;
+		const persisted = resolveReference(ref, row, scoped, tenantId);
+		const depth = ref.node.depth + 1;
+
+		if (!persisted || visited.has(persisted)) {
+			continue;
+		}
+
+		if (depth >= GRAPH_CHECK_MAX_DEPTH) {
+			// Nothing below this level is walked, so nothing may be persisted below it either: save()
+			// would cascade (or re-parent) those rows with no ownership check at all.
+			if (hasRelationPayload(target, persisted)) {
+				throw new BadRequestException(
+					`Nested payload in "${relation.propertyPath}" is deeper than ${GRAPH_CHECK_MAX_DEPTH} levels`
+				);
+			}
+			continue;
+		}
+
+		visited.add(persisted);
+		next.push({ metadata: target, entity: persisted, depth });
+	}
+
+	return next;
 }
 
 /**

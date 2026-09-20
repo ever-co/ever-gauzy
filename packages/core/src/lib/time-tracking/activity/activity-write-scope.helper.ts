@@ -50,20 +50,7 @@ export async function scopeActivitiesForWrite<T extends IActivity>(
 ): Promise<T[]> {
 	const { tenantId, employeeId } = scope;
 
-	for (const activity of activities) {
-		for (const key of FORCED_RELATION_KEYS) {
-			delete (activity as any)[key];
-		}
-		for (const { relation, column } of SCOPED_REFERENCES) {
-			const nested = (activity as any)[relation];
-			if (nested) {
-				if (!(activity as any)[column] && typeof nested === 'object' && nested.id) {
-					(activity as any)[column] = nested.id;
-				}
-				delete (activity as any)[relation];
-			}
-		}
-	}
+	normalizeReferences(activities);
 
 	await dropForeignReferences(activities, repository, tenantId);
 
@@ -87,6 +74,35 @@ export async function scopeActivitiesForWrite<T extends IActivity>(
 	}
 
 	return activities;
+}
+
+/**
+ * Drops the relation objects the caller forces anyway ({@link FORCED_RELATION_KEYS}) and folds a
+ * {@link SCOPED_REFERENCES} relation object into the scalar id the row actually stores, so only the
+ * id has to be scoped.
+ *
+ * @param activities - The activities about to be saved.
+ */
+function normalizeReferences<T extends IActivity>(activities: T[]): void {
+	for (const activity of activities) {
+		for (const key of FORCED_RELATION_KEYS) {
+			delete (activity as any)[key];
+		}
+
+		for (const { relation, column } of SCOPED_REFERENCES) {
+			const nested = (activity as any)[relation];
+
+			if (!nested) {
+				continue;
+			}
+
+			if (!(activity as any)[column] && typeof nested === 'object' && nested.id) {
+				(activity as any)[column] = nested.id;
+			}
+
+			delete (activity as any)[relation];
+		}
+	}
 }
 
 /**
