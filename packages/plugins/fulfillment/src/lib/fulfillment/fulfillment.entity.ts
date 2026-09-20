@@ -9,7 +9,8 @@ import {
 	MultiORMEntity,
 	MultiORMManyToOne,
 	MultiORMOneToMany,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	VersionedColumn
 } from '@gauzy/core';
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
 import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
@@ -170,11 +171,21 @@ export class Fulfillment extends TenantOrganizationBaseEntity implements IFulfil
 	@MultiORMColumn({ nullable: true, type: 'text' })
 	note?: string;
 
-	/** Optimistic lock: every transition takes an entity tag and bumps this counter. */
+	/**
+	 * Optimistic lock: every transition takes an entity tag and bumps this counter.
+	 *
+	 * Declared with `@VersionedColumn()` rather than as a plain column because this row is the one a
+	 * caller reads and writes back — two people working the same shipment off one screen would
+	 * otherwise silently overwrite each other, and the second write would erase the first without
+	 * anyone being told. The decorator states the same definition both ORMs receive, and the increment
+	 * is applied by `commitVersionedUpdate` in the same statement that checks it, never by a service
+	 * after a read: a counter bumped in application code is exactly the read-then-write window the
+	 * conditional update exists to close.
+	 */
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsInt()
-	@MultiORMColumn({ type: 'int', default: 1 })
+	@VersionedColumn()
 	version: number;
 
 	/** Open-ended payload for the carrier's own identifiers. */

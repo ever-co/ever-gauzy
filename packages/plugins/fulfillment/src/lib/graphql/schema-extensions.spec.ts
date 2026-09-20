@@ -61,4 +61,38 @@ describe('the fulfilment document — the retry key on the inputs of the decorat
 		expect(typeOf(fieldNamed('CreateShippingOptionInput', 'idempotencyKey'))).toBe('String');
 		expect(typeOf(fieldNamed('CreateShippingProfileInput', 'idempotencyKey'))).toBe('String');
 	});
+
+	it('declares it on the input that requests a carrier label', () => {
+		expect(typeOf(fieldNamed('RequestFulfillmentLabelInput', 'idempotencyKey'))).toBe('String');
+	});
+});
+
+/**
+ * The label mutation's own document.
+ *
+ * A mutation a client cannot spell is a mutation that does not exist, and the members it reads are read
+ * off the input it declares: the strategy is required because a label is asked of a named carrier, the
+ * service level is not because the shipment already records one, and the version is nullable for the
+ * same reason the retry key is — the refusal for a missing one is the kernel's to state, in the
+ * platform's own vocabulary, rather than the document's to pre-empt.
+ */
+describe('the fulfilment document — the label request', () => {
+	it('declares the carrier strategy as required and the service level as optional', () => {
+		expect(typeOf(fieldNamed('RequestFulfillmentLabelInput', 'providerId'))).toBe('String!');
+		expect(typeOf(fieldNamed('RequestFulfillmentLabelInput', 'service'))).toBe('String');
+	});
+
+	it('declares the version the write is predicated on', () => {
+		expect(typeOf(fieldNamed('RequestFulfillmentLabelInput', 'version'))).toBe('Int');
+	});
+
+	it('declares the root field, answering the fulfilment the route answers', () => {
+		const field = fieldNamed('Mutation', 'requestFulfillmentLabel');
+
+		expect(typeOf(field)).toBe('Fulfillment!');
+		expect(field.arguments?.map((argument) => `${argument.name.value}: ${typeOf(argument)}`)).toEqual([
+			'id: ID!',
+			'input: RequestFulfillmentLabelInput!'
+		]);
+	});
 });

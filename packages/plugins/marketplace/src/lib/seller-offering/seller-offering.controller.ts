@@ -2,18 +2,32 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards 
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	ApiErrorCode,
+	ApiException,
 	BaseQueryDTO,
+	BulkExecutor,
+	BulkItemResult,
+	BulkOperation,
+	BulkResult,
 	CrudController,
+	IBulkItemContext,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	bulkOptionsOf
 } from '@gauzy/core';
+import type { BulkItemRequest } from '@gauzy/core';
 import { SellerOffering } from './seller-offering.entity';
 import { SellerOfferingService } from './seller-offering.service';
 import { CreateSellerOfferingDTO, UpdateSellerOfferingDTO } from './dto';
+import {
+	IBulkSellerOfferingItem,
+	IBulkSellerOfferingsRequest,
+	SELLER_OFFERING_BULK_REQUIRED_KEYS
+} from './seller-offering.bulk';
 import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 import { ISellerScope } from '../seller-scope/seller-scope';
 
@@ -28,7 +42,10 @@ import { ISellerScope } from '../seller-scope/seller-scope';
 @Permissions(PermissionsEnum.SELLER_OFFERINGS_VIEW)
 @Controller('/seller-offerings')
 export class SellerOfferingController extends CrudController<SellerOffering> {
-	constructor(private readonly sellerOfferingService: SellerOfferingService) {
+	constructor(
+		private readonly sellerOfferingService: SellerOfferingService,
+		private readonly bulkExecutor: BulkExecutor
+	) {
 		super(sellerOfferingService);
 	}
 
@@ -139,6 +156,132 @@ export class SellerOfferingController extends CrudController<SellerOffering> {
 	@Delete('/:id')
 	async withdraw(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<SellerOffering> {
 		return this.sellerOfferingService.withdraw(id, this.scope(request));
+	}
+
+	/**
+	 * Applies a batch of offerings.
+	 *
+	 * One request publishes, pauses, withdraws or re-prices a page of listings and answers one outcome per
+	 * item: what applied, what did not and the counts derived from both. The batch itself is the
+	 * platform's — `@BulkOperation` declares what this route accepts, the executor is configured from
+	 * that declaration, and it authorises the whole request once, refuses a batch it cannot read before
+	 * writing anything, and rolls an atomic batch back when one of its items fails. A second runner
+	 * beside that one would be a second answer to the same question, which is what the platform's bulk
+	 * contract exists to prevent.
+	 *
+	 * The items are applied through the service that owns the offering's writes, with the batch's own
+	 * transactional manager, so an atomic batch is one transaction over the same methods the single-item
+	 * routes reach and an item produces the same row, the same event and the same refusal.
+	 *
+	 * `atomic` is the whole point of the flag: an atomic batch applies every item or none of them, and a
+	 * batch that is not atomic applies what it can and reports the rest.
+	 *
+	 * The caller's seller scope is resolved once by the guard and handed to every item, so a seller-scoped
+	 * caller reaches its own offerings and no others — the refusal the single-item routes give for
+	 * another seller's offering is the refusal its item reports.
+	 *
+	 * The route declares no body type: the batch's own checks — the cap, the unreadable item, the member
+	 * an item does not carry — belong to the executor, so a validation pipe here could only refuse a
+	 * request the contract already refuses, in a second vocabulary.
+	 *
+	 * @param request The HTTP request, which carries the seller scope the guard resolved.
+	 * @param body The batch.
+	 * @returns What applied, what did not, and the counts derived from both.
+	 */
+	@ApiOperation({ summary: 'Publish, pause, withdraw and re-price offerings in bulk' })
+	@ApiResponse({
+		status: 200,
+		description: 'The batch was applied, with one outcome per item'
+	})
+	@ApiResponse({
+		status: 400,
+		description: 'The request or an item could not be read'
+	})
+	@ApiResponse({
+		status: 409,
+		description: 'An atomic batch was refused whole, naming the item that failed'
+	})
+	@ApiResponse({
+		status: 413,
+		description: 'BULK_LIMIT_EXCEEDED'
+	})
+	@ApiResponse({
+		status: 422,
+		description: 'BULK_ALL_ITEMS_FAILED'
+	})
+	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
+	@Idempotent({ scope: 'seller_offering.bulk', required: false, resourceType: 'seller_offering' })
+	@BulkOperation({
+		resource: 'seller_offering',
+		// The platform's cap for every resource but the price and stock matrices, whose batches are larger.
+		maxItems: 200,
+		permission: PermissionsEnum.SELLER_OFFERINGS_EDIT
+	})
+	@Post('/bulk')
+	async bulk(
+		@Req() request: any,
+		@Body() body: IBulkSellerOfferingsRequest
+	): Promise<BulkResult<IBulkSellerOfferingItem>> {
+		this.assertNoDryRun(body);
+
+		const scope = this.scope(request);
+
+		return await this.bulkExecutor.execute<IBulkSellerOfferingItem>(
+			body,
+			(item, context) => this.applyBulkItem(item, context, scope),
+			bulkOptionsOf(SellerOfferingController, 'bulk', {
+				requiredKeys: SELLER_OFFERING_BULK_REQUIRED_KEYS,
+				transaction: this.sellerOfferingService.transaction
+			})
+		);
+	}
+
+	/**
+	 * Refuses a batch that asks for a dry run.
+	 *
+	 * This route declares no dry run, and the platform's executor would honour the member anyway: it would
+	 * apply every item with no transaction, so a request that asked the batch to be validated and priced
+	 * without being written would be answered with the writes it asked not to make. Refusing is the honest
+	 * answer to a member the endpoint table does not declare for this route, and it is refused before item
+	 * 0 so nothing is applied.
+	 *
+	 * The member is read off the body rather than off the declared type because the route declares no body
+	 * type: a REST caller reaches the handler with whatever the request carried.
+	 *
+	 * @param body The batch.
+	 * @throws ApiException When the batch carries the undeclared member.
+	 */
+	private assertNoDryRun(body: IBulkSellerOfferingsRequest): void {
+		if ((body as { dryRun?: unknown })?.dryRun !== undefined) {
+			throw new ApiException(
+				400,
+				ApiErrorCode.VALIDATION_FAILED,
+				'This route applies every item it accepts; it declares no dry run.',
+				{ field: 'dryRun' }
+			);
+		}
+	}
+
+	/**
+	 * Applies one item of a batch through the service that owns the offering's writes.
+	 *
+	 * The route owns no write of its own: the item is handed on with the batch's transactional manager
+	 * exactly as the executor resolved it and with the scope the guard resolved, and the outcome names the
+	 * offering that moved so a client can match an answer to the listing it asked about.
+	 *
+	 * @param item The item.
+	 * @param context What the executor resolved for it.
+	 * @param scope The seller scope the guard resolved, when the caller is seller-scoped.
+	 * @returns The outcome the batch reports for the item.
+	 */
+	private async applyBulkItem(
+		item: BulkItemRequest<IBulkSellerOfferingItem>,
+		context: IBulkItemContext,
+		scope?: ISellerScope
+	): Promise<BulkItemResult> {
+		const offering = await this.sellerOfferingService.applyBulkItem(item, scope, context.manager);
+
+		return { index: context.index, id: offering.id };
 	}
 
 	/** The seller scope the guard resolved. */

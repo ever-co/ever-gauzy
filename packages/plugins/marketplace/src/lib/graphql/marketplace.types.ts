@@ -16,6 +16,8 @@ import {
 	TaxCollectionMode,
 	TaxRegistrationScheme
 } from '@gauzy/contracts';
+import { SellerOfferingBulkOperation } from '../seller-offering/seller-offering.bulk';
+import type { IBulkSellerOfferingItemResult } from '../seller-offering/seller-offering.bulk';
 
 /**
  * The GraphQL enums the marketplace exposes.
@@ -56,6 +58,14 @@ registerEnumType(SellerTransactionStatus, {
 	description: 'The lifecycle of a ledger row.'
 });
 registerEnumType(SellerHoldReason, { name: 'SellerHoldReason', description: 'Why a ledger row is held.' });
+/**
+ * The offering batch's own vocabulary, registered from the enum the resource writes with rather than
+ * restated, so the values a caller states are the values the service switches on.
+ */
+registerEnumType(SellerOfferingBulkOperation, {
+	name: 'SellerOfferingBulkOperation',
+	description: 'The operation one item of an offering batch performs.'
+});
 
 /**
  * A seller, as GraphQL exposes it.
@@ -486,4 +496,68 @@ export class SellerSplitReconciliationType {
 	/** What the platform kept on the seller-owned part; legitimately negative. */
 	@Field(() => Float)
 	platformRetained: number;
+}
+
+/**
+ * One item's outcome in an offering batch.
+ *
+ * The item result is the batch's unit of answer rather than a row: it carries the position the item held
+ * in the request and either the offering that moved or the failure with the item's own code, so a client
+ * that sent a page of listings reads which of them applied without matching rows back to a request by
+ * hand.
+ */
+@ObjectType('SellerOfferingBulkItemResult')
+export class SellerOfferingBulkItemResultType {
+	/** The item's position in the request. */
+	@Field(() => Int)
+	index: number;
+
+	/** True when the item applied. */
+	@Field(() => Boolean)
+	ok: boolean;
+
+	/** The offering that moved, when the item applied. */
+	@Field(() => ID, { nullable: true })
+	id?: string;
+
+	/** The resource that moved, so a mixed batch reads unambiguously. */
+	@Field(() => String, { nullable: true })
+	resource?: string;
+
+	/**
+	 * Why the item did not apply, with the code the same item would have produced alone.
+	 *
+	 * The member's type is the kernel's `UserError`, named here as the schema names it: the platform
+	 * declares that type once for every payload that reports an expected outcome, and a second class for it
+	 * in this package would be a second declaration of a kernel type — one that composes only while the two
+	 * copies agree.
+	 */
+	@Field(() => 'UserError', { nullable: true })
+	error?: IBulkSellerOfferingItemResult['error'];
+}
+
+/**
+ * What a batch of offerings adds up to.
+ *
+ * The counts are read from the platform's own batch result rather than accumulated beside it, so a client
+ * can assert `succeeded + failed == total` against the same answer rather than against a second number
+ * that could disagree with it.
+ */
+@ObjectType('BulkSellerOfferingsPayload')
+export class BulkSellerOfferingsPayloadType {
+	/** One entry per request item, in request order. */
+	@Field(() => [SellerOfferingBulkItemResultType])
+	results: IBulkSellerOfferingItemResult[];
+
+	/** How many items applied. */
+	@Field(() => Int)
+	succeeded: number;
+
+	/** How many items did not. */
+	@Field(() => Int)
+	failed: number;
+
+	/** How many items the request carried. */
+	@Field(() => Int)
+	total: number;
 }

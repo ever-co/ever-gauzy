@@ -1,8 +1,24 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
+import { EntityManager, FindOptionsWhere, Repository } from 'typeorm';
 import { ID, IPagination, OfferingStatus, SellerStatus } from '@gauzy/contracts';
-import { EventOutboxService, RequestContext, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
+import {
+	ApiErrorCode,
+	ApiException,
+	EventOutboxService,
+	IBulkTransactionRunner,
+	RequestContext,
+	TenantAwareCrudService,
+	isUniqueViolation,
+	operationOf
+} from '@gauzy/core';
+import type { BulkItemRequest } from '@gauzy/core';
 import { SellerOffering } from './seller-offering.entity';
+import {
+	IBulkSellerOfferingItem,
+	SELLER_OFFERING_BULK_OPERATIONS,
+	SellerOfferingBulkOperation,
+	isSellerOfferingBulkOperation
+} from './seller-offering.bulk';
 import { MikroOrmSellerOfferingRepository } from './repository/mikro-orm-seller-offering.repository';
 import { TypeOrmSellerOfferingRepository } from './repository/type-orm-seller-offering.repository';
 import { Seller } from '../seller/seller.entity';
@@ -34,6 +50,34 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		super(typeOrmSellerOfferingRepository, mikroOrmSellerOfferingRepository);
 	}
 
+	/**
+	 * The transaction a bulk batch writes its items through.
+	 *
+	 * An atomic batch has to be one transaction, and only the resource knows which connection its own
+	 * table is written through, so the runner is the service's to state rather than the route's to
+	 * assemble: the `.manager.transaction` path is the platform's, as it is everywhere else a group of
+	 * writes has to commit or roll back together.
+	 *
+	 * It is a member rather than a method so it can be handed to the batch executor as it stands.
+	 */
+	public readonly transaction: IBulkTransactionRunner = (work) =>
+		this.typeOrmSellerOfferingRepository.manager.transaction(work);
+
+	/**
+	 * The repository a write goes through.
+	 *
+	 * A batch that asked for atomicity hands every item the manager its one transaction opened, and an
+	 * item written through any other handle would not be part of that transaction — it would survive the
+	 * rollback the executor performs when a later item fails. A call that states no manager writes
+	 * through the repository the single-item routes use.
+	 *
+	 * @param manager The batch's transactional manager, when the call has one.
+	 * @returns The repository the call writes and reads through.
+	 */
+	private repository(manager?: EntityManager): Repository<SellerOffering> {
+		return manager ? manager.getRepository(SellerOffering) : this.typeOrmSellerOfferingRepository;
+	}
+
 	/** Lists offerings, narrowed to the caller's seller unless the caller is staff. */
 	async listOfferings(filter: any = {}, scope?: ISellerScope): Promise<IPagination<SellerOffering>> {
 		const where = { ...(filter?.where ?? {}) };
@@ -49,8 +93,8 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 	}
 
 	/** Reads one offering, refusing one that belongs to another seller. */
-	async getOffering(id: ID, scope?: ISellerScope): Promise<SellerOffering> {
-		const offering = await this.typeOrmSellerOfferingRepository.findOne({
+	async getOffering(id: ID, scope?: ISellerScope, manager?: EntityManager): Promise<SellerOffering> {
+		const offering = await this.repository(manager).findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),
@@ -116,9 +160,20 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		}
 	}
 
-	/** Updates the mutable fields of an offering. */
-	async updateOffering(id: ID, input: Partial<SellerOffering>, scope?: ISellerScope): Promise<SellerOffering> {
-		const offering = await this.getOffering(id, scope);
+	/**
+	 * Updates the mutable fields of an offering.
+	 *
+	 * `manager` is threaded for the reason the batch's writes are: an item of an atomic batch has to be
+	 * read and written inside the one transaction the batch opened, or it would survive the rollback. A
+	 * call that states none writes through the repository the single-item route uses.
+	 */
+	async updateOffering(
+		id: ID,
+		input: Partial<SellerOffering>,
+		scope?: ISellerScope,
+		manager?: EntityManager
+	): Promise<SellerOffering> {
+		const offering = await this.getOffering(id, scope, manager);
 
 		const window = this.assertWindow(
 			input.availableFrom ?? offering.availableFrom,
@@ -138,9 +193,9 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		Object.assign(offering, values);
 
-		const saved = await this.typeOrmSellerOfferingRepository.save(offering);
+		const saved = await this.repository(manager).save(offering);
 
-		await this.emit(saved, 'seller-offering.updated', { changed: Object.keys(values), status: saved.status });
+		await this.emit(saved, 'seller-offering.updated', { changed: Object.keys(values), status: saved.status }, manager);
 
 		return saved;
 	}
@@ -168,9 +223,14 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 	 * The publication clauses are checked before the status changes so that a seller is never told an
 	 * offering is live when a clause would have excluded it.
 	 */
-	async publish(id: ID, channelIds?: string[], scope?: ISellerScope): Promise<SellerOffering> {
-		const offering = await this.getOffering(id, scope);
-		const seller = await this.requireSeller(offering.sellerId);
+	async publish(
+		id: ID,
+		channelIds?: string[],
+		scope?: ISellerScope,
+		manager?: EntityManager
+	): Promise<SellerOffering> {
+		const offering = await this.getOffering(id, scope, manager);
+		const seller = await this.requireSeller(offering.sellerId, manager);
 
 		if (channelIds?.length) {
 			offering.channelIds = channelIds;
@@ -182,38 +242,43 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		offering.approvedAt = new Date();
 		offering.approvedByUserId = RequestContext.currentUserId();
 
-		const published = await this.typeOrmSellerOfferingRepository.save(offering);
+		const published = await this.repository(manager).save(offering);
 
-		await this.emit(published, 'seller-offering.updated', {
-			changed: ['status', 'channelIds'],
-			status: published.status
-		});
+		await this.emit(
+			published,
+			'seller-offering.updated',
+			{
+				changed: ['status', 'channelIds'],
+				status: published.status
+			},
+			manager
+		);
 
 		return published;
 	}
 
 	/** Pauses an offering without withdrawing it. */
-	async unpause(id: ID, scope?: ISellerScope): Promise<SellerOffering> {
-		const offering = await this.getOffering(id, scope);
+	async unpause(id: ID, scope?: ISellerScope, manager?: EntityManager): Promise<SellerOffering> {
+		const offering = await this.getOffering(id, scope, manager);
 
 		offering.status = OfferingStatus.PAUSED;
 
-		const paused = await this.typeOrmSellerOfferingRepository.save(offering);
+		const paused = await this.repository(manager).save(offering);
 
-		await this.emit(paused, 'seller-offering.updated', { changed: ['status'], status: paused.status });
+		await this.emit(paused, 'seller-offering.updated', { changed: ['status'], status: paused.status }, manager);
 
 		return paused;
 	}
 
 	/** Withdraws an offering; the row is kept, because it explains a past line's price and commission. */
-	async withdraw(id: ID, scope?: ISellerScope): Promise<SellerOffering> {
-		const offering = await this.getOffering(id, scope);
+	async withdraw(id: ID, scope?: ISellerScope, manager?: EntityManager): Promise<SellerOffering> {
+		const offering = await this.getOffering(id, scope, manager);
 
 		offering.status = OfferingStatus.WITHDRAWN;
 
-		const withdrawn = await this.typeOrmSellerOfferingRepository.save(offering);
+		const withdrawn = await this.repository(manager).save(offering);
 
-		await this.emit(withdrawn, 'seller-offering.withdrawn', { reason: 'WITHDRAWN' });
+		await this.emit(withdrawn, 'seller-offering.withdrawn', { reason: 'WITHDRAWN' }, manager);
 
 		return withdrawn;
 	}
@@ -242,6 +307,79 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		});
 
 		return saved;
+	}
+
+	/**
+	 * Applies one item of an offering batch and answers the offering it moved.
+	 *
+	 * The item states one of the four operations this resource serves, and each of them is the act the
+	 * delivered single-item route performs: a publish reaches `publish` with the item's channel subset, a
+	 * pause reaches `unpause`, a withdrawal reaches `withdraw`, and a re-price reaches the
+	 * price-and-commission half of `updateOffering`. The item therefore produces the same columns, the
+	 * same outbox event and the same refusal as the equivalent call on its own route — a batch is a
+	 * second way to ask, never a second thing that happens.
+	 *
+	 * **The platform's `op` is read only to refuse the one kind this batch cannot perform.** Every
+	 * operation here addresses an offering that already exists, so an item that states `create` is asking
+	 * for a write no route of this resource serves, and applying it as the operation it also named would
+	 * answer a request the caller did not make. `update`, `upsert` and `delete` all name a row that must
+	 * already exist, which is what this batch does — including `delete`, because the delivered removal is
+	 * the withdrawal and it keeps the row.
+	 *
+	 * **`manager` is what makes an atomic batch all-or-nothing.** An atomic batch hands every item the one
+	 * manager its transaction opened, and every read, write and outbox row of the item goes through it. A
+	 * batch that applies its items one by one states no manager, and each item's write then stands on its
+	 * own.
+	 *
+	 * @param item The item: the operation and the offering it applies to. The platform types an item of a
+	 * batch as the resource's own members plus the optional `op` the batch contract adds to every item.
+	 * @param scope The seller scope the guard resolved, when the caller is seller-scoped.
+	 * @param manager The batch's transactional manager, when the batch has one.
+	 * @returns The offering the item moved.
+	 * @throws ApiException `400` when the item names an unknown operation or asks for a creation this batch
+	 * does not perform, carrying the catalogue code the equivalent single-item refusal carries. The batch
+	 * reports it as that item's failure.
+	 */
+	public async applyBulkItem(
+		item: BulkItemRequest<IBulkSellerOfferingItem>,
+		scope?: ISellerScope,
+		manager?: EntityManager
+	): Promise<SellerOffering> {
+		if (operationOf(item) === 'create') {
+			// A batch item that names a creation is refused with a catalogue code rather than a bare 400: the
+			// executor reports an item's `ApiException` as it stands and treats anything else as an internal
+			// defect, and a caller's mistake must not read as a defect of the platform.
+			throw new ApiException(
+				400,
+				ApiErrorCode.VALIDATION_FAILED,
+				'A bulk item cannot create an offering: it names the offering it applies to.',
+				{ field: 'op' }
+			);
+		}
+
+		if (!isSellerOfferingBulkOperation(item?.operation)) {
+			// The batch refuses an unknown verb rather than applying one of the four by position, so an item a
+			// client wrote with a typo is reported instead of guessing at what it meant. The code and the
+			// detail are the ones the platform's own pre-pass gives a value that is not a member of its
+			// vocabulary.
+			throw new ApiException(
+				400,
+				ApiErrorCode.VALIDATION_INVALID_ENUM,
+				`"${String(item?.operation)}" is not a bulk operation of an offering.`,
+				{ field: 'operation', allowed: [...SELLER_OFFERING_BULK_OPERATIONS] }
+			);
+		}
+
+		switch (item.operation) {
+			case SellerOfferingBulkOperation.PUBLISH:
+				return this.publish(item.id, item.channelIds, scope, manager);
+			case SellerOfferingBulkOperation.PAUSE:
+				return this.unpause(item.id, scope, manager);
+			case SellerOfferingBulkOperation.WITHDRAW:
+				return this.withdraw(item.id, scope, manager);
+			default:
+				return this.updateOffering(item.id, repriceOf(item), scope, manager);
+		}
 	}
 
 	/**
@@ -329,30 +467,49 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 	 * The event is written in the same transaction as the row, so an offering cannot change without the
 	 * platform being able to say that it did — which is what a catalogue projection, a price-cache
 	 * invalidation and an open-cart validation all depend on.
+	 *
+	 * A call that arrives with the batch's manager appends through it, because that transaction already
+	 * exists and the announcement has to commit or roll back with the row it announces: opening a second
+	 * transaction here would leave the outbox announcing a change the batch then rolled back. A call that
+	 * states none opens the transaction the single-item routes use.
 	 */
-	private async emit(offering: SellerOffering, name: string, extra: Record<string, any> = {}): Promise<void> {
-		await this.typeOrmSellerOfferingRepository.manager.transaction(async (manager) => {
-			await this.outbox.append(manager, {
-				name,
-				aggregateType: 'SELLER_OFFERING',
-				aggregateId: offering.id as ID,
-				data: {
-					offeringId: offering.id,
-					sellerId: offering.sellerId,
-					status: offering.status,
-					channelIds: offering.channelIds ?? [],
-					commissionRate: offering.commissionRate,
-					...extra
-				},
-				tenantId: offering.tenantId,
-				organizationId: offering.organizationId
-			});
+	private async emit(
+		offering: SellerOffering,
+		name: string,
+		extra: Record<string, any> = {},
+		manager?: EntityManager
+	): Promise<void> {
+		const event = {
+			name,
+			aggregateType: 'SELLER_OFFERING',
+			aggregateId: offering.id as ID,
+			data: {
+				offeringId: offering.id,
+				sellerId: offering.sellerId,
+				status: offering.status,
+				channelIds: offering.channelIds ?? [],
+				commissionRate: offering.commissionRate,
+				...extra
+			},
+			tenantId: offering.tenantId,
+			organizationId: offering.organizationId
+		};
+
+		if (manager) {
+			await this.outbox.append(manager, event);
+
+			return;
+		}
+
+		await this.typeOrmSellerOfferingRepository.manager.transaction(async (own) => {
+			await this.outbox.append(own, event);
 		});
 	}
 
 	/** Reads the seller a child row is being written for. */
-	private async requireSeller(sellerId: ID): Promise<Seller> {
-		const seller = await this.sellerRepository.findOne({
+	private async requireSeller(sellerId: ID, manager?: EntityManager): Promise<Seller> {
+		const repository: Repository<Seller> = manager ? manager.getRepository(Seller) : this.sellerRepository;
+		const seller = await repository.findOne({
 			where: {
 				id: sellerId,
 				tenantId: RequestContext.currentTenantId(),
@@ -366,4 +523,29 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		return seller;
 	}
+}
+
+/**
+ * The members a re-price writes.
+ *
+ * Only the members the item states are returned, because a member an item leaves out is a member it says
+ * nothing about: handing the update a key whose value is `undefined` would wipe the column the item was
+ * silent on, and a batch that re-priced one offering would then also empty its currency or its
+ * commission schedule.
+ *
+ * A re-price writes the price and, when the item states them, the commission members it is sold under. It
+ * never touches the window, the channel set, the seller or the variant, which are the members
+ * `updateOffering` refuses to move in any case.
+ *
+ * @param item The item.
+ * @returns The offering members the item states.
+ */
+function repriceOf(item: IBulkSellerOfferingItem): Partial<SellerOffering> {
+	return {
+		...(item.priceAmount !== undefined ? { priceAmount: item.priceAmount } : {}),
+		...(item.priceCurrency !== undefined ? { priceCurrency: item.priceCurrency } : {}),
+		...(item.commissionRate !== undefined ? { commissionRate: item.commissionRate } : {}),
+		...(item.commissionBasis !== undefined ? { commissionBasis: item.commissionBasis } : {}),
+		...(item.commissionTiers !== undefined ? { commissionTiers: item.commissionTiers } : {})
+	};
 }

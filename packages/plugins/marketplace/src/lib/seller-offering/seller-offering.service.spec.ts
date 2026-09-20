@@ -50,6 +50,11 @@ jest.mock('@gauzy/core', () => {
 		EventOutboxService: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
 		isUniqueViolation: (error: any) => Boolean(error?.code === '23505'),
+		// The batch path reads the operation an item declared and names a catalogue code when it refuses one,
+		// so the kernel's own reader and its own error classes answer rather than a second copy of either.
+		operationOf: jest.requireActual('@gauzy/core/src/lib/api/bulk').operationOf,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
 		Merchant: class {},
 		OrganizationContact: class {},
 		Product: class {},
@@ -78,11 +83,12 @@ jest.mock('@gauzy/config', () => ({
 }));
 
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { OfferingStatus, SellerStatus } from '@gauzy/contracts';
-import { RequestContext } from '@gauzy/core';
+import { CommissionBasis, OfferingStatus, SellerStatus } from '@gauzy/contracts';
+import { ApiErrorCode, ApiException, RequestContext } from '@gauzy/core';
 import { Seller } from '../seller/seller.entity';
 import { SellerOffering } from './seller-offering.entity';
 import { SellerOfferingService } from './seller-offering.service';
+import { SellerOfferingBulkOperation } from './seller-offering.bulk';
 
 /**
  * What a seller offers, and when it may be sold (doc 20 §3, §10.2).
@@ -157,6 +163,7 @@ function offeringFixture(
 		seller_offering: [...(seed.offerings ?? [offeringRow('offering-1')])]
 	};
 	const appended: any[] = [];
+	const appendedWith: unknown[] = [];
 
 	const tableOf = (entity: unknown): Row[] => {
 		if (entity === Seller) {
@@ -205,7 +212,14 @@ function offeringFixture(
 
 			return row;
 		},
-		transaction: async (run: (transactional: any) => Promise<any>) => await run(manager)
+		transaction: async (run: (transactional: any) => Promise<any>) => await run(manager),
+		// The repositories a batch's manager hands out. They read and write the same in-memory tables, which
+		// is what makes the manager's transaction the only thing the batch's atomicity can be observed on:
+		// a write that went through the repository instead would still land in these tables.
+		getRepository: (entity: unknown) => ({
+			findOne: async ({ where }: any = {}) => tableOf(entity).find((row) => matches(row, where)) ?? null,
+			save: async (row: Row) => await manager.save(entity, row)
+		})
 	};
 
 	const offeringRepository: any = {
@@ -223,8 +237,9 @@ function offeringFixture(
 		findOne: async ({ where }: any = {}) => tables.seller.find((row) => matches(row, where)) ?? null
 	};
 	const outbox = {
-		append: async (_manager: unknown, event: any) => {
+		append: async (manager: unknown, event: any) => {
 			appended.push(event);
+			appendedWith.push(manager);
 
 			return event;
 		}
@@ -234,8 +249,10 @@ function offeringFixture(
 
 	return {
 		service,
+		manager,
 		tables,
 		appended,
+		appendedWith,
 		events: () => appended.map((event) => event.name),
 		store: (id: string = 'offering-1') => tables.seller_offering.find((row) => row.id === id)
 	};
@@ -576,5 +593,203 @@ describe('SellerOfferingService — what a scoped caller may see (MK-22, doc 20 
 		const page = await fixture.service.listOfferings({}, { sellerId: SELLER, staff: false } as never);
 
 		expect(page.items.map((row) => row.id)).toEqual(['offering-1']);
+	});
+});
+
+describe('SellerOfferingService — one item of a batch (doc 20 §14.1, the bulk route)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('publishes through the publish route’s own act, channel subset and all', async () => {
+		const fixture = offeringFixture();
+
+		const moved = await fixture.service.applyBulkItem({
+			id: 'offering-1',
+			operation: SellerOfferingBulkOperation.PUBLISH,
+			channelIds: [CHANNEL]
+		});
+
+		// Control: the item reaches the method the delivered route reaches, so the approval stamp and the
+		// publication clauses are the ones that route applies — a batch that wrote the status directly would
+		// leave `approvedAt` unset and would publish an offering whose seller is suspended.
+		expect(moved).toMatchObject({
+			status: OfferingStatus.ACTIVE,
+			approvedByUserId: 'user-1',
+			channelIds: [CHANNEL]
+		});
+		expect(moved.approvedAt).toBeInstanceOf(Date);
+	});
+
+	it('refuses to publish through the batch an offering whose seller is not active', async () => {
+		const fixture = offeringFixture({ sellers: [sellerRow({ status: SellerStatus.SUSPENDED })] });
+
+		await expect(
+			fixture.service.applyBulkItem({ id: 'offering-1', operation: SellerOfferingBulkOperation.PUBLISH })
+		).rejects.toBeInstanceOf(ForbiddenException);
+		expect(fixture.store()?.status).toBe(OfferingStatus.DRAFT);
+	});
+
+	it('pauses and withdraws through the two status moves, keeping the row', async () => {
+		const paused = offeringFixture();
+
+		await paused.service.applyBulkItem({ id: 'offering-1', operation: SellerOfferingBulkOperation.PAUSE });
+
+		expect(paused.store()?.status).toBe(OfferingStatus.PAUSED);
+
+		const withdrawn = offeringFixture();
+
+		await withdrawn.service.applyBulkItem({ id: 'offering-1', operation: SellerOfferingBulkOperation.WITHDRAW });
+
+		// "the row is kept, because it explains a past line's price and commission" (§13.2), and the event is
+		// the withdrawal's own rather than the generic update.
+		expect(withdrawn.store()?.status).toBe(OfferingStatus.WITHDRAWN);
+		expect(withdrawn.tables.seller_offering).toHaveLength(1);
+		expect(withdrawn.events()).toEqual(['seller-offering.withdrawn']);
+	});
+
+	it('re-prices the amount and leaves every member the item did not state as it was', async () => {
+		const fixture = offeringFixture({
+			offerings: [
+				offeringRow('offering-1', {
+					priceAmount: '10.00',
+					priceCurrency: 'EUR',
+					commissionRate: '0.150000',
+					title: 'The seller’s own title'
+				})
+			]
+		});
+
+		await fixture.service.applyBulkItem({
+			id: 'offering-1',
+			operation: SellerOfferingBulkOperation.REPRICE,
+			priceAmount: '19.00'
+		});
+
+		// Control: an item that states only the amount must not empty the columns it was silent on, which is
+		// what an update carrying every member would do — and the currency is the one the offering already
+		// held, so the price is resolvable.
+		expect(fixture.store()).toMatchObject({
+			priceAmount: '19.00',
+			priceCurrency: 'EUR',
+			commissionRate: '0.150000',
+			title: 'The seller’s own title'
+		});
+		expect(fixture.events()).toEqual(['seller-offering.updated']);
+	});
+
+	it('re-prices the commission members when the item states them', async () => {
+		const fixture = offeringFixture();
+
+		await fixture.service.applyBulkItem({
+			id: 'offering-1',
+			operation: SellerOfferingBulkOperation.REPRICE,
+			priceAmount: '19.00',
+			priceCurrency: 'USD',
+			commissionRate: '0.200000',
+			commissionBasis: CommissionBasis.DISCOUNTED_SUBTOTAL
+		});
+
+		expect(fixture.store()).toMatchObject({
+			priceCurrency: 'USD',
+			commissionRate: '0.200000',
+			commissionBasis: CommissionBasis.DISCOUNTED_SUBTOTAL
+		});
+	});
+
+	it('refuses an authored price with no currency anywhere to resolve it', async () => {
+		// The same refusal the edit route gives: the item states an amount and neither it nor the offering
+		// holds a currency, so the price could not be resolved later.
+		const fixture = offeringFixture({ offerings: [offeringRow('offering-1', { priceCurrency: null })] });
+
+		await expect(
+			fixture.service.applyBulkItem({
+				id: 'offering-1',
+				operation: SellerOfferingBulkOperation.REPRICE,
+				priceAmount: '19.00'
+			})
+		).rejects.toThrow(/authored price needs a currency/);
+		expect(fixture.store()?.priceAmount).toBe('10.00');
+	});
+
+	it('refuses an item that names no known operation, naming the ones it may state', async () => {
+		const fixture = offeringFixture();
+
+		const refusal = await fixture.service
+			.applyBulkItem({ id: 'offering-1', operation: 'REPRICE_OFFERING' } as never)
+			.catch((thrown) => thrown);
+
+		// Control: the refusal carries the catalogue code and the vocabulary rather than a bare 400, because
+		// the platform's executor reports an item's `ApiException` as it stands and treats anything else as an
+		// internal defect — a caller's typo must not read as a defect of the platform.
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect(refusal.code).toBe(ApiErrorCode.VALIDATION_INVALID_ENUM);
+		expect(refusal.details).toEqual({
+			field: 'operation',
+			allowed: ['PUBLISH', 'PAUSE', 'WITHDRAW', 'REPRICE']
+		});
+		expect(fixture.events()).toEqual([]);
+	});
+
+	it('refuses an item that asks the batch to create an offering', async () => {
+		const fixture = offeringFixture({ offerings: [] });
+
+		const refusal = await fixture.service
+			.applyBulkItem({ id: 'offering-1', op: 'create', operation: SellerOfferingBulkOperation.PUBLISH } as never)
+			.catch((thrown) => thrown);
+
+		// Control: no operation of this route creates a row, so an item that declares one is reported instead
+		// of being applied as the operation it also named — and nothing was written.
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect(refusal.code).toBe(ApiErrorCode.VALIDATION_FAILED);
+		expect(refusal.details).toEqual({ field: 'op' });
+		expect(fixture.tables.seller_offering).toEqual([]);
+	});
+
+	it('refuses an item that addresses another seller’s offering', async () => {
+		const fixture = offeringFixture({ offerings: [offeringRow('offering-1', { sellerId: 'seller-2' })] });
+
+		await expect(
+			fixture.service.applyBulkItem(
+				{ id: 'offering-1', operation: SellerOfferingBulkOperation.PAUSE },
+				{ sellerId: SELLER, staff: false } as never
+			)
+		).rejects.toBeInstanceOf(ForbiddenException);
+	});
+
+	it('writes the row and its event through the manager the batch’s transaction opened', async () => {
+		const fixture = offeringFixture();
+		const batchManager: any = {
+			...fixture.manager,
+			getRepository: jest.fn(fixture.manager.getRepository)
+		};
+
+		await fixture.service.applyBulkItem(
+			{ id: 'offering-1', operation: SellerOfferingBulkOperation.PAUSE },
+			undefined,
+			batchManager
+		);
+
+		// Control: this is what makes an atomic batch all-or-nothing. An item read and written through the
+		// repository the single-item routes use would not be part of the batch's transaction, and the event
+		// would announce a change the executor's rollback then undid — so the manager is asserted on for both
+		// the row and the outbox row.
+		expect(batchManager.getRepository).toHaveBeenCalledWith(SellerOffering);
+		expect(fixture.appendedWith).toEqual([batchManager]);
+		expect(fixture.store()?.status).toBe(OfferingStatus.PAUSED);
+	});
+
+	it('opens the service’s own transaction for an item applied outside a batch', async () => {
+		const fixture = offeringFixture();
+
+		await fixture.service.applyBulkItem({ id: 'offering-1', operation: SellerOfferingBulkOperation.PAUSE });
+
+		// A batch that is not atomic states no manager, and the item's write then stands on its own: the event
+		// is written in the transaction the single-item routes use, which is the repository's own.
+		expect(fixture.appendedWith).toEqual([fixture.manager]);
 	});
 });

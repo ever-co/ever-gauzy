@@ -220,6 +220,24 @@ export const fulfillmentSchemaExtensions = gql`
 		idempotencyKey: String
 	}
 
+	input RequestFulfillmentLabelInput {
+		"The registered carrier strategy the label is requested from."
+		providerId: String!
+		"The service level to label the parcel for, when it differs from the one the shipment records."
+		service: String
+		"""
+		The client's own key for this request, honoured when one is presented. A request retried under
+		the same key is answered with the label the first attempt recorded, instead of asking the
+		carrier a second time.
+		"""
+		idempotencyKey: String
+		"""
+		The version the caller read the fulfilment at. A label is written through the version-predicated
+		update, so a shipment that moved on since it was read is refused rather than overwritten.
+		"""
+		version: Int
+	}
+
 	input ShippingEligibilityInput {
 		channelId: ID
 		regionId: ID
@@ -266,5 +284,7 @@ export const fulfillmentSchemaExtensions = gql`
 		markFulfillmentInTransit(id: ID!): Fulfillment!
 		deliverFulfillment(id: ID!): Fulfillment!
 		cancelFulfillment(id: ID!, reason: String): Fulfillment!
+		"Request a carrier label for a shipment, or re-fetch the one the carrier already issued."
+		requestFulfillmentLabel(id: ID!, input: RequestFulfillmentLabelInput!): Fulfillment!
 	}
 `;

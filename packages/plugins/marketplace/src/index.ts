@@ -22,6 +22,7 @@ export * from './lib/seller-offering/seller-offering.entity';
 export * from './lib/seller-offering/seller-offering.service';
 export * from './lib/seller-offering/seller-offering.controller';
 export * from './lib/seller-offering/seller-offering.module';
+export * from './lib/seller-offering/seller-offering.bulk';
 export * from './lib/seller-transaction/seller-transaction.entity';
 export * from './lib/seller-transaction/seller-transaction.service';
 export * from './lib/seller-transaction/seller-transaction.controller';

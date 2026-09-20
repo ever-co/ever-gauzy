@@ -59,10 +59,11 @@ import { TypeOrmSellerTransactionRepository } from './seller-transaction/reposit
 		TypeOrmSellerOfferingRepository,
 		TypeOrmSellerTransactionRepository,
 		// The GraphQL resolver is a provider here for the same reason each controller is a provider of
-		// its own aggregate module: it injects the six aggregate services this module imports, so it
-		// belongs in an injector context that can reach them. The plugin hands the composition pass the
-		// same classes through `extensions.resolvers`, so there is one resolver implementation per rule
-		// rather than one per surface.
+		// its own aggregate module: it injects the six aggregate services this module imports — and the
+		// batch executor the offering module provides and hands on, because a resolver can only inject
+		// what its own injector context can reach — so it belongs in a context that reaches them all. The
+		// plugin hands the composition pass the same classes through `extensions.resolvers`, so there is
+		// one resolver implementation per rule rather than one per surface.
 		...resolvers
 	],
 	exports: [

@@ -51,6 +51,11 @@ const AWAITING_PROVIDER = {
 		owner: 'the installation',
 		needs:
 			'Which contact is a member of which organization. No membership relation exists in an installation of these packages, so there is nothing to read and no provider can be written here — the guard stays open by construction, and a deployment that installs a contact-membership capability binds it.'
+	},
+	FULFILLMENT_LABEL_PROVIDER: {
+		owner: 'a carrier integration',
+		needs:
+			'A carrier label: the route hands the parcel\'s tracking number, the provider and the service to an adapter, and the adapter answers the label\'s URL and its document. That is a conversation with a carrier rather than a read of this platform\'s own tables, so no adapter ships with these packages — the port is declared, the token is exported, and an installation that binds nothing is answered the domain\'s own `502 FULFILLMENT_LABEL_UNAVAILABLE`, which is a refusal a caller can act on rather than a route that silently does nothing. The one thing this platform owns is the write: the label columns and the fulfilment\'s version increment are one statement, and the provider\'s document is projected out of the list read.'
 	}
 };
 

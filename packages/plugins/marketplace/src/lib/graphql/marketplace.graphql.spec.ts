@@ -91,7 +91,16 @@ jest.mock('@gauzy/core', () => {
 		// writes it under are the kernel's own rather than a second copy of either.
 		IDEMPOTENT_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy')
 			.IDEMPOTENT_METADATA_KEY,
-		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent
+		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
+		// The offering controller declares a bulk route and the mutation that mirrors it runs the same
+		// batch from that declaration, so the decorator, its reader and the executor are the kernel's own:
+		// a doubled reader would agree with a resolver while disagreeing with the controller.
+		BulkOperation: jest.requireActual('@gauzy/core/src/lib/api/bulk.decorator').BulkOperation,
+		bulkOptionsOf: jest.requireActual('@gauzy/core/src/lib/api/bulk.decorator').bulkOptionsOf,
+		BulkExecutor: jest.requireActual('@gauzy/core/src/lib/api/bulk-executor.service').BulkExecutor,
+		// The per-item projection both surfaces answer with is the kernel's own, so the payload the resolver
+		// assembles here is the projection the REST body carries rather than a second rendering of it.
+		toBulkItemOutcomes: jest.requireActual('@gauzy/core/src/lib/api/bulk').toBulkItemOutcomes
 	};
 });
 
@@ -105,6 +114,15 @@ jest.mock('@gauzy/config', () => ({
 	}
 }));
 
+/**
+ * The batch executor names the field-visibility service in its constructor, and importing that class
+ * reaches the whole core persistence layer — the request context, its configuration and the token
+ * libraries — none of which a batch needs. The seam therefore doubles the module behind the name as well,
+ * exactly as the payout surface's specification doubles the kernel's key store: the executor is the real
+ * one here, and the visibility it authorises through is the in-memory predicate below.
+ */
+jest.mock('@gauzy/core/src/lib/api/field-visibility.service', () => ({ FieldVisibility: class {} }));
+
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MODULE_METADATA } from '@nestjs/common/constants';
@@ -113,12 +131,14 @@ import {
 	extendSchema,
 	getNamedType,
 	GraphQLEnumType,
+	GraphQLInputObjectType,
 	GraphQLObjectType,
 	isNonNullType,
 	Kind,
 	parse,
 	print
 } from 'graphql';
+import type { GraphQLArgument, GraphQLField, GraphQLInputField } from 'graphql';
 import {
 	CommissionBasis,
 	OfferingCondition,
@@ -137,10 +157,11 @@ import {
 	TaxRegistrationScheme
 } from '@gauzy/contracts';
 import { getPluginExtensions } from '@gauzy/plugin';
-import { IDEMPOTENT_METADATA_KEY } from '@gauzy/core';
+import { BulkExecutor, IDEMPOTENT_METADATA_KEY } from '@gauzy/core';
 import { MarketplaceModule } from '../marketplace.module';
 import { MarketplacePlugin } from '../marketplace.plugin';
 import { SellerOfferingController } from '../seller-offering/seller-offering.controller';
+import { SellerOfferingBulkOperation } from '../seller-offering/seller-offering.bulk';
 import { SellerPayoutController } from '../seller-payout/seller-payout.controller';
 import { SellerSettlementController } from '../seller-settlement/seller-settlement.controller';
 import { SellerTransactionController } from '../seller-transaction/seller-transaction.controller';
@@ -168,15 +189,23 @@ const EXPORTED_RESOLVERS = Object.entries(graphqlSurface)
 /**
  * The platform's own contribution, reduced to what the marketplace references.
  *
- * The kernel declares the scalars and the three root operation types; a plugin extends the roots and
- * may never redeclare a type. Composing against this stub is what makes the assertion runnable with
- * no container, no database and no configuration — the same sequence the boot performs, on the part
- * of the schema this package is responsible for.
+ * The kernel declares the scalars, the `UserError` every payload that reports an expected outcome carries
+ * and the three root operation types; a plugin extends the roots and may never redeclare a type.
+ * Composing against this stub is what makes the assertion runnable with no container, no database and no
+ * configuration — the same sequence the boot performs, on the part of the schema this package is
+ * responsible for.
  */
 const PLATFORM_STUB = `
 	scalar DateTime
 	scalar Decimal
 	scalar JSON
+
+	type UserError {
+		code: String!
+		message: String!
+		path: [String!]
+		details: JSON
+	}
 
 	type Query {
 		_thePlatform: Boolean
@@ -449,10 +478,13 @@ const RECONCILIATION: Record<string, unknown> = {
 };
 
 /**
- * The six services, doubled.
+ * The six services and the batch executor, doubled.
  *
- * Each returns the row its own aggregate carries, so a resolver method under test is the real one and
- * the only thing invented here is the store it reads.
+ * Each service returns the row its own aggregate carries, so a resolver method under test is the real one
+ * and the only thing invented here is the store it reads. The batch executor is the kernel's own — a
+ * doubled one would agree with the resolver while disagreeing with the route that declares the batch — and
+ * the two members it reads from the platform are doubled: the visibility it authorises the whole request
+ * through, and the service an item of this resource reaches.
  */
 function createResolver(): SellerEntityResolver {
 	const sellerService = {
@@ -470,7 +502,9 @@ function createResolver(): SellerEntityResolver {
 		listOfferings: async () => ({ items: [OFFERING], total: 1 }),
 		publish: async () => OFFERING,
 		unpause: async () => OFFERING,
-		withdraw: async () => OFFERING
+		withdraw: async () => OFFERING,
+		applyBulkItem: async (item: { id: string }) => ({ ...OFFERING, id: item.id }),
+		transaction: async (work: (manager: unknown) => Promise<unknown>) => await work(undefined)
 	};
 
 	const sellerTransactionService = {
@@ -498,13 +532,16 @@ function createResolver(): SellerEntityResolver {
 		record: async () => SETTLEMENT
 	};
 
+	const visibility = { assertCanSee: () => undefined, canSee: () => true };
+
 	return new SellerEntityResolver(
 		sellerService as any,
 		sellerOfferingService as any,
 		sellerTransactionService as any,
 		sellerPayoutService as any,
 		sellerPayoutLineService as any,
-		sellerSettlementService as any
+		sellerSettlementService as any,
+		new BulkExecutor(visibility as never)
 	);
 }
 
@@ -528,6 +565,27 @@ const CALLS: Record<string, { args: unknown[]; row: Record<string, unknown> }> =
 	publishSellerOffering: { args: ['offering-1', ['channel-1']], row: OFFERING },
 	pauseSellerOffering: { args: ['offering-1'], row: OFFERING },
 	withdrawSellerOffering: { args: ['offering-1'], row: OFFERING },
+	bulkSellerOfferings: {
+		args: [
+			{
+				items: [
+					{ id: 'offering-1', operation: 'PUBLISH', channelIds: ['channel-1'] },
+					{ id: 'offering-2', operation: 'REPRICE', priceAmount: '12.500000', priceCurrency: 'EUR' }
+				],
+				mode: 'upsert',
+				atomic: true
+			}
+		],
+		row: {
+			results: [
+				{ index: 0, ok: true, id: 'offering-1', resource: 'seller_offering' },
+				{ index: 1, ok: true, id: 'offering-2', resource: 'seller_offering' }
+			],
+			succeeded: 2,
+			failed: 0,
+			total: 2
+		}
+	},
 	settleSellerTransaction: { args: ['transaction-1', 'captured'], row: TRANSACTION },
 	holdSellerTransaction: { args: ['transaction-1', 'DISPUTE'], row: TRANSACTION },
 	createSellerPayout: { args: ['seller-1', 'USD', ['transaction-1'], 'operator override'], row: PAYOUT },
@@ -540,7 +598,15 @@ const CALLS: Record<string, { args: unknown[]; row: Record<string, unknown> }> =
 	}
 };
 
-/** The contract enum each GraphQL enum is the vocabulary of. */
+/**
+ * The vocabulary each GraphQL enum is declared from.
+ *
+ * Every entry but the last two is a contract enum of the platform's own. `SellerOfferingBulkOperation` is
+ * the batch's own vocabulary, which the plugin declares because no contract enum states it — the four
+ * operations are the resource's rather than the platform's four write kinds. `SellerOfferingBulkMode` is
+ * the platform's `BulkMode`, which is a TypeScript union and therefore has no runtime values, so the map
+ * states the wire strings it holds.
+ */
 const CONTRACT_ENUMS: Record<string, Record<string, string>> = {
 	SellerStatus,
 	SellerVerificationStatus,
@@ -556,7 +622,9 @@ const CONTRACT_ENUMS: Record<string, Record<string, string>> = {
 	SellerSettlementStatus,
 	SellerTransactionKind,
 	SellerTransactionStatus,
-	SellerHoldReason
+	SellerHoldReason,
+	SellerOfferingBulkOperation,
+	SellerOfferingBulkMode: { UPSERT: 'upsert', REPLACE: 'replace' }
 };
 
 /** Unwraps a root field's type to the object type a row is read as. */
@@ -601,6 +669,14 @@ const RETRY_MIRRORS: ReadonlyArray<{
 		mutation: 'publishSellerOffering',
 		controller: SellerOfferingController,
 		route: 'publish',
+		required: false,
+		resourceType: 'seller_offering'
+	},
+	{
+		scope: 'seller_offering.bulk',
+		mutation: 'bulkSellerOfferings',
+		controller: SellerOfferingController,
+		route: 'bulk',
 		required: false,
 		resourceType: 'seller_offering'
 	},
@@ -662,13 +738,45 @@ function adoptedMutations(): string[] {
 	).map((entry) => entry.field);
 }
 
-/** Every mutation whose declared arguments carry a retry key. */
+/**
+ * Every mutation whose declared arguments carry a retry key.
+ *
+ * A key reaches the kernel through one of two declared places: an argument of the field itself, or the
+ * input object the field takes — which is where a mutation whose request is a body of its own carries it,
+ * as the batch does. Both are the schema declaring the member, which is what the assertion below is
+ * about, so both are read.
+ */
 function keyedMutations(): string[] {
 	const fields = COMPOSED.getMutationType()?.getFields() ?? {};
 
 	return Object.values(fields)
-		.filter((field) => field.args.some((argument) => argument.name === IDEMPOTENCY_KEY_MEMBER))
+		.filter((field) => Boolean(retryKeyOf(field)))
 		.map((field) => field.name);
+}
+
+/**
+ * The retry key a mutation declares, as the schema states it.
+ *
+ * @param field The mutation's field definition.
+ * @returns The declared member, or undefined when neither place carries one.
+ */
+function retryKeyOf(field: GraphQLField<unknown, unknown>): GraphQLArgument | GraphQLInputField | undefined {
+	const direct = field.args.find((argument) => argument.name === IDEMPOTENCY_KEY_MEMBER);
+
+	if (direct) {
+		return direct;
+	}
+
+	for (const argument of field.args) {
+		const named = getNamedType(argument.type);
+		const member = named instanceof GraphQLInputObjectType ? named.getFields()[IDEMPOTENCY_KEY_MEMBER] : undefined;
+
+		if (member) {
+			return member;
+		}
+	}
+
+	return undefined;
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -809,7 +917,7 @@ describe('the marketplace GraphQL contribution', () => {
 			'declares %s idempotencyKey as a nullable String',
 			(mutation) => {
 				const declared = COMPOSED.getMutationType()?.getFields()[mutation];
-				const argument = declared?.args.find((candidate) => candidate.name === IDEMPOTENCY_KEY_MEMBER);
+				const argument = declared ? retryKeyOf(declared) : undefined;
 
 				expect(declared).toBeDefined();
 				expect(argument).toBeDefined();

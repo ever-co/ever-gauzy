@@ -1,8 +1,15 @@
-import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Context, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { BadRequestException, UseGuards } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
-import { Permissions, PermissionGuard, TenantPermissionGuard, Idempotent } from '@gauzy/core';
+import {
+	Idempotent,
+	Permissions,
+	PermissionGuard,
+	TenantPermissionGuard,
+	Versioned,
+	versionExpectationOf
+} from '@gauzy/core';
 import { Fulfillment } from '../fulfillment/fulfillment.entity';
 import { FulfillmentService } from '../fulfillment/fulfillment.service';
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
@@ -28,6 +35,11 @@ import { IFulfillmentConnection } from './types';
  * create presents one operation whichever protocol carried it. A GraphQL request may select several
  * mutations, so the key rides beside the input it qualifies — the `idempotencyKey` member of the
  * mutation's own input — which is the member the kernel reads it from.
+ *
+ * The label mutation carries two declarations rather than one, for the same reason its route does: the
+ * key makes a re-fetch safe to repeat, and the version makes the write refuse a shipment that moved on
+ * instead of overwriting it. A GraphQL operation travels over `POST` whichever root type it selects, so
+ * the write is stated rather than inferred.
  */
 @Resolver(() => Fulfillment)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -195,6 +207,32 @@ export class FulfillmentResolver {
 		@Args('reason', { type: () => String, nullable: true }) reason?: string
 	): Promise<Fulfillment> {
 		return this.fulfillmentService.cancel(id, reason);
+	}
+
+	/**
+	 * Requests a carrier label for a shipment, or asks the carrier for the one it already issued.
+	 *
+	 * The mutation mirrors the route member for member: the same permission, the same retry scope and
+	 * the same versioned declaration, over the same service method, so a client that retries on one
+	 * protocol and succeeds on the other cannot diverge in what it is allowed to do or in what a rule
+	 * means. The version travels beside the input it qualifies, because one GraphQL request may select
+	 * several mutations and a header could say which of them a version belongs to.
+	 *
+	 * @param id The fulfilment.
+	 * @param input The carrier strategy, the service level, and the key and version the caller states.
+	 * @param context The operation's context, which carries the request the guard ran on.
+	 * @returns The fulfilment with its label recorded.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Idempotent({ scope: 'fulfillment.label', required: false, resourceType: 'fulfillment' })
+	@Versioned({ resource: FulfillmentService })
+	@Mutation(() => Object, { name: 'requestFulfillmentLabel' })
+	async requestFulfillmentLabel(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { type: () => Object }) input: Record<string, any>,
+		@Context() context?: any
+	): Promise<Fulfillment> {
+		return this.fulfillmentService.requestLabel(id, input as any, versionExpectationOf(context?.req));
 	}
 
 	/**

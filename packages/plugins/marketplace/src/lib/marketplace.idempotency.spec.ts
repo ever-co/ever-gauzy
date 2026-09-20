@@ -91,7 +91,14 @@ jest.mock('@gauzy/core', () => {
 		// The kernel is the subject here, so its own modules answer rather than a second copy of them.
 		IDEMPOTENT_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy')
 			.IDEMPOTENT_METADATA_KEY,
-		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent
+		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
+		// The offering controller declares a bulk route, so the decorator that declares what a route
+		// accepts and the executor it is run by are the kernel's own rather than a second copy of either:
+		// the declaration is read back here, and a doubled one would prove nothing about the route.
+		BulkOperation: jest.requireActual('@gauzy/core/src/lib/api/bulk.decorator').BulkOperation,
+		bulkOptionsOf: jest.requireActual('@gauzy/core/src/lib/api/bulk.decorator').bulkOptionsOf,
+		BulkExecutor: class {},
+		FieldVisibility: class {}
 	};
 });
 
@@ -207,6 +214,14 @@ const ADOPTED: readonly AdoptedRoute[] = [
 		required: false,
 		resourceType: 'seller_offering',
 		because: 'publishing twice re-stamps the approval and announces a second publication'
+	},
+	{
+		controller: SellerOfferingController,
+		route: 'bulk',
+		scope: 'seller_offering.bulk',
+		required: false,
+		resourceType: 'seller_offering',
+		because: 'a batch re-sent after a lost response must answer from its first attempt, not move the listings again'
 	},
 	{
 		controller: SellerTransactionController,

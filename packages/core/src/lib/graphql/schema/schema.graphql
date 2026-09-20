@@ -9886,6 +9886,11 @@ type Mutation {
   deliverFulfillment(id: ID!): Fulfillment!
   cancelFulfillment(id: ID!, reason: String): Fulfillment!
 
+  """
+  Request a carrier label for a shipment, or re-fetch the one the carrier already issued.
+  """
+  requestFulfillmentLabel(id: ID!, input: RequestFulfillmentLabelInput!): Fulfillment!
+
   """Requests a return against an order."""
   requestOrderReturn(input: RequestOrderReturnInput!): RequestOrderReturnPayload!
 
@@ -10122,6 +10127,13 @@ type Mutation {
 
   """Withdraws an offering; terminal."""
   withdrawSellerOffering(id: ID!): SellerOffering!
+
+  """
+  Publishes, pauses, withdraws or re-prices a page of listings in one request.
+  
+  Mirrors `POST /seller-offerings/bulk` and declares the same `seller_offering.bulk` scope, so a retry of one batch is a retry whichever protocol it arrives on. The batch is applied by the platform's executor from the route's own declaration, which is what makes the two surfaces one operation: the same cap, the same single authorisation decision, the same per-item report, and an atomic batch that writes nothing when one item fails.
+  """
+  bulkSellerOfferings(input: BulkSellerOfferingsInput!): BulkSellerOfferingsPayload!
 
   """
   Advances a ledger row to settleable. The state is advanced, never the amount.
@@ -48786,6 +48798,29 @@ input ShipFulfillmentInput {
   idempotencyKey: String
 }
 
+input RequestFulfillmentLabelInput {
+  """The registered carrier strategy the label is requested from."""
+  providerId: String!
+
+  """
+  The service level to label the parcel for, when it differs from the one the shipment records.
+  """
+  service: String
+
+  """
+  The client's own key for this request, honoured when one is presented. A request retried under
+  the same key is answered with the label the first attempt recorded, instead of asking the
+  carrier a second time.
+  """
+  idempotencyKey: String
+
+  """
+  The version the caller read the fulfilment at. A label is written through the version-predicated
+  update, so a shipment that moved on since it was read is refused rather than overwritten.
+  """
+  version: Int
+}
+
 input ShippingEligibilityInput {
   channelId: ID
   regionId: ID
@@ -51056,6 +51091,40 @@ enum OfferingFulfilmentMode {
   DROPSHIP
 }
 
+"""
+What one item of an offering batch does. The values are the resource's own vocabulary, because none of the four is one of the platform's write kinds: no operation creates a row and none removes one.
+"""
+enum SellerOfferingBulkOperation {
+  """
+  Moves the offering to `ACTIVE`, checking every publication clause first.
+  """
+  PUBLISH
+
+  """
+  Moves the offering to `PAUSED`, so it stops being sellable and stays resumable.
+  """
+  PAUSE
+
+  """Moves the offering to `WITHDRAWN`; the row is kept."""
+  WITHDRAW
+
+  """
+  Rewrites the offering's price, and the commission it is sold under when the item states one.
+  """
+  REPRICE
+}
+
+"""
+How a batch writes the offering an item names. The values are the platform bulk contract's own wire values, copied un-re-cased, so one batch statement reads identically over either protocol.
+"""
+enum SellerOfferingBulkMode {
+  """Merge into the offering the item names; the platform's default."""
+  upsert
+
+  """Overwrite the addressed offering rather than merging into it."""
+  replace
+}
+
 """Who collects and remits the tax on a seller's lines."""
 enum TaxCollectionMode {
   """The seller remits on its own registration."""
@@ -51351,6 +51420,131 @@ type SellerOffering {
   Orders competing offers of the same variant in a listing. Merchandising only.
   """
   isFeatured: Boolean!
+}
+
+"""
+One band of a graduated commission schedule: `from <= x < to`, with `to` null meaning open ended. The bounds are in major units for an amount basis and in units for a quantity basis.
+"""
+input CommissionTierInput {
+  """Inclusive lower bound."""
+  from: Float!
+
+  """Exclusive upper bound; null is open ended."""
+  to: Float
+
+  """
+  Rate applied to the whole amount or quantity when the value falls in this band. An exact decimal, never a float.
+  """
+  rate: Decimal!
+}
+
+"""
+One item of an offering batch: the operation it performs and the offering it performs it on.
+
+The members are the members the delivered single-item routes accept, so an item states exactly what the equivalent call states and nothing beside it. A member that is absent is a member the item says nothing about, which is a different request from a member stated as empty — a re-price of the amount alone leaves the currency, the window and the channel set as the offering holds them.
+
+Each member belongs to the operation that reads it: `channelIds` narrows what a `PUBLISH` publishes to, the two price members and the three commission members are what a `REPRICE` writes, and a `PAUSE` and a `WITHDRAW` write the status alone.
+"""
+input SellerOfferingBulkItem {
+  """
+  The offering the item acts on. Required: no operation of this batch creates or guesses a row.
+  """
+  id: ID!
+
+  """
+  The operation this item performs. Required: an item that states none is refused.
+  """
+  operation: SellerOfferingBulkOperation!
+
+  """The price the offering is to carry; read by a re-price."""
+  priceAmount: Decimal
+
+  """The currency of that price; read by a re-price."""
+  priceCurrency: String
+
+  """
+  The commission rate the offering overrides the seller's default with; read by a re-price.
+  """
+  commissionRate: Decimal
+
+  """What that rate multiplies; read by a re-price."""
+  commissionBasis: CommissionBasis
+
+  """
+  The graduated schedule that replaces the flat rate; read by a re-price.
+  """
+  commissionTiers: [CommissionTierInput!]
+
+  """
+  The channel subset to publish to; null inherits the seller's set. Read by a publish.
+  """
+  channelIds: [String!]
+}
+
+"""
+A page of listings to move in one request.
+
+`mode` is the platform bulk contract's write mode and `atomic` is its all-or-nothing flag: an atomic batch applies every item or none of them, and a batch that is not atomic applies what it can and reports the rest. This route creates no row, so the mode names how the platform's contract merges rather than a choice the resource offers.
+
+`idempotencyKey` is the retry key of this batch, and it is optional: the route honours a key and does not demand one. A GraphQL request may carry many mutations in one document and a header cannot say which of them a key belongs to, so the key travels here, beside the input it qualifies, and is read by the same kernel that stores and replays the REST surface's keys.
+"""
+input BulkSellerOfferingsInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [SellerOfferingBulkItem!]!
+
+  """How the addressed offering is written. Null is the platform's default."""
+  mode: SellerOfferingBulkMode
+
+  """Whether the batch is applied as one write."""
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+One item's outcome: the offering that moved, or the item's own failure.
+
+The index is part of the answer because a batch is answered in one piece — a caller that sent a page of listings reads which of them applied without matching rows back to a request by hand.
+"""
+type SellerOfferingBulkItemResult {
+  """The item's position in the request."""
+  index: Int!
+
+  """Whether the item applied."""
+  ok: Boolean!
+
+  """The offering that moved, when the item applied."""
+  id: ID
+
+  """The resource that moved, so a mixed batch reads unambiguously."""
+  resource: String
+
+  """
+  Why the item did not apply, with the code the same item would have produced alone. The path names the item it belongs to.
+  """
+  error: UserError
+}
+
+"""
+What a batch of offerings adds up to.
+
+`succeeded` and `failed` are the counts of the two kinds of entry in `results`, so a client can assert `succeeded + failed == items.length` against the same answer rather than against a second number that could disagree with it.
+"""
+type BulkSellerOfferingsPayload {
+  """One entry per request item, in request order."""
+  results: [SellerOfferingBulkItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
 }
 
 """

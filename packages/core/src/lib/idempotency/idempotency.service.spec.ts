@@ -1,9 +1,12 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { In, LessThan } from 'typeorm';
+import * as gauzyConfig from '@gauzy/config';
 import { IIdempotencyStartInput, IdempotencyOutcome, IdempotencyStatus } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
+import { isUniqueViolation } from '../core/errors/unique-violation';
+import { parseTypeORMFindToMikroOrm } from '../core/utils';
 import { IdempotencyKey } from './idempotency-key.entity';
 import { IdempotencyService } from './idempotency.service';
 import { TypeOrmIdempotencyKeyRepository } from './repository/type-orm-idempotency-key.repository';
@@ -16,9 +19,73 @@ import { TypeOrmIdempotencyKeyRepository } from './repository/type-orm-idempoten
  * can receive — claimed, replayed, in flight, refused — and what each of them does to the work. The
  * double below enforces the unique tuple and raises the driver's unique violation, which is how the
  * service learns it lost a race without a lock table or any cooperation from the caller.
+ *
+ * The double is reached through the platform's dual-ORM CRUD path, because that is where the
+ * storage half of the service now lives: the calls the service makes arrive as `find`,
+ * `findOneByIdString`, `save` and `delete`, and the cases below assert them there rather than
+ * against the repository the service used to hold directly. The three calls that could not move —
+ * the claim's insert, the sweep and the takeover — are pinned by their reason in
+ * `the calls the dual-ORM surface cannot carry`.
  */
 
+/**
+ * The dialect the takeover is running against.
+ *
+ * `@gauzy/config` reads `DB_TYPE` once, when it is loaded, so a case cannot switch dialect by setting
+ * an environment variable later; the two helpers it exposes are therefore mocked with call-through
+ * defaults, and a case that asserts on the row lock states the dialect it needs.
+ */
+jest.mock('@gauzy/config', () => {
+	const actual = jest.requireActual('@gauzy/config');
+
+	return {
+		...actual,
+		isPostgres: jest.fn(actual.isPostgres),
+		isMySQL: jest.fn(actual.isMySQL)
+	};
+});
+
+/** The dialect this environment really is, so a case that changes it can put it back. */
+const actualConfig = jest.requireActual('@gauzy/config') as typeof gauzyConfig;
+
+const isPostgresMock = gauzyConfig.isPostgres as unknown as jest.Mock;
+const isMySQLMock = gauzyConfig.isMySQL as unknown as jest.Mock;
+
+/**
+ * Puts the service on a dialect that can take a row lock, or on one that cannot.
+ *
+ * @param supported Whether the dialect locks a row when it is asked to.
+ */
+function onDialect(supported: boolean): void {
+	isPostgresMock.mockReturnValue(supported);
+	isMySQLMock.mockReturnValue(false);
+}
+
 type Row = Record<string, any>;
+
+/**
+ * Watches one method of the platform's dual-ORM CRUD surface, which is where the storage half of the
+ * service now lives.
+ *
+ * The spy calls through to the real implementation, so a case can assert that a storage call was made
+ * at the surface the platform offers — `find`, `findOneByIdString`, `save`, `delete` — rather than
+ * against a repository the service no longer holds directly.
+ *
+ * `crud.service` is required lazily rather than imported at the top. It is one end of an import cycle
+ * with the entity graph this suite loads (entity graph → `@gauzy/core` CRUD barrel → the
+ * tenant-aware subclass → `crud.service`), and reaching it as the first module of that cycle leaves
+ * the subclass extending an undefined class before the cycle has settled.
+ *
+ * @param method The dual-ORM method to watch.
+ * @returns The spy, which calls through.
+ */
+function watchingDualOrmMethod(
+	method: 'find' | 'findOneByIdString' | 'save' | 'delete'
+): jest.SpyInstance {
+	const { CrudService } = require('../core/crud/crud.service') as typeof import('../core/crud/crud.service');
+
+	return jest.spyOn(CrudService.prototype, method);
+}
 
 /** The error the driver raises for a duplicate unique tuple, as the classifier reads it. */
 function uniqueViolation(): Error {
@@ -32,13 +99,16 @@ function uniqueViolation(): Error {
  *
  * It enforces `(organizationId, scope, key)` on insert, applies the criteria the service asks for
  * (including the `In` and `LessThan` operators the cleanup sweep builds), and answers a query builder
- * the way the row-locking takeover needs.
+ * the way the row-locking takeover needs — recording, for every such read, the criteria and the lock
+ * the service asked it for.
  */
 class KeyTable {
 	readonly rows: Row[] = [];
 	readonly deletes: Row[] = [];
 	/** The entity each locking read was addressed to. */
 	readonly queries: unknown[] = [];
+	/** Every read the takeover made through a query builder, with the lock it asked for. */
+	readonly lockingReads: { criteria: Row; lock?: string }[] = [];
 	private sequence = 0;
 
 	async transaction<R>(work: (manager: any) => Promise<R>): Promise<R> {
@@ -56,6 +126,7 @@ class KeyTable {
 		this.queries.push(entity);
 
 		let criteria: Row = {};
+		let lock: string | undefined;
 
 		const builder = {
 			where: (value: Row) => {
@@ -63,8 +134,16 @@ class KeyTable {
 
 				return builder;
 			},
-			setLock: (_mode: string) => builder,
-			getOne: async () => this.rows.find((row) => matches(row, criteria)) ?? null
+			setLock: (mode: string) => {
+				lock = mode;
+
+				return builder;
+			},
+			getOne: async () => {
+				this.lockingReads.push({ criteria, lock });
+
+				return this.rows.find((row) => matches(row, criteria)) ?? null;
+			}
 		};
 
 		return builder;
@@ -178,6 +257,10 @@ function at(iso: string): void {
 }
 
 afterEach(() => {
+	// The two dialect helpers are `jest.fn`s from a module factory rather than spies, so
+	// `jest.restoreAllMocks` leaves them alone; they are put back to the real dialect here.
+	isPostgresMock.mockReturnValue(actualConfig.isPostgres());
+	isMySQLMock.mockReturnValue(actualConfig.isMySQL());
 	jest.useRealTimers();
 	jest.restoreAllMocks();
 });
@@ -254,14 +337,18 @@ describe('claiming a key', () => {
 			})
 		);
 
-		const real = table.findOne.bind(table);
+		// The race is staged on the read the service actually makes, which is the platform's dual-ORM
+		// one: a spy left on a repository method the service no longer reaches would leave this case
+		// passing through the read-found-the-winner path, which is a different case altogether.
+		const real = table.find.bind(table);
+		const insert = jest.spyOn(table, 'save');
 		let racingRead = true;
 
-		jest.spyOn(table, 'findOne').mockImplementation(async (options?: { where?: Row }) => {
+		jest.spyOn(table, 'find').mockImplementation(async (options?: { where?: Row; take?: number }) => {
 			if (racingRead) {
 				racingRead = false;
 
-				return null;
+				return [];
 			}
 
 			return real(options);
@@ -270,6 +357,9 @@ describe('claiming a key', () => {
 		const outcome = await service.startOrReplay(request());
 
 		expect(outcome.outcome).toBe(IdempotencyOutcome.IN_FLIGHT);
+		// Control: the insert was attempted, which is what makes this a lost race rather than a read
+		// that found the winner's row — the row count below is satisfied either way.
+		expect(insert).toHaveBeenCalledTimes(1);
 		expect(table.rows).toHaveLength(1);
 	});
 
@@ -328,6 +418,37 @@ describe('claiming a key', () => {
 		expect((await service.claim(request())).outcome).toBe(IdempotencyOutcome.IN_FLIGHT);
 		expect(table.rows).toHaveLength(3);
 	});
+
+	it('reads the key back through the platform\'s dual-ORM read, scoped by the credential', async () => {
+		const { service } = store();
+		const read = watchingDualOrmMethod('find');
+
+		const first = await service.claim(request());
+		expect(first.outcome).toBe(IdempotencyOutcome.CLAIMED);
+
+		await service.complete(first.record.id as string, { responseStatus: 201, responseBody: { id: 'order-1' } });
+		read.mockClear();
+
+		const second = await service.startOrReplay(request());
+
+		// Control: the ported read answered with the stored row, so a read that found nothing would be
+		// caught here — while the arguments below are what pins the scoping itself, because a read
+		// with no criteria at all would have found this single row just as well.
+		expect(second.outcome).toBe(IdempotencyOutcome.REPLAYED);
+		// The call is pinned through the dual-ORM method the service now reaches for, with the exact
+		// arguments it passes: one bounded read, the scope and the key as stated, and the tenant and
+		// the organization as the credential states them.
+		expect(read).toHaveBeenCalledTimes(1);
+		expect(read.mock.calls[0][0]).toEqual({
+			where: {
+				scope: 'checkout.complete',
+				key: 'key-12345678',
+				tenantId: null,
+				organizationId: null
+			},
+			take: 1
+		});
+	});
 });
 
 describe('settling a key', () => {
@@ -364,6 +485,48 @@ describe('settling a key', () => {
 		const { service } = store();
 
 		await expect(service.complete('key-404', {})).rejects.toBeInstanceOf(NotFoundException);
+	});
+
+	it('reads a row back by its identifier through the dual-ORM path, and answers a missing row with null', async () => {
+		const { service, table } = store();
+		const readById = watchingDualOrmMethod('findOneByIdString');
+
+		const first = await service.claim(request());
+
+		// Control: the row that comes back is the stored one, so a read that answered null for
+		// everything would fail here instead of passing the miss below by accident.
+		expect((await service.findById(first.record.id as string))?.id).toBe(first.record.id);
+		expect(readById).toHaveBeenCalledWith(first.record.id);
+
+		// A miss is an ordinary answer — `settle` reads a row back to find out whether it is still
+		// there — while the platform's read by identifier answers a miss by raising. The case above
+		// pins that the service's own refusal still reaches the caller; this one pins that the port
+		// maps the platform's refusal back to null rather than letting it escape in its place.
+		expect(await service.findById('key-404')).toBeNull();
+		// Control: the row is still there after both reads, because a read is a read — neither the hit
+		// nor the miss removed or rewrote anything.
+		expect(table.rows).toHaveLength(1);
+	});
+
+	it('settles a key through the platform\'s dual-ORM write', async () => {
+		const { service, table } = store();
+		const write = watchingDualOrmMethod('save');
+
+		const first = await service.claim(request());
+		write.mockClear();
+
+		const settled = await service.complete(first.record.id as string, {
+			responseStatus: 201,
+			responseBody: { id: 'order-1' }
+		});
+
+		expect(write).toHaveBeenCalledTimes(1);
+		expect(settled.status).toBe(IdempotencyStatus.COMPLETED);
+		// Control: the write reached the row rather than only the returned value — a settle routed
+		// somewhere the store does not see would leave the key in progress and replay nothing.
+		expect(table.rows[0].status).toBe(IdempotencyStatus.COMPLETED);
+		expect(table.rows[0].responseStatus).toBe(201);
+		expect(table.rows[0].responseBody).toEqual({ id: 'order-1' });
 	});
 });
 
@@ -562,6 +725,22 @@ describe('the operator surface', () => {
 		expect(released.responseBody).toBeDefined();
 	});
 
+	it('removes the row through the platform\'s dual-ORM delete, on plain values', async () => {
+		const { service, table } = store();
+		const remove = watchingDualOrmMethod('delete');
+
+		const released = stored(table);
+
+		await service.release(released.id as string);
+
+		// The removal is the delete whose criteria are plain values — the row id, and nothing a
+		// statement cannot carry — so it travels the dual-ORM path and works on either ORM.
+		expect(remove).toHaveBeenCalledTimes(1);
+		expect(remove.mock.calls[0][0]).toEqual({ id: released.id });
+		// Control: the row is gone from the table, not merely reported as released.
+		expect(table.rows).toHaveLength(0);
+	});
+
 	it('refuses to release a claim whose work is still running', async () => {
 		at('2026-03-01T10:00:00Z');
 
@@ -598,5 +777,97 @@ describe('the operator surface', () => {
 		await service.release(abandoned.id as string);
 
 		expect(table.rows).toHaveLength(0);
+	});
+});
+
+describe('the calls the dual-ORM surface cannot carry', () => {
+	it('keeps the sweep on the repository, because the converter drops the range it selects on', () => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const now = new Date('2026-03-01T10:00:00Z');
+
+		const converted = parseTypeORMFindToMikroOrm({
+			where: {
+				expiresAt: LessThan(now),
+				status: In([IdempotencyStatus.COMPLETED, IdempotencyStatus.FAILED])
+			}
+		}).where as Row;
+
+		// `In` translates and `LessThan` does not: the converter's `processFindOperator` handles
+		// isNull, not, in, equal, between, moreThan and moreThanOrEqual, and sends every other operator
+		// to a default branch that warns and answers an empty condition. Control: the `In` half is
+		// asserted too, so this case cannot pass by the converter having failed outright.
+		expect(converted['status']).toEqual({ $in: [IdempotencyStatus.COMPLETED, IdempotencyStatus.FAILED] });
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('lessThan'));
+		// The empty condition is the whole reason `purgeExpired` — both of its reads and both of its
+		// deletes — and the single-row clear still call the TypeORM repository: on the dual-ORM path
+		// the expiry predicate would vanish, and the sweep would delete rows whose stored response is
+		// still inside its window, which is the first of the two eligibility rules this kernel keeps.
+		// Should the converter ever learn `lessThan`, this assertion fails and those calls become
+		// portable; that is the point of pinning it here rather than in a comment alone.
+		expect(converted['expiresAt']).toEqual({});
+	});
+
+	it('keeps the claim\'s insert on the repository, because the CRUD write path buries the lost race', async () => {
+		const { service, table } = store();
+		const driverError = uniqueViolation();
+
+		// What the insert raises today, and what the claim decision is read from: the driver's own
+		// error. Control: a classifier that answered false here would make the assertion below say
+		// nothing about the port.
+		expect(isUniqueViolation(driverError)).toBe(true);
+
+		jest.spyOn(table, 'save').mockRejectedValueOnce(driverError);
+
+		const throughTheCrudPath = await service
+			.save({
+				scope: 'checkout.complete',
+				key: 'key-12345678',
+				requestHash: 'a'.repeat(64),
+				expiresAt: new Date()
+			})
+			.catch((error) => error);
+
+		// The platform's write path answers a failed write with a client-facing message rather than
+		// with the driver's error...
+		expect(throughTheCrudPath).toBeInstanceOf(BadRequestException);
+		// ...so the classifier that tells "another request won the race" apart from "the store is
+		// broken" stops recognizing it: routed through that path, a lost race would be answered with a
+		// `400` instead of resolving into the winner's stored row, and the in-flight refusal would
+		// never be reached. The MikroORM arm of the same path is an upsert besides, which merges into
+		// the row the race was lost to rather than raising the violation the outcome is decided by.
+		// This case is the reason the insert still calls the repository, and it fails the moment
+		// `core/crud` lets a driver error through — which is the change that would let it be ported.
+		expect(isUniqueViolation(throughTheCrudPath)).toBe(false);
+	});
+
+	it('keeps the takeover on the repository, because the lock is what makes it a takeover', async () => {
+		at('2026-03-01T10:00:00Z');
+
+		const { service, table } = store();
+
+		expect((await service.claim(request())).outcome).toBe(IdempotencyOutcome.CLAIMED);
+
+		// On PostgreSQL and MySQL the read takes the row, which is what stops two requests from both
+		// deciding that one abandoned claim is theirs to take.
+		at('2026-03-01T10:05:00Z');
+		onDialect(true);
+
+		expect((await service.claim(request())).outcome).toBe(IdempotencyOutcome.CLAIMED);
+		expect(table.lockingReads[0].criteria).toEqual({ id: 'key-1', status: IdempotencyStatus.IN_PROGRESS });
+		// The lock is a database feature the platform's cross-ORM query builder does not carry —
+		// `IQueryBuilder` has no `setLock` — so the takeover stays on the repository manager, and this
+		// assertion is what would have to be deleted for a port to claim otherwise.
+		expect(table.lockingReads[0].lock).toBe('pessimistic_write');
+
+		// A store that cannot lock answers the same outcome: the embedded dialect serializes writers,
+		// so the surrounding transaction is the lock. Control: the row is re-claimed here exactly as
+		// it was above, so the difference between the two reads is the lock and nothing else — which
+		// is the guarantee a port would have to give up, and why the call stays where it is.
+		at('2026-03-01T10:10:00Z');
+		onDialect(false);
+
+		expect((await service.claim(request())).outcome).toBe(IdempotencyOutcome.CLAIMED);
+		expect(table.lockingReads[1].lock).toBeUndefined();
+		expect(table.lockingReads[1].criteria).toEqual({ id: 'key-1', status: IdempotencyStatus.IN_PROGRESS });
 	});
 });

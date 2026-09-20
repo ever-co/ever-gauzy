@@ -54,6 +54,12 @@ export type IdempotencyKeyView = Omit<IIdempotencyKey, 'responseBody'>;
  * The service answers with outcomes rather than exceptions, because what a client should be told
  * (`409` for in flight, `422` for a reused key, the stored response for a replay) is a transport
  * decision the caller owns.
+ *
+ * Storage is reached through the platform's dual-ORM CRUD path wherever that path can express the
+ * call, so a deployment that switches `DB_ORM` runs the same kernel. Three calls it cannot carry go
+ * to the TypeORM repository instead, and each says at the call site what it needs and why: the
+ * claim's insert (whose lost race is read off the driver's own error), the sweep (which selects on a
+ * range operator the converter does not translate) and the takeover (which takes a row lock).
  */
 @Injectable()
 export class IdempotencyService extends CrudService<IdempotencyKey> {
@@ -93,6 +99,17 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 		const now = new Date();
 		const retentionMs = policy.retentionMs ?? IdempotencyService.DEFAULT_RETENTION_MS;
 
+		// The claim's insert stays on the repository, and the reason is the answer the caller gets when
+		// it loses the race. The platform's CRUD write path cannot carry this call: `CrudService.create`
+		// and `CrudService.save` catch every write failure and rethrow it as a `BadRequestException`
+		// built from `toClientSafeError`, which is a client-facing message and a `400` rather than a
+		// driver error — so `isUniqueViolation` below would stop recognizing the duplicate tuple and a
+		// lost race would be reported as a failed write instead of resolving into the stored row. The
+		// MikroORM arm of `CrudService.save` is an upsert besides, which merges into the row the race
+		// was lost to instead of raising the violation the outcome is decided by. Porting this call
+		// therefore needs a dual-ORM write that lets the driver's error through, which is a change in
+		// `core/crud` rather than in this kernel, and it is reported as such rather than worked around
+		// here.
 		const claim = this.typeOrmIdempotencyKeyRepository.create({
 			key: input.key,
 			scope: input.scope,
@@ -193,6 +210,14 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 		const staleLockMs = policy.staleLockMs ?? IdempotencyService.DEFAULT_STALE_LOCK_MS;
 		const abandonedBefore = new Date(now.getTime() - Math.max(staleLockMs, 0));
 
+		// The sweep stays on the repository, and the operator it needs is the reason. It selects on a
+		// range — `expiresAt < now`, and `lockedAt < abandonedBefore` for the second rule — and the
+		// dual-ORM surface cannot carry a range: `parseTypeORMFindToMikroOrm` translates `In` but sends
+		// `LessThan` to the default branch of its `processFindOperator`, which warns and answers an
+		// empty condition. Routed through that path the expiry predicate would vanish on one ORM and
+		// the sweep would delete rows whose stored response is still replayable, which is the first of
+		// the two eligibility rules above. `In` alone is not enough to move the call, and the deletes
+		// below assert the same range, so the reads and the deletes travel together.
 		const terminal = await this.typeOrmIdempotencyKeyRepository.find({
 			where: {
 				expiresAt: LessThan(now),
@@ -242,6 +267,10 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	/**
 	 * Clears one expired row, but only while it is still expired.
 	 *
+	 * The `LessThan` on the expiry is what makes the delete safe to lose a race to, and it is also why
+	 * this call stays on the repository: see {@link purgeExpired} for what the dual-ORM path does with
+	 * that operator.
+	 *
 	 * @param id The row id.
 	 */
 	private async clearExpired(id: ID): Promise<void> {
@@ -285,29 +314,61 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	/**
 	 * Finds the row a key resolves to within the current tenant and organization.
 	 *
+	 * The criteria are plain values, so the lookup travels the platform's dual-ORM read path and
+	 * answers the same row whichever ORM is deployed. It is spelled as a `find` bounded to one row
+	 * rather than as the dual-ORM read-by-criteria, because a key that has never been presented is
+	 * this service's ordinary answer — every first attempt is a miss — and the read-by-criteria
+	 * answers a miss by raising `NotFoundException`.
+	 *
+	 * The tenant and the organization are passed exactly as the credential states them, `null`
+	 * included. A `null` member is a predicate and not an omission under the platform's
+	 * `TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR` (`null: 'sql-null'`), which is the setting that makes a
+	 * criteria object mean the same thing on both ORMs, so the scoping of this lookup is unchanged by
+	 * the port.
+	 *
 	 * @param scope The operation namespace.
 	 * @param key The client-supplied key.
 	 * @returns The row, or null when the key has never been presented.
 	 */
 	async findByKey(scope: string, key: string): Promise<IdempotencyKey | null> {
-		return this.typeOrmIdempotencyKeyRepository.findOne({
+		const [record] = await this.find({
 			where: {
 				scope,
 				key,
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
-			} as any
+			} as any,
+			take: 1
 		});
+
+		return record ?? null;
 	}
 
 	/**
 	 * Finds a row by id.
 	 *
+	 * The dual-ORM read by identifier answers a miss by raising, because a read by id is a `404` for
+	 * every caller that reads one resource. A miss here is not a refusal: the settle below reads a row
+	 * back to find out whether it is still there, and absence is one of the answers it acts on. The
+	 * platform's refusal is therefore mapped back to `null` rather than allowed to escape.
+	 *
+	 * An absent id is mapped the same way, and that is deliberate rather than incidental: the platform
+	 * refuses to look a row up by no id at all, because a criteria-less lookup answers an arbitrary row
+	 * of the table — and this read feeds a write, so the arbitrary row would be the one settled.
+	 *
 	 * @param id The row id.
 	 * @returns The row, or null.
 	 */
 	async findById(id: ID): Promise<IdempotencyKey | null> {
-		return this.typeOrmIdempotencyKeyRepository.findOne({ where: { id } as any });
+		try {
+			return await this.findOneByIdString(id);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+
+			throw error;
+		}
 	}
 
 	/**
@@ -583,6 +644,14 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	 * The read and the write share a transaction and the row is locked where the dialect supports
 	 * it, so two requests cannot both decide that the same abandoned claim is theirs to take.
 	 *
+	 * The lock is the reason this call stays on the repository: a row lock is a database feature
+	 * rather than an ORM one, and the platform's cross-ORM surface carries neither half of it. The
+	 * dual-ORM query builder offers no `setLock` — `IQueryBuilder` has no such member — and
+	 * `CrudService` exposes no transaction for a MikroORM deployment to take the lock inside, so a
+	 * port would have to give up the lock and with it the guarantee that only one of two concurrent
+	 * takeovers wins. What a store that cannot lock does instead is unchanged and is the branch below:
+	 * the surrounding transaction is the lock.
+	 *
 	 * @param id The row id.
 	 * @param policy Overrides for the retention window.
 	 * @returns The re-claimed row, or null when the claim turned out to be live after all.
@@ -630,6 +699,13 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	 * A row that is already terminal is returned untouched: completing twice (a crash between the
 	 * write and the response, then a retry) must not replace the response a replay would hand back.
 	 *
+	 * The write travels the platform's dual-ORM save, because the row it writes already exists and is
+	 * addressed by its primary key alone: no criterion beyond the id is involved, so nothing about the
+	 * call needs an operator or a lock. Unlike the claim's insert, no answer of this kernel is read off
+	 * the error a failed write raises — the interceptor logs a settle that could not be recorded and
+	 * still returns the response the work produced — so the platform's own client-safe error is the
+	 * right thing for a failure here to surface as.
+	 *
 	 * @param record The claimed row, or its id.
 	 * @param status The terminal status to record.
 	 * @param completion The response to store.
@@ -660,8 +736,6 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 			resourceId: completion.resourceId ?? current.resourceId
 		};
 
-		return this.typeOrmIdempotencyKeyRepository.save(
-			this.typeOrmIdempotencyKeyRepository.create(settled as Partial<IdempotencyKey>)
-		);
+		return this.save(settled as unknown as IdempotencyKey);
 	}
 }

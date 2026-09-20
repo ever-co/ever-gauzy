@@ -11,6 +11,7 @@ export * from './lib/entities';
 export * from './lib/database/fulfillment-migrations';
 export * from './lib/database/migrations/1791000000240-CreateFulfillmentTables';
 export * from './lib/database/migrations/1791000000250-AddCartShippingOptionForeignKey';
+export * from './lib/database/migrations/1791000000610-AddFulfillmentVersionColumn';
 export * from './lib/graphql';
 export * from './lib/graphql/schema-extensions';
 // The GraphQL type module is exported by name rather than wholesale. Two of its members already

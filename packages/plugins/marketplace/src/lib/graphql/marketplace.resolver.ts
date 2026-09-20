@@ -1,11 +1,29 @@
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import type { ID as Id } from '@gauzy/contracts';
+import {
+	BulkExecutor,
+	IBulkItemContext,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	bulkOptionsOf,
+	toBulkItemOutcomes
+} from '@gauzy/core';
+import type { BulkItemRequest } from '@gauzy/core';
 import { Seller } from '../seller/seller.entity';
 import { SellerService } from '../seller/seller.service';
 import { SellerOffering } from '../seller-offering/seller-offering.entity';
 import { SellerOfferingService } from '../seller-offering/seller-offering.service';
+import { SellerOfferingController } from '../seller-offering/seller-offering.controller';
+import {
+	IBulkSellerOfferingItem,
+	IBulkSellerOfferingsInput,
+	IBulkSellerOfferingsPayload,
+	SELLER_OFFERING_BULK_REQUIRED_KEYS
+} from '../seller-offering/seller-offering.bulk';
 import { SellerTransaction } from '../seller-transaction/seller-transaction.entity';
 import { SellerTransactionService } from '../seller-transaction/seller-transaction.service';
 import { SellerPayout } from '../seller-payout/seller-payout.entity';
@@ -15,6 +33,7 @@ import { SellerPayoutLineService } from '../seller-payout-line/seller-payout-lin
 import { SellerSettlement } from '../seller-settlement/seller-settlement.entity';
 import { SellerSettlementService } from '../seller-settlement/seller-settlement.service';
 import {
+	BulkSellerOfferingsPayloadType,
 	SellerBalanceType,
 	SellerOfferingType,
 	SellerPayoutLineType,
@@ -43,7 +62,8 @@ export class SellerEntityResolver {
 		private readonly sellerTransactionService: SellerTransactionService,
 		private readonly sellerPayoutService: SellerPayoutService,
 		private readonly sellerPayoutLineService: SellerPayoutLineService,
-		private readonly sellerSettlementService: SellerSettlementService
+		private readonly sellerSettlementService: SellerSettlementService,
+		private readonly bulkExecutor: BulkExecutor
 	) {}
 
 	/** Lists seller accounts. */
@@ -212,6 +232,72 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
 	async withdrawSellerOffering(@Args('id', { type: () => ID }) id: string): Promise<SellerOffering> {
 		return this.sellerOfferingService.withdraw(id);
+	}
+
+	/**
+	 * Applies a batch of offerings, one outcome per item.
+	 *
+	 * The batch is the same one the route applies, and it is run by the same executor from the same
+	 * declaration: the options are read off the controller's own `@BulkOperation`, so the resource name,
+	 * the cap, the permission and the members an item must carry cannot differ between the two surfaces.
+	 * The items go through the service method the route's items go through, with the same transaction
+	 * runner, so an atomic batch means the same thing on both.
+	 *
+	 * The field carries the guard stack and the permission the delivered mutations of this class carry, and
+	 * no more: the REST route's seller scope is the access guard's, which every mutation here states none of,
+	 * so the batch adds no scope of its own on either surface. A caller reaches the batch over GraphQL on the
+	 * same terms as it reaches the single-item mutations.
+	 *
+	 * `idempotencyKey` is read from the input by the platform's idempotency kernel rather than here, which
+	 * is why the input carries it and this field does nothing with it: a key the kernel cannot use is
+	 * refused with the same code the route answers.
+	 */
+	@Idempotent({ scope: 'seller_offering.bulk', required: false, resourceType: 'seller_offering' })
+	@Mutation(() => BulkSellerOfferingsPayloadType, { name: 'bulkSellerOfferings' })
+	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
+	async bulkSellerOfferings(@Args('input') input: IBulkSellerOfferingsInput): Promise<IBulkSellerOfferingsPayload> {
+		const result = await this.bulkExecutor.execute<IBulkSellerOfferingItem>(
+			{ items: input.items, mode: input.mode, atomic: input.atomic },
+			(item, context) => this.applyBulkItem(item, context),
+			bulkOptionsOf(SellerOfferingController, 'bulk', {
+				requiredKeys: SELLER_OFFERING_BULK_REQUIRED_KEYS,
+				transaction: this.sellerOfferingService.transaction
+			})
+		);
+
+		// The per-item view is the platform's own projection of the batch result, so the counters and the
+		// item codes are the numbers the REST body carries. The path each item's outcome belongs to is
+		// stated here because only the payload knows where its items came from.
+		return {
+			results: toBulkItemOutcomes(result).map((outcome) => ({
+				index: outcome.index,
+				ok: outcome.ok,
+				id: outcome.id,
+				resource: outcome.resource,
+				error: outcome.error
+					? { ...outcome.error, path: ['items', String(outcome.index)] }
+					: undefined
+			})),
+			succeeded: result.succeededCount,
+			failed: result.failedCount,
+			total: result.total
+		};
+	}
+
+	/**
+	 * Applies one item of a batch through the service that owns the offering's writes.
+	 *
+	 * The field owns no write of its own, for the reason every other field here owns none: the item is
+	 * handed on with the batch's transactional manager exactly as the executor resolved it, and the outcome
+	 * names the offering that moved so a client can match an answer to the listing it asked about.
+	 */
+	private async applyBulkItem(
+		item: BulkItemRequest<IBulkSellerOfferingItem>,
+		context: IBulkItemContext
+	): Promise<{ index: number; id: Id }> {
+		const offering = await this.sellerOfferingService.applyBulkItem(item, undefined, context.manager);
+
+		return { index: context.index, id: offering.id };
 	}
 
 	/**

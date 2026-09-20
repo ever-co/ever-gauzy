@@ -910,8 +910,9 @@ async function main() {
 		// The route is retry-safe by design: recording a verification verdict twice is the same verdict,
 		// so it demands a key and this probe presents one. A caller that retries a lost response is the
 		// client this contract exists for, and a harness that skipped the header would be testing a
-		// platform nobody runs.
-		{ 'Idempotency-Key': `flow-verify-${holderId}` }
+		// platform nobody runs. The key is per run, because a key identifies one request and a second run
+		// of the suite states a different one under the same fixture.
+		{ 'Idempotency-Key': `flow-verify-${holderId}-${Date.now()}` }
 	);
 
 	record(
@@ -981,10 +982,11 @@ async function main() {
 			cardNumber: '4111111111111111',
 			expiry: '12/99'
 		},
-		// Saving an instrument is retry-safe by design and the route demands a key, so the card-data
-		// refusal this probe is about is reached with one — otherwise the key's own refusal arrives first
-		// and the suite would report the wrong rule as broken.
-		{ 'Idempotency-Key': `flow-card-data-${holderId}` }
+		// The key is per run, not per fixture: a key is the identity of one request, and a second run of this
+		// suite sends a different body under the same fixture — which the platform correctly refuses as a
+		// reused key. Reusing the fixture's identifier here would make the suite fail on its own second run
+		// and report a refusal the platform is right to make as a defect.
+		{ 'Idempotency-Key': `flow-card-data-${holderId}-${Date.now()}` }
 	);
 
 	record(
@@ -1324,8 +1326,9 @@ async function main() {
 			organizationId: session.organizationId
 		},
 		// The key is presented for the same reason as the refusal above: the rule under test is the closed
-		// account's, so the request has to get past the retry contract to reach it.
-		{ 'Idempotency-Key': `flow-closed-account-${disposalId}` }
+		// account's, so the request has to get past the retry contract to reach it — and it is per run, for
+		// the reason stated there.
+		{ 'Idempotency-Key': `flow-closed-account-${disposalId}-${Date.now()}` }
 	);
 
 	record(

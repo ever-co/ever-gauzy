@@ -98,7 +98,7 @@ set; the marketplace adds the lifecycle and money operations.
 | Resource | Path | Notable operations |
 |---|---|---|
 | Sellers | `/sellers` | `submit`, `verify`, `activate`, `suspend`, `reinstate`, `reject`, `offboard`, `statement`, `balance` |
-| Offerings | `/seller-offerings` | `submit`, `publish`, `unpublish`, `PUT /:id/channels`, `DELETE /:id` (withdraw) |
+| Offerings | `/seller-offerings` | `submit`, `publish`, `unpublish`, `PUT /:id/channels`, `DELETE /:id` (withdraw), `POST /bulk` (publish, pause, withdraw or re-price a page of listings) |
 | Ledger | `/seller-transactions` | `reconciliation`, `:id/settle`, `:id/hold` |
 | Payouts | `/seller-payouts` | `POST /run`, `:id/approve`, `:id/pay`, `:id/cancel`, `:id/retry` |
 | Payout lines | `/seller-payout-lines` | read |

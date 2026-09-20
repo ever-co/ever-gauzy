@@ -27,6 +27,10 @@ jest.mock('@gauzy/core', () => {
 	// double replaces the application graph the barrel boots, not the arithmetic the assertions below
 	// turn on, and a subtraction re-implemented here would make the decimal case assert the double.
 	const decimals = jest.requireActual('@gauzy/core/src/lib/money/decimal');
+	// The kernel's conditional write is the real one for the same reason: the label cases below are
+	// about what `commitVersionedUpdate` does with the version a caller stated and with a version that
+	// moved on, and a re-implementation here would assert the double rather than the platform.
+	const versionedWrite = jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write');
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
@@ -116,9 +120,14 @@ jest.mock('@gauzy/core', () => {
 		ColumnIndex: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
+		VersionedColumn: decorator,
 		MultiORMOneToMany: decorator,
 		MultiORMManyToOne: decorator,
 		JsonColumn: decorator,
+		// The kernel's own conditional write, so a conflict is the platform's conflict rather than this
+		// suite's.
+		commitVersionedUpdate: versionedWrite.commitVersionedUpdate,
+		versionExpectationOf: versionedWrite.versionExpectationOf,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -347,10 +356,14 @@ function repository(
 
 			return created;
 		},
-		// The platform's `update` reaches TypeORM's own, which answers an `UpdateResult` and not the row.
+		// The platform's `update` reaches TypeORM's own, which answers an `UpdateResult` and not the row —
+		// and which applies the whole criteria it was handed rather than the id alone. The version the
+		// conditional write predicates its statement on is part of that criteria, so a double that
+		// matched on the id only would report a stale write as a successful one and make every
+		// concurrency case below vacuous.
 		update: async (criteria: any, partial: Row) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows().findIndex((row) => same(row.id, id));
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = rows().findIndex((row) => matches(row, where));
 
 			if (index >= 0) {
 				Object.assign(rows()[index], partial);
@@ -447,8 +460,11 @@ function orderLineService(tables: ITables) {
  * `fulfillment_line` table.
  *
  * @param options.seed The order lines, shipments and shipment lines the fixture starts with.
+ * @param options.labelProvider The carrier label provider the service is given. Omitted, the port is
+ * unbound — which is the state a deployment with no carrier integration is in, and the state the
+ * label cases below have to answer for.
  */
-function fulfillmentFixture(options: { seed?: Partial<ITables> } = {}) {
+function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: any } = {}) {
 	const tables: ITables = {
 		order_line: [...(options.seed?.order_line ?? [])],
 		fulfillment: [...(options.seed?.fulfillment ?? [])],
@@ -475,7 +491,8 @@ function fulfillmentFixture(options: { seed?: Partial<ITables> } = {}) {
 		) as never,
 		{} as never,
 		lineService,
-		orderLineService(tables) as never
+		orderLineService(tables) as never,
+		options.labelProvider as never
 	);
 
 	return {
@@ -1171,5 +1188,176 @@ describe('FulfillmentService — what an order line still has to ship (doc 09 §
 		).rejects.toBeInstanceOf(BadRequestException);
 		expect(fixture.tables.fulfillment).toEqual([]);
 		expect(Number.isNaN(Number(fixture.line(LINE_A).fulfilledQuantity))).toBe(false);
+	});
+});
+
+describe('FulfillmentService — requesting a carrier label (doc 06 §7.13)', () => {
+	/** The shipment every case here is about, once the carrier has taken it. */
+	const SHIPMENT = '00000000-0000-4000-8000-0000000000c1';
+
+	/** What the carrier answers with: the document, and the provider's own payload for it. */
+	const LABEL = {
+		labelUrl: 'https://labels.invalid/TRACK-1.pdf',
+		labelData: { format: 'PDF', size: 'A6', widthMm: 100, heightMm: 150 }
+	};
+
+	/** The version a caller states back, which is the one it read the shipment at. */
+	const AT_VERSION = (...versions: number[]) => ({ wildcard: false, versions });
+
+	/** One shipment handed to a carrier: the only state a label can be requested for. */
+	const shipped = (overrides: Row = {}) =>
+		shipment(SHIPMENT, {
+			status: FulfillmentStatusDetail.SHIPPED,
+			trackingNumber: 'TRACK-1',
+			carrier: 'the carrier',
+			service: 'express-24h',
+			shippedAt: SHIPPED_AT,
+			version: 3,
+			...overrides
+		});
+
+	/** A carrier that answers with the label above, so a case can assert what was asked of it. */
+	const carrier = (label: Row = LABEL) => ({ requestLabel: jest.fn(async () => label) });
+
+	it('refuses a shipment the carrier has not taken, naming the platform code for that state', async () => {
+		// Control: a provider is registered and would answer, so the refusal below is the shipment's own
+		// state rather than the installation's missing integration.
+		const labelProvider = carrier();
+		const fixture = fulfillmentFixture({
+			seed: { fulfillment: [shipment(SHIPMENT, { version: 3 })] },
+			labelProvider
+		});
+
+		await expect(
+			fixture.service.requestLabel(SHIPMENT, { providerId: 'carrier-strategy' }, AT_VERSION(3))
+		).rejects.toMatchObject({
+			status: 400,
+			response: {
+				code: 'SHIPMENT_NOT_DEPARTED',
+				details: { fulfillmentId: SHIPMENT, status: FulfillmentStatusDetail.PENDING }
+			}
+		});
+		// Nothing was asked of the carrier and nothing was written: a label for a parcel no carrier has
+		// taken is a request that cannot be answered, not one to guess at.
+		expect(labelProvider.requestLabel).not.toHaveBeenCalled();
+		expect(fixture.row(SHIPMENT).labelUrl).toBeUndefined();
+		expect(fixture.row(SHIPMENT).version).toBe(3);
+	});
+
+	it('refuses with the label-unavailable code when this installation has no carrier integration', async () => {
+		// Control: the shipment is in the state a label can be requested for, so the refusal below is
+		// the installation's rather than the parcel's. The port is left unbound, which is what a
+		// deployment with no carrier integration is.
+		const fixture = fulfillmentFixture({ seed: { fulfillment: [shipped()] } });
+
+		await expect(
+			fixture.service.requestLabel(SHIPMENT, { providerId: 'carrier-strategy' }, AT_VERSION(3))
+		).rejects.toMatchObject({
+			status: 502,
+			response: {
+				code: 'FULFILLMENT_LABEL_UNAVAILABLE',
+				details: { fulfillmentId: SHIPMENT, providerId: 'carrier-strategy' }
+			}
+		});
+		expect(fixture.row(SHIPMENT).labelUrl).toBeUndefined();
+		expect(fixture.row(SHIPMENT).version).toBe(3);
+	});
+
+	it('asks the carrier for the parcel and records the label, moving the version in the same write', async () => {
+		const labelProvider = carrier();
+		const fixture = fulfillmentFixture({ seed: { fulfillment: [shipped()] }, labelProvider });
+
+		const labelled = await fixture.service.requestLabel(
+			SHIPMENT,
+			{ providerId: 'carrier-strategy' },
+			AT_VERSION(3)
+		);
+
+		// The provider is told which parcel it is labelling, and the service level falls back to the one
+		// the shipment records when the caller does not restate it.
+		expect(labelProvider.requestLabel).toHaveBeenCalledTimes(1);
+		expect(labelProvider.requestLabel).toHaveBeenCalledWith(
+			expect.objectContaining({
+				fulfillmentId: SHIPMENT,
+				orderId: ORDER,
+				providerId: 'carrier-strategy',
+				trackingNumber: 'TRACK-1',
+				service: 'express-24h',
+				carrier: 'the carrier'
+			})
+		);
+		expect(labelled).toMatchObject({ labelUrl: LABEL.labelUrl, labelData: LABEL.labelData, version: 4 });
+		// The version and the label columns are one row afterwards, which is what routing the write
+		// through the conditional update means: the increment cannot land without the label it describes.
+		expect(fixture.row(SHIPMENT)).toMatchObject({
+			labelUrl: LABEL.labelUrl,
+			labelData: LABEL.labelData,
+			version: 4
+		});
+	});
+
+	it('lets a caller restate the service level the label is issued for', async () => {
+		const labelProvider = carrier();
+		const fixture = fulfillmentFixture({ seed: { fulfillment: [shipped()] }, labelProvider });
+
+		await fixture.service.requestLabel(
+			SHIPMENT,
+			{ providerId: 'carrier-strategy', service: 'economy' },
+			AT_VERSION(3)
+		);
+
+		expect(labelProvider.requestLabel).toHaveBeenCalledWith(expect.objectContaining({ service: 'economy' }));
+	});
+
+	it('re-fetches over a label the shipment already holds, at the version the caller now has', async () => {
+		// A re-fetch is not a second label: the carrier answers with the document it holds, and the two
+		// columns are written again from the same place. The write is what makes it safe, and the
+		// version is what makes it ordered.
+		const labelProvider = carrier();
+		const fixture = fulfillmentFixture({
+			seed: {
+				fulfillment: [shipped({ labelUrl: 'https://labels.invalid/earlier.pdf', labelData: { format: 'PDF' } })]
+			},
+			labelProvider
+		});
+
+		const fetched = await fixture.service.requestLabel(SHIPMENT, { providerId: 'carrier-strategy' }, AT_VERSION(3));
+
+		expect(fetched).toMatchObject({ labelUrl: LABEL.labelUrl, labelData: LABEL.labelData, version: 4 });
+		expect(fixture.row(SHIPMENT)).toMatchObject({ labelUrl: LABEL.labelUrl, version: 4 });
+	});
+
+	it('refuses a write based on a version the shipment has moved past', async () => {
+		const labelProvider = carrier();
+		const fixture = fulfillmentFixture({ seed: { fulfillment: [shipped({ version: 5 })] }, labelProvider });
+
+		await expect(
+			fixture.service.requestLabel(SHIPMENT, { providerId: 'carrier-strategy' }, AT_VERSION(3))
+		).rejects.toMatchObject({ status: 409, code: 'ENTITY_VERSION_CONFLICT' });
+		// The conditional update matched no row, so the shipment keeps the version another writer left it
+		// at and carries no label from this attempt. On the route the guard answers this before the
+		// handler runs, which is why the carrier is not reached there at all; this call is the half that
+		// cannot be skipped, and it is the one asserted here.
+		expect(fixture.row(SHIPMENT).labelUrl).toBeUndefined();
+		expect(fixture.row(SHIPMENT).version).toBe(5);
+	});
+
+	it('withholds the provider payload from a list read and answers it on a single read', async () => {
+		const fixture = fulfillmentFixture({
+			seed: { fulfillment: [shipped({ labelUrl: LABEL.labelUrl, labelData: LABEL.labelData })] }
+		});
+
+		const page = await fixture.service.findAll({});
+
+		expect(page.total).toBe(1);
+		// The address is one field a list renders; the payload is a document, and a page of shipments is
+		// not a page of documents.
+		expect(page.items[0].labelUrl).toBe(LABEL.labelUrl);
+		expect('labelData' in page.items[0]).toBe(false);
+
+		// Control: the same row answers the payload when it is read on its own, so the list is a
+		// projection of a row that still holds one rather than a row that never did.
+		const one = await fixture.service.findOneByIdString(SHIPMENT);
+		expect(one.labelData).toEqual(LABEL.labelData);
 	});
 });

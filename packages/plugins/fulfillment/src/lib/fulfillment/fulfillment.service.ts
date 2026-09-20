@@ -1,5 +1,13 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
+import {
+	BadGatewayException,
+	BadRequestException,
+	ConflictException,
+	Inject,
+	Injectable,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
+import { DeepPartial, FindManyOptions } from 'typeorm';
 import {
 	FulfillmentDirection,
 	FulfillmentStatusDetail,
@@ -7,7 +15,13 @@ import {
 	IOrderLine,
 	IPagination
 } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, compareDecimalStrings } from '@gauzy/core';
+import {
+	IVersionExpectation,
+	RequestContext,
+	TenantAwareCrudService,
+	commitVersionedUpdate,
+	compareDecimalStrings
+} from '@gauzy/core';
 import { OrderLineService } from '@gauzy/plugin-order';
 import { Fulfillment } from './fulfillment.entity';
 import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.repository';
@@ -15,6 +29,7 @@ import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillmen
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
 import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
 import { addQuantities, isNegativeQuantity, isPositiveQuantity, remainingQuantity } from '../fulfillment.quantity';
+import { FULFILLMENT_LABEL_PROVIDER, IFulfillmentLabelProviderPort } from '../fulfillment.types';
 
 /**
  * The transitions the fulfilment lifecycle allows, and nothing else.
@@ -53,6 +68,13 @@ const ALLOWED_TRANSITIONS: Record<FulfillmentStatusDetail, FulfillmentStatusDeta
  * comparison against it and the counters themselves all go through `fulfillment.quantity.ts` — because
  * a partial shipment of a measured good lands exactly on a boundary that binary floating point cannot
  * represent.
+ *
+ * One capability is reached through a port rather than implemented here, because it belongs to the
+ * carrier: the label a shipment travels with is issued by a provider this domain does not own. The
+ * port is injected optionally — an installation with no carrier integration records tracking by hand —
+ * and a request for a label that cannot be answered is refused loudly rather than invented. Every
+ * write of a fulfilment that a caller conditions on a version goes through `commitVersionedUpdate`, so
+ * the columns and the version move in one statement.
  */
 @Injectable()
 export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
@@ -60,9 +82,33 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		readonly typeOrmFulfillmentRepository: TypeOrmFulfillmentRepository,
 		readonly mikroOrmFulfillmentRepository: MikroOrmFulfillmentRepository,
 		private readonly lineService: FulfillmentLineService,
-		private readonly orderLineService: OrderLineService
+		private readonly orderLineService: OrderLineService,
+		@Optional()
+		@Inject(FULFILLMENT_LABEL_PROVIDER)
+		private readonly labelProvider?: IFulfillmentLabelProviderPort
 	) {
 		super(typeOrmFulfillmentRepository, mikroOrmFulfillmentRepository);
+	}
+
+	/**
+	 * Lists fulfilments without the carrier's label payload.
+	 *
+	 * A page of shipments is a list of journeys, and the label payload is a document: it is the
+	 * provider's own body, it is as large as the provider chose to make it, and no list view renders
+	 * it. Projecting it out here rather than at each caller is what keeps the rule in one place — the
+	 * collection read of both protocols narrows through this method, so neither can start answering
+	 * with a payload the other withholds.
+	 *
+	 * `labelUrl` stays. It is one address, it is what a list actually shows, and the read of one
+	 * fulfilment answers both members in full — which is where a caller that needs the document goes.
+	 *
+	 * @param options The query options.
+	 * @returns A page of fulfilments, each without its label payload.
+	 */
+	public async findAll(options: FindManyOptions<Fulfillment> = {}): Promise<IPagination<Fulfillment>> {
+		const page = await super.findAll(options);
+
+		return { ...page, items: page.items.map((fulfillment) => this.withoutLabelPayload(fulfillment)) };
 	}
 
 	/**
@@ -312,6 +358,96 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	}
 
 	/**
+	 * Requests a carrier label for a shipment, or asks the carrier for the label it already issued.
+	 *
+	 * **The two cases are one call.** A carrier answers a request for a label it has already issued
+	 * with the document it holds for that tracking number rather than by issuing a second one, so the
+	 * domain cannot tell a first request from a re-fetch and does not try to: what it writes is what
+	 * the provider answered, and the version-predicated update is what makes the write safe to repeat.
+	 * A retry that carries the same `Idempotency-Key` never reaches here at all — the kernel replays
+	 * the first answer — and a re-fetch that carries a fresh key is an ordinary call that lands on the
+	 * same two columns.
+	 *
+	 * **A label needs a parcel the carrier has taken.** The tracking number is the number the carrier
+	 * issued when it took the goods, so a shipment that carries none has not been handed over, and a
+	 * label for it is a request no carrier can answer. It is refused with the code this package already
+	 * raises for a shipment that has not departed, rather than by asking a provider about a parcel it
+	 * has never seen and reporting whatever it says.
+	 *
+	 * **An installation with no carrier integration is refused, not guessed at.** The provider is
+	 * reached through a port, and a deployment that registered none cannot produce a label for any
+	 * shipment; the answer is the code the API specification already assigns to that, so an operator
+	 * learns that the integration is missing rather than that this parcel is special.
+	 *
+	 * @param fulfillmentId The fulfilment.
+	 * @param request The carrier strategy, and the service level when the caller restates it.
+	 * @param expectation The version the caller read the fulfilment at, which the write is predicated
+	 * on.
+	 * @returns The fulfilment with its label recorded and its version moved on.
+	 * @throws NotFoundException when the fulfilment is not the caller's, which is also the answer for
+	 * one that does not exist.
+	 * @throws BadRequestException with `SHIPMENT_NOT_DEPARTED` when the fulfilment carries no tracking
+	 * number.
+	 * @throws BadGatewayException with `FULFILLMENT_LABEL_UNAVAILABLE` when no carrier label provider
+	 * is registered in this installation.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the fulfilment moved on since it was
+	 * read.
+	 */
+	public async requestLabel(
+		fulfillmentId: ID,
+		request: { providerId: string; service?: string },
+		expectation: IVersionExpectation
+	): Promise<Fulfillment> {
+		const fulfillment = await this.findOneByIdString(fulfillmentId);
+
+		if (!fulfillment) {
+			throw new NotFoundException(`FULFILLMENT_NOT_FOUND: no fulfilment exists with id ${fulfillmentId}.`);
+		}
+
+		if (!fulfillment.trackingNumber) {
+			throw new BadRequestException({
+				message: `SHIPMENT_NOT_DEPARTED: fulfillment '${fulfillmentId}' carries no tracking number, so no carrier has taken the parcel and no label can be requested for it.`,
+				code: 'SHIPMENT_NOT_DEPARTED',
+				details: { fulfillmentId, status: fulfillment.status }
+			});
+		}
+
+		if (!this.labelProvider) {
+			throw new BadGatewayException({
+				message: `FULFILLMENT_LABEL_UNAVAILABLE: no carrier label provider is registered in this installation, so no shipping label is available for fulfillment '${fulfillmentId}'.`,
+				code: 'FULFILLMENT_LABEL_UNAVAILABLE',
+				details: { fulfillmentId, providerId: request?.providerId }
+			});
+		}
+
+		const label = await this.labelProvider.requestLabel({
+			fulfillmentId: fulfillment.id,
+			orderId: fulfillment.orderId,
+			providerId: request.providerId,
+			trackingNumber: fulfillment.trackingNumber,
+			service: request.service ?? fulfillment.service,
+			carrier: fulfillment.carrier,
+			direction: fulfillment.direction,
+			warehouseId: fulfillment.warehouseId
+		});
+
+		// The label and the version increment are one statement, so a caller that read the shipment and
+		// a carrier that labelled it cannot both be right about the row: whichever loses is answered
+		// with the conflict and re-reads.
+		await commitVersionedUpdate<Fulfillment>(this, {
+			id: fulfillment.id,
+			expectation,
+			patch: { labelUrl: label.labelUrl, labelData: label.labelData },
+			where: {
+				...(fulfillment.tenantId ? { tenantId: fulfillment.tenantId } : {}),
+				...(fulfillment.organizationId ? { organizationId: fulfillment.organizationId } : {})
+			}
+		});
+
+		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
 	 * The quantity of an order line that may still go into a fulfilment.
 	 *
 	 * @param orderLineId The order line.
@@ -471,5 +607,26 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		}
 
 		await this.orderLineService.update(orderLineId, changes as any);
+	}
+
+	/**
+	 * One fulfilment without the carrier's label payload.
+	 *
+	 * The copy is deliberate: the row the caller holds is the one the list read answered with, and
+	 * deleting a member from it would edit a record another caller may still be reading. A fulfilment
+	 * that holds no payload is answered as it stands, because there is nothing to withhold.
+	 *
+	 * @param fulfillment The fulfilment, as it was read.
+	 * @returns The fulfilment without its label payload.
+	 */
+	private withoutLabelPayload(fulfillment: Fulfillment): Fulfillment {
+		if (fulfillment?.labelData === null || fulfillment?.labelData === undefined) {
+			return fulfillment;
+		}
+
+		const { labelData, ...rest } = fulfillment;
+		void labelData;
+
+		return rest as Fulfillment;
 	}
 }

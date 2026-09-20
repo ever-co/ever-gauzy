@@ -1,5 +1,6 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { FulfillmentDirection, IPagination } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
@@ -9,12 +10,19 @@ import {
 	PermissionGuard,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	Versioned,
+	versionExpectationOf
 } from '@gauzy/core';
 import { Fulfillment } from './fulfillment.entity';
 import { FulfillmentService } from './fulfillment.service';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
-import { CreateFulfillmentDTO, FulfillmentTransitionDTO, UpdateFulfillmentDTO } from './dto';
+import {
+	CreateFulfillmentDTO,
+	FulfillmentTransitionDTO,
+	RequestFulfillmentLabelDTO,
+	UpdateFulfillmentDTO
+} from './dto';
 
 /**
  * The fulfilment resource, and the shipment's own transitions.
@@ -30,6 +38,13 @@ import { CreateFulfillmentDTO, FulfillmentTransitionDTO, UpdateFulfillmentDTO } 
  * the carrier honours a key when it is presented: a repeated `ship` is refused by the status machine
  * rather than by the key, so the key is offered rather than required, and a caller that never sends one
  * is unaffected.
+ *
+ * The label route adopts both of the platform's write conventions, because it is the route where they
+ * meet. Requesting a label asks a carrier for a document, and asking again for one the carrier has
+ * already issued is the ordinary way to re-fetch it — so the key is honoured rather than demanded, and
+ * a client that lost the first answer is answered from its record instead of asking the carrier a
+ * second time. The shipment is also a versioned aggregate on this branch: the write states the version
+ * it was based on, and a shipment that moved on in the meantime is refused rather than overwritten.
  */
 @ApiTags('Fulfillment')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -178,6 +193,42 @@ export class FulfillmentController extends CrudController<Fulfillment> {
 		@Body() body: FulfillmentTransitionDTO
 	): Promise<Fulfillment> {
 		return this.fulfillmentService.cancel(id, body?.reason);
+	}
+
+	/**
+	 * Requests a carrier label for a shipment, or asks the carrier for the one it already issued.
+	 *
+	 * The route is one operation, not two: a carrier answers a request for a label it has already
+	 * issued with the document it holds for that tracking number, so re-fetching and requesting are the
+	 * same call and the fulfilment comes back with `labelUrl` and `labelData` populated either way.
+	 *
+	 * A key is honoured rather than demanded. Re-fetching is exactly the request a client repeats after
+	 * losing a response, and a repeat that presents the key of the lost attempt is answered with what
+	 * that attempt recorded rather than with a second trip to the carrier. A caller that never sends one
+	 * is unaffected: the version it states is what protects a re-fetch from overwriting a shipment that
+	 * moved on in between.
+	 *
+	 * @param id The fulfilment.
+	 * @param body The carrier strategy, and the service level when the caller restates it.
+	 * @param request The request, which carries the version the caller read the shipment at.
+	 * @returns The fulfilment with its label recorded.
+	 */
+	@ApiOperation({ summary: 'Request or re-fetch a carrier label' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Label recorded on the fulfillment' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The shipment carries no tracking number' })
+	@ApiResponse({ status: HttpStatus.BAD_GATEWAY, description: 'No carrier label provider is registered' })
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Idempotent({ scope: 'fulfillment.label', required: false, resourceType: 'fulfillment' })
+	@Versioned({ resource: FulfillmentService })
+	@Post(':id/label')
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async requestLabel(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() body: RequestFulfillmentLabelDTO,
+		@Req() request: Request
+	): Promise<Fulfillment> {
+		return this.fulfillmentService.requestLabel(id, body, versionExpectationOf(request));
 	}
 
 	/**
