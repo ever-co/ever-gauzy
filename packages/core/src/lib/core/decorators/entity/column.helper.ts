@@ -43,10 +43,12 @@ export function parseMikroOrmColumnOptions<T>({ type, options }): MikroORMColumn
 	// be stored and hydrated raw under `DB_ORM=mikro-orm`. Run it through a MikroORM type instead.
 	if (options?.transformer) {
 		const { transformer, ...rest } = options;
+		// MikroORM generates DDL from the custom type's getColumnType(), so both must agree.
+		const columnType = options.columnType ?? declaredColumnType(type, options);
 		return {
 			...rest,
-			type: new ValueTransformerType(transformer, declaredColumnType(type, options)),
-			columnType: options.columnType ?? declaredColumnType(type, options)
+			type: new ValueTransformerType(transformer, columnType),
+			columnType
 		};
 	}
 

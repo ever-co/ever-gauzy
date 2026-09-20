@@ -96,9 +96,9 @@ describe('UpdateCandidateDTO billing rates', () => {
 		expect(await rateErrors(dto)).toEqual([]);
 	});
 
-	it('rejects a rate the numeric(14,2) column cannot hold, instead of failing in the database', async () => {
-		const tooBig = plainToInstance(UpdateCandidateDTO, { billRateValue: 1e12 });
-		const largest = plainToInstance(UpdateCandidateDTO, { billRateValue: 999999999999.99 });
+	it('rejects a rate above the old integer ceiling, so every stored rate stays revertible', async () => {
+		const tooBig = plainToInstance(UpdateCandidateDTO, { billRateValue: 2147483648 });
+		const largest = plainToInstance(UpdateCandidateDTO, { billRateValue: 2147483647 });
 
 		expect(await rateErrors(tooBig)).toEqual(['billRateValue']);
 		expect(await rateErrors(largest)).toEqual([]);

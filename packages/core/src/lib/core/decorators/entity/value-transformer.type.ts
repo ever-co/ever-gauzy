@@ -1,6 +1,9 @@
 import { Type } from '@mikro-orm/core';
 import { ValueTransformer } from 'typeorm';
 
+/** What TypeORM's `transformer` column option accepts. */
+export type ColumnValueTransformer = ValueTransformer | ValueTransformer[];
+
 /**
  * Runs a TypeORM `ValueTransformer` under MikroORM.
  *
@@ -12,7 +15,7 @@ import { ValueTransformer } from 'typeorm';
  */
 export class ValueTransformerType extends Type<any, any> {
 	constructor(
-		private readonly transformer: ValueTransformer,
+		private readonly transformer: ColumnValueTransformer,
 		private readonly declaredColumnType?: string
 	) {
 		super();
@@ -23,7 +26,10 @@ export class ValueTransformerType extends Type<any, any> {
 	 * @returns The database representation, as TypeORM's transformer produces it.
 	 */
 	convertToDatabaseValue(value: any): any {
-		return this.transformer.to(value);
+		// Same order as TypeORM's ApplyValueTransformers.transformTo: first transformer first.
+		return Array.isArray(this.transformer)
+			? this.transformer.reduce((transformed, transformer) => transformer.to(transformed), value)
+			: this.transformer.to(value);
 	}
 
 	/**
@@ -31,7 +37,10 @@ export class ValueTransformerType extends Type<any, any> {
 	 * @returns The entity representation, as TypeORM's transformer produces it.
 	 */
 	convertToJSValue(value: any): any {
-		return this.transformer.from(value);
+		// Same order as TypeORM's ApplyValueTransformers.transformFrom: reversed.
+		return Array.isArray(this.transformer)
+			? this.transformer.reduceRight((transformed, transformer) => transformer.from(transformed), value)
+			: this.transformer.from(value);
 	}
 
 	/**
@@ -51,17 +60,25 @@ export class ValueTransformerType extends Type<any, any> {
 }
 
 /**
- * Builds the column DDL for {@link ValueTransformerType} from the declared column options, so
- * precision and scale survive (`numeric` + 14/2 → `numeric(14,2)`).
+ * Builds the exact column DDL for {@link ValueTransformerType} from the declared column options, so
+ * the modifiers survive: `numeric` + 14/2 → `numeric(14,2)`, `varchar` + 255 → `varchar(255)`.
  *
  * @param type - The declared column type.
  * @param options - The column options.
  * @returns The column type string, or undefined to let MikroORM infer it.
  */
-export function declaredColumnType(type: unknown, options: { precision?: number; scale?: number } = {}) {
+export function declaredColumnType(
+	type: unknown,
+	options: { length?: number; precision?: number; scale?: number } = {}
+): string | undefined {
 	if (typeof type !== 'string') {
 		return undefined;
 	}
-	const { precision, scale } = options;
-	return precision != null && scale != null ? `${type}(${precision},${scale})` : type;
+	const { length, precision, scale } = options;
+
+	if (precision != null) {
+		return scale != null ? `${type}(${precision},${scale})` : `${type}(${precision})`;
+	}
+
+	return length != null ? `${type}(${length})` : type;
 }
