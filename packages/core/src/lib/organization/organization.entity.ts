@@ -555,7 +555,8 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	 */
 	@ApiPropertyOptional({
 		type: () => Boolean,
-		description: 'Allow employees to see their own tracked data (screenshots, activity, app/url history, time logs).',
+		description:
+			'Allow employees to see their own tracked data (screenshots, activity, app/url history, time logs).',
 		example: true
 	})
 	@IsOptional()

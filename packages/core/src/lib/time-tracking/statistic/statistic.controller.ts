@@ -42,9 +42,9 @@ export class StatisticController {
 	 * Tells whether the current user can view tracked data in the organization, applying the
 	 * `allowEmployeeToSeeTrackedData` setting with the same rule as {@link EmployeeTrackedDataGuard}
 	 * (admins, callers without an employee record and team/project managers are exempt).
-	 * The web UI uses it to hide navigation to tracked-data pages.
+	 * The web UI uses it to hide navigation to tracked-data pages. It answers for the caller's own
+	 * organization only, so it cannot be used to read the setting of any other organization.
 	 *
-	 * @param {string} organizationId - The organization to check, in addition to the caller's own.
 	 * @returns {Promise<{ allowed: boolean }>} - Whether tracked data is visible to the caller.
 	 */
 	@ApiOperation({
@@ -56,13 +56,9 @@ export class StatisticController {
 		status: HttpStatus.OK,
 		description: 'The visibility decision for the current user.'
 	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'The organizationId is not a valid UUID.'
-	})
 	@Get('/tracked-data-access')
-	async getTrackedDataAccess(@Query('organizationId') organizationId?: string): Promise<{ allowed: boolean }> {
-		return { allowed: await canViewTrackedData(this.dataSource, [organizationId]) };
+	async getTrackedDataAccess(): Promise<{ allowed: boolean }> {
+		return { allowed: await canViewTrackedData(this.dataSource) };
 	}
 
 	/**

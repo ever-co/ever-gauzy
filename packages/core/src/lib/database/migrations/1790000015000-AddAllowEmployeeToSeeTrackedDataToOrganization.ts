@@ -12,7 +12,8 @@ export class AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000 impleme
 			[DatabaseTypeEnum.postgres]: `ALTER TABLE "organization" ADD "allowEmployeeToSeeTrackedData" boolean NOT NULL DEFAULT true`,
 			[DatabaseTypeEnum.sqlite]: `ALTER TABLE "organization" ADD COLUMN "allowEmployeeToSeeTrackedData" boolean NOT NULL DEFAULT 1`,
 			[DatabaseTypeEnum.betterSqlite3]: `ALTER TABLE "organization" ADD COLUMN "allowEmployeeToSeeTrackedData" boolean NOT NULL DEFAULT 1`,
-			[DatabaseTypeEnum.mysql]: 'ALTER TABLE `organization` ADD `allowEmployeeToSeeTrackedData` tinyint NOT NULL DEFAULT 1'
+			[DatabaseTypeEnum.mysql]:
+				'ALTER TABLE `organization` ADD `allowEmployeeToSeeTrackedData` tinyint NOT NULL DEFAULT 1'
 		};
 		const sql = queryMap[dbEngine];
 		if (!sql) {
@@ -28,7 +29,7 @@ export class AddAllowEmployeeToSeeTrackedDataToOrganization1790000015000 impleme
 			[DatabaseTypeEnum.postgres]: `ALTER TABLE "organization" DROP COLUMN "allowEmployeeToSeeTrackedData"`,
 			[DatabaseTypeEnum.sqlite]: `ALTER TABLE "organization" DROP COLUMN "allowEmployeeToSeeTrackedData"`,
 			[DatabaseTypeEnum.betterSqlite3]: `ALTER TABLE "organization" DROP COLUMN "allowEmployeeToSeeTrackedData"`,
-			[DatabaseTypeEnum.mysql]: 'ALTER TABLE `organization` DROP COLUMN `allowEmployeeToSeeTrackedData`',
+			[DatabaseTypeEnum.mysql]: 'ALTER TABLE `organization` DROP COLUMN `allowEmployeeToSeeTrackedData`'
 		};
 		const sql = revertMap[dbEngine];
 		if (!sql) {

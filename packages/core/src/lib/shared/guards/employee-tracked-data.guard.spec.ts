@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { BadRequestException, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { canViewTrackedData, EmployeeTrackedDataGuard } from './employee-tracked-data.guard';
 
@@ -31,7 +31,11 @@ describe('EmployeeTrackedDataGuard', () => {
 	let guard: EmployeeTrackedDataGuard;
 
 	const matches = (row: any, where: Record<string, unknown>) =>
-		Object.entries(where).every(([key, value]) => row[key] === value);
+		Object.entries(where).every(([key, value]) =>
+			value && typeof value === 'object'
+				? matches(row[key] ?? {}, value as Record<string, unknown>)
+				: row[key] === value
+		);
 
 	const membership = (overrides: Record<string, unknown> = {}) => ({
 		employeeId: EMPLOYEE,
@@ -81,6 +85,8 @@ describe('EmployeeTrackedDataGuard', () => {
 
 		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		// No organization claim on the token by default, so the employee record resolves the organization
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ employeeId: EMPLOYEE, tenantId: TENANT } as any);
 	});
 
@@ -122,6 +128,12 @@ describe('EmployeeTrackedDataGuard', () => {
 			await expect(guard.canActivate(createContext({ body: undefined }))).resolves.toBe(true);
 		});
 
+		it('takes the organization from the token without an employee lookup when the token carries one', async () => {
+			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG_A);
+			await expect(guard.canActivate(createContext())).resolves.toBe(true);
+			expect(getRepository).not.toHaveBeenCalledWith('Employee');
+		});
+
 		it('treats a missing value as on', async () => {
 			rows.Organization = [{ id: ORG_A, tenantId: TENANT }];
 			await expect(guard.canActivate(createContext())).resolves.toBe(true);
@@ -151,6 +163,18 @@ describe('EmployeeTrackedDataGuard', () => {
 		it('allows an active team manager in the organization', async () => {
 			rows.OrganizationTeamEmployee = [membership()];
 			await expect(guard.canActivate(createContext({ query: { organizationId: ORG_A } }))).resolves.toBe(true);
+		});
+
+		it('allows a team member holding the MANAGER role (the team flows set the role, not isManager)', async () => {
+			rows.OrganizationTeamEmployee = [membership({ isManager: false, role: { name: RolesEnum.MANAGER } })];
+			await expect(guard.canActivate(createContext({ query: { organizationId: ORG_A } }))).resolves.toBe(true);
+		});
+
+		it('blocks a team member holding a non-manager role', async () => {
+			rows.OrganizationTeamEmployee = [membership({ isManager: false, role: { name: RolesEnum.EMPLOYEE } })];
+			await expect(guard.canActivate(createContext({ query: { organizationId: ORG_A } }))).rejects.toThrow(
+				new ForbiddenException(HIDDEN_MESSAGE)
+			);
 		});
 
 		it('allows an active project manager in the organization', async () => {
@@ -203,18 +227,23 @@ describe('EmployeeTrackedDataGuard', () => {
 		});
 	});
 
-	describe('fails closed on unknown context', () => {
-		it('rejects an organization of another tenant', async () => {
-			await expect(
-				guard.canActivate(createContext({ query: { organizationId: ORG_OTHER_TENANT } }))
-			).rejects.toThrow(new ForbiddenException('Organization not found or not accessible'));
+	describe('organizations that carry no setting do not change the answer', () => {
+		it('ignores an organization of another tenant while the own organization allows it (as on develop)', async () => {
+			await expect(guard.canActivate(createContext({ query: { organizationId: ORG_OTHER_TENANT } }))).resolves.toBe(
+				true
+			);
 		});
 
-		it('rejects an employee record outside the tenant', async () => {
+		it('still blocks when the own organization has the setting off', async () => {
+			setOrganizations({ [ORG_A]: false, [ORG_OTHER_TENANT]: true });
+			await expect(
+				guard.canActivate(createContext({ query: { organizationId: ORG_OTHER_TENANT } }))
+			).rejects.toThrow(new ForbiddenException(HIDDEN_MESSAGE));
+		});
+
+		it('allows when neither the token nor the employee record names an organization', async () => {
 			rows.Employee = [{ id: EMPLOYEE, tenantId: OTHER_TENANT, organizationId: ORG_A }];
-			await expect(guard.canActivate(createContext())).rejects.toThrow(
-				new ForbiddenException('Employee not found or not accessible')
-			);
+			await expect(guard.canActivate(createContext())).resolves.toBe(true);
 		});
 
 		it('rejects a request without tenant context', async () => {
@@ -251,6 +280,11 @@ describe('EmployeeTrackedDataGuard', () => {
 			setOrganizations({ [ORG_A]: false });
 			rows.OrganizationTeamEmployee = [membership()];
 			await expect(canViewTrackedData(dataSource, [undefined, null, ''])).resolves.toBe(true);
+		});
+
+		it('answers for the caller own organization when called without arguments', async () => {
+			setOrganizations({ [ORG_A]: false });
+			await expect(canViewTrackedData(dataSource)).resolves.toBe(false);
 		});
 	});
 });

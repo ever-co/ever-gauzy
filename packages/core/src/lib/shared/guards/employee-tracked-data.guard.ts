@@ -1,7 +1,7 @@
 import { BadRequestException, CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { DataSource, In } from 'typeorm';
 import { isUUID } from 'class-validator';
-import { ID, PermissionsEnum } from '@gauzy/contracts';
+import { ID, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 
 /**
@@ -15,12 +15,12 @@ import { RequestContext } from '../../core/context';
  * 1. The caller has `CHANGE_SELECTED_EMPLOYEE` permission (Admin / Super Admin), OR
  * 2. The caller has no employee record (they have no tracked data of their own, so their role-based
  *    access is unchanged), OR
- * 3. The setting is not `false` in every organization the request touches: the organization of the
- *    caller's employee record, and each `organizationId` the request names, OR
+ * 3. The setting is not `false` in every organization the request touches that exists in the caller's
+ *    tenant: the caller's own organization, and each `organizationId` the request names, OR
  * 4. The caller manages an active team or project in each organization where the setting is `false`.
  *
- * Blocks (403) otherwise, and when the tenant, the employee record or a named organization cannot be
- * found in the caller's tenant. A malformed `organizationId` gets 400.
+ * Blocks (403) otherwise. A malformed `organizationId` gets 400. An organization the request names that
+ * does not exist in the tenant carries no setting, so the route's own validation answers as before.
  *
  * Why the employee's own organization and not only the requested one: an employee's tracked data lives in
  * the organization of their employee record. Some guarded routes read by record id or scope by a field the
@@ -59,7 +59,7 @@ export class EmployeeTrackedDataGuard implements CanActivate {
  * @param requestedOrganizationIds - `organizationId` values named by the request; empty values are ignored.
  * @returns `false` when the setting hides tracked data from the caller.
  * @throws BadRequestException when a requested `organizationId` is not a single UUID string.
- * @throws ForbiddenException when the tenant, the employee record or a requested organization is not found.
+ * @throws ForbiddenException when there is no tenant context (the tenant guards run before this one).
  */
 export async function canViewTrackedData(
 	dataSource: DataSource,
@@ -91,24 +91,28 @@ export async function canViewTrackedData(
 		throw new ForbiddenException('Tenant context is required to access tracked data');
 	}
 
-	const employee = await dataSource.getRepository('Employee').findOne({
-		where: { id: employeeId, tenantId },
-		select: { id: true, organizationId: true }
-	});
-	if (!employee?.organizationId) {
-		throw new ForbiddenException('Employee not found or not accessible');
+	// The caller's own organization: where their tracked data lives, and the one whose setting applies even
+	// when a route reads by record id or scopes by a field this guard does not see. JwtStrategy validates the
+	// token's organization against the employee record, so it needs no second lookup.
+	let ownOrganizationId: ID = RequestContext.currentOrganizationId();
+	if (!ownOrganizationId) {
+		const employee = await dataSource.getRepository('Employee').findOne({
+			where: { id: employeeId, tenantId },
+			select: { id: true, organizationId: true }
+		});
+		ownOrganizationId = employee?.organizationId;
 	}
 
-	const organizationIds: ID[] = [...new Set<ID>([employee.organizationId, ...requested])];
+	const organizationIds: ID[] = [...new Set<ID>([ownOrganizationId, ...requested].filter(Boolean))];
+	if (!organizationIds.length) {
+		// No organization to apply a setting to; the route's own scoping and validation answer as before
+		return true;
+	}
+
 	const organizations = await dataSource.getRepository('Organization').find({
 		where: { id: In(organizationIds), tenantId },
 		select: { id: true, allowEmployeeToSeeTrackedData: true }
 	});
-
-	// Fail closed: an organization that does not exist in the caller's tenant
-	if (organizations.length !== organizationIds.length) {
-		throw new ForbiddenException('Organization not found or not accessible');
-	}
 
 	for (const organization of organizations) {
 		// The column is NOT NULL DEFAULT true; only an explicit false (0 from a raw tinyint) hides data
@@ -127,6 +131,10 @@ export async function canViewTrackedData(
 
 /**
  * Whether the employee is an active manager of any team or project in the organization.
+ *
+ * A team membership counts as managing when `isManager` is set or when the member holds the MANAGER role:
+ * the team flows write the role (`OrganizationTeamService.create`) while the flag stays at its default, so
+ * checking only the flag would miss most team managers.
  */
 async function isManagerInOrganization(
 	dataSource: DataSource,
@@ -134,10 +142,14 @@ async function isManagerInOrganization(
 	organizationId: ID,
 	tenantId: ID
 ): Promise<boolean> {
-	const where = { employeeId, organizationId, tenantId, isManager: true, isActive: true, isArchived: false };
+	const membership = { employeeId, organizationId, tenantId, isActive: true, isArchived: false };
+	const teamEmployeeRepository = dataSource.getRepository('OrganizationTeamEmployee');
 
-	if (await dataSource.getRepository('OrganizationTeamEmployee').existsBy(where)) {
+	if (await teamEmployeeRepository.existsBy({ ...membership, isManager: true })) {
 		return true;
 	}
-	return await dataSource.getRepository('OrganizationProjectEmployee').existsBy(where);
+	if (await teamEmployeeRepository.existsBy({ ...membership, role: { name: RolesEnum.MANAGER } })) {
+		return true;
+	}
+	return await dataSource.getRepository('OrganizationProjectEmployee').existsBy({ ...membership, isManager: true });
 }

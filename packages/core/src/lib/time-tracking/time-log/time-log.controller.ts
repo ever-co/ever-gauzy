@@ -17,7 +17,12 @@ import { ITimeLog, PermissionsEnum, ID } from '@gauzy/contracts';
 import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
 import { OrganizationPolicyTarget, Permissions } from './../../shared/decorators';
-import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard, EmployeeTrackedDataGuard } from './../../shared/guards';
+import {
+	OrganizationPermissionGuard,
+	PermissionGuard,
+	TenantBaseGuard,
+	EmployeeTrackedDataGuard
+} from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { GetTimeLogConflictQueryDTO, TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';

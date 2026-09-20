@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
-import { catchError, distinctUntilChanged, map, startWith, switchMap } from 'rxjs/operators';
-import { IOrganization, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { catchError, distinctUntilChanged, map, retry, startWith, switchMap } from 'rxjs/operators';
+import { IOrganization, IRolePermission, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import { Store } from '../store/store.service';
 
@@ -35,8 +35,11 @@ export class EmployeeTrackedDataAccessService {
 	constructor() {
 		combineLatest([this._store.selectedOrganization$, this._store.user$, this._store.userRolePermissions$])
 			.pipe(
-				map(([organization, user]) =>
-					this.isHiddenByOrganization(organization, user) ? { organization, userId: user.id } : null
+				map(([organization, user, permissions]: [IOrganization, IUser, IRolePermission[]]) =>
+					// Until the permissions are loaded the admin exemption cannot be evaluated, so decide nothing yet
+					permissions?.length && this.isHiddenByOrganization(organization, user)
+						? { organization, userId: user.id }
+						: null
 				),
 				distinctUntilChanged((a, b) => a?.organization.id === b?.organization.id && a?.userId === b?.userId),
 				switchMap((restricted) =>
@@ -46,9 +49,12 @@ export class EmployeeTrackedDataAccessService {
 			.subscribe((access) => this._access$.next(access));
 	}
 
-	/** Whether navigation to tracked-data pages should be hidden (also while the API has not answered). */
+	/**
+	 * Whether navigation to tracked-data pages should be hidden. Only a settled answer hides anything: a
+	 * user the API allows never loses menu entries while the probe is in flight.
+	 */
 	get hidden(): boolean {
-		return this._access$.value !== 'allowed';
+		return this._access$.value === 'hidden';
 	}
 
 	/**
@@ -78,11 +84,13 @@ export class EmployeeTrackedDataAccessService {
 	private fetchAccess(organization: IOrganization): Observable<EmployeeTrackedDataAccess> {
 		return this._http
 			.get<{ allowed: boolean }>(`${API_PREFIX}/timesheet/statistics/tracked-data-access`, {
-				params: { organizationId: organization.id, tenantId: organization.tenantId }
+				params: { tenantId: organization.tenantId }
 			})
 			.pipe(
 				map((response): EmployeeTrackedDataAccess => (response?.allowed === true ? 'allowed' : 'hidden')),
-				catchError(() => of('hidden' as const)),
+				retry({ count: 2, delay: 2000 }),
+				// A failed probe keeps navigation hidden, but stays short of the settled 'hidden' that redirects
+				catchError(() => of('pending' as const)),
 				startWith('pending' as const)
 			);
 	}
