@@ -13,11 +13,13 @@ import {
     IsArray,
     IsBoolean,
     IsEnum,
+    IsInt,
     IsNotEmpty,
     IsNumber,
     IsObject,
     IsOptional,
     IsString,
+    Max,
     ValidateNested
 } from "class-validator";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
@@ -26,9 +28,18 @@ import { CreateInvoiceItemDTO } from "./../../invoice-item/dto";
 
 export class InvoiceDTO extends TenantOrganizationBaseDTO {
 
+    /**
+     * A whole number inside the safe-integer range.
+     *
+     * `numeric` (Postgres/SQLite) keeps a fraction that `bigint` (MySQL) would truncate, so a
+     * fractional number would make `MAX(invoiceNumber) + 1` mean different things per database.
+     * Beyond the upper bound the value can no longer round-trip through a JS number, and an
+     * unbounded client-chosen number could inflate the next-number sequence (GHSA-57hw-jqpj-ww97).
+     */
     @ApiProperty({ type: () => Number, readOnly: true })
     @IsNotEmpty()
-    @IsNumber()
+    @IsInt()
+    @Max(Number.MAX_SAFE_INTEGER)
     readonly invoiceNumber: number;
 
     @ApiProperty({ type: () => Date, readOnly: true })
