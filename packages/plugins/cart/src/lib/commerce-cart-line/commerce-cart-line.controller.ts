@@ -1,10 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -66,5 +68,73 @@ export class CommerceCartLineController extends CrudController<CommerceCartLine>
 		@Body() entity: UpdateCommerceCartLineDTO
 	): Promise<any> {
 		return this.commerceCartLineService.update(id, entity as any);
+	}
+
+	/**
+	 * Deletes a cart line.
+	 *
+	 * This route is `CrudController.delete()`'s, re-declared here only to state the grant it requires.
+	 * The base declares it with no permission metadata at all, so `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that empty metadata
+	 * — its `isEmpty(permissions)` return — and the inherited route otherwise stood on the class-level
+	 * `CARTS_VIEW` alone. Removing a line is a `CARTS_EDIT` action, the same grant the `removeCartLine`
+	 * mutation states.
+	 *
+	 * @param id The cart line.
+	 * @returns The result of the deletion.
+	 */
+	@ApiOperation({ summary: 'Delete a cart line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The cart line was deleted' })
+	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft-deletes a cart line.
+	 *
+	 * This route is `CrudController.softRemove()`'s, re-declared here only to state the grant it
+	 * requires. The base declares it with no permission metadata at all, so `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that empty metadata
+	 * — its `isEmpty(permissions)` return — and the inherited route otherwise stood on the class-level
+	 * `CARTS_VIEW` alone. Soft-deleting a line archives the row a restore puts back, and it states the
+	 * same `CARTS_EDIT` grant the `removeCartLine` mutation does.
+	 *
+	 * @param id The cart line.
+	 * @returns The soft-deleted cart line.
+	 */
+	@ApiOperation({ summary: 'Soft delete a cart line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The cart line was soft deleted' })
+	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted cart line.
+	 *
+	 * This route is `CrudController.softRecover()`'s, re-declared here only to state the grant it
+	 * requires. The base declares it with no permission metadata at all, so `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that empty metadata
+	 * — its `isEmpty(permissions)` return — and the inherited route otherwise stood on the class-level
+	 * `CARTS_VIEW` alone. Restoring a line undoes a removal, so it states the same `CARTS_EDIT` grant
+	 * the `removeCartLine` mutation does.
+	 *
+	 * @param id The cart line.
+	 * @returns The restored cart line.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted cart line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The cart line was restored' })
+	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

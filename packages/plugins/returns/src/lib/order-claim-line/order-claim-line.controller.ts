@@ -1,12 +1,27 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -87,5 +102,74 @@ export class OrderClaimLineController extends CrudController<OrderClaimLine> {
 		await this.orderClaimLineService.update(id, entity as any);
 
 		return await this.orderClaimLineService.findOneByIdString(id);
+	}
+
+	/**
+	 * Deletes a claim line.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission:
+	 * the base declares `DELETE :id` with no permission metadata at all, and `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) returns `true` to empty metadata —
+	 * `if (isEmpty(permissions)) { return true; }` — so the inherited handler stands on the
+	 * class-level read grant alone. This line joins a claim, and the plugin declares no
+	 * `CLAIMS_DELETE`, so this states `CLAIMS_CREATE`, the grant that already lets a caller write a
+	 * claim line.
+	 *
+	 * @param id The claim line to delete.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete a claim line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The line was deleted.' })
+	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft-deletes a claim line.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission:
+	 * the base declares `DELETE :id/soft` with no permission metadata at all, and `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) returns `true` to empty metadata —
+	 * `if (isEmpty(permissions)) { return true; }` — so the inherited handler stands on the
+	 * class-level read grant alone. Soft removal is the same destructive write staged for recovery,
+	 * so it states `CLAIMS_CREATE` as well.
+	 *
+	 * @param id The claim line to soft delete.
+	 * @returns The soft-deleted claim line.
+	 */
+	@ApiOperation({ summary: 'Soft delete a claim line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The line was soft deleted.' })
+	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted claim line.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission:
+	 * the base declares `PUT :id/recover` with no permission metadata at all, and `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) returns `true` to empty metadata —
+	 * `if (isEmpty(permissions)) { return true; }` — so the inherited handler stands on the
+	 * class-level read grant alone. Restoring is the same destructive grant exercised backwards, so
+	 * it states `CLAIMS_CREATE` as well.
+	 *
+	 * @param id The claim line to restore.
+	 * @returns The restored claim line.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted claim line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The line was restored.' })
+	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

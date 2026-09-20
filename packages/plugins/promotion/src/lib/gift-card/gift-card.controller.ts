@@ -1,10 +1,25 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -108,7 +123,7 @@ export class GiftCardController extends CrudController<GiftCard> {
 	@Permissions(PromotionPermission.GIFT_CARDS_EDIT as PermissionsEnum)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<unknown> {
-		return this.giftCardService.delete(id);
+		return super.delete(id);
 	}
 
 	/**
@@ -198,5 +213,50 @@ export class GiftCardController extends CrudController<GiftCard> {
 		@Body() body: { reason?: string }
 	): Promise<IGiftCard> {
 		return this.giftCardService.cancel(id, body?.reason);
+	}
+
+	/**
+	 * Soft deletes a gift card.
+	 *
+	 * The route belongs to `CrudController`, which declares it with no `@Permissions` metadata at
+	 * all, so `PermissionGuard` answers `true` to that empty metadata (`permission.guard.ts`, the
+	 * `isEmpty` return) and only the class-level view grant was left in front of it. The override
+	 * exists only to state the destructive grant the route needs, `GIFT_CARDS_EDIT`: the plugin
+	 * declares no `GIFT_CARDS_DELETE`, and withdrawing a card from circulation is what its edit
+	 * grant already covers.
+	 *
+	 * @param id The card to soft delete.
+	 * @returns The soft-deleted card.
+	 */
+	@ApiOperation({ summary: 'Soft delete a gift card' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Gift card soft deleted' })
+	@Permissions(PromotionPermission.GIFT_CARDS_EDIT as PermissionsEnum)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted gift card.
+	 *
+	 * The route belongs to `CrudController`, which declares it with no `@Permissions` metadata at
+	 * all, so `PermissionGuard` answers `true` to that empty metadata (`permission.guard.ts`, the
+	 * `isEmpty` return) and only the class-level view grant was left in front of it. The override
+	 * exists only to state the destructive grant the route needs, `GIFT_CARDS_EDIT`, because
+	 * restoring a card puts a liability that was written off back into circulation.
+	 *
+	 * @param id The card to restore.
+	 * @returns The restored card.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted gift card' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Gift card restored' })
+	@Permissions(PromotionPermission.GIFT_CARDS_EDIT as PermissionsEnum)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

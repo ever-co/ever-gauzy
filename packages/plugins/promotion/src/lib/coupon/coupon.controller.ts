@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -124,6 +126,50 @@ export class CouponController extends CrudController<Coupon> {
 	@Permissions(PromotionPermission.COUPONS_DELETE as PermissionsEnum)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<unknown> {
-		return this.couponService.delete(id);
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft deletes a coupon.
+	 *
+	 * The route belongs to `CrudController`, which declares it with no `@Permissions` metadata at
+	 * all, so `PermissionGuard` answers `true` to that empty metadata (`permission.guard.ts`, the
+	 * `isEmpty` return) and only the class-level view grant was left in front of it. The override
+	 * exists only to state the destructive grant the route needs, `COUPONS_DELETE`, which is the
+	 * permission the `deleteCoupon` mutation declares.
+	 *
+	 * @param id The coupon to soft delete.
+	 * @returns The soft-deleted coupon.
+	 */
+	@ApiOperation({ summary: 'Soft delete a coupon' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Coupon soft deleted' })
+	@Permissions(PromotionPermission.COUPONS_DELETE as PermissionsEnum)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted coupon.
+	 *
+	 * The route belongs to `CrudController`, which declares it with no `@Permissions` metadata at
+	 * all, so `PermissionGuard` answers `true` to that empty metadata (`permission.guard.ts`, the
+	 * `isEmpty` return) and only the class-level view grant was left in front of it. The override
+	 * exists only to state the destructive grant the route needs, `COUPONS_DELETE`, because
+	 * restoring a code puts it back in front of the customers who type it.
+	 *
+	 * @param id The coupon to restore.
+	 * @returns The restored coupon.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted coupon' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Coupon restored' })
+	@Permissions(PromotionPermission.COUPONS_DELETE as PermissionsEnum)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

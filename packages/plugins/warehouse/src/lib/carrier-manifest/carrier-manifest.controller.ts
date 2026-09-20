@@ -1,13 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -165,5 +167,73 @@ export class CarrierManifestController extends CrudController<CarrierManifest> {
 		@Body() entity: CancelCarrierManifestDTO
 	): Promise<CarrierManifestWithMembers> {
 		return await this.carrierManifestService.cancel(id, entity.reason);
+	}
+
+	/**
+	 * Delete a manifest.
+	 *
+	 * The `DELETE ':id'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that
+	 * empty metadata with its `isEmpty(permissions)` return, which left the inherited handler standing on
+	 * this controller's class-level read grant alone. It now states `FULFILLMENTS_EDIT`, the manifest's edit
+	 * grant, which is what the plugin's own manifest writes demand.
+	 *
+	 * @param id The manifest to delete.
+	 * @returns The delete result.
+	 */
+	@ApiOperation({ summary: 'Delete a manifest' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The manifest was deleted.' })
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft delete a manifest.
+	 *
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that
+	 * empty metadata with its `isEmpty(permissions)` return, which left the inherited handler standing on
+	 * this controller's class-level read grant alone. It now states `FULFILLMENTS_EDIT`, the same grant the
+	 * delete route above states.
+	 *
+	 * @param id The manifest to soft delete.
+	 * @returns The soft-deleted manifest.
+	 */
+	@ApiOperation({ summary: 'Soft delete a manifest' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The manifest was soft deleted.' })
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restore a soft-deleted manifest.
+	 *
+	 * The `PUT ':id/recover'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that
+	 * empty metadata with its `isEmpty(permissions)` return, which left the inherited handler standing on
+	 * this controller's class-level read grant alone. It now states `FULFILLMENTS_EDIT` — restoring is the
+	 * same grant exercised backwards, exactly as the delete route above states it.
+	 *
+	 * @param id The manifest to restore.
+	 * @returns The restored manifest.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted manifest' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The manifest was restored.' })
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

@@ -1,10 +1,24 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -85,5 +99,72 @@ export class CollectionProductController extends CrudController<CollectionProduc
 		@Body() body: { productIds: ID[] }
 	): Promise<CollectionProduct[]> {
 		return this.collectionProductService.replaceProducts(collectionId, body.productIds ?? []);
+	}
+
+	/**
+	 * Deletes one collection membership by id.
+	 *
+	 * The route belongs to `CrudController`, which declares it with no permission metadata of its own, and
+	 * `PermissionGuard` answers `true` to empty metadata — its `isEmpty(permissions)` return in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — so the inherited handler demanded nothing
+	 * beyond this controller's class-level view grant. This override exists only to state its permission:
+	 * the path and the body are the base class's, and the grant is `COLLECTIONS_EDIT`, which is what the
+	 * `removeCollectionProducts` mutation declares for removing these same rows
+	 * (`graphql/resolvers/collection-product.resolver.ts`).
+	 *
+	 * @param id The collection membership to delete.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete a collection membership' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The membership was deleted' })
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft deletes one collection membership by id.
+	 *
+	 * `CrudController` declares this route with no permission metadata at all, and `PermissionGuard`
+	 * returns `true` to empty metadata — the `isEmpty(permissions)` branch in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — so the inherited route was reachable on
+	 * this controller's class-level view grant alone. The override restates the route and its body
+	 * unchanged and adds only the permission the base class omits: `COLLECTIONS_EDIT`.
+	 *
+	 * @param id The collection membership to soft delete.
+	 * @returns The soft-deleted membership.
+	 */
+	@ApiOperation({ summary: 'Soft delete a collection membership' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The membership was soft deleted' })
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted collection membership by id.
+	 *
+	 * The route is `CrudController`'s, declared there with no permission metadata whatsoever, and
+	 * `PermissionGuard` treats empty metadata as authorization — it returns `true` in the
+	 * `isEmpty(permissions)` branch of `packages/core/src/lib/shared/guards/permission.guard.ts` — which is
+	 * what left the inherited handler open to every authenticated member of the tenant. This override
+	 * exists only to state its permission, `COLLECTIONS_EDIT`, on the same path and the same body.
+	 *
+	 * @param id The collection membership to restore.
+	 * @returns The restored membership.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted collection membership' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The membership was restored' })
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

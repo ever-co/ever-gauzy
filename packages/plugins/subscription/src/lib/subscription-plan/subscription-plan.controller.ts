@@ -1,12 +1,27 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -89,6 +104,52 @@ export class SubscriptionPlanController extends CrudController<SubscriptionPlan>
 		await this.subscriptionPlanService.updatePlan(id, { isActive: false } as any);
 
 		return await this.subscriptionPlanService.softRemove(id);
+	}
+
+	/**
+	 * Soft deletes a plan.
+	 *
+	 * The route belongs to `CrudController`, which declares `DELETE :id/soft` with no permission metadata
+	 * at all, so `PermissionGuard` (`shared/guards/permission.guard.ts`) answers `true` from its `isEmpty`
+	 * branch to the empty pair and the inherited route was left on the class-level `SUBSCRIPTIONS_VIEW`.
+	 * Deactivation is this plugin's delete — the row stays for the subscriptions that point at it — so the
+	 * override states `SUBSCRIPTIONS_EDIT`, the grant the `delete` above and the plugin's own
+	 * `deleteSubscriptionPlan` mutation state for the same act.
+	 *
+	 * @param id The plan to deactivate.
+	 * @returns The soft-deleted plan.
+	 */
+	@ApiOperation({ summary: 'Soft delete a subscription plan' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The plan was soft deleted.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted plan.
+	 *
+	 * `PUT :id/recover` is the last of the five mutating routes `CrudController` declares, and like the
+	 * others it carries no permission metadata, so `PermissionGuard`
+	 * (`shared/guards/permission.guard.ts`) answered `true` from its `isEmpty` branch before the
+	 * class-level `SUBSCRIPTIONS_VIEW` was consulted. This override exists only to state the permission:
+	 * putting a plan back on offer reverses the soft delete above, so it states the same
+	 * `SUBSCRIPTIONS_EDIT` grant.
+	 *
+	 * @param id The plan to restore.
+	 * @returns The restored plan.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted subscription plan' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The plan was restored.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 
 	/**

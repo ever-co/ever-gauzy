@@ -1,12 +1,27 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -96,6 +111,50 @@ export class SubscriptionItemController extends CrudController<SubscriptionItem>
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
 		await this.subscriptionItemService.softDelete(id);
+	}
+
+	/**
+	 * Soft deletes a recurring line.
+	 *
+	 * `DELETE :id/soft` belongs to `CrudController`, which declares it with no permission metadata at all,
+	 * so `PermissionGuard` (`shared/guards/permission.guard.ts`) answers `true` from its `isEmpty` branch
+	 * to the empty metadata and leaves the inherited route on the class-level `SUBSCRIPTIONS_VIEW`. This
+	 * override exists only to state the permission, which is the same `SUBSCRIPTIONS_EDIT` the `delete`
+	 * above states and the plugin's own `deleteSubscriptionItem` mutation states for the same act.
+	 *
+	 * @param id The line to soft delete.
+	 * @returns The soft-deleted line.
+	 */
+	@ApiOperation({ summary: 'Soft delete a recurring line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The line was soft deleted.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted recurring line.
+	 *
+	 * The route is the inherited `PUT :id/recover`, which `CrudController` declares without permission
+	 * metadata, so `PermissionGuard` (`shared/guards/permission.guard.ts`) answered `true` from its
+	 * `isEmpty` branch and the class-level `SUBSCRIPTIONS_VIEW` was the only thing in front of it. This
+	 * override exists only to state the permission a restore carries: it puts a line back into what the
+	 * subscription bills, so it states `SUBSCRIPTIONS_EDIT`, the same grant its soft delete states.
+	 *
+	 * @param id The line to restore.
+	 * @returns The restored line.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted recurring line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The line was restored.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 
 	/**

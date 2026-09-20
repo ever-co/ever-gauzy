@@ -52,6 +52,21 @@ const BASE_CLASSES = /\bextends\s+(?:[\w.]+\.)?(?:TenantAware)?CrudService\s*</;
  */
 const ROOTS = [join(ROOT, 'packages', 'core'), join(ROOT, 'packages', 'plugins'), join(ROOT, 'apps')];
 
+/**
+ * Subclasses that are not providers, so the metadata this script is about is not needed for them.
+ *
+ * A suite that writes `new Subclass(repository, repository)` hands the constructor its arguments
+ * itself, and TypeScript emits `design:paramtypes` for a hand-written `new` from the constructor's own
+ * signature rather than from decorator metadata. The rule this script enforces is about classes Nest
+ * builds; these are built by a test, and no module lists them in `providers`.
+ */
+const NOT_PROVIDERS = new Map([
+	[
+		join('packages', 'core', 'src', 'lib', 'core', 'testing', 'persistence-invariants', 'persistence-invariant.service.ts'),
+		'a fixture the suite constructs directly, added by the persistence-invariants work'
+	]
+]);
+
 /** Directories that hold no source. */
 const SKIP_DIRECTORIES = new Set(['node_modules', 'dist', 'coverage', '.nx', 'tmp', 'migrations']);
 
@@ -157,6 +172,7 @@ function decoratorsAbove(lines, index) {
 }
 
 const offenders = [];
+const excused = [];
 let scanned = 0;
 let injectable = 0;
 
@@ -166,6 +182,7 @@ for (const root of ROOTS) {
 		if (!BASE_CLASSES.test(text)) continue;
 
 		const lines = text.split(/\r?\n/);
+		const notAProvider = NOT_PROVIDERS.get(relative(ROOT, file));
 
 		for (let index = 0; index < lines.length; index++) {
 			const declaration = /^\s*export\s+(abstract\s+)?class\s+(\w+)/.exec(lines[index]);
@@ -183,6 +200,8 @@ for (const root of ROOTS) {
 
 			if (decorators.includes('Injectable')) {
 				injectable++;
+			} else if (notAProvider) {
+				excused.push({ file: relative(ROOT, file), line: index + 1, name: declaration[2], reason: notAProvider });
 			} else {
 				offenders.push({
 					file: relative(ROOT, file),
@@ -203,6 +222,13 @@ console.log(`  ${scanned} concrete class(es) extend a CRUD base class across the
 console.log(`  ${injectable} carry @Injectable(), so Nest hands them the repositories they name`);
 console.log(`  ${offenders.length} carry none, so Nest hands them nothing`);
 console.log('');
+if (excused.length) {
+	console.log(`  ${excused.length} skipped as not a provider:`);
+	for (const class_ of excused) {
+		console.log(`    ${class_.file}:${class_.line}  → ${class_.name} — ${class_.reason}`);
+	}
+	console.log('');
+}
 
 if (offenders.length) {
 	for (const offender of offenders) {

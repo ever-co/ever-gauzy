@@ -1,12 +1,27 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -154,5 +169,57 @@ export class PurchaseOrderLineController extends CrudController<PurchaseOrderLin
 		await this.purchaseOrderService.recomputeTotalsFor(purchaseOrder.id);
 
 		return result;
+	}
+
+	/**
+	 * Soft deletes a purchase-order line.
+	 *
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata of its own, so
+	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
+	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
+	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
+	 * demanding only this controller's class-level view grant. It now states `PURCHASE_ORDERS_EDIT`, the
+	 * grant the order these rows belong to is amended and deleted under.
+	 *
+	 * @param id The line to soft delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The soft-deleted line.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		// The base hands this same array over; the service's signature names find options, hence the cast.
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted purchase-order line.
+	 *
+	 * The `PUT ':id/recover'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata of its own, so
+	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
+	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
+	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
+	 * demanding only this controller's class-level view grant. It now states `PURCHASE_ORDERS_EDIT`, the
+	 * grant the order these rows belong to is amended and deleted under.
+	 *
+	 * @param id The line to restore.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The restored line.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		// The base hands this same array over; the service's signature names find options, hence the cast.
+		return await super.softRecover(id, ...options);
 	}
 }

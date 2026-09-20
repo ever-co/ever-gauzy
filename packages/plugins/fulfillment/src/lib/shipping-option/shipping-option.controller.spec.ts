@@ -41,6 +41,17 @@ jest.mock('@gauzy/core', () => {
 		TenantBaseEntity: BaseEntity,
 		TenantOrganizationBaseEntity: BaseEntity,
 		TenantOrganizationBaseDTO: class {},
+		// `@UsePipes(new AbstractValidationPipe(...))` on the inherited mutating routes is
+		// evaluated when the controller class is defined, and Nest requires a pipe to expose
+		// `transform`, so the double has to as well.
+		AbstractValidationPipe: class AbstractValidationPipe {
+			constructor(..._args: any[]) {
+				/* no validation happens in this suite */
+			}
+			transform(value: any): any {
+				return value;
+			}
+		},
 		BaseQueryDTO: class {},
 		MikroOrmBaseEntityRepository: class {},
 		ColumnIndex: decorator,

@@ -1,13 +1,29 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	Req,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { FulfillmentDirection, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	Idempotent,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe,
@@ -263,5 +279,71 @@ export class FulfillmentController extends CrudController<Fulfillment> {
 			...(entity as any),
 			direction: FulfillmentDirection.RETURN
 		});
+	}
+
+	/**
+	 * Deletes a fulfilment.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission: the
+	 * base declares it with no permission metadata at all, and `PermissionGuard`
+	 * (`shared/guards/permission.guard.ts`) returns `true` to empty metadata — `if (isEmpty(permissions))
+	 * { return true; }` — so an inherited handler stands on the class-level read grant alone. The plugin
+	 * declares no `FULFILLMENTS_DELETE`, so this states `FULFILLMENTS_EDIT`, the grant that already lets
+	 * a caller write a shipment.
+	 *
+	 * @param id The fulfilment.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete a fulfillment' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Fulfillment deleted' })
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft-deletes a fulfilment.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission: the
+	 * base declares it with no permission metadata at all, and `PermissionGuard`
+	 * (`shared/guards/permission.guard.ts`) returns `true` to empty metadata — `if (isEmpty(permissions))
+	 * { return true; }` — so an inherited handler stands on the class-level read grant alone. Soft
+	 * removal is the same destructive write staged for recovery, so it states `FULFILLMENTS_EDIT` too.
+	 *
+	 * @param id The fulfilment.
+	 * @returns The soft-deleted fulfilment.
+	 */
+	@ApiOperation({ summary: 'Soft delete a fulfillment' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Fulfillment soft deleted' })
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted fulfilment.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission: the
+	 * base declares it with no permission metadata at all, and `PermissionGuard`
+	 * (`shared/guards/permission.guard.ts`) returns `true` to empty metadata — `if (isEmpty(permissions))
+	 * { return true; }` — so an inherited handler stands on the class-level read grant alone. Restoring
+	 * is the same destructive grant exercised backwards, so it states `FULFILLMENTS_EDIT` as well.
+	 *
+	 * @param id The fulfilment.
+	 * @returns The restored fulfilment.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted fulfillment' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Fulfillment restored' })
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

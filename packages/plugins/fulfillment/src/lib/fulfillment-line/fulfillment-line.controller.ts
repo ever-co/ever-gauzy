@@ -1,9 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -67,5 +69,71 @@ export class FulfillmentLineController extends CrudController<FulfillmentLine> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateFulfillmentLineDTO) {
 		return this.service.update(id, entity as any);
+	}
+
+	/**
+	 * Deletes a fulfilment line.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission: the
+	 * base declares it with no permission metadata at all, and `PermissionGuard`
+	 * (`shared/guards/permission.guard.ts`) returns `true` to empty metadata — `if (isEmpty(permissions))
+	 * { return true; }` — so an inherited handler stands on the class-level read grant alone. A line is
+	 * written as part of its fulfilment, so this states `FULFILLMENTS_EDIT`: the plugin declares no
+	 * `FULFILLMENTS_DELETE`, and the fulfilment's own write routes take that same grant.
+	 *
+	 * @param id The line.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete a fulfillment line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Fulfillment line deleted' })
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft-deletes a fulfilment line.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission: the
+	 * base declares it with no permission metadata at all, and `PermissionGuard`
+	 * (`shared/guards/permission.guard.ts`) returns `true` to empty metadata — `if (isEmpty(permissions))
+	 * { return true; }` — so an inherited handler stands on the class-level read grant alone. Soft
+	 * removal is the same write staged for recovery, so it states `FULFILLMENTS_EDIT` too.
+	 *
+	 * @param id The line.
+	 * @returns The soft-deleted line.
+	 */
+	@ApiOperation({ summary: 'Soft delete a fulfillment line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Fulfillment line soft deleted' })
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted fulfilment line.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission: the
+	 * base declares it with no permission metadata at all, and `PermissionGuard`
+	 * (`shared/guards/permission.guard.ts`) returns `true` to empty metadata — `if (isEmpty(permissions))
+	 * { return true; }` — so an inherited handler stands on the class-level read grant alone. Restoring
+	 * is the same grant exercised backwards, so it states `FULFILLMENTS_EDIT` as well.
+	 *
+	 * @param id The line.
+	 * @returns The restored line.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted fulfillment line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Fulfillment line restored' })
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

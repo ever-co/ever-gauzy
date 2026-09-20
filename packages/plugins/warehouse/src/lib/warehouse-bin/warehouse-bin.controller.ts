@@ -1,14 +1,16 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe,
@@ -325,6 +327,52 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
-		return await this.warehouseBinService.delete(id);
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft delete a bin.
+	 *
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that
+	 * empty metadata with its `isEmpty(permissions)` return, which left the inherited handler standing on
+	 * this controller's class-level read grant alone. It now states `WAREHOUSE_BINS_DELETE`, the grant the
+	 * plugin's own `deleteWarehouseBin` mutation carries, so both surfaces ask the same caller.
+	 *
+	 * @param id The bin to soft delete.
+	 * @returns The soft-deleted bin.
+	 */
+	@ApiOperation({ summary: 'Soft delete a bin' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The bin was soft deleted.' })
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_DELETE)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restore a soft-deleted bin.
+	 *
+	 * The `PUT ':id/recover'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that
+	 * empty metadata with its `isEmpty(permissions)` return, which left the inherited handler standing on
+	 * this controller's class-level read grant alone. It now states `WAREHOUSE_BINS_DELETE` — restoring is
+	 * the same grant exercised backwards, exactly as the delete route above states it.
+	 *
+	 * @param id The bin to restore.
+	 * @returns The restored bin.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted bin' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The bin was restored.' })
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_DELETE)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

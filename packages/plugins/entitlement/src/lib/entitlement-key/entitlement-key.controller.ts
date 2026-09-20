@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	Delete,
 	Get,
 	HttpCode,
 	HttpStatus,
@@ -9,18 +10,21 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import { FeatureFlag } from '@gauzy/common';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -178,5 +182,82 @@ export class EntitlementKeyController extends CrudController<EntitlementKey> {
 	@Get()
 	async findAll(@Query() options: BaseQueryDTO<EntitlementKey>): Promise<IPagination<EntitlementKey>> {
 		return await this.entitlementKeyService.findAll(options);
+	}
+
+	/**
+	 * Deletes a licence key.
+	 *
+	 * The `DELETE ':id'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata of its own, so
+	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
+	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
+	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
+	 * demanding only this controller's class-level view grant. It now states `ENTITLEMENTS_EDIT`, the
+	 * grant the revoke and re-issue routes here already carry.
+	 *
+	 * @param id The key.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete a licence key' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The key was deleted.' })
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft deletes a licence key, leaving the row in place.
+	 *
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata of its own, so
+	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
+	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
+	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
+	 * demanding only this controller's class-level view grant. It now states `ENTITLEMENTS_EDIT`, as the
+	 * delete and restore routes here do.
+	 *
+	 * @param id The key.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The soft-deleted key.
+	 */
+	@ApiOperation({ summary: 'Soft delete a licence key' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The key was soft deleted.' })
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		// The inherited route forwards its rest parameter as one argument, an ARRAY the service itself
+		// normalises away (`toFindOneOptions`, crud.service.ts) — never find options. Cast to keep that
+		// call byte-for-byte the base class's.
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a licence key that was soft deleted.
+	 *
+	 * The `PUT ':id/recover'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata of its own, so
+	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
+	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
+	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
+	 * demanding only this controller's class-level view grant. It now states `ENTITLEMENTS_EDIT`, as the
+	 * delete and soft-delete routes here do.
+	 *
+	 * @param id The key.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The restored key.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted licence key' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The key was restored.' })
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		// As on the soft-delete route above: the array is what the base class hands over.
+		return await super.softRecover(id, ...options);
 	}
 }

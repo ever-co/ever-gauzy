@@ -1,11 +1,25 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -93,6 +107,58 @@ export class PriceListController extends CrudController<PriceList> {
 		@Query('force') force?: string | boolean
 	): Promise<DeleteResult | UpdateResult | PriceList> {
 		return await this.priceListService.deletePriceList(id, { force: force === true || force === 'true' });
+	}
+
+	/**
+	 * Soft delete a price list.
+	 *
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata of its own, so
+	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
+	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
+	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
+	 * demanding only this controller's class-level view grant. It now states `PRICE_LISTS_DELETE`, the
+	 * grant the plugin's `deletePriceList` mutation carries.
+	 *
+	 * @param id The list to soft delete.
+	 * @param options The inherited options, forwarded to the base handler.
+	 * @returns The soft-deleted list.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The price list was soft deleted.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such price list in this organization.' })
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRICE_LISTS_DELETE))
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restore a soft-deleted price list.
+	 *
+	 * The `PUT ':id/recover'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata of its own, so
+	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
+	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
+	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
+	 * demanding only this controller's class-level view grant. It now states `PRICE_LISTS_DELETE`, the
+	 * grant the plugin's `deletePriceList` mutation carries.
+	 *
+	 * @param id The list to restore.
+	 * @param options The inherited options, forwarded to the base handler.
+	 * @returns The restored list.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The price list was restored.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such price list in this organization.' })
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRICE_LISTS_DELETE))
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 
 	/**

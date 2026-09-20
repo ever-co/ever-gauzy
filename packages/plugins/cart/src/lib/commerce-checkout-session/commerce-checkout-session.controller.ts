@@ -1,11 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	Idempotent,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -115,5 +117,74 @@ export class CommerceCheckoutSessionController extends CrudController<CommerceCh
 		@Body() data: Record<string, unknown>
 	): Promise<CommerceCheckoutSession> {
 		return this.commerceCheckoutSessionService.completeStep(id, step, data);
+	}
+
+	/**
+	 * Deletes a checkout session.
+	 *
+	 * This route is `CrudController.delete()`'s, re-declared here only to state the grant it requires.
+	 * The base declares it with no permission metadata at all, so `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that empty metadata
+	 * — its `isEmpty(permissions)` return — and the inherited route otherwise stood on the class-level
+	 * `CARTS_VIEW` alone. A session is a child row of the cart it converts, so removing one takes the
+	 * cart's own `CARTS_DELETE` grant, the value the plugin's permissions file declares for deleting or
+	 * expiring a cart.
+	 *
+	 * @param id The checkout session.
+	 * @returns The result of the deletion.
+	 */
+	@ApiOperation({ summary: 'Delete a checkout session' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Checkout session deleted' })
+	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft-deletes a checkout session.
+	 *
+	 * This route is `CrudController.softRemove()`'s, re-declared here only to state the grant it
+	 * requires. The base declares it with no permission metadata at all, so `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that empty metadata
+	 * — its `isEmpty(permissions)` return — and the inherited route otherwise stood on the class-level
+	 * `CARTS_VIEW` alone. Soft-deleting a session archives a child row of the cart, so it states the
+	 * same `CARTS_DELETE` grant the cart's deletion takes.
+	 *
+	 * @param id The checkout session.
+	 * @returns The soft-deleted checkout session.
+	 */
+	@ApiOperation({ summary: 'Soft delete a checkout session' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Checkout session soft deleted' })
+	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted checkout session.
+	 *
+	 * This route is `CrudController.softRecover()`'s, re-declared here only to state the grant it
+	 * requires. The base declares it with no permission metadata at all, so `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that empty metadata
+	 * — its `isEmpty(permissions)` return — and the inherited route otherwise stood on the class-level
+	 * `CARTS_VIEW` alone. Restoring a session undoes the removal of a cart's child row, so it states
+	 * the same `CARTS_DELETE` grant the cart's deletion takes.
+	 *
+	 * @param id The checkout session.
+	 * @returns The restored checkout session.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted checkout session' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Checkout session restored' })
+	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

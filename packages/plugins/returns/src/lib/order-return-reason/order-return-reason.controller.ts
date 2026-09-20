@@ -1,13 +1,28 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -134,5 +149,52 @@ export class OrderReturnReasonController extends CrudController<OrderReturnReaso
 	@Delete(':id/hard')
 	async hardDelete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this.orderReturnReasonService.delete(id);
+	}
+
+	/**
+	 * Soft-deletes a return reason.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission:
+	 * the base declares `DELETE :id/soft` with no permission metadata at all, and `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) returns `true` to empty metadata —
+	 * `if (isEmpty(permissions)) { return true; }` — so the inherited handler stands on the
+	 * class-level read grant alone. The plugin declares no `RETURNS_DELETE`, and the GraphQL
+	 * `deleteOrderReturnReason` mutation that retires the same reason states `RETURNS_CREATE`, so
+	 * this states the same grant.
+	 *
+	 * @param id The return reason to soft delete.
+	 * @returns The soft-deleted return reason.
+	 */
+	@ApiOperation({ summary: 'Soft delete a return reason' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The reason was soft deleted.' })
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted return reason.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission:
+	 * the base declares `PUT :id/recover` with no permission metadata at all, and `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) returns `true` to empty metadata —
+	 * `if (isEmpty(permissions)) { return true; }` — so the inherited handler stands on the
+	 * class-level read grant alone. Restoring is the same destructive grant exercised backwards, so
+	 * it states `RETURNS_CREATE` as well.
+	 *
+	 * @param id The return reason to restore.
+	 * @returns The restored return reason.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted return reason' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The reason was restored.' })
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

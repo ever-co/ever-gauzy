@@ -11,18 +11,21 @@ import {
 	Put,
 	Query,
 	Req,
-	UseGuards
+	UseGuards,
+	UsePipes
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe,
@@ -147,6 +150,72 @@ export class SubscriptionController extends CrudController<Subscription> {
 		}
 
 		return await this.subscriptionService.applyChanges(id, changes as any, versionExpectationOf(request));
+	}
+
+	/**
+	 * Deletes a subscription.
+	 *
+	 * The route belongs to `CrudController`, which declares `DELETE :id` with no permission metadata at
+	 * all, so `PermissionGuard` (`shared/guards/permission.guard.ts`) resolves the handler first, falls
+	 * back to the class and answers `true` from its `isEmpty` branch to the empty pair — leaving the route
+	 * on the class-level `SUBSCRIPTIONS_VIEW` that every member of the tenant holds. This override exists
+	 * only to state the permission: ending a customer's subscription is the same class of act as
+	 * cancelling it, and the plugin declares no `SUBSCRIPTIONS_DELETE`, so it states `SUBSCRIPTIONS_EDIT`.
+	 *
+	 * @param id The subscription to delete.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete a subscription' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The subscription was deleted.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft deletes a subscription.
+	 *
+	 * `DELETE :id/soft` is the second of the routes `CrudController` declares bare, and
+	 * `PermissionGuard` (`shared/guards/permission.guard.ts`) answers `true` from its `isEmpty` branch
+	 * whenever neither the handler nor the class declares a permission — the gap this override closes. A
+	 * soft delete takes the subscription out of every read while its rows stay as history, which is the
+	 * destructive half of that pair, so it states the same `SUBSCRIPTIONS_EDIT` its `delete` sibling does.
+	 *
+	 * @param id The subscription to soft delete.
+	 * @returns The soft-deleted subscription.
+	 */
+	@ApiOperation({ summary: 'Soft delete a subscription' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The subscription was soft deleted.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted subscription.
+	 *
+	 * `PUT :id/recover` is the third inherited route `CrudController` declares with no permission metadata,
+	 * so `PermissionGuard` (`shared/guards/permission.guard.ts`) returned `true` from its `isEmpty` branch
+	 * and nothing but the class-level `SUBSCRIPTIONS_VIEW` stood in front of it. This override exists only
+	 * to state the permission a restore has to carry: it undoes the delete above, so it takes the same
+	 * `SUBSCRIPTIONS_EDIT` grant that delete and soft delete take.
+	 *
+	 * @param id The subscription to restore.
+	 * @returns The restored subscription.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted subscription' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The subscription was restored.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 
 	/**

@@ -1,11 +1,25 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -98,7 +112,55 @@ export class TaxRateController extends CrudController<TaxRate> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
-		return await this.taxRateService.delete(id);
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft delete a tax rate.
+	 *
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that
+	 * empty metadata with its `isEmpty(permissions)` return, which left the inherited handler standing on
+	 * this controller's class-level read grant alone. It now states `TAX_RATES_EDIT`, the grant the plugin's
+	 * `deleteTaxRate` mutation carries, so both surfaces ask the same caller.
+	 *
+	 * @param id The rate to soft delete.
+	 * @returns The soft-deleted rate.
+	 */
+	@ApiOperation({ summary: 'Soft delete a tax rate' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The tax rate was soft deleted.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such tax rate in this organization.' })
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_RATES_EDIT))
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restore a soft-deleted tax rate.
+	 *
+	 * The `PUT ':id/recover'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that
+	 * empty metadata with its `isEmpty(permissions)` return, which left the inherited handler standing on
+	 * this controller's class-level read grant alone. It now states `TAX_RATES_EDIT` — restoring is the same
+	 * grant exercised backwards, exactly as the delete route above states it.
+	 *
+	 * @param id The rate to restore.
+	 * @returns The restored rate.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted tax rate' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The tax rate was restored.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such tax rate in this organization.' })
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_RATES_EDIT))
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 
 	/**

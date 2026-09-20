@@ -1,12 +1,27 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	Idempotent,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -148,5 +163,72 @@ export class ShippingProfileController extends CrudController<ShippingProfile> {
 		await this.shippingProfileService.update(id, { isDefault: true } as any);
 
 		return this.shippingProfileService.findOneByIdString(id);
+	}
+
+	/**
+	 * Deletes a shipping profile.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission: the
+	 * base declares it with no permission metadata at all, and `PermissionGuard`
+	 * (`shared/guards/permission.guard.ts`) returns `true` to empty metadata — `if (isEmpty(permissions))
+	 * { return true; }` — so an inherited handler stands on the class-level view grant alone. The
+	 * plugin's own `deleteShippingProfile` mutation demands `SHIPPING_OPTIONS_DELETE` — a profile is
+	 * shipping configuration, not a resource with a grant of its own — so REST states the same grant.
+	 *
+	 * @param id The profile.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete a shipping profile' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Shipping profile deleted' })
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft-deletes a shipping profile.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission: the
+	 * base declares it with no permission metadata at all, and `PermissionGuard`
+	 * (`shared/guards/permission.guard.ts`) returns `true` to empty metadata — `if (isEmpty(permissions))
+	 * { return true; }` — so an inherited handler stands on the class-level view grant alone. A withdrawn
+	 * profile is deleted as far as a variant is concerned, so it states `SHIPPING_OPTIONS_DELETE` too.
+	 *
+	 * @param id The profile.
+	 * @returns The soft-deleted profile.
+	 */
+	@ApiOperation({ summary: 'Soft delete a shipping profile' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Shipping profile soft deleted' })
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted shipping profile.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission: the
+	 * base declares it with no permission metadata at all, and `PermissionGuard`
+	 * (`shared/guards/permission.guard.ts`) returns `true` to empty metadata — `if (isEmpty(permissions))
+	 * { return true; }` — so an inherited handler stands on the class-level view grant alone. Restoring
+	 * hands the profile back to the variants that ship under it, so it states
+	 * `SHIPPING_OPTIONS_DELETE` as well.
+	 *
+	 * @param id The profile.
+	 * @returns The restored profile.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted shipping profile' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Shipping profile restored' })
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

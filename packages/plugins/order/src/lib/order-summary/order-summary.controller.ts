@@ -1,10 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -63,5 +65,71 @@ export class OrderSummaryController extends CrudController<OrderSummary> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateOrderSummaryDTO): Promise<any> {
 		return this.service.update(id, entity as any);
+	}
+
+	/**
+	 * Deletes an order summary by id.
+	 *
+	 * The route belongs to `CrudController`, which declares it with no permission metadata of its own, and
+	 * `PermissionGuard` answers `true` to empty metadata — its `isEmpty(permissions)` return in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — so the inherited handler demanded nothing
+	 * beyond this controller's class-level view grant. This override exists only to state that permission:
+	 * the path and the body are the base class's, and the grant is `ORDERS_EDIT`, the same one this
+	 * resource's update route already requires.
+	 *
+	 * @param id The order summary.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete an order summary' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The order summary was deleted' })
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft deletes an order summary by id.
+	 *
+	 * `CrudController` declares this route with no permission metadata at all, and `PermissionGuard`
+	 * returns `true` to empty metadata — the `isEmpty(permissions)` branch in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — so the inherited route was reachable on
+	 * this controller's class-level view grant alone. The override restates the route and its body
+	 * unchanged and adds only the permission the base class omits: `ORDERS_EDIT`.
+	 *
+	 * @param id The order summary.
+	 * @returns The soft-deleted order summary.
+	 */
+	@ApiOperation({ summary: 'Soft delete an order summary' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The order summary was soft deleted' })
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted order summary by id.
+	 *
+	 * The route is `CrudController`'s, declared there with no permission metadata whatsoever, and
+	 * `PermissionGuard` treats empty metadata as authorization — it returns `true` in the
+	 * `isEmpty(permissions)` branch of `packages/core/src/lib/shared/guards/permission.guard.ts` — which is
+	 * what left the inherited handler open to every authenticated member of the tenant. This override
+	 * exists only to state its permission, `ORDERS_EDIT`, on the same path and the same body.
+	 *
+	 * @param id The order summary.
+	 * @returns The restored order summary.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted order summary' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The order summary was restored' })
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

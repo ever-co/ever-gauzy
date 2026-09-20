@@ -1,11 +1,26 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -118,5 +133,53 @@ export class RefundLineController extends CrudController<RefundLine> {
 	@HttpCode(HttpStatus.OK)
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<IRefundLine> {
 		return this.refundLineService.removeLine(id);
+	}
+
+	/**
+	 * Soft deletes a refund line, leaving the breakdown on record.
+	 *
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to
+	 * empty metadata with its `isEmpty(permissions)` return, and the inherited handler stood on this
+	 * class's read grant alone. It now states `REFUNDS_CREATE`, the grant the create, update and delete
+	 * routes here carry and the one the GraphQL `deleteRefundLine` mutation states for the same line.
+	 *
+	 * @param id The line to soft delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The soft-deleted line.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a refund line that was soft deleted.
+	 *
+	 * The `PUT ':id/recover'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to
+	 * empty metadata with its `isEmpty(permissions)` return, and the inherited handler stood on this
+	 * class's read grant alone. It now states `REFUNDS_CREATE` — restoring is the same grant exercised
+	 * backwards, and the delete and soft-delete routes here state it too.
+	 *
+	 * @param id The line to restore.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The restored line.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

@@ -1,14 +1,18 @@
 import {
 	Body,
 	Controller,
+	Delete,
 	Get,
+	HttpCode,
+	HttpStatus,
 	MethodNotAllowedException,
 	Param,
 	Post,
 	Put,
 	Query,
 	Req,
-	UseGuards
+	UseGuards,
+	UsePipes
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -19,11 +23,13 @@ import {
 	SellerHoldReason
 } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -194,6 +200,72 @@ export class SellerTransactionController extends CrudController<SellerTransactio
 		@Body() body: { reason: SellerHoldReason; note?: string }
 	): Promise<SellerTransaction> {
 		return this.sellerTransactionService.hold(id, body?.reason, body?.note);
+	}
+
+	/**
+	 * DELETE a seller transaction by id
+	 *
+	 * The route belongs to `CrudController`, which declares it with no permission metadata of its own, and
+	 * `PermissionGuard` answers `true` to that empty metadata — its `isEmpty(permissions)` return in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — so the inherited handler stood on this
+	 * controller's class-level view grant alone. This override exists only to state its permission: the path
+	 * and the body are the base class's, and a ledger row is a child row of the seller, so deleting one takes
+	 * SELLERS_DELETE, the DELETE value the catalogue declares for the seller whose ledger it is.
+	 *
+	 * @param id The ledger row id.
+	 * @returns The result of the deletion.
+	 */
+	@ApiOperation({ summary: 'Delete a seller transaction' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Transaction deleted successfully' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * SOFT DELETE a seller transaction by id
+	 *
+	 * The route belongs to `CrudController.softRemove()`, which declares it with no permission metadata at
+	 * all, so `PermissionGuard` answers `true` to the empty metadata — the `isEmpty(permissions)` return in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — and only this controller's class-level view
+	 * grant was left in front of it. This override exists only to state its permission: the route and its
+	 * body are unchanged, and archiving a child row of the seller takes SELLERS_DELETE.
+	 *
+	 * @param id The ledger row id.
+	 * @returns The soft-deleted transaction.
+	 */
+	@ApiOperation({ summary: 'Soft delete a seller transaction' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Transaction soft deleted successfully' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * RESTORE a soft-deleted seller transaction by id
+	 *
+	 * The route belongs to `CrudController.softRecover()` and carries no permission metadata of its own, so
+	 * `PermissionGuard` answers `true` to the empty metadata — the `isEmpty(permissions)` return in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — before it consults the role grants at all.
+	 * This override exists only to state its permission on the same path and the same body: restoring a row
+	 * under the seller takes SELLERS_DELETE, the same destructive grant its deletion takes.
+	 *
+	 * @param id The ledger row id.
+	 * @returns The restored transaction.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted seller transaction' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Transaction restored successfully' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 
 	/**

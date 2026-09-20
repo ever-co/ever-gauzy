@@ -1,12 +1,27 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	Idempotent,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -144,5 +159,77 @@ export class PaymentWebhookEventController extends CrudController<PaymentWebhook
 	@HttpCode(HttpStatus.OK)
 	async reprocess(@Param('id', UUIDValidationPipe) id: ID, @Body() body?: { force?: boolean }): Promise<IPaymentWebhookEvent> {
 		return this.paymentWebhookEventService.reprocess(id, Boolean(body?.force));
+	}
+
+	/**
+	 * Deletes a row from the inbound provider callback log.
+	 *
+	 * The `DELETE ':id'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to
+	 * empty metadata with its `isEmpty(permissions)` return, and the inherited handler stood on this
+	 * class's read grant alone. It now states `PAYMENT_CALLBACKS_REPROCESS`, the grant the record and
+	 * update routes here already carry, because the log is evidence and removing a row from it is an
+	 * administrative act.
+	 *
+	 * @param id The event to delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully deleted' })
+	@Permissions(PaymentPermission.PAYMENT_CALLBACKS_REPROCESS as PermissionsEnum)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft deletes a row from the inbound provider callback log.
+	 *
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to
+	 * empty metadata with its `isEmpty(permissions)` return, and the inherited handler stood on this
+	 * class's read grant alone. It now states `PAYMENT_CALLBACKS_REPROCESS`, as the delete route this
+	 * controller declares does.
+	 *
+	 * @param id The event to soft delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The soft-deleted event.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@Permissions(PaymentPermission.PAYMENT_CALLBACKS_REPROCESS as PermissionsEnum)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a callback row that was soft deleted.
+	 *
+	 * The `PUT ':id/recover'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to
+	 * empty metadata with its `isEmpty(permissions)` return, and the inherited handler stood on this
+	 * class's read grant alone. It now states `PAYMENT_CALLBACKS_REPROCESS` — restoring is the same
+	 * grant exercised backwards, and the delete and soft-delete routes here state it too.
+	 *
+	 * @param id The event to restore.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The restored event.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@Permissions(PaymentPermission.PAYMENT_CALLBACKS_REPROCESS as PermissionsEnum)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

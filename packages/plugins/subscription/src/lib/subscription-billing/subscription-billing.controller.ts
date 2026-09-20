@@ -1,12 +1,27 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -81,6 +96,73 @@ export class SubscriptionBillingController extends CrudController<SubscriptionBi
 		await this.subscriptionBillingService.update(id, entity as any);
 
 		return await this.subscriptionBillingService.findOneScoped(id);
+	}
+
+	/**
+	 * Deletes a billing cycle.
+	 *
+	 * The route belongs to `CrudController`, which declares `DELETE :id` with no permission metadata at
+	 * all: `PermissionGuard` (`shared/guards/permission.guard.ts`) reads the handler first, then the class,
+	 * and answers `true` from its `isEmpty` branch when the pair is empty, so only the read grant
+	 * `SUBSCRIPTIONS_VIEW` stood in front of it. This override exists only to state the permission such a
+	 * delete has to carry — a cycle is the record of money billed, and the plugin declares no
+	 * `SUBSCRIPTIONS_DELETE`, so the child row takes the subscription's destructive grant,
+	 * `SUBSCRIPTIONS_EDIT`.
+	 *
+	 * @param id The cycle to delete.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete a billing cycle' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The cycle was deleted.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft deletes a billing cycle.
+	 *
+	 * `DELETE :id/soft` is declared by `CrudController` with no permission metadata either, so
+	 * `PermissionGuard` (`shared/guards/permission.guard.ts`) answers `true` from its `isEmpty` branch and
+	 * the inherited route is reachable by any tenant member — the same omission this override repairs. A
+	 * soft-deleted cycle leaves every billing read while its row survives as history, so it states the
+	 * grant its `delete` sibling states: `SUBSCRIPTIONS_EDIT`.
+	 *
+	 * @param id The cycle to soft delete.
+	 * @returns The soft-deleted cycle.
+	 */
+	@ApiOperation({ summary: 'Soft delete a billing cycle' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The cycle was soft deleted.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted billing cycle.
+	 *
+	 * The third bare route `CrudController` declares is `PUT :id/recover`, and
+	 * `PermissionGuard` (`shared/guards/permission.guard.ts`) returning `true` from its `isEmpty` branch is
+	 * what left it on the class-level `SUBSCRIPTIONS_VIEW` alone. This override exists only to state the
+	 * permission: putting a cycle back into the billing history is the inverse of deleting it, so it takes
+	 * the same `SUBSCRIPTIONS_EDIT` grant.
+	 *
+	 * @param id The cycle to restore.
+	 * @returns The restored cycle.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted billing cycle' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The cycle was restored.' })
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 
 	/**

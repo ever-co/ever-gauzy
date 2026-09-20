@@ -1,12 +1,14 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -112,5 +114,51 @@ export class PickListLineController extends CrudController<PickListLine> {
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
 		await this.pickListLineService.delete(id);
+	}
+
+	/**
+	 * Soft delete a pick line.
+	 *
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that
+	 * empty metadata with its `isEmpty(permissions)` return, which left the inherited handler standing on
+	 * this controller's class-level read grant alone. It now states `PICK_LISTS_EDIT`, the same grant the
+	 * `delete` route above already states, so all three destructive routes ask for the same thing.
+	 *
+	 * @param id The line to soft delete.
+	 * @returns The soft-deleted line.
+	 */
+	@ApiOperation({ summary: 'Soft delete a pick line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The line was soft deleted.' })
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restore a soft-deleted pick line.
+	 *
+	 * The `PUT ':id/recover'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata at all, so
+	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that
+	 * empty metadata with its `isEmpty(permissions)` return, which left the inherited handler standing on
+	 * this controller's class-level read grant alone. It now states `PICK_LISTS_EDIT` — restoring is the
+	 * same grant exercised backwards, exactly as the `delete` route above states it.
+	 *
+	 * @param id The line to restore.
+	 * @returns The restored line.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted pick line' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The line was restored.' })
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

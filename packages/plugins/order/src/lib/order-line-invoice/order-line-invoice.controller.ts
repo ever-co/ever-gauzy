@@ -1,12 +1,27 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -183,6 +198,51 @@ export class OrderLineInvoiceController extends CrudController<OrderLineInvoice>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
-		return await this.service.delete(id);
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft deletes a line-to-invoice link by id.
+	 *
+	 * `CrudController` declares this route with no permission metadata at all, and `PermissionGuard`
+	 * returns `true` to empty metadata — the `isEmpty(permissions)` branch in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — so the inherited route was reachable on
+	 * this controller's class-level view grant alone. The override restates the route and its body
+	 * unchanged and adds only the permission the base class omits: `ORDERS_EDIT`, the grant the `delete`
+	 * route above already requires.
+	 *
+	 * @param id The link.
+	 * @returns The soft-deleted link.
+	 */
+	@ApiOperation({ summary: 'Soft delete a line-to-invoice link' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The link was soft deleted' })
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted line-to-invoice link by id.
+	 *
+	 * The route is `CrudController`'s, declared there with no permission metadata whatsoever, and
+	 * `PermissionGuard` treats empty metadata as authorization — it returns `true` in the
+	 * `isEmpty(permissions)` branch of `packages/core/src/lib/shared/guards/permission.guard.ts` — which is
+	 * what left the inherited handler open to every authenticated member of the tenant. This override
+	 * exists only to state its permission, `ORDERS_EDIT`, on the same path and the same body.
+	 *
+	 * @param id The link.
+	 * @returns The restored link.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted line-to-invoice link' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The link was restored' })
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

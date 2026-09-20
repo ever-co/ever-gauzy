@@ -1,10 +1,25 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -93,7 +108,7 @@ export class PromotionController extends CrudController<Promotion> {
 	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<unknown> {
-		return this.promotionService.delete(id);
+		return super.delete(id);
 	}
 
 	/**
@@ -198,5 +213,49 @@ export class PromotionController extends CrudController<Promotion> {
 		@Query() options: Record<string, unknown>
 	) {
 		return this.promotionService.findUsage(id, options ?? {});
+	}
+
+	/**
+	 * Soft deletes a promotion.
+	 *
+	 * The route belongs to `CrudController`, which declares it with no `@Permissions` metadata at
+	 * all, so `PermissionGuard` answers `true` to that empty metadata (`permission.guard.ts`, the
+	 * `isEmpty` return) and only the class-level view grant was left in front of it. The override
+	 * exists only to state the destructive grant the route needs, `PROMOTIONS_DELETE`, which is the
+	 * permission the `deletePromotion` mutation declares.
+	 *
+	 * @param id The promotion to soft delete.
+	 * @returns The soft-deleted promotion.
+	 */
+	@ApiOperation({ summary: 'Soft delete a promotion' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Promotion soft deleted' })
+	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted promotion.
+	 *
+	 * The route belongs to `CrudController`, which declares it with no `@Permissions` metadata at
+	 * all, so `PermissionGuard` answers `true` to that empty metadata (`permission.guard.ts`, the
+	 * `isEmpty` return) and only the class-level view grant was left in front of it. The override
+	 * exists only to state the destructive grant the route needs, `PROMOTIONS_DELETE`, because a
+	 * restored offer becomes a candidate for every basket its rules match again.
+	 *
+	 * @param id The promotion to restore.
+	 * @returns The restored promotion.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted promotion' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Promotion restored' })
+	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

@@ -67,6 +67,14 @@ jest.mock('@gauzy/core', () => {
 		PermissionGuard: class PermissionGuard {},
 		TenantPermissionGuard: class TenantPermissionGuard {},
 		FeatureFlagGuard: class FeatureFlagGuard {},
+		// The CRUD base's soft-delete routes decorate with `new AbstractValidationPipe(...)`, so the
+		// controller resolves this name at import — and `@UsePipes()` refuses a pipe with no `transform`,
+		// which is the only member the declaration needs here.
+		AbstractValidationPipe: class AbstractValidationPipe {
+			transform(value: any): any {
+				return value;
+			}
+		},
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		SequenceService: class SequenceService {},
 		TenantSettingService: class TenantSettingService {},

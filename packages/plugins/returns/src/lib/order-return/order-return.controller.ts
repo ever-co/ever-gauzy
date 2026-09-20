@@ -1,6 +1,7 @@
 import {
 	Body,
 	Controller,
+	Delete,
 	Get,
 	HttpCode,
 	HttpStatus,
@@ -9,17 +10,20 @@ import {
 	Put,
 	Query,
 	Req,
-	UseGuards
+	UseGuards,
+	UsePipes
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe,
@@ -327,5 +331,73 @@ export class OrderReturnController extends CrudController<OrderReturn> {
 	@Get()
 	async findAll(@Query() options: BaseQueryDTO<OrderReturn>): Promise<IPagination<OrderReturn>> {
 		return await this.orderReturnService.findAll(options);
+	}
+
+	/**
+	 * Deletes a return.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission:
+	 * the base declares `DELETE :id` with no permission metadata at all, and `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) returns `true` to empty metadata —
+	 * `if (isEmpty(permissions)) { return true; }` — so the inherited handler stands on the
+	 * class-level read grant alone. The plugin declares no `RETURNS_DELETE`, so this states
+	 * `RETURNS_CREATE`, the grant that already lets a caller write a return.
+	 *
+	 * @param id The return to delete.
+	 * @returns The result of the delete.
+	 */
+	@ApiOperation({ summary: 'Delete a return' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The return was deleted.' })
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft-deletes a return.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission:
+	 * the base declares `DELETE :id/soft` with no permission metadata at all, and `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) returns `true` to empty metadata —
+	 * `if (isEmpty(permissions)) { return true; }` — so the inherited handler stands on the
+	 * class-level read grant alone. Soft removal is the same destructive write staged for recovery,
+	 * so it states `RETURNS_CREATE` as well.
+	 *
+	 * @param id The return to soft delete.
+	 * @returns The soft-deleted return.
+	 */
+	@ApiOperation({ summary: 'Soft delete a return' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The return was soft deleted.' })
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted return.
+	 *
+	 * The route belongs to `CrudController`, and this override exists only to state its permission:
+	 * the base declares `PUT :id/recover` with no permission metadata at all, and `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) returns `true` to empty metadata —
+	 * `if (isEmpty(permissions)) { return true; }` — so the inherited handler stands on the
+	 * class-level read grant alone. Restoring is the same destructive grant exercised backwards, so
+	 * it states `RETURNS_CREATE` as well.
+	 *
+	 * @param id The return to restore.
+	 * @returns The restored return.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted return' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The return was restored.' })
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

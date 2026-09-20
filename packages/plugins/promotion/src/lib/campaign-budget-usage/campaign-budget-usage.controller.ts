@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -83,6 +85,50 @@ export class CampaignBudgetUsageController extends CrudController<CampaignBudget
 	@Permissions(PromotionPermission.PROMOTIONS_EDIT as PermissionsEnum)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<unknown> {
-		return this.campaignBudgetUsageService.delete(id);
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft deletes a per-value consumption row of a campaign budget.
+	 *
+	 * The route belongs to `CrudController`, which declares it with no `@Permissions` metadata at
+	 * all, so `PermissionGuard` answers `true` to that empty metadata (`permission.guard.ts`, the
+	 * `isEmpty` return) and only the class-level view grant was left in front of it. The override
+	 * exists only to state the destructive grant the route needs, `PROMOTIONS_DELETE`: the row is a
+	 * child of one budget and of the campaign above it, so the campaign's delete grant governs it.
+	 *
+	 * @param id The usage row to soft delete.
+	 * @returns The soft-deleted usage row.
+	 */
+	@ApiOperation({ summary: 'Soft delete a campaign budget usage row' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Usage row soft deleted' })
+	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted per-value consumption row of a campaign budget.
+	 *
+	 * The route belongs to `CrudController`, which declares it with no `@Permissions` metadata at
+	 * all, so `PermissionGuard` answers `true` to that empty metadata (`permission.guard.ts`, the
+	 * `isEmpty` return) and only the class-level view grant was left in front of it. The override
+	 * exists only to state the destructive grant the route needs, `PROMOTIONS_DELETE`, because the
+	 * restored figure is what the next reservation against that value is allowed to take.
+	 *
+	 * @param id The usage row to restore.
+	 * @returns The restored usage row.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted campaign budget usage row' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Usage row restored' })
+	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

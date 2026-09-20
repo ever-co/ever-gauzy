@@ -41,6 +41,16 @@ jest.mock('@gauzy/core', () => {
 		Permissions: decorator,
 		PermissionGuard: class {},
 		TenantPermissionGuard: class {},
+		// The soft-delete and recover routes construct this pipe at class-definition time, so the
+		// double has to export the class those routes build, carrying the `transform` Nest insists on.
+		AbstractValidationPipe: class AbstractValidationPipe {
+			constructor(..._args: any[]) {
+				/* no validation happens in this suite */
+			}
+			transform(value: any): any {
+				return value;
+			}
+		},
 		UUIDValidationPipe: class {},
 		UseValidationPipe: decorator,
 		VersionedColumn: decorator,

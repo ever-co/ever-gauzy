@@ -1,12 +1,27 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Req,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { CommerceCartValidationMode, ICommerceCart } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	CrudController,
 	Idempotent,
 	Permissions,
 	PermissionGuard,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe,
@@ -338,5 +353,73 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 		@Req() request: Request
 	): Promise<ICommerceCart> {
 		return this.commerceCartService.removePromotion(id, code, versionExpectationOf(request));
+	}
+
+	/**
+	 * Deletes a cart.
+	 *
+	 * This route is `CrudController.delete()`'s, re-declared here only to state the grant it requires.
+	 * The base declares it with no permission metadata at all, so `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that empty metadata
+	 * — its `isEmpty(permissions)` return — and the inherited route otherwise stood on the class-level
+	 * `CARTS_VIEW` alone. Removing a cart is a `CARTS_DELETE` action, the same grant the `deleteCart`
+	 * mutation states.
+	 *
+	 * @param id The cart.
+	 * @returns The result of the deletion.
+	 */
+	@ApiOperation({ summary: 'Delete a cart' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Cart deleted' })
+	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft-deletes a cart.
+	 *
+	 * This route is `CrudController.softRemove()`'s, re-declared here only to state the grant it
+	 * requires. The base declares it with no permission metadata at all, so `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that empty metadata
+	 * — its `isEmpty(permissions)` return — and the inherited route otherwise stood on the class-level
+	 * `CARTS_VIEW` alone. Soft-deleting a cart archives the row a restore puts back, and it states the
+	 * same `CARTS_DELETE` grant the `deleteCart` mutation does.
+	 *
+	 * @param id The cart.
+	 * @returns The soft-deleted cart.
+	 */
+	@ApiOperation({ summary: 'Soft delete a cart' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Cart soft deleted' })
+	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted cart.
+	 *
+	 * This route is `CrudController.softRecover()`'s, re-declared here only to state the grant it
+	 * requires. The base declares it with no permission metadata at all, so `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to that empty metadata
+	 * — its `isEmpty(permissions)` return — and the inherited route otherwise stood on the class-level
+	 * `CARTS_VIEW` alone. Restoring a cart undoes a deletion, so it states the same `CARTS_DELETE`
+	 * grant the `deleteCart` mutation does.
+	 *
+	 * @param id The cart.
+	 * @returns The restored cart.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted cart' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Cart restored' })
+	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
 	}
 }

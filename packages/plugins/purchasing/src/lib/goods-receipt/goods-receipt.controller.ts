@@ -1,6 +1,7 @@
 import {
 	Body,
 	Controller,
+	Delete,
 	Get,
 	Headers,
 	HttpCode,
@@ -9,17 +10,20 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
 	UseValidationPipe
@@ -159,5 +163,81 @@ export class GoodsReceiptController extends CrudController<GoodsReceipt> {
 	@Get()
 	async findAll(@Query() options: BaseQueryDTO<GoodsReceipt>): Promise<IPagination<GoodsReceipt>> {
 		return await this.goodsReceiptService.findAll(options);
+	}
+
+	/**
+	 * Deletes a receipt.
+	 *
+	 * The `DELETE ':id'` route belongs to `CrudController`, and this override exists only to state the
+	 * permission it demands. The base declares the route with no permission metadata of its own, so
+	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
+	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
+	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
+	 * demanding only this controller's class-level view grant. It now states `GOODS_RECEIPTS_CREATE`, the
+	 * grant recording a delivery and reversing a receipt both carry.
+	 *
+	 * @param id The receipt to delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The deletion result.
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record deleted successfully' })
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * Soft deletes a receipt.
+	 *
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata of its own, so
+	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
+	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
+	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
+	 * demanding only this controller's class-level view grant. It now states `GOODS_RECEIPTS_CREATE`, the
+	 * grant recording a delivery and reversing a receipt both carry.
+	 *
+	 * @param id The receipt to soft delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The soft-deleted receipt.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		// The base hands this same array over; the service's signature names find options, hence the cast.
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a soft-deleted receipt.
+	 *
+	 * The `PUT ':id/recover'` route belongs to `CrudController`, and this override exists only to state
+	 * the permission it demands. The base declares the route with no permission metadata of its own, so
+	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
+	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
+	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
+	 * demanding only this controller's class-level view grant. It now states `GOODS_RECEIPTS_CREATE`, the
+	 * grant recording a delivery and reversing a receipt both carry.
+	 *
+	 * @param id The receipt to restore.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The restored receipt.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		// The base hands this same array over; the service's signature names find options, hence the cast.
+		return await super.softRecover(id, ...options);
 	}
 }
