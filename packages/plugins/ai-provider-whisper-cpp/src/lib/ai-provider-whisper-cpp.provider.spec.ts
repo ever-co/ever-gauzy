@@ -131,13 +131,43 @@ describe('whisperCppProviderDefinition', () => {
 			expect(String(fetchMock.mock.calls[0][0])).toBe('http://10.0.0.7:8080/inference');
 		});
 
-		it('allows the built-in default for a tenant row that carries no base URL', async () => {
+		/**
+		 * Residual of the same advisory: the built-in default is LOOPBACK, so a tenant row with no base
+		 * URL still made the server request `localhost:8080` — on shared hosting, whatever answers in
+		 * the API pod. Saving the row is tenant input, so the deployment flag decides here too.
+		 */
+		it('refuses the built-in loopback default for a tenant row that carries no base URL', async () => {
+			const fetchMock = capture({ text: 'ok' });
+
+			const error = (await whisperCppProviderDefinition
+				.transcribe!(Buffer.from('audio'), 'audio/webm', { apiKey: '', source: 'tenant' })
+				.catch((e: unknown) => e)) as Error & { kind?: string };
+
+			expect(error.kind).toBe('network');
+			expect(error.message).toMatch(/not allowed/);
+			expect(fetchMock).not.toHaveBeenCalled();
+		});
+
+		it('allows that same built-in default once the deployment opts in', async () => {
+			process.env.GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS = 'true';
 			const fetchMock = capture({ text: 'ok' });
 
 			await expect(
 				whisperCppProviderDefinition.transcribe!(Buffer.from('audio'), 'audio/webm', {
 					apiKey: '',
 					source: 'tenant'
+				})
+			).resolves.toBe('ok');
+			expect(String(fetchMock.mock.calls[0][0])).toBe('http://localhost:8080/inference');
+		});
+
+		it("allows it for an operator's own WHISPER_CPP_BASE_URL (environment source) with no opt-in", async () => {
+			const fetchMock = capture({ text: 'ok' });
+
+			await expect(
+				whisperCppProviderDefinition.transcribe!(Buffer.from('audio'), 'audio/webm', {
+					apiKey: '',
+					source: 'environment'
 				})
 			).resolves.toBe('ok');
 			expect(String(fetchMock.mock.calls[0][0])).toBe('http://localhost:8080/inference');

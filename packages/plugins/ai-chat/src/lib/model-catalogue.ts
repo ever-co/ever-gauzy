@@ -171,8 +171,9 @@ export function credentialCacheKey(credentials: IAiProviderCredentials | null): 
  * @param url - Absolute catalogue URL.
  * @param init.headers - Extra request headers (auth).
  * @param init.allowPrivateHost - Permit a private target. Pass
- *        `isPrivateAiProviderEndpointAllowed(credentials)`, which allows operator-chosen and built-in
- *        addresses and leaves a tenant-supplied one to the `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS` flag.
+ *        `isPrivateAiProviderEndpointAllowed(credentials)`, which allows operator-chosen addresses and
+ *        leaves everything a TENANT credential leads to — the URL it carries, or the provider default it
+ *        falls back to — to the `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS` flag.
  * @param init.resolver - DNS resolver for the egress pre-flight; `dns.lookup` when unset (tests inject one).
  */
 export async function fetchCatalogueJson<T>(

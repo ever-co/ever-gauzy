@@ -18,6 +18,7 @@ import {
     IsObject,
     IsOptional,
     IsString,
+    Max,
     ValidateNested
 } from "class-validator";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
@@ -26,9 +27,14 @@ import { CreateInvoiceItemDTO } from "./../../invoice-item/dto";
 
 export class InvoiceDTO extends TenantOrganizationBaseDTO {
 
+    /**
+     * Upper bound: beyond it the value can no longer round-trip through a JS number, and an
+     * unbounded client-chosen number could inflate the next-number sequence (GHSA-57hw-jqpj-ww97).
+     */
     @ApiProperty({ type: () => Number, readOnly: true })
     @IsNotEmpty()
     @IsNumber()
+    @Max(Number.MAX_SAFE_INTEGER)
     readonly invoiceNumber: number;
 
     @ApiProperty({ type: () => Date, readOnly: true })
