@@ -683,7 +683,7 @@ describe('OrganizationPermissionGuard', () => {
 
 			expect(firstMatch).toBe('org-allow');
 			// ... while the service deletes the rows of `query.organizationId`, whose policy is off.
-			expect(request.query.organizationId).toBe('org-deny');
+			expect(request.query?.organizationId).toBe('org-deny');
 		});
 
 		it('denies when a targeted log lives in an organization whose policy is off', async () => {
