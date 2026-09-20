@@ -1,14 +1,18 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
 // The Edit Key Result Parameters dialog, on the same scale as the other goals
-// dialogs: a header row, 12px tabs over a panel that sizes to its content, and
-// a footer whose buttons sit on the trailing edge.
-// It used to borrow the Edit Key Result stylesheet, which dressed none of this.
-// Every custom property carries a fallback — `--gauzy-*` is undefined in
+// dialogs: a header row, 12px tabs over a panel that sizes to its content, 12px
+// labels over 2rem controls, and a footer whose buttons sit on the trailing
+// edge. It used to borrow the Edit Key Result stylesheet, which dressed none of
+// this. Every custom property carries a fallback — `--gauzy-*` is undefined in
 // material-light / material-dark, where a `var()` without one is dropped.
+$control-height: 2rem;
 $control-font-size: 12px;
+$control-padding-x: 0.75rem;
 $inset: 1rem;
 $divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+$muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+$single-column-below: 575.98px;
 
 // Was a hard 645 x 390px, which left a third of the sheet empty under two
 // fields and clipped the Type tab's own.
@@ -90,6 +94,189 @@ $divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18))
     min-height: 9rem;
     padding: $inset;
     background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.06));
+  }
+
+  // Was `.info`, painted in the info accent: a two-line paragraph louder than
+  // the field it explains.
+  .hint {
+    margin: 0 0 0.875rem;
+    font-size: $control-font-size;
+    line-height: 1.125rem;
+    color: $muted;
+  }
+
+  .parameters-form {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.875rem 0.75rem;
+    align-items: start;
+
+    @media (max-width: $single-column-below) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .field {
+    min-width: 0;
+  }
+
+  .span-3 {
+    grid-column: span 3;
+
+    @media (max-width: $single-column-below) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  // The type picker renders its fields inside wrappers of its own; taking those
+  // out of the box tree makes the fields items of this grid.
+  ::ng-deep ga-keyresult-type-select,
+  ::ng-deep ga-keyresult-type-select > div {
+    display: contents;
+  }
+
+  ::ng-deep .kr-field {
+    min-width: 0;
+    grid-column: span 3;
+
+    @media (max-width: $single-column-below) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  // The value trio on a row of its own, under Type, as in the Edit Key Result
+  // dialog; a task's project and task pair up the same way.
+  ::ng-deep .kr-field-initial {
+    grid-column: 1 / span 2;
+  }
+
+  ::ng-deep .kr-field-target,
+  ::ng-deep .kr-field-unit {
+    grid-column: span 2;
+  }
+
+  ::ng-deep .kr-field-project {
+    grid-column: 1 / span 3;
+  }
+
+  @media (max-width: $single-column-below) {
+    ::ng-deep .kr-field-initial,
+    ::ng-deep .kr-field-target,
+    ::ng-deep .kr-field-unit,
+    ::ng-deep .kr-field-project {
+      grid-column: 1 / -1;
+    }
+  }
+
+  // The share this weight comes to, as a figure with a bar under its label
+  // rather than a bar stretched across half the dialog.
+  .share-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: $control-height;
+  }
+
+  .share-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  .share-bar {
+    flex: 1 1 auto;
+    width: 100%;
+
+    ::ng-deep .progress-container {
+      height: 6px !important;
+      border-radius: 999px;
+      background-color: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+    }
+
+    ::ng-deep .progress-value {
+      border-radius: 999px;
+
+      span {
+        display: none;
+      }
+    }
+  }
+
+  ::ng-deep label.label {
+    display: block;
+    margin: 0 0 0.375rem;
+    font-size: $control-font-size;
+    font-weight: 600;
+    line-height: 1rem;
+    color: $muted;
+  }
+
+  ::ng-deep label.label.mt-3 {
+    margin-top: 0 !important;
+  }
+
+  ::ng-deep input[nbInput] {
+    height: $control-height;
+    // `!important` against the shared `dialog()` mixin, which pins every input
+    // and select in a dialog to a 2.375rem `min-height` with `!important`.
+    min-height: $control-height !important;
+    padding: 0 $control-padding-x;
+    font-size: $control-font-size;
+    line-height: 1rem;
+  }
+
+  // Both selectors on purpose: the `dialog()` mixin pins the `.status-basic`
+  // one with `!important`, so only a selector of its shape can win, while the
+  // bare one still reaches a select carrying another status.
+  ::ng-deep nb-select .select-button,
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button {
+    height: $control-height;
+    min-height: $control-height !important;
+    padding-block: 0;
+    padding-inline-start: $control-padding-x !important;
+    font-size: $control-font-size;
+    line-height: 1rem;
+  }
+
+  ::ng-deep .ng-select .ng-select-container {
+    min-height: $control-height;
+    font-size: $control-font-size;
+  }
+
+  // Where a KPI select goes once a KPI exists: a dashed slot the height of a
+  // control, rather than a filled primary button in the middle of the form.
+  ::ng-deep .add-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    width: 100%;
+    height: $control-height;
+    margin: 0;
+    padding: 0 $control-padding-x;
+    border: 1px dashed var(--gauzy-border-default-color, rgba(126, 126, 143, 0.4));
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    background: transparent;
+    font-size: $control-font-size;
+    font-weight: 600;
+    line-height: 1rem;
+    color: nb-theme(color-primary-default);
+    cursor: pointer;
+
+    i {
+      font-size: 10px;
+    }
+
+    &:hover {
+      border-color: nb-theme(color-primary-default);
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    }
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 2px;
+    }
   }
 
   // Buttons on the trailing edge, Cancel quiet beside the primary action.
