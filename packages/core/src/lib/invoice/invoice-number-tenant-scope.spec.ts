@@ -136,7 +136,7 @@ describe('Invoice entity: invoice numbers are unique per tenant (GHSA-57hw-jqpj-
 	});
 });
 
-describe('InvoiceDTO.invoiceNumber upper bound', () => {
+describe('InvoiceDTO.invoiceNumber bounds', () => {
 	const errorsFor = async (invoiceNumber: number) => {
 		const dto = plainToInstance(InvoiceDTO, { invoiceNumber });
 		const errors = await validate(dto);
@@ -151,5 +151,11 @@ describe('InvoiceDTO.invoiceNumber upper bound', () => {
 		const constraints = await errorsFor(1e18);
 		expect(constraints).not.toHaveProperty('isNumber');
 		expect(constraints).toHaveProperty('max');
+	});
+
+	it('rejects a fractional number, which @IsNumber alone accepted', async () => {
+		// `numeric` keeps the fraction while MySQL's `bigint` truncates it, so MAX(...) + 1 would
+		// mean something different per database.
+		expect(await errorsFor(1000.5)).toHaveProperty('isInt');
 	});
 });
