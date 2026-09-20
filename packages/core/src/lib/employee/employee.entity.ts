@@ -2,7 +2,17 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
-import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+import {
+	IsBoolean,
+	IsDateString,
+	IsEnum,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUrl,
+	Max,
+	MaxLength
+} from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
 	CurrenciesEnum,
@@ -94,7 +104,7 @@ import {
 	TypeOrmEmployeeEntityCustomFields
 } from '../core/entities/custom-entity-fields/employee';
 import { Trimmed } from '../shared/decorators';
-import { billingRateColumn, ColumnNumericTransformerPipe, toBillingRate } from '../shared/pipes';
+import { BILLING_RATE_MAX, billingRateColumn, ColumnNumericTransformerPipe, toBillingRate } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { OrganizationProjectModuleEmployee } from '../organization-project-module/organization-project-module-employee.entity';
@@ -140,6 +150,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
+	@Max(BILLING_RATE_MAX)
 	@Transform(toBillingRate)
 	@MultiORMColumn(billingRateColumn())
 	billRateValue?: number;
@@ -147,6 +158,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
+	@Max(BILLING_RATE_MAX)
 	@Transform(toBillingRate)
 	@MultiORMColumn(billingRateColumn())
 	minimumBillingRate?: number;

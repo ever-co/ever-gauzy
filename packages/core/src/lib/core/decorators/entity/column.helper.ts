@@ -1,5 +1,6 @@
 import { DataSourceOptions } from 'typeorm';
 import { ColumnDataType, MikroORMColumnOptions } from './column-options.types';
+import { declaredColumnType, ValueTransformerType } from './value-transformer.type';
 
 /**
  * Resolve the database column type.
@@ -37,6 +38,18 @@ export function parseMikroOrmColumnOptions<T>({ type, options }): MikroORMColumn
 	if (options?.relationId) {
 		options.persist = false;
 	}
+
+	// MikroORM has no `transformer` option and would ignore it, so a column that declares one would
+	// be stored and hydrated raw under `DB_ORM=mikro-orm`. Run it through a MikroORM type instead.
+	if (options?.transformer) {
+		const { transformer, ...rest } = options;
+		return {
+			...rest,
+			type: new ValueTransformerType(transformer, declaredColumnType(type, options)),
+			columnType: options.columnType ?? declaredColumnType(type, options)
+		};
+	}
+
 	return {
 		type: type,
 		...options

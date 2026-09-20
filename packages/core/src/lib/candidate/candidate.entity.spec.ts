@@ -96,6 +96,14 @@ describe('UpdateCandidateDTO billing rates', () => {
 		expect(await rateErrors(dto)).toEqual([]);
 	});
 
+	it('rejects a rate the numeric(14,2) column cannot hold, instead of failing in the database', async () => {
+		const tooBig = plainToInstance(UpdateCandidateDTO, { billRateValue: 1e12 });
+		const largest = plainToInstance(UpdateCandidateDTO, { billRateValue: 999999999999.99 });
+
+		expect(await rateErrors(tooBig)).toEqual(['billRateValue']);
+		expect(await rateErrors(largest)).toEqual([]);
+	});
+
 	it("keeps parseInt's leading-number parsing and still rejects non-numeric rates", async () => {
 		const loose = plainToInstance(UpdateCandidateDTO, { billRateValue: '10,50' });
 		const invalid = plainToInstance(UpdateCandidateDTO, { billRateValue: 'abc' });

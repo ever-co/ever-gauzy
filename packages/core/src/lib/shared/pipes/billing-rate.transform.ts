@@ -2,6 +2,13 @@ import { TransformFnParams } from 'class-transformer';
 import { ColumnNumericTransformerPipe, roundToScale } from './column-numeric-transformer.pipe';
 
 /**
+ * Largest value `numeric(14,2)` / `decimal(14,2)` can hold. Validate against it (`@Max`) so an
+ * out-of-range rate is a clean 400 from the DTO instead of a database overflow, and so a rollback
+ * to the old `integer` column cannot be blocked by a value it could never hold.
+ */
+export const BILLING_RATE_MAX = 999999999999.99;
+
+/**
  * Column options for a money rate (`billRateValue`, `minimumBillingRate` on Employee and Candidate).
  * `numeric(14,2)` holds every value the old `integer` column could (up to 2,147,483,647) and keeps
  * cents (issue #10199).
