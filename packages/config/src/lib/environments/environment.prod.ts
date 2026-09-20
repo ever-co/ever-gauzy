@@ -72,7 +72,7 @@ export const environment: IEnvironment = {
 	// the API loads its env files after its imports have run, so an eagerly read secret can be
 	// decided before they are loaded (GHSA-39j7-x845-4w3c).
 	get EXPRESS_SESSION_SECRET(): string {
-		return resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy'); // Never a published literal outside DEMO
+		return resolveSecret('EXPRESS_SESSION_SECRET'); // Never a published literal, DEMO included
 	},
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 

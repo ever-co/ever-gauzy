@@ -77,7 +77,7 @@ describe('resolveSecret (GHSA-39j7-x845-4w3c)', () => {
 		});
 
 		it('returns a random 512-bit secret instead, which rejects the forged token', () => {
-			const secret = resolveSecret('JWT_SECRET', 'secretKey');
+			const secret = resolveSecret('JWT_SECRET');
 
 			expect(secret).toMatch(/^[0-9a-f]{128}$/);
 			expect(isKnownDefaultSecret(secret)).toBe(false);
@@ -85,21 +85,21 @@ describe('resolveSecret (GHSA-39j7-x845-4w3c)', () => {
 		});
 
 		it('returns the same value for the same name within the process, and a different one per name', () => {
-			const first = resolveSecret('JWT_SECRET', 'secretKey');
+			const first = resolveSecret('JWT_SECRET');
 
-			expect(resolveSecret('JWT_SECRET', 'secretKey')).toBe(first);
-			expect(resolveSecret('JWT_REFRESH_TOKEN_SECRET', 'refreshSecretKey')).not.toBe(first);
+			expect(resolveSecret('JWT_SECRET')).toBe(first);
+			expect(resolveSecret('JWT_REFRESH_TOKEN_SECRET')).not.toBe(first);
 		});
 
 		it('treats a whitespace-only value as unset', () => {
 			process.env.JWT_SECRET = '   ';
 
-			expect(resolveSecret('JWT_SECRET', 'secretKey')).toMatch(/^[0-9a-f]{128}$/);
+			expect(resolveSecret('JWT_SECRET')).toMatch(/^[0-9a-f]{128}$/);
 		});
 
 		it('warns once, naming the variable but never printing the value', () => {
-			const secret = resolveSecret('JWT_SECRET', 'secretKey');
-			resolveSecret('JWT_SECRET', 'secretKey');
+			const secret = resolveSecret('JWT_SECRET');
+			resolveSecret('JWT_SECRET');
 
 			expect(warn).toHaveBeenCalledTimes(1);
 			const message = String(warn.mock.calls[0][0]);
@@ -108,7 +108,7 @@ describe('resolveSecret (GHSA-39j7-x845-4w3c)', () => {
 		});
 
 		it('marks the value as generated, so the startup guard can still report it as unset', () => {
-			const secret = resolveSecret('JWT_SECRET', 'secretKey');
+			const secret = resolveSecret('JWT_SECRET');
 
 			expect(isGeneratedSecret('JWT_SECRET', secret)).toBe(true);
 			expect(isGeneratedSecret('JWT_SECRET', 'some-other-value')).toBe(false);
@@ -120,7 +120,7 @@ describe('resolveSecret (GHSA-39j7-x845-4w3c)', () => {
 		it('never returns the published literal either', () => {
 			process.env.NODE_ENV = 'production';
 
-			const secret = resolveSecret('JWT_SECRET', 'secretKey');
+			const secret = resolveSecret('JWT_SECRET');
 
 			expect(secret).not.toBe('secretKey');
 			expect(isGeneratedSecret('JWT_SECRET', secret)).toBe(true);
@@ -131,33 +131,46 @@ describe('resolveSecret (GHSA-39j7-x845-4w3c)', () => {
 		it('returns a strong value exactly as provided, without warning', () => {
 			process.env.JWT_SECRET = '  a-strong-operator-secret-with-spaces  ';
 
-			expect(resolveSecret('JWT_SECRET', 'secretKey')).toBe('  a-strong-operator-secret-with-spaces  ');
+			expect(resolveSecret('JWT_SECRET')).toBe('  a-strong-operator-secret-with-spaces  ');
 			expect(warn).not.toHaveBeenCalled();
 		});
 
 		it('keeps an explicit published value in development (e.g. .env.local), but warns', () => {
 			process.env.JWT_SECRET = 'secretKey';
 
-			expect(resolveSecret('JWT_SECRET', 'secretKey')).toBe('secretKey');
+			expect(resolveSecret('JWT_SECRET')).toBe('secretKey');
 			expect(warn).toHaveBeenCalledTimes(1);
 			expect(String(warn.mock.calls[0][0])).toContain('JWT_SECRET');
 			expect(isGeneratedSecret('JWT_SECRET', 'secretKey')).toBe(false);
 		});
 	});
 
-	describe('DEMO=true (held)', () => {
-		it('keeps the historical fallback exactly', () => {
+	describe('DEMO=true', () => {
+		it('CONTROL: the exemption used to hand a public demo the published literal', () => {
 			process.env.DEMO = 'true';
 
-			expect(resolveSecret('JWT_SECRET', 'secretKey')).toBe(preFixJwtSecret());
-			expect(resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy')).toBe('gauzy');
+			// What the DEMO branch returned before: `process.env[name] || '<published literal>'`.
+			expect(preFixJwtSecret()).toBe('secretKey');
+			expect(acceptsForgery(preFixJwtSecret())).toBe(true);
 		});
 
-		it('still uses an explicitly set value', () => {
+		it('is not exempt: an unset secret gets the same random value as anywhere else', () => {
+			process.env.DEMO = 'true';
+
+			const secret = resolveSecret('JWT_SECRET');
+
+			expect(secret).toMatch(/^[0-9a-f]{128}$/);
+			expect(isKnownDefaultSecret(secret)).toBe(false);
+			expect(acceptsForgery(secret)).toBe(false);
+			expect(resolveSecret('EXPRESS_SESSION_SECRET')).not.toBe('gauzy');
+		});
+
+		it('still uses an explicitly set value, which is how every deployment runs', () => {
 			process.env.DEMO = 'true';
 			process.env.JWT_SECRET = 'demo-store-secret';
 
-			expect(resolveSecret('JWT_SECRET', 'secretKey')).toBe('demo-store-secret');
+			expect(resolveSecret('JWT_SECRET')).toBe('demo-store-secret');
+			expect(warn).not.toHaveBeenCalled();
 		});
 	});
 

@@ -23,10 +23,11 @@ const CHECKED_SECRETS: ReadonlyArray<string> = [
  * - Additionally refuses to start in a real production deployment (`NODE_ENV=production` and
  *   `DEMO !== 'true'`), unless the operator explicitly opts out via `ALLOW_INSECURE_JWT_SECRET=true`.
  *
- * Outside DEMO an unset secret no longer means a published literal: `@gauzy/config` substitutes a
- * random per-process value (see `resolveSecret`), which this guard still reports as "unset". The
- * daily-reset demo (`DEMO=true`) keeps the published fallback for now and is exempted from the hard
- * failure, as is local development, while both are still warned.
+ * An unset secret no longer means a published literal anywhere, DEMO included: `@gauzy/config`
+ * substitutes a random per-process value (see `resolveSecret`), which this guard still reports as
+ * "unset". The daily-reset demo and local development are exempted from the hard FAILURE so they
+ * keep booting out of the box, and both are still warned — but neither can sign with a key that is
+ * printed in this repository any more.
  *
  * @throws Error in production (non-demo) when weak secrets are detected and the override is not set.
  */

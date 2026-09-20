@@ -95,11 +95,11 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 		// lazily for the same reason: the API loads its env files after its imports have run, so an
 		// eagerly resolved secret would be decided before `.env.local` exists (GHSA-39j7-x845-4w3c).
 		get expressSessionSecret(): string {
-			return resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy');
+			return resolveSecret('EXPRESS_SESSION_SECRET');
 		},
 		userPasswordBcryptSaltRounds: 12,
 		get jwtSecret(): string {
-			return resolveSecret('JWT_SECRET', 'secretKey');
+			return resolveSecret('JWT_SECRET');
 		}
 	},
 	assetOptions: {
