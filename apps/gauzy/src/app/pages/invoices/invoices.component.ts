@@ -697,7 +697,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			this.getTranslation('INVOICES_PAGE.TAX_2'),
 			this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'),
 			this.getTranslation('INVOICES_PAGE.CONTACT')
-		].join(',');
+		];
 
 		generateCsv(data, headers, fileName);
 	}
