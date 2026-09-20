@@ -118,6 +118,37 @@ describe('RegisterAuthorizationGuard', () => {
 
 	const activeSuperAdmin = { id: 'caller-1', tenantId: 'tenant-1', roleId: 'role-sa', isActive: true, isArchived: false };
 
+	/**
+	 * GHSA-28wv-vrxj-rp4q — a password-reset token is signed with the same secret and carries the
+	 * account `id`, so for a real super admin it used to pass as that admin's access token.
+	 */
+	it('refuses a non-access token (password reset) that names a super admin', async () => {
+		const resetToken = sign({ purpose: 'password-reset', id: 'caller-1', tenantId: 'tenant-1' }, env.JWT_SECRET);
+
+		// CONTROL: the same request with the admin's access token is authorized, so only the token
+		// type makes the difference below.
+		const control = build(activeSuperAdmin, superAdminState);
+		await expect(
+			control.guard.canActivate(
+				context({ user: { email: 'new@ever.co', roleId: 'role-target' } }).executionContext
+			)
+		).resolves.toBe(true);
+
+		const { guard, typeOrmUserRepository } = build(activeSuperAdmin, superAdminState);
+		const { executionContext } = context({ user: { email: 'new@ever.co', roleId: 'role-target' } }, resetToken);
+
+		await expect(guard.canActivate(executionContext)).rejects.toBeInstanceOf(ForbiddenException);
+		expect(typeOrmUserRepository.findOne).not.toHaveBeenCalled();
+	});
+
+	it('refuses an access token signed with a non-HS256 algorithm', async () => {
+		const hs512 = sign({ id: 'caller-1', tenantId: 'tenant-1' }, env.JWT_SECRET, { algorithm: 'HS512' });
+		const { guard } = build(activeSuperAdmin, superAdminState);
+		const { executionContext } = context({ user: { email: 'new@ever.co', roleId: 'role-target' } }, hs512);
+
+		await expect(guard.canActivate(executionContext)).rejects.toBeInstanceOf(ForbiddenException);
+	});
+
 	it('lets pure public self-registration through untouched', async () => {
 		const { guard, typeOrmUserRepository } = build(activeSuperAdmin, superAdminState);
 		const { executionContext } = context({ user: { email: 'new@ever.co' } }, null);

@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, HttpStatus, NotFoundException } from '@nestjs/common';
 import { MoreThanOrEqual, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
-import { JwtPayload, sign } from 'jsonwebtoken';
+import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
@@ -30,6 +30,7 @@ import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikr
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { LoginAttemptScope, LoginAttemptService } from '../auth/login-attempt.service';
+import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
@@ -106,7 +107,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				code
 			};
 			/** Generate JWT token using above JWT payload */
-			const token: string = sign(payload, environment.JWT_SECRET, {
+			const token: string = signPurposeToken(TokenPurposeEnum.TEAM_JOIN, payload, {
 				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`
 			});
 
@@ -263,7 +264,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				code
 			};
 			/** Generate JWT token using above JWT payload */
-			const token: string = sign(payload, environment.JWT_SECRET, {
+			const token: string = signPurposeToken(TokenPurposeEnum.TEAM_JOIN, payload, {
 				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`
 			});
 

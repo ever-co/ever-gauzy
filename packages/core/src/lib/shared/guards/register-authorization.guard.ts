@@ -10,6 +10,7 @@ import { RoleAuthorizationService } from '../../role/role-authorization.service'
 import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
 import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
 import { getORMType, MultiORMEnum } from '../../core/utils';
+import { isAccessTokenPayload, JWT_ALGORITHMS } from '../../auth/purpose-token';
 
 /**
  * Minimal user shape set on the request by this guard when the register route
@@ -153,8 +154,14 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		// `role` and `tenantId` claims are resolved from the database below instead.
 		let jwtPayload: { id: string };
 		try {
-			jwtPayload = verify(token, env.JWT_SECRET) as any;
+			jwtPayload = verify(token, env.JWT_SECRET, { algorithms: JWT_ALGORITHMS }) as any;
 		} catch {
+			throw new ForbiddenException('Invalid or expired authentication token.');
+		}
+
+		// Only an ACCESS token authenticates the caller. A password-reset token also carries `id`
+		// and is signed with the same secret (GHSA-28wv-vrxj-rp4q).
+		if (!isAccessTokenPayload(jwtPayload)) {
 			throw new ForbiddenException('Invalid or expired authentication token.');
 		}
 

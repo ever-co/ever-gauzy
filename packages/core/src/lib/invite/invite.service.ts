@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { JwtPayload, sign, verify } from 'jsonwebtoken';
+import { JwtPayload } from 'jsonwebtoken';
 import {
 	FindManyOptions,
 	FindOptionsWhere,
@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 import { addDays } from 'date-fns';
 import { pick } from 'underscore';
-import { ConfigService, environment } from '@gauzy/config';
+import { ConfigService } from '@gauzy/config';
 import { DEFAULT_INVITE_EXPIRY_PERIOD } from '@gauzy/constants';
 import {
 	ICreateEmailInvitesInput,
@@ -40,6 +40,7 @@ import { IAppIntegrationConfig } from '@gauzy/common';
 import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { signPurposeToken, TokenPurposeEnum, verifyPurposeToken } from '../auth/purpose-token';
 import {
 	MultiORMEnum,
 	freshTimestamp,
@@ -242,7 +243,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 		for await (const email of emailIds) {
 			const code = generateAlphaNumericCode();
-			const token = sign({ email, code }, environment.JWT_SECRET, {});
+			const token = signPurposeToken(TokenPurposeEnum.INVITE, { email, code });
 
 			// Retrieve organization team employees for the email.
 			const organizationTeamEmployees = await this.typeOrmOrganizationTeamEmployeeRepository.findBy({
@@ -425,7 +426,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const code = generateAlphaNumericCode();
 
 		// Generate a JWT token containing the email and invite code
-		const token = sign({ email, code }, environment.JWT_SECRET, {});
+		const token = signPurposeToken(TokenPurposeEnum.INVITE, { email, code });
 
 		return { code, token };
 	}
@@ -605,7 +606,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	async validateByToken(where: FindOptionsWhere<Invite>): Promise<IInvite> {
 		try {
 			const { email, token } = where;
-			const payload: string | JwtPayload = verify(token as string, environment.JWT_SECRET);
+			// Only an invite token is accepted. Invites mailed before tokens were purpose-typed carry
+			// no purpose; they still work because the lookup below also requires the STORED token.
+			const payload: string | JwtPayload = verifyPurposeToken(token, TokenPurposeEnum.INVITE, {
+				requiredClaims: ['email'],
+				allowLegacyUntyped: true
+			});
 
 			if (typeof payload === 'object' && 'email' in payload) {
 				if (payload.email === email) {
@@ -728,7 +734,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	}
 
 	createToken(email: string): string {
-		const token: string = sign({ email }, environment.JWT_SECRET, {});
+		const token: string = signPurposeToken(TokenPurposeEnum.INVITE, { email });
 		return token;
 	}
 

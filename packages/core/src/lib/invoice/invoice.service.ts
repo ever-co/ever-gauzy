@@ -4,8 +4,7 @@ import { Between, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import { IInvoice, IOrganization, InvoiceStats, LanguagesEnum } from '@gauzy/contracts';
-import { sign } from 'jsonwebtoken';
-import { environment } from '@gauzy/config';
+import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 import { MultiORMEnum } from './../core/utils';
 import { I18nService } from 'nestjs-i18n';
 import * as moment from 'moment';
@@ -145,7 +144,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			};
 			return await this.create({
 				id: invoiceId,
-				token: sign(payload, environment.JWT_SECRET, {})
+				token: signPurposeToken(TokenPurposeEnum.INVOICE_SHARE, payload)
 			});
 		} catch (error) {
 			throw new BadRequestException(error);

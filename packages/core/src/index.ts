@@ -188,3 +188,4 @@ export { IncomeCreateCommand, IncomeModule, IncomeService } from './lib/income';
 export { TagTypeModule, TagTypeService } from './lib/tag-type';
 export { AutomationLabelSyncCommand, RelationalTagDTO, Taggable, TagModule, TagService } from './lib/tags';
 export * from './lib/token';
+export * from './lib/auth/purpose-token';

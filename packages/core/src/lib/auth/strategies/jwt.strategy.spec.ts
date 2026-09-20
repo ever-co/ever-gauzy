@@ -79,6 +79,46 @@ describe('JwtStrategy.validate', () => {
 		expect(authService.getAuthenticatedUser).not.toHaveBeenCalled();
 	});
 
+	/**
+	 * GHSA-28wv-vrxj-rp4q — every purpose-specific token is signed with the same JWT_SECRET. A
+	 * password-reset token even carries `id`, so the id-presence check above does not stop it.
+	 */
+	describe('purpose-typed tokens (GHSA-28wv-vrxj-rp4q)', () => {
+		it.each([
+			['a password-reset token', { purpose: 'password-reset', id: 'first-user', tenantId: 'tenant' }],
+			[
+				'an invoice share token',
+				{ purpose: 'invoice-share', id: 'first-user', organizationId: 'o', tenantId: 'tenant' }
+			],
+			['a refresh token', { id: 'first-user', tenantId: 'tenant', tokenType: 'REFRESH_TOKEN_TYPE' }]
+		])('rejects %s even though it names a user id', async (_label, payload: any) => {
+			// CONTROL: the payload passes the pre-existing id-presence check, so only the type check stops it.
+			expect(payload.id).toBeTruthy();
+
+			const { strategy, authService } = build();
+			const { err, user } = await run(strategy, payload);
+			expect(err).toBeInstanceOf(UnauthorizedException);
+			expect(user).toBe(false);
+			expect(authService.getAuthenticatedUser).not.toHaveBeenCalled();
+		});
+
+		it('authenticates an access token carrying the access token type', async () => {
+			const { strategy } = build();
+			const { err, user } = await run(strategy, {
+				id: 'first-user',
+				tenantId: 'tenant',
+				tokenType: 'ACCESS_TOKEN_TYPE'
+			});
+			expect(err).toBeNull();
+			expect(user).toMatchObject({ id: 'first-user' });
+		});
+
+		it('only verifies HS256 signatures', () => {
+			const { strategy } = build();
+			expect((strategy as any)._verifOpts.algorithms).toEqual(['HS256']);
+		});
+	});
+
 	it('still authenticates a real access token (id claim)', async () => {
 		const { strategy, authService } = build();
 		const { err, user } = await run(strategy, { id: 'first-user', tenantId: 'tenant' });

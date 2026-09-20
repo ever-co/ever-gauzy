@@ -12,3 +12,4 @@ export * from './lib/config.service';
 export { environment, gauzyToggleFeatures } from './lib/environments/environment';
 export * from './lib/environments/is-development';
 export * from './lib/environments/ienvironment';
+export * from './lib/environments/social-auth.helper';

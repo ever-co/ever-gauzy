@@ -5,6 +5,7 @@ import { JwtPayload } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
 import { IAuthenticatedUser } from '../../core/context/types';
 import { AuthService } from '../auth.service';
+import { isAccessTokenPayload, JWT_ALGORITHMS } from '../purpose-token';
 import { EmployeeService } from '../../employee/employee.service';
 import { RoleAuthorizationService } from '../../role/role-authorization.service';
 import { UserOrganizationService } from '../../user-organization/user-organization.services';
@@ -22,7 +23,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	) {
 		super({
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-			secretOrKey: env.JWT_SECRET
+			secretOrKey: env.JWT_SECRET,
+			algorithms: JWT_ALGORITHMS
 		});
 	}
 
@@ -45,6 +47,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			// appointment, magic-code tokens); a lookup by an undefined id used to fall through to
 			// the FIRST user in the table, so such a token authenticated as that user. Reject them here.
 			if (!id && !thirdPartyId) {
+				return done(new UnauthorizedException('unauthorized'), false);
+			}
+
+			// A purpose-typed token (password reset, workspace sign-in, ...) is not an access token even
+			// when it carries an `id`: the password-reset token does (GHSA-28wv-vrxj-rp4q).
+			if (!isAccessTokenPayload(payload)) {
 				return done(new UnauthorizedException('unauthorized'), false);
 			}
 
