@@ -54,14 +54,27 @@ describe('CreateEmailTemplateDTO', () => {
 		await expect(failedProperties({ ...VALID, name: { id: 'x' }, hbs: 42 })).resolves.toEqual(['hbs', 'name']);
 	});
 
-	it('declares no tenant field: a body can never name the tenant it writes into', () => {
+	it('refuses a language code the platform does not ship', async () => {
+		// Every reader looks a template up by a `LanguagesEnum` value, so `xx` would store a row nothing
+		// can find. The column itself has no enum constraint, which is why the DTO carries the check.
+		await expect(failedProperties({ ...VALID, languageCode: 'xx' })).resolves.toEqual(['languageCode']);
+		await expect(failedProperties({ ...VALID, languageCode: 'de' })).resolves.toEqual([]);
+	});
+
+	it('declares no tenant field: a body naming one has it whitelisted away', async () => {
 		// The DTO is the schema the route whitelists against (`@UseValidationPipe({ whitelist: true })`),
-		// so a field it does not declare is dropped before the handler sees it. The instance itself still
-		// carries the extra key — `plainToInstance` copies unknown properties — which is why the route
-		// whitelists and the controller also strips the scope fields explicitly.
-		const declared = Object.keys(plainToInstance(CreateEmailTemplateDTO, VALID));
-		expect(declared).not.toContain('tenantId');
-		expect(declared).not.toContain('tenant');
-		expect(declared.sort()).toEqual(['hbs', 'languageCode', 'mjml', 'name']);
+		// so a field it does not declare never reaches the handler. Asserted through the same
+		// whitelisting `validate()` the pipe runs, with the tenant keys actually present in the input —
+		// `plainToInstance` alone copies unknown properties straight onto the instance.
+		const instance = plainToInstance(CreateEmailTemplateDTO, {
+			...VALID,
+			tenant: { id: '3f0c1d2e-0000-4000-8000-000000000001' },
+			tenantId: '3f0c1d2e-0000-4000-8000-000000000001'
+		});
+		expect(Object.keys(instance)).toEqual(expect.arrayContaining(['tenant', 'tenantId']));
+
+		await expect(validate(instance, { whitelist: true })).resolves.toEqual([]);
+
+		expect(Object.keys(instance).sort()).toEqual(['hbs', 'languageCode', 'mjml', 'name']);
 	});
 });
