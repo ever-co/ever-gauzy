@@ -196,7 +196,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		// string or `{ id }`). Validated BEFORE the inviter's own role is looked at, so a malformed or
 		// self-contradicting payload is refused for every caller and not just for the ones that reach
 		// the fallback below — an EMPLOYEE inviter is force-assigned the EMPLOYEE role, but that is an
-		// authorization decision and must not double as a licence to ignore bad input.
+		// authorization decision and must not double as permission to ignore bad input.
 		// `extractRoleIds` itself throws on a role key that is present but references nothing.
 		const requestedRoleIds = extractRoleIds(input);
 		if (requestedRoleIds.length > 1) {
