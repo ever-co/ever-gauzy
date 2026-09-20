@@ -4,6 +4,8 @@ import { EmailTemplateEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { EmailTemplate } from './email-template.entity';
 import { CrudService, BaseQueryDTO } from './../core/crud';
+import { IFindManyOptions } from './../core/crud/icrud.service';
+import { scopeEmailTemplateWhere } from './email-template.scope';
 import { MultiORMEnum } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -31,31 +33,31 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 		this.assertRelationsPermitted(params);
 
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
-				const { tenantId: mTenantIdParam, organizationId: mOrgId, languageCode: mLang } = params.where;
+			case MultiORMEnum.MikroORM: {
+				const { organizationId: mOrgId, languageCode: mLang } = params.where ?? {};
 				const mTenantId = RequestContext.currentTenantId();
 
-				const mWhere = {
-					$or: [
-						{
-							...(isNotEmpty(mTenantId) ? { tenantId: mTenantId } : {}),
-							...(isNotEmpty(mOrgId) ? { organizationId: mOrgId } : {}),
-							...(isNotEmpty(mLang) ? { languageCode: mLang } : {})
-						},
-						{
-							organizationId: null,
-							tenantId: null
-						}
-					]
+				// The caller's tenant is never taken from the client (GHSA-44pv-34gx-q9p4), and the tenant
+				// arm exists only when the context HAS a tenant: MikroORM compiles a literal `null` to
+				// `IS NULL`, so a `tenantId: null` arm would not match nothing — it would match every
+				// NULL-tenant row, organization-scoped ones included. Without a tenant, only the global
+				// defaults (`tenantId IS NULL AND organizationId IS NULL`) are readable.
+				const mGlobalArm = { organizationId: null, tenantId: null };
+				const mTenantArm = {
+					tenantId: mTenantId,
+					...(isNotEmpty(mOrgId) ? { organizationId: mOrgId } : {}),
+					...(isNotEmpty(mLang) ? { languageCode: mLang } : {})
 				};
+				const mWhere = { $or: mTenantId ? [mTenantArm, mGlobalArm] : [mGlobalArm] };
 
 				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere as any, {
 					...(params?.relations ? { populate: Object.keys(params.relations) as any[] } : {}),
 					...(params?.order ? { orderBy: params.order as any } : {})
 				});
 				return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
+			}
 
-			case MultiORMEnum.TypeORM:
+			case MultiORMEnum.TypeORM: {
 				const query = this.typeOrmRepository.createQueryBuilder('email_template');
 				query.setFindOptions({
 					select: {
@@ -79,12 +81,13 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 				query.where((qb: SelectQueryBuilder<EmailTemplate>) => {
 					qb.where(
 						new Brackets((web: WhereExpressionBuilder) => {
-							const { tenantId, organizationId, languageCode } = params.where;
-							if (isNotEmpty(tenantId)) {
-								web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
-									tenantId: RequestContext.currentTenantId()
-								});
-							}
+							const { organizationId, languageCode } = params.where ?? {};
+							// Always pinned to the caller's tenant. This used to run only when the CLIENT
+							// sent `where.tenantId`, so omitting it listed every tenant's templates
+							// (GHSA-44pv-34gx-q9p4). A missing context tenant binds NULL and matches nothing.
+							web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
+								tenantId: RequestContext.currentTenantId() ?? null
+							});
 							if (isNotEmpty(organizationId)) {
 								web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 									organizationId
@@ -106,10 +109,30 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 				});
 				const [items, total] = await query.getManyAndCount();
 				return { items, total };
+			}
 
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
+	}
+
+	/**
+	 * Paginates email templates of the caller's tenant plus the global (NULL-tenant) defaults.
+	 *
+	 * Inherited `GET /email-template/pagination` used to hand the client `where` straight to
+	 * `CrudService.paginate`, which adds no tenant predicate on this plain `CrudService`
+	 * (GHSA-44pv-34gx-q9p4).
+	 *
+	 * @param options - The client pagination options.
+	 * @returns The paginated templates.
+	 */
+	public async paginate(options?: IFindManyOptions<EmailTemplate>): Promise<IPagination<EmailTemplate>> {
+		const where = scopeEmailTemplateWhere(
+			(options as { where?: unknown } | undefined)?.where,
+			RequestContext.currentTenantId(),
+			this.ormType
+		);
+		return await super.paginate({ ...options, where } as IFindManyOptions<EmailTemplate>);
 	}
 
 	/**

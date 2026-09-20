@@ -5,6 +5,7 @@ import {
 	Delete,
 	ForbiddenException,
 	Get,
+	HttpCode,
 	HttpStatus,
 	Param,
 	Post,
@@ -14,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { QueryBus, CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -24,7 +25,13 @@ import { EmailTemplate } from './email-template.entity';
 import { EmailTemplateService } from './email-template.service';
 import { EmailTemplateGeneratePreviewQuery, EmailTemplateQuery, FindEmailTemplateQuery } from './queries';
 import { EmailTemplateSaveCommand } from './commands';
-import { EmailTemplatePreviewDTO, EmailTemplateQueryDTO, SaveEmailTemplateDTO } from './dto';
+import {
+	CreateEmailTemplateDTO,
+	EmailTemplatePreviewDTO,
+	EmailTemplateQueryDTO,
+	SaveEmailTemplateDTO
+} from './dto';
+import { stripEmailTemplateScopeFields } from './email-template.scope';
 
 @ApiTags('EmailTemplate')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -200,7 +207,9 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 					id,
 					tenantId: RequestContext.currentTenantId()
 				},
-				input
+				// The body is unvalidated: never let it move the template to another tenant or
+				// organization, or turn it into a global (NULL-tenant) template.
+				stripEmailTemplateScopeFields(input)
 			);
 		} catch (error) {
 			throw new ForbiddenException();
@@ -236,5 +245,79 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		} catch (error) {
 			throw new ForbiddenException();
 		}
+	}
+
+	/**
+	 * CREATE email template in the caller's tenant.
+	 *
+	 * Overrides the inherited `CrudController.create()`: `EmailTemplateService` is a plain `CrudService`,
+	 * so the inherited route persisted the client's `tenantId` / `organizationId` verbatim — a template
+	 * could be written into another tenant, or as a GLOBAL (NULL-tenant) template every tenant reads
+	 * (GHSA-44pv-34gx-q9p4). The tenant is pinned to the caller's; the organization must be one the caller
+	 * belongs to. The web editor saves through `POST template/save`, which is unaffected.
+	 *
+	 * `whitelist` drops everything `CreateEmailTemplateDTO` does not declare, so no undeclared key of the
+	 * body reaches persistence — `stripEmailTemplateScopeFields` below stays as the explicit statement of
+	 * which fields are scope fields.
+	 *
+	 * @param entity - The template to create.
+	 * @returns The created template.
+	 */
+	@ApiOperation({ summary: 'Create email template in the current tenant' })
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	@UseValidationPipe({ whitelist: true })
+	async create(@Body() entity: CreateEmailTemplateDTO): Promise<EmailTemplate> {
+		const payload = (entity ?? {}) as CreateEmailTemplateDTO;
+		const { organizationId } = payload;
+		const created = await this.emailTemplateService.create({
+			...stripEmailTemplateScopeFields(payload),
+			// Checked against the caller's memberships by `CreateEmailTemplateDTO`.
+			...(organizationId ? { organizationId } : {}),
+			tenantId: RequestContext.currentTenantId()
+		} as DeepPartial<EmailTemplate>);
+
+		// Answer with the row as it was STORED, read back through the tenant-scoped lookup, rather than
+		// echoing the request body back with an id attached. The client then sees the scope fields the
+		// server pinned instead of the ones it sent, and nothing that was never persisted. It also keeps
+		// the request body out of the response, which is what CodeQL's js/reflected-xss flags here (not
+		// exploitable — the response is JSON and helmet sets `X-Content-Type-Options: nosniff` — but the
+		// echo has no value worth defending).
+		return (await this.findById(created.id)) as EmailTemplate;
+	}
+
+	/**
+	 * SOFT DELETE email template by id in the same tenant.
+	 *
+	 * Overrides the inherited route, which looked the row up by id alone on this non tenant-aware service:
+	 * any tenant could soft-delete another tenant's template, or a global default (GHSA-44pv-34gx-q9p4).
+	 * `findById` only resolves rows of the caller's tenant, so global templates are refused too.
+	 *
+	 * @param id - The template id.
+	 * @returns The soft-deleted template.
+	 */
+	@ApiOperation({ summary: 'Soft delete email template' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id/soft')
+	async softRemove(@Param('id', UUIDValidationPipe) id: string): Promise<EmailTemplate> {
+		await this.findById(id);
+		return await this.emailTemplateService.softRemove(id, {
+			where: { tenantId: RequestContext.currentTenantId() }
+		});
+	}
+
+	/**
+	 * RECOVER a soft-deleted email template by id in the same tenant. See {@link softRemove}.
+	 *
+	 * @param id - The template id.
+	 * @returns The recovered template.
+	 */
+	@ApiOperation({ summary: 'Recover soft-deleted email template' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/recover')
+	async softRecover(@Param('id', UUIDValidationPipe) id: string): Promise<EmailTemplate> {
+		return await this.emailTemplateService.softRecover(id, {
+			where: { tenantId: RequestContext.currentTenantId() }
+		});
 	}
 }
