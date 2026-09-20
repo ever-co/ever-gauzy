@@ -50,10 +50,11 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 			if (!employee) {
 				throw new ForbiddenException('The employee does not belong to this tenant');
 			}
-			// Assign the employee's organizationId if it's not provided
-			if (isEmpty(organizationId)) {
-				organizationId = employee.organizationId;
-			}
+			// The employee's own organization wins over a body-supplied one: an Employee row belongs to
+			// exactly one organization, so a different organizationId of the same tenant would file this
+			// employee's activities under an organization they are not a member of. The body value stays
+			// a fallback for an employee without an organization.
+			organizationId = employee.organizationId || organizationId;
 		}
 
 		// Log empty activities and filter out any invalid ones

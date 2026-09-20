@@ -1551,7 +1551,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	async addManualTime(request: IManualTimeInput): Promise<ITimeLog> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { employeeId, startedAt, stoppedAt, organizationId } = request;
+			const { employeeId, startedAt, stoppedAt } = request;
 
 			// Validate input
 			if (!startedAt || !stoppedAt) {
@@ -1560,6 +1560,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Retrieve employee information
 			const employee: IEmployee = await this.findEmployeeInTenant(employeeId, tenantId);
+
+			// The organization is the EMPLOYEE's, not the body's. The policy consulted right below is
+			// `employee.organization`'s, so honouring a different organizationId of the same tenant would
+			// judge the write by one organization's rules and then persist it — log, slots and timesheet —
+			// under another's. The body value is only a fallback for an employee without an organization.
+			const organizationId = employee.organizationId ?? request.organizationId;
 
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
@@ -1599,7 +1605,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Create the new time log entry
-			return await this.commandBus.execute(new TimeLogCreateCommand(request));
+			return await this.commandBus.execute(new TimeLogCreateCommand({ ...request, organizationId }));
 		} catch (error) {
 			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
 			if (error instanceof HttpException) {
@@ -1619,7 +1625,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	async updateManualTime(id: ID, request: IManualTimeInput): Promise<ITimeLog> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { startedAt, stoppedAt, employeeId, organizationId } = request;
+			const { startedAt, stoppedAt, employeeId } = request;
 
 			// Validate input
 			if (!startedAt || !stoppedAt) {
@@ -1628,6 +1634,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 			// Retrieve employee information
 			const employee: IEmployee = await this.findEmployeeInTenant(employeeId, tenantId);
+
+			// The employee's organization, never the body's — see `addManualTime`. Here it also decides
+			// which rows count as conflicting, i.e. which time slots this call is allowed to delete.
+			const organizationId = employee.organizationId ?? request.organizationId;
 
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;

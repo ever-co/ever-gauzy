@@ -95,6 +95,20 @@ describe('BulkActivitiesSaveHandler (GHSA-6qvm-3wg4-26w4)', () => {
 		expect(activityRepository.save).not.toHaveBeenCalled();
 	});
 
+	it("files the activities under the employee's own organization, not a body-supplied one", async () => {
+		// An Employee row belongs to exactly one organization; a sibling organization of the same tenant
+		// would otherwise get this employee's activities filed under it.
+		const { handler, activityRepository } = createHandler();
+		asCaller({ employeeId: 'employee-a' });
+
+		await handler.execute(
+			new BulkActivitiesSaveCommand({ organizationId: 'org-sibling', activities: [{ title: 'x' }] } as any)
+		);
+
+		const [saved] = activityRepository.save.mock.calls[0][0];
+		expect(saved).toMatchObject({ organizationId: 'org-a', employeeId: 'employee-a', tenantId: TENANT_A });
+	});
+
 	it("never saves under another tenant's activity id, and keeps the employee's own", async () => {
 		const { handler, activityRepository } = createHandler();
 		asCaller({ employeeId: 'employee-a' });
