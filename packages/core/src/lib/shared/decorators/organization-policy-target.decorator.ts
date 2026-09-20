@@ -11,8 +11,14 @@ export const ORGANIZATION_POLICY_TARGET_METADATA = 'organizationPolicyTarget';
 export interface IOrganizationPolicyTarget {
 	/** The tenant-scoped entity class the route param identifies. It must have an `organizationId` column. */
 	entity: Type<unknown>;
-	/** The name of the route param carrying the record id. */
+	/** The name of the route param (or query parameter) carrying the record id(s). */
 	param: string;
+	/**
+	 * Where the id(s) come from. `params` (the default) reads a single route param; `query` reads a
+	 * query parameter that may carry SEVERAL ids, and then every addressed record's organization has
+	 * to allow the action.
+	 */
+	source?: 'params' | 'query';
 }
 
 /**
@@ -25,9 +31,16 @@ export interface IOrganizationPolicyTarget {
  * switched off. With it the guard loads the record inside the caller's tenant, denies when it does not
  * exist there, and requires the record's organization to allow the action as well.
  *
- * @param entity The entity class the route param identifies.
- * @param param The route param carrying the record id. Defaults to `id`.
+ * On the bulk delete routes the ids live in the QUERY (`?logIds[0]=...`), and the guard used to check
+ * only the organization the request NAMED — which the delete services do not necessarily use. A body
+ * `organizationId` could therefore shadow the query `organizationId` the service filters by
+ * (GHSA-rmq9-85v7-f365). With `source: 'query'` the guard resolves the organization of every
+ * addressed record instead, so a client-named organization cannot decide the verdict on its own.
+ *
+ * @param entity The entity class the id(s) identify.
+ * @param param The route param, or query parameter, carrying the record id(s). Defaults to `id`.
+ * @param source Where to read the id(s) from: `params` (default) or `query`.
  * @returns A method decorator that stores the target on the route handler.
  */
-export const OrganizationPolicyTarget = (entity: Type<unknown>, param = 'id') =>
-	SetMetadata<string, IOrganizationPolicyTarget>(ORGANIZATION_POLICY_TARGET_METADATA, { entity, param });
+export const OrganizationPolicyTarget = (entity: Type<unknown>, param = 'id', source: 'params' | 'query' = 'params') =>
+	SetMetadata<string, IOrganizationPolicyTarget>(ORGANIZATION_POLICY_TARGET_METADATA, { entity, param, source });

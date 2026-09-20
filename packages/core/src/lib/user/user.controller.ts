@@ -12,7 +12,8 @@ import {
 	Post,
 	Body,
 	Put,
-	Delete
+	Delete,
+	UsePipes
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -20,7 +21,8 @@ import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { ID, IPagination, IUser, IUserUiPreferences, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { UUIDValidationPipe, ParseJsonPipe, UseValidationPipe } from './../shared/pipes';
+import { TenantOrganizationBaseDTO } from './../core/dto';
+import { AbstractValidationPipe, UUIDValidationPipe, ParseJsonPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { User } from './user.entity';
@@ -322,5 +324,55 @@ export class UserController extends CrudController<User> {
 	@Delete('/reset')
 	async factoryReset() {
 		return await this._factoryResetService.reset();
+	}
+
+	/**
+	 * SOFT DELETE user by id
+	 *
+	 * Overrides the inherited `CrudController.softRemove()` route only to attach the permission gate.
+	 * Left bare, any tenant member could soft-delete any user of the tenant, the admin included
+	 * (GHSA-v79w-54p2-wmh5). ORG_USERS_EDIT, not the `delete` pair: EMPLOYEE holds ACCESS_DELETE_ACCOUNT
+	 * for self-deletion, which `UserService.delete` enforces and the soft route would not.
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'Record soft deleted successfully'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<User> {
+		return super.softRemove(id, ...options);
+	}
+
+	/**
+	 * RESTORE a soft-deleted user by id
+	 *
+	 * Overrides the inherited `CrudController.softRecover()` route only to attach the permission gate.
+	 * Left bare, any tenant member could soft-delete any user of the tenant, the admin included
+	 * (GHSA-v79w-54p2-wmh5). ORG_USERS_EDIT, not the `delete` pair: EMPLOYEE holds ACCESS_DELETE_ACCOUNT
+	 * for self-deletion, which `UserService.delete` enforces and the soft route would not.
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'Record restored successfully'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<User> {
+		return super.softRecover(id, ...options);
 	}
 }

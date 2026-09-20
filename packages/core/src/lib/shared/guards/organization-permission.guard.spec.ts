@@ -120,6 +120,7 @@ interface GuardHarness {
 	findOne: jest.Mock;
 	createQueryBuilder: jest.Mock;
 	findTarget: jest.Mock;
+	findTargets: jest.Mock;
 }
 
 function createGuard(): GuardHarness {
@@ -145,16 +146,25 @@ function createGuard(): GuardHarness {
 		return TIME_LOGS.find((log) => log.id === where.id && log.tenantId === where.tenantId) ?? null;
 	});
 
+	// The bulk form of the lookup above: `where.id` is an `In([...])` operator.
+	const findTargets = jest.fn(async (entity: unknown, { where }: any) => {
+		if (entity !== TimeLogStub) {
+			return [];
+		}
+		const ids: string[] = where.id?.value ?? [];
+		return TIME_LOGS.filter((log) => ids.includes(log.id) && log.tenantId === where.tenantId);
+	});
+
 	const guard = new OrganizationPermissionGuard(
 		cacheManager,
 		new Reflector(),
 		{ findOne } as any,
 		{} as any,
-		{ createQueryBuilder, manager: { findOne: findTarget } } as any,
+		{ createQueryBuilder, manager: { findOne: findTarget, find: findTargets } } as any,
 		{} as any
 	);
 
-	return { guard, cache, findOne, createQueryBuilder, findTarget };
+	return { guard, cache, findOne, createQueryBuilder, findTarget, findTargets };
 }
 
 /**
@@ -164,7 +174,7 @@ function createGuard(): GuardHarness {
 function createContext(
 	permissions: PermissionsEnum[] | undefined,
 	request: { body?: any; query?: any; params?: any } = {},
-	target?: { entity: unknown; param: string }
+	target?: { entity: unknown; param: string; source?: 'params' | 'query' }
 ): ExecutionContext {
 	const handler = function handlerStub() {
 		/* route handler */
@@ -633,6 +643,126 @@ describe('OrganizationPermissionGuard', () => {
 			await guard.canActivate(build());
 
 			expect(createQueryBuilder).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('the bulk delete routes (GHSA-rmq9-85v7-f365 residual)', () => {
+		// `DELETE /timesheet/time-log` and `DELETE /timesheet/time-slot` take their ids AND the
+		// organization they filter by from the QUERY, while the guard used to check the FIRST
+		// organizationId it found — body first. A body value could therefore decide the verdict for rows
+		// the service deletes in another organization.
+		const target = { entity: TimeLogStub, param: 'logIds', source: 'query' as const };
+
+		it('denies a delete whose body names a permissive organization and whose query names a denied one', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.MANAGER, employeeId: null });
+
+			const context = createContext([PermissionsEnum.ALLOW_DELETE_TIME], {
+				body: { organizationId: 'org-allow' },
+				query: { organizationId: 'org-deny', logIds: ['log-in-deny'] }
+			});
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+		});
+
+		it('CONTROL: the pre-fix extraction returned the body value and checked only that', () => {
+			// `extractRequestOrganizationId` took the first non-empty string of
+			// [body.organizationId, query.organizationId, params.organizationId].
+			const request = {
+				body: { organizationId: 'org-allow' },
+				query: { organizationId: 'org-deny', logIds: ['log-in-deny'] }
+			};
+			const candidates = [
+				request.body?.organizationId,
+				request.query?.organizationId,
+				(request as any).params?.organizationId
+			];
+			const firstMatch = candidates.find(
+				(candidate) => typeof candidate === 'string' && candidate.trim().length > 0
+			);
+
+			expect(firstMatch).toBe('org-allow');
+			// ... while the service deletes the rows of `query.organizationId`, whose policy is off.
+			expect(request.query.organizationId).toBe('org-deny');
+		});
+
+		it('denies when a targeted log lives in an organization whose policy is off', async () => {
+			const { guard, findTargets } = createGuard();
+			asCaller({ role: RolesEnum.MANAGER, employeeId: null });
+
+			const context = createContext(
+				[PermissionsEnum.ALLOW_DELETE_TIME],
+				{ query: { organizationId: 'org-allow', logIds: ['log-in-allow', 'log-in-deny'] } },
+				target
+			);
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+			expect(findTargets).toHaveBeenCalled();
+		});
+
+		it('allows when every targeted log lives in an organization that allows the delete', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.MANAGER, employeeId: null });
+
+			const context = createContext(
+				[PermissionsEnum.ALLOW_DELETE_TIME],
+				{ query: { organizationId: 'org-allow', logIds: ['log-in-allow'] } },
+				target
+			);
+
+			await expect(guard.canActivate(context)).resolves.toBe(true);
+		});
+
+		it('ignores ids that match nothing in the caller tenant, and still checks the named organization', async () => {
+			const { guard } = createGuard();
+			asCaller({ role: RolesEnum.MANAGER, employeeId: null });
+
+			// A log of another tenant cannot be deleted by the service either, so it must not turn a legal
+			// delete into a 403 — the organization the request names still has to allow it.
+			await expect(
+				guard.canActivate(
+					createContext(
+						[PermissionsEnum.ALLOW_DELETE_TIME],
+						{ query: { organizationId: 'org-allow', logIds: ['log-foreign'] } },
+						target
+					)
+				)
+			).resolves.toBe(true);
+			await expect(
+				guard.canActivate(
+					createContext(
+						[PermissionsEnum.ALLOW_DELETE_TIME],
+						{ query: { organizationId: 'org-deny', logIds: ['log-foreign'] } },
+						target
+					)
+				)
+			).resolves.toBe(false);
+		});
+
+		it('denies a delete that names no id at all', async () => {
+			const { guard, createQueryBuilder } = createGuard();
+			asCaller({ role: RolesEnum.MANAGER, employeeId: null });
+
+			const context = createContext(
+				[PermissionsEnum.ALLOW_DELETE_TIME],
+				{ query: { organizationId: 'org-allow' } },
+				target
+			);
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+			expect(createQueryBuilder).not.toHaveBeenCalled();
+		});
+
+		it('fails closed on an organizationId that is not a string', async () => {
+			const { guard, createQueryBuilder } = createGuard();
+			asCaller({ role: RolesEnum.MANAGER, employeeId: null });
+
+			const context = createContext([PermissionsEnum.ALLOW_DELETE_TIME], {
+				query: { organizationId: ['org-allow', 'org-deny'] }
+			});
+
+			await expect(guard.canActivate(context)).resolves.toBe(false);
+			expect(createQueryBuilder).not.toHaveBeenCalled();
 		});
 	});
 });

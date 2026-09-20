@@ -5,6 +5,7 @@ import {
 	Delete,
 	ForbiddenException,
 	Get,
+	HttpCode,
 	HttpStatus,
 	Param,
 	Post,
@@ -14,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { QueryBus, CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -24,7 +25,8 @@ import { EmailTemplate } from './email-template.entity';
 import { EmailTemplateService } from './email-template.service';
 import { EmailTemplateGeneratePreviewQuery, EmailTemplateQuery, FindEmailTemplateQuery } from './queries';
 import { EmailTemplateSaveCommand } from './commands';
-import { EmailTemplateQueryDTO, SaveEmailTemplateDTO } from './dto';
+import { CreateEmailTemplateDTO, EmailTemplateQueryDTO, SaveEmailTemplateDTO } from './dto';
+import { stripEmailTemplateScopeFields } from './email-template.scope';
 
 @ApiTags('EmailTemplate')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -199,7 +201,9 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 					id,
 					tenantId: RequestContext.currentTenantId()
 				},
-				input
+				// The body is unvalidated: never let it move the template to another tenant or
+				// organization, or turn it into a global (NULL-tenant) template.
+				stripEmailTemplateScopeFields(input)
 			);
 		} catch (error) {
 			throw new ForbiddenException();
@@ -235,5 +239,66 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		} catch (error) {
 			throw new ForbiddenException();
 		}
+	}
+
+	/**
+	 * CREATE email template in the caller's tenant.
+	 *
+	 * Overrides the inherited `CrudController.create()`: `EmailTemplateService` is a plain `CrudService`,
+	 * so the inherited route persisted the client's `tenantId` / `organizationId` verbatim — a template
+	 * could be written into another tenant, or as a GLOBAL (NULL-tenant) template every tenant reads
+	 * (GHSA-44pv-34gx-q9p4). The tenant is pinned to the caller's; the organization must be one the caller
+	 * belongs to. The web editor saves through `POST template/save`, which is unaffected.
+	 *
+	 * @param entity - The template to create.
+	 * @returns The created template.
+	 */
+	@ApiOperation({ summary: 'Create email template in the current tenant' })
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	@UseValidationPipe()
+	async create(@Body() entity: CreateEmailTemplateDTO): Promise<EmailTemplate> {
+		const { organizationId } = entity ?? {};
+		return await this.emailTemplateService.create({
+			...stripEmailTemplateScopeFields(entity ?? {}),
+			// Checked against the caller's memberships by `CreateEmailTemplateDTO`.
+			...(organizationId ? { organizationId } : {}),
+			tenantId: RequestContext.currentTenantId()
+		} as DeepPartial<EmailTemplate>);
+	}
+
+	/**
+	 * SOFT DELETE email template by id in the same tenant.
+	 *
+	 * Overrides the inherited route, which looked the row up by id alone on this non tenant-aware service:
+	 * any tenant could soft-delete another tenant's template, or a global default (GHSA-44pv-34gx-q9p4).
+	 * `findById` only resolves rows of the caller's tenant, so global templates are refused too.
+	 *
+	 * @param id - The template id.
+	 * @returns The soft-deleted template.
+	 */
+	@ApiOperation({ summary: 'Soft delete email template' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id/soft')
+	async softRemove(@Param('id', UUIDValidationPipe) id: string): Promise<EmailTemplate> {
+		await this.findById(id);
+		return await this.emailTemplateService.softRemove(id, {
+			where: { tenantId: RequestContext.currentTenantId() }
+		});
+	}
+
+	/**
+	 * RECOVER a soft-deleted email template by id in the same tenant. See {@link softRemove}.
+	 *
+	 * @param id - The template id.
+	 * @returns The recovered template.
+	 */
+	@ApiOperation({ summary: 'Recover soft-deleted email template' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/recover')
+	async softRecover(@Param('id', UUIDValidationPipe) id: string): Promise<EmailTemplate> {
+		return await this.emailTemplateService.softRecover(id, {
+			where: { tenantId: RequestContext.currentTenantId() }
+		});
 	}
 }

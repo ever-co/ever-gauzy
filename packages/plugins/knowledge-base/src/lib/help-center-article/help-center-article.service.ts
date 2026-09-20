@@ -77,6 +77,9 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		if (typeof entity.data === 'string') {
 			entity.data = sanitizeRichHtml(entity.data);
 		}
+		if (typeof entity.descriptionHtml === 'string') {
+			entity.descriptionHtml = sanitizeRichHtml(entity.descriptionHtml);
+		}
 		return await super.create(entity);
 	}
 
@@ -334,6 +337,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		if (typeof input.data === 'string') {
 			input.data = sanitizeRichHtml(input.data);
 		}
+		sanitizeDescriptionHtml(input);
 		await super.update(id, input);
 	}
 
@@ -358,6 +362,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		if (typeof input.data === 'string') {
 			input.data = sanitizeRichHtml(input.data);
 		}
+		sanitizeDescriptionHtml(input);
 
 		// 1. Get current article state
 		const { record: currentArticle } = await this.findOneOrFailByIdString(id);
@@ -428,7 +433,12 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 			setClauses.descriptionBinary = fields.descriptionBinary;
 		}
 		if (fields.descriptionHtml !== undefined) {
-			setClauses.descriptionHtml = fields.descriptionHtml;
+			// Same server-side allowlist as the other HTML columns (GHSA-v79w-54p2-wmh5): this path writes
+			// through a raw query builder and bypasses every other sanitizing write.
+			setClauses.descriptionHtml =
+				typeof fields.descriptionHtml === 'string'
+					? sanitizeRichHtml(fields.descriptionHtml)
+					: fields.descriptionHtml;
 		}
 		if (fields.descriptionJson !== undefined) {
 			setClauses.descriptionJson = fields.descriptionJson;
@@ -575,5 +585,19 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		});
 
 		return Buffer.concat(chunks);
+	}
+}
+
+/**
+ * Runs the article's `descriptionHtml` through the shared server-side allowlist, in place.
+ *
+ * `descriptionHtml` is stored HTML like the legacy `data` column, but every write path used to persist
+ * it verbatim (GHSA-v79w-54p2-wmh5); a client rendering it would execute whatever an editor stored.
+ *
+ * @param input - A create / update payload that may carry `descriptionHtml`.
+ */
+export function sanitizeDescriptionHtml(input: { descriptionHtml?: string | null }): void {
+	if (input && typeof input.descriptionHtml === 'string') {
+		input.descriptionHtml = sanitizeRichHtml(input.descriptionHtml);
 	}
 }

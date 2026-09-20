@@ -313,6 +313,10 @@ export class TimeLogController {
 	})
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
+	// The ids to delete live in the query, and the service filters the rows it deletes by the QUERY
+	// organizationId; resolve the organization of every addressed log so a body organizationId cannot
+	// decide the verdict for rows of another organization (GHSA-rmq9-85v7-f365).
+	@OrganizationPolicyTarget(TimeLog, 'logIds', 'query')
 	@Delete()
 	@UseValidationPipe({ transform: true })
 	async deleteTimeLog(@Query() options: DeleteTimeLogDTO): Promise<DeleteResult | UpdateResult> {

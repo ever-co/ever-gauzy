@@ -125,6 +125,9 @@ export class TimeSlotController {
 	})
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
+	// See the time-log delete route: the organization of every addressed slot is checked, not only the
+	// one the request names (GHSA-rmq9-85v7-f365).
+	@OrganizationPolicyTarget(TimeSlot, 'ids', 'query')
 	@Delete('/')
 	@UseValidationPipe({ transform: true })
 	async deleteTimeSlot(@Query() options: DeleteTimeSlotDTO): Promise<DeleteResult | UpdateResult> {
