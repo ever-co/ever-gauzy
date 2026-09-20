@@ -140,7 +140,9 @@ describe('AlterInvoiceNumberUniquePerTenant (SQLite) — GHSA-57hw-jqpj-ww97', (
 	});
 
 	it('control: before the migration, one tenant cannot use a number another tenant holds', async () => {
-		expect(await invoiceTableSql()).toContain('CONSTRAINT "UQ_d7bed97fb47876e03fd7d7c285a" UNIQUE ("invoiceNumber")');
+		expect(await invoiceTableSql()).toContain(
+			'CONSTRAINT "UQ_d7bed97fb47876e03fd7d7c285a" UNIQUE ("invoiceNumber")'
+		);
 		await expect(insertInvoice(dataSource, 'a-2', TENANT_A, 5000)).rejects.toThrow(/UNIQUE constraint failed/);
 	});
 
@@ -162,14 +164,19 @@ describe('AlterInvoiceNumberUniquePerTenant (SQLite) — GHSA-57hw-jqpj-ww97', (
 		expect(sql).not.toContain('UQ_d7bed97fb47876e03fd7d7c285a');
 		expect(await columnNames()).toEqual(columnsBefore);
 		expect((await indexNames()).sort()).toEqual(indexesBefore.sort());
-		expect(await dataSource.query(`SELECT "id" FROM "invoice" ORDER BY "id"`)).toEqual([{ id: 'a-1' }, { id: 'b-1' }]);
+		expect(await dataSource.query(`SELECT "id" FROM "invoice" ORDER BY "id"`)).toEqual([
+			{ id: 'a-1' },
+			{ id: 'b-1' }
+		]);
 	});
 
 	it('reverts to the installation-wide constraint while no number is shared by two tenants', async () => {
 		await dataSource.runMigrations({ transaction: 'each' });
 		await dataSource.undoLastMigration({ transaction: 'each' });
 
-		expect(await invoiceTableSql()).toContain('CONSTRAINT "UQ_d7bed97fb47876e03fd7d7c285a" UNIQUE ("invoiceNumber")');
+		expect(await invoiceTableSql()).toContain(
+			'CONSTRAINT "UQ_d7bed97fb47876e03fd7d7c285a" UNIQUE ("invoiceNumber")'
+		);
 		await expect(insertInvoice(dataSource, 'a-2', TENANT_A, 5000)).rejects.toThrow(/UNIQUE constraint failed/);
 	});
 
@@ -182,5 +189,112 @@ describe('AlterInvoiceNumberUniquePerTenant (SQLite) — GHSA-57hw-jqpj-ww97', (
 		);
 		// The refusal leaves the tenant-local constraint in place.
 		expect(await invoiceTableSql()).toContain('CONSTRAINT "UQ_205ce780e85433a0b705baa130d" UNIQUE');
+	});
+});
+
+/**
+ * The MySQL branch, driven against a stub query runner.
+ *
+ * MySQL commits each DDL statement on its own, so `migrationsTransactionMode: 'each'` cannot roll the
+ * CREATE and the DROP back together: a crash between them used to leave the composite index behind
+ * with the migration unrecorded, and the retry on the next boot died on `Duplicate key name`. No MySQL
+ * server is available here, so the unique indexes are simulated: the migration only learns about them
+ * through `information_schema.STATISTICS`, which is exactly what this stub answers.
+ */
+describe('AlterInvoiceNumberUniquePerTenant (MySQL) — recovery after a partial run', () => {
+	/** A stub runner over a set of unique indexes, recording the DDL the migration issues. */
+	const mysqlRunner = (indexes: Record<string, string[]>) => {
+		const statements: string[] = [];
+		const runner = {
+			connection: { options: { type: 'mysql' } },
+			query: async (sql: string, parameters?: unknown[]) => {
+				if (sql.includes('information_schema')) {
+					const columns = String(parameters?.[0]);
+					return Object.entries(indexes)
+						.filter(([, indexColumns]) => indexColumns.join(',') === columns)
+						.map(([indexName]) => ({ indexName }));
+				}
+				if (!/^(CREATE|DROP) /.test(sql)) {
+					return []; // the duplicate-number lookup `down()` runs first; no row is shared here
+				}
+				statements.push(sql);
+
+				const created = /CREATE UNIQUE INDEX `([^`]+)` ON `invoice` \(([^)]+)\)/.exec(sql);
+				if (created) {
+					indexes[created[1]] = created[2].split(',').map((column) => column.trim().replace(/`/g, ''));
+				}
+				const dropped = /DROP INDEX `([^`]+)`/.exec(sql);
+				if (dropped) {
+					delete indexes[dropped[1]];
+				}
+				return [];
+			}
+		};
+		return { runner: runner as any, statements, indexes };
+	};
+
+	/** The `invoice` unique indexes as the migration chain leaves them on MySQL. */
+	const globalOnly = () => ({ IDX_d7bed97fb47876e03fd7d7c285: ['invoiceNumber'], PRIMARY: ['id'] });
+
+	it('swaps the installation-wide unique index for the tenant-local one', async () => {
+		const { runner, statements, indexes } = mysqlRunner(globalOnly());
+
+		await new AlterInvoiceNumberUniquePerTenant1790000015400().up(runner);
+
+		expect(statements).toEqual([
+			'CREATE UNIQUE INDEX `IDX_205ce780e85433a0b705baa130` ON `invoice` (`tenantId`, `invoiceNumber`)',
+			'DROP INDEX `IDX_d7bed97fb47876e03fd7d7c285` ON `invoice`'
+		]);
+		expect(indexes).toEqual({ IDX_205ce780e85433a0b705baa130: ['tenantId', 'invoiceNumber'], PRIMARY: ['id'] });
+	});
+
+	it('resumes when a previous run created the index and died before dropping the old one', async () => {
+		// Exactly the state MySQL is left in when the process stops between the two DDL statements.
+		const { runner, statements, indexes } = mysqlRunner({
+			...globalOnly(),
+			IDX_205ce780e85433a0b705baa130: ['tenantId', 'invoiceNumber']
+		});
+
+		await new AlterInvoiceNumberUniquePerTenant1790000015400().up(runner);
+
+		// No second CREATE: that is the `Duplicate key name` which used to block every later boot.
+		expect(statements).toEqual(['DROP INDEX `IDX_d7bed97fb47876e03fd7d7c285` ON `invoice`']);
+		expect(indexes).toEqual({ IDX_205ce780e85433a0b705baa130: ['tenantId', 'invoiceNumber'], PRIMARY: ['id'] });
+	});
+
+	it('is a no-op on a second run once the swap is complete', async () => {
+		const { runner, statements } = mysqlRunner({
+			IDX_205ce780e85433a0b705baa130: ['tenantId', 'invoiceNumber'],
+			PRIMARY: ['id']
+		});
+
+		await new AlterInvoiceNumberUniquePerTenant1790000015400().up(runner);
+
+		expect(statements).toEqual([]);
+	});
+
+	it('converts an index the migration chain did not name, and leaves the primary key alone', async () => {
+		// e.g. an install whose unique was created by `synchronize` under another name.
+		const { runner, statements, indexes } = mysqlRunner({ invoice_number_key: ['invoiceNumber'], PRIMARY: ['id'] });
+
+		await new AlterInvoiceNumberUniquePerTenant1790000015400().up(runner);
+
+		expect(statements).toContain('DROP INDEX `invoice_number_key` ON `invoice`');
+		expect(indexes).toEqual({ IDX_205ce780e85433a0b705baa130: ['tenantId', 'invoiceNumber'], PRIMARY: ['id'] });
+	});
+
+	it('reverting drops the tenant-local index whatever it is named', async () => {
+		const { runner, statements, indexes } = mysqlRunner({
+			tenant_invoice_number_key: ['tenantId', 'invoiceNumber'],
+			PRIMARY: ['id']
+		});
+
+		await new AlterInvoiceNumberUniquePerTenant1790000015400().down(runner);
+
+		expect(statements).toEqual([
+			'CREATE UNIQUE INDEX `IDX_d7bed97fb47876e03fd7d7c285` ON `invoice` (`invoiceNumber`)',
+			'DROP INDEX `tenant_invoice_number_key` ON `invoice`'
+		]);
+		expect(indexes).toEqual({ IDX_d7bed97fb47876e03fd7d7c285: ['invoiceNumber'], PRIMARY: ['id'] });
 	});
 });
