@@ -154,16 +154,37 @@ const PREFIX_ALLOWED = new Set([
 ]);
 
 /**
- * Words that must never appear in this repository's source. This platform's design is its own; a
- * reference to another product in a name, a comment or a file name is a defect regardless of intent.
+ * Words that must never appear in this repository's source.
+ *
+ * This platform's design is its own; a reference to another product in a name, a comment or a file name
+ * is a defect regardless of intent. The phrases below are the ones that can be stated without naming
+ * anything: they are the *shape* of a provenance leak ("this mirrors the industry standard"), and they
+ * catch a comment that credits an unnamed outside design.
+ *
+ * **The product names are deliberately not in this file.** A check that enforces "no other product is
+ * named here" by naming nine of them puts those names into the very repository it is guarding, and the
+ * file is pushed. They therefore live in `.vendor-denylist.json`, which is ignored by git: a developer
+ * who wants the strict check writes it once, locally, and it is the developer's list rather than the
+ * repository's. `localDenylist()` reads it when it is there and the run says so when it is not, so a
+ * weaker check is visible rather than silent.
  */
-const FORBIDDEN = [
-	'competitor',
-	'market leader',
-	'industry standard',
-	'other platform',
-	'reference platform'
-];
+const FORBIDDEN = ['competitor', 'market leader', 'industry standard', 'other platform', 'reference platform'];
+
+/**
+ * The local list of product names to refuse, when a developer has written one.
+ *
+ * @returns The names, or an empty array — and the caller reports which, because a check that quietly
+ * became weaker is worse than one that was never strong.
+ */
+function localDenylist() {
+	try {
+		const parsed = JSON.parse(readFileSync(join(HERE, '..', '..', '.vendor-denylist.json'), 'utf8'));
+
+		return Array.isArray(parsed?.names) ? parsed.names.filter((name) => typeof name === 'string') : [];
+	} catch {
+		return [];
+	}
+}
 
 /** Kernel capabilities that live in core and must each be a complete, wired module. */
 const KERNEL_MODULES = [
@@ -1056,19 +1077,27 @@ for (const plugin of Object.keys(PLUGINS)) {
 
 // The sweep covers the code this programme owns — the declared plugin packages and the kernel
 // modules — rather than every file in the repository. Pre-existing, unrelated content elsewhere
-// (legal text and the like) is not this check's business.
+// (legal text and the like) is not this check's business. It also covers this directory, so the tools
+// that enforce the rule are held to it: a check is code like any other.
 const scanRoots = [
 	...Object.keys(PLUGINS).map((plugin) => join(pluginsDir, plugin)),
-	...KERNEL_MODULES.map((name) => join(coreDir, name))
+	...KERNEL_MODULES.map((name) => join(coreDir, name)),
+	join(repoRoot, 'tools', 'scripts')
 ];
+
+const vendorNames = localDenylist();
+const forbidden = [...FORBIDDEN, ...vendorNames.map((name) => name.toLowerCase())];
 
 let scanned = 0;
 for (const root of scanRoots) {
 	for (const file of walk(root)) {
 		if (!/\.(ts|json|md)$/.test(file)) continue;
+		// This file is where the rule is enforced rather than where it is obeyed; naming nothing, it
+		// cannot leak, and exempting it is what lets the list of phrases above be maintained.
+		if (basename(file) === basename(fileURLToPath(import.meta.url))) continue;
 		scanned++;
 		const source = read(file).toLowerCase();
-		for (const word of FORBIDDEN) {
+		for (const word of forbidden) {
 			if (source.includes(word)) {
 				check(`no reference to another product in ${rel(file)}`, false, `contains "${word}"`);
 			}
@@ -1076,6 +1105,14 @@ for (const root of scanRoots) {
 	}
 }
 passed++; // the sweep itself ran
+
+// Said out loud rather than assumed: the product-name half of this check only runs where a developer
+// has supplied the list, and a run that quietly stopped looking would be worse than one that never did.
+console.log(
+	vendorNames.length
+		? `  product-name sweep : ${vendorNames.length} local name(s) from .vendor-denylist.json`
+		: '  product-name sweep : phrase list only — write .vendor-denylist.json to name the products to refuse'
+);
 
 /* ------------------------------------------------------------------------------------------------
  * Report
