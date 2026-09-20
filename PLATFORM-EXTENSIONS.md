@@ -10,8 +10,11 @@ money arithmetic, the rule engine, global search, and GraphQL for every REST cap
 **Read this before merging anything here.** The branch builds, boots and passes its suites, and an
 independent adversarial review of it found **defects that are not fixed**. The three worst were fixed
 during the review (a GraphQL permission hole, 88 plugin resolvers missing the platform feature gate, and a
-payment-status decision computed in binary floating point); **twelve remain**, and the list is in the
-handover document named below. The ones a reviewer should weigh first:
+payment-status decision computed in binary floating point). A second wave then closed the authorization
+gaps a live probe found — the destructive routes every plugin controller inherited with no permission of
+their own, three GraphQL fields that stated no permission at all, and two resolvers running without the
+tenant guard their own route carries. **Twelve remain**, and the list is in the handover document named
+below. The ones a reviewer should weigh first:
 
 - **Three writes bypass the optimistic-concurrency check.** `FulfillmentService.move()` reads a row and
   then writes an application-computed version, reachable from four routes that carry no version
@@ -26,8 +29,42 @@ handover document named below. The ones a reviewer should weigh first:
 - **Twenty-four of twenty-six versioned writes carry no tenant scope.**
 
 The gates in `tools/scripts/` are green, and that is **not** evidence the above is absent: they do not read
-permissions, guards, protocol shape, or the plugin half of the repository. Do not treat a green run as an
-acceptance.
+every property a caller depends on. Two of them do read authorization — `mutating-route-permission-check.mjs`
+(no plugin controller may inherit a `CrudController` mutating route without stating its own permission) and
+`authorization-probe.mjs`, which provisions a read-only principal against a running installation and asserts
+both protocols refuse it — but neither reads protocol shape, refusal codes or the plugin half of the
+database. Do not treat a green run as an acceptance.
+
+## Authorization, and how to re-check it
+
+`CrudController` declares five mutating routes with no `@Permissions` metadata, and `PermissionGuard`
+answers `true` to empty metadata — so a controller that does not override a route inherits one that stands
+on its class-level grant, which is the read grant. Every plugin controller now re-declares the three
+destructive routes with the grant its own GraphQL mutation states. To verify that claim rather than read it:
+
+```powershell
+node tools/scripts/mutating-route-permission-check.mjs   # static: every route states a permission
+node tools/scripts/authorization-probe.mjs               # live: a read-only principal is refused, twice
+```
+
+The probe creates a throwaway role and account (a read grant and nothing else), asserts `403` from
+`DELETE /api/carts/:id`, `DELETE /api/carts/:id/soft` and `PUT /api/carts/:id/recover`, and asserts the
+super administrator is still served. Against the build this branch shipped, the same probe showed the
+read-only principal receiving `202 Accepted` from the first of those. Four pre-existing platform controllers
+(`changelog`, `job-proposal`, and the two `job-search` presets — the last two declare no guard and no
+permission on any route) are listed as exemptions inside the static gate rather than fixed here.
+
+Two further divergences were found in the same pass and left as they are, each for a reason a reviewer can
+weigh rather than an oversight:
+
+- **The capability gate is one-sided on REST.** Ten packages gate their GraphQL resolvers with
+  `@FeatureFlag(FEATURE_GRAPHQL)` while their controllers carry only the tenant and permission guards, so a
+  capability switched off still answers over REST. That is the intended asymmetry — `FEATURE_GRAPHQL` is the
+  catalogue's entry for the GraphQL endpoint and its resolvers — but it means "the capability is off" is true
+  of one protocol only.
+- **`GET /payment-account-holders/:id` over-serves.** It returns an account holder's masked instruments under
+  `PAYMENT_ACCOUNT_HOLDERS_VIEW`, where the catalogue gives instruments `PAYMENT_METHOD_TOKENS_VIEW`. GraphQL
+  is the stricter surface here; narrowing the route is the fix, and weakening the resolver to match was not.
 
 ## Where the design lives
 
@@ -49,8 +86,15 @@ npx nx build api
 node tools/scripts/graphql-surface-smoke.mjs   # one selection per declared query root field
 node tools/scripts/commerce-e2e.mjs            # REST + GraphQL sweep
 node tools/scripts/commerce-flow-e2e.mjs       # cross-capability proofs
+node tools/scripts/authorization-probe.mjs     # a read-only principal is refused, on both protocols
 foreach ($g in Get-ChildItem tools/scripts/*check*.mjs) { node $g }   # the static gates
 ```
+
+The desktop and server applications build from the same tree: `yarn build:package:all:prod:once` is the
+strict library gate CI runs, and `npx nx build desktop`, `desktop-timer`, `agent`, `gauzy-server`,
+`gauzy-api-server` and `server-mcp` each build against it once `yarn config:prod` and the matching
+`config:<app>:prod` have generated the environment files (a fresh checkout has none, which is why a bare
+`nx build desktop` fails on `environment.prod.ts` rather than on any source).
 
 ## Conventions this branch follows
 

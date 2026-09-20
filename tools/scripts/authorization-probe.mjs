@@ -9,7 +9,7 @@
  *
  * The property it pins is the one the inherited-route defect broke. `CrudController` declares
  * `DELETE :id`, `DELETE :id/soft` and `PUT :id/recover` with no permission metadata, `PermissionGuard`
- * answers `true` to empty metadata, and Nest falls back to the controller's class-level grant â€” which
+ * answers `true` to empty metadata, and Nest falls back to the controller's class-level grant — which
  * is the view grant. A read-only principal could therefore delete. After the fix, each of those routes
  * states the destructive grant the resource's own GraphQL mutation states, so the same principal is
  * refused while a caller that holds the grant is served.
@@ -54,7 +54,7 @@ const results = [];
  */
 function record(name, ok, detail) {
 	results.push({ name, ok });
-	console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  â€” ${detail}` : ''}`);
+	console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  — ${detail}` : ''}`);
 }
 
 /**
@@ -267,6 +267,20 @@ async function main() {
 		`the ${PROBE_GRAPHQL_MUTATION} mutation refuses the same principal`,
 		/FORBIDDEN|PERMISSION_DENIED|UNAUTHORIZED/i.test(String(errorCode(mutation))),
 		`HTTP ${mutation.status} ${errorCode(mutation)}`
+	);
+
+	// A second GraphQL operation the principal may not run, against a different resolver. Two
+	// independent refusals are what separate "the resolver's guards run over GraphQL and refuse this
+	// caller" from "this one field failed for its own reason" — one field can fail on the row it
+	// names, two cannot both do so by accident.
+	const query = await graphql('query ProbeRead { orders { total } }', {
+		token: probeToken,
+		tenantId: probeTenantId
+	});
+	record(
+		'a second GraphQL operation the principal may not run is refused too',
+		/FORBIDDEN|PERMISSION_DENIED|UNAUTHORIZED/i.test(String(errorCode(query))),
+		`HTTP ${query.status} ${errorCode(query)}`
 	);
 
 	// --- and the super administrator is still served --------------------------------------------
