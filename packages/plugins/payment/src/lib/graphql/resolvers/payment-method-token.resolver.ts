@@ -167,7 +167,19 @@ export class PaymentMethodTokenResolver {
 	 * and append the typed error — the contract's shape for a withheld field — rather than nulling the
 	 * whole instrument. The read is a callback so nothing is read for a caller that may not see the
 	 * result.
+	 *
+	 * **The operation's own permission is stated beside the escalation, because the class states none.**
+	 * `PAYMENT_METHOD_TOKENS_CHARGE` is required *in addition to* the permission the operation is reached
+	 * with and never instead of it (`17-graphql-api-specification.md` §6, the two consequences of the
+	 * routes being mirrored one for one), and the reach is the read of a stored instrument. This class
+	 * carries no `@Permissions` of its own — every root field above states its own — so without the line
+	 * below the field would carry no permission metadata at all, and `PermissionGuard` answers `true`
+	 * when the metadata is empty (`permission.guard.ts`, the `isEmpty(permissions)` return): the charge
+	 * check inside the method body would then be the only gate on a field the guard chain no longer
+	 * constrains. The declaration is the same value `paymentMethodTokens` and `paymentMethodToken(id)`
+	 * carry, which is what makes the two halves of the field's requirement legible in one place.
 	 */
+	@Permissions(PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW as PermissionsEnum)
 	@VisibleWith(PermissionsEnum.PAYMENT_METHOD_TOKENS_CHARGE)
 	@ResolveField('token')
 	async token(@Parent() row: IPaymentMethodToken): Promise<string | null> {

@@ -314,6 +314,30 @@ describe('the stored-instrument resolvers (17 §3.2, §6.8)', () => {
 		}
 	});
 
+	it('states a permission on the two fields whose own class states none', () => {
+		/*
+		 * The control that matters here is the *class*, not the field. Neither resolver class carries a
+		 * class-level `@Permissions`, and `PermissionGuard` answers `true` when the metadata it reads is
+		 * empty — so a field that states nothing of its own is a field the guard chain does not constrain
+		 * at all, whatever its parent query requires. Asserting only that the two fields carry a
+		 * permission would still pass against a broken implementation that had put the *wrong* one there,
+		 * so the expected values are the grants the contract gives the rows each field returns:
+		 * `PAYMENT_METHOD_TOKENS_VIEW` for both — the masked instruments are that resource on both
+		 * surfaces, and `PaymentMethodToken.token`'s extra requirement is the charge gate inside the
+		 * method body, asserted separately below.
+		 */
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, PaymentAccountHolderResolver)).toBeUndefined();
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, PaymentMethodTokenResolver)).toBeUndefined();
+
+		expect(
+			Reflect.getMetadata(PERMISSIONS_METADATA, PaymentAccountHolderResolver.prototype.methodTokens)
+		).toEqual([PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW]);
+
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, PaymentMethodTokenResolver.prototype.token)).toEqual([
+			PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW
+		]);
+	});
+
 	it('declares each root field on the resolver the schema names it on', () => {
 		const tokenSource = readFileSync(join(__dirname, 'payment-method-token.resolver.ts'), 'utf8');
 		const accountSource = readFileSync(join(__dirname, 'payment-account-holder.resolver.ts'), 'utf8');

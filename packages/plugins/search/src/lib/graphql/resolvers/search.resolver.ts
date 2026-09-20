@@ -8,7 +8,7 @@ import {
 	SearchMatchMode,
 	SearchSortDirection
 } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions } from '@gauzy/core';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { SearchService, decodeCursor } from '../../services/search.service';
@@ -55,6 +55,15 @@ interface IPageArgs {
  * for a REST call, and the service removes an entity the caller may not read before the merge rather
  * than after it.
  *
+ * **The chain is the controller's, and the tenant guard is first because it was missing.** `SearchController`
+ * carries `@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)`; this class carried only
+ * the last two, so over GraphQL a caller that stated a `Tenant-Id` header naming a tenant other than the
+ * one its own credential was issued for was never compared against it. `TenantBaseGuard` is what performs
+ * that comparison for an operation (`tenant-base.guard.ts`, `canActivateGraphqlOperation`), and a
+ * resolver that does not run it is a resolver the same header can be pointed at another tenant through.
+ * The guard is stated first for the same reason it is first on the route: a caller that states the wrong
+ * tenant is refused as a tenancy problem before its grants are consulted.
+ *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
  * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
  * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
@@ -66,7 +75,7 @@ interface IPageArgs {
  * 404.
  */
 @Resolver('SearchResult')
-@UseGuards(PermissionGuard, FeatureFlagGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class SearchResolver {
 	constructor(private readonly searchService: SearchService) {}

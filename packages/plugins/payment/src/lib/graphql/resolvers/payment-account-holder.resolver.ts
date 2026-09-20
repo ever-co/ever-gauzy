@@ -174,7 +174,22 @@ export class PaymentAccountHolderResolver {
 	 * Reached only through an account the caller has already been allowed to read, and it carries no
 	 * stored reference whatever the caller's permissions are: a list — and this is one — never carries
 	 * the value.
+	 *
+	 * **The field states the permission its own rows are read under, and it states it here rather than
+	 * nowhere.** The class carries no `@Permissions` of its own — every root field above states its own —
+	 * so before this line the field carried no permission metadata at all, and `PermissionGuard` answers
+	 * `true` when the metadata is empty (`permission.guard.ts`, the `isEmpty(permissions)` return): the
+	 * field was therefore reachable by any authenticated caller that could obtain a `PaymentAccountHolder`
+	 * parent, and would have been reachable by any caller at all had a second root field ever returned
+	 * that type. A saved instrument is its own resource with its own grant — `PAYMENT_METHOD_TOKENS_VIEW`
+	 * reads "a party's saved instruments: the masked display facts and the status, never the token value"
+	 * (`appendix-b-permissions-and-features.md` §2.13) — and the route that serves these rows directly is
+	 * `GET /payment-method-tokens`, which carries exactly that permission. Stating the parent's own
+	 * `PAYMENT_ACCOUNT_HOLDERS_VIEW` here instead would have copied the REST account-holder read, which
+	 * returns the same instrument summaries under the account grant; that route is the looser of the two
+	 * and is reported as such rather than mirrored into the resolver.
 	 */
+	@Permissions(PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW as PermissionsEnum)
 	@ResolveField('methodTokens')
 	async methodTokens(@Parent() holder: IPaymentAccountHolder): Promise<IPaymentMethodToken[]> {
 		const instruments = await this.paymentMethodTokens.list({ accountHolderId: holder.id });

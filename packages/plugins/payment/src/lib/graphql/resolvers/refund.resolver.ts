@@ -149,10 +149,20 @@ export class RefundResolver {
 	/**
 	 * Resolves the lines a refund paid back.
 	 *
+	 * **The field states the permission its own rows are read under.** This class carries no
+	 * `@Permissions` of its own — every root field above states its own — so before this line the field
+	 * carried no permission metadata at all, and `PermissionGuard` answers `true` when the metadata is
+	 * empty (`permission.guard.ts`, the `isEmpty(permissions)` return). The grant it states is the one
+	 * both surfaces already require for these rows: `GET /refunds/:id` carries `REFUNDS_VIEW` and the
+	 * refund-line resource's own list route carries `REFUNDS_VIEW` as well, so declaring it here changes
+	 * no caller's answer and stops the field from becoming reachable by every authenticated caller the
+	 * day a second root field returns a `Refund`.
+	 *
 	 * @param refund The refund being read.
 	 * @returns Its lines, each marked `legacy` when the breakdown came from the metadata array of a
 	 * refund written before this package recorded a line as a row.
 	 */
+	@Permissions(PaymentPermission.REFUNDS_VIEW as PermissionsEnum)
 	@ResolveField('lines')
 	async lines(@Parent() refund: IRefund): Promise<IRefundLine[]> {
 		if (Array.isArray(refund.lines)) {
