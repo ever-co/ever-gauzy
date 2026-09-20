@@ -103,6 +103,22 @@ COPY --chown=node:node packages/plugins/ai-provider-localai/package.json ./packa
 COPY --chown=node:node packages/plugins/ai-provider-whisper-cpp/package.json ./packages/plugins/ai-provider-whisper-cpp/
 COPY --chown=node:node packages/plugins/ai-provider-openai-compatible/package.json ./packages/plugins/ai-provider-openai-compatible/
 COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
+COPY --chown=node:node packages/plugins/catalog/package.json ./packages/plugins/catalog/
+COPY --chown=node:node packages/plugins/pricing/package.json ./packages/plugins/pricing/
+COPY --chown=node:node packages/plugins/tax/package.json ./packages/plugins/tax/
+COPY --chown=node:node packages/plugins/inventory/package.json ./packages/plugins/inventory/
+COPY --chown=node:node packages/plugins/warehouse/package.json ./packages/plugins/warehouse/
+COPY --chown=node:node packages/plugins/cart/package.json ./packages/plugins/cart/
+COPY --chown=node:node packages/plugins/order/package.json ./packages/plugins/order/
+COPY --chown=node:node packages/plugins/payment/package.json ./packages/plugins/payment/
+COPY --chown=node:node packages/plugins/promotion/package.json ./packages/plugins/promotion/
+COPY --chown=node:node packages/plugins/fulfillment/package.json ./packages/plugins/fulfillment/
+COPY --chown=node:node packages/plugins/returns/package.json ./packages/plugins/returns/
+COPY --chown=node:node packages/plugins/subscription/package.json ./packages/plugins/subscription/
+COPY --chown=node:node packages/plugins/purchasing/package.json ./packages/plugins/purchasing/
+COPY --chown=node:node packages/plugins/entitlement/package.json ./packages/plugins/entitlement/
+COPY --chown=node:node packages/plugins/marketplace/package.json ./packages/plugins/marketplace/
+COPY --chown=node:node packages/plugins/search/package.json ./packages/plugins/search/
 
 # We do not build Wakatime plugin here, because it is used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -217,6 +233,22 @@ COPY --chown=node:node packages/plugins/ai-provider-localai/package.json ./packa
 COPY --chown=node:node packages/plugins/ai-provider-whisper-cpp/package.json ./packages/plugins/ai-provider-whisper-cpp/
 COPY --chown=node:node packages/plugins/ai-provider-openai-compatible/package.json ./packages/plugins/ai-provider-openai-compatible/
 COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
+COPY --chown=node:node packages/plugins/catalog/package.json ./packages/plugins/catalog/
+COPY --chown=node:node packages/plugins/pricing/package.json ./packages/plugins/pricing/
+COPY --chown=node:node packages/plugins/tax/package.json ./packages/plugins/tax/
+COPY --chown=node:node packages/plugins/inventory/package.json ./packages/plugins/inventory/
+COPY --chown=node:node packages/plugins/warehouse/package.json ./packages/plugins/warehouse/
+COPY --chown=node:node packages/plugins/cart/package.json ./packages/plugins/cart/
+COPY --chown=node:node packages/plugins/order/package.json ./packages/plugins/order/
+COPY --chown=node:node packages/plugins/payment/package.json ./packages/plugins/payment/
+COPY --chown=node:node packages/plugins/promotion/package.json ./packages/plugins/promotion/
+COPY --chown=node:node packages/plugins/fulfillment/package.json ./packages/plugins/fulfillment/
+COPY --chown=node:node packages/plugins/returns/package.json ./packages/plugins/returns/
+COPY --chown=node:node packages/plugins/subscription/package.json ./packages/plugins/subscription/
+COPY --chown=node:node packages/plugins/purchasing/package.json ./packages/plugins/purchasing/
+COPY --chown=node:node packages/plugins/entitlement/package.json ./packages/plugins/entitlement/
+COPY --chown=node:node packages/plugins/marketplace/package.json ./packages/plugins/marketplace/
+COPY --chown=node:node packages/plugins/search/package.json ./packages/plugins/search/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -409,7 +441,23 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/ai-provider-localai/node_modules ./node_modules/@gauzy/plugin-ai-provider-localai/ && \
     cp -r /mnt/packages/plugins/ai-provider-whisper-cpp/node_modules ./node_modules/@gauzy/plugin-ai-provider-whisper-cpp/ && \
     cp -r /mnt/packages/plugins/ai-provider-openai-compatible/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai-compatible/ && \
-    cp -r /mnt/packages/plugins/docs/node_modules ./node_modules/@gauzy/plugin-docs/
+    cp -r /mnt/packages/plugins/docs/node_modules ./node_modules/@gauzy/plugin-docs/ && \
+    cp -r /mnt/packages/plugins/catalog/node_modules ./node_modules/@gauzy/plugin-catalog/ && \
+    cp -r /mnt/packages/plugins/pricing/node_modules ./node_modules/@gauzy/plugin-pricing/ && \
+    cp -r /mnt/packages/plugins/tax/node_modules ./node_modules/@gauzy/plugin-tax/ && \
+    cp -r /mnt/packages/plugins/inventory/node_modules ./node_modules/@gauzy/plugin-inventory/ && \
+    cp -r /mnt/packages/plugins/warehouse/node_modules ./node_modules/@gauzy/plugin-warehouse/ && \
+    cp -r /mnt/packages/plugins/cart/node_modules ./node_modules/@gauzy/plugin-cart/ && \
+    cp -r /mnt/packages/plugins/order/node_modules ./node_modules/@gauzy/plugin-order/ && \
+    cp -r /mnt/packages/plugins/payment/node_modules ./node_modules/@gauzy/plugin-payment/ && \
+    cp -r /mnt/packages/plugins/promotion/node_modules ./node_modules/@gauzy/plugin-promotion/ && \
+    cp -r /mnt/packages/plugins/fulfillment/node_modules ./node_modules/@gauzy/plugin-fulfillment/ && \
+    cp -r /mnt/packages/plugins/returns/node_modules ./node_modules/@gauzy/plugin-returns/ && \
+    cp -r /mnt/packages/plugins/subscription/node_modules ./node_modules/@gauzy/plugin-subscription/ && \
+    cp -r /mnt/packages/plugins/purchasing/node_modules ./node_modules/@gauzy/plugin-purchasing/ && \
+    cp -r /mnt/packages/plugins/entitlement/node_modules ./node_modules/@gauzy/plugin-entitlement/ && \
+    cp -r /mnt/packages/plugins/marketplace/node_modules ./node_modules/@gauzy/plugin-marketplace/ && \
+    cp -r /mnt/packages/plugins/search/node_modules ./node_modules/@gauzy/plugin-search/
 
 RUN mkdir /import && chown node:node /import && touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
     chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
