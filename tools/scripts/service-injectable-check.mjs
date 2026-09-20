@@ -58,14 +58,12 @@ const ROOTS = [join(ROOT, 'packages', 'core'), join(ROOT, 'packages', 'plugins')
  * A suite that writes `new Subclass(repository, repository)` hands the constructor its arguments
  * itself, and TypeScript emits `design:paramtypes` for a hand-written `new` from the constructor's own
  * signature rather than from decorator metadata. The rule this script enforces is about classes Nest
- * builds; these are built by a test, and no module lists them in `providers`.
+ * builds; such a fixture is built by a test and no module lists it in `providers`.
+ *
+ * Empty today: the one fixture that needed it now carries `@Injectable()` for the same reason every
+ * other subclass of the base does.
  */
-const NOT_PROVIDERS = new Map([
-	[
-		join('packages', 'core', 'src', 'lib', 'core', 'testing', 'persistence-invariants', 'persistence-invariant.service.ts'),
-		'a fixture the suite constructs directly, added by the persistence-invariants work'
-	]
-]);
+const NOT_PROVIDERS = new Map([]);
 
 /** Directories that hold no source. */
 const SKIP_DIRECTORIES = new Set(['node_modules', 'dist', 'coverage', '.nx', 'tmp', 'migrations']);

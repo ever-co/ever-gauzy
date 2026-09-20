@@ -211,3 +211,10 @@ jobs:
       - name: Injectable CRUD services
         if: always()
         run: node tools/scripts/service-injectable-check.mjs
+
+      # `CrudController` declares its five mutating routes with no permission metadata of its own, so a
+      # controller that does not override one inherits a route that stands on its class-level view grant.
+      # This gate fails the run when any plugin controller does that again.
+      - name: Inherited mutating routes state their permission
+        if: always()
+        run: node tools/scripts/mutating-route-permission-check.mjs

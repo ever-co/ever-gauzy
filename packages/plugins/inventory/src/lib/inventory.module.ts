@@ -29,7 +29,6 @@ import { StockCountModule } from './stock-count/stock-count.module';
 import { StockCountLineModule } from './stock-count-line/stock-count-line.module';
 import { StockAvailabilityService } from './stock-availability/stock-availability.service';
 import { StockLedgerService } from './stock-ledger/stock-ledger.service';
-import { inventoryResolvers } from './graphql';
 
 @Module({
 	imports: [
@@ -46,16 +45,7 @@ import { inventoryResolvers } from './graphql';
 		StockCountModule,
 		StockCountLineModule
 	],
-	providers: [
-		StockAvailabilityService,
-		StockLedgerService,
-		// The GraphQL resolvers are providers of this module. Nest discovers a resolver by scanning the
-		// providers of every module, so a resolver declared only in the plugin metadata —
-		// `extensions.resolvers` — is never registered: the schema advertises its fields and the default
-		// resolver answers `null` for each of them, which is a non-null violation at the caller. Their
-		// services arrive through the sub-modules imported above, which export them.
-		...inventoryResolvers
-	],
+	providers: [StockAvailabilityService, StockLedgerService],
 	exports: [
 		StockAvailabilityService,
 		StockLedgerService,

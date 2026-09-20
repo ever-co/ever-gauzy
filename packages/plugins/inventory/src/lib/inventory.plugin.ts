@@ -16,7 +16,19 @@ import { StockCountLine } from './stock-count-line/stock-count-line.entity';
 import { CreateInventoryTables1791000000160 } from './database/migrations/1791000000160-CreateInventoryTables';
 import { BackfillStockRowScope1791000000405 } from './database/migrations/1791000000405-BackfillStockRowScope';
 import { AddWarehouseSellerColumn1791000000436 } from './database/migrations/1791000000436-AddWarehouseSellerColumn';
-import { inventoryResolvers, inventorySchemaExtensions } from './graphql';
+import {
+	inventorySchemaExtensions,
+	StockMovementResolver,
+	StockReservationResolver,
+	StockTransferResolver,
+	StockTransferLineResolver,
+	StockAlertResolver,
+	StockAdjustmentResolver,
+	StockCountResolver,
+	StockCountLineResolver,
+	ChannelWarehouseResolver,
+	StockLevelResolver
+} from './graphql';
 
 /**
  * The inventory plugin’s declaration.
@@ -52,7 +64,18 @@ const pluginMetadata = {
 	settings: INVENTORY_SETTINGS,
 	extensions: {
 		schema: inventorySchemaExtensions,
-		resolvers: inventoryResolvers
+		resolvers: [
+			StockLevelResolver,
+			StockMovementResolver,
+			StockReservationResolver,
+			StockTransferResolver,
+			StockTransferLineResolver,
+			StockAlertResolver,
+			StockAdjustmentResolver,
+			StockCountResolver,
+			StockCountLineResolver,
+			ChannelWarehouseResolver
+		]
 	},
 	dependsOn: ['@gauzy/plugin-catalog']
 };
