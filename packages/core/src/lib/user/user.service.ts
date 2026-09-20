@@ -913,61 +913,72 @@ export class UserService extends TenantAwareCrudService<User> {
 	public async findAccountsUsingPasswords(
 		candidates: ReadonlyArray<{ email: string; password: string }>
 	): Promise<string[]> {
-		// One entry per (email, password) pair, so two passwords proposed for the same address are both
-		// tested, and an address repeated with the same password is tested once.
-		const seen = new Set<string>();
-		const pairs = candidates.filter(({ email, password }) => {
+		// One Set of passwords per address: `getPublishedSeedAccounts()` can propose the same address
+		// twice (the canonical one and the configured one), and a Map keeps one query per address while
+		// still testing every password proposed for it. Insertion order is the candidate order.
+		const passwordsByEmail = new Map<string, Set<string>>();
+		for (const { email, password } of candidates) {
 			if (!email) {
-				return false;
+				continue;
 			}
-			const fingerprint = `${email} :: ${password}`;
-			if (seen.has(fingerprint)) {
-				return false;
-			}
-			seen.add(fingerprint);
-			return true;
-		});
-		if (pairs.length === 0) {
-			return [];
+			const passwords = passwordsByEmail.get(email) ?? new Set<string>();
+			passwords.add(password);
+			passwordsByEmail.set(email, passwords);
 		}
 
-		const matches = new Set<string>();
-		for (const email of [...new Set(pairs.map((pair) => pair.email))]) {
-			// Queried per address, with its own row budget: see MAX_ROWS_PER_ACCOUNT.
-			let rows: Array<Pick<User, 'email' | 'hash'>>;
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					// Raw entities, not `serialize()`d: serialization strips `hash`.
-					rows = await this.mikroOrmUserRepository.find({ email } as any, { limit: MAX_ROWS_PER_ACCOUNT });
-					break;
-				case MultiORMEnum.TypeORM:
-				default:
-					rows = await this.typeOrmUserRepository.find({
-						where: { email },
-						select: { id: true, email: true, hash: true },
-						take: MAX_ROWS_PER_ACCOUNT
-					});
-					break;
-			}
-
-			const passwords = pairs.filter((pair) => pair.email === email).map((pair) => pair.password);
+		const matches: string[] = [];
+		for (const [email, passwords] of passwordsByEmail) {
+			const rows = await this.findUsersByEmail(email);
 			// Re-checked against the row AND sliced again here, so a repository that ignored the filter
 			// or the limit can neither cross-match one account's password onto another nor make the
 			// expensive part unbounded.
 			const relevant = rows.filter((row) => row?.email === email && !!row.hash).slice(0, MAX_ROWS_PER_ACCOUNT);
-			for (const row of relevant) {
-				if (matches.has(email)) {
-					break;
-				}
-				for (const password of passwords) {
-					if (await this._passwordHashService.verify(password, row.hash)) {
-						matches.add(email);
-						break;
-					}
+			if (await this.anyPasswordVerifies(relevant, passwords)) {
+				matches.push(email);
+			}
+		}
+		return matches;
+	}
+
+	/**
+	 * Reads at most {@link MAX_ROWS_PER_ACCOUNT} users with this exact email, with their hash.
+	 *
+	 * @param email The address to look up.
+	 */
+	private async findUsersByEmail(email: string): Promise<Array<Pick<User, 'email' | 'hash'>>> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				// Raw entities, not `serialize()`d: serialization strips `hash`.
+				return this.mikroOrmUserRepository.find({ email } as any, { limit: MAX_ROWS_PER_ACCOUNT });
+			case MultiORMEnum.TypeORM:
+			default:
+				return this.typeOrmUserRepository.find({
+					where: { email },
+					select: { id: true, email: true, hash: true },
+					take: MAX_ROWS_PER_ACCOUNT
+				});
+		}
+	}
+
+	/**
+	 * Whether any of `passwords` verifies against any of the given rows' hashes. Stops at the first
+	 * match, since one is enough to warn about the account.
+	 *
+	 * @param rows Rows already narrowed to one address and known to carry a hash.
+	 * @param passwords The passwords to test.
+	 */
+	private async anyPasswordVerifies(
+		rows: ReadonlyArray<Pick<User, 'hash'>>,
+		passwords: Iterable<string>
+	): Promise<boolean> {
+		for (const row of rows) {
+			for (const password of passwords) {
+				if (await this._passwordHashService.verify(password, row.hash)) {
+					return true;
 				}
 			}
 		}
-		return [...matches];
+		return false;
 	}
 
 	/**
