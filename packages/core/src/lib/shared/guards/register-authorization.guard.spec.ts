@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { sign } from 'jsonwebtoken';
@@ -205,6 +205,69 @@ describe('RegisterAuthorizationGuard', () => {
 		const { executionContext } = context({ user: { email: 'new@ever.co', roleId: 'role-target' } });
 
 		await expect(guard.canActivate(executionContext)).rejects.toBeInstanceOf(ForbiddenException);
+	});
+
+	/**
+	 * GHSA-hjcg-633x-qq74 hardening: the tenant of EVERY role identifier in `body.user` is checked —
+	 * `roleId`, `role.id`, and `role` as a bare id string (GHSA-x4mv-fhwj-g3rp) — instead of the first
+	 * one picked with `roleId ?? role.id`.
+	 */
+	describe('role tenant isolation', () => {
+		const OWN_ROLE = 'role-own-employee';
+		const FOREIGN_ROLE = 'role-foreign-super-admin';
+
+		/** A role repository that only knows the caller tenant's role, as a tenant-scoped lookup would. */
+		function buildWithRoles() {
+			const built = build(activeSuperAdmin, superAdminState);
+			const findOneByOrFail = jest.fn(async ({ id, tenantId }: { id: string; tenantId: string }) => {
+				if (id === OWN_ROLE && tenantId === 'tenant-1') {
+					return { id, tenantId };
+				}
+				throw new Error('EntityNotFound');
+			});
+			(built.guard as any).typeOrmRoleRepository = { findOneByOrFail };
+			return { ...built, findOneByOrFail };
+		}
+
+		it('CONTROL: the pre-fix `roleId ?? role.id` pick never looked at the foreign role', () => {
+			const user: any = { roleId: OWN_ROLE, role: { id: FOREIGN_ROLE } };
+			expect(user.roleId ?? user.role?.id).toBe(OWN_ROLE);
+		});
+
+		it('refuses an own-tenant roleId paired with a foreign role.id', async () => {
+			const { guard, findOneByOrFail } = buildWithRoles();
+			const { executionContext } = context({
+				user: { email: 'new@ever.co', roleId: OWN_ROLE, role: { id: FOREIGN_ROLE } }
+			});
+
+			await expect(guard.canActivate(executionContext)).rejects.toBeInstanceOf(ForbiddenException);
+			expect(findOneByOrFail).toHaveBeenCalledWith({ id: FOREIGN_ROLE, tenantId: 'tenant-1' });
+		});
+
+		it('refuses a foreign role sent as a bare id string', async () => {
+			const { guard } = buildWithRoles();
+			const { executionContext } = context({ user: { email: 'new@ever.co', role: FOREIGN_ROLE } });
+
+			await expect(guard.canActivate(executionContext)).rejects.toBeInstanceOf(ForbiddenException);
+		});
+
+		it('refuses a role key that references nothing', async () => {
+			const { guard } = buildWithRoles();
+			const { executionContext } = context({ user: { email: 'new@ever.co', role: { name: 'SUPER_ADMIN' } } });
+
+			await expect(guard.canActivate(executionContext)).rejects.toBeInstanceOf(BadRequestException);
+		});
+
+		it.each([
+			['roleId', { roleId: OWN_ROLE }],
+			['a role object', { role: { id: OWN_ROLE, name: RolesEnum.EMPLOYEE } }],
+			['both, agreeing', { roleId: OWN_ROLE, role: { id: OWN_ROLE } }]
+		])('still admits an own-tenant role sent as %s', async (_label, fields) => {
+			const { guard } = buildWithRoles();
+			const { executionContext } = context({ user: { email: 'new@ever.co', ...fields } });
+
+			await expect(guard.canActivate(executionContext)).resolves.toBe(true);
+		});
 	});
 
 	it('still refuses an unauthenticated privileged registration', async () => {

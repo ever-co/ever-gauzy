@@ -114,7 +114,11 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			const user = await this._commandBus.execute(
 				new UserCreateCommand({
 					...input.user,
+					// The role is decided here, server-side. Pin BOTH role fields to it: the spread above can
+					// carry a body `user.roleId` (or a string `user.role`), which would otherwise sit next to the
+					// trusted role and could be what gets persisted (GHSA-x4mv-fhwj-g3rp).
 					role,
+					roleId: role?.id,
 					hash: passwordHash,
 					preferredLanguage: languageCode,
 					preferredComponentLayout: ComponentLayoutStyleEnum.TABLE

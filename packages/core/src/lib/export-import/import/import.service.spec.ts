@@ -36,9 +36,9 @@ import { ImportService } from './import.service';
 import { generateImportArchiveFileName } from './import-archive-file-name';
 
 /**
- * Builds a ZIP holding a single `user.csv` and returns its bytes.
+ * Builds a ZIP holding a single `user.csv`, plus any extra files given, and returns its bytes.
  */
-async function buildArchive(csv: string): Promise<Buffer> {
+async function buildArchive(csv: string, extraFiles: Record<string, string> = {}): Promise<Buffer> {
 	const chunks: Buffer[] = [];
 	const archive = archiver('zip', { zlib: { level: 0 } });
 	archive.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -47,6 +47,9 @@ async function buildArchive(csv: string): Promise<Buffer> {
 		archive.on('error', reject);
 	});
 	archive.append(Buffer.from(csv, 'utf8'), { name: 'user.csv' });
+	for (const [name, content] of Object.entries(extraFiles)) {
+		archive.append(Buffer.from(content, 'utf8'), { name });
+	}
 	await archive.finalize();
 	await finished;
 	return Buffer.concat(chunks);
@@ -239,6 +242,64 @@ describe('ImportService', () => {
 			).resolves.toBeUndefined();
 
 			removeSpy.mockRestore();
+		});
+	});
+
+	/**
+	 * The export escapes a cell a spreadsheet would evaluate by prefixing `'`, and the import reverses
+	 * it. An uploaded ZIP is not necessarily one this server wrote, though: reversing the escape on a
+	 * dump from an older Gauzy, on a filled-in `/export/template`, or on a CSV set built by external
+	 * tooling would silently drop a legitimate leading apostrophe. The archive manifest is what tells
+	 * the two apart.
+	 */
+	describe('reverses the cell escape only for a marked archive (GHSA-7xp5-j564-4752)', () => {
+		/** One row whose `name` is the escaped form of `=1+1` — or a legacy value that just looks like it. */
+		const ESCAPED_CSV = 'id,name\nrow-a,"\'=1+1"\n';
+
+		const MANIFEST = JSON.stringify({
+			format: 'gauzy-export',
+			version: 1,
+			spreadsheetSafeCells: true,
+			exportedAt: '2026-01-01T00:00:00.000Z'
+		});
+
+		/** Imports one archive and returns the rows that reached the entity layer. */
+		async function importArchive(extraFiles: Record<string, string> = {}): Promise<Record<string, unknown>[]> {
+			const { service, imported } = buildService();
+			const extractPath = await service.createExtractDirectory();
+			created.push(extractPath);
+			getFile.mockImplementation(async () => buildArchive(ESCAPED_CSV, extraFiles));
+
+			await service.unzipAndParse(extractPath, 'import/marked.zip');
+			return imported;
+		}
+
+		it('un-escapes a cell of an archive this server wrote', async () => {
+			const imported = await importArchive({ 'gauzy-export.json': MANIFEST });
+
+			expect(imported).toHaveLength(1);
+			expect(imported[0]['name']).toBe('=1+1');
+		});
+
+		it('leaves an unmarked archive alone, so a legacy value keeps its apostrophe', async () => {
+			const imported = await importArchive();
+
+			expect(imported).toHaveLength(1);
+			expect(imported[0]['name']).toBe("'=1+1");
+		});
+
+		it.each([
+			['another format', JSON.stringify({ format: 'something-else', version: 1, spreadsheetSafeCells: true })],
+			['a newer version', JSON.stringify({ format: 'gauzy-export', version: 99, spreadsheetSafeCells: true })],
+			[
+				'the flag turned off',
+				JSON.stringify({ format: 'gauzy-export', version: 1, spreadsheetSafeCells: false })
+			],
+			['a malformed file', 'not json at all']
+		])('does not decode on %s', async (_label, manifest) => {
+			const imported = await importArchive({ 'gauzy-export.json': manifest });
+
+			expect(imported[0]['name']).toBe("'=1+1");
 		});
 	});
 });

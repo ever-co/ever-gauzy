@@ -52,6 +52,7 @@ import { LIKE_OPERATOR } from './../core/util';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';
+import { extractRoleIds } from '../user/role-assignment.helper';
 import { OrganizationService } from './../organization/organization.service';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
 import { OrganizationDepartmentService } from './../organization-department/organization-department.service';
@@ -163,7 +164,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			organizationContactIds = [],
 			departmentIds = [],
 			teamIds = [],
-			roleId,
 			organizationId,
 			startedWorkOn,
 			appliedDate,
@@ -193,6 +193,17 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			relations: { role: true }
 		});
 
+		// The role the body asks for, read in every form it can carry it (`roleId`, `role` as an id
+		// string or `{ id }`). Validated BEFORE the inviter's own role is looked at, so a malformed or
+		// self-contradicting payload is refused for every caller and not just for the ones that reach
+		// the fallback below — an EMPLOYEE inviter is force-assigned the EMPLOYEE role, but that is an
+		// authorization decision and must not double as permission to ignore bad input.
+		// `extractRoleIds` itself throws on a role key that is present but references nothing.
+		const requestedRoleIds = extractRoleIds(input);
+		if (requestedRoleIds.length > 1) {
+			throw new BadRequestException('The role and roleId fields must reference the same role.');
+		}
+
 		// Invited Role
 		let role: IRole;
 
@@ -204,8 +215,13 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				where: { name: RolesEnum.EMPLOYEE }
 			});
 		} catch (error) {
-			// If the current role is not an 'EMPLOYEE' role, fallback to specified 'roleId'
-			role = await this.roleService.findOneByIdString(roleId);
+			// If the current role is not an 'EMPLOYEE' role, fallback to the requested role. Exactly one
+			// role must be named: a second, unchecked identifier must not ride along, and an invitation
+			// cannot be issued for no role at all (GHSA-x4mv-fhwj-g3rp).
+			if (requestedRoleIds.length !== 1) {
+				throw new BadRequestException('Exactly one valid role must be specified for the invitation.');
+			}
+			role = await this.roleService.findOneByIdString(requestedRoleIds[0]);
 
 			// Handle unauthorized access if the invitedByUser is not a 'SUPER_ADMIN'
 			if (role.name === RolesEnum.SUPER_ADMIN && invitedByUser.role.name !== RolesEnum.SUPER_ADMIN) {
@@ -288,7 +304,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				new Invite({
 					token,
 					email,
-					roleId,
+					// The role that was CHECKED above — never the body `roleId`. For an EMPLOYEE inviter that
+					// is the EMPLOYEE role whatever the body asked for; persisting the body value let an
+					// employee issue invitations for any role, SUPER_ADMIN included (GHSA-x4mv-fhwj-g3rp).
+					roleId: role.id,
 					organizationId,
 					tenantId,
 					invitedByUserId,

@@ -11,6 +11,9 @@ import { TypeOrmOrganizationRepository } from '../../organization/repository/typ
 import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
 import { getORMType, MultiORMEnum } from '../../core/utils';
 import { isAccessTokenPayload, JWT_ALGORITHMS } from '../../auth/purpose-token';
+// A dependency-free helper file (no entity imports), so this does not close the `user/` import cycle
+// described on `findCaller` below.
+import { extractRoleIds } from '../../user/role-assignment.helper';
 
 /**
  * Minimal user shape set on the request by this guard when the register route
@@ -196,9 +199,12 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		// Get ORM type from request context
 		const ormType = getORMType();
 
-		// Validate tenant isolation for roleId (top-level or nested in user)
-		const targetRoleId = body.user?.roleId ?? getIdFromRelation(body.user?.role);
-		if (targetRoleId && typeof targetRoleId === 'string') {
+		// Validate tenant isolation for EVERY role identifier nested in user — `roleId`, and `role` as an
+		// object or a bare id string. Picking one with `roleId ?? role.id` left the other unchecked here,
+		// so the guard's tenant isolation silently depended on the handler's second look
+		// (GHSA-hjcg-633x-qq74 hardening; the string form is GHSA-x4mv-fhwj-g3rp). A role key that is
+		// present but references nothing is refused with a 400 by `extractRoleIds`.
+		for (const targetRoleId of extractRoleIds(body.user)) {
 			try {
 				const whereCondition = {
 					id: targetRoleId,

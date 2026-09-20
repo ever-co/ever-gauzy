@@ -2503,6 +2503,8 @@
 				"ACTIVITY_PROOF_DURATION": "Длительность проверки активности",
 				"ACTIVITY_PROOF_DURATION_INFO": "Длительность диалогового окна для проверки активности, оно отображает количество секунд, заданных для доказательства активности",
 				"ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Частота скриншотов",
 				"SCREENSHOT_FREQUENCY_INFO": "Укажите частоту обновления или временные интервалы синхронизации.",
 				"RANDOM_SCREENSHOT": "Случайный скриншот",

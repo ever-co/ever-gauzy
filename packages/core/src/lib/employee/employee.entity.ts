@@ -94,27 +94,10 @@ import {
 	TypeOrmEmployeeEntityCustomFields
 } from '../core/entities/custom-entity-fields/employee';
 import { Trimmed } from '../shared/decorators';
-import { ColumnNumericTransformerPipe, roundToScale } from '../shared/pipes';
+import { billingRateColumn, ColumnNumericTransformerPipe, toBillingRate } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { OrganizationProjectModuleEmployee } from '../organization-project-module/organization-project-module-employee.entity';
-
-const billingRateColumn = () => ({
-	nullable: true,
-	type: 'numeric' as const,
-	precision: 14,
-	scale: 2,
-	transformer: new ColumnNumericTransformerPipe(2)
-});
-
-/**
- * Keeps cents, but leaves non-numeric input as NaN so `@IsNumber()` still rejects it (as the
- * previous `parseInt` transform did) instead of silently storing 0.
- */
-const toBillingRate = ({ value }: TransformFnParams) => {
-	const n = typeof value === 'number' ? value : Number.parseFloat(value || 0);
-	return Number.isFinite(n) ? roundToScale(n) : Number.NaN;
-};
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, Taggable, HasCustomFields {

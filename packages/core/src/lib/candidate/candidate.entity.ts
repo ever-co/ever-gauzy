@@ -40,7 +40,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { billingRateColumn, ColumnNumericTransformerPipe, toBillingRate } from './../shared/pipes';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -113,15 +113,15 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
-	@MultiORMColumn({ nullable: true })
+	@Transform(toBillingRate)
+	@MultiORMColumn(billingRateColumn())
 	billRateValue?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
-	@MultiORMColumn({ nullable: true })
+	@Transform(toBillingRate)
+	@MultiORMColumn(billingRateColumn())
 	minimumBillingRate?: number;
 
 	@ApiPropertyOptional({ type: () => String, enum: PayPeriodEnum, example: PayPeriodEnum.WEEKLY })

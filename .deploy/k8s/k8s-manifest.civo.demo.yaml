@@ -76,12 +76,15 @@ spec:
                         value: 'https://apidemocivo.gauzy.co'
                       - name: CLIENT_BASE_URL
                         value: 'https://democivo.gauzy.co'
+                      # Signing/session secrets: never commit a value here, it is public (GHSA-39j7-x845-4w3c).
+                      # Inject real ones from a secret store. Left empty, this DEMO=true API still
+                      # falls back to the published defaults in code (held, see resolveSecret in @gauzy/config).
                       - name: EXPRESS_SESSION_SECRET
-                        value: 'gauzy'
+                        value: ''
                       - name: JWT_SECRET
-                        value: 'secretKey'
+                        value: ''
                       - name: JWT_REFRESH_TOKEN_SECRET
-                        value: 'refreshSecretKey'
+                        value: ''
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '86400'
                       - name: ALLOWED_ORIGINS
