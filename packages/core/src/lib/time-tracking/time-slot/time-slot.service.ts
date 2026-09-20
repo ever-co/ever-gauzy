@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { SelectQueryBuilder } from 'typeorm';
+import { FindOptionsWhere, SelectQueryBuilder } from 'typeorm';
 import { PermissionsEnum, IGetTimeSlotInput, ID, ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
@@ -27,6 +27,15 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		private readonly _commandBus: CommandBus
 	) {
 		super(typeOrmTimeSlotRepository, mikroOrmTimeSlotRepository);
+	}
+
+	/**
+	 * Time slots are personal: a caller without CHANGE_SELECTED_EMPLOYEE and without an employee record
+	 * of their own (a custom role holding TIME_TRACKER, say) must not fall back to the tenant-wide scope
+	 * of the CRUD reads and deletes (GHSA-6qvm-3wg4-26w4). They match nothing instead.
+	 */
+	protected findConditionsWithoutOwnEmployee(): FindOptionsWhere<TimeSlot> {
+		return this.neverMatchingEmployeeCondition();
 	}
 
 	/**

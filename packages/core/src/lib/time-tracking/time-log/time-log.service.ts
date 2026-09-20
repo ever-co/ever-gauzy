@@ -3,10 +3,11 @@ import {
 	BadRequestException,
 	ForbiddenException,
 	HttpException,
-	NotAcceptableException
+	NotAcceptableException,
+	NotFoundException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
+import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult, FindOptionsWhere } from 'typeorm';
 import { chain, pluck } from 'underscore';
 import {
 	IManualTimeInput,
@@ -69,6 +70,15 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {
 		super(typeOrmTimeLogRepository, mikroOrmTimeLogRepository);
+	}
+
+	/**
+	 * Time logs are personal: a caller without CHANGE_SELECTED_EMPLOYEE and without an employee record
+	 * of their own (a custom role holding TIME_TRACKER, say) must not fall back to the tenant-wide scope
+	 * of the CRUD reads and deletes (GHSA-6qvm-3wg4-26w4). They match nothing instead.
+	 */
+	protected findConditionsWithoutOwnEmployee(): FindOptionsWhere<TimeLog> {
+		return this.neverMatchingEmployeeCondition();
 	}
 
 	/**
@@ -1492,6 +1502,31 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Loads the employee a manual time log is written for, inside the caller's tenant.
+	 *
+	 * The raw repository has no tenant scoping, and an undefined id would be dropped from the where
+	 * clause and match an arbitrary employee, so both a missing id and a missing tenant fail closed
+	 * (GHSA-6qvm-3wg4-26w4).
+	 *
+	 * @param employeeId - The employee from the request.
+	 * @param tenantId - The caller's tenant.
+	 * @returns The employee, with its organization.
+	 */
+	private async findEmployeeInTenant(employeeId: ID, tenantId: ID): Promise<IEmployee> {
+		const employee =
+			employeeId && tenantId
+				? await this.typeOrmEmployeeRepository.findOne({
+						where: { id: employeeId, tenantId },
+						relations: { organization: true }
+					})
+				: null;
+		if (!employee) {
+			throw new NotFoundException('The employee was not found');
+		}
+		return employee;
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
@@ -1499,7 +1534,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async addManualTime(request: IManualTimeInput): Promise<ITimeLog> {
 		try {
-			const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
+			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, startedAt, stoppedAt, organizationId } = request;
 
 			// Validate input
@@ -1508,10 +1543,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Retrieve employee information
-			const employee: IEmployee = await this.typeOrmEmployeeRepository.findOne({
-				where: { id: employeeId },
-				relations: { organization: true }
-			});
+			const employee: IEmployee = await this.findEmployeeInTenant(employeeId, tenantId);
 
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
@@ -1570,7 +1602,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async updateManualTime(id: ID, request: IManualTimeInput): Promise<ITimeLog> {
 		try {
-			const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
+			const tenantId = RequestContext.currentTenantId();
 			const { startedAt, stoppedAt, employeeId, organizationId } = request;
 
 			// Validate input
@@ -1579,10 +1611,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Retrieve employee information
-			const employee: IEmployee = await this.typeOrmEmployeeRepository.findOne({
-				where: { id: employeeId },
-				relations: { organization: true }
-			});
+			const employee: IEmployee = await this.findEmployeeInTenant(employeeId, tenantId);
 
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;

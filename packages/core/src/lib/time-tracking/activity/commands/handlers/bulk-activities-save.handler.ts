@@ -1,7 +1,9 @@
+import { ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IActivity, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { Activity } from '../../activity.entity';
+import { scopeActivitiesForWrite } from '../../activity-write-scope.helper';
 import { BulkActivitiesSaveCommand } from '../bulk-activities-save.command';
 import { RequestContext } from '../../../../core/context';
 import { TypeOrmActivityRepository } from '../../repository/type-orm-activity.repository';
@@ -26,7 +28,12 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 		let { employeeId, organizationId, activities = [], projectId } = input;
 
 		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
+		// Activities are written into the caller's tenant only; a body tenantId is never a fallback.
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new ForbiddenException('A tenant is required to save activities');
+		}
 
 		// Check if the logged user has permission to change the selected employee
 		const hasChangeEmployeePermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
@@ -36,10 +43,17 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 			employeeId = RequestContext.currentEmployeeId();
 		}
 
-		// Assign the current user's organizationId if it's not provided
-		if (isEmpty(organizationId) && employeeId) {
-			const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId });
-			organizationId = employee ? employee.organizationId : null;
+		// The employee must belong to the caller's tenant: CHANGE_SELECTED_EMPLOYEE holders may name any
+		// employee in the body, and the lookup used to resolve it in any tenant (GHSA-6qvm-3wg4-26w4).
+		if (employeeId) {
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId, tenantId });
+			if (!employee) {
+				throw new ForbiddenException('The employee does not belong to this tenant');
+			}
+			// Assign the employee's organizationId if it's not provided
+			if (isEmpty(organizationId)) {
+				organizationId = employee.organizationId;
+			}
 		}
 
 		// Log empty activities and filter out any invalid ones
@@ -48,8 +62,17 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 			activities.filter((activity: IActivity) => Object.keys(activity).length === 0)
 		);
 
-		activities = activities
-			.filter((activity: IActivity) => Object.keys(activity).length !== 0)
+		// Body-supplied activity ids / time slot ids are kept only when they are the employee's own:
+		// save() upserts by primary key alone and would otherwise overwrite any tenant's activity.
+		const validActivities = await scopeActivitiesForWrite(
+			activities
+				.filter((activity: IActivity) => Object.keys(activity).length !== 0)
+				.map((activity: IActivity) => ({ ...activity })),
+			this.typeOrmActivityRepository,
+			{ tenantId, employeeId }
+		);
+
+		activities = validActivities
 			.map(
 				(activity: IActivity) =>
 					// `recordedAt` is guaranteed by `ActivitySubscriber.beforeEntityCreate`, which
