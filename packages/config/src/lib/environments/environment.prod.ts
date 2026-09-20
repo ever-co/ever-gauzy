@@ -7,24 +7,10 @@
 import * as dotenv from 'dotenv';
 dotenv.config({ quiet: true });
 
-import { FileStorageProviderEnum } from '@gauzy/contracts';
+import { FileStorageProviderEnum, isKnownDefaultSecret } from '@gauzy/contracts';
 import { IEnvironment, IGauzyFeatures } from './ienvironment';
 import { isEnvFlagEnabled, isFeatureEnabled, parseNonNegativeInt } from './environment.helper';
-
-/**
- * Insecure default JWT secrets that must NEVER be used in production.
- * If any of these are detected at startup, the server will refuse to start.
- */
-const INSECURE_DEFAULT_SECRETS = new Set([
-	'secretkey', // cspell:ignore secretkey
-	'refreshsecretkey', // cspell:ignore refreshsecretkey
-	'verificationsecretkey', // cspell:ignore verificationsecretkey
-	'changeme', // cspell:ignore changeme
-	'secret',
-	'password',
-	'default',
-	'gauzy'
-]);
+import { resolveSecret } from './secret-resolver';
 
 /**
  * Validates that critical JWT secrets are set and not using insecure defaults.
@@ -43,7 +29,7 @@ function validateProductionSecrets(): void {
 	for (const { name, value } of secretChecks) {
 		if (!value || value.trim() === '') {
 			errors.push(`${name} is not set. This is required in production.`);
-		} else if (INSECURE_DEFAULT_SECRETS.has(value.trim().toLowerCase())) {
+		} else if (isKnownDefaultSecret(value)) {
 			errors.push(
 				`${name} is set to a known insecure default value [REDACTED]. ` +
 					`Generate a strong, unique secret for production use (e.g., openssl rand -base64 64).`
@@ -81,19 +67,30 @@ export const environment: IEnvironment = {
 		LOG_LEVEL: 'debug'
 	},
 
-	EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET || 'gauzy',
+	// Getters, so the value is read when it is first used rather than when this module is imported:
+	// the API loads its env files after its imports have run, so an eagerly read secret can be
+	// decided before they are loaded (GHSA-39j7-x845-4w3c).
+	get EXPRESS_SESSION_SECRET(): string {
+		return resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy'); // Never a published literal outside DEMO
+	},
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
-	JWT_SECRET: process.env.JWT_SECRET!, // Validated at startup — must be set in production
+	get JWT_SECRET(): string {
+		return process.env.JWT_SECRET!; // Validated at startup — must be set in production
+	},
 	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
-	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET!, // Validated at startup — must be set in production
+	get JWT_REFRESH_TOKEN_SECRET(): string {
+		return process.env.JWT_REFRESH_TOKEN_SECRET!; // Validated at startup — must be set in production
+	},
 	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options
 	 */
-	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET!, // Validated at startup — must be set in production
+	get JWT_VERIFICATION_TOKEN_SECRET(): string {
+		return process.env.JWT_VERIFICATION_TOKEN_SECRET!; // Validated at startup — must be set in production
+	},
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
 
 	/**

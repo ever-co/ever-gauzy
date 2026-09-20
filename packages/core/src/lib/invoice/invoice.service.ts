@@ -1,12 +1,13 @@
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { Between, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import { IInvoice, IOrganization, InvoiceStats, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { MultiORMEnum } from './../core/utils';
+import { RequestContext } from './../core/context';
 import { I18nService } from 'nestjs-i18n';
 import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
@@ -68,22 +69,36 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
-	 * GET highest invoice number
+	 * GET highest invoice number of the current tenant
+	 *
+	 * Invoices and estimates share one number sequence per tenant, and the unique constraint on
+	 * `invoiceNumber` is tenant-local (tenantId, invoiceNumber). The aggregate runs on raw builders,
+	 * which bypass TenantAwareCrudService scoping, so it must add the tenant predicate itself —
+	 * unscoped, it disclosed the installation-wide maximum across tenants (GHSA-57hw-jqpj-ww97).
 	 *
 	 * @returns
 	 */
 	async getHighestInvoiceNumber(): Promise<IInvoice> {
+		// Fail closed: without a tenant there is no sequence this caller may read.
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new ForbiddenException();
+		}
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const knex = this.mikroOrmRepository.getEntityManager().getKnex();
-					const result = await knex(this.tableName).max('invoiceNumber as max').first();
+					const result = await knex(this.tableName).where({ tenantId }).max('invoiceNumber as max').first();
 					return { max: result?.max ?? 0 } as any;
 				}
 				case MultiORMEnum.TypeORM:
 				default: {
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-					return await query.select(`COALESCE(MAX(${query.alias}.invoiceNumber), 0)`, 'max').getRawOne();
+					return await query
+						.select(`COALESCE(MAX(${query.alias}.invoiceNumber), 0)`, 'max')
+						.where(`${query.alias}.tenantId = :tenantId`, { tenantId })
+						.getRawOne();
 				}
 			}
 		} catch (error) {

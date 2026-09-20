@@ -11,6 +11,8 @@ import * as path from 'node:path';
 import { isFunction, isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
 import { ExportEntityClass, redactForExport } from '../export-redact.decorator';
+import { toSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
+import { writeExportManifest } from '../export-manifest';
 
 import { IColumnRelationMetadata, IRepositoryModel, RepositoriesService } from '../repositories/repositories.service';
 
@@ -280,12 +282,23 @@ export class ExportService {
 
 		const csvWriter = csv.createObjectCsvWriter({
 			path: path.join(job.csvDir, `${filename}.csv`),
-			header
+			header,
+			// 🛑 Quote every field. By default `csv-writer` quotes only on `,`, `\n` or `"`, so a value
+			// such as `Acme\r=HYPERLINK(...)` is written bare, and Excel/LibreOffice read the bare CR as
+			// a row break — the payload then starts a cell of its own and the leading-character escape
+			// below never sees it (GHSA-7xp5-j564-4752). `csv-parser` on the import side reads quoted
+			// fields the same as bare ones; empty values stay empty.
+			alwaysQuote: true
 		});
+
+		// Every cell of every row — table rows, the `/export/filter` tables and the junction tables all
+		// come through here — is escaped so a stored formula is shown as text, not evaluated, when the
+		// archive is opened in a spreadsheet (GHSA-7xp5-j564-4752). The import side undoes it.
+		const rows = items.map((row) => toSpreadsheetSafeCsvRow(row));
 
 		// Awaited, not `.then()`-ed: the old code dropped the rejection, so a write failure (another
 		// request's cleanup removing the directory, a full disk) left the promise pending forever.
-		await csvWriter.writeRecords(items);
+		await csvWriter.writeRecords(rows);
 	}
 
 	/**
@@ -345,6 +358,10 @@ export class ExportService {
 	async exportTables(job: IExportJob, organizationId: string): Promise<boolean> {
 		const repositories = await this.getRepositories();
 
+		// Marks the archive as one whose cells carry the spreadsheet-formula escape, so the import side
+		// knows it may reverse that escape — and leaves an archive without the marker untouched.
+		await writeExportManifest(job.csvDir);
+
 		for await (const item of repositories) {
 			await this.getAsCsv(
 				job,
@@ -375,6 +392,10 @@ export class ExportService {
 	 */
 	async exportSpecificTables(job: IExportJob, names: string[], organizationId?: string): Promise<boolean> {
 		const repositories = await this.getRepositories();
+
+		// Same marker as a full export: these CSVs are escaped the same way. `/export/template` is
+		// deliberately NOT marked — an operator fills it in by hand, so nothing there was ever escaped.
+		await writeExportManifest(job.csvDir);
 
 		for await (const item of repositories) {
 			const nameFile = item.repository.metadata.tableName;

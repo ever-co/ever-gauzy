@@ -57,8 +57,9 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 				`${trimTrailingSlash(baseUrl)}/models`,
 				{
 					...(resolved?.apiKey ? { headers: { authorization: `Bearer ${resolved.apiKey}` } } : {}),
-					// The operator's own address or the built-in default may be private; a tenant's may
-					// not unless the deployment opted in (GHSA-w3mx-m5cr-3gxp).
+					// The operator's own address may be private; a tenant credential may not reach one —
+					// its own URL or the built-in local default — unless the deployment opted in
+					// (GHSA-w3mx-m5cr-3gxp).
 					allowPrivateHost: isPrivateAiProviderEndpointAllowed(resolved)
 				}
 			);

@@ -12,7 +12,7 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { TenantPermissionGuard, PermissionGuard } from '../../shared/guards';
+import { TenantPermissionGuard, PermissionGuard, EmployeeTrackedDataGuard } from '../../shared/guards';
 import { PermissionsEnum, ITrackingSession, ITimeLog, ITrackingSessionResponse } from '@gauzy/contracts';
 import { Permissions } from '../../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe, BulkBodyLoadTransformPipe } from '../../shared/pipes';
@@ -107,6 +107,7 @@ export class CustomTrackingController {
 		status: HttpStatus.OK,
 		description: 'Custom tracking sessions retrieved successfully'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/sessions')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getTrackingSessions(@Query() query: CustomTrackingSessionsQueryDTO): Promise<{
@@ -140,6 +141,7 @@ export class CustomTrackingController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'TimeSlot not found'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/time-slot/:id')
 	async getTimeSlotTrackingData(@Param('id', UUIDValidationPipe) timeSlotId: string): Promise<{
 		timeSlotId: string;
@@ -171,6 +173,7 @@ export class CustomTrackingController {
 		status: HttpStatus.OK,
 		description: 'Tracking sessions retrieved successfully'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/session/:sessionId')
 	async getSessionsBySessionId(
 		@Param('sessionId') sessionId: string,
@@ -193,6 +196,7 @@ export class CustomTrackingController {
 		status: HttpStatus.OK,
 		description: 'Active tracking sessions retrieved successfully'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/active')
 	async getActiveSessions(
 		@Query('employeeId', UUIDValidationPipe) employeeId?: string,

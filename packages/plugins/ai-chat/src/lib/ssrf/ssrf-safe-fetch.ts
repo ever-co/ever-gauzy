@@ -340,15 +340,22 @@ async function assertOutboundTargetAllowed(
  * DNS service is enough — no rebinding needed) passed the store-time and read-time LITERAL checks and
  * was then requested, redirects followed, by every chat turn (GHSA-w3mx-m5cr-3gxp).
  *
- * Only a TENANT-supplied base URL is guarded. For anything else — the operator's own `*_BASE_URL`, a
- * platform key, or a tenant key with no base URL, which the SDK sends to the vendor's built-in host —
- * this returns `undefined`, so the factory keeps its default transport and operator traffic is
- * unchanged. For a tenant URL, private targets follow the `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS` deployment
- * flag, exactly as `isPrivateAiProviderEndpointAllowed` decides for the catalogue and speech paths.
+ * Every TENANT credential is guarded; an operator credential (`environment`/`platform`) is not, so
+ * this returns `undefined` for it and the factory keeps its default transport.
  *
- * The guard is the one {@link ssrfSafeFetch} applies, connection-time check included, so a name
- * that rebinds between the pre-flight and the connection is refused here too. Streaming responses
- * (server-sent events) stream through it unchanged.
+ * How much guarding a tenant credential gets depends on who chose the address:
+ *
+ * - **It carries a base URL** → the full {@link ssrfSafeFetch} guard, connection-time check included,
+ *   so a name that rebinds between the pre-flight and the connection is refused here too. Streaming
+ *   responses (server-sent events) stream through it unchanged.
+ * - **It carries none** → the SDK sends the request to the provider's BUILT-IN default, which the
+ *   tenant cannot choose. For a vendor that is a public host and the request goes out on the platform
+ *   `fetch` untouched, keep-alive and all; for a local provider (LocalAI and friends) it is loopback,
+ *   and that is refused unless the deployment opted in — the residual of GHSA-w3mx-m5cr-3gxp. A DNS
+ *   pre-flight would add nothing here, since no tenant-chosen name is involved.
+ *
+ * Private targets follow the `GAUZY_AI_CHAT_ALLOW_PRIVATE_BASE_URLS` deployment flag either way,
+ * exactly as `isPrivateAiProviderEndpointAllowed` decides for the catalogue and speech paths.
  *
  * @param credentials - The credentials the provider model is being created with.
  * @param options.resolver - DNS resolver override (tests); `dns.lookup` otherwise.
@@ -358,16 +365,44 @@ export function createAiProviderSdkFetch(
 	credentials: IAiProviderCredentials | null | undefined,
 	options?: Pick<ISsrfSafeFetchOptions, 'resolver'>
 ): typeof fetch | undefined {
-	if (credentials?.source !== 'tenant' || !credentials.baseUrl?.trim()) {
+	if (credentials?.source !== 'tenant') {
 		return undefined;
 	}
 	const guardOptions: ISsrfSafeFetchOptions = {
 		allowPrivateHost: isPrivateAiProviderBaseUrlAllowed(),
 		resolver: options?.resolver
 	};
+
+	if (!credentials.baseUrl?.trim()) {
+		// The provider's own default. Only its host class is judged, and only when it is private does
+		// the request go through the guard (which then refuses it, unless the flag is on).
+		return async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+			if (guardOptions.allowPrivateHost || !targetsPrivateHost(input)) {
+				return await fetch(input, init);
+			}
+			return await guardedFetch(input, { ...(init ?? {}), redirect: 'error' }, guardOptions);
+		};
+	}
+
 	// The SDK passes a string today; a `Request` is judged by its own URL and signal all the same.
 	return async (input: string | URL | Request, init?: RequestInit): Promise<Response> =>
 		await guardedFetch(input, { ...(init ?? {}), redirect: 'error' }, guardOptions);
+}
+
+/**
+ * Whether this request's URL names a private/loopback/link-local host LITERALLY.
+ *
+ * Used only for addresses no tenant chose (a provider's built-in default), where there is no
+ * attacker-controlled name to resolve, so the literal host is the whole question. An unparsable URL
+ * counts as private: it then takes the guarded path, which refuses it with a reason.
+ */
+function targetsPrivateHost(input: string | URL | Request): boolean {
+	const url = typeof input === 'object' && !(input instanceof URL) ? input.url : String(input);
+	try {
+		return isPrivateOrLoopbackHost(new URL(url).hostname.replace(/^\[|\]$/g, ''));
+	} catch {
+		return true;
+	}
 }
 
 /** Whether an error came from the egress guard (duck-typed, so it survives bundle boundaries). */

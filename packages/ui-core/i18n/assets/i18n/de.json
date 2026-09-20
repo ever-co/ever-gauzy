@@ -2451,6 +2451,8 @@
 				"REQUIRE_CLIENT": "Kunde benötigt werden",
 				"REQUIRE_CLIENT_INFO": "Für den Start des Timers und auch für das Hinzufügen oder Bearbeiten von manueller Zeit in den Zeitprotokollen wird der Kunde der erfassten Zeit benötigt.",
 				"ALLOW_TO_SET_DEFAULT_ORGANIZATION": "Erlaube dem Benutzer, die Standardorganisation festzulegen.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Frequentie schermafbeeldingen",
 				"SCREENSHOT_FREQUENCY_INFO": "Geef de updatefrequentie of tijdintervallen voor synchronisatie op.",
 				"RANDOM_SCREENSHOT": "Willekeurige schermafbeelding",

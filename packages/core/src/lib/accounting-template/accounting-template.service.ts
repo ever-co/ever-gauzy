@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Brackets, FindOptionsWhere, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { FilterQuery as MikroFilterQuery } from '@mikro-orm/core';
-import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
 import {
 	AccountingTemplateTypeEnum,
@@ -23,6 +22,7 @@ import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { MultiORMEnum } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { compileMjml, toTemplateSource } from './../email-template/compile-mjml';
 import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accounting-template.repository';
 import { MikroOrmAccountingTemplateRepository } from './repository/mikro-orm-accounting-template.repository';
 
@@ -36,10 +36,13 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	}
 
 	generatePreview(input) {
-		const { data, organization } = input.request;
+		const { organization } = input.request;
+		// Coerce first: both the MJML compiler and the Handlebars fallback below must only ever see a
+		// string — Handlebars.compile() also accepts a pre-parsed AST object (GHSA-48h9-vwf5-h8m7).
+		const data = toTemplateSource(input.request.data);
 		let textToHtml = data;
 		try {
-			const mjmlToHtml = mjml2html(data);
+			const mjmlToHtml = compileMjml(data);
 			textToHtml = mjmlToHtml.errors.length ? data : mjmlToHtml.html;
 		} catch (error) {}
 
@@ -160,6 +163,12 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	 */
 	async saveTemplate(input: IAccountingTemplateUpdateInput) {
 		const tenantId = RequestContext.currentTenantId();
+		// Compile the SUBMITTED mjml: this used to compile the previously stored `record.mjml`, so the
+		// saved hbs always lagged one save behind the mjml stored next to it. Compiled OUTSIDE the
+		// try/catch below on purpose — that catch means "no template for this organization yet", and
+		// mjml throws on markup it cannot parse, so a compile failure must not be read as a missing
+		// record and turned into an insert.
+		const hbs = compileMjml(input.mjml).html;
 		try {
 			const record = await this.findOneByWhereOptions({
 				languageCode: input.languageCode,
@@ -169,7 +178,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			});
 			let entity: AccountingTemplate = {
 				...record,
-				hbs: mjml2html(record.mjml).html,
+				hbs,
 				mjml: input.mjml
 			};
 			return await this.update(record.id, entity);
@@ -179,7 +188,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			entity.templateType = input.templateType;
 			entity.name = input.templateType;
 			entity.mjml = input.mjml;
-			entity.hbs = mjml2html(input.mjml).html;
+			entity.hbs = hbs;
 			entity.organizationId = input.organizationId;
 			entity.tenantId = tenantId;
 			return await this.create(entity);
