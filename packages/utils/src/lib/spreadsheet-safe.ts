@@ -1,3 +1,4 @@
+// cspell:ignore IMEs OWASP WEBSERVICE exfiltration unneutralize
 /**
  * Spreadsheet-safe cell encoding (CSV / formula injection, CWE-1236).
  *
@@ -8,7 +9,7 @@
  * when an admin opens an export: a live `=HYPERLINK(...)` exfiltration link, a `WEBSERVICE` fetch,
  * or DDE on legacy Excel (GHSA-7xp5-j564-4752).
  *
- * The defence is the OWASP one: prefix such a cell with a single quote, which every spreadsheet
+ * The defense is the OWASP one: prefix such a cell with a single quote, which every spreadsheet
  * treats as "this cell is text". A value that already starts with a quote is prefixed too, so that
  * {@link unneutralizeSpreadsheetCell} can undo the escape exactly and a Gauzy export → import
  * round-trips byte for byte.

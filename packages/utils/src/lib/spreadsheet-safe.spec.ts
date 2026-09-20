@@ -1,3 +1,4 @@
+// cspell:ignore brillig unneutralize
 import { neutralizeSpreadsheetCell, unneutralizeSpreadsheetCell } from './spreadsheet-safe';
 
 /**

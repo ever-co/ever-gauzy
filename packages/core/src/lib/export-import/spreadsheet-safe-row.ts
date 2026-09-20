@@ -1,3 +1,4 @@
+// cspell:ignore unneutralize
 import { neutralizeSpreadsheetCell, unneutralizeSpreadsheetCell } from '@gauzy/utils';
 
 /**

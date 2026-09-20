@@ -1,3 +1,4 @@
+// cspell:ignore brillig stringifier
 import 'reflect-metadata';
 
 /**
