@@ -30,7 +30,7 @@ export const environment: IEnvironment = {
 	},
 
 	/**
-	 * Token-signing and session secrets never fall back to a published literal outside DEMO: unset
+	 * Token-signing and session secrets never fall back to a published literal, DEMO included: unset
 	 * means a random per-process value (and a refused boot in production). See resolveSecret()
 	 * (GHSA-39j7-x845-4w3c).
 	 *
@@ -42,17 +42,17 @@ export const environment: IEnvironment = {
 	 * literal that clash was invisible, because both copies ended up on the same literal.
 	 */
 	get EXPRESS_SESSION_SECRET(): string {
-		return resolveSecret('EXPRESS_SESSION_SECRET', 'gauzy');
+		return resolveSecret('EXPRESS_SESSION_SECRET');
 	},
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
 	get JWT_SECRET(): string {
-		return resolveSecret('JWT_SECRET', 'secretKey');
+		return resolveSecret('JWT_SECRET');
 	},
 	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
 	get JWT_REFRESH_TOKEN_SECRET(): string {
-		return resolveSecret('JWT_REFRESH_TOKEN_SECRET', 'refreshSecretKey');
+		return resolveSecret('JWT_REFRESH_TOKEN_SECRET');
 	},
 	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
@@ -60,7 +60,7 @@ export const environment: IEnvironment = {
 	 * Email verification options
 	 */
 	get JWT_VERIFICATION_TOKEN_SECRET(): string {
-		return resolveSecret('JWT_VERIFICATION_TOKEN_SECRET', 'verificationSecretKey');
+		return resolveSecret('JWT_VERIFICATION_TOKEN_SECRET');
 	},
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
 

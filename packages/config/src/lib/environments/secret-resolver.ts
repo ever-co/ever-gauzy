@@ -45,29 +45,23 @@ function warnOnce(name: string, message: string): void {
  *   published default (see `KNOWN_DEFAULT_SECRETS`) only logs a warning here: in development it is
  *   an explicit developer choice (`.env.local` ships `secretKey`, and CI/e2e read it through Nx),
  *   and in production `validateApplicationSecrets()` refuses to boot with it.
- * - Unset or blank, `DEMO !== 'true'`: a random 512-bit secret is generated once per process and a
- *   warning names the variable. Tokens and sessions then do NOT survive a restart, and every
- *   separate process that signs or verifies these tokens (API replicas, `yarn seed`) must be given
- *   the same value explicitly. In production `validateApplicationSecrets()` still refuses to boot,
- *   as before, because {@link isGeneratedSecret} marks the value as not configured.
- * - Unset or blank, `DEMO === 'true'`: returns `demoFallback` — the historical published default.
+ * - Unset or blank: a random 512-bit secret is generated once per process and a warning names the
+ *   variable. Tokens and sessions then do NOT survive a restart, and every separate process that
+ *   signs or verifies these tokens (API replicas, `yarn seed`) must be given the same value
+ *   explicitly. In production `validateApplicationSecrets()` still refuses to boot, as before,
+ *   because {@link isGeneratedSecret} marks the value as not configured.
+ *
+ * `DEMO=true` is NOT exempt. It used to be: the demo fell back to the published literal, which is
+ * why anyone could forge tokens for a demo instance. Every deployment in the Ever fleet sets all
+ * four secrets explicitly (verified 2026-09-20), so the exemption protected nothing there, and a
+ * public demo signing with a key printed in this repository is exactly the hole the advisory
+ * describes.
  *
  * @param name - The environment variable holding the secret.
- * @param demoFallback - The value `DEMO=true` deployments have always used when the variable is unset.
  * @returns The secret to use.
  */
-export function resolveSecret(name: string, demoFallback: string): string {
+export function resolveSecret(name: string): string {
 	const raw = process.env[name];
-
-	// TODO(GHSA-39j7-x845-4w3c): HELD — the DEMO=true path deliberately keeps the historical
-	// behaviour (`process.env[name] || '<published default>'`) until the maintainers decide how the
-	// public demo is provisioned. demo.gauzy.co runs DEMO=true with NODE_ENV=development and takes its
-	// secrets from a store we cannot inspect from here; switching it to random or refused secrets
-	// could log everyone out on every restart or stop it from booting. Anyone who can reach a DEMO
-	// instance that relies on this fallback can forge tokens for it.
-	if (process.env.DEMO === 'true') {
-		return raw || demoFallback;
-	}
 
 	if (raw?.trim()) {
 		if (isKnownDefaultSecret(raw)) {
