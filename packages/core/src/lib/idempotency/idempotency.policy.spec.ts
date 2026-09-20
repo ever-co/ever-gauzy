@@ -8,6 +8,8 @@ import {
 	MIN_IDEMPOTENCY_KEY_LENGTH,
 	buildGraphqlRequestHash,
 	buildRequestHash,
+	canonicalizeBody,
+	canonicalizePath,
 	canonicalizeQuery,
 	clampRetentionSeconds,
 	hashPrefix,
@@ -155,7 +157,12 @@ describe('the identity of a request', () => {
 	it('canonicalizes the query string, because two parameter orders are one request', () => {
 		expect(canonicalizeQuery(undefined)).toBe('');
 		expect(canonicalizeQuery(null)).toBe('');
-		expect(canonicalizeQuery('page=2&limit=10')).toBe('page=2&limit=10');
+		// A raw string is parsed before it is sorted, for the same reason the parsed object is.
+		expect(canonicalizeQuery('page=2&limit=10')).toBe(canonicalizeQuery('limit=10&page=2'));
+		expect(canonicalizeQuery('?page=2&limit=10')).toBe(canonicalizeQuery({ page: '2', limit: '10' }));
+		expect(canonicalizeQuery('')).toBe('');
+		// A repeated key keeps the order its values were written in: two orders are two lists.
+		expect(canonicalizeQuery('tag=a&tag=b')).not.toBe(canonicalizeQuery('tag=b&tag=a'));
 		expect(canonicalizeQuery({ page: 2, limit: 10 })).toBe(canonicalizeQuery({ limit: 10, page: 2 }));
 	});
 
@@ -191,15 +198,66 @@ describe('the identity of a request', () => {
 		expect(buildRequestHash({ ...base, body: { sku: 'B' } })).not.toBe(hash);
 	});
 
-	it('prefers the raw body the client actually sent over the parsed one', () => {
-		// The parsed body has already lost the caller's spelling; the raw bytes have not.
-		const raw = '{"sku":"A",  "note":"  spaced  "}';
+	it('recognises a retry the client re-serialised, whatever bytes it sent', () => {
+		// The property the mechanism rests on, stated over the transport's own shape: the interceptor
+		// always has raw bytes to hand, because the platform captures them for signature verification,
+		// and hashing those bytes made a rebuilt retry look like a different request. It is the parsed
+		// body that says what was asked for.
+		const first = '{"sku":"A","qty":2}';
+		const rebuilt = '{ "qty": 2,\n  "sku": "A" }';
 
-		expect(buildRequestHash({ method: 'POST', path: '/api/orders', rawBody: raw, body: { sku: 'A' } })).toBe(
-			buildRequestHash({ method: 'POST', path: '/api/orders', rawBody: raw, body: { sku: 'ignored' } })
+		expect(
+			buildRequestHash({ method: 'POST', path: '/api/orders', rawBody: first, body: { sku: 'A', qty: 2 } })
+		).toBe(
+			buildRequestHash({ method: 'POST', path: '/api/orders', rawBody: rebuilt, body: { qty: 2, sku: 'A' } })
 		);
-		expect(buildRequestHash({ method: 'POST', path: '/api/orders', rawBody: Buffer.from(raw, 'utf8') })).toBe(
-			buildRequestHash({ method: 'POST', path: '/api/orders', rawBody: raw })
+
+		// And a body that really is different is still a different request.
+		expect(
+			buildRequestHash({ method: 'POST', path: '/api/orders', rawBody: first, body: { sku: 'A', qty: 2 } })
+		).not.toBe(
+			buildRequestHash({ method: 'POST', path: '/api/orders', rawBody: first, body: { sku: 'A', qty: 3 } })
+		);
+	});
+
+	it('falls back to the bytes when there is nothing parsed to hash', () => {
+		// A payload the platform did not parse has no structure to canonicalize, so its bytes are the
+		// only honest fingerprint it has — and `express.json()` leaving `{}` behind is not evidence that
+		// nothing was sent.
+		const signed = '<xml><sku>A</sku></xml>';
+
+		expect(buildRequestHash({ method: 'POST', path: '/api/hooks', rawBody: signed, body: {} })).toBe(
+			buildRequestHash({ method: 'POST', path: '/api/hooks', rawBody: Buffer.from(signed, 'utf8'), body: {} })
+		);
+		expect(buildRequestHash({ method: 'POST', path: '/api/hooks', rawBody: signed, body: {} })).not.toBe(
+			buildRequestHash({ method: 'POST', path: '/api/hooks', rawBody: '<xml><sku>B</sku></xml>', body: {} })
+		);
+
+		// Raw bytes that are JSON go through the same canonical rule as everything else, so the two
+		// paths cannot disagree about one request.
+		expect(canonicalizeBody({ rawBody: '{"b":2,"a":1}' })).toBe(canonicalizeBody({ body: { a: 1, b: 2 } }));
+		expect(canonicalizeBody({ rawBody: '   ', body: {} })).toBe(canonicalizeBody({ body: {} }));
+	});
+
+	it('does not count the query string twice, in two different canonical forms', () => {
+		// The interceptor hands over `originalUrl`, which carries the query, and the query is hashed on
+		// its own. Left in the path it was the one part of the fingerprint the sorting never reached.
+		expect(canonicalizePath('/api/orders?page=2&limit=10')).toBe('/api/orders');
+		expect(canonicalizePath('/api/orders#frag')).toBe('/api/orders');
+		expect(canonicalizePath(undefined)).toBe('');
+
+		expect(
+			buildRequestHash({
+				method: 'GET',
+				path: '/api/orders?page=2&limit=10',
+				query: { page: '2', limit: '10' }
+			})
+		).toBe(
+			buildRequestHash({
+				method: 'GET',
+				path: '/api/orders?limit=10&page=2',
+				query: { limit: '10', page: '2' }
+			})
 		);
 	});
 });

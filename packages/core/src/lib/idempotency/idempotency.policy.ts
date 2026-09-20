@@ -184,6 +184,12 @@ export function stableStringify(value: unknown): string {
  * Query parameters arrive in whatever order the client wrote them, and two of those orders are the
  * same request. Sorting the keys is what keeps a retry from looking like a different query.
  *
+ * A raw string is parsed before it is sorted, for the same reason the parsed object is: a client
+ * that rebuilds its URL writes the same parameters in whatever order its own map iterates, and
+ * leaving a string alone applied the sorting to one spelling of a query and not to the other. A
+ * repeated key keeps the order its values were written in, because `?tag=a&tag=b` and `?tag=b&tag=a`
+ * are two different lists to every parser the platform hands them to.
+ *
  * @param query The parsed query object, or the raw query string.
  * @returns A deterministic string.
  */
@@ -193,10 +199,100 @@ export function canonicalizeQuery(query: unknown): string {
 	}
 
 	if (typeof query === 'string') {
-		return query;
+		const trimmed = query.startsWith('?') ? query.slice(1) : query;
+
+		if (trimmed === '') {
+			return '';
+		}
+
+		const grouped: Record<string, string[]> = {};
+
+		for (const [key, value] of new URLSearchParams(trimmed)) {
+			if (!grouped[key]) {
+				grouped[key] = [];
+			}
+			grouped[key].push(value);
+		}
+
+		return stableStringify(
+			Object.fromEntries(
+				Object.keys(grouped).map((key) => [key, grouped[key].length === 1 ? grouped[key][0] : grouped[key]])
+			)
+		);
 	}
 
 	return stableStringify(query);
+}
+
+/**
+ * Strips the query and the fragment off a request path.
+ *
+ * The interceptor reads `originalUrl`, which carries the query string, and the query is already
+ * hashed on its own through {@link canonicalizeQuery}. Hashing it twice would be harmless; hashing
+ * it twice *in two different canonical forms* is not — the sorted form agrees between two spellings
+ * of one request while the copy embedded in the path disagrees, and the retry is then refused as a
+ * reused key.
+ *
+ * @param path The path as the transport presented it.
+ * @returns The path alone.
+ */
+export function canonicalizePath(path: unknown): string {
+	const value = String(path ?? '');
+	const queryAt = value.indexOf('?');
+	const fragmentAt = value.indexOf('#');
+	const end = Math.min(queryAt === -1 ? value.length : queryAt, fragmentAt === -1 ? value.length : fragmentAt);
+
+	return value.slice(0, end);
+}
+
+/**
+ * Canonicalizes the body of a request.
+ *
+ * **The parsed body is the request; the raw bytes are only its spelling.** A retry is a retry when
+ * it asks for the same thing, and a client that rebuilds its JSON — or a proxy, a gateway or an SDK
+ * that re-serialises it — writes the same members with a different key order, different whitespace
+ * and a different number format. Hashing the bytes made every one of those look like a different
+ * request, so the retry this mechanism exists to make safe was refused as a reused key, which is the
+ * one outcome the caller cannot recover from: it has no response, and it may not ask again.
+ *
+ * The raw bytes are still what is hashed when there is nothing parsed to hash. A payload the
+ * platform did not parse into an object has no structure to canonicalize, and its bytes are then the
+ * only honest fingerprint it has; when those bytes do turn out to be JSON they go through the same
+ * canonical rule as everything else, so the two paths cannot disagree about one request.
+ *
+ * @param request The body as the transport presented it, parsed and raw.
+ * @returns A deterministic string.
+ */
+export function canonicalizeBody(request: { rawBody?: string | Buffer | null; body?: unknown }): string {
+	const parsed = request.body;
+	const parsedIsEmptyObject =
+		parsed !== null &&
+		typeof parsed === 'object' &&
+		!Array.isArray(parsed) &&
+		Object.keys(parsed as Record<string, unknown>).length === 0;
+
+	// `express.json()` leaves `{}` behind for a request whose body it did not parse, so an empty
+	// object is not evidence that nothing was sent. When raw bytes exist, they are.
+	if (parsed !== undefined && parsed !== null && !parsedIsEmptyObject) {
+		return stableStringify(parsed);
+	}
+
+	if (request.rawBody === undefined || request.rawBody === null) {
+		return stableStringify(parsed === undefined ? null : parsed);
+	}
+
+	const raw = Buffer.isBuffer(request.rawBody) ? request.rawBody.toString('utf8') : String(request.rawBody);
+
+	if (raw.trim() === '') {
+		return stableStringify(parsed === undefined ? null : parsed);
+	}
+
+	try {
+		return stableStringify(JSON.parse(raw));
+	} catch {
+		// Not JSON — a signed blob, XML, or plain text. Its bytes are its meaning.
+		return raw;
+	}
 }
 
 /**
@@ -204,9 +300,13 @@ export function canonicalizeQuery(query: unknown): string {
  *
  * Method, path, query and body together — because the same key presented to the same scope for a
  * different body is not a retry, and answering it with the first response would answer a question
- * the caller never asked. The raw body is preferred over the parsed one: it is what the client
- * actually sent, and it is available because the platform already captures it for signature
- * verification.
+ * the caller never asked.
+ *
+ * Every one of the four is reduced to its canonical form first, which is the property the whole
+ * mechanism rests on: two spellings of one request must produce one hash, or the retry is refused as
+ * a reused key. The method is upper-cased, the path loses the query it may carry a second time, the
+ * query is sorted, and the body is canonicalized by {@link canonicalizeBody} — which reads the
+ * parsed body rather than the bytes, so a rebuilt retry is still a retry.
  *
  * @param request The request fingerprint.
  * @returns The hex sha-256 of the canonicalized request.
@@ -218,18 +318,11 @@ export function buildRequestHash(request: {
 	rawBody?: string | Buffer | null;
 	body?: unknown;
 }): string {
-	const body =
-		request.rawBody !== undefined && request.rawBody !== null
-			? Buffer.isBuffer(request.rawBody)
-				? request.rawBody.toString('utf8')
-				: String(request.rawBody)
-			: stableStringify(request.body ?? null);
-
 	const canonical = JSON.stringify([
 		String(request.method ?? '').toUpperCase(),
-		request.path ?? '',
+		canonicalizePath(request.path),
 		canonicalizeQuery(request.query),
-		body
+		canonicalizeBody(request)
 	]);
 
 	return createHash('sha256').update(canonical).digest('hex');
