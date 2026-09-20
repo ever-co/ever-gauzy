@@ -31,6 +31,7 @@ import {
 	validateDateRange
 } from '../../core/utils';
 import { assertSensitiveRelationsAllowed } from '../../core/util/sensitive-relations.helper';
+import { withoutTrackedDataRelations } from '../../core/util/tracked-data-sensitive-relations.config';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
 import {
@@ -673,13 +674,13 @@ export class TimerService {
 					? await this.typeOrmTimeLogRepository.find({
 							where: whereClause,
 							order: { startedAt: 'DESC', createdAt: 'DESC' }
-					  })
+						})
 					: await this.typeOrmTimeLogRepository.findOne({
 							where: whereClause,
 							order: { startedAt: 'DESC', createdAt: 'DESC' },
 							// Determine relations if includeTimeSlots is true
 							...(includeTimeSlots && { relations: { timeSlots: true } })
-					  });
+						});
 		}
 	}
 
@@ -719,6 +720,12 @@ export class TimerService {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		assertSensitiveRelationsAllowed(this.typeOrmTimeLogRepository.metadata, request.relations);
+
+		// ORG_MEMBER_LAST_LOG_VIEW, which the default EMPLOYEE role holds, lets a caller name a teammate
+		// here — that is the point of the team presence view. The last log itself is the feature; the
+		// tracked data hanging off it is not, and the root row is someone else's, so the per-employee
+		// restriction never applies to those rows. Drop them unless the caller may act for other employees.
+		request = { ...request, relations: withoutTrackedDataRelations(request.relations) };
 
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 		const { organizationId, organizationTeamId, source } = request;
