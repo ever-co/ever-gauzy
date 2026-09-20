@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron';
 import { ServerTask } from './server-task';
+import { redactSecretsForLog } from '../../config/desktop-secrets';
 
 export class ApiService extends ServerTask {
 	constructor(
@@ -67,6 +68,7 @@ export class ApiService extends ServerTask {
 			API_PORT: this.config.apiPort,
 			API_BASE_URL: this.config.apiUrl,
 		};
-		console.log('API configuration set:', this.args);
+		// The args carry the per-install signing/session secrets and DB password: never log their values.
+		console.log('API configuration set:', redactSecretsForLog(this.args));
 	}
 }
