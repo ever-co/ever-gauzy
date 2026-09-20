@@ -1,2 +1,3 @@
 export * from './accounting-template-query.dto';
 export * from './save-accounting-template.dto';
+export * from './accounting-template-preview.dto';

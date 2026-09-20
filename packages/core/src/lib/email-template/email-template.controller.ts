@@ -24,7 +24,7 @@ import { EmailTemplate } from './email-template.entity';
 import { EmailTemplateService } from './email-template.service';
 import { EmailTemplateGeneratePreviewQuery, EmailTemplateQuery, FindEmailTemplateQuery } from './queries';
 import { EmailTemplateSaveCommand } from './commands';
-import { EmailTemplateQueryDTO, SaveEmailTemplateDTO } from './dto';
+import { EmailTemplatePreviewDTO, EmailTemplateQueryDTO, SaveEmailTemplateDTO } from './dto';
 
 @ApiTags('EmailTemplate')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -97,7 +97,7 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	/**
 	 * Generate email template preview
 	 *
-	 * @param data
+	 * @param input - `{ data }`: the MJML or Handlebars text to render
 	 * @returns
 	 */
 	@ApiOperation({
@@ -109,8 +109,9 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 		type: EmailTemplate
 	})
 	@Post('template/preview')
-	async generatePreview(@Body('data') data: string): Promise<IEmailTemplate> {
-		return await this.queryBus.execute(new EmailTemplateGeneratePreviewQuery(data));
+	@UseValidationPipe({ whitelist: true })
+	async generatePreview(@Body() input: EmailTemplatePreviewDTO): Promise<IEmailTemplate> {
+		return await this.queryBus.execute(new EmailTemplateGeneratePreviewQuery(input.data));
 	}
 
 	/**

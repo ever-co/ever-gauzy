@@ -17,6 +17,7 @@ import {
 import { IntegrationService, IntegrationTenantUpdateOrCreateCommand, RequestContext } from '@gauzy/core';
 import { DEFAULT_ENTITY_SETTINGS, ISSUE_TIED_ENTITIES } from './github-entity-settings';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
+import { GITHUB_INSTALLATION_ID_PATTERN } from './dto/github-app-install.dto';
 
 // Import the Probot configuration module
 const { github } = environment;
@@ -99,7 +100,14 @@ export class GithubService {
 			}
 
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-			const { installation_id, setup_action, organizationId } = input;
+			const { setup_action, organizationId } = input;
+
+			// Only the canonical decimal spelling may be stored: the uniqueness check below is an exact
+			// string match, so '0123' must not bind installation 123 again (GHSA-4rwq-65wh-45h4).
+			const installation_id = String(input.installation_id);
+			if (!GITHUB_INSTALLATION_ID_PATTERN.test(installation_id)) {
+				throw new HttpException('Invalid github input data', HttpStatus.BAD_REQUEST);
+			}
 
 			// Security: reject an installation_id already bound to another tenant (GHSA-4rwq-65wh-45h4).
 			await this.assertInstallationNotClaimedByAnotherTenant(installation_id, tenantId);
