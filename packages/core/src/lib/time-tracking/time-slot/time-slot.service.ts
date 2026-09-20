@@ -81,7 +81,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		// such a caller would read the whole organization's slots — or the body-supplied employees'
 		// (GHSA-6qvm-3wg4-26w4). The CRUD reads already match nothing in that state
 		// (findConditionsWithoutOwnEmployee); this hand-built query carries the same rule.
-		if (!hasChangeSelectedEmployeePermission && !user?.employeeId) {
+		if (!hasChangeSelectedEmployeePermission && !user.employeeId) {
 			return [];
 		}
 

@@ -1288,7 +1288,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// query would return the whole organization (GHSA-6qvm-3wg4-26w4). The CRUD reads already match
 		// nothing in that state (findConditionsWithoutOwnEmployee); these hand-built report queries
 		// never reach that hook, so they carry the same rule here.
-		if (!hasChangeSelectedEmployeePermission && !user?.employeeId) {
+		if (!hasChangeSelectedEmployeePermission && !user.employeeId) {
 			query.andWhere('1 = 0');
 			return query;
 		}
@@ -1424,7 +1424,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Fail closed for a caller with neither the permission nor an employee record. See the TypeORM
 		// branch in getFilterTimeLogQuery.
-		if (!hasChangeSelectedEmployeePermission && !user?.employeeId) {
+		if (!hasChangeSelectedEmployeePermission && !user.employeeId) {
 			return { id: { $in: [] } };
 		}
 

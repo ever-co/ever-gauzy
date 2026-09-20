@@ -46,13 +46,13 @@ export class UpdateTimeSlotHandler implements ICommandHandler<UpdateTimeSlotComm
 		// A body employeeId only narrows the lookup, and only for callers who may act for any employee
 		// of the tenant. Everyone else is pinned to their own employee; without one there is no slot
 		// they may edit (an absent filter would match every employee's slot).
-		const employeeId = this.resolveEmployeeScope(input.employeeId);
-		if (employeeId === null) {
+		const scope = this.resolveEmployeeScope(input.employeeId);
+		if (!scope) {
 			return null;
 		}
 
 		const where = {
-			...(employeeId ? { employeeId } : {}),
+			...(scope.employeeId ? { employeeId: scope.employeeId } : {}),
 			tenantId,
 			id
 		};
@@ -85,15 +85,19 @@ export class UpdateTimeSlotHandler implements ICommandHandler<UpdateTimeSlotComm
 
 	/**
 	 * The employee the lookup is narrowed to: the body's for a caller who may act for any employee of
-	 * the tenant, the caller's own otherwise. `null` means the request may not edit any slot at all.
+	 * the tenant, the caller's own otherwise. `null` means the request may not edit any slot at all —
+	 * as opposed to an absent `employeeId`, which a caller who may act for anyone is allowed to omit.
 	 *
 	 * @param requestedEmployeeId - The employeeId carried by the request body.
 	 */
-	private resolveEmployeeScope(requestedEmployeeId: ID | undefined): ID | undefined | null {
+	private resolveEmployeeScope(requestedEmployeeId: ID | undefined): { employeeId?: ID } | null {
 		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			return requestedEmployeeId;
+			return { employeeId: requestedEmployeeId ?? undefined };
 		}
-		return RequestContext.currentUser()?.employeeId || null;
+
+		const own = RequestContext.currentUser()?.employeeId;
+
+		return own ? { employeeId: own } : null;
 	}
 
 	/**
