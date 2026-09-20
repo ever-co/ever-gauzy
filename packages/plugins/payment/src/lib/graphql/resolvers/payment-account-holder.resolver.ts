@@ -1,7 +1,7 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID, IPaymentAccountHolder, IPaymentMethodToken, PermissionsEnum } from '@gauzy/contracts';
-import { PaymentAccountHolderService, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, PaymentAccountHolderService, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { PaymentPermission } from '../../payment.permissions';
 import { PaymentAccountHolderLifecycleService } from '../../payment-account-holder/payment-account-holder-lifecycle.service';
 import { PaymentMethodTokenLifecycleService } from '../../payment-method-token/payment-method-token-lifecycle.service';
@@ -81,6 +81,9 @@ export class PaymentAccountHolderResolver {
 	 * Records a party's account at a provider, in the state onboarding starts from.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_ACCOUNT_HOLDERS_EDIT as PermissionsEnum)
+	// Recording an account starts an onboarding at the provider, so this mutation requires the retry key
+	// the REST route requires, under the same scope.
+	@Idempotent({ scope: 'payment.account.create', required: true, resourceType: 'payment_account_holder' })
 	@Mutation('createPaymentAccountHolder')
 	async createPaymentAccountHolder(
 		@Args('input') input: ICreatePaymentAccountHolderGraphInput
@@ -111,6 +114,9 @@ export class PaymentAccountHolderResolver {
 	 * Records a verification verdict and moves the account where the verdict says it belongs.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_ACCOUNT_HOLDERS_EDIT as PermissionsEnum)
+	// A verification is recorded once and carries evidence with it, so this mutation requires the retry
+	// key the REST route requires, under the same scope.
+	@Idempotent({ scope: 'payment.account.verify', required: true, resourceType: 'payment_account_holder' })
 	@Mutation('verifyPaymentAccountHolder')
 	async verifyPaymentAccountHolder(
 		@Args('input') input: IVerifyPaymentAccountHolderGraphInput

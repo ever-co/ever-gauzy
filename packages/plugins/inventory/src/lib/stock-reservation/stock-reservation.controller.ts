@@ -2,11 +2,13 @@ import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/co
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	Versioned
 } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockReservation } from './stock-reservation.entity';
@@ -39,11 +41,23 @@ export class StockReservationController {
 		return await this.stockReservationService.findOneByIdString(id);
 	}
 
-	/** Holds stock for a document. */
+	/**
+	 * Holds stock for a document.
+	 *
+	 * Whether the hold fits is decided from the level the caller read, so the version it read is
+	 * required: a level that has moved since is a level whose availability is no longer the one the
+	 * decision was made on, and granting the hold anyway is how two documents oversell one bin.
+	 *
+	 * The key is optional — a hold is a delta on the reserved quantity, and a retry without a key
+	 * reserves the same units twice.
+	 */
 	@ApiOperation({ summary: 'Reserve stock' })
 	@ApiResponse({ status: 201, description: 'Stock reserved.' })
 	@ApiResponse({ status: 409, description: 'Availability does not cover the requested hold.' })
+	@ApiResponse({ status: 428, description: 'The version the hold was based on was not stated.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	@Versioned()
+	@Idempotent({ scope: 'stock.reservation.create', required: false, resourceType: 'stock-reservation' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateStockReservationDTO): Promise<StockReservation> {
@@ -60,11 +74,20 @@ export class StockReservationController {
 		return await this.stockReservationService.update(id, entity as any);
 	}
 
-	/** Releases a hold without the stock leaving. */
+	/**
+	 * Releases a hold without the stock leaving.
+	 *
+	 * The release gives the reserved quantity back to the level, so a caller that read the level may
+	 * state its version and have it honoured; a caller that states none is still protected by the
+	 * compare-and-set the release is written under, and by the hold's own status, which makes a second
+	 * release a refusal rather than a second credit.
+	 */
 	@ApiOperation({ summary: 'Release a stock reservation' })
 	@ApiResponse({ status: 202, description: 'Reservation released.' })
 	@ApiResponse({ status: 409, description: 'The reservation was already closed.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'stock.reservation.release', required: false, resourceType: 'stock-reservation' })
 	@Post(':id/release')
 	async release(@Param('id', UUIDValidationPipe) id: ID, @Query('reason') reason?: string): Promise<StockReservation> {
 		return await this.stockReservationService.release(id, reason);

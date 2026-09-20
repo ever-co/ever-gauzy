@@ -16,6 +16,7 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { RequestContext } from '../core/context/request-context';
+import { Idempotent } from '../idempotency/idempotent.decorator';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -197,6 +198,7 @@ export class OperationResolver {
 	 */
 	@Mutation('cancelOperation')
 	@Permissions(PermissionsEnum.OPERATIONS_CANCEL)
+	@Idempotent({ scope: 'operation.cancel', resourceType: 'operation' })
 	async cancelOperation(
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('reason', { type: () => String, nullable: true }) reason?: string
@@ -213,6 +215,7 @@ export class OperationResolver {
 	 */
 	@Mutation('retryOperation')
 	@Permissions(PermissionsEnum.OPERATIONS_CANCEL)
+	@Idempotent({ scope: 'operation.retry', resourceType: 'operation' })
 	async retryOperation(@Args('id', { type: () => ID }) id: Id): Promise<IOperation> {
 		const { operation } = await this.operationService.retry(id);
 

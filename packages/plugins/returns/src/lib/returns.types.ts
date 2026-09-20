@@ -355,6 +355,8 @@ export interface IOrderReturn extends IBasePerTenantAndOrganizationEntityModel {
 	shippingOptionId?: ID;
 	noNotification: boolean;
 	note?: string;
+	/** The optimistic-concurrency counter, which every write of the return moves on. */
+	version?: number;
 	metadata?: Record<string, unknown>;
 	lines?: IOrderReturnLine[];
 }
@@ -469,6 +471,12 @@ export interface IOrderExchangeLineInput {
 export interface IOrderReturnReceiptOutcome {
 	returnId: ID;
 	status: OrderReturnStatus;
+	/**
+	 * The version the return holds once the receipt — and the refund, when one was issued — is
+	 * written. A receipt is answered with the return's own state rather than with the return, so the
+	 * version travels beside the status it belongs to and a caller can condition its next write on it.
+	 */
+	version: number;
 	movementIds: ID[];
 	refund?: IRefundResult;
 	receivedQuantity: DecimalString;

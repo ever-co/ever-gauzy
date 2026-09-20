@@ -26,6 +26,7 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany
 } from './../core/decorators/entity';
+import { VersionedColumn } from './../concurrency';
 import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository';
 
 /**
@@ -160,11 +161,16 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	/**
 	 * Optimistic-lock counter. The level row is the contention point for a product at a location, so
 	 * every write takes the counter it read and bumps it; two writers cannot both win the same row.
+	 *
+	 * Declared with `@VersionedColumn()` because this is the product-level half of the stock-level
+	 * pair: the aggregate a variant level hangs from is written by the same engine, by both sides of
+	 * the same movement, and carries the counter a version-predicated write checks and increments in
+	 * one statement. The column it declares is the one that was already here.
 	 */
 	@ApiPropertyOptional({ type: Number, default: 1 })
 	@IsInt()
 	@Min(1)
-	@MultiORMColumn({ type: 'int', default: 1 })
+	@VersionedColumn()
 	version?: number;
 
 	/**

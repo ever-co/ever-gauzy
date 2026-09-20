@@ -20,7 +20,8 @@ import {
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMOneToMany,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	VersionedColumn
 } from '@gauzy/core';
 import { OrderAddress } from '../order-address/order-address.entity';
 import { OrderChange } from '../order-change/order-change.entity';
@@ -345,11 +346,20 @@ export class Order extends TenantOrganizationBaseEntity implements IOrder {
 	/**
 	 * The optimistic lock and the totals-version pointer. Every committed write that alters order
 	 * content increments it by one, and every increment writes one `order_summary` row.
+	 *
+	 * It is surfaced to a caller as the `ETag` of the order it read and required back as an `If-Match`
+	 * header by every route that writes the order, so two concurrent edits cannot silently overwrite
+	 * each other: the second writer states the version it read, and an order that has moved on since
+	 * answers a conflict rather than accepting a change based on a value that is gone.
+	 *
+	 * The increment is applied by `commitVersionedUpdate`, in the same statement that checks the
+	 * version — never by a caller after a read, because an increment applied after a read is exactly
+	 * the read-then-write window the conditional update closes.
 	 */
 	@ApiProperty({ type: () => Number })
 	@IsNotEmpty()
 	@IsInt()
-	@MultiORMColumn({ type: 'int', default: 1 })
+	@VersionedColumn()
 	version: number;
 
 	/** When the order was placed. */

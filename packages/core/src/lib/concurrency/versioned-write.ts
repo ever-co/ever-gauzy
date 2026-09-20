@@ -89,10 +89,17 @@ export async function commitVersionedUpdate<T extends BaseEntity>(
 	}
 
 	const nextVersion = bumpVersion(expected);
+	// The caller's extra criteria go in FIRST and the two reserved columns go in last, because the
+	// spread order is the whole guarantee. `where` is documented as the tenant and organization scope,
+	// and every call site builds it by spreading a criteria object — so a `where` that already carried
+	// an `id` or a `version` would, written the other way round, silently replace the precondition and
+	// predicated the statement on a version this helper never validated. Reserving both columns makes
+	// that impossible rather than merely unlikely: a caller cannot state a precondition this function
+	// did not derive.
 	const criteria: Record<string, unknown> = {
+		...(options.where ?? {}),
 		id: options.id,
-		version: expected,
-		...(options.where ?? {})
+		version: expected
 	};
 
 	// The patch is typed loosely on purpose: `version` is a convention an entity opts into with
@@ -158,14 +165,31 @@ function readAffected(result: unknown): number {
 /**
  * Reads a record's version from storage.
  *
+ * **A read that failed is not a record that is absent, and this is the one place the difference is
+ * load-bearing.** The version this answers is what the `UPDATE` is predicated on, so swallowing a
+ * transient failure here would turn "the store did not answer" into "the record is not there" — and
+ * the caller would be sent down the deleted-record path, told to stop retrying, for a row that is
+ * still there. The failure is therefore raised. The read-back *after* a failed update is the opposite
+ * case and is caught deliberately: there the value only explains a conflict that has already been
+ * decided, and failing the request over an explanation would report a conflict as a server error.
+ *
  * @param service The service that owns the record.
  * @param id The record id.
  * @returns The version, or null when the record is gone or carries none.
+ * @throws Whatever the reader raised, when it raised something other than a miss.
  */
 async function readStoredVersion<T extends BaseEntity>(service: CrudService<T>, id: ID): Promise<number | null> {
-	const state = await readRowState(service, id);
+	try {
+		const row = await service.findOneByIdString(id);
 
-	return state.exists === false ? null : state.actualVersion ?? null;
+		return parseEntityVersion((row as any)?.['version']);
+	} catch (error) {
+		if (error instanceof NotFoundException) {
+			return null;
+		}
+
+		throw error;
+	}
 }
 
 /**

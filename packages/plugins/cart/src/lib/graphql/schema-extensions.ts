@@ -163,6 +163,7 @@ export const cartSchemaExtensions = gql`
 		locale: String
 		note: String
 		externalId: String
+		idempotencyKey: String
 	}
 
 	input UpdateCartInput {
@@ -174,6 +175,7 @@ export const cartSchemaExtensions = gql`
 		note: String
 		isTaxExempt: Boolean
 		externalId: String
+		version: Int
 	}
 
 	input AddCartLineInput {
@@ -194,6 +196,8 @@ export const cartSchemaExtensions = gql`
 		note: String
 		warehouseId: ID
 		subscriptionPlanId: ID
+		version: Int
+		idempotencyKey: String
 	}
 
 	input UpdateCartLineInput {
@@ -203,6 +207,7 @@ export const cartSchemaExtensions = gql`
 		unitPrice: Decimal
 		note: String
 		warehouseId: ID
+		version: Int
 	}
 
 	input SetCartShippingMethodInput {
@@ -214,6 +219,8 @@ export const cartSchemaExtensions = gql`
 		isManual: Boolean
 		taxCategoryId: ID
 		data: JSON
+		version: Int
+		idempotencyKey: String
 	}
 
 	input ApplyCartPromotionInput {
@@ -223,15 +230,19 @@ export const cartSchemaExtensions = gql`
 		code: String
 		amount: Decimal!
 		isAutomatic: Boolean
+		version: Int
+		idempotencyKey: String
 	}
 
 	input StartCheckoutInput {
 		cartId: ID!
 		step: String
+		idempotencyKey: String
 	}
 
 	input CompleteCheckoutInput {
 		cartId: ID!
+		version: Int
 		idempotencyKey: String
 		paymentSessionId: ID
 	}
@@ -252,18 +263,18 @@ export const cartSchemaExtensions = gql`
 	extend type Mutation {
 		createCart(input: CreateCartInput!): Cart!
 		updateCart(id: ID!, input: UpdateCartInput!): Cart!
-		deleteCart(id: ID!): Boolean!
-		associateCartWithContact(id: ID!, contactId: ID!): Cart!
-		mergeCarts(targetCartId: ID!, sourceCartId: ID!): Cart!
+		deleteCart(id: ID!, version: Int): Boolean!
+		associateCartWithContact(id: ID!, contactId: ID!, version: Int): Cart!
+		mergeCarts(targetCartId: ID!, sourceCartId: ID!, version: Int, idempotencyKey: String): Cart!
 		addCartLine(input: AddCartLineInput!): Cart!
 		updateCartLine(input: UpdateCartLineInput!): Cart!
-		removeCartLine(cartId: ID!, lineId: ID!): Cart!
+		removeCartLine(cartId: ID!, lineId: ID!, version: Int): Cart!
 		setCartShippingMethod(input: SetCartShippingMethodInput!): Cart!
-		removeCartShippingMethod(cartId: ID!): Cart!
+		removeCartShippingMethod(cartId: ID!, version: Int): Cart!
 		applyCartPromotion(input: ApplyCartPromotionInput!): Cart!
-		removeCartPromotion(cartId: ID!, code: String!): Cart!
+		removeCartPromotion(cartId: ID!, code: String!, version: Int): Cart!
 		startCheckout(input: StartCheckoutInput!): CheckoutSession!
 		completeCheckout(input: CompleteCheckoutInput!): CheckoutResult!
-		abandonCheckout(cartId: ID!): Cart!
+		abandonCheckout(cartId: ID!, version: Int): Cart!
 	}
 `;

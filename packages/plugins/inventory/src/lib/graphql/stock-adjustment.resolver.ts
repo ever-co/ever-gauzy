@@ -10,7 +10,7 @@ import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/
 import { UseGuards } from '@nestjs/common';
 import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { EventBus, Idempotent, Permissions, PermissionGuard, TenantPermissionGuard, Versioned } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockAdjustmentStatus } from './../inventory.enums';
 import { StockAdjustment } from './../stock-adjustment/stock-adjustment.entity';
@@ -27,6 +27,7 @@ export class StockAdjustmentResolver {
 	/** Manual correction instructions. */
 	@Query('stockAdjustments')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
+	@Versioned({ write: false })
 	async stockAdjustments(@Args('warehouseId') warehouseId: string, @Args('variantId') variantId: string, @Args('status') status: StockAdjustmentStatus): Promise<any> {
 		return await this.service.findAdjustments({ where: { warehouseId, variantId, status } });
 	}
@@ -38,10 +39,25 @@ export class StockAdjustmentResolver {
 		return await this.service.createAdjustment(input);
 	}
 
-	/** Applies a drafted correction and writes its ledger row. */
+	/**
+	 * Applies a drafted correction and writes its ledger row.
+	 *
+	 * The same operation the REST route serves, with the same version convention and the same key
+	 * scope: the version the caller read is required — the correction is decided from the level it
+	 * read — and a key already used for this operation is replayed rather than applied twice. The key
+	 * is the resolver's own argument because this mutation has no input object to carry it, which is
+	 * the second spelling the platform's retry-safety convention reads.
+	 */
 	@Mutation('applyStockAdjustment')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	async applyStockAdjustment(@Args('id') id: string): Promise<any> {
-		return await this.service.apply(id).then((result) => result.adjustment);
+	@Versioned()
+	@Idempotent({ scope: 'stock.adjust', required: false, resourceType: 'stock-adjustment' })
+	async applyStockAdjustment(
+		@Args('id') id: string,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey: string
+	): Promise<any> {
+		void idempotencyKey;
+
+		return await this.service.apply(id).then((result) => ({ ...result.adjustment, version: result.version }));
 	}
 }

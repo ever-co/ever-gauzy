@@ -282,11 +282,13 @@ export interface IAuthorizePaymentSessionGraphInput {
 }
 
 /**
- * The voiding of an attempt, as the SDL declares it.
+ * The voiding of an attempt, as the SDL declares it. The retry key is optional here, because releasing
+ * an authorisation that is already released is refused by the service rather than applied twice.
  */
 export interface IVoidPaymentSessionGraphInput {
 	readonly id: ID;
 	readonly reason?: string;
+	readonly idempotencyKey?: string;
 }
 
 /**

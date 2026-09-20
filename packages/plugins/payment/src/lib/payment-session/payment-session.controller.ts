@@ -4,6 +4,7 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -78,6 +79,10 @@ export class PaymentSessionController extends CrudController<PaymentSession> {
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Session created' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Provider disabled, or a live authorised session' })
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	// Opening an attempt reserves nothing yet and the service switches the pair rather than opening a
+	// second attempt, so the key is optional: a client that presents one is answered from the record
+	// instead of switching the attempt again.
+	@Idempotent({ scope: 'payment.session.create', required: false, resourceType: 'payment_session' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async create(@Body() entity: CreatePaymentSessionDTO): Promise<IPaymentSession> {
@@ -121,6 +126,10 @@ export class PaymentSessionController extends CrudController<PaymentSession> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Session authorised' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Session expired, closed or declined' })
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	// Recording an approval reserves the amount on the collection, and the service refuses a session that
+	// is already authorised, so the key is optional: a client that presents one is answered from the
+	// record instead of being refused for a retry of the same approval.
+	@Idempotent({ scope: 'payment.session.authorize', required: false, resourceType: 'payment_session' })
 	@Post(':id/authorize')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
@@ -157,6 +166,10 @@ export class PaymentSessionController extends CrudController<PaymentSession> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Session cancelled' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Session already closed' })
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CANCEL as PermissionsEnum)
+	// Cancelling an attempt releases the authorisation it holds, which is a movement of money even though
+	// no row is written back. The scope names the cancellation itself rather than the verb that carries
+	// it, so a client retrying a cancel presents the same key whatever surface it retries on.
+	@Idempotent({ scope: 'payment.cancel', required: false, resourceType: 'payment_session' })
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<IPaymentSession> {
 		return this.paymentSessionService.voidSession(id);

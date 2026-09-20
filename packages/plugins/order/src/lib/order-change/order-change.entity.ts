@@ -43,7 +43,16 @@ export class OrderChange extends TenantOrganizationBaseEntity implements IOrderC
 	@MultiORMColumn({ relationId: true })
 	orderId: ID;
 
-	/** The order version this change produces when it is applied. */
+	/**
+	 * The order version this change produces when it is applied.
+	 *
+	 * It is the **order aggregate's** version, announced by the change that will move it — never a lock
+	 * of this row's own. A change carries no version of its own because every write to it happens inside
+	 * a write of the order: the order's version is the one a caller states and the one the conditional
+	 * update checks, so a second lock here would be a second answer to the same question, and the two
+	 * would disagree the moment either of them moved. The index over this column is what answers "which
+	 * change produced the order's version N?".
+	 */
 	@ApiProperty({ type: () => Number })
 	@IsNotEmpty()
 	@IsInt()

@@ -780,6 +780,22 @@ describe('the per-consumer delivery record', () => {
 		expect(await service.findLastDeliveredSequence('job:events', partitionKey)).toBe(0);
 	});
 
+	it('advances the gate past a position an operator deliberately stopped', async () => {
+		const { service, db } = outbox();
+		const eventId = await withEvent(service, db);
+		const partitionKey = `Order:${ORDER}`;
+
+		const first = await service.claimDelivery({ eventId, consumerKey: CONSUMER, partitionKey, sequence: 1 });
+
+		await service.deadLetterDelivery(first.delivery.id as ID, 'the endpoint is gone and the fact is stale');
+
+		// Control: the gate asks what a consumer has *settled*, not what it received. A gate that kept
+		// waiting for this position would hold every later event of the aggregate forever, which is a
+		// worse outcome than the one the operator chose — and nothing else in the run would report it,
+		// because the events would simply stop arriving.
+		expect(await service.findLastDeliveredSequence(CONSUMER, partitionKey)).toBe(1);
+	});
+
 	it('reports nothing for a record that does not exist', async () => {
 		const { service } = outbox();
 

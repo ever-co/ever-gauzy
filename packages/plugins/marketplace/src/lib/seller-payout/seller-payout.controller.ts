@@ -4,6 +4,7 @@ import { ID, IPagination, ISellerPayoutRunResult, PermissionsEnum } from '@gauzy
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -67,6 +68,12 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	 * base class names the entity's shape, whose reflected type is `Object` — a parameter the validation
 	 * pipe skips, so an inherited `create` would write any body at all.
 	 *
+	 * `seller.payout.create` is adopted as retry-safe without requiring a key: a client that presents
+	 * one is answered from its first attempt instead of building a second payout over the same ledger
+	 * rows, and a client that presents none is served exactly as it was before. The key stays optional
+	 * here because a duplicated payout is a row an operator can still cancel, while the execution route
+	 * — the one that instructs the provider — is the one that demands it.
+	 *
 	 * @param request The request.
 	 * @param body What to pay.
 	 * @returns The created payout.
@@ -74,6 +81,7 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	@ApiOperation({ summary: 'Create a payout from settleable transactions' })
 	@ApiResponse({ status: 201, description: 'Payout created successfully', type: SellerPayout })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
+	@Idempotent({ scope: 'seller.payout.create', required: false, resourceType: 'seller_payout' })
 	@Post('/')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Req() request: any, @Body() body: CreateSellerPayoutDTO): Promise<SellerPayout> {
@@ -119,11 +127,17 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	/**
 	 * Runs the payout pass for the sellers whose schedule is due.
 	 *
+	 * `seller.payout.run` is adopted as retry-safe without requiring a key: a scheduler that re-sends a
+	 * pass it never received an answer for is answered from the first attempt's result rather than
+	 * repeating the pass. The pass is already guarded against paying one ledger row twice, which is why
+	 * the key stays optional — a client that presents none still cannot be paid twice by this route.
+	 *
 	 * @param body The period and the optional sellers, currency and dry-run flag.
 	 * @returns What the run decided for each seller.
 	 */
 	@ApiOperation({ summary: 'Run the scheduled payout pass' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
+	@Idempotent({ scope: 'seller.payout.run', required: false, resourceType: 'seller_payout' })
 	@Post('/run')
 	@UseValidationPipe({ transform: true })
 	async run(
@@ -161,12 +175,22 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	/**
 	 * Records the provider's execution of a payout.
 	 *
+	 * This is the route that moves money out of the platform and to the seller, and a retried execution
+	 * instructs the provider a second time, so `seller.payout.pay` is the one route here that requires
+	 * the key: a client that cannot state which attempt this is receives `IDEMPOTENCY_KEY_REQUIRED`
+	 * instead of a second transfer. The first attempt's answer is what a retry of the same key and the
+	 * same body receives, and a different body under that key is refused as a reused key.
+	 *
+	 * `resourceType` records what the key was holding, so an operator reading a stuck client's row knows
+	 * which payout it belongs to without reconstructing the request.
+	 *
 	 * @param id The payout id.
 	 * @param body What the provider reported.
 	 * @returns The payout, in `PAID` or `FAILED`.
 	 */
 	@ApiOperation({ summary: 'Execute a payout through the provider' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
+	@Idempotent({ scope: 'seller.payout.pay', required: true, resourceType: 'seller_payout' })
 	@Post('/:id/pay')
 	@UseValidationPipe({ transform: true })
 	async pay(
@@ -204,11 +228,17 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	/**
 	 * Re-drives a failed payout.
 	 *
+	 * `seller.payout.retry` is adopted as retry-safe without requiring a key: re-driving a payout the
+	 * client never saw the answer for would clear a failure an operator is still reading and put the
+	 * payout back in front of the execution route. A client that presents a key is answered from its
+	 * first attempt instead.
+	 *
 	 * @param id The payout id.
 	 * @returns The payout, in `APPROVED`.
 	 */
 	@ApiOperation({ summary: 'Retry a failed payout' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
+	@Idempotent({ scope: 'seller.payout.retry', required: false, resourceType: 'seller_payout' })
 	@Post('/:id/retry')
 	async retry(@Param('id', UUIDValidationPipe) id: ID): Promise<SellerPayout> {
 		return this.sellerPayoutService.retry(id);

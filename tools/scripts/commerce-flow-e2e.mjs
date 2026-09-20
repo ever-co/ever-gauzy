@@ -177,7 +177,7 @@ function section(title) {
  * @returns {Promise<{status: number, json: any, text: string}>} The response.
  */
 async function call(method, url, options = {}) {
-	const { token, tenantId, body } = options;
+	const { token, tenantId, body, headers: extraHeaders } = options;
 	// The signed-in caller's organization, so every request after the login carries the scope the
 	// platform resolves numbering series, default channel and currency through. A call site may still
 	// state its own.
@@ -196,7 +196,9 @@ async function call(method, url, options = {}) {
 			 * `PURCHASE_ORDER_SEQUENCE_MISSING` for a series that exists, which is a defect in this
 			 * harness rather than in the platform.
 			 */
-			...(organizationId ? { 'Organization-Id': organizationId } : {})
+			...(organizationId ? { 'Organization-Id': organizationId } : {}),
+			// Whatever the call site states, last, so a request can carry a retry key or a precondition.
+			...(extraHeaders ?? {})
 		},
 		body: body === undefined ? undefined : JSON.stringify(body)
 	});
@@ -210,7 +212,7 @@ async function call(method, url, options = {}) {
 		json = undefined;
 	}
 
-	return { status: response.status, json, text };
+	return { status: response.status, json, text, headers: response.headers };
 }
 
 /** @param {{json: any, text: string}} result A response. @returns {string} A short description. */
@@ -224,10 +226,11 @@ function brief(result) {
  * @param {string} method The HTTP method.
  * @param {string} url The path.
  * @param {unknown} [body] The body, when the call carries one.
+ * @param {Record<string, string>} [headers] Request headers the call states, for a retry key or a precondition.
  * @returns {Promise<{status: number, json: any, text: string}>} The response.
  */
-function scoped(method, url, body) {
-	return call(method, url, { token: session.token, tenantId: session.tenantId, body });
+function scoped(method, url, body, headers) {
+	return call(method, url, { token: session.token, tenantId: session.tenantId, body, headers });
 }
 
 /**
@@ -772,10 +775,10 @@ async function main() {
 
 		if (String(order?.message ?? order?.error ?? '').includes('PURCHASE_ORDER_SEQUENCE_MISSING')) {
 			note(
-				'the order was refused because the organization holds no numbering series for key "PO", and no surface creates one: ' +
-					'`sequence` is empty on a fresh install (SeedCoreDefaults skips every step when no organization exists yet, and the ' +
-					'organization is created after the migrations), the SequenceModule exports no controller, and GET/POST /api/sequences ' +
-					'answer 404. Proof A therefore cannot start here; it runs and passes end to end as soon as the series exists.'
+				'the order was refused because the organization holds no numbering series for key "PO". `GET/POST /api/sequences` now ' +
+					'serves the series resource, so a series can be opened through the API; what the harness does not do is open one, because ' +
+					'a flow suite that provisions the numbering configuration it needs would hide the fact that a fresh installation has none. ' +
+					'Proof A runs and passes end to end as soon as the series exists.'
 			);
 		}
 	} else {
@@ -896,11 +899,20 @@ async function main() {
 
 	if (!holderId) return finish();
 
-	const verified = await scoped('POST', `/api/payment-account-holders/${holderId}/verify`, {
-		verificationStatus: 'VERIFIED',
-		reference: FIXTURE.accountReference,
-		note: 'Verified by the commerce flow suite.'
-	});
+	const verified = await scoped(
+		'POST',
+		`/api/payment-account-holders/${holderId}/verify`,
+		{
+			verificationStatus: 'VERIFIED',
+			reference: FIXTURE.accountReference,
+			note: 'Verified by the commerce flow suite.'
+		},
+		// The route is retry-safe by design: recording a verification verdict twice is the same verdict,
+		// so it demands a key and this probe presents one. A caller that retries a lost response is the
+		// client this contract exists for, and a harness that skipped the header would be testing a
+		// platform nobody runs.
+		{ 'Idempotency-Key': `flow-verify-${holderId}` }
+	);
 
 	record(
 		'the verification moves the account to active',
@@ -959,13 +971,21 @@ async function main() {
 
 	// The rule that is part of the capability: this platform stores a provider-issued reference and
 	// holds no primary account number, so a body that carries one is refused with its own code.
-	const cardData = await scoped('POST', '/api/payment-method-tokens', {
-		accountHolderId: holderId,
-		providerKey: FIXTURE.providerKey,
-		token: `${FIXTURE.instrumentReference}-card-data`,
-		cardNumber: '4111111111111111',
-		expiry: '12/99'
-	});
+	const cardData = await scoped(
+		'POST',
+		'/api/payment-method-tokens',
+		{
+			accountHolderId: holderId,
+			providerKey: FIXTURE.providerKey,
+			token: `${FIXTURE.instrumentReference}-card-data`,
+			cardNumber: '4111111111111111',
+			expiry: '12/99'
+		},
+		// Saving an instrument is retry-safe by design and the route demands a key, so the card-data
+		// refusal this probe is about is reached with one — otherwise the key's own refusal arrives first
+		// and the suite would report the wrong rule as broken.
+		{ 'Idempotency-Key': `flow-card-data-${holderId}` }
+	);
 
 	record(
 		'a body carrying card data is refused with the platform code',
@@ -1118,7 +1138,20 @@ async function main() {
 			// No instant is stated: the cycle derives the period it covers from the subscription's own
 			// calendar, and the route's contract validates `asOf` as a `Date`, which a JSON body cannot
 			// carry — stating one as a string is refused before the cycle is reached.
-			const cycle = await scoped('POST', `/api/subscriptions/${subscription.id}/bill`, {});
+			// The billing route is retry-safe by design and states a versioned aggregate, so it asks for both
+			// a key and the version the caller read. The version is the row's own, which the read beside this
+			// probe already answers: a harness that sent neither would never reach the cycle it is testing.
+			const cycle = await scoped(
+				'POST',
+				`/api/subscriptions/${subscription.id}/bill`,
+				{},
+				{
+					'Idempotency-Key': `flow-bill-${subscription.id}`,
+					...(subscription.version !== undefined && subscription.version !== null
+						? { 'If-Match': `"${subscription.version}"` }
+						: {})
+				}
+			);
 			const outcome = cycle.json ?? {};
 			const cycleCode = outcome.errorCode ?? outcome.code;
 
@@ -1276,23 +1309,147 @@ async function main() {
 		`HTTP ${afterClose.status} ${afterCloseItems.length} row(s), ${stillRevoked} revoked`
 	);
 
-	const refusedNew = await scoped('POST', '/api/payment-method-tokens', {
-		accountHolderId: disposalId,
-		providerKey: FIXTURE.disposableProviderKey,
-		token: `${FIXTURE.disposableInstrumentReference}-after-close`,
-		providerConfirmation: {
+	const refusedNew = await scoped(
+		'POST',
+		'/api/payment-method-tokens',
+		{
+			accountHolderId: disposalId,
+			providerKey: FIXTURE.disposableProviderKey,
 			token: `${FIXTURE.disposableInstrumentReference}-after-close`,
-			confirmedAt: new Date().toISOString()
+			providerConfirmation: {
+				token: `${FIXTURE.disposableInstrumentReference}-after-close`,
+				confirmedAt: new Date().toISOString()
+			},
+			type: 'CARD',
+			organizationId: session.organizationId
 		},
-		type: 'CARD',
-		organizationId: session.organizationId
-	});
+		// The key is presented for the same reason as the refusal above: the rule under test is the closed
+		// account's, so the request has to get past the retry contract to reach it.
+		{ 'Idempotency-Key': `flow-closed-account-${disposalId}` }
+	);
 
 	record(
 		'a closed account takes no new instrument',
 		refusedNew.status === 400 && String(refusedNew.json?.message ?? '').includes('PAYMENT_ACCOUNT_HOLDER_RESTRICTED'),
 		`HTTP ${refusedNew.status} ${String(refusedNew.json?.message ?? brief(refusedNew)).slice(0, 140)}`
 	);
+
+	// --- Proof C ---------------------------------------------------------------------------------
+	section('proof C: a retry under one key is answered once, and an operator can release it');
+
+	/*
+	 * The retry-safety chain, walked end to end against the running installation rather than asserted
+	 * against a service: a client presents a key, loses the response, retries, and must not book the
+	 * thing twice. Every link is exercised — the decorator on the route, the interceptor that reads the
+	 * header and claims the key, the stored response that answers the replay, the operator's read of
+	 * the row, and the release that makes the next attempt a first attempt again.
+	 *
+	 * The key and the two references are unique per run, so a second run of this suite proves the same
+	 * chain from a clean key instead of replaying the first run's answer and calling it a pass.
+	 */
+	const stamp = Date.now();
+	const retryKey = `flow-retry-${stamp}`;
+	const firstReference = `${FIXTURE.orderReference}-retry-${stamp}-a`;
+	const secondReference = `${FIXTURE.orderReference}-retry-${stamp}-b`;
+	const retryHeaders = { 'Idempotency-Key': retryKey };
+
+	/** The body of a purchase order this proof raises, so the two differ in exactly one member. */
+	const orderBody = (vendorReference) => ({
+		vendorId: vendor.row?.id,
+		warehouseId: warehouse.row?.id,
+		currency: FIXTURE.currency,
+		vendorReference,
+		organizationId: session.organizationId,
+		note: 'Raised by the commerce flow suite to prove retry safety.',
+		lines: [
+			{
+				variantId: variant.row?.id,
+				quantity: FIXTURE.lineQuantity,
+				unitCost: FIXTURE.lineUnitCost
+			}
+		]
+	});
+
+	const first = await scoped('POST', '/api/purchase-orders', orderBody(firstReference), retryHeaders);
+	const firstId = first.json?.id;
+
+	record(
+		'a route that opted into retry safety accepts a key',
+		(first.status === 201 || first.status === 200) && Boolean(firstId),
+		`HTTP ${first.status} ${firstId ? `id=${firstId}` : brief(first)}`
+	);
+
+	if (!firstId) {
+		notRun(
+			[
+				'the identical retry is answered from the stored response rather than run again',
+				'a different body under the same key is refused as a reused key',
+				"the operator's read finds the stored key, without the response it holds",
+				'releasing the key makes the next attempt a first attempt again'
+			],
+			`the first request was not accepted (HTTP ${first.status})`
+		);
+	} else {
+		const replay = await scoped('POST', '/api/purchase-orders', orderBody(firstReference), retryHeaders);
+
+		// The whole mechanism in one assertion: the same key with the same body answers the *stored*
+		// response, so the order that was already booked is the order the client is told about. A second
+		// order would carry a different id, and nothing else in this run would notice.
+		record(
+			'the identical retry is answered from the stored response rather than run again',
+			replay.json?.id === firstId && replay.headers?.get('idempotency-replayed') === 'true',
+			`HTTP ${replay.status} id=${replay.json?.id ?? 'none'} replayed=${replay.headers?.get('idempotency-replayed') ?? 'no header'}`
+		);
+
+		const reused = await scoped('POST', '/api/purchase-orders', orderBody(secondReference), retryHeaders);
+
+		// A key states which request a client is retrying. A different body under the same key is not a
+		// retry, and answering it with the first response would answer a question never asked. The message
+		// is the human sentence and the code is the machine one, so the assertion reads the pair the way a
+		// client does: the status first, then the code inside the platform's error envelope.
+		const reusedCode = reused.json?.code ?? reused.json?.errorCode;
+
+		record(
+			'a different body under the same key is refused as a reused key',
+			reused.status === 409 && reusedCode === 'IDEMPOTENCY_KEY_REUSED',
+			`HTTP ${reused.status} code=${reusedCode ?? 'none'} ${String(reused.json?.message ?? brief(reused)).slice(0, 120)}`
+		);
+
+		const stored = await scoped(
+			'GET',
+			`/api/idempotency-keys?scope=${encodeURIComponent('purchase_order.create')}&key=${encodeURIComponent(retryKey)}`
+		);
+		const storedItems = Array.isArray(stored.json?.items) ? stored.json.items : [];
+		const storedRow = storedItems[0];
+
+		record(
+			"the operator's read finds the stored key, without the response it holds",
+			stored.status === 200 && storedItems.length === 1 && !('responseBody' in (storedRow ?? {})),
+			`HTTP ${stored.status} ${storedItems.length} row(s)${storedRow ? ` status=${storedRow.status} resourceType=${storedRow.resourceType}` : ''}`
+		);
+
+		const released = storedRow?.id
+			? await scoped('DELETE', `/api/idempotency-keys/${storedRow.id}`)
+			: { status: 0, json: undefined, text: '' };
+
+		record(
+			'the stored key can be released',
+			released.status === 200,
+			`HTTP ${released.status} ${String(released.json?.message ?? '').slice(0, 120)}`
+		);
+
+		// A released key is removed rather than marked, so the retry the operator was unblocking is a
+		// true first attempt: the second-order reference is accepted under the very same key.
+		const afterRelease = await scoped('POST', '/api/purchase-orders', orderBody(secondReference), retryHeaders);
+
+		record(
+			'releasing the key makes the next attempt a first attempt again',
+			(afterRelease.status === 201 || afterRelease.status === 200) &&
+				Boolean(afterRelease.json?.id) &&
+				afterRelease.json?.id !== firstId,
+			`HTTP ${afterRelease.status} id=${afterRelease.json?.id ?? 'none'} (released key reused, new order expected)`
+		);
+	}
 
 	return finish();
 }

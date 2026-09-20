@@ -14,6 +14,7 @@ import { SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { Order } from './order.entity';
 import { TypeOrmOrderRepository } from './repository/type-orm-order.repository';
 import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository';
+import { ANY_ORDER_VERSION, OrderVersionExpectation } from '../order.types';
 import { OrderAddress } from '../order-address/order-address.entity';
 import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderChange } from '../order-change/order-change.entity';
@@ -36,6 +37,13 @@ const ORDER_SEQUENCE_KEY = 'ORDER';
  * edited, and each of those moves the lifecycle through `OrderStateMachine` and then asks
  * `OrderTotalsService` to recompute — because a status change and a totals change are one write, not
  * two that can be observed apart.
+ *
+ * **That one write is version-predicated.** The order carries a version; a route requires the caller
+ * to state the version it read as an `If-Match` header and publishes the version it produced as an
+ * `ETag`; and the move is applied by `commitVersionedUpdate`, whose `UPDATE … WHERE id = :id AND
+ * version = :expected` decides the outcome from the affected-row count. Two callers that read the same
+ * order therefore cannot both write it: the second is answered with a conflict instead of silently
+ * erasing the first.
  *
  * A placed order is **not** edited here. `update` refuses anything but the handful of fields a draft or
  * a note may change, and every other modification is an `order_change` handled by
@@ -204,9 +212,14 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 *
 	 * @param orderId The order.
 	 * @param placedWith What the placement is attributed to, recorded on the timeline entry.
+	 * @param expectation The version the caller read the order at.
 	 * @returns The placed order.
 	 */
-	public async place(orderId: ID, placedWith: { cartId?: ID; idempotencyKey?: string } = {}): Promise<Order> {
+	public async place(
+		orderId: ID,
+		placedWith: { cartId?: ID; idempotencyKey?: string } = {},
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<Order> {
 		const order = await this.findOneByIdString(orderId);
 
 		if (!order) {
@@ -230,13 +243,19 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			paymentStatus: order.paymentStatus
 		});
 
-		await this.typeOrmOrderRepository.update(order.id, { ...move, isDraft: false } as any);
+		// The move is committed before the timeline records it: an entry written first would describe a
+		// placement the conditional update then refused, and a reader of the timeline would believe it.
+		const placed = await this.totalsService.recompute(order.id, 'PLACED', {
+			expectation,
+			patch: { ...move, isDraft: false }
+		});
+
 		await this.historyService.record(order.id, 'ORDER_PLACED', 'Order placed', {
 			number: order.number,
 			...placedWith
 		});
 
-		return this.totalsService.recompute(order.id, 'PLACED');
+		return placed;
 	}
 
 	/**
@@ -244,9 +263,14 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 *
 	 * @param orderId The order.
 	 * @param actor Who is confirming.
+	 * @param expectation The version the caller read the order at.
 	 * @returns The confirmed order.
 	 */
-	public async confirm(orderId: ID, actor: 'STAFF' | 'SYSTEM' = 'STAFF'): Promise<Order> {
+	public async confirm(
+		orderId: ID,
+		actor: 'STAFF' | 'SYSTEM' = 'STAFF',
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<Order> {
 		const order = await this.findOneByIdString(orderId);
 
 		if (!order) {
@@ -271,10 +295,14 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			paymentStatus: await this.totalsService.derivePaymentStatus(order, snapshot)
 		});
 
-		await this.typeOrmOrderRepository.update(order.id, move as any);
+		const confirmed = await this.totalsService.recompute(order.id, 'CONFIRMED', {
+			expectation,
+			patch: move as Record<string, unknown>
+		});
+
 		await this.historyService.record(order.id, 'ORDER_CONFIRMED', 'Order confirmed', {});
 
-		return this.totalsService.recompute(order.id, 'CONFIRMED');
+		return confirmed;
 	}
 
 	/**
@@ -282,9 +310,14 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 *
 	 * @param orderId The order.
 	 * @param reason Why it was cancelled.
+	 * @param expectation The version the caller read the order at.
 	 * @returns The cancelled order.
 	 */
-	public async cancel(orderId: ID, reason?: string): Promise<Order> {
+	public async cancel(
+		orderId: ID,
+		reason?: string,
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<Order> {
 		const order = await this.findOneByIdString(orderId);
 
 		if (!order) {
@@ -304,22 +337,24 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			paymentStatus: order.paymentStatus
 		});
 
-		await this.typeOrmOrderRepository.update(order.id, {
-			...move,
-			cancelReason: reason ?? order.cancelReason
-		} as any);
+		const cancelled = await this.totalsService.recompute(order.id, 'CANCEL', {
+			expectation,
+			patch: { ...move, cancelReason: reason ?? order.cancelReason }
+		});
+
 		await this.historyService.record(order.id, 'ORDER_CANCELED', 'Order canceled', { reason });
 
-		return this.totalsService.recompute(order.id, 'CANCEL');
+		return cancelled;
 	}
 
 	/**
 	 * Archives a terminal order.
 	 *
 	 * @param orderId The order.
+	 * @param expectation The version the caller read the order at.
 	 * @returns The archived order.
 	 */
-	public async archive(orderId: ID): Promise<Order> {
+	public async archive(orderId: ID, expectation: OrderVersionExpectation = ANY_ORDER_VERSION): Promise<Order> {
 		const order = await this.findOneByIdString(orderId);
 
 		if (!order) {
@@ -337,14 +372,17 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			paymentStatus: order.paymentStatus
 		});
 
-		await this.typeOrmOrderRepository.update(order.id, {
-			...move,
-			isArchived: true,
-			archivedAt: new Date()
-		} as any);
+		// The archival rides the totals write rather than preceding it: the version has to advance on
+		// every committed write of the aggregate, and a version that advanced without a summary row
+		// would leave a gap the audit of the version history reads as a lost revision.
+		const archived = await this.totalsService.recompute(order.id, 'ARCHIVED', {
+			expectation,
+			patch: { ...move, isArchived: true, archivedAt: new Date() }
+		});
+
 		await this.historyService.record(order.id, 'ORDER_ARCHIVED', 'Order archived', {});
 
-		return this.findOneByIdString(order.id);
+		return archived;
 	}
 
 	/**
@@ -354,11 +392,20 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 * a placed order and belongs to an `order_change`, where it is versioned and reversible. A draft is
 	 * the exception: it has not been placed, so it is freely editable.
 	 *
+	 * The edit is committed through the totals writer even though it changes no figure: the version is
+	 * what the next caller states back, so a write that left it where it was would publish a version
+	 * that no longer describes the row.
+	 *
 	 * @param orderId The order.
 	 * @param changes The fields to change.
+	 * @param expectation The version the caller read the order at.
 	 * @returns The order after the change.
 	 */
-	public async updateMutable(orderId: ID, changes: DeepPartial<Order>): Promise<Order> {
+	public async updateMutable(
+		orderId: ID,
+		changes: DeepPartial<Order>,
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<Order> {
 		const order = await this.findOneByIdString(orderId);
 
 		if (!order) {
@@ -379,18 +426,23 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			});
 		}
 
-		await this.typeOrmOrderRepository.update(order.id, changes as any);
-
-		return this.findOneByIdString(order.id);
+		return this.totalsService.recompute(order.id, 'ORDER_UPDATED', {
+			expectation,
+			patch: changes as Record<string, unknown>
+		});
 	}
 
 	/**
 	 * Completes an order whose lines are all fulfilled and whose money side is settled.
 	 *
 	 * @param orderId The order.
+	 * @param expectation The version the caller read the order at.
 	 * @returns The completed order, or the order unchanged when it is not yet completable.
 	 */
-	public async completeIfSettled(orderId: ID): Promise<Order> {
+	public async completeIfSettled(
+		orderId: ID,
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<Order> {
 		const order = await this.findOneByIdString(orderId);
 
 		if (!order || !this.totalsService.canComplete(order)) {
@@ -416,10 +468,14 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			paymentStatus: order.paymentStatus
 		});
 
-		await this.typeOrmOrderRepository.update(order.id, move as any);
+		const completed = await this.totalsService.recompute(order.id, 'COMPLETED', {
+			expectation,
+			patch: move as Record<string, unknown>
+		});
+
 		await this.historyService.record(order.id, 'ORDER_COMPLETED', 'Order completed', {});
 
-		return this.totalsService.recompute(order.id, 'COMPLETED');
+		return completed;
 	}
 
 	/**

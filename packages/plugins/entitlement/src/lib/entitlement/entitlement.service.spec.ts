@@ -14,14 +14,63 @@
  * too.
  */
 jest.mock('@gauzy/core', () => {
+	const { NotFoundException } = require('@nestjs/common');
+
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
 	class BaseEntity {}
 
+	/**
+	 * The base CRUD class, doubled as the two halves the platform's own update is made of.
+	 * `CrudService.update` is the statement a write goes through, criteria included; the tenant-aware
+	 * class in front of it resolves the row first — except for a criteria that names a `version`, which
+	 * the platform leaves to the statement so a stale version is answered with a conflict rather than
+	 * with the pre-read's not-found.
+	 */
+	class CrudService {
+		constructor(
+			protected readonly typeOrmRepository: any,
+			protected readonly mikroOrmRepository?: any
+		) {}
+
+		async update(id: any, partial: any): Promise<any> {
+			return await this.typeOrmRepository.update(id, partial);
+		}
+	}
+
+	class TenantAwareCrudService extends CrudService {
+		async findOneByIdString(id: any, options: any = {}): Promise<any> {
+			const record = await this.typeOrmRepository.findOne({
+				...options,
+				where: { ...(options.where ?? {}), id }
+			});
+
+			if (!record) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			return record;
+		}
+
+		async update(id: any, partial: any): Promise<any> {
+			if (typeof id === 'string') {
+				await this.findOneByIdString(id);
+			} else if (id && typeof id === 'object' && !('version' in id)) {
+				const record = await this.typeOrmRepository.findOne({ where: id });
+
+				if (!record) {
+					throw new NotFoundException('The requested record was not found');
+				}
+			}
+
+			return await super.update(id, partial);
+		}
+	}
+
 	return {
-		TenantAwareCrudService: class {},
-		CrudService: class {},
+		TenantAwareCrudService,
+		CrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
 		TenantOrganizationBaseEntity: BaseEntity,
@@ -34,6 +83,7 @@ jest.mock('@gauzy/core', () => {
 		MultiORMOneToMany: decorator,
 		JsonColumn: decorator,
 		IsSecret: decorator,
+		VersionedColumn: decorator,
 		BaseEvent: class {},
 		EventBus: class {},
 		EventOutboxService: class {},
@@ -42,6 +92,14 @@ jest.mock('@gauzy/core', () => {
 		OrganizationContact: class {},
 		Product: class {},
 		ProductVariant: class {},
+		// The conditional write is the kernel's own, so the assertions below are about the statement it
+		// issues and the affected-row count it reads, not about a stub's idea of either; the refusal a
+		// transaction-scoped write raises is the kernel's exception for the same reason.
+		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write').commitVersionedUpdate,
+		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write').versionExpectationOf,
+		bumpVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').bumpVersion,
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
@@ -67,6 +125,7 @@ jest.mock('@gauzy/config', () => ({
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { RequestContext } from '@gauzy/core';
+import { ApiErrorCode } from '@gauzy/core/src/lib/core/errors/api-error-codes';
 import { Entitlement } from './entitlement.entity';
 import { EntitlementActivation } from '../entitlement-activation/entitlement-activation.entity';
 import { EntitlementKey } from '../entitlement-key/entitlement-key.entity';
@@ -384,6 +443,9 @@ function entitlementFixture(
 		createQueryBuilder,
 		create: (partial: Row) => ({ ...partial }),
 		save: async (row: any) => await manager.save(Entitlement, row),
+		// The statement a conditional write goes through: the criteria — `version` included — decides
+		// which row the patch reaches, so a row that holds another version reports nothing affected.
+		update: async (criteria: any, patch: Row) => await manager.update(Entitlement, criteria, patch),
 		findOne: async (options: any = {}) => {
 			const { where, order } = options;
 
@@ -1292,5 +1354,118 @@ describe('EntitlementService — the counters and the conditions (doc 05 §19.1,
 
 		await expect(fixture.service.findOneScoped('nope')).rejects.toBeInstanceOf(NotFoundException);
 		await expect(fixture.service.findOneDetailed('nope')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+/**
+ * The write a caller conditions on a version it read (doc 05 §19.1).
+ *
+ * The suite pins the two halves of the conditional edit, and it pins them against the kernel's own
+ * conditional write rather than against a stub: `commitVersionedUpdate` is the real one, so what is
+ * asserted is the statement the edit issues and the affected-row count it reads.
+ *
+ * - an edit whose caller accepted a version the right no longer holds is refused with
+ *   `ENTITY_VERSION_CONFLICT`, and the row is left exactly as it was — this is the lost update the
+ *   whole convention exists to prevent, and the refusal names both versions;
+ * - an edit whose caller accepted the version the right holds lands, and the row moves exactly one
+ *   revision on — because the check and the increment are one statement.
+ *
+ * The lifecycle writes are not covered here: they run inside the service's own transaction, which the
+ * instrumented store below does not expose. Those predicate their version in the transaction's own
+ * statement instead of through `commitVersionedUpdate` — `updateVersionedRow` — and the grants,
+ * suspensions, resumptions, extensions, reductions, withdrawals and lapses named by the suites above
+ * exercise them.
+ */
+describe('EntitlementService — editing under the version the caller read (doc 05 §19.1)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses an edit based on a version the right has moved past, and writes nothing', async () => {
+		const fixture = entitlementFixture({ rights: [rightRow('a', { version: 2 })] });
+
+		const refusal = await fixture.service
+			.applyChanges('a', { quantity: 4 }, { wildcard: false, versions: [1] })
+			.catch((error) => error);
+
+		expect(refusal).toMatchObject({
+			status: 409,
+			code: ApiErrorCode.ENTITY_VERSION_CONFLICT,
+			details: { expectedVersion: 1, actualVersion: 2 }
+		});
+		expect(fixture.store('a').quantity).toBe(1);
+		expect(fixture.store('a').version).toBe(2);
+	});
+
+	it('applies an edit based on the version the caller read, one revision on', async () => {
+		const fixture = entitlementFixture({ rights: [rightRow('a', { version: 2 })] });
+
+		const updated = await fixture.service.applyChanges('a', { quantity: 4 }, { wildcard: false, versions: [2] });
+
+		expect(fixture.store('a').quantity).toBe(4);
+		expect(fixture.store('a').version).toBe(3);
+		expect(updated.quantity).toBe(4);
+	});
+
+	it('refuses an edit of a right that is gone, rather than reporting a conflict with it', async () => {
+		const fixture = entitlementFixture();
+
+		await expect(
+			fixture.service.applyChanges('missing', { quantity: 4 }, { wildcard: false, versions: [2] })
+		).rejects.toMatchObject({ status: 404, code: ApiErrorCode.RESOURCE_NOT_FOUND });
+	});
+});
+
+/**
+ * The transition's own statement, inside the transaction the transition opens (doc 05 §19.1).
+ *
+ * The lifecycle writes cannot use the conditional write the suite above pins: that helper issues its
+ * statement through the service, which would step outside the transaction holding the right's row
+ * lock and the outbox row the transaction exists for. The transaction therefore states the predicate
+ * itself, with the increment in the same patch, and its own affected-row count is what answers a
+ * version that has moved on — the same `409 ENTITY_VERSION_CONFLICT`, from the other half of the
+ * mechanism.
+ *
+ * A suspension is the transition with the least to decide, so it is the one pinned here: its only
+ * entitlement-row write is the one being asserted.
+ */
+describe('EntitlementService — a transition under the version the caller read (doc 05 §19.1)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses a suspension based on a version the right has moved past, and leaves it in force', async () => {
+		const fixture = entitlementFixture({ rights: [rightRow('a', { version: 2 })] });
+
+		const refusal = await fixture.service
+			.suspend('a', 'PAYMENT_FAILED', {}, { wildcard: false, versions: [1] })
+			.catch((error) => error);
+
+		expect(refusal).toMatchObject({
+			status: 409,
+			code: ApiErrorCode.ENTITY_VERSION_CONFLICT,
+			details: { expectedVersion: 1, actualVersion: 2 }
+		});
+		// The refused statement is the transaction's only write, so the rollback leaves the right in
+		// force and announces nothing.
+		expect(fixture.store('a').status).toBe(EntitlementStatus.ACTIVE);
+		expect(fixture.store('a').version).toBe(2);
+		expect(fixture.appended).toEqual([]);
+	});
+
+	it('applies a suspension based on the version the caller accepted, one revision on', async () => {
+		const fixture = entitlementFixture({ rights: [rightRow('a', { version: 2 })] });
+
+		const suspended = await fixture.service.suspend('a', 'PAYMENT_FAILED', {}, { wildcard: false, versions: [2] });
+
+		expect(suspended).toMatchObject({ status: EntitlementStatus.SUSPENDED, suspendedReason: 'PAYMENT_FAILED' });
+		expect(fixture.store('a').version).toBe(3);
+		expect(fixture.events()).toEqual([EntitlementEventName.SUSPENDED]);
 	});
 });

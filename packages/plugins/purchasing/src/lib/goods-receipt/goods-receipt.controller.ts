@@ -17,6 +17,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -40,6 +41,11 @@ import { GoodsReceiptService } from './goods-receipt.service';
  * ledger that no document explains — reversing it writes the compensating movements and leaves both
  * versions readable. The edit route the CRUD base maps is nevertheless declared below, so that the
  * body it accepts is validated rather than written as it arrives.
+ *
+ * Recording a delivery **demands** the platform's retry key. Receiving a purchase order twice books the
+ * stock twice and moves the order's counters twice, and the second booking is not a duplicate row but a
+ * second delivery of goods that arrived once — so a client that loses the response to a receipt has to
+ * present the key it sent, and a request without one is refused rather than guessed at.
  */
 @ApiTags('GoodsReceipt')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -62,6 +68,7 @@ export class GoodsReceiptController extends CrudController<GoodsReceipt> {
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The goods were received.' })
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The order cannot be received, the location differs, or a line exceeds the ordered quantity.' })
 	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	@Idempotent({ scope: 'purchase_order.receive', required: true, resourceType: 'goods_receipt' })
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })

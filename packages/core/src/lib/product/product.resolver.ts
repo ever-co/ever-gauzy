@@ -16,13 +16,24 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
+import { BulkExecutor, IBulkItemContext } from '../api/bulk-executor.service';
+import { toBulkItemOutcomes } from '../api/bulk';
 import { FeatureFlag } from '@gauzy/common';
 import { RequestContext } from '../core/context/request-context';
+import { Idempotent } from '../idempotency/idempotent.decorator';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Product } from './product.entity';
+import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
+import {
+	IBulkCreateProductsInput,
+	IBulkCreateProductsPayload,
+	IBulkProductItem,
+	PRODUCT_BULK_REQUIRED_KEYS,
+	productBulkOptions
+} from './product.bulk';
 import { ProductCreateCommand, ProductDeleteCommand, ProductUpdateCommand } from './commands';
 
 /** One translation as `ProductTranslationInput` declares it. */
@@ -159,7 +170,11 @@ const PRODUCT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
 @UseGuards(TenantPermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class ProductResolver {
-	constructor(private readonly productService: ProductService, private readonly commandBus: CommandBus) {}
+	constructor(
+		private readonly productService: ProductService,
+		private readonly commandBus: CommandBus,
+		private readonly bulkExecutor: BulkExecutor
+	) {}
 
 	/**
 	 * The products of the caller's tenant, newest first.
@@ -203,6 +218,12 @@ export class ProductResolver {
 	 * "no such row" on a field that may have none, and the REST route's `404` is that same fact
 	 * stated in the other protocol's vocabulary.
 	 *
+	 * The one argument names the row the way the delivered route names it — by identifier, or by the
+	 * slug a caller can read — and the choice between the two readings is the service's, so the two
+	 * surfaces accept exactly the same values rather than each deciding for itself. There is no second
+	 * field for the slug: one capability has one door, and a `productBySlug` beside this one would
+	 * resolve the same row of the same route a second time under a second name.
+	 *
 	 * A stated language is not a preference but the selection of the other delivered read: the two
 	 * routes by id differ in exactly that, so a request that states one is served by the method its
 	 * route calls, and a request that states none by the other.
@@ -211,13 +232,13 @@ export class ProductResolver {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	async product(
-		@Args('id', { type: () => ID }) id: Id,
+		@Args('id', { type: () => ID }) idOrSlug: Id,
 		@Args('language', { type: () => String, nullable: true }) language?: string
 	): Promise<Product | null> {
 		try {
 			return language
-				? ((await this.productService.findByIdTranslated(language, id)) as Product)
-				: await this.productService.findOneByIdString(id);
+				? ((await this.productService.findByIdTranslated(language, idOrSlug)) as Product)
+				: await this.productService.findOneByIdOrSlug(idOrSlug);
 		} catch (error) {
 			if (error instanceof NotFoundException) {
 				return null;
@@ -300,6 +321,52 @@ export class ProductResolver {
 		await this.commandBus.execute(new ProductDeleteCommand(id));
 
 		return true;
+	}
+
+	/**
+	 * Applies a batch of products, one outcome per item.
+	 *
+	 * The batch is the same one the REST route applies, and it is run by the same executor from the
+	 * same declaration: the options are read off the controller's own `@BulkOperation`, so the
+	 * resource name, the cap, the permission and the members an item must carry cannot differ between
+	 * the two surfaces. The items are applied through the service the controller's items go through,
+	 * with the same transaction runner, so an atomic batch means the same thing on both.
+	 *
+	 * `idempotencyKey` is read from the input by the platform's idempotency kernel rather than here,
+	 * which is why the field carries it in the schema and the resource does nothing with it: a key it
+	 * cannot use is refused by the kernel with the same code the route answers.
+	 */
+	@Mutation('bulkCreateProducts')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.PRODUCTS_BULK_IMPORT)
+	@Idempotent({ scope: 'product.bulk', required: false, resourceType: 'product' })
+	async bulkCreateProducts(@Args('input') input: IBulkCreateProductsInput): Promise<IBulkCreateProductsPayload> {
+		const result = await this.bulkExecutor.execute<IBulkProductItem>(
+			{ items: input.items, atomic: input.atomic },
+			(item, context) => this.applyBulkItem(item, context),
+			productBulkOptions(ProductController, 'bulk', {
+				requiredKeys: PRODUCT_BULK_REQUIRED_KEYS,
+				transaction: this.productService.transaction
+			})
+		);
+
+		// The per-item view is the platform's own projection of the batch result, so the counters and
+		// the item codes are the numbers the REST body carries. The path each item's outcome belongs
+		// to is stated here because only the payload knows where its items came from.
+		return {
+			results: toBulkItemOutcomes(result).map((outcome) => ({
+				index: outcome.index,
+				ok: outcome.ok,
+				id: outcome.id,
+				resource: outcome.resource,
+				error: outcome.error
+					? { ...outcome.error, path: ['items', String(outcome.index)] }
+					: undefined
+			})),
+			succeeded: result.succeededCount,
+			failed: result.failedCount,
+			total: result.total
+		};
 	}
 
 	/**
@@ -404,5 +471,22 @@ export class ProductResolver {
 			translations: input.translations,
 			optionGroupCreateInputs: input.optionGroupCreateInputs
 		} as unknown as IProductCreateInput;
+	}
+
+	/**
+	 * Applies one item of a batch through the service that owns the product's writes.
+	 *
+	 * The field owns no write of its own, for the reason every other field here owns none: the item
+	 * is handed on with the batch's transactional manager exactly as the executor resolved it, and
+	 * the outcome names the row that changed so a client can match an answer to the row it asked
+	 * about.
+	 */
+	private async applyBulkItem(
+		item: IBulkProductItem,
+		context: IBulkItemContext
+	): Promise<{ index: number; id: Id }> {
+		const product = await this.productService.applyBulkItem(item, context.manager);
+
+		return { index: context.index, id: product.id };
 	}
 }

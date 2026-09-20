@@ -1,7 +1,7 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ID, IPagination } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, PermissionGuard, Permissions, TenantPermissionGuard, Versioned } from '@gauzy/core';
 import { Entitlement } from '../../entitlement/entitlement.entity';
 import { EntitlementService } from '../../entitlement/entitlement.service';
 import { EntitlementActivation } from '../../entitlement-activation/entitlement-activation.entity';
@@ -44,6 +44,7 @@ export class EntitlementActivationResolver {
 	 * @param page The page.
 	 * @returns One page of activations.
 	 */
+	@Versioned({ resource: EntitlementService, write: false })
 	@Query('entitlementActivations')
 	async entitlementActivations(
 		@Args('filter') filter?: IEntitlementActivationFilter,
@@ -68,10 +69,15 @@ export class EntitlementActivationResolver {
 	/**
 	 * Occupies a slot of a right.
 	 *
+	 * The retry scope is `entitlement.activate`, which the activation route declares as well: taking a
+	 * seat is the one activate this plugin serves, and a device that repeats the mutation under one key
+	 * is answered from the first attempt rather than taking a second slot.
+	 *
 	 * @param input The right, the device and the key when one is used.
 	 * @returns The payload, carrying the activation and the right it belongs to.
 	 */
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_GRANT)
+	@Idempotent({ scope: 'entitlement.activate', required: false, resourceType: 'entitlement_activation' })
 	@Mutation('activateEntitlement')
 	async activateEntitlement(@Args('input') input: IEntitlementActivationInput) {
 		try {

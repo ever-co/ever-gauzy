@@ -1,7 +1,7 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { RefundService } from '../../refund/refund.service';
 import { RefundLineService } from '../../refund-line/refund-line.service';
 import { IRefund, IRefundLine } from '../../payment.types';
@@ -82,6 +82,9 @@ export class RefundResolver {
 	 * Records a refund against an order and, when one is named, against the payment it gives back.
 	 */
 	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	// Recording a refund is the same operation on both surfaces, so this mutation requires the retry key
+	// the REST route requires, under the same scope.
+	@Idempotent({ scope: 'refund.create', required: true, resourceType: 'refund' })
 	@Mutation('createRefund')
 	async createRefund(@Args('input') input: ICreateRefundGraphInput): Promise<ICreateRefundPayload> {
 		try {

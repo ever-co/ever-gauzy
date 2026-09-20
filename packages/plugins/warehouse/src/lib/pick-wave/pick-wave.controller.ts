@@ -5,6 +5,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -123,6 +124,7 @@ export class PickWaveController extends CrudController<PickWave> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'The wave was released.' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'A line of the wave has no bin.' })
 	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Idempotent({ scope: 'warehouse.release', required: false, resourceType: 'pick-wave' })
 	@Post(':id/release')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async release(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: PickWaveActionDTO): Promise<PickWave> {
@@ -166,6 +168,7 @@ export class PickWaveController extends CrudController<PickWave> {
 	@ApiOperation({ summary: 'Close a wave' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The wave was closed.' })
 	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Idempotent({ scope: 'warehouse.close', required: false, resourceType: 'pick-wave' })
 	@Post(':id/close')
 	async close(@Param('id', UUIDValidationPipe) id: ID): Promise<PickWave> {
 		return await this.pickWaveService.close(id);

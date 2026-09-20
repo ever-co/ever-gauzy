@@ -86,7 +86,12 @@ jest.mock('@gauzy/core', () => {
 		User: class {},
 		Warehouse: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
-		isUniqueViolation: (error: any) => Boolean(error?.code === '23505')
+		isUniqueViolation: (error: any) => Boolean(error?.code === '23505'),
+		// The retry-safety declaration is read back here, so the decorator that writes it and the key it
+		// writes it under are the kernel's own rather than a second copy of either.
+		IDEMPOTENT_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy')
+			.IDEMPOTENT_METADATA_KEY,
+		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent
 	};
 });
 
@@ -109,6 +114,7 @@ import {
 	getNamedType,
 	GraphQLEnumType,
 	GraphQLObjectType,
+	isNonNullType,
 	Kind,
 	parse,
 	print
@@ -131,8 +137,13 @@ import {
 	TaxRegistrationScheme
 } from '@gauzy/contracts';
 import { getPluginExtensions } from '@gauzy/plugin';
+import { IDEMPOTENT_METADATA_KEY } from '@gauzy/core';
 import { MarketplaceModule } from '../marketplace.module';
 import { MarketplacePlugin } from '../marketplace.plugin';
+import { SellerOfferingController } from '../seller-offering/seller-offering.controller';
+import { SellerPayoutController } from '../seller-payout/seller-payout.controller';
+import { SellerSettlementController } from '../seller-settlement/seller-settlement.controller';
+import { SellerTransactionController } from '../seller-transaction/seller-transaction.controller';
 import * as graphqlSurface from './index';
 import { SellerEntityResolver } from './marketplace.resolver';
 import { schemaExtensions } from './schema-extensions';
@@ -560,6 +571,107 @@ function rowTypeOf(field: DeclaredField): GraphQLObjectType {
 }
 
 /* ------------------------------------------------------------------------------------------------
+ * The retry-safety mirror
+ * ---------------------------------------------------------------------------------------------- */
+
+/** The member a GraphQL caller states its retry key in, beside the input it qualifies. */
+const IDEMPOTENCY_KEY_MEMBER = 'idempotencyKey';
+
+/**
+ * One route that declares a retry scope, and the mutation declared to mirror it.
+ *
+ * The scope is the operation's identity on both surfaces, so a client that presents one key to REST and
+ * one key over GraphQL is making two attempts at one operation, and the two protocols have to answer it
+ * identically for that to be true. `required` is the route's own: executing a payout requires a key,
+ * because a retry of it pays the seller twice.
+ *
+ * Only operations the schema mirrors appear here. A route the document declares no mutation for has
+ * nothing to mirror, and inventing one is exactly what the parity rule forbids.
+ */
+const RETRY_MIRRORS: ReadonlyArray<{
+	scope: string;
+	mutation: string;
+	controller: any;
+	route: string;
+	required: boolean;
+	resourceType?: string;
+}> = [
+	{
+		scope: 'seller_offering.publish',
+		mutation: 'publishSellerOffering',
+		controller: SellerOfferingController,
+		route: 'publish',
+		required: false,
+		resourceType: 'seller_offering'
+	},
+	{
+		scope: 'seller.transaction.settle',
+		mutation: 'settleSellerTransaction',
+		controller: SellerTransactionController,
+		route: 'settle',
+		required: false,
+		resourceType: 'seller_transaction'
+	},
+	{
+		scope: 'seller.payout.create',
+		mutation: 'createSellerPayout',
+		controller: SellerPayoutController,
+		route: 'create',
+		required: false,
+		resourceType: 'seller_payout'
+	},
+	{
+		scope: 'seller.payout.pay',
+		mutation: 'markSellerPayoutPaid',
+		controller: SellerPayoutController,
+		route: 'pay',
+		required: true,
+		resourceType: 'seller_payout'
+	},
+	{
+		scope: 'seller.settlement.record',
+		mutation: 'createSellerSettlement',
+		controller: SellerSettlementController,
+		route: 'create',
+		required: false,
+		resourceType: 'seller_settlement'
+	}
+];
+
+/** One retry declaration, as the decorator wrote it onto a method. */
+interface RetryDeclaration {
+	scope: string;
+	required?: boolean;
+	resourceType?: string;
+}
+
+/**
+ * The retry declaration a method carries, or undefined when it carries none.
+ *
+ * Read from the method's own metadata rather than from the text of either file: the interceptor decides
+ * from that metadata, so a declaration the runtime cannot see is not a declaration at all.
+ */
+function retryOf(owner: any, method: string): RetryDeclaration | undefined {
+	return Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, owner.prototype[method]);
+}
+
+/** Every mutation whose resolver declares a retry scope. */
+function adoptedMutations(): string[] {
+	return DECLARED.filter(
+		(entry) => entry.operation === 'Mutation' && retryOf(SellerEntityResolver, entry.method)
+	).map((entry) => entry.field);
+}
+
+/** Every mutation whose declared arguments carry a retry key. */
+function keyedMutations(): string[] {
+	const fields = COMPOSED.getMutationType()?.getFields() ?? {};
+
+	return Object.values(fields)
+		.filter((field) => field.args.some((argument) => argument.name === IDEMPOTENCY_KEY_MEMBER))
+		.map((field) => field.name);
+}
+
+/* ------------------------------------------------------------------------------------------------
  * The invariants
  * ---------------------------------------------------------------------------------------------- */
 
@@ -660,6 +772,60 @@ describe('the marketplace GraphQL contribution', () => {
 			}
 
 			expect(mismatches).toEqual([]);
+		});
+	});
+
+	describe('the retry-safety mirror', () => {
+		it.each(RETRY_MIRRORS.map((mirror) => mirror.scope))(
+			'answers %s with one declaration on both protocols',
+			(scope) => {
+				const mirror = RETRY_MIRRORS.find((candidate) => candidate.scope === scope)!;
+				const answering = DECLARED.find((entry) => entry.field === mirror.mutation);
+				const expected = {
+					scope: mirror.scope,
+					required: mirror.required,
+					...(mirror.resourceType ? { resourceType: mirror.resourceType } : {})
+				};
+
+				// The mutation the document declares for this scope is answered by a method that carries the
+				// declaration — not by some other field that happens to be named similarly.
+				expect(answering?.operation).toBe('Mutation');
+				expect(retryOf(SellerEntityResolver, answering!.method)).toEqual(expected);
+				expect(retryOf(mirror.controller, mirror.route)).toEqual(expected);
+			}
+		);
+
+		it('declares the retry key on exactly the mutations that have adopted the convention', () => {
+			const adopted = adoptedMutations();
+
+			// The equality is the invariant in both directions: a mutation that declares the member without
+			// adopting the convention would expose an argument nothing reads, and a mutation that adopts it
+			// without declaring the member could never be presented with a key.
+			expect(adopted.length).toBeGreaterThan(0);
+			expect([...keyedMutations()].sort()).toEqual([...adopted].sort());
+		});
+
+		it.each(RETRY_MIRRORS.map((mirror) => mirror.mutation))(
+			'declares %s idempotencyKey as a nullable String',
+			(mutation) => {
+				const declared = COMPOSED.getMutationType()?.getFields()[mutation];
+				const argument = declared?.args.find((candidate) => candidate.name === IDEMPOTENCY_KEY_MEMBER);
+
+				expect(declared).toBeDefined();
+				expect(argument).toBeDefined();
+				expect(getNamedType(argument!.type).name).toBe('String');
+				// Nullable on purpose, including on the mutation whose route requires a key: the refusal is the
+				// kernel's own `IDEMPOTENCY_KEY_REQUIRED`, which is the answer the route gives, and a schema-level
+				// requirement would replace it with a validation error the REST caller never sees.
+				expect(isNonNullType(argument!.type)).toBe(false);
+			}
+		);
+
+		it('requires the key only on the mutation that mirrors the route moving money', () => {
+			const required = RETRY_MIRRORS.filter((mirror) => mirror.required).map((mirror) => mirror.mutation);
+
+			expect(required).toEqual(['markSellerPayoutPaid']);
+			expect(retryOf(SellerPayoutController, 'pay')).toMatchObject({ required: true });
 		});
 	});
 });

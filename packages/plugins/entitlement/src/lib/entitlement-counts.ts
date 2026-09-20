@@ -31,6 +31,11 @@ export async function recountEntitlementOccupancy(manager: EntityManager, entitl
 		where: { entitlementId, status: EntitlementActivationStatus.ACTIVE } as any
 	});
 
+	// The counter is a cache re-derived from the rows counted above, never a value a caller states, so
+	// this statement carries no version predicate and moves no revision: the revision belongs to the
+	// right's own columns and is moved by the statement that changes them. A write that bumped it here
+	// would report two revisions for one state change, and would skip the repair the moment the row had
+	// moved on — leaving the count stale, which is the one thing this helper exists to prevent.
 	await manager.update(Entitlement, { id: entitlementId } as any, { activationCount: live } as any);
 
 	const keys = await manager.find(EntitlementKey, { where: { entitlementId } as any });

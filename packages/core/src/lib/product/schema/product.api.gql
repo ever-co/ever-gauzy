@@ -4,9 +4,9 @@
 # once for the whole platform, so a domain adds fields to it and never declares its own.
 #
 # Every field below is one the delivered `/api/products` routes already serve — the list, the one row,
-# the count, the create, the edit, the removal, the two lifecycle moves and the four image operations
-# — under the same guard chain, so a client that reaches the capability over one protocol is not
-# given a narrower or a wider one than the client that reaches it over the other.
+# the count, the create, the edit, the removal, the two lifecycle moves, the four image operations and
+# the batch — under the same guard chain, so a client that reaches the capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other.
 #
 # The list is a connection rather than a bare array. It takes the same query protocol the REST list
 # route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
@@ -41,9 +41,19 @@ extend type Query {
 	"""
 	One product, or null when there is none.
 
+	`idOrSlug` names the row the way the delivered route names it: a value that is an identifier is
+	read by identifier, and any other value is read by the product's slug. One argument carries both
+	because they name one row of one resource, and which column a value addresses is a fact about the
+	resource rather than about the request that carried it.
+
+	There is deliberately no `productBySlug` beside this field. Parity is capability parity, and this
+	capability is "read one product by the value that names it"; a second root field resolving the same
+	row of the same route under a second name would be a second surface for one door, which is what the
+	platform's own naming doctrine forbids. A client that holds a slug states it here.
+
 	`language` selects which of the two delivered reads by id the request means: without it the field
-	answers the row `GET /products/:id` answers, and with it the row `GET /products/local/:langCode/:id`
-	answers, which is that same row with its translation merged.
+	answers the row `GET /products/:idOrSlug` answers, and with it the row
+	`GET /products/local/:langCode/:id` answers, which is that same row with its translation merged.
 	"""
 	product(id: ID!, language: String): Product
 
@@ -77,6 +87,23 @@ extend type Mutation {
 	write.
 	"""
 	updateProduct(input: UpdateProductInput!): Product!
+
+	"""
+	Applies a batch of products — written, changed and archived — and answers one outcome per item.
+
+	The batch is the one `POST /products/bulk` applies, run by the same executor from the same
+	declaration, so the resource name, the cap, the permission and the members an item must carry are
+	the route's rather than a second statement of them. `atomic` is the whole point of the flag: an
+	atomic batch applies every item or none of them, and a batch that is not atomic applies what it can
+	and reports the rest.
+
+	`idempotencyKey` is the retry key of this batch. A GraphQL request may carry many mutations in one
+	document and a header cannot say which of them a key belongs to, so the key travels beside the
+	input it qualifies. The kernel that stores and replays keys reads it there, which is why a key it
+	cannot use is refused with the same code the route answers — and why a batch that states no key is
+	served exactly as before.
+	"""
+	bulkCreateProducts(input: BulkCreateProductsInput!): BulkCreateProductsPayload!
 
 	"""
 	Removes a product, together with the rows only it explains: its variants and their setting and

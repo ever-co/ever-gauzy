@@ -23,6 +23,17 @@ import { gql } from 'graphql-tag';
  * root field declared here with no resolver resolves to null with no error anywhere, and a field a
  * resolver declares without being declared here is never served at all. The two are written and
  * reviewed together, and the plugin hands both to the platform in one `extensions` block.
+ *
+ * Every mutation that mirrors a route which declares a retry scope carries that scope's name in its
+ * description and an `idempotencyKey` beside its other arguments, and the resolver behind it carries
+ * the route's own `@Idempotent(...)` declaration. The member is what a key rides in here rather than a
+ * header, because a GraphQL request is one `POST` carrying as many mutations as its document selects:
+ * a header could neither say which of them a key belongs to nor carry several of them.
+ *
+ * It is declared **nullable on every one of them, including the mutation whose route requires a key**.
+ * A schema-level requirement would refuse a keyless mutation with a validation error the REST caller
+ * never sees; leaving it nullable lets the request reach the kernel, which refuses it with the
+ * platform's own `IDEMPOTENCY_KEY_REQUIRED` — the same answer, in the same vocabulary, as the route.
  */
 export const schemaExtensions = gql`
 	"Where a seller account stands. \`APPROVED\` means every required verification passed; \`ACTIVE\` means an operator then let it trade."
@@ -515,25 +526,64 @@ export const schemaExtensions = gql`
 		suspendSeller(id: ID!, reason: String!): Seller!
 		"Returns a suspended seller to active."
 		reinstateSeller(id: ID!): Seller!
-		"Publishes an offering to the given channels, materialising its authored price into a price row."
-		publishSellerOffering(id: ID!, channelIds: [String!]): SellerOffering!
+		"""
+		Publishes an offering to the given channels, materialising its authored price into a price row.
+
+		Mirrors the publish route and declares the same \`seller_offering.publish\` scope, so a retry of one
+		publication is a retry whichever protocol it arrives on.
+		"""
+		publishSellerOffering(id: ID!, channelIds: [String!], idempotencyKey: String): SellerOffering!
 		"Pauses an offering, so it stops being sellable and stays resumable."
 		pauseSellerOffering(id: ID!): SellerOffering!
 		"Withdraws an offering; terminal."
 		withdrawSellerOffering(id: ID!): SellerOffering!
-		"Advances a ledger row to settleable. The state is advanced, never the amount."
-		settleSellerTransaction(id: ID!, note: String): SellerTransaction!
+		"""
+		Advances a ledger row to settleable. The state is advanced, never the amount.
+
+		Mirrors the settle route and declares the same \`seller.transaction.settle\` scope, so a retry of one
+		advance is a retry whichever protocol it arrives on.
+		"""
+		settleSellerTransaction(id: ID!, note: String, idempotencyKey: String): SellerTransaction!
 		"Holds a ledger row out of payouts, with a reason a seller can read."
 		holdSellerTransaction(id: ID!, reason: String!): SellerTransaction!
-		"Creates a payout from named ledger rows, or from the settleable rows of a period."
-		createSellerPayout(sellerId: ID!, currency: String!, transactionIds: [String!], note: String): SellerPayout!
+		"""
+		Creates a payout from named ledger rows, or from the settleable rows of a period.
+
+		Mirrors the create route and declares the same \`seller.payout.create\` scope, so a client that
+		presents one key over either protocol receives the payout its first attempt built rather than a
+		second one over the same ledger rows.
+		"""
+		createSellerPayout(
+			sellerId: ID!
+			currency: String!
+			transactionIds: [String!]
+			note: String
+			idempotencyKey: String
+		): SellerPayout!
 		"Approves a payout. Approving is a separate permission from creating, because approving one moves money."
 		approveSellerPayout(id: ID!): SellerPayout!
-		"Records the provider's execution of a payout, as reported."
-		markSellerPayoutPaid(id: ID!, providerKey: String, providerTransferId: String): SellerPayout!
+		"""
+		Records the provider's execution of a payout, as reported.
+
+		Mirrors the execution route, and carries that route's scope and its requirement with it. This is
+		the operation that moves money to the seller, so a mutation sent without a key is refused with
+		\`IDEMPOTENCY_KEY_REQUIRED\` rather than executed, exactly as the route refuses it. A repeat of one
+		key and one body receives the first attempt's payout instead of instructing the provider again.
+		"""
+		markSellerPayoutPaid(
+			id: ID!
+			providerKey: String
+			providerTransferId: String
+			idempotencyKey: String
+		): SellerPayout!
 		"Cancels an unpaid payout, returning its ledger rows to settleable."
 		cancelSellerPayout(id: ID!, reason: String!): SellerPayout!
-		"Records a settlement reported by a provider, as reported: the ledger is never edited to agree with it."
+		"""
+		Records a settlement reported by a provider, as reported: the ledger is never edited to agree with it.
+
+		Mirrors the recording route and declares the same \`seller.settlement.record\` scope, so a
+		signature-verified callback delivered twice records one settlement over either protocol.
+		"""
 		createSellerSettlement(
 			sellerId: ID!
 			providerKey: String!
@@ -541,6 +591,7 @@ export const schemaExtensions = gql`
 			grossAmount: String!
 			commissionAmount: String
 			feeAmount: String
+			idempotencyKey: String
 		): SellerSettlement!
 	}
 `;

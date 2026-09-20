@@ -73,6 +73,9 @@ jest.mock('@gauzy/core', () => {
 		// one line: the ordering this suite pins is the ordering two real pipes are applied in.
 		UseValidationPipe: (options: unknown) => UsePipes(new ValidationPipe(options as never)),
 		Permissions: (...permissions: string[]) => SetMetadata(PERMISSIONS_METADATA, permissions),
+		// Retry safety is left real: the kernel's own decorator writes the declaration, under the
+		// kernel's own metadata key, and the suite below drives the kernel's own interceptor over it.
+		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
 		VisibleWith: (permission: string) => (target: object, property: string) =>
 			Reflect.defineMetadata('__visible:with__', permission, target, property),
 		PaymentAccountHolder: class PaymentAccountHolder {},
@@ -106,14 +109,27 @@ jest.mock(
 	{ virtual: true }
 );
 
+/**
+ * The interceptor names `IdempotencyService` as its injected dependency, and a class used in a
+ * constructor signature is emitted as a value, so the service is doubled at its own module: the
+ * interceptor the retry suite below drives is the real one.
+ */
+jest.mock('@gauzy/core/src/lib/idempotency/idempotency.service', () => ({
+	IdempotencyService: class IdempotencyService {}
+}));
+
 /** The permission set the caller holds, which the doubled field gate reads. */
 let granted: string[] = [];
 const grantedFor = (): boolean => granted.includes('PAYMENT_METHOD_TOKENS_CHARGE');
 
 import { ArgumentMetadata, PipeTransform, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA, PIPES_METADATA } from '@nestjs/common/constants';
+import { Reflector } from '@nestjs/core';
+import { from, lastValueFrom } from 'rxjs';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { FieldVisibility, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { IdempotencyInterceptor } from '@gauzy/core/src/lib/idempotency/idempotency.interceptor';
+import { IDEMPOTENT_METADATA_KEY } from '@gauzy/core/src/lib/idempotency/idempotency.policy';
 import { PaymentPermission } from '../payment.permissions';
 import { PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED, RejectCardDataPipe } from '../payment.card-data.pipe';
 import { PaymentMethodTokenController } from './payment-method-token.controller';
@@ -373,5 +389,196 @@ describe('PaymentMethodTokenController — the no-card-data contract (06 §6.8, 
 		await expect(through(pipesOf('update'), { expiry: '12/30' })).rejects.toMatchObject({
 			response: { code: PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED, details: { field: 'expiry' } }
 		});
+	});
+});
+
+/** The retry declaration a handler carries, as the kernel's interceptor reads it. */
+const declarationOf = (handler: string) =>
+	Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, (PaymentMethodTokenController.prototype as never)[handler]);
+
+/**
+ * The key store, doubled in memory.
+ *
+ * The kernel's interceptor reads one vocabulary from it — a first claim, a replay of the stored
+ * response, a key already used for a different request, and a claim still held by another request — so
+ * the double answers that vocabulary, keyed the way the kernel keys a row: by scope, by key and within
+ * the caller's own tenant and organization.
+ */
+function keyStore() {
+	const rows = new Map<string, any>();
+	let sequence = 0;
+
+	const byId = (id: string) => [...rows.values()].find((row) => row.id === id);
+
+	return {
+		rows,
+		claim: jest.fn(async (input: any) => {
+			const identity = `${input.scope}:${input.key}`;
+			const existing = rows.get(identity);
+
+			if (existing) {
+				if (existing.requestHash !== input.requestHash) {
+					return { outcome: 'REUSED_KEY', record: existing };
+				}
+
+				return {
+					outcome: 'REPLAYED',
+					record: existing,
+					response: { status: existing.responseStatus, body: existing.responseBody }
+				};
+			}
+
+			const record = { id: `key-${++sequence}`, ...input, status: 'IN_PROGRESS' };
+			rows.set(identity, record);
+
+			return { outcome: 'CLAIMED', record };
+		}),
+		complete: jest.fn(async (id: string, completion: any) =>
+			Object.assign(byId(id), {
+				status: 'COMPLETED',
+				responseStatus: completion.responseStatus,
+				responseBody: completion.responseBody
+			})
+		),
+		fail: jest.fn(async (id: string, completion: any) =>
+			Object.assign(byId(id), { status: 'FAILED', responseStatus: completion.responseStatus })
+		)
+	};
+}
+
+/**
+ * Sends one HTTP request through the kernel's own interceptor the way the application does.
+ *
+ * The store is passed in rather than built here, so a case that sends two requests under one key sees
+ * the second answered from the first; the handler is the controller's own prototype method, so the
+ * declaration under test is read from the route rather than restated here.
+ */
+async function dispatch(
+	surface: ReturnType<typeof resource>,
+	store: ReturnType<typeof keyStore>,
+	handler: string,
+	input: { method: string; body: unknown; headers: Record<string, string>; args?: unknown[] }
+): Promise<{ result: any; response: { headers: Record<string, string> } }> {
+	const headers: Record<string, string> = {};
+	const response = {
+		headers,
+		setHeader(name: string, value: string) {
+			headers[name] = value;
+		},
+		status: () => response
+	};
+	const request = {
+		method: input.method,
+		originalUrl: '/api/payment-method-tokens',
+		query: {},
+		body: input.body,
+		headers: input.headers
+	};
+	const context = {
+		getType: () => 'http',
+		getClass: () => PaymentMethodTokenController,
+		getHandler: () => (PaymentMethodTokenController.prototype as never)[handler],
+		switchToHttp: () => ({ getRequest: () => request, getResponse: () => response }),
+		getArgByIndex: (index: number) => [null, request][index]
+	} as never;
+	const callable = surface.controller as unknown as Record<string, (...rest: unknown[]) => Promise<unknown>>;
+	const interceptor = new IdempotencyInterceptor(store as never, new Reflector());
+	const result = await lastValueFrom(
+		interceptor.intercept(context, {
+			handle: () => from(callable[handler].call(surface.controller, ...(input.args ?? [input.body])))
+		})
+	);
+
+	return { result, response };
+}
+
+describe('PaymentMethodTokenController — the retry contract (06 §6.8, §7.12)', () => {
+	/** The reference the provider issued, which is what the retry key covers. */
+	const REFERENCE = 'the-providers-own-reference';
+
+	/** The instrument a client saves, as the request body states it. */
+	const saveBody = (overrides: Record<string, unknown> = {}) => ({
+		accountHolderId: HOLDER,
+		providerKey: 'a-provider',
+		token: REFERENCE,
+		...overrides
+	});
+
+	it('requires a key on saving an instrument', () => {
+		expect(declarationOf('create')).toEqual({
+			scope: 'payment.instrument.create',
+			required: true,
+			resourceType: 'payment_method_token'
+		});
+	});
+
+	it('refuses an instrument that presents no key, naming IDEMPOTENCY_KEY_REQUIRED', async () => {
+		const surface = resource();
+		const store = keyStore();
+
+		await expect(
+			dispatch(surface, store, 'create', { method: 'POST', body: saveBody(), headers: {} })
+		).rejects.toMatchObject({ status: 400, code: 'IDEMPOTENCY_KEY_REQUIRED' });
+
+		expect(surface.kernel.recordProviderInstrument).not.toHaveBeenCalled();
+		expect(store.claim).not.toHaveBeenCalled();
+	});
+
+	it('replays the first instrument for the same key and the same body, saving one instrument', async () => {
+		const surface = resource();
+		const store = keyStore();
+
+		const first = await dispatch(surface, store, 'create', {
+			method: 'POST',
+			body: saveBody(),
+			headers: { 'idempotency-key': 'instrument-key-0001' }
+		});
+		const second = await dispatch(surface, store, 'create', {
+			method: 'POST',
+			body: saveBody(),
+			headers: { 'idempotency-key': 'instrument-key-0001' }
+		});
+
+		expect(second.result).toEqual(first.result);
+		expect(surface.kernel.recordProviderInstrument).toHaveBeenCalledTimes(1);
+		expect(second.response.headers['Idempotency-Replayed']).toBe('true');
+	});
+
+	it('refuses a different reference under the same key, naming IDEMPOTENCY_KEY_REUSED', async () => {
+		const surface = resource();
+		const store = keyStore();
+
+		await dispatch(surface, store, 'create', {
+			method: 'POST',
+			body: saveBody(),
+			headers: { 'idempotency-key': 'instrument-key-0001' }
+		});
+
+		await expect(
+			dispatch(surface, store, 'create', {
+				method: 'POST',
+				body: saveBody({ token: 'another-provider-reference' }),
+				headers: { 'idempotency-key': 'instrument-key-0001' }
+			})
+		).rejects.toMatchObject({ status: 409, code: 'IDEMPOTENCY_KEY_REUSED' });
+		expect(surface.kernel.recordProviderInstrument).toHaveBeenCalledTimes(1);
+	});
+
+	it('leaves a route that declares no scope untouched, key or no key', async () => {
+		const surface = resource();
+		const store = keyStore();
+		const body = { brand: 'a-brand' };
+
+		await expect(
+			dispatch(surface, store, 'update', {
+				method: 'PUT',
+				body,
+				headers: { 'idempotency-key': 'instrument-key-0001' },
+				args: [TOKEN, body]
+			})
+		).resolves.toBeDefined();
+
+		expect(declarationOf('update')).toBeUndefined();
+		expect(store.claim).not.toHaveBeenCalled();
 	});
 });

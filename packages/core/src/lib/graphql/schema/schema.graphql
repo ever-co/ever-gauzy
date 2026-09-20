@@ -1168,6 +1168,27 @@ type Query {
   """How many objectives the caller's tenant holds."""
   goalCount: Int
 
+  """
+  The stored keys of the caller's tenant and organization, newest first.
+  
+  This is the read an operator arrives at when an integration is stuck: it answers what a client is
+  holding, how far the first attempt got, and what that attempt produced. Narrow it by `scope` and
+  `key` rather than by reading the table — a key row is found by the two values the stuck client can
+  state, which is exactly what the table's unique index is built on.
+  """
+  idempotencyKeys(filter: IdempotencyKeyFilter, sort: [IdempotencyKeySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): IdempotencyKeyConnection!
+
+  """
+  One stored key of the caller's tenant and organization, or null when there is none.
+  
+  A key belonging to another tenant or another organization answers `null` rather than a refusal,
+  because the read is scoped from the credential: a caller is never told that a key it may not read
+  exists. That is the REST route's `404` stated in this protocol's vocabulary.
+  
+  The stored response is not a member of what this field answers — see `IdempotencyKey` for why.
+  """
+  idempotencyKey(id: ID!): IdempotencyKey
+
   """The images of the caller's tenant, newest first."""
   imageAssets(filter: ImageAssetFilter, sort: [ImageAssetSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ImageAssetConnection!
 
@@ -2140,9 +2161,19 @@ type Query {
   """
   One product, or null when there is none.
   
+  `idOrSlug` names the row the way the delivered route names it: a value that is an identifier is
+  read by identifier, and any other value is read by the product's slug. One argument carries both
+  because they name one row of one resource, and which column a value addresses is a fact about the
+  resource rather than about the request that carried it.
+  
+  There is deliberately no `productBySlug` beside this field. Parity is capability parity, and this
+  capability is "read one product by the value that names it"; a second root field resolving the same
+  row of the same route under a second name would be a second surface for one door, which is what the
+  platform's own naming doctrine forbids. A client that holds a slug states it here.
+  
   `language` selects which of the two delivered reads by id the request means: without it the field
-  answers the row `GET /products/:id` answers, and with it the row `GET /products/local/:langCode/:id`
-  answers, which is that same row with its translation merged.
+  answers the row `GET /products/:idOrSlug` answers, and with it the row
+  `GET /products/local/:langCode/:id` answers, which is that same row with its translation merged.
   """
   product(id: ID!, language: String): Product
 
@@ -6578,6 +6609,19 @@ type Mutation {
   recoverGoal(id: ID!): Goal!
 
   """
+  Releases a key, so the next attempt under it is a true first attempt.
+  
+  The row is removed rather than marked, because a marked row would still occupy the unique tuple and
+  the retry the operator is unblocking would be refused as a reused key. The move is refused while a
+  live claim holds the key: removing a claim whose work is still executing would let the retry start a
+  second run of that work. An operator who genuinely needs that waits for the lease to go stale, which
+  happens on its own — the row's `lockedAt` and the kernel's stale window say how long that is.
+  
+  The answer is the row as it stood, without the response it held.
+  """
+  releaseIdempotencyKey(id: ID!): IdempotencyKey!
+
+  """
   Records an image whose bytes are already held. This is the delivered create route and not the
   upload: see the note above for why the upload has no field.
   """
@@ -8164,6 +8208,23 @@ type Mutation {
   updateProduct(input: UpdateProductInput!): Product!
 
   """
+  Applies a batch of products — written, changed and archived — and answers one outcome per item.
+  
+  The batch is the one `POST /products/bulk` applies, run by the same executor from the same
+  declaration, so the resource name, the cap, the permission and the members an item must carry are
+  the route's rather than a second statement of them. `atomic` is the whole point of the flag: an
+  atomic batch applies every item or none of them, and a batch that is not atomic applies what it can
+  and reports the rest.
+  
+  `idempotencyKey` is the retry key of this batch. A GraphQL request may carry many mutations in one
+  document and a header cannot say which of them a key belongs to, so the key travels beside the
+  input it qualifies. The kernel that stores and replays keys reads it there, which is why a key it
+  cannot use is refused with the same code the route answers — and why a batch that states no key is
+  served exactly as before.
+  """
+  bulkCreateProducts(input: BulkCreateProductsInput!): BulkCreateProductsPayload!
+
+  """
   Removes a product, together with the rows only it explains: its variants and their setting and
   price rows, and its option groups with their options and translations. A variant left behind
   without its setting and price cannot be priced, sold or counted.
@@ -9522,14 +9583,20 @@ type Mutation {
   setTaxRegimeRates(input: SetTaxRegimeRatesInput!): [TaxRegimeRate!]!
   reconcileStockLevels(input: StockLevelReconciliationInput): StockLevelReconciliation!
   adjustStock(input: StockAdjustmentInput!): StockAdjustment!
-  applyStockAdjustment(id: ID!): StockAdjustment!
+
+  """
+  Applies a drafted correction. The key is the resolver's own argument here because the mutation
+  has no input object to carry it; the kernel reads both spellings, so the two protocols answer
+  identically.
+  """
+  applyStockAdjustment(id: ID!, idempotencyKey: String): StockAdjustment!
   createStockReservation(input: StockReservationInput!): StockReservation!
-  releaseStockReservation(id: ID!, reason: String): StockReservation!
+  releaseStockReservation(id: ID!, reason: String, idempotencyKey: String): StockReservation!
   consumeStockReservation(id: ID!): StockReservation!
   createStockTransfer(input: StockTransferInput!): StockTransfer!
   updateStockTransfer(id: ID!, note: String): StockTransfer!
-  shipStockTransfer(id: ID!, lines: [StockTransferShipLineInput!]!): StockTransfer!
-  receiveStockTransfer(id: ID!, lines: [StockTransferReceiveLineInput!]!): StockTransfer!
+  shipStockTransfer(id: ID!, lines: [StockTransferShipLineInput!]!, idempotencyKey: String): StockTransfer!
+  receiveStockTransfer(id: ID!, lines: [StockTransferReceiveLineInput!]!, idempotencyKey: String): StockTransfer!
   cancelStockTransfer(id: ID!, reason: String): StockTransfer!
   addStockTransferLine(input: StockTransferLineInput!): StockTransferLine!
   createStockAlert(input: StockAlertInput!): StockAlert!
@@ -9537,8 +9604,8 @@ type Mutation {
   deleteStockAlert(id: ID!): Boolean!
   createStockCount(input: StockCountInput!): StockCount!
   openStockCount(id: ID!): StockCount!
-  recordStockCountLine(id: ID!, lines: [StockCountLineInput!]!): StockCount!
-  closeStockCount(id: ID!): StockCount!
+  recordStockCountLine(id: ID!, lines: [StockCountLineInput!]!, idempotencyKey: String): StockCount!
+  closeStockCount(id: ID!, idempotencyKey: String): StockCount!
   assignChannelWarehouse(input: ChannelWarehouseInput!): ChannelWarehouse!
   unassignChannelWarehouse(channelId: ID!, warehouseId: ID!): Boolean!
 
@@ -9567,7 +9634,7 @@ type Mutation {
   updateWarehouseBin(id: ID!, input: WarehouseBinInput!): WarehouseBinPayload!
 
   """Moves a bin and its subtree inside its zone."""
-  reparentWarehouseBin(id: ID!, parentId: ID): WarehouseBinPayload!
+  reparentWarehouseBin(id: ID!, parentId: ID, idempotencyKey: String): WarehouseBinPayload!
 
   """Blocks a bin, or puts it back into service."""
   setWarehouseBinBlocked(id: ID!, isBlocked: Boolean!): WarehouseBinPayload!
@@ -9590,7 +9657,7 @@ type Mutation {
   createPickWave(input: PickWaveInput!): PickWavePayload!
 
   """Releases a wave to the floor."""
-  releasePickWave(id: ID!, pickerUserId: ID): PickWavePayload!
+  releasePickWave(id: ID!, pickerUserId: ID, idempotencyKey: String): PickWavePayload!
 
   """Marks a released wave as being walked."""
   startPickWave(id: ID!): PickWavePayload!
@@ -9599,7 +9666,7 @@ type Mutation {
   completePickWave(id: ID!): PickWavePayload!
 
   """Closes a wave whose output was packed and manifested."""
-  closePickWave(id: ID!): PickWavePayload!
+  closePickWave(id: ID!, idempotencyKey: String): PickWavePayload!
 
   """Closes a wave short, releasing the work that will not be done."""
   closePickWaveShort(id: ID!, reason: String): PickWavePayload!
@@ -9623,10 +9690,24 @@ type Mutation {
   cancelPickList(id: ID!, reason: String): PickListPayload!
 
   """Records what was taken from the bin."""
-  pickPickListLine(pickListId: ID!, lineId: ID!, pickedQuantity: Decimal!, binId: ID, lotNumber: String, serialNumbers: [String!], note: String): PickListLinePayload!
+  pickPickListLine(
+    pickListId: ID!
+    lineId: ID!
+    pickedQuantity: Decimal!
+    binId: ID
+    lotNumber: String
+    serialNumbers: [String!]
+    note: String
+
+    """
+    The level counter the outcome is conditioned on, stated as the input member `version`.
+    """
+    version: Int
+    idempotencyKey: String
+  ): PickListLinePayload!
 
   """Records a substitute: a different unit was taken."""
-  substitutePickListLine(pickListId: ID!, lineId: ID!, substituteVariantId: ID!, substituteQuantity: Decimal!, substitutionReason: String, binId: ID, note: String): PickListLinePayload!
+  substitutePickListLine(pickListId: ID!, lineId: ID!, substituteVariantId: ID!, substituteQuantity: Decimal!, substitutionReason: String, binId: ID, note: String, version: Int, idempotencyKey: String): PickListLinePayload!
 
   """Records a line the picker deliberately did not collect."""
   skipPickListLine(pickListId: ID!, lineId: ID!, note: String): PickListLinePayload!
@@ -9653,32 +9734,47 @@ type Mutation {
   cancelCarrierManifest(id: ID!, reason: String): CarrierManifestPayload!
   createCart(input: CreateCartInput!): Cart!
   updateCart(id: ID!, input: UpdateCartInput!): Cart!
-  deleteCart(id: ID!): Boolean!
-  associateCartWithContact(id: ID!, contactId: ID!): Cart!
-  mergeCarts(targetCartId: ID!, sourceCartId: ID!): Cart!
+  deleteCart(id: ID!, version: Int): Boolean!
+  associateCartWithContact(id: ID!, contactId: ID!, version: Int): Cart!
+  mergeCarts(targetCartId: ID!, sourceCartId: ID!, version: Int, idempotencyKey: String): Cart!
   addCartLine(input: AddCartLineInput!): Cart!
   updateCartLine(input: UpdateCartLineInput!): Cart!
-  removeCartLine(cartId: ID!, lineId: ID!): Cart!
+  removeCartLine(cartId: ID!, lineId: ID!, version: Int): Cart!
   setCartShippingMethod(input: SetCartShippingMethodInput!): Cart!
-  removeCartShippingMethod(cartId: ID!): Cart!
+  removeCartShippingMethod(cartId: ID!, version: Int): Cart!
   applyCartPromotion(input: ApplyCartPromotionInput!): Cart!
-  removeCartPromotion(cartId: ID!, code: String!): Cart!
+  removeCartPromotion(cartId: ID!, code: String!, version: Int): Cart!
   startCheckout(input: StartCheckoutInput!): CheckoutSession!
   completeCheckout(input: CompleteCheckoutInput!): CheckoutResult!
-  abandonCheckout(cartId: ID!): Cart!
+  abandonCheckout(cartId: ID!, version: Int): Cart!
   createOrder(input: CreateOrderInput!): Order!
   updateOrder(id: ID!, input: UpdateOrderInput!): Order!
-  cancelOrder(id: ID!, reason: String): Order!
-  archiveOrder(id: ID!): Order!
-  placeOrder(id: ID!): Order!
-  confirmOrder(id: ID!): Order!
-  recalculateOrder(id: ID!): Order!
+  cancelOrder(id: ID!, reason: String, version: Int, idempotencyKey: String): Order!
+  archiveOrder(id: ID!, version: Int): Order!
+  placeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
+  confirmOrder(id: ID!, version: Int): Order!
+  recalculateOrder(id: ID!, version: Int): Order!
 
   """Create a change: the only way a placed order is modified."""
   requestOrderEdit(input: RequestOrderEditInput!): OrderChange!
-  confirmOrderChange(id: ID!): OrderChange!
-  declineOrderChange(id: ID!, reason: String): OrderChange!
-  cancelOrderChange(id: ID!, reason: String): OrderChange!
+
+  """
+  Applies a change. The version argument is the version of the ORDER the change belongs to — the
+  value the order itself carries, not the version of the change, which is the order version the
+  change produces — and an order that has moved past it answers a conflict rather than applying
+  the change.
+  """
+  confirmOrderChange(id: ID!, version: Int, idempotencyKey: String): OrderChange!
+
+  """
+  Declines a change. The version argument is the version of the order the change belongs to.
+  """
+  declineOrderChange(id: ID!, reason: String, version: Int): OrderChange!
+
+  """
+  Cancels a change. The version argument is the version of the order the change belongs to.
+  """
+  cancelOrderChange(id: ID!, reason: String, version: Int): OrderChange!
 
   """
   Records a link and moves the line's counters with it, in one transaction.
@@ -9793,22 +9889,26 @@ type Mutation {
   """Requests a return against an order."""
   requestOrderReturn(input: RequestOrderReturnInput!): RequestOrderReturnPayload!
 
-  """Approves a requested return."""
-  approveOrderReturn(id: ID!, note: String): RequestOrderReturnPayload!
+  """
+  Approves a requested return. The version the caller read rides as its own argument rather than
+  in an input, because deciding a status takes no other input and one GraphQL request may carry
+  several mutations, so a version cannot be stated once for all of them.
+  """
+  approveOrderReturn(id: ID!, note: String, version: Int): RequestOrderReturnPayload!
 
-  """Rejects a requested return."""
-  rejectOrderReturn(id: ID!, reason: String): RequestOrderReturnPayload!
+  """Rejects a requested return, under the version the caller read."""
+  rejectOrderReturn(id: ID!, reason: String, version: Int): RequestOrderReturnPayload!
 
   """
   Receives returned goods, writing the stock movements and issuing the refund.
   """
   receiveOrderReturn(id: ID!, input: ReceiveOrderReturnInput!): ReceiveOrderReturnPayload!
 
-  """Cancels a return."""
-  cancelOrderReturn(id: ID!, reason: String): RequestOrderReturnPayload!
+  """Cancels a return, under the version the caller read."""
+  cancelOrderReturn(id: ID!, reason: String, version: Int): RequestOrderReturnPayload!
 
-  """Closes a fully received return."""
-  closeOrderReturn(id: ID!): RequestOrderReturnPayload!
+  """Closes a fully received return, under the version the caller read."""
+  closeOrderReturn(id: ID!, version: Int): RequestOrderReturnPayload!
 
   """Creates a governed return reason."""
   createOrderReturnReason(input: OrderReturnReasonInput!): OrderReturnReasonPayload!
@@ -9853,13 +9953,13 @@ type Mutation {
   updateSubscription(id: ID!, input: UpdateSubscriptionInput!): CustomerSubscriptionPayload!
 
   """Starts billing a pending subscription."""
-  activateSubscription(id: ID!): CustomerSubscriptionPayload!
+  activateSubscription(id: ID!, version: Int, idempotencyKey: String): CustomerSubscriptionPayload!
 
   """Suspends billing."""
   pauseSubscription(id: ID!, input: PauseSubscriptionInput): CustomerSubscriptionPayload!
 
   """Resumes a paused subscription."""
-  resumeSubscription(id: ID!): CustomerSubscriptionPayload!
+  resumeSubscription(id: ID!, version: Int, idempotencyKey: String): CustomerSubscriptionPayload!
 
   """Ends a subscription."""
   cancelSubscription(id: ID!, input: CancelSubscriptionInput): CustomerSubscriptionPayload!
@@ -9873,12 +9973,12 @@ type Mutation {
   changeSubscriptionPlan(id: ID!, input: ChangeSubscriptionPlanInput!): SubscriptionPlanChangePayload!
 
   """Adds a recurring line mid-cycle, settling the remainder of the period."""
-  addSubscriptionItem(id: ID!, input: SubscriptionItemInput!): SubscriptionPlanChangePayload!
+  addSubscriptionItem(id: ID!, input: SubscriptionItemInput!, version: Int, idempotencyKey: String): SubscriptionPlanChangePayload!
 
   """
   Changes a recurring line's quantity mid-cycle, settling the remainder of the period.
   """
-  changeSubscriptionItemQuantity(id: ID!, variantId: ID!, quantity: Decimal!): SubscriptionPlanChangePayload!
+  changeSubscriptionItemQuantity(id: ID!, variantId: ID!, quantity: Decimal!, version: Int, idempotencyKey: String): SubscriptionPlanChangePayload!
 
   """
   Removes a recurring line mid-cycle, settling the remainder of the period.
@@ -9968,12 +10068,16 @@ type Mutation {
   grantEntitlement(input: GrantEntitlementInput!): GrantEntitlementPayload!
 
   """
-  Withdraws a right, terminally. Its keys and its live activations go with it.
+  Withdraws a right, terminally. Its keys and its live activations go with it. The caller states
+  the 'version' it read, and a right that has moved on since is refused.
   """
-  revokeEntitlement(id: ID!, reason: String!): EntitlementPayload!
+  revokeEntitlement(id: ID!, reason: String!, version: Int, idempotencyKey: String): EntitlementPayload!
 
-  """Extends the term of a right, which is what a successful renewal does."""
-  extendEntitlement(id: ID!, endsAt: DateTime!, quantity: Int): EntitlementPayload!
+  """
+  Extends the term of a right, which is what a successful renewal does. The caller states the
+  'version' it read, and a right that has moved on since is refused.
+  """
+  extendEntitlement(id: ID!, endsAt: DateTime!, quantity: Int, version: Int, idempotencyKey: String): EntitlementPayload!
 
   """Occupies a slot of a right for a device or a named seat."""
   activateEntitlement(input: ActivateEntitlementInput!): ActivateEntitlementPayload!
@@ -10007,8 +10111,11 @@ type Mutation {
 
   """
   Publishes an offering to the given channels, materialising its authored price into a price row.
+  
+  Mirrors the publish route and declares the same `seller_offering.publish` scope, so a retry of one
+  publication is a retry whichever protocol it arrives on.
   """
-  publishSellerOffering(id: ID!, channelIds: [String!]): SellerOffering!
+  publishSellerOffering(id: ID!, channelIds: [String!], idempotencyKey: String): SellerOffering!
 
   """Pauses an offering, so it stops being sellable and stays resumable."""
   pauseSellerOffering(id: ID!): SellerOffering!
@@ -10018,32 +10125,49 @@ type Mutation {
 
   """
   Advances a ledger row to settleable. The state is advanced, never the amount.
+  
+  Mirrors the settle route and declares the same `seller.transaction.settle` scope, so a retry of one
+  advance is a retry whichever protocol it arrives on.
   """
-  settleSellerTransaction(id: ID!, note: String): SellerTransaction!
+  settleSellerTransaction(id: ID!, note: String, idempotencyKey: String): SellerTransaction!
 
   """Holds a ledger row out of payouts, with a reason a seller can read."""
   holdSellerTransaction(id: ID!, reason: String!): SellerTransaction!
 
   """
   Creates a payout from named ledger rows, or from the settleable rows of a period.
+  
+  Mirrors the create route and declares the same `seller.payout.create` scope, so a client that
+  presents one key over either protocol receives the payout its first attempt built rather than a
+  second one over the same ledger rows.
   """
-  createSellerPayout(sellerId: ID!, currency: String!, transactionIds: [String!], note: String): SellerPayout!
+  createSellerPayout(sellerId: ID!, currency: String!, transactionIds: [String!], note: String, idempotencyKey: String): SellerPayout!
 
   """
   Approves a payout. Approving is a separate permission from creating, because approving one moves money.
   """
   approveSellerPayout(id: ID!): SellerPayout!
 
-  """Records the provider's execution of a payout, as reported."""
-  markSellerPayoutPaid(id: ID!, providerKey: String, providerTransferId: String): SellerPayout!
+  """
+  Records the provider's execution of a payout, as reported.
+  
+  Mirrors the execution route, and carries that route's scope and its requirement with it. This is
+  the operation that moves money to the seller, so a mutation sent without a key is refused with
+  `IDEMPOTENCY_KEY_REQUIRED` rather than executed, exactly as the route refuses it. A repeat of one
+  key and one body receives the first attempt's payout instead of instructing the provider again.
+  """
+  markSellerPayoutPaid(id: ID!, providerKey: String, providerTransferId: String, idempotencyKey: String): SellerPayout!
 
   """Cancels an unpaid payout, returning its ledger rows to settleable."""
   cancelSellerPayout(id: ID!, reason: String!): SellerPayout!
 
   """
   Records a settlement reported by a provider, as reported: the ledger is never edited to agree with it.
+  
+  Mirrors the recording route and declares the same `seller.settlement.record` scope, so a
+  signature-verified callback delivered twice records one settlement over either protocol.
   """
-  createSellerSettlement(sellerId: ID!, providerKey: String!, currency: String!, grossAmount: String!, commissionAmount: String, feeAmount: String): SellerSettlement!
+  createSellerSettlement(sellerId: ID!, providerKey: String!, currency: String!, grossAmount: String!, commissionAmount: String, feeAmount: String, idempotencyKey: String): SellerSettlement!
 
   """Re-weights or deactivates an index definition."""
   updateSearchIndexDefinition(id: ID!, input: SearchIndexDefinitionUpdateInput!): SearchIndexDefinitionPayload!
@@ -22453,11 +22577,20 @@ type Operation {
   type: String!
   status: OperationStatus!
 
-  """The aggregate type the operation acts on."""
-  aggregateType: String!
+  """
+  The aggregate type the operation acts on, or null when the operation is not about one.
+  Nullable because the delivered column is: the exclusivity rule is a *partial* unique index —
+  `WHERE "aggregateType" IS NOT NULL AND "status" IN ('PENDING','RUNNING','COMPENSATING')` — so an
+  operation that spans several aggregates, or that runs for the platform rather than for a row, is a
+  stored operation with no aggregate at all. Declaring the member non-null would make reading such a
+  row a schema violation, which is the one thing a nullable column must never become.
+  """
+  aggregateType: String
 
-  """The aggregate instance the operation acts on."""
-  aggregateId: ID!
+  """
+  The aggregate instance the operation acts on, or null for the same reason as `aggregateType`.
+  """
+  aggregateId: ID
 
   """Completion in the range 0 to 1."""
   progress: Float!
@@ -22637,6 +22770,173 @@ input PageInput {
 enum SortDirection {
   ASC
   DESC
+}
+
+"""
+One stored idempotency key: the claim a client's retry is answered from.
+"""
+type IdempotencyKey {
+  id: ID!
+
+  """
+  The tenant the key belongs to, which the caller's credential states and never the caller.
+  """
+  tenantId: ID
+
+  """
+  The organization the key was presented in. Keys are scoped by it, so one tenant's key can never
+  replay another's response — not even inside the same tenant across two organizations.
+  """
+  organizationId: ID
+
+  """
+  The key the client presented, exactly as it sent it. It is the client's own string and is stored so
+  the client can find its own row; it is never generated and never rewritten.
+  """
+  key: String!
+
+  """
+  The operation the key was presented to, for example `checkout.complete`. Two operations may
+  legitimately be called with the same client key, which is why the scope is part of the identity
+  rather than a filter applied after the lookup.
+  """
+  scope: String!
+
+  """
+  The first eight characters of the SHA-256 of the canonicalised request.
+  A replay with a different body is a conflict rather than a replay, and the stored hash is what makes
+  the two distinguishable — without keeping the body itself, which is why only the prefix is carried
+  here. Eight hex characters tell two requests apart and reconstruct neither.
+  """
+  requestHash: String!
+
+  """
+  How far the first attempt got: `IN_PROGRESS` while it runs, `COMPLETED` when its response was
+  recorded, `FAILED` when it was refused. A terminal row is what a retry is answered from, and the
+  distinction is what an operator reads to decide whether to release it.
+  """
+  status: IdempotencyStatus!
+
+  """
+  The status the first attempt answered with, or null while the attempt is still running. A replay
+  returns this status verbatim, which is why it is recorded rather than recomputed.
+  """
+  responseStatus: Int
+
+  """
+  What the operation was recorded as creating, for example `order`. Null while the attempt runs.
+  """
+  resourceType: String
+
+  """
+  Id of what was created, when the response carried one. It is how an operator finds the row.
+  """
+  resourceId: ID
+
+  """
+  The moment past which the stored response is no longer replayable and the row is swept. The lookup
+  refuses an expired row on its own, so the horizon holds even if the sweep is behind.
+  """
+  expiresAt: DateTime!
+
+  """
+  When the claim was taken. A claim whose lease has gone stale is treated as abandoned and may be
+  taken over by another attempt, which is what stops a request whose process died mid-flight from
+  holding its key forever — and what decides whether a release is allowed to remove the row.
+  """
+  lockedAt: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""The lifecycle of a stored key."""
+enum IdempotencyStatus {
+  """A first attempt owns the key and its work is running."""
+  IN_PROGRESS
+
+  """The attempt finished; its response is what a retry is answered from."""
+  COMPLETED
+
+  """
+  The attempt was refused; a retry receives the refusal rather than a second run.
+  """
+  FAILED
+}
+
+"""The boundary of one page of keys."""
+type IdempotencyKeyEdge {
+  node: IdempotencyKey!
+  cursor: String!
+}
+
+"""
+One page of keys, with the total the filters select and the boundary cursors.
+"""
+type IdempotencyKeyConnection {
+  nodes: [IdempotencyKey!]!
+  edges: [IdempotencyKeyEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""
+The fields a key list may be sorted by.
+
+`createdAt` is what an operator chasing a stuck client reaches for — the newest rows are the retries in
+flight — and `expiresAt` is what a retention question is read in. The identifiers are not sort keys: an
+order by identifier is not an order anybody reads a key table in, and the questions those columns
+answer are filters.
+"""
+enum IdempotencyKeySortField {
+  createdAt
+  expiresAt
+  lockedAt
+  scope
+  status
+}
+
+"""The order the keys are returned in. At most three keys are accepted."""
+input IdempotencyKeySort {
+  field: IdempotencyKeySortField!
+  direction: SortDirection!
+}
+
+"""Comparison on the lifecycle of a key."""
+input IdempotencyStatusFilter {
+  eq: IdempotencyStatus
+  ne: IdempotencyStatus
+  in: [IdempotencyStatus!]
+  nin: [IdempotencyStatus!]
+  isNull: Boolean
+}
+
+"""
+The fields a key list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row, and the set is deliberately the columns an operator actually
+searches by: the operation, the client's own key, the lifecycle and the resource it points at. A key
+table is not browsed — an operator arrives at it already knowing which operation and which key the
+stuck client is holding — and a pattern match over the request hash, or a range over the whole table,
+would invite the scan the unique index exists to avoid. The tenant and the organization are absent
+because both are applied to the read from the credential rather than from the caller.
+"""
+input IdempotencyKeyFilter {
+  id: IDFilter
+  key: StringFilter
+  scope: StringFilter
+  requestHash: StringFilter
+  status: IdempotencyStatusFilter
+  responseStatus: NumberFilter
+  resourceType: StringFilter
+  resourceId: IDFilter
+  expiresAt: DateTimeFilter
+  lockedAt: DateTimeFilter
+  createdAt: DateTimeFilter
+  updatedAt: DateTimeFilter
+  and: [IdempotencyKeyFilter!]
+  or: [IdempotencyKeyFilter!]
+  not: IdempotencyKeyFilter
 }
 
 """A stored image."""
@@ -33491,6 +33791,138 @@ input UpdateProductInput {
   optionDeleteInputs: [ProductOptionInput!]
 }
 
+"""The operation one item of a product batch performs."""
+enum ProductBulkOperation {
+  """A row is written from the item's members."""
+  create
+
+  """A row the item names is changed."""
+  update
+
+  """A row the item names is archived: kept, and no longer listed."""
+  delete
+
+  """A row the item names is changed, or written when it names none."""
+  upsert
+}
+
+"""
+One item of a product batch: the operation it performs and the product it performs it on.
+
+The members are the product's own write members, so an item states exactly what the equivalent
+single-item request states and nothing beside it. A member that is absent is a member the item says
+nothing about, which is a different request from a member stated as empty. Tags are named by the
+identifier the pivot row is written from, never by the tag row beside it.
+"""
+input ProductBulkItem {
+  """The operation this item performs."""
+  op: ProductBulkOperation!
+
+  """
+  The row the item addresses. Stated by the operations that change or archive a product.
+  """
+  id: ID
+
+  """The operator-facing code, unique within the organization."""
+  code: String
+
+  """
+  Whether the product may be sold. A disabled product stays readable and cannot be ordered.
+  """
+  enabled: Boolean
+
+  """
+  A denormalised thumbnail URL, for the lists that must not join the asset table.
+  """
+  imageUrl: String
+
+  """The asset the storefront shows as the product's cover."""
+  featuredImageId: ID
+
+  """The operator's classification of the product."""
+  productTypeId: ID
+
+  """The merchandising grouping the product belongs to."""
+  productCategoryId: ID
+
+  """The facets to attach to the product."""
+  tagIds: [ID!]
+
+  """The product's name and description, one row per language."""
+  translations: [ProductTranslationInput!]
+}
+
+"""
+What a caller states when it applies a batch of products.
+
+`atomic` asks for the batch as one write: either every item applies or none of them does. A batch that
+does not ask for it applies what it can and reports the items it could not — the flag is the whole
+difference between the two answers, and neither is a guess about the other.
+
+`idempotencyKey` is the retry key of this batch, and it is optional: the operation honours a key and
+does not demand one. A GraphQL request may carry many mutations in one document and a header cannot
+say which of them a key belongs to, so the key travels here, beside the input it qualifies, and is
+read by the same kernel that stores and replays the REST surface's keys.
+"""
+input BulkCreateProductsInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [ProductBulkItem!]!
+
+  """Whether the batch is applied as one write."""
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+One item's outcome: the row that changed, or the item's own failure.
+
+The index is part of the answer because a batch is answered in one piece — a caller that sent twenty
+items reads which of them applied without matching rows back to a request by hand.
+"""
+type BulkProductItemResult {
+  """The item's position in the request."""
+  index: Int!
+
+  """Whether the item applied."""
+  ok: Boolean!
+
+  """The row that changed, when the item applied."""
+  id: ID
+
+  """The resource that changed, so a mixed batch reads unambiguously."""
+  resource: String
+
+  """
+  Why the item did not apply, with the code the same item would have produced alone. The path names the item it belongs to.
+  """
+  error: UserError
+}
+
+"""
+What a batch of products adds up to.
+
+`succeeded` and `failed` are the counts of the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == items.length` against the same answer rather than against a second number that
+could disagree with it.
+"""
+type BulkCreateProductsPayload {
+  """One entry per request item, in request order."""
+  results: [BulkProductItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
+}
+
 """One emoji one actor left on one row of another domain."""
 type Reaction {
   id: ID!
@@ -44076,6 +44508,12 @@ type StockLevel {
   id: ID!
   warehouseId: ID!
   variantId: ID!
+
+  """
+  The counter a conditional write is stated against. It travels with the availability because a
+  client can only condition a write on a version it has read.
+  """
+  version: Int!
   quantity: Float!
   reservedQuantity: Float!
   safetyStock: Float!
@@ -44107,11 +44545,18 @@ type StockLevelReconciliation {
 
 """
 What the caller wants a reconciliation run to walk. Everything may be left out.
+
+`version` is the level counter the run is conditioned on and `idempotencyKey` the key a retry
+presents. Both are nullable, and both answer exactly as the REST route answers: a version that has
+moved is refused with the platform's conflict code, and a key already used for this request is
+replayed instead of running the run a second time.
 """
 input StockLevelReconciliationInput {
   warehouseId: ID
   variantId: ID
   take: Int
+  version: Int
+  idempotencyKey: String
 }
 
 input StockAdjustmentInput {
@@ -44124,6 +44569,11 @@ input StockAdjustmentInput {
   note: String
 }
 
+"""
+The hold a caller wants placed. `version` is the level counter the availability decision was
+made from and `idempotencyKey` the key a retry presents; both mirror the REST route, and both are
+nullable so a caller that states neither is answered rather than refused.
+"""
 input StockReservationInput {
   variantId: ID!
   productId: ID!
@@ -44134,13 +44584,19 @@ input StockReservationInput {
   lineId: ID
   expiresAt: DateTime
   allowBackorder: Boolean
+  version: Int
+  idempotencyKey: String
 }
 
+"""
+The transfer a caller wants drafted. `idempotencyKey` makes a retry of the draft safe.
+"""
 input StockTransferInput {
   fromWarehouseId: ID!
   toWarehouseId: ID!
   note: String
   lines: [StockTransferLineInput!]
+  idempotencyKey: String
 }
 
 input StockTransferLineInput {
@@ -44171,6 +44627,9 @@ input StockTransferReceiveLineInput {
   damagedQuantity: Float
 }
 
+"""
+The alert rule a caller wants created. `idempotencyKey` makes a retry of the rule safe.
+"""
 input StockAlertInput {
   variantId: ID!
   warehouseId: ID
@@ -44179,6 +44638,7 @@ input StockAlertInput {
   notifyRoles: [String!]
   cooldownMinutes: Int
   isActive: Boolean
+  idempotencyKey: String
 }
 
 input StockCountInput {
@@ -44787,12 +45247,20 @@ input WarehouseBinRangeInput {
   sortOrder: Int
 }
 
-"""The scope of a bin reconciliation."""
+"""
+The scope of a bin reconciliation.
+
+`version` is the level counter the run is conditioned on and `idempotencyKey` the key a retry
+presents; both are nullable and both answer exactly as the REST route answers, because a run walks
+a batch of levels and a caller cannot name one version for all of them.
+"""
 input ReconcileBinsInput {
   warehouseId: ID!
   zoneId: ID
   binIds: [ID!]
   repair: Boolean
+  version: Int
+  idempotencyKey: String
 }
 
 """What one reconciliation found."""
@@ -44861,7 +45329,9 @@ input PickListInput {
   fulfillmentIds: [ID!]
 }
 
-"""What sealing a slip recorded."""
+"""
+What sealing a slip recorded. `idempotencyKey` is the key a retry of the seal presents.
+"""
 input PackSlipContentInput {
   packageCount: Int!
   totalWeight: Decimal
@@ -44870,6 +45340,7 @@ input PackSlipContentInput {
   trackingNumber: String
   labelUrl: String
   note: String
+  idempotencyKey: String
 }
 
 """The definition of a manifest."""
@@ -44883,13 +45354,16 @@ input CarrierManifestInput {
   note: String
 }
 
-"""What the dock recorded at hand-over."""
+"""
+What the dock recorded at hand-over. `idempotencyKey` is the key a retry of the hand-over presents.
+"""
 input HandOverManifestInput {
   scanCount: Int
 
   """Tracking numbers the carrier scanned that the manifest does not carry."""
   scannedTrackingNumbers: [String!]
   note: String
+  idempotencyKey: String
 }
 
 """The outcome of a mutation on a zone."""
@@ -44916,7 +45390,13 @@ type BinReconciliationPayload {
   userErrors: [UserError!]!
 }
 
-"""One home-bin declaration: the variant and the location it is kept at."""
+"""
+One home-bin declaration: the variant and the location it is kept at.
+
+`version` is the level counter the declaration is conditioned on — the address is part of the
+state a caller reads, so a declaration overwriting a concurrent one is the same lost update as a
+quantity — and `idempotencyKey` is the key a retry presents.
+"""
 input AssignWarehouseBinInput {
   variantId: ID!
   warehouseId: ID!
@@ -44924,6 +45404,8 @@ input AssignWarehouseBinInput {
   """The level row, when the caller has it."""
   levelId: ID
   reason: String
+  version: Int
+  idempotencyKey: String
 }
 
 """
@@ -44935,7 +45417,13 @@ type AssignWarehouseBinPayload {
   userErrors: [UserError!]!
 }
 
-"""One put-away: the units being placed, and where they walk from."""
+"""
+One put-away: the units being placed, and where they walk from.
+
+`version` is the level counter the walk is conditioned on, so units are never walked into an
+address whose state the caller has not seen, and `idempotencyKey` is the key a retry presents —
+a second walk of the same units is a second arrival.
+"""
 input PutAwayWarehouseBinInput {
   variantId: ID!
   warehouseId: ID!
@@ -44952,6 +45440,8 @@ input PutAwayWarehouseBinInput {
   """The row that asked for the walk."""
   referenceId: ID
   reason: String
+  version: Int
+  idempotencyKey: String
 }
 
 """What a put-away wrote."""
@@ -45157,6 +45647,7 @@ input CreateCartInput {
   locale: String
   note: String
   externalId: String
+  idempotencyKey: String
 }
 
 input UpdateCartInput {
@@ -45168,6 +45659,7 @@ input UpdateCartInput {
   note: String
   isTaxExempt: Boolean
   externalId: String
+  version: Int
 }
 
 input AddCartLineInput {
@@ -45188,6 +45680,8 @@ input AddCartLineInput {
   note: String
   warehouseId: ID
   subscriptionPlanId: ID
+  version: Int
+  idempotencyKey: String
 }
 
 input UpdateCartLineInput {
@@ -45197,6 +45691,7 @@ input UpdateCartLineInput {
   unitPrice: Decimal
   note: String
   warehouseId: ID
+  version: Int
 }
 
 input SetCartShippingMethodInput {
@@ -45208,6 +45703,8 @@ input SetCartShippingMethodInput {
   isManual: Boolean
   taxCategoryId: ID
   data: JSON
+  version: Int
+  idempotencyKey: String
 }
 
 input ApplyCartPromotionInput {
@@ -45217,15 +45714,19 @@ input ApplyCartPromotionInput {
   code: String
   amount: Decimal!
   isAutomatic: Boolean
+  version: Int
+  idempotencyKey: String
 }
 
 input StartCheckoutInput {
   cartId: ID!
   step: String
+  idempotencyKey: String
 }
 
 input CompleteCheckoutInput {
   cartId: ID!
+  version: Int
   idempotencyKey: String
   paymentSessionId: ID
 }
@@ -45500,6 +46001,10 @@ type OrderTransaction {
 type OrderChange {
   id: ID!
   orderId: ID!
+
+  """
+  The order version this change produces when it is applied; not a version of the change itself.
+  """
   version: Int!
   changeType: String!
   status: String!
@@ -45611,6 +46116,11 @@ input CreateOrderInput {
   """The settlement schedule the order is placed against."""
   paymentTermId: ID
   externalId: String
+
+  """
+  Retry key: a repeat of this input under the same key is answered from the first attempt.
+  """
+  idempotencyKey: String
 }
 
 input UpdateOrderInput {
@@ -45621,6 +46131,11 @@ input UpdateOrderInput {
   externalId: String
   cancelReason: String
   paymentTermId: ID
+
+  """
+  The version of the order this change was reasoned about; omitted, the write is refused.
+  """
+  version: Int
 }
 
 """The request that records one line-to-invoice link."""
@@ -45666,6 +46181,11 @@ input RequestOrderEditInput {
   changeType: String
   note: String
   actions: [OrderChangeActionInput!]!
+
+  """
+  Retry key: a repeat of this input under the same key is answered from the first attempt.
+  """
+  idempotencyKey: String
 }
 
 """The request that records one refund against an order line."""
@@ -46409,6 +46929,7 @@ input AuthorizePaymentSessionInput {
 input VoidPaymentSessionInput {
   id: ID!
   reason: String
+  idempotencyKey: String
 }
 
 input CapturePaymentInput {
@@ -48176,6 +48697,12 @@ input CreateShippingProfileInput {
   code: String!
   isDefault: Boolean
   description: String
+
+  """
+  The client's own key for this request, honoured when one is presented. A request retried under
+  the same key is answered with what the first attempt wrote instead of raising a second profile.
+  """
+  idempotencyKey: String
 }
 
 input CreateShippingOptionInput {
@@ -48197,6 +48724,12 @@ input CreateShippingOptionInput {
   allowPickup: Boolean
   maxWeight: Decimal
   maxItemCount: Int
+
+  """
+  The client's own key for this request, honoured when one is presented. A request retried under
+  the same key is answered with what the first attempt wrote instead of raising a second option.
+  """
+  idempotencyKey: String
 }
 
 input ShippingOptionAssignmentInput {
@@ -48223,6 +48756,12 @@ input CreateFulfillmentInput {
   noNotification: Boolean
   note: String
   lines: [FulfillmentLineInput!]!
+
+  """
+  The client's own key for this request, which this operation requires. A fulfilment that is
+  created twice ships the same goods twice, so the mutation is refused without one.
+  """
+  idempotencyKey: String
 }
 
 input UpdateFulfillmentInput {
@@ -48239,6 +48778,12 @@ input ShipFulfillmentInput {
   carrier: String
   service: String
   noNotification: Boolean
+
+  """
+  The client's own key for this request, honoured when one is presented. A request retried under
+  the same key is answered with the shipment the first attempt handed over.
+  """
+  idempotencyKey: String
 }
 
 input ShippingEligibilityInput {
@@ -48340,6 +48885,13 @@ type OrderReturn {
 
   """The quantity still expected back across the return's lines."""
   outstandingQuantity: Decimal!
+
+  """
+  The version of the return, which every write of it moves on. A client states the version it
+  read so its write can be refused when someone else moved the return on in between, and reads
+  the new one back from the payload of the write.
+  """
+  version: Int!
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -48563,6 +49115,13 @@ input RequestOrderReturnInput {
   shippingOptionId: ID
   noNotification: Boolean
   note: String
+
+  """
+  The client's own key for this request, honoured when one is presented. A request that is
+  retried under the same key is answered with the first attempt's response instead of raising a
+  second return.
+  """
+  idempotencyKey: String
 }
 
 """One line as it is received back."""
@@ -48579,6 +49138,17 @@ input ReceiveOrderReturnInput {
   warehouseId: ID
   refund: Decimal
   note: String
+
+  """
+  The version of the return the caller read, which this receipt is predicated on.
+  """
+  version: Int
+
+  """
+  The client's own key for this request, which this operation requires. A receipt is refused
+  without one, because receiving the same goods twice restocks and refunds them twice.
+  """
+  idempotencyKey: String
 }
 
 """The definition of a governed return reason."""
@@ -48803,6 +49373,11 @@ type CustomerSubscription {
   currency: String!
   metadata: JSON
 
+  """
+  Optimistic lock: the value a caller states back on the mutation that writes this subscription.
+  """
+  version: Int!
+
   """The recurring lines each cycle bills."""
   items: [SubscriptionItem!]!
 
@@ -49014,6 +49589,7 @@ input CreateSubscriptionInput {
   startTrial: Boolean
   discountPercentage: Decimal
   metadata: JSON
+  idempotencyKey: String
 }
 
 """The fields a subscription's caller may move."""
@@ -49022,6 +49598,10 @@ input UpdateSubscriptionInput {
   paymentMethodTokenId: ID
   quantity: Decimal
   metadata: JSON
+
+  """The version the caller read the subscription at."""
+  version: Int
+  idempotencyKey: String
 }
 
 """The request that moves a subscription to another plan."""
@@ -49030,12 +49610,20 @@ input ChangeSubscriptionPlanInput {
   quantity: Decimal
   effective: String
   note: String
+
+  """The version the caller read the subscription at."""
+  version: Int
+  idempotencyKey: String
 }
 
 """The request that suspends billing."""
 input PauseSubscriptionInput {
   until: DateTime
   reason: String
+
+  """The version the caller read the subscription at."""
+  version: Int
+  idempotencyKey: String
 }
 
 """The request that ends a subscription."""
@@ -49044,16 +49632,28 @@ input CancelSubscriptionInput {
 
   """True stops billing now; false lets the paid period run out."""
   immediate: Boolean
+
+  """The version the caller read the subscription at."""
+  version: Int
+  idempotencyKey: String
 }
 
 """The request that ends a subscription because it ran out."""
 input ExpireSubscriptionInput {
   reason: String
+
+  """The version the caller read the subscription at."""
+  version: Int
+  idempotencyKey: String
 }
 
 """The request that bills one cycle of one subscription."""
 input BillSubscriptionInput {
   asOf: DateTime
+
+  """The version the caller read the subscription at."""
+  version: Int
+  idempotencyKey: String
 }
 
 """The request that runs a billing pass."""
@@ -49747,6 +50347,13 @@ input CreatePurchaseOrderInput {
   shippingTotal: Decimal
   note: String
   lines: [PurchaseOrderLineInput!]!
+
+  """
+  The client's own key for this request, honoured when one is presented. A request retried under
+  the same key is answered with the order the first attempt raised instead of raising a second
+  document for the same purchase.
+  """
+  idempotencyKey: String
 }
 
 """An amendment to a draft purchase order."""
@@ -49790,6 +50397,12 @@ input CreateGoodsReceiptInput {
   overReceiptTolerance: Decimal
   note: String
   lines: [GoodsReceiptLineInput!]!
+
+  """
+  The client's own key for this request, which this operation requires. A delivery that is booked
+  twice books the stock twice, so the mutation is refused without one.
+  """
+  idempotencyKey: String
 }
 
 """One further line recorded against a receipt that was already posted."""
@@ -49964,6 +50577,13 @@ type Entitlement {
 
   """The credentials issued against it."""
   keys: [EntitlementKey!]!
+
+  """
+  The revision of the row. A mutation states the revision it read as the input member 'version'
+  and is refused when the right has moved on since, so two callers editing one right cannot
+  silently overwrite each other.
+  """
+  version: Int!
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -50157,6 +50777,13 @@ input GrantEntitlementInput {
 
   """Grant the right already in force instead of PENDING."""
   activateImmediately: Boolean
+
+  """
+  The key this grant is retried under, so a client whose response was lost re-states the same
+  key rather than granting a second right. Honoured by the surfaces that declare a retry scope;
+  a grant that names no key behaves exactly as it always did.
+  """
+  idempotencyKey: String
 }
 
 """The request that occupies a slot."""
@@ -50173,6 +50800,13 @@ input ActivateEntitlementInput {
   key: String
   activatedByCustomerId: ID
   metadata: JSON
+
+  """
+  The key this activation is retried under, so a device that lost the response re-states the same
+  key rather than taking a second slot. Honoured by the surfaces that declare a retry scope; an
+  activation that states no key behaves exactly as it always did.
+  """
+  idempotencyKey: String
 }
 
 """The request that asks whether a right may be exercised."""
@@ -50200,6 +50834,13 @@ input IssueEntitlementKeyInput {
   """Store a recoverable ciphertext so an operator can re-display the key."""
   storeKey: Boolean
   metadata: JSON
+
+  """
+  The key this issuance is retried under, so a client that lost the response re-states the same
+  key rather than issuing a second credential. Honoured by the surfaces that declare a retry
+  scope; an issuance that states no key behaves exactly as it always did.
+  """
+  idempotencyKey: String
 }
 
 """What a check answered."""

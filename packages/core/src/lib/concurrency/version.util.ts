@@ -86,11 +86,17 @@ export type VersionedWriteOutcome =
  * Reads an `If-Match` header.
  *
  * Clients differ, so the parser is deliberately generous about form and strict about meaning. All
- * of these state version 3: `"3"`, `3`, `W/"3"`. A list states that either version is acceptable,
- * which is what a client that has seen two revisions of the same row sends. `*` states only that
- * the row must exist. Whitespace and an empty list are refused rather than guessed at: a header
- * that parses to nothing would turn a conditional write into an unconditional one, which is the
- * exact failure this mechanism exists to prevent.
+ * of these state version 3: `"3"`, `3` as it arrives, `W/"3"`. A list states that either version is
+ * acceptable, which is what a client that has seen two revisions of the same row sends. `*` states
+ * only that the row must exist. Whitespace and an empty list are refused rather than guessed at: a
+ * header that parses to nothing would turn a conditional write into an unconditional one, which is
+ * the exact failure this mechanism exists to prevent.
+ *
+ * **A header value is text**, so this refuses anything that did not arrive as one — a number reaching
+ * here means a caller built the argument itself rather than taking it off a request, and
+ * `parseEntityTag` is the function that reads a value of any type. `versionFromResolverArgs` is where
+ * a GraphQL operation's numeric `version` member is turned into the text this expects, so both
+ * transports arrive at the same comparison without this parser having to guess at a type.
  *
  * @param header The raw header value, as it arrived.
  * @returns The parsed expectation, or why it could not be used.
@@ -133,6 +139,36 @@ export function parseIfMatch(header: unknown): IfMatchParse | null {
 	return versions.length
 		? { status: 'match', expectation: { wildcard: false, versions } }
 		: { status: 'invalid', reason: 'malformed' };
+}
+
+/**
+ * The version a GraphQL operation states.
+ *
+ * A GraphQL request is one `POST` carrying whatever the document selected, so there is no header
+ * that could say which of three mutations in it a version belongs to. The version therefore travels
+ * beside the input it qualifies — `input.version` on an update, or `version` where the resolver takes
+ * it as its own argument — and this turns either into the shape {@link parseIfMatch} already reads,
+ * so both transports run the same comparison and answer the same codes.
+ *
+ * The members are read in the order a resolver is most likely to declare them, and a member that is
+ * present but unusable is passed through rather than ignored: a client that sent `version: "three"`
+ * has made a mistake, and answering it with `428` would say it sent nothing.
+ *
+ * @param args The resolver's arguments, as Nest hands them over.
+ * @returns The stated version in `If-Match` form, or undefined when none was stated.
+ */
+export function versionFromResolverArgs(args: any): string | undefined {
+	for (const candidate of [args?.input?.version, args?.version]) {
+		if (candidate === undefined || candidate === null) {
+			continue;
+		}
+
+		// Any stated value is passed on, whatever its type: `parseEntityTag` decides whether it is a
+		// version, and a value it refuses becomes `400` rather than silence.
+		return String(candidate);
+	}
+
+	return undefined;
 }
 
 /**

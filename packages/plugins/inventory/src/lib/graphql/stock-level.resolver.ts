@@ -10,7 +10,7 @@ import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/
 import { UseGuards } from '@nestjs/common';
 import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { EventBus, Idempotent, Permissions, PermissionGuard, TenantPermissionGuard, Versioned } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
 import { WarehouseProductVariant } from '@gauzy/core';
 import { StockLevelService } from './../stock-level/stock-level.service';
@@ -25,9 +25,16 @@ export class StockLevelResolver {
 		private readonly eventBus: EventBus
 	) {}
 
-	/** The levels of a location or of a variant, with their derived availability. */
+	/**
+	 * The levels of a location or of a variant, with their derived availability.
+	 *
+	 * A GraphQL operation is always a `POST`, so the resolver states that this one reads rather than
+	 * letting the transport decide: the version travels out with the levels and is never demanded of
+	 * the caller.
+	 */
 	@Query('stockLevels')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
+	@Versioned({ write: false })
 	async stockLevels(
 		@Args('warehouseId') warehouseId: string,
 		@Args('variantId') variantId: string,
@@ -36,9 +43,10 @@ export class StockLevelResolver {
 		return await this.service.findLevels({ warehouseId, variantId, take });
 	}
 
-	/** One level row with its derived availability. */
+	/** One level row with its derived availability, and the counter a write is conditioned on. */
 	@Query('stockLevel')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
+	@Versioned({ write: false })
 	async stockLevel(@Args('warehouseId') warehouseId: string, @Args('variantId') variantId: string): Promise<any> {
 		return await this.service.findLevel(warehouseId, variantId);
 	}
@@ -46,6 +54,7 @@ export class StockLevelResolver {
 	/** Availability of a variant at a location: on hand minus reserved minus the unsellable buffer. */
 	@Query('availableQuantity')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
+	@Versioned({ write: false })
 	async availableQuantity(@Args('warehouseId') warehouseId: string, @Args('variantId') variantId: string): Promise<any> {
 		return await this.service.availableQuantity(warehouseId, variantId);
 	}
@@ -58,9 +67,16 @@ export class StockLevelResolver {
 	 * one than the client that reaches it over REST. It carries the reconciliation permission rather
 	 * than the read permission the queries carry, so a role that may look at levels cannot correct them
 	 * by choosing the other protocol.
+	 *
+	 * The version is optional for the reason the REST route states: a run walks a batch of levels and a
+	 * caller cannot name one version for all of them, while a stated version is honoured for the level
+	 * it names. The key mirrors the REST scope, so a retry over either protocol replays rather than
+	 * running the run again.
 	 */
 	@Mutation('reconcileStockLevels')
 	@Permissions(InventoryPermission.STOCK_RECONCILE as PermissionsEnum)
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'stock.reconcile', required: false, resourceType: 'stock-level' })
 	async reconcileStockLevels(@Args('input') input: any): Promise<any> {
 		return await this.service.reconcile({
 			warehouseId: input?.warehouseId,

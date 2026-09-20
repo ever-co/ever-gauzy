@@ -44,11 +44,25 @@ jest.mock('@gauzy/core', () => {
 
 	class BaseEntity {}
 
-	class TenantAwareCrudService {
+	class CrudService {
 		constructor(
 			protected readonly typeOrmRepository: any,
 			protected readonly mikroOrmRepository?: any
 		) {}
+
+		get ormType(): string {
+			return 'typeorm';
+		}
+
+		async update(id: any, partial: any): Promise<any> {
+			return this.typeOrmRepository.update(id, partial);
+		}
+	}
+
+	class TenantAwareCrudService extends CrudService {
+		constructor(typeOrmRepository: any, mikroOrmRepository?: any) {
+			super(typeOrmRepository, mikroOrmRepository);
+		}
 
 		get ormType(): string {
 			return 'typeorm';
@@ -121,6 +135,7 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		CrudService,
 		TenantAwareCrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
@@ -133,6 +148,13 @@ jest.mock('@gauzy/core', () => {
 		MultiORMOneToMany: decorator,
 		MultiORMManyToOne: decorator,
 		JsonColumn: decorator,
+		Idempotent: decorator,
+		Versioned: decorator,
+		VersionedColumn: decorator,
+		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.commitVersionedUpdate,
+		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.versionExpectationOf,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -307,8 +329,9 @@ function repository(tables: Record<string, any[]>, tableName: TableName) {
 			return created;
 		},
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows().findIndex((row) => row.id === id);
+			const index = rows().findIndex((row) =>
+				matches(row, typeof criteria === 'string' ? { id: criteria } : criteria)
+			);
 
 			if (index >= 0) {
 				Object.assign(rows()[index], partial);
@@ -418,7 +441,10 @@ function world(
 		{
 			findByOwner: async (ownerType: string, ownerId: string) =>
 				taxRows.filter((row) => row.ownerType === ownerType && row.ownerId === ownerId)
-		} as never
+		} as never,
+		// The aggregate's version-predicated write resolves the order's writer by token. The order
+		// service is built below, so the lookup answers the resolved instance when a write runs.
+		{ get: () => orderService } as never
 	);
 
 	const allocate = jest.fn(async () => ({ formatted: 'ORD-000900', value: 900, key: 'ORDER' }));

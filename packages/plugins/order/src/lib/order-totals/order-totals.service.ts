@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import {
 	AdjustmentOwnerType,
 	FulfillmentStatus,
@@ -10,9 +11,10 @@ import {
 	OrderPaymentStatus,
 	TaxLineOwnerType
 } from '@gauzy/contracts';
-import { AdjustmentService, TaxLineService } from '@gauzy/core';
+import { AdjustmentService, CrudService, TaxLineService, commitVersionedUpdate } from '@gauzy/core';
 import { ITotalsAdjustment, ITotalsContext, ITotalsSnapshot, ITotalsTaxLine, TotalsCalculator } from '@gauzy/plugin-cart';
 import { Order } from '../order/order.entity';
+import { ANY_ORDER_VERSION, ORDER_AGGREGATE_WRITER, OrderVersionExpectation } from '../order.types';
 import { OrderCreditLine } from '../order-credit-line/order-credit-line.entity';
 import { OrderCreditLineService } from '../order-credit-line/order-credit-line.service';
 import { OrderLine } from '../order-line/order-line.entity';
@@ -27,12 +29,43 @@ import { OrderStateMachine } from '../order-state-machine/order-state-machine';
 import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repository';
 
 /**
+ * What a recalculation is told beyond the order it acts on.
+ */
+export interface IOrderRecalculation {
+	/**
+	 * The version the caller read the order at.
+	 *
+	 * A route passes what its `If-Match` header stated, so a recalculation reasoned about from an
+	 * order that has moved on is refused rather than applied on top of someone else's change. A caller
+	 * inside the package states nothing and the write is predicated on the version the row holds when
+	 * the statement runs.
+	 */
+	expectation?: OrderVersionExpectation;
+
+	/**
+	 * The columns the triggering operation commits in the same statement as the totals.
+	 *
+	 * A lifecycle move and the totals it produces are one write, not two that a reader could observe
+	 * apart: the state machine's own columns ride here, so the order's version advances exactly once
+	 * per move and exactly one summary row describes each version. A patch that stated a version would
+	 * be ignored — the conditional update decides the version, never the caller.
+	 */
+	patch?: Record<string, unknown>;
+}
+
+/**
  * The only writer of an order's total columns.
  *
- * The chain itself is not implemented here: it is `TotalsCalculator` â€” one function, shared with the
+ * The chain itself is not implemented here: it is `TotalsCalculator` — one function, shared with the
  * cart, so a cart and the order it becomes cannot compute a total differently. What this service adds is
  * everything an order has and a cart does not: the credit lines, the money ledger, the two materialised
  * statuses, the version bump and the summary row that makes each version's totals answerable later.
+ *
+ * **The version bump is a version-predicated write.** The totals, the materialised statuses, the
+ * columns the triggering move carries and the version are written by one `UPDATE … WHERE id = :id AND
+ * version = :expected`, through `commitVersionedUpdate`, so the comparison and the increment cannot be
+ * separated by another writer. The `order_summary` row is then written for the version that statement
+ * returned, which is what keeps "one row per committed version, never skipped" true.
  *
  * Everything happens in one call and is meant to run inside the transaction of the write that triggered
  * it, so a reader never sees a total that disagrees with the lines it was computed from.
@@ -47,7 +80,8 @@ export class OrderTotalsService {
 		private readonly transactionService: OrderTransactionService,
 		private readonly summaryService: OrderSummaryService,
 		private readonly adjustmentService: AdjustmentService,
-		private readonly taxLineService: TaxLineService
+		private readonly taxLineService: TaxLineService,
+		private readonly moduleRef: ModuleRef
 	) {}
 
 	/**
@@ -56,62 +90,90 @@ export class OrderTotalsService {
 	 * @param orderId The order.
 	 * @param reason Why the totals moved, recorded on the summary row: `PLACED`, `CHANGE_CONFIRMED`,
 	 * `PAYMENT_RECONCILED`, `FULFILLMENT_COMMITTED`, `CASH_ROUNDED`.
-	 * @param expectedVersion When supplied and different from the stored version, the write is refused
-	 * rather than applied on top of someone else's change.
+	 * @param options The version the caller read the order at, and the columns the move commits with
+	 * the totals.
 	 * @returns The order, as written.
 	 */
-	public async recompute(orderId: ID, reason: string, expectedVersion?: number): Promise<Order> {
+	public async recompute(orderId: ID, reason: string, options: IOrderRecalculation = {}): Promise<Order> {
 		const order = await this.typeOrmOrderRepository.findOne({ where: { id: orderId } });
 
 		if (!order) {
 			throw new NotFoundException(`ORDER_NOT_FOUND: no order exists with id ${orderId}.`);
 		}
 
-		if (expectedVersion !== undefined && Number(order.version) !== Number(expectedVersion)) {
-			throw new NotFoundException(
-				`ORDER_VERSION_CONFLICT: the order is at version ${order.version}, not ${expectedVersion}.`
-			);
-		}
+		// The row as the triggering move will leave it. The money and fulfilment states are derived from
+		// the order's own status, so a placement or a cancellation has to be read through the columns it
+		// is about to write rather than from the row as it still stands.
+		const moved: Order = { ...order, ...(options.patch ?? {}) } as Order;
+		const snapshot = await this.computeTotals(moved);
+		const paymentStatus = await this.derivePaymentStatus(moved, snapshot);
+		const fulfillmentStatus = await this.deriveFulfillmentStatus(moved);
+		const promisedAt = await this.promisedDate(moved);
 
-		const snapshot = await this.computeTotals(order);
-		const paymentStatus = await this.derivePaymentStatus(order, snapshot);
-		const fulfillmentStatus = await this.deriveFulfillmentStatus(order);
-		const promisedAt = await this.promisedDate(order);
-		const version = Number(order.version) + 1;
-
-		await this.typeOrmOrderRepository.update(order.id, {
-			itemSubtotal: snapshot.itemSubtotal,
-			itemDiscountTotal: snapshot.itemDiscountTotal,
-			itemTaxTotal: snapshot.itemTaxTotal,
-			shippingSubtotal: snapshot.shippingSubtotal,
-			shippingDiscountTotal: snapshot.shippingDiscountTotal,
-			shippingTaxTotal: snapshot.shippingTaxTotal,
-			discountTotal: snapshot.discountTotal,
-			taxTotal: snapshot.taxTotal,
-			grandTotal: snapshot.grandTotal,
-			creditTotal: snapshot.creditTotal,
-			paidTotal: snapshot.paidTotal,
-			refundedTotal: snapshot.refundedTotal,
-			outstandingTotal: snapshot.outstandingTotal,
-			paymentStatus,
-			fulfillmentStatus,
-			sellerCount: await this.countSellers(order),
-			promisedAt,
-			version
-		} as any);
+		// `version` is deliberately absent: the conditional update writes the next version in the same
+		// statement that checks the current one, and a patch that carried one would move the row past
+		// the version the write was predicated on.
+		const { version } = await commitVersionedUpdate<Order>(this.orderWriter(), {
+			id: orderId,
+			expectation: options.expectation ?? ANY_ORDER_VERSION,
+			patch: {
+				...(options.patch ?? {}),
+				itemSubtotal: snapshot.itemSubtotal,
+				itemDiscountTotal: snapshot.itemDiscountTotal,
+				itemTaxTotal: snapshot.itemTaxTotal,
+				shippingSubtotal: snapshot.shippingSubtotal,
+				shippingDiscountTotal: snapshot.shippingDiscountTotal,
+				shippingTaxTotal: snapshot.shippingTaxTotal,
+				discountTotal: snapshot.discountTotal,
+				taxTotal: snapshot.taxTotal,
+				grandTotal: snapshot.grandTotal,
+				creditTotal: snapshot.creditTotal,
+				paidTotal: snapshot.paidTotal,
+				refundedTotal: snapshot.refundedTotal,
+				outstandingTotal: snapshot.outstandingTotal,
+				paymentStatus,
+				fulfillmentStatus,
+				sellerCount: await this.countSellers(moved),
+				promisedAt
+			} as Record<string, unknown>
+		});
 
 		// One row per committed version, written in the same transaction as the columns it describes.
 		// The row for the current version always equals the denormalised totals; the nightly audit
 		// verifies exactly that.
 		await this.summaryService.create({
-			orderId: order.id,
+			orderId,
 			version,
 			totals: { ...snapshot },
 			currency: order.currency,
 			reason
 		} as any);
 
-		return this.typeOrmOrderRepository.findOne({ where: { id: order.id } });
+		return this.typeOrmOrderRepository.findOne({ where: { id: orderId } });
+	}
+
+	/**
+	 * The service that owns the order row.
+	 *
+	 * Resolved when a write runs rather than injected: `OrderService` is constructed *from* this
+	 * service and calls it for every move it makes, so an injected dependency would close a cycle the
+	 * container cannot express. The token is registered by the order module and aliases the order
+	 * service — the same late lookup the concurrency kernel's own guard performs for the service a
+	 * route names. A missing registration is reported rather than absorbed, because a write that
+	 * silently stopped being version-predicated would leave every caller believing it was.
+	 *
+	 * @returns The order aggregate's service.
+	 */
+	private orderWriter(): CrudService<Order> {
+		const writer = this.moduleRef?.get<CrudService<Order>>(ORDER_AGGREGATE_WRITER, { strict: false });
+
+		if (!writer || typeof writer.update !== 'function' || typeof writer.findOneByIdString !== 'function') {
+			throw new InternalServerErrorException(
+				'ORDER_WRITER_UNAVAILABLE: the order aggregate has no versioned writer registered.'
+			);
+		}
+
+		return writer;
 	}
 
 	/**

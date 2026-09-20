@@ -204,8 +204,14 @@ export {
 	IdempotencyModule,
 	IdempotencyService,
 	Idempotent,
-	IDEMPOTENT_METADATA_KEY
+	IDEMPOTENT_METADATA_KEY,
+	IDEMPOTENCY_KEY_MEMBER
 } from './lib/idempotency';
+// The concurrency kernel's surface is the decorator a route adopts *and* the pieces a plugin has to
+// name to implement one: the type of the expectation its write is predicated on, the increment that
+// keeps every writer moving the counter by the same step, and the metadata key a spec reads to assert
+// a route declared the convention. A plugin that has to derive or restate any of the three from the
+// outside is a plugin that can drift from the kernel it is implementing.
 export {
 	Versioned,
 	VersionGuard,
@@ -214,7 +220,11 @@ export {
 	commitVersionedUpdate,
 	parseIfMatch,
 	formatEntityTag,
-	versionExpectationOf
+	versionExpectationOf,
+	bumpVersion,
+	IVersionExpectation,
+	VERSIONED_METADATA_KEY,
+	VERSION_EXPECTATION_PROPERTY
 } from './lib/concurrency';
 /**
  * The API conventions a resource adopts: the query protocol, field-level visibility, bulk

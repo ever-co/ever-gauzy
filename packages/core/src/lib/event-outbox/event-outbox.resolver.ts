@@ -13,6 +13,7 @@ import { RequestContext } from '../core/context/request-context';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GraphqlPubSub } from '../graphql/subscriptions/graphql-pubsub.service';
 import { Permissions } from '../shared/decorators';
+import { Idempotent } from '../idempotency/idempotent.decorator';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EventOutboxService } from './event-outbox.service';
 import {
@@ -271,6 +272,7 @@ export class EventOutboxResolver {
 	 */
 	@Mutation('replayEventDelivery')
 	@Permissions(PermissionsEnum.EVENT_OUTBOX_RETRY)
+	@Idempotent({ scope: 'event.delivery.replay', resourceType: 'event_delivery' })
 	async replayEventDelivery(@Args('id', { type: () => ID }) id: Id): Promise<IEventDelivery> {
 		return this.eventOutboxService.replayDelivery(id);
 	}
@@ -284,6 +286,7 @@ export class EventOutboxResolver {
 	 */
 	@Mutation('markEventDeliveryDead')
 	@Permissions(PermissionsEnum.EVENT_OUTBOX_RETRY)
+	@Idempotent({ scope: 'event.delivery.mark-dead', resourceType: 'event_delivery' })
 	async markEventDeliveryDead(@Args('input') input: IMarkEventDeliveryDeadInput): Promise<IEventDelivery> {
 		return this.eventOutboxService.deadLetterDelivery(input.id, input.reason);
 	}

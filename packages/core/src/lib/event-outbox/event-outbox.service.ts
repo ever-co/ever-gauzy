@@ -659,6 +659,12 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * dead-letter write leaves that column alone; a move that cleared it would be editing a fact it
 	 * was not asked about.
 	 *
+	 * **What the move does do to the rest of the stream is advance the order gate past this position.**
+	 * The gate asks what a consumer has settled, and a record an operator has deliberately stopped is
+	 * settled — so the events that follow it stop waiting for a position that will never be published.
+	 * A dead letter is therefore not only a diagnosis; it is the one thing that unblocks the aggregate
+	 * it belongs to.
+	 *
 	 * @param id The record id.
 	 * @param reason Why the record is being stopped.
 	 * @returns The record as it stands after the move.
@@ -678,9 +684,21 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * This is the order gate: a consumer that receives `n + 2` while `n + 1` is still in flight
 	 * rejects the message and is redelivered later, so a gap never becomes a silently skipped event.
 	 *
+	 * **A dead letter is a resolved position.** The gate advances past a position that was published
+	 * *or* deliberately stopped, because dead-lettering is an operator deciding that this fact will
+	 * never reach this consumer — and a gate that kept waiting for it would hold every later event of
+	 * the aggregate forever, which is a worse outcome than the one the operator chose. The two are not
+	 * the same fact and the record keeps the difference in its `status`: what the gate answers is
+	 * whether the position is settled, not whether it was delivered.
+	 *
+	 * A replay moves a dead letter back to `PENDING`, which un-settles it: the position leaves the gate
+	 * until the re-driven attempt either publishes or is stopped again. That is the ordering guarantee
+	 * being re-established rather than a side effect — an operator who asks for the fact to be
+	 * delivered again is asking for it to be delivered in its place.
+	 *
 	 * @param consumerKey The consumer key.
 	 * @param partitionKey The ordering key.
-	 * @returns The highest delivered sequence, or 0 when nothing of the partition was delivered.
+	 * @returns The highest settled sequence, or 0 when nothing of the partition was settled.
 	 */
 	async findLastDeliveredSequence(consumerKey: string, partitionKey: string): Promise<number> {
 		const raw = await this.typeOrmEventDeliveryRepository
@@ -688,7 +706,9 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			.select('MAX(delivery.sequence)', 'max')
 			.where('delivery.consumerKey = :consumerKey', { consumerKey })
 			.andWhere('delivery.partitionKey = :partitionKey', { partitionKey })
-			.andWhere('delivery.status = :status', { status: EventOutboxStatus.PUBLISHED })
+			.andWhere('delivery.status IN (:...statuses)', {
+				statuses: [EventOutboxStatus.PUBLISHED, EventOutboxStatus.DEAD]
+			})
 			.getRawOne();
 
 		return Number(raw?.max ?? 0);

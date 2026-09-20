@@ -3,6 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID } from '@gauzy/contracts';
 import {
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -19,6 +20,10 @@ import { CreateOrderLineDTO, RecordOrderLineRefundDTO, UpdateOrderLineDTO } from
  *
  * One controller per entity, on the entity's own concept path, with the same guards and permissions the
  * rest of the platform uses. There is no second surface for this resource and no parallel controller.
+ *
+ * `@Idempotent(...)` is on the create route because a create is what a lost response turns into a
+ * duplicate: a client that never saw the answer cannot tell whether the line exists, so the key it
+ * presents is answered from the record of the first attempt rather than by adding the line again.
  */
 @ApiTags('OrderLine')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -42,6 +47,7 @@ export class OrderLineController extends CrudController<OrderLine> {
 	@ApiOperation({ summary: 'Create an order line' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The order line was created', type: OrderLine })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_CREATE)
+	@Idempotent({ scope: 'order.line.create', required: false, resourceType: 'order_line' })
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })

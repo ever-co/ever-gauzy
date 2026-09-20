@@ -59,6 +59,11 @@ jest.mock('@gauzy/core', () => {
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		Permissions: (...permissions: string[]) => SetMetadata(PERMISSIONS_METADATA, permissions),
 		UseValidationPipe: decorator,
+		// The two conventions the decorated routes carry. Both are decorator factories and nothing more:
+		// the guard and the interceptor they attach are application providers, and a unit test that never
+		// boots the application never runs them.
+		Versioned: () => () => undefined,
+		Idempotent: () => () => undefined,
 		BaseEvent: class {},
 		EventBus: class {},
 		Product: class Product {},
@@ -218,7 +223,10 @@ describe('StockLevelResolver — the reconciliation over GraphQL (doc 09 §10.4)
 describe('StockLevelResolver — one concept, two protocols, the same names (doc 09 §11)', () => {
 	it('declares the reconciliation as a mutation with its input and its report', () => {
 		expect(schemaText).toMatch(/reconcileStockLevels\(input: StockLevelReconciliationInput\): StockLevelReconciliation!/);
-		expect(schemaText).toMatch(/input StockLevelReconciliationInput \{\s*warehouseId: ID\s+variantId: ID\s+take: Int\s*\}/);
+		// The input states the three filters the run walks and the two conventions the mutation adopted:
+		// the level counter a conditional run is stated against, and the key a retry presents. Both are
+		// nullable, so a caller that states neither is answered rather than refused.
+		expect(schemaText).toMatch(/input StockLevelReconciliationInput \{\s*warehouseId: ID\s+variantId: ID\s+take: Int\s+version: Int\s+idempotencyKey: String\s*\}/);
 		expect(schemaText).toMatch(/type StockLevelReconciliation \{\s*scanned: Int!\s*corrected: Int!\s*corrections: \[StockLevelCorrection!\]!\s*\}/);
 		expect(schemaText).toMatch(/type StockLevelCorrection \{/);
 		// The mutation block is where a write belongs: the queries stay queries.

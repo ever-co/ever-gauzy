@@ -15,6 +15,16 @@ import { gql } from 'graphql-tag';
  *
  * Money and quantities are `Decimal`, never `Float`: an amount read here and the same amount read
  * over REST are the same string, and a binary fraction cannot hold a cent exactly.
+ *
+ * **A mutation that writes a subscription states the version it read, and a mutation that mirrors a
+ * retry-safe route declares `idempotencyKey`.** A GraphQL operation always travels over `POST`, so
+ * neither a precondition header nor a retry key could say which root field it belongs to: both ride
+ * beside the input they qualify, as the nullable `version` and `idempotencyKey` members below, which
+ * are siblings of the input where a mutation takes no input object. The requirement to present either
+ * is not restated in the schema — the kernel refuses a mutation that must be retried safely without a
+ * key with `IDEMPOTENCY_KEY_REQUIRED`, and refuses a write that states a version that has moved on
+ * with `ENTITY_VERSION_CONFLICT`, which are the same codes and the same statuses the mirrored routes
+ * answer with. Declaring them non-null here would be a second place for them to drift out of step.
  */
 export const schemaExtensions = gql`
 	"How often a plan bills; the interval multiplies the period."
@@ -114,6 +124,8 @@ export const schemaExtensions = gql`
 		cancelReason: String
 		currency: String!
 		metadata: JSON
+		"Optimistic lock: the value a caller states back on the mutation that writes this subscription."
+		version: Int!
 		"The recurring lines each cycle bills."
 		items: [SubscriptionItem!]!
 		"Every cycle that was billed, or attempted."
@@ -309,6 +321,7 @@ export const schemaExtensions = gql`
 		startTrial: Boolean
 		discountPercentage: Decimal
 		metadata: JSON
+		idempotencyKey: String
 	}
 
 	"The fields a subscription's caller may move."
@@ -317,6 +330,9 @@ export const schemaExtensions = gql`
 		paymentMethodTokenId: ID
 		quantity: Decimal
 		metadata: JSON
+		"The version the caller read the subscription at."
+		version: Int
+		idempotencyKey: String
 	}
 
 	"The request that moves a subscription to another plan."
@@ -325,12 +341,18 @@ export const schemaExtensions = gql`
 		quantity: Decimal
 		effective: String
 		note: String
+		"The version the caller read the subscription at."
+		version: Int
+		idempotencyKey: String
 	}
 
 	"The request that suspends billing."
 	input PauseSubscriptionInput {
 		until: DateTime
 		reason: String
+		"The version the caller read the subscription at."
+		version: Int
+		idempotencyKey: String
 	}
 
 	"The request that ends a subscription."
@@ -338,16 +360,25 @@ export const schemaExtensions = gql`
 		reason: String
 		"True stops billing now; false lets the paid period run out."
 		immediate: Boolean
+		"The version the caller read the subscription at."
+		version: Int
+		idempotencyKey: String
 	}
 
 	"The request that ends a subscription because it ran out."
 	input ExpireSubscriptionInput {
 		reason: String
+		"The version the caller read the subscription at."
+		version: Int
+		idempotencyKey: String
 	}
 
 	"The request that bills one cycle of one subscription."
 	input BillSubscriptionInput {
 		asOf: DateTime
+		"The version the caller read the subscription at."
+		version: Int
+		idempotencyKey: String
 	}
 
 	"The request that runs a billing pass."
@@ -514,11 +545,11 @@ export const schemaExtensions = gql`
 		"Moves a subscription's payer, quantity or metadata."
 		updateSubscription(id: ID!, input: UpdateSubscriptionInput!): CustomerSubscriptionPayload!
 		"Starts billing a pending subscription."
-		activateSubscription(id: ID!): CustomerSubscriptionPayload!
+		activateSubscription(id: ID!, version: Int, idempotencyKey: String): CustomerSubscriptionPayload!
 		"Suspends billing."
 		pauseSubscription(id: ID!, input: PauseSubscriptionInput): CustomerSubscriptionPayload!
 		"Resumes a paused subscription."
-		resumeSubscription(id: ID!): CustomerSubscriptionPayload!
+		resumeSubscription(id: ID!, version: Int, idempotencyKey: String): CustomerSubscriptionPayload!
 		"Ends a subscription."
 		cancelSubscription(id: ID!, input: CancelSubscriptionInput): CustomerSubscriptionPayload!
 		"Ends a subscription because it ran out."
@@ -526,9 +557,20 @@ export const schemaExtensions = gql`
 		"Moves a subscription to another plan, settling the remainder of the current period."
 		changeSubscriptionPlan(id: ID!, input: ChangeSubscriptionPlanInput!): SubscriptionPlanChangePayload!
 		"Adds a recurring line mid-cycle, settling the remainder of the period."
-		addSubscriptionItem(id: ID!, input: SubscriptionItemInput!): SubscriptionPlanChangePayload!
+		addSubscriptionItem(
+			id: ID!
+			input: SubscriptionItemInput!
+			version: Int
+			idempotencyKey: String
+		): SubscriptionPlanChangePayload!
 		"Changes a recurring line's quantity mid-cycle, settling the remainder of the period."
-		changeSubscriptionItemQuantity(id: ID!, variantId: ID!, quantity: Decimal!): SubscriptionPlanChangePayload!
+		changeSubscriptionItemQuantity(
+			id: ID!
+			variantId: ID!
+			quantity: Decimal!
+			version: Int
+			idempotencyKey: String
+		): SubscriptionPlanChangePayload!
 		"Removes a recurring line mid-cycle, settling the remainder of the period."
 		removeSubscriptionItem(id: ID!, variantId: ID!): SubscriptionPlanChangePayload!
 		"Adds a recurring line without settling a proration."

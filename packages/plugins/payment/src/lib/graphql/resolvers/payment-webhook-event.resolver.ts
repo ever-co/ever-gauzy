@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { PaymentWebhookEventService } from '../../payment-webhook-event/payment-webhook-event.service';
 import { IPaymentWebhookEvent } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
@@ -77,6 +77,9 @@ export class PaymentWebhookEventResolver {
 	 * Re-runs a stored callback through the same classification the intake uses.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_CALLBACKS_REPROCESS as PermissionsEnum)
+	// Re-running a callback re-applies an effect to money, so the key is honoured here under the same
+	// scope as on the REST route: a client that presents one is answered from the record.
+	@Idempotent({ scope: 'payment.callback.reprocess', required: false, resourceType: 'payment_webhook_event' })
 	@Mutation('reprocessPaymentWebhookEvent')
 	async reprocessPaymentWebhookEvent(
 		@Args('input') input: IReprocessPaymentWebhookEventGraphInput

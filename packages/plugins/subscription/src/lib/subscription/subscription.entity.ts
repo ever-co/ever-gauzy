@@ -1,12 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsDate, IsEnum, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMOneToMany,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	VersionedColumn
 } from '@gauzy/core';
 import { ISubscription, ISubscriptionBilling, ISubscriptionItem, SubscriptionStatus } from '../subscription.types';
 import { SubscriptionBilling } from '../subscription-billing/subscription-billing.entity';
@@ -165,6 +166,18 @@ export class Subscription extends TenantOrganizationBaseEntity implements ISubsc
 	@IsObject()
 	@MultiORMColumn({ type: 'jsonb', nullable: true })
 	metadata?: Record<string, unknown>;
+
+	/**
+	 * Optimistic lock. Published as the `ETag` of every response that carries the row and required as
+	 * an `If-Match` header by every route that writes it, so two callers editing one subscription
+	 * cannot silently overwrite each other. `commitVersionedUpdate` increments it in the same
+	 * statement that checks it.
+	 */
+	@ApiProperty({ type: () => Number })
+	@IsNotEmpty()
+	@IsInt()
+	@VersionedColumn()
+	version: number;
 
 	/*
 	|--------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PickListLine } from '../../pick-list-line/pick-list-line.entity';
 import { PackSlip } from '../../pack-slip/pack-slip.entity';
@@ -121,6 +121,7 @@ export class PackSlipResolver {
 	 */
 	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
 	@Mutation('packPackSlip')
+	@Idempotent({ scope: 'warehouse.pack', required: false, resourceType: 'pack-slip' })
 	async packPackSlip(
 		@Args('id') id: ID,
 		@Args('input')

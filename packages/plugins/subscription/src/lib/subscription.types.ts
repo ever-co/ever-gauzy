@@ -379,6 +379,11 @@ export interface ISubscription extends IBasePerTenantAndOrganizationEntityModel 
 	cancelReason?: string;
 	currency: CurrencyCode;
 	metadata?: Record<string, unknown>;
+	/**
+	 * The optimistic lock a write to this subscription is predicated on, and the value a caller states
+	 * back on the write that follows the read it made.
+	 */
+	version: number;
 	items?: ISubscriptionItem[];
 	billings?: ISubscriptionBilling[];
 }

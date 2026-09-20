@@ -16,7 +16,14 @@ import {
 	StockMovementKind
 } from '../returns.types';
 import { fromQuantityUnits, subtractQuantities, sumQuantities, toQuantityUnits } from '../returns.quantity';
-import { Money, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import {
+	IVersionExpectation,
+	Money,
+	RequestContext,
+	SequenceService,
+	TenantAwareCrudService,
+	commitVersionedUpdate
+} from '@gauzy/core';
 import { OrderReturnLine } from '../order-return-line/order-return-line.entity';
 import { IOrderReturnReceiptPlan, OrderReturnLineService } from '../order-return-line/order-return-line.service';
 import { OrderReturn } from './order-return.entity';
@@ -25,6 +32,31 @@ import { TypeOrmOrderReturnRepository } from './repository/type-orm-order-return
 
 /** The series key returns are numbered from. */
 const RETURN_NUMBER_KEY = 'RETURN';
+
+/**
+ * The version a write is predicated on when no caller stated one.
+ *
+ * A write the platform makes on its own behalf — a receipt compensating itself, a caller inside the
+ * platform moving a return on — has no version a client accepted, and refusing it would make the
+ * aggregate unwritable from anywhere but a route. The wildcard is not an escape from the protection:
+ * the version is read from the row and the UPDATE is still predicated on it, so a version that moved
+ * on between that read and the write is refused exactly as it is for a stated one.
+ */
+const ANY_VERSION: IVersionExpectation = { wildcard: true, versions: [] };
+
+/**
+ * The expectation that pins one exact version.
+ *
+ * Used where one request writes the same return twice — a receipt and the refund that follows it —
+ * because the second write has to be predicated on the version the first one produced, or it would
+ * be refused as a conflict by the very write it follows.
+ *
+ * @param version The version the return holds.
+ * @returns The expectation to predicate the next write on.
+ */
+function exactly(version: number): IVersionExpectation {
+	return { wildcard: false, versions: [version] };
+}
 
 /** Statuses a return may still be approved, rejected or cancelled from. */
 const DECIDABLE_STATUSES: OrderReturnStatus[] = [
@@ -78,6 +110,12 @@ interface IPostedMovement extends IPlannedMovement {
  * other domains: the stock ledger the received units are written to, and the refund that sends money
  * back. Both are injected optionally — a tenant with neither can still run the lifecycle — but a
  * receipt that has units to move and no ledger fails loudly instead of adjusting a level itself.
+ *
+ * Every write of the header goes through `commitVersionedUpdate`, which is what makes the return an
+ * optimistically concurrent aggregate rather than a row two people can overwrite in turn. A route
+ * states the version its caller read; a write the platform makes on its own behalf is predicated on
+ * the version the row holds, which is the same statement either way. The version is never written by
+ * this class — it is set by the conditional update, in the same statement that checks it.
  */
 @Injectable()
 export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
@@ -169,18 +207,23 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 *
 	 * @param id The return to approve.
 	 * @param note An optional operator note appended to the return.
+	 * @param expectation The version the caller read, when the route stated one.
 	 * @returns The approved return.
 	 */
-	public async approve(id: ID, note?: string): Promise<OrderReturn> {
+	public async approve(id: ID, note?: string, expectation: IVersionExpectation = ANY_VERSION): Promise<OrderReturn> {
 		const orderReturn = await this.findOneScoped(id);
 
 		this.assertStatus(orderReturn, [OrderReturnStatus.OPEN, OrderReturnStatus.REQUESTED], 'approve');
 
-		await super.update(id, {
-			status: OrderReturnStatus.APPROVED,
-			approvedAt: new Date(),
-			note: note ?? orderReturn.note
-		} as any);
+		await this.commitHeader(
+			orderReturn,
+			{
+				status: OrderReturnStatus.APPROVED,
+				approvedAt: new Date(),
+				note: note ?? orderReturn.note
+			},
+			expectation
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -191,17 +234,22 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 *
 	 * @param id The return to reject.
 	 * @param reason Why it was rejected.
+	 * @param expectation The version the caller read, when the route stated one.
 	 * @returns The rejected return.
 	 */
-	public async reject(id: ID, reason?: string): Promise<OrderReturn> {
+	public async reject(id: ID, reason?: string, expectation: IVersionExpectation = ANY_VERSION): Promise<OrderReturn> {
 		const orderReturn = await this.findOneScoped(id);
 
 		this.assertStatus(orderReturn, DECIDABLE_STATUSES, 'reject');
 
-		await super.update(id, {
-			status: OrderReturnStatus.REJECTED,
-			reason: reason ?? orderReturn.reason
-		} as any);
+		await this.commitHeader(
+			orderReturn,
+			{
+				status: OrderReturnStatus.REJECTED,
+				reason: reason ?? orderReturn.reason
+			},
+			expectation
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -211,18 +259,23 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 *
 	 * @param id The return to cancel.
 	 * @param reason Why it was cancelled.
+	 * @param expectation The version the caller read, when the route stated one.
 	 * @returns The cancelled return.
 	 */
-	public async cancel(id: ID, reason?: string): Promise<OrderReturn> {
+	public async cancel(id: ID, reason?: string, expectation: IVersionExpectation = ANY_VERSION): Promise<OrderReturn> {
 		const orderReturn = await this.findOneScoped(id);
 
 		this.assertStatus(orderReturn, DECIDABLE_STATUSES, 'cancel');
 
-		await super.update(id, {
-			status: OrderReturnStatus.CANCELED,
-			canceledAt: new Date(),
-			reason: reason ?? orderReturn.reason
-		} as any);
+		await this.commitHeader(
+			orderReturn,
+			{
+				status: OrderReturnStatus.CANCELED,
+				canceledAt: new Date(),
+				reason: reason ?? orderReturn.reason
+			},
+			expectation
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -259,12 +312,14 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * @param id The return being received.
 	 * @param lines The quantities that arrived, per line.
 	 * @param options The receiving location, the refund to issue and an operator note.
-	 * @returns What the receipt did.
+	 * @param expectation The version the caller read, when the route stated one.
+	 * @returns What the receipt did, including the version the return now holds.
 	 */
 	public async receive(
 		id: ID,
 		lines: IOrderReturnReceiptInput[],
-		options: { warehouseId?: ID; refund?: string | number; note?: string } = {}
+		options: { warehouseId?: ID; refund?: string | number; note?: string } = {},
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<IOrderReturnReceiptOutcome> {
 		const orderReturn = await this.findOneScoped(id);
 
@@ -273,6 +328,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		const posted: IPostedMovement[] = [];
 		let plan: IOrderReturnReceiptPlan[] = [];
 		let settlement = { received: '0', outstanding: '0' };
+		let version: number;
 
 		try {
 			const fulfilled = await this.lineService.readFulfilledLines(orderReturn.orderId);
@@ -295,12 +351,16 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 			// The status is written last, and the refund below reads it: the refund guard refuses a
 			// return that has not received anything, which is the check that keeps money behind goods.
-			await super.update(id, {
-				status,
-				receivedAt: new Date(),
-				warehouseId: options.warehouseId ?? orderReturn.warehouseId,
-				note: options.note ?? orderReturn.note
-			} as any);
+			version = await this.commitHeader(
+				orderReturn,
+				{
+					status,
+					receivedAt: new Date(),
+					warehouseId: options.warehouseId ?? orderReturn.warehouseId,
+					note: options.note ?? orderReturn.note
+				},
+				expectation
+			);
 		} catch (error) {
 			await this.compensateReceipt(orderReturn, plan, posted);
 
@@ -312,12 +372,19 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		let refund: IRefundResult | undefined;
 
 		if (options.refund !== undefined && options.refund !== null && String(options.refund) !== '') {
-			refund = await this.refund(id, options.refund, undefined, options.note);
+			// The refund is the second write of one request, so it is predicated on the version the
+			// receipt just produced rather than on the one the caller read: the version it stated has
+			// already been spent, and stating it again would be refused as a conflict.
+			const settled = await this.settleRefund(id, options.refund, undefined, options.note, exactly(version));
+
+			refund = settled.refund;
+			version = settled.version;
 		}
 
 		return {
 			returnId: updated.id,
 			status: updated.status,
+			version,
 			movementIds: posted
 				.map((movement) => movement.movementId)
 				.filter((movementId): movementId is ID => !!movementId),
@@ -338,11 +405,48 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * @param amount The amount to refund, as an exact decimal.
 	 * @param reasonId The governed refund reason, when the operator picked one.
 	 * @param note An operator note kept beside the refund.
+	 * @param expectation The version the caller read, when the route stated one.
 	 * @returns The refund that was written.
 	 * @throws BadRequestException when the return has not received anything yet, or when no payment
 	 * capability is registered.
 	 */
-	public async refund(id: ID, amount: string | number, reasonId?: ID, note?: string): Promise<IRefundResult> {
+	public async refund(
+		id: ID,
+		amount: string | number,
+		reasonId?: ID,
+		note?: string,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<IRefundResult> {
+		const settled = await this.settleRefund(id, amount, reasonId, note, expectation);
+
+		return settled.refund;
+	}
+
+	/**
+	 * Issues a refund and reports the version its write left behind.
+	 *
+	 * The amount is normalised at the currency's scale through the platform money layer before it is
+	 * recorded, and the running total on the return is the exact sum of what has been refunded — never
+	 * a recomputed guess. The version is answered as well as the refund because a receipt that refunds
+	 * writes the return a second time in the same request, and the second write needs the version the
+	 * first one left rather than the one the caller stated.
+	 *
+	 * @param id The return being refunded.
+	 * @param amount The amount to refund, as an exact decimal.
+	 * @param reasonId The governed refund reason, when the operator picked one.
+	 * @param note An operator note kept beside the refund.
+	 * @param expectation The version this write is predicated on.
+	 * @returns The refund that was written, and the version the return now holds.
+	 * @throws BadRequestException when the return has not received anything yet, or when no payment
+	 * capability is registered.
+	 */
+	private async settleRefund(
+		id: ID,
+		amount: string | number,
+		reasonId: ID | undefined,
+		note: string | undefined,
+		expectation: IVersionExpectation
+	): Promise<{ refund: IRefundResult; version: number }> {
 		const orderReturn = await this.findOneScoped(id);
 
 		if (
@@ -383,9 +487,9 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			.round()
 			.toStorageString();
 
-		await super.update(id, { refundAmount: runningTotal } as any);
+		const version = await this.commitHeader(orderReturn, { refundAmount: runningTotal }, expectation);
 
-		return result;
+		return { refund: result, version };
 	}
 
 	/**
@@ -410,9 +514,10 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * admits the shortfall.
 	 *
 	 * @param id The return to close.
+	 * @param expectation The version the caller read, when the route stated one.
 	 * @returns The closed return.
 	 */
-	public async close(id: ID): Promise<OrderReturn> {
+	public async close(id: ID, expectation: IVersionExpectation = ANY_VERSION): Promise<OrderReturn> {
 		const orderReturn = await this.findOneScoped(id);
 
 		if (orderReturn.status === OrderReturnStatus.CLOSED) {
@@ -441,26 +546,30 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 		const closedAt = new Date();
 
-		await super.update(id, {
-			status: OrderReturnStatus.CLOSED,
-			closedAt,
-			...(shortfalls.length
-				? {
-						metadata: {
-							...(orderReturn.metadata ?? {}),
-							shortClose: {
-								closedAt: closedAt.toISOString(),
-								outstandingQuantity: sumQuantities(shortfalls.map((entry) => entry.outstanding)),
-								lines: shortfalls.map((entry) => ({
-									returnLineId: entry.line.id,
-									orderLineId: entry.line.orderLineId,
-									outstandingQuantity: entry.outstanding
-								}))
+		await this.commitHeader(
+			orderReturn,
+			{
+				status: OrderReturnStatus.CLOSED,
+				closedAt,
+				...(shortfalls.length
+					? {
+							metadata: {
+								...(orderReturn.metadata ?? {}),
+								shortClose: {
+									closedAt: closedAt.toISOString(),
+									outstandingQuantity: sumQuantities(shortfalls.map((entry) => entry.outstanding)),
+									lines: shortfalls.map((entry) => ({
+										returnLineId: entry.line.id,
+										orderLineId: entry.line.orderLineId,
+										outstandingQuantity: entry.outstanding
+									}))
+								}
 							}
-						}
-				  }
-				: {})
-		} as any);
+					  }
+					: {})
+			},
+			expectation
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -473,11 +582,13 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 *
 	 * @param id The return to ship.
 	 * @param options The shipping option, the collection location and an already-known tracking number.
+	 * @param expectation The version the caller read, when the route stated one.
 	 * @returns What the shipping capability created.
 	 */
 	public async createShipment(
 		id: ID,
-		options: { shippingOptionId?: ID; warehouseId?: ID; trackingNumber?: string } = {}
+		options: { shippingOptionId?: ID; warehouseId?: ID; trackingNumber?: string } = {},
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<IReturnShipmentResult> {
 		const orderReturn = await this.findOneScoped(id);
 
@@ -499,9 +610,11 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			trackingNumber: options.trackingNumber
 		});
 
-		await super.update(id, {
-			shippingOptionId: options.shippingOptionId ?? orderReturn.shippingOptionId
-		} as any);
+		await this.commitHeader(
+			orderReturn,
+			{ shippingOptionId: options.shippingOptionId ?? orderReturn.shippingOptionId },
+			expectation
+		);
 
 		return result;
 	}
@@ -527,6 +640,74 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		}
 
 		return orderReturn;
+	}
+
+	/**
+	 * Writes the header fields a caller edited, under the version that caller read.
+	 *
+	 * The edit route is the one place a caller changes a return's own fields rather than moving it
+	 * through its lifecycle, and it writes through the same conditional update as every other write:
+	 * the patch it is given lands if and only if the return still holds the version the caller stated.
+	 * An empty patch is a legitimate call — the line set is part of the aggregate, and an edit that
+	 * only rewrites it still moves the aggregate on, so a client holding the old tag cannot edit the
+	 * same return a second time.
+	 *
+	 * @param id The return to write.
+	 * @param entity The header fields to change, which may be none.
+	 * @param expectation The version the caller read, when the route stated one.
+	 * @returns The return as it now stands.
+	 */
+	public async applyVersionedUpdate(
+		id: ID,
+		entity: Partial<OrderReturn>,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<OrderReturn> {
+		const orderReturn = await this.findOneScoped(id);
+
+		await this.commitHeader(orderReturn, entity as Record<string, unknown>, expectation);
+
+		return await this.findOneDetailed(id);
+	}
+
+	/**
+	 * Commits one version-predicated write of a return's header.
+	 *
+	 * This is the only path a header is written through: `commitVersionedUpdate` states the check and
+	 * the increment as one statement — `UPDATE … SET version = :next … WHERE id = :id AND version =
+	 * :expected` — so there is no window between deciding and acting, and no read-then-write race to
+	 * lose. The affected-row count is the whole answer, and the platform turns it into the caller's
+	 * answer: one row means the write landed and the return is now at the next version, none means
+	 * another writer moved the return on, or deleted it, and the conflict or the not-found follows from
+	 * the row itself.
+	 *
+	 * The scope the write is confined to is stated here as well as by the service layer, because a write
+	 * the platform makes on its own behalf — a receipt compensating itself — runs with no request behind
+	 * it, and the row's own tenant and organization are then the only scope there is.
+	 *
+	 * @param orderReturn The return as it was read, which supplies the id and the scope of the write.
+	 * @param patch The columns to write. `version` is set by the conditional update and never stated.
+	 * @param expectation The version the caller accepted, or `ANY_VERSION` for a write the platform
+	 * made on its own behalf.
+	 * @returns The version the return now holds.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the return moved on, or with
+	 * `RESOURCE_NOT_FOUND` when it is gone.
+	 */
+	private async commitHeader(
+		orderReturn: OrderReturn,
+		patch: Record<string, unknown>,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<number> {
+		const { version } = await commitVersionedUpdate(this, {
+			id: orderReturn.id,
+			expectation,
+			patch,
+			where: {
+				...(orderReturn.tenantId ? { tenantId: orderReturn.tenantId } : {}),
+				...(orderReturn.organizationId ? { organizationId: orderReturn.organizationId } : {})
+			}
+		});
+
+		return version;
 	}
 
 	/**
@@ -698,12 +879,15 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		await this.reverseMovements(orderReturn, posted);
 		await this.lineService.restoreReceipt(plan);
 
-		await super.update(orderReturn.id, {
+		// The header is restored under whatever version it holds at this moment rather than under the
+		// one the caller stated: this write undoes a receipt that failed, so it must land whether or not
+		// the failed receipt managed to move the version on before it threw.
+		await this.commitHeader(orderReturn, {
 			status: orderReturn.status,
 			receivedAt: orderReturn.receivedAt,
 			warehouseId: orderReturn.warehouseId,
 			note: orderReturn.note
-		} as any);
+		});
 	}
 
 	/**

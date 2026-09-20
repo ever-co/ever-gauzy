@@ -22,6 +22,13 @@ jest.mock('@gauzy/core', () => {
 	 */
 	const { parseIfMatch } = jest.requireActual('../../../../../core/src/lib/concurrency/version.util');
 
+	/**
+	 * The platform’s conditional write and its reader for the version a request accepted. The engine
+	 * under test reaches both through the barrel being replaced here, so the shared double answers for
+	 * both — the kernel’s own behaviour, decided rather than stubbed.
+	 */
+	const { commitVersionedUpdate, versionExpectationOf } = require('../testing/versioned-write.double');
+
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
@@ -95,6 +102,11 @@ jest.mock('@gauzy/core', () => {
 		TenantPermissionGuard: class TenantPermissionGuard {},
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		UseValidationPipe: decorator,
+		// The two conventions the decorated routes carry. Both are decorator factories and nothing more:
+		// the guard and the interceptor they attach are application providers, and a unit test that never
+		// boots the application never runs them.
+		Versioned: () => () => undefined,
+		Idempotent: () => () => undefined,
 		Permissions: (...permissions: string[]) => SetMetadata(PERMISSIONS_METADATA, permissions),
 		parseIfMatch,
 		BaseEvent: class {},
@@ -106,7 +118,15 @@ jest.mock('@gauzy/core', () => {
 		WarehouseProductVariant: class WarehouseProductVariant {},
 		User: class User {},
 		Sequence: class Sequence {},
+		// The kernel helpers the ledger engine imports beside the entities above. Both decide rather than
+		// answer unconditionally, so a versioned write is refused here as it is refused in production.
+		commitVersionedUpdate,
+		versionExpectationOf,
 		RequestContext: {
+			// The engine reads the version the current request accepted from here, and a unit test has no
+			// request: the accepted version is then absent, which is the case the engine's own
+			// compare-and-set covers.
+			currentRequest: () => null,
 			currentUser: () => null,
 			currentUserId: () => null,
 			currentTenantId: () => '00000000-0000-4000-8000-000000000001',

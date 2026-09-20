@@ -12,6 +12,7 @@ import {
 	MultiORMEntity,
 	MultiORMManyToOne
 } from './../core/decorators/entity';
+import { VersionedColumn } from './../concurrency';
 import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
 
 /**
@@ -114,9 +115,14 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	/**
 	 * Optimistic-lock counter. Every write takes the counter it read and bumps it, so two writers
 	 * cannot both win the same level row.
+	 *
+	 * Declared with `@VersionedColumn()` rather than as a plain column because this row is the one a
+	 * caller contends for: the counter is what a version-predicated write checks and increments in one
+	 * statement, and the decorator is how a route that guards this row learns the column exists. It is
+	 * the same `@MultiORMColumn` underneath, so the column is unchanged for both ORMs.
 	 */
 	@ApiPropertyOptional({ type: () => Number })
-	@MultiORMColumn({ type: 'int', default: 1 })
+	@VersionedColumn()
 	version: number;
 
 	/**

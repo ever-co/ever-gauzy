@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { PaymentCollectionService } from '../../payment-collection/payment-collection.service';
 import { IPaymentCollection } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
@@ -63,6 +63,9 @@ export class PaymentCollectionResolver {
 	 * Creates the collection of an order or a cart.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	// An order or a cart has one collection and the service refuses a second one, so the key is optional
+	// here exactly as it is on the REST route, under the same scope.
+	@Idempotent({ scope: 'payment.collection.create', required: false, resourceType: 'payment_collection' })
 	@Mutation('createPaymentCollection')
 	async createPaymentCollection(
 		@Args('input') input: ICreatePaymentCollectionGraphInput

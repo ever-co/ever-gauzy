@@ -1,7 +1,15 @@
 import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID } from '@gauzy/contracts';
-import { CrudController, Permissions, PermissionGuard, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
+import {
+	CrudController,
+	Idempotent,
+	Permissions,
+	PermissionGuard,
+	TenantPermissionGuard,
+	UUIDValidationPipe,
+	UseValidationPipe
+} from '@gauzy/core';
 import { CommerceCheckoutSession } from './commerce-checkout-session.entity';
 import { CommerceCheckoutSessionService } from './commerce-checkout-session.service';
 import { CART_PERMISSIONS } from '../cart.permissions';
@@ -12,6 +20,11 @@ import { CreateCommerceCheckoutSessionDTO, UpdateCommerceCheckoutSessionDTO } fr
  *
  * A session is optional: a single-request checkout never creates one. When one exists it is the record
  * of how far a multi-step or externally hosted checkout got, and of the durable operation it started.
+ *
+ * The two write routes that a client is expected to retry — starting a session, and reporting that a
+ * step completed — adopt `@Idempotent(...)`. A key is optional on both: the session's own uniqueness
+ * rule already makes a second start return the open session, and a step that is reported twice
+ * appends once, so a caller that presents no key is answered exactly as it was before.
  */
 @ApiTags('CheckoutSession')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -34,6 +47,7 @@ export class CommerceCheckoutSessionController extends CrudController<CommerceCh
 	@ApiOperation({ summary: 'Start a checkout session' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Checkout session started' })
 	@Permissions(CART_PERMISSIONS.CARTS_CHECKOUT)
+	@Idempotent({ scope: 'checkout.session.create', required: false, resourceType: 'checkout_session' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateCommerceCheckoutSessionDTO): Promise<CommerceCheckoutSession> {
@@ -91,6 +105,7 @@ export class CommerceCheckoutSessionController extends CrudController<CommerceCh
 	@ApiOperation({ summary: 'Complete a checkout step' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Step completed' })
 	@Permissions(CART_PERMISSIONS.CARTS_CHECKOUT)
+	@Idempotent({ scope: 'checkout.step.complete', required: false, resourceType: 'checkout_session' })
 	@Post(':id/steps/:step')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true })

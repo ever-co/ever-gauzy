@@ -16,6 +16,7 @@ import { CartModule } from '@gauzy/plugin-cart';
 import { PricingModule } from '@gauzy/plugin-pricing';
 import { TaxModule } from '@gauzy/plugin-tax';
 import { ALL_ORDER_ENTITIES } from './entities';
+import { ORDER_AGGREGATE_WRITER } from './order.types';
 import { OrderController } from './order/order.controller';
 import { OrderService } from './order/order.service';
 import { TypeOrmOrderRepository } from './order/repository/type-orm-order.repository';
@@ -86,6 +87,13 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
  * translations and its variants are the catalogue's own tables and are registered here rather than
  * read across a package boundary: an order line has to state a title and a tax category, and only the
  * catalogue's rows say what they are.
+ *
+ * The order aggregate's writer is registered under a token as well as under its own class. The totals
+ * service commits every write of an order row, and the service that owns the row is `OrderService` —
+ * which is constructed from the totals service, so the totals service cannot inject it without closing
+ * a cycle the container cannot express. The token is resolved through `ModuleRef` when a write runs,
+ * which is the same late lookup the platform's concurrency guard performs for the service a route
+ * names.
  */
 @Module({
 	controllers: [
@@ -117,6 +125,10 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 	],
 	providers: [
 		OrderService,
+		{
+			provide: ORDER_AGGREGATE_WRITER,
+			useExisting: OrderService
+		},
 		TypeOrmOrderRepository,
 		MikroOrmOrderRepository,
 		OrderTotalsService,

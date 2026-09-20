@@ -14,7 +14,12 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { buildSchema, printSchema } from 'graphql';
 import { LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { BulkExecutor } from '../api/bulk-executor.service';
 import { CursorCodec } from '../api/cursor';
+import { FieldVisibility } from '../api/field-visibility.service';
+import { ApiErrorCode } from '../core/errors/api-error-codes';
+import { ApiException } from '../core/errors/api-exception';
+import { IDEMPOTENT_METADATA_KEY } from '../idempotency/idempotency.policy';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ProductController } from './product.controller';
 import { ProductModule } from './product.module';
@@ -25,8 +30,8 @@ import { ProductService } from './product.service';
  * The catalogue's sellable thing over GraphQL.
  *
  * The delivered REST routes serve a product list, one product in either of two readings, a count, the
- * create, the edit, the removal, the two lifecycle moves and four image operations. This suite pins
- * the half of the two-protocol doctrine that is easy to get quietly wrong:
+ * create, the edit, the removal, the two lifecycle moves, four image operations and the batch. This
+ * suite pins the half of the two-protocol doctrine that is easy to get quietly wrong:
  *
  * - every one of those capabilities is a root field of the one composed schema, and the list is a
  *   connection with the platform's own cursor codec behind it, so a cursor obtained over REST
@@ -36,7 +41,9 @@ import { ProductService } from './product.service';
  * - **the guard stack and the permission are the controller's, field by field** — including the two
  *   lifecycle fields, whose delivered routes carry no permission at all, so a resolver that demanded
  *   one would refuse a caller the REST route serves;
- * - a product that is not there is `null` on the one-row field rather than a refusal.
+ * - a product that is not there is `null` on the one-row field rather than a refusal;
+ * - **one capability has one door**: the one-row field answers a slug as well as an identifier under
+ *   one argument, and there is deliberately no second field that resolves the same row again.
  */
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
@@ -82,12 +89,17 @@ const ROWS = [
 	}
 ];
 
-/** The resolver, over a scripted service and command bus. */
+/** The resolver, over a scripted service and command bus, with the platform's own batch executor. */
 function surfaces() {
 	const productService = {
 		findProducts: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
+		findOneByIdOrSlug: jest.fn().mockResolvedValue(ROWS[0]),
 		findByIdTranslated: jest.fn().mockResolvedValue(ROWS[0]),
+		applyBulkItem: jest.fn().mockResolvedValue(ROWS[0]),
+		// The transaction the route hands the executor: it runs the work it is given, as the service's
+		// own runner does, so the items of a batch are applied whether or not the batch is atomic.
+		transaction: jest.fn(async (work: (manager: unknown) => Promise<unknown>) => work(undefined)),
 		count: jest.fn().mockResolvedValue(ROWS.length),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-04-01T10:00:00.000Z') }),
 		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
@@ -97,11 +109,20 @@ function surfaces() {
 		deleteFeaturedImage: jest.fn().mockResolvedValue({ ...ROWS[0], featuredImageId: null })
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS[0]) };
+	const visibility = {
+		assertCanSee: jest.fn(),
+		canSee: jest.fn().mockReturnValue(true)
+	} as unknown as FieldVisibility;
 
 	return {
 		productService,
 		commandBus,
-		resolver: new ProductResolver(productService as never, commandBus as never)
+		visibility,
+		resolver: new ProductResolver(
+			productService as never,
+			commandBus as never,
+			new BulkExecutor(visibility) as never
+		)
 	};
 }
 
@@ -160,6 +181,13 @@ function fieldArgs(operation: 'Query' | 'Mutation', field: string): string[] {
 	return (root?.getFields()?.[field]?.args ?? []).map((argument) => argument.name);
 }
 
+/** The members one input or object type declares, in the order a client states them. */
+function fieldMembers(name: string): string[] {
+	const type = schema.getType(name) as { getFields(): Record<string, unknown> } | undefined;
+
+	return Object.keys(type?.getFields() ?? {});
+}
+
 describe('ProductResolver — the SDL declares the capabilities the REST routes serve', () => {
 	it('declares the product connection query, the one-row query and the count', () => {
 		expect(rootFields('Query')).toEqual(expect.arrayContaining(['products', 'product', 'productCount']));
@@ -173,12 +201,22 @@ describe('ProductResolver — the SDL declares the capabilities the REST routes 
 				'deleteProduct',
 				'softDeleteProduct',
 				'recoverProduct',
+				'bulkCreateProducts',
 				'addProductGalleryImages',
 				'setProductAsFeatured',
 				'deleteProductGalleryImage',
 				'deleteProductFeaturedImage'
 			])
 		);
+	});
+
+	it('answers a product by identifier and by slug through one field, and declares no second field for either', () => {
+		// Control: the one-row field is the door for both forms, so a schema that added `productBySlug`
+		// would be the second surface for one capability — and a schema that dropped the argument
+		// entirely would fail the assertion below rather than pass it quietly.
+		expect(fieldArgs('Query', 'product')).toEqual(['id', 'language']);
+		expect(rootFields('Query')).not.toContain('productBySlug');
+		expect(rootFields('Query')).not.toContain('productById');
 	});
 
 	it('declares the connection, its edges, its filters and its sorts', () => {
@@ -201,6 +239,40 @@ describe('ProductResolver — the SDL declares the capabilities the REST routes 
 		expect(printed).toMatch(/input ProductTranslationInput \{/);
 		expect(printed).toMatch(/input ProductOptionGroupInput \{/);
 		expect(printed).toMatch(/input ProductOptionInput \{/);
+	});
+
+	it('declares the batch input as the route’s body plus the retry key, and nothing else', () => {
+		// The two members the endpoint table declares — the items, each naming its operation and
+		// payload, and the atomicity flag — plus the retry key GraphQL has nowhere else to carry.
+		// Control: a member the route does not read, such as a write mode or a dry run, would appear
+		// here and let a client believe it had asked for something the resource cannot honour.
+		expect(fieldMembers('BulkCreateProductsInput')).toEqual(['items', 'atomic', 'idempotencyKey']);
+		expect(fieldMembers('ProductBulkItem')).toEqual([
+			'op',
+			'id',
+			'code',
+			'enabled',
+			'imageUrl',
+			'featuredImageId',
+			'productTypeId',
+			'productCategoryId',
+			'tagIds',
+			'translations'
+		]);
+		expect(fieldMembers('BulkCreateProductsPayload')).toEqual(['results', 'succeeded', 'failed', 'total']);
+		expect(fieldMembers('BulkProductItemResult')).toEqual(['index', 'ok', 'id', 'resource', 'error']);
+	});
+
+	it('declares the operations a batch item may name', () => {
+		const printed = printSchema(schema);
+		const operations = schema.getType('ProductBulkOperation') as
+			| { getValues(): readonly { name: string }[] }
+			| undefined;
+
+		// The values are the platform bulk contract's own wire values, copied un-re-cased, so the same
+		// batch statement reads identically over either protocol.
+		expect(operations?.getValues().map((value) => value.name)).toEqual(['create', 'update', 'delete', 'upsert']);
+		expect(printed).toMatch(/input ProductBulkItem \{/);
 	});
 
 	it('extends the Product object type rather than declaring a second one', () => {
@@ -340,8 +412,18 @@ describe('ProductResolver — one concept, two protocols, the same operations', 
 		const { resolver, productService } = surfaces();
 
 		expect(await resolver.product(PRODUCT)).toBe(ROWS[0]);
-		expect(productService.findOneByIdString).toHaveBeenCalledWith(PRODUCT);
+		expect(productService.findOneByIdOrSlug).toHaveBeenCalledWith(PRODUCT);
 		expect(productService.findByIdTranslated).not.toHaveBeenCalled();
+	});
+
+	it('reads one product by the slug it states, through the same field and the same method', async () => {
+		const { resolver, productService } = surfaces();
+
+		// Control: the field passes the value on as it stands, so the identifier-or-slug decision is the
+		// service's — one reading for both surfaces rather than one per protocol.
+		expect(await resolver.product('a-widget')).toBe(ROWS[0]);
+		expect(productService.findOneByIdOrSlug).toHaveBeenCalledWith('a-widget');
+		expect(productService.findOneByIdString).not.toHaveBeenCalled();
 	});
 
 	it('reads one product in a language through the method the per-language route calls', async () => {
@@ -349,12 +431,12 @@ describe('ProductResolver — one concept, two protocols, the same operations', 
 
 		expect(await resolver.product(PRODUCT, LanguagesEnum.GERMAN)).toBe(ROWS[0]);
 		expect(productService.findByIdTranslated).toHaveBeenCalledWith(LanguagesEnum.GERMAN, PRODUCT);
-		expect(productService.findOneByIdString).not.toHaveBeenCalled();
+		expect(productService.findOneByIdOrSlug).not.toHaveBeenCalled();
 	});
 
 	it('answers null for a product that is not there, which is the REST route’s 404 in this vocabulary', async () => {
 		const { resolver, productService } = surfaces();
-		productService.findOneByIdString.mockRejectedValueOnce(new NotFoundException());
+		productService.findOneByIdOrSlug.mockRejectedValueOnce(new NotFoundException());
 
 		expect(await resolver.product(OTHER_PRODUCT)).toBeNull();
 
@@ -514,6 +596,85 @@ describe('ProductResolver — one concept, two protocols, the same operations', 
 });
 
 /**
+ * The batch, over the platform's own executor.
+ *
+ * The executor is the real one, so these assertions are about the field's half of the contract: the
+ * options it runs the batch with, the service the items reach, and the per-item answer it derives.
+ * The atomicity of the batch itself is the executor's and is asserted beside it, in
+ * `product.controller.spec.ts`, where the route runs the same executor from the same declaration.
+ */
+describe('ProductResolver — the batch is the route’s batch, run by the platform’s executor', () => {
+	it('applies every item through the service and answers one outcome per item, with the counts', async () => {
+		const { resolver, productService, visibility } = surfaces();
+
+		const payload = await resolver.bulkCreateProducts({
+			items: [
+				{ op: 'create', code: 'WIDGET-1' },
+				{ op: 'update', id: OTHER_PRODUCT, enabled: false }
+			]
+		});
+
+		expect(productService.applyBulkItem).toHaveBeenCalledTimes(2);
+		expect(payload.results.map((result) => result.index)).toEqual([0, 1]);
+		expect(payload.results.map((result) => result.ok)).toEqual([true, true]);
+		// The row each item wrote is named, so a client matches an answer to the row it asked about.
+		expect(payload.results[0].id).toBe(PRODUCT);
+		expect(payload.succeeded).toBe(2);
+		expect(payload.failed).toBe(0);
+		expect(payload.total).toBe(2);
+		// Control: the permission is the route's own, read off the controller's declaration rather than
+		// restated — a field that ran the batch unauthorised would fail here.
+		expect(visibility.assertCanSee).toHaveBeenCalledWith(PermissionsEnum.PRODUCTS_BULK_IMPORT, {
+			resource: 'product',
+			mode: 'write'
+		});
+	});
+
+	it('reports the item that failed and keeps the one that applied, in a batch that is not atomic', async () => {
+		const { resolver, productService } = surfaces();
+		productService.applyBulkItem
+			.mockResolvedValueOnce(ROWS[0])
+			.mockRejectedValueOnce(
+				new ApiException(409, ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION, 'The code is taken.', { field: 'code' })
+			);
+
+		const payload = await resolver.bulkCreateProducts({
+			items: [
+				{ op: 'create', code: 'WIDGET-1' },
+				{ op: 'create', code: 'GADGET-2' }
+			]
+		});
+
+		expect(payload.succeeded).toBe(1);
+		expect(payload.failed).toBe(1);
+		expect(payload.results[1].ok).toBe(false);
+		expect(payload.results[1].error.code).toBe(ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION);
+		// The path names the item the outcome belongs to, which is what the payload's `path` member is for.
+		expect(payload.results[1].error.path).toEqual(['items', '1']);
+	});
+
+	it('refuses a batch whose item names no operation before any item is applied', async () => {
+		const { resolver, productService } = surfaces();
+
+		const error = await resolver
+			.bulkCreateProducts({ items: [{ code: 'WIDGET-1' } as never] })
+			.catch((thrown) => thrown);
+
+		expect(error).toBeInstanceOf(ApiException);
+		expect((error as ApiException).details).toMatchObject({
+			items: [
+				{
+					index: 0,
+					code: ApiErrorCode.VALIDATION_REQUIRED_FIELD,
+					details: { field: 'op' }
+				}
+			]
+		});
+		expect(productService.applyBulkItem).not.toHaveBeenCalled();
+	});
+});
+
+/**
  * Every root field and the delivered route it mirrors.
  *
  * The two surfaces are one capability stated twice, so the guard stack and the permission of a field
@@ -530,6 +691,7 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'deleteProduct', route: 'delete' },
 	{ field: 'softDeleteProduct', route: 'softRemove' },
 	{ field: 'recoverProduct', route: 'softRecover' },
+	{ field: 'bulkCreateProducts', route: 'bulk' },
 	{ field: 'addProductGalleryImages', route: 'addGalleryImage' },
 	{ field: 'setProductAsFeatured', route: 'setAsFeatured' },
 	{ field: 'deleteProductGalleryImage', route: 'deleteGalleryImage' },
@@ -596,6 +758,28 @@ describe('ProductResolver — the guard stack is the controller’s, field by fi
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductResolver.prototype.recoverProduct)).toBeUndefined();
 		expect(Reflect.getMetadata('__guards__', ProductResolver.prototype.softDeleteProduct)).toBeUndefined();
 		expect(Reflect.getMetadata('__guards__', ProductResolver.prototype.recoverProduct)).toBeUndefined();
+	});
+
+	it('carries the catalogue’s bulk-import permission on the batch, on both surfaces, and one retry scope', () => {
+		// A batch is a heavier operation than a single write and the catalogue declares a permission of
+		// its own for it, so the field carries that one and not the edit permission beside it.
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductResolver.prototype.bulkCreateProducts)).toEqual([
+			PermissionsEnum.PRODUCTS_BULK_IMPORT
+		]);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductController.prototype.bulk)).toEqual([
+			PermissionsEnum.PRODUCTS_BULK_IMPORT
+		]);
+
+		// The retry declaration is one scope stated twice. Control: a field that declared a scope of its
+		// own would store its keys under a second namespace and replay the route's answer as a miss.
+		const routeDeclaration = Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, ProductController.prototype.bulk);
+		const fieldDeclaration = Reflect.getMetadata(
+			IDEMPOTENT_METADATA_KEY,
+			ProductResolver.prototype.bulkCreateProducts
+		);
+
+		expect(routeDeclaration).toEqual({ scope: 'product.bulk', required: false, resourceType: 'product' });
+		expect(fieldDeclaration).toEqual(routeDeclaration);
 	});
 });
 

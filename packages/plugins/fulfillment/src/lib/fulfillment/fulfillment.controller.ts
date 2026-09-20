@@ -4,6 +4,7 @@ import { FulfillmentDirection, IPagination } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -22,6 +23,13 @@ import { CreateFulfillmentDTO, FulfillmentTransitionDTO, UpdateFulfillmentDTO } 
  * a caller patches, it is the outcome of an event that has a precondition. `ship` may only follow
  * `PENDING`, `deliver` may only follow `SHIPPED` or `IN_TRANSIT`, and nothing may follow `DELIVERED` —
  * a delivered shipment is returned, not cancelled.
+ *
+ * Two of the routes below declare the platform's retry convention, and they are the two a client
+ * retries after losing a response. Creating a fulfilment **demands** a key, because creating one twice
+ * ships the same goods twice, and that is not a duplicate row but a duplicate parcel. Handing one to
+ * the carrier honours a key when it is presented: a repeated `ship` is refused by the status machine
+ * rather than by the key, so the key is offered rather than required, and a caller that never sends one
+ * is unaffected.
  */
 @ApiTags('Fulfillment')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -68,6 +76,7 @@ export class FulfillmentController extends CrudController<Fulfillment> {
 	@ApiOperation({ summary: 'Create a fulfillment' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Fulfillment created' })
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_CREATE)
+	@Idempotent({ scope: 'fulfillment.create', required: true, resourceType: 'fulfillment' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateFulfillmentDTO): Promise<Fulfillment> {
@@ -105,6 +114,7 @@ export class FulfillmentController extends CrudController<Fulfillment> {
 	@ApiOperation({ summary: 'Mark a fulfillment shipped' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Fulfillment shipped' })
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Idempotent({ scope: 'fulfillment.ship', required: false, resourceType: 'fulfillment' })
 	@Post(':id/ship')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true })

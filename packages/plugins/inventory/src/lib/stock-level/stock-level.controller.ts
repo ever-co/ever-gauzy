@@ -2,11 +2,13 @@ import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } f
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import {
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	Versioned
 } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
@@ -50,6 +52,7 @@ export class StockLevelController {
 	 */
 	@ApiOperation({ summary: 'List stock levels' })
 	@ApiResponse({ status: 200, description: 'Levels found.' })
+	@Versioned({ write: false })
 	@Get()
 	async findAll(
 		@Query('warehouseId', new ParseUUIDPipe({ optional: true })) warehouseId?: ID,
@@ -72,6 +75,7 @@ export class StockLevelController {
 	@ApiOperation({ summary: 'Find one stock level by id' })
 	@ApiResponse({ status: 200, description: 'Level found.' })
 	@ApiResponse({ status: 404, description: 'Level not found.' })
+	@Versioned({ write: false })
 	@Get(':id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<IStockAvailability> {
 		const level = await this.stockLevelService.findLevelById(id);
@@ -91,10 +95,19 @@ export class StockLevelController {
 	 * two are suspected of disagreeing. It is a write, which is why it carries the reconciliation
 	 * permission rather than the read one: a correction appends a movement to the ledger, and the
 	 * ledger is the record the business is audited against.
+	 *
+	 * The version is optional here, and that is not a weaker guarantee. A run is scoped by location
+	 * and variant and walks a batch of levels, so a caller cannot state one version for all of them;
+	 * a caller that does state the version it read has it honoured for the level it names and is
+	 * refused the moment that level has moved, and a caller that states none is still protected by the
+	 * compare-and-set every correction is written under.
 	 */
 	@ApiOperation({ summary: 'Reconcile stock levels against the movement ledger' })
 	@ApiResponse({ status: 202, description: 'Levels reconciled.' })
+	@ApiResponse({ status: 409, description: 'A level moved past the version the run was based on.' })
 	@Permissions(InventoryPermission.STOCK_RECONCILE as PermissionsEnum)
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'stock.reconcile', required: false, resourceType: 'stock-level' })
 	@Post('reconcile')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async reconcile(@Body() entity: ReconcileStockLevelsDTO): Promise<IStockReconciliation> {

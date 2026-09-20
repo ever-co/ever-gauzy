@@ -247,3 +247,125 @@ input UpdateProductInput {
 	optionGroupDeleteInputs: [ProductOptionGroupInput!]
 	optionDeleteInputs: [ProductOptionInput!]
 }
+
+# The batch surface.
+#
+# A catalogue import is one request whose answer names every item it could not apply, and the members
+# below are that request and that answer for this resource. The request is the route's own body: the
+# items, each naming its operation and carrying the product's write members, and the flag that says
+# whether the batch is one write or a sequence of them. Nothing else is declared, because nothing else
+# is read — the route offers no write mode and no dry run, and an input the resource cannot honour is
+# worse than an absent one.
+#
+# `op` is required on every item although the platform's contract defaults an item that states none to
+# an upsert: a batch that silently wrote a new row for a caller who meant to change an existing one is
+# worse than a batch that says which item it could not read. An operation that addresses a row — the
+# change and the archive — must name it, and the batch's own pre-pass reports an item that does not
+# before anything is written.
+#
+# The archive is the withdrawal the second protocol's `deleteProduct` sibling performs: the row is kept
+# and stops being listed, so the order lines that name the product keep resolving. A batch is not the
+# place for the destructive removal, which the delivered removal route serves.
+
+"""
+The operation one item of a product batch performs.
+"""
+enum ProductBulkOperation {
+	"A row is written from the item's members."
+	create
+	"A row the item names is changed."
+	update
+	"A row the item names is archived: kept, and no longer listed."
+	delete
+	"A row the item names is changed, or written when it names none."
+	upsert
+}
+
+"""
+One item of a product batch: the operation it performs and the product it performs it on.
+
+The members are the product's own write members, so an item states exactly what the equivalent
+single-item request states and nothing beside it. A member that is absent is a member the item says
+nothing about, which is a different request from a member stated as empty. Tags are named by the
+identifier the pivot row is written from, never by the tag row beside it.
+"""
+input ProductBulkItem {
+	"The operation this item performs."
+	op: ProductBulkOperation!
+	"The row the item addresses. Stated by the operations that change or archive a product."
+	id: ID
+	"The operator-facing code, unique within the organization."
+	code: String
+	"Whether the product may be sold. A disabled product stays readable and cannot be ordered."
+	enabled: Boolean
+	"A denormalised thumbnail URL, for the lists that must not join the asset table."
+	imageUrl: String
+	"The asset the storefront shows as the product's cover."
+	featuredImageId: ID
+	"The operator's classification of the product."
+	productTypeId: ID
+	"The merchandising grouping the product belongs to."
+	productCategoryId: ID
+	"The facets to attach to the product."
+	tagIds: [ID!]
+	"The product's name and description, one row per language."
+	translations: [ProductTranslationInput!]
+}
+
+"""
+What a caller states when it applies a batch of products.
+
+`atomic` asks for the batch as one write: either every item applies or none of them does. A batch that
+does not ask for it applies what it can and reports the items it could not — the flag is the whole
+difference between the two answers, and neither is a guess about the other.
+
+`idempotencyKey` is the retry key of this batch, and it is optional: the operation honours a key and
+does not demand one. A GraphQL request may carry many mutations in one document and a header cannot
+say which of them a key belongs to, so the key travels here, beside the input it qualifies, and is
+read by the same kernel that stores and replays the REST surface's keys.
+"""
+input BulkCreateProductsInput {
+	"The items of the batch, in caller order. The answer refers to them by position."
+	items: [ProductBulkItem!]!
+	"Whether the batch is applied as one write."
+	atomic: Boolean
+	"The client's retry key for this batch."
+	idempotencyKey: String
+}
+
+"""
+One item's outcome: the row that changed, or the item's own failure.
+
+The index is part of the answer because a batch is answered in one piece — a caller that sent twenty
+items reads which of them applied without matching rows back to a request by hand.
+"""
+type BulkProductItemResult {
+	"The item's position in the request."
+	index: Int!
+	"Whether the item applied."
+	ok: Boolean!
+	"The row that changed, when the item applied."
+	id: ID
+	"The resource that changed, so a mixed batch reads unambiguously."
+	resource: String
+	"Why the item did not apply, with the code the same item would have produced alone. The path names the item it belongs to."
+	error: UserError
+}
+
+"""
+What a batch of products adds up to.
+
+`succeeded` and `failed` are the counts of the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == items.length` against the same answer rather than against a second number that
+could disagree with it.
+"""
+type BulkCreateProductsPayload {
+	"One entry per request item, in request order."
+	results: [BulkProductItemResult!]!
+	"How many items applied."
+	succeeded: Int!
+	"How many items did not."
+	failed: Int!
+	"How many items the request carried."
+	total: Int!
+}

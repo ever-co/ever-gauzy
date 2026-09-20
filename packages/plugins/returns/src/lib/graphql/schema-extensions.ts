@@ -93,6 +93,12 @@ export const schemaExtensions = gql`
 		lines: [OrderReturnLine!]!
 		"The quantity still expected back across the return's lines."
 		outstandingQuantity: Decimal!
+		"""
+		The version of the return, which every write of it moves on. A client states the version it
+		read so its write can be refused when someone else moved the return on in between, and reads
+		the new one back from the payload of the write.
+		"""
+		version: Int!
 		createdAt: DateTime
 		updatedAt: DateTime
 	}
@@ -306,6 +312,12 @@ export const schemaExtensions = gql`
 		shippingOptionId: ID
 		noNotification: Boolean
 		note: String
+		"""
+		The client's own key for this request, honoured when one is presented. A request that is
+		retried under the same key is answered with the first attempt's response instead of raising a
+		second return.
+		"""
+		idempotencyKey: String
 	}
 
 	"One line as it is received back."
@@ -322,6 +334,13 @@ export const schemaExtensions = gql`
 		warehouseId: ID
 		refund: Decimal
 		note: String
+		"The version of the return the caller read, which this receipt is predicated on."
+		version: Int
+		"""
+		The client's own key for this request, which this operation requires. A receipt is refused
+		without one, because receiving the same goods twice restocks and refunds them twice.
+		"""
+		idempotencyKey: String
 	}
 
 	"The definition of a governed return reason."
@@ -447,16 +466,20 @@ export const schemaExtensions = gql`
 	extend type Mutation {
 		"Requests a return against an order."
 		requestOrderReturn(input: RequestOrderReturnInput!): RequestOrderReturnPayload!
-		"Approves a requested return."
-		approveOrderReturn(id: ID!, note: String): RequestOrderReturnPayload!
-		"Rejects a requested return."
-		rejectOrderReturn(id: ID!, reason: String): RequestOrderReturnPayload!
+		"""
+		Approves a requested return. The version the caller read rides as its own argument rather than
+		in an input, because deciding a status takes no other input and one GraphQL request may carry
+		several mutations, so a version cannot be stated once for all of them.
+		"""
+		approveOrderReturn(id: ID!, note: String, version: Int): RequestOrderReturnPayload!
+		"Rejects a requested return, under the version the caller read."
+		rejectOrderReturn(id: ID!, reason: String, version: Int): RequestOrderReturnPayload!
 		"Receives returned goods, writing the stock movements and issuing the refund."
 		receiveOrderReturn(id: ID!, input: ReceiveOrderReturnInput!): ReceiveOrderReturnPayload!
-		"Cancels a return."
-		cancelOrderReturn(id: ID!, reason: String): RequestOrderReturnPayload!
-		"Closes a fully received return."
-		closeOrderReturn(id: ID!): RequestOrderReturnPayload!
+		"Cancels a return, under the version the caller read."
+		cancelOrderReturn(id: ID!, reason: String, version: Int): RequestOrderReturnPayload!
+		"Closes a fully received return, under the version the caller read."
+		closeOrderReturn(id: ID!, version: Int): RequestOrderReturnPayload!
 		"Creates a governed return reason."
 		createOrderReturnReason(input: OrderReturnReasonInput!): OrderReturnReasonPayload!
 		"Updates a governed return reason."

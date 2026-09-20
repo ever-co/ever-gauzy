@@ -44,6 +44,14 @@ export interface IStockMovementInput {
 export interface IAppliedMovement {
 	readonly movementId: ID;
 	readonly levelId: ID;
+	/**
+	 * The version the level holds after this movement.
+	 *
+	 * It is reported because a caller can only condition its next write on a version it has been told:
+	 * the value is published as the response's `ETag` on a versioned route, and a client that replays
+	 * one is answered with the same version rather than a second movement.
+	 */
+	readonly version: number;
 	readonly quantityBefore: number;
 	readonly quantityAfter: number;
 	readonly reservedBefore: number;
@@ -56,6 +64,8 @@ export interface IStockAvailability {
 	readonly levelId: ID;
 	readonly warehouseId: ID;
 	readonly variantId: ID;
+	/** The level's optimistic-lock counter, which is what a conditional write is stated against. */
+	readonly version: number;
 	readonly quantity: number;
 	readonly reservedQuantity: number;
 	readonly safetyStock: number;

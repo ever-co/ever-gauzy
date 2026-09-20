@@ -9,6 +9,7 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany,
 	TenantOrganizationBaseEntity,
+	VersionedColumn,
 	Warehouse
 } from '@gauzy/core';
 import { IOrderClaim, IOrderExchange, IOrderReturn, IOrderReturnLine, IOrderReturnReason, OrderReturnStatus } from '../returns.types';
@@ -160,6 +161,23 @@ export class OrderReturn extends TenantOrganizationBaseEntity implements IOrderR
 	@IsDate()
 	@MultiORMColumn({ nullable: true })
 	closedAt?: Date;
+
+	/**
+	 * The version of the return, which every write of it moves on.
+	 *
+	 * A return is read, reasoned about and written back by two people at once — a warehouse clerk
+	 * receiving a delivery while an operator refunds it — and the second write would otherwise erase
+	 * the first with nobody told. The caller states the version it read, the write is predicated on it,
+	 * and a version that has moved on is refused rather than applied.
+	 *
+	 * The counter is owned by the write, never by the entity: `commitVersionedUpdate` increments it in
+	 * the same statement that checks it, so there is no window between reading a version and acting on
+	 * it. The column is declared with `@VersionedColumn()` rather than inline so both ORMs receive the
+	 * same definition — a deployment running the other one would otherwise have a versioned route with
+	 * no column behind it.
+	 */
+	@VersionedColumn()
+	version: number;
 
 	/*
 	|--------------------------------------------------------------------------

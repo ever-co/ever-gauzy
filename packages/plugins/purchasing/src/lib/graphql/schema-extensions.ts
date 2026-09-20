@@ -431,6 +431,12 @@ export const schemaExtensions = gql`
 		shippingTotal: Decimal
 		note: String
 		lines: [PurchaseOrderLineInput!]!
+		"""
+		The client's own key for this request, honoured when one is presented. A request retried under
+		the same key is answered with the order the first attempt raised instead of raising a second
+		document for the same purchase.
+		"""
+		idempotencyKey: String
 	}
 
 	"An amendment to a draft purchase order."
@@ -468,6 +474,11 @@ export const schemaExtensions = gql`
 		overReceiptTolerance: Decimal
 		note: String
 		lines: [GoodsReceiptLineInput!]!
+		"""
+		The client's own key for this request, which this operation requires. A delivery that is booked
+		twice books the stock twice, so the mutation is refused without one.
+		"""
+		idempotencyKey: String
 	}
 
 	"One further line recorded against a receipt that was already posted."

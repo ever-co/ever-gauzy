@@ -4,6 +4,7 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -86,6 +87,9 @@ export class RefundController extends CrudController<Refund> {
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Refund recorded' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Unattributed, or above what was captured' })
 	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	// Recording a refund twice would put two intentions against one payment, and the second one would
+	// be approved against money the first already gave back. The key is therefore mandatory here.
+	@Idempotent({ scope: 'refund.create', required: true, resourceType: 'refund' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async create(@Body() entity: CreateRefundDTO): Promise<IRefund> {

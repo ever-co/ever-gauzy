@@ -35,20 +35,33 @@ export interface IBulkOperationOptions {
  * }
  * ```
  *
- * @param options The route's declaration.
- * @returns The method decorator.
+ * **It may also be written on the controller**, and {@link readBulkOperation} honours both: a resource
+ * whose routes all accept batches declares itself once, and a route that takes a smaller one narrows it.
+ * The declaration is typed for both because it is usable as both — a method-only type would make the
+ * controller-level form a compile error while the reader kept looking for it, which is a documented
+ * capability nobody could use.
+ *
+ * @param options The route's declaration, or the controller's default for its routes.
+ * @returns The decorator.
  */
-export const BulkOperation = (options: IBulkOperationOptions): MethodDecorator =>
+export const BulkOperation = (options: IBulkOperationOptions): MethodDecorator & ClassDecorator =>
 	SetMetadata(BULK_OPERATION_METADATA, options);
 
 /**
- * The declaration a route carries.
+ * The declaration a route carries, or the one its controller declares for it.
  *
- * The method's declaration wins over the controller's, so a controller can declare the resource once
- * and a single route can narrow the cap.
+ * **The two levels are stored in two different places, and that is the whole subtlety here.** A method
+ * decorator writes onto the method function — `SetMetadata` calls
+ * `Reflect.defineMetadata(key, value, descriptor.value)` — while a class decorator writes onto the
+ * constructor. A reader that asked for metadata *defined with an explicit property key* on the
+ * prototype found neither, so a correctly decorated route was reported as declaring nothing; the
+ * failure was invisible only because no route in this repository used the machinery until one did. All
+ * four slots are therefore consulted, nearest first: the method's own record, then the prototype's, then
+ * the constructor's, then the target handed in — which is what makes a controller-level default reach a
+ * route that states none, and a route's own record win over it.
  *
- * @param target The controller's prototype, or the controller itself.
- * @param propertyKey The route's method name.
+ * @param target The controller's prototype, the controller itself, or a method function.
+ * @param propertyKey The route's method name, when the caller knows it.
  * @returns The declaration, or undefined when the route accepts no batch.
  */
 export function readBulkOperation(
@@ -59,9 +72,20 @@ export function readBulkOperation(
 		return undefined;
 	}
 
-	const own = propertyKey ? Reflect.getMetadata(BULK_OPERATION_METADATA, target, propertyKey) : undefined;
+	const record = target as Record<string | symbol, unknown>;
+	const method = propertyKey ? record[propertyKey] : undefined;
 
-	return (own as IBulkOperationOptions) ?? (Reflect.getMetadata(BULK_OPERATION_METADATA, target) as IBulkOperationOptions);
+	// The controller's own declaration is the last of the four slots rather than the first, because a
+	// route that states its own has to win over the default its controller states for it.
+	const constructor = (target as { constructor?: object }).constructor;
+	const declared = [
+		method ? Reflect.getMetadata(BULK_OPERATION_METADATA, method) : undefined,
+		propertyKey ? Reflect.getMetadata(BULK_OPERATION_METADATA, target, propertyKey) : undefined,
+		constructor ? Reflect.getMetadata(BULK_OPERATION_METADATA, constructor) : undefined,
+		Reflect.getMetadata(BULK_OPERATION_METADATA, target)
+	].find((candidate) => candidate !== undefined);
+
+	return declared as IBulkOperationOptions | undefined;
 }
 
 /**

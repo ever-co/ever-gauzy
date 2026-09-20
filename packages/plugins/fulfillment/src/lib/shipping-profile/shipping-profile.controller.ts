@@ -4,6 +4,7 @@ import { IPagination } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -21,6 +22,11 @@ import { CreateShippingProfileDTO, UpdateShippingProfileDTO } from './dto';
  * The variant attachment is a route on this controller rather than a resource of its own: attaching a
  * variant to a profile is an edit of the profile's membership, and a caller that could address the pivot
  * directly could put a variant in two profiles without passing the rule that prevents it.
+ *
+ * Creating a profile honours the platform's retry convention when a key is presented, so a retried
+ * create is answered with the profile the first attempt wrote rather than with a refusal for a code that
+ * is already taken. Marking a profile as the default is not decorated: it is idempotent by construction
+ * — setting the same profile as the default twice leaves one default — and a key would add nothing.
  */
 @ApiTags('ShippingProfile')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -40,6 +46,7 @@ export class ShippingProfileController extends CrudController<ShippingProfile> {
 	@ApiOperation({ summary: 'Create a shipping profile' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Shipping profile created' })
 	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_CREATE)
+	@Idempotent({ scope: 'shipping_profile.create', required: false, resourceType: 'shipping_profile' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateShippingProfileDTO): Promise<ShippingProfile> {

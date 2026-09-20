@@ -13,6 +13,11 @@
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
 
+	// The kernel's conditional write is the real one. The subject of the optimistic-concurrency cases
+	// below is what `commitVersionedUpdate` does with a version that moved on, and a re-implementation
+	// here would assert the double rather than the platform.
+	const versionedWrite = jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write');
+
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
@@ -98,6 +103,7 @@ jest.mock('@gauzy/core', () => {
 		ColumnIndex: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
+		VersionedColumn: decorator,
 		MultiORMManyToOne: decorator,
 		MultiORMOneToMany: decorator,
 		JsonColumn: decorator,
@@ -111,6 +117,10 @@ jest.mock('@gauzy/core', () => {
 		},
 		BaseEvent: class {},
 		EventBus: class {},
+		// The kernel's own conditional write, so a conflict is the platform's conflict rather than this
+		// suite's.
+		commitVersionedUpdate: versionedWrite.commitVersionedUpdate,
+		versionExpectationOf: versionedWrite.versionExpectationOf,
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
 		SequenceService: class SequenceService {},
 		TenantSettingService: class TenantSettingService {},
@@ -161,7 +171,12 @@ import { OrderReturnService } from './order-return.service';
  *   (doc 10 §11.6 step 5);
  * - **the state machine refuses what it does not admit.** Approving a return whose goods are already
  *   in, cancelling one whose goods have arrived, or closing one that has received nothing are all
- *   refusals that leave the row exactly as it was (doc 10 §11.1).
+ *   refusals that leave the row exactly as it was (doc 10 §11.1);
+ * - **every write of the header is conditional on the version its caller read.** The counter moves on
+ *   with the write that checked it, a version that moved on between the caller's read and its write is
+ *   refused with `ENTITY_VERSION_CONFLICT` and nothing applied, and a write the platform makes on its
+ *   own behalf — a receipt compensating itself, or the second write of one request — is still
+ *   predicated on the version the row holds.
  *
  * The service is constructed directly over in-memory tables. The repository double states the `where`
  * the services state — equality, `In` and the nested `Not(In(...))` the live-return read builds —
@@ -197,6 +212,8 @@ interface ITables {
 function repository(tables: ITables, tableName: keyof ITables) {
 	let sequence = 0;
 	const rows = () => tables[tableName].filter((row) => !row.deletedAt);
+	/** What every `update` was asked to write, and the criteria it was asked to write it under. */
+	const updates: Array<{ criteria: Row; partial: Row }> = [];
 	const same = (left: unknown, right: unknown) => String(left ?? '') === String(right ?? '');
 	/** Every operator the services actually build, and nothing else: an unknown one throws. */
 	const matchesOperator = (value: unknown, operator: FindOperator<any>): boolean => {
@@ -231,6 +248,7 @@ function repository(tables: ITables, tableName: keyof ITables) {
 
 	return {
 		rows,
+		updates,
 		metadata: { tableName, hasColumnWithPropertyPath: () => false },
 		find: async (options: any = {}) => rows().filter((row) => matches(row, options.where)),
 		findOne: async (options: any = {}) => rows().find((row) => matches(row, options.where)) ?? null,
@@ -270,15 +288,31 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			return Array.isArray(rowOrRows) ? list : list[0];
 		},
 		// The platform's `update` reaches TypeORM's own, which answers an `UpdateResult` and not the row.
+		// `TenantAwareCrudService.update` merges the caller's scoped conditions into the criteria the
+		// statement runs with and resolves a criteria that does not name a `version` through a read,
+		// which raises when nothing matches. **A criteria that does name one skips that read**, because
+		// the column is a precondition the `UPDATE` evaluates rather than a locator — so a version that
+		// moved on reaches the affected-row count, which is where the conflict is read from. Both
+		// branches are mirrored here: a double that pre-read every criteria would answer a stale version
+		// with a not-found, and the cases below would assert the double instead of the platform.
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = tables[tableName].findIndex((row) => same(row.id, id));
+			const where = typeof criteria === 'string' ? { id: criteria } : criteria ?? {};
+			// The platform reads first only for a criteria that does not name a version.
+			const readsFirst = typeof criteria === 'string' || !('version' in where);
 
-			if (index >= 0) {
-				Object.assign(tables[tableName][index], partial);
+			if (readsFirst && !rows().some((row) => matches(row, where))) {
+				throw new NotFoundException('The requested record was not found');
 			}
 
-			return { affected: index >= 0 ? 1 : 0 };
+			const matching = rows().filter((row) => matches(row, where));
+
+			updates.push({ criteria: where, partial });
+
+			for (const row of matching) {
+				Object.assign(row, partial);
+			}
+
+			return { affected: matching.length };
 		},
 		softDelete: async (criteria: any) => {
 			const matching = tables[tableName].filter((row) => matches(row, criteria));
@@ -313,6 +347,8 @@ const returnRow = (id: string, overrides: Row = {}): Row => ({
 	currency: 'USD',
 	noNotification: false,
 	warehouseId: WAREHOUSE,
+	// Every row carries the version its writes are predicated on, as the entity's own column does.
+	version: 1,
 	...overrides
 });
 
@@ -465,6 +501,7 @@ function returnFixture(
 		refundCalls,
 		shipmentCalls,
 		sequenceCalls,
+		updates: typeOrmOrderReturnRepository.updates,
 		returnRow: (id: string) => tables.order_return.find((row) => row.id === id),
 		line: (id: string) => tables.order_return_line.find((row) => row.id === id)
 	};
@@ -1231,3 +1268,142 @@ describe('OrderReturnService — reading a return with everything a detail view 
 		).rejects.toThrow(/would exceed/);
 	});
 });
+
+describe('OrderReturnService — the versioned write (the aggregate’s optimistic lock)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('moves the version on in the same statement that checks it', async () => {
+		// The comparison and the write are one statement, so there is no window between deciding and
+		// acting: the caller states version 3, and the write it earns leaves the return at 4.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { version: 3, status: OrderReturnStatus.REQUESTED })]
+		});
+
+		const approved = await fixture.service.approve('return-1', 'looks fine', {
+			wildcard: false,
+			versions: [3]
+		});
+
+		expect(approved).toMatchObject({ status: OrderReturnStatus.APPROVED, version: 4 });
+	});
+
+	it('refuses a write whose version moved on, and leaves the return exactly as it was', async () => {
+		// The failure this exists for: the caller read version 3, someone else wrote version 4, and the
+		// caller's write is refused rather than erasing the change it never saw.
+		//
+		// The refusal is the *central* one. The version travels in the criteria the ordinary `update` runs
+		// with, the statement matches no row there, and the kernel reads the conflict from the affected-row
+		// count — the service adds no classification of its own below it.
+		const fixture = returnFixture({
+			returns: [
+				returnRow('return-1', {
+					version: 4,
+					status: OrderReturnStatus.REQUESTED,
+					note: 'the other operator’s note'
+				})
+			]
+		});
+
+		await expect(
+			fixture.service.approve('return-1', 'mine', { wildcard: false, versions: [3] })
+		).rejects.toMatchObject({ status: 409, code: 'ENTITY_VERSION_CONFLICT' });
+
+		expect(fixture.updates[fixture.updates.length - 1].criteria).toEqual({
+			id: 'return-1',
+			version: 3,
+			tenantId: TENANT,
+			organizationId: ORG
+		});
+		expect(fixture.returnRow('return-1')).toMatchObject({
+			status: OrderReturnStatus.REQUESTED,
+			note: 'the other operator’s note',
+			version: 4
+		});
+		expect(fixture.returnRow('return-1')?.approvedAt).toBeUndefined();
+	});
+
+	it('tells a return that is gone apart from one that moved on', async () => {
+		// A return that no longer exists is answered before any write is attempted, because the service
+		// reads the row it is about to move; a version that moved on is the conflict the conditional
+		// update answers, which is the case above.
+		const fixture = returnFixture({ returns: [] });
+
+		await expect(
+			fixture.service.close('no-such-return', { wildcard: false, versions: [3] })
+		).rejects.toBeInstanceOf(NotFoundException);
+		expect(fixture.updates).toEqual([]);
+	});
+
+	it('predicates a write the platform makes on its own behalf on the version the row holds', async () => {
+		// A caller inside the platform states no version, and the write is still conditional: the version
+		// it read is the one the statement is predicated on, and it is moved on by the same statement.
+		const fixture = returnFixture({ returns: [returnRow('return-1', { version: 7 })] });
+
+		const approved = await fixture.service.approve('return-1');
+
+		expect(approved.version).toBe(8);
+	});
+
+	it('writes one return twice in a single request, each write under the version the last one produced', async () => {
+		// A receipt that refunds is two writes of one aggregate in one request: the status moves the
+		// version to 2, and the refund is predicated on 2 rather than on the 1 the caller stated — which
+		// the receipt has already spent. Reusing the stated version would refuse the refund of a receipt
+		// that had in fact landed.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { version: 1, status: OrderReturnStatus.APPROVED })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })]
+		});
+
+		const outcome = await fixture.service.receive(
+			'return-1',
+			[{ lineId: 'line-1', receivedQuantity: '5' }],
+			{ refund: '50.00' },
+			{ wildcard: false, versions: [1] }
+		);
+
+		expect(outcome).toMatchObject({
+			status: OrderReturnStatus.RECEIVED,
+			version: 3
+		});
+		expect(fixture.returnRow('return-1')).toMatchObject({ version: 3, refundAmount: '50.000000' });
+	});
+
+	it('writes an edit of the header under the version the caller read', async () => {
+		const fixture = returnFixture({ returns: [returnRow('return-1', { version: 2 })] });
+
+		const edited = await fixture.service.applyVersionedUpdate(
+			'return-1',
+			{ note: 'customer asked for a different drop-off' },
+			{ wildcard: false, versions: [2] }
+		);
+
+		expect(edited).toMatchObject({ note: 'customer asked for a different drop-off', version: 3 });
+
+		await expect(
+			fixture.service.applyVersionedUpdate('return-1', { note: 'again' }, {
+				wildcard: false,
+				versions: [2]
+			})
+		).rejects.toMatchObject({ status: 409, code: 'ENTITY_VERSION_CONFLICT' });
+	});
+
+	it('moves the version on for an edit that only rewrites the line set', async () => {
+		// The lines are part of the aggregate: an edit that changes none of the header's own fields still
+		// changes the return, so the version has to follow it — otherwise a client holding the old tag
+		// could edit the same return a second time.
+		const fixture = returnFixture({ returns: [returnRow('return-1', { version: 5 })], lines: [] });
+
+		const edited = await fixture.service.applyVersionedUpdate('return-1', {}, {
+			wildcard: false,
+			versions: [5]
+		});
+
+		expect(edited.version).toBe(6);
+	});
+});
+

@@ -1,8 +1,15 @@
-import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Context, ID, Int, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { BadRequestException, UseGuards } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
-import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import {
+	Idempotent,
+	Permissions,
+	PermissionGuard,
+	TenantPermissionGuard,
+	Versioned,
+	versionExpectationOf
+} from '@gauzy/core';
 import { OrderChangeService } from './../order-change/order-change.service';
 import { OrderChangeActionService } from './../order-change-action/order-change-action.service';
 import { OrderHistoryService } from './../order-history/order-history.service';
@@ -35,6 +42,11 @@ import {
  *
  * Everything here delegates to the service that owns the rule, so the change lifecycle — including the
  * exclusivity rule and the atomic application of an action set — exists once.
+ *
+ * The mutations that write a change carry `@Versioned(...)`, and the version they take is the
+ * **order's**, never the change's: the `version` column on a change is the order version the change
+ * produces, which is a different fact. A mutation names only the change, so no resource is declared —
+ * the handler resolves the order and the order's own conditional update compares the stated version.
  */
 @Resolver('OrderChange')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -149,13 +161,29 @@ export class OrderChangeResolver {
 	/**
 	 * Applies a change.
 	 *
+	 * A key is mandatory here, exactly as it is on the route this mutation mirrors: applying a change
+	 * twice moves the order twice, and a client that never saw the first answer has no other way to tell
+	 * whether it landed.
+	 *
+	 * The mutation names the change and not the order, so no resource is declared: the handler resolves
+	 * the order the change belongs to, and the order's own conditional update is what compares the
+	 * version the caller stated and refuses an order that has moved on.
+	 *
 	 * @param id The change.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
 	 * @returns The applied change.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.change.confirm', required: true, resourceType: 'order_change' })
+	@Versioned({})
 	@Mutation(() => Object, { name: 'confirmOrderChange' })
-	async confirmOrderChange(@Args('id', { type: () => ID }) id: string): Promise<OrderChange> {
-		const result = await this.changeService.confirm(id);
+	async confirmOrderChange(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<OrderChange> {
+		const result = await this.changeService.confirm(id, versionExpectationOf(context?.req));
 
 		return result.change;
 	}
@@ -165,15 +193,19 @@ export class OrderChangeResolver {
 	 *
 	 * @param id The change.
 	 * @param reason Why it was declined.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
 	 * @returns The declined change.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({})
 	@Mutation(() => Object, { name: 'declineOrderChange' })
 	async declineOrderChange(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('reason', { type: () => String, nullable: true }) reason?: string
+		@Args('reason', { type: () => String, nullable: true }) reason?: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
 	): Promise<OrderChange> {
-		return this.changeService.decline(id, reason);
+		return this.changeService.decline(id, reason, versionExpectationOf(context?.req));
 	}
 
 	/**
@@ -181,15 +213,19 @@ export class OrderChangeResolver {
 	 *
 	 * @param id The change.
 	 * @param reason Why it was cancelled.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
 	 * @returns The cancelled change.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({})
 	@Mutation(() => Object, { name: 'cancelOrderChange' })
 	async cancelOrderChange(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('reason', { type: () => String, nullable: true }) reason?: string
+		@Args('reason', { type: () => String, nullable: true }) reason?: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
 	): Promise<OrderChange> {
-		return this.changeService.cancel(id, reason);
+		return this.changeService.cancel(id, reason, versionExpectationOf(context?.req));
 	}
 
 	/**

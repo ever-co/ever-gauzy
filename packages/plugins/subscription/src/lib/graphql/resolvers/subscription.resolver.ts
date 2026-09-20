@@ -1,8 +1,15 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Context, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { FindOptionsWhere } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	Versioned,
+	versionExpectationOf
+} from '@gauzy/core';
 import { SubscriptionPermissions } from '../../subscription.permissions';
 import {
 	ISubscription,
@@ -69,6 +76,18 @@ interface IUpdateSubscriptionArgs {
  * allowed-from state. The two fields a change can produce — a proration's settlement and a cycle's
  * outcome — are returned whole rather than reduced to a status, because the arithmetic that produced
  * them is what a caller has to show a customer.
+ *
+ * The two conventions the controller adopts are adopted here with the same scope names, so the two
+ * protocols answer a retry, a missing version and a stale version identically. A GraphQL operation
+ * always travels over `POST`, so a query states `write: false` explicitly — nothing about the
+ * transport says it — and the version a caller read rides beside the input, because one request may
+ * select several mutations and a header could not say which of them it belongs to. The version the
+ * guard accepted is read back off the operation's own request, so the write is predicated on exactly
+ * the version the guard compared.
+ *
+ * Every mutating field here declares the scope its route declares and honours a key presented under
+ * it; only billing a cycle requires one, because a route that started demanding a key would refuse
+ * every caller it already has.
  */
 @Resolver('CustomerSubscription')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -87,6 +106,7 @@ export class SubscriptionResolver {
 	 * @param page The page.
 	 * @returns One page of subscriptions.
 	 */
+	@Versioned({ resource: SubscriptionService, write: false })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 	@Query('subscriptions')
 	async subscriptions(@Args('filter') filter?: ISubscriptionFilter, @Args('page') page?: IPageSelection) {
@@ -129,6 +149,7 @@ export class SubscriptionResolver {
 	 * @param id The subscription.
 	 * @returns The subscription, or null when it is not the caller's.
 	 */
+	@Versioned({ resource: SubscriptionService, write: false })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 	@Query('subscription')
 	async subscription(@Args('id') id: ID): Promise<Subscription | null> {
@@ -142,10 +163,16 @@ export class SubscriptionResolver {
 	/**
 	 * Starts a subscription on a plan.
 	 *
+	 * No version is required of the caller — there is no subscription to have read yet — and the created
+	 * subscription's version is published in the payload, which is what the writes that follow it state
+	 * back.
+	 *
 	 * @param input The request.
 	 * @returns The payload, with the subscription or the reason it was refused.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_CREATE)
+	@Idempotent({ scope: 'subscription.create', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService, required: false })
 	@Mutation('createSubscription')
 	async createSubscription(@Args('input') input: ICreateSubscriptionArgs) {
 		try {
@@ -160,15 +187,27 @@ export class SubscriptionResolver {
 	 *
 	 * @param id The subscription.
 	 * @param input The fields to change.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
 	 * @returns The payload.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.update', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Mutation('updateSubscription')
-	async updateSubscription(@Args('id') id: ID, @Args('input') input: IUpdateSubscriptionArgs) {
+	async updateSubscription(
+		@Args('id') id: ID,
+		@Args('input') input: IUpdateSubscriptionArgs,
+		@Context() context: any
+	) {
 		try {
-			await this.subscriptionService.update(id, input as any);
-
-			return { subscription: await this.subscriptionService.findOneDetailed(id), userErrors: [] };
+			return {
+				subscription: await this.subscriptionService.applyChanges(
+					id,
+					input as any,
+					versionExpectationOf(context?.req)
+				),
+				userErrors: []
+			};
 		} catch (error) {
 			return { subscription: null, userErrors: [toUserError(error)] };
 		}
@@ -178,13 +217,19 @@ export class SubscriptionResolver {
 	 * Activates a pending subscription.
 	 *
 	 * @param id The subscription.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
 	 * @returns The payload.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.activate', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Mutation('activateSubscription')
-	async activateSubscription(@Args('id') id: ID) {
+	async activateSubscription(@Args('id') id: ID, @Context() context: any) {
 		try {
-			return { subscription: await this.subscriptionService.activate(id), userErrors: [] };
+			return {
+				subscription: await this.subscriptionService.activate(id, versionExpectationOf(context?.req)),
+				userErrors: []
+			};
 		} catch (error) {
 			return { subscription: null, userErrors: [toUserError(error)] };
 		}
@@ -195,14 +240,25 @@ export class SubscriptionResolver {
 	 *
 	 * @param id The subscription.
 	 * @param input Until when, and why.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
 	 * @returns The payload.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.pause', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Mutation('pauseSubscription')
-	async pauseSubscription(@Args('id') id: ID, @Args('input') input?: { until?: Date; reason?: string }) {
+	async pauseSubscription(
+		@Args('id') id: ID,
+		@Args('input') input: { until?: Date; reason?: string } | undefined,
+		@Context() context: any
+	) {
 		try {
 			return {
-				subscription: await this.subscriptionService.pause(id, { until: input?.until, reason: input?.reason }),
+				subscription: await this.subscriptionService.pause(
+					id,
+					{ until: input?.until, reason: input?.reason },
+					versionExpectationOf(context?.req)
+				),
 				userErrors: []
 			};
 		} catch (error) {
@@ -214,13 +270,23 @@ export class SubscriptionResolver {
 	 * Resumes a paused subscription.
 	 *
 	 * @param id The subscription.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
 	 * @returns The payload.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.resume', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Mutation('resumeSubscription')
-	async resumeSubscription(@Args('id') id: ID) {
+	async resumeSubscription(@Args('id') id: ID, @Context() context: any) {
 		try {
-			return { subscription: await this.subscriptionService.resume(id), userErrors: [] };
+			return {
+				subscription: await this.subscriptionService.resume(
+					id,
+					undefined,
+					versionExpectationOf(context?.req)
+				),
+				userErrors: []
+			};
 		} catch (error) {
 			return { subscription: null, userErrors: [toUserError(error)] };
 		}
@@ -231,17 +297,28 @@ export class SubscriptionResolver {
 	 *
 	 * @param id The subscription.
 	 * @param input Why, and whether it ends now.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
 	 * @returns The payload.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.cancel', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Mutation('cancelSubscription')
-	async cancelSubscription(@Args('id') id: ID, @Args('input') input?: { reason?: string; immediate?: boolean }) {
+	async cancelSubscription(
+		@Args('id') id: ID,
+		@Args('input') input: { reason?: string; immediate?: boolean } | undefined,
+		@Context() context: any
+	) {
 		try {
 			return {
-				subscription: await this.subscriptionService.cancel(id, {
-					reason: input?.reason,
-					immediate: input?.immediate
-				}),
+				subscription: await this.subscriptionService.cancel(
+					id,
+					{
+						reason: input?.reason,
+						immediate: input?.immediate
+					},
+					versionExpectationOf(context?.req)
+				),
 				userErrors: []
 			};
 		} catch (error) {
@@ -254,13 +331,27 @@ export class SubscriptionResolver {
 	 *
 	 * @param id The subscription.
 	 * @param input Why.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
 	 * @returns The payload.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.expire', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Mutation('expireSubscription')
-	async expireSubscription(@Args('id') id: ID, @Args('input') input?: { reason?: string }) {
+	async expireSubscription(
+		@Args('id') id: ID,
+		@Args('input') input: { reason?: string } | undefined,
+		@Context() context: any
+	) {
 		try {
-			return { subscription: await this.subscriptionService.expire(id, input?.reason), userErrors: [] };
+			return {
+				subscription: await this.subscriptionService.expire(
+					id,
+					input?.reason,
+					versionExpectationOf(context?.req)
+				),
+				userErrors: []
+			};
 		} catch (error) {
 			return { subscription: null, userErrors: [toUserError(error)] };
 		}
@@ -269,18 +360,30 @@ export class SubscriptionResolver {
 	/**
 	 * Moves a subscription to another plan.
 	 *
+	 * A plan change charges the prorated difference through the ordinary order path, which is the
+	 * strongest case in this plugin for a retry key: a client that loses the payload cannot tell whether
+	 * the difference was collected, and a second attempt under the same key is answered from the record
+	 * of the first rather than charging the customer twice for the same remainder of the period.
+	 *
 	 * @param id The subscription.
 	 * @param input The plan, the quantity and when the change takes effect.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
 	 * @returns The payload, carrying what the change settled.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.plan.change', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Mutation('changeSubscriptionPlan')
 	async changeSubscriptionPlan(
 		@Args('id') id: ID,
-		@Args('input') input: { planId: ID; quantity?: string; effective?: 'IMMEDIATE' | 'NEXT_PERIOD'; note?: string }
+		@Args('input') input: { planId: ID; quantity?: string; effective?: 'IMMEDIATE' | 'NEXT_PERIOD'; note?: string },
+		@Context() context: any
 	) {
 		try {
-			return { ...(await this.subscriptionService.changePlan(id, input as any)), userErrors: [] };
+			return {
+				...(await this.subscriptionService.changePlan(id, input as any, versionExpectationOf(context?.req))),
+				userErrors: []
+			};
 		} catch (error) {
 			return {
 				subscription: null,
@@ -297,15 +400,30 @@ export class SubscriptionResolver {
 	/**
 	 * Adds a recurring line mid-cycle.
 	 *
+	 * Adding a line charges the prorated difference for the remainder of the period, so this mutation is
+	 * the other strong case for a retry key: a lost payload leaves a client unable to tell whether the
+	 * line it asked for was added and charged, and a retry under the same key is answered from the record
+	 * of the first attempt.
+	 *
 	 * @param id The subscription.
 	 * @param input The line.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
 	 * @returns The payload, carrying what the change settled.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.item.add', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Mutation('addSubscriptionItem')
-	async addSubscriptionItem(@Args('id') id: ID, @Args('input') input: ISubscriptionItemArgs) {
+	async addSubscriptionItem(
+		@Args('id') id: ID,
+		@Args('input') input: ISubscriptionItemArgs,
+		@Context() context: any
+	) {
 		try {
-			return { ...(await this.subscriptionService.addItem(id, input as any)), userErrors: [] };
+			return {
+				...(await this.subscriptionService.addItem(id, input as any, versionExpectationOf(context?.req))),
+				userErrors: []
+			};
 		} catch (error) {
 			return this.failedChange(error);
 		}
@@ -317,17 +435,29 @@ export class SubscriptionResolver {
 	 * @param id The subscription.
 	 * @param variantId The variant whose line is changing.
 	 * @param quantity The new quantity.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
 	 * @returns The payload, carrying what the change settled.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.item.change_quantity', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Mutation('changeSubscriptionItemQuantity')
 	async changeSubscriptionItemQuantity(
 		@Args('id') id: ID,
 		@Args('variantId') variantId: ID,
-		@Args('quantity') quantity: string
+		@Args('quantity') quantity: string,
+		@Context() context: any
 	) {
 		try {
-			return { ...(await this.subscriptionService.changeItemQuantity(id, variantId, quantity)), userErrors: [] };
+			return {
+				...(await this.subscriptionService.changeItemQuantity(
+					id,
+					variantId,
+					quantity,
+					versionExpectationOf(context?.req)
+				)),
+				userErrors: []
+			};
 		} catch (error) {
 			return this.failedChange(error);
 		}
@@ -335,6 +465,10 @@ export class SubscriptionResolver {
 
 	/**
 	 * Removes a recurring line mid-cycle.
+	 *
+	 * The removal takes the line's row away rather than writing the subscription, so no version of the
+	 * subscription is stated and the write the removal does make to it — the proration it records — is
+	 * predicated on the version the row holds.
 	 *
 	 * @param id The subscription.
 	 * @param variantId The variant whose line is being removed.
@@ -353,15 +487,29 @@ export class SubscriptionResolver {
 	/**
 	 * Bills one cycle of one subscription.
 	 *
+	 * A retry presents the same key and is answered from the record of the first attempt, so a lost
+	 * response never bills a period twice.
+	 *
 	 * @param id The subscription.
 	 * @param input The instant to bill against.
+	 * @param context The operation context, which carries the version the caller read the subscription at.
 	 * @returns The payload, carrying what the cycle did.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_BILL)
+	@Idempotent({ scope: 'subscription.bill', required: true, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Mutation('billSubscription')
-	async billSubscription(@Args('id') id: ID, @Args('input') input?: { asOf?: Date }) {
+	async billSubscription(
+		@Args('id') id: ID,
+		@Args('input') input: { asOf?: Date } | undefined,
+		@Context() context: any
+	) {
 		try {
-			const outcome = await this.subscriptionService.billCycle(id, { asOf: input?.asOf, manual: true });
+			const outcome = await this.subscriptionService.billCycle(
+				id,
+				{ asOf: input?.asOf, manual: true },
+				versionExpectationOf(context?.req)
+			);
 
 			return { ...outcome, userErrors: [] };
 		} catch (error) {

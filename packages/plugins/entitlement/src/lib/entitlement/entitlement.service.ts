@@ -1,7 +1,19 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { EntityManager, Not } from 'typeorm';
+import { EntityManager, Not, UpdateResult } from 'typeorm';
 import { ID, IRuleCreateInput } from '@gauzy/contracts';
-import { EventBus, EventOutboxService, RequestContext, RuleService, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import {
+	ApiErrorCode,
+	ApiException,
+	EventBus,
+	EventOutboxService,
+	IVersionExpectation,
+	RequestContext,
+	RuleService,
+	SequenceService,
+	TenantAwareCrudService,
+	bumpVersion,
+	commitVersionedUpdate
+} from '@gauzy/core';
 import { Entitlement } from './entitlement.entity';
 import { EntitlementActivation } from '../entitlement-activation/entitlement-activation.entity';
 import { EntitlementKey } from '../entitlement-key/entitlement-key.entity';
@@ -41,6 +53,16 @@ const EXTENDABLE_STATUSES: EntitlementStatus[] = [
 const SUSPENDABLE_STATUSES: EntitlementStatus[] = [EntitlementStatus.PENDING, EntitlementStatus.ACTIVE];
 
 /**
+ * The version a write that no caller conditioned on is predicated on.
+ *
+ * A write that arrives from a route is predicated on what its caller accepted in `If-Match`. A write
+ * that arrives from anywhere else — the expiry pass, an event consumer, another service — has no
+ * caller to condition it, so it is predicated on the version the row holds when the statement runs.
+ * Either way the check and the increment are one statement rather than two.
+ */
+const ANY_VERSION: IVersionExpectation = { wildcard: true, versions: [] };
+
+/**
  * The right itself: granting it, and the transitions that end or bend it.
  *
  * Everything a right does after it exists is here or in the two services it delegates to, and the
@@ -68,6 +90,35 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		private readonly eventBus: EventBus
 	) {
 		super(typeOrmEntitlementRepository, mikroOrmEntitlementRepository);
+	}
+
+	/**
+	 * Writes the fields a caller changed onto a right, under the version that caller read.
+	 *
+	 * The write is predicated on the caller's version rather than on the one the row happens to hold,
+	 * which is what turns a second editor's change to the same right into a refusal instead of a silent
+	 * overwrite. The conditions are not part of this write: they are `rule` rows the rule engine owns,
+	 * and {@link replaceConditions} replaces them in its own transaction.
+	 *
+	 * @param id The right.
+	 * @param changes The fields to change.
+	 * @param expectation The version the caller read the right at.
+	 * @returns The changed right, with its activations, its keys and the party it belongs to.
+	 */
+	public async applyChanges(
+		id: ID,
+		changes: Record<string, unknown>,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<Entitlement> {
+		await commitVersionedUpdate(this, {
+			id,
+			expectation,
+			// The version is written by the conditional update and never by the caller's payload, so a
+			// body that carried one cannot move the row past the version the write was predicated on.
+			patch: { ...changes }
+		});
+
+		return await this.findOneDetailed(id);
 	}
 
 	/**
@@ -133,6 +184,10 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 				gracePeriodDays,
 				activationLimit: activationLimit ?? null,
 				activationCount: 0,
+				// The row starts at the column's own first revision, stated here rather than left to the
+				// database default so that the created right carries its version back to the caller on
+				// every dialect — that response is where the next write reads the version it states.
+				version: 1,
 				// A right granted without a purchase behind it is in force at once unless the caller says
 				// otherwise: there is no payment to wait for, so `PENDING` would be a state nothing moves
 				// it out of.
@@ -267,7 +322,9 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 					continue;
 				}
 
-				await manager.update(Entitlement, { id: entitlement.id } as any, { status: EntitlementStatus.ACTIVE } as any);
+				// The right is put into force under the version the read above found — no caller
+				// conditioned this write, so the version the row holds is what it is predicated on.
+				await this.updateVersionedRow(manager, entitlement, { status: EntitlementStatus.ACTIVE });
 
 				await this.outbox.append(manager, {
 					name: EntitlementEventName.ACTIVATED,
@@ -312,10 +369,17 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 *
 	 * @param id The right to suspend.
 	 * @param reason Why, kept on the row and carried by the event.
+	 * @param scope The tenant and organization the write is scoped to.
+	 * @param expectation The version the caller read the right at, when the call has a caller.
 	 * @returns The suspended right.
 	 * @throws BadRequestException when the right is withdrawn or already expired.
 	 */
-	public async suspend(id: ID, reason?: string, scope: IEntitlementScope = {}): Promise<Entitlement> {
+	public async suspend(
+		id: ID,
+		reason?: string,
+		scope: IEntitlementScope = {},
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<Entitlement> {
 		return await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
 			const entitlement = await this.requireLocked(manager, id, scope);
 
@@ -329,10 +393,13 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 				);
 			}
 
-			await manager.update(
-				Entitlement,
-				{ id } as any,
-				{ status: EntitlementStatus.SUSPENDED, suspendedReason: reason ?? null } as any
+			// The suspension is predicated on the locked row's version; see `updateVersionedRow` for why
+			// the transaction-scoped writes state their own predicate rather than calling the helper.
+			await this.updateVersionedRow(
+				manager,
+				entitlement,
+				{ status: EntitlementStatus.SUSPENDED, suspendedReason: reason ?? null },
+				expectation
 			);
 
 			await this.outbox.append(manager, {
@@ -361,10 +428,16 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 * expresses "still in force while a renewal is chased".
 	 *
 	 * @param id The right to resume.
+	 * @param scope The tenant and organization the write is scoped to.
+	 * @param expectation The version the caller read the right at, when the call has a caller.
 	 * @returns The resumed — or expired — right.
 	 * @throws BadRequestException when the right is not suspended.
 	 */
-	public async resume(id: ID, scope: IEntitlementScope = {}): Promise<Entitlement> {
+	public async resume(
+		id: ID,
+		scope: IEntitlementScope = {},
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<Entitlement> {
 		const entitlement = await this.findOneScoped(id, scope);
 
 		if (entitlement.status === EntitlementStatus.ACTIVE) {
@@ -378,14 +451,18 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		}
 
 		if (isDueForExpiry(entitlement, new Date())) {
-			return await this.expire(id, 'TERM_ENDED', scope);
+			return await this.expire(id, 'TERM_ENDED', scope, expectation);
 		}
 
 		return await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
-			await manager.update(
-				Entitlement,
-				{ id } as any,
-				{ status: EntitlementStatus.ACTIVE, suspendedReason: null } as any
+			// The row was read before the transaction opened, so the statement's own predicate is what
+			// makes this write safe: a right that moved on since that read matches no row, and the write
+			// is refused rather than applied underneath the change that moved it.
+			await this.updateVersionedRow(
+				manager,
+				entitlement,
+				{ status: EntitlementStatus.ACTIVE, suspendedReason: null },
+				expectation
 			);
 
 			const resumed = (await manager.findOne(Entitlement, { where: { id } as any })) as Entitlement;
@@ -405,13 +482,16 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 *
 	 * @param id The right to extend.
 	 * @param input The new end of the term and the quantity that was billed.
+	 * @param scope The tenant and organization the write is scoped to.
+	 * @param expectation The version the caller read the right at, when the call has a caller.
 	 * @returns The extended right.
 	 * @throws BadRequestException when the right is withdrawn or the new term is not an extension.
 	 */
 	public async extend(
 		id: ID,
 		input: { endsAt: Date; quantity?: number; note?: string },
-		scope: IEntitlementScope = {}
+		scope: IEntitlementScope = {},
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<Entitlement> {
 		const endsAt = new Date(input.endsAt);
 
@@ -436,15 +516,17 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 
 			const quantity = input.quantity === undefined ? Number(entitlement.quantity) : toWholeQuantity(input.quantity);
 
-			await manager.update(
-				Entitlement,
-				{ id } as any,
+			// The extension is predicated on the locked row's version; see `updateVersionedRow`.
+			await this.updateVersionedRow(
+				manager,
+				entitlement,
 				{
 					endsAt,
 					quantity,
 					status: EntitlementStatus.ACTIVE,
 					suspendedReason: null
-				} as any
+				},
+				expectation
 			);
 
 			await this.outbox.append(manager, {
@@ -483,6 +565,8 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 * @param id The right to reduce.
 	 * @param quantity The ceiling that remains.
 	 * @param reason Why.
+	 * @param scope The tenant and organization the write is scoped to.
+	 * @param expectation The version the caller read the right at, when the call has a caller.
 	 * @returns The reduced, or revoked, right.
 	 * @throws BadRequestException when the quantity is not a reduction.
 	 */
@@ -490,12 +574,13 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		id: ID,
 		quantity: number,
 		reason?: string,
-		scope: IEntitlementScope = {}
+		scope: IEntitlementScope = {},
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<Entitlement> {
 		const next = toWholeQuantity(quantity);
 
 		if (next === 0) {
-			return await this.revoke(id, reason ?? EntitlementRevocationReason.REFUNDED, scope);
+			return await this.revoke(id, reason ?? EntitlementRevocationReason.REFUNDED, scope, expectation);
 		}
 
 		return await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
@@ -528,7 +613,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 				);
 			}
 
-			await manager.update(Entitlement, { id } as any, { quantity: next } as any);
+			await this.updateVersionedRow(manager, entitlement, { quantity: next }, expectation);
 
 			const liveAfter = await recountEntitlementOccupancy(manager, id);
 
@@ -569,10 +654,17 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 *
 	 * @param id The right to withdraw.
 	 * @param reason `REFUNDED`, `CHARGEBACK`, `RETURNED`, `DATA_ERASURE`, or an operator's note.
+	 * @param scope The tenant and organization the write is scoped to.
+	 * @param expectation The version the caller read the right at, when the call has a caller.
 	 * @returns The withdrawn right.
 	 * @throws NotFoundException when it is not the caller's.
 	 */
-	public async revoke(id: ID, reason: string, scope: IEntitlementScope = {}): Promise<Entitlement> {
+	public async revoke(
+		id: ID,
+		reason: string,
+		scope: IEntitlementScope = {},
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<Entitlement> {
 		const now = new Date();
 		const userId = RequestContext.currentUserId();
 
@@ -592,15 +684,17 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 
 			await this.entitlementKeyService.revokeForEntitlement(manager, entitlement.id, reason);
 
-			await manager.update(
-				Entitlement,
-				{ id: entitlement.id } as any,
+			// The withdrawal is predicated on the locked row's version; see `updateVersionedRow`.
+			await this.updateVersionedRow(
+				manager,
+				entitlement,
 				{
 					status: EntitlementStatus.REVOKED,
 					revokedAt: now,
 					revokedReason: reason,
 					...(userId ? { revokedByUserId: userId } : {})
-				} as any
+				},
+				expectation
 			);
 
 			await recountEntitlementOccupancy(manager, entitlement.id);
@@ -642,10 +736,18 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 *
 	 * @param id The right to expire.
 	 * @param reason Why it lapsed.
+	 * @param scope The tenant and organization the write is scoped to.
+	 * @param expectation The version the caller read the right at, when the call has a caller: a right
+	 * resumed past its term lapses under the version the resume was based on.
 	 * @returns The expired right.
 	 * @throws NotFoundException when it is not the caller's.
 	 */
-	public async expire(id: ID, reason = 'TERM_ENDED', scope: IEntitlementScope = {}): Promise<Entitlement> {
+	public async expire(
+		id: ID,
+		reason = 'TERM_ENDED',
+		scope: IEntitlementScope = {},
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<Entitlement> {
 		const now = new Date();
 
 		const outcome = await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
@@ -655,7 +757,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 				return { entitlement, alreadyClosed: true };
 			}
 
-			await this.applyExpiry(manager, entitlement, reason, now);
+			await this.applyExpiry(manager, entitlement, reason, now, expectation);
 
 			return {
 				entitlement: (await manager.findOne(Entitlement, { where: { id: entitlement.id } as any })) as Entitlement,
@@ -688,13 +790,15 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 * @param entitlement The right that lapsed.
 	 * @param reason Why it lapsed.
 	 * @param now The instant of the lapse.
+	 * @param expectation The version the caller accepted, when the lapse has a caller.
 	 * @returns Nothing.
 	 */
 	private async applyExpiry(
 		manager: EntityManager,
 		entitlement: Entitlement,
 		reason: string,
-		now: Date
+		now: Date,
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<void> {
 		await this.entitlementActivationService.closeAllForEntitlement(
 			manager,
@@ -705,7 +809,8 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 
 		await this.entitlementKeyService.revokeForEntitlement(manager, entitlement.id, reason);
 
-		await manager.update(Entitlement, { id: entitlement.id } as any, { status: EntitlementStatus.EXPIRED } as any);
+		// The lapse is predicated on the version the right was read at; see `updateVersionedRow`.
+		await this.updateVersionedRow(manager, entitlement, { status: EntitlementStatus.EXPIRED }, expectation);
 
 		await recountEntitlementOccupancy(manager, entitlement.id);
 
@@ -908,6 +1013,67 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		}
 
 		return entitlement;
+	}
+
+	/**
+	 * Writes one right inside the caller's transaction, predicated on the version it was read at.
+	 *
+	 * The transaction-scoped writes cannot go through `commitVersionedUpdate`. That helper issues its
+	 * own statement through the service, and a service write would step outside the caller's
+	 * transaction — leaving behind the row lock the seat arithmetic and the lifecycle transitions are
+	 * decided under, and leaving behind the outbox row the transaction exists for. So the transaction's
+	 * own statement carries the predicate and the increment together, `UPDATE … SET …, version = :next
+	 * WHERE id = :id AND version = :expected`, and a statement that matched no row means the right
+	 * moved on between the read and this write: it is refused with the same conflict the guard answers
+	 * with rather than applied on top of a change its caller never saw.
+	 *
+	 * The version to predicate on is the one the row was read at — under its lock wherever the caller
+	 * took one, which is what makes that value authoritative inside this transaction. A caller that
+	 * accepted a version states the predicate itself, so a write based on a right that has moved on is
+	 * refused even when the read that preceded this statement was not locked.
+	 *
+	 * @param manager The caller's transaction manager.
+	 * @param entitlement The right, as the caller read it.
+	 * @param patch The columns to write. `version` is set here and must not be part of the patch.
+	 * @param expectation The version the caller accepted, when the write has a caller.
+	 * @returns Nothing.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the right no longer holds that version.
+	 */
+	private async updateVersionedRow(
+		manager: EntityManager,
+		entitlement: Entitlement,
+		patch: Record<string, unknown>,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<void> {
+		// What the caller accepted is the predicate when it named exactly one version. A caller that
+		// accepted several versions, or any version that exists, has stated a condition rather than a
+		// number, so the number comes from the row the lock protects — which is what keeps the check and
+		// the increment in one statement for every form of acceptance.
+		const accepted =
+			!expectation.wildcard && expectation.versions.length === 1 ? expectation.versions[0] : undefined;
+		const expected = accepted ?? entitlement.version;
+
+		// The patch is typed loosely on purpose: `version` is a convention the entity opts into with
+		// `@VersionedColumn()` rather than a member of the base entity, so it cannot be expressed in
+		// `Partial<Entitlement>`. The increment rides in the same statement as the predicate, which is
+		// what leaves no window between checking the version and moving it, and `bumpVersion` is the
+		// kernel's own answer to what comes after a revision rather than a second rule stated here.
+		const result = await manager.update(
+			Entitlement,
+			{ id: entitlement.id, version: expected } as any,
+			{ ...patch, version: bumpVersion(expected) } as any
+		);
+
+		if (Number((result as UpdateResult)?.affected ?? 0) > 0) {
+			return;
+		}
+
+		throw new ApiException(
+			409,
+			ApiErrorCode.ENTITY_VERSION_CONFLICT,
+			'The record changed since you read it. Read it again and reapply your change.',
+			{ expectedVersion: expected, actualVersion: entitlement.version }
+		);
 	}
 
 	/**

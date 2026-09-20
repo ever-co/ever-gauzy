@@ -4,6 +4,7 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -77,6 +78,9 @@ export class RefundReasonController extends CrudController<RefundReason> {
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Reason created' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Code taken, or a third level requested' })
 	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	// A reason is refused when its code is taken, so the key is optional: a client that presents one is
+	// answered from the record instead of being refused for a duplicate it did not intend.
+	@Idempotent({ scope: 'refund.reason.create', required: false, resourceType: 'refund_reason' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async create(@Body() entity: CreateRefundReasonDTO): Promise<IRefundReason> {

@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } fro
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -44,6 +45,7 @@ export class StockAlertController {
 	@ApiResponse({ status: 201, description: 'Rule created.' })
 	@ApiResponse({ status: 409, description: 'A rule already watches this variant at this location.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	@Idempotent({ scope: 'stock.alert.create', required: false, resourceType: 'stock-alert' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateStockAlertDTO): Promise<StockAlert> {

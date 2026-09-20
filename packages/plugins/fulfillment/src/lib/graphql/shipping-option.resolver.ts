@@ -1,7 +1,7 @@
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { IPagination, ShippingPriceType } from '@gauzy/contracts';
-import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { ShippingOption } from '../shipping-option/shipping-option.entity';
 import { IShippingEligibilityContext, ShippingOptionService } from '../shipping-option/shipping-option.service';
 import { ShippingProfile } from '../shipping-profile/shipping-profile.entity';
@@ -16,6 +16,10 @@ import { IShippingOptionConnection, IShippingOptionEligibility, IShippingProfile
  * Profiles and options share a resolver because they are one configuration: an option names the profile
  * it is offered for, and the pairing is what decides whether a cart of digital goods is offered a
  * courier at all.
+ *
+ * Creating a profile and creating an option carry the retry declarations their REST routes carry, under
+ * the same scope names: a retried create over either protocol is answered with what the first attempt
+ * wrote rather than with a refusal for a code that is already taken.
  */
 @Resolver(() => ShippingOption)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -120,6 +124,7 @@ export class ShippingOptionResolver {
 	 * @returns The created profile.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_CREATE)
+	@Idempotent({ scope: 'shipping_profile.create', required: false, resourceType: 'shipping_profile' })
 	@Mutation(() => Object, { name: 'createShippingProfile' })
 	async createShippingProfile(
 		@Args('input', { type: () => Object }) input: Record<string, any>
@@ -183,6 +188,7 @@ export class ShippingOptionResolver {
 	 * @returns The created option.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_CREATE)
+	@Idempotent({ scope: 'shipping_option.create', required: false, resourceType: 'shipping_option' })
 	@Mutation(() => Object, { name: 'createShippingOption' })
 	async createShippingOption(
 		@Args('input', { type: () => Object }) input: Record<string, any>

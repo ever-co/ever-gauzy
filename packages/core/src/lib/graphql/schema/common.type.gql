@@ -155,10 +155,17 @@ type Operation {
 	"""
 	type: String!
 	status: OperationStatus!
-	"The aggregate type the operation acts on."
-	aggregateType: String!
-	"The aggregate instance the operation acts on."
-	aggregateId: ID!
+	"""
+	The aggregate type the operation acts on, or null when the operation is not about one.
+	Nullable because the delivered column is: the exclusivity rule is a *partial* unique index —
+	`WHERE "aggregateType" IS NOT NULL AND "status" IN ('PENDING','RUNNING','COMPENSATING')` — so an
+	operation that spans several aggregates, or that runs for the platform rather than for a row, is a
+	stored operation with no aggregate at all. Declaring the member non-null would make reading such a
+	row a schema violation, which is the one thing a nullable column must never become.
+	"""
+	aggregateType: String
+	"The aggregate instance the operation acts on, or null for the same reason as `aggregateType`."
+	aggregateId: ID
 	"Completion in the range 0 to 1."
 	progress: Float!
 	steps: [OperationStep!]!

@@ -2,6 +2,7 @@ import { BadRequestException, Body, Controller, Get, Headers, Param, Post, Query
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -56,6 +57,7 @@ export class StockTransferController {
 	@ApiOperation({ summary: 'Create a stock transfer' })
 	@ApiResponse({ status: 201, description: 'Transfer created.' })
 	@Permissions(InventoryPermission.STOCK_TRANSFER_CREATE as PermissionsEnum)
+	@Idempotent({ scope: 'transfer.create', required: false, resourceType: 'stock-transfer' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateStockTransferDTO): Promise<StockTransfer> {
@@ -108,11 +110,20 @@ export class StockTransferController {
 		return await this.stockTransferService.approve(id, this.expectedVersion(ifMatch));
 	}
 
-	/** Dispatches a transfer and writes the outbound movements. */
+	/**
+	 * Dispatches a transfer and writes the outbound movements.
+	 *
+	 * The movements land on the levels of the source location, one per line, so the level write is
+	 * protected by the engine's own compare-and-set rather than by a stated version: on this route
+	 * `If-Match` already carries the *transfer's* version, which is what the transition is refused on,
+	 * and one header cannot name two records. The key is what makes a retry of the dispatch safe,
+	 * because a second dispatch writes the outbound movements a second time.
+	 */
 	@ApiOperation({ summary: 'Ship a stock transfer' })
 	@ApiResponse({ status: 202, description: 'Transfer dispatched.' })
 	@ApiResponse({ status: 409, description: 'The transfer is in the wrong state or has moved past the stated version.' })
 	@Permissions(InventoryPermission.STOCK_TRANSFER_SHIP as PermissionsEnum)
+	@Idempotent({ scope: 'transfer.ship', required: false, resourceType: 'stock-transfer' })
 	@Post(':id/ship')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async ship(
@@ -123,11 +134,18 @@ export class StockTransferController {
 		return await this.stockTransferService.ship(id, entity.lines, this.expectedVersion(ifMatch));
 	}
 
-	/** Receives a transfer and writes the inbound movements. */
+	/**
+	 * Receives a transfer and writes the inbound movements.
+	 *
+	 * The movements land on the levels of the destination location, one per line, so the level write is
+	 * protected by the engine's own compare-and-set for the same reason the dispatch is: `If-Match` on
+	 * this route states the transfer's version. The key is what makes a retry of the receipt safe.
+	 */
 	@ApiOperation({ summary: 'Receive a stock transfer' })
 	@ApiResponse({ status: 202, description: 'Transfer received.' })
 	@ApiResponse({ status: 409, description: 'The transfer is in the wrong state or has moved past the stated version.' })
 	@Permissions(InventoryPermission.STOCK_TRANSFER_RECEIVE as PermissionsEnum)
+	@Idempotent({ scope: 'transfer.receive', required: false, resourceType: 'stock-transfer' })
 	@Post(':id/receive')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async receive(

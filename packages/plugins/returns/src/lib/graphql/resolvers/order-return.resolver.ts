@@ -1,5 +1,6 @@
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Context, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
+import { Idempotent, Versioned, versionExpectationOf } from '@gauzy/core';
 import { toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { IOrderReturn, IOrderReturnReceiptOutcome, OrderReturnStatus } from '../../returns.types';
@@ -22,6 +23,8 @@ interface IRequestOrderReturnArgs {
 	shippingOptionId?: ID;
 	noNotification?: boolean;
 	note?: string;
+	/** The client's retry key, honoured when one is presented. */
+	idempotencyKey?: string;
 }
 
 /** The receipt of a return's goods, as the schema declares it. */
@@ -30,6 +33,16 @@ interface IReceiveOrderReturnArgs {
 	warehouseId?: ID;
 	refund?: string;
 	note?: string;
+	/** The version the caller read, which the write is predicated on. */
+	version?: number;
+	/** The client's retry key, which this operation requires. */
+	idempotencyKey?: string;
+}
+
+/** What the platform builds beside the arguments of every operation. */
+interface IOperationContext {
+	/** The HTTP request the operation arrived on, which is where the guard left the accepted version. */
+	readonly req?: unknown;
 }
 
 /**
@@ -39,6 +52,16 @@ interface IReceiveOrderReturnArgs {
  * one requested over REST obey the same ceiling check and the same lifecycle, and the two surfaces
  * cannot drift. Authorisation is unchanged: the guards run on the HTTP request that carried the
  * operation, exactly as they do for a REST call.
+ *
+ * Retry safety and optimistic concurrency are declared here with the same decorators the REST routes
+ * carry, and under the same scope names, because a client that retries a mutation has presented the
+ * same request whichever protocol carried it. One GraphQL document may select several mutations, so
+ * the two conventions ride beside the operation rather than on the request: the retry key is the
+ * `idempotencyKey` input member of the mutation the kernel reads it from, and the version is the
+ * `version` member of the input that updates a return — or the `version` argument of a mutation that
+ * only decides a status, which has no input to carry it. A declared argument the method body never
+ * reads is deliberate: the schema has to accept the version so a client may state one, and the guard
+ * reads it from the operation's arguments before the method runs.
  */
 @Resolver('OrderReturn')
 export class OrderReturnResolver {
@@ -55,6 +78,7 @@ export class OrderReturnResolver {
 	 * @param page The page.
 	 * @returns One page of returns.
 	 */
+	@Versioned({ resource: OrderReturnService, write: false })
 	@Query('orderReturns')
 	async orderReturns(
 		@Args('filter') filter?: { status?: OrderReturnStatus; orderId?: ID; number?: string; warehouseId?: ID },
@@ -82,6 +106,7 @@ export class OrderReturnResolver {
 	 * @param id The return.
 	 * @returns The return, or null when it is not the caller's.
 	 */
+	@Versioned({ resource: OrderReturnService, write: false })
 	@Query('orderReturn')
 	async orderReturn(@Args('id') id: ID): Promise<OrderReturn | null> {
 		try {
@@ -97,6 +122,8 @@ export class OrderReturnResolver {
 	 * @param input The request.
 	 * @returns The payload, with the return or the reason it was refused.
 	 */
+	@Idempotent({ scope: 'return.create', required: false, resourceType: 'order_return' })
+	@Versioned({ resource: OrderReturnService, required: false })
 	@Mutation('requestOrderReturn')
 	async requestOrderReturn(@Args('input') input: IRequestOrderReturnArgs) {
 		try {
@@ -116,12 +143,23 @@ export class OrderReturnResolver {
 	 *
 	 * @param id The return.
 	 * @param note An operator note.
+	 * @param version The version the caller read.
+	 * @param context The operation's context, which carries the request the guard ran on.
 	 * @returns The payload.
 	 */
+	@Versioned({ resource: OrderReturnService })
 	@Mutation('approveOrderReturn')
-	async approveOrderReturn(@Args('id') id: ID, @Args('note') note?: string) {
+	async approveOrderReturn(
+		@Args('id') id: ID,
+		@Args('note') note?: string,
+		@Args('version') version?: number,
+		@Context() context?: IOperationContext
+	) {
 		try {
-			return { orderReturn: await this.orderReturnService.approve(id, note), userErrors: [] };
+			return {
+				orderReturn: await this.orderReturnService.approve(id, note, versionExpectationOf(context?.req)),
+				userErrors: []
+			};
 		} catch (error) {
 			return { orderReturn: null, userErrors: [toUserError(error)] };
 		}
@@ -132,12 +170,23 @@ export class OrderReturnResolver {
 	 *
 	 * @param id The return.
 	 * @param reason Why it was rejected.
+	 * @param version The version the caller read.
+	 * @param context The operation's context, which carries the request the guard ran on.
 	 * @returns The payload.
 	 */
+	@Versioned({ resource: OrderReturnService })
 	@Mutation('rejectOrderReturn')
-	async rejectOrderReturn(@Args('id') id: ID, @Args('reason') reason?: string) {
+	async rejectOrderReturn(
+		@Args('id') id: ID,
+		@Args('reason') reason?: string,
+		@Args('version') version?: number,
+		@Context() context?: IOperationContext
+	) {
 		try {
-			return { orderReturn: await this.orderReturnService.reject(id, reason), userErrors: [] };
+			return {
+				orderReturn: await this.orderReturnService.reject(id, reason, versionExpectationOf(context?.req)),
+				userErrors: []
+			};
 		} catch (error) {
 			return { orderReturn: null, userErrors: [toUserError(error)] };
 		}
@@ -148,16 +197,28 @@ export class OrderReturnResolver {
 	 *
 	 * @param id The return.
 	 * @param input The quantities that arrived.
+	 * @param context The operation's context, which carries the request the guard ran on.
 	 * @returns The payload, carrying what the receipt did.
 	 */
+	@Idempotent({ scope: 'return.receive', required: true, resourceType: 'order_return' })
+	@Versioned({ resource: OrderReturnService })
 	@Mutation('receiveOrderReturn')
-	async receiveOrderReturn(@Args('id') id: ID, @Args('input') input: IReceiveOrderReturnArgs) {
+	async receiveOrderReturn(
+		@Args('id') id: ID,
+		@Args('input') input: IReceiveOrderReturnArgs,
+		@Context() context?: IOperationContext
+	) {
 		try {
-			const outcome: IOrderReturnReceiptOutcome = await this.orderReturnService.receive(id, input.lines, {
-				warehouseId: input.warehouseId,
-				refund: input.refund,
-				note: input.note
-			});
+			const outcome: IOrderReturnReceiptOutcome = await this.orderReturnService.receive(
+				id,
+				input.lines,
+				{
+					warehouseId: input.warehouseId,
+					refund: input.refund,
+					note: input.note
+				},
+				versionExpectationOf(context?.req)
+			);
 
 			return {
 				orderReturn: await this.orderReturnService.findOneDetailed(id),
@@ -186,12 +247,23 @@ export class OrderReturnResolver {
 	 *
 	 * @param id The return.
 	 * @param reason Why it was cancelled.
+	 * @param version The version the caller read.
+	 * @param context The operation's context, which carries the request the guard ran on.
 	 * @returns The payload.
 	 */
+	@Versioned({ resource: OrderReturnService })
 	@Mutation('cancelOrderReturn')
-	async cancelOrderReturn(@Args('id') id: ID, @Args('reason') reason?: string) {
+	async cancelOrderReturn(
+		@Args('id') id: ID,
+		@Args('reason') reason?: string,
+		@Args('version') version?: number,
+		@Context() context?: IOperationContext
+	) {
 		try {
-			return { orderReturn: await this.orderReturnService.cancel(id, reason), userErrors: [] };
+			return {
+				orderReturn: await this.orderReturnService.cancel(id, reason, versionExpectationOf(context?.req)),
+				userErrors: []
+			};
 		} catch (error) {
 			return { orderReturn: null, userErrors: [toUserError(error)] };
 		}
@@ -201,12 +273,22 @@ export class OrderReturnResolver {
 	 * Closes a fully received return.
 	 *
 	 * @param id The return.
+	 * @param version The version the caller read.
+	 * @param context The operation's context, which carries the request the guard ran on.
 	 * @returns The payload.
 	 */
+	@Versioned({ resource: OrderReturnService })
 	@Mutation('closeOrderReturn')
-	async closeOrderReturn(@Args('id') id: ID) {
+	async closeOrderReturn(
+		@Args('id') id: ID,
+		@Args('version') version?: number,
+		@Context() context?: IOperationContext
+	) {
 		try {
-			return { orderReturn: await this.orderReturnService.close(id), userErrors: [] };
+			return {
+				orderReturn: await this.orderReturnService.close(id, versionExpectationOf(context?.req)),
+				userErrors: []
+			};
 		} catch (error) {
 			return { orderReturn: null, userErrors: [toUserError(error)] };
 		}

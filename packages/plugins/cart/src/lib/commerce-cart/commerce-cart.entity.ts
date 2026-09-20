@@ -9,7 +9,8 @@ import {
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMOneToMany,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	VersionedColumn
 } from '@gauzy/core';
 import { CommerceCartLine } from '../commerce-cart-line/commerce-cart-line.entity';
 import { CommerceCartPromotion } from '../commerce-cart-promotion/commerce-cart-promotion.entity';
@@ -202,13 +203,19 @@ export class CommerceCart extends TenantOrganizationBaseEntity implements IComme
 	isTaxExempt: boolean;
 
 	/**
-	 * Optimistic lock, surfaced to a caller as the `If-Match` entity tag. It increments on every write
-	 * that changes cart content, so two concurrent edits cannot silently overwrite each other.
+	 * Optimistic lock, surfaced to a caller as the `ETag` of the cart it read and required back as an
+	 * `If-Match` header by every route that writes the cart. Two concurrent edits therefore cannot
+	 * silently overwrite each other: the second writer states the version it read, and a cart that has
+	 * moved on since answers a conflict rather than accepting a change based on a value that is gone.
+	 *
+	 * The increment is applied by `commitVersionedUpdate`, in the same statement that checks the
+	 * version — never by an entity listener or by the service after a read, because an increment
+	 * applied after a read is exactly the read-then-write window the conditional update closes.
 	 */
 	@ApiProperty({ type: () => Number })
 	@IsNotEmpty()
 	@IsInt()
-	@MultiORMColumn({ type: 'int', default: 1 })
+	@VersionedColumn()
 	version: number;
 
 	/**

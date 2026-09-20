@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Inject, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { DeepPartial } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	AdjustmentType,
@@ -11,10 +12,12 @@ import {
 import {
 	AdjustmentService,
 	EventOutboxService,
+	IVersionExpectation,
 	IdempotencyService,
 	Money,
 	RequestContext,
-	TenantAwareCrudService
+	TenantAwareCrudService,
+	commitVersionedUpdate
 } from '@gauzy/core';
 import {
 	IChangeSubscriptionPlanInput,
@@ -53,6 +56,43 @@ import { SubscriptionBillingService } from '../subscription-billing/subscription
 import { Subscription } from './subscription.entity';
 import { MikroOrmSubscriptionRepository } from './repository/mikro-orm-subscription.repository';
 import { TypeOrmSubscriptionRepository } from './repository/type-orm-subscription.repository';
+
+/**
+ * The version a write that no caller conditioned on is predicated on.
+ *
+ * A write that arrives from a route is predicated on what its caller accepted in `If-Match`. A write
+ * that arrives from anywhere else — a scheduled billing pass, another service, a replayed event — has
+ * no caller to condition it, so it is predicated on the version the row holds when the statement runs.
+ * Either way the check and the increment are one statement rather than two.
+ */
+const ANY_VERSION: IVersionExpectation = { wildcard: true, versions: [] };
+
+/**
+ * The version each write of one request is predicated on, handed out one write at a time.
+ *
+ * The caller's version is spent by the first write the request makes, because that write is the one
+ * the caller's precondition was about. Every write after it belongs to the request's own follow-up —
+ * the cycle row's metadata, the calendar it advances — and is predicated on the version the row holds
+ * when its statement runs; predicating a follow-up on the caller's version would report the request's
+ * own increment as a race it lost.
+ *
+ * The reader is handed to the writes rather than to the calls that contain them, so a branch that
+ * writes nothing does not spend the caller's version on behalf of the branch that does.
+ *
+ * @param expectation What the caller accepted, or the wildcard a caller-less write is predicated on.
+ * @returns A reader that answers the caller's version once and the wildcard thereafter.
+ */
+function spendableExpectation(expectation: IVersionExpectation): () => IVersionExpectation {
+	let pending = expectation;
+
+	return () => {
+		const current = pending;
+
+		pending = ANY_VERSION;
+
+		return current;
+	};
+}
 
 /** The key a billing cycle's idempotency claim is scoped under. */
 const BILLING_SCOPE = 'subscription.bill';
@@ -133,6 +173,36 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		private readonly instruments?: ISubscriptionInstrumentPort
 	) {
 		super(typeOrmSubscriptionRepository, mikroOrmSubscriptionRepository);
+	}
+
+	/**
+	 * Writes the fields a caller changed onto a subscription, under the version that caller read.
+	 *
+	 * The write is predicated on the version the caller stated rather than on the one the row happens to
+	 * hold, so a second editor's change to the same subscription is refused instead of applied over a
+	 * value it never saw. The check and the increment are the statement's own: a stale version reaches
+	 * `commitVersionedUpdate`'s affected-row count and is answered with the conflict it is, not with the
+	 * "not found" a read-then-write would report for a row that exists and has merely moved on.
+	 *
+	 * @param id The subscription.
+	 * @param changes The fields to change.
+	 * @param expectation The version the caller read the subscription at.
+	 * @returns The subscription as it stands after the write.
+	 */
+	public async applyChanges(
+		id: ID,
+		changes: DeepPartial<Subscription>,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<Subscription> {
+		await commitVersionedUpdate<Subscription>(this, {
+			id,
+			expectation,
+			// The version is written by the conditional update and never by the caller's payload, so a body
+			// that named one cannot move the row past the version the write was predicated on.
+			patch: { ...(changes as Record<string, unknown>) } as Record<string, unknown> & Partial<Subscription>
+		});
+
+		return await this.findOneDetailed(id);
 	}
 
 	/*
@@ -216,6 +286,10 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 					nextBillingAt: period.end,
 					billingCycleCount: 0,
 					currency,
+					// The row starts its optimistic lock at one, which is the value the column's own
+					// `NOT NULL DEFAULT 1` gives it: stated here as well so the row carries its version
+					// from the moment it exists, whichever ORM wrote it.
+					version: 1,
 					metadata,
 					tenantId,
 					organizationId
@@ -305,10 +379,11 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * week does not inherit a week of period it was never billed for.
 	 *
 	 * @param id The subscription to activate.
+	 * @param expectation The version the caller read the subscription at.
 	 * @returns The activated subscription.
 	 * @throws BadRequestException when it is not pending.
 	 */
-	public async activate(id: ID): Promise<Subscription> {
+	public async activate(id: ID, expectation: IVersionExpectation = ANY_VERSION): Promise<Subscription> {
 		const subscription = await this.findOneScoped(id);
 
 		if (subscription.status === SubscriptionStatus.ACTIVE) {
@@ -324,12 +399,16 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const start = trialEndsAt && trialEndsAt.getTime() > now.getTime() ? trialEndsAt : now;
 		const period = periodFrom(start, cadence);
 
-		await super.update(id, {
-			status: SubscriptionStatus.ACTIVE,
-			currentPeriodStart: period.start,
-			currentPeriodEnd: period.end,
-			nextBillingAt: period.end
-		} as any);
+		await commitVersionedUpdate<Subscription>(this, {
+			id,
+			expectation,
+			patch: {
+				status: SubscriptionStatus.ACTIVE,
+				currentPeriodStart: period.start,
+				currentPeriodEnd: period.end,
+				nextBillingAt: period.end
+			}
+		});
 
 		await this.emit('subscription.activated', id, {
 			subscriptionId: id,
@@ -350,18 +429,27 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 *
 	 * @param id The subscription to pause.
 	 * @param options Until when, and why.
+	 * @param expectation The version the caller read the subscription at.
 	 * @returns The paused subscription.
 	 * @throws BadRequestException when it is not active.
 	 */
-	public async pause(id: ID, options: { until?: Date; reason?: string } = {}): Promise<Subscription> {
+	public async pause(
+		id: ID,
+		options: { until?: Date; reason?: string } = {},
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<Subscription> {
 		const subscription = await this.findOneScoped(id);
 
 		this.assertStatus(subscription, [SubscriptionStatus.ACTIVE], 'pause');
 
-		await super.update(id, {
-			status: SubscriptionStatus.PAUSED,
-			pausedUntil: options.until ?? null
-		} as any);
+		await commitVersionedUpdate<Subscription>(this, {
+			id,
+			expectation,
+			patch: {
+				status: SubscriptionStatus.PAUSED,
+				pausedUntil: options.until ?? null
+			}
+		});
 
 		await this.emit('subscription.paused', id, {
 			subscriptionId: id,
@@ -382,10 +470,11 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * @param id The subscription to resume.
 	 * @param at The instant to resume at; defaults to now, and is used by the billing run when a
 	 * scheduled pause ends.
+	 * @param expectation The version the caller read the subscription at.
 	 * @returns The resumed subscription.
 	 * @throws BadRequestException when it is not paused.
 	 */
-	public async resume(id: ID, at?: Date): Promise<Subscription> {
+	public async resume(id: ID, at?: Date, expectation: IVersionExpectation = ANY_VERSION): Promise<Subscription> {
 		const subscription = await this.findOneScoped(id);
 
 		this.assertStatus(subscription, [SubscriptionStatus.PAUSED], 'resume');
@@ -394,11 +483,15 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const periodEnd = subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : now;
 		const nextBillingAt = periodEnd.getTime() > now.getTime() ? periodEnd : now;
 
-		await super.update(id, {
-			status: SubscriptionStatus.ACTIVE,
-			pausedUntil: null,
-			nextBillingAt
-		} as any);
+		await commitVersionedUpdate<Subscription>(this, {
+			id,
+			expectation,
+			patch: {
+				status: SubscriptionStatus.ACTIVE,
+				pausedUntil: null,
+				nextBillingAt
+			}
+		});
 
 		await this.emit('subscription.resumed', id, {
 			subscriptionId: id,
@@ -419,9 +512,14 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 *
 	 * @param id The subscription to cancel.
 	 * @param options Why, and whether it ends now.
+	 * @param expectation The version the caller read the subscription at.
 	 * @returns The cancelled subscription.
 	 */
-	public async cancel(id: ID, options: { reason?: string; immediate?: boolean } = {}): Promise<Subscription> {
+	public async cancel(
+		id: ID,
+		options: { reason?: string; immediate?: boolean } = {},
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<Subscription> {
 		const subscription = await this.findOneScoped(id);
 
 		if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(subscription.status)) {
@@ -431,17 +529,21 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const now = new Date();
 		const deferred = !options.immediate && subscription.status === SubscriptionStatus.ACTIVE;
 
-		await super.update(id, {
-			status: deferred ? SubscriptionStatus.ACTIVE : SubscriptionStatus.CANCELED,
-			canceledAt: now,
-			cancelReason: options.reason ?? subscription.cancelReason,
-			nextBillingAt: deferred ? subscription.nextBillingAt : null,
-			pausedUntil: deferred ? subscription.pausedUntil : null,
-			metadata: {
-				...(subscription.metadata ?? {}),
-				...(deferred ? { cancelAtPeriodEnd: true } : {})
+		await commitVersionedUpdate<Subscription>(this, {
+			id,
+			expectation,
+			patch: {
+				status: deferred ? SubscriptionStatus.ACTIVE : SubscriptionStatus.CANCELED,
+				canceledAt: now,
+				cancelReason: options.reason ?? subscription.cancelReason,
+				nextBillingAt: deferred ? subscription.nextBillingAt : null,
+				pausedUntil: deferred ? subscription.pausedUntil : null,
+				metadata: {
+					...(subscription.metadata ?? {}),
+					...(deferred ? { cancelAtPeriodEnd: true } : {})
+				}
 			}
-		} as any);
+		});
 
 		await this.emit('subscription.canceled', id, {
 			subscriptionId: id,
@@ -462,9 +564,10 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 *
 	 * @param id The subscription to expire.
 	 * @param reason Why it expired.
+	 * @param expectation The version the caller read the subscription at.
 	 * @returns The expired subscription.
 	 */
-	public async expire(id: ID, reason?: string): Promise<Subscription> {
+	public async expire(id: ID, reason?: string, expectation: IVersionExpectation = ANY_VERSION): Promise<Subscription> {
 		const subscription = await this.findOneScoped(id);
 
 		if (subscription.status === SubscriptionStatus.EXPIRED) {
@@ -477,11 +580,15 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			'expire'
 		);
 
-		await super.update(id, {
-			status: SubscriptionStatus.EXPIRED,
-			nextBillingAt: null,
-			pausedUntil: null
-		} as any);
+		await commitVersionedUpdate<Subscription>(this, {
+			id,
+			expectation,
+			patch: {
+				status: SubscriptionStatus.EXPIRED,
+				nextBillingAt: null,
+				pausedUntil: null
+			}
+		});
 
 		await this.emit('subscription.expired', id, {
 			subscriptionId: id,
@@ -512,11 +619,16 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 *
 	 * @param id The subscription to change.
 	 * @param input The plan to move to, the quantity and when the change takes effect.
+	 * @param expectation The version the caller read the subscription at.
 	 * @returns What the change decided and what it settled.
 	 * @throws BadRequestException when the subscription is terminal, or when a charge is owed and the
 	 * order capability is not registered.
 	 */
-	public async changePlan(id: ID, input: IChangeSubscriptionPlanInput): Promise<ISubscriptionPlanChangeOutcome> {
+	public async changePlan(
+		id: ID,
+		input: IChangeSubscriptionPlanInput,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<ISubscriptionPlanChangeOutcome> {
 		const subscription = await this.findOneScoped(id);
 
 		this.assertLive(subscription);
@@ -534,18 +646,22 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			  }));
 		const prepared = await this.itemService.prepareItems(requested, subscription.currency, subscription.customerId);
 
-		return await this.applyChange(subscription, {
-			planId: plan.id,
-			quantity: input.quantity,
-			discountPercentage:
-				plan.discountPercentage !== undefined && plan.discountPercentage !== null
-					? String(plan.discountPercentage)
-					: undefined,
-			before: existing,
-			after: prepared,
-			effective: input.effective ?? 'IMMEDIATE',
-			description: input.note ?? `Plan changed to ${plan.code}.`
-		});
+		return await this.applyChange(
+			subscription,
+			{
+				planId: plan.id,
+				quantity: input.quantity,
+				discountPercentage:
+					plan.discountPercentage !== undefined && plan.discountPercentage !== null
+						? String(plan.discountPercentage)
+						: undefined,
+				before: existing,
+				after: prepared,
+				effective: input.effective ?? 'IMMEDIATE',
+				description: input.note ?? `Plan changed to ${plan.code}.`
+			},
+			expectation
+		);
 	}
 
 	/**
@@ -553,9 +669,14 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 *
 	 * @param id The subscription to add the line to.
 	 * @param item The line as the caller stated it.
+	 * @param expectation The version the caller read the subscription at.
 	 * @returns What the change decided and what it settled.
 	 */
-	public async addItem(id: ID, item: ISubscriptionItemInput): Promise<ISubscriptionPlanChangeOutcome> {
+	public async addItem(
+		id: ID,
+		item: ISubscriptionItemInput,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<ISubscriptionPlanChangeOutcome> {
 		const subscription = await this.findOneScoped(id);
 
 		this.assertLive(subscription);
@@ -575,12 +696,16 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			subscription.customerId
 		);
 
-		return await this.applyChange(subscription, {
-			before,
-			after: prepared,
-			effective: 'IMMEDIATE',
-			description: `Recurring line added for variant ${item.variantId}.`
-		});
+		return await this.applyChange(
+			subscription,
+			{
+				before,
+				after: prepared,
+				effective: 'IMMEDIATE',
+				description: `Recurring line added for variant ${item.variantId}.`
+			},
+			expectation
+		);
 	}
 
 	/**
@@ -589,12 +714,14 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * @param id The subscription whose line is changing.
 	 * @param variantId The variant whose line is changing.
 	 * @param quantity The new quantity, as an exact decimal.
+	 * @param expectation The version the caller read the subscription at.
 	 * @returns What the change decided and what it settled.
 	 */
 	public async changeItemQuantity(
 		id: ID,
 		variantId: ID,
-		quantity: DecimalString | number
+		quantity: DecimalString | number,
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<ISubscriptionPlanChangeOutcome> {
 		const subscription = await this.findOneScoped(id);
 
@@ -619,12 +746,16 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			subscription.customerId
 		);
 
-		return await this.applyChange(subscription, {
-			before,
-			after: prepared,
-			effective: 'IMMEDIATE',
-			description: `Recurring quantity changed for variant ${variantId}.`
-		});
+		return await this.applyChange(
+			subscription,
+			{
+				before,
+				after: prepared,
+				effective: 'IMMEDIATE',
+				description: `Recurring quantity changed for variant ${variantId}.`
+			},
+			expectation
+		);
 	}
 
 	/**
@@ -632,9 +763,14 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 *
 	 * @param id The subscription whose line is being removed.
 	 * @param variantId The variant whose line is being removed.
+	 * @param expectation The version the caller read the subscription at.
 	 * @returns What the change decided and what it settled.
 	 */
-	public async removeItem(id: ID, variantId: ID): Promise<ISubscriptionPlanChangeOutcome> {
+	public async removeItem(
+		id: ID,
+		variantId: ID,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<ISubscriptionPlanChangeOutcome> {
 		const subscription = await this.findOneScoped(id);
 
 		this.assertLive(subscription);
@@ -666,12 +802,16 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			subscription.customerId
 		);
 
-		return await this.applyChange(subscription, {
-			before,
-			after: prepared,
-			effective: 'IMMEDIATE',
-			description: `Recurring line removed for variant ${variantId}.`
-		});
+		return await this.applyChange(
+			subscription,
+			{
+				before,
+				after: prepared,
+				effective: 'IMMEDIATE',
+				description: `Recurring line removed for variant ${variantId}.`
+			},
+			expectation
+		);
 	}
 
 	/*
@@ -691,11 +831,23 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * @param id The subscription to bill.
 	 * @param options The instant to bill against, and whether an operator asked for it — a manual
 	 * attempt ignores the dunning schedule, which is what makes "retry this now" possible.
+	 * @param expectation The version the caller read the subscription at. The cycle spends it on the
+	 * first write it makes to the subscription — a resume, a cancellation, an expiry or the cycle's own
+	 * record — because the subscription's version moves with that write and the version the caller
+	 * stated no longer exists afterwards.
 	 * @returns What the cycle did.
 	 */
-	public async billCycle(id: ID, options: { asOf?: Date; manual?: boolean } = {}): Promise<ISubscriptionBillingOutcome> {
+	public async billCycle(
+		id: ID,
+		options: { asOf?: Date; manual?: boolean } = {},
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<ISubscriptionBillingOutcome> {
 		const now = options.asOf ?? new Date();
 		let subscription = await this.findOneScoped(id);
+
+		// Every subscription write this cycle makes is predicated through this reader, so exactly one of
+		// them — whichever runs first — carries the version the caller stated.
+		const spend = spendableExpectation(expectation);
 
 		if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(subscription.status)) {
 			return this.outcome(subscription, {
@@ -716,7 +868,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 				});
 			}
 
-			await this.resume(id, now);
+			await this.resume(id, now, spend());
 			subscription = await this.findOneScoped(id);
 		}
 
@@ -724,10 +876,14 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			const periodEnd = subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : now;
 
 			if (periodEnd.getTime() <= now.getTime()) {
-				const canceled = await this.cancel(id, {
-					reason: subscription.cancelReason ?? 'Cancelled at the end of the period.',
-					immediate: true
-				});
+				const canceled = await this.cancel(
+					id,
+					{
+						reason: subscription.cancelReason ?? 'Cancelled at the end of the period.',
+						immediate: true
+					},
+					spend()
+				);
 
 				return this.outcome(canceled, {
 					status: SubscriptionBillingStatus.PENDING,
@@ -741,7 +897,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const cadence = this.planService.cadenceOf(plan);
 
 		if (plan.maxBillingCycles !== undefined && plan.maxBillingCycles !== null && subscription.billingCycleCount >= plan.maxBillingCycles) {
-			const expired = await this.expire(id, 'MAX_BILLING_CYCLES_REACHED');
+			const expired = await this.expire(id, 'MAX_BILLING_CYCLES_REACHED', spend());
 
 			return this.outcome(expired, {
 				status: SubscriptionBillingStatus.PENDING,
@@ -785,7 +941,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			});
 		}
 
-		const outcome = await this.executeCycle(subscription, plan, period, now, options.manual === true);
+		const outcome = await this.executeCycle(subscription, plan, period, now, options.manual === true, spend());
 
 		if (SETTLED_CYCLE_STATUSES.includes(outcome.status)) {
 			// Only a settled cycle completes its key. A failed cycle leaves the claim in progress so the
@@ -982,6 +1138,8 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * @param period The period the cycle covers.
 	 * @param now The instant the cycle is running at.
 	 * @param manual Whether an operator asked for this attempt, which ignores the dunning schedule.
+	 * @param expectation The version the caller read the subscription at, spent by the first write this
+	 * cycle makes to it.
 	 * @returns What the cycle did.
 	 */
 	private async executeCycle(
@@ -989,7 +1147,8 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		plan: SubscriptionPlan,
 		period: ISubscriptionPeriod,
 		now: Date,
-		manual: boolean
+		manual: boolean,
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<ISubscriptionBillingOutcome> {
 		const items = await this.itemService.findForSubscription(subscription.id);
 
@@ -1033,6 +1192,11 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const gross = recurringAmount(items, subscription.currency);
 		const { discount, net } = applyRecurringDiscount(gross, this.discountOf(plan, this.discountOverrideOf(subscription)));
 
+		// The subscription is written by whichever of the two writes below runs first — the metadata the
+		// order path records, or the cycle's own record — so the caller's version is handed to the writes
+		// rather than to the calls, and a path that writes nothing does not spend it.
+		const spend = spendableExpectation(expectation);
+
 		const billing =
 			existing ??
 			(await this.billingService.createPending({
@@ -1051,13 +1215,23 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 
 		const credit = await this.consumePendingCredit(subscription, billing);
 
-		const failure = await this.raiseCycleOrder(subscription, plan, items, billing, period, net, credit, discount);
+		const failure = await this.raiseCycleOrder(
+			subscription,
+			plan,
+			items,
+			billing,
+			period,
+			net,
+			credit,
+			discount,
+			spend
+		);
 
 		if (failure) {
-			return await this.recordFailure(subscription, billing, failure, now);
+			return await this.recordFailure(subscription, billing, failure, now, spend());
 		}
 
-		return await this.recordSuccess(subscription, plan, billing, period, items);
+		return await this.recordSuccess(subscription, plan, billing, period, items, spend());
 	}
 
 	/**
@@ -1071,6 +1245,8 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * @param net The recurring amount after the plan discount.
 	 * @param credit The deferred proration credit, when one is owed.
 	 * @param discount The plan discount granted, when one was.
+	 * @param nextExpectation The reader the two subscription writes below take their expectation from,
+	 * so that whichever of them runs first carries the version the route's caller stated.
 	 * @returns A platform code and message when the charge could not be made, or undefined on success.
 	 */
 	private async raiseCycleOrder(
@@ -1081,7 +1257,8 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		period: ISubscriptionPeriod,
 		net: Money,
 		credit: Money | null,
-		discount: Money
+		discount: Money,
+		nextExpectation: () => IVersionExpectation
 	): Promise<{ code: string; message: string } | undefined> {
 		if (!this.orderGateway) {
 			return {
@@ -1148,11 +1325,11 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			}
 
 			if (setupFee) {
-				await this.rememberSetupFee(subscription, plan);
+				await this.rememberSetupFee(subscription, plan, nextExpectation());
 			}
 
 			if (credit && !credit.isZero()) {
-				await this.clearPendingCredit(subscription);
+				await this.clearPendingCredit(subscription, nextExpectation());
 			}
 
 			return undefined;
@@ -1173,13 +1350,16 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * @param billing The cycle's row.
 	 * @param failure The platform code and message the attempt produced.
 	 * @param now The instant the attempt failed at.
+	 * @param expectation The version the caller read the subscription at, carried by whichever of the
+	 * two writes below records the attempt — only one of them ever runs.
 	 * @returns What the attempt did.
 	 */
 	private async recordFailure(
 		subscription: Subscription,
 		billing: SubscriptionBilling,
 		failure: { code: string; message: string },
-		now: Date
+		now: Date,
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<ISubscriptionBillingOutcome> {
 		const attempts = (billing.attemptCount ?? 0) + 1;
 		const exhausted = isDunningExhausted(attempts);
@@ -1195,14 +1375,22 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		if (exhausted) {
 			// The retry policy is spent. The subscription keeps its history and its period, and stops
 			// being billed automatically until an operator acts or the customer supplies an instrument.
-			await super.update(subscription.id, { status: SubscriptionStatus.FAILED, nextBillingAt: null } as any);
+			await commitVersionedUpdate<Subscription>(this, {
+				id: subscription.id,
+				expectation,
+				patch: { status: SubscriptionStatus.FAILED, nextBillingAt: null }
+			});
 		} else {
 			// Still active, and still owed the same period: the cycle row's own retry instant decides
 			// when the next attempt happens, so the calendar does not move.
-			await super.update(subscription.id, {
-				status: SubscriptionStatus.ACTIVE,
-				nextBillingAt: billing.periodStart
-			} as any);
+			await commitVersionedUpdate<Subscription>(this, {
+				id: subscription.id,
+				expectation,
+				patch: {
+					status: SubscriptionStatus.ACTIVE,
+					nextBillingAt: billing.periodStart
+				}
+			});
 		}
 
 		await this.emit('subscription.payment-failed', subscription.id, {
@@ -1244,6 +1432,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * @param billing The cycle's row.
 	 * @param period The period the cycle covered.
 	 * @param items The recurring lines.
+	 * @param expectation The version the caller read the subscription at.
 	 * @returns What the cycle did.
 	 */
 	private async recordSuccess(
@@ -1251,20 +1440,25 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		plan: SubscriptionPlan,
 		billing: SubscriptionBilling,
 		period: ISubscriptionPeriod,
-		items: SubscriptionItem[]
+		items: SubscriptionItem[],
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<ISubscriptionBillingOutcome> {
 		const settled = await this.billingService.findOneScoped(billing.id);
 		const cycleCount = (subscription.billingCycleCount ?? 0) + 1;
 		const ceilingReached =
 			plan.maxBillingCycles !== undefined && plan.maxBillingCycles !== null && cycleCount >= plan.maxBillingCycles;
 
-		await super.update(subscription.id, {
-			status: ceilingReached ? SubscriptionStatus.EXPIRED : SubscriptionStatus.ACTIVE,
-			currentPeriodStart: period.start,
-			currentPeriodEnd: period.end,
-			nextBillingAt: ceilingReached ? null : period.end,
-			billingCycleCount: cycleCount
-		} as any);
+		await commitVersionedUpdate<Subscription>(this, {
+			id: subscription.id,
+			expectation,
+			patch: {
+				status: ceilingReached ? SubscriptionStatus.EXPIRED : SubscriptionStatus.ACTIVE,
+				currentPeriodStart: period.start,
+				currentPeriodEnd: period.end,
+				nextBillingAt: ceilingReached ? null : period.end,
+				billingCycleCount: cycleCount
+			}
+		});
 
 		await this.emit('subscription.renewed', subscription.id, {
 			subscriptionId: subscription.id,
@@ -1310,6 +1504,8 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 *
 	 * @param subscription The subscription being changed.
 	 * @param change What is changing: the plan, the line set, or both.
+	 * @param expectation The version the caller read the subscription at, carried by whichever of the
+	 * two writes below the change takes — a scheduled change and an immediate one never both run.
 	 * @returns What the change decided and what it settled.
 	 */
 	private async applyChange(
@@ -1322,7 +1518,8 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			after: Array<{ variantId: ID; quantity: DecimalString; unitPrice: DecimalString; position: number; metadata?: Record<string, unknown> }>;
 			effective: 'IMMEDIATE' | 'NEXT_PERIOD';
 			description: string;
-		}
+		},
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<ISubscriptionPlanChangeOutcome> {
 		const currency = subscription.currency;
 		const zero = Money.zero(currency).round().toStorageString();
@@ -1350,7 +1547,11 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 				description: change.description
 			};
 
-			await super.update(subscription.id, { metadata } as any);
+			await commitVersionedUpdate<Subscription>(this, {
+				id: subscription.id,
+				expectation,
+				patch: { metadata }
+			});
 
 			return {
 				subscription: await this.findOneScoped(subscription.id),
@@ -1393,11 +1594,15 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			settlement = 'WAIVED';
 		}
 
-		await super.update(subscription.id, {
-			...(change.planId ? { planId: change.planId } : {}),
-			...(change.quantity !== undefined ? { quantity: normalizeDecimal(change.quantity, subscription.quantity) } : {}),
-			metadata
-		} as any);
+		await commitVersionedUpdate<Subscription>(this, {
+			id: subscription.id,
+			expectation,
+			patch: {
+				...(change.planId ? { planId: change.planId } : {}),
+				...(change.quantity !== undefined ? { quantity: normalizeDecimal(change.quantity, subscription.quantity) } : {}),
+				metadata
+			}
+		});
 
 		if (change.planId || change.after.length !== change.before.length) {
 			await this.itemService.replaceItems(
@@ -1696,28 +1901,45 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	/**
 	 * @param subscription The subscription whose setup fee was charged.
 	 * @param plan The plan whose setup fee it was.
+	 * @param expectation The version the write is predicated on.
 	 */
-	private async rememberSetupFee(subscription: Subscription, plan: SubscriptionPlan): Promise<void> {
+	private async rememberSetupFee(
+		subscription: Subscription,
+		plan: SubscriptionPlan,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<void> {
 		const charged = (subscription.metadata?.[CHARGED_SETUP_FEES] as ID[]) ?? [];
 
 		if (charged.includes(plan.id)) {
 			return;
 		}
 
-		await super.update(subscription.id, {
-			metadata: { ...(subscription.metadata ?? {}), [CHARGED_SETUP_FEES]: [...charged, plan.id] }
-		} as any);
+		await commitVersionedUpdate<Subscription>(this, {
+			id: subscription.id,
+			expectation,
+			patch: {
+				metadata: { ...(subscription.metadata ?? {}), [CHARGED_SETUP_FEES]: [...charged, plan.id] }
+			}
+		});
 	}
 
 	/**
 	 * @param subscription The subscription whose deferred credit was applied.
+	 * @param expectation The version the write is predicated on.
 	 */
-	private async clearPendingCredit(subscription: Subscription): Promise<void> {
+	private async clearPendingCredit(
+		subscription: Subscription,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<void> {
 		const metadata = { ...(subscription.metadata ?? {}) };
 
 		delete metadata[PENDING_CREDIT];
 
-		await super.update(subscription.id, { metadata } as any);
+		await commitVersionedUpdate<Subscription>(this, {
+			id: subscription.id,
+			expectation,
+			patch: { metadata }
+		});
 	}
 
 	/**

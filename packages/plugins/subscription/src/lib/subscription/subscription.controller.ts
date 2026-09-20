@@ -10,19 +10,24 @@ import {
 	Post,
 	Put,
 	Query,
+	Req,
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	Versioned,
+	versionExpectationOf
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { SubscriptionFeatures } from '../subscription.features';
@@ -59,6 +64,21 @@ import { SubscriptionService } from './subscription.service';
  * The prorated changes live here rather than on the item controller because a proration is a fact
  * about the subscription's period: adding a line has a price consequence the subscription's calendar
  * decides, and a caller that had to reconstruct that would one day reconstruct it differently.
+ *
+ * Two conventions are adopted on the mutating routes and are deliberately identical on the GraphQL
+ * mutations that mirror them:
+ *
+ * - `@Idempotent(...)` makes a route safe to retry under a client-supplied key. Billing a cycle
+ *   requires one, because a lost response to it is a customer who cannot tell whether the period was
+ *   charged; every other mutating route declares its own scope and honours a key when one is presented,
+ *   so a client that retries is answered from the record of its first attempt rather than by performing
+ *   the change twice. None of those routes demands one — a route that started demanding a key would
+ *   refuse every caller it already has.
+ * - `@Versioned({ resource: SubscriptionService })` refuses a write based on a subscription that has
+ *   moved on and publishes the subscription's version as an `ETag`, which is the value the next write
+ *   states back in `If-Match`. The write that follows is predicated on that version inside the
+ *   statement that performs it, so the check the guard makes before the handler runs is not the only
+ *   one.
  */
 @ApiTags('Subscription')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -73,6 +93,9 @@ export class SubscriptionController extends CrudController<Subscription> {
 	/**
 	 * Starts a subscription on a plan.
 	 *
+	 * No version is required of the caller — there is no subscription to have read yet — and the created
+	 * subscription's version is published in the response for the writes that follow it.
+	 *
 	 * @param entity The subscription request.
 	 * @returns The created subscription.
 	 */
@@ -80,6 +103,8 @@ export class SubscriptionController extends CrudController<Subscription> {
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The subscription was created.' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The plan is not sellable or a line cannot be priced.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_CREATE)
+	@Idempotent({ scope: 'subscription.create', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService, required: false })
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -90,17 +115,29 @@ export class SubscriptionController extends CrudController<Subscription> {
 	/**
 	 * Updates a subscription's payer, quantity or metadata.
 	 *
+	 * The fields a caller may move are a closed set, so the route hands the change to the service under
+	 * the version the caller read rather than patching the row itself: the statement that writes it is
+	 * predicated on that version, which is what refuses a change based on a subscription another writer
+	 * has already moved on.
+	 *
 	 * @param id The subscription to update.
 	 * @param entity The fields to change.
+	 * @param request The request, which carries the version the caller read the subscription at.
 	 * @returns The updated subscription.
 	 */
 	@ApiOperation({ summary: 'Update a subscription' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The subscription was updated.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.update', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateSubscriptionDTO): Promise<Subscription> {
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateSubscriptionDTO,
+		@Req() request: Request
+	): Promise<Subscription> {
 		const { planId, ...changes } = entity;
 
 		if (planId) {
@@ -109,23 +146,24 @@ export class SubscriptionController extends CrudController<Subscription> {
 			);
 		}
 
-		await this.subscriptionService.update(id, changes as any);
-
-		return await this.subscriptionService.findOneDetailed(id);
+		return await this.subscriptionService.applyChanges(id, changes as any, versionExpectationOf(request));
 	}
 
 	/**
 	 * Activates a pending subscription.
 	 *
 	 * @param id The subscription to activate.
+	 * @param request The request, which carries the version the caller read the subscription at.
 	 * @returns The activated subscription.
 	 */
 	@ApiOperation({ summary: 'Activate a pending subscription' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The subscription is active.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.activate', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Post(':id/activate')
-	async activate(@Param('id', UUIDValidationPipe) id: ID): Promise<Subscription> {
-		return await this.subscriptionService.activate(id);
+	async activate(@Param('id', UUIDValidationPipe) id: ID, @Req() request: Request): Promise<Subscription> {
+		return await this.subscriptionService.activate(id, versionExpectationOf(request));
 	}
 
 	/**
@@ -133,29 +171,43 @@ export class SubscriptionController extends CrudController<Subscription> {
 	 *
 	 * @param id The subscription to pause.
 	 * @param entity Until when, and why.
+	 * @param request The request, which carries the version the caller read the subscription at.
 	 * @returns The paused subscription.
 	 */
 	@ApiOperation({ summary: 'Pause a subscription' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The subscription is paused.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.pause', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Post(':id/pause')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async pause(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: PauseSubscriptionDTO): Promise<Subscription> {
-		return await this.subscriptionService.pause(id, { until: entity.until, reason: entity.reason });
+	async pause(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: PauseSubscriptionDTO,
+		@Req() request: Request
+	): Promise<Subscription> {
+		return await this.subscriptionService.pause(
+			id,
+			{ until: entity.until, reason: entity.reason },
+			versionExpectationOf(request)
+		);
 	}
 
 	/**
 	 * Resumes a paused subscription.
 	 *
 	 * @param id The subscription to resume.
+	 * @param request The request, which carries the version the caller read the subscription at.
 	 * @returns The resumed subscription.
 	 */
 	@ApiOperation({ summary: 'Resume a paused subscription' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The subscription is billing again.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.resume', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Post(':id/resume')
-	async resume(@Param('id', UUIDValidationPipe) id: ID): Promise<Subscription> {
-		return await this.subscriptionService.resume(id);
+	async resume(@Param('id', UUIDValidationPipe) id: ID, @Req() request: Request): Promise<Subscription> {
+		return await this.subscriptionService.resume(id, undefined, versionExpectationOf(request));
 	}
 
 	/**
@@ -163,15 +215,26 @@ export class SubscriptionController extends CrudController<Subscription> {
 	 *
 	 * @param id The subscription to cancel.
 	 * @param entity Why, and whether it ends now.
+	 * @param request The request, which carries the version the caller read the subscription at.
 	 * @returns The cancelled subscription.
 	 */
 	@ApiOperation({ summary: 'Cancel a subscription' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The subscription is cancelled.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.cancel', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Post(':id/cancel')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async cancel(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: CancelSubscriptionDTO): Promise<Subscription> {
-		return await this.subscriptionService.cancel(id, { reason: entity.reason, immediate: entity.immediate });
+	async cancel(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: CancelSubscriptionDTO,
+		@Req() request: Request
+	): Promise<Subscription> {
+		return await this.subscriptionService.cancel(
+			id,
+			{ reason: entity.reason, immediate: entity.immediate },
+			versionExpectationOf(request)
+		);
 	}
 
 	/**
@@ -179,54 +242,79 @@ export class SubscriptionController extends CrudController<Subscription> {
 	 *
 	 * @param id The subscription to expire.
 	 * @param entity Why.
+	 * @param request The request, which carries the version the caller read the subscription at.
 	 * @returns The expired subscription.
 	 */
 	@ApiOperation({ summary: 'Expire a subscription' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The subscription is expired.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.expire', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Post(':id/expire')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async expire(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: ExpireSubscriptionDTO): Promise<Subscription> {
-		return await this.subscriptionService.expire(id, entity.reason);
+	async expire(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: ExpireSubscriptionDTO,
+		@Req() request: Request
+	): Promise<Subscription> {
+		return await this.subscriptionService.expire(id, entity.reason, versionExpectationOf(request));
 	}
 
 	/**
 	 * Moves a subscription to another plan, settling the remainder of the current period.
 	 *
+	 * A plan change charges the prorated difference through the ordinary order path, which is the
+	 * strongest case in this plugin for a retry key: a client that loses the response cannot tell whether
+	 * the difference was collected, and a second attempt under the same key is answered from the record
+	 * of the first rather than charging the customer twice for the same remainder of the period.
+	 *
 	 * @param id The subscription to change.
 	 * @param entity The plan, the quantity and when the change takes effect.
+	 * @param request The request, which carries the version the caller read the subscription at.
 	 * @returns What the change decided and what it settled.
 	 */
 	@ApiOperation({ summary: 'Change the plan of a subscription' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The plan change was applied.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.plan.change', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Post(':id/plan')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async changePlan(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: ChangeSubscriptionPlanDTO
+		@Body() entity: ChangeSubscriptionPlanDTO,
+		@Req() request: Request
 	): Promise<ISubscriptionPlanChangeOutcome> {
-		return await this.subscriptionService.changePlan(id, entity as any);
+		return await this.subscriptionService.changePlan(id, entity as any, versionExpectationOf(request));
 	}
 
 	/**
 	 * Adds a recurring line mid-cycle.
 	 *
+	 * Adding a line charges the prorated difference for the remainder of the period through the ordinary
+	 * order path, so this route is the other strong case for a retry key: a lost response to it is a
+	 * client that cannot tell whether the line it asked for was added and charged, and a retry under the
+	 * same key is answered from the record of the first attempt.
+	 *
 	 * @param id The subscription.
 	 * @param entity The line to add.
+	 * @param request The request, which carries the version the caller read the subscription at.
 	 * @returns What the change decided and what it settled.
 	 */
 	@ApiOperation({ summary: 'Add a recurring line to a subscription' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The line was added.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.item.add', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@HttpCode(HttpStatus.CREATED)
 	@Post(':id/items')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async addItem(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: SubscriptionItemInputDTO
+		@Body() entity: SubscriptionItemInputDTO,
+		@Req() request: Request
 	): Promise<ISubscriptionPlanChangeOutcome> {
-		return await this.subscriptionService.addItem(id, entity as any);
+		return await this.subscriptionService.addItem(id, entity as any, versionExpectationOf(request));
 	}
 
 	/**
@@ -235,23 +323,36 @@ export class SubscriptionController extends CrudController<Subscription> {
 	 * @param id The subscription.
 	 * @param variantId The variant whose line is changing.
 	 * @param entity The new quantity.
+	 * @param request The request, which carries the version the caller read the subscription at.
 	 * @returns What the change decided and what it settled.
 	 */
 	@ApiOperation({ summary: 'Change the quantity of a recurring line' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The quantity was changed.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Idempotent({ scope: 'subscription.item.change_quantity', required: false, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Put(':id/items/:variantId')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async changeItemQuantity(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Param('variantId', UUIDValidationPipe) variantId: ID,
-		@Body() entity: SubscriptionItemInputDTO
+		@Body() entity: SubscriptionItemInputDTO,
+		@Req() request: Request
 	): Promise<ISubscriptionPlanChangeOutcome> {
-		return await this.subscriptionService.changeItemQuantity(id, variantId, entity.quantity ?? '1');
+		return await this.subscriptionService.changeItemQuantity(
+			id,
+			variantId,
+			entity.quantity ?? '1',
+			versionExpectationOf(request)
+		);
 	}
 
 	/**
 	 * Removes a recurring line mid-cycle.
+	 *
+	 * The route names the subscription whose line is going, but it removes a child row rather than
+	 * writing the subscription, so it states no version and the write it does make to the subscription —
+	 * the proration it records in the metadata — is predicated on the version the row holds.
 	 *
 	 * @param id The subscription.
 	 * @param variantId The variant whose line is being removed.
@@ -271,17 +372,32 @@ export class SubscriptionController extends CrudController<Subscription> {
 	/**
 	 * Bills one cycle of one subscription.
 	 *
+	 * A retry presents the same key and is answered from the record of the first attempt, so a lost
+	 * response never bills a period twice, and the caller states the version it read so a cycle is not
+	 * run against a subscription that has moved on since.
+	 *
 	 * @param id The subscription to bill.
 	 * @param entity The instant to bill against.
+	 * @param request The request, which carries the version the caller read the subscription at.
 	 * @returns What the cycle did.
 	 */
 	@ApiOperation({ summary: 'Bill one cycle of a subscription' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The cycle was billed or is already settled.' })
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_BILL)
+	@Idempotent({ scope: 'subscription.bill', required: true, resourceType: 'subscription' })
+	@Versioned({ resource: SubscriptionService })
 	@Post(':id/bill')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async bill(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: BillSubscriptionDTO): Promise<ISubscriptionBillingOutcome> {
-		return await this.subscriptionService.billCycle(id, { asOf: entity.asOf, manual: true });
+	async bill(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: BillSubscriptionDTO,
+		@Req() request: Request
+	): Promise<ISubscriptionBillingOutcome> {
+		return await this.subscriptionService.billCycle(
+			id,
+			{ asOf: entity.asOf, manual: true },
+			versionExpectationOf(request)
+		);
 	}
 
 	/**

@@ -2,11 +2,13 @@ import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/co
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	Versioned
 } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockCount } from './stock-count.entity';
@@ -68,20 +70,37 @@ export class StockCountController {
 		return await this.stockCountService.open(id);
 	}
 
-	/** Records counted quantities for a batch of lines. */
+	/**
+	 * Records counted quantities for a batch of lines.
+	 *
+	 * The readings themselves are a write on the session and not on the levels — nothing is moved until
+	 * the session closes — so this route carries the key and not the version: a retry that recorded the
+	 * same readings twice would double-count a batch of the variance.
+	 */
 	@ApiOperation({ summary: 'Record counted quantities' })
 	@ApiResponse({ status: 202, description: 'Readings recorded.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	@Idempotent({ scope: 'stock.count', required: false, resourceType: 'stock-count' })
 	@Post(':id/count')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async count(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: RecordStockCountLinesDTO): Promise<StockCount> {
 		return await this.stockCountService.recordLines(id, entity.lines);
 	}
 
-	/** Closes a session and writes its corrections to the ledger. */
+	/**
+	 * Closes a session and writes its corrections to the ledger.
+	 *
+	 * The corrections land on the levels of the lines the session covers, so a caller cannot state one
+	 * version for all of them: a stated version is honoured for the level it names, and every
+	 * correction is still written under the engine's compare-and-set. The key is what makes a retry of
+	 * the close safe, because a second close would write a second set of corrections.
+	 */
 	@ApiOperation({ summary: 'Close a stock count session' })
 	@ApiResponse({ status: 202, description: 'Session closed.' })
+	@ApiResponse({ status: 409, description: 'A level moved past the version the close was based on.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'stock.count', required: false, resourceType: 'stock-count' })
 	@Post(':id/close')
 	async close(@Param('id', UUIDValidationPipe) id: ID) {
 		return await this.stockCountService.close(id);

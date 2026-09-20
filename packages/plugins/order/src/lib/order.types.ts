@@ -1,6 +1,6 @@
 import { DeepPartial } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity } from '@gauzy/core';
+import { TenantOrganizationBaseEntity, versionExpectationOf } from '@gauzy/core';
 
 /**
  * A record as a caller supplies it: the entity's own columns, plus the tenancy columns the base entity
@@ -8,6 +8,39 @@ import { TenantOrganizationBaseEntity } from '@gauzy/core';
  * are named here and never redeclared by a table.
  */
 export type OrderWriteInput<T> = DeepPartial<T> & Partial<TenantOrganizationBaseEntity>;
+
+/**
+ * The version a caller accepted for a write, as the concurrency kernel states it.
+ *
+ * Taken from the reader that produces it rather than restated here, so the shape the kernel leaves on
+ * a request and the shape this package hands back to the version-predicated update cannot drift apart.
+ * A route reads it with `versionExpectationOf(request)`; a caller inside the package states
+ * {@link ANY_ORDER_VERSION} when no client version is behind the write.
+ */
+export type OrderVersionExpectation = ReturnType<typeof versionExpectationOf>;
+
+/**
+ * The version a write that no caller conditioned on is predicated on.
+ *
+ * A route is predicated on the version its caller stated, so a change reasoned about from an order
+ * that has moved on is refused instead of applied. A write that arrives from anywhere else — the
+ * checkout path that places the order a cart became, the change confirmation, the staleness sweep —
+ * has no caller to condition it and is predicated on the version the row holds when the statement
+ * runs. Either way the comparison and the increment are one statement, so no write in this package is
+ * a last-writer-wins write.
+ */
+export const ANY_ORDER_VERSION: OrderVersionExpectation = { wildcard: true, versions: [] };
+
+/**
+ * The token the service that owns an order row is reachable under.
+ *
+ * `OrderTotalsService` commits every write of the order aggregate, and the service that owns the row
+ * is `OrderService` — which is constructed *from* the totals service and therefore cannot be injected
+ * into it without closing a dependency cycle the container cannot express. The token is resolved
+ * through `ModuleRef` at the moment of a write instead, which is the same route the concurrency
+ * kernel's own guard takes to the service a route names.
+ */
+export const ORDER_AGGREGATE_WRITER = 'ORDER_AGGREGATE_WRITER';
 
 /**
  * What kind of line this is.

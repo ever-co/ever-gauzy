@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { PaymentProviderService } from '../../payment-provider/payment-provider.service';
 import { IPaymentProvider } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
@@ -67,6 +67,9 @@ export class PaymentProviderResolver {
 	 * Registers a provider against an existing integration.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_PROVIDERS_CREATE as PermissionsEnum)
+	// A registration is refused when the code is taken, which already makes a duplicate harmless, so the
+	// key is optional here exactly as it is on the REST route, under the same scope.
+	@Idempotent({ scope: 'payment.provider.create', required: false, resourceType: 'payment_provider' })
 	@Mutation('createPaymentProvider')
 	async createPaymentProvider(
 		@Args('input') input: ICreatePaymentProviderGraphInput

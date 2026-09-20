@@ -4,6 +4,7 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -78,6 +79,9 @@ export class PaymentCollectionController extends CrudController<PaymentCollectio
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Collection created' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'No target, or a cart that already has one' })
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	// An order or a cart has one collection, and the service refuses a second one, so the key is
+	// optional: a client that presents one is answered from the record rather than from the refusal.
+	@Idempotent({ scope: 'payment.collection.create', required: false, resourceType: 'payment_collection' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async create(@Body() entity: CreatePaymentCollectionDTO): Promise<IPaymentCollection> {

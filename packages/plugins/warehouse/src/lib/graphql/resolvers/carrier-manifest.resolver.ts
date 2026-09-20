@@ -1,7 +1,7 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { CarrierManifestService, CarrierManifestWithMembers } from '../../carrier-manifest/carrier-manifest.service';
 import { CarrierManifest } from '../../carrier-manifest/carrier-manifest.entity';
@@ -129,6 +129,7 @@ export class CarrierManifestResolver {
 	 */
 	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
 	@Mutation('handOverCarrierManifest')
+	@Idempotent({ scope: 'warehouse.handover', required: false, resourceType: 'carrier-manifest' })
 	async handOverCarrierManifest(
 		@Args('id') id: ID,
 		@Args('input') input?: { scanCount?: number; scannedTrackingNumbers?: string[]; note?: string }

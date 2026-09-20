@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { In, LessThan } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
@@ -7,11 +7,14 @@ import {
 	IIdempotencyCompletion,
 	IIdempotencyKey,
 	IIdempotencyStartInput,
+	IPagination,
 	IdempotencyOutcome,
 	IdempotencyStatus
 } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { ApiErrorCode } from '../core/errors/api-error-codes';
+import { ApiException } from '../core/errors/api-exception';
 import { isUniqueViolation } from '../core/errors/unique-violation';
 import { IdempotencyKey } from './idempotency-key.entity';
 import { TypeOrmIdempotencyKeyRepository } from './repository/type-orm-idempotency-key.repository';
@@ -26,6 +29,17 @@ export interface IIdempotencyPolicy {
 	/** How long a claim may sit before another request is allowed to take it over. */
 	staleLockMs?: number;
 }
+
+/**
+ * A stored key as an operator reads it.
+ *
+ * The stored response body is not part of it. A key row holds the answer the first attempt produced,
+ * and that answer is the calling client's own data — an order, a refund, an instrument — so the
+ * permission to release a key is not thereby a permission to read what the key answered. Everything
+ * else on the row is diagnostic and is answered: the operation, the client's key, how far it got, and
+ * what it points at.
+ */
+export type IdempotencyKeyView = Omit<IIdempotencyKey, 'responseBody'>;
 
 /**
  * Makes retryable requests safe to retry.
@@ -294,6 +308,222 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	 */
 	async findById(id: ID): Promise<IdempotencyKey | null> {
 		return this.typeOrmIdempotencyKeyRepository.findOne({ where: { id } as any });
+	}
+
+	/**
+	 * Reads one key of the caller's organization, as an operator sees it.
+	 *
+	 * The row is looked up through the same scope every other read of this service applies rather than
+	 * by identifier alone, so a key belonging to another tenant is answered as absent. That is the
+	 * difference between a refusal and a disclosure: a `404` says "no such key is stored", which is
+	 * true for the caller, while a row of somebody else's would say that the key exists.
+	 *
+	 * @param id The row id.
+	 * @returns The stored key, without the response it holds.
+	 * @throws NotFoundException when no such key is stored for this caller.
+	 */
+	async findKeyOrFail(id: ID): Promise<IdempotencyKeyView> {
+		const record = await this.listKeysById(id);
+
+		if (!record) {
+			throw new NotFoundException(`RESOURCE_NOT_FOUND: no idempotency key '${String(id)}' is stored.`);
+		}
+
+		return this.toKeyView(record);
+	}
+
+	/**
+	 * Lists the keys of the caller's tenant and organization, newest first.
+	 *
+	 * The operator's view, and the reason it exists is that a release is only possible for a key whose
+	 * identifier somebody can find: a stored key has no client-facing read of its own, so without this
+	 * the release route would be reachable only by an operator who already knew the id from a log.
+	 *
+	 * The scope is the credential's and never the caller's, so one tenant can never read — or release —
+	 * a key another tenant's retry is holding. The narrowing is deliberately narrow: the columns an
+	 * operator actually searches by, because a wider filter on a table whose whole purpose is to answer
+	 * one lookup would invite the scan the unique index exists to avoid.
+	 *
+	 * @param narrowing The columns to narrow by, and the page to answer.
+	 * @returns One page of keys, newest first, without the responses they hold.
+	 */
+	async listKeys(narrowing: {
+		scope?: string;
+		key?: string;
+		status?: IdempotencyStatus;
+		resourceType?: string;
+		take?: number;
+		skip?: number;
+	} = {}): Promise<IPagination<IdempotencyKeyView>> {
+		const page = await this.findAll({
+			where: this.keyCriteria(narrowing) as any,
+			order: { createdAt: 'DESC' } as any,
+			...(typeof narrowing.take === 'number' ? { take: narrowing.take } : {}),
+			...(typeof narrowing.skip === 'number' ? { skip: narrowing.skip } : {})
+		});
+
+		return {
+			...page,
+			items: (page.items ?? []).map((record) => this.toKeyView(record))
+		} as IPagination<IdempotencyKeyView>;
+	}
+
+	/**
+	 * Releases a key, so the next attempt under it is a true first attempt.
+	 *
+	 * The row is removed rather than marked. A key that was marked released would still occupy the
+	 * unique tuple, and the retry the operator is trying to unblock would then be refused as a reused
+	 * key — which is the opposite of what releasing it is for. This is the one operation in the kernel
+	 * that deletes, and it exists because a client that lost its key cannot do it for itself.
+	 *
+	 * **A claim that is still live is refused.** Deleting an `IN_PROGRESS` row whose lease has not
+	 * gone stale would let the retry start a second run of work while the first one is still
+	 * executing, and duplicating a side effect is exactly what the key exists to prevent. An operator
+	 * who genuinely needs that must wait for the lease to expire — which happens on its own, in
+	 * minutes — or delete the row in the store, deliberately and visibly.
+	 *
+	 * @param id The row id.
+	 * @param policy Overrides for the stale-lock window.
+	 * @returns The row that was removed.
+	 * @throws NotFoundException when no such key is stored.
+	 * @throws ApiException with `IDEMPOTENCY_IN_PROGRESS` while a live claim holds it.
+	 */
+	async release(id: ID, policy: IIdempotencyPolicy = {}): Promise<IdempotencyKeyView> {
+		const record = await this.listKeysById(id);
+
+		if (!record) {
+			throw new NotFoundException(`RESOURCE_NOT_FOUND: no idempotency key '${String(id)}' is stored.`);
+		}
+
+		if (record.status === IdempotencyStatus.IN_PROGRESS && !this.isLockStale(record, policy)) {
+			const heldForMs = this.heldForMs(record);
+			const retryAfterMs = Math.max(
+				0,
+				(policy.staleLockMs ?? IdempotencyService.DEFAULT_STALE_LOCK_MS) - heldForMs
+			);
+
+			throw new ApiException(
+				HttpStatus.CONFLICT,
+				ApiErrorCode.IDEMPOTENCY_IN_PROGRESS,
+				'A request with this idempotency key is still in progress, so releasing it would let the work run twice.',
+				{ scope: record.scope, retryAfterMs }
+			);
+		}
+
+		await this.delete({ id } as any);
+
+		return this.toKeyView(record);
+	}
+
+	/**
+	 * The criteria every operator read of this resource is scoped by.
+	 *
+	 * The tenant and the organization come from the credential, and a member the caller did not state
+	 * is left out of the criteria entirely rather than set to `undefined`: a key present with an
+	 * undefined value is a criterion the ORM would have to interpret, and the two ORMs interpret it
+	 * differently.
+	 *
+	 * @param narrowing What the caller stated.
+	 * @returns The criteria.
+	 */
+	private keyCriteria(narrowing: {
+		scope?: string;
+		key?: string;
+		status?: IdempotencyStatus;
+		resourceType?: string;
+	} = {}): Record<string, unknown> {
+		const criteria: Record<string, unknown> = {};
+
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		if (tenantId) {
+			criteria.tenantId = tenantId;
+		}
+
+		if (organizationId) {
+			criteria.organizationId = organizationId;
+		}
+
+		if (narrowing.scope) {
+			criteria.scope = narrowing.scope;
+		}
+
+		if (narrowing.key) {
+			criteria.key = narrowing.key;
+		}
+
+		if (narrowing.status) {
+			criteria.status = narrowing.status;
+		}
+
+		if (narrowing.resourceType) {
+			criteria.resourceType = narrowing.resourceType;
+		}
+
+		return criteria;
+	}
+
+	/**
+	 * Reads one row within the caller's scope.
+	 *
+	 * @param id The row id.
+	 * @returns The row, or null when the caller has none by that id.
+	 */
+	private async listKeysById(id: ID): Promise<IdempotencyKey | null> {
+		const rows = await this.find({ where: { ...this.keyCriteria(), id } as any, take: 1 });
+
+		return rows?.[0] ?? null;
+	}
+
+	/**
+	 * The projection an operator's read answers.
+	 *
+	 * The stored response is dropped here rather than at each surface, so both protocols answer the
+	 * same columns by construction and a third caller cannot reintroduce the leak by forgetting to
+	 * project.
+	 *
+	 * @param record The stored row.
+	 * @returns The row without the response it holds.
+	 */
+	private toKeyView(record: IdempotencyKey): IdempotencyKeyView {
+		const { responseBody: _storedResponse, ...view } = record as IdempotencyKey & { responseBody?: unknown };
+
+		return view as IdempotencyKeyView;
+	}
+
+	/**
+	 * Whether the claim on a row has been held long enough to be treated as abandoned.
+	 *
+	 * A row with no recorded lock is treated as abandoned: it was written by a build that did not
+	 * stamp one, and refusing to ever release it would leave an operator with no way forward.
+	 *
+	 * @param record The stored row.
+	 * @param policy Overrides for the stale-lock window.
+	 * @returns True when the lease has gone stale.
+	 */
+	private isLockStale(record: Pick<IdempotencyKey, 'lockedAt'>, policy: IIdempotencyPolicy = {}): boolean {
+		if (!record.lockedAt) {
+			return true;
+		}
+
+		return this.heldForMs(record) >= (policy.staleLockMs ?? IdempotencyService.DEFAULT_STALE_LOCK_MS);
+	}
+
+	/**
+	 * How long ago a claim was taken.
+	 *
+	 * @param record The stored row.
+	 * @returns The age of the claim in milliseconds, or zero when none was stamped.
+	 */
+	private heldForMs(record: Pick<IdempotencyKey, 'lockedAt'>): number {
+		if (!record.lockedAt) {
+			return 0;
+		}
+
+		const taken = new Date(record.lockedAt).getTime();
+
+		return Number.isFinite(taken) ? Math.max(0, Date.now() - taken) : 0;
 	}
 
 	/**

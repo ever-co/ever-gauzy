@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { PaymentSessionService } from '../../payment-session/payment-session.service';
 import { IPaymentSession } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
@@ -72,6 +72,9 @@ export class PaymentSessionResolver {
 	 * Opens, or switches, the attempt of a `(collection, provider)` pair.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	// Opening an attempt reserves nothing and the service switches the pair rather than opening a second
+	// attempt, so the key is optional here exactly as it is on the REST route, under the same scope.
+	@Idempotent({ scope: 'payment.session.create', required: false, resourceType: 'payment_session' })
 	@Mutation('openPaymentSession')
 	async openPaymentSession(@Args('input') input: IOpenPaymentSessionGraphInput): Promise<IOpenPaymentSessionPayload> {
 		try {
@@ -85,6 +88,9 @@ export class PaymentSessionResolver {
 	 * Records the provider's approval of an attempt and reserves its amount on the collection.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	// Recording an approval reserves the amount on the collection and the service refuses a session that
+	// is already authorised, so the key is optional here exactly as it is on the REST route.
+	@Idempotent({ scope: 'payment.session.authorize', required: false, resourceType: 'payment_session' })
 	@Mutation('authorizePaymentSession')
 	async authorizePaymentSession(
 		@Args('input') input: IAuthorizePaymentSessionGraphInput
@@ -103,6 +109,10 @@ export class PaymentSessionResolver {
 	 * Voids an attempt: it is cancelled and the authorisation it holds is released.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CANCEL as PermissionsEnum)
+	// Voiding an attempt cancels it and releases the authorisation it holds. The scope names the
+	// cancellation itself rather than the surface that carries it, so it is the same scope the REST
+	// cancel route declares.
+	@Idempotent({ scope: 'payment.cancel', required: false, resourceType: 'payment_session' })
 	@Mutation('voidPaymentSession')
 	async voidPaymentSession(@Args('input') input: IVoidPaymentSessionGraphInput): Promise<IVoidPaymentSessionPayload> {
 		try {

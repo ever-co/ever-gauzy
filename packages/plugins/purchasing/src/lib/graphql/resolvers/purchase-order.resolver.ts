@@ -1,5 +1,6 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
+import { Idempotent } from '@gauzy/core';
 import { toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import {
@@ -37,6 +38,8 @@ interface ICreatePurchaseOrderArgs {
 		expectedAt?: Date;
 		note?: string;
 	}>;
+	/** The client's retry key, honoured when one is presented. */
+	idempotencyKey?: string;
 }
 
 /** The amendment to a draft purchase order, as the schema declares it. */
@@ -58,6 +61,11 @@ interface IUpdatePurchaseOrderArgs {
  * one raised over REST obey the same state machine, the same approval gate and the same derivation of
  * the money, and the two surfaces cannot drift. Authorisation is unchanged: the guards run on the HTTP
  * request that carried the operation, exactly as they do for a REST call.
+ *
+ * Raising an order carries the retry declaration its REST route carries, under the same scope, so a
+ * client that retries presents one operation whichever protocol carried it: the key rides as the
+ * `idempotencyKey` member of the mutation's input, because one GraphQL request may select several
+ * mutations and a header could not say which of them a key belongs to.
  */
 @Resolver('PurchaseOrder')
 export class PurchaseOrderResolver {
@@ -124,6 +132,7 @@ export class PurchaseOrderResolver {
 	 * @param input The order to raise.
 	 * @returns The payload, with the order or the reason it was refused.
 	 */
+	@Idempotent({ scope: 'purchase_order.create', required: false, resourceType: 'purchase_order' })
 	@Mutation('createPurchaseOrder')
 	async createPurchaseOrder(@Args('input') input: ICreatePurchaseOrderArgs) {
 		try {

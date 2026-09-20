@@ -1,14 +1,18 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { IPagination, IOrder, OrderChangeType } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	Versioned,
+	versionExpectationOf
 } from '@gauzy/core';
 import { Order } from './order.entity';
 import { OrderService } from './order.service';
@@ -30,6 +34,19 @@ import { CreateOrderCreditLineDTO } from '../order-credit-line/dto';
  * decided by the guard and the permission, never by a second base path. The routes that move an order
  * forward — placing it, cancelling it, archiving it, and working a change through to application — live
  * here rather than on a second controller, because that is what "one controller per entity" means.
+ *
+ * Two conventions are adopted on the mutating routes and are deliberately identical on the GraphQL
+ * mutations that mirror them:
+ *
+ * - `@Idempotent(...)` makes a route safe to retry under a client-supplied key. Confirming a change
+ *   requires one, because a lost response to it costs a second application of the same change; the
+ *   remaining writes honour a key when one is presented and behave as they always did when none is.
+ * - `@Versioned({ resource: OrderService })` refuses a write based on an order that has moved on and
+ *   publishes the order's version as an `ETag`, which is the header the next write states back. The
+ *   version is always the **order's**, including on the routes that write a change: a change is part of
+ *   the aggregate the order's version describes, and its own `version` column means something else —
+ *   the order version the change produces. A route whose path names only the change states no resource,
+ *   because the order it belongs to is resolved by the handler.
  */
 @ApiTags('Order')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -51,12 +68,17 @@ export class OrderController extends CrudController<Order> {
 	/**
 	 * Creates a draft order.
 	 *
+	 * No version is required of the caller — there is no order to have read yet — and the created
+	 * order's version is published in the response for the writes that follow.
+	 *
 	 * @param entity The order to create.
 	 * @returns The created order.
 	 */
 	@ApiOperation({ summary: 'Create a draft order' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Order created' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_CREATE)
+	@Idempotent({ scope: 'order.create', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService, required: false })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateOrderDTO): Promise<IOrder> {
@@ -66,11 +88,15 @@ export class OrderController extends CrudController<Order> {
 	/**
 	 * Reads an order with the satellites a caller needs to render it.
 	 *
+	 * The response carries the order's version as an `ETag` and in the body, which is what a caller
+	 * states back as `If-Match` on the write it is about to make.
+	 *
 	 * @param id The order.
 	 * @returns The order.
 	 */
 	@ApiOperation({ summary: 'Find an order by id' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Order found' })
+	@Versioned({ resource: OrderService, write: false })
 	@Get(':id')
 	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<IOrder> {
 		return this.orderService.findOneByIdString(id, {
@@ -96,48 +122,56 @@ export class OrderController extends CrudController<Order> {
 	 *
 	 * @param id The order.
 	 * @param entity The fields to change.
+	 * @param request The request, which carries the version the caller read the order at.
 	 * @returns The order.
 	 */
 	@ApiOperation({ summary: 'Update an order' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Order updated' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateOrderDTO
+		@Body() entity: UpdateOrderDTO,
+		@Req() request: Request
 	): Promise<IOrder> {
-		return this.orderService.updateMutable(id, entity as any);
+		return this.orderService.updateMutable(id, entity as any, versionExpectationOf(request));
 	}
 
 	/**
 	 * Places a draft order.
 	 *
 	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
 	 * @returns The placed order.
 	 */
 	@ApiOperation({ summary: 'Place a draft order' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Order placed' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.place', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
 	@Post(':id/place')
 	@HttpCode(HttpStatus.OK)
-	async place(@Param('id', UUIDValidationPipe) id: string): Promise<IOrder> {
-		return this.orderService.place(id);
+	async place(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
+		return this.orderService.place(id, {}, versionExpectationOf(request));
 	}
 
 	/**
 	 * Confirms a placed order.
 	 *
 	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
 	 * @returns The confirmed order.
 	 */
 	@ApiOperation({ summary: 'Confirm a placed order' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Order confirmed' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_APPROVE)
+	@Versioned({ resource: OrderService })
 	@Post(':id/approve')
 	@HttpCode(HttpStatus.OK)
-	async approve(@Param('id', UUIDValidationPipe) id: string): Promise<IOrder> {
-		return this.orderService.confirm(id, 'STAFF');
+	async approve(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
+		return this.orderService.confirm(id, 'STAFF', versionExpectationOf(request));
 	}
 
 	/**
@@ -145,49 +179,57 @@ export class OrderController extends CrudController<Order> {
 	 *
 	 * @param id The order.
 	 * @param body The reason.
+	 * @param request The request, which carries the version the caller read the order at.
 	 * @returns The cancelled order.
 	 */
 	@ApiOperation({ summary: 'Cancel an order' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Order cancelled' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_CANCEL)
+	@Idempotent({ scope: 'order.cancel', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
 	@Post(':id/cancel')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async cancel(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: { reason?: string }
+		@Body() body: { reason?: string },
+		@Req() request: Request
 	): Promise<IOrder> {
-		return this.orderService.cancel(id, body?.reason);
+		return this.orderService.cancel(id, body?.reason, versionExpectationOf(request));
 	}
 
 	/**
 	 * Archives a terminal order.
 	 *
 	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
 	 * @returns The archived order.
 	 */
 	@ApiOperation({ summary: 'Archive an order' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Order archived' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
 	@Post(':id/archive')
 	@HttpCode(HttpStatus.OK)
-	async archive(@Param('id', UUIDValidationPipe) id: string): Promise<IOrder> {
-		return this.orderService.archive(id);
+	async archive(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
+		return this.orderService.archive(id, versionExpectationOf(request));
 	}
 
 	/**
 	 * Recomputes an order's totals from its lines and the money ledgers.
 	 *
 	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
 	 * @returns The order with its recomputed totals.
 	 */
 	@ApiOperation({ summary: 'Recalculate an order' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Order recalculated' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
 	@Post(':id/recalculate')
 	@HttpCode(HttpStatus.OK)
-	async recalculate(@Param('id', UUIDValidationPipe) id: string): Promise<IOrder> {
-		return this.totalsService.recompute(id, 'MANUAL');
+	async recalculate(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
+		return this.totalsService.recompute(id, 'MANUAL', { expectation: versionExpectationOf(request) });
 	}
 
 	/**
@@ -251,6 +293,10 @@ export class OrderController extends CrudController<Order> {
 	/**
 	 * Applies a credit line, which reduces what the customer owes without money moving.
 	 *
+	 * The route creates a change rather than writing the order, so the version the caller states is the
+	 * order version the credit was reasoned about: an order that has moved on since is refused before
+	 * anything is recorded.
+	 *
 	 * @param id The order.
 	 * @param entity The credit to apply.
 	 * @returns The change that carries the credit.
@@ -258,6 +304,7 @@ export class OrderController extends CrudController<Order> {
 	@ApiOperation({ summary: 'Apply a credit line to an order' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Credit line applied' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
 	@Post(':id/credit-lines')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async addCreditLine(@Param('id', UUIDValidationPipe) id: string, @Body() entity: CreateOrderCreditLineDTO) {
@@ -289,6 +336,8 @@ export class OrderController extends CrudController<Order> {
 	@ApiOperation({ summary: 'Create a change on an order' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Change created' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.change.create', required: false, resourceType: 'order_change' })
+	@Versioned({ resource: OrderService })
 	@Post(':id/changes')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async createChange(@Param('id', UUIDValidationPipe) id: string, @Body() entity: CreateOrderChangeDTO) {
@@ -311,60 +360,87 @@ export class OrderController extends CrudController<Order> {
 	/**
 	 * Applies a change.
 	 *
+	 * A key is mandatory here rather than optional, and for the same reason the confirmation is the one
+	 * change operation that demands one: applying a change twice moves the order twice, and a client
+	 * that never saw the first answer has no other way to tell whether it landed. A retry that presents
+	 * the key of the attempt that was lost is answered with the change that attempt applied.
+	 *
+	 * The version is the **order's**, which the route names in its path: the guard reads that order and
+	 * refuses a change applied against an order that has moved on before the handler runs, and the
+	 * order's own write checks the same version again in the statement that increments it.
+	 *
 	 * @param id The order.
 	 * @param changeId The change.
+	 * @param request The request, which carries the version the caller read the order at.
 	 * @returns The change and the order it moved.
 	 */
 	@ApiOperation({ summary: 'Apply an order change' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Change applied' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.change.confirm', required: true, resourceType: 'order_change' })
+	@Versioned({ resource: OrderService })
 	@Post(':id/changes/:changeId/confirm')
 	@HttpCode(HttpStatus.OK)
 	async confirmChange(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Param('changeId', UUIDValidationPipe) changeId: string
+		@Param('changeId', UUIDValidationPipe) changeId: string,
+		@Req() request: Request
 	) {
-		return this.changeService.confirm(changeId);
+		return this.changeService.confirm(changeId, versionExpectationOf(request));
 	}
 
 	/**
 	 * Declines a change without applying it.
 	 *
+	 * The path names the change and not the order, so the guard states no resource: it reads and
+	 * validates the version the caller presents, and the handler resolves the order the change belongs
+	 * to and predicates the order's own write on it — which is where the comparison is made.
+	 *
 	 * @param changeId The change.
 	 * @param body The reason.
+	 * @param request The request, which carries the version the caller read the order at.
 	 * @returns The declined change.
 	 */
 	@ApiOperation({ summary: 'Decline an order change' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Change declined' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({})
 	@Post('changes/:changeId/decline')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async declineChange(
 		@Param('changeId', UUIDValidationPipe) changeId: string,
-		@Body() body: { reason?: string }
+		@Body() body: { reason?: string },
+		@Req() request: Request
 	) {
-		return this.changeService.decline(changeId, body?.reason);
+		return this.changeService.decline(changeId, body?.reason, versionExpectationOf(request));
 	}
 
 	/**
 	 * Cancels a pending change.
 	 *
+	 * The path names the change and not the order, so the guard states no resource: it reads and
+	 * validates the version the caller presents, and the handler resolves the order the change belongs
+	 * to and predicates the order's own write on it — which is where the comparison is made.
+	 *
 	 * @param changeId The change.
 	 * @param body The reason.
+	 * @param request The request, which carries the version the caller read the order at.
 	 * @returns The cancelled change.
 	 */
 	@ApiOperation({ summary: 'Cancel an order change' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Change cancelled' })
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({})
 	@Post('changes/:changeId/cancel')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async cancelChange(
 		@Param('changeId', UUIDValidationPipe) changeId: string,
-		@Body() body: { reason?: string }
+		@Body() body: { reason?: string },
+		@Req() request: Request
 	) {
-		return this.changeService.cancel(changeId, body?.reason);
+		return this.changeService.cancel(changeId, body?.reason, versionExpectationOf(request));
 	}
 
 	/**

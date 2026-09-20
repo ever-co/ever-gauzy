@@ -18,6 +18,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -53,6 +54,13 @@ export class EntitlementKeyController extends CrudController<EntitlementKey> {
 	/**
 	 * Issues a key.
 	 *
+	 * This is the same operation as `POST /entitlements/:id/keys`, reached the other way round: the
+	 * right is named in the body here and in the path there, and both call the one method that mints a
+	 * credential. The two therefore declare the same retry scope rather than two namespaces, because a
+	 * retry of either is a retry of that one operation — and neither can be answered with the other's
+	 * response, since the fingerprint of a request is its method, its path and its body, and the two
+	 * paths differ.
+	 *
 	 * @param entity The right, the format and the holder.
 	 * @returns The issued key, with its plaintext as an extra member, returned once and never again.
 	 */
@@ -60,6 +68,7 @@ export class EntitlementKeyController extends CrudController<EntitlementKey> {
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The key was issued.' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The right cannot carry a key.' })
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_GRANT)
+	@Idempotent({ scope: 'entitlement_key.issue', required: false, resourceType: 'entitlement_key' })
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })

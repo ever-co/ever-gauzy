@@ -141,6 +141,11 @@ export const inventorySchemaExtensions = gql`
 		id: ID!
 		warehouseId: ID!
 		variantId: ID!
+		"""
+		The counter a conditional write is stated against. It travels with the availability because a
+		client can only condition a write on a version it has read.
+		"""
+		version: Int!
 		quantity: Float!
 		reservedQuantity: Float!
 		safetyStock: Float!
@@ -192,14 +197,19 @@ export const inventorySchemaExtensions = gql`
 	extend type Mutation {
 		reconcileStockLevels(input: StockLevelReconciliationInput): StockLevelReconciliation!
 		adjustStock(input: StockAdjustmentInput!): StockAdjustment!
-		applyStockAdjustment(id: ID!): StockAdjustment!
+		"""
+		Applies a drafted correction. The key is the resolver's own argument here because the mutation
+		has no input object to carry it; the kernel reads both spellings, so the two protocols answer
+		identically.
+		"""
+		applyStockAdjustment(id: ID!, idempotencyKey: String): StockAdjustment!
 		createStockReservation(input: StockReservationInput!): StockReservation!
-		releaseStockReservation(id: ID!, reason: String): StockReservation!
+		releaseStockReservation(id: ID!, reason: String, idempotencyKey: String): StockReservation!
 		consumeStockReservation(id: ID!): StockReservation!
 		createStockTransfer(input: StockTransferInput!): StockTransfer!
 		updateStockTransfer(id: ID!, note: String): StockTransfer!
-		shipStockTransfer(id: ID!, lines: [StockTransferShipLineInput!]!): StockTransfer!
-		receiveStockTransfer(id: ID!, lines: [StockTransferReceiveLineInput!]!): StockTransfer!
+		shipStockTransfer(id: ID!, lines: [StockTransferShipLineInput!]!, idempotencyKey: String): StockTransfer!
+		receiveStockTransfer(id: ID!, lines: [StockTransferReceiveLineInput!]!, idempotencyKey: String): StockTransfer!
 		cancelStockTransfer(id: ID!, reason: String): StockTransfer!
 		addStockTransferLine(input: StockTransferLineInput!): StockTransferLine!
 		createStockAlert(input: StockAlertInput!): StockAlert!
@@ -207,17 +217,26 @@ export const inventorySchemaExtensions = gql`
 		deleteStockAlert(id: ID!): Boolean!
 		createStockCount(input: StockCountInput!): StockCount!
 		openStockCount(id: ID!): StockCount!
-		recordStockCountLine(id: ID!, lines: [StockCountLineInput!]!): StockCount!
-		closeStockCount(id: ID!): StockCount!
+		recordStockCountLine(id: ID!, lines: [StockCountLineInput!]!, idempotencyKey: String): StockCount!
+		closeStockCount(id: ID!, idempotencyKey: String): StockCount!
 		assignChannelWarehouse(input: ChannelWarehouseInput!): ChannelWarehouse!
 		unassignChannelWarehouse(channelId: ID!, warehouseId: ID!): Boolean!
 	}
 
-	"""What the caller wants a reconciliation run to walk. Everything may be left out."""
+	"""
+	What the caller wants a reconciliation run to walk. Everything may be left out.
+
+	\`version\` is the level counter the run is conditioned on and \`idempotencyKey\` the key a retry
+	presents. Both are nullable, and both answer exactly as the REST route answers: a version that has
+	moved is refused with the platform's conflict code, and a key already used for this request is
+	replayed instead of running the run a second time.
+	"""
 	input StockLevelReconciliationInput {
 		warehouseId: ID
 		variantId: ID
 		take: Int
+		version: Int
+		idempotencyKey: String
 	}
 
 	input StockAdjustmentInput {
@@ -230,6 +249,11 @@ export const inventorySchemaExtensions = gql`
 		note: String
 	}
 
+	"""
+	The hold a caller wants placed. \`version\` is the level counter the availability decision was
+	made from and \`idempotencyKey\` the key a retry presents; both mirror the REST route, and both are
+	nullable so a caller that states neither is answered rather than refused.
+	"""
 	input StockReservationInput {
 		variantId: ID!
 		productId: ID!
@@ -240,13 +264,17 @@ export const inventorySchemaExtensions = gql`
 		lineId: ID
 		expiresAt: DateTime
 		allowBackorder: Boolean
+		version: Int
+		idempotencyKey: String
 	}
 
+	"""The transfer a caller wants drafted. \`idempotencyKey\` makes a retry of the draft safe."""
 	input StockTransferInput {
 		fromWarehouseId: ID!
 		toWarehouseId: ID!
 		note: String
 		lines: [StockTransferLineInput!]
+		idempotencyKey: String
 	}
 
 	input StockTransferLineInput {
@@ -275,6 +303,7 @@ export const inventorySchemaExtensions = gql`
 		damagedQuantity: Float
 	}
 
+	"""The alert rule a caller wants created. \`idempotencyKey\` makes a retry of the rule safe."""
 	input StockAlertInput {
 		variantId: ID!
 		warehouseId: ID
@@ -283,6 +312,7 @@ export const inventorySchemaExtensions = gql`
 		notifyRoles: [String!]
 		cooldownMinutes: Int
 		isActive: Boolean
+		idempotencyKey: String
 	}
 
 	input StockCountInput {

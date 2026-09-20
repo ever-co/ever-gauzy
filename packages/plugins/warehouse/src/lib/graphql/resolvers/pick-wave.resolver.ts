@@ -1,7 +1,7 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PickListService } from '../../pick-list/pick-list.service';
 import { PickList } from '../../pick-list/pick-list.entity';
@@ -115,11 +115,19 @@ export class PickWaveResolver {
 	 *
 	 * @param id The wave.
 	 * @param pickerUserId The picker the wave is released to.
+	 * @param idempotencyKey The key a retry presents, matching the REST route's scope.
 	 * @returns The payload.
 	 */
 	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
 	@Mutation('releasePickWave')
-	async releasePickWave(@Args('id') id: ID, @Args('pickerUserId') pickerUserId?: ID) {
+	@Idempotent({ scope: 'warehouse.release', required: false, resourceType: 'pick-wave' })
+	async releasePickWave(
+		@Args('id') id: ID,
+		@Args('pickerUserId') pickerUserId?: ID,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+	) {
+		void idempotencyKey;
+
 		try {
 			return { pickWave: await this.pickWaveService.release(id, pickerUserId), userErrors: [] };
 		} catch (error) {
@@ -163,11 +171,18 @@ export class PickWaveResolver {
 	 * Closes a wave whose output was packed and manifested.
 	 *
 	 * @param id The wave.
+	 * @param idempotencyKey The key a retry presents, matching the REST route's scope.
 	 * @returns The payload.
 	 */
 	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
 	@Mutation('closePickWave')
-	async closePickWave(@Args('id') id: ID) {
+	@Idempotent({ scope: 'warehouse.close', required: false, resourceType: 'pick-wave' })
+	async closePickWave(
+		@Args('id') id: ID,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+	) {
+		void idempotencyKey;
+
 		try {
 			return { pickWave: await this.pickWaveService.close(id), userErrors: [] };
 		} catch (error) {

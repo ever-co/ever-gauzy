@@ -4,6 +4,7 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -135,6 +136,10 @@ export class PaymentWebhookEventController extends CrudController<PaymentWebhook
 	@ApiResponse({ status: HttpStatus.OK, description: 'Event reprocessed' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Already processed, without force' })
 	@Permissions(PaymentPermission.PAYMENT_CALLBACKS_REPROCESS as PermissionsEnum)
+	// Re-running a callback re-applies an effect to money, and the service already refuses an event that
+	// succeeded without force, so the key is optional: a client that presents one gets the recorded
+	// outcome back rather than a second application of the same event.
+	@Idempotent({ scope: 'payment.callback.reprocess', required: false, resourceType: 'payment_webhook_event' })
 	@Post(':id/reprocess')
 	@HttpCode(HttpStatus.OK)
 	async reprocess(@Param('id', UUIDValidationPipe) id: ID, @Body() body?: { force?: boolean }): Promise<IPaymentWebhookEvent> {

@@ -18,6 +18,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -55,6 +56,12 @@ import { PurchaseOrderService } from './purchase-order.service';
  * Receiving is reachable from the order as well as from the receipt resource, because receiving is
  * what a caller looking at an order actually wants to do; both routes run the same service method and
  * therefore the same ceiling check.
+ *
+ * Raising an order honours the platform's retry key when one is presented. It is offered rather than
+ * demanded: an order that is raised twice is refused by the numbering series and the supplier rules
+ * rather than by a key, so a route that started demanding one would refuse every existing caller —
+ * while a caller that does present one is answered, on a retry, with the order the first attempt
+ * raised instead of with a second document for the same purchase.
  */
 @ApiTags('PurchaseOrder')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -80,6 +87,7 @@ export class PurchaseOrderController extends CrudController<PurchaseOrder> {
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'The supplier does not exist.' })
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The supplier is archived or inactive.' })
 	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_CREATE)
+	@Idempotent({ scope: 'purchase_order.create', required: false, resourceType: 'purchase_order' })
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })

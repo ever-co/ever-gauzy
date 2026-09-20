@@ -5,6 +5,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -132,6 +133,7 @@ export class CarrierManifestController extends CrudController<CarrierManifest> {
 	@ApiOperation({ summary: 'Hand the parcels over to the carrier' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The manifest was handed over.' })
 	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Idempotent({ scope: 'warehouse.handover', required: false, resourceType: 'carrier-manifest' })
 	@Post(':id/handover')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async handOver(

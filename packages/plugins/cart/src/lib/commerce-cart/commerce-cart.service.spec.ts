@@ -18,7 +18,17 @@ jest.mock('@gauzy/core', () => {
 
 	class BaseEntity {}
 
-	class TenantAwareCrudService {
+	/**
+	 * The platform's dual-ORM CRUD class, without tenant merging.
+	 *
+	 * `update` here is the statement itself: it hands the criteria to the repository, which is where a
+	 * version-predicated write is decided. The tenant-aware subclass below adds the existence check the
+	 * real one performs — and, like the real one, skips that check for a criteria that names a
+	 * `version`, because that column is a precondition the statement evaluates rather than a locator.
+	 * A double that read first would turn a lost race into "not found" while production answers the
+	 * conflict, which is a green suite proving the wrong thing.
+	 */
+	class CrudService {
 		constructor(
 			protected readonly typeOrmRepository: any,
 			protected readonly mikroOrmRepository?: any
@@ -78,10 +88,6 @@ jest.mock('@gauzy/core', () => {
 		}
 
 		async update(id: any, partial: any): Promise<any> {
-			if (typeof id === 'string') {
-				await this.findOneByIdString(id);
-			}
-
 			return this.typeOrmRepository.update(id, partial);
 		}
 
@@ -94,7 +100,20 @@ jest.mock('@gauzy/core', () => {
 		}
 	}
 
+	class TenantAwareCrudService extends CrudService {
+		async update(id: any, partial: any): Promise<any> {
+			if (typeof id === 'string') {
+				await this.findOneByIdString(id);
+			} else if (id && typeof id === 'object' && !('version' in id)) {
+				await this.findOneByWhereOptions(id);
+			}
+
+			return super.update(id, partial);
+		}
+	}
+
 	return {
+		CrudService,
 		TenantAwareCrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
@@ -107,6 +126,16 @@ jest.mock('@gauzy/core', () => {
 		MultiORMOneToMany: decorator,
 		MultiORMManyToOne: decorator,
 		JsonColumn: decorator,
+		// The optimistic-lock column is the same `@MultiORMColumn` every other column is, so the
+		// decorator double above is what stands in for it.
+		VersionedColumn: decorator,
+		// The two conventions the routes adopt are used for real, not doubled: what the suite asserts
+		// about a versioned write is the behaviour of the kernel's own conditional update.
+		Versioned: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned.decorator').Versioned,
+		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.commitVersionedUpdate,
+		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.versionExpectationOf,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -253,7 +282,14 @@ function repository(tables: ITables, tableName: keyof ITables) {
 		},
 		update: async (criteria: any, partial: any) => {
 			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows().findIndex((row) => row.id === id);
+			// A criteria that names a version is a conditional update: the row has to still be at that
+			// version for the statement to change it, and the affected count is what reports which of
+			// the two happened. Without this the double could not tell a lost race from a won one.
+			const index = rows().findIndex(
+				(row) =>
+					String(row.id ?? '') === String(id ?? '') &&
+					(criteria?.version === undefined || String(row.version ?? '') === String(criteria.version))
+			);
 
 			if (index >= 0) {
 				Object.assign(rows()[index], partial);
@@ -1030,5 +1066,103 @@ describe('CommerceCartService — merge', () => {
 			CommerceCartStatus.COMPLETED;
 
 		await expect(fixture.service.merge(cart.id, other.id)).rejects.toThrow(/CART_MERGE_INVALID/);
+	});
+});
+
+/**
+ * The cart's optimistic lock.
+ *
+ * Two editors open the same cart, and only one of them may be told its change landed. The version is
+ * what separates them: a write states the version it was based on and is refused when the cart has
+ * moved on, rather than overwriting whatever moved it. The suite therefore pins three properties of
+ * the write itself — that a stale version is refused with the platform's own conflict code, that the
+ * refusal leaves the row exactly as it was, and that an accepted write leaves the cart one version
+ * further on, which is the number the next caller has to state back.
+ *
+ * The conditional update is the kernel's own, not a double: what is asserted here is the behaviour of
+ * the statement the routes depend on, with only the repository underneath it in memory.
+ */
+describe('CommerceCartService — the versioned write', () => {
+	it('refuses a write based on a version the cart has moved on from', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		// The caller read the cart one revision ago: someone else's write is what moved it.
+		const stale = { wildcard: false, versions: [Number(cart.version) - 1] };
+		const before = { ...tables.commerce_cart[0] };
+
+		await expect(service.recalculate(cart.id, 'MANUAL', stale)).rejects.toMatchObject({
+			code: 'ENTITY_VERSION_CONFLICT'
+		});
+
+		expect(tables.commerce_cart[0]).toEqual(before);
+	});
+
+	it('names what the caller expected and what the cart holds when it refuses', async () => {
+		const { service } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		const expected = Number(cart.version) - 1;
+
+		await expect(service.recalculate(cart.id, 'MANUAL', { wildcard: false, versions: [expected] })).rejects.toMatchObject(
+			{
+				code: 'ENTITY_VERSION_CONFLICT',
+				details: { expectedVersion: expected, actualVersion: Number(cart.version) }
+			}
+		);
+	});
+
+	it('applies the write and moves the cart on by one when the stated version is the current one', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		const stated = Number(cart.version);
+
+		const written = await service.recalculate(cart.id, 'MANUAL', { wildcard: false, versions: [stated] });
+
+		expect(written.version).toBe(stated + 1);
+		expect(tables.commerce_cart[0].version).toBe(stated + 1);
+		expect(written.metadata?.lastRecalculationReason).toBe('MANUAL');
+	});
+
+	it('writes the fields a caller changed under the version that caller read', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		const changed = await service.applyChanges(cart.id, { note: 'Deliver after six.' } as any, {
+			wildcard: false,
+			versions: [Number(cart.version)]
+		});
+
+		expect(tables.commerce_cart[0].note).toBe('Deliver after six.');
+		// The change and the recomputation that follows it each move the version, so the cart a caller
+		// reads next is two revisions past the one it edited.
+		expect(changed.version).toBe(Number(cart.version) + 2);
+	});
+
+	it('refuses a field change based on a version the cart has moved on from, and writes nothing', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await expect(
+			service.applyChanges(cart.id, { note: 'Deliver after six.' } as any, {
+				wildcard: false,
+				versions: [Number(cart.version) - 1]
+			})
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+
+		expect(tables.commerce_cart[0].note).toBeUndefined();
+		expect(tables.commerce_cart[0].version).toBe(Number(cart.version));
+	});
+
+	it('predicates a write that no caller conditioned on the version the cart holds', async () => {
+		// The expiry pass, the checkout handler's follow-up and the merge of a second cart all write
+		// without a caller to condition them. They must still increment the version, or the next caller
+		// would state a number the cart no longer has.
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		const abandoned = await service.abandon(cart.id);
+
+		expect(abandoned.status).toBe(CommerceCartStatus.ABANDONED);
+		expect(tables.commerce_cart[0].version).toBe(Number(cart.version) + 1);
 	});
 });

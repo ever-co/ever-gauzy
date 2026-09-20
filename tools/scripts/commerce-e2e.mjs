@@ -111,7 +111,10 @@ const RESOURCES = [
 	{ path: '/api/operations', capability: 'operations' },
 	{ path: '/api/events/outbox', capability: 'reliability' },
 	{ path: '/api/events/deliveries', capability: 'reliability' },
-	{ path: '/api/sequences', capability: 'numbering' }
+	{ path: '/api/sequences', capability: 'numbering' },
+	// The operator's view of the stored retry keys. Swept for the same reason the kernels are: a
+	// resource that exists and cannot be read is invisible to a sweep that only looks for a route.
+	{ path: '/api/idempotency-keys', capability: 'reliability' }
 	// 🛑 `/api/stats/global` is deliberately not swept. Its capability is an environment setting rather
 	// than a catalogue row — `FEATURE_OPEN_STATS=true`, which no toggle endpoint can switch on — so a
 	// sweep would report the deployment's own decision as a missing route. Its GraphQL field is gated by
@@ -417,7 +420,10 @@ async function main() {
 		'/api/events/outbox': 'eventOutbox',
 		'/api/events/deliveries': 'eventDeliveries',
 		'/api/operations': 'operations',
-		'/api/sequences': 'sequences'
+		'/api/sequences': 'sequences',
+		// The operator's view of the stored retry keys: the concept is the key store rather than the key,
+		// so the field is named for the store.
+		'/api/idempotency-keys': 'idempotencyKeys'
 	};
 	// An alias key may also name a resource the sweep reads, so the two lists are unioned rather than
 	// concatenated: a resource in both is one check, not two.

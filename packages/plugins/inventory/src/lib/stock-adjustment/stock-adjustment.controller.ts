@@ -2,11 +2,13 @@ import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/co
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	Versioned
 } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockAdjustment } from './stock-adjustment.entity';
@@ -50,11 +52,26 @@ export class StockAdjustmentController {
 		return await this.stockAdjustmentService.createAdjustment(entity as any);
 	}
 
-	/** Applies a drafted instruction, writing its ledger row. */
+	/**
+	 * Applies a drafted instruction, writing its ledger row.
+	 *
+	 * The signed change lands on one level — the instruction names one variant at one location — so
+	 * this is the route where a caller's read genuinely decides its write: an operator who saw 40 on
+	 * hand and writes 25 off is correcting a number that may already be 30. The version the caller read
+	 * is therefore required, and a level that has moved since is refused rather than corrected from a
+	 * value that no longer exists.
+	 *
+	 * The key is optional because the operation is a delta: a retry without one applies the correction
+	 * twice, which is exactly what presenting a key prevents, and a client that does not retry is not
+	 * forced to invent one.
+	 */
 	@ApiOperation({ summary: 'Apply a stock adjustment' })
 	@ApiResponse({ status: 202, description: 'Adjustment applied.' })
 	@ApiResponse({ status: 409, description: 'The instruction was already applied, or the correction would break a hold.' })
+	@ApiResponse({ status: 428, description: 'The version the correction was based on was not stated.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	@Versioned()
+	@Idempotent({ scope: 'stock.adjust', required: false, resourceType: 'stock-adjustment' })
 	@Post(':id/apply')
 	async apply(@Param('id', UUIDValidationPipe) id: ID) {
 		return await this.stockAdjustmentService.apply(id);

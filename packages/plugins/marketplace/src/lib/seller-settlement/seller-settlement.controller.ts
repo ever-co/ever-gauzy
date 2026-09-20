@@ -4,6 +4,7 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -58,10 +59,17 @@ export class SellerSettlementController extends CrudController<SellerSettlement>
 	 * the entity's shape, whose reflected type is `Object`, so the validation pipe is skipped and an
 	 * inherited `create` would write any body at all. The service call is the recorder's, which is what
 	 * this route has always done.
+	 *
+	 * `seller.settlement.record` is adopted as retry-safe without requiring a key: this is what a
+	 * signature-verified provider callback lands on, and a callback that is delivered twice must record
+	 * one settlement rather than two. A client that presents a key is answered from its first attempt.
+	 * The key stays optional because the report's own uniqueness already refuses the second row, which
+	 * is the guarantee that keeps holding when the retry store is unavailable.
 	 */
 	@ApiOperation({ summary: 'Record a settlement reported by a provider' })
 	@ApiResponse({ status: 201, description: 'Settlement recorded successfully', type: SellerSettlement })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
+	@Idempotent({ scope: 'seller.settlement.record', required: false, resourceType: 'seller_settlement' })
 	@Post('/')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateSellerSettlementDTO): Promise<SellerSettlement> {
@@ -86,9 +94,17 @@ export class SellerSettlementController extends CrudController<SellerSettlement>
 		return this.sellerSettlementService.update(id, entity as any);
 	}
 
-	/** Reconciles a settlement against the platform's lines for its period. */
+	/**
+	 * Reconciles a settlement against the platform's lines for its period.
+	 *
+	 * `seller.settlement.reconcile` is adopted as retry-safe without requiring a key: the comparison is
+	 * computed from the ledger, and a client that re-sends a reconciliation it never saw the answer to
+	 * would stamp a second reconciled date over the first. A client that presents a key is answered from
+	 * its first attempt instead; the key stays optional because the second run reaches the same verdict.
+	 */
 	@ApiOperation({ summary: 'Reconcile a settlement' })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
+	@Idempotent({ scope: 'seller.settlement.reconcile', required: false, resourceType: 'seller_settlement' })
 	@Post('/:id/reconcile')
 	async reconcile(
 		@Param('id', UUIDValidationPipe) id: ID,

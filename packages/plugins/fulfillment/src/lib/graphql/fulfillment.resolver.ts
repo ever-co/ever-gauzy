@@ -2,7 +2,7 @@ import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nest
 import { BadRequestException, UseGuards } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
-import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { Permissions, PermissionGuard, TenantPermissionGuard, Idempotent } from '@gauzy/core';
 import { Fulfillment } from '../fulfillment/fulfillment.entity';
 import { FulfillmentService } from '../fulfillment/fulfillment.service';
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
@@ -23,6 +23,11 @@ import { IFulfillmentConnection } from './types';
  * caller and a REST caller cannot diverge in what they may do or in what a rule means. The transitions
  * are mutations rather than a writable status field, because a status is the outcome of an event with a
  * precondition, not a value to patch.
+ *
+ * The retry declarations are the routes' own, under the same scope names, so a client that retries a
+ * create presents one operation whichever protocol carried it. A GraphQL request may select several
+ * mutations, so the key rides beside the input it qualifies — the `idempotencyKey` member of the
+ * mutation's own input — which is the member the kernel reads it from.
  */
 @Resolver(() => Fulfillment)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -111,6 +116,7 @@ export class FulfillmentResolver {
 	 * @returns The created fulfilment.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_CREATE)
+	@Idempotent({ scope: 'fulfillment.create', required: true, resourceType: 'fulfillment' })
 	@Mutation(() => Object, { name: 'createFulfillment' })
 	async createFulfillment(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<Fulfillment> {
 		return this.fulfillmentService.create(input as any);
@@ -142,6 +148,7 @@ export class FulfillmentResolver {
 	 * @returns The shipped fulfilment.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Idempotent({ scope: 'fulfillment.ship', required: false, resourceType: 'fulfillment' })
 	@Mutation(() => Object, { name: 'shipFulfillment' })
 	async shipFulfillment(
 		@Args('id', { type: () => ID }) id: string,

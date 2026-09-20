@@ -1,0 +1,195 @@
+/**
+ * The GraphQL surface answers a retry and a stale version exactly as the REST surface does.
+ *
+ * A caller picks a protocol; the rules do not. The mutations mirror the routes, so the two are asserted
+ * against each other rather than against a restated table: whatever the route declares, the mutation
+ * that mirrors it declares too — the same retry scope, the same versioned resource — and both name the
+ * version and the retry key as nullable members, because a GraphQL operation travels over `POST`
+ * whichever root type it selects and a header could not say which mutation either belongs to.
+ *
+ * The kernel's own decorators are the real ones here, since a route's behaviour is decided by the
+ * metadata they write. `@gauzy/core`'s barrel is doubled at the module boundary for the reason the
+ * package's other suites state, and the cart package's barrel with it, because the totals service
+ * imports the shared calculator through it.
+ */
+jest.mock('@gauzy/plugin-cart', () => ({
+	TotalsCalculator: jest.requireActual('@gauzy/plugin-cart/src/lib/totals/totals-calculator').TotalsCalculator
+}));
+
+jest.mock('@gauzy/core', () => {
+	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
+	const decorator = () => () => undefined;
+
+	class BaseEntity {}
+
+	return {
+		BaseEntity,
+		TenantBaseEntity: BaseEntity,
+		TenantOrganizationBaseEntity: BaseEntity,
+		TenantOrganizationBaseDTO: class {},
+		MikroOrmBaseEntityRepository: class {},
+		CrudService: class {},
+		TenantAwareCrudService: class {},
+		CrudController: class {
+			constructor(protected readonly service: any) {}
+		},
+		BaseQueryDTO: class {},
+		UUIDValidationPipe: class {},
+		ColumnIndex: decorator,
+		MultiORMColumn: decorator,
+		MultiORMEntity: decorator,
+		MultiORMOneToMany: decorator,
+		MultiORMManyToOne: decorator,
+		JsonColumn: decorator,
+		Permissions: decorator,
+		UseValidationPipe: decorator,
+		PermissionGuard: class {},
+		TenantPermissionGuard: class {},
+		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
+		Versioned: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned.decorator').Versioned,
+		VersionedColumn: decorator,
+		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.commitVersionedUpdate,
+		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.versionExpectationOf,
+		ColumnNumericTransformerPipe: class {
+			to(value: unknown) {
+				return value;
+			}
+			from(value: unknown) {
+				return value;
+			}
+		},
+		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		RequestContext: {
+			currentUser: () => null,
+			currentUserId: () => null,
+			currentTenantId: () => null,
+			currentOrganizationId: () => null,
+			currentEmployeeId: () => null,
+			hasPermission: () => false
+		},
+		AdjustmentService: class {},
+		TaxLineService: class {},
+		SequenceService: class {}
+	};
+});
+
+import { Reflector } from '@nestjs/core';
+import { OrderController } from '../order/order.controller';
+import { OrderService } from '../order/order.service';
+import { OrderResolver } from './order.resolver';
+import { OrderChangeResolver } from './order-change.resolver';
+import { orderSchemaExtensions } from './schema-extensions';
+
+const { IDEMPOTENT_METADATA_KEY } = jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy');
+const { VERSIONED_METADATA_KEY } = jest.requireActual('@gauzy/core/src/lib/concurrency/version.util');
+
+const reflector = new Reflector();
+
+/** What a handler declares about retrying it. */
+const retryOf = (handler: any): any => reflector.get(IDEMPOTENT_METADATA_KEY, handler);
+
+/** What a handler declares about the version it carries. */
+const versionedOf = (handler: any): any => reflector.get(VERSIONED_METADATA_KEY, handler);
+
+/** The operations the two surfaces share, as the route and the mutation that mirror each other. */
+const MIRRORED: Array<{ route: any; mutation: any }> = [
+	{ route: OrderController.prototype.findById, mutation: OrderResolver.prototype.order },
+	{ route: OrderController.prototype.create, mutation: OrderResolver.prototype.createOrder },
+	{ route: OrderController.prototype.update, mutation: OrderResolver.prototype.updateOrder },
+	{ route: OrderController.prototype.place, mutation: OrderResolver.prototype.placeOrder },
+	{ route: OrderController.prototype.cancel, mutation: OrderResolver.prototype.cancelOrder },
+	{ route: OrderController.prototype.archive, mutation: OrderResolver.prototype.archiveOrder },
+	{ route: OrderController.prototype.recalculate, mutation: OrderResolver.prototype.recalculateOrder },
+	{ route: OrderController.prototype.createChange, mutation: OrderResolver.prototype.requestOrderEdit },
+	{ route: OrderController.prototype.declineChange, mutation: OrderChangeResolver.prototype.declineOrderChange },
+	{ route: OrderController.prototype.cancelChange, mutation: OrderChangeResolver.prototype.cancelOrderChange }
+];
+
+describe('The order mutations mirror the order routes', () => {
+	it('carries the same retry scope on the mutation as on the route it mirrors', () => {
+		for (const { route, mutation } of MIRRORED) {
+			// The scope is part of the key's identity: a client that retries over the other protocol must
+			// be answered from the same record, and two operations must never replay each other's answer.
+			expect(retryOf(mutation)?.scope).toBe(retryOf(route)?.scope);
+			expect(retryOf(mutation)?.required ?? false).toBe(retryOf(route)?.required ?? false);
+		}
+
+		// The confirmation is the fifth key-bearing operation and is compared on its own below, because
+		// the two surfaces address it differently: the route names the order as well as the change, and
+		// the mutation names only the change.
+		expect(OrderChangeResolver.prototype.confirmOrderChange).toBeDefined();
+		expect(retryOf(OrderController.prototype.confirmChange)?.scope).toBe('order.change.confirm');
+		expect(retryOf(OrderChangeResolver.prototype.confirmOrderChange)?.scope).toBe('order.change.confirm');
+		expect(retryOf(OrderChangeResolver.prototype.confirmOrderChange)?.required).toBe(true);
+
+		// A control: the routes that adopted the convention are the ones compared, not two tables of
+		// `undefined`.
+		expect(MIRRORED.filter(({ route }) => retryOf(route) !== undefined).length).toBe(4);
+	});
+
+	it('carries the same versioned resource on the mutation as on the route it mirrors', () => {
+		for (const { route, mutation } of MIRRORED) {
+			expect(versionedOf(mutation)?.resource).toBe(versionedOf(route)?.resource);
+			expect(versionedOf(mutation)?.write ?? true).toBe(versionedOf(route)?.write ?? true);
+		}
+
+		// A read states no version on either surface, so a caller that states none is still served.
+		expect(versionedOf(OrderResolver.prototype.order)?.write).toBe(false);
+	});
+
+	it('takes the order’s version on the confirmation, and says so on whichever surface can', () => {
+		// The route names the order in its path, so it declares the service that owns it and the guard
+		// reads that order before the handler runs. The mutation names only the change, so it declares no
+		// resource: the handler resolves the order, and the order's conditional update compares the
+		// version. Neither takes a version of the change — the change has none.
+		expect(versionedOf(OrderController.prototype.confirmChange)?.resource).toBe(OrderService);
+		expect(versionedOf(OrderChangeResolver.prototype.confirmOrderChange)?.resource).toBeUndefined();
+		expect(versionedOf(OrderChangeResolver.prototype.confirmOrderChange)?.write ?? true).toBe(true);
+	});
+
+	it('requires a retry key on the confirmation, and on nothing else that mirrors a key-optional route', () => {
+		const required = [...MIRRORED.map(({ mutation }) => mutation), OrderChangeResolver.prototype.confirmOrderChange]
+			.filter((mutation) => retryOf(mutation)?.required === true);
+
+		expect(required.map((mutation) => retryOf(mutation).scope)).toEqual(['order.change.confirm']);
+	});
+});
+
+describe('The order schema states the version and the retry key a caller supplies', () => {
+	/** The schema, with the line breaks the template writes flattened so a declaration reads as one line. */
+	const schema = (orderSchemaExtensions as any).loc.source.body.replace(/\s+/g, ' ');
+
+	it('carries the version of both versioned aggregates on their object types', () => {
+		for (const type of ['type Order {', 'type OrderChange {']) {
+			const body = schema.slice(schema.indexOf(type), schema.indexOf('}', schema.indexOf(type)));
+
+			expect({ type, version: body.includes('version: Int!') }).toEqual({ type, version: true });
+		}
+	});
+
+	it('accepts the version an update of an order is based on', () => {
+		const body = schema.slice(
+			schema.indexOf('input UpdateOrderInput {'),
+			schema.indexOf('}', schema.indexOf('input UpdateOrderInput {'))
+		);
+
+		// Nullable on purpose: the kernel answers a write that states none with the platform's own code,
+		// which is the same answer the route gives.
+		expect(body).toContain('version: Int');
+		expect(body).not.toContain('version: Int!');
+	});
+
+	it('accepts a retry key wherever the route it mirrors honours one', () => {
+		for (const declaration of [
+			'input CreateOrderInput {',
+			'input RequestOrderEditInput {',
+			'placeOrder(id: ID!, version: Int, idempotencyKey: String): Order!',
+			'cancelOrder(id: ID!, reason: String, version: Int, idempotencyKey: String): Order!',
+			'confirmOrderChange(id: ID!, version: Int, idempotencyKey: String): OrderChange!'
+		]) {
+			expect({ declaration, declared: schema.includes(declaration) }).toEqual({ declaration, declared: true });
+		}
+	});
+});

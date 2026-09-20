@@ -589,20 +589,83 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	/**
 	 * Updates entity partially. Entity can be found by a given conditions.
 	 *
-	 * @param id
-	 * @param partialEntity
-	 * @returns
+	 * **Two things this does beyond the base update, and both are about which rows the statement may
+	 * touch.**
+	 *
+	 * The tenant and organization conditions are merged into the criteria the `UPDATE` runs with, so the
+	 * scoping is the statement's own rather than a pre-read's. The read below is still made — it is what
+	 * answers a caller with the platform's refusal instead of a silent no-op — but a row another tenant
+	 * owns is now excluded by the write itself, which is the stronger of the two guarantees and the one
+	 * that survives a caller assembling its criteria by hand. Only the scoping a statement can express
+	 * travels: see {@link scalarConditions}.
+	 *
+	 * **A criterion that names a `version` is a precondition rather than a locator**, so the pre-read is
+	 * skipped for it. That column is evaluated by the `UPDATE` — which is what makes a conditional write
+	 * one statement instead of two — and a row that does not match it has to be reported as the conflict
+	 * it is. Reading first would answer "not found" for a record that exists and has merely moved on,
+	 * which sends the caller down the deleted-record path instead of the re-read-and-reapply path, and
+	 * it would do so before the affected-row count the concurrency kernel's error contract is built on
+	 * could be seen at all. The tenant conditions are still merged in, because the merge above is what
+	 * scopes the write.
+	 *
+	 * @param id A record id, or the conditions the record must satisfy.
+	 * @param partialEntity The columns to write.
+	 * @returns The update result, or the updated record, whichever the ORM answers.
 	 */
 	public async update(
 		id: string | FindOptionsWhere<T>,
 		partialEntity: QueryDeepPartialEntity<T>
 	): Promise<T | UpdateResult> {
+		const user = RequestContext.currentUser();
+		// A write with no caller in context — a seeder, a job, the sign-in path stamping a last-login
+		// time — has no tenant to be scoped by, and the criteria it states are the criteria the statement
+		// runs with. Reading the tenant off a user that is not there would fail the write instead.
+		const scoped = user ? this.scalarConditions(this.findConditionsWithTenantByUser(user)) : {};
+
 		if (typeof id === 'string') {
 			await this.findOneByIdString(id);
-		} else if (typeof id === 'object') {
-			await this.findOneByWhereOptions(id as FindOptionsWhere<T>);
+
+			return await super.update({ ...scoped, id } as FindOptionsWhere<T>, partialEntity);
 		}
+
+		if (typeof id === 'object' && id !== null) {
+			const criteria = id as FindOptionsWhere<T>;
+
+			if (!('version' in criteria)) {
+				await this.findOneByWhereOptions(criteria);
+			}
+
+			return await super.update({ ...criteria, ...scoped }, partialEntity);
+		}
+
 		return await super.update(id, partialEntity);
+	}
+
+	/**
+	 * The scoping conditions a statement can carry.
+	 *
+	 * A `where` for a read may name a relation — the tenant, the employee — and the read joins to
+	 * resolve it. An `UPDATE` addresses columns, so a relation condition is not something it can express;
+	 * handing one to it produces invalid SQL rather than a narrower write. Only the scalar members are
+	 * kept, and nothing is lost by that here: the two relations this platform scopes by are reached
+	 * through foreign-key columns (`tenantId`, `employeeId`) that travel beside them in the same object,
+	 * and those columns are exactly what the statement can be scoped by.
+	 *
+	 * @param conditions The conditions the read would use.
+	 * @returns The subset a write can be predicated on.
+	 */
+	private scalarConditions(conditions: FindOptionsWhere<T>): FindOptionsWhere<T> {
+		const scalars: Record<string, unknown> = {};
+
+		for (const [column, value] of Object.entries(conditions ?? {})) {
+			if (value !== null && typeof value === 'object') {
+				continue;
+			}
+
+			scalars[column] = value;
+		}
+
+		return scalars as FindOptionsWhere<T>;
 	}
 
 	/**

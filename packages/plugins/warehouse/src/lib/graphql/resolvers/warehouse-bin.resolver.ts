@@ -1,7 +1,7 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard, Versioned } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { WarehouseBin } from '../../warehouse-bin/warehouse-bin.entity';
 import { WarehouseBinService } from '../../warehouse-bin/warehouse-bin.service';
@@ -229,11 +229,19 @@ export class WarehouseBinResolver {
 	 *
 	 * @param id The bin.
 	 * @param parentId The new parent, or null to make it a root.
+	 * @param idempotencyKey The key a retry presents, matching the REST route's scope.
 	 * @returns The payload.
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
 	@Mutation('reparentWarehouseBin')
-	async reparentWarehouseBin(@Args('id') id: ID, @Args('parentId') parentId?: ID) {
+	@Idempotent({ scope: 'warehouse.move', required: false, resourceType: 'warehouse-bin' })
+	async reparentWarehouseBin(
+		@Args('id') id: ID,
+		@Args('parentId') parentId?: ID,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+	) {
+		void idempotencyKey;
+
 		try {
 			return { warehouseBin: await this.warehouseBinService.reparent(id, parentId ?? null), userErrors: [] };
 		} catch (error) {
@@ -279,11 +287,18 @@ export class WarehouseBinResolver {
 	/**
 	 * Reconciles the bins of a location against the movement ledger.
 	 *
+	 * The corrections land on the levels of the variants the run covers, so the version is optional for
+	 * the reason the REST route states it optionally — a stated version is honoured for the level it
+	 * names and the compare-and-set covers the rest — and the key carries the same scope the REST route
+	 * declares, so a retry over either protocol replays.
+	 *
 	 * @param input The scope of the run and whether it should repair what it finds.
 	 * @returns The payload, carrying the report.
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
 	@Mutation('reconcileWarehouseBins')
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'warehouse.count', required: false, resourceType: 'warehouse-bin' })
 	async reconcileWarehouseBins(
 		@Args('input') input: { warehouseId: ID; zoneId?: ID; binIds?: ID[]; repair?: boolean }
 	) {
@@ -360,7 +375,8 @@ export class WarehouseBinResolver {
 	 * Declares a bin as the home bin of a variant at a location.
 	 *
 	 * A declaration rather than a move: no movement is written, and reconciliation is what later reports
-	 * the declaration once it disagrees with the placement.
+	 * the declaration once it disagrees with the placement. It writes the level's own address column,
+	 * so the version the caller read is required, exactly as the REST route requires it.
 	 *
 	 * @param id The bin being named.
 	 * @param input The variant and the location.
@@ -368,6 +384,7 @@ export class WarehouseBinResolver {
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
 	@Mutation('assignWarehouseBinHome')
+	@Versioned()
 	async assignWarehouseBinHome(
 		@Args('id') id: ID,
 		@Args('input') input: { variantId: ID; warehouseId: ID; levelId?: ID; reason?: string }
@@ -382,12 +399,18 @@ export class WarehouseBinResolver {
 	/**
 	 * Walks received units from the receiving area into a bin.
 	 *
+	 * The walk lands on one level — the variant at the location — so the version the caller read is
+	 * required, exactly as the REST route requires it, and the key makes a retry of the walk replay
+	 * rather than arrive twice.
+	 *
 	 * @param id The bin the units are placed into.
 	 * @param input The variant, the quantity and where the units walk from.
 	 * @returns The payload, with what the ledger wrote in `putAway`, or the refusal in `userErrors`.
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
 	@Mutation('putAwayWarehouseBin')
+	@Versioned()
+	@Idempotent({ scope: 'warehouse.put-away', required: false, resourceType: 'warehouse-bin' })
 	async putAwayWarehouseBin(
 		@Args('id') id: ID,
 		@Args('input')

@@ -3,6 +3,7 @@ import { Type } from '@nestjs/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { CreateReturnTables1791000000300 } from './database/migrations/1791000000300-CreateReturnTables';
 import { AddReturnsLinePositiveChecks1791000000432 } from './database/migrations/1791000000432-AddReturnsLinePositiveChecks';
+import { AddOrderReturnVersionColumn1791000000590 } from './database/migrations/1791000000590-AddOrderReturnVersionColumn';
 import { resolvers } from './graphql/resolvers';
 import { schemaExtensions } from './graphql/schema-extensions';
 import { RETURNS_FEATURES } from './returns.features';
@@ -39,9 +40,14 @@ const RETURNS_DEPENDS_ON: string[] = ['@gauzy/plugin-order', '@gauzy/plugin-paym
 	 * The migrations this plugin owns. The platform merges them into the connection's migration list
 	 * before the connection is created, so they run in timestamp order with every other package's. The
 	 * second states the rules a claim line and an exchange line carry — a resolution asks for a positive
-	 * quantity — over the tables the first creates.
+	 * quantity — over the tables the first creates, and the third gives a return the version its writes
+	 * are predicated on.
 	 */
-	migrations: [CreateReturnTables1791000000300, AddReturnsLinePositiveChecks1791000000432],
+	migrations: [
+		CreateReturnTables1791000000300,
+		AddReturnsLinePositiveChecks1791000000432,
+		AddOrderReturnVersionColumn1791000000590
+	],
 	/**
 	 * The permissions the plugin contributes to the platform role model.
 	 */

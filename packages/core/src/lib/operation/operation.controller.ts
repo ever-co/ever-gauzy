@@ -14,6 +14,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IOperation, IOperationStep, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { paginateRows, resolveRestPage } from '../api/graphql-connection';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
+import { Idempotent } from '../idempotency/idempotent.decorator';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -117,6 +118,49 @@ export class OperationController {
 	}
 
 	/**
+	 * Reads the step list of one operation.
+	 *
+	 * The endpoint table names this as a route of its own, and it is delivered beside the node read
+	 * rather than instead of it: the node read attaches the same rows because an operator's next
+	 * question after "what is this operation doing" is always "which step is it on", while a client
+	 * that polls a long run wants the progress alone rather than the whole operation with its state and
+	 * its result on every call. Both reads go through the same `findSteps`, so the two answers cannot
+	 * disagree.
+	 *
+	 * **The operation is read before its steps, and that is not an optimisation.** It is what makes a
+	 * missing operation a `404` rather than an empty list: an empty step list is also the honest answer
+	 * for an operation that has run no step yet, so a route that answered `[]` for an identifier that
+	 * exists nowhere would leave a caller unable to tell the two apart. The read is scoped by the
+	 * service from the credential, so an operation of another tenant is missing rather than refused.
+	 *
+	 * Over GraphQL this route is the node read's own `steps` member rather than a root field: the same
+	 * rows, reached through the operation they belong to, which is what §3.1's "a sub-route folds into
+	 * the read that carries it" states.
+	 *
+	 * @param id The operation whose steps are read.
+	 * @returns One page envelope carrying the step rows, in the order the plan runs them.
+	 * @throws NotFoundException when the operation does not exist inside the caller's scope.
+	 */
+	@ApiOperation({ summary: 'List the steps of a durable operation' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Operation steps retrieved' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'OPERATION_NOT_FOUND' })
+	@Permissions(PermissionsEnum.OPERATIONS_VIEW)
+	@Get(':id/steps')
+	async findSteps(@Param('id', UUIDValidationPipe) id: ID): Promise<IPagination<IOperationStep>> {
+		const operation = await this.operationService.findOperation(id);
+
+		if (!operation) {
+			throw new NotFoundException(
+				`${ApiErrorCode.RESOURCE_NOT_FOUND}: operation '${String(id)}' could not be found.`
+			);
+		}
+
+		const steps = await this.operationService.findSteps(id);
+
+		return { items: steps as unknown as IOperationStep[], total: steps.length };
+	}
+
+	/**
 	 * Requests cancellation, which compensates what the operation already applied.
 	 *
 	 * The answer is `202` because that is what the route establishes: a cancellation is a request the
@@ -133,6 +177,7 @@ export class OperationController {
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'OPERATION_NOT_CANCELABLE' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'OPERATION_NOT_FOUND' })
 	@Permissions(PermissionsEnum.OPERATIONS_CANCEL)
+	@Idempotent({ scope: 'operation.cancel', resourceType: 'operation' })
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post(':id/cancel')
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -157,6 +202,7 @@ export class OperationController {
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The operation completed, or a caller cancelled it' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'OPERATION_NOT_FOUND' })
 	@Permissions(PermissionsEnum.OPERATIONS_CANCEL)
+	@Idempotent({ scope: 'operation.retry', resourceType: 'operation' })
 	@HttpCode(HttpStatus.OK)
 	@Post(':id/retry')
 	async retry(@Param('id', UUIDValidationPipe) id: ID): Promise<IOperation> {

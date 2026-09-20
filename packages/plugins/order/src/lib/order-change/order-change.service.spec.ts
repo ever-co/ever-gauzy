@@ -20,7 +20,7 @@ jest.mock('@gauzy/core', () => {
 
 	class BaseEntity {}
 
-	class TenantAwareCrudService {
+	class CrudService {
 		constructor(
 			protected readonly typeOrmRepository: any,
 			protected readonly mikroOrmRepository?: any
@@ -30,6 +30,12 @@ jest.mock('@gauzy/core', () => {
 			return 'typeorm';
 		}
 
+		async update(id: any, partial: any): Promise<any> {
+			return this.typeOrmRepository.update(id, partial);
+		}
+	}
+
+	class TenantAwareCrudService extends CrudService {
 		async findAll(options: any = {}): Promise<any> {
 			const [items, total] = await this.typeOrmRepository.findAndCount(options);
 
@@ -74,6 +80,11 @@ jest.mock('@gauzy/core', () => {
 		async update(id: any, partial: any): Promise<any> {
 			if (typeof id === 'string') {
 				await this.findOneByIdString(id);
+			} else if (id && typeof id === 'object' && !('version' in id)) {
+				// The base service reads a criteria object before writing with it, except when the criteria
+				// names a version: that column is the write's precondition and the statement evaluates it,
+				// which is what makes a write that lost a race a conflict rather than a missing record.
+				await this.findOneByWhereOptions(id);
 			}
 
 			return this.typeOrmRepository.update(id, partial);
@@ -85,6 +96,7 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		CrudService,
 		TenantAwareCrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
@@ -97,6 +109,13 @@ jest.mock('@gauzy/core', () => {
 		MultiORMOneToMany: decorator,
 		MultiORMManyToOne: decorator,
 		JsonColumn: decorator,
+		Idempotent: decorator,
+		Versioned: decorator,
+		VersionedColumn: decorator,
+		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.commitVersionedUpdate,
+		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.versionExpectationOf,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -274,8 +293,9 @@ function repository(tables: Record<string, any[]>, tableName: TableName) {
 			return created;
 		},
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows().findIndex((row) => row.id === id);
+			const index = rows().findIndex((row) =>
+				matches(row, typeof criteria === 'string' ? { id: criteria } : criteria)
+			);
 
 			if (index >= 0) {
 				Object.assign(rows()[index], partial);
@@ -354,6 +374,12 @@ function orderFixture(seeds: { lines?: any[]; shippingMethods?: any[]; order?: R
 	});
 	const repo = (table: TableName) => repository(tables, table);
 	const typeOrmOrderRepository = repo('order');
+	// The order aggregate's version-predicated write resolves the service that owns the row by token,
+	// so the fixture offers the totals writer the same two calls the real order service offers it.
+	const orderWriter = {
+		update: async (criteria: any, partial: any) => typeOrmOrderRepository.update(criteria, partial),
+		findOneByIdString: async (id: any) => typeOrmOrderRepository.findOne({ where: { id } })
+	};
 
 	const totalsService = new OrderTotalsService(
 		typeOrmOrderRepository as never,
@@ -363,7 +389,8 @@ function orderFixture(seeds: { lines?: any[]; shippingMethods?: any[]; order?: R
 		new OrderTransactionService(repo('order_transaction') as never, {} as never) as never,
 		new OrderSummaryService(repo('order_summary') as never, {} as never) as never,
 		ledger(adjustments) as never,
-		ledger(taxLines) as never
+		ledger(taxLines) as never,
+		{ get: () => orderWriter } as never
 	);
 	const service = new OrderChangeService(
 		repo('order_change') as never,
@@ -901,7 +928,7 @@ describe('OrderChangeService — the record a change leaves (doc 10 §6.6)', () 
 		}
 	});
 
-	it('bumps the order version once, through the totals writer', async () => {
+	it('bumps the order version once, through the totals writer, and leaves the change announcing it', async () => {
 		const fixture = orderFixture({ lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
 
 		await fixture.totalsService.recompute('order-1', 'PLACED');
@@ -922,6 +949,47 @@ describe('OrderChangeService — the record a change leaves (doc 10 §6.6)', () 
 		expect(fixture.order.version).toBe(3);
 		expect(fixture.tables.order_summary.map((summary: any) => summary.version)).toEqual([2, 3]);
 		expect(fixture.tables.order_summary[1].reason).toBe('CHANGE_CONFIRMED');
+
+		// The change's version is not a lock and is never incremented: it still says which order version
+		// the change produced, which is the one fact the column is named for and the one the index over
+		// it answers. A change has no version of its own — the order's is the aggregate's lock.
+		expect(fixture.tables.order_change[0].version).toBe(change.version);
+		expect(fixture.tables.order_change[0].version).toBe(fixture.order.version);
+	});
+
+	it('refuses a decision based on an order version that has moved on, and writes nothing', async () => {
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
+
+		await fixture.totalsService.recompute('order-1', 'PLACED');
+
+		const change = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: [{ action: OrderChangeActionType.ITEM_ADD, details: { title: 'X', quantity: 1, unitPrice: 1 } }]
+		} as never);
+		const readAt = fixture.order.version;
+
+		// Another caller moved the order on — a payment reconciled, a line fulfilled — while this one
+		// still held the version it read. The decision is refused by the order's own conditional update,
+		// which is the aggregate's lock, and the refusal happens before the change is written.
+		await fixture.totalsService.recompute('order-1', 'PAYMENT_RECONCILED');
+
+		await expect(
+			fixture.service.decline(change.id, 'Out of policy', { wildcard: false, versions: [readAt] })
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT', status: 409 });
+
+		expect(fixture.tables.order_change[0].status).toBe(OrderChangeStatus.PENDING);
+		expect(fixture.tables.order_change[0].declinedAt).toBeUndefined();
+
+		// The version the caller actually holds is accepted: the change is written under the order write
+		// that proved it.
+		const declined = await fixture.service.decline(change.id, 'Out of policy', {
+			wildcard: false,
+			versions: [fixture.order.version]
+		});
+
+		expect(declined.status).toBe(OrderChangeStatus.DECLINED);
+		expect(fixture.order.version).toBe(readAt + 2);
 	});
 
 	it('refuses to apply a change twice, and refuses one that was declined', async () => {

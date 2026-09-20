@@ -3,6 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination, IPaymentMethodToken, PermissionsEnum } from '@gauzy/contracts';
 import {
 	CrudController,
+	Idempotent,
 	PaymentMethodToken,
 	PaymentMethodTokenService,
 	Permissions,
@@ -101,6 +102,10 @@ export class PaymentMethodTokenController extends CrudController<PaymentMethodTo
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Instrument saved' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Unconfirmed reference, or card data in the body' })
 	@Permissions(PaymentPermission.PAYMENT_METHOD_TOKENS_EDIT as PermissionsEnum)
+	// Saving an instrument is a write at the provider as well as a row here, so a retry that lost its
+	// answer must be given the stored instrument back rather than save a second one. The key is
+	// therefore mandatory here.
+	@Idempotent({ scope: 'payment.instrument.create', required: true, resourceType: 'payment_method_token' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	@UseCardDataRefusal()

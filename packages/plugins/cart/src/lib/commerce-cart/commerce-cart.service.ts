@@ -17,7 +17,13 @@ import {
 	IPagination,
 	TaxLineOwnerType
 } from '@gauzy/contracts';
-import { AdjustmentService, TaxLineService, TenantAwareCrudService } from '@gauzy/core';
+import {
+	AdjustmentService,
+	IVersionExpectation,
+	TaxLineService,
+	TenantAwareCrudService,
+	commitVersionedUpdate
+} from '@gauzy/core';
 import { CommerceCart } from './commerce-cart.entity';
 import { CommerceCartLine } from '../commerce-cart-line/commerce-cart-line.entity';
 import { CommerceCartLineService } from '../commerce-cart-line/commerce-cart-line.service';
@@ -49,6 +55,17 @@ import { CART_STOCK_AVAILABILITY, ICartStockPort } from '../cart.types';
  */
 const DEFAULT_TTL_HOURS_ANONYMOUS = 168;
 const DEFAULT_TTL_HOURS_CUSTOMER = 720;
+
+/**
+ * The version a write that no caller conditioned on is predicated on.
+ *
+ * A write that arrives from a route is predicated on the version its caller stated, so a change based
+ * on a cart that has moved on is refused rather than applied. A write that arrives from anywhere else
+ * — the checkout handler's own follow-up, the merge of a second cart, the expiry pass — has no caller
+ * to condition it, and is predicated on the version the row holds when the statement runs. Either way
+ * the comparison and the increment are one statement, so no write here is a last-writer-wins write.
+ */
+const ANY_VERSION: IVersionExpectation = { wildcard: true, versions: [] };
 
 /**
  * What the `STOCK` step refuses with: the ladder's error shape, plus what it measured, so an operator
@@ -86,6 +103,37 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		private readonly stockAvailability?: ICartStockPort
 	) {
 		super(typeOrmCommerceCartRepository, mikroOrmCommerceCartRepository);
+	}
+
+	/**
+	 * Writes the fields a caller changed onto a cart, under the version that caller read.
+	 *
+	 * The write is predicated on the caller's version rather than on the one the row happens to hold,
+	 * which is what turns a second editor's change to the same cart into a refusal instead of a silent
+	 * overwrite. The cart is re-priced afterwards, so the totals cache never outlives the fields it was
+	 * computed from.
+	 *
+	 * @param id The cart.
+	 * @param changes The fields to change.
+	 * @param expectation The version the caller read the cart at.
+	 * @param reason The reason code the recomputation records, which names what the change was.
+	 * @returns The changed cart, with its recomputed totals.
+	 */
+	public async applyChanges(
+		id: ID,
+		changes: DeepPartial<CommerceCart>,
+		expectation: IVersionExpectation = ANY_VERSION,
+		reason: string = 'CART_UPDATED'
+	): Promise<CommerceCart> {
+		await commitVersionedUpdate<CommerceCart>(this, {
+			id,
+			expectation,
+			// The version is written by the conditional update and never by the caller's payload, so a
+			// body that carried one cannot move the row past the version the write was predicated on.
+			patch: { ...(changes as Record<string, unknown>) }
+		});
+
+		return this.recalculate(id, reason, ANY_VERSION);
 	}
 
 	/**
@@ -142,9 +190,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 *
 	 * @param cartId The cart.
 	 * @param line The line to add.
+	 * @param expectation The version the caller read the cart at.
 	 * @returns The cart after the addition, re-priced.
 	 */
-	public async addLine(cartId: ID, line: DeepPartial<CommerceCartLine>): Promise<CommerceCart> {
+	public async addLine(
+		cartId: ID,
+		line: DeepPartial<CommerceCartLine>,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<CommerceCart> {
 		const cart = await this.assertMutable(cartId);
 
 		if (!line.variantId) {
@@ -195,7 +248,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			} as DeepPartial<CommerceCartLine>);
 		}
 
-		return this.recalculate(cart.id, 'LINE_ADDED');
+		return this.recalculate(cart.id, 'LINE_ADDED', expectation);
 	}
 
 	/**
@@ -204,12 +257,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * @param cartId The cart.
 	 * @param lineId The line.
 	 * @param changes The fields to change.
+	 * @param expectation The version the caller read the cart at.
 	 * @returns The cart after the change, re-priced.
 	 */
 	public async updateLine(
 		cartId: ID,
 		lineId: ID,
-		changes: DeepPartial<CommerceCartLine>
+		changes: DeepPartial<CommerceCartLine>,
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
 		await this.assertMutable(cartId);
 		const line = await this.assertLineBelongsToCart(cartId, lineId);
@@ -228,7 +283,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		await this.lineService.update(lineId, changes as any);
 
-		return this.recalculate(cartId, 'LINE_UPDATED');
+		return this.recalculate(cartId, 'LINE_UPDATED', expectation);
 	}
 
 	/**
@@ -236,15 +291,16 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 *
 	 * @param cartId The cart.
 	 * @param lineId The line.
+	 * @param expectation The version the caller read the cart at.
 	 * @returns The cart after the removal, re-priced.
 	 */
-	public async removeLine(cartId: ID, lineId: ID): Promise<CommerceCart> {
+	public async removeLine(cartId: ID, lineId: ID, expectation: IVersionExpectation = ANY_VERSION): Promise<CommerceCart> {
 		await this.assertMutable(cartId);
 		await this.assertLineBelongsToCart(cartId, lineId);
 
 		await this.lineService.delete(lineId);
 
-		return this.recalculate(cartId, 'LINE_REMOVED');
+		return this.recalculate(cartId, 'LINE_REMOVED', expectation);
 	}
 
 	/**
@@ -255,9 +311,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 *
 	 * @param cartId The cart.
 	 * @param method The chosen method.
+	 * @param expectation The version the caller read the cart at.
 	 * @returns The cart after the choice, re-priced.
 	 */
-	public async setShippingMethod(cartId: ID, method: DeepPartial<CommerceCartShippingMethod>): Promise<CommerceCart> {
+	public async setShippingMethod(
+		cartId: ID,
+		method: DeepPartial<CommerceCartShippingMethod>,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<CommerceCart> {
 		await this.assertMutable(cartId);
 
 		if (!method.name) {
@@ -284,7 +345,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			isManual: method.isManual ?? false
 		} as DeepPartial<CommerceCartShippingMethod>);
 
-		return this.recalculate(cartId, 'SHIPPING_CHANGED');
+		return this.recalculate(cartId, 'SHIPPING_CHANGED', expectation);
 	}
 
 	/**
@@ -296,9 +357,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 *
 	 * @param cartId The cart.
 	 * @param promotion The applied promotion.
+	 * @param expectation The version the caller read the cart at.
 	 * @returns The cart after the application, re-priced.
 	 */
-	public async applyPromotion(cartId: ID, promotion: DeepPartial<CommerceCartPromotion>): Promise<CommerceCart> {
+	public async applyPromotion(
+		cartId: ID,
+		promotion: DeepPartial<CommerceCartPromotion>,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<CommerceCart> {
 		await this.assertMutable(cartId);
 
 		if (promotion.amount === undefined || promotion.amount === null) {
@@ -330,7 +396,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			} as DeepPartial<CommerceCartPromotion>);
 		}
 
-		return this.recalculate(cartId, 'PROMOTION_CHANGED');
+		return this.recalculate(cartId, 'PROMOTION_CHANGED', expectation);
 	}
 
 	/**
@@ -338,9 +404,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 *
 	 * @param cartId The cart.
 	 * @param code The code, or the promotion's id, of the promotion to remove.
+	 * @param expectation The version the caller read the cart at.
 	 * @returns The cart after the removal, re-priced.
 	 */
-	public async removePromotion(cartId: ID, code: string): Promise<CommerceCart> {
+	public async removePromotion(cartId: ID, code: string, expectation: IVersionExpectation = ANY_VERSION): Promise<CommerceCart> {
 		await this.assertMutable(cartId);
 
 		const existing = (await this.promotionService.findAll({
@@ -353,7 +420,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			}
 		}
 
-		return this.recalculate(cartId, 'PROMOTION_REMOVED');
+		return this.recalculate(cartId, 'PROMOTION_REMOVED', expectation);
 	}
 
 	/**
@@ -363,11 +430,21 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * stamp and refreshes its expiry, so a caller that reads the cart afterwards sees one consistent
 	 * state rather than a partially updated one.
 	 *
+	 * The version is written by the conditional update rather than carried in the patch, which is what
+	 * makes the totals and the version they belong to one statement: a cart that moved on while the
+	 * totals were being computed from its lines is refused instead of being given totals computed from
+	 * rows that no longer describe it.
+	 *
 	 * @param cartId The cart.
 	 * @param reason The reason code, recorded for diagnostics.
+	 * @param expectation The version the caller read the cart at.
 	 * @returns The cart with its recomputed totals.
 	 */
-	public async recalculate(cartId: ID, reason: string): Promise<CommerceCart> {
+	public async recalculate(
+		cartId: ID,
+		reason: string,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<CommerceCart> {
 		const cart = await this.findOneByIdString(cartId);
 
 		if (!cart) {
@@ -377,21 +454,24 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		const snapshot = await this.computeTotals(cart);
 		const now = new Date();
 
-		await this.update(cart.id, {
-			itemSubtotal: snapshot.itemSubtotal,
-			itemDiscountTotal: snapshot.itemDiscountTotal,
-			itemTaxTotal: snapshot.itemTaxTotal,
-			shippingSubtotal: snapshot.shippingSubtotal,
-			shippingDiscountTotal: snapshot.shippingDiscountTotal,
-			shippingTaxTotal: snapshot.shippingTaxTotal,
-			discountTotal: snapshot.discountTotal,
-			taxTotal: snapshot.taxTotal,
-			grandTotal: snapshot.grandTotal,
-			version: Number(cart.version) + 1,
-			lastActivityAt: now,
-			expiresAt: this.expiryOf(cart, now),
-			metadata: { ...(cart.metadata ?? {}), lastRecalculationReason: reason }
-		} as any);
+		await commitVersionedUpdate<CommerceCart>(this, {
+			id: cart.id,
+			expectation,
+			patch: {
+				itemSubtotal: snapshot.itemSubtotal,
+				itemDiscountTotal: snapshot.itemDiscountTotal,
+				itemTaxTotal: snapshot.itemTaxTotal,
+				shippingSubtotal: snapshot.shippingSubtotal,
+				shippingDiscountTotal: snapshot.shippingDiscountTotal,
+				shippingTaxTotal: snapshot.shippingTaxTotal,
+				discountTotal: snapshot.discountTotal,
+				taxTotal: snapshot.taxTotal,
+				grandTotal: snapshot.grandTotal,
+				lastActivityAt: now,
+				expiresAt: this.expiryOf(cart, now),
+				metadata: { ...(cart.metadata ?? {}), lastRecalculationReason: reason }
+			}
+		});
 
 		return this.findOneByIdString(cart.id);
 	}
@@ -502,11 +582,15 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 *
 	 * @param cartId The cart.
 	 * @param options The checkout request.
+	 * @param expectation The version the caller read the cart at. It is spent by the first write this
+	 * call makes to the cart — the recomputation that precedes the order — because the cart's revision
+	 * moves with that write and the revision the caller stated no longer exists afterwards.
 	 * @returns The placed order's identity and the cart it came from.
 	 */
 	public async complete(
 		cartId: ID,
-		options: { idempotencyKey?: string; paymentSessionId?: string } = {}
+		options: { idempotencyKey?: string; paymentSessionId?: string } = {},
+		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<{ cart: CommerceCart; orderId: string; orderNumber: string }> {
 		const existing = await this.findOneWithContent(cartId);
 
@@ -531,7 +615,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			});
 		}
 
-		const cart = await this.recalculate(cartId, 'CHECKOUT_VALIDATION');
+		const cart = await this.recalculate(cartId, 'CHECKOUT_VALIDATION', expectation);
 		const handler = cartCheckoutRegistry.resolve();
 
 		if (!handler) {
@@ -548,19 +632,24 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		const completedAt = new Date();
 
-		await this.update(cart.id, {
-			status: CommerceCartStatus.COMPLETED,
-			orderId: result.orderId,
-			completedAt,
-			version: Number(cart.version) + 1,
-			lastActivityAt: completedAt,
-			metadata: {
-				...(cart.metadata ?? {}),
-				checkoutStartedAt: null,
-				checkoutOperationId: null,
-				checkoutCompletedAt: completedAt.toISOString()
+		await commitVersionedUpdate<CommerceCart>(this, {
+			id: cart.id,
+			// The caller's version was spent by the recomputation above; this write rides on the version
+			// that recomputation produced.
+			expectation: ANY_VERSION,
+			patch: {
+				status: CommerceCartStatus.COMPLETED,
+				orderId: result.orderId,
+				completedAt,
+				lastActivityAt: completedAt,
+				metadata: {
+					...(cart.metadata ?? {}),
+					checkoutStartedAt: null,
+					checkoutOperationId: null,
+					checkoutCompletedAt: completedAt.toISOString()
+				}
 			}
-		} as any);
+		});
 
 		await this.checkoutSessionService.closeForCart(cart.id, CommerceCheckoutSessionStatus.COMPLETED);
 
@@ -574,9 +663,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * status and not a deletion.
 	 *
 	 * @param cartId The cart.
+	 * @param expectation The version the caller read the cart at.
 	 * @returns The abandoned cart.
 	 */
-	public async abandon(cartId: ID): Promise<CommerceCart> {
+	public async abandon(cartId: ID, expectation: IVersionExpectation = ANY_VERSION): Promise<CommerceCart> {
 		const cart = await this.findOneByIdString(cartId);
 
 		if (!cart) {
@@ -587,11 +677,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			throw new BadRequestException(`CART_STATUS_INVALID: a ${cart.status} cart cannot be abandoned.`);
 		}
 
-		await this.update(cart.id, {
-			status: CommerceCartStatus.ABANDONED,
-			abandonedAt: new Date(),
-			version: Number(cart.version) + 1
-		} as any);
+		await commitVersionedUpdate<CommerceCart>(this, {
+			id: cart.id,
+			expectation,
+			patch: { status: CommerceCartStatus.ABANDONED, abandonedAt: new Date() }
+		});
 
 		return this.findOneByIdString(cart.id);
 	}
@@ -604,9 +694,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 *
 	 * @param targetCartId The cart that survives.
 	 * @param sourceCartId The cart that is merged away.
+	 * @param expectation The version the caller read the surviving cart at.
 	 * @returns The target cart, re-priced.
 	 */
-	public async merge(targetCartId: ID, sourceCartId: ID): Promise<CommerceCart> {
+	public async merge(
+		targetCartId: ID,
+		sourceCartId: ID,
+		expectation: IVersionExpectation = ANY_VERSION
+	): Promise<CommerceCart> {
 		if (targetCartId === sourceCartId) {
 			throw new BadRequestException('CART_MERGE_INVALID: a cart cannot be merged into itself.');
 		}
@@ -618,49 +713,74 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			throw new BadRequestException(`CART_MERGE_INVALID: a ${source?.status ?? 'missing'} cart cannot be merged.`);
 		}
 
+		// The caller's version is spent by the first write this merge makes to the surviving cart: every
+		// statement after it rides on the version that write produced, because the revision the caller
+		// stated stops existing the moment the merge begins changing the row it named.
+		let pending = expectation;
+		const spend = (): IVersionExpectation => {
+			const current = pending;
+
+			pending = ANY_VERSION;
+
+			return current;
+		};
+
 		for (const line of source.lines ?? []) {
-			await this.addLine(target.id, {
-				productId: line.productId,
-				variantId: line.variantId,
-				sellerId: line.sellerId,
-				title: line.title,
-				sku: line.sku,
-				thumbnail: line.thumbnail,
-				quantity: line.quantity,
-				unitPrice: line.unitPrice,
-				originalUnitPrice: line.originalUnitPrice,
-				isTaxInclusive: line.isTaxInclusive,
-				taxCategoryId: line.taxCategoryId,
-				isDiscountable: line.isDiscountable,
-				requiresShipping: line.requiresShipping,
-				weight: line.weight,
-				warehouseId: line.warehouseId,
-				subscriptionPlanId: line.subscriptionPlanId,
-				metadata: line.metadata
-			} as DeepPartial<CommerceCartLine>);
+			await this.addLine(
+				target.id,
+				{
+					productId: line.productId,
+					variantId: line.variantId,
+					sellerId: line.sellerId,
+					title: line.title,
+					sku: line.sku,
+					thumbnail: line.thumbnail,
+					quantity: line.quantity,
+					unitPrice: line.unitPrice,
+					originalUnitPrice: line.originalUnitPrice,
+					isTaxInclusive: line.isTaxInclusive,
+					taxCategoryId: line.taxCategoryId,
+					isDiscountable: line.isDiscountable,
+					requiresShipping: line.requiresShipping,
+					weight: line.weight,
+					warehouseId: line.warehouseId,
+					subscriptionPlanId: line.subscriptionPlanId,
+					metadata: line.metadata
+				} as DeepPartial<CommerceCartLine>,
+				spend()
+			);
 		}
 
 		if ((target.shippingMethods ?? []).length === 0 && (source.shippingMethods ?? []).length > 0) {
 			const sourceMethod = (source.shippingMethods ?? [])[0];
 
-			await this.setShippingMethod(target.id, {
-				shippingOptionId: sourceMethod.shippingOptionId,
-				name: sourceMethod.name,
-				amount: sourceMethod.amount,
-				isTaxInclusive: sourceMethod.isTaxInclusive,
-				taxCategoryId: sourceMethod.taxCategoryId,
-				data: sourceMethod.data,
-				isManual: sourceMethod.isManual
-			} as DeepPartial<CommerceCartShippingMethod>);
+			await this.setShippingMethod(
+				target.id,
+				{
+					shippingOptionId: sourceMethod.shippingOptionId,
+					name: sourceMethod.name,
+					amount: sourceMethod.amount,
+					isTaxInclusive: sourceMethod.isTaxInclusive,
+					taxCategoryId: sourceMethod.taxCategoryId,
+					data: sourceMethod.data,
+					isManual: sourceMethod.isManual
+				} as DeepPartial<CommerceCartShippingMethod>,
+				spend()
+			);
 		}
 
 		const mergedAt = new Date();
 
-		await this.update(source.id, {
-			status: CommerceCartStatus.MERGED,
-			version: Number(source.version) + 1,
-			metadata: { ...(source.metadata ?? {}), mergedIntoCartId: target.id, mergedAt: mergedAt.toISOString() }
-		} as any);
+		// The source is a different row from the one the caller conditioned on, so this write is
+		// predicated on the version the source holds rather than on the target's.
+		await commitVersionedUpdate<CommerceCart>(this, {
+			id: source.id,
+			expectation: ANY_VERSION,
+			patch: {
+				status: CommerceCartStatus.MERGED,
+				metadata: { ...(source.metadata ?? {}), mergedIntoCartId: target.id, mergedAt: mergedAt.toISOString() }
+			}
+		});
 
 		// The source keeps no lines: its rows are soft-deleted so that the totals of a merged cart and
 		// the promise that it is empty agree.
@@ -668,17 +788,21 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			await this.lineService.delete(line.id);
 		}
 
-		const recalculated = await this.recalculate(target.id, 'CART_MERGED');
+		const recalculated = await this.recalculate(target.id, 'CART_MERGED', spend());
 
-		await this.update(recalculated.id, {
-			metadata: {
-				...(recalculated.metadata ?? {}),
-				mergedFromCartIds: [
-					...((recalculated.metadata?.mergedFromCartIds as string[]) ?? []),
-					source.id
-				]
+		await commitVersionedUpdate<CommerceCart>(this, {
+			id: recalculated.id,
+			expectation: ANY_VERSION,
+			patch: {
+				metadata: {
+					...(recalculated.metadata ?? {}),
+					mergedFromCartIds: [
+						...((recalculated.metadata?.mergedFromCartIds as string[]) ?? []),
+						source.id
+					]
+				}
 			}
-		} as any);
+		});
 
 		return this.findOneByIdString(target.id);
 	}
@@ -700,10 +824,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			}
 
 			if (cart.expiresAt && new Date(cart.expiresAt).getTime() <= now) {
-				await this.update(cart.id, {
-					status: CommerceCartStatus.EXPIRED,
-					version: Number(cart.version) + 1
-				} as any);
+				// The pass runs on a schedule and has no caller to condition its write, so the write is
+				// predicated on the version the row holds; a cart a buyer touched since the scan began is
+				// therefore refused rather than expired underneath them.
+				await commitVersionedUpdate<CommerceCart>(this, {
+					id: cart.id,
+					expectation: ANY_VERSION,
+					patch: { status: CommerceCartStatus.EXPIRED }
+				});
 				expired.push(cart.id);
 			}
 		}

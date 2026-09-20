@@ -20,7 +20,7 @@ jest.mock('@gauzy/core', () => {
 
 	class BaseEntity {}
 
-	class TenantAwareCrudService {
+	class CrudService {
 		constructor(
 			protected readonly typeOrmRepository: any,
 			protected readonly mikroOrmRepository?: any
@@ -30,6 +30,12 @@ jest.mock('@gauzy/core', () => {
 			return 'typeorm';
 		}
 
+		async update(id: any, partial: any): Promise<any> {
+			return this.typeOrmRepository.update(id, partial);
+		}
+	}
+
+	class TenantAwareCrudService extends CrudService {
 		async findAll(options: any = {}): Promise<any> {
 			const [items, total] = await this.typeOrmRepository.findAndCount(options);
 
@@ -74,6 +80,11 @@ jest.mock('@gauzy/core', () => {
 		async update(id: any, partial: any): Promise<any> {
 			if (typeof id === 'string') {
 				await this.findOneByIdString(id);
+			} else if (id && typeof id === 'object' && !('version' in id)) {
+				// The base service reads a criteria object before writing with it, except when the criteria
+				// names a version: that column is the write's precondition and the statement evaluates it,
+				// which is what makes a write that lost a race a conflict rather than a missing record.
+				await this.findOneByWhereOptions(id);
 			}
 
 			return this.typeOrmRepository.update(id, partial);
@@ -85,6 +96,7 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		CrudService,
 		TenantAwareCrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
@@ -97,6 +109,13 @@ jest.mock('@gauzy/core', () => {
 		MultiORMOneToMany: decorator,
 		MultiORMManyToOne: decorator,
 		JsonColumn: decorator,
+		Idempotent: decorator,
+		Versioned: decorator,
+		VersionedColumn: decorator,
+		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.commitVersionedUpdate,
+		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.versionExpectationOf,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -264,8 +283,7 @@ function repository(tables: Record<string, any[]>, tableName: TableName) {
 			return created;
 		},
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows().findIndex((row) => row.id === id);
+			const index = rows().findIndex((row) => matches(row, typeof criteria === 'string' ? { id: criteria } : criteria));
 
 			if (index >= 0) {
 				Object.assign(rows()[index], partial);
@@ -340,6 +358,12 @@ function orderFixture(seeds: { lines?: any[]; order?: Record<string, unknown> } 
 
 	const repo = (table: TableName) => repository(tables, table);
 	const typeOrmOrderRepository = repo('order');
+	// The order aggregate's version-predicated write resolves the service that owns the row by token,
+	// so the fixture offers the totals writer the same two calls the real order service offers it.
+	const orderWriter = {
+		update: async (criteria: any, partial: any) => typeOrmOrderRepository.update(criteria, partial),
+		findOneByIdString: async (id: any) => typeOrmOrderRepository.findOne({ where: { id } })
+	};
 	const totalsService = new OrderTotalsService(
 		typeOrmOrderRepository as never,
 		new OrderLineService(repo('order_line') as never, {} as never, {} as never) as never,
@@ -348,7 +372,8 @@ function orderFixture(seeds: { lines?: any[]; order?: Record<string, unknown> } 
 		new OrderTransactionService(repo('order_transaction') as never, {} as never) as never,
 		new OrderSummaryService(repo('order_summary') as never, {} as never) as never,
 		{ findByOwner: async () => [] } as never,
-		{ findByOwner: async () => [] } as never
+		{ findByOwner: async () => [] } as never,
+		{ get: () => orderWriter } as never
 	);
 	const allocate = jest.fn(async () => ({ formatted: 'ORD-000124', value: 124, key: 'ORDER' }));
 	const openChanges: any[] = [];

@@ -1,8 +1,15 @@
-import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Context, ID, Int, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { BadRequestException, UseGuards } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { IPagination, OrderChangeType } from '@gauzy/contracts';
-import { Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import {
+	Idempotent,
+	Permissions,
+	PermissionGuard,
+	TenantPermissionGuard,
+	Versioned,
+	versionExpectationOf
+} from '@gauzy/core';
 import { OrderService } from '../order/order.service';
 import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderChangeService } from '../order-change/order-change.service';
@@ -39,6 +46,13 @@ import {
  * and the same permissions, so a GraphQL caller and a REST caller cannot diverge in what they are
  * allowed to do or in what a rule means. Every relation is resolved by its own aggregate's service,
  * which is what makes the order graph one query without N+1 reads.
+ *
+ * The mutations carry the same `@Idempotent(...)` and `@Versioned(...)` declarations as the routes
+ * they mirror, under the same scope names, so the two protocols answer a retry and a stale version
+ * identically. A GraphQL operation travels over `POST` whichever root type it selects, so a mutation
+ * states its version as the nullable `version` argument — and its retry key as `idempotencyKey` —
+ * because one request may carry several mutations and a header could not say which of them either
+ * belongs to.
  */
 @Resolver('Order')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -116,9 +130,13 @@ export class OrderResolver {
 	/**
 	 * Reads one order.
 	 *
+	 * A read carries the version in the response body, which is what the caller states back as the
+	 * `version` argument of the mutation it is about to make.
+	 *
 	 * @param id The order.
 	 * @returns The order.
 	 */
+	@Versioned({ resource: OrderService, write: false })
 	@Query(() => Object, { name: 'order', nullable: true })
 	async order(@Args('id', { type: () => ID }) id: string): Promise<Order> {
 		return this.orderService.findOneByIdString(id);
@@ -155,6 +173,8 @@ export class OrderResolver {
 	 * @returns The created order.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_CREATE)
+	@Idempotent({ scope: 'order.create', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService, required: false })
 	@Mutation(() => Object, { name: 'createOrder' })
 	async createOrder(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<Order> {
 		return this.orderService.create(input as any);
@@ -164,40 +184,57 @@ export class OrderResolver {
 	 * Updates the fields of an order that may change outside a change.
 	 *
 	 * @param id The order.
-	 * @param input The fields to change.
+	 * @param input The fields to change, with the version the caller read the order at.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
 	 * @returns The order.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
 	@Mutation(() => Object, { name: 'updateOrder' })
 	async updateOrder(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('input', { type: () => Object }) input: Record<string, any>
+		@Args('input', { type: () => Object }) input: Record<string, any>,
+		@Context() context: any
 	): Promise<Order> {
-		return this.orderService.updateMutable(id, input as any);
+		return this.orderService.updateMutable(id, input as any, versionExpectationOf(context?.req));
 	}
 
 	/**
 	 * Places a draft order.
 	 *
 	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
 	 * @returns The placed order.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.place', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
 	@Mutation(() => Object, { name: 'placeOrder' })
-	async placeOrder(@Args('id', { type: () => ID }) id: string): Promise<Order> {
-		return this.orderService.place(id);
+	async placeOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.orderService.place(id, {}, versionExpectationOf(context?.req));
 	}
 
 	/**
 	 * Confirms a placed order.
 	 *
 	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
 	 * @returns The confirmed order.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_APPROVE)
+	@Versioned({ resource: OrderService })
 	@Mutation(() => Object, { name: 'confirmOrder' })
-	async confirmOrder(@Args('id', { type: () => ID }) id: string): Promise<Order> {
-		return this.orderService.confirm(id, 'STAFF');
+	async confirmOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.orderService.confirm(id, 'STAFF', versionExpectationOf(context?.req));
 	}
 
 	/**
@@ -205,39 +242,57 @@ export class OrderResolver {
 	 *
 	 * @param id The order.
 	 * @param reason Why it was cancelled.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
 	 * @returns The cancelled order.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_CANCEL)
+	@Idempotent({ scope: 'order.cancel', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
 	@Mutation(() => Object, { name: 'cancelOrder' })
 	async cancelOrder(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('reason', { type: () => String, nullable: true }) reason?: string
+		@Args('reason', { type: () => String, nullable: true }) reason?: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
 	): Promise<Order> {
-		return this.orderService.cancel(id, reason);
+		return this.orderService.cancel(id, reason, versionExpectationOf(context?.req));
 	}
 
 	/**
 	 * Archives a terminal order.
 	 *
 	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
 	 * @returns The archived order.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
 	@Mutation(() => Object, { name: 'archiveOrder' })
-	async archiveOrder(@Args('id', { type: () => ID }) id: string): Promise<Order> {
-		return this.orderService.archive(id);
+	async archiveOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.orderService.archive(id, versionExpectationOf(context?.req));
 	}
 
 	/**
 	 * Recomputes an order.
 	 *
 	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
 	 * @returns The order with its recomputed totals.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
 	@Mutation(() => Object, { name: 'recalculateOrder' })
-	async recalculateOrder(@Args('id', { type: () => ID }) id: string): Promise<Order> {
-		return this.totalsService.recompute(id, 'MANUAL');
+	async recalculateOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.totalsService.recompute(id, 'MANUAL', { expectation: versionExpectationOf(context?.req) });
 	}
 
 	/**
@@ -247,6 +302,13 @@ export class OrderResolver {
 	 * @returns The created change.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.change.create', required: false, resourceType: 'order_change' })
+	// The order is the record the change is reasoned about, and the input names it rather than the
+	// resolver's own argument list, so the version is read from the order the input points at.
+	@Versioned({
+		resource: OrderService,
+		identify: (_request: any, context: any) => context?.getArgByIndex?.(1)?.input?.orderId
+	})
 	@Mutation(() => Object, { name: 'requestOrderEdit' })
 	async requestOrderEdit(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<OrderChange> {
 		return this.changeService.create({

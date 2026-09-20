@@ -4,6 +4,7 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -54,10 +55,16 @@ export class SellerOfferingController extends CrudController<SellerOffering> {
 	 * Declared rather than inherited: a request body is validated from the type the handler names, and the
 	 * base class names the entity's shape, whose reflected type is `Object` — a parameter the validation
 	 * pipe skips, so an inherited `create` would write any body at all.
+	 *
+	 * `seller_offering.create` is adopted as retry-safe without requiring a key: a seller that re-sends an
+	 * offer it never saw acknowledged is answered with the offering the first attempt created rather than
+	 * with the collision the same variant causes. The key stays optional because one seller may offer one
+	 * variant once, so the second write is already refused.
 	 */
 	@ApiOperation({ summary: 'Offer a variant' })
 	@ApiResponse({ status: 201, description: 'Offering created successfully', type: SellerOffering })
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
+	@Idempotent({ scope: 'seller_offering.create', required: false, resourceType: 'seller_offering' })
 	@Post('/')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Req() request: any, @Body() entity: CreateSellerOfferingDTO): Promise<SellerOffering> {
@@ -86,9 +93,17 @@ export class SellerOfferingController extends CrudController<SellerOffering> {
 		return this.sellerOfferingService.submit(id, this.scope(request));
 	}
 
-	/** Publishes an offering, optionally to a channel subset. */
+	/**
+	 * Publishes an offering, optionally to a channel subset.
+	 *
+	 * `seller_offering.publish` is adopted as retry-safe without requiring a key: publishing twice
+	 * re-stamps the approval and announces a second publication of an offering that is already live, so
+	 * a client that presents a key is answered from its first attempt instead. The key stays optional
+	 * because the second write otherwise converges on the same `ACTIVE` state.
+	 */
 	@ApiOperation({ summary: 'Publish an offering' })
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
+	@Idempotent({ scope: 'seller_offering.publish', required: false, resourceType: 'seller_offering' })
 	@Post('/:id/publish')
 	async publish(
 		@Req() request: any,

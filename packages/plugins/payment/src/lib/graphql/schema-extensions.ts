@@ -16,6 +16,13 @@ import { gql } from 'graphql-tag';
  * the `Decimal`, `DateTime` and `JSON` scalars, so nothing of that is redeclared here; two packages
  * contributing one type name is a boot failure by design.
  *
+ * **A mutation that mirrors a retry-safe route declares `idempotencyKey`, and declares it nullable.**
+ * A GraphQL request is one `POST` carrying as many mutations as its document selects, so the key rides
+ * beside the input it qualifies rather than in a header, and the requirement to present one is not
+ * restated in the schema: the kernel answers a mutation that must be retried safely without a key with
+ * `IDEMPOTENCY_KEY_REQUIRED`, which is the same code and the same status the REST route answers with.
+ * Stating it a second time as a non-null member would be a second place for it to drift out of step.
+ *
  * **No input type declares a card member.** There is no `number`, `pan`, `cvc`, `cvv`, `iban`,
  * `accountNumber` or free-text `expiry` anywhere below, and none may be added: the platform stores a
  * provider-issued token and holds no primary account number, verification value or bank account
@@ -748,6 +755,7 @@ export const schemaExtensions = gql`
 	input VoidPaymentSessionInput {
 		id: ID!
 		reason: String
+		idempotencyKey: String
 	}
 
 	input CapturePaymentInput {

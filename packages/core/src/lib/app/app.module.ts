@@ -151,6 +151,7 @@ import { RuleModule } from '../rule/rule.module';
 import { SequenceModule } from '../sequence/sequence.module';
 import { SearchModule } from '../search/search.module';
 import { IdempotencyModule } from '../idempotency/idempotency.module';
+import { IdempotencyMaintenanceModule } from '../idempotency/idempotency-maintenance.module';
 import { IdempotencyInterceptor } from '../idempotency/idempotency.interceptor';
 import { EventOutboxModule } from '../event-outbox/event-outbox.module';
 import { OperationModule } from '../operation/operation.module';
@@ -628,7 +629,12 @@ if (environment.THROTTLE_ENABLED) {
 						enabled: false,
 						enableQueueing: true,
 						logRegisteredJobs: false
-					})
+					}),
+					// The hourly sweep over the retry keys travels on that queue, so it is registered exactly
+					// when the queue exists. A scheduled job needs a worker, a worker needs a connection, and
+					// registering one where there is no root is not a degraded sweep — it is a boot that fails
+					// on `Worker requires a connection`, which is what a single-container dev setup would meet.
+					IdempotencyMaintenanceModule
 			  ]
 			: []),
 		//Token cleanup scheduler is disabled by default; enable when ready

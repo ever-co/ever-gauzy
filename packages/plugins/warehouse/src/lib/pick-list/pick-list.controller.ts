@@ -5,11 +5,13 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
-	UseValidationPipe
+	UseValidationPipe,
+	Versioned
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PickListLine } from '../pick-list-line/pick-list-line.entity';
@@ -199,7 +201,10 @@ export class PickListController extends CrudController<PickList> {
 	@ApiOperation({ summary: 'Record a pick against a line' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The outcome was recorded.' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'More was taken than the list asked for.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'A level moved past the version the pick was based on.' })
 	@Permissions(WarehousePermissions.PICK_LISTS_PICK)
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'warehouse.pick', required: false, resourceType: 'pick-list-line' })
 	@Post(':id/lines/:lineId/pick')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async pick(
@@ -228,7 +233,10 @@ export class PickListController extends CrudController<PickList> {
 	 */
 	@ApiOperation({ summary: 'Record a substitution against a line' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The substitution was recorded.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'A level moved past the version the swap was based on.' })
 	@Permissions(WarehousePermissions.PICK_LISTS_PICK)
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'warehouse.substitute', required: false, resourceType: 'pick-list-line' })
 	@Post(':id/lines/:lineId/substitute')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async substitute(

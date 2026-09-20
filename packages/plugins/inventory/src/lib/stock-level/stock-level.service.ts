@@ -12,12 +12,20 @@
  * optimistic-lock counter so a lost update is detected instead of silently overwriting. A contention
  * loss is retried three times with increasing backoff and then refused with `STOCK_CONFLICT`.
  */
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntityManager } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { DatabaseTypeEnum } from '@gauzy/config';
-import { Product, ProductVariant, RequestContext, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
+import {
+	Product,
+	ProductVariant,
+	RequestContext,
+	WarehouseProduct,
+	WarehouseProductVariant,
+	commitVersionedUpdate,
+	versionExpectationOf
+} from '@gauzy/core';
 import { StockMovement } from './../stock-movement/stock-movement.entity';
 import { StockMovementType } from './../inventory.enums';
 import { InventoryErrorCode, invariantViolation, inventoryError } from './../inventory.errors';
@@ -41,6 +49,41 @@ const RESERVATION_ONLY_TYPES: StockMovementType[] = [
 	StockMovementType.RESERVATION,
 	StockMovementType.RELEASE
 ];
+
+/**
+ * The version a request accepted, as the kernel states it.
+ *
+ * `versionExpectationOf` answers with the kernel's own shape; the two members are restated here
+ * because that interface is not part of the package's public surface and this engine reads nothing
+ * else from it — whether the caller accepted any existing version, and which versions it named.
+ */
+type TVersionExpectation = { wildcard: boolean; versions: number[] };
+
+/**
+ * The version the current request accepted, when it accepted one.
+ *
+ * A versioned route leaves what the caller stated on the request, and the write reads it from there
+ * rather than parsing the header again, so the value the guard validated is the value the `UPDATE` is
+ * predicated on. A request that carries none — a route that did not opt in, a worker, a seed — states
+ * no precondition, and the engine's own compare-and-set remains its guarantee. `versionExpectationOf`
+ * is the kernel's reader and refuses a request that states nothing, which is exactly the case this
+ * treats as "the caller accepted no version".
+ *
+ * @returns The accepted version, or undefined when the caller accepted none.
+ */
+function acceptedVersionExpectation(): TVersionExpectation | undefined {
+	const request = RequestContext.currentRequest();
+
+	if (!request) {
+		return undefined;
+	}
+
+	try {
+		return versionExpectationOf(request) as TVersionExpectation;
+	} catch {
+		return undefined;
+	}
+}
 
 /**
  * The movement input as the engine reads it.
@@ -98,11 +141,15 @@ export class StockLevelService {
 	 *
 	 * @param input the signed delta, its cause and the document that carries it.
 	 * @param manager the transaction to join, when the caller is already inside one.
-	 * @returns the persisted movement and the level state it produced.
+	 * @param expectation the version the request accepted, when it accepted one. The default is what the
+	 * current request carries, which is how a versioned route reaches this engine without every caller
+	 * between the two having to pass it down by hand.
+	 * @returns the persisted movement and the level state it produced, at the version it produced it.
 	 */
 	public async applyMovement(
 		input: IStockMovementInput,
-		manager?: EntityManager
+		manager?: EntityManager,
+		expectation: TVersionExpectation | undefined = acceptedVersionExpectation()
 	): Promise<IAppliedMovement> {
 		const movement = input as TStockMovementInput;
 		const quantityDelta = Number(movement.quantityDelta ?? 0);
@@ -122,12 +169,12 @@ export class StockLevelService {
 		}
 
 		if (manager) {
-			return await this.applyOn(manager, movement, quantityDelta, reservedDelta);
+			return await this.applyOn(manager, movement, quantityDelta, reservedDelta, expectation);
 		}
 
 		return await this.dataSource.transaction(
 			async (transactional: EntityManager) =>
-				await this.applyOn(transactional, movement, quantityDelta, reservedDelta)
+				await this.applyOn(transactional, movement, quantityDelta, reservedDelta, expectation)
 		);
 	}
 
@@ -141,18 +188,20 @@ export class StockLevelService {
 	 * @param movement the movement as the engine reads it.
 	 * @param quantityDelta the signed change to the on-hand quantity.
 	 * @param reservedDelta the signed change to the held quantity.
+	 * @param expectation the version the request accepted, when it accepted one.
 	 * @returns the persisted movement and the level state it produced.
 	 */
 	private async applyOn(
 		manager: EntityManager,
 		movement: TStockMovementInput,
 		quantityDelta: number,
-		reservedDelta: number
+		reservedDelta: number,
+		expectation?: TVersionExpectation
 	): Promise<IAppliedMovement> {
 		const level = await this.resolveLevel(manager, movement);
 		await this.lockLevelRow(manager, level.id, movement.lockTimeoutMs);
 
-		return await this.applyWithRetry(manager, level.id, movement, quantityDelta, reservedDelta);
+		return await this.applyWithRetry(manager, level.id, movement, quantityDelta, reservedDelta, expectation);
 	}
 
 	/**
@@ -169,6 +218,7 @@ export class StockLevelService {
 			levelId: level.id,
 			warehouseId,
 			variantId: level.variantId,
+			version: this.readVersion(level),
 			quantity,
 			reservedQuantity,
 			safetyStock,
@@ -260,11 +310,13 @@ export class StockLevelService {
 	 *
 	 * @param input The location, the variant and the bin.
 	 * @param manager The transaction to write inside, when the caller is already in one.
+	 * @param expectation The version the request accepted, when it accepted one.
 	 * @returns Whether a level row was found and named.
 	 */
 	public async setHomeBin(
 		input: { warehouseId: ID; variantId: ID; binId: ID },
-		manager?: EntityManager
+		manager?: EntityManager,
+		expectation: TVersionExpectation | undefined = acceptedVersionExpectation()
 	): Promise<boolean> {
 		const run = async (transactional: EntityManager): Promise<boolean> => {
 			const level = await this.findLevelRow(transactional, input.warehouseId, input.variantId);
@@ -273,7 +325,15 @@ export class StockLevelService {
 				return false;
 			}
 
-			await transactional.update(WarehouseProductVariant, level.id, { binId: input.binId });
+			// Naming a home bin is a write on the level row like any other, so it goes through the same
+			// conditional write: the address is part of the state a caller reads, and a declaration that
+			// overwrote a concurrent one would be the same lost update as a quantity.
+			await this.commitLevelUpdate(transactional, {
+				levelId: level.id,
+				version: this.readVersion(level),
+				patch: { binId: input.binId },
+				expectation
+			});
 
 			return true;
 		};
@@ -307,9 +367,15 @@ export class StockLevelService {
 	 * the same delta, so a product-level row stays the sum of its variant rows.
 	 *
 	 * @param filter which level rows the run walks, and how many.
+	 * @param expectation the version the request accepted, when it accepted one. A run that corrects one
+	 * level honours it; a run that walks many states why it cannot, and the per-row compare-and-set
+	 * remains the guarantee for the rows it does correct.
 	 * @returns what the run scanned and what it corrected, with the numbers that decided each one.
 	 */
-	public async reconcile(filter: IStockReconciliationFilter = {}): Promise<IStockReconciliation> {
+	public async reconcile(
+		filter: IStockReconciliationFilter = {},
+		expectation: TVersionExpectation | undefined = acceptedVersionExpectation()
+	): Promise<IStockReconciliation> {
 		const take = Number.isFinite(filter.take) ? Number(filter.take) : 200;
 
 		return await this.dataSource.transaction(async (manager: EntityManager) => {
@@ -333,7 +399,7 @@ export class StockLevelService {
 					continue;
 				}
 
-				await this.correctLevel(manager, locked ?? level, quantityBefore, ledgerQuantity);
+				await this.correctLevel(manager, locked ?? level, quantityBefore, ledgerQuantity, expectation);
 
 				corrections.push({
 					levelId: level.id,
@@ -372,6 +438,10 @@ export class StockLevelService {
 				'level.isUnlimited',
 				'level.allowBackorder',
 				'level.backorderLimit',
+				// The counter travels with the availability because a caller can only condition a write
+				// on a version it has read: a level reported without one is a level no client can
+				// protect.
+				'level.version',
 				'aggregate.warehouseId'
 			]);
 	}
@@ -449,29 +519,26 @@ export class StockLevelService {
 	 * @param level the level row as it was read under its lock.
 	 * @param quantityBefore the quantity the level held when the correction was computed.
 	 * @param ledgerQuantity the sum of the level’s movements, which is what it is corrected to.
-	 * @throws ConflictException When the row moved past the version this correction was computed from.
+	 * @param expectation the version the request accepted, when it accepted one.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the row moved past the version this
+	 * correction was computed from.
 	 */
 	private async correctLevel(
 		manager: EntityManager,
 		level: WarehouseProductVariant,
 		quantityBefore: number,
-		ledgerQuantity: number
+		ledgerQuantity: number,
+		expectation?: TVersionExpectation
 	): Promise<void> {
-		const version = Number(level.version ?? 1);
-		const update = await manager
-			.createQueryBuilder()
-			.update(WarehouseProductVariant)
-			.set({ quantity: ledgerQuantity, version: version + 1 })
-			.where('id = :id AND version = :version', { id: level.id, version })
-			.execute();
-
-		if (!update.affected) {
-			throw inventoryError(
-				InventoryErrorCode.CONFLICT,
-				'The stock level is contended: the correction was computed from a version another writer has moved.',
-				{ details: { levelId: level.id, version, attempts: 1 } }
-			);
-		}
+		// The correction is the kernel's conditional write, run on this run's transaction: the version
+		// the statement checks is the version it increments, so a row another writer moved between the
+		// read and this statement is refused rather than overwritten.
+		await this.commitLevelUpdate(manager, {
+			levelId: level.id,
+			version: this.readVersion(level),
+			patch: { quantity: ledgerQuantity },
+			expectation
+		});
 
 		// The delta is taken from the quantity the correction was computed against rather than from the
 		// row the write just produced, so the aggregate moves by exactly what the level moved by.
@@ -796,6 +863,14 @@ export class StockLevelService {
 	 * attempt that loses the row therefore leaves nothing behind at all — the movement it computed is
 	 * discarded with the attempt — so however many retries a contended write takes, the ledger holds
 	 * exactly one row per logical movement and the level stays the sum of its movements.
+	 *
+	 * The compare-and-set itself is the kernel's conditional write, run on this transaction. A caller
+	 * that stated the version it read is refused with `ENTITY_VERSION_CONFLICT` the moment the row has
+	 * moved past it, because the value it reasoned about no longer exists and re-running the attempt
+	 * would write the decision it made about that value. A caller that stated none is measured against
+	 * the version read under the row lock, and contention there is retried rather than reported: that
+	 * reader had no decision to invalidate, so waiting for the row is the right answer and the three
+	 * attempts with increasing backoff are what a busy pick face looks like from the inside.
 	 */
 	private async applyWithRetry(
 		manager: EntityManager,
@@ -803,6 +878,7 @@ export class StockLevelService {
 		input: TStockMovementInput,
 		quantityDelta: number,
 		reservedDelta: number,
+		expectation?: TVersionExpectation,
 		attempt = 0
 	): Promise<IAppliedMovement> {
 		const level = await manager.findOne(WarehouseProductVariant, { where: { id: levelId } });
@@ -822,19 +898,20 @@ export class StockLevelService {
 
 		const binId = await this.resolveBin(manager, input);
 
-		const version = Number(level.version ?? 1);
-		const update = await manager
-			.createQueryBuilder()
-			.update(WarehouseProductVariant)
-			.set({
-				quantity: quantityAfter,
-				reservedQuantity: reservedAfter,
-				version: version + 1
-			})
-			.where('id = :id AND version = :version', { id: level.id, version })
-			.execute();
+		let version: number;
 
-		if (!update.affected) {
+		try {
+			version = await this.commitLevelUpdate(manager, {
+				levelId: level.id,
+				version: this.readVersion(level),
+				patch: { quantity: quantityAfter, reservedQuantity: reservedAfter },
+				expectation
+			});
+		} catch (error) {
+			if (expectation || !this.isVersionConflict(error)) {
+				throw error;
+			}
+
 			const backoff = RETRY_BACKOFF_MS[attempt];
 			if (backoff === undefined) {
 				throw inventoryError(
@@ -845,7 +922,15 @@ export class StockLevelService {
 			}
 			this.logger.warn(`Retrying a contended level write on ${level.id} after ${backoff}ms.`);
 			await this.sleep(backoff + Math.floor(Math.random() * backoff));
-			return await this.applyWithRetry(manager, levelId, input, quantityDelta, reservedDelta, attempt + 1);
+			return await this.applyWithRetry(
+				manager,
+				levelId,
+				input,
+				quantityDelta,
+				reservedDelta,
+				expectation,
+				attempt + 1
+			);
 		}
 
 		// The level is this writer's. Only now is the ledger row that explains it written, inside the
@@ -885,12 +970,106 @@ export class StockLevelService {
 		return {
 			movementId: persisted.id,
 			levelId: level.id,
+			version,
 			quantityBefore,
 			quantityAfter,
 			reservedBefore,
 			reservedAfter,
 			binId
 		};
+	}
+
+	/**
+	 * The version-predicated level write, run on the transaction the caller already holds.
+	 *
+	 * `commitVersionedUpdate` is the platform's conditional write: it resolves the version the caller
+	 * accepted, predicates the `UPDATE` on it and increments it in the same statement, so the affected
+	 * row count is the whole answer and there is no window between deciding and acting. It reaches
+	 * storage through the service it is handed, and the service this engine would hand it writes on its
+	 * own connection — a second transaction, which would commit a level apart from the ledger row that
+	 * explains it. The adapter below is that same helper's storage surface bound to the caller's
+	 * transaction, so the statement, the conflict and the increment stay the kernel's while the
+	 * transaction stays the caller's, and no level is ever written by two statements.
+	 *
+	 * @param manager The open transaction.
+	 * @param options The level, the version its invariants were measured against, the columns to write,
+	 * and the version the request accepted when it accepted one.
+	 * @returns The version the level now holds.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the level moved past the accepted
+	 * version, or with `RESOURCE_NOT_FOUND` when it is gone.
+	 */
+	private async commitLevelUpdate(
+		manager: EntityManager,
+		options: {
+			levelId: ID;
+			version: number;
+			patch: Record<string, unknown>;
+			expectation?: TVersionExpectation;
+		}
+	): Promise<number> {
+		const writer = {
+			// The same `UPDATE … WHERE id = … AND version = …` the helper would issue through a
+			// repository, said to this transaction instead: the criteria the kernel passes are the id and
+			// the version, and every one of them becomes a predicate of the one statement.
+			update: (criteria: Record<string, unknown>, patch: Record<string, unknown>) => {
+				const builder = manager.createQueryBuilder().update(WarehouseProductVariant).set(patch);
+				let scoped = builder;
+
+				for (const [column, value] of Object.entries(criteria)) {
+					scoped = scoped.andWhere(`${column} = :${column}`, { [column]: value });
+				}
+
+				return scoped.execute();
+			},
+			findOneByIdString: (id: ID) => manager.findOne(WarehouseProductVariant, { where: { id } as never })
+		};
+
+		const committed = await commitVersionedUpdate(
+			writer as unknown as Parameters<typeof commitVersionedUpdate>[0],
+			{
+				id: options.levelId,
+				// A caller that stated the version it read is measured against exactly that version. A
+				// caller that stated none — a worker, a document deriving its own delta — is measured
+				// against the version this transaction read under the row lock, which is the value its
+				// invariants were just checked against; the wildcard is how that version reaches the
+				// statement without a second read.
+				expectation: options.expectation ?? { wildcard: true, versions: [] },
+				patch: options.patch,
+				readVersion: async () => options.version
+			}
+		);
+
+		return committed.version;
+	}
+
+	/**
+	 * Whether a failed level write failed because the row moved on.
+	 *
+	 * The kernel answers a conditional write that matched no row with `409`, having already told a row
+	 * that moved apart from one that is gone. Only that answer is worth another attempt: every other
+	 * failure would fail again, and retrying it would turn a real error into a slower one.
+	 *
+	 * @param error Whatever the write threw.
+	 * @returns True when the row was overtaken.
+	 */
+	private isVersionConflict(error: unknown): boolean {
+		return error instanceof HttpException && error.getStatus() === HttpStatus.CONFLICT;
+	}
+
+	/**
+	 * The counter a level row holds.
+	 *
+	 * A row written before the column existed, or one whose value is unusable, is treated as being at
+	 * one — the value the column's own default gives it — so the comparison has a number to work with
+	 * rather than a gap.
+	 *
+	 * @param level The level row.
+	 * @returns The version.
+	 */
+	private readVersion(level: WarehouseProductVariant): number {
+		const version = Number((level as { version?: unknown })?.version ?? 1);
+
+		return Number.isSafeInteger(version) && version > 0 ? version : 1;
 	}
 
 	/**
@@ -988,6 +1167,11 @@ export class StockLevelService {
 	 * A re-read and re-sum would be a second source of truth for the same number and would race with
 	 * every concurrent writer on the location; the delta is applied inside the same transaction, so the
 	 * aggregate is always the running sum of its variant rows.
+	 *
+	 * The aggregate's own counter moves with it. It is written as a delta and not as a
+	 * read-modify-write, so there is no decision of a caller's for a version to protect and nothing to
+	 * predicate the statement on; what the counter owes is the truth, and a counter that never moved
+	 * while the row did would be a version a reader could not rely on.
 	 */
 	private async applyAggregateDelta(
 		manager: EntityManager,
@@ -1003,7 +1187,8 @@ export class StockLevelService {
 			.update(WarehouseProduct)
 			.set({
 				quantity: () => `"quantity" + ${quantityDelta}`,
-				reservedQuantity: () => `"reservedQuantity" + ${reservedDelta}`
+				reservedQuantity: () => `"reservedQuantity" + ${reservedDelta}`,
+				version: () => '"version" + 1'
 			})
 			.where('id = :id', { id: level.warehouseProductId })
 			.execute();

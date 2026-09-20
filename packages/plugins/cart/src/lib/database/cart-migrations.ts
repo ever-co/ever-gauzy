@@ -1,6 +1,8 @@
 import { CreateCartTables1791000000200 } from './migrations/1791000000200-CreateCartTables';
+import { AddCartVersionColumn1791000000570 } from './migrations/1791000000570-AddCartVersionColumn';
 
 export { CreateCartTables1791000000200 } from './migrations/1791000000200-CreateCartTables';
+export { AddCartVersionColumn1791000000570 } from './migrations/1791000000570-AddCartVersionColumn';
 
 /**
  * The plugin's migration set, in run order.
@@ -14,4 +16,4 @@ export { CreateCartTables1791000000200 } from './migrations/1791000000200-Create
  * The array lives here rather than beside the migration classes so that every file in the
  * `migrations/` directory is a migration and nothing else.
  */
-export const ALL_CART_MIGRATIONS = [CreateCartTables1791000000200];
+export const ALL_CART_MIGRATIONS = [CreateCartTables1791000000200, AddCartVersionColumn1791000000570];

@@ -1,8 +1,16 @@
 import { Inject, Optional, UseGuards } from '@nestjs/common';
-import { Args, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
+import { Args, Context, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
 import { filter, Observable } from 'rxjs';
 import { ID, IPagination } from '@gauzy/contracts';
-import { EventBus, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	EventBus,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	Versioned,
+	versionExpectationOf
+} from '@gauzy/core';
 import { Entitlement } from '../../entitlement/entitlement.entity';
 import { EntitlementService } from '../../entitlement/entitlement.service';
 import { EntitlementKeyService } from '../../entitlement-key/entitlement-key.service';
@@ -50,6 +58,17 @@ interface IEntitlementFilter {
  * granted over REST obey the same provenance check and the same lifecycle, and the two surfaces cannot
  * drift. Authorisation is unchanged: the guards run on the request that carried the operation, and a
  * field declares the same permission the equivalent route does.
+ *
+ * One difference the transport forces is stated rather than inferred. A GraphQL operation travels over
+ * `POST` whichever root type it selects, so a query has to say that it does not write, and a mutation
+ * has to carry the version it read beside the arguments it qualifies — one request may select several
+ * mutations, and neither a header nor the transport could say which of them a version belongs to. The
+ * version therefore rides as the `version` argument, and the accepted version reaches the service
+ * through the request the operation arrived on.
+ *
+ * The retry key rides the same way and for the same reason: a mutation that mirrors a retry-safe route
+ * declares the same `@Idempotent()` scope, and its `idempotencyKey` member is what a client presents
+ * instead of the header REST carries it in.
  */
 @Resolver('Entitlement')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -73,6 +92,7 @@ export class EntitlementResolver {
 	 * @param page The page.
 	 * @returns One page of rights.
 	 */
+	@Versioned({ resource: EntitlementService, write: false })
 	@Query('entitlements')
 	async entitlements(@Args('filter') filter?: IEntitlementFilter, @Args('page') page?: IPageSelection) {
 		const { skip, take } = resolvePageWindow(page);
@@ -102,6 +122,7 @@ export class EntitlementResolver {
 	 * @param id The right.
 	 * @returns The right, or null when it is not the caller's.
 	 */
+	@Versioned({ resource: EntitlementService, write: false })
 	@Query('entitlement')
 	async entitlement(@Args('id') id: ID): Promise<Entitlement | null> {
 		try {
@@ -117,6 +138,7 @@ export class EntitlementResolver {
 	 * @param input What the caller holds.
 	 * @returns The verdict and the code that explains it.
 	 */
+	@Versioned({ resource: EntitlementService, write: false })
 	@Query('checkEntitlement')
 	async checkEntitlement(@Args('input') input: Record<string, any>): Promise<IEntitlementCheckResult> {
 		return await this.entitlementCheckService.check(input as any);
@@ -125,10 +147,16 @@ export class EntitlementResolver {
 	/**
 	 * Grants a right.
 	 *
+	 * No version is stated: a right is created here rather than edited, so there is none to have read,
+	 * and the created right carries its version back in the payload. The retry scope is
+	 * `entitlement.create`, the scope the grant route declares.
+	 *
 	 * @param input The grant.
 	 * @returns The payload, carrying the right and — once — the plaintext of any key it issued.
 	 */
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_GRANT)
+	@Idempotent({ scope: 'entitlement.create', required: false, resourceType: 'entitlement' })
+	@Versioned({ resource: EntitlementService, required: false })
 	@Mutation('grantEntitlement')
 	async grantEntitlement(@Args('input') input: IEntitlementGrantInput) {
 		try {
@@ -149,15 +177,24 @@ export class EntitlementResolver {
 	/**
 	 * Withdraws a right.
 	 *
+	 * The retry scope is `entitlement.revoke`, the scope the withdrawal route declares, and the key is
+	 * presented as the `idempotencyKey` argument this field advertises.
+	 *
 	 * @param id The right.
 	 * @param reason Why.
+	 * @param context The operation context, which carries the version the caller read the right at.
 	 * @returns The payload.
 	 */
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Idempotent({ scope: 'entitlement.revoke', required: false, resourceType: 'entitlement' })
+	@Versioned({ resource: EntitlementService })
 	@Mutation('revokeEntitlement')
-	async revokeEntitlement(@Args('id') id: ID, @Args('reason') reason: string) {
+	async revokeEntitlement(@Args('id') id: ID, @Args('reason') reason: string, @Context() context: any) {
 		try {
-			return { entitlement: await this.entitlementService.revoke(id, reason), userErrors: [] };
+			return {
+				entitlement: await this.entitlementService.revoke(id, reason, {}, versionExpectationOf(context?.req)),
+				userErrors: []
+			};
 		} catch (error) {
 			return { entitlement: null, userErrors: [toUserError(error)] };
 		}
@@ -166,21 +203,33 @@ export class EntitlementResolver {
 	/**
 	 * Extends the term of a right.
 	 *
+	 * The retry scope is `entitlement.extend`, the scope the extension route declares: an extension
+	 * moves the right's own term, so a retry under one key must not move it twice.
+	 *
 	 * @param id The right.
 	 * @param endsAt The new end of the term.
 	 * @param quantity The quantity the renewal was billed for.
+	 * @param context The operation context, which carries the version the caller read the right at.
 	 * @returns The payload.
 	 */
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Idempotent({ scope: 'entitlement.extend', required: false, resourceType: 'entitlement' })
+	@Versioned({ resource: EntitlementService })
 	@Mutation('extendEntitlement')
 	async extendEntitlement(
 		@Args('id') id: ID,
 		@Args('endsAt') endsAt: Date,
-		@Args('quantity') quantity?: number
+		@Args('quantity') quantity?: number,
+		@Context() context?: any
 	) {
 		try {
 			return {
-				entitlement: await this.entitlementService.extend(id, { endsAt: new Date(endsAt), quantity }),
+				entitlement: await this.entitlementService.extend(
+					id,
+					{ endsAt: new Date(endsAt), quantity },
+					{},
+					versionExpectationOf(context?.req)
+				),
 				userErrors: []
 			};
 		} catch (error) {

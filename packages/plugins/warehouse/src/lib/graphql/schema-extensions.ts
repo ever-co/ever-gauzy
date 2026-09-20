@@ -555,12 +555,20 @@ export const schemaExtensions = gql`
 		sortOrder: Int
 	}
 
-	"The scope of a bin reconciliation."
+	"""
+	The scope of a bin reconciliation.
+
+	\`version\` is the level counter the run is conditioned on and \`idempotencyKey\` the key a retry
+	presents; both are nullable and both answer exactly as the REST route answers, because a run walks
+	a batch of levels and a caller cannot name one version for all of them.
+	"""
 	input ReconcileBinsInput {
 		warehouseId: ID!
 		zoneId: ID
 		binIds: [ID!]
 		repair: Boolean
+		version: Int
+		idempotencyKey: String
 	}
 
 	"What one reconciliation found."
@@ -618,7 +626,7 @@ export const schemaExtensions = gql`
 		fulfillmentIds: [ID!]
 	}
 
-	"What sealing a slip recorded."
+	"What sealing a slip recorded. \`idempotencyKey\` is the key a retry of the seal presents."
 	input PackSlipContentInput {
 		packageCount: Int!
 		totalWeight: Decimal
@@ -627,6 +635,7 @@ export const schemaExtensions = gql`
 		trackingNumber: String
 		labelUrl: String
 		note: String
+		idempotencyKey: String
 	}
 
 	"The definition of a manifest."
@@ -640,12 +649,13 @@ export const schemaExtensions = gql`
 		note: String
 	}
 
-	"What the dock recorded at hand-over."
+	"What the dock recorded at hand-over. \`idempotencyKey\` is the key a retry of the hand-over presents."
 	input HandOverManifestInput {
 		scanCount: Int
 		"Tracking numbers the carrier scanned that the manifest does not carry."
 		scannedTrackingNumbers: [String!]
 		note: String
+		idempotencyKey: String
 	}
 
 	"The outcome of a mutation on a zone."
@@ -672,13 +682,21 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
-	"One home-bin declaration: the variant and the location it is kept at."
+	"""
+	One home-bin declaration: the variant and the location it is kept at.
+
+	\`version\` is the level counter the declaration is conditioned on — the address is part of the
+	state a caller reads, so a declaration overwriting a concurrent one is the same lost update as a
+	quantity — and \`idempotencyKey\` is the key a retry presents.
+	"""
 	input AssignWarehouseBinInput {
 		variantId: ID!
 		warehouseId: ID!
 		"The level row, when the caller has it."
 		levelId: ID
 		reason: String
+		version: Int
+		idempotencyKey: String
 	}
 
 	"The outcome of declaring a home bin. Nothing moved, so there is no movement to report."
@@ -688,7 +706,13 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
-	"One put-away: the units being placed, and where they walk from."
+	"""
+	One put-away: the units being placed, and where they walk from.
+
+	\`version\` is the level counter the walk is conditioned on, so units are never walked into an
+	address whose state the caller has not seen, and \`idempotencyKey\` is the key a retry presents —
+	a second walk of the same units is a second arrival.
+	"""
 	input PutAwayWarehouseBinInput {
 		variantId: ID!
 		warehouseId: ID!
@@ -701,6 +725,8 @@ export const schemaExtensions = gql`
 		"The row that asked for the walk."
 		referenceId: ID
 		reason: String
+		version: Int
+		idempotencyKey: String
 	}
 
 	"What a put-away wrote."
@@ -808,7 +834,7 @@ export const schemaExtensions = gql`
 		"Updates a bin."
 		updateWarehouseBin(id: ID!, input: WarehouseBinInput!): WarehouseBinPayload!
 		"Moves a bin and its subtree inside its zone."
-		reparentWarehouseBin(id: ID!, parentId: ID): WarehouseBinPayload!
+		reparentWarehouseBin(id: ID!, parentId: ID, idempotencyKey: String): WarehouseBinPayload!
 		"Blocks a bin, or puts it back into service."
 		setWarehouseBinBlocked(id: ID!, isBlocked: Boolean!): WarehouseBinPayload!
 		"Deletes a bin that is empty and holds no position under it."
@@ -822,13 +848,13 @@ export const schemaExtensions = gql`
 		"Creates a wave and the picking work it covers."
 		createPickWave(input: PickWaveInput!): PickWavePayload!
 		"Releases a wave to the floor."
-		releasePickWave(id: ID!, pickerUserId: ID): PickWavePayload!
+		releasePickWave(id: ID!, pickerUserId: ID, idempotencyKey: String): PickWavePayload!
 		"Marks a released wave as being walked."
 		startPickWave(id: ID!): PickWavePayload!
 		"Completes a wave whose lists are all done."
 		completePickWave(id: ID!): PickWavePayload!
 		"Closes a wave whose output was packed and manifested."
-		closePickWave(id: ID!): PickWavePayload!
+		closePickWave(id: ID!, idempotencyKey: String): PickWavePayload!
 		"Closes a wave short, releasing the work that will not be done."
 		closePickWaveShort(id: ID!, reason: String): PickWavePayload!
 		"Cancels a wave nothing has been picked from."
@@ -852,6 +878,9 @@ export const schemaExtensions = gql`
 			lotNumber: String
 			serialNumbers: [String!]
 			note: String
+			"The level counter the outcome is conditioned on, stated as the input member \`version\`."
+			version: Int
+			idempotencyKey: String
 		): PickListLinePayload!
 		"Records a substitute: a different unit was taken."
 		substitutePickListLine(
@@ -862,6 +891,8 @@ export const schemaExtensions = gql`
 			substitutionReason: String
 			binId: ID
 			note: String
+			version: Int
+			idempotencyKey: String
 		): PickListLinePayload!
 		"Records a line the picker deliberately did not collect."
 		skipPickListLine(pickListId: ID!, lineId: ID!, note: String): PickListLinePayload!

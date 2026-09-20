@@ -5,6 +5,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -113,6 +114,7 @@ export class PackSlipController extends CrudController<PackSlip> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'The slip was packed and is now immutable.' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'A covered line has no outcome.' })
 	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Idempotent({ scope: 'warehouse.pack', required: false, resourceType: 'pack-slip' })
 	@Post(':id/pack')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async pack(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: PackSlipContentDTO): Promise<PackSlip> {

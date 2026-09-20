@@ -4,6 +4,7 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -95,6 +96,9 @@ export class PaymentProviderController extends CrudController<PaymentProvider> {
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Provider registered' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Code taken, or a credential in the configuration' })
 	@Permissions(PaymentPermission.PAYMENT_PROVIDERS_CREATE as PermissionsEnum)
+	// A registration is refused when the code is taken, which already makes a duplicate harmless, so the
+	// key is optional: a client that presents one is answered from the record instead of being refused.
+	@Idempotent({ scope: 'payment.provider.create', required: false, resourceType: 'payment_provider' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async create(@Body() entity: CreatePaymentProviderDTO): Promise<IPaymentProvider> {

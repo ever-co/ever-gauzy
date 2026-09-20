@@ -6,6 +6,7 @@ import {
 	BaseQueryDTO,
 	CrudController,
 	FeatureFlagGuard,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -49,6 +50,12 @@ export class EntitlementActivationController extends CrudController<EntitlementA
 	 * rather than a second one. It is refused with a stable code when the right is withdrawn, past its
 	 * term, above its activation ceiling or out of seats.
 	 *
+	 * The retry scope is `entitlement.activate` — the slot operation this plugin serves on a route. The
+	 * only other activation the domain performs is the event-driven `EntitlementService.activateGranted`,
+	 * which puts a purchased right into force and has no route of its own, so this scope names taking a
+	 * seat and nothing else. A key is not required; a client that presents one and repeats the call is
+	 * answered from the first attempt rather than taking a second slot.
+	 *
 	 * @param entity The right, the device and the key when one is used.
 	 * @returns The activation, with the right it belongs to and what is left of it as extra members.
 	 */
@@ -57,6 +64,7 @@ export class EntitlementActivationController extends CrudController<EntitlementA
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The entitlement refuses the activation.' })
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_GRANT)
 	@HttpCode(HttpStatus.CREATED)
+	@Idempotent({ scope: 'entitlement.activate', required: false, resourceType: 'entitlement_activation' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(

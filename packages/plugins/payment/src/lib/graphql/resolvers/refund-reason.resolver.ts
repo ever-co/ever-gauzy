@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { RefundReasonService } from '../../refund-reason/refund-reason.service';
 import { IRefundReason } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
@@ -71,6 +71,9 @@ export class RefundReasonResolver {
 	 * Creates a reason, optionally as a refinement of an existing one.
 	 */
 	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	// A reason is refused when its code is taken, so the key is optional here exactly as it is on the REST
+	// route, under the same scope.
+	@Idempotent({ scope: 'refund.reason.create', required: false, resourceType: 'refund_reason' })
 	@Mutation('createRefundReason')
 	async createRefundReason(
 		@Args('input') input: ICreateRefundReasonGraphInput

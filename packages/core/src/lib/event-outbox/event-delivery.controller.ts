@@ -4,6 +4,7 @@ import { EventOutboxStatus, ID, IEventDelivery, IPagination, PermissionsEnum } f
 import { paginateRows, resolveRestPage } from '../api/graphql-connection';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { Permissions } from '../shared/decorators';
+import { Idempotent } from '../idempotency/idempotent.decorator';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
 import { EventOutboxService } from './event-outbox.service';
@@ -93,6 +94,7 @@ export class EventDeliveryController {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Delivery record re-queued' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'RESOURCE_NOT_FOUND' })
 	@Permissions(PermissionsEnum.EVENT_OUTBOX_RETRY)
+	@Idempotent({ scope: 'event.delivery.replay', resourceType: 'event_delivery' })
 	@HttpCode(HttpStatus.OK)
 	@Post(':id/replay')
 	async replay(@Param('id', UUIDValidationPipe) id: ID): Promise<IEventDelivery> {
@@ -113,6 +115,7 @@ export class EventDeliveryController {
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'RESOURCE_NOT_FOUND' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'VALIDATION_REQUIRED_FIELD' })
 	@Permissions(PermissionsEnum.EVENT_OUTBOX_RETRY)
+	@Idempotent({ scope: 'event.delivery.mark-dead', resourceType: 'event_delivery' })
 	@HttpCode(HttpStatus.OK)
 	@Post(':id/mark-dead')
 	@UseValidationPipe({ transform: true, whitelist: true })

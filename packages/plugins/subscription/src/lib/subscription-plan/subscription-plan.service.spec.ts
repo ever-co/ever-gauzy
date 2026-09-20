@@ -81,6 +81,7 @@ jest.mock('@gauzy/core', () => {
 		MultiORMEntity: decorator,
 		MultiORMManyToOne: decorator,
 		MultiORMOneToMany: decorator,
+		VersionedColumn: decorator,
 		JsonColumn: decorator,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {

@@ -2,6 +2,8 @@ import { NotFoundException } from '@nestjs/common';
 import { In, LessThan } from 'typeorm';
 import { IIdempotencyStartInput, IdempotencyOutcome, IdempotencyStatus } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
+import { ApiErrorCode } from '../core/errors/api-error-codes';
+import { ApiException } from '../core/errors/api-exception';
 import { IdempotencyKey } from './idempotency-key.entity';
 import { IdempotencyService } from './idempotency.service';
 import { TypeOrmIdempotencyKeyRepository } from './repository/type-orm-idempotency-key.repository';
@@ -101,6 +103,16 @@ class KeyTable {
 		const matched = this.rows.filter((row) => matches(row, options.where ?? {}));
 
 		return typeof options.take === 'number' ? matched.slice(0, options.take) : matched;
+	}
+
+	async findAndCount(options: { where?: Row; take?: number; skip?: number } = {}): Promise<[Row[], number]> {
+		const matched = this.rows.filter((row) => matches(row, options.where ?? {}));
+		const skip = typeof options.skip === 'number' ? options.skip : 0;
+		const window = typeof options.take === 'number' ? matched.slice(skip, skip + options.take) : matched.slice(skip);
+
+		// The total is the rows the criteria select rather than the rows this page carries, which is what
+		// the operator's read reports as the page's total and what an assertion about narrowing needs.
+		return [window, matched.length];
 	}
 
 	async delete(criteria: Row): Promise<{ affected: number }> {
@@ -465,5 +477,126 @@ describe('the cleanup sweep', () => {
 			expiresAt: expect.any(Object),
 			status: expect.any(Object)
 		});
+	});
+});
+
+describe('the operator surface', () => {
+	/** The caller the operator reads are scoped by. */
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-1');
+	});
+
+	/** One stored key, with the columns the operator reads answer. */
+	const stored = (table: KeyTable, overrides: Row = {}): Row => {
+		const created = table.create({
+			tenantId: 'tenant-1',
+			organizationId: 'org-1',
+			scope: 'checkout.complete',
+			key: 'key-12345678',
+			requestHash: 'a'.repeat(64),
+			status: IdempotencyStatus.COMPLETED,
+			responseStatus: 201,
+			responseBody: { id: 'order-1', total: '10.000000' },
+			resourceType: 'order',
+			resourceId: 'order-1',
+			expiresAt: new Date('2026-03-02T10:00:00Z'),
+			createdAt: new Date('2026-03-01T10:00:00Z'),
+			...overrides
+		});
+
+		table.rows.push(created);
+
+		return created;
+	};
+
+	it('lists the caller\'s keys and never the response a key holds', async () => {
+		const { service, table } = store();
+
+		stored(table);
+		stored(table, { id: undefined, scope: 'order.capture', key: 'key-87654321' });
+
+		const page = await service.listKeys();
+
+		expect(page.total).toBe(2);
+		expect(page.items).toHaveLength(2);
+		// The stored response is the calling client's own data. The permission to release a key is a
+		// permission to unblock a retry, not a permission to read what the retry produced.
+		expect(page.items[0]).not.toHaveProperty('responseBody');
+		expect(page.items[0]).toHaveProperty('resourceId', 'order-1');
+	});
+
+	it('narrows the list by the columns an operator searches by', async () => {
+		const { service, table } = store();
+
+		stored(table);
+		stored(table, { id: undefined, scope: 'order.capture', key: 'key-87654321', resourceType: 'payment' });
+
+		expect((await service.listKeys({ scope: 'order.capture' })).total).toBe(1);
+		expect((await service.listKeys({ key: 'key-12345678' })).total).toBe(1);
+		expect((await service.listKeys({ status: IdempotencyStatus.IN_PROGRESS })).total).toBe(0);
+		expect((await service.listKeys({ resourceType: 'order' })).total).toBe(1);
+	});
+
+	it('answers another organization\'s key as absent rather than refusing it', async () => {
+		const { service, table } = store();
+
+		const mine = stored(table);
+		stored(table, { id: 'theirs', organizationId: 'org-2', key: 'key-99999999' });
+
+		expect(await service.findKeyOrFail(mine.id as string)).toMatchObject({ id: mine.id });
+		// A refusal that said "this key belongs to somebody else" would be a disclosure. `404` says no
+		// such key is stored, which is exactly what is true for this caller.
+		await expect(service.findKeyOrFail('theirs')).rejects.toThrow(/RESOURCE_NOT_FOUND/);
+	});
+
+	it('releases a settled key by removing it, so the retry is a first attempt again', async () => {
+		const { service, table } = store();
+
+		const released = stored(table);
+
+		await service.release(released.id as string);
+
+		expect(table.rows).toHaveLength(0);
+		// What the caller is answered is the row as it stood, without the response it held.
+		expect(released.responseBody).toBeDefined();
+	});
+
+	it('refuses to release a claim whose work is still running', async () => {
+		at('2026-03-01T10:00:00Z');
+
+		const { service, table } = store();
+
+		const live = stored(table, {
+			status: IdempotencyStatus.IN_PROGRESS,
+			lockedAt: new Date('2026-03-01T09:59:30Z'),
+			responseStatus: undefined,
+			responseBody: undefined
+		});
+
+		const refusal = await service.release(live.id as string).catch((error) => error);
+
+		// The same refusal the retry-safety interceptor answers a concurrent duplicate with, because it
+		// is the same fact: a claim is live and removing it would let the work run twice.
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect((refusal as ApiException).code).toBe(ApiErrorCode.IDEMPOTENCY_IN_PROGRESS);
+		expect((refusal as ApiException).getStatus()).toBe(409);
+		// Control: the row is what the refusal protects.
+		expect(table.rows).toHaveLength(1);
+	});
+
+	it('releases a claim whose lease has gone stale, because nothing is executing it any more', async () => {
+		at('2026-03-01T10:00:00Z');
+
+		const { service, table } = store();
+
+		const abandoned = stored(table, {
+			status: IdempotencyStatus.IN_PROGRESS,
+			lockedAt: new Date('2026-03-01T09:50:00Z')
+		});
+
+		await service.release(abandoned.id as string);
+
+		expect(table.rows).toHaveLength(0);
 	});
 });

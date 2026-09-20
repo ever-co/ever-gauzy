@@ -14,6 +14,7 @@ import { TenantAwareCrudService } from '@gauzy/core';
 import { OrderChange } from './order-change.entity';
 import { TypeOrmOrderChangeRepository } from './repository/type-orm-order-change.repository';
 import { MikroOrmOrderChangeRepository } from './repository/mikro-orm-order-change.repository';
+import { ANY_ORDER_VERSION, OrderVersionExpectation } from '../order.types';
 import { OrderChangeAction } from '../order-change-action/order-change-action.entity';
 import { OrderChangeActionService } from '../order-change-action/order-change-action.service';
 import { OrderCreditLine } from '../order-credit-line/order-credit-line.entity';
@@ -65,6 +66,13 @@ const DELEGATED_ACTIONS: Partial<Record<OrderChangeActionType, string>> = {
  * **A change is applied atomically.** Its actions are validated as a set before any of them runs, then
  * applied in `ordering` sequence, and only then does the change move to `APPLIED` and the order's
  * version and totals move with it. A change that cannot be applied leaves the order untouched.
+ *
+ * **Every write of a change row happens inside a write of the order**, and the order's version is what
+ * predicated it: a change is part of the aggregate the order's version describes, so the caller states
+ * the version of the *order* it read — as an `If-Match` header, or as the `version` argument of a
+ * mutation — and the statement that checks and increments that version is the order's own conditional
+ * update. The change carries no version of its own: the `version` column on this row is the order
+ * version the change produces, which is a different fact, and one lock per fact is the rule.
  */
 @Injectable()
 export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
@@ -82,6 +90,55 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 		private readonly totalsService: OrderTotalsService
 	) {
 		super(typeOrmOrderChangeRepository, mikroOrmOrderChangeRepository);
+	}
+
+	/**
+	 * Writes fields onto a change under the version of the order it belongs to.
+	 *
+	 * A change carries no version of its own: every write to it happens inside a write of the order, and
+	 * the order's version is the one a caller states and the one the conditional update checks. The
+	 * change is read first because the request names it and not the order — the route takes `:id`, which
+	 * is the change — so the aggregate the version belongs to is discovered here rather than in a guard.
+	 *
+	 * @param changeId The change.
+	 * @param changes The fields to write.
+	 * @param expectation The version the caller read the order at.
+	 * @returns The change, as written.
+	 */
+	public async commitChange(
+		changeId: ID,
+		changes: DeepPartial<OrderChange>,
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<OrderChange> {
+		const change = await this.loadChange(changeId);
+
+		await this.writeUnderOrderVersion(change, changes, 'CHANGE_UPDATED', expectation);
+
+		return this.findOneByIdString(change.id);
+	}
+
+	/**
+	 * Writes a change's own columns under the version of the order it belongs to.
+	 *
+	 * The order's write is made **first**, so a caller that read an order which has moved on is refused
+	 * before anything about the change is written, and it is the only version-predicated statement of
+	 * the pair — a change is part of what the order's version describes, so a lock on this row would be a
+	 * second answer to the question the order's version already answers.
+	 *
+	 * @param change The change, already loaded.
+	 * @param changes The fields to write.
+	 * @param reason Why the order's version moved, recorded on the summary row.
+	 * @param expectation The version the caller read the order at.
+	 */
+	private async writeUnderOrderVersion(
+		change: OrderChange,
+		changes: DeepPartial<OrderChange>,
+		reason: string,
+		expectation: OrderVersionExpectation
+	): Promise<void> {
+		await this.totalsService.recompute(change.orderId, reason, { expectation });
+
+		await this.update(change.id, changes as any);
 	}
 
 	/**
@@ -162,10 +219,21 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	/**
 	 * Applies a change.
 	 *
+	 * The change's own columns are written plainly and the order's write is the version-predicated one,
+	 * because the order's version is the aggregate's lock: a caller that read an order which has moved on
+	 * is refused by that statement rather than by a lock on this row. The change's status is written
+	 * first, so a confirmation raced by another writer fails closed — a retry is refused as an already
+	 * applied change rather than re-running the actions — and the idempotency key the route requires is
+	 * what makes the retry a replay of the first answer instead.
+	 *
 	 * @param changeId The change.
+	 * @param expectation The version the caller read the order at.
 	 * @returns The change, now `APPLIED`, and the order it moved.
 	 */
-	public async confirm(changeId: ID): Promise<{ change: OrderChange; order: unknown }> {
+	public async confirm(
+		changeId: ID,
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<{ change: OrderChange; order: unknown }> {
 		const change = await this.findOneByIdString(changeId, { relations: ['actions'] });
 
 		if (!change) {
@@ -202,7 +270,13 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 			changeType: change.changeType
 		});
 
-		const order = await this.totalsService.recompute(change.orderId, 'CHANGE_CONFIRMED');
+		// The one version-predicated write of this operation, and the one statement that increments the
+		// order's version. The columns the change states about the order itself ride it: a property
+		// written on its own would be a second write of the same row, judged by nothing.
+		const order = await this.totalsService.recompute(change.orderId, 'CHANGE_CONFIRMED', {
+			expectation,
+			patch: this.orderPropertiesOf(actions)
+		});
 
 		return { change: await this.findOneByIdString(change.id, { relations: ['actions'] }), order };
 	}
@@ -212,9 +286,14 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	 *
 	 * @param changeId The change.
 	 * @param reason Why it was declined.
+	 * @param expectation The version the caller read the order at.
 	 * @returns The declined change.
 	 */
-	public async decline(changeId: ID, reason?: string): Promise<OrderChange> {
+	public async decline(
+		changeId: ID,
+		reason?: string,
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<OrderChange> {
 		const change = await this.loadChange(changeId);
 
 		if (!NON_TERMINAL_STATUSES.includes(change.status)) {
@@ -223,11 +302,16 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 			);
 		}
 
-		await this.update(change.id, {
-			status: OrderChangeStatus.DECLINED,
-			declinedAt: new Date(),
-			metadata: { ...(change.metadata ?? {}), declineReason: reason }
-		} as any);
+		await this.writeUnderOrderVersion(
+			change,
+			{
+				status: OrderChangeStatus.DECLINED,
+				declinedAt: new Date(),
+				metadata: { ...(change.metadata ?? {}), declineReason: reason }
+			},
+			'CHANGE_DECLINED',
+			expectation
+		);
 		await this.historyService.record(change.orderId, 'CHANGE_DECLINED', 'A change was declined', {
 			changeId: change.id,
 			reason
@@ -241,9 +325,14 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	 *
 	 * @param changeId The change.
 	 * @param reason Why it was cancelled.
+	 * @param expectation The version the caller read the order at.
 	 * @returns The cancelled change.
 	 */
-	public async cancel(changeId: ID, reason?: string): Promise<OrderChange> {
+	public async cancel(
+		changeId: ID,
+		reason?: string,
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<OrderChange> {
 		const change = await this.loadChange(changeId);
 
 		if (!NON_TERMINAL_STATUSES.includes(change.status)) {
@@ -252,11 +341,16 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 			);
 		}
 
-		await this.update(change.id, {
-			status: OrderChangeStatus.CANCELED,
-			canceledAt: new Date(),
-			metadata: { ...(change.metadata ?? {}), cancelReason: reason }
-		} as any);
+		await this.writeUnderOrderVersion(
+			change,
+			{
+				status: OrderChangeStatus.CANCELED,
+				canceledAt: new Date(),
+				metadata: { ...(change.metadata ?? {}), cancelReason: reason }
+			},
+			'CHANGE_CANCELED',
+			expectation
+		);
 		await this.historyService.record(change.orderId, 'CHANGE_CANCELED', 'A change was cancelled', {
 			changeId: change.id,
 			reason
@@ -487,18 +581,10 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 				break;
 			}
 
-			case OrderChangeActionType.UPDATE_ORDER_PROPERTIES: {
-				const changes: Record<string, unknown> = {};
-
-				for (const field of ['email', 'phone', 'locale', 'note', 'metadata']) {
-					if (details[field] !== undefined) {
-						changes[field] = details[field];
-					}
-				}
-
-				await this.typeOrmOrderRepository.update(change.orderId, changes as any);
+			case OrderChangeActionType.UPDATE_ORDER_PROPERTIES:
+				// Written with the totals, by the one version-predicated write of the order aggregate:
+				// `orderPropertiesOf` folds every action of this kind into that write's patch.
 				break;
-			}
 
 			case OrderChangeActionType.NOTE_ADD:
 				await this.historyService.record(change.orderId, 'NOTE_ADDED', details['title'] ?? 'Note added', {
@@ -543,6 +629,38 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 					details: { action: action.action }
 				});
 		}
+	}
+
+	/**
+	 * The order's own columns a change states, folded into one patch.
+	 *
+	 * Only the fields a placed order may still change are read: everything else about an order is a
+	 * ledger or a cache, and a change that named one of those would be this package editing a fact the
+	 * writer that owns it is responsible for. Several actions of the same kind fold in application
+	 * order, so the last statement of a field is the one that lands — which is what applying them in
+	 * sequence would have produced.
+	 *
+	 * @param actions The change's actions, in application order.
+	 * @returns The columns to write with the totals.
+	 */
+	private orderPropertiesOf(actions: readonly OrderChangeAction[]): Record<string, unknown> {
+		const changes: Record<string, unknown> = {};
+
+		for (const action of actions) {
+			if (action.action !== OrderChangeActionType.UPDATE_ORDER_PROPERTIES) {
+				continue;
+			}
+
+			const details = (action.details ?? {}) as Record<string, any>;
+
+			for (const field of ['email', 'phone', 'locale', 'note', 'metadata']) {
+				if (details[field] !== undefined) {
+					changes[field] = details[field];
+				}
+			}
+		}
+
+		return changes;
 	}
 
 	/**

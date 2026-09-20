@@ -10,7 +10,8 @@ import {
 	VERSION_EXPECTATION_PROPERTY,
 	isReadOnlyMethod,
 	parseEntityVersion,
-	evaluateVersionPrecondition
+	evaluateVersionPrecondition,
+	versionFromResolverArgs
 } from './version.util';
 import type { IVersionedOptions } from './versioned.decorator';
 
@@ -71,7 +72,13 @@ export class VersionGuard implements CanActivate {
 		const row = options.resource && id ? await this.readRow(options.resource, id) : undefined;
 
 		const decision = evaluateVersionPrecondition({
-			ifMatch: readRequestHeader(request, IF_MATCH_HEADER),
+			// One HTTP request carries one `If-Match`, so REST states the version in a header. A
+			// GraphQL request carries as many mutations as its document selects, and a header could
+			// not say which of them the version belongs to, so the version rides beside the input it
+			// qualifies. Both forms reach the same comparison, and both answer the same codes.
+			ifMatch: isGraphql
+				? versionFromResolverArgs(context.getArgByIndex?.(1))
+				: readRequestHeader(request, IF_MATCH_HEADER),
 			write,
 			required: options.required,
 			...(row ? { exists: row.exists, currentVersion: row.version } : {})
@@ -85,16 +92,20 @@ export class VersionGuard implements CanActivate {
 				throw new ApiException(
 					428,
 					ApiErrorCode.VERSION_REQUIRED,
-					`This operation changes a record that carries a version; state the version you read in an ${IF_MATCH_HEADER} header.`,
-					{ header: IF_MATCH_HEADER }
+					isGraphql
+						? 'This operation changes a record that carries a version; state the version you read as the input member `version`.'
+						: `This operation changes a record that carries a version; state the version you read in an ${IF_MATCH_HEADER} header.`,
+					isGraphql ? { field: 'version' } : { header: IF_MATCH_HEADER }
 				);
 
 			case 'INVALID':
 				throw new ApiException(
 					400,
 					ApiErrorCode.VALIDATION_FAILED,
-					`The ${IF_MATCH_HEADER} header is not a version.`,
-					{ field: IF_MATCH_HEADER, reason: decision.reason }
+					isGraphql
+						? 'The `version` you stated is not a version.'
+						: `The ${IF_MATCH_HEADER} header is not a version.`,
+					isGraphql ? { field: 'version', reason: decision.reason } : { field: IF_MATCH_HEADER, reason: decision.reason }
 				);
 
 			case 'NOT_FOUND':

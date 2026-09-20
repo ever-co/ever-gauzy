@@ -12,6 +12,7 @@ import {
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -70,6 +71,12 @@ export class SellerController extends CrudController<Seller> {
 	/**
 	 * Creates a seller account on the seller's behalf.
 	 *
+	 * `seller.create` is adopted as retry-safe without requiring a key: an applicant that re-sends an
+	 * application it never saw acknowledged is answered with the seller the first attempt created rather
+	 * than with the collision its own code causes. The key stays optional because the organization's own
+	 * uniqueness on the code already refuses the second row, so a client that presents no key is served
+	 * exactly as it was before.
+	 *
 	 * @param entity The seller to create.
 	 * @returns The created seller.
 	 */
@@ -77,6 +84,7 @@ export class SellerController extends CrudController<Seller> {
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Seller created successfully', type: Seller })
 	@Permissions(PermissionsEnum.SELLERS_CREATE)
 	@HttpCode(HttpStatus.CREATED)
+	@Idempotent({ scope: 'seller.create', required: false, resourceType: 'seller' })
 	@Post('/')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateSellerDTO): Promise<Seller> {
@@ -119,12 +127,18 @@ export class SellerController extends CrudController<Seller> {
 	/**
 	 * Records one verification kind's result.
 	 *
+	 * `seller.verify` is adopted as retry-safe without requiring a key: a verifier that re-sends a
+	 * verdict it never saw acknowledged would stamp a fresh verification date over the one already
+	 * recorded, so a client that presents a key is answered from its first attempt instead. The key
+	 * stays optional because a repeated verdict converges on the same status either way.
+	 *
 	 * @param id The seller id.
 	 * @param body The verification result.
 	 * @returns The seller with its verification statuses.
 	 */
 	@ApiOperation({ summary: 'Record a verification result' })
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
+	@Idempotent({ scope: 'seller.verify', required: false, resourceType: 'seller' })
 	@Post('/:id/verify')
 	@UseValidationPipe({ transform: true })
 	async verify(
@@ -199,11 +213,17 @@ export class SellerController extends CrudController<Seller> {
 	/**
 	 * Starts winding a seller down.
 	 *
+	 * `seller.offboard` is adopted as retry-safe without requiring a key: the move is a lifecycle
+	 * transition, so a second attempt is refused by the state machine rather than applied twice, and
+	 * answering it from the first attempt's record is the more useful of the two answers. The key stays
+	 * optional because a client that presents none is already protected by that refusal.
+	 *
 	 * @param id The seller id.
 	 * @returns The seller, in `OFFBOARDING`.
 	 */
 	@ApiOperation({ summary: 'Start offboarding a seller' })
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
+	@Idempotent({ scope: 'seller.offboard', required: false, resourceType: 'seller' })
 	@Post('/:id/offboard')
 	async offboard(@Param('id', UUIDValidationPipe) id: ID): Promise<Seller> {
 		return this.sellerService.startOffboarding(id);

@@ -4,6 +4,7 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
@@ -79,6 +80,10 @@ export class PaymentCaptureController extends CrudController<PaymentCapture> {
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Capture recorded' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Not authorised, already captured, or over capture' })
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CAPTURE as PermissionsEnum)
+	// A capture is money taken, so a client that lost the answer must be given the first capture back
+	// rather than take the authorisation a second time. The key is therefore mandatory here: a retried
+	// capture without one is refused before the service is reached.
+	@Idempotent({ scope: 'payment.capture', required: true, resourceType: 'payment' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async create(@Body() entity: CreatePaymentCaptureDTO): Promise<IPaymentCapture> {

@@ -10,7 +10,7 @@ import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/
 import { UseGuards } from '@nestjs/common';
 import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { EventBus, Idempotent, Permissions, PermissionGuard, TenantPermissionGuard, Versioned } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockTransferStatus } from './../inventory.enums';
 import { StockTransfer } from './../stock-transfer/stock-transfer.entity';
@@ -29,6 +29,7 @@ export class StockTransferResolver {
 	/** Transfers, filtered by state. */
 	@Query('stockTransfers')
 	@Permissions(InventoryPermission.STOCK_TRANSFER_VIEW as PermissionsEnum)
+	@Versioned({ write: false })
 	async stockTransfers(@Args('status') status: StockTransferStatus): Promise<any> {
 		return await this.service.findTransfers({ where: { status } });
 	}
@@ -36,28 +37,57 @@ export class StockTransferResolver {
 	/** One transfer with its lines. */
 	@Query('stockTransfer')
 	@Permissions(InventoryPermission.STOCK_TRANSFER_VIEW as PermissionsEnum)
+	@Versioned({ write: false })
 	async stockTransfer(@Args('id') id: string): Promise<any> {
 		return await this.service.findOneByIdString(id, { relations: ["lines"] });
 	}
 
-	/** Drafts a transfer and numbers it. */
+	/** Drafts a transfer and numbers it. The key makes a retry of the draft safe. */
 	@Mutation('createStockTransfer')
 	@Permissions(InventoryPermission.STOCK_TRANSFER_CREATE as PermissionsEnum)
+	@Idempotent({ scope: 'transfer.create', required: false, resourceType: 'stock-transfer' })
 	async createStockTransfer(@Args('input') input: any): Promise<any> {
 		return await this.service.createTransfer(input);
 	}
 
-	/** Dispatches a transfer and writes the outbound movements. */
+	/**
+	 * Dispatches a transfer and writes the outbound movements.
+	 *
+	 * The movements land on the levels of the source location, one per line, so the level write is
+	 * protected by the engine's own compare-and-set: one mutation cannot carry the version of many
+	 * records. The key is what makes a retry of the dispatch safe, and it carries the same scope the
+	 * REST route declares, so the two protocols answer a retry identically.
+	 */
 	@Mutation('shipStockTransfer')
 	@Permissions(InventoryPermission.STOCK_TRANSFER_SHIP as PermissionsEnum)
-	async shipStockTransfer(@Args('id') id: string, @Args('lines') lines: any[]): Promise<any> {
+	@Idempotent({ scope: 'transfer.ship', required: false, resourceType: 'stock-transfer' })
+	async shipStockTransfer(
+		@Args('id') id: string,
+		@Args('lines') lines: any[],
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey: string
+	): Promise<any> {
+		void idempotencyKey;
+
 		return await this.service.ship(id, lines);
 	}
 
-	/** Receives a transfer and writes the inbound movements. */
+	/**
+	 * Receives a transfer and writes the inbound movements.
+	 *
+	 * The movements land on the levels of the destination location, one per line, for the same reason
+	 * the dispatch leaves the level write to the engine's compare-and-set. The key mirrors the REST
+	 * scope.
+	 */
 	@Mutation('receiveStockTransfer')
 	@Permissions(InventoryPermission.STOCK_TRANSFER_RECEIVE as PermissionsEnum)
-	async receiveStockTransfer(@Args('id') id: string, @Args('lines') lines: any[]): Promise<any> {
+	@Idempotent({ scope: 'transfer.receive', required: false, resourceType: 'stock-transfer' })
+	async receiveStockTransfer(
+		@Args('id') id: string,
+		@Args('lines') lines: any[],
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey: string
+	): Promise<any> {
+		void idempotencyKey;
+
 		return await this.service.receive(id, lines);
 	}
 

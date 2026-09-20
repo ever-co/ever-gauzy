@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { PaymentCaptureService } from '../../payment-capture/payment-capture.service';
 import { IPaymentCapture } from '../../payment.types';
 import { PaymentPermission } from '../../payment.permissions';
@@ -74,6 +74,9 @@ export class PaymentCaptureResolver {
 	 * collection with it.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CAPTURE as PermissionsEnum)
+	// The REST capture route requires a retry key and this mutation is the same operation, so it requires
+	// one too, under the same scope: the two surfaces must answer a retry of one capture identically.
+	@Idempotent({ scope: 'payment.capture', required: true, resourceType: 'payment' })
 	@Mutation('capturePayment')
 	async capturePayment(@Args('input') input: ICapturePaymentGraphInput): Promise<ICapturePaymentPayload> {
 		try {

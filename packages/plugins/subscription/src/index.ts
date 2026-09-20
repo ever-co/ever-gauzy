@@ -10,6 +10,7 @@ export * from './lib/subscription.scope';
 export * from './lib/subscription.permissions';
 export * from './lib/subscription.features';
 export * from './lib/database/migrations/1791000000320-CreateSubscriptionTables';
+export * from './lib/database/migrations/1791000000575-AddSubscriptionVersionColumn';
 export * from './lib/graphql/schema-extensions';
 export * from './lib/graphql/resolvers';
 

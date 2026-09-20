@@ -50,6 +50,26 @@ GraphQL, the same operations over the one platform schema: `orderReturns`, `orde
 `deleteOrderReturnReason`, `requestOrderClaim`, `approveOrderClaim`, `rejectOrderClaim`,
 `requestOrderExchange`, `approveOrderExchange`, `rejectOrderExchange`.
 
+## Retry safety and the return's version
+
+Two conventions ride on the routes that move goods and money, and both are the platform's own
+(`packages/core/src/lib/idempotency/` and `packages/core/src/lib/concurrency/`).
+
+**A retry key.** `POST /order-returns` and its mutation `requestOrderReturn` honour an
+`Idempotency-Key` header — the `idempotencyKey` input member over GraphQL — when one is presented.
+`POST /order-returns/:id/receive` and `receiveOrderReturn` require one, because receiving the same
+goods twice restocks and refunds them twice. A retry under the same key and the same bytes is answered
+with the first attempt's response instead of running the work again, and a key reused for a different
+request is refused with `IDEMPOTENCY_KEY_REUSED`.
+
+**A version.** A return carries a `version` that every write of its header moves on, and the version is
+incremented by the same statement that checks it. A write states the version it read — an `If-Match`
+header on REST, the `version` member of the mutation's input on GraphQL, or the mutation's own `version`
+argument where it takes no input — and is refused with `ENTITY_VERSION_CONFLICT` when the return has
+moved past it, or with `VERSION_REQUIRED` when it states none. Every response that carries the return
+publishes the version in an `ETag`; a read states none, because reading is how a client learns the
+version it has to state.
+
 ## Capabilities this plugin reaches through ports
 
 Four things belong to other domains and are injected under tokens rather than implemented here:
@@ -72,8 +92,11 @@ stock behaviour and are enabled once the tenant's policy exists).
 
 ## Migrations
 
-`CreateReturnTables1791000000300`, multi-dialect (PostgreSQL, MySQL, SQLite), with a `down` that
-reverses every statement.
+`CreateReturnTables1791000000300`, `AddReturnsLinePositiveChecks1791000000432` and
+`AddOrderReturnVersionColumn1791000000590`, each multi-dialect (PostgreSQL, MySQL, SQLite) and each with
+a `down` that reverses its own statements. The third gives a return the version its writes are
+predicated on: `version int NOT NULL DEFAULT 1`, so every row that already exists carries the value the
+entity declares.
 
 ## Building
 

@@ -63,6 +63,8 @@ import { DashboardResolver } from './../dashboard/dashboard.resolver';
 import { DashboardModule } from './../dashboard/dashboard.module';
 import { DashboardWidgetResolver } from './../dashboard/dashboard-widget/dashboard-widget.resolver';
 import { DashboardWidgetModule } from './../dashboard/dashboard-widget/dashboard-widget.module';
+import { IdempotencyKeyResolver } from './../idempotency/idempotency-key.resolver';
+import { IdempotencyModule } from './../idempotency/idempotency.module';
 
 /**
  * Resolvers the platform itself ships.
@@ -134,7 +136,11 @@ const CORE_RESOLVERS: Array<Type<any>> = [
 	// graphs and cannot be pulled into the barrel that is already inside them.
 	ReportResolver,
 	DashboardResolver,
-	DashboardWidgetResolver
+	DashboardWidgetResolver,
+	// The operator's view of the stored retry keys: what a stuck client is holding, and the release
+	// that makes its next attempt a first attempt again. Declared by `IdempotencyModule`, which is
+	// named among the modules below.
+	IdempotencyKeyResolver
 ];
 
 /**
@@ -221,6 +227,11 @@ const CORE_RESOLVER_MODULES: Array<Type<any>> = [
 	ReportModule,
 	DashboardModule,
 	DashboardWidgetModule,
+	// The stored retry keys. `IdempotencyModule` is imported for its resolver and not for its
+	// schedule: the cleanup job is declared by the same module, and Nest instantiates a module class
+	// once however many modules import it, so the hourly sweep is registered once even though both
+	// this graph and the application graph reach it.
+	IdempotencyModule
 ];
 
 /**

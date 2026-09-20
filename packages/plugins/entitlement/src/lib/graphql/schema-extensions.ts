@@ -125,6 +125,12 @@ export const schemaExtensions = gql`
 		activations: [EntitlementActivation!]!
 		"The credentials issued against it."
 		keys: [EntitlementKey!]!
+		"""
+		The revision of the row. A mutation states the revision it read as the input member 'version'
+		and is refused when the right has moved on since, so two callers editing one right cannot
+		silently overwrite each other.
+		"""
+		version: Int!
 		createdAt: DateTime
 		updatedAt: DateTime
 	}
@@ -293,6 +299,12 @@ export const schemaExtensions = gql`
 		assignedToEmail: String
 		"Grant the right already in force instead of PENDING."
 		activateImmediately: Boolean
+		"""
+		The key this grant is retried under, so a client whose response was lost re-states the same
+		key rather than granting a second right. Honoured by the surfaces that declare a retry scope;
+		a grant that names no key behaves exactly as it always did.
+		"""
+		idempotencyKey: String
 	}
 
 	"The request that occupies a slot."
@@ -307,6 +319,12 @@ export const schemaExtensions = gql`
 		key: String
 		activatedByCustomerId: ID
 		metadata: JSON
+		"""
+		The key this activation is retried under, so a device that lost the response re-states the same
+		key rather than taking a second slot. Honoured by the surfaces that declare a retry scope; an
+		activation that states no key behaves exactly as it always did.
+		"""
+		idempotencyKey: String
 	}
 
 	"The request that asks whether a right may be exercised."
@@ -331,6 +349,12 @@ export const schemaExtensions = gql`
 		"Store a recoverable ciphertext so an operator can re-display the key."
 		storeKey: Boolean
 		metadata: JSON
+		"""
+		The key this issuance is retried under, so a client that lost the response re-states the same
+		key rather than issuing a second credential. Honoured by the surfaces that declare a retry
+		scope; an issuance that states no key behaves exactly as it always did.
+		"""
+		idempotencyKey: String
 	}
 
 	"What a check answered."
@@ -419,10 +443,22 @@ export const schemaExtensions = gql`
 	extend type Mutation {
 		"Grants a right. Idempotent on the order line or subscription it names."
 		grantEntitlement(input: GrantEntitlementInput!): GrantEntitlementPayload!
-		"Withdraws a right, terminally. Its keys and its live activations go with it."
-		revokeEntitlement(id: ID!, reason: String!): EntitlementPayload!
-		"Extends the term of a right, which is what a successful renewal does."
-		extendEntitlement(id: ID!, endsAt: DateTime!, quantity: Int): EntitlementPayload!
+		"""
+		Withdraws a right, terminally. Its keys and its live activations go with it. The caller states
+		the 'version' it read, and a right that has moved on since is refused.
+		"""
+		revokeEntitlement(id: ID!, reason: String!, version: Int, idempotencyKey: String): EntitlementPayload!
+		"""
+		Extends the term of a right, which is what a successful renewal does. The caller states the
+		'version' it read, and a right that has moved on since is refused.
+		"""
+		extendEntitlement(
+			id: ID!
+			endsAt: DateTime!
+			quantity: Int
+			version: Int
+			idempotencyKey: String
+		): EntitlementPayload!
 		"Occupies a slot of a right for a device or a named seat."
 		activateEntitlement(input: ActivateEntitlementInput!): ActivateEntitlementPayload!
 		"Gives a slot back: released by the holder, or revoked by support."

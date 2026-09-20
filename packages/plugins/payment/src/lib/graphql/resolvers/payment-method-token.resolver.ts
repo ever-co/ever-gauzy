@@ -1,7 +1,14 @@
 import { BadRequestException, HttpStatus, Optional, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID, IPaymentMethodToken, PermissionsEnum } from '@gauzy/contracts';
-import { FieldVisibility, PermissionGuard, Permissions, TenantPermissionGuard, VisibleWith } from '@gauzy/core';
+import {
+	FieldVisibility,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	VisibleWith
+} from '@gauzy/core';
 import { PaymentPermission } from '../../payment.permissions';
 import { PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED } from '../../payment.card-data.pipe';
 import { findCardDataField } from '../../payment.validators';
@@ -91,6 +98,9 @@ export class PaymentMethodTokenResolver {
 	 * Saves an instrument from a reference the provider issued and confirmed.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_METHOD_TOKENS_EDIT as PermissionsEnum)
+	// Saving an instrument is a write at the provider as well as a row here, so this mutation requires
+	// the retry key the REST route requires, under the same scope.
+	@Idempotent({ scope: 'payment.instrument.create', required: true, resourceType: 'payment_method_token' })
 	@Mutation('createPaymentMethodToken')
 	async createPaymentMethodToken(
 		@Args('input') input: ICreatePaymentMethodTokenGraphInput

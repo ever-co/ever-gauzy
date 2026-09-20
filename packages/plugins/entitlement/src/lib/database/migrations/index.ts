@@ -1,6 +1,8 @@
 export * from './1791000000360-CreateEntitlementTables';
+export * from './1791000000580-AddEntitlementVersionColumn';
 
 import { CreateEntitlementTables1791000000360 } from './1791000000360-CreateEntitlementTables';
+import { AddEntitlementVersionColumn1791000000580 } from './1791000000580-AddEntitlementVersionColumn';
 
 /**
  * Every migration this plugin owns, in run order.
@@ -9,4 +11,7 @@ import { CreateEntitlementTables1791000000360 } from './1791000000360-CreateEnti
  * created, so a package that is installed is a package whose schema is installed, and the order is
  * decided by the timestamps rather than by the order plugins happen to be listed in.
  */
-export const ENTITLEMENT_MIGRATIONS = [CreateEntitlementTables1791000000360];
+export const ENTITLEMENT_MIGRATIONS = [
+	CreateEntitlementTables1791000000360,
+	AddEntitlementVersionColumn1791000000580
+];

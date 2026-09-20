@@ -3,6 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IPagination, IPaymentAccountHolder, PermissionsEnum } from '@gauzy/contracts';
 import {
 	CrudController,
+	Idempotent,
 	PaymentAccountHolder,
 	PaymentAccountHolderService,
 	Permissions,
@@ -118,6 +119,9 @@ export class PaymentAccountHolderController extends CrudController<PaymentAccoun
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Account recorded' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid account, or card data in the body' })
 	@Permissions(PaymentPermission.PAYMENT_ACCOUNT_HOLDERS_EDIT as PermissionsEnum)
+	// An account is created at the platform and then onboarded at the provider, so a second row for the
+	// same retry would mean two onboardings for one party. The key is therefore mandatory here.
+	@Idempotent({ scope: 'payment.account.create', required: true, resourceType: 'payment_account_holder' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	@UseCardDataRefusal()
@@ -164,6 +168,9 @@ export class PaymentAccountHolderController extends CrudController<PaymentAccoun
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'A move the account cannot make' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Account not found' })
 	@Permissions(PaymentPermission.PAYMENT_ACCOUNT_HOLDERS_EDIT as PermissionsEnum)
+	// A verification is a verdict with evidence around it, so a retry that lost its answer must be given
+	// the recorded verdict back rather than append a second one. The key is therefore mandatory here.
+	@Idempotent({ scope: 'payment.account.verify', required: true, resourceType: 'payment_account_holder' })
 	@Post(':id/verify')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })

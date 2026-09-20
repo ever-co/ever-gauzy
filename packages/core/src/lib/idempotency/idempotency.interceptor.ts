@@ -1,6 +1,7 @@
 import { CallHandler, ExecutionContext, HttpStatus, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { HTTP_CODE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
+import { GqlExecutionContext } from '@nestjs/graphql';
 import { Observable, from, lastValueFrom } from 'rxjs';
 import type { ID } from '@gauzy/contracts';
 import { executionRequest, executionResponse, readRequestHeader, setResponseHeader } from '../core/context/execution-context.util';
@@ -10,11 +11,14 @@ import { IdempotencyService } from './idempotency.service';
 import {
 	IDEMPOTENT_METADATA_KEY,
 	IDEMPOTENCY_KEY_HEADER,
+	IDEMPOTENCY_KEY_MEMBER,
 	IDEMPOTENCY_ORIGINAL_REQUEST_HEADER,
 	IDEMPOTENCY_REPLAYED_HEADER,
 	RETRY_AFTER_HEADER,
+	buildGraphqlRequestHash,
 	buildRequestHash,
 	clampRetentionSeconds,
+	idempotencyKeyFromResolverArgs,
 	normalizeIdempotencyKey,
 	planIdempotentRequest,
 	serializeResponseForStorage
@@ -93,16 +97,30 @@ export class IdempotencyInterceptor implements NestInterceptor {
 	): Promise<any> {
 		const request = executionRequest(context);
 		const response = executionResponse(context, request);
+		const isGraphql = context.getType<'http' | 'graphql' | string>() === 'graphql';
 		const method = String(request?.method ?? '').toUpperCase();
-		const header = readRequestHeader(request, IDEMPOTENCY_KEY_HEADER);
 
-		const requestHash = buildRequestHash({
-			method,
-			path: String(request?.originalUrl ?? request?.url ?? ''),
-			query: request?.query,
-			rawBody: request?.rawBody,
-			body: request?.body
-		});
+		// One HTTP request carries one `Idempotency-Key`, and the transport is what the key is
+		// presented in. A GraphQL request carries as many mutations as its document selects, so the
+		// key rides beside the input it qualifies and the fingerprint is the operation rather than
+		// the request that carried it.
+		const header = isGraphql
+			? idempotencyKeyFromResolverArgs(context.getArgByIndex?.(1))
+			: readRequestHeader(request, IDEMPOTENCY_KEY_HEADER);
+
+		const requestHash = isGraphql
+			? buildGraphqlRequestHash({
+					operation: graphqlOperationOf(context),
+					fieldName: graphqlFieldOf(context),
+					args: context.getArgByIndex?.(1)
+			  })
+			: buildRequestHash({
+					method,
+					path: String(request?.originalUrl ?? request?.url ?? ''),
+					query: request?.query,
+					rawBody: request?.rawBody,
+					body: request?.body
+			  });
 
 		const decision = planIdempotentRequest({ method, key: header, required: options.required, requestHash });
 
@@ -114,7 +132,9 @@ export class IdempotencyInterceptor implements NestInterceptor {
 			throw new ApiException(
 				HttpStatus.BAD_REQUEST,
 				ApiErrorCode.IDEMPOTENCY_KEY_REQUIRED,
-				`This operation must be retried safely and requires an ${IDEMPOTENCY_KEY_HEADER} header.`
+				isGraphql
+					? `This operation must be retried safely and requires an \`${IDEMPOTENCY_KEY_MEMBER}\` input member.`
+					: `This operation must be retried safely and requires an ${IDEMPOTENCY_KEY_HEADER} header.`
 			);
 		}
 
@@ -122,8 +142,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
 			throw new ApiException(
 				HttpStatus.BAD_REQUEST,
 				ApiErrorCode.VALIDATION_FAILED,
-				`The ${IDEMPOTENCY_KEY_HEADER} header is not usable.`,
-				{ field: IDEMPOTENCY_KEY_HEADER, reason: decision.reason }
+				isGraphql
+					? `The \`${IDEMPOTENCY_KEY_MEMBER}\` you stated is not usable.`
+					: `The ${IDEMPOTENCY_KEY_HEADER} header is not usable.`,
+				{ field: isGraphql ? IDEMPOTENCY_KEY_MEMBER : IDEMPOTENCY_KEY_HEADER, reason: decision.reason }
 			);
 		}
 
@@ -319,4 +341,38 @@ function extractResourceId(result: any): ID | undefined {
 	const id = result?.id;
 
 	return typeof id === 'string' ? id : undefined;
+}
+
+/**
+ * The root operation a GraphQL field was selected under.
+ *
+ * A failed read answers `mutation`, which is the safe default: it is what a key is normally required
+ * on, and it keeps the fingerprint of a request whose identity cannot be read apart from a query's.
+ *
+ * @param context The execution context.
+ * @returns The operation, or undefined when it cannot be read.
+ */
+function graphqlOperationOf(context: ExecutionContext): string | undefined {
+	try {
+		return GqlExecutionContext.create(context).getInfo?.()?.operation?.operation;
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * The name of the root field being executed.
+ *
+ * This is what makes two mutations in one deployment's schema different requests. Without it, every
+ * mutation without arguments would fingerprint identically and a retry of one would replay another.
+ *
+ * @param context The execution context.
+ * @returns The field name, or undefined when it cannot be read.
+ */
+function graphqlFieldOf(context: ExecutionContext): string | undefined {
+	try {
+		return GqlExecutionContext.create(context).getInfo?.()?.fieldName;
+	} catch {
+		return undefined;
+	}
 }

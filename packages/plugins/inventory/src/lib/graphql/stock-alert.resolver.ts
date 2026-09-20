@@ -10,7 +10,7 @@ import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/
 import { UseGuards } from '@nestjs/common';
 import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { EventBus, Idempotent, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockAlert } from './../stock-alert/stock-alert.entity';
 import { StockAlertService } from './../stock-alert/stock-alert.service';
@@ -30,9 +30,15 @@ export class StockAlertResolver {
 		return await this.service.findAlerts({ where: { variantId, isActive } });
 	}
 
-	/** Creates a rule. */
+	/**
+	 * Creates a rule.
+	 *
+	 * The key is the input member the REST route's header mirrors: a rule a client retried after losing
+	 * the response is replayed rather than created a second time under a new threshold.
+	 */
 	@Mutation('createStockAlert')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	@Idempotent({ scope: 'stock.alert.create', required: false, resourceType: 'stock-alert' })
 	async createStockAlert(@Args('input') input: any): Promise<any> {
 		return await this.service.createAlert(input);
 	}

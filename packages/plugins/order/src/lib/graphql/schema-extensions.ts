@@ -254,6 +254,7 @@ export const orderSchemaExtensions = gql`
 	type OrderChange {
 		id: ID!
 		orderId: ID!
+		"The order version this change produces when it is applied; not a version of the change itself."
 		version: Int!
 		changeType: String!
 		status: String!
@@ -364,6 +365,8 @@ export const orderSchemaExtensions = gql`
 		"The settlement schedule the order is placed against."
 		paymentTermId: ID
 		externalId: String
+		"Retry key: a repeat of this input under the same key is answered from the first attempt."
+		idempotencyKey: String
 	}
 
 	input UpdateOrderInput {
@@ -374,6 +377,8 @@ export const orderSchemaExtensions = gql`
 		externalId: String
 		cancelReason: String
 		paymentTermId: ID
+		"The version of the order this change was reasoned about; omitted, the write is refused."
+		version: Int
 	}
 
 	"The request that records one line-to-invoice link."
@@ -412,6 +417,8 @@ export const orderSchemaExtensions = gql`
 		changeType: String
 		note: String
 		actions: [OrderChangeActionInput!]!
+		"Retry key: a repeat of this input under the same key is answered from the first attempt."
+		idempotencyKey: String
 	}
 
 	extend type Query {
@@ -449,16 +456,24 @@ export const orderSchemaExtensions = gql`
 	extend type Mutation {
 		createOrder(input: CreateOrderInput!): Order!
 		updateOrder(id: ID!, input: UpdateOrderInput!): Order!
-		cancelOrder(id: ID!, reason: String): Order!
-		archiveOrder(id: ID!): Order!
-		placeOrder(id: ID!): Order!
-		confirmOrder(id: ID!): Order!
-		recalculateOrder(id: ID!): Order!
+		cancelOrder(id: ID!, reason: String, version: Int, idempotencyKey: String): Order!
+		archiveOrder(id: ID!, version: Int): Order!
+		placeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
+		confirmOrder(id: ID!, version: Int): Order!
+		recalculateOrder(id: ID!, version: Int): Order!
 		"Create a change: the only way a placed order is modified."
 		requestOrderEdit(input: RequestOrderEditInput!): OrderChange!
-		confirmOrderChange(id: ID!): OrderChange!
-		declineOrderChange(id: ID!, reason: String): OrderChange!
-		cancelOrderChange(id: ID!, reason: String): OrderChange!
+		"""
+		Applies a change. The version argument is the version of the ORDER the change belongs to — the
+		value the order itself carries, not the version of the change, which is the order version the
+		change produces — and an order that has moved past it answers a conflict rather than applying
+		the change.
+		"""
+		confirmOrderChange(id: ID!, version: Int, idempotencyKey: String): OrderChange!
+		"Declines a change. The version argument is the version of the order the change belongs to."
+		declineOrderChange(id: ID!, reason: String, version: Int): OrderChange!
+		"Cancels a change. The version argument is the version of the order the change belongs to."
+		cancelOrderChange(id: ID!, reason: String, version: Int): OrderChange!
 		"Records a link and moves the line's counters with it, in one transaction."
 		recordOrderLineInvoice(input: OrderLineInvoiceInput!): OrderLineInvoicePayload!
 		"Amends a link's tenant extras; the rest of the row describes an issued document."

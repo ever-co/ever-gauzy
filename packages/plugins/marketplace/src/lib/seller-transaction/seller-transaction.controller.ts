@@ -21,6 +21,7 @@ import {
 import {
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -160,12 +161,19 @@ export class SellerTransactionController extends CrudController<SellerTransactio
 	/**
 	 * Forces a row to settleable.
 	 *
+	 * `seller.transaction.settle` is adopted as retry-safe without requiring a key: a caller that
+	 * re-sends an advance it never saw acknowledged would announce the row's release a second time and
+	 * move its settleable date, so a client that presents a key is answered from its first attempt
+	 * instead. The key stays optional because the row is advanced, never re-amounted, so the second
+	 * write converges on the same status.
+	 *
 	 * @param id The row id.
 	 * @param body The note.
 	 * @returns The row, in `SETTLEABLE`.
 	 */
 	@ApiOperation({ summary: 'Force a transaction to settleable' })
 	@Permissions(PermissionsEnum.SELLER_TRANSACTIONS_SETTLE)
+	@Idempotent({ scope: 'seller.transaction.settle', required: false, resourceType: 'seller_transaction' })
 	@Post('/:id/settle')
 	async settle(@Param('id', UUIDValidationPipe) id: ID, @Body() body: { note?: string }): Promise<SellerTransaction> {
 		return this.sellerTransactionService.settle(id, body?.note);

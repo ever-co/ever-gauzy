@@ -49,6 +49,15 @@ export const MAX_STORED_RESPONSE_BYTES = 1024 * 1024;
 export const MIN_RETENTION_SECONDS = 60;
 export const MAX_RETENTION_SECONDS = 7 * 24 * 60 * 60;
 
+/**
+ * The member an input carries its retry key in.
+ *
+ * A GraphQL request is one `POST` carrying as many mutations as the document selects, so a header
+ * could neither say which of three mutations a key belongs to nor carry three of them. The key
+ * therefore rides beside the input it qualifies, and this is the member name it rides under.
+ */
+export const IDEMPOTENCY_KEY_MEMBER = 'idempotencyKey';
+
 /** What the caller must do with the request, decided from the header and the stored key. */
 export type IdempotencyPlan =
 	| { action: 'SKIP' }
@@ -224,6 +233,82 @@ export function buildRequestHash(request: {
 	]);
 
 	return createHash('sha256').update(canonical).digest('hex');
+}
+
+/**
+ * Reads the key off a resolver's arguments.
+ *
+ * Both spellings a resolver may use are read: an `input` object that carries the member, and the
+ * member taken as the resolver's own argument. The value is returned raw, because the caller decides
+ * whether an absent key is a refusal or nothing to do with this route — the same decision the header
+ * path makes.
+ *
+ * @param args The resolver's arguments, as Nest hands them over.
+ * @returns The raw stated key, or undefined when none was stated.
+ */
+export function idempotencyKeyFromResolverArgs(args: any): unknown {
+	if (args === null || typeof args !== 'object') {
+		return undefined;
+	}
+
+	if (args.input !== null && typeof args.input === 'object' && IDEMPOTENCY_KEY_MEMBER in args.input) {
+		return args.input[IDEMPOTENCY_KEY_MEMBER];
+	}
+
+	return IDEMPOTENCY_KEY_MEMBER in args ? args[IDEMPOTENCY_KEY_MEMBER] : undefined;
+}
+
+/**
+ * Hashes what makes two GraphQL operations the same operation.
+ *
+ * The tuple is the GraphQL equivalent of the HTTP one: the root type, the field, and the arguments
+ * with the retry key removed. The key is not part of the fingerprint on purpose — it is the record's
+ * *identity*, not its content, so two different keys presented with the same input are two attempts
+ * at one request rather than one key reused.
+ *
+ * @param request The operation fingerprint.
+ * @returns The hex sha-256 of the canonicalized operation.
+ */
+export function buildGraphqlRequestHash(request: {
+	operation?: string;
+	fieldName?: string;
+	args?: unknown;
+}): string {
+	const canonical = JSON.stringify([
+		String(request.operation ?? 'mutation').toLowerCase(),
+		request.fieldName ?? '',
+		stableStringify(withoutIdempotencyKey(request.args) ?? {})
+	]);
+
+	return createHash('sha256').update(canonical).digest('hex');
+}
+
+/**
+ * The same arguments with the retry key removed.
+ *
+ * Only the member itself is removed, and only at the top level of the input: an input that carries
+ * a key for a *nested* concept is stating part of its content, and dropping that would make two
+ * different requests look like one.
+ *
+ * @param args The resolver's arguments.
+ * @returns The arguments without the retry key.
+ */
+function withoutIdempotencyKey(args: unknown): unknown {
+	if (args === null || typeof args !== 'object' || Array.isArray(args)) {
+		return args;
+	}
+
+	const record = { ...(args as Record<string, unknown>) };
+
+	if (record.input !== null && typeof record.input === 'object' && !Array.isArray(record.input)) {
+		const input = { ...(record.input as Record<string, unknown>) };
+		delete input[IDEMPOTENCY_KEY_MEMBER];
+		record.input = input;
+	}
+
+	delete record[IDEMPOTENCY_KEY_MEMBER];
+
+	return record;
 }
 
 /**

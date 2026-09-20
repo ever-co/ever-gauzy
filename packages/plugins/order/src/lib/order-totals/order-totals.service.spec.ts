@@ -33,6 +33,13 @@ jest.mock('@gauzy/core', () => {
 		MultiORMOneToMany: decorator,
 		MultiORMManyToOne: decorator,
 		JsonColumn: decorator,
+		Idempotent: decorator,
+		Versioned: decorator,
+		VersionedColumn: decorator,
+		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.commitVersionedUpdate,
+		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.versionExpectationOf,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -49,6 +56,13 @@ jest.mock('@gauzy/core', () => {
 			currentOrganizationId: () => null,
 			currentEmployeeId: () => null,
 			hasPermission: () => false
+		},
+		CrudService: class {
+			constructor(protected readonly typeOrmRepository: any) {}
+
+			async update(id: any, partial: any): Promise<any> {
+				return this.typeOrmRepository.update(id, partial);
+			}
 		},
 		TenantAwareCrudService: class {
 			constructor(
@@ -152,10 +166,17 @@ function orderFixture(order: Record<string, unknown> = {}) {
 	});
 	const typeOrmOrderRepository = {
 		findOne: async ({ where }: any = {}) => (String(where?.id) === String(row.id) ? { ...row } : null),
-		update: async (_id: any, partial: any) => {
-			Object.assign(row, partial);
+		update: async (criteria: any, partial: any) => {
+			const expected = typeof criteria === 'string' ? { id: criteria } : criteria ?? {};
+			const matches = Object.entries(expected).every(
+				([field, value]) => value === undefined || String(row[field] ?? '') === String(value)
+			);
 
-			return { affected: 1 };
+			if (matches) {
+				Object.assign(row, partial);
+			}
+
+			return { affected: matches ? 1 : 0 };
 		},
 		/** Persists a partial update only when the whole write succeeds, the way a transaction would. */
 		create: async (partial: any) => {
@@ -163,6 +184,12 @@ function orderFixture(order: Record<string, unknown> = {}) {
 
 			return { ...row };
 		}
+	};
+	// The version-predicated write resolves the order's writer by token, so the fixture offers it the
+	// same two calls the real order service offers the totals service.
+	const orderWriter = {
+		update: async (criteria: any, partial: any) => typeOrmOrderRepository.update(criteria, partial),
+		findOneByIdString: async (id: any) => (String(id) === String(row.id) ? { ...row } : null)
 	};
 	const service = new OrderTotalsService(
 		typeOrmOrderRepository as never,
@@ -172,7 +199,8 @@ function orderFixture(order: Record<string, unknown> = {}) {
 		collection(transactions) as never,
 		{ create: async (summary: any) => (summaries.push(summary), summary) } as never,
 		ownedLedger(adjustments) as never,
-		ownedLedger(taxLines) as never
+		ownedLedger(taxLines) as never,
+		{ get: () => orderWriter } as never
 	);
 
 	return { service, order: row, lines, shippingMethods, creditLines, transactions, adjustments, taxLines, summaries };
@@ -345,8 +373,13 @@ describe('OrderTotalsService — version, summary rows and concurrency (doc 07 �
 		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
 		const before = await fixture.service.recompute('order-1', 'PLACED');
 
-		// Another writer committed version 2 while this caller still held version 1.
-		await expect(fixture.service.recompute('order-1', 'MANUAL', 1)).rejects.toThrow(/ORDER_VERSION_CONFLICT/);
+		// Another writer committed version 2 while this caller still held version 1. The refusal is the
+		// kernel's — the conditional update matched no row — so the caller is told the version moved on
+		// rather than that the order is missing. The code travels on the exception; the HTTP envelope
+		// the filter renders is the kernel's own.
+		await expect(
+			fixture.service.recompute('order-1', 'MANUAL', { expectation: { wildcard: false, versions: [1] } })
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT', status: 409 });
 
 		// Nothing moved: no version, no summary row, no column. A refused write that had already
 		// bumped something would be worse than an accepted one.
@@ -355,7 +388,9 @@ describe('OrderTotalsService — version, summary rows and concurrency (doc 07 �
 		expect(fixture.order.grandTotal).toBe(before.grandTotal);
 
 		// The version the caller actually holds is accepted.
-		const written = await fixture.service.recompute('order-1', 'MANUAL', before.version);
+		const written = await fixture.service.recompute('order-1', 'MANUAL', {
+			expectation: { wildcard: false, versions: [before.version] }
+		});
 		expect(written.version).toBe(before.version + 1);
 	});
 

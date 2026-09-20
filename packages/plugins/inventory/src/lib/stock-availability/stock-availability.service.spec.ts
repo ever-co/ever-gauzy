@@ -11,6 +11,13 @@
  * `toAvailability`, which derives a policy from a row it is handed and touches no connection.
  */
 jest.mock('@gauzy/core', () => {
+	/**
+	 * The platform’s conditional write and its reader for the version a request accepted. The engine
+	 * under test reaches both through the barrel being replaced here, so the shared double answers for
+	 * both — the kernel’s own behaviour, decided rather than stubbed.
+	 */
+	const { commitVersionedUpdate, versionExpectationOf } = require('../testing/versioned-write.double');
+
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
@@ -58,10 +65,18 @@ jest.mock('@gauzy/core', () => {
 		parseDecimalString: decimal.parseDecimalString,
 		formatDecimalUnits: decimal.formatDecimalUnits,
 		pow10: decimal.pow10,
+		// The kernel helpers the ledger engine imports beside the entities above. Both decide rather than
+		// answer unconditionally, so a versioned write is refused here as it is refused in production.
+		commitVersionedUpdate,
+		versionExpectationOf,
 		// The double answers with the fixture’s scope, which is what a request-scoped read resolves to.
 		// Every case that is about tenancy re-points it with a spy, so the scope is never a constant of
 		// this specification.
 		RequestContext: {
+			// The engine reads the version the current request accepted from here, and a unit test has no
+			// request: the accepted version is then absent, which is the case the engine's own
+			// compare-and-set covers.
+			currentRequest: () => null,
 			currentUser: () => null,
 			currentUserId: () => null,
 			currentTenantId: () => 'tenant-1',

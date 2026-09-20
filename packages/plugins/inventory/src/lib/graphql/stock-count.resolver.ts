@@ -10,7 +10,7 @@ import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/
 import { UseGuards } from '@nestjs/common';
 import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { EventBus, Idempotent, Permissions, PermissionGuard, TenantPermissionGuard, Versioned } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockCountMode, StockCountStatus } from './../inventory.enums';
 import { StockCount } from './../stock-count/stock-count.entity';
@@ -52,17 +52,45 @@ export class StockCountResolver {
 		return await this.service.open(id);
 	}
 
-	/** Records a batch of readings. */
+	/**
+	 * Records a batch of readings.
+	 *
+	 * The readings are a write on the session and not on the levels — nothing moves until the session
+	 * closes — so this mutation carries the key and not the version, with the same scope the REST route
+	 * declares. A retry that recorded the same readings twice would double-count a batch of the
+	 * variance.
+	 */
 	@Mutation('recordStockCountLine')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	async recordStockCountLine(@Args('id') id: string, @Args('lines') lines: any[]): Promise<any> {
+	@Idempotent({ scope: 'stock.count', required: false, resourceType: 'stock-count' })
+	async recordStockCountLine(
+		@Args('id') id: string,
+		@Args('lines') lines: any[],
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey: string
+	): Promise<any> {
+		void idempotencyKey;
+
 		return await this.service.recordLines(id, lines);
 	}
 
-	/** Closes the session and writes its corrections. */
+	/**
+	 * Closes the session and writes its corrections.
+	 *
+	 * The corrections land on the levels of the lines the session covers, so the version is optional
+	 * for the reason the REST route states it optionally — a stated version is honoured for the level
+	 * it names and the compare-and-set covers the rest — and the key makes a retry of the close replay
+	 * rather than write a second set of corrections.
+	 */
 	@Mutation('closeStockCount')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	async closeStockCount(@Args('id') id: string): Promise<any> {
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'stock.count', required: false, resourceType: 'stock-count' })
+	async closeStockCount(
+		@Args('id') id: string,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey: string
+	): Promise<any> {
+		void idempotencyKey;
+
 		return await this.service.close(id).then((result) => result.count);
 	}
 }

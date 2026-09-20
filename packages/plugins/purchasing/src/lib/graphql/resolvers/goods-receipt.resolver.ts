@@ -1,5 +1,6 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
+import { Idempotent } from '@gauzy/core';
 import { toFailedGoodsReceiptPayload, toGoodsReceiptPayload, toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { GoodsReceiptStatus, IGoodsReceipt, IGoodsReceiptLine, IGoodsReceiptLineInput } from '../../purchasing.types';
@@ -15,6 +16,8 @@ interface ICreateGoodsReceiptArgs {
 	overReceiptTolerance?: string;
 	note?: string;
 	lines: IGoodsReceiptLineInput[];
+	/** The client's retry key, which this mutation requires. */
+	idempotencyKey?: string;
 }
 
 /**
@@ -26,7 +29,11 @@ interface ICreateGoodsReceiptArgs {
  * whichever name a caller reached for.
  *
  * The resolvers call the same services the REST controllers call, so a receipt recorded here and one
- * recorded over REST pass through the same over-receipt check and the same movement seam.
+ * recorded over REST pass through the same over-receipt check and the same movement seam — and, for the
+ * recording itself, the same retry declaration under the same scope: a delivery that is booked twice
+ * books the stock twice, so the mutation demands a key exactly as the route does, and the key rides as
+ * the `idempotencyKey` member of the mutation's own input because one GraphQL request may select
+ * several mutations.
  */
 @Resolver('GoodsReceipt')
 export class GoodsReceiptResolver {
@@ -85,6 +92,7 @@ export class GoodsReceiptResolver {
 	 * @param input The delivery.
 	 * @returns The payload, with the receipt or the reason it was refused.
 	 */
+	@Idempotent({ scope: 'purchase_order.receive', required: true, resourceType: 'goods_receipt' })
 	@Mutation('createGoodsReceipt')
 	async createGoodsReceipt(@Args('input') input: ICreateGoodsReceiptArgs) {
 		try {

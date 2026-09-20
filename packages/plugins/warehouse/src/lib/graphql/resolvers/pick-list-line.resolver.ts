@@ -1,7 +1,7 @@
 import { BadRequestException, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard, Versioned } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PickListLine } from '../../pick-list-line/pick-list-line.entity';
 import { PickListLineService } from '../../pick-list-line/pick-list-line.service';
@@ -70,6 +70,8 @@ export class PickListLineResolver {
 	 */
 	@Permissions(WarehousePermissions.PICK_LISTS_PICK)
 	@Mutation('pickPickListLine')
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'warehouse.pick', required: false, resourceType: 'pick-list-line' })
 	async pickPickListLine(
 		@Args('pickListId') pickListId: ID,
 		@Args('lineId') lineId: ID,
@@ -110,6 +112,8 @@ export class PickListLineResolver {
 	 */
 	@Permissions(WarehousePermissions.PICK_LISTS_PICK)
 	@Mutation('substitutePickListLine')
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'warehouse.substitute', required: false, resourceType: 'pick-list-line' })
 	async substitutePickListLine(
 		@Args('pickListId') pickListId: ID,
 		@Args('lineId') lineId: ID,

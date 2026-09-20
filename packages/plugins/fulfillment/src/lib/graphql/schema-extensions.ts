@@ -135,6 +135,11 @@ export const fulfillmentSchemaExtensions = gql`
 		code: String!
 		isDefault: Boolean
 		description: String
+		"""
+		The client's own key for this request, honoured when one is presented. A request retried under
+		the same key is answered with what the first attempt wrote instead of raising a second profile.
+		"""
+		idempotencyKey: String
 	}
 
 	input CreateShippingOptionInput {
@@ -156,6 +161,11 @@ export const fulfillmentSchemaExtensions = gql`
 		allowPickup: Boolean
 		maxWeight: Decimal
 		maxItemCount: Int
+		"""
+		The client's own key for this request, honoured when one is presented. A request retried under
+		the same key is answered with what the first attempt wrote instead of raising a second option.
+		"""
+		idempotencyKey: String
 	}
 
 	input ShippingOptionAssignmentInput {
@@ -182,6 +192,11 @@ export const fulfillmentSchemaExtensions = gql`
 		noNotification: Boolean
 		note: String
 		lines: [FulfillmentLineInput!]!
+		"""
+		The client's own key for this request, which this operation requires. A fulfilment that is
+		created twice ships the same goods twice, so the mutation is refused without one.
+		"""
+		idempotencyKey: String
 	}
 
 	input UpdateFulfillmentInput {
@@ -198,6 +213,11 @@ export const fulfillmentSchemaExtensions = gql`
 		carrier: String
 		service: String
 		noNotification: Boolean
+		"""
+		The client's own key for this request, honoured when one is presented. A request retried under
+		the same key is answered with the shipment the first attempt handed over.
+		"""
+		idempotencyKey: String
 	}
 
 	input ShippingEligibilityInput {

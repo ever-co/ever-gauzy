@@ -49,6 +49,21 @@ One surface, one controller per table, guards and permissions exactly as the res
 `/api/refunds`, `/api/refund-reasons`, `/api/payment-webhook-events`. The same concepts are served over
 GraphQL by the resolvers this package contributes.
 
+## Retry safety
+
+A write that moves money is safe to retry under a client-supplied key. A REST caller presents one in the
+`Idempotency-Key` header; a GraphQL caller states `idempotencyKey` beside the input it qualifies, because
+one request may select several mutations and a header could not say which of them it belongs to. The
+first attempt claims the key, owns the work and records its answer; a repeat of the same key with the
+same body is answered from that record and the work does not run again; the same key with a different
+body is refused with `IDEMPOTENCY_KEY_REUSED` rather than applied.
+
+Capturing a payment, recording a refund, recording a provider account and its verification, and saving
+an instrument **require** a key, because a retry that lost its answer must not move the money twice. The
+package's other unsafe routes honour a key when one is presented and are unchanged when none is:
+registering a provider, creating a collection, opening or authorising an attempt, cancelling one,
+creating a refund reason, and re-processing an inbound callback.
+
 ## Dependencies
 
 `@gauzy/plugin-order` — a collection settles an order, and the order rows are read by the reconciliation

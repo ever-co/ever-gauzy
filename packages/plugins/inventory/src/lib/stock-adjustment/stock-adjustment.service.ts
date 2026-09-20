@@ -69,8 +69,12 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 	 * is why the instruction stores the observed target for a set rather than a pre-computed delta: the
 	 * level may have moved between drafting and applying, and the correction must be the difference
 	 * from what is actually there.
+	 *
+	 * The level it moves is written under the version the request accepted, so a caller that read the
+	 * level and decided from it is refused when the level has moved since — and the version the write
+	 * left behind is reported back, which is what lets the caller condition its next instruction.
 	 */
-	public async apply(id: ID): Promise<{ adjustment: StockAdjustment; quantityDelta: number }> {
+	public async apply(id: ID): Promise<{ adjustment: StockAdjustment; quantityDelta: number; version?: number }> {
 		return await this.typeOrmStockAdjustmentRepository.manager.transaction(async (manager) => {
 			const adjustment = await manager.findOne(StockAdjustment, { where: { id } });
 			if (!adjustment) {
@@ -90,6 +94,7 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 			const level = await this.findLevel(manager, adjustment.warehouseId, adjustment.variantId);
 			const current = Number(level?.quantity ?? 0);
 			const quantityDelta = this.resolveDelta(adjustment.type, Number(adjustment.quantity), current);
+			let version: number | undefined;
 
 			if (quantityDelta !== 0) {
 				// The movement joins this instruction's transaction, so an instruction that fails to be
@@ -112,13 +117,14 @@ export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustme
 				);
 				adjustment.movementId = applied.movementId;
 				adjustment.warehouseProductVariantId = applied.levelId;
+				version = applied.version;
 			}
 
 			adjustment.status = StockAdjustmentStatus.APPLIED;
 			adjustment.appliedAt = new Date();
 			adjustment.appliedByUserId = RequestContext.currentUserId();
 			const saved = await manager.save(StockAdjustment, adjustment);
-			return { adjustment: saved, quantityDelta };
+			return { adjustment: saved, quantityDelta, version };
 		});
 	}
 

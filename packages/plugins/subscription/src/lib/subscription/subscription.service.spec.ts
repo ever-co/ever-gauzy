@@ -20,11 +20,25 @@ jest.mock('@gauzy/core', () => {
 
 	class BaseEntity {}
 
-	class TenantAwareCrudService {
+	/**
+	 * The platform's own base class, and the inheritance between the two: the tenant-aware class reads a
+	 * row before it writes it, and the base class is the one that reaches the statement.
+	 */
+	class CrudService {
+		constructor(protected readonly typeOrmRepository: any) {}
+
+		async update(criteria: any, partial: any): Promise<any> {
+			return this.typeOrmRepository.update(criteria, partial);
+		}
+	}
+
+	class TenantAwareCrudService extends CrudService {
 		constructor(
-			protected readonly typeOrmRepository: any,
+			typeOrmRepository: any,
 			protected readonly mikroOrmRepository?: any
-		) {}
+		) {
+			super(typeOrmRepository);
+		}
 
 		get ormType(): string {
 			return 'typeorm';
@@ -57,12 +71,43 @@ jest.mock('@gauzy/core', () => {
 			return record;
 		}
 
+		async findOneByWhereOptions(options: any): Promise<any> {
+			const record = await this.typeOrmRepository.findOne({ where: options });
+
+			if (!record) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			return record;
+		}
+
 		async create(entity: any): Promise<any> {
 			return this.typeOrmRepository.save(this.typeOrmRepository.create(entity));
 		}
 
+		/**
+		 * The platform's own update, in the two behaviours this suite turns on.
+		 *
+		 * A criterion that names a `version` is a precondition rather than a locator, so the read in
+		 * front of the statement is skipped for it and the affected-row count is what reports a write
+		 * that lost its race — the conflict the concurrency kernel's contract is built on. Every other
+		 * criterion is read first, so a row that is not there is answered "not found" instead of the
+		 * statement quietly matching nothing. A double that read unconditionally would answer the stale
+		 * case with a `404` while production answers `409`, which is a green suite proving the wrong
+		 * thing.
+		 */
 		async update(id: any, partial: any): Promise<any> {
-			return this.typeOrmRepository.update(id, partial);
+			if (typeof id === 'string') {
+				await this.findOneByIdString(id);
+
+				return await super.update(id, partial);
+			}
+
+			if (id && typeof id === 'object' && !('version' in id)) {
+				await this.findOneByWhereOptions(id);
+			}
+
+			return await super.update(id, partial);
 		}
 
 		async delete(criteria: any): Promise<any> {
@@ -76,6 +121,7 @@ jest.mock('@gauzy/core', () => {
 
 	return {
 		TenantAwareCrudService,
+		CrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
 		TenantOrganizationBaseEntity: BaseEntity,
@@ -86,6 +132,7 @@ jest.mock('@gauzy/core', () => {
 		MultiORMEntity: decorator,
 		MultiORMManyToOne: decorator,
 		MultiORMOneToMany: decorator,
+		VersionedColumn: decorator,
 		JsonColumn: decorator,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
@@ -97,6 +144,15 @@ jest.mock('@gauzy/core', () => {
 		},
 		BaseEvent: class {},
 		EventBus: class {},
+		// The conditional write, and the refusals it raises, are the platform's own: the assertions are
+		// about the statement the service issues, and a stub would only assert that the service calls the
+		// stub.
+		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.commitVersionedUpdate,
+		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.versionExpectationOf,
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
 		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
 		SequenceService: class SequenceService {},
@@ -118,7 +174,7 @@ import {
 	AdjustmentType,
 	IdempotencyOutcome
 } from '@gauzy/contracts';
-import { RequestContext } from '@gauzy/core';
+import { ApiErrorCode, ApiException, IVersionExpectation, RequestContext } from '@gauzy/core';
 import {
 	SubscriptionBillingPeriod,
 	SubscriptionBillingStatus,
@@ -300,8 +356,11 @@ function repository(tables: ITables, tableName: keyof ITables, onWrite?: (entity
 			return created;
 		},
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = tables[tableName].findIndex((row) => same(row.id, id));
+			// A version-predicated write arrives as `{ id, version }`, and the version is part of the
+			// condition rather than of the patch: a row the write is not predicated on matches nothing,
+			// which is exactly what the affected-row count reports.
+			const where = typeof criteria === 'string' ? { id: criteria } : criteria ?? {};
+			const index = tables[tableName].findIndex((row) => matches(row, where));
 
 			if (index >= 0) {
 				Object.assign(tables[tableName][index], partial);
@@ -355,6 +414,9 @@ const subscriptionRow = (id: string, overrides: Row = {}): Row => ({
 	nextBillingAt: new Date(APRIL),
 	billingCycleCount: 0,
 	currency: 'USD',
+	// The row carries the optimistic lock every write to it is predicated on, which is the value the
+	// column's `NOT NULL DEFAULT 1` gives it.
+	version: 1,
 	...overrides
 });
 
@@ -2184,5 +2246,128 @@ describe('SubscriptionService — the reads a detail view is built from', () => 
 		await expect(fixture.service.findOneDetailed('theirs')).rejects.toBeInstanceOf(NotFoundException);
 		await expect(fixture.service.findOneScoped('deleted')).rejects.toBeInstanceOf(NotFoundException);
 		await expect(fixture.service.findBillings('no-such-subscription')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+/**
+ * The versioned write.
+ *
+ * A subscription carries an optimistic lock, and this suite pins what the lock is for: the write a
+ * route performs is predicated on the version its caller read, in the same statement that increments
+ * it, so a change based on a subscription that has moved on is refused with a conflict rather than
+ * applied over a value nobody saw. It pins the other half of the convention too: the writes a request
+ * makes after its first one are the request's own follow-up, so they ride the version the row holds
+ * rather than reporting the request's own increment as a race it lost.
+ *
+ * The conditional update is the platform's real `commitVersionedUpdate`, driven over the in-memory
+ * repository, so a case is a statement about the row that was written and the count the statement
+ * reported rather than about a call log.
+ */
+describe('SubscriptionService — the versioned write', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The fixture's subscription row is at version one, and this is the expectation that accepts it. */
+	const asReadByTheCaller: IVersionExpectation = { wildcard: false, versions: [1] };
+
+	it('refuses a write predicated on a version the subscription no longer holds', async () => {
+		const fixture = subscriptionFixture();
+
+		const refusal = await fixture.service
+			.pause(SUBSCRIPTION, { reason: 'customer asked' }, { wildcard: false, versions: [3] })
+			.catch((error) => error);
+
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+		expect(refusal.getStatus()).toBe(409);
+		// The refusal came from the statement, so the row is untouched and no event was published for a
+		// change that did not happen.
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ status: SubscriptionStatus.ACTIVE, version: 1 });
+		expect(fixture.events).toEqual([]);
+	});
+
+	it('writes under the version the caller read, and leaves the row one version further on', async () => {
+		const fixture = subscriptionFixture();
+
+		const paused = await fixture.service.pause(SUBSCRIPTION, { reason: 'customer asked' }, asReadByTheCaller);
+
+		expect(paused).toMatchObject({ status: SubscriptionStatus.PAUSED });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ status: SubscriptionStatus.PAUSED, version: 2 });
+	});
+
+	it('writes the fields a caller changed under the version that caller read', async () => {
+		// The route a field edit arrives on: the fields are written under the version the caller read, and
+		// the answer is the subscription as it stands afterwards.
+		const fixture = subscriptionFixture();
+
+		const changed = await fixture.service.applyChanges(SUBSCRIPTION, { quantity: '3' }, asReadByTheCaller);
+
+		expect(changed).toMatchObject({ quantity: '3', version: 2 });
+	});
+
+	it('refuses a change predicated on a version the subscription no longer holds', async () => {
+		// The conflict, not a not-found: the row exists and has merely moved on, and the caller has to be
+		// told to read it again rather than sent down the deleted-record path.
+		const fixture = subscriptionFixture();
+
+		const refusal = await fixture.service
+			.applyChanges(SUBSCRIPTION, { quantity: '3' }, { wildcard: false, versions: [4] })
+			.catch((error) => error);
+
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+		expect(refusal.getStatus()).toBe(409);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ quantity: '1.000000', version: 1 });
+	});
+
+	it('predicates a write that no caller conditioned on the version the row holds', async () => {
+		// A scheduled pass, another service or a replayed event has no caller to state a version, so the
+		// write is predicated on the row's own — which is still a conditional write, not last-writer-wins.
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.PENDING, version: 5 })]
+		});
+
+		const activated = await fixture.service.activate(SUBSCRIPTION);
+
+		expect(activated).toMatchObject({ status: SubscriptionStatus.ACTIVE });
+		expect(fixture.subscription(SUBSCRIPTION)?.version).toBe(6);
+	});
+
+	it('spends the caller’s version on the first write and rides the row’s own version after it', async () => {
+		// A cycle that owes a setup fee writes the subscription twice: the fee it remembers, and the
+		// cycle it records. The first carries the caller's version; the second would be refused if it
+		// carried it too, because the row has moved on — by this request's own first write.
+		const fixture = subscriptionFixture({ plans: [planRow(PLAN, { setupFee: '30' }), planRow(BETTER_PLAN)] });
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true }, asReadByTheCaller);
+
+		expect(outcome.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			billingCycleCount: 1,
+			version: 3
+		});
+	});
+
+	it('refuses a cycle predicated on a version the subscription no longer holds', async () => {
+		const fixture = subscriptionFixture();
+
+		const refusal = await fixture.service
+			.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true }, { wildcard: false, versions: [9] })
+			.catch((error) => error);
+
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+		// The subscription the caller reasoned about was not the one in the database, so nothing about it
+		// moved: no calendar, no cycle count, no new version.
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			billingCycleCount: 0,
+			version: 1
+		});
 	});
 });

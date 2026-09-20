@@ -34,6 +34,7 @@ jest.mock('@gauzy/core', () => {
 		MultiORMOneToMany: decorator,
 		JsonColumn: decorator,
 		IsSecret: decorator,
+		VersionedColumn: decorator,
 		BaseEvent: class {},
 		EventBus: class {},
 		EventOutboxService: class {},

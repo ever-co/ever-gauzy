@@ -1,7 +1,8 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ID, IPagination } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { Idempotent, PermissionGuard, Permissions, TenantPermissionGuard, Versioned } from '@gauzy/core';
+import { EntitlementService } from '../../entitlement/entitlement.service';
 import { EntitlementKey } from '../../entitlement-key/entitlement-key.entity';
 import { EntitlementKeyService } from '../../entitlement-key/entitlement-key.service';
 import { EntitlementKeyStatus } from '../../entitlement.enums';
@@ -38,6 +39,7 @@ export class EntitlementKeyResolver {
 	 * @param page The page.
 	 * @returns One page of keys.
 	 */
+	@Versioned({ resource: EntitlementService, write: false })
 	@Query('entitlementKeys')
 	async entitlementKeys(@Args('filter') filter?: IEntitlementKeyFilter, @Args('page') page?: IPageSelection) {
 		const { skip, take } = resolvePageWindow(page);
@@ -59,10 +61,16 @@ export class EntitlementKeyResolver {
 	/**
 	 * Issues a credential.
 	 *
+	 * The retry scope is `entitlement_key.issue`, which the key route declares as well: the two reach
+	 * one operation differently — the right comes from the path there and from the input here — so a
+	 * client that lost the response gets the same credential back rather than a second one, and a retry
+	 * of one surface can never replay the other's answer because the fingerprint includes the path.
+	 *
 	 * @param input The right, the format and the holder.
 	 * @returns The payload, carrying the plaintext once.
 	 */
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_GRANT)
+	@Idempotent({ scope: 'entitlement_key.issue', required: false, resourceType: 'entitlement_key' })
 	@Mutation('issueEntitlementKey')
 	async issueEntitlementKey(@Args('input') input: IEntitlementKeyIssueInput) {
 		try {

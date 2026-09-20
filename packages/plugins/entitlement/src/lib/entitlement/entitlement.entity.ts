@@ -10,7 +10,8 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany,
 	OrganizationContact,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	VersionedColumn
 } from '@gauzy/core';
 import { EntitlementKind, EntitlementStatus } from '../entitlement.enums';
 import { EntitlementActivation } from '../entitlement-activation/entitlement-activation.entity';
@@ -202,6 +203,17 @@ export class Entitlement extends TenantOrganizationBaseEntity {
 	@MaxLength(255)
 	@MultiORMColumn({ length: 255, nullable: true })
 	suspendedReason?: string;
+
+	/**
+	 * Optimistic lock. Published as the `ETag` of every response that carries the row and required as
+	 * an `If-Match` header by every route that writes it, so two callers editing one right cannot
+	 * silently overwrite each other. The increment is applied by the statement that checks it.
+	 */
+	@ApiProperty({ type: () => Number })
+	@IsNotEmpty()
+	@IsInt()
+	@VersionedColumn()
+	version: number;
 
 	/** Tenant extras: the licence tier, the feature flags the right carries, the dunning watermark. */
 	@ApiPropertyOptional({ type: () => Object })

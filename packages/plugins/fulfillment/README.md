@@ -44,6 +44,19 @@ One surface, one controller per entity: `/api/shipping-profiles`, `/api/shipping
 `/api/fulfillments`, and the shipment's own transitions on `/api/fulfillments/:id/ship`, `/deliver` and
 `/cancel`.
 
+## Retry safety
+
+Creating a fulfilment and handing one to the carrier carry the platform's retry convention
+(`packages/core/src/lib/idempotency/`).
+
+`POST /api/fulfillments` and the mutation `createFulfillment` require an `Idempotency-Key` header — the
+`idempotencyKey` input member over GraphQL — because creating a fulfilment twice ships the same goods
+twice, and the second copy is not a duplicate row but a duplicate parcel. `POST
+/api/fulfillments/:id/ship`, `shipFulfillment`, `POST /api/shipping-options`, `createShippingOption`,
+`POST /api/shipping-profiles` and `createShippingProfile` honour a key when one is presented: a retry
+under the same key and the same bytes is answered with the first attempt's response rather than running
+the work again, and a caller that never sends a key is unaffected.
+
 ## Dependencies
 
 `@gauzy/plugin-order` (a fulfilment is against an order, and it maintains that order's line counters) and

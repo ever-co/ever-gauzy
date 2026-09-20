@@ -6,10 +6,12 @@ import {
 	MAX_IDEMPOTENCY_KEY_LENGTH,
 	MAX_STORED_RESPONSE_BYTES,
 	MIN_IDEMPOTENCY_KEY_LENGTH,
+	buildGraphqlRequestHash,
 	buildRequestHash,
 	canonicalizeQuery,
 	clampRetentionSeconds,
 	hashPrefix,
+	idempotencyKeyFromResolverArgs,
 	isSafeMethod,
 	isValidIdempotencyKey,
 	normalizeIdempotencyKey,
@@ -198,6 +200,67 @@ describe('the identity of a request', () => {
 		);
 		expect(buildRequestHash({ method: 'POST', path: '/api/orders', rawBody: Buffer.from(raw, 'utf8') })).toBe(
 			buildRequestHash({ method: 'POST', path: '/api/orders', rawBody: raw })
+		);
+	});
+});
+
+describe('the key and the fingerprint on the GraphQL transport', () => {
+	it('reads the key off the input the mutation declares, or off a bare argument', () => {
+		// A GraphQL request carries as many mutations as its document selects, so the key rides beside
+		// the input it qualifies. Both spellings a resolver may use are read.
+		expect(idempotencyKeyFromResolverArgs({ input: { cartId: 'cart-1', idempotencyKey: 'key-12345678' } })).toBe(
+			'key-12345678'
+		);
+		expect(idempotencyKeyFromResolverArgs({ idempotencyKey: 'key-12345678' })).toBe('key-12345678');
+		expect(idempotencyKeyFromResolverArgs({ input: { cartId: 'cart-1' } })).toBeUndefined();
+		expect(idempotencyKeyFromResolverArgs(undefined)).toBeUndefined();
+		expect(idempotencyKeyFromResolverArgs(null)).toBeUndefined();
+	});
+
+	it('fingerprints the operation rather than the request that carried it', () => {
+		const hash = buildGraphqlRequestHash({
+			operation: 'mutation',
+			fieldName: 'completeCheckout',
+			args: { input: { cartId: 'cart-1', idempotencyKey: 'key-12345678' } }
+		});
+
+		expect(hash).toMatch(/^[0-9a-f]{64}$/);
+		// The key is the record's identity, not its content: two different keys presented with the same
+		// input are two attempts at one request rather than one key reused, so the fingerprint must not
+		// move when the key does.
+		expect(
+			buildGraphqlRequestHash({
+				operation: 'mutation',
+				fieldName: 'completeCheckout',
+				args: { input: { cartId: 'cart-1', idempotencyKey: 'key-87654321' } }
+			})
+		).toBe(hash);
+	});
+
+	it('separates two operations that state the same input', () => {
+		// Control: without the field name in the tuple, every mutation with no arguments would
+		// fingerprint identically and a retry of one would replay another.
+		const args = { input: { id: 'order-1', idempotencyKey: 'key-12345678' } };
+		const capture = buildGraphqlRequestHash({ operation: 'mutation', fieldName: 'capturePayment', args });
+
+		expect(buildGraphqlRequestHash({ operation: 'mutation', fieldName: 'refundPayment', args })).not.toBe(capture);
+		expect(buildGraphqlRequestHash({ operation: 'query', fieldName: 'capturePayment', args })).not.toBe(capture);
+		expect(buildGraphqlRequestHash({ operation: 'mutation', fieldName: 'capturePayment', args: { input: { id: 'order-2' } } })).not.toBe(
+			capture
+		);
+	});
+
+	it('drops the key from the fingerprint without touching a nested member of the same name', () => {
+		// A nested key belongs to the nested concept's own content, and dropping it would make two
+		// different requests look like one.
+		expect(
+			buildGraphqlRequestHash({
+				operation: 'mutation',
+				fieldName: 'createOrder',
+				args: { input: { lines: [{ idempotencyKey: 'nested' }] } }
+			})
+		).not.toBe(
+			buildGraphqlRequestHash({ operation: 'mutation', fieldName: 'createOrder', args: { input: { lines: [] } } })
 		);
 	});
 });

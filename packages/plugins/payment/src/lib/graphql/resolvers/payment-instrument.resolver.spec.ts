@@ -72,6 +72,9 @@ jest.mock('@gauzy/core', () => {
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		UseValidationPipe: decorator,
 		Permissions: (...permissions: string[]) => SetMetadata(PERMISSIONS_METADATA, permissions),
+		// The retry declaration the mutations carry is written by the kernel's own decorator, so the
+		// assertions below read what the kernel's interceptor reads.
+		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
 		VisibleWith: jest.requireActual('@gauzy/core/src/lib/api/visible-with.decorator').VisibleWith,
 		FieldVisibility: jest.requireActual('@gauzy/core/src/lib/api/field-visibility.service').FieldVisibility,
 		PaymentAccountHolder: class PaymentAccountHolder {},
@@ -110,6 +113,7 @@ import { BadRequestException } from '@nestjs/common';
 import { print } from 'graphql';
 import { PERMISSIONS_METADATA, VISIBLE_WITH_METADATA } from '@gauzy/constants';
 import { FieldVisibility, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { IDEMPOTENT_METADATA_KEY } from '@gauzy/core/src/lib/idempotency/idempotency.policy';
 import { PaymentPermission } from '../../payment.permissions';
 import { PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED } from '../../payment.card-data.pipe';
 import { PaymentAccountHolderLifecycleService } from '../../payment-account-holder/payment-account-holder-lifecycle.service';
@@ -426,5 +430,41 @@ describe('the stored-instrument mutations (17 §9.7)', () => {
 			deleted: true,
 			revokedTokenCount: 1
 		});
+	});
+});
+
+describe('the stored-instrument mutations — the retry declaration (17 §6.1)', () => {
+	/** The retry declaration a mutation carries, as the kernel's interceptor reads it. */
+	const declarationOf = (resolver: { prototype: object }, handler: string) =>
+		Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, (resolver.prototype as never)[handler]);
+
+	it('requires a key on recording an account, on recording its verification, and on saving an instrument', () => {
+		// The three mutations write at a provider as well as in a table, so a retry that lost its answer
+		// must be given the first answer back rather than repeat the write.
+		expect(declarationOf(PaymentAccountHolderResolver, 'createPaymentAccountHolder')).toEqual({
+			scope: 'payment.account.create',
+			required: true,
+			resourceType: 'payment_account_holder'
+		});
+		expect(declarationOf(PaymentAccountHolderResolver, 'verifyPaymentAccountHolder')).toEqual({
+			scope: 'payment.account.verify',
+			required: true,
+			resourceType: 'payment_account_holder'
+		});
+		expect(declarationOf(PaymentMethodTokenResolver, 'createPaymentMethodToken')).toEqual({
+			scope: 'payment.instrument.create',
+			required: true,
+			resourceType: 'payment_method_token'
+		});
+	});
+
+	it('leaves the mutations that repair a row without one', () => {
+		// A repair writes what the caller states over a row the caller named, so a repeat is not a second
+		// side effect and the mutation is untouched by the convention.
+		expect(declarationOf(PaymentAccountHolderResolver, 'updatePaymentAccountHolder')).toBeUndefined();
+
+		for (const handler of ['setDefaultPaymentMethodToken', 'revokePaymentMethodToken']) {
+			expect(declarationOf(PaymentMethodTokenResolver, handler)).toBeUndefined();
+		}
 	});
 });

@@ -1,6 +1,9 @@
 import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { CreateSubscriptionTables1791000000320 } from './database/migrations/1791000000320-CreateSubscriptionTables';
+import {
+	AddSubscriptionVersionColumn1791000000575
+} from './database/migrations/1791000000575-AddSubscriptionVersionColumn';
 import { resolvers } from './graphql/resolvers';
 import { schemaExtensions } from './graphql/schema-extensions';
 import { SUBSCRIPTION_FEATURES } from './subscription.features';
@@ -47,7 +50,7 @@ const SUBSCRIPTION_DEPENDS_ON: string[] = [
 	 * The migrations this plugin owns. The platform merges them into the connection's migration list
 	 * before the connection is created, so they run in timestamp order with every other package's.
 	 */
-	migrations: [CreateSubscriptionTables1791000000320],
+	migrations: [CreateSubscriptionTables1791000000320, AddSubscriptionVersionColumn1791000000575],
 	/**
 	 * The permissions the plugin contributes to the platform role model.
 	 */
