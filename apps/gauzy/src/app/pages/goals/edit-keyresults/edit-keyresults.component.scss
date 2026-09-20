@@ -11,10 +11,12 @@ $control-padding-x: 0.75rem;
 $inset: 1rem;
 $divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
 $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+// Below this the form goes to one column.
+$single-column-below: 575.98px;
 
-// Was a fixed 645px.
+// Was a fixed 645px, one field per row, which ran the form 830px down the page.
 .key-result-dialog {
-  width: min(calc(100vw - 2rem), 40rem);
+  width: min(calc(100vw - 2rem), 44rem);
 }
 
 :host {
@@ -65,17 +67,79 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
     padding: $inset;
   }
 
-  // One field under another, at an even rhythm; bootstrap's rows and their
-  // `.mt-3` labels used to set the spacing field by field.
+  // Name and Description across the grid, then the type's own fields, the two
+  // people, the deadlines, and the objective switch.
   .key-result-form {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.875rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.875rem 0.75rem;
     align-content: start;
+
+    @media (max-width: $single-column-below) {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
   .field {
     min-width: 0;
+  }
+
+  .span-2 {
+    grid-column: span 2;
+  }
+
+  .span-3 {
+    grid-column: span 3;
+  }
+
+  .span-6 {
+    grid-column: 1 / -1;
+  }
+
+  // The type picker and the aligned-objective picker each render their fields
+  // inside wrappers of their own. Taking the wrappers out of the box tree makes
+  // those fields items of this grid, so they pair up with everything else
+  // instead of stacking one per row.
+  ::ng-deep ga-keyresult-type-select,
+  ::ng-deep ga-keyresult-type-select > div,
+  ::ng-deep ga-goal-level-select,
+  ::ng-deep ga-goal-level-select > div {
+    display: contents;
+  }
+
+  ::ng-deep .kr-field,
+  ::ng-deep .goal-level-field {
+    min-width: 0;
+    grid-column: span 3;
+
+    @media (max-width: $single-column-below) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  // Initial value, target value and unit read as one trio, so the first of
+  // them starts a row of its own rather than pairing with Type and leaving the
+  // other two on the next line. A task's project and task pair up the same way.
+  ::ng-deep .kr-field-initial {
+    grid-column: 1 / span 2;
+  }
+
+  ::ng-deep .kr-field-target,
+  ::ng-deep .kr-field-unit {
+    grid-column: span 2;
+  }
+
+  ::ng-deep .kr-field-project {
+    grid-column: 1 / span 3;
+  }
+
+  @media (max-width: $single-column-below) {
+    ::ng-deep .kr-field-initial,
+    ::ng-deep .kr-field-target,
+    ::ng-deep .kr-field-unit,
+    ::ng-deep .kr-field-project {
+      grid-column: 1 / -1;
+    }
   }
 
   // The general help, still a line above the form at this point.

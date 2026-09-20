@@ -12,7 +12,7 @@
 		<form class="key-result-form" [formGroup]="keyResultsForm">
 			<p class="helper-text" [innerHTML]="'KEY_RESULT_PAGE.HELPER_TEXT.KEY_RESULT_GENERAL' | translate"></p>
 
-			<div class="field">
+			<div class="field span-6">
 				<label for="key-result-title" class="label">
 					{{ 'FORM.LABELS.NAME' | translate }}
 				</label>
@@ -26,7 +26,7 @@
 				/>
 			</div>
 
-			<div class="field">
+			<div class="field span-6">
 				<label for="key-result-description" class="label">
 					{{ 'FORM.LABELS.DESCRIPTION_OPTIONAL' | translate }}
 				</label>
@@ -47,7 +47,7 @@
 				[KPIs]="KPIs"
 			></ga-keyresult-type-select>
 
-			<div class="field">
+			<div class="field span-3">
 				<label for="key-result-owner" class="label">
 					{{ 'KEY_RESULT_PAGE.FORM.LABELS.OWNER' | translate }}
 				</label>
@@ -63,7 +63,7 @@
 				></ga-employee-multi-select>
 			</div>
 
-			<div class="field">
+			<div class="field span-3">
 				<label for="key-result-lead" class="label">
 					{{ 'KEY_RESULT_PAGE.FORM.LABELS.LEAD' | translate }}
 				</label>
@@ -79,7 +79,7 @@
 				></ga-employee-multi-select>
 			</div>
 
-			<div class="field">
+			<div class="field span-3">
 				<label for="key-result-deadline" class="label">
 					{{ 'KEY_RESULT_PAGE.FORM.LABELS.DEADLINE' | translate }}
 				</label>
@@ -98,7 +98,7 @@
 			</div>
 
 			@if (keyResultsForm.value.deadline == keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE) {
-			<div class="field">
+			<div class="field span-3">
 				<label for="soft-deadline" class="label">
 					{{ 'KEY_RESULT_PAGE.FORM.LABELS.SOFT_DEADLINE' | translate }}
 				</label>
@@ -118,7 +118,7 @@
 			</div>
 			} @if (keyResultsForm.value.deadline == keyResultDeadlineEnum.HARD_AND_SOFT_DEADLINE ||
 			keyResultsForm.value.deadline == keyResultDeadlineEnum.HARD_DEADLINE) {
-			<div class="field">
+			<div class="field span-3">
 				<label for="hard-deadline" class="label">
 					{{ 'KEY_RESULT_PAGE.FORM.LABELS.HARD_DEADLINE' | translate }}
 				</label>
@@ -137,7 +137,7 @@
 			</div>
 			}
 
-			<div class="field">
+			<div class="field span-6">
 				<div class="d-flex flex-row align-items-center">
 					<nb-toggle id="updated-value" formControlName="assignAsObjective" status="primary"></nb-toggle>
 					<span class="ml-3">{{ 'KEY_RESULT_PAGE.FORM.LABELS.ASSIGN_AS_OBJECTIVE' | translate }}</span>
