@@ -1956,6 +1956,7 @@
 		"EXPECTED": "Verwacht",
 		"UPDATES": "Updates",
 		"UPDATE": "Bijwerken",
+		"ALIGNMENTS": "Uitlijningen",
 		"COMMENTS": "Reacties",
 		"KEY_RESULTS": "Belangrijkste Resultaten",
 		"GROUP_BY": "Groeperen op",
@@ -1972,6 +1973,8 @@
 		"GOAL_TEMPLATES": "Doelsjablonen",
 		"CREATE_NEW_MENU": "Maak nieuw",
 		"CREATE_FROM_PRESET": "Maken vanuit voorinstelling",
+		"SELECT_A_PRESET": "Selecteer een voorinstelling",
+		"ADDITIONAL_DETAILS": "Aanvullende gegevens",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Werknemers",
 			"TEAMS": "Teams",
@@ -2001,7 +2004,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Geen sleutelresultaten om weer te geven.",
 			"NO_UPDATES": "Nog geen updates.",
-			"NO_ALIGNMENT": "Nog geen uitlijningen."
+			"NO_ALIGNMENT": "Nog geen uitlijningen.",
+			"NO_PROGRESS_DATA": "Nog geen voortgangsgegevens om weer te geven."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organisatie",

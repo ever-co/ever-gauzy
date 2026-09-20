@@ -1955,6 +1955,7 @@
 		"EXPECTED": "متوقع",
 		"UPDATES": "التحديثات",
 		"UPDATE": "تحديث",
+		"ALIGNMENTS": "الاستقامات",
 		"COMMENTS": "تعليقات",
 		"KEY_RESULTS": "نتائج رئيسية",
 		"GROUP_BY": "تجميع حسب",
@@ -1971,6 +1972,8 @@
 		"GOAL_TEMPLATES": "قوالب الأهداف",
 		"CREATE_NEW_MENU": "إنشاء جديد",
 		"CREATE_FROM_PRESET": "إنشاء من الضبط المسبق",
+		"SELECT_A_PRESET": "اختر ضبطًا مسبقًا",
+		"ADDITIONAL_DETAILS": "تفاصيل إضافية",
 		"OWNERSHIP": {
 			"EMPLOYEES": "الموظفون",
 			"TEAMS": "الفِرَق",
@@ -2000,7 +2003,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "لا توجد نتائج مفتاحية لعرضها.",
 			"NO_UPDATES": "لا توجد تحديثات حتى الآن.",
-			"NO_ALIGNMENT": "لا توجد استقامات حتى الآن."
+			"NO_ALIGNMENT": "لا توجد استقامات حتى الآن.",
+			"NO_PROGRESS_DATA": "لا توجد بيانات تقدّم لرسمها بعد."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "المنظمة",

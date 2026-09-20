@@ -2442,6 +2442,7 @@
 		"EXPECTED": "Expected",
 		"UPDATES": "Updates",
 		"UPDATE": "Update",
+		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
@@ -2458,6 +2459,8 @@
 		"GOAL_TEMPLATES": "Goal Templates",
 		"CREATE_NEW_MENU": "Create New",
 		"CREATE_FROM_PRESET": "Create from Preset",
+		"SELECT_A_PRESET": "Select a Preset",
+		"ADDITIONAL_DETAILS": "Additional Details",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Employees",
 			"TEAMS": "Teams",
@@ -2487,7 +2490,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
-			"NO_ALIGNMENT": "No Alignments yet."
+			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organization",

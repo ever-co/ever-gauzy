@@ -1956,6 +1956,7 @@
 		"EXPECTED": "Erwartet",
 		"UPDATES": "Aktualisierungen",
 		"UPDATE": "Aktualisierung",
+		"ALIGNMENTS": "Ausrichtungen",
 		"COMMENTS": "Kommentare",
 		"KEY_RESULTS": "Schlüsselergebnisse",
 		"GROUP_BY": "Gruppieren nach",
@@ -1972,6 +1973,8 @@
 		"GOAL_TEMPLATES": "Zielvorlagen",
 		"CREATE_NEW_MENU": "Erstellen Sie neu",
 		"CREATE_FROM_PRESET": "Erstellen aus Vorlage",
+		"SELECT_A_PRESET": "Vorlage auswählen",
+		"ADDITIONAL_DETAILS": "Weitere Details",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Mitarbeiter",
 			"TEAMS": "Teams ist eine Kollaborationsplattform, die es Benutzern ermöglicht, zusammenzuarbeiten, zu kommunizieren und Dateien gemeinsam zu bearbeiten. Mit Teams können Benutzer Chatnachrichten senden, Audio- und Videoanrufe tätigen, Onlinebesprechungen abhalten und gemeinsam an Dokumenten arbeiten. Es ist eine vielseitige und benutzerfreundliche Plattform, die Teams in Unternehmen oder Bildungseinrichtungen bei der effektiven Kommunikation und Zusammenarbeit unterstützt.",
@@ -2001,7 +2004,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Keine Key Results anzuzeigen.",
 			"NO_UPDATES": "Keine Updates bisher.",
-			"NO_ALIGNMENT": "Noch keine Ausrichtungen vorhanden."
+			"NO_ALIGNMENT": "Noch keine Ausrichtungen vorhanden.",
+			"NO_PROGRESS_DATA": "Noch keine Fortschrittsdaten für das Diagramm vorhanden."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organisation",

@@ -7,7 +7,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<nb-stepper #stepper orientation="horizontal" [linear]="true">
-			<nb-step label="Select a Preset">
+			<nb-step [label]="'GOALS_PAGE.SELECT_A_PRESET' | translate">
 				<div class="presets">
 					@for (template of goalTemplates; track template; let index = $index) {
 					<nb-accordion class="preset">
@@ -42,7 +42,7 @@
 					}
 				</div>
 			</nb-step>
-			<nb-step label="Additional Details">
+			<nb-step [label]="'GOALS_PAGE.ADDITIONAL_DETAILS' | translate">
 				<!-- The preset this objective is built from, so the second step still says what it is creating. -->
 				@if (selectedGoalTemplate) {
 				<div class="selected-preset">

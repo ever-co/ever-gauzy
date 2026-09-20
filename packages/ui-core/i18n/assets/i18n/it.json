@@ -1956,6 +1956,7 @@
 		"EXPECTED": "Previsto/Aspettato",
 		"UPDATES": "Aggiornamenti",
 		"UPDATE": "Aggiornamento",
+		"ALIGNMENTS": "Allineamenti",
 		"COMMENTS": "Commenti",
 		"KEY_RESULTS": "Risultati chiave",
 		"GROUP_BY": "Raggruppa per",
@@ -1972,6 +1973,8 @@
 		"GOAL_TEMPLATES": "Modelli di obiettivi",
 		"CREATE_NEW_MENU": "Creare Nuovo",
 		"CREATE_FROM_PRESET": "Crea da preset",
+		"SELECT_A_PRESET": "Seleziona un preset",
+		"ADDITIONAL_DETAILS": "Dettagli aggiuntivi",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Impiegati",
 			"TEAMS": "Squadre",
@@ -2001,7 +2004,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Nessun risultato chiave da visualizzare",
 			"NO_UPDATES": "Ancora nessun aggiornamento",
-			"NO_ALIGNMENT": "Nessun allineamento ancora"
+			"NO_ALIGNMENT": "Nessun allineamento ancora",
+			"NO_PROGRESS_DATA": "Nessun dato di progresso da rappresentare"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organizzazione",

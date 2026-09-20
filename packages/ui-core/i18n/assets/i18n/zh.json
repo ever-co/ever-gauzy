@@ -1956,6 +1956,7 @@
 		"EXPECTED": "预期的",
 		"UPDATES": "更新",
 		"UPDATE": "更新",
+		"ALIGNMENTS": "对齐",
 		"COMMENTS": "评论",
 		"KEY_RESULTS": "关键结果",
 		"GROUP_BY": "分组",
@@ -1972,6 +1973,8 @@
 		"GOAL_TEMPLATES": "目标模板",
 		"CREATE_NEW_MENU": "创建新的",
 		"CREATE_FROM_PRESET": "从预设创建",
+		"SELECT_A_PRESET": "选择预设",
+		"ADDITIONAL_DETAILS": "其他详情",
 		"OWNERSHIP": {
 			"EMPLOYEES": "员工",
 			"TEAMS": "团队",
@@ -2001,7 +2004,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "没有要显示的关键结果。",
 			"NO_UPDATES": "目前尚未有任何更新。",
-			"NO_ALIGNMENT": "尚无对齐。"
+			"NO_ALIGNMENT": "尚无对齐。",
+			"NO_PROGRESS_DATA": "尚无可绘制的进度数据。"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "组织",
