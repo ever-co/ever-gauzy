@@ -35,7 +35,10 @@ describe('AppService', () => {
 			runDefaultSeed: jest.fn().mockResolvedValue(undefined),
 			runDemoSeed: jest.fn().mockResolvedValue(undefined)
 		} as never;
-		userService = { countAll: jest.fn(), findAccountsUsingPasswords: jest.fn().mockResolvedValue([]) } as never;
+		userService = {
+			countAll: jest.fn(),
+			findAccountsUsingPasswords: jest.fn().mockResolvedValue({ matches: [], inconclusive: [] })
+		} as never;
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -147,7 +150,7 @@ describe('AppService', () => {
 		});
 
 		it('warns loudly when one still matches, and still never re-seeds', async () => {
-			userService.findAccountsUsingPasswords.mockResolvedValue(['admin@ever.co']);
+			userService.findAccountsUsingPasswords.mockResolvedValue({ matches: ['admin@ever.co'], inconclusive: [] });
 
 			await service.seedDBIfEmpty();
 
@@ -156,10 +159,27 @@ describe('AppService', () => {
 		});
 
 		it('CONTROL: stays silent when every account was rotated', async () => {
-			userService.findAccountsUsingPasswords.mockResolvedValue([]);
+			userService.findAccountsUsingPasswords.mockResolvedValue({ matches: [], inconclusive: [] });
 
 			await service.seedDBIfEmpty();
 
+			expect(warned()).not.toContain('INSECURE ACCOUNTS');
+			expect(warn).not.toHaveBeenCalled();
+		});
+
+		it('says so when the check could not be exhaustive, instead of reading as clean', async () => {
+			// The per-address row budget means a vulnerable tenant can sit outside the sample. A silent
+			// boot would be indistinguishable from "checked, nothing found".
+			userService.findAccountsUsingPasswords.mockResolvedValue({
+				matches: [],
+				inconclusive: ['admin@ever.co']
+			});
+
+			await service.seedDBIfEmpty();
+
+			expect(String(warn.mock.calls[0][0])).toContain('not exhaustively');
+			expect(String(warn.mock.calls[0][0])).toContain('admin@ever.co');
+			// Still only a note: nothing was actually found, so it must not claim an insecure account.
 			expect(warned()).not.toContain('INSECURE ACCOUNTS');
 		});
 

@@ -39,16 +39,30 @@ export class AppService {
 			return;
 		}
 		try {
-			const accounts = await this.userService.findAccountsUsingPasswords(getPublishedSeedAccounts());
-			if (accounts.length === 0) {
+			const { matches, inconclusive } = await this.userService.findAccountsUsingPasswords(
+				getPublishedSeedAccounts()
+			);
+			if (inconclusive.length > 0) {
+				// The check reads a bounded number of rows per address, so with the same seeded address
+				// in many tenants a vulnerable one can sit outside the sample. Say so rather than let a
+				// silent boot read as "clean".
+				console.warn(
+					chalk.yellow(
+						`Seeded accounts were checked for published passwords, but not exhaustively for ` +
+							`${inconclusive.join(', ')}: that address exists in more tenants than the check reads. ` +
+							'Audit those tenants separately.'
+					)
+				);
+			}
+			if (matches.length === 0) {
 				return;
 			}
-			console.error(chalk.bgRed.whiteBright.bold(` INSECURE ACCOUNTS: ${accounts.join(', ')} `));
+			console.error(chalk.bgRed.whiteBright.bold(` INSECURE ACCOUNTS: ${matches.join(', ')} `));
 			console.error(
 				chalk.red(
-					`${accounts.join(', ')} still ${accounts.length === 1 ? 'uses its' : 'use their'} published default ` +
+					`${matches.join(', ')} still ${matches.length === 1 ? 'uses its' : 'use their'} published default ` +
 						'password from the Gauzy README. Anyone who can reach the login page can sign in as ' +
-						`${accounts.length === 1 ? 'it' : 'them'}. Change ${accounts.length === 1 ? 'that password' : 'those passwords'} ` +
+						`${matches.length === 1 ? 'it' : 'them'}. Change ${matches.length === 1 ? 'that password' : 'those passwords'} ` +
 						'now (or deactivate the account).'
 				)
 			);

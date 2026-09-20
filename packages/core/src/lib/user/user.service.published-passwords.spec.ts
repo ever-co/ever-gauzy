@@ -58,10 +58,10 @@ describe('UserService.findAccountsUsingPasswords', () => {
 			{ email: 'employee@ever.co', hash: await bcrypt.hash('12345678') }
 		]);
 
-		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual([
-			'admin@ever.co',
-			'employee@ever.co'
-		]);
+		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual({
+			matches: ['admin@ever.co', 'employee@ever.co'],
+			inconclusive: []
+		});
 	});
 
 	it('CONTROL: a rotated password is not reported', async () => {
@@ -70,13 +70,13 @@ describe('UserService.findAccountsUsingPasswords', () => {
 			{ email: 'local.admin@ever.co' } // no password at all (e.g. social sign-in only)
 		]);
 
-		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual([]);
+		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual({ matches: [], inconclusive: [] });
 	});
 
 	it('does not cross-match one account against another account’s password', async () => {
 		const { service } = build([{ email: 'employee@ever.co', hash: await scrypt.hash('admin') }]);
 
-		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual([]);
+		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual({ matches: [], inconclusive: [] });
 	});
 
 	it('reports an email once even when it exists in several tenants', async () => {
@@ -86,7 +86,10 @@ describe('UserService.findAccountsUsingPasswords', () => {
 			{ email: 'admin@ever.co', hash }
 		]);
 
-		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual(['admin@ever.co']);
+		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual({
+			matches: ['admin@ever.co'],
+			inconclusive: []
+		});
 	});
 
 	it('queries each candidate address on its own, selecting only the hash (TypeORM)', async () => {
@@ -127,7 +130,7 @@ describe('UserService.findAccountsUsingPasswords', () => {
 				{ email: 'admin@ever.co', password: 'admin' },
 				{ email: 'admin@ever.co', password: 'admin' }
 			])
-		).resolves.toEqual(['admin@ever.co']);
+		).resolves.toEqual({ matches: ['admin@ever.co'], inconclusive: [] });
 		expect(typeOrmUserRepository.find).toHaveBeenCalledTimes(1);
 	});
 
@@ -143,7 +146,10 @@ describe('UserService.findAccountsUsingPasswords', () => {
 			{ email: 'employee@ever.co', hash: await scrypt.hash('12345678') }
 		]);
 
-		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual(['employee@ever.co']);
+		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual({
+			matches: ['employee@ever.co'],
+			inconclusive: ['admin@ever.co']
+		});
 	});
 
 	/**
@@ -162,7 +168,11 @@ describe('UserService.findAccountsUsingPasswords', () => {
 		const verify = jest.spyOn(hashing, 'verify');
 
 		try {
-			await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual([]);
+			// `admin@ever.co` is reported as inconclusive: the budget ran out before its 200 rows did.
+			await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual({
+				matches: [],
+				inconclusive: ['admin@ever.co']
+			});
 
 			expect(typeOrmUserRepository.find.mock.calls[0][0].take).toBe(5);
 			// 5 rows per address, one password each, three addresses.
@@ -172,10 +182,38 @@ describe('UserService.findAccountsUsingPasswords', () => {
 		}
 	});
 
+	it('reports a search that ran out of budget as inconclusive, not as clean', async () => {
+		// Same address in more tenants than the cap: a vulnerable row can sit past the sample, so the
+		// caller must be able to say "not exhaustively checked" instead of implying "clean".
+		const rotated = await scrypt.hash('rotated-after-install');
+		const { service } = build(Array.from({ length: 9 }, () => ({ email: 'admin@ever.co', hash: rotated })));
+
+		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual({
+			matches: [],
+			inconclusive: ['admin@ever.co']
+		});
+	});
+
+	it('does not call an address inconclusive once it has already matched', async () => {
+		const hash = await scrypt.hash('admin');
+		const { service } = build(Array.from({ length: 9 }, () => ({ email: 'admin@ever.co', hash })));
+
+		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual({
+			matches: ['admin@ever.co'],
+			inconclusive: []
+		});
+	});
+
+	it('does not call an address inconclusive when all of its rows fit in the budget', async () => {
+		const { service } = build([{ email: 'admin@ever.co', hash: await scrypt.hash('rotated-after-install') }]);
+
+		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual({ matches: [], inconclusive: [] });
+	});
+
 	it('does not query at all without candidates', async () => {
 		const { service, typeOrmUserRepository } = build([]);
 
-		await expect(service.findAccountsUsingPasswords([])).resolves.toEqual([]);
+		await expect(service.findAccountsUsingPasswords([])).resolves.toEqual({ matches: [], inconclusive: [] });
 		expect(typeOrmUserRepository.find).not.toHaveBeenCalled();
 	});
 });

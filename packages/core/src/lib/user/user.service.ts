@@ -907,12 +907,19 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * address is queried on its own and at most {@link MAX_ROWS_PER_ACCOUNT} of its rows are read and
 	 * verified — every candidate gets looked at, and a boot cannot be held up.
 	 *
+	 * The cap makes a clean result non-conclusive: with the same address in more tenants than the cap,
+	 * a vulnerable row can sit outside the sample. That is reported rather than hidden — `inconclusive`
+	 * names the addresses whose rows filled the budget without a match, so the caller can say "not
+	 * exhaustively checked" instead of implying "clean".
+	 *
 	 * @param candidates Account emails, each with the password to test.
-	 * @returns The matching emails (an email is reported once even if it exists in several tenants).
+	 * @returns `matches`, the emails that still use one of the given passwords (each reported once
+	 * however many tenants hold it), and `inconclusive`, the emails whose search hit the row budget
+	 * without matching.
 	 */
 	public async findAccountsUsingPasswords(
 		candidates: ReadonlyArray<{ email: string; password: string }>
-	): Promise<string[]> {
+	): Promise<{ matches: string[]; inconclusive: string[] }> {
 		// One Set of passwords per address: `getPublishedSeedAccounts()` can propose the same address
 		// twice (the canonical one and the configured one), and a Map keeps one query per address while
 		// still testing every password proposed for it. Insertion order is the candidate order.
@@ -927,6 +934,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 
 		const matches: string[] = [];
+		const inconclusive: string[] = [];
 		for (const [email, passwords] of passwordsByEmail) {
 			const rows = await this.findUsersByEmail(email);
 			// Re-checked against the row AND sliced again here, so a repository that ignored the filter
@@ -935,9 +943,12 @@ export class UserService extends TenantAwareCrudService<User> {
 			const relevant = rows.filter((row) => row?.email === email && !!row.hash).slice(0, MAX_ROWS_PER_ACCOUNT);
 			if (await this.anyPasswordVerifies(relevant, passwords)) {
 				matches.push(email);
+			} else if (relevant.length >= MAX_ROWS_PER_ACCOUNT) {
+				// The budget ran out before the rows did: there may be a vulnerable one past it.
+				inconclusive.push(email);
 			}
 		}
-		return matches;
+		return { matches, inconclusive };
 	}
 
 	/**
