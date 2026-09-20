@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ID, IUser, IUserCreateInput } from '@gauzy/contracts';
 import { UserCreateCommand } from '../user.create.command';
@@ -6,6 +7,8 @@ import { normalizeRolePayload } from '../../role-assignment.helper';
 
 @CommandHandler(UserCreateCommand)
 export class UserCreateHandler implements ICommandHandler<UserCreateCommand> {
+	private readonly logger = new Logger(UserCreateHandler.name);
+
 	constructor(private readonly userService: UserService) {}
 
 	/**
@@ -24,7 +27,7 @@ export class UserCreateHandler implements ICommandHandler<UserCreateCommand> {
 		// cannot see, since the victim is a member of the caller's own tenant (GHSA-jh6m-9fxr-rx3c).
 		// Every caller of this command means to INSERT a user, so the id is dropped rather than refused.
 		if (id) {
-			console.log('UserCreateHandler: ignoring the body-supplied user id on a create');
+			this.logger.warn(`Ignoring the body-supplied user id on a create: ${id}`);
 		}
 
 		// Every form of the role — `roleId`, `role` as a bare id string, `role: { id }` — is read, and
