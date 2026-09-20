@@ -198,6 +198,73 @@ describe('TimeLogService', () => {
 			expect(conditions).toEqual(expect.arrayContaining(scopingConditions));
 			expect(parameters).toEqual(expect.objectContaining({ employeeIds: [CURRENT_EMPLOYEE_ID] }));
 		});
+
+		/**
+		 * `moment().tz(undefined)` returns undefined rather than a moment, so every report that groups
+		 * its rows by `.tz(timeZone).format(...)` answered 500 "Cannot read properties of undefined
+		 * (reading 'format')" for a request that named no time zone — but only once the organization had
+		 * time logs, because an empty result never runs the grouping. The filter specs above all run on
+		 * an empty result, which is why they never caught it.
+		 */
+		describe('a request without a time zone', () => {
+			const LOG_STARTED_AT = '2026-01-06T22:00:00.000Z';
+
+			beforeEach(() => {
+				actAs({ canChangeSelectedEmployee: true });
+				builder.rows = [
+					{
+						id: 'b1f0c6da-6f54-4f3e-8f7a-4c2e9d0b1a23',
+						employeeId: TARGET_EMPLOYEE_ID,
+						startedAt: LOG_STARTED_AT,
+						stoppedAt: '2026-01-06T23:00:00.000Z',
+						duration: 3600,
+						logType: 'TRACKED',
+						employee: { id: TARGET_EMPLOYEE_ID, user: { id: USER_ID } },
+						timeSlots: [{ id: '2f3e4d5c-6b7a-4980-9a1b-2c3d4e5f6a7b', overall: 60, duration: 600 }]
+					}
+				];
+			});
+
+			it.each<[string, (input: IGetTimeLogReportInput) => Promise<unknown>]>(reportMethods)(
+				'%s still answers when the request names no time zone',
+				async (_name, run) => {
+					const { timeZone, ...withoutTimeZone } = request;
+
+					await expect(run(withoutTimeZone as IGetTimeLogReportInput)).resolves.toBeDefined();
+				}
+			);
+
+			it.each<[string, (input: IGetTimeLogReportInput) => Promise<unknown>]>(reportMethods)(
+				'%s still answers when the time zone is empty',
+				async (_name, run) => {
+					await expect(run({ ...request, timeZone: '' })).resolves.toBeDefined();
+				}
+			);
+
+			it('buckets the rows under the server zone, the same one the day list is built in', async () => {
+				const { timeZone, ...withoutTimeZone } = request;
+				const serverZoneDate = moment.utc(LOG_STARTED_AT).tz(moment.tz.guess()).format('YYYY-MM-DD');
+
+				const report = (await service.getWeeklyReport(withoutTimeZone as IGetTimeLogReportInput)) as Array<{
+					dates: Record<string, unknown>;
+				}>;
+
+				// The day list and the grouping agree, so the log lands in a real bucket rather than in a
+				// key nobody reads
+				expect(Object.keys(report[0].dates)).toContain(serverZoneDate);
+				expect(report[0].dates[serverZoneDate]).not.toBe(0);
+			});
+
+			it('keeps using the requested time zone when the request names one', async () => {
+				const report = (await service.getWeeklyReport({ ...request, timeZone: 'Asia/Tokyo' })) as Array<{
+					dates: Record<string, unknown>;
+				}>;
+
+				// UTC+9: 22:00Z on the 6th is already 07:00 on the 7th there
+				const zoned = moment.utc(LOG_STARTED_AT).tz('Asia/Tokyo').format('YYYY-MM-DD');
+				expect(report[0].dates[zoned]).not.toBe(0);
+			});
+		});
 	});
 
 	/**

@@ -45,7 +45,13 @@ import {
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from './commands';
-import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum, parseFindOptionsRelations } from './../../core/utils';
+import {
+	getDateRangeFormat,
+	getDaysBetweenDates,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	resolveTimeZone
+} from './../../core/utils';
 import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
@@ -163,6 +169,21 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * The days a report covers and the time zone its rows are grouped by, resolved together.
+	 *
+	 * They have to come from one and the same zone: the day list is what the response is keyed by, so a
+	 * grouping key built in another zone lands in a bucket nobody reads. A request that names no zone falls
+	 * back to the server zone rather than formatting an undefined moment.
+	 *
+	 * @param request The report input.
+	 * @returns The day list and the zone that produced it.
+	 */
+	private reportDateRange(request: IGetTimeLogReportInput): { days: string[]; timeZone: string } {
+		const timeZone = resolveTimeZone(request.timeZone);
+		return { days: getDaysBetweenDates(request.startDate, request.endDate, timeZone), timeZone };
+	}
+
+	/**
 	 * Fetches time logs for a weekly report based on the provided input.
 	 * @param request The input parameters for fetching time logs.
 	 * @returns A Promise that resolves to an array of weekly report data.
@@ -236,9 +257,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
-		// Gets an array of days between the given start date, end date and timezone.
-		const { startDate, endDate, timeZone } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
+		// The days the report covers, and the zone its rows are grouped by
+		const { days, timeZone } = this.reportDateRange(request);
 
 		// Process weekly logs using lodash and Moment.js
 		const weeklyLogs = chain(logs)
@@ -323,9 +343,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
-		// Gets an array of days between the given start date, end date and timezone.
-		const { startDate, endDate, timeZone } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
+		// The days the report covers, and the zone its rows are grouped by
+		const { days, timeZone } = this.reportDateRange(request);
 
 		// Group time logs by date and calculate tracked, manual, idle, and resumed durations
 		const byDate = chain(logs)
@@ -502,8 +521,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A Promise that resolves to an array of owed amount report data.
 	 */
 	async getOwedAmountReport(request: IGetTimeLogReportInput): Promise<IAmountOwedReport[]> {
-		// Extract timezone from the request
-		const { timeZone } = request;
+		// The zone the rows are grouped by; a request without one would format an undefined moment
+		const timeZone = resolveTimeZone(request.timeZone);
 
 		let timeLogs: ITimeLog[];
 
@@ -659,9 +678,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
-		// Gets an array of days between the given start date, end date and timezone.
-		const { startDate, endDate, timeZone } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
+		// The days the report covers, and the zone its rows are grouped by
+		const { days, timeZone } = this.reportDateRange(request);
 
 		const byDate: any = chain(timeLogs)
 			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -774,9 +792,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
-		// Gets an array of days between the given start date, end date and timezone.
-		const { startDate, endDate, timeZone } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
+		// The days the report covers, and the zone its rows are grouped by
+		const { days, timeZone } = this.reportDateRange(request);
 
 		// Process time log data and calculate time limits for each employee and date
 		const byDate: any = chain(timeLogs)

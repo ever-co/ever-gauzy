@@ -20,6 +20,12 @@ export type RecordedClause = {
 export class RecordingQueryBuilder {
 	/** Clauses present when the query executed, i.e. the ones that would have reached the SQL. */
 	executedClauses: RecordedClause[] | null = null;
+	/**
+	 * Rows `getMany()` hands back. Empty by default, because the filter specs only care about the
+	 * clauses; set it when a spec needs the report body — which only runs over a non-empty result — to
+	 * execute.
+	 */
+	rows: unknown[] = [];
 	private clauses: RecordedClause[] = [];
 
 	constructor(readonly alias: string) {}
@@ -52,9 +58,9 @@ export class RecordingQueryBuilder {
 		return 0;
 	}
 
-	async getMany(): Promise<never[]> {
+	async getMany(): Promise<unknown[]> {
 		this.executedClauses = [...this.clauses];
-		return [];
+		return this.rows;
 	}
 
 	private record(condition: unknown, parameters?: Record<string, unknown>): RecordedClause {
