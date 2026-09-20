@@ -88,9 +88,9 @@ describe('OAuth2TokenManager.refreshAccessToken — account re-check', () => {
 
 		expect(await manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => null)).toBeNull();
 
-		// NOT revoked: the wired provider (apps/mcp-auth getMcpUserInfo) also answers null for a
-		// transient lookup failure, so revoking here would let one database blip sign an active user
-		// out for good. Refusing is what blocks the deactivated account, and it holds on every call.
+		// NOT revoked: refusing already blocks every use of the token, and a revocation could not be
+		// undone if the account is re-activated. (A lookup that FAILS is a separate case now — the
+		// provider rejects rather than answering null — and is covered below.)
 		expect((manager as any).refreshTokens.get(jti).isRevoked).toBe(false);
 		expect(await manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => null)).toBeNull();
 
