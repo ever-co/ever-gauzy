@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { IDesktopSecret, isKnownDefaultSecret } from '@gauzy/contracts';
 
 /** The four signing/session secrets of the API a desktop app runs locally, as stored in `configs.secret`. */
@@ -37,7 +37,8 @@ export function ensureDesktopSecrets(
 	stored?: Partial<IDesktopSecret['secret']> | null,
 	generate: () => string = () => randomBytes(64).toString('hex')
 ): { secret: DesktopSecrets; changed: boolean } {
-	const secret = { ...(stored ?? {}) } as DesktopSecrets;
+	// `let`: conceptually mutable, the loop below writes through its properties.
+	let secret = { ...stored } as DesktopSecrets;
 	let changed = false;
 
 	for (const key of Object.keys(DESKTOP_SECRET_ENV) as Array<keyof DesktopSecrets>) {
@@ -65,17 +66,51 @@ export function desktopSecretsToEnv(secret: DesktopSecrets): Record<string, stri
 	};
 }
 
+/** Key names whose value is a credential. Matched case-insensitively at every nesting level. */
+const SECRET_KEY_PATTERN = /secret|pass|token|key|credential/i;
+
+/** How deep {@link redactSecretsForLog} walks before it gives up and drops the remaining value. */
+const MAX_REDACTION_DEPTH = 8;
+
 /**
- * A copy of `values` that is safe to log: values under secret-looking keys (and a nested `secret`
- * object) are replaced. The local API's env and the setup config carry the per-install secrets.
- *
- * @param values - Environment variables or a config object.
+ * Recursively redacts one value. Arrays and plain objects are walked; anything else is returned
+ * as is. `seen` breaks reference cycles, `depth` bounds pathological structures.
  */
-export function redactSecretsForLog<T extends Record<string, any>>(values: T | null | undefined): Record<string, unknown> {
+function redactValue(value: unknown, seen: WeakSet<object>, depth: number): unknown {
+	if (value === null || typeof value !== 'object') {
+		return value;
+	}
+	if (depth >= MAX_REDACTION_DEPTH) {
+		return '[TRUNCATED]';
+	}
+	if (seen.has(value as object)) {
+		return '[CIRCULAR]';
+	}
+	seen.add(value as object);
+
+	if (Array.isArray(value)) {
+		return value.map((entry) => redactValue(entry, seen, depth + 1));
+	}
+
 	return Object.fromEntries(
-		Object.entries(values ?? {}).map(([key, value]) => [
+		Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
 			key,
-			/secret|pass|token|key/i.test(key) && value ? '[REDACTED]' : value
+			SECRET_KEY_PATTERN.test(key) && entry ? '[REDACTED]' : redactValue(entry, seen, depth + 1)
 		])
 	);
+}
+
+/**
+ * A copy of `values` that is safe to log: every value under a secret-looking key is replaced, at any
+ * nesting depth. The local API's env and the setup config carry the per-install signing secrets, the
+ * database password (`postgres.dbPassword`) and the proxy TLS key (`secureProxy.ssl.key`), all of
+ * which used to be printed verbatim by the launcher.
+ *
+ * @param values - Environment variables or a config object.
+ * @returns A redacted shallow-immutable copy; the input is never modified.
+ */
+export function redactSecretsForLog<T extends Record<string, any>>(
+	values: T | null | undefined
+): Record<string, unknown> {
+	return redactValue(values ?? {}, new WeakSet<object>(), 0) as Record<string, unknown>;
 }

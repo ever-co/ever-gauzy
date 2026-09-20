@@ -68,12 +68,17 @@ import {
 const ACTIVE_ACCOUNT = { isActive: true, isArchived: false } as const;
 
 /**
- * How many rows {@link UserService.findAccountsUsingPasswords} reads and verifies. That check runs on
- * the boot path, `user.email` carries a plain (non-unique) index, and a password verification costs
- * tens to hundreds of milliseconds by design — so the work has to be capped rather than scale with the
- * number of tenants that happen to hold the same seeded address (GHSA-4r2r-mv32-3468).
+ * How many rows {@link UserService.findAccountsUsingPasswords} reads and verifies PER CANDIDATE
+ * ADDRESS. That check runs on the boot path, `user.email` carries a plain (non-unique) index, and a
+ * password verification costs tens to hundreds of milliseconds by design — so the work has to be
+ * capped rather than scale with the number of tenants that happen to hold the same seeded address
+ * (GHSA-4r2r-mv32-3468).
+ *
+ * The budget is per address rather than global: one shared `IN (...)` limit let the rows of whichever
+ * address the database returned first use up the whole allowance, so a rotated `admin@ever.co` in ten
+ * tenants could hide an `employee@ever.co` that still had its published password.
  */
-const MAX_ACCOUNTS_CHECKED = 10;
+const MAX_ROWS_PER_ACCOUNT = 5;
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -898,9 +903,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 *
 	 * Best effort, and deliberately bounded: `email` is not unique across tenants, so the same seeded
 	 * address can exist many times, while one verification is expensive on purpose (scrypt, or bcrypt
-	 * at 12 rounds for a legacy hash). This runs before the API starts listening, so at most
-	 * {@link MAX_ACCOUNTS_CHECKED} rows are read and verified — enough for a warning, and it cannot
-	 * hold up a boot.
+	 * at 12 rounds for a legacy hash). This runs before the API starts listening, so each candidate
+	 * address is queried on its own and at most {@link MAX_ROWS_PER_ACCOUNT} of its rows are read and
+	 * verified — every candidate gets looked at, and a boot cannot be held up.
 	 *
 	 * @param candidates Account emails, each with the password to test.
 	 * @returns The matching emails (an email is reported once even if it exists in several tenants).
@@ -908,40 +913,57 @@ export class UserService extends TenantAwareCrudService<User> {
 	public async findAccountsUsingPasswords(
 		candidates: ReadonlyArray<{ email: string; password: string }>
 	): Promise<string[]> {
-		const emails = [...new Set(candidates.map(({ email }) => email).filter(Boolean))];
-		if (emails.length === 0) {
+		// One entry per (email, password) pair, so two passwords proposed for the same address are both
+		// tested, and an address repeated with the same password is tested once.
+		const seen = new Set<string>();
+		const pairs = candidates.filter(({ email, password }) => {
+			if (!email) {
+				return false;
+			}
+			const fingerprint = `${email} :: ${password}`;
+			if (seen.has(fingerprint)) {
+				return false;
+			}
+			seen.add(fingerprint);
+			return true;
+		});
+		if (pairs.length === 0) {
 			return [];
 		}
 
-		let rows: Array<Pick<User, 'email' | 'hash'>>;
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
-				// Raw entities, not `serialize()`d: serialization strips `hash`.
-				rows = await this.mikroOrmUserRepository.find({ email: { $in: emails } } as any, {
-					limit: MAX_ACCOUNTS_CHECKED
-				});
-				break;
-			case MultiORMEnum.TypeORM:
-			default:
-				rows = await this.typeOrmUserRepository.find({
-					where: { email: In(emails) },
-					select: { id: true, email: true, hash: true },
-					take: MAX_ACCOUNTS_CHECKED
-				});
-				break;
-		}
-
 		const matches = new Set<string>();
-		// Sliced as well as limited in the query, so the expensive part stays bounded whatever the
-		// repository returns.
-		for (const { email, hash } of rows.slice(0, MAX_ACCOUNTS_CHECKED)) {
-			if (!hash || matches.has(email)) {
-				continue;
-			}
-			for (const candidate of candidates) {
-				if (candidate.email === email && (await this._passwordHashService.verify(candidate.password, hash))) {
-					matches.add(email);
+		for (const email of [...new Set(pairs.map((pair) => pair.email))]) {
+			// Queried per address, with its own row budget: see MAX_ROWS_PER_ACCOUNT.
+			let rows: Array<Pick<User, 'email' | 'hash'>>;
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					// Raw entities, not `serialize()`d: serialization strips `hash`.
+					rows = await this.mikroOrmUserRepository.find({ email } as any, { limit: MAX_ROWS_PER_ACCOUNT });
 					break;
+				case MultiORMEnum.TypeORM:
+				default:
+					rows = await this.typeOrmUserRepository.find({
+						where: { email },
+						select: { id: true, email: true, hash: true },
+						take: MAX_ROWS_PER_ACCOUNT
+					});
+					break;
+			}
+
+			const passwords = pairs.filter((pair) => pair.email === email).map((pair) => pair.password);
+			// Re-checked against the row AND sliced again here, so a repository that ignored the filter
+			// or the limit can neither cross-match one account's password onto another nor make the
+			// expensive part unbounded.
+			const relevant = rows.filter((row) => row?.email === email && !!row.hash).slice(0, MAX_ROWS_PER_ACCOUNT);
+			for (const row of relevant) {
+				if (matches.has(email)) {
+					break;
+				}
+				for (const password of passwords) {
+					if (await this._passwordHashService.verify(password, row.hash)) {
+						matches.add(email);
+						break;
+					}
 				}
 			}
 		}

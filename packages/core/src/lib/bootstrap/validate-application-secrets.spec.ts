@@ -1,4 +1,4 @@
-import { environment, resolveSecret } from '@gauzy/config';
+import { environment } from '@gauzy/config';
 import { validateApplicationSecrets } from './validate-secrets';
 
 /**
@@ -32,28 +32,28 @@ describe('validateApplicationSecrets', () => {
 	const env = () => environment as unknown as Record<string, unknown>;
 
 	let saved: Record<string, string | undefined>;
-	let savedEnvironment: Record<string, unknown>;
 	let savedProduction: boolean;
 	let error: jest.SpyInstance;
 	let warn: jest.SpyInstance;
 
-	/** Sets a secret the way a deployment does: in process.env and in the config object read at import. */
+	/**
+	 * Sets a secret the way a deployment does. `environment` exposes these four as GETTERS over
+	 * `resolveSecret`, so `process.env` IS the config: assigning to `environment.JWT_SECRET` would
+	 * throw ("only a getter"), and there is no second place to keep in sync.
+	 */
 	const setSecret = (key: string, value: string) => {
 		process.env[key] = value;
-		env()[key] = value;
 	};
 
-	/** Leaves a secret unset: the config object then holds whatever `resolveSecret` substitutes. */
+	/** Leaves a secret unset: reading it then yields whatever `resolveSecret` substitutes. */
 	const unsetSecret = (key: string) => {
 		delete process.env[key];
-		env()[key] = resolveSecret(key, PRE_FIX_DEFAULTS[key]);
 	};
 
 	const setStrongSecrets = () => KEYS.forEach((key) => setSecret(key, `strong-${key}-7f3c9a1e5b`));
 
 	beforeEach(() => {
 		saved = Object.fromEntries(MANAGED.map((key) => [key, process.env[key]]));
-		savedEnvironment = Object.fromEntries(KEYS.map((key) => [key, env()[key]]));
 		savedProduction = environment.production;
 		for (const key of MANAGED) {
 			delete process.env[key];
@@ -72,7 +72,6 @@ describe('validateApplicationSecrets', () => {
 				process.env[key] = saved[key];
 			}
 		}
-		Object.assign(env(), savedEnvironment);
 		environment.production = savedProduction;
 		delete (globalThis as any)[REGISTRY];
 		error.mockRestore();
@@ -117,6 +116,18 @@ describe('validateApplicationSecrets', () => {
 			setSecret('JWT_VERIFICATION_TOKEN_SECRET', '   ');
 
 			expect(() => validateApplicationSecrets()).toThrow(/JWT_VERIFICATION_TOKEN_SECRET, EXPRESS_SESSION_SECRET/);
+		});
+
+		it('reads the value through the lazy getter, so a late-loaded .env still decides the verdict', () => {
+			// `environment` resolves these four on READ (apps/api loads .env.local after its imports).
+			// The guard must therefore see a value set after import — and must not be fooled by a stale
+			// snapshot taken at import time.
+			unsetSecret('JWT_SECRET');
+			expect(() => validateApplicationSecrets()).toThrow(/JWT_SECRET/);
+
+			setSecret('JWT_SECRET', 'strong-JWT_SECRET-7f3c9a1e5b');
+			expect(environment.JWT_SECRET).toBe('strong-JWT_SECRET-7f3c9a1e5b');
+			expect(() => validateApplicationSecrets()).not.toThrow();
 		});
 
 		it('keeps the explicit ALLOW_INSECURE_JWT_SECRET opt-out', () => {

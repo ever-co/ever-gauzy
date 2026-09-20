@@ -1,4 +1,4 @@
-import { OAuth2TokenManager, TokenPayload } from './oauth-token-manager';
+import { OAuth2TokenManager, TokenPayload, UserLookupUnavailableError } from './oauth-token-manager';
 
 /**
  * Regression suite for GHSA-3cgp-wmrg-4fqg, MCP OAuth residual.
@@ -45,12 +45,29 @@ describe('OAuth2TokenManager.refreshAccessToken — account re-check', () => {
 		return pair.refreshToken!;
 	};
 
-	it('CONTROL: without the account re-check, a deactivated user keeps minting access tokens', async () => {
+	/** The pre-fix call shape: two arguments, no account resolver. It no longer type-checks. */
+	const refreshWithoutResolver = (token: string): Promise<any> =>
+		(manager.refreshAccessToken as unknown as (t: string, c: string) => Promise<any>).call(
+			manager,
+			token,
+			CLIENT_ID
+		);
+
+	it('CONTROL: the metadata-only path the pre-fix code took is otherwise valid (it minted a token)', async () => {
 		const refreshToken = await issueRefreshToken();
-		// The pre-fix call shape: no user resolver is consulted at all.
-		const pair = await manager.refreshAccessToken(refreshToken, CLIENT_ID);
+		// Everything the pre-fix code checked still passes for this token, so the ONLY thing standing
+		// between a deactivated user and a fresh access token is the account re-check below.
+		const pair = await manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => ({ sub: USER_ID }));
 
 		expect(pair?.accessToken).toBeDefined();
+	});
+
+	it('fails closed when a caller omits the resolver, instead of skipping the account check', async () => {
+		const refreshToken = await issueRefreshToken();
+
+		// Not a token pair, and not `null` either: a misconfigured caller must not look like a bad
+		// refresh token. The token endpoint turns this into 500 server_error.
+		await expect(refreshWithoutResolver(refreshToken)).rejects.toThrow(/resolveUser/);
 	});
 
 	it('positive control: an active user still refreshes', async () => {
@@ -81,16 +98,45 @@ describe('OAuth2TokenManager.refreshAccessToken — account re-check', () => {
 		expect(await manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => ({ sub: USER_ID }))).not.toBeNull();
 	});
 
-	it('refuses without revoking when the lookup itself fails (transient error)', async () => {
+	it('reports a FAILED lookup separately from an inactive account, and keeps the token usable', async () => {
 		const refreshToken = await issueRefreshToken();
 		const jti = payloads.get(refreshToken)!.jti;
+		const cause = new Error('database unavailable');
 
-		const pair = await manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => {
-			throw new Error('database unavailable');
-		});
+		// Not `null`: `null` becomes invalid_grant, which tells the client to throw a still-valid
+		// refresh token away. A transient failure must stay retryable.
+		await expect(
+			manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => {
+				throw cause;
+			})
+		).rejects.toBeInstanceOf(UserLookupUnavailableError);
 
-		expect(pair).toBeNull();
 		expect((manager as any).refreshTokens.get(jti).isRevoked).toBe(false);
+		// Once the lookup recovers, the same refresh token still works.
+		expect(await manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => ({ sub: USER_ID }))).not.toBeNull();
+	});
+
+	it('carries the cause and the user id on the lookup failure, and does not swallow it as a token error', async () => {
+		const refreshToken = await issueRefreshToken();
+		const cause = new Error('connection terminated');
+
+		const error: unknown = await manager
+			.refreshAccessToken(refreshToken, CLIENT_ID, async () => {
+				throw cause;
+			})
+			.then(() => undefined, (caught) => caught);
+
+		expect(error).toBeInstanceOf(UserLookupUnavailableError);
+		// The guard the callers actually use, which also holds when `instanceof` is broken by a
+		// downlevelled bundle.
+		expect(UserLookupUnavailableError.is(error)).toBe(true);
+		expect((error as UserLookupUnavailableError).userId).toBe(USER_ID);
+		expect((error as UserLookupUnavailableError).cause).toBe(cause);
+		expect(UserLookupUnavailableError.is(new Error('something else'))).toBe(false);
+	});
+
+	it('still answers null (not a lookup failure) when the token itself is bad', async () => {
+		expect(await manager.refreshAccessToken('not-a-token', CLIENT_ID, async () => ({ sub: USER_ID }))).toBeNull();
 	});
 
 	it('does not consult the user for a token that fails the existing checks', async () => {

@@ -117,6 +117,35 @@ describe('AppService', () => {
 			]);
 		});
 
+		it('also checks the CANONICAL published addresses when the configuration was changed later', async () => {
+			// The database was seeded at some point in the past. An operator who set
+			// DEMO_SUPER_ADMIN_EMAIL afterwards still has the original `admin@ever.co` row with the
+			// published password; checking only today's configuration would walk straight past it.
+			const credentials = environment.demoCredentialConfig as unknown as Record<string, string>;
+			const saved = credentials.superAdminEmail;
+			credentials.superAdminEmail = 'ops@example.com';
+			try {
+				await service.seedDBIfEmpty();
+
+				const checked = userService.findAccountsUsingPasswords.mock.calls[0][0];
+				expect(checked).toEqual(
+					expect.arrayContaining([
+						{ email: 'ops@example.com', password: 'admin' },
+						{ email: 'admin@ever.co', password: 'admin' }
+					])
+				);
+			} finally {
+				credentials.superAdminEmail = saved;
+			}
+		});
+
+		it('does not check the same address twice when the configuration is unchanged', async () => {
+			await service.seedDBIfEmpty();
+
+			const checked = userService.findAccountsUsingPasswords.mock.calls[0][0];
+			expect(new Set(checked.map(({ email, password }) => `${email} :: ${password}`)).size).toBe(checked.length);
+		});
+
 		it('warns loudly when one still matches, and still never re-seeds', async () => {
 			userService.findAccountsUsingPasswords.mockResolvedValue(['admin@ever.co']);
 

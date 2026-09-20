@@ -9,7 +9,6 @@ jest.mock('../employee/employee.service', () => ({ EmployeeService: class Employ
 jest.mock('../tasks/task.service', () => ({ TaskService: class TaskService {} }));
 jest.mock('./../core/crud', () => ({ TenantAwareCrudService: class TenantAwareCrudService {} }));
 
-import { In } from 'typeorm';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import { ScryptHashStrategy } from '../password-hash/strategies/scrypt-hash.strategy';
 import { BcryptHashStrategy } from '../password-hash/strategies/bcrypt-hash.strategy';
@@ -30,9 +29,19 @@ describe('UserService.findAccountsUsingPasswords', () => {
 		{ email: 'employee@ever.co', password: '12345678' }
 	];
 
+	/**
+	 * Stands in for the repositories. Each address is queried on its own now, so the fake applies the
+	 * `where` and the row limit the way a real query would — otherwise the test would not notice a
+	 * candidate that never gets looked at.
+	 */
 	function build(rows: Array<{ email: string; hash?: string }>, ormType = 'typeorm') {
-		const typeOrmUserRepository = { find: jest.fn(async (_options: any) => rows) };
-		const mikroOrmUserRepository = { find: jest.fn(async (_where: any) => rows) };
+		const rowsFor = (email: string, limit: number) => rows.filter((row) => row.email === email).slice(0, limit);
+		const typeOrmUserRepository = {
+			find: jest.fn(async (options: any) => rowsFor(options?.where?.email, options?.take ?? rows.length))
+		};
+		const mikroOrmUserRepository = {
+			find: jest.fn(async (where: any, options: any) => rowsFor(where?.email, options?.limit ?? rows.length))
+		};
 		const service: UserService = Object.create(UserService.prototype);
 		Object.assign(service, {
 			ormType,
@@ -80,29 +89,61 @@ describe('UserService.findAccountsUsingPasswords', () => {
 		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual(['admin@ever.co']);
 	});
 
-	it('uses ONE query, selecting the hash for just those emails (TypeORM)', async () => {
+	it('queries each candidate address on its own, selecting only the hash (TypeORM)', async () => {
 		const { service, typeOrmUserRepository } = build([]);
 
 		await service.findAccountsUsingPasswords(PUBLISHED);
 
-		expect(typeOrmUserRepository.find).toHaveBeenCalledTimes(1);
+		expect(typeOrmUserRepository.find).toHaveBeenCalledTimes(3);
 		expect(typeOrmUserRepository.find).toHaveBeenCalledWith({
-			where: { email: In(['admin@ever.co', 'local.admin@ever.co', 'employee@ever.co']) },
+			where: { email: 'admin@ever.co' },
 			select: { id: true, email: true, hash: true },
-			take: 10
+			take: 5
 		});
+		expect(typeOrmUserRepository.find.mock.calls.map(([options]: any[]) => options.where.email)).toEqual([
+			'admin@ever.co',
+			'local.admin@ever.co',
+			'employee@ever.co'
+		]);
 	});
 
-	it('uses ONE query on MikroORM too', async () => {
+	it('queries each candidate address on its own on MikroORM too', async () => {
 		const { service, mikroOrmUserRepository } = build([], 'mikro-orm');
 
 		await service.findAccountsUsingPasswords(PUBLISHED);
 
-		expect(mikroOrmUserRepository.find).toHaveBeenCalledTimes(1);
-		expect(mikroOrmUserRepository.find).toHaveBeenCalledWith(
-			{ email: { $in: ['admin@ever.co', 'local.admin@ever.co', 'employee@ever.co'] } },
-			{ limit: 10 }
-		);
+		expect(mikroOrmUserRepository.find).toHaveBeenCalledTimes(3);
+		expect(mikroOrmUserRepository.find).toHaveBeenCalledWith({ email: 'admin@ever.co' }, { limit: 5 });
+	});
+
+	it('does not repeat a query for the same address, and tests every password proposed for it', async () => {
+		// getPublishedSeedAccounts() can propose the canonical address and the configured one; when an
+		// operator renamed only one of them the SAME address arrives twice, with different passwords.
+		const { service, typeOrmUserRepository } = build([{ email: 'admin@ever.co', hash: await scrypt.hash('admin') }]);
+
+		await expect(
+			service.findAccountsUsingPasswords([
+				{ email: 'admin@ever.co', password: '12345678' },
+				{ email: 'admin@ever.co', password: 'admin' },
+				{ email: 'admin@ever.co', password: 'admin' }
+			])
+		).resolves.toEqual(['admin@ever.co']);
+		expect(typeOrmUserRepository.find).toHaveBeenCalledTimes(1);
+	});
+
+	/**
+	 * The reason the budget is per address: with one shared `IN (...)` query and a global limit, the
+	 * rows of whichever address the database happened to return first could use the whole allowance and
+	 * hide a later candidate that still had its published password.
+	 */
+	it('still finds a vulnerable account behind many rotated rows of ANOTHER seeded address', async () => {
+		const rotated = await scrypt.hash('rotated-after-install');
+		const { service } = build([
+			...Array.from({ length: 50 }, () => ({ email: 'admin@ever.co', hash: rotated })),
+			{ email: 'employee@ever.co', hash: await scrypt.hash('12345678') }
+		]);
+
+		await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual(['employee@ever.co']);
 	});
 
 	/**
@@ -114,15 +155,18 @@ describe('UserService.findAccountsUsingPasswords', () => {
 		const hash = await scrypt.hash('not-the-published-one');
 		const rows = Array.from({ length: 200 }, () => ({ email: 'admin@ever.co', hash }));
 		const { service, typeOrmUserRepository } = build(rows);
+		// A repository that ignores `take` entirely: the loop itself must still stay bounded.
+		typeOrmUserRepository.find.mockImplementation(async (options: any) =>
+			rows.filter((row) => row.email === options?.where?.email)
+		);
 		const verify = jest.spyOn(hashing, 'verify');
 
 		try {
 			await expect(service.findAccountsUsingPasswords(PUBLISHED)).resolves.toEqual([]);
 
-			expect(typeOrmUserRepository.find.mock.calls[0][0].take).toBe(10);
-			// The repository is mocked, so it ignores `take` and hands back all 200 rows: the loop itself
-			// must not verify more than the rows a real query would have returned.
-			expect(verify.mock.calls.length).toBeLessThanOrEqual(10);
+			expect(typeOrmUserRepository.find.mock.calls[0][0].take).toBe(5);
+			// 5 rows per address, one password each, three addresses.
+			expect(verify.mock.calls.length).toBeLessThanOrEqual(15);
 		} finally {
 			verify.mockRestore();
 		}

@@ -15,7 +15,7 @@ import escapeHtml from 'escape-html';
 import { doubleCsrf } from 'csrf-csrf';
 import { oAuth2ClientManager, OAuth2Client } from './oauth-client-manager';
 import { oAuth2AuthorizationCodeManager } from './oauth-authorization-code-manager';
-import { OAuth2TokenManager } from './oauth-token-manager';
+import { OAuth2TokenManager, UserLookupUnavailableError } from './oauth-token-manager';
 import { OAuthValidator } from './oauth-validator';
 import { AuthorizationConfig, IntrospectionResponse } from '../interfaces';
 
@@ -1348,11 +1348,32 @@ export class OAuth2AuthorizationServer {
 		}
 
 		// Refresh tokens
-		const newTokenPair = await this.tokenManager.refreshAccessToken(
-			params.refresh_token,
-			params.client_id,
-			(userId: string) => userInfoProvider(userId)
-		);
+		let newTokenPair: Awaited<ReturnType<OAuth2TokenManager['refreshAccessToken']>>;
+		try {
+			newTokenPair = await this.tokenManager.refreshAccessToken(
+				params.refresh_token,
+				params.client_id,
+				(userId: string) => userInfoProvider(userId)
+			);
+		} catch (error) {
+			// The account could not be looked up (database outage, timeout). Answering `invalid_grant`
+			// here would tell the client its refresh token is dead and well-behaved clients would drop
+			// it, signing an active user out over a transient failure. 503 + Retry-After semantics keep
+			// the token usable once the store recovers; it was not revoked.
+			if (UserLookupUnavailableError.is(error)) {
+				this.securityLogger.error('Refresh grant: account lookup unavailable', error);
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError(
+						'temporarily_unavailable',
+						'Account status could not be verified, retry later'
+					),
+					503
+				);
+				return;
+			}
+			throw error;
+		}
 		if (!newTokenPair) {
 			this.errorHandler.handleOAuthError(
 				res,

@@ -381,7 +381,7 @@ const getEnvApi = () => {
 	// Per-install random signing/session secrets, generated on first start and replacing a stored
 	// published default on upgrade. Persisted before the API starts so restarts keep the same keys
 	// (GHSA-39j7-x845-4w3c).
-	const { secret, changed } = ensureDesktopSecrets(config?.secret);
+	const { secret, changed } = ensureDesktopSecrets(config.secret);
 	if (changed) {
 		serverConfig.setting = { secret };
 	}

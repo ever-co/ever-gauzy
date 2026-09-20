@@ -1,4 +1,5 @@
 import { OAuth2AuthorizationServer } from './oauth-authorization-server';
+import { UserLookupUnavailableError } from './oauth-token-manager';
 import { oAuth2ClientManager } from './oauth-client-manager';
 
 /**
@@ -58,6 +59,27 @@ describe('OAuth2AuthorizationServer refresh_token grant', () => {
 
 		expect(responseBuilder.sendTokenResponse).not.toHaveBeenCalled();
 		expect(errorHandler.handleOAuthError.mock.calls[0][1]).toMatchObject({ error: 'invalid_grant' });
+	});
+
+	it('answers a RETRYABLE 503 when the account lookup is unavailable, not invalid_grant', async () => {
+		const { grant, errorHandler, responseBuilder, tokenManager } = build(async () => {
+			throw new Error('database unavailable');
+		});
+		tokenManager.refreshAccessToken.mockRejectedValue(new UserLookupUnavailableError('user-1', new Error('db')));
+
+		await grant();
+
+		expect(responseBuilder.sendTokenResponse).not.toHaveBeenCalled();
+		expect(errorHandler.handleOAuthError.mock.calls[0][1]).toMatchObject({ error: 'temporarily_unavailable' });
+		expect(errorHandler.handleOAuthError.mock.calls[0][2]).toBe(503);
+	});
+
+	it('lets any other error reach the token endpoint handler (500)', async () => {
+		const { grant, tokenManager, errorHandler } = build(async () => null);
+		tokenManager.refreshAccessToken.mockRejectedValue(new Error('boom'));
+
+		await expect(grant()).rejects.toThrow('boom');
+		expect(errorHandler.handleOAuthError).not.toHaveBeenCalled();
 	});
 
 	it('fails closed, without touching the refresh token, when no userInfoProvider is configured', async () => {

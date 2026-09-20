@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import * as chalk from 'chalk';
 import { isKnownDefaultSecret } from '@gauzy/contracts';
 
@@ -20,13 +20,15 @@ type SecretRegistryHolder = {
 
 function registry(): Map<string, string> {
 	const holder = globalThis as unknown as SecretRegistryHolder;
-	return (holder[GENERATED_SECRETS] ??= new Map<string, string>());
+	holder[GENERATED_SECRETS] ??= new Map<string, string>();
+	return holder[GENERATED_SECRETS];
 }
 
 /** Logs `message` once per process for `name`. Never pass the secret value itself. */
 function warnOnce(name: string, message: string): void {
 	const holder = globalThis as unknown as SecretRegistryHolder;
-	const warned = (holder[WARNED_SECRETS] ??= new Set<string>());
+	holder[WARNED_SECRETS] ??= new Set<string>();
+	const warned = holder[WARNED_SECRETS];
 	if (warned.has(name)) {
 		return;
 	}
@@ -67,7 +69,7 @@ export function resolveSecret(name: string, demoFallback: string): string {
 		return raw || demoFallback;
 	}
 
-	if (raw && raw.trim()) {
+	if (raw?.trim()) {
 		if (isKnownDefaultSecret(raw)) {
 			warnOnce(
 				name,

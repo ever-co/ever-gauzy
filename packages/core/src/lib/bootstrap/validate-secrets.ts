@@ -85,10 +85,15 @@ export function validateApplicationSecrets(): void {
  * up with a fully privileged Super Admin (plus an Admin and an Employee) whose passwords are
  * printed in that same README (GHSA-4r2r-mv32-3468).
  */
-const KNOWN_DEFAULT_SEED_CREDENTIALS: ReadonlyArray<{ key: string; value: string; account: string }> = [
-	{ key: 'DEMO_SUPER_ADMIN_PASSWORD', value: 'admin', account: 'admin@ever.co (SUPER_ADMIN)' },
-	{ key: 'DEMO_ADMIN_PASSWORD', value: 'admin', account: 'local.admin@ever.co (ADMIN)' },
-	{ key: 'DEMO_EMPLOYEE_PASSWORD', value: '12345678', account: 'employee@ever.co (EMPLOYEE)' }
+const KNOWN_DEFAULT_SEED_CREDENTIALS: ReadonlyArray<{
+	key: string;
+	value: string;
+	email: string;
+	role: string;
+}> = [
+	{ key: 'DEMO_SUPER_ADMIN_PASSWORD', value: 'admin', email: 'admin@ever.co', role: 'SUPER_ADMIN' },
+	{ key: 'DEMO_ADMIN_PASSWORD', value: 'admin', email: 'local.admin@ever.co', role: 'ADMIN' },
+	{ key: 'DEMO_EMPLOYEE_PASSWORD', value: '12345678', email: 'employee@ever.co', role: 'EMPLOYEE' }
 ];
 
 /**
@@ -98,15 +103,34 @@ const KNOWN_DEFAULT_SEED_CREDENTIALS: ReadonlyArray<{ key: string; value: string
  */
 export function getPublishedSeedAccounts(): Array<{ email: string; password: string }> {
 	const credentials = (environment.demoCredentialConfig ?? {}) as Record<string, string | undefined>;
-	const emails: Record<string, string | undefined> = {
+	const configuredEmails: Record<string, string | undefined> = {
 		DEMO_SUPER_ADMIN_PASSWORD: credentials.superAdminEmail,
 		DEMO_ADMIN_PASSWORD: credentials.adminEmail,
 		DEMO_EMPLOYEE_PASSWORD: credentials.employeeEmail
 	};
 
-	return KNOWN_DEFAULT_SEED_CREDENTIALS.map(({ key, value }) => ({ email: emails[key] ?? '', password: value })).filter(
-		({ email }) => !!email
-	);
+	// BOTH the currently configured address and the canonical published one. The database was seeded
+	// at some point in the past: an operator who changed DEMO_SUPER_ADMIN_EMAIL afterwards still has
+	// the original `admin@ever.co` row, with the published password, and checking only today's
+	// configuration would walk straight past it.
+	const seen = new Set<string>();
+	const accounts: Array<{ email: string; password: string }> = [];
+	for (const { key, value, email } of KNOWN_DEFAULT_SEED_CREDENTIALS) {
+		for (const candidate of [configuredEmails[key], email]) {
+			const normalized = String(candidate ?? '').trim();
+			if (!normalized) {
+				continue;
+			}
+			// Deduplicated on the pair, so the usual case (configuration unchanged) still yields three.
+			const fingerprint = `${normalized.toLowerCase()} :: ${value}`;
+			if (seen.has(fingerprint)) {
+				continue;
+			}
+			seen.add(fingerprint);
+			accounts.push({ email: normalized, password: value });
+		}
+	}
+	return accounts;
 }
 
 /**
@@ -185,7 +209,7 @@ export function validateSeedCredentials(options: SeedCredentialOptions = {}): vo
 	}
 
 	const keys = weak.map(({ key }) => key);
-	const accounts = weak.map(({ account }) => account);
+	const accounts = weak.map(({ email, role }) => `${email} (${role})`);
 	const problems: string[] = [];
 
 	if (weak.length > 0) {

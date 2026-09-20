@@ -116,4 +116,47 @@ describe('ensureDesktopSecrets', () => {
 			expect(logged).not.toContain(value);
 		}
 	});
+
+	it('redacts NESTED credentials of the setup config the desktop launcher logs', () => {
+		// apps/desktop logs the whole DesktopSetupConfig. A shallow redaction left
+		// `postgres.dbPassword` and `secureProxy.ssl.key` in plain text (CWE-532).
+		const logged = JSON.stringify(
+			redactSecretsForLog({
+				isLocalServer: true,
+				port: '3000',
+				postgres: {
+					dbHost: 'localhost',
+					dbPort: '5432',
+					dbName: 'gauzy',
+					dbUsername: 'postgres',
+					dbPassword: 'nested-db-password'
+				},
+				secureProxy: { secure: true, enable: true, ssl: { key: 'nested-tls-key', cert: 'public-cert' } },
+				secret: { jwt: 'nested-jwt-secret', refresh_token: 'nested-refresh-secret' }
+			})
+		);
+
+		expect(logged).toContain('"dbHost":"localhost"');
+		expect(logged).toContain('"cert":"public-cert"');
+		for (const value of ['nested-db-password', 'nested-tls-key', 'nested-jwt-secret', 'nested-refresh-secret']) {
+			expect(logged).not.toContain(value);
+		}
+	});
+
+	it('survives a self-referencing config instead of overflowing the stack', () => {
+		const values: Record<string, any> = { API_PORT: '3000', DB_PASS: 'db-password' };
+		values.self = values;
+
+		const logged = JSON.stringify(redactSecretsForLog(values));
+
+		expect(logged).toContain('"API_PORT":"3000"');
+		expect(logged).not.toContain('db-password');
+	});
+
+	it('does not mutate the object it redacts', () => {
+		const values = { postgres: { dbPassword: 'nested-db-password' } };
+		redactSecretsForLog(values);
+
+		expect(values.postgres.dbPassword).toBe('nested-db-password');
+	});
 });
