@@ -155,6 +155,8 @@ import { IdempotencyModule } from '../idempotency/idempotency.module';
 import { IdempotencyMaintenanceModule } from '../idempotency/idempotency-maintenance.module';
 import { IdempotencyInterceptor } from '../idempotency/idempotency.interceptor';
 import { EventOutboxModule } from '../event-outbox/event-outbox.module';
+import { EventOutboxMaintenanceModule } from '../event-outbox/event-outbox-maintenance.module';
+import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module';
 import { OperationModule } from '../operation/operation.module';
 import { WebhookModule } from '../webhook/webhook.module';
 import { MeasurementModule } from '../measurement/measurement.module';
@@ -648,7 +650,22 @@ if (environment.THROTTLE_ENABLED) {
 					// when the queue exists. A scheduled job needs a worker, a worker needs a connection, and
 					// registering one where there is no root is not a degraded sweep — it is a boot that fails
 					// on `Worker requires a connection`, which is what a single-container dev setup would meet.
-					IdempotencyMaintenanceModule
+					IdempotencyMaintenanceModule,
+					// The per-minute pass that drains the transactional outbox, registered under the same
+					// condition and for the same reason. 🛑 Note what its absence means, because it is not the
+					// same as the sweep's: without a queue root nothing hands appended events to their
+					// consumers, so GraphQL subscriptions, the search index and every outbound webhook go
+					// quiet while `event_outbox` grows. Appending still works and no writer sees an error —
+					// which is exactly why this is called out here rather than left to be discovered. A
+					// deployment that wants events delivered needs `REDIS_ENABLED` and a worker process.
+					EventOutboxMaintenanceModule,
+					// The per-minute pass that re-attempts a delivery the ladder says is due. It is the
+					// second half of the outbound surface: the fan-out above makes the first attempt, and
+					// without this one there is never a second — `WebhookDeliveryService` writes seven rungs
+					// onto every row and `findDue` reads exactly the rows that are due, and nothing called
+					// it, so an endpoint unreachable for the one moment it was reached never heard about
+					// that event again.
+					WebhookMaintenanceModule
 			  ]
 			: []),
 		//Token cleanup scheduler is disabled by default; enable when ready

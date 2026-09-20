@@ -51,6 +51,18 @@ export interface IOutboxDeliveryClaimInput {
 	partitionKey?: string;
 	/** Copied from the outbox row. */
 	sequence?: number;
+	/**
+	 * Overrides the tenant taken from the request context, exactly as `append` accepts one.
+	 *
+	 * The dispatcher claims deliveries from a queue worker, where there is no request and therefore no
+	 * context to read a tenant from — so a record written without this would carry none, and a record
+	 * that carries no tenant is invisible to every read this service scopes: the delivery listing, the
+	 * node read, and the two operator moves that are reached through it. The event knows whose fact it
+	 * is; this is how it says so.
+	 */
+	tenantId?: ID;
+	/** Overrides the organization taken from the request context, for the same reason. */
+	organizationId?: ID;
 }
 
 /**
@@ -426,8 +438,11 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			attemptCount: 0,
 			partitionKey: input.partitionKey,
 			sequence: input.sequence,
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
+			// The stated scope wins over the context's, the same way `append` reads it: a claim made
+			// inside a request still takes the caller's tenant, and a claim made by the dispatcher takes
+			// the one the event carries instead of none at all.
+			tenantId: input.tenantId ?? RequestContext.currentTenantId(),
+			organizationId: input.organizationId ?? RequestContext.currentOrganizationId()
 		} as Partial<EventDelivery>);
 
 		try {

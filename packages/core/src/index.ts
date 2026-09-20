@@ -228,6 +228,11 @@ export * from './lib/token';
 // not part of the public surface cannot be applied from a plugin at all.
 export {
 	IdempotencyInterceptor,
+	// The sweep's module, exported because the process that *ticks* a schedule is not the process
+	// that declares it: core's own `AppModule` registers the scheduler root with `enabled: false`, so
+	// a maintenance module imported only there contributes its worker and never its cron. The worker
+	// application imports this by name for exactly that reason.
+	IdempotencyMaintenanceModule,
 	IdempotencyModule,
 	IdempotencyService,
 	Idempotent,

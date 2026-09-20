@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { GraphqlSubscriptionModule } from '../graphql/subscriptions';
+import { EventOutboxModule } from '../event-outbox/event-outbox.module';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { WebhookDelivery } from './webhook-delivery.entity';
 import { WebhookSubscription } from './webhook-subscription.entity';
@@ -12,6 +13,7 @@ import { WebhookDeliveryController } from './webhook-delivery.controller';
 import { WebhookSubscriptionController } from './webhook-subscription.controller';
 import { WebhookResolver } from './webhook.resolver';
 import { WebhookEventPublisher } from './webhook-event.publisher';
+import { WebhookOutboxConsumer } from './webhook-outbox.consumer';
 import { TypeOrmWebhookDeliveryRepository } from './repository/type-orm-webhook-delivery.repository';
 import { TypeOrmWebhookSubscriptionRepository } from './repository/type-orm-webhook-subscription.repository';
 import { MikroOrmWebhookDeliveryRepository } from './repository/mikro-orm-webhook-delivery.repository';
@@ -48,13 +50,21 @@ import { MikroOrmWebhookSubscriptionRepository } from './repository/mikro-orm-we
  * services announce through, and the resolver is listed by the GraphQL host beside the other core
  * resolvers; a module that hands on what it declares is what makes both reachable without a second
  * instance over the same fact.
+ *
+ * **`EventOutboxModule` is imported for the consumer registry, which is what connects this domain to
+ * anything at all.** Without the edge, `WebhookOutboxConsumer` resolves an absent registry — its
+ * registry is optional, as every outbox consumer's is, so the boot succeeds — and the fan-out never
+ * registers: an operator's subscriptions match nothing, every delivery log stays empty and nothing
+ * reports it, because each individual piece is working. The registry is a singleton of that module, so
+ * the instance this consumer registers with is the one the dispatch pass consults.
  */
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([WebhookSubscription, WebhookDelivery]),
 		MikroOrmModule.forFeature([WebhookSubscription, WebhookDelivery]),
 		RolePermissionModule,
-		GraphqlSubscriptionModule
+		GraphqlSubscriptionModule,
+		EventOutboxModule
 	],
 	controllers: [WebhookSubscriptionController, WebhookDeliveryController],
 	providers: [
@@ -65,6 +75,9 @@ import { MikroOrmWebhookSubscriptionRepository } from './repository/mikro-orm-we
 		// The producers, declared beside the services that call them: a subscription is fed from one
 		// place or it is fed inconsistently, and these are the two facts this domain streams.
 		WebhookEventPublisher,
+		// The step that makes a subscription mean something: it registers with the outbox dispatcher at
+		// bootstrap and turns each dispatched event into the deliveries its endpoints are owed.
+		WebhookOutboxConsumer,
 		WebhookResolver,
 		TypeOrmWebhookSubscriptionRepository,
 		MikroOrmWebhookSubscriptionRepository,
@@ -75,6 +88,7 @@ import { MikroOrmWebhookSubscriptionRepository } from './repository/mikro-orm-we
 		WebhookSubscriptionService,
 		WebhookDeliveryService,
 		WebhookEventPublisher,
+		WebhookOutboxConsumer,
 		WebhookResolver,
 		TypeOrmWebhookSubscriptionRepository,
 		MikroOrmWebhookSubscriptionRepository,
