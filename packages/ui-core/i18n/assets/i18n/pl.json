@@ -1955,6 +1955,7 @@
 		"EXPECTED": "Oczekiwany",
 		"UPDATES": "Aktualizacje",
 		"UPDATE": "Aktualizuj",
+		"ALIGNMENTS": "Wyrównania",
 		"COMMENTS": "Komentarze",
 		"KEY_RESULTS": "Wyniki kluczowe",
 		"GROUP_BY": "Grupuj według",
@@ -1971,6 +1972,8 @@
 		"GOAL_TEMPLATES": "Szablony celów",
 		"CREATE_NEW_MENU": "Utwórz nowe",
 		"CREATE_FROM_PRESET": "Utwórz z szablonu",
+		"SELECT_A_PRESET": "Wybierz szablon",
+		"ADDITIONAL_DETAILS": "Dodatkowe szczegóły",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Pracownicy",
 			"TEAMS": "Zespoły",
@@ -2000,7 +2003,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Brak wyników kluczowych do wyświetlenia",
 			"NO_UPDATES": "Nie ma jeszcze aktualizacji",
-			"NO_ALIGNMENT": "Brak jeszcze wyrównań"
+			"NO_ALIGNMENT": "Brak jeszcze wyrównań",
+			"NO_PROGRESS_DATA": "Brak jeszcze danych postępu do wykresu"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organizacja",

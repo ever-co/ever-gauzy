@@ -2005,6 +2005,7 @@
 		"EXPECTED": "Ожидается",
 		"UPDATES": "Обновления",
 		"UPDATE": "Обновить",
+		"ALIGNMENTS": "Выравнивания",
 		"COMMENTS": "Комментарии",
 		"KEY_RESULTS": "Ключевые результаты",
 		"GROUP_BY": "Группировать по",
@@ -2021,6 +2022,8 @@
 		"GOAL_TEMPLATES": "Шаблоны целей",
 		"CREATE_NEW_MENU": "Создать новый",
 		"CREATE_FROM_PRESET": "Создать из пресета",
+		"SELECT_A_PRESET": "Выберите пресет",
+		"ADDITIONAL_DETAILS": "Дополнительные сведения",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Сотрудники",
 			"TEAMS": "Команды",
@@ -2050,7 +2053,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Нет ключевых результатов для отображения.",
 			"NO_UPDATES": "Пока нет обновлений.",
-			"NO_ALIGNMENT": "Пока нет выравниваний."
+			"NO_ALIGNMENT": "Пока нет выравниваний.",
+			"NO_PROGRESS_DATA": "Пока нет данных о прогрессе для графика."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Организация",

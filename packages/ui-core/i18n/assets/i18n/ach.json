@@ -1845,6 +1845,7 @@
 		"EXPECTED": "crwdns9554:0crwdne9554:0",
 		"UPDATES": "crwdns4984:0crwdne4984:0",
 		"UPDATE": "crwdns4986:0crwdne4986:0",
+		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "crwdns4988:0crwdne4988:0",
 		"KEY_RESULTS": "crwdns4990:0crwdne4990:0",
 		"GROUP_BY": "crwdns7454:0crwdne7454:0",
@@ -1861,6 +1862,8 @@
 		"GOAL_TEMPLATES": "crwdns9576:0crwdne9576:0",
 		"CREATE_NEW_MENU": "crwdns11247:0crwdne11247:0",
 		"CREATE_FROM_PRESET": "crwdns11249:0crwdne11249:0",
+		"SELECT_A_PRESET": "Select a Preset",
+		"ADDITIONAL_DETAILS": "Additional Details",
 		"OWNERSHIP": {
 			"EMPLOYEES": "crwdns7500:0crwdne7500:0",
 			"TEAMS": "crwdns7502:0crwdne7502:0",
@@ -1890,7 +1893,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "crwdns7418:0crwdne7418:0",
 			"NO_UPDATES": "crwdns7420:0crwdne7420:0",
-			"NO_ALIGNMENT": "crwdns7422:0crwdne7422:0"
+			"NO_ALIGNMENT": "crwdns7422:0crwdne7422:0",
+			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "crwdns4998:0crwdne4998:0",

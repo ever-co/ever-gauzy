@@ -1958,6 +1958,7 @@
 		"EXPECTED": "Esperado",
 		"UPDATES": "Actualizaciones",
 		"UPDATE": "Actualizar",
+		"ALIGNMENTS": "Alineaciones",
 		"COMMENTS": "Comentarios",
 		"KEY_RESULTS": "Resultados clave",
 		"GROUP_BY": "Agrupar Por",
@@ -1974,6 +1975,8 @@
 		"GOAL_TEMPLATES": "Plantillas de objetivos",
 		"CREATE_NEW_MENU": "Crear nuevo",
 		"CREATE_FROM_PRESET": "Crear a partir de un preajuste",
+		"SELECT_A_PRESET": "Seleccionar un preajuste",
+		"ADDITIONAL_DETAILS": "Detalles adicionales",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Empleados.",
 			"TEAMS": "Equipos",
@@ -2003,7 +2006,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No hay resultados clave para mostrar.",
 			"NO_UPDATES": "Aún no hay actualizaciones.",
-			"NO_ALIGNMENT": "Aún no hay alineaciones."
+			"NO_ALIGNMENT": "Aún no hay alineaciones.",
+			"NO_PROGRESS_DATA": "Aún no hay datos de progreso para el gráfico."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organización",
