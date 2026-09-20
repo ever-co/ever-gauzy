@@ -1,3 +1,4 @@
+// cspell:ignore Ungated ungated
 /**
  * 🛑 These two imports must stay FIRST, before anything that pulls a core controller.
  *
