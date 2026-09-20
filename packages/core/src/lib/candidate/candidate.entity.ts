@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
-import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, Max, MaxLength } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
 	ICandidate,
@@ -40,7 +40,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { billingRateColumn, ColumnNumericTransformerPipe, toBillingRate } from './../shared/pipes';
+import { BILLING_RATE_MAX, billingRateColumn, ColumnNumericTransformerPipe, toBillingRate } from './../shared/pipes';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -113,6 +113,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
+	@Max(BILLING_RATE_MAX)
 	@Transform(toBillingRate)
 	@MultiORMColumn(billingRateColumn())
 	billRateValue?: number;
@@ -120,6 +121,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
+	@Max(BILLING_RATE_MAX)
 	@Transform(toBillingRate)
 	@MultiORMColumn(billingRateColumn())
 	minimumBillingRate?: number;

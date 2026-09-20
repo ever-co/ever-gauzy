@@ -96,6 +96,14 @@ describe('UpdateCandidateDTO billing rates', () => {
 		expect(await rateErrors(dto)).toEqual([]);
 	});
 
+	it('rejects a rate above the old integer ceiling, so every stored rate stays revertible', async () => {
+		const tooBig = plainToInstance(UpdateCandidateDTO, { billRateValue: 2147483648 });
+		const largest = plainToInstance(UpdateCandidateDTO, { billRateValue: 2147483647 });
+
+		expect(await rateErrors(tooBig)).toEqual(['billRateValue']);
+		expect(await rateErrors(largest)).toEqual([]);
+	});
+
 	it("keeps parseInt's leading-number parsing and still rejects non-numeric rates", async () => {
 		const loose = plainToInstance(UpdateCandidateDTO, { billRateValue: '10,50' });
 		const invalid = plainToInstance(UpdateCandidateDTO, { billRateValue: 'abc' });
