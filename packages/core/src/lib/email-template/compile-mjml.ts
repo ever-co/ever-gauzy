@@ -1,3 +1,4 @@
+// cspell:ignore inlines mjmlconfig
 /**
  * The ONE place in @gauzy/core that is allowed to call the MJML compiler (an ESLint
  * `no-restricted-imports` rule in packages/core/eslint.config.js enforces it).

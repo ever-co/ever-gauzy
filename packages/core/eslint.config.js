@@ -1,3 +1,4 @@
+// cspell:ignore esquery
 const baseConfig = require('../../eslint.config.js');
 
 // The MJML compiler reads files from disk for `<mj-include>` unless told not to, and email/accounting
