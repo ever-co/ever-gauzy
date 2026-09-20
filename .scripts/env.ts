@@ -420,11 +420,14 @@ export const env: Env = cleanEnv(
 		GAUZY_DESKTOP_TRAY_ICON: str({
 			default: 'assets/icons/default-tray-icon.png'
 		}),
+		// No published default (GHSA-39j7-x845-4w3c): these values were baked into every desktop build and
+		// used as the local API's signing keys. Left empty, each install generates and stores its own
+		// random secrets at first start (see ensureDesktopSecrets in @gauzy/desktop-lib).
 		DESKTOP_JWT_SECRET: str({
-			default: 'secretKey'
+			default: ''
 		}),
 		DESKTOP_JWT_REFRESH_TOKEN_SECRET: str({
-			default: 'refreshTokenSecretKey'
+			default: ''
 		}),
 
 		// Deployed release version (git tag) + commit SHA, embedded at build time.

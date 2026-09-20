@@ -2,6 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ID, IUser, IUserCreateInput } from '@gauzy/contracts';
 import { UserCreateCommand } from '../user.create.command';
 import { UserService } from '../../user.service';
+import { normalizeRolePayload } from '../../role-assignment.helper';
 
 @CommandHandler(UserCreateCommand)
 export class UserCreateHandler implements ICommandHandler<UserCreateCommand> {
@@ -26,11 +27,16 @@ export class UserCreateHandler implements ICommandHandler<UserCreateCommand> {
 			console.log('UserCreateHandler: ignoring the body-supplied user id on a create');
 		}
 
+		// Every form of the role — `roleId`, `role` as a bare id string, `role: { id }` — is read, and
+		// the payload is pinned to that single id so the role that is checked is the role that is
+		// saved (GHSA-x4mv-fhwj-g3rp). A malformed role key, or a `role`/`roleId` pair that disagrees,
+		// is a 400.
+		normalizeRolePayload(input);
+
 		// Creating a SUPER_ADMIN is reserved to callers who may edit super admins — the same boundary
-		// the register handler and invite creation enforce. Both the flat `roleId` and the `role`
-		// relation are resolved from the database (the relation wins on persist), and an id that does
-		// not belong to the caller's tenant is refused rather than ignored.
-		await this.userService.assertCanAssignRoles([input?.roleId, input?.role?.id]);
+		// the register handler and invite creation enforce. The role is resolved from the database, and
+		// an id that does not belong to the caller's tenant is refused rather than ignored.
+		await this.userService.assertCanAssignRoles(input);
 
 		return await this.userService.create(input);
 	}

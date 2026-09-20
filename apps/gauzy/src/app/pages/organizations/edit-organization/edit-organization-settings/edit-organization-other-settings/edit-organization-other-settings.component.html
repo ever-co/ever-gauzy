@@ -649,6 +649,28 @@
 								<div class="col-xl-6 col-12 pt-2 form-group invite-toggle">
 									<nb-toggle
 										class="d-block"
+										formControlName="allowEmployeeToSeeTrackedData"
+										status="primary"
+										labelPosition="start"
+									>
+										{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_EMPLOYEE_SEE_TRACKED_DATA' | translate }}
+										<button
+											[nbTooltip]="
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO' | translate
+											"
+											ghost
+											nbButton
+											size="small"
+											status="info"
+											class="p-0"
+										>
+											<nb-icon icon="info"></nb-icon>
+										</button>
+									</nb-toggle>
+								</div>
+								<div class="col-xl-6 col-12 pt-2 form-group invite-toggle">
+									<nb-toggle
+										class="d-block"
 										formControlName="allowScreenshotCapture"
 										status="primary"
 										labelPosition="start"
