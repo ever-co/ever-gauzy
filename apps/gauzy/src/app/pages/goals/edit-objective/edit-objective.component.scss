@@ -17,11 +17,19 @@ $muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
 $stack-below: 991.98px;
 // Below this the form itself goes to one column.
 $single-column-below: 575.98px;
+// What the card has to measure for those two 10rem columns to survive beside
+// the help: 2 x 1rem of body padding + 10rem + the 0.75rem column gap + 10rem +
+// the 1rem layout gap + the 14rem help column = 37.75rem.
+$side-by-side-min: 38rem;
 
 // Was a flat 50vw: 720px on this screen, but 960px on a wide one for the same
-// six fields, with the help column taking up the difference.
+// six fields, with the help column taking up the difference. `clamp`, not a
+// bare `min()`: at a 1024px viewport 50vw is only 32rem, which left each form
+// column about 7rem once the padding, the gap and the help column came off —
+// narrower than the 10rem this layout stacks below $stack-below to protect. The
+// floor still fits, with room to spare, at the 992px where side by side starts.
 .objective-dialog {
-  width: min(50vw, 46rem);
+  width: clamp($side-by-side-min, 50vw, 46rem);
 
   @media (max-width: $stack-below) {
     width: min(calc(100vw - 2rem), 40rem);
