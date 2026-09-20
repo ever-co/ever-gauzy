@@ -1,3 +1,4 @@
+// cspell:ignore reparents
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EntityManager, EntityMetadata } from 'typeorm';
 import { RelationMetadata } from 'typeorm/metadata/RelationMetadata';
