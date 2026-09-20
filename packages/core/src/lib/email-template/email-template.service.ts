@@ -33,33 +33,31 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 		this.assertRelationsPermitted(params);
 
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
+			case MultiORMEnum.MikroORM: {
 				const { organizationId: mOrgId, languageCode: mLang } = params.where ?? {};
 				const mTenantId = RequestContext.currentTenantId();
 
-				const mWhere = {
-					$or: [
-						{
-							// Always the caller's tenant — never skipped when the context has none, or the
-							// arm would match every tenant's templates (GHSA-44pv-34gx-q9p4).
-							tenantId: mTenantId ?? null,
-							...(isNotEmpty(mOrgId) ? { organizationId: mOrgId } : {}),
-							...(isNotEmpty(mLang) ? { languageCode: mLang } : {})
-						},
-						{
-							organizationId: null,
-							tenantId: null
-						}
-					]
+				// The caller's tenant is never taken from the client (GHSA-44pv-34gx-q9p4), and the tenant
+				// arm exists only when the context HAS a tenant: MikroORM compiles a literal `null` to
+				// `IS NULL`, so a `tenantId: null` arm would not match nothing — it would match every
+				// NULL-tenant row, organization-scoped ones included. Without a tenant, only the global
+				// defaults (`tenantId IS NULL AND organizationId IS NULL`) are readable.
+				const mGlobalArm = { organizationId: null, tenantId: null };
+				const mTenantArm = {
+					tenantId: mTenantId,
+					...(isNotEmpty(mOrgId) ? { organizationId: mOrgId } : {}),
+					...(isNotEmpty(mLang) ? { languageCode: mLang } : {})
 				};
+				const mWhere = { $or: mTenantId ? [mTenantArm, mGlobalArm] : [mGlobalArm] };
 
 				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere as any, {
 					...(params?.relations ? { populate: Object.keys(params.relations) as any[] } : {}),
 					...(params?.order ? { orderBy: params.order as any } : {})
 				});
 				return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
+			}
 
-			case MultiORMEnum.TypeORM:
+			case MultiORMEnum.TypeORM: {
 				const query = this.typeOrmRepository.createQueryBuilder('email_template');
 				query.setFindOptions({
 					select: {
@@ -111,6 +109,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 				});
 				const [items, total] = await query.getManyAndCount();
 				return { items, total };
+			}
 
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
@@ -133,7 +132,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 			RequestContext.currentTenantId(),
 			this.ormType
 		);
-		return await super.paginate({ ...(options ?? {}), where } as IFindManyOptions<EmailTemplate>);
+		return await super.paginate({ ...options, where } as IFindManyOptions<EmailTemplate>);
 	}
 
 	/**

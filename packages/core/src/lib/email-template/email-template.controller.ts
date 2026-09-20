@@ -250,17 +250,22 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	 * (GHSA-44pv-34gx-q9p4). The tenant is pinned to the caller's; the organization must be one the caller
 	 * belongs to. The web editor saves through `POST template/save`, which is unaffected.
 	 *
+	 * `whitelist` drops everything `CreateEmailTemplateDTO` does not declare, so no undeclared key of the
+	 * body reaches persistence — `stripEmailTemplateScopeFields` below stays as the explicit statement of
+	 * which fields are scope fields.
+	 *
 	 * @param entity - The template to create.
 	 * @returns The created template.
 	 */
 	@ApiOperation({ summary: 'Create email template in the current tenant' })
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UseValidationPipe()
+	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateEmailTemplateDTO): Promise<EmailTemplate> {
-		const { organizationId } = entity ?? {};
+		const payload = (entity ?? {}) as CreateEmailTemplateDTO;
+		const { organizationId } = payload;
 		return await this.emailTemplateService.create({
-			...stripEmailTemplateScopeFields(entity ?? {}),
+			...stripEmailTemplateScopeFields(payload),
 			// Checked against the caller's memberships by `CreateEmailTemplateDTO`.
 			...(organizationId ? { organizationId } : {}),
 			tenantId: RequestContext.currentTenantId()

@@ -840,7 +840,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async softRemove(id: ID, options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
 		// The inherited `DELETE :id/soft` route hands over its rest parameter, an ARRAY; never treat it
 		// as find options.
-		options = toFindOneOptions(options);
+		options = toFindOneOptions<T>(options);
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -888,7 +888,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		// `withDeleted` every inherited `PUT :id/recover` route answered 404 for the very row it was
 		// meant to restore. The inherited route also hands over its rest parameter, an ARRAY; never treat
 		// it as find options.
-		options = { ...(toFindOneOptions(options) ?? {}), withDeleted: true } as IFindOneOptions<T>;
+		options = { ...toFindOneOptions<T>(options), withDeleted: true } as IFindOneOptions<T>;
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -1020,7 +1020,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
  * @param options - The value received as find options.
  * @returns The options object, or `undefined` when none was given.
  */
-function toFindOneOptions<T>(options: IFindOneOptions<T> | unknown): IFindOneOptions<T> | undefined {
+function toFindOneOptions<T>(options: unknown): IFindOneOptions<T> | undefined {
 	return options && typeof options === 'object' && !Array.isArray(options)
 		? (options as IFindOneOptions<T>)
 		: undefined;

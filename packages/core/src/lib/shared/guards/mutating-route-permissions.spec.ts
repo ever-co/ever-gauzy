@@ -743,9 +743,31 @@ function declaredPermissionCount(node: ts.Node): number | undefined {
 	return decoratorCall(node, 'Permissions')?.arguments.length;
 }
 
-/** `@Public()` (unauthenticated by design) and `@Roles()` (role gate) are explicit decisions too. */
-function isOpenedAnotherWay(node: ts.Node): boolean {
-	return !!decoratorCall(node, 'Public') || !!decoratorCall(node, 'Roles');
+/** Whether `@UseGuards(...)` on this node lists `RoleGuard`. */
+function usesRoleGuard(node: ts.Node): boolean {
+	const call = decoratorCall(node, 'UseGuards');
+	if (!call) {
+		return false;
+	}
+	return call.arguments.some((argument) => ts.isIdentifier(argument) && argument.text === 'RoleGuard');
+}
+
+/**
+ * `@Public()` (unauthenticated by design) and `@Roles()` (role gate) are explicit decisions too.
+ *
+ * `@Roles()` only counts when a `RoleGuard` is actually in scope. The decorator alone just SETS
+ * metadata, and `RoleGuard` is not registered as an `APP_GUARD` (see `app.module.ts`), so a route
+ * carrying `@Roles()` without `@UseGuards(RoleGuard)` — on the handler or on its controller — reads
+ * as role-gated while nothing ever consults those roles.
+ *
+ * @param node - The handler or the controller class.
+ * @param roleGuardInScope - Whether a `RoleGuard` applies to this node (class-level guards included).
+ */
+function isOpenedAnotherWay(node: ts.Node, roleGuardInScope: boolean): boolean {
+	if (decoratorCall(node, 'Public')) {
+		return true;
+	}
+	return !!decoratorCall(node, 'Roles') && roleGuardInScope;
 }
 
 /**
@@ -767,7 +789,8 @@ function scanMutatingRoutes(): ScannedRoute[] {
 
 			const controller = statement.name.text;
 			const classPermissions = declaredPermissionCount(statement);
-			const classOpened = isOpenedAnotherWay(statement);
+			const classRoleGuard = usesRoleGuard(statement);
+			const classOpened = isOpenedAnotherWay(statement, classRoleGuard);
 
 			const declared = new Map<string, ts.MethodDeclaration>();
 			for (const member of statement.members) {
@@ -786,7 +809,10 @@ function scanMutatingRoutes(): ScannedRoute[] {
 					key: `${controller}.${method}`,
 					file: relative,
 					httpMethod,
-					gated: effective > 0 || classOpened || (node ? isOpenedAnotherWay(node) : false)
+					gated:
+						effective > 0 ||
+						classOpened ||
+						(node ? isOpenedAnotherWay(node, classRoleGuard || usesRoleGuard(node)) : false)
 				});
 			};
 
@@ -849,7 +875,43 @@ describe('every mutating route of core and the plugins', () => {
 		// that quietly re-opens the hole if the route comes back.
 		const stillUngated = new Set(ungated);
 		expect(optedIn.filter((key) => !stillUngated.has(key))).toEqual([]);
-		expect(optedIn.length).toBe(new Set(optedIn).size);
+		expect(optedIn).toHaveLength(new Set(optedIn).size);
+	});
+
+	it('counts @Roles() as a gate only where a RoleGuard actually reads it', () => {
+		// `@Roles()` just calls `SetMetadata`. `RoleGuard` is NOT an `APP_GUARD` (see `app.module.ts`),
+		// so a handler that declares roles without `@UseGuards(RoleGuard)` is wide open while reading as
+		// gated. Parsed in memory: these shapes must not exist in the tree, which is exactly the point.
+		const parse = (source: string): ts.ClassDeclaration =>
+			ts
+				.createSourceFile('in-memory.controller.ts', source, ts.ScriptTarget.Latest, true)
+				.statements.find(ts.isClassDeclaration) as ts.ClassDeclaration;
+
+		const guarded = parse(`
+			@Controller('/x')
+			class Guarded {
+				@UseGuards(RoleGuard)
+				@Roles(RolesEnum.SUPER_ADMIN)
+				@Delete('/:id')
+				delete() {}
+			}
+		`);
+		const bare = parse(`
+			@Controller('/x')
+			class Bare {
+				@Roles(RolesEnum.SUPER_ADMIN)
+				@Delete('/:id')
+				delete() {}
+			}
+		`);
+		const handlerOf = (declaration: ts.ClassDeclaration): ts.MethodDeclaration =>
+			declaration.members.find(ts.isMethodDeclaration) as ts.MethodDeclaration;
+
+		const guardedHandler = handlerOf(guarded);
+		expect(isOpenedAnotherWay(guardedHandler, usesRoleGuard(guarded) || usesRoleGuard(guardedHandler))).toBe(true);
+
+		const bareHandler = handlerOf(bare);
+		expect(isOpenedAnotherWay(bareHandler, usesRoleGuard(bare) || usesRoleGuard(bareHandler))).toBe(false);
 	});
 
 	it('agrees with the metadata Nest itself reads, for the controllers this suite loads', () => {

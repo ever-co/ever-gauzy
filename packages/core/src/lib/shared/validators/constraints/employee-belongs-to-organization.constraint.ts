@@ -51,8 +51,13 @@ export class EmployeeBelongsToOrganizationConstraint implements ValidatorConstra
 		// the lookup would run without an organization predicate — TypeORM drops an `undefined` where
 		// key — and accept an employee of ANY organization of the tenant (GHSA-44pv-34gx-q9p4).
 		const { organization } = object;
+		// An organization can be named as the bare id (`organization=<uuid>` on a query DTO that does not
+		// extend `TenantOrganizationBaseDTO`, which is where `@IsObject()` would refuse a string) or as the
+		// object. Resolve both shapes ONCE, so the same value that passes the "names something usable"
+		// check below is also the one the membership lookup runs with — reading only `organization.id`
+		// here dropped the string form and fell through to the permissive no-organization branch.
+		const named = typeof organization === 'string' ? organization : (organization as { id?: unknown })?.id;
 		if (organization !== undefined && organization !== null) {
-			const named = typeof organization === 'string' ? organization : (organization as { id?: unknown })?.id;
 			if (typeof named !== 'string' || isEmpty(named)) {
 				return false;
 			}
@@ -60,7 +65,8 @@ export class EmployeeBelongsToOrganizationConstraint implements ValidatorConstra
 
 		const organizationId =
 			(typeof object.organizationId === 'string' && object.organizationId) ||
-			((organization as { id?: string })?.id ?? undefined);
+			(typeof named === 'string' && named) ||
+			undefined;
 
 		// No organization named at all. The employee cannot be checked against one here, so the scope has
 		// to come from the DTO (`TenantOrganizationBaseDTO` requires an organization unless the payload

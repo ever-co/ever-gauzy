@@ -166,12 +166,15 @@ describe('EmployeeBelongsToOrganizationConstraint', () => {
 		['a relation filter', { isActive: true }],
 		['an empty object', {}],
 		['a null id', { id: null }]
-	])('refuses an employee when the payload names an organization with no usable id: %s', async (_label, organization) => {
-		// Such an object is truthy, so it also switched off the `organizationId` validator of
-		// TenantOrganizationBaseDTO: the lookup ran with an undefined organization predicate, which
-		// TypeORM drops, and accepted an employee of any organization of the tenant.
-		await expect(constraint.validate('employee-sibling', args({ organization }))).resolves.toBe(false);
-	});
+	])(
+		'refuses an employee when the payload names an organization with no usable id: %s',
+		async (_label, organization) => {
+			// Such an object is truthy, so it also switched off the `organizationId` validator of
+			// TenantOrganizationBaseDTO: the lookup ran with an undefined organization predicate, which
+			// TypeORM drops, and accepted an employee of any organization of the tenant.
+			await expect(constraint.validate('employee-sibling', args({ organization }))).resolves.toBe(false);
+		}
+	);
 
 	it('CONTROL: the pre-fix check returned true for each of those, and the lookup matched any employee', async () => {
 		const legacyValidate = async (object: {
@@ -214,6 +217,19 @@ describe('EmployeeBelongsToOrganizationConstraint', () => {
 		).resolves.toBe(false);
 		await expect(
 			constraint.validate('employee-foreign', args({ organizationId: FOREIGN_ORGANIZATION_ID }))
+		).resolves.toBe(false);
+	});
+
+	it('checks the membership when the organization is named as a bare id string', async () => {
+		// A query DTO that does not extend `TenantOrganizationBaseDTO` — `EmployeeRecurringExpenseQueryDTO`
+		// intersects `EmployeeFeatureDTO` only — has no `@IsObject()` to refuse `?organization=<uuid>`.
+		// Reading `organization.id` alone left that string unresolved, so the check fell through to the
+		// permissive "no organization named" branch and the employee was never matched against one.
+		await expect(constraint.validate('employee-own', args({ organization: OWN_ORGANIZATION_ID }))).resolves.toBe(
+			true
+		);
+		await expect(
+			constraint.validate('employee-sibling', args({ organization: OWN_ORGANIZATION_ID }))
 		).resolves.toBe(false);
 	});
 
