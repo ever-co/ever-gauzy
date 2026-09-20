@@ -16,6 +16,17 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-pr
  * - Team manager status (isManager in OrganizationTeamEmployee)
  * - Project manager status (isManager in OrganizationProjectEmployee)
  */
+/**
+ * Stands in for "this caller may see no employee at all".
+ *
+ * The employee predicates in this codebase are applied only when the id list is non-empty
+ * (`if (isNotEmpty(employeeIds))`), so an empty list reads as "do not filter" rather than "deny", and a
+ * caller whose token carries no employee identity would get the whole organization. Returning this id
+ * instead keeps the predicate in place and matches no row, so such a caller gets an empty result. It is
+ * the nil UUID, which is a valid value to compare against a uuid column.
+ */
+export const NO_ACCESSIBLE_EMPLOYEE_ID: ID = '00000000-0000-0000-0000-000000000000';
+
 @Injectable()
 export class ManagedEmployeeService {
 	constructor(
@@ -57,9 +68,17 @@ export class ManagedEmployeeService {
 			return [currentEmployeeId];
 		}
 
-		// Case 3: No employeeId (user not logged in as employee)
+		// Case 3: An authenticated caller whose token carries no employee identity — after switching to an
+		// organization they belong to without being an employee there, or when their employee record is gone.
+		// An organization-wide viewer keeps the access their role gives them; anyone else gets an id that
+		// matches nothing, so they see an empty result instead of every employee in the organization.
+		// A request with no user at all (a public share link, an internal call) is left to the scoping its own
+		// caller applies, exactly as before.
 		if (!currentEmployeeId) {
-			return [];
+			if (user && !RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+				return [NO_ACCESSIBLE_EMPLOYEE_ID];
+			}
+			return requestedEmployeeIds;
 		}
 
 		// Case 4: Check if user is manager of the specified teams/projects
@@ -385,8 +404,8 @@ export class ManagedEmployeeService {
 				...(organizationId ? { organizationTeam: { organizationId } } : {})
 			},
 			select: {
-                organizationTeamId: true
-            }
+				organizationTeamId: true
+			}
 		});
 
 		if (!isNotEmpty(managedTeams)) {
@@ -432,8 +451,8 @@ export class ManagedEmployeeService {
 					tenantId
 				},
 				select: {
-                    employeeId: true
-                }
+					employeeId: true
+				}
 			});
 
 			teamMembers.forEach((member) => employeeIds.add(member.employeeId));
@@ -449,8 +468,8 @@ export class ManagedEmployeeService {
 					tenantId
 				},
 				select: {
-                    employeeId: true
-                }
+					employeeId: true
+				}
 			});
 
 			projectMembers.forEach((member) => employeeIds.add(member.employeeId));
