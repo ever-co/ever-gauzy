@@ -10,6 +10,7 @@ dotenv.config({ quiet: true });
 import { FileStorageProviderEnum, isKnownDefaultSecret } from '@gauzy/contracts';
 import { IEnvironment, IGauzyFeatures } from './ienvironment';
 import { isEnvFlagEnabled, isFeatureEnabled, parseNonNegativeInt } from './environment.helper';
+import { resolveSocialAuthClients } from './social-auth.helper';
 import { resolveSecret } from './secret-resolver';
 
 /**
@@ -212,6 +213,12 @@ export const environment: IEnvironment = {
 		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
 		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`
 	},
+
+	/**
+	 * OAuth clients whose provider access tokens are accepted by the email-based social sign-in
+	 * routes. Defaults to Gauzy's own OAuth apps; see `resolveSocialAuthClients` (GHSA-58x4-7mw9-gmqg).
+	 */
+	socialAuth: resolveSocialAuthClients(),
 
 	jira: {
 		/** Jira Integration Configuration */
