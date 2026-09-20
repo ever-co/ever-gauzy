@@ -49,7 +49,7 @@ export class PublicInvoiceService {
 				throw new ForbiddenException();
 			}
 			tenantId = decoded.tenantId;
-		} catch (error) {
+		} catch {
 			throw new ForbiddenException();
 		}
 
@@ -128,7 +128,7 @@ export class PublicInvoiceService {
 				},
 				...(relations ? { relations: parseFindOptionsRelations(relations) } : {})
 			});
-		} catch (error) {
+		} catch {
 			throw new ForbiddenException();
 		}
 	}

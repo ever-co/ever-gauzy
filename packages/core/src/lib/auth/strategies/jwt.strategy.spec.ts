@@ -188,6 +188,73 @@ describe('JwtStrategy.validate', () => {
 	});
 
 	/**
+	 * The `organizationId` claim is re-resolved against `user_organization` on every request, and an
+	 * `employeeId` claim must belong to the organization the same token names.
+	 */
+	describe('organization claim', () => {
+		it('rejects an organization the user is not a member of', async () => {
+			const { strategy, userOrganizationService } = build();
+			userOrganizationService.findOneByOptions.mockResolvedValue(null);
+
+			const { err, user } = await run(strategy, {
+				id: 'first-user',
+				tenantId: 'tenant',
+				organizationId: 'org-1'
+			});
+
+			expect(err).toBeInstanceOf(UnauthorizedException);
+			expect(user).toBe(false);
+		});
+
+		it('rejects an employee that belongs to another organization', async () => {
+			const { strategy, employeeService, userOrganizationService } = build();
+			employeeService.findOneByIdString.mockResolvedValue({
+				id: 'emp-1',
+				userId: 'first-user',
+				organizationId: 'org-2',
+				isActive: true,
+				isArchived: false
+			});
+			userOrganizationService.findOneByOptions.mockResolvedValue({ id: 'user-org-1' });
+
+			const { err, user } = await run(strategy, {
+				id: 'first-user',
+				tenantId: 'tenant',
+				employeeId: 'emp-1',
+				organizationId: 'org-1'
+			});
+
+			expect(err).toBeInstanceOf(UnauthorizedException);
+			expect(user).toBe(false);
+			// Refused before the membership lookup: the claims contradict each other.
+			expect(userOrganizationService.findOneByOptions).not.toHaveBeenCalled();
+		});
+
+		it('attaches the organization the user is an active member of', async () => {
+			const { strategy, userOrganizationService } = build();
+			userOrganizationService.findOneByOptions.mockResolvedValue({ id: 'user-org-1' });
+
+			const { err, user } = await run(strategy, {
+				id: 'first-user',
+				tenantId: 'tenant',
+				organizationId: 'org-1'
+			});
+
+			expect(err).toBeNull();
+			expect(user).toMatchObject({ id: 'first-user', lastOrganizationId: 'org-1' });
+			expect(userOrganizationService.findOneByOptions).toHaveBeenCalledWith({
+				where: {
+					userId: 'first-user',
+					organizationId: 'org-1',
+					tenantId: 'tenant',
+					isActive: true,
+					isArchived: false
+				}
+			});
+		});
+	});
+
+	/**
 	 * GHSA-m8xc-8pwr-89fj — the request user is what every authorization check reads, so it must carry
 	 * the role and permissions the user has NOW, not the ones their token was minted with.
 	 */

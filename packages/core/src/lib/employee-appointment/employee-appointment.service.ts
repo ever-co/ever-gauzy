@@ -89,7 +89,7 @@ export class EmployeeAppointmentService extends TenantAwareCrudService<EmployeeA
 	 */
 	static getRescheduleTokenLifetime(endDateTime?: Date | string | null, now: number = Date.now()): number {
 		const DAY = 24 * 60 * 60;
-		const end = endDateTime ? new Date(endDateTime).getTime() : NaN;
+		const end = endDateTime ? new Date(endDateTime).getTime() : Number.NaN;
 		const untilWeekAfterEnd = Number.isFinite(end) ? Math.ceil((end - now) / 1000) + 7 * DAY : 0;
 		return Math.max(DAY, untilWeekAfterEnd);
 	}

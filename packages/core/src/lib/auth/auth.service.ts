@@ -55,7 +55,7 @@ import {
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CommandBus } from '@nestjs/cqrs';
-import { JsonWebTokenError, JwtPayload, verify } from 'jsonwebtoken';
+import { JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { DeepPartial, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
@@ -95,7 +95,6 @@ import {
 } from './social-account/token-verification/verify-oauth-tokens';
 import {
 	isNonEmptyString,
-	JWT_ALGORITHMS,
 	PurposeTokenError,
 	signPurposeToken,
 	TokenPurposeEnum,
@@ -1191,18 +1190,12 @@ export class AuthService extends SocialAuthService {
 				throw new BadRequestException('Password Reset Failed: Token has expired.');
 			}
 
-			// Verify the token and extract user information
-			// Validate the purpose claim to ensure this is a dedicated password-reset token
-			const decoded = verify(token, environment.JWT_SECRET, { algorithms: JWT_ALGORITHMS }) as {
-				purpose?: string;
-				id: ID;
-				tenantId: ID;
-			};
-
-			// Reject tokens without the password-reset purpose claim
-			if (decoded.purpose !== 'password-reset') {
-				throw new BadRequestException('Password Reset Failed: Invalid token type.');
-			}
+			// Verify the token and extract user information: signature (HS256 only), expiry, the
+			// dedicated password-reset purpose, and a non-empty `id`. The `id` requirement matters —
+			// `findOneByIdString(undefined)` would widen the lookup instead of failing closed.
+			const decoded = verifyPurposeToken<{ id: ID; tenantId: ID }>(token, TokenPurposeEnum.PASSWORD_RESET, {
+				requiredClaims: ['id']
+			});
 
 			const { id, tenantId } = decoded;
 

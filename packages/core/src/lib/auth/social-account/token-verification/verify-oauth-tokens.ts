@@ -36,6 +36,26 @@ const reject = (reason: string): never => {
 };
 
 /**
+ * The provider account id as a non-empty string, or `''` when it is missing or malformed.
+ *
+ * Providers disagree on the type: Google returns `sub` as a string, GitHub returns a numeric id.
+ * Anything else (object, boolean, float, negative, unsafe integer) is not an identity.
+ *
+ * @param rawId - The `id` as the provider returned it.
+ * @returns The normalised id, or an empty string.
+ */
+function normalizeProviderAccountId(rawId: unknown): string {
+	if (typeof rawId === 'string') {
+		return rawId.trim();
+	}
+	// GitHub account ids are numeric
+	if (typeof rawId === 'number' && Number.isSafeInteger(rawId) && rawId > 0) {
+		return String(rawId);
+	}
+	return '';
+}
+
+/**
  * Normalises and validates what a provider verifier returned.
  *
  * An absent `id` or `email` must never reach a `find()`: TypeORM runs with
@@ -48,13 +68,7 @@ export function normalizeSocialIdentity(
 	provider: ProviderEnum,
 	raw: { id?: unknown; email?: unknown } | null | undefined
 ): IVerifiedSocialIdentity {
-	const rawId = raw?.id;
-	const id =
-		typeof rawId === 'string'
-			? rawId.trim()
-			: typeof rawId === 'number' && Number.isSafeInteger(rawId) && rawId > 0
-				? String(rawId) // GitHub account ids are numeric
-				: '';
+	const id = normalizeProviderAccountId(raw?.id);
 
 	const rawEmail = typeof raw?.email === 'string' ? raw.email.trim() : '';
 	const email = rawEmail.toLowerCase();

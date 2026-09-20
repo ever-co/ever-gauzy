@@ -75,51 +75,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			// next request. If the role cannot be resolved the user gets none — authorization fails closed.
 			await this._roleAuthorizationService.attachAuthorizationState(user);
 
-			// Validate and assign employeeId from JWT
-			let validatedEmployee = null;
-			if (employeeId) {
-				const employee = await this._employeeService.findOneByIdString(employeeId);
+			// Validate the employee/organization claims and attach them to the user.
+			const contextError = await this.attachEmployeeAndOrganizationContext(user, {
+				employeeId,
+				organizationId,
+				tenantId
+			});
 
-				// Same reasoning as for the user above: a deactivated or archived employee record must not
-				// keep granting the employee context its token was minted with.
-				if (
-					!employee ||
-					employee.userId !== user.id ||
-					employee.isActive !== true ||
-					employee.isArchived !== false
-				) {
-					return done(new UnauthorizedException('unauthorized'), false);
-				}
-
-				validatedEmployee = employee;
-				user.employeeId = employeeId;
-			}
-
-			// Validate and assign organizationId from JWT
-			if (organizationId) {
-				// Cross-validate: if employeeId was provided, ensure it belongs to the claimed organization
-				if (validatedEmployee && validatedEmployee.organizationId !== organizationId) {
-					return done(
-						new UnauthorizedException('Employee does not belong to the claimed organization'),
-						false
-					);
-				}
-
-				const userOrganization = await this._userOrganizationService.findOneByOptions({
-					where: {
-						userId: user.id,
-						organizationId,
-						tenantId: tenantId || user.tenantId,
-						isActive: true,
-						isArchived: false
-					}
-				});
-
-				if (!userOrganization) {
-					return done(new UnauthorizedException('User does not have access to organization'), false);
-				}
-
-				user.lastOrganizationId = organizationId;
+			if (contextError) {
+				return done(contextError, false);
 			}
 
 			if (this.loggingEnabled) {
@@ -130,5 +94,71 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			this.logger.error(`Error occurred during JWT validation: ${error?.message}`, error?.stack, 'JwtStrategy');
 			return done(new UnauthorizedException('unauthorized', error.message), false);
 		}
+	}
+
+	/**
+	 * Validate the `employeeId` / `organizationId` claims of an access token and attach them to the
+	 * authenticated user.
+	 *
+	 * Both claims are frozen into the token at issuance, so each one is re-resolved against the
+	 * database on every request: a deactivated or archived employee record, an employee that belongs
+	 * to another user or another organization, and an organization the user is no longer a member of
+	 * all stop granting the context the token was minted with.
+	 *
+	 * @param user - The authenticated user, mutated with the validated claims.
+	 * @param claims - The `employeeId`, `organizationId` and `tenantId` claims of the token.
+	 * @returns The `UnauthorizedException` that rejects the request, or `null` when both claims pass.
+	 */
+	private async attachEmployeeAndOrganizationContext(
+		user: IAuthenticatedUser,
+		claims: { employeeId?: string; organizationId?: string; tenantId?: string }
+	): Promise<UnauthorizedException | null> {
+		const { employeeId, organizationId, tenantId } = claims;
+
+		// Validate and assign employeeId from JWT
+		let validatedEmployee = null;
+		if (employeeId) {
+			const employee = await this._employeeService.findOneByIdString(employeeId);
+
+			// Same reasoning as for the user above: a deactivated or archived employee record must not
+			// keep granting the employee context its token was minted with.
+			if (
+				!employee ||
+				employee.userId !== user.id ||
+				employee.isActive !== true ||
+				employee.isArchived !== false
+			) {
+				return new UnauthorizedException('unauthorized');
+			}
+
+			validatedEmployee = employee;
+			user.employeeId = employeeId;
+		}
+
+		// Validate and assign organizationId from JWT
+		if (organizationId) {
+			// Cross-validate: if employeeId was provided, ensure it belongs to the claimed organization
+			if (validatedEmployee && validatedEmployee.organizationId !== organizationId) {
+				return new UnauthorizedException('Employee does not belong to the claimed organization');
+			}
+
+			const userOrganization = await this._userOrganizationService.findOneByOptions({
+				where: {
+					userId: user.id,
+					organizationId,
+					tenantId: tenantId || user.tenantId,
+					isActive: true,
+					isArchived: false
+				}
+			});
+
+			if (!userOrganization) {
+				return new UnauthorizedException('User does not have access to organization');
+			}
+
+			user.lastOrganizationId = organizationId;
+		}
+
+		return null;
 	}
 }
