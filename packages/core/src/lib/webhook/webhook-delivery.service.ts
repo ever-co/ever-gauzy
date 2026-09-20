@@ -7,6 +7,7 @@ import { WebhookDelivery } from './webhook-delivery.entity';
 import { WebhookSubscription } from './webhook-subscription.entity';
 import { WebhookSubscriptionService } from './webhook-subscription.service';
 import { WebhookEventPublisher } from './webhook-event.publisher';
+import { refusalForResolvedEndpoint } from './webhook-endpoint-policy';
 import { signWebhookPayload } from './webhook-signature';
 import { TypeOrmWebhookDeliveryRepository } from './repository/type-orm-webhook-delivery.repository';
 import { MikroOrmWebhookDeliveryRepository } from './repository/mikro-orm-webhook-delivery.repository';
@@ -215,6 +216,32 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 			return {
 				delivery: skipped,
 				result: { delivered: false, lastError: 'SUBSCRIPTION_DISABLED', durationMs: 0 },
+				skipped: true
+			};
+		}
+
+		// **Where the endpoint points is checked again here, not only when it was stored.** A host is
+		// validated at creation, but a name can answer a public address then and a private one now —
+		// deliberately, which is DNS rebinding, or accidentally, through a split-horizon resolver — and
+		// this is the moment the platform is about to make the request. A refused endpoint is recorded
+		// as a dead delivery rather than retried: the ladder exists for an endpoint that is unreachable,
+		// and this one is unreachable by policy, so re-attempting it would only repeat the refusal
+		// every minute for six hours.
+		const endpointRefusal = await this.refuseUnroutableEndpoint(subscription.url);
+
+		if (endpointRefusal) {
+			const refused = await this.saveDelivery(delivery, {
+				status: WebhookDeliveryStatus.DEAD,
+				lastError: endpointRefusal,
+				nextAttemptAt: null,
+				attemptCount: attempt
+			});
+
+			await this.webhookEventPublisher.deliveryFailed(this.redact(refused), attempt);
+
+			return {
+				delivery: refused,
+				result: { delivered: false, lastError: endpointRefusal, durationMs: 0 },
 				skipped: true
 			};
 		}
@@ -457,6 +484,30 @@ export class WebhookDeliveryService extends CrudService<WebhookDelivery> {
 		}
 
 		return headers;
+	}
+
+	/**
+	 * Why this endpoint must not be called, or undefined when it may be.
+	 *
+	 * The rule itself lives in `webhook-endpoint-policy`, so the subscription surface and this one
+	 * cannot disagree about which addresses are out of bounds. A host that simply does not resolve is
+	 * *not* refused here — that is an ordinary delivery failure, and the attempt below reports it as
+	 * one; calling it a policy refusal would tell an operator their endpoint is forbidden when it is
+	 * merely down.
+	 *
+	 * @param url The endpoint the subscription names.
+	 * @returns The reason, or undefined.
+	 */
+	private async refuseUnroutableEndpoint(url: string): Promise<string | undefined> {
+		let parsed: URL;
+
+		try {
+			parsed = new URL(url);
+		} catch {
+			return 'ENDPOINT_NOT_A_URL';
+		}
+
+		return refusalForResolvedEndpoint(parsed);
 	}
 
 	/**

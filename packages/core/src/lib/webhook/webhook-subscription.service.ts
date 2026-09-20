@@ -6,6 +6,7 @@ import { EncryptionService } from '../common/encryption/encryption.service';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { isUniqueViolation } from '../core/errors/unique-violation';
+import { refusalForEndpointHost } from './webhook-endpoint-policy';
 import { WebhookSubscription } from './webhook-subscription.entity';
 import { WebhookEventPublisher } from './webhook-event.publisher';
 import { TypeOrmWebhookSubscriptionRepository } from './repository/type-orm-webhook-subscription.repository';
@@ -635,6 +636,14 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 	 * development installation may set — which is refused outright once the platform runs in
 	 * production, because an unencrypted webhook leaks every payload it carries.
 	 *
+	 * **The scheme was the only thing this checked**, and the scheme is not what makes an endpoint
+	 * safe to call. A tenant user who may create a subscription could point one at
+	 * `https://169.254.169.254/`, at a database admin port on the pod network, or at a service mesh's
+	 * control plane, and then read four kilobytes of each response back out through the delivery log
+	 * — a read API the same user already has. `refusalForEndpointHost` is the rule about *where* an
+	 * endpoint may point; the delivery path applies it again against the address the host actually
+	 * resolves to, because a name can answer differently a minute later.
+	 *
 	 * @param url The endpoint.
 	 * @param metadata The subscription metadata.
 	 * @throws BadRequestException when the endpoint is not allowed.
@@ -646,6 +655,12 @@ export class WebhookSubscriptionService extends CrudService<WebhookSubscription>
 			parsed = new URL(url);
 		} catch {
 			throw new BadRequestException('A webhook endpoint must be an absolute URL.');
+		}
+
+		const refusal = refusalForEndpointHost(parsed);
+
+		if (refusal) {
+			throw new BadRequestException(refusal);
 		}
 
 		if (parsed.protocol === 'https:') {

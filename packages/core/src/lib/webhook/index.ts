@@ -1,6 +1,7 @@
 export * from './webhook-subscription.entity';
 export * from './webhook-delivery.entity';
 export * from './webhook-signature';
+export * from './webhook-endpoint-policy';
 export * from './webhook-event.publisher';
 export * from './webhook-subscription.service';
 export * from './webhook-delivery.service';
