@@ -72,6 +72,9 @@ jest.mock('@gauzy/core', () => {
 		EventBus: class {},
 		PermissionGuard: class PermissionGuard {},
 		TenantPermissionGuard: class TenantPermissionGuard {},
+		// Every resolver class carries the platform's feature guard, so the double provides the class
+		// the resolver imports: an undefined guard handed to the real `@UseGuards` fails the suite.
+		FeatureFlagGuard: class TenantPermissionGuard {},
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		Warehouse: class Warehouse {},
 		Product: class Product {},

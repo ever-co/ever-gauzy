@@ -2,7 +2,9 @@ import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/g
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere, In, Raw } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { TAX_PERMISSION_VALUES, taxPermission } from '../../tax.permissions';
 import { IResolvedTaxRegime, TaxWriteInput } from '../../tax.types';
 import { TaxRegimeRate } from '../../tax-regime-rate/tax-regime-rate.entity';
@@ -43,9 +45,20 @@ const TAX_REGIME_SORT_FIELDS: Record<TaxRegimeSortField, string> = {
  * Membership is a field of the regime and a mutation on the regime rather than a resource of its own,
  * because a membership row has no lifecycle: it is the statement "this rate belongs to this set", and the
  * permission that guards reshaping a set is the regime's own.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
  */
 @Resolver('TaxRegime')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_REGIMES_VIEW))
 export class TaxRegimeResolver {
 	constructor(private readonly taxRegimeService: TaxRegimeService) {}

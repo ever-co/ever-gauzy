@@ -1,7 +1,9 @@
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { IPagination, ShippingPriceType } from '@gauzy/contracts';
-import { Idempotent, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { ShippingOption } from '../shipping-option/shipping-option.entity';
 import { IShippingEligibilityContext, ShippingOptionService } from '../shipping-option/shipping-option.service';
 import { ShippingProfile } from '../shipping-profile/shipping-profile.entity';
@@ -20,9 +22,20 @@ import { IShippingOptionConnection, IShippingOptionEligibility, IShippingProfile
  * Creating a profile and creating an option carry the retry declarations their REST routes carry, under
  * the same scope names: a retried create over either protocol is answered with what the first attempt
  * wrote rather than with a refusal for a code that is already taken.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
  */
 @Resolver(() => ShippingOption)
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_VIEW)
 export class ShippingOptionResolver {
 	constructor(

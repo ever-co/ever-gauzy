@@ -12,24 +12,40 @@
  * the gate and every other resolver not, so the flag gated a fraction of one endpoint.
  *
  * The rule is therefore mechanical, and it is checked mechanically rather than reviewed by eye: every
- * class under `packages/core/src/lib` that carries a class-level `@Resolver(` must also carry
+ * class under the trees this script scans that carries a class-level `@Resolver(` must also carry
  * `@FeatureFlag(` — the code `FeatureFlagGuard` reads from `FEATURE_METADATA` with `getAllAndOverride`
  * over the handler and then the class. A resolver that hosts fields rather than a resource (a plain
  * container class) is held to the same rule as its neighbours, because its fields are served through
  * the same endpoint.
  *
+ * **Two trees are scanned, and the second one is the reason this file has a history.** The endpoint is
+ * one schema, assembled from the kernel and from every configured plugin, so a plugin resolver left
+ * un-gated is exactly as open as a kernel one — and the claim `feature/graphql-feature.code.ts` makes,
+ * that "every `@Resolver` this platform ships carries `@FeatureFlag(FEATURE_GRAPHQL)`", was false for
+ * the plugin packages while this scan covered the kernel alone: eighty-three resolver classes across
+ * sixteen plugin packages carried the decorator nowhere. A check that covers half the surface certifies
+ * half the surface, which is the failure this script exists to catch, so both trees are scanned and the
+ * count of each is reported.
+ *
  * Two things are stated rather than inferred:
  *
  * - **The code is declared once.** Every gate states the shared `FEATURE_GRAPHQL` exported by
- *   `feature/graphql-feature.code.ts`; a resolver that spells the code as a literal is reported below,
- *   because a literal that drifted from the catalogue names a code no catalogue row carries and the
- *   guard resolves it as disabled — which closes that whole surface for every caller, quietly. That
- *   report is information rather than a failure: the value is the same, and what an operator's switch
- *   depends on is that the gate is there at all.
+ *   `feature/graphql-feature.code.ts`; a resolver whose gate resolves a different code — a literal that
+ *   drifted from the catalogue, or a domain code such as `WarehouseFeatures.WAREHOUSE` — is reported
+ *   below, because a code no catalogue row carries is resolved by the guard as disabled, which closes
+ *   that whole surface for every caller, quietly. That report is information rather than a failure: the
+ *   value is the same for a literal, and what an operator's switch depends on is that the gate is there
+ *   at all.
  * - **The exceptions are written down.** {@link ALLOWED} is the frozen list of resolvers that predate
  *   this convention and are deliberately not gated by the change that introduced it. An entry is a
  *   record, not a bypass: it needs a reason, and it is reported when the resolver it excuses has since
  *   been gated, so the list cannot quietly outlive the exception it describes.
+ *
+ * A class may state more than one code, and the decorator writes a single metadata value: the code
+ * written first is the one `getAllAndOverride` resolves for every field, and each code written after it
+ * is a statement that never runs. That is reported rather than forbidden, because choosing between the
+ * platform gate and a domain gate is a real decision on a class that carries both, and because a
+ * decision nothing prints is a decision nobody can review.
  *
  * Usage:
  *   node tools/scripts/graphql-feature-gate-check.mjs [repoRoot]
@@ -44,12 +60,27 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = process.argv[2] ? resolve(process.argv[2]) : resolve(HERE, '..', '..');
-const CORE = join(ROOT, 'packages', 'core', 'src', 'lib');
+
+/**
+ * The trees this rule is checked over, each with the label its resolvers are reported under.
+ *
+ * The label prefixes every path below, so a resolver is named by a path that says which tree it was
+ * found in. That matters beyond readability: an allow-list key is built the same way, and a key that
+ * named a bare relative path would be a key two trees could both produce — which is how an entry ends
+ * up excusing a file nobody decided to excuse, the one thing an allow-list must never do.
+ */
+const TREES = [
+	{ label: 'packages/core/src/lib', root: join(ROOT, 'packages', 'core', 'src', 'lib') },
+	{ label: 'packages/plugins', root: join(ROOT, 'packages', 'plugins') }
+];
 
 /** The class-level resolver decorator, the test for it, and the gate it must be accompanied by. */
 const RESOLVER = /^@Resolver\(/gm;
 const HAS_RESOLVER = /^@Resolver\(/m;
 const FEATURE_FLAG = /@FeatureFlag\(/;
+
+/** Every code one class-level decorator block states, in the order the file states them. */
+const FEATURE_FLAG_ARGUMENT = /@FeatureFlag\(\s*([^)]*?)\s*\)/g;
 
 /** The gate as it is meant to be spelled: the shared constant, named rather than repeated. */
 const SHARED_CODE = 'FEATURE_GRAPHQL';
@@ -58,15 +89,9 @@ const SHARED_CODE = 'FEATURE_GRAPHQL';
  * The resolvers this rule does not hold yet, and why — the short written record of the exception.
  *
  * A file here is one that carries `@Resolver(` and no `@FeatureFlag(`, and is knowingly left that way.
- * The list is keyed by the path relative to `packages/core/src/lib`, and each entry states the reason
- * in the same breath as the file, so nobody has to reconstruct it later.
- */
-/**
- * The resolvers this rule does not hold yet, and why — the short written record of the exception.
- *
- * A file here is one that carries `@Resolver(` and no `@FeatureFlag(`, and is knowingly left that way.
- * The list is keyed by the path relative to `packages/core/src/lib`, and each entry states the reason
- * in the same breath as the file, so nobody has to reconstruct it later.
+ * The list is keyed by the path this script reports — the tree's label, then the path relative to that
+ * tree — and each entry states the reason in the same breath as the file, so nobody has to reconstruct
+ * it later.
  *
  * **It holds two entries, and both are reference data rather than tenant data.** The currency and country
  * resolvers are `@Public()`: the platform's delivered routes for them are open, and a `@Public()` handler
@@ -79,11 +104,11 @@ const SHARED_CODE = 'FEATURE_GRAPHQL';
  */
 const ALLOWED = new Map([
 	[
-		'currency/currency.resolver.ts',
+		'packages/core/src/lib/currency/currency.resolver.ts',
 		'public reference data with no tenancy column: the gate is tenant-scoped and a @Public() handler has no scope to evaluate it against'
 	],
 	[
-		'country/country.resolver.ts',
+		'packages/core/src/lib/country/country.resolver.ts',
 		'public reference data with no tenancy column: the gate is tenant-scoped and a @Public() handler has no scope to evaluate it against'
 	]
 ]);
@@ -155,43 +180,68 @@ const resolvers = [];
 const gated = [];
 const ungated = [];
 const allowed = [];
-const gatedWithLiteral = [];
+const gatedWithOtherCode = [];
+const multipleCodes = [];
 const staleAllowList = [];
+const perTree = new Map(TREES.map((tree) => [tree.label, { checked: 0, gated: 0, allowed: 0, ungated: 0 }]));
 
-for (const file of sources(CORE)) {
-	const source = read(file);
-	if (!HAS_RESOLVER.test(source)) continue;
+for (const tree of TREES) {
+	const found = perTree.get(tree.label);
 
-	const where = relative(CORE, file).split('\\').join('/');
+	for (const file of sources(tree.root)) {
+		const source = read(file);
+		if (!HAS_RESOLVER.test(source)) continue;
 
-	for (const { line, name, block } of resolverClasses(source)) {
-		resolvers.push({ file: where, line, name });
+		const where = `${tree.label}/${relative(tree.root, file).split('\\').join('/')}`;
 
-		if (FEATURE_FLAG.test(block)) {
-			gated.push({ file: where, line });
+		for (const { line, name, block } of resolverClasses(source)) {
+			resolvers.push({ file: where, line, name });
+			found.checked++;
 
-			if (!new RegExp(`@FeatureFlag\\(\\s*${SHARED_CODE}\\s*\\)`).test(block)) {
-				gatedWithLiteral.push({ file: where, line, argument: /@FeatureFlag\(([^)]*)\)/.exec(block)?.[1] });
+			if (FEATURE_FLAG.test(block)) {
+				gated.push({ file: where, line });
+				found.gated++;
+
+				// The decorator writes one metadata value and the guard resolves the first one it finds,
+				// so the code stated first is the code that gates every field of this class. The codes
+				// after it are read only to be reported: each of them is a statement that never runs.
+				const stated = [...block.matchAll(FEATURE_FLAG_ARGUMENT)].map((match) => match[1]);
+
+				if (stated[0] !== SHARED_CODE) {
+					gatedWithOtherCode.push({ file: where, line, argument: stated[0] });
+				}
+
+				if (stated.length > 1) {
+					multipleCodes.push({ file: where, line, resolved: stated[0], others: stated.slice(1) });
+				}
+
+				if (ALLOWED.has(where)) staleAllowList.push(where);
+			} else if (ALLOWED.has(where)) {
+				allowed.push({ file: where, reason: ALLOWED.get(where) });
+				found.allowed++;
+			} else {
+				ungated.push({ file: where, line, name });
+				found.ungated++;
 			}
-
-			if (ALLOWED.has(where)) staleAllowList.push(where);
-		} else if (ALLOWED.has(where)) {
-			allowed.push({ file: where, reason: ALLOWED.get(where) });
-		} else {
-			ungated.push({ file: where, line, name });
 		}
 	}
 }
 
 const failed = ungated.length > 0;
+const labels = TREES.map((tree) => tree.label);
 
 console.log('');
 console.log('GraphQL feature gate — every resolver behind the catalogue’s own code');
 console.log('===================================================================');
 console.log('');
-console.log(`  ${resolvers.length} resolver class(es) under packages/core/src/lib`);
+console.log(`  ${resolvers.length} resolver class(es) over ${labels.join(' and ')}`);
+for (const [label, found] of perTree) {
+	console.log(
+		`    ${label}: ${found.checked} checked, ${found.gated} carry the gate, ${found.allowed} on the frozen allow-list`
+	);
+}
 console.log(
-	`  ${gated.length} carry the gate, ${gated.length - gatedWithLiteral.length} of them through the shared ${SHARED_CODE} constant`
+	`  ${gated.length} carry the gate, ${gated.length - gatedWithOtherCode.length} of them through the shared ${SHARED_CODE} constant`
 );
 console.log(`  ${allowed.length} predate the convention and are on the frozen allow-list`);
 console.log(`  ${ungated.length} carry no gate and no reason, which is the defect this check exists for`);
@@ -214,12 +264,23 @@ if (allowed.length) {
 	console.log('');
 }
 
-if (gatedWithLiteral.length) {
+if (gatedWithOtherCode.length) {
 	console.log(
-		`  ${gatedWithLiteral.length} gate(s) state the code as a literal rather than importing it (information, not a failure):`
+		`  ${gatedWithOtherCode.length} gate(s) resolve a code other than the shared ${SHARED_CODE} constant (information, not a failure):`
 	);
-	for (const entry of gatedWithLiteral) {
+	for (const entry of gatedWithOtherCode) {
 		console.log(`    ${entry.file}:${entry.line}  → @FeatureFlag(${entry.argument})`);
+	}
+	console.log('');
+}
+
+if (multipleCodes.length) {
+	console.log(
+		`  ${multipleCodes.length} resolver class(es) state more than one code, and only the first is resolved (information, not a failure):`
+	);
+	for (const entry of multipleCodes) {
+		console.log(`    ${entry.file}:${entry.line}  → @FeatureFlag(${entry.resolved}) is read`);
+		console.log(`        the code(s) beside it, which never run: ${entry.others.join(', ')}`);
 	}
 	console.log('');
 }

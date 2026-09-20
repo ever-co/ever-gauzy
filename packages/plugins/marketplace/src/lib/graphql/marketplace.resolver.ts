@@ -4,6 +4,7 @@ import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import type { ID as Id } from '@gauzy/contracts';
 import {
 	BulkExecutor,
+	FeatureFlagGuard,
 	IBulkItemContext,
 	Idempotent,
 	PermissionGuard,
@@ -12,6 +13,8 @@ import {
 	bulkOptionsOf,
 	toBulkItemOutcomes
 } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import type { BulkItemRequest } from '@gauzy/core';
 import { Seller } from '../seller/seller.entity';
 import { SellerService } from '../seller/seller.service';
@@ -52,9 +55,20 @@ import {
  * same operation, the same tenant and organization scoping, and the same refusal. A mutation that the
  * REST surface refuses for a missing permission is refused here with the same permission, so a client
  * cannot reach a write through GraphQL that REST would deny.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
  */
 @Resolver(() => SellerType)
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 export class SellerEntityResolver {
 	constructor(
 		private readonly sellerService: SellerService,

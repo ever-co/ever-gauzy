@@ -10,13 +10,34 @@ import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/
 import { UseGuards } from '@nestjs/common';
 import { map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, Idempotent, Permissions, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import {
+	EventBus,
+	FeatureFlagGuard,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard
+} from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockAlert } from './../stock-alert/stock-alert.entity';
 import { StockAlertService } from './../stock-alert/stock-alert.service';
 
+/**
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
+ */
 @Resolver('StockAlert')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
 export class StockAlertResolver {
 	constructor(

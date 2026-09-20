@@ -2,6 +2,7 @@ import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/g
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { PickList } from '../../pick-list/pick-list.entity';
 import { PickListService } from '../../pick-list/pick-list.service';
@@ -19,9 +20,22 @@ import { toUserError } from '../../graphql/wire';
  * The resolvers call the same services the REST surface calls, so a list generated over GraphQL and one
  * generated over REST obey the same derivation and the same idempotence rule. The outcomes recorded
  * against a line belong to the line's own resolver, because they are guarded differently.
+ *
+ * **The gate is the catalogue's, and the domain code stands beside it.** `FeatureFlagGuard` reads one
+ * code per target — `getAllAndOverride` over the handler and then the class — so the code stated first
+ * on the class is the one that gates every field below, and it is `FEATURE_GRAPHQL`, the commerce
+ * catalogue's entry for "the GraphQL endpoint and its resolvers, under the same guards and permissions
+ * as REST": a tenant that switched the GraphQL surface off is answered the refusal a disabled
+ * capability's routes answer with a 404, which is the hole this statement closes. `WarehouseFeatures.WAREHOUSE`
+ * stays written below it because the warehouse capability is what the routes serving the same resources
+ * carry and what this plugin's own feature catalogue declares, so a reader comparing the two surfaces
+ * sees it; it is a record rather than a second check, because the feature metadata carries one value per
+ * target, and a class that needs both codes checked needs `FeatureFlagGuard` to resolve a set of them —
+ * a change to `packages/core/src/lib/shared/guards/feature-flag.guard.ts`, not to this file.
  */
 @Resolver('PickList')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @FeatureFlag(WarehouseFeatures.WAREHOUSE)
 export class PickListResolver {
 	constructor(

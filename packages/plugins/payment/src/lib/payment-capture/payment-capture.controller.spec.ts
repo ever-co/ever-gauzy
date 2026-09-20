@@ -63,6 +63,9 @@ jest.mock('@gauzy/core', () => {
 		Integration: class Integration {},
 		PermissionGuard: class PermissionGuard {},
 		TenantPermissionGuard: class TenantPermissionGuard {},
+		// Every resolver class carries the platform's feature guard, so the double provides the class
+		// the resolver imports: an undefined guard handed to the real `@UseGuards` fails the suite.
+		FeatureFlagGuard: class FeatureFlagGuard {},
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		// The platform's decorator is `UsePipes(new ValidationPipe(options))`, so the double is that same
 		// line rather than a no-op: a route's pipes are otherwise not what this suite asserts.

@@ -1,7 +1,9 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { CurrencyCode, ID } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { PurchasingPermissions } from '../../purchasing.permissions';
 import { VendorTermStatus } from '../../purchasing.types';
 import { VendorProductTermService } from '../../vendor-product-term/vendor-product-term.service';
@@ -45,15 +47,29 @@ interface IResolveVendorProductTermArgs {
  * written over REST obey the same band-overlap invariant, the same window rule and the same
  * defaulting of the currency, and the two surfaces cannot drift.
  *
- * Authorisation is carried here as well as on the controller, under the same two guards and the same
- * two permissions: a term is procurement's, and `VENDOR_TERMS_VIEW` deliberately does not come with
- * `PURCHASE_ORDERS_VIEW`. The feature guard the controller carries is deliberately **not** repeated —
- * a guard is a provider of the module hosting the handler, and the resolver host imports the
- * permission module rather than each plugin's feature module, so repeating it here would make the
- * resolver host responsible for a provider it cannot reach.
+ * Authorisation is carried here as well as on the controller, under the same two permissions and the
+ * same two protocol guards: a term is procurement's, and `VENDOR_TERMS_VIEW` deliberately does not come
+ * with `PURCHASE_ORDERS_VIEW`. The platform's feature guard is carried here too, which it was not
+ * before, and the reason that kept it off this class does not hold: a guard resolves its dependencies
+ * from the module that hosts the handler, and every host of this resolver reaches the feature service —
+ * the plugin's own module imports `FeatureModule`, and so does the host the endpoint scans,
+ * `GraphqlApiModule`. The plugin's own `PURCHASING` code is deliberately not stated beside the platform
+ * gate: the platform's feature metadata carries one value per target and `FeatureFlagGuard` resolves the
+ * first, so a second code would be a statement that never runs rather than a capability that is checked.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
  */
 @Resolver('VendorProductTerm')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PurchasingPermissions.VENDOR_TERMS_VIEW)
 export class VendorProductTermResolver {
 	constructor(private readonly vendorProductTermService: VendorProductTermService) {}

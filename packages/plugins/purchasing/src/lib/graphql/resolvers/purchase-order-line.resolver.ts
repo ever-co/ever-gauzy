@@ -1,5 +1,10 @@
+import { UseGuards } from '@nestjs/common';
 import { Args, Parent, ResolveField, Resolver } from '@nestjs/graphql';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { IGoodsReceipt, IPurchaseOrder, IPurchaseOrderLine, PurchaseBillingPolicy } from '../../purchasing.types';
+import { PurchasingPermissions } from '../../purchasing.permissions';
 import { isGreaterThanQuantity, negateQuantity, sumQuantity } from '../../purchasing.quantity';
 import { PurchaseOrderLine } from '../../purchase-order-line/purchase-order-line.entity';
 import { PurchaseOrderLineService } from '../../purchase-order-line/purchase-order-line.service';
@@ -13,8 +18,20 @@ import { PurchaseOrderService } from '../../purchase-order/purchase-order.servic
  * exists for the three members that are derived rather than stored: how much of the line is still
  * expected, what is still unbilled under the policy the caller names, and the order it belongs to when
  * a caller reached it without one.
+ *
+ * **Authorisation is the controller's.** A line with no root field is still served through the one
+ * GraphQL endpoint, so the class carries the guard chain, the platform's feature gate and the read
+ * permission the purchase-order-line controller class carries — `PURCHASE_ORDERS_VIEW`, which is the
+ * permission that controller's own list route states, and the permission the order these fields are
+ * selected through is read under. The platform gate is `FEATURE_GRAPHQL`, imported from the catalogue
+ * rather than restated: a literal that drifted would name a code no catalogue row carries, which the
+ * guard resolves as disabled and which would refuse every field here for every caller with nothing red
+ * anywhere.
  */
 @Resolver('PurchaseOrderLine')
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
+@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 export class PurchaseOrderLineResolver {
 	constructor(
 		private readonly purchaseOrderService: PurchaseOrderService,
@@ -31,6 +48,7 @@ export class PurchaseOrderLineResolver {
 	 * @returns The outstanding quantity as an exact decimal string.
 	 */
 	@ResolveField('outstandingQuantity')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 	outstandingQuantity(@Parent() line: IPurchaseOrderLine): string {
 		const settled = sumQuantity([line.receivedQuantity, line.damagedQuantity]);
 
@@ -52,6 +70,7 @@ export class PurchaseOrderLineResolver {
 	 * @returns The unbilled quantity as an exact decimal string.
 	 */
 	@ResolveField('toBillQuantity')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 	toBillQuantity(
 		@Parent() line: IPurchaseOrderLine,
 		@Args('policy') policy: PurchaseBillingPolicy
@@ -66,6 +85,7 @@ export class PurchaseOrderLineResolver {
 	 * @returns The order, or null when it cannot be read.
 	 */
 	@ResolveField('purchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 	async purchaseOrder(@Parent() line: IPurchaseOrderLine): Promise<PurchaseOrder | null> {
 		const attached = (line as PurchaseOrderLine).purchaseOrder as IPurchaseOrder | undefined;
 

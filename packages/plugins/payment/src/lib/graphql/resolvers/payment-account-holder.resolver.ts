@@ -1,7 +1,16 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID, IPaymentAccountHolder, IPaymentMethodToken, PermissionsEnum } from '@gauzy/contracts';
-import { Idempotent, PaymentAccountHolderService, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	Idempotent,
+	PaymentAccountHolderService,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard
+} from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { PaymentPermission } from '../../payment.permissions';
 import { PaymentAccountHolderLifecycleService } from '../../payment-account-holder/payment-account-holder-lifecycle.service';
 import { PaymentMethodTokenLifecycleService } from '../../payment-method-token/payment-method-token-lifecycle.service';
@@ -35,9 +44,20 @@ import {
  * loaded its instruments would be one query per row for a field nobody asked for. The rows are the
  * masked summary — brand, last four, expiry — because no list carries a stored instrument reference,
  * for any caller (17-graphql-api-specification.md §6.4).
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
  */
 @Resolver('PaymentAccountHolder')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 export class PaymentAccountHolderResolver {
 	constructor(
 		private readonly paymentAccountHolderService: PaymentAccountHolderService,

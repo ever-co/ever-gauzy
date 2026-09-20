@@ -68,6 +68,9 @@ jest.mock('@gauzy/core', () => {
 		RolePermissionModule: class RolePermissionModule {},
 		PermissionGuard: class PermissionGuard {},
 		TenantPermissionGuard: class TenantPermissionGuard {},
+		// Every resolver class carries the platform's feature guard, so the double provides the class
+		// the resolver imports: an undefined guard handed to the real `@UseGuards` fails the suite.
+		FeatureFlagGuard: class FeatureFlagGuard {},
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		// The platform's decorator is `UsePipes(new ValidationPipe(options))`, so the double is that same
 		// one line: the ordering this suite pins is the ordering two real pipes are applied in.

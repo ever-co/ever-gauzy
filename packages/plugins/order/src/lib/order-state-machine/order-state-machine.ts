@@ -1,5 +1,32 @@
-﻿import { BadRequestException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { FulfillmentStatus, OrderStatus, OrderPaymentStatus } from '@gauzy/contracts';
+import { compareDecimalStrings, subtractDecimalStrings } from '@gauzy/core';
+
+/**
+ * An amount as the decimal string it is compared as.
+ *
+ * The values arrive as `number` — that is what the totals chain hands over — and this does not pretend
+ * otherwise: `String` renders the number the engine already rounded to the currency's scale, and the
+ * decimal kernel then compares those renderings exactly. What it must not do is the *arithmetic* in
+ * binary floating point, which is what the caller used to do and what a comparison of money cannot
+ * survive.
+ *
+ * @param value The amount as it arrives.
+ * @returns The same amount as a decimal string.
+ */
+function decimal(value: number): string {
+	return Number.isFinite(value) ? String(value) : '0';
+}
+
+/** Whether a decimal string is greater than zero. */
+function isPositive(value: string): boolean {
+	return compareDecimalStrings(value, '0') > 0;
+}
+
+/** Whether a decimal string is exactly zero. */
+function isZero(value: string): boolean {
+	return compareDecimalStrings(value, '0') === 0;
+}
 
 /** Who is asking for the transition. */
 export type OrderActor = 'STAFF' | 'CUSTOMER' | 'SYSTEM' | 'PROVIDER';
@@ -172,6 +199,15 @@ export class OrderStateMachine {
 	 * The order of the rules is the specification: the first one that matches wins, which is what makes
 	 * "captured and partly refunded" resolve to `PARTIALLY_REFUNDED` rather than to `CAPTURED`.
 	 *
+	 * **The money is compared as decimals, never as the numbers it arrives in.** A payment status is a
+	 * decision about money, and money that has passed through a JavaScript `number` has already lost the
+	 * exactness the decision needs: `0.05 - 0.02` is `0.030000000000000002` in binary floating point, so
+	 * an order whose grand total is `0.05`, whose credit is `0.02` and which was captured for exactly
+	 * `0.03` compares as *underpaid* and is reported `PARTIALLY_CAPTURED`. The two subtractions and the
+	 * comparisons therefore go through the platform's decimal kernel, which works on the scaled integers
+	 * these values actually are. The parameters stay `number` because that is what the totals chain
+	 * hands over; what changes is that the arithmetic no longer trusts them.
+	 *
 	 * @param input The derived inputs.
 	 * @returns The payment status.
 	 */
@@ -188,34 +224,38 @@ export class OrderStateMachine {
 		hasFailedAttempt: boolean;
 		hasTransactions: boolean;
 	}): OrderPaymentStatus {
-		const payable = input.grandTotal - input.creditTotal;
-		const authorized = input.authorized - input.voided;
+		const payable = subtractDecimalStrings(decimal(input.grandTotal), decimal(input.creditTotal));
+		const authorized = subtractDecimalStrings(decimal(input.authorized), decimal(input.voided));
+		const captured = decimal(input.captured);
+		const refunded = decimal(input.refunded);
+		const hasCaptured = isPositive(captured);
+		const hasRefunded = isPositive(refunded);
 
-		if (input.orderStatus === OrderStatus.CANCELED && input.captured === 0) {
+		if (input.orderStatus === OrderStatus.CANCELED && isZero(captured)) {
 			return OrderPaymentStatus.CANCELED;
 		}
-		if (input.captured > 0 && input.refunded >= input.captured) {
+		if (hasCaptured && compareDecimalStrings(refunded, captured) >= 0) {
 			return OrderPaymentStatus.REFUNDED;
 		}
-		if (input.captured > 0 && input.refunded > 0) {
+		if (hasCaptured && hasRefunded) {
 			return OrderPaymentStatus.PARTIALLY_REFUNDED;
 		}
-		if (payable > 0 && input.captured >= payable) {
+		if (isPositive(payable) && compareDecimalStrings(captured, payable) >= 0) {
 			return OrderPaymentStatus.CAPTURED;
 		}
-		if (input.captured > 0 && input.captured < payable) {
+		if (hasCaptured && compareDecimalStrings(captured, payable) < 0) {
 			return OrderPaymentStatus.PARTIALLY_CAPTURED;
 		}
-		if (payable > 0 && input.captured === 0 && authorized >= payable) {
+		if (isPositive(payable) && isZero(captured) && compareDecimalStrings(authorized, payable) >= 0) {
 			return OrderPaymentStatus.AUTHORIZED;
 		}
-		if (authorized > 0 && authorized < payable && input.captured === 0) {
+		if (isPositive(authorized) && compareDecimalStrings(authorized, payable) < 0 && isZero(captured)) {
 			return OrderPaymentStatus.PARTIALLY_AUTHORIZED;
 		}
 		if (
 			input.hasFailedAttempt &&
-			input.captured === 0 &&
-			authorized === 0 &&
+			isZero(captured) &&
+			isZero(authorized) &&
 			[OrderStatus.PENDING, OrderStatus.REQUIRES_ACTION].includes(input.orderStatus)
 		) {
 			return OrderPaymentStatus.FAILED;

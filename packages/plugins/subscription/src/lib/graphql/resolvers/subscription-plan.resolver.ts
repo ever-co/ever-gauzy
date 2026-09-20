@@ -2,7 +2,9 @@ import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FindOptionsWhere } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { SubscriptionPermissions } from '../../subscription.permissions';
 import { SubscriptionPlan } from '../../subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanService } from '../../subscription-plan/subscription-plan.service';
@@ -47,9 +49,20 @@ interface IUpdateSubscriptionPlanArgs extends Partial<ICreateSubscriptionPlanArg
  * created over REST obey the same code check, the same cadence validation and the same
  * don't-strand-a-subscriber rule, and the two surfaces cannot drift. Authorisation is unchanged: the
  * guards run on the HTTP request that carried the operation, exactly as they do for a REST call.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
  */
 @Resolver('SubscriptionPlan')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 export class SubscriptionPlanResolver {
 	constructor(private readonly subscriptionPlanService: SubscriptionPlanService) {}

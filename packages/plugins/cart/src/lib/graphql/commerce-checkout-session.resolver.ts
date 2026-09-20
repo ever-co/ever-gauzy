@@ -3,13 +3,16 @@ import { BadRequestException, UseGuards } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { CommerceCheckoutSessionStatus, IPagination } from '@gauzy/contracts';
 import {
+	FeatureFlagGuard,
 	Idempotent,
-	Permissions,
 	PermissionGuard,
+	Permissions,
 	TenantPermissionGuard,
 	Versioned,
 	versionExpectationOf
 } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { CommerceCart } from '../commerce-cart/commerce-cart.entity';
 import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
 import { CommerceCheckoutSession } from '../commerce-checkout-session/commerce-checkout-session.entity';
@@ -30,9 +33,20 @@ import { ICheckoutResult, ICheckoutSessionConnection } from './types';
  * the caller states the version it read. The mutations a client is expected to retry adopt
  * `@Idempotent(...)` under the same scope names the REST routes declare, which is what makes a retry
  * over either protocol cost one order rather than two.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
  */
 @Resolver('CheckoutSession')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(CART_PERMISSIONS.CARTS_VIEW)
 export class CommerceCheckoutSessionResolver {
 	constructor(

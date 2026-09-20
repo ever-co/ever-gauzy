@@ -54,6 +54,9 @@ jest.mock('@gauzy/core', () => {
 		Integration: class Integration {},
 		PermissionGuard: class PermissionGuard {},
 		TenantPermissionGuard: class TenantPermissionGuard {},
+		// Every resolver class carries the platform's feature guard, so the double provides the class
+		// the resolver imports: an undefined guard handed to the real `@UseGuards` fails the suite.
+		FeatureFlagGuard: class FeatureFlagGuard {},
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		UseValidationPipe: (options: unknown) => UsePipes(new ValidationPipe(options as never)),
 		Permissions: (...permissions: string[]) => SetMetadata(PERMISSIONS_METADATA, permissions),

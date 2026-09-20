@@ -3,13 +3,16 @@ import { BadRequestException, UseGuards } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
 import {
+	FeatureFlagGuard,
 	Idempotent,
-	Permissions,
 	PermissionGuard,
+	Permissions,
 	TenantPermissionGuard,
 	Versioned,
 	versionExpectationOf
 } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { OrderChangeService } from './../order-change/order-change.service';
 import { OrderChangeActionService } from './../order-change-action/order-change-action.service';
 import { OrderHistoryService } from './../order-history/order-history.service';
@@ -47,9 +50,20 @@ import {
  * **order's**, never the change's: the `version` column on a change is the order version the change
  * produces, which is a different fact. A mutation names only the change, so no resource is declared —
  * the handler resolves the order and the order's own conditional update compares the stated version.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
  */
 @Resolver('OrderChange')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)
 export class OrderChangeResolver {
 	constructor(

@@ -1,6 +1,9 @@
+import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
-import { Idempotent } from '@gauzy/core';
+import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import {
@@ -9,6 +12,7 @@ import {
 	IPurchaseOrderLine,
 	PurchaseOrderStatus
 } from '../../purchasing.types';
+import { PurchasingPermissions } from '../../purchasing.permissions';
 import { isGreaterThanQuantity, negateQuantity, sumQuantity } from '../../purchasing.quantity';
 import { GoodsReceiptService } from '../../goods-receipt/goods-receipt.service';
 import { PurchaseOrderLineService } from '../../purchase-order-line/purchase-order-line.service';
@@ -66,8 +70,30 @@ interface IUpdatePurchaseOrderArgs {
  * client that retries presents one operation whichever protocol carried it: the key rides as the
  * `idempotencyKey` member of the mutation's input, because one GraphQL request may select several
  * mutations and a header could not say which of them a key belongs to.
+ *
+ * **Authorisation is the controller's, restated field by field.** The class carries what the
+ * purchase-order controller class carries — both protocol guards, the platform's feature gate and the
+ * read permission its reads run under — and every field then states the permission its own route states:
+ * the two reads carry `PURCHASE_ORDERS_VIEW`, raising an order `PURCHASE_ORDERS_CREATE`, amending,
+ * deleting, cancelling and closing one `PURCHASE_ORDERS_EDIT`, and sending it to the supplier
+ * `PURCHASE_ORDERS_SEND` — the value that decides whether the supplier is told, as against
+ * `PURCHASE_ORDERS_APPROVE`, which is what permits the order to exist. The fields that resolve an
+ * order's lines, its receipts and its derived outstanding quantity answer under the permission the order
+ * is read with, which is the route they are selected through.
+ *
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the two permission guards — after
+ * them, so a caller with no credential is refused as a credential problem before a tenant's switches are
+ * consulted — and the code it reads is `FEATURE_GRAPHQL`, the commerce catalogue's own entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because nothing checks one string against another: a literal that
+ * drifted names a code no catalogue row carries, which the guard resolves as disabled, and every field
+ * here would then answer `Cannot query field <name>` for every caller with nothing red anywhere.
  */
 @Resolver('PurchaseOrder')
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
+@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 export class PurchaseOrderResolver {
 	constructor(
 		private readonly purchaseOrderService: PurchaseOrderService,
@@ -83,6 +109,7 @@ export class PurchaseOrderResolver {
 	 * @returns One page of purchase orders.
 	 */
 	@Query('purchaseOrders')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 	async purchaseOrders(
 		@Args('filter')
 		filter?: {
@@ -118,6 +145,7 @@ export class PurchaseOrderResolver {
 	 * @returns The order, or null when it is not the caller's.
 	 */
 	@Query('purchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 	async purchaseOrder(@Args('id') id: ID): Promise<PurchaseOrder | null> {
 		try {
 			return await this.purchaseOrderService.findOneDetailed(id);
@@ -134,6 +162,7 @@ export class PurchaseOrderResolver {
 	 */
 	@Idempotent({ scope: 'purchase_order.create', required: false, resourceType: 'purchase_order' })
 	@Mutation('createPurchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_CREATE)
 	async createPurchaseOrder(@Args('input') input: ICreatePurchaseOrderArgs) {
 		try {
 			return {
@@ -153,6 +182,7 @@ export class PurchaseOrderResolver {
 	 * @returns The payload.
 	 */
 	@Mutation('updatePurchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
 	async updatePurchaseOrder(@Args('id') id: ID, @Args('input') input: IUpdatePurchaseOrderArgs) {
 		try {
 			return {
@@ -171,6 +201,7 @@ export class PurchaseOrderResolver {
 	 * @returns The payload, carrying the identity that was removed.
 	 */
 	@Mutation('deletePurchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
 	async deletePurchaseOrder(@Args('id') id: ID) {
 		try {
 			await this.purchaseOrderService.delete(id);
@@ -190,6 +221,7 @@ export class PurchaseOrderResolver {
 	 * @returns The payload.
 	 */
 	@Mutation('sendPurchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_SEND)
 	async sendPurchaseOrder(@Args('id') id: ID, @Args('email') email?: string, @Args('note') note?: string) {
 		try {
 			return {
@@ -209,6 +241,7 @@ export class PurchaseOrderResolver {
 	 * @returns The payload.
 	 */
 	@Mutation('closePurchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
 	async closePurchaseOrder(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return { purchaseOrder: await this.purchaseOrderService.close(id, reason), userErrors: [] };
@@ -225,6 +258,7 @@ export class PurchaseOrderResolver {
 	 * @returns The payload.
 	 */
 	@Mutation('cancelPurchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
 	async cancelPurchaseOrder(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return { purchaseOrder: await this.purchaseOrderService.cancel(id, reason), userErrors: [] };
@@ -240,6 +274,7 @@ export class PurchaseOrderResolver {
 	 * @returns The lines.
 	 */
 	@ResolveField('lines')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 	async lines(@Parent() purchaseOrder: IPurchaseOrder): Promise<IPurchaseOrderLine[]> {
 		if (Array.isArray((purchaseOrder as PurchaseOrder).lines)) {
 			return (purchaseOrder as PurchaseOrder).lines;
@@ -255,6 +290,7 @@ export class PurchaseOrderResolver {
 	 * @returns The receipts.
 	 */
 	@ResolveField('receipts')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 	async receipts(@Parent() purchaseOrder: IPurchaseOrder): Promise<IGoodsReceipt[]> {
 		if (Array.isArray((purchaseOrder as PurchaseOrder).receipts)) {
 			return (purchaseOrder as PurchaseOrder).receipts;
@@ -273,6 +309,7 @@ export class PurchaseOrderResolver {
 	 * @returns The outstanding quantity as an exact decimal string.
 	 */
 	@ResolveField('outstandingQuantity')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 	async outstandingQuantity(@Parent() purchaseOrder: IPurchaseOrder): Promise<string> {
 		const lines = await this.lines(purchaseOrder);
 
@@ -297,6 +334,7 @@ export class PurchaseOrderResolver {
 	 * @returns True when the order was approved.
 	 */
 	@ResolveField('isApproved')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 	isApproved(@Parent() purchaseOrder: IPurchaseOrder): boolean {
 		return Boolean(purchaseOrder.approvedAt);
 	}

@@ -2,13 +2,16 @@ import { Args, Context, ID, Mutation, Parent, ResolveField, Resolver } from '@ne
 import { UseGuards } from '@nestjs/common';
 import { IPagination } from '@gauzy/contracts';
 import {
+	FeatureFlagGuard,
 	Idempotent,
-	Permissions,
 	PermissionGuard,
+	Permissions,
 	TenantPermissionGuard,
 	Versioned,
 	versionExpectationOf
 } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { CommerceCart } from '../commerce-cart/commerce-cart.entity';
 import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
 import { CommerceCartLine } from '../commerce-cart-line/commerce-cart-line.entity';
@@ -26,9 +29,20 @@ import { Cart } from './types';
  * Every one of these mutations writes the *cart* — adding a line re-prices it, and the re-priced
  * totals are the cart's columns — so each is versioned against the cart and each names the cart in
  * its own `cartId` member rather than in the `id` argument the guard looks for by default.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
  */
 @Resolver('Cart')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(CART_PERMISSIONS.CARTS_VIEW)
 export class CommerceCartLineResolver {
 	constructor(

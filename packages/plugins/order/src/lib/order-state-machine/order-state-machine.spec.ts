@@ -3,6 +3,17 @@ import { FulfillmentStatus, OrderPaymentStatus, OrderStatus } from '@gauzy/contr
 import { IOrderTransitionContext, OrderActor, OrderStateMachine } from './order-state-machine';
 
 /**
+ * The decimal helpers the state machine compares money with, reached by path rather than through the
+ * barrel.
+ *
+ * The class imports them from `@gauzy/core`, and loading that barrel would pull the whole package —
+ * including the bootstrap, which reaches an ESM-only dependency this suite's module registry cannot
+ * load, so the suite would fail to run at all rather than fail an assertion. The module is the same
+ * object either way: this suite is about the decision the state machine makes, not about the barrel.
+ */
+jest.mock('@gauzy/core', () => jest.requireActual('@gauzy/core/src/lib/money/decimal'));
+
+/**
  * The order lifecycle, and the two statuses materialised from the order's own rows.
  *
  * `status` is written here and nowhere else, so this class is the single answer to "may this order
@@ -331,6 +342,26 @@ describe('OrderStateMachine.derivePaymentStatus (doc 10 §5.5)', () => {
 		hasFailedAttempt: false,
 		hasTransactions: true,
 		...overrides
+	});
+
+	it('compares the ledger as decimals, so a captured total is not read as short by a float', () => {
+		// The counterexample an audit found, and the reason the class no longer subtracts its inputs as
+		// numbers: in binary floating point `0.05 - 0.02` is `0.030000000000000002`, so an order captured
+		// for exactly `0.03` used to compare as underpaid and was reported `PARTIALLY_CAPTURED` — a
+		// customer told they still owe money on an order they have paid in full.
+		expect(
+			OrderStateMachine.derivePaymentStatus(
+				ledger({ grandTotal: 0.05, creditTotal: 0.02, captured: 0.03, authorized: 0.05 }) as never
+			)
+		).toBe(OrderPaymentStatus.CAPTURED);
+
+		// Control: a genuinely short capture is still reported as one, so the fix is a comparison and not
+		// a licence to call everything captured.
+		expect(
+			OrderStateMachine.derivePaymentStatus(
+				ledger({ grandTotal: 0.05, creditTotal: 0.02, captured: 0.02, authorized: 0.05 }) as never
+			)
+		).toBe(OrderPaymentStatus.PARTIALLY_CAPTURED);
 	});
 
 	it('derives every branch of the decision list', () => {

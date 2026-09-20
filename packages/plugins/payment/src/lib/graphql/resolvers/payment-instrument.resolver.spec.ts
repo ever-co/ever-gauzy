@@ -69,6 +69,9 @@ jest.mock('@gauzy/core', () => {
 		RolePermissionModule: class RolePermissionModule {},
 		PermissionGuard: class PermissionGuard {},
 		TenantPermissionGuard: class TenantPermissionGuard {},
+		// The platform's feature gate, which every resolver class carries: the chain asserted below is
+		// the production chain, so the class the guard is stated as has to be the one the resolver imports.
+		FeatureFlagGuard: class FeatureFlagGuard {},
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		UseValidationPipe: decorator,
 		Permissions: (...permissions: string[]) => SetMetadata(PERMISSIONS_METADATA, permissions),
@@ -112,7 +115,7 @@ import { join } from 'node:path';
 import { BadRequestException } from '@nestjs/common';
 import { print } from 'graphql';
 import { PERMISSIONS_METADATA, VISIBLE_WITH_METADATA } from '@gauzy/constants';
-import { FieldVisibility, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, FieldVisibility, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { IDEMPOTENT_METADATA_KEY } from '@gauzy/core/src/lib/idempotency/idempotency.policy';
 import { PaymentPermission } from '../../payment.permissions';
 import { PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED } from '../../payment.card-data.pipe';
@@ -276,7 +279,11 @@ describe('the stored-instrument resolvers (17 §3.2, §6.8)', () => {
 		for (const surface of [PaymentAccountHolderResolver, PaymentMethodTokenResolver]) {
 			const guards = Reflect.getMetadata('__guards__', surface) ?? [];
 
-			expect(guards).toEqual([TenantPermissionGuard, PermissionGuard]);
+			// The platform's feature gate is the last member of the chain, after the two permission
+			// guards: a caller with no credential is refused as a credential problem before a tenant's
+			// switches are consulted. The chain is asserted whole rather than by membership, because a
+			// guard that was dropped to add another would still answer `toContain`.
+			expect(guards).toEqual([TenantPermissionGuard, PermissionGuard, FeatureFlagGuard]);
 		}
 	});
 

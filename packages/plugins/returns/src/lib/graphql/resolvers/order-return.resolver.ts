@@ -1,9 +1,21 @@
+import { UseGuards } from '@nestjs/common';
 import { Args, Context, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
-import { Idempotent, Versioned, versionExpectationOf } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	Versioned,
+	versionExpectationOf
+} from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
 import { toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { IOrderReturn, IOrderReturnReceiptOutcome, OrderReturnStatus } from '../../returns.types';
+import { ReturnsPermissions } from '../../returns.permissions';
 import { subtractQuantities, sumQuantities, toQuantityUnits } from '../../returns.quantity';
 import { OrderReturn } from '../../order-return/order-return.entity';
 import { OrderReturnService } from '../../order-return/order-return.service';
@@ -50,8 +62,8 @@ interface IOperationContext {
  *
  * The resolvers call the same services the REST surface calls, so a return requested over GraphQL and
  * one requested over REST obey the same ceiling check and the same lifecycle, and the two surfaces
- * cannot drift. Authorisation is unchanged: the guards run on the HTTP request that carried the
- * operation, exactly as they do for a REST call.
+ * cannot drift. The guards run on the HTTP request that carried the operation, exactly as they do for a
+ * REST call, which is what makes the chain stated below the chain those routes already run under.
  *
  * Retry safety and optimistic concurrency are declared here with the same decorators the REST routes
  * carry, and under the same scope names, because a client that retries a mutation has presented the
@@ -62,8 +74,32 @@ interface IOperationContext {
  * only decides a status, which has no input to carry it. A declared argument the method body never
  * reads is deliberate: the schema has to accept the version so a client may state one, and the guard
  * reads it from the operation's arguments before the method runs.
+ *
+ * **Authorisation is the controller's, restated field by field.** The class carries what the
+ * controller class carries — both protocol guards, the platform's feature gate and the read permission
+ * an operator's reads run under — and every field then states the permission its own route states, so a
+ * field is never narrower or wider than the route it mirrors: the two reads carry `RETURNS_VIEW`, the
+ * request and the cancel `RETURNS_CREATE`, the approval `RETURNS_APPROVE`, the rejection `RETURNS_REJECT`,
+ * and the receipt and the close `RETURNS_RECEIVE`, which is the pair `06-api-specification.md` §7 gives
+ * this resource. The fields that resolve a return's lines, reason and outstanding quantity answer under
+ * the read permission their own read route carries, because that is the route they are selected through.
+ *
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the chain the two permission guards
+ * already form — after them, so a caller with no credential is refused as a credential problem before a
+ * tenant's switches are consulted — and the code it reads is `FEATURE_GRAPHQL`, the commerce catalogue's
+ * own entry for "the GraphQL endpoint and its resolvers, under the same guards and permissions as REST".
+ * The code is imported rather than restated because the value has to agree with the catalogue's `code`
+ * and nothing checks one string against another: a literal that drifted names a code no catalogue row
+ * carries, which the guard resolves as disabled, so every field here would answer
+ * `Cannot query field <name>` for every caller with nothing red anywhere. One statement on the class
+ * puts every field behind it, and a tenant that switched the capability off is answered the same refusal
+ * a disabled capability's routes answer with a 404.
  */
 @Resolver('OrderReturn')
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
+@Permissions(ReturnsPermissions.RETURNS_VIEW)
 export class OrderReturnResolver {
 	constructor(
 		private readonly orderReturnService: OrderReturnService,
@@ -80,6 +116,7 @@ export class OrderReturnResolver {
 	 */
 	@Versioned({ resource: OrderReturnService, write: false })
 	@Query('orderReturns')
+	@Permissions(ReturnsPermissions.RETURNS_VIEW)
 	async orderReturns(
 		@Args('filter') filter?: { status?: OrderReturnStatus; orderId?: ID; number?: string; warehouseId?: ID },
 		@Args('page') page?: IPageSelection
@@ -108,6 +145,7 @@ export class OrderReturnResolver {
 	 */
 	@Versioned({ resource: OrderReturnService, write: false })
 	@Query('orderReturn')
+	@Permissions(ReturnsPermissions.RETURNS_VIEW)
 	async orderReturn(@Args('id') id: ID): Promise<OrderReturn | null> {
 		try {
 			return await this.orderReturnService.findOneDetailed(id);
@@ -125,6 +163,7 @@ export class OrderReturnResolver {
 	@Idempotent({ scope: 'return.create', required: false, resourceType: 'order_return' })
 	@Versioned({ resource: OrderReturnService, required: false })
 	@Mutation('requestOrderReturn')
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
 	async requestOrderReturn(@Args('input') input: IRequestOrderReturnArgs) {
 		try {
 			const orderReturn = await this.orderReturnService.create({
@@ -149,6 +188,7 @@ export class OrderReturnResolver {
 	 */
 	@Versioned({ resource: OrderReturnService })
 	@Mutation('approveOrderReturn')
+	@Permissions(ReturnsPermissions.RETURNS_APPROVE)
 	async approveOrderReturn(
 		@Args('id') id: ID,
 		@Args('note') note?: string,
@@ -176,6 +216,7 @@ export class OrderReturnResolver {
 	 */
 	@Versioned({ resource: OrderReturnService })
 	@Mutation('rejectOrderReturn')
+	@Permissions(ReturnsPermissions.RETURNS_REJECT)
 	async rejectOrderReturn(
 		@Args('id') id: ID,
 		@Args('reason') reason?: string,
@@ -203,6 +244,7 @@ export class OrderReturnResolver {
 	@Idempotent({ scope: 'return.receive', required: true, resourceType: 'order_return' })
 	@Versioned({ resource: OrderReturnService })
 	@Mutation('receiveOrderReturn')
+	@Permissions(ReturnsPermissions.RETURNS_RECEIVE)
 	async receiveOrderReturn(
 		@Args('id') id: ID,
 		@Args('input') input: IReceiveOrderReturnArgs,
@@ -253,6 +295,7 @@ export class OrderReturnResolver {
 	 */
 	@Versioned({ resource: OrderReturnService })
 	@Mutation('cancelOrderReturn')
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
 	async cancelOrderReturn(
 		@Args('id') id: ID,
 		@Args('reason') reason?: string,
@@ -279,6 +322,7 @@ export class OrderReturnResolver {
 	 */
 	@Versioned({ resource: OrderReturnService })
 	@Mutation('closeOrderReturn')
+	@Permissions(ReturnsPermissions.RETURNS_RECEIVE)
 	async closeOrderReturn(
 		@Args('id') id: ID,
 		@Args('version') version?: number,
@@ -301,6 +345,7 @@ export class OrderReturnResolver {
 	 * @returns The lines.
 	 */
 	@ResolveField('lines')
+	@Permissions(ReturnsPermissions.RETURNS_VIEW)
 	async lines(@Parent() orderReturn: IOrderReturn): Promise<OrderReturnLine[]> {
 		if (Array.isArray((orderReturn as OrderReturn).lines)) {
 			return (orderReturn as OrderReturn).lines;
@@ -319,6 +364,7 @@ export class OrderReturnResolver {
 	 * @returns The reason, or null when the return has none.
 	 */
 	@ResolveField('reasonCode')
+	@Permissions(ReturnsPermissions.RETURNS_VIEW)
 	async reasonCode(@Parent() orderReturn: IOrderReturn): Promise<OrderReturnReason | null> {
 		if (!orderReturn.reasonId) {
 			return null;
@@ -338,6 +384,7 @@ export class OrderReturnResolver {
 	 * @returns The outstanding quantity as an exact decimal string.
 	 */
 	@ResolveField('outstandingQuantity')
+	@Permissions(ReturnsPermissions.RETURNS_VIEW)
 	async outstandingQuantity(@Parent() orderReturn: IOrderReturn): Promise<string> {
 		const lines = await this.lines(orderReturn);
 		let outstanding = '0';
