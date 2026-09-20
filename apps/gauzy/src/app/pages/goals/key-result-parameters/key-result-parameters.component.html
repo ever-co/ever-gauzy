@@ -1,14 +1,11 @@
-<nb-card style="width: 645px; height: 390px">
-  <nb-card-header>
-    <span class="cancel"
-      ><i class="fas fa-times" (click)="closeDialog(null)"></i
-    ></span>
-    <h4 class="title">{{
-      'KEY_RESULT_PAGE.EDIT_KEY_RESULT_PARAMETERS'
-      | translate
-    }}</h4>
+<nb-card class="parameters-dialog">
+  <nb-card-header class="header">
+    <h4 class="title">{{ 'KEY_RESULT_PAGE.EDIT_KEY_RESULT_PARAMETERS' | translate }}</h4>
+    <button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog(null)">
+      <i class="fas fa-times" aria-hidden="true"></i>
+    </button>
   </nb-card-header>
-  <nb-card-body class="p-0">
+  <nb-card-body>
     <nb-tabset>
       <nb-tab tabTitle="{{ 'KEY_RESULT_PAGE.FORM.LABELS.WEIGHT' | translate }}">
         <p class="info">
@@ -82,11 +79,11 @@
         </nb-tab>
       </nb-tabset>
     </nb-card-body>
-    <nb-card-footer class="text-left content">
-      <button class="mr-3" outline nbButton (click)="closeDialog(null)">
+    <nb-card-footer class="footer">
+      <button nbButton ghost status="basic" size="small" (click)="closeDialog(null)">
         {{ 'BUTTONS.CANCEL' | translate }}
       </button>
-      <button nbButton status="success" (click)="updateKeyResult()">
+      <button nbButton status="success" size="small" (click)="updateKeyResult()">
         {{ 'BUTTONS.SAVE' | translate }}
       </button>
     </nb-card-footer>

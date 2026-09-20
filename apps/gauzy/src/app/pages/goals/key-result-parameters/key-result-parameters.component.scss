@@ -1,0 +1,72 @@
+@use 'gauzy/_gauzy-dialogs' as *;
+
+// The Edit Key Result Parameters dialog, on the same scale as the other goals
+// dialogs: a header row, and a footer whose buttons sit on the trailing edge.
+// It used to borrow the Edit Key Result stylesheet, which dressed none of this.
+// Every custom property carries a fallback — `--gauzy-*` is undefined in
+// material-light / material-dark, where a `var()` without one is dropped.
+$control-font-size: 12px;
+$inset: 1rem;
+$divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+
+// Was a hard 645 x 390px, which left a third of the sheet empty under two
+// fields and clipped the Type tab's own.
+.parameters-dialog {
+  width: min(calc(100vw - 2rem), 40rem);
+  max-height: calc(100vh - 4rem);
+}
+
+:host {
+  nb-card {
+    background-color: var(--gauzy-card-1, var(--card-background-color));
+  }
+
+  nb-card-header.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.875rem $inset;
+    border-bottom: $divider;
+
+    .title {
+      margin: 0;
+      font-size: $control-font-size;
+      font-weight: 600;
+      line-height: 1rem;
+      color: var(--gauzy-text-color-1, inherit);
+    }
+
+    // A real button, so the close is reachable from the keyboard and named for
+    // a screen reader; the browser's button chrome is stripped.
+    .cancel {
+      width: auto;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      line-height: 1;
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: 2px solid nb-theme(color-primary-default);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+    }
+  }
+
+  // Buttons on the trailing edge, Cancel quiet beside the primary action.
+  nb-card-footer.footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem $inset;
+    border-top: $divider;
+
+    button {
+      margin: 0;
+    }
+  }
+}
