@@ -23,6 +23,7 @@ import { CommerceCheckoutSessionController } from './commerce-checkout-session/c
 import { CommerceCheckoutSessionService } from './commerce-checkout-session/commerce-checkout-session.service';
 import { TypeOrmCommerceCheckoutSessionRepository } from './commerce-checkout-session/repository/type-orm-commerce-checkout-session.repository';
 import { MikroOrmCommerceCheckoutSessionRepository } from './commerce-checkout-session/repository/mikro-orm-commerce-checkout-session.repository';
+import { cartResolvers } from './graphql';
 
 /**
  * The cart module.
@@ -70,7 +71,13 @@ import { MikroOrmCommerceCheckoutSessionRepository } from './commerce-checkout-s
 		MikroOrmCommerceCartPromotionRepository,
 		CommerceCheckoutSessionService,
 		TypeOrmCommerceCheckoutSessionRepository,
-		MikroOrmCommerceCheckoutSessionRepository
+		MikroOrmCommerceCheckoutSessionRepository,
+		// The GraphQL resolvers are providers of this module, beside their controllers. Nest discovers a
+		// resolver by scanning the providers of every module, so a resolver a plugin declares only in its
+		// plugin metadata — `extensions.resolvers` — is never registered: the schema advertises its
+		// fields and the default resolver answers `null` for each of them, which is a non-null violation
+		// at the caller. Every other package in this set lists them here for that reason.
+		...cartResolvers
 	],
 	exports: [
 		CommerceCartService,

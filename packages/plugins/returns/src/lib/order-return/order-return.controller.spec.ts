@@ -77,7 +77,14 @@ jest.mock('@gauzy/core', () => {
 		FeatureFlagGuard: class FeatureFlagGuard {},
 		// The soft-delete and recover routes construct this pipe at class-definition time, so the
 		// double has to export the class those routes build.
-		AbstractValidationPipe: class {},
+		AbstractValidationPipe: class AbstractValidationPipe {
+			constructor(..._args: any[]) {
+				/* no validation happens in this suite */
+			}
+			transform(value: any): any {
+				return value;
+			}
+		},
 		UUIDValidationPipe: class UUIDValidationPipe {},
 		SequenceService: class SequenceService {},
 		TenantSettingService: class TenantSettingService {},

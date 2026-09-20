@@ -38,6 +38,7 @@ import { OrderShippingMethodController } from './order-shipping-method/order-shi
 import { OrderShippingMethodService } from './order-shipping-method/order-shipping-method.service';
 import { TypeOrmOrderShippingMethodRepository } from './order-shipping-method/repository/type-orm-order-shipping-method.repository';
 import { MikroOrmOrderShippingMethodRepository } from './order-shipping-method/repository/mikro-orm-order-shipping-method.repository';
+import { orderResolvers } from './graphql';
 import { OrderSummaryController } from './order-summary/order-summary.controller';
 import { OrderSummaryService } from './order-summary/order-summary.service';
 import { TypeOrmOrderSummaryRepository } from './order-summary/repository/type-orm-order-summary.repository';
@@ -164,7 +165,13 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 		MikroOrmOrderCreditLineRepository,
 		OrderHistoryService,
 		TypeOrmOrderHistoryRepository,
-		MikroOrmOrderHistoryRepository
+		MikroOrmOrderHistoryRepository,
+		// The GraphQL resolvers are providers of this module, beside their controllers. Nest discovers a
+		// resolver by scanning the providers of every module, so a resolver a plugin declares only in its
+		// plugin metadata — `extensions.resolvers` — is never registered: the schema advertises its
+		// fields and the default resolver answers `null` for each of them, which is a non-null violation
+		// at the caller. Every other package in this set lists them here for that reason.
+		...orderResolvers
 	],
 	exports: [
 		OrderService,

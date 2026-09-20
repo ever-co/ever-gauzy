@@ -26,6 +26,7 @@ import { TypeOrmShippingProfileVariantRepository } from './shipping-profile-vari
 import { MikroOrmShippingProfileVariantRepository } from './shipping-profile-variant/repository/mikro-orm-shipping-profile-variant.repository';
 import { WarehouseFulfillmentService } from './warehouse-fulfillment/warehouse-fulfillment.service';
 import { ReturnShipmentService } from './return-shipment/return-shipment.service';
+import { fulfillmentResolvers } from './graphql';
 
 /**
  * The fulfilment module.
@@ -72,7 +73,13 @@ import { ReturnShipmentService } from './return-shipment/return-shipment.service
 		TypeOrmShippingProfileVariantRepository,
 		MikroOrmShippingProfileVariantRepository,
 		WarehouseFulfillmentService,
-		ReturnShipmentService
+		ReturnShipmentService,
+		// The GraphQL resolvers are providers of this module, beside their controllers. Nest discovers a
+		// resolver by scanning the providers of every module, so a resolver a plugin declares only in its
+		// plugin metadata — `extensions.resolvers` — is never registered: the schema advertises its
+		// fields and the default resolver answers `null` for each of them, which is a non-null violation
+		// at the caller. Every other package in this set lists them here for that reason.
+		...fulfillmentResolvers
 	],
 	exports: [
 		FulfillmentService,
