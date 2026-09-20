@@ -184,9 +184,15 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 							}
 						}
 					};
+				} else {
+					// Nothing to chart. `loading` is otherwise cleared on the way through
+					// `progressData()`, on the path that builds the datasets, so without this the
+					// spinner would spin over an empty region for as long as the dialog is open.
+					this.loading = false;
 				}
 			})
 			.catch((error) => {
+				this.loading = false;
 				console.log(error);
 			});
 	}
