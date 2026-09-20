@@ -136,9 +136,15 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	@Post('/')
 	async create(@Body() input: IIntegrationTenantCreateInput): Promise<IIntegrationTenant> {
 		// Fail closed: anything under `settings` that is not a plain array of allowlisted settings is refused.
-		const settings = input?.settings == null ? [] : Array.isArray(input.settings) ? input.settings : [null];
+		const submitted = input?.settings;
 
-		for (const setting of settings) {
+		if (submitted != null && !Array.isArray(submitted)) {
+			throw new ForbiddenException(
+				'This integration setting is managed by the server and cannot be set by a client.'
+			);
+		}
+
+		for (const setting of submitted ?? []) {
 			if (!isUserEditableIntegrationSetting(input?.name, setting?.settingsName)) {
 				throw new ForbiddenException(
 					'This integration setting is managed by the server and cannot be set by a client.'

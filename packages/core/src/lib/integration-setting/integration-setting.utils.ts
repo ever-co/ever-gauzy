@@ -55,6 +55,9 @@ export const userEditableIntegrationSettings: Readonly<Record<string, readonly s
  * @returns `true` only for settings on the {@link userEditableIntegrationSettings} allowlist.
  */
 export function isUserEditableIntegrationSetting(provider: string | null | undefined, settingsName: string): boolean {
+	// `hasOwnProperty.call` (not `in`, and not `Object.hasOwn`): a prototype key such as 'toString'
+	// or '__proto__' must never resolve to an entry of the allowlist, and `Object.hasOwn` is ES2022
+	// while packages/core/tsconfig.lib.json compiles against the ES2021 lib.
 	if (!provider || !settingsName || !Object.prototype.hasOwnProperty.call(userEditableIntegrationSettings, provider)) {
 		return false;
 	}

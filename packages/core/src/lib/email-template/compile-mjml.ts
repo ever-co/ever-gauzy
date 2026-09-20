@@ -42,11 +42,22 @@ export interface ICompiledMjml {
  * vector; request bodies are JSON, so an unvalidated `data` could be an object. Everything that
  * can reach Handlebars.compile() or mjml2html() from a request goes through this first.
  *
+ * Non-primitives (a JSON object or array, a Handlebars AST, a function) are not a template, so they
+ * map to `''` rather than being stringified: `String(value)` would yield a useless '[object Object]'
+ * and, for an object whose `toString`/`valueOf` are not callable (`{"toString":1,"valueOf":2}` is
+ * valid JSON), would throw a TypeError out of the request handler.
+ *
  * @param source - The template source as received.
- * @returns The source as a string (`''` for null/undefined).
+ * @returns The source as a string (`''` for null/undefined and for anything that is not a primitive).
  */
 export function toTemplateSource(source: unknown): string {
-	return typeof source === 'string' ? source : String(source ?? '');
+	if (typeof source === 'string') {
+		return source;
+	}
+	if (source === null || source === undefined || typeof source === 'object' || typeof source === 'function') {
+		return '';
+	}
+	return String(source);
 }
 
 /**

@@ -147,9 +147,25 @@ describe('toTemplateSource', () => {
 		// CONTROL: Handlebars.compile() accepts a Program AST object as a template.
 		expect(Handlebars.compile(ast as any)({ name: 'x' })).toBe('AST-MARKER x');
 
-		// After coercion it is plain text, not a template program.
+		// After coercion it is plain text, not a template program: an object is not a template, so
+		// nothing of it survives and nothing of it is interpreted.
 		const source = toTemplateSource(ast);
 		expect(typeof source).toBe('string');
-		expect(Handlebars.compile(source)({ name: 'x' })).toBe('[object Object]');
+		expect(source).toBe('');
+		expect(Handlebars.compile(source)({ name: 'x' })).toBe('');
+	});
+
+	it('never throws on a hostile body, whatever JSON carried', () => {
+		// `String(value)` throws a TypeError on this one (neither `toString` nor `valueOf` is
+		// callable), and it is valid JSON, so a request body can hold it.
+		expect(toTemplateSource({ toString: 1, valueOf: 2 })).toBe('');
+		expect(toTemplateSource([1, 2, 3])).toBe('');
+		expect(toTemplateSource(Object.create(null))).toBe('');
+		expect(toTemplateSource(() => '{{name}}')).toBe('');
+	});
+
+	it('still stringifies primitives', () => {
+		expect(toTemplateSource(42)).toBe('42');
+		expect(toTemplateSource(true)).toBe('true');
 	});
 });

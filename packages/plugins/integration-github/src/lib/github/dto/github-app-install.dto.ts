@@ -36,7 +36,7 @@ export class GithubInstallStateDTO extends TenantOrganizationBaseDTO {}
  * (GHSA-4rwq-65wh-45h4). With a single canonical form the stored value equals `String(id)`,
  * which is also what the webhook routing compares against.
  */
-export const GITHUB_INSTALLATION_ID_PATTERN = /^[1-9][0-9]{0,19}$/;
+export const GITHUB_INSTALLATION_ID_PATTERN = /^[1-9]\d{0,19}$/;
 
 /**
  *
