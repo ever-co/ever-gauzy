@@ -127,8 +127,8 @@ describe('OAuth2TokenManager.refreshAccessToken — account re-check', () => {
 			.then(() => undefined, (caught) => caught);
 
 		expect(error).toBeInstanceOf(UserLookupUnavailableError);
-		// The guard the callers actually use, which also holds when `instanceof` is broken by a
-		// downlevelled bundle.
+		// The guard the callers actually use, which also holds when `instanceof` is broken by a bundle
+		// compiled for a pre-ES6 target.
 		expect(UserLookupUnavailableError.is(error)).toBe(true);
 		expect((error as UserLookupUnavailableError).userId).toBe(USER_ID);
 		expect((error as UserLookupUnavailableError).cause).toBe(cause);

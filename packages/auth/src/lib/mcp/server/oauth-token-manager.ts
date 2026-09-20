@@ -46,9 +46,9 @@ export interface TokenPayload {
 export class UserLookupUnavailableError extends Error {
 	/**
 	 * Stable marker read by {@link UserLookupUnavailableError.is}. `instanceof` alone is not enough
-	 * here: this package is consumed both as source and as a bundle, and a downlevelled `extends
-	 * Error` silently breaks the prototype chain — which would turn a database outage back into
-	 * `invalid_grant`, the exact failure this class exists to prevent.
+	 * here: this package is consumed both as source and as a bundle, and `extends Error` compiled for
+	 * a pre-ES6 target silently breaks the prototype chain — which would turn a database outage back
+	 * into `invalid_grant`, the exact failure this class exists to prevent.
 	 */
 	readonly isUserLookupUnavailableError = true;
 
