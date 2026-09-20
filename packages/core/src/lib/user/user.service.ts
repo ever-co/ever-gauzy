@@ -49,7 +49,12 @@ import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
 import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
 import { PasswordHashService } from '../password-hash/password-hash.service';
-import { assertRoleAssignmentAllowed } from './role-assignment.helper';
+import {
+	assertRoleAssignmentAllowed,
+	extractRoleIds,
+	IRoleAssignmentPayload,
+	normalizeRolePayload
+} from './role-assignment.helper';
 import {
 	emailVerificationClaimWhere,
 	emailVerificationClaimWhereMikroOrm,
@@ -475,6 +480,13 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 		}
 
+		// Read the role the body assigns in EVERY form it can take — `roleId`, `role` as a bare id string,
+		// `role: { id }` — and make the payload persist exactly that id (GHSA-x4mv-fhwj-g3rp). A string
+		// `role` used to be invisible to the checks below while TypeORM still wrote it as the FK, and a
+		// `null` role cleared the caller's own role. A malformed role key or a `role`/`roleId` pair that
+		// disagrees is a 400; this runs before the `try`, which turns every error into a 403.
+		normalizeRolePayload(entity);
+
 		let user: IUser;
 
 		try {
@@ -498,15 +510,14 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 
 			// Restrict users from updating their own role.
-			// Check BOTH the nested `role` object and the flat `roleId` field INDEPENDENTLY, otherwise a
-			// user could escalate their own privileges (e.g. to SUPER_ADMIN). `role?.id ?? roleId` is not
-			// enough: a crafted body could send an empty `role: { id: '' }` (non-nullish) to mask a
-			// privileged `roleId` and slip through. Reject if any provided role identifier differs from the
-			// caller's current role.
+			// Every role identifier the (normalized) payload carries is checked — `roleId`, `role` as an
+			// id string and `role: { id }` alike — otherwise a user could escalate their own privileges
+			// (e.g. to SUPER_ADMIN) through whichever form the check forgot. Reject if any of them differs
+			// from the caller's current role.
 			// Compare as strings: `id` is typed `ID | number`, so a numeric-equivalent value must not
 			// slip past the self-update check on a strict `===`.
 			if (String(currentUserId) === String(id)) {
-				const requestedRoleIds = [entity.role?.id, entity.roleId].filter((roleId) => isNotEmpty(roleId));
+				const requestedRoleIds = extractRoleIds(entity);
 				if (requestedRoleIds.some((roleId) => String(roleId) !== String(currentRoleId))) {
 					throw new ForbiddenException();
 				}
@@ -514,7 +525,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				// Updating SOMEONE ELSE: granting SUPER_ADMIN is reserved to callers who may edit super
 				// admins (the same boundary the register handler and invite creation enforce). The role is
 				// resolved from the database — never from a client-supplied role name.
-				await this.assertCanAssignRoles([entity.role?.id, entity.roleId]);
+				await this.assertCanAssignRoles(entity);
 			}
 
 			// Update password hash if provided
@@ -896,15 +907,18 @@ export class UserService extends TenantAwareCrudService<User> {
 	/**
 	 * Refuses a payload that assigns a role the caller may not grant.
 	 *
-	 * @param roleIds Every role identifier in the payload — both the flat `roleId` and `role.id`.
-	 * @throws BadRequestException When an id does not resolve inside the caller's tenant.
+	 * @param payload The payload that assigns the role. Its identifiers are extracted here, in every
+	 *                form (`roleId`, `role` as an id string, `role: { id }`), so a caller cannot forget one.
+	 * @throws BadRequestException When a role key does not reference a role, or an id does not resolve
+	 *                             inside the caller's tenant.
 	 * @throws ForbiddenException When SUPER_ADMIN is requested without `SUPER_ADMIN_EDIT`.
 	 */
-	public async assertCanAssignRoles(roleIds: Array<ID | undefined>): Promise<void> {
+	public async assertCanAssignRoles(payload: IRoleAssignmentPayload): Promise<void> {
 		// EVERY candidate is checked, not just the first: the entity carries both a `role` relation and a
-		// flat `roleId` column, and the RELATION wins when the row is persisted — so a body sending a
-		// harmless `roleId` next to a privileged `role: { id }` must not validate the harmless one.
-		const candidates = roleIds.filter((roleId) => isNotEmpty(roleId)) as ID[];
+		// flat `roleId` column, so a body sending a harmless `roleId` next to a privileged `role` must not
+		// validate the harmless one. A role key that is present but references nothing throws inside
+		// `extractRoleIds` rather than leaving an empty list that checks nothing (GHSA-x4mv-fhwj-g3rp).
+		const candidates = extractRoleIds(payload);
 		const canEditSuperAdmin = RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT);
 		for (const roleId of candidates) {
 			assertRoleAssignmentAllowed(await this.resolveRoleName(roleId), canEditSuperAdmin);

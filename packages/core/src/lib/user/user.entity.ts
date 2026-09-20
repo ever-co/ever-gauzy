@@ -113,6 +113,13 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * bcrypt password digest. Blanked rather than masked on export: a trailing hint of a digest buys
 	 * an offline cracker free characters and buys an operator nothing.
+	 *
+	 * Not MikroORM `hidden` (unlike `refreshToken` / `code` / `codeExpireAt`): under DB_ORM=mikro-orm
+	 * every CrudService read returns `wrap(entity).toJSON()`, which drops hidden properties, and
+	 * `AuthService.login` / workspace sign-in read `hash` from exactly those results — hiding it would
+	 * break every password login. The same holds for `emailToken` (e-mail confirmation) and
+	 * `emailVerifiedAt`. Responses are still scrubbed of all six credential columns by
+	 * `TransformInterceptor` (GHSA-hh83-hq74-gh9f).
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -128,7 +135,9 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@ExportRedacted({ blank: true })
 	@Exclude({ toPlainOnly: true })
-	@MultiORMColumn({ insert: false, nullable: true })
+	// MikroORM `hidden`: a prototype-less `toJSON()` user must not carry it (GHSA-hh83-hq74-gh9f). Only
+	// read from a repository entity (`getUserIfRefreshTokenMatches`), which `hidden` does not affect.
+	@MultiORMColumn({ insert: false, nullable: true, hidden: true })
 	refreshToken?: string;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
@@ -174,13 +183,15 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@ExportRedacted()
 	@Exclude({ toPlainOnly: true })
-	@MultiORMColumn({ insert: false, nullable: true })
+	// MikroORM `hidden` (GHSA-hh83-hq74-gh9f): the code is only ever matched in a WHERE clause, never
+	// read back from a serialized user.
+	@MultiORMColumn({ insert: false, nullable: true, hidden: true })
 	code?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
-	@MultiORMColumn({ insert: false, nullable: true })
+	@MultiORMColumn({ insert: false, nullable: true, hidden: true })
 	codeExpireAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
