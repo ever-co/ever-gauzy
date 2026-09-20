@@ -24,6 +24,7 @@ import {
 	Req
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { Request } from 'express';
@@ -141,6 +142,9 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@Public()
+	// An invite token/code is a credential: unauthenticated and guessable one request at a time,
+	// so this route is rate limited like the public auth routes (GHSA-86mw-2crg-vmhc).
+	@Throttle({ default: { limit: 10, ttl: 60000 } })
 	@Get('/validate')
 	@UseValidationPipe({ whitelist: true })
 	async validateInviteByToken(@Query() options: ValidateInviteQueryDTO) {
@@ -169,6 +173,9 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@Public()
+	// An invite token/code is a credential: unauthenticated and guessable one request at a time,
+	// so this route is rate limited like the public auth routes (GHSA-86mw-2crg-vmhc).
+	@Throttle({ default: { limit: 10, ttl: 60000 } })
 	@Post('/validate-by-code')
 	@UseValidationPipe({ whitelist: true })
 	async validateInviteByCode(@Body() body: ValidateInviteByCodeQueryDTO) {
@@ -198,6 +205,9 @@ export class InviteController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Public()
+	// An invite token/code is a credential: unauthenticated and guessable one request at a time,
+	// so this route is rate limited like the public auth routes (GHSA-86mw-2crg-vmhc).
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@Post('/accept')
 	// This route is unauthenticated and its body reaches `AuthService.register()` — the shared
 	// user-creation sink — so the whitelist is what decides which columns an invitee can write.
@@ -228,6 +238,9 @@ export class InviteController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Public()
+	// An invite token/code is a credential: unauthenticated and guessable one request at a time,
+	// so this route is rate limited like the public auth routes (GHSA-86mw-2crg-vmhc).
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@Post('/reject')
 	@UseValidationPipe()
 	async rejectInvitation(@Body() input: RejectInviteDTO) {
@@ -251,6 +264,9 @@ export class InviteController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	// An invite token/code is a credential: unauthenticated and guessable one request at a time,
+	// so this route is rate limited like the public auth routes (GHSA-86mw-2crg-vmhc).
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@Post('/contact')
 	@Public()
 	// Unauthenticated, and its body reaches `AuthService.register()` and `OrganizationService.create()`.

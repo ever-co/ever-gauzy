@@ -14,6 +14,7 @@ import { convertToDatetime } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
 import { Organization } from '../../core/entities/internal';
 import { RequestContext } from '../../core';
+import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
 import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 import {
@@ -140,7 +141,8 @@ export class ImportService {
 					let results = [];
 					const stream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
 					stream.on('data', (data) => {
-						results.push(data);
+						// Undo the spreadsheet formula escape the export adds (GHSA-7xp5-j564-4752).
+						results.push(fromSpreadsheetSafeCsvRow(data));
 					});
 					stream.on('error', (error) => {
 						console.log(chalk.red(`Failed to parse CSV for table: ${masterTable}`), error);
@@ -192,7 +194,8 @@ export class ImportService {
 					let results = [];
 					const stream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
 					stream.on('data', (data) => {
-						results.push(data);
+						// Undo the spreadsheet formula escape the export adds (GHSA-7xp5-j564-4752).
+						results.push(fromSpreadsheetSafeCsvRow(data));
 					});
 					stream.on('error', (error) => {
 						console.log(chalk.red(`Failed to parse CSV for table: ${joinTableName}`), error);
@@ -403,7 +406,8 @@ export class ImportService {
 			const results: Organization[] = [];
 			const stream = fs.createReadStream(organizationsCsvPath, 'utf8').pipe(csv());
 			stream.on('data', (data) => {
-				if (isNotEmpty(data)) results.push(data);
+				// Undo the spreadsheet formula escape the export adds (GHSA-7xp5-j564-4752).
+				if (isNotEmpty(data)) results.push(fromSpreadsheetSafeCsvRow(data));
 			});
 			stream.on('error', (error) => {
 				console.log(chalk.red(`Failed to parse CSV for table: organization`), error);
