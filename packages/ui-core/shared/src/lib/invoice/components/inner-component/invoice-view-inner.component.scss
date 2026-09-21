@@ -1,9 +1,14 @@
 @use 'themes' as *;
 @use 'gauzy/_gauzy-table-hub' as ga-hub;
 
+// The item grid's panel: the recessed surface it always had, now with the
+// hairline and corner every other panel in the app carries, and an even inset
+// instead of a flat 10px.
 .table {
-  margin-top: 20px;
-  padding: 10px;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: var(--border-radius, 0.5rem);
+  box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   background-color: nb-theme(gauzy-card-2);
   // NOTE: `max-height: 17.5rem` is a flat 280px cap on the item list whatever the
   // window, so an invoice of more than about eight lines scrolls internally while
@@ -104,4 +109,16 @@
   .text-right {
     font-variant-numeric: tabular-nums;
   }
+}
+
+// ── Row rhythm ───────────────────────────────────────────────────────────────
+// 0.5rem above and below every cell's content, header included, against the
+// 0.1875rem `density-tokens()` sets for one-line list tables — the same rhythm
+// the item grid on the Add / Edit form now uses.
+//
+// After the `density-tokens()` include above, not before: that mixin sets these
+// same tokens on `:host`, so an earlier block of equal specificity loses to it.
+:host {
+  --gauzy-table-cell-padding-y: 0.5rem;
+  --gauzy-table-header-padding-y: 0.5rem;
 }
