@@ -78,8 +78,15 @@ jest.mock('@gauzy/core', () => {
 		AdjustmentService: class {},
 		TaxLineService: class {},
 		SequenceService: class {},
-	// Added when core grew this export: the double has to carry it, or the code under
-	// test calls nothing and the suite fails for a reason that is not its own.
+		// Added when core grew this export: the double has to carry it, or the code under test calls
+		// nothing and the suite fails for a reason that is not its own.
+		EventOutboxService: class {},
+		// The exact decimal primitives are pulled through the seam rather than restated: the sums this
+		// service feeds the state machine are the subject of several cases below, and arithmetic
+		// re-implemented here would make them assert the double.
+		addDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').addDecimalStrings,
+		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
+		subtractDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').subtractDecimalStrings
 	};
 });
 
@@ -171,7 +178,25 @@ function orderFixture(order: Record<string, unknown> = {}) {
 		findByOwner: async (ownerType: string, ownerId: string) =>
 			rows.filter((candidate) => candidate.ownerType === ownerType && candidate.ownerId === ownerId)
 	});
+	/** Every `order.*` row the service appended, in the order it appended them. */
+	const events: any[] = [];
+	/**
+	 * The platform outbox, reduced to the one call this service makes on it.
+	 *
+	 * The manager it is handed is the order repository's own, which is what the assertions below check:
+	 * an event appended through some other connection is an event a crash can separate from the write
+	 * it describes, which is the whole reason the outbox is a table rather than a bus.
+	 */
+	const outbox = {
+		append: async (manager: any, input: any) => {
+			events.push({ manager, ...input });
+
+			return input;
+		}
+	};
 	const typeOrmOrderRepository = {
+		// The entity manager the conditional update, the summary row and the event all go through.
+		manager: { name: 'order-manager' },
 		findOne: async ({ where }: any = {}) => (String(where?.id) === String(row.id) ? { ...row } : null),
 		update: async (criteria: any, partial: any) => {
 			const expected = typeof criteria === 'string' ? { id: criteria } : criteria ?? {};
@@ -207,10 +232,23 @@ function orderFixture(order: Record<string, unknown> = {}) {
 		{ create: async (summary: any) => (summaries.push(summary), summary) } as never,
 		ownedLedger(adjustments) as never,
 		ownedLedger(taxLines) as never,
+		outbox as never,
 		{ get: () => orderWriter } as never
 	);
 
-	return { service, order: row, lines, shippingMethods, creditLines, transactions, adjustments, taxLines, summaries };
+	return {
+		service,
+		order: row,
+		lines,
+		shippingMethods,
+		creditLines,
+		transactions,
+		adjustments,
+		taxLines,
+		summaries,
+		events,
+		manager: typeOrmOrderRepository.manager
+	};
 }
 
 /** `order_summary.totals` fields that are also denormalised columns on `order`. */
@@ -401,6 +439,69 @@ describe('OrderTotalsService — version, summary rows and concurrency (doc 07 �
 		expect(written.version).toBe(before.version + 1);
 	});
 
+	it('appends the move’s event through the same manager as the write, once the write has committed', async () => {
+		// The README says observable changes leave through the core `event_outbox`, and nothing was
+		// writing one. The append is bound to the write rather than made after it by the caller: it goes
+		// through the order repository's own entity manager — the one the conditional update and the
+		// summary row were written through — and it carries the version that update produced.
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
+
+		const written = await fixture.service.recompute('order-1', 'PLACED', {
+			event: { name: 'order.placed', data: { cartId: 'cart-1' } }
+		} as never);
+
+		expect(fixture.events).toHaveLength(1);
+		expect(fixture.events[0]).toMatchObject({
+			manager: fixture.manager,
+			name: 'order.placed',
+			aggregateType: 'ORDER',
+			aggregateId: 'order-1'
+		});
+		// A projection, not an entity dump, and it states the version the write landed on so a consumer
+		// can tell a replay from a later revision.
+		expect(fixture.events[0].data).toMatchObject({
+			orderId: 'order-1',
+			status: written.status,
+			paymentStatus: written.paymentStatus,
+			fulfillmentStatus: written.fulfillmentStatus,
+			version: written.version,
+			cartId: 'cart-1'
+		});
+	});
+
+	it('appends nothing for a recomputation that announces nothing', async () => {
+		// A totals refresh is not a fact another context acts on, so it produces no row. An outbox that
+		// carried every write would make `order.*` unsubscribable.
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
+
+		await fixture.service.recompute('order-1', 'PAYMENT_RECONCILED');
+
+		expect(fixture.events).toEqual([]);
+	});
+
+	it('announces nothing when the conditional write was refused', async () => {
+		// The reason the event is stated *with* the move rather than published after it. A caller that
+		// published on its own would have announced a placement the version predicate declined, and a
+		// consumer would have acted on an order that never moved.
+		const fixture = orderFixture({ version: 7 });
+
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
+
+		await expect(
+			fixture.service.recompute('order-1', 'PLACED', {
+				expectation: { wildcard: false, versions: [3] },
+				event: { name: 'order.placed' }
+			} as never)
+		).rejects.toBeDefined();
+
+		expect(fixture.events).toEqual([]);
+		expect(fixture.order.version).toBe(7);
+	});
+
 	it('refuses to recompute an order that does not exist', async () => {
 		const fixture = orderFixture();
 
@@ -483,6 +584,96 @@ describe('OrderTotalsService — the materialised statuses (doc 10 §5.4, §5.5,
 		const written = await fixture.service.recompute('order-1', 'CANCEL');
 
 		expect(written.fulfillmentStatus).toBe(FulfillmentStatus.CANCELED);
+	});
+
+	it('sums the ledger on its digits, so an order captured in full is not reported short', async () => {
+		// The counterexample. `0.10 + 0.70` is `0.7999999999999999` in binary floating point, and the
+		// state machine — which compares exactly — was being handed that. The fully captured order was
+		// stamped `PARTIALLY_CAPTURED`, which is not one of the three statuses a confirmation admits, so
+		// the order could then never be confirmed or completed either. The parts still have to sum to
+		// the whole: `0.10 + 0.70 = 0.80`, and 0.80 covers a grand total of 0.80.
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 0.8 }));
+		fixture.transactions.push({ orderId: 'order-1', amount: 0.1, type: OrderTransactionType.CAPTURE });
+		fixture.transactions.push({ orderId: 'order-1', amount: 0.7, type: OrderTransactionType.CAPTURE });
+
+		const written = await fixture.service.recompute('order-1', 'PAYMENT_RECONCILED');
+
+		expect(written.paymentStatus).toBe(OrderPaymentStatus.CAPTURED);
+
+		// Control: a genuinely short capture is still short, so the fix is exact arithmetic rather than
+		// a licence to call everything captured.
+		const short = orderFixture();
+
+		short.lines.push(line('L1', { quantity: 1, unitPrice: 0.8 }));
+		short.transactions.push({ orderId: 'order-1', amount: 0.1, type: OrderTransactionType.CAPTURE });
+		short.transactions.push({ orderId: 'order-1', amount: 0.6, type: OrderTransactionType.CAPTURE });
+
+		expect((await short.service.recompute('order-1', 'PAYMENT_RECONCILED')).paymentStatus).toBe(
+			OrderPaymentStatus.PARTIALLY_CAPTURED
+		);
+	});
+
+	it('combines the two halves of a capture and of a refund exactly, not with `+`', async () => {
+		// `captured` is the sum of the CAPTURE rows plus the sum of the positive MANUAL rows, and
+		// `refunded` is three sums added together. Each half can be exact and the addition of the halves
+		// still lose the value: `10 + 10.01` is `20.009999999999998`. The parts must sum to the whole
+		// here too.
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 20.01 }));
+		fixture.transactions.push({ orderId: 'order-1', amount: 10, type: OrderTransactionType.CAPTURE });
+		fixture.transactions.push({ orderId: 'order-1', amount: 10.01, type: OrderTransactionType.MANUAL });
+
+		expect((await fixture.service.recompute('order-1', 'PAYMENT_RECONCILED')).paymentStatus).toBe(
+			OrderPaymentStatus.CAPTURED
+		);
+
+		// And the refunded side, whose three sums are added the same way: a refund of the whole capture,
+		// paid back in two parts that a double cannot add back to it.
+		const refunded = orderFixture();
+
+		refunded.lines.push(line('L1', { quantity: 1, unitPrice: 0.8 }));
+		refunded.transactions.push({ orderId: 'order-1', amount: 0.8, type: OrderTransactionType.CAPTURE });
+		refunded.transactions.push({ orderId: 'order-1', amount: -0.1, type: OrderTransactionType.REFUND });
+		refunded.transactions.push({ orderId: 'order-1', amount: -0.7, type: OrderTransactionType.CHARGEBACK });
+
+		expect((await refunded.service.recompute('order-1', 'PAYMENT_RECONCILED')).paymentStatus).toBe(
+			OrderPaymentStatus.REFUNDED
+		);
+	});
+
+	it('totals the line counters on their digits, so a fully accounted-for order is fulfilled', async () => {
+		// `netTarget = ordered − writtenOff − dismissed`, and the derivation tests it for being exactly
+		// zero. `0.3 − 0.1 − 0.2` is `-2.7755575615628914e-17` in binary floating point: neither above
+		// zero nor equal to it, so the line fell through to `NOT_FULFILLED` and the order was stuck in
+		// `CONFIRMED` for ever, because the derivation is deterministic and would decide the same way on
+		// every recomputation.
+		const fixture = orderFixture();
+
+		fixture.lines.push(
+			line('L1', { quantity: 0.3, writtenOffQuantity: 0.1, returnDismissedQuantity: 0.2, requiresShipping: true })
+		);
+
+		const written = await fixture.service.recompute('order-1', 'FULFILLMENT_COMMITTED');
+
+		expect(written.fulfillmentStatus).toBe(FulfillmentStatus.FULFILLED);
+	});
+
+	it('decides the open-line question on the digits, so a fully accounted line is not still open', async () => {
+		// The other half of the same stall. `0.7 + 0.3` is `0.9999999999999999`, which *is* below `1`, so
+		// a line that shipped 0.7 and wrote off the remaining 0.3 was reported as still owing units —
+		// and `completeIfSettled` would never complete the order it belongs to.
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 10, fulfilledQuantity: 0.7, writtenOffQuantity: 0.3 }));
+
+		expect(await fixture.service.hasOpenShippableLines(fixture.order as never)).toBe(false);
+
+		// Control: a line that genuinely still owes a unit is still open.
+		fixture.lines[0].writtenOffQuantity = 0.1;
+		expect(await fixture.service.hasOpenShippableLines(fixture.order as never)).toBe(true);
 	});
 
 	it('counts the distinct sellers among the lines, and never the blanks', async () => {

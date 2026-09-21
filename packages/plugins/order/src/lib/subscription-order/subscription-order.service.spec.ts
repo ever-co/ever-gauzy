@@ -449,6 +449,10 @@ function world(
 			findByOwner: async (ownerType: string, ownerId: string) =>
 				taxRows.filter((row) => row.ownerType === ownerType && row.ownerId === ownerId)
 		} as never,
+		// The outbox every recomputation announces itself into. Stubbed rather than omitted: the
+		// constructor gained it when the order lifecycle started announcing its moves, and a double
+		// that stops matching the constructor is a suite that fails to compile.
+		{ append: jest.fn() } as never,
 		// The aggregate's version-predicated write resolves the order's writer by token. The order
 		// service is built below, so the lookup answers the resolved instance when a write runs.
 		{ get: () => orderService } as never

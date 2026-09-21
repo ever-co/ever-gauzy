@@ -11,10 +11,23 @@ import {
 	OrderPaymentStatus,
 	TaxLineOwnerType
 } from '@gauzy/contracts';
-import { AdjustmentService, CrudService, TaxLineService, commitVersionedUpdate } from '@gauzy/core';
+import {
+	AdjustmentService,
+	CrudService,
+	TaxLineService,
+	EventOutboxService,
+	addDecimalStrings,
+	commitVersionedUpdate,
+	compareDecimalStrings
+} from '@gauzy/core';
 import { ITotalsAdjustment, ITotalsContext, ITotalsSnapshot, ITotalsTaxLine, TotalsCalculator } from '@gauzy/plugin-cart';
 import { Order } from '../order/order.entity';
-import { ANY_ORDER_VERSION, ORDER_AGGREGATE_WRITER, OrderVersionExpectation } from '../order.types';
+import {
+	ANY_ORDER_VERSION,
+	ORDER_AGGREGATE_TYPE,
+	ORDER_AGGREGATE_WRITER,
+	OrderVersionExpectation
+} from '../order.types';
 import { OrderCreditLine } from '../order-credit-line/order-credit-line.entity';
 import { OrderCreditLineService } from '../order-credit-line/order-credit-line.service';
 import { OrderLine } from '../order-line/order-line.entity';
@@ -28,9 +41,35 @@ import { OrderStateMachine } from '../order-state-machine/order-state-machine';
 import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repository';
 
 /**
+ * One `order.*` fact, as the move that caused it states it.
+ *
+ * The name is `<aggregate>.<action>` — the form the outbox, the webhook subscriptions and the
+ * consumer registry all match on — and the payload is a projection rather than an entity dump: a
+ * consumer that needs the order reads the order, and an event that carried the row would promise a
+ * shape this package would then be unable to change.
+ */
+export interface IOrderEvent {
+	/** `order.placed`, `order.confirmed`, `order.canceled`, `order.completed`, `order.archived`. */
+	name: string;
+	/** What a consumer receives beside the order's identity. */
+	data?: Record<string, unknown>;
+}
+
+/**
  * What a recalculation is told beyond the order it acts on.
  */
 export interface IOrderRecalculation {
+	/**
+	 * The fact this write announces, when the move that triggered it announces one.
+	 *
+	 * Stated here rather than published by the caller afterwards, because the announcement has to be
+	 * bound to the write that earned it: a conditional update that was refused throws out of this
+	 * method, so an event stated for it is never appended, and a caller that published on its own
+	 * would have announced a placement the statement declined. A recalculation that announces nothing
+	 * — a totals refresh, a subscription cycle's second pass — states no event and appends no row.
+	 */
+	event?: IOrderEvent;
+
 	/**
 	 * The version the caller read the order at.
 	 *
@@ -68,6 +107,14 @@ export interface IOrderRecalculation {
  *
  * Everything happens in one call and is meant to run inside the transaction of the write that triggered
  * it, so a reader never sees a total that disagrees with the lines it was computed from.
+ *
+ * **The order's events leave from here too, for the same reason the summary row does.** The package's
+ * README says observable changes are emitted through the core `event_outbox`, and this is the one
+ * method that knows a lifecycle move actually committed: the conditional update either returned a
+ * version or threw. A caller that published afterwards would announce placements the statement had
+ * declined, and a caller that published over a bus rather than into the outbox would lose the event to
+ * any crash between the commit and the publish — which is the failure the outbox exists to remove. The
+ * move states the fact it announces in `options.event`; this method appends it beside the row.
  */
 @Injectable()
 export class OrderTotalsService {
@@ -80,6 +127,7 @@ export class OrderTotalsService {
 		private readonly summaryService: OrderSummaryService,
 		private readonly adjustmentService: AdjustmentService,
 		private readonly taxLineService: TaxLineService,
+		private readonly outbox: EventOutboxService,
 		private readonly moduleRef: ModuleRef
 	) {}
 
@@ -112,9 +160,21 @@ export class OrderTotalsService {
 		// `version` is deliberately absent: the conditional update writes the next version in the same
 		// statement that checks the current one, and a patch that carried one would move the row past
 		// the version the write was predicated on.
+		//
+		// The tenancy columns are stated as criteria rather than left to the service layer. A
+		// conditional write whose criteria name only the row id is a write one identifier is the whole
+		// key to, and the identifier travels — it is in a URL, a webhook payload, an exported report —
+		// so the statement has to say whose row it is allowed to touch as well as which row. The values
+		// come from the row this call just read, which is the same source `OrderReturnService` and
+		// `FulfillmentService` take theirs from, and it is the only source available on the paths that
+		// run with no request behind them: the checkout handler, a recurrence and the staleness sweep.
 		const { version } = await commitVersionedUpdate<Order>(this.orderWriter(), {
 			id: orderId,
 			expectation: options.expectation ?? ANY_ORDER_VERSION,
+			where: {
+				...(order.tenantId ? { tenantId: order.tenantId } : {}),
+				...(order.organizationId ? { organizationId: order.organizationId } : {})
+			},
 			patch: {
 				...(options.patch ?? {}),
 				itemSubtotal: snapshot.itemSubtotal,
@@ -148,7 +208,62 @@ export class OrderTotalsService {
 			reason
 		} as any);
 
+		if (options.event) {
+			await this.announce(moved, version, snapshot, options.event);
+		}
+
 		return this.typeOrmOrderRepository.findOne({ where: { id: orderId } });
+	}
+
+	/**
+	 * Appends one `order.*` event to the platform outbox.
+	 *
+	 * **The append rides the write, and that is the whole point of the outbox.** An event published
+	 * after a commit is an event a crash between the two loses, and nothing afterwards knows it is
+	 * missing; an event written as a row beside the state change is delivered by the dispatcher
+	 * whenever the process comes back. It is appended through the order repository's own entity
+	 * manager — the manager the conditional update and the summary row were written through — and only
+	 * after that update returned, so an event is never produced for a write the version predicate
+	 * refused: that refusal throws before this line is reached.
+	 *
+	 * The projection carries the order's identity, the version the write produced and the two
+	 * materialised statuses, because those are what a consumer routes on — a search index reindexes,
+	 * a notification decides whether to send, a webhook subscriber filters. It deliberately does not
+	 * carry the order row: an event that shipped the entity would freeze its shape into every
+	 * consumer.
+	 *
+	 * @param order The order as the move left it.
+	 * @param version The version the conditional update produced.
+	 * @param snapshot The totals written with it.
+	 * @param event The fact to announce.
+	 */
+	private async announce(
+		order: Order,
+		version: number,
+		snapshot: IOrderTotals,
+		event: IOrderEvent
+	): Promise<void> {
+		await this.outbox.append(this.typeOrmOrderRepository.manager, {
+			name: event.name,
+			aggregateType: ORDER_AGGREGATE_TYPE,
+			aggregateId: order.id,
+			data: {
+				orderId: order.id,
+				number: order.number,
+				status: order.status,
+				paymentStatus: order.paymentStatus,
+				fulfillmentStatus: order.fulfillmentStatus,
+				currency: order.currency,
+				grandTotal: this.decimalOf(snapshot.grandTotal),
+				outstandingTotal: this.decimalOf(snapshot.outstandingTotal ?? 0),
+				channelId: order.channelId ?? null,
+				customerId: order.customerId ?? null,
+				version,
+				...(event.data ?? {})
+			},
+			tenantId: order.tenantId,
+			organizationId: order.organizationId
+		});
 	}
 
 	/**
@@ -276,6 +391,16 @@ export class OrderTotalsService {
 	/**
 	 * Derives the money state from the order's own ledger.
 	 *
+	 * **The ledger is summed on the digits, not with `+`.** The state machine compares exactly, but a
+	 * comparison can only be as exact as what it is handed, and every member below but `payable` is a
+	 * running sum over the order's transaction rows. Accumulated in binary floating point, an order
+	 * whose grand total is `0.80` and which was captured by two transactions of `0.10` and `0.70`
+	 * produces `0.7999999999999999`, which compares below `0.80`: the fully captured order is stamped
+	 * `PARTIALLY_CAPTURED`, and because `PARTIALLY_CAPTURED` is not one of the statuses a confirmation
+	 * admits, a fully paid order can then never be confirmed or completed. The accumulation therefore
+	 * runs through the platform's decimal kernel and the two aggregate members are combined with
+	 * `addDecimalStrings` rather than with `+`; the state machine accepts the digits as digits.
+	 *
 	 * @param order The order.
 	 * @param snapshot The totals just computed, whose `grandTotal` and `creditTotal` the derivation needs.
 	 * @returns The payment status.
@@ -285,24 +410,32 @@ export class OrderTotalsService {
 			where: { orderId: order.id }
 		})) as IPagination<OrderTransaction>).items;
 
-		const sumOf = (types: OrderTransactionType[], positive: boolean) =>
+		const sumOf = (types: OrderTransactionType[], positive: boolean): string =>
 			transactions
 				.filter((transaction) => types.includes(transaction.type))
-				.filter((transaction) => (positive ? Number(transaction.amount) > 0 : Number(transaction.amount) < 0))
-				.reduce((total, transaction) => total + Math.abs(Number(transaction.amount)), 0);
+				.map((transaction) => this.decimalOf(transaction.amount))
+				.filter((amount) =>
+					positive ? compareDecimalStrings(amount, '0') > 0 : compareDecimalStrings(amount, '0') < 0
+				)
+				.reduce((total, amount) => addDecimalStrings(total, this.absolute(amount)), '0');
 
 		return OrderStateMachine.derivePaymentStatus({
 			orderStatus: order.status,
-			grandTotal: Number(snapshot.grandTotal),
-			creditTotal: Number(snapshot.creditTotal ?? 0),
+			grandTotal: this.decimalOf(snapshot.grandTotal),
+			creditTotal: this.decimalOf(snapshot.creditTotal ?? 0),
 			authorized: sumOf([OrderTransactionType.AUTHORIZATION], true),
 			voided: sumOf([OrderTransactionType.VOID], true),
-			captured:
-				sumOf([OrderTransactionType.CAPTURE], true) + sumOf([OrderTransactionType.MANUAL], true),
-			refunded:
-				sumOf([OrderTransactionType.REFUND], false) +
-				sumOf([OrderTransactionType.CHARGEBACK], false) +
-				sumOf([OrderTransactionType.MANUAL], false),
+			captured: addDecimalStrings(
+				sumOf([OrderTransactionType.CAPTURE], true),
+				sumOf([OrderTransactionType.MANUAL], true)
+			),
+			refunded: addDecimalStrings(
+				addDecimalStrings(
+					sumOf([OrderTransactionType.REFUND], false),
+					sumOf([OrderTransactionType.CHARGEBACK], false)
+				),
+				sumOf([OrderTransactionType.MANUAL], false)
+			),
 			hasRequiresMoreSession: false,
 			hasPendingSession: false,
 			hasFailedAttempt: transactions.some((transaction) => transaction.metadata?.['status'] === 'FAILED'),
@@ -313,6 +446,11 @@ export class OrderTotalsService {
 	/**
 	 * Derives the fulfilment state from the order's lines.
 	 *
+	 * The per-line counters are totalled on their digits for the same reason the ledger above is: a
+	 * `numeric(20,6)` quantity summed with `+` lands beside the value it should be, and the derivation
+	 * it feeds tests a difference for being *exactly* zero — the one test a floating point sum can never
+	 * pass.
+	 *
 	 * @param order The order.
 	 * @returns The fulfilment status.
 	 */
@@ -321,8 +459,8 @@ export class OrderTotalsService {
 			where: { orderId: order.id }
 		})) as IPagination<OrderLine>).items;
 
-		const total = (field: keyof OrderLine) =>
-			lines.reduce((sum, line) => sum + Number(line[field] ?? 0), 0);
+		const total = (field: keyof OrderLine): string =>
+			lines.reduce<string>((sum, line) => addDecimalStrings(sum, this.decimalOf(line[field] ?? 0)), '0');
 
 		return OrderStateMachine.deriveFulfillmentStatus({
 			orderStatus: order.status,
@@ -332,6 +470,79 @@ export class OrderTotalsService {
 			fulfilledQuantity: total('fulfilledQuantity'),
 			receivedReturnQuantity: total('returnReceivedQuantity')
 		});
+	}
+
+	/**
+	 * One stored figure as the decimal text it is summed and compared as.
+	 *
+	 * The column is a `numeric(20,6)` and the transformer hands it back as a `number`, so this is where
+	 * the digits are recovered: a `number` is rendered in its shortest round-trip form, and an
+	 * exponential rendering — `String(1e-7)` is `'1e-7'`, which the decimal kernel refuses rather than
+	 * guesses at — is laid out in full so that a very small credit does not escape a totals
+	 * recomputation as a `MONEY_NOT_DECIMAL_STRING` server fault. A value that already arrives as text
+	 * is passed through untouched, because re-rendering it through a double is exactly the step that
+	 * loses it.
+	 *
+	 * @param value The figure, as a column or a calculator handed it over.
+	 * @returns The figure as exact decimal text.
+	 */
+	private decimalOf(value: unknown): string {
+		if (typeof value === 'string') {
+			const text = value.trim();
+
+			return text === '' ? '0' : this.expandExponential(text);
+		}
+
+		if (typeof value === 'number') {
+			return Number.isFinite(value) ? this.expandExponential(String(value)) : '0';
+		}
+
+		if (value === null || value === undefined) {
+			return '0';
+		}
+
+		return this.decimalOf(String(value));
+	}
+
+	/**
+	 * @param text A decimal rendering, possibly in exponential form.
+	 * @returns The same value written as plain decimal digits, which is the only form the decimal
+	 * kernel parses.
+	 */
+	private expandExponential(text: string): string {
+		const match = /^([+-]?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/.exec(text);
+
+		if (!match) {
+			return text;
+		}
+
+		const [, sign, whole, fraction = '', exponentText] = match;
+		const digits = `${whole}${fraction}`;
+		const point = whole.length + Number(exponentText);
+
+		if (point <= 0) {
+			return `${sign}0.${'0'.repeat(-point)}${digits}`;
+		}
+
+		if (point >= digits.length) {
+			return `${sign}${digits}${'0'.repeat(point - digits.length)}`;
+		}
+
+		return `${sign}${digits.slice(0, point)}.${digits.slice(point)}`;
+	}
+
+	/**
+	 * The magnitude of a decimal, taken from its sign rather than through `Math.abs`.
+	 *
+	 * A ledger row's direction is carried by its sign and its magnitude is what a running total
+	 * accumulates, so the sign is dropped as text: routing the value through `Math.abs` would put it
+	 * back into a double for no reason other than to remove one character.
+	 *
+	 * @param value Decimal text.
+	 * @returns The same value without its sign.
+	 */
+	private absolute(value: string): string {
+		return value.startsWith('-') ? value.slice(1) : value;
 	}
 
 	/**
@@ -387,6 +598,12 @@ export class OrderTotalsService {
 	/**
 	 * Whether an order has any line that still has to ship.
 	 *
+	 * The comparison decides whether an order may complete, and it is made on the digits for the same
+	 * reason the fulfilment status is: a line ordered for `0.3` that shipped `0.1` and was written off
+	 * `0.2` has `0.1 + 0.2 = 0.30000000000000004` in binary floating point, which is *not* below `0.3` —
+	 * and the mirrored case, where the sum lands just under, reports an open line on an order that has
+	 * nothing left to ship and leaves it in the picking queue for ever.
+	 *
 	 * @param order The order.
 	 * @returns True when a shippable line is not fully fulfilled.
 	 */
@@ -395,15 +612,26 @@ export class OrderTotalsService {
 			where: { orderId: order.id }
 		})) as IPagination<OrderLine>).items;
 
-		return lines.some(
-			(line) =>
-				line.requiresShipping &&
-				Number(line.fulfilledQuantity) + Number(line.writtenOffQuantity) < Number(line.quantity)
-		);
+		return lines.some((line) => {
+			if (!line.requiresShipping) {
+				return false;
+			}
+
+			const accounted = addDecimalStrings(
+				this.decimalOf(line.fulfilledQuantity ?? 0),
+				this.decimalOf(line.writtenOffQuantity ?? 0)
+			);
+
+			return compareDecimalStrings(accounted, this.decimalOf(line.quantity ?? 0)) < 0;
+		});
 	}
 
 	/**
 	 * Whether the payment side of an order is settled, which is one of the conditions for completion.
+	 *
+	 * The test is "nothing is outstanding", and an outstanding total that is a rounding error away from
+	 * zero is nothing outstanding — but only a comparison on the digits says so. Compared as a double,
+	 * an order settled to the last cent can hold an outstanding total of `2.7e-17` and never complete.
 	 *
 	 * @param order The order.
 	 * @returns True when nothing is outstanding.
@@ -411,7 +639,7 @@ export class OrderTotalsService {
 	public async isPaymentSettled(order: Order): Promise<boolean> {
 		const snapshot = await this.computeTotals(order);
 
-		return Number(snapshot.outstandingTotal ?? 0) <= 0;
+		return compareDecimalStrings(this.decimalOf(snapshot.outstandingTotal ?? 0), '0') <= 0;
 	}
 
 	/**

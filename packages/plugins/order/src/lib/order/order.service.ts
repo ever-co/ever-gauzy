@@ -16,7 +16,7 @@ import { SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { Order } from './order.entity';
 import { TypeOrmOrderRepository } from './repository/type-orm-order.repository';
 import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository';
-import { ANY_ORDER_VERSION, OrderVersionExpectation } from '../order.types';
+import { ANY_ORDER_VERSION, ORDER_EVENTS, OrderVersionExpectation } from '../order.types';
 import { OrderAddress } from '../order-address/order-address.entity';
 import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderChange } from '../order-change/order-change.entity';
@@ -50,6 +50,16 @@ const ORDER_SEQUENCE_KEY = 'ORDER';
  * A placed order is **not** edited here. `update` refuses anything but the handful of fields a draft or
  * a note may change, and every other modification is an `order_change` handled by
  * `OrderChangeService`.
+ *
+ * **Each lifecycle move announces itself, and it does so as part of the write.** The package's README
+ * says observable changes are emitted through the core `event_outbox`, and nothing was emitting them:
+ * an order could be placed, confirmed, cancelled, completed or archived and no search index, webhook
+ * subscriber or GraphQL subscription could learn of it. The fact is now stated with the move and
+ * appended by the same call that commits it (`OrderTotalsService.recompute`), which is the only
+ * arrangement that makes the two inseparable — a refused conditional update announces nothing, and a
+ * committed one cannot lose its event to a crash. The `order_history` rows stay exactly as they were:
+ * they are the order's own human-readable timeline, which is a different thing from a fact another
+ * context consumes.
  */
 @Injectable()
 export class OrderService extends TenantAwareCrudService<Order> {
@@ -254,7 +264,12 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		// placement the conditional update then refused, and a reader of the timeline would believe it.
 		const placed = await this.totalsService.recompute(order.id, 'PLACED', {
 			expectation,
-			patch: { ...move, isDraft: false }
+			patch: { ...move, isDraft: false },
+			// The announcement is stated with the move rather than made after it: the conditional update
+			// either commits and appends the event beside the row, or refuses and appends nothing. An
+			// `order.placed` published from here after the call returned would be lost by any crash in
+			// between, which is exactly what the outbox exists to prevent.
+			event: { name: ORDER_EVENTS.PLACED, data: { ...placedWith } }
 		});
 
 		await this.historyService.record(order.id, 'ORDER_PLACED', 'Order placed', {
@@ -304,7 +319,8 @@ export class OrderService extends TenantAwareCrudService<Order> {
 
 		const confirmed = await this.totalsService.recompute(order.id, 'CONFIRMED', {
 			expectation,
-			patch: move as Record<string, unknown>
+			patch: move as Record<string, unknown>,
+			event: { name: ORDER_EVENTS.CONFIRMED, data: { actor } }
 		});
 
 		await this.historyService.record(order.id, 'ORDER_CONFIRMED', 'Order confirmed', {});
@@ -346,7 +362,8 @@ export class OrderService extends TenantAwareCrudService<Order> {
 
 		const cancelled = await this.totalsService.recompute(order.id, 'CANCEL', {
 			expectation,
-			patch: { ...move, cancelReason: reason ?? order.cancelReason }
+			patch: { ...move, cancelReason: reason ?? order.cancelReason },
+			event: { name: ORDER_EVENTS.CANCELED, data: { reason: reason ?? order.cancelReason ?? null } }
 		});
 
 		await this.historyService.record(order.id, 'ORDER_CANCELED', 'Order canceled', { reason });
@@ -384,7 +401,8 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		// would leave a gap the audit of the version history reads as a lost revision.
 		const archived = await this.totalsService.recompute(order.id, 'ARCHIVED', {
 			expectation,
-			patch: { ...move, isArchived: true, archivedAt: new Date() }
+			patch: { ...move, isArchived: true, archivedAt: new Date() },
+			event: { name: ORDER_EVENTS.ARCHIVED }
 		});
 
 		await this.historyService.record(order.id, 'ORDER_ARCHIVED', 'Order archived', {});
@@ -477,7 +495,8 @@ export class OrderService extends TenantAwareCrudService<Order> {
 
 		const completed = await this.totalsService.recompute(order.id, 'COMPLETED', {
 			expectation,
-			patch: move as Record<string, unknown>
+			patch: move as Record<string, unknown>,
+			event: { name: ORDER_EVENTS.COMPLETED }
 		});
 
 		await this.historyService.record(order.id, 'ORDER_COMPLETED', 'Order completed', {});

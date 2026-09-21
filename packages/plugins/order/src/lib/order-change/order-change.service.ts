@@ -10,7 +10,14 @@ import {
 	OrderStatus,
 	OrderTransactionType
 } from '@gauzy/contracts';
-import { ApiErrorCode, ApiException, TenantAwareCrudService, matchesExpectation, parseEntityVersion } from '@gauzy/core';
+import {
+	ApiErrorCode,
+	ApiException,
+	TenantAwareCrudService,
+	addDecimalStrings,
+	matchesExpectation,
+	parseEntityVersion
+} from '@gauzy/core';
 import { OrderChange } from './order-change.entity';
 import { TypeOrmOrderChangeRepository } from './repository/type-orm-order-change.repository';
 import { MikroOrmOrderChangeRepository } from './repository/mikro-orm-order-change.repository';
@@ -640,8 +647,7 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 				const line = await this.loadLine(change.orderId, action.referenceId ?? details['orderLineId']);
 
 				await this.lineService.update(line.id, {
-					returnRequestedQuantity:
-						Number(line.returnRequestedQuantity) + Number(details['quantity'] ?? 0)
+					returnRequestedQuantity: this.movedCounter(line.returnRequestedQuantity, details['quantity'])
 				} as any);
 				break;
 			}
@@ -650,8 +656,7 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 				const line = await this.loadLine(change.orderId, action.referenceId ?? details['orderLineId']);
 
 				await this.lineService.update(line.id, {
-					returnDismissedQuantity:
-						Number(line.returnDismissedQuantity) + Number(details['quantity'] ?? 0)
+					returnDismissedQuantity: this.movedCounter(line.returnDismissedQuantity, details['quantity'])
 				} as any);
 				break;
 			}
@@ -660,7 +665,7 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 				const line = await this.loadLine(change.orderId, action.referenceId ?? details['orderLineId']);
 
 				await this.lineService.update(line.id, {
-					writtenOffQuantity: Number(line.writtenOffQuantity) + Number(details['quantity'] ?? 0)
+					writtenOffQuantity: this.movedCounter(line.writtenOffQuantity, details['quantity'])
 				} as any);
 				break;
 			}
@@ -707,7 +712,29 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	}
 
 	/**
+	 * One of an order line's quantity counters, moved by what an action states.
+	 *
+	 * The counters are `numeric(20,6)` decimals, and moving one by adding two doubles is the arithmetic
+	 * the rest of this branch exists to keep out of quantity code: a line written off `0.1` and then
+	 * dismissed `0.2` lands on `0.30000000000000004`, and the fulfilment derivation that subtracts both
+	 * from the ordered quantity then tests a difference for being exactly zero — which it never is
+	 * again. The addition is therefore made on the digits, and the result is handed back as the number
+	 * the column's transformer takes, so nothing about the write path changes but its exactness.
+	 *
+	 * @param current The counter as the line holds it.
+	 * @param delta The quantity the action states, which may be absent.
+	 * @returns The counter after the move.
+	 */
+	private movedCounter(current: unknown, delta: unknown): number {
+		return Number(addDecimalStrings(this.decimalOf(current), this.decimalOf(delta)));
+	}
+
+	/**
 	 * The money effect of a change, taken from its actions' own amounts.
+	 *
+	 * The actions are summed on their digits rather than with `+`: a change made of several priced
+	 * actions is exactly the case where a floating point accumulation lands a cent beside the figure an
+	 * operator reconciles the change against, and `priceChange` is a money column like any other.
 	 *
 	 * @param change The change.
 	 * @returns The net delta, recorded on the change so an operator can see it without replaying the
@@ -718,10 +745,53 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 			where: { changeId: change.id }
 		})) as IPagination<OrderChangeAction>;
 
-		return actions.items.reduce(
-			(total: number, action: OrderChangeAction) => total + Number(action.amount ?? 0),
-			0
+		return Number(
+			actions.items.reduce<string>(
+				(total: string, action: OrderChangeAction) => addDecimalStrings(total, this.decimalOf(action.amount)),
+				'0'
+			)
 		);
+	}
+
+	/**
+	 * One stored figure as the decimal text it is summed on.
+	 *
+	 * A money or quantity column is a `numeric(20,6)` whose transformer hands the value back as a
+	 * `number`, and an action's `details` carry whatever a caller wrote. Both are read here: a number is
+	 * rendered in its shortest round-trip form with any exponent laid out in full — the decimal kernel
+	 * refuses `'1e-7'` rather than guessing at it — and text is passed through untouched, because
+	 * re-rendering digits through a double is the step that loses them. Anything that is not a figure at
+	 * all is zero, which is what an absent `details.quantity` has always meant on this path.
+	 *
+	 * @param value The figure, as a column or a caller stated it.
+	 * @returns The figure as exact decimal text.
+	 */
+	private decimalOf(value: unknown): string {
+		const text = typeof value === 'number' ? String(value) : `${value ?? ''}`.trim();
+
+		if (text === '' || !/^[+-]?(\d+(\.\d+)?|\.\d+)([eE][+-]?\d+)?$/.test(text)) {
+			return '0';
+		}
+
+		const match = /^([+-]?)(\d*)(?:\.(\d+))?[eE]([+-]?\d+)$/.exec(text);
+
+		if (!match) {
+			return text;
+		}
+
+		const [, sign, whole = '', fraction = '', exponentText] = match;
+		const digits = `${whole || '0'}${fraction}`;
+		const point = (whole || '0').length + Number(exponentText);
+
+		if (point <= 0) {
+			return `${sign}0.${'0'.repeat(-point)}${digits}`;
+		}
+
+		if (point >= digits.length) {
+			return `${sign}${digits}${'0'.repeat(point - digits.length)}`;
+		}
+
+		return `${sign}${digits.slice(0, point)}.${digits.slice(point)}`;
 	}
 
 	/**

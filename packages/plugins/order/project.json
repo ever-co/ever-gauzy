@@ -11,7 +11,8 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "plugin-cart", "plugin-pricing", "plugin-tax", "utils"],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "plugin-cart", "plugin-pricing",
+		"plugin-subscription", "plugin-tax", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",

@@ -380,6 +380,10 @@ function orderFixture(seeds: { lines?: any[]; order?: Record<string, unknown> } 
 		new OrderSummaryService(repo('order_summary') as never, {} as never) as never,
 		{ findByOwner: async () => [] } as never,
 		{ findByOwner: async () => [] } as never,
+		// The outbox every recomputation announces itself into. Stubbed rather than omitted: the
+		// constructor gained it when the order lifecycle started announcing its moves, and a double
+		// that stops matching the constructor is a suite that fails to compile.
+		{ append: jest.fn() } as never,
 		{ get: () => orderWriter } as never
 	);
 	const allocate = jest.fn(async () => ({ formatted: 'ORD-000124', value: 124, key: 'ORDER' }));

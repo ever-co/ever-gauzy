@@ -4,6 +4,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import {
 	AdjustmentModule,
 	ChannelModule,
+	EventOutboxModule,
 	IdempotencyModule,
 	Product,
 	ProductTranslation,
@@ -120,6 +121,11 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 		SequenceModule,
 		ChannelModule,
 		IdempotencyModule,
+		// Every `order.*` event is appended by the same call that commits the state change it describes,
+		// so the module that owns the outbox row is imported here rather than the event being published
+		// after the fact through a bus — an event published after a commit is an event a crash loses, and
+		// the outbox exists precisely so that it is not.
+		EventOutboxModule,
 		PricingModule,
 		TaxModule,
 		CartModule
