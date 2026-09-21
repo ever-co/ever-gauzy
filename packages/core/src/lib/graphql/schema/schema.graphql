@@ -4474,17 +4474,17 @@ type Query {
   """The computed totals of one order."""
   orderTotals(id: ID!): OrderTotals
 
-  """The totals history of one order, one row per version."""
-  orderSummaries(orderId: ID!): OrderSummaryConnection!
+  """The totals history of one order, one row per version, newest first."""
+  orderSummaries(orderId: ID!, page: PageInput): OrderSummaryConnection!
 
   """The money ledger of one order."""
-  orderTransactions(orderId: ID!, type: String): OrderTransactionConnection!
+  orderTransactions(orderId: ID!, type: String, page: PageInput): OrderTransactionConnection!
 
   """The timeline of one order."""
   orderHistory(orderId: ID!): [OrderHistory!]!
 
   """The changes of one order."""
-  orderChanges(orderId: ID!, status: String): OrderChangeConnection!
+  orderChanges(orderId: ID!, status: String, page: PageInput): OrderChangeConnection!
 
   """Read one change with its actions."""
   orderChange(id: ID!): OrderChange
@@ -43565,30 +43565,58 @@ enum PriceBulkMode {
 
 """A page of price lists."""
 type PriceListConnection {
-  items: [PriceList!]!
-  total: Int!
+  nodes: [PriceList!]!
+  edges: [PriceListEdge!]!
+  totalCount: Int!
   pageInfo: PageInfo!
+}
+
+"""One price list in a page, with the cursor that addresses it."""
+type PriceListEdge {
+  node: PriceList!
+  cursor: String!
 }
 
 """A page of price rows."""
 type ProductPriceConnection {
-  items: [ProductPrice!]!
-  total: Int!
+  nodes: [ProductPrice!]!
+  edges: [ProductPriceEdge!]!
+  totalCount: Int!
   pageInfo: PageInfo!
+}
+
+"""One price row in a page, with the cursor that addresses it."""
+type ProductPriceEdge {
+  node: ProductPrice!
+  cursor: String!
 }
 
 """A page of tax-inclusivity preferences."""
 type PricePreferenceConnection {
-  items: [PricePreference!]!
-  total: Int!
+  nodes: [PricePreference!]!
+  edges: [PricePreferenceEdge!]!
+  totalCount: Int!
   pageInfo: PageInfo!
+}
+
+"""One preference in a page, with the cursor that addresses it."""
+type PricePreferenceEdge {
+  node: PricePreference!
+  cursor: String!
 }
 
 """A page of exchange rates."""
 type ExchangeRateConnection {
-  items: [ExchangeRate!]!
-  total: Int!
+  nodes: [ExchangeRate!]!
+  edges: [ExchangeRateEdge!]!
+  totalCount: Int!
   pageInfo: PageInfo!
+}
+
+"""One exchange rate in a page, with the cursor that addresses it."""
+type ExchangeRateEdge {
+  node: ExchangeRate!
+  cursor: String!
 }
 
 """What deleting a price list did."""
@@ -45742,14 +45770,32 @@ type CartTotals {
   currencyDecimals: Int!
 }
 
+"""A page of carts."""
 type CartConnection {
-  items: [Cart!]!
-  total: Int!
+  nodes: [Cart!]!
+  edges: [CartEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
 }
 
+"""One cart in a page, with the cursor that addresses it."""
+type CartEdge {
+  node: Cart!
+  cursor: String!
+}
+
+"""A page of checkout sessions."""
 type CheckoutSessionConnection {
-  items: [CheckoutSession!]!
-  total: Int!
+  nodes: [CheckoutSession!]!
+  edges: [CheckoutSessionEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One checkout session in a page, with the cursor that addresses it."""
+type CheckoutSessionEdge {
+  node: CheckoutSession!
+  cursor: String!
 }
 
 """The outcome of a checkout: the order the cart became."""
@@ -46203,24 +46249,60 @@ type OrderTotals {
   currencyDecimals: Int!
 }
 
+"""A page of orders."""
 type OrderConnection {
-  items: [Order!]!
-  total: Int!
+  nodes: [Order!]!
+  edges: [OrderEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
 }
 
+"""One order in a page, with the cursor that addresses it."""
+type OrderEdge {
+  node: Order!
+  cursor: String!
+}
+
+"""A page of order changes."""
 type OrderChangeConnection {
-  items: [OrderChange!]!
-  total: Int!
+  nodes: [OrderChange!]!
+  edges: [OrderChangeEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
 }
 
+"""One change in a page, with the cursor that addresses it."""
+type OrderChangeEdge {
+  node: OrderChange!
+  cursor: String!
+}
+
+"""A page of totals summaries."""
 type OrderSummaryConnection {
-  items: [OrderSummary!]!
-  total: Int!
+  nodes: [OrderSummary!]!
+  edges: [OrderSummaryEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
 }
 
+"""One summary in a page, with the cursor that addresses it."""
+type OrderSummaryEdge {
+  node: OrderSummary!
+  cursor: String!
+}
+
+"""A page of ledger transactions."""
 type OrderTransactionConnection {
-  items: [OrderTransaction!]!
-  total: Int!
+  nodes: [OrderTransaction!]!
+  edges: [OrderTransactionEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One transaction in a page, with the cursor that addresses it."""
+type OrderTransactionEdge {
+  node: OrderTransaction!
+  cursor: String!
 }
 
 input CreateOrderInput {
@@ -48799,19 +48881,46 @@ type ShippingRate {
   reason: String
 }
 
+"""A page of shipping profiles."""
 type ShippingProfileConnection {
-  items: [ShippingProfile!]!
-  total: Int!
+  nodes: [ShippingProfile!]!
+  edges: [ShippingProfileEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
 }
 
+"""One shipping profile in a page, with the cursor that addresses it."""
+type ShippingProfileEdge {
+  node: ShippingProfile!
+  cursor: String!
+}
+
+"""A page of shipping options."""
 type ShippingOptionConnection {
-  items: [ShippingOption!]!
-  total: Int!
+  nodes: [ShippingOption!]!
+  edges: [ShippingOptionEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
 }
 
+"""One shipping option in a page, with the cursor that addresses it."""
+type ShippingOptionEdge {
+  node: ShippingOption!
+  cursor: String!
+}
+
+"""A page of fulfilments."""
 type FulfillmentConnection {
-  items: [Fulfillment!]!
-  total: Int!
+  nodes: [Fulfillment!]!
+  edges: [FulfillmentEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One fulfilment in a page, with the cursor that addresses it."""
+type FulfillmentEdge {
+  node: Fulfillment!
+  cursor: String!
 }
 
 input CreateShippingProfileInput {

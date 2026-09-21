@@ -1,6 +1,15 @@
 import { BadRequestException } from '@nestjs/common';
 import { CursorCodec } from './cursor';
-import { ConnectionFilter, ConnectionFieldKind, buildConnection, connectionFromPage } from './graphql-connection';
+import {
+	ConnectionFilter,
+	ConnectionFieldKind,
+	MAX_CONNECTION_PAGE_SIZE,
+	buildConnection,
+	connectionFromOffsetPage,
+	connectionFromPage,
+	encodeOffsetCursor,
+	resolveConnectionWindow
+} from './graphql-connection';
 
 /**
  * The connection contract, at the kernel rather than through a domain.
@@ -257,5 +266,63 @@ describe('buildConnection — what a caller may state', () => {
 		})();
 
 		expect(isRefusal(error)).toBe(true);
+	});
+});
+
+describe('resolveConnectionWindow — the window a cursor names', () => {
+	/** The failure a window resolver raised, or undefined when it answered. */
+	function refuse(selection: Parameters<typeof resolveConnectionWindow>[0]): string | undefined {
+		try {
+			resolveConnectionWindow(selection);
+
+			return undefined;
+		} catch (thrown) {
+			return (thrown as Error).message;
+		}
+	}
+
+	it('resumes past the row an `after` cursor names, because the schema says the cursor is exclusive', () => {
+		// Reading `after` as "the offset to resume at" re-answered the row the client had just been given,
+		// so a walk that paged with the cursors it was handed repeated one row per page.
+		expect(resolveConnectionWindow({ first: 3, after: encodeOffsetCursor(7) })).toEqual({ skip: 8, take: 3 });
+	});
+
+	it('ends a backward walk at the row a `before` cursor names rather than starting there', () => {
+		// The same misreading turned `last: 5, before: <offset 12>` into rows 12 to 16 — the wrong
+		// direction as well as the wrong rows.
+		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(12) })).toEqual({ skip: 7, take: 5 });
+		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(3) })).toEqual({ skip: 0, take: 5 });
+	});
+
+	it('walks from a page boundary to exactly the next page', () => {
+		// What a client does with the boundary it was given: the first page of three, then the cursor it
+		// answered with. Nothing is repeated and nothing is skipped.
+		const first = resolveConnectionWindow({ first: 3 });
+		const boundary = connectionFromOffsetPage({ items: [1, 2, 3], total: 9 }, first.skip).pageInfo.endCursor;
+
+		expect(resolveConnectionWindow({ first: 3, after: boundary ?? undefined })).toEqual({ skip: 3, take: 3 });
+
+		const second = connectionFromOffsetPage({ items: [4, 5, 6], total: 9 }, 3);
+		expect(second.edges.map((edge) => edge.cursor)).toEqual([3, 4, 5].map(encodeOffsetCursor));
+		expect(second.edges[second.edges.length - 1].cursor).toBe(second.pageInfo.endCursor);
+	});
+
+	it('refuses a cursor this platform did not mint rather than reading it as the first page', () => {
+		expect(refuse({ first: 3, after: 'not-a-cursor' })).toContain('PAGINATION_CURSOR_INVALID');
+		expect(refuse({ first: 3, after: encodeOffsetCursor(7).slice(0, -1) })).toContain('PAGINATION_CURSOR_INVALID');
+	});
+
+	it('refuses a backward walk with no anchor rather than answering the first page', () => {
+		expect(refuse({ last: 5 })).toContain('PAGINATION_ANCHOR_REQUIRED');
+	});
+
+	it('refuses a request that states both directions, both styles, or a cursor past the cap', () => {
+		expect(refuse({ first: 1, last: 1 })).toContain('PAGINATION_DIRECTION_CONFLICT');
+		expect(refuse({ after: encodeOffsetCursor(1), before: encodeOffsetCursor(9) })).toContain(
+			'PAGINATION_DIRECTION_CONFLICT'
+		);
+		expect(refuse({ first: 1, offset: 4 })).toContain('PAGINATION_STYLE_CONFLICT');
+
+		expect(resolveConnectionWindow({ first: 5000 }).take).toBe(MAX_CONNECTION_PAGE_SIZE);
 	});
 });

@@ -4,11 +4,14 @@ import { FindOptionsWhere } from 'typeorm';
 import { IPagination, OrderChangeType } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
+	IConnectionPageSelection,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
 	Versioned,
+	connectionFromOffsetPage,
+	resolveConnectionWindow,
 	versionExpectationOf
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
@@ -96,9 +99,11 @@ export class OrderResolver {
 		@Args('paymentStatus', { type: () => String, nullable: true }) paymentStatus?: string,
 		@Args('fulfillmentStatus', { type: () => String, nullable: true }) fulfillmentStatus?: string,
 		@Args('customerId', { type: () => ID, nullable: true }) customerId?: string,
-		@Args('channelId', { type: () => ID, nullable: true }) channelId?: string
+		@Args('channelId', { type: () => ID, nullable: true }) channelId?: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
 	): Promise<IOrderConnection> {
 		const where: FindOptionsWhere<Order> = {};
+		const { skip, take } = resolveConnectionWindow(page);
 
 		if (status) {
 			if (!isOrderStatus(status)) {
@@ -136,9 +141,9 @@ export class OrderResolver {
 			where.channelId = channelId;
 		}
 
-		const page = (await this.orderService.findAll({ where })) as IPagination<Order>;
+		const listing = (await this.orderService.findAll({ where, skip, take })) as IPagination<Order>;
 
-		return { items: page.items, total: page.total };
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/**

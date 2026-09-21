@@ -1,3 +1,4 @@
+import { GraphqlConnection, IConnectionPageSelection } from '@gauzy/core';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import {
 	IProductPriceBulkItem,
@@ -32,31 +33,25 @@ import { ProductPrice } from '../product-price/product-price.entity';
 /**
  * Cursor pagination, exactly as the kernel declares `PageInput`.
  *
- * `first`/`after` walk forwards and `last`/`before` walk backwards. A request that states both a
- * cursor window and a `limit`/`offset` window is refused rather than silently preferring one,
+ * `first`/`after` walk forwards and `last`/`before` walk backwards, both cursors exclusive. A request that
+ * states both a cursor window and a `limit`/`offset` window is refused rather than silently preferring one,
  * because the two walk differently over rows that are being inserted.
+ *
+ * The interface was declared here before the kernel owned it, and it was the same four members — which is
+ * what made two `PageInput`s and one schema a divergence waiting to happen.
  */
-export interface IPageInput {
-	first?: number;
-	after?: string;
-	last?: number;
-	before?: string;
-}
+export type IPageInput = IConnectionPageSelection;
 
 /** The boundary of a page, exactly as the kernel declares `PageInfo`. */
-export interface IPageInfo {
-	hasNextPage: boolean;
-	hasPreviousPage: boolean;
-	startCursor?: string;
-	endCursor?: string;
-}
+export type IPageInfo = GraphqlConnection<unknown>['pageInfo'];
 
-/** One page of rows, as every connection root field of this domain answers. */
-export interface IConnection<T> {
-	items: T[];
-	total: number;
-	pageInfo: IPageInfo;
-}
+/**
+ * One page of rows, as every connection root field of this domain answers.
+ *
+ * Bound to the kernel's connection rather than restated: this domain's page was `{ items, total, pageInfo }`,
+ * which is a fifth spelling of a page and the one a client could not walk by cursor.
+ */
+export type IConnection<T> = GraphqlConnection<T>;
 
 /*
 |--------------------------------------------------------------------------

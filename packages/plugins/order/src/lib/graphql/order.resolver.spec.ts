@@ -67,6 +67,13 @@ jest.mock('@gauzy/core', () => {
 			.commitVersionedUpdate,
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.versionExpectationOf,
+		// The connection helpers the list fields page and answer with, taken from the kernel: a double that
+		// left them undefined would have the suite fail with "not a function" the moment a case called one
+		// of those fields, rather than tell it anything about the page it answered.
+		connectionFromOffsetPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.connectionFromOffsetPage,
+		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.resolveConnectionWindow,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -215,6 +222,33 @@ describe('The order schema states the version and the retry key a caller supplie
 			'confirmOrderChange(id: ID!, version: Int, idempotencyKey: String): OrderChange!'
 		]) {
 			expect({ declaration, declared: schema.includes(declaration) }).toEqual({ declaration, declared: true });
+		}
+	});
+
+	it('answers every list field of the domain with the one connection shape, pageable', () => {
+		// Four page types used to be `{ items, total }`, which told a client how many rows there are and
+		// nothing about whether it had seen them all. The shape is asserted here as the client reads it.
+		for (const [type, edge] of [
+			['type OrderConnection {', 'OrderEdge'],
+			['type OrderChangeConnection {', 'OrderChangeEdge'],
+			['type OrderSummaryConnection {', 'OrderSummaryEdge'],
+			['type OrderTransactionConnection {', 'OrderTransactionEdge']
+		]) {
+			const body = schema.slice(schema.indexOf(type), schema.indexOf('}', schema.indexOf(type)));
+
+			for (const member of ['nodes: [', `edges: [${edge}!]!`, 'totalCount: Int!', 'pageInfo: PageInfo!']) {
+				expect({ type, member, declares: body.includes(member) }).toEqual({ type, member, declares: true });
+			}
+		}
+
+		// A connection whose field accepts no page can only ever answer one page, whatever its `pageInfo`
+		// claims, so every field that answers one states the page it takes.
+		for (const field of [
+			'orderSummaries(orderId: ID!, page: PageInput)',
+			'orderTransactions(orderId: ID!, type: String, page: PageInput)',
+			'orderChanges(orderId: ID!, status: String, page: PageInput)'
+		]) {
+			expect({ field, declared: schema.includes(field) }).toEqual({ field, declared: true });
 		}
 	});
 });

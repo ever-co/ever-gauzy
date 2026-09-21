@@ -320,30 +320,58 @@ export const schemaExtensions = gql`
 
 	"A page of price lists."
 	type PriceListConnection {
-		items: [PriceList!]!
-		total: Int!
+		nodes: [PriceList!]!
+		edges: [PriceListEdge!]!
+		totalCount: Int!
 		pageInfo: PageInfo!
+	}
+
+	"One price list in a page, with the cursor that addresses it."
+	type PriceListEdge {
+		node: PriceList!
+		cursor: String!
 	}
 
 	"A page of price rows."
 	type ProductPriceConnection {
-		items: [ProductPrice!]!
-		total: Int!
+		nodes: [ProductPrice!]!
+		edges: [ProductPriceEdge!]!
+		totalCount: Int!
 		pageInfo: PageInfo!
+	}
+
+	"One price row in a page, with the cursor that addresses it."
+	type ProductPriceEdge {
+		node: ProductPrice!
+		cursor: String!
 	}
 
 	"A page of tax-inclusivity preferences."
 	type PricePreferenceConnection {
-		items: [PricePreference!]!
-		total: Int!
+		nodes: [PricePreference!]!
+		edges: [PricePreferenceEdge!]!
+		totalCount: Int!
 		pageInfo: PageInfo!
+	}
+
+	"One preference in a page, with the cursor that addresses it."
+	type PricePreferenceEdge {
+		node: PricePreference!
+		cursor: String!
 	}
 
 	"A page of exchange rates."
 	type ExchangeRateConnection {
-		items: [ExchangeRate!]!
-		total: Int!
+		nodes: [ExchangeRate!]!
+		edges: [ExchangeRateEdge!]!
+		totalCount: Int!
 		pageInfo: PageInfo!
+	}
+
+	"One exchange rate in a page, with the cursor that addresses it."
+	type ExchangeRateEdge {
+		node: ExchangeRate!
+		cursor: String!
 	}
 
 	"What deleting a price list did."

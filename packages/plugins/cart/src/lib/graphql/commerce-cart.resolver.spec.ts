@@ -74,7 +74,14 @@ jest.mock('@gauzy/core', () => {
 		// guard runs in this suite; what it asserts is the metadata below.
 		Versioned: (options: unknown = {}) => SetMetadata(VERSIONED_METADATA_KEY, options),
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
-			.versionExpectationOf
+			.versionExpectationOf,
+		// The connection helpers the list fields page and answer with, taken from the kernel rather than
+		// restated: a double that stubbed them would let a page drift from the contract in a suite that
+		// still passed, which is the whole class of defect this conversion removed.
+		connectionFromOffsetPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.connectionFromOffsetPage,
+		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.resolveConnectionWindow
 	};
 });
 
@@ -134,6 +141,23 @@ describe('the cart schema — the members the conventions need a client to be ab
 	it('refuses the key on a create without demanding a version of it', () => {
 		// A create has no revision to have read, so the version member is an update's alone.
 		expect(bodyOf('input', 'CreateCartInput')).not.toMatch(/version: Int/);
+	});
+
+	it('answers both list fields with the one connection shape, and gives each a cursor to walk from', () => {
+		// The two page types were `{ items, total }` — no `pageInfo` at all — so a client of either field
+		// could not tell whether there was more, let alone ask for it. `nodes`, `edges`, `totalCount` and a
+		// non-null `pageInfo` is the shape every other list field of the platform answers with.
+		for (const [type, edge] of [
+			['CartConnection', 'CartEdge'],
+			['CheckoutSessionConnection', 'CheckoutSessionEdge']
+		]) {
+			expect(bodyOf('type', type)).toMatch(/nodes: \[[A-Za-z]+!\]!/);
+			expect(bodyOf('type', type)).toMatch(new RegExp(`edges: \\[${edge}!\\]!`));
+			expect(bodyOf('type', type)).toMatch(/totalCount: Int!/);
+			expect(bodyOf('type', type)).toMatch(/pageInfo: PageInfo!/);
+			expect(bodyOf('type', edge)).toMatch(/node: [A-Za-z]+!/);
+			expect(bodyOf('type', edge)).toMatch(/cursor: String!/);
+		}
 	});
 });
 

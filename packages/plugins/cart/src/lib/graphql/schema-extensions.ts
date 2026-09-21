@@ -136,14 +136,32 @@ export const cartSchemaExtensions = gql`
 		currencyDecimals: Int!
 	}
 
+	"A page of carts."
 	type CartConnection {
-		items: [Cart!]!
-		total: Int!
+		nodes: [Cart!]!
+		edges: [CartEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
+	"One cart in a page, with the cursor that addresses it."
+	type CartEdge {
+		node: Cart!
+		cursor: String!
+	}
+
+	"A page of checkout sessions."
 	type CheckoutSessionConnection {
-		items: [CheckoutSession!]!
-		total: Int!
+		nodes: [CheckoutSession!]!
+		edges: [CheckoutSessionEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One checkout session in a page, with the cursor that addresses it."
+	type CheckoutSessionEdge {
+		node: CheckoutSession!
+		cursor: String!
 	}
 
 	"The outcome of a checkout: the order the cart became."

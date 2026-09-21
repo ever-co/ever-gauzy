@@ -115,19 +115,46 @@ export const fulfillmentSchemaExtensions = gql`
 		reason: String
 	}
 
+	"A page of shipping profiles."
 	type ShippingProfileConnection {
-		items: [ShippingProfile!]!
-		total: Int!
+		nodes: [ShippingProfile!]!
+		edges: [ShippingProfileEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
+	"One shipping profile in a page, with the cursor that addresses it."
+	type ShippingProfileEdge {
+		node: ShippingProfile!
+		cursor: String!
+	}
+
+	"A page of shipping options."
 	type ShippingOptionConnection {
-		items: [ShippingOption!]!
-		total: Int!
+		nodes: [ShippingOption!]!
+		edges: [ShippingOptionEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
+	"One shipping option in a page, with the cursor that addresses it."
+	type ShippingOptionEdge {
+		node: ShippingOption!
+		cursor: String!
+	}
+
+	"A page of fulfilments."
 	type FulfillmentConnection {
-		items: [Fulfillment!]!
-		total: Int!
+		nodes: [Fulfillment!]!
+		edges: [FulfillmentEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One fulfilment in a page, with the cursor that addresses it."
+	type FulfillmentEdge {
+		node: Fulfillment!
+		cursor: String!
 	}
 
 	input CreateShippingProfileInput {

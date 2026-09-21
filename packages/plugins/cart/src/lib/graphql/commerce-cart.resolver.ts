@@ -4,11 +4,14 @@ import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
+	IConnectionPageSelection,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
 	Versioned,
+	connectionFromOffsetPage,
+	resolveConnectionWindow,
 	versionExpectationOf
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
@@ -54,7 +57,13 @@ export class CommerceCartResolver {
 	/**
 	 * Lists carts.
 	 *
-	 * @param filter The filter arguments.
+	 * The page the caller states is honoured rather than dropped: the field accepts `page` in the schema,
+	 * and a field that accepts a page and answers every row is a field whose schema lies.
+	 *
+	 * @param status The status to filter by.
+	 * @param customerId The customer to filter by.
+	 * @param email The email to filter by.
+	 * @param page The page.
 	 * @returns A page of carts.
 	 * @throws BadRequestException when a status is given that the cart does not have.
 	 */
@@ -63,9 +72,11 @@ export class CommerceCartResolver {
 	async carts(
 		@Args('status', { type: () => String, nullable: true }) status?: string,
 		@Args('customerId', { type: () => ID, nullable: true }) customerId?: string,
-		@Args('email', { type: () => String, nullable: true }) email?: string
+		@Args('email', { type: () => String, nullable: true }) email?: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
 	): Promise<ICartConnection> {
 		const where: FindOptionsWhere<CommerceCart> = {};
+		const { skip, take } = resolveConnectionWindow(page);
 
 		if (status) {
 			if (!isCartStatus(status)) {
@@ -81,9 +92,9 @@ export class CommerceCartResolver {
 			where.email = email;
 		}
 
-		const page = (await this.commerceCartService.findAll({ where })) as IPagination<Cart>;
+		const listing = (await this.commerceCartService.findAll({ where, skip, take })) as IPagination<Cart>;
 
-		return { items: page.items, total: page.total };
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/**

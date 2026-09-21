@@ -1,7 +1,16 @@
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { IPagination, ShippingPriceType } from '@gauzy/contracts';
-import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	IConnectionPageSelection,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	connectionFromOffsetPage,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { ShippingOption } from '../shipping-option/shipping-option.entity';
@@ -46,13 +55,17 @@ export class ShippingOptionResolver {
 	/**
 	 * Lists shipping profiles.
 	 *
+	 * @param page The page.
 	 * @returns A page of profiles.
 	 */
 	@Query(() => Object, { name: 'shippingProfiles' })
-	async shippingProfiles(): Promise<IShippingProfileConnection> {
-		const page = (await this.profileService.findAll({})) as IPagination<ShippingProfile>;
+	async shippingProfiles(
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<IShippingProfileConnection> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const listing = (await this.profileService.findAll({ skip, take })) as IPagination<ShippingProfile>;
 
-		return { items: page.items, total: page.total };
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/**
@@ -82,13 +95,17 @@ export class ShippingOptionResolver {
 	/**
 	 * Lists shipping options.
 	 *
+	 * @param page The page.
 	 * @returns A page of options.
 	 */
 	@Query(() => Object, { name: 'shippingOptions' })
-	async shippingOptions(): Promise<IShippingOptionConnection> {
-		const page = (await this.optionService.findAll({})) as IPagination<ShippingOption>;
+	async shippingOptions(
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<IShippingOptionConnection> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const listing = (await this.optionService.findAll({ skip, take })) as IPagination<ShippingOption>;
 
-		return { items: page.items, total: page.total };
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/**

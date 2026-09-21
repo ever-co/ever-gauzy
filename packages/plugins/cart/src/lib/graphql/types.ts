@@ -1,3 +1,4 @@
+import { GraphqlConnection } from '@gauzy/core';
 import {
 	ICommerceCart,
 	ICommerceCartLine,
@@ -22,17 +23,15 @@ export type CartPromotion = ICommerceCartPromotion;
 export type CheckoutSession = ICommerceCheckoutSession;
 export type CartTotals = ICommerceCartTotals;
 
-/** A page of carts. */
-export interface ICartConnection {
-	items: Cart[];
-	total: number;
-}
-
-/** A page of checkout sessions. */
-export interface ICheckoutSessionConnection {
-	items: CheckoutSession[];
-	total: number;
-}
+/**
+ * A page of carts, and a page of checkout sessions.
+ *
+ * Both were a two-member shape of their own — `{ items, total }`, with no boundary a client could walk
+ * from — which is the shape the schema no longer declares. The kernel's connection is the one shape
+ * every list field of the platform answers with, so a client that can page one domain can page them all.
+ */
+export type ICartConnection = GraphqlConnection<Cart>;
+export type ICheckoutSessionConnection = GraphqlConnection<CheckoutSession>;
 
 /** What a completed checkout returns. */
 export interface ICheckoutResult {

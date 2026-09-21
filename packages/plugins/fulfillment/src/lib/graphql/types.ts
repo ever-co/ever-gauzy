@@ -1,3 +1,4 @@
+import { GraphqlConnection } from '@gauzy/core';
 import {
 	IFulfillment,
 	IFulfillmentLine,
@@ -18,23 +19,15 @@ export type ShippingOption = IShippingOption;
 export type ShippingProfile = IShippingProfile;
 export type ShippingProfileVariant = IShippingProfileVariant;
 
-/** A page of fulfilments. */
-export interface IFulfillmentConnection {
-	items: Fulfillment[];
-	total: number;
-}
-
-/** A page of shipping options. */
-export interface IShippingOptionConnection {
-	items: ShippingOption[];
-	total: number;
-}
-
-/** A page of shipping profiles. */
-export interface IShippingProfileConnection {
-	items: ShippingProfile[];
-	total: number;
-}
+/**
+ * A page of fulfilments, of shipping options and of shipping profiles.
+ *
+ * Each was its own `{ items, total }` before, which is a page a client can read once and not walk: the
+ * kernel's connection carries the cursors and the boundary as well as the count.
+ */
+export type IFulfillmentConnection = GraphqlConnection<Fulfillment>;
+export type IShippingOptionConnection = GraphqlConnection<ShippingOption>;
+export type IShippingProfileConnection = GraphqlConnection<ShippingProfile>;
 
 /** An option together with why it is or is not available. */
 export interface IShippingOptionEligibility {

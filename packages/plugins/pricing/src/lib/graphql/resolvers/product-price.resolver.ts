@@ -69,7 +69,7 @@ export class ProductPriceResolver {
 		@Args('offset') offset?: number
 	): Promise<ProductPriceConnection> {
 		return await readConnection(page, limit, offset, (window) =>
-			this.productPriceService.paginate({
+			this.productPriceService.findAll({
 				where: this.whereOf(filter),
 				order: this.orderOf(sort),
 				take: window.take,

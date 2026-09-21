@@ -1,3 +1,4 @@
+import { GraphqlConnection } from '@gauzy/core';
 import {
 	IOrder,
 	IOrderAddress,
@@ -31,26 +32,14 @@ export type OrderCreditLine = IOrderCreditLine;
 export type OrderHistory = IOrderHistory;
 export type OrderTotals = IOrderTotals;
 
-/** A page of orders. */
-export interface IOrderConnection {
-	items: Order[];
-	total: number;
-}
-
-/** A page of order changes. */
-export interface IOrderChangeConnection {
-	items: OrderChange[];
-	total: number;
-}
-
-/** A page of summaries. */
-export interface IOrderSummaryConnection {
-	items: OrderSummary[];
-	total: number;
-}
-
-/** A page of transactions. */
-export interface IOrderTransactionConnection {
-	items: OrderTransaction[];
-	total: number;
-}
+/**
+ * A page of orders, changes, summaries or transactions.
+ *
+ * Each of these was a two-member shape of its own — `{ items, total }` — so the four list fields of this
+ * domain were four spellings of a page and none of them could be walked from. One connection type per row
+ * type, bound to the kernel's own, is what makes a client that pages orders able to page all of them.
+ */
+export type IOrderConnection = GraphqlConnection<Order>;
+export type IOrderChangeConnection = GraphqlConnection<OrderChange>;
+export type IOrderSummaryConnection = GraphqlConnection<OrderSummary>;
+export type IOrderTransactionConnection = GraphqlConnection<OrderTransaction>;

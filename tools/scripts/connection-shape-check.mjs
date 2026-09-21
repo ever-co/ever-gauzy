@@ -21,12 +21,15 @@
  * Both halves of the surface are read from the composed SDL, which is what the endpoint serves.
  *
  * **The two lists below are the baseline, and they are the point of this gate rather than an exception to
- * it.** 48 list root fields answer a bare array and 52 connection types still spell their count `total`;
- * each needs a connection type, its edge type and resolver arguments of its own, which is a wave of its
- * own rather than a line in someone else's. Naming every one of them is what makes the remainder
+ * it.** 35 list root fields of this programme still answer a bare array — either the platform's own
+ * application reads them, or the commerce programme introduced them and their connection type is a wave of
+ * its own rather than a line in someone else's. Naming every one of them is what makes the remainder
  * countable and keeps a *new* one from appearing unnoticed — and each conversion is a line removed from
  * these lists. A name that no longer violates its rule is reported as stale, so the wave that lands it has
  * to take it out rather than leaving the list describing a state that has moved on.
+ *
+ * The connection-shape baseline is empty: every `*Connection` type in the composed schema is canonical, so
+ * a new one that is not fails here rather than being added to a list.
  *
  * Run from the repository root: `node tools/scripts/connection-shape-check.mjs`
  */
@@ -43,28 +46,50 @@ const schema = readFileSync(SDL, 'utf8')
 	.replace(/^[ \t]*"(?:[^"\\]|\\.)*"[ \t]*$/gm, '')
 	.replace(/^[ \t]*#.*$/gm, '');
 
-const BARE_ARRAYS = new Set([
-	'addressRoles', 'splitExpensesByEmployee', 'mySplitExpenses', 'featureToggleDefinitions',
-	'myIncomes', 'unitCategories', 'units',
-	'organizationContactsByEmployee', 'organizationProjectsByEmployee', 'organizationStrategicInitiativesByProject', 'paymentTerms',
-	'myRolePermissions', 'resolvePrice', 'taxRateParts', 'resolveTaxRate',
-	'taxRegimeRates', 'stockLevels', 'stockMovements', 'stockReservations',
-	'stockTransfers', 'stockTransferLines', 'stockAlerts', 'stockAdjustments',
-	'stockCounts', 'stockCountLines', 'channelWarehouses', 'warehouseBinSubtree',
-	'warehouseBinContents', 'warehouseBinCapacityWarnings', 'pickListLines', 'orderHistory',
-	'orderLineInvoices', 'shippingOptionsForContext', 'orderReturnLines', 'orderClaimLines',
-	'orderExchangeLines', 'sellers', 'sellerOfferings', 'sellerTransactions',
-	'sellerSplitReconciliation', 'sellerPayouts', 'sellerPayoutLines', 'sellerSettlements',
-	'searchSuggest', 'searchFacets', 'searchIndexDefinitions', 'searchIndexStatus',
+/**
+ * List root fields this programme introduced that still answer a bare array.
+ *
+ * Each needs a connection type and the resolver arguments of its own, which is a wave rather than a line
+ * in someone else's — see the branch's handover for the slice each package owns.
+ */
+const PROGRAMME_BARE_ARRAYS = new Set([
+	'resolvePrice', 'taxRateParts', 'resolveTaxRate', 'taxRegimeRates',
+	'stockLevels', 'stockMovements', 'stockReservations', 'stockTransfers',
+	'stockTransferLines', 'stockAlerts', 'stockAdjustments', 'stockCounts',
+	'stockCountLines', 'channelWarehouses', 'warehouseBinSubtree', 'warehouseBinContents',
+	'warehouseBinCapacityWarnings', 'pickListLines', 'orderHistory', 'orderLineInvoices',
+	'shippingOptionsForContext', 'orderReturnLines', 'orderClaimLines', 'orderExchangeLines',
+	'sellers', 'sellerOfferings', 'sellerTransactions', 'sellerSplitReconciliation',
+	'sellerPayouts', 'sellerPayoutLines', 'sellerSettlements', 'searchSuggest',
+	'searchFacets', 'searchIndexDefinitions', 'searchIndexStatus',
 ]);
 
-const LEGACY_CONNECTIONS = new Set([
-	'PriceListConnection', 'ProductPriceConnection', 'PricePreferenceConnection',
-	'ExchangeRateConnection', 'CartConnection',
-	'CheckoutSessionConnection', 'OrderConnection', 'OrderChangeConnection', 'OrderSummaryConnection',
-	'OrderTransactionConnection', 'ShippingProfileConnection',
-	'ShippingOptionConnection', 'FulfillmentConnection',
+/**
+ * List root fields that predate this programme and answer a bare array.
+ *
+ * **These are not this branch's to change.** Each is served by the platform's own application today, so a
+ * field that started returning a connection instead of a list is a breaking change to a surface somebody
+ * else's client reads — which is the owner's decision, not a branch's. They are named here so the rule can
+ * be enforced everywhere else, and so the exemption is visible rather than implied by a count.
+ */
+const PLATFORM_BARE_ARRAYS = new Set([
+	'addressRoles', 'splitExpensesByEmployee', 'mySplitExpenses', 'featureToggleDefinitions',
+	'myIncomes', 'unitCategories', 'units', 'organizationContactsByEmployee',
+	'organizationProjectsByEmployee', 'organizationStrategicInitiativesByProject', 'paymentTerms', 'myRolePermissions',
 ]);
+
+/**
+ * Connection types that still spell their count `total` rather than `totalCount`, or leave `pageInfo`
+ * nullable, or carry no `edges`.
+ *
+ * **Empty, and that is the point of keeping it.** The wave that converted the last thirteen — the four of
+ * pricing, the four of ordering, the three of fulfilment and the two of the cart — took every entry out, so
+ * a connection that departs from the canonical shape now fails this gate outright instead of being named
+ * here. The list stays because removing it would remove the stale-entry check with it: the next wave that
+ * needs an exemption gets the same accounting for free, and a name left in it after its conversion is
+ * reported rather than quietly tolerated.
+ */
+const LEGACY_CONNECTIONS = new Set([]);
 
 /** The body of `type <name> { … }`, or null when the schema declares no such type. */
 function typeBody(name) {
@@ -117,7 +142,7 @@ const queryFields = fieldsOf(typeBody('Query') ?? '');
 for (const field of queryFields) {
 	if (!/^\[/.test(field.type)) continue;
 
-	if (!BARE_ARRAYS.has(field.name)) {
+	if (!PROGRAMME_BARE_ARRAYS.has(field.name) && !PLATFORM_BARE_ARRAYS.has(field.name)) {
 		failures.push(
 			`Query.${field.name} -> returns \`${field.type}\`, a bare array; a list root field returns a connection`
 		);
@@ -164,9 +189,11 @@ for (const name of connections) {
 	}
 }
 
-for (const name of BARE_ARRAYS) {
+for (const name of [...PROGRAMME_BARE_ARRAYS, ...PLATFORM_BARE_ARRAYS]) {
 	if (!queryFields.some((field) => field.name === name && /^\[/.test(field.type))) {
-		stale.push(`Query.${name} no longer returns a bare array — take it out of BARE_ARRAYS`);
+		const list = PROGRAMME_BARE_ARRAYS.has(name) ? 'PROGRAMME_BARE_ARRAYS' : 'PLATFORM_BARE_ARRAYS';
+
+		stale.push(`Query.${name} no longer returns a bare array — take it out of ${list}`);
 	}
 }
 
@@ -176,7 +203,7 @@ if (failures.length > 0) {
 	console.error('');
 	console.error('A list root field returns a connection; a connection carries nodes, edges, totalCount');
 	console.error('and a non-null pageInfo; a count is nullable. A field that cannot follow the rule yet is');
-	console.error('named in the two lists at the top of this file, with the reason it is still there.');
+	console.error('named in the three lists at the top of this file, with the reason it is still there.');
 	process.exit(1);
 }
 
@@ -189,8 +216,9 @@ if (stale.length > 0) {
 }
 
 console.log(
-	`PASSED — ${queryFields.length} root field(s) read: ${BARE_ARRAYS.size} list field(s) still answer a bare ` +
-		`array and ${LEGACY_CONNECTIONS.size} of ${connections.length} connection type(s) are still not the ` +
-		`canonical shape, both named in the baseline; every other list field is a connection and every other ` +
+	`PASSED — ${queryFields.length} root field(s) read: ${PROGRAMME_BARE_ARRAYS.size} list field(s) of this ` +
+		`programme and ${PLATFORM_BARE_ARRAYS.size} the platform already answers a bare array, and ` +
+		`${LEGACY_CONNECTIONS.size} of ${connections.length} connection type(s) are not yet the canonical ` +
+		`shape — all three named in the baseline. Every other list field is a connection, and every other ` +
 		`connection carries nodes, edges, totalCount and a non-null pageInfo.`
 );

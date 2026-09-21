@@ -331,24 +331,60 @@ export const orderSchemaExtensions = gql`
 		currencyDecimals: Int!
 	}
 
+	"A page of orders."
 	type OrderConnection {
-		items: [Order!]!
-		total: Int!
+		nodes: [Order!]!
+		edges: [OrderEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
+	"One order in a page, with the cursor that addresses it."
+	type OrderEdge {
+		node: Order!
+		cursor: String!
+	}
+
+	"A page of order changes."
 	type OrderChangeConnection {
-		items: [OrderChange!]!
-		total: Int!
+		nodes: [OrderChange!]!
+		edges: [OrderChangeEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
+	"One change in a page, with the cursor that addresses it."
+	type OrderChangeEdge {
+		node: OrderChange!
+		cursor: String!
+	}
+
+	"A page of totals summaries."
 	type OrderSummaryConnection {
-		items: [OrderSummary!]!
-		total: Int!
+		nodes: [OrderSummary!]!
+		edges: [OrderSummaryEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
+	"One summary in a page, with the cursor that addresses it."
+	type OrderSummaryEdge {
+		node: OrderSummary!
+		cursor: String!
+	}
+
+	"A page of ledger transactions."
 	type OrderTransactionConnection {
-		items: [OrderTransaction!]!
-		total: Int!
+		nodes: [OrderTransaction!]!
+		edges: [OrderTransactionEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One transaction in a page, with the cursor that addresses it."
+	type OrderTransactionEdge {
+		node: OrderTransaction!
+		cursor: String!
 	}
 
 	input CreateOrderInput {
@@ -437,14 +473,14 @@ export const orderSchemaExtensions = gql`
 		orderByNumber(number: String!): Order
 		"The computed totals of one order."
 		orderTotals(id: ID!): OrderTotals
-		"The totals history of one order, one row per version."
-		orderSummaries(orderId: ID!): OrderSummaryConnection!
+		"The totals history of one order, one row per version, newest first."
+		orderSummaries(orderId: ID!, page: PageInput): OrderSummaryConnection!
 		"The money ledger of one order."
-		orderTransactions(orderId: ID!, type: String): OrderTransactionConnection!
+		orderTransactions(orderId: ID!, type: String, page: PageInput): OrderTransactionConnection!
 		"The timeline of one order."
 		orderHistory(orderId: ID!): [OrderHistory!]!
 		"The changes of one order."
-		orderChanges(orderId: ID!, status: String): OrderChangeConnection!
+		orderChanges(orderId: ID!, status: String, page: PageInput): OrderChangeConnection!
 		"Read one change with its actions."
 		orderChange(id: ID!): OrderChange
 		"Every item and credit-note item one order line was billed through, oldest first."

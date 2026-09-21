@@ -4,11 +4,14 @@ import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
+	IConnectionPageSelection,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
 	Versioned,
+	connectionFromOffsetPage,
+	resolveConnectionWindow,
 	versionExpectationOf
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
@@ -79,15 +82,18 @@ export class OrderChangeResolver {
 	 *
 	 * @param orderId The order.
 	 * @param status Optional status filter.
+	 * @param page The page.
 	 * @returns A page of changes.
 	 * @throws BadRequestException when a status is given that a change does not have.
 	 */
 	@Query(() => Object, { name: 'orderChanges' })
 	async orderChanges(
 		@Args('orderId', { type: () => ID }) orderId: string,
-		@Args('status', { type: () => String, nullable: true }) status?: string
+		@Args('status', { type: () => String, nullable: true }) status?: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
 	): Promise<IOrderChangeConnection> {
 		const where: FindOptionsWhere<OrderChange> = { orderId };
+		const { skip, take } = resolveConnectionWindow(page);
 
 		if (status) {
 			if (!isOrderChangeStatus(status)) {
@@ -99,9 +105,14 @@ export class OrderChangeResolver {
 			where.status = status;
 		}
 
-		const page = (await this.changeService.findAll({ where, relations: ['actions'] })) as IPagination<OrderChange>;
+		const listing = (await this.changeService.findAll({
+			where,
+			relations: ['actions'],
+			skip,
+			take
+		})) as IPagination<OrderChange>;
 
-		return { items: page.items, total: page.total };
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/**
@@ -118,17 +129,28 @@ export class OrderChangeResolver {
 	/**
 	 * The totals history of an order.
 	 *
+	 * The order the field means — newest version first — is asked of the store rather than applied to the
+	 * rows afterwards: a list that is sorted after it was paged answers the wrong page whenever the rows
+	 * do not already arrive in that order, which is exactly what the sort was there to fix.
+	 *
 	 * @param orderId The order.
+	 * @param page The page.
 	 * @returns A page of summaries, newest version first.
 	 */
 	@Query(() => Object, { name: 'orderSummaries' })
-	async orderSummaries(@Args('orderId', { type: () => ID }) orderId: string): Promise<IOrderSummaryConnection> {
-		const page = (await this.summaryService.findAll({ where: { orderId } })) as IPagination<OrderSummary>;
+	async orderSummaries(
+		@Args('orderId', { type: () => ID }) orderId: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<IOrderSummaryConnection> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const listing = (await this.summaryService.findAll({
+			where: { orderId },
+			order: { version: 'DESC' },
+			skip,
+			take
+		})) as IPagination<OrderSummary>;
 
-		return {
-			items: [...page.items].sort((left, right) => Number(right.version) - Number(left.version)),
-			total: page.total
-		};
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/**
@@ -136,15 +158,18 @@ export class OrderChangeResolver {
 	 *
 	 * @param orderId The order.
 	 * @param type Optional transaction-type filter.
+	 * @param page The page.
 	 * @returns A page of transactions.
 	 * @throws BadRequestException when a type is given that the ledger does not carry.
 	 */
 	@Query(() => Object, { name: 'orderTransactions' })
 	async orderTransactions(
 		@Args('orderId', { type: () => ID }) orderId: string,
-		@Args('type', { type: () => String, nullable: true }) type?: string
+		@Args('type', { type: () => String, nullable: true }) type?: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
 	): Promise<IOrderTransactionConnection> {
 		const where: FindOptionsWhere<OrderTransaction> = { orderId };
+		const { skip, take } = resolveConnectionWindow(page);
 
 		if (type) {
 			if (!isOrderTransactionType(type)) {
@@ -156,9 +181,9 @@ export class OrderChangeResolver {
 			where.type = type;
 		}
 
-		const page = (await this.transactionService.findAll({ where })) as IPagination<OrderTransaction>;
+		const listing = (await this.transactionService.findAll({ where, skip, take })) as IPagination<OrderTransaction>;
 
-		return { items: page.items, total: page.total };
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/**

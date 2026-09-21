@@ -4,11 +4,14 @@ import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
+	IConnectionPageSelection,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
 	Versioned,
+	connectionFromOffsetPage,
+	resolveConnectionWindow,
 	versionExpectationOf
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
@@ -69,6 +72,7 @@ export class FulfillmentResolver {
 	 * Lists fulfilments.
 	 *
 	 * @param filter The filter arguments.
+	 * @param page The page.
 	 * @returns A page of fulfilments.
 	 * @throws BadRequestException when a status or a direction is given that a fulfilment does not have.
 	 */
@@ -77,9 +81,11 @@ export class FulfillmentResolver {
 		@Args('orderId', { type: () => ID, nullable: true }) orderId?: string,
 		@Args('status', { type: () => String, nullable: true }) status?: string,
 		@Args('warehouseId', { type: () => ID, nullable: true }) warehouseId?: string,
-		@Args('direction', { type: () => String, nullable: true }) direction?: string
+		@Args('direction', { type: () => String, nullable: true }) direction?: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
 	): Promise<IFulfillmentConnection> {
 		const where: FindOptionsWhere<Fulfillment> = {};
+		const { skip, take } = resolveConnectionWindow(page);
 
 		if (orderId) {
 			where.orderId = orderId;
@@ -109,9 +115,9 @@ export class FulfillmentResolver {
 			where.direction = direction;
 		}
 
-		const page = (await this.fulfillmentService.findAll({ where })) as IPagination<Fulfillment>;
+		const listing = (await this.fulfillmentService.findAll({ where, skip, take })) as IPagination<Fulfillment>;
 
-		return { items: page.items, total: page.total };
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/**

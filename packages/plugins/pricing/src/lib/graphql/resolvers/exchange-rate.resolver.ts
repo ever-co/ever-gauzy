@@ -64,7 +64,7 @@ export class ExchangeRateResolver {
 		@Args('offset') offset?: number
 	): Promise<ExchangeRateConnection> {
 		return await readConnection(page, limit, offset, (window) =>
-			this.exchangeRateService.paginate({
+			this.exchangeRateService.findAll({
 				where: this.whereOf(filter),
 				order: this.orderOf(sort),
 				take: window.take,

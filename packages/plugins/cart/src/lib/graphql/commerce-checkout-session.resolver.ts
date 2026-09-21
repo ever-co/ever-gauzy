@@ -4,11 +4,14 @@ import { FindOptionsWhere } from 'typeorm';
 import { CommerceCheckoutSessionStatus, IPagination } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
+	IConnectionPageSelection,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
 	Versioned,
+	connectionFromOffsetPage,
+	resolveConnectionWindow,
 	versionExpectationOf
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
@@ -58,6 +61,7 @@ export class CommerceCheckoutSessionResolver {
 	 *
 	 * @param cartId Optional cart filter.
 	 * @param status Optional status filter.
+	 * @param page The page.
 	 * @returns A page of sessions.
 	 * @throws BadRequestException when a status is given that a checkout session does not have.
 	 */
@@ -65,9 +69,11 @@ export class CommerceCheckoutSessionResolver {
 	@Query(() => Object, { name: 'checkoutSessions' })
 	async checkoutSessions(
 		@Args('cartId', { type: () => ID, nullable: true }) cartId?: string,
-		@Args('status', { type: () => String, nullable: true }) status?: string
+		@Args('status', { type: () => String, nullable: true }) status?: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
 	): Promise<ICheckoutSessionConnection> {
 		const where: FindOptionsWhere<CommerceCheckoutSession> = {};
+		const { skip, take } = resolveConnectionWindow(page);
 
 		if (cartId) {
 			where.cartId = cartId;
@@ -82,11 +88,13 @@ export class CommerceCheckoutSessionResolver {
 			where.status = status;
 		}
 
-		const page = (await this.commerceCheckoutSessionService.findAll({
-			where
+		const listing = (await this.commerceCheckoutSessionService.findAll({
+			where,
+			skip,
+			take
 		})) as IPagination<CommerceCheckoutSession>;
 
-		return { items: page.items, total: page.total };
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/**

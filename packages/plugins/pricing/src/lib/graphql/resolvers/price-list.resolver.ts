@@ -65,7 +65,7 @@ export class PriceListResolver {
 		@Args('offset') offset?: number
 	): Promise<PriceListConnection> {
 		return await readConnection(page, limit, offset, (window) =>
-			this.priceListService.paginate({
+			this.priceListService.findAll({
 				where: this.whereOf(filter),
 				order: this.orderOf(sort),
 				take: window.take,

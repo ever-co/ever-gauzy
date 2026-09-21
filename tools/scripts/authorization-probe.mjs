@@ -273,7 +273,7 @@ async function main() {
 	// independent refusals are what separate "the resolver's guards run over GraphQL and refuse this
 	// caller" from "this one field failed for its own reason" — one field can fail on the row it
 	// names, two cannot both do so by accident.
-	const query = await graphql('query ProbeRead { orders { total } }', {
+	const query = await graphql('query ProbeRead { orders { totalCount nodes { id } } }', {
 		token: probeToken,
 		tenantId: probeTenantId
 	});

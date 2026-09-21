@@ -804,11 +804,22 @@ export interface IConnectionPageSelection {
 	offset?: number;
 }
 
-/** The page size used when a caller states none. */
-export const DEFAULT_CONNECTION_PAGE_SIZE = 25;
+/**
+ * The page size used when a caller states none.
+ *
+ * Taken from the query protocol rather than chosen here: a connection is the same contract over GraphQL
+ * as over REST, and two constants that happened to disagree answered one request with twenty rows over
+ * one surface and twenty-five over the other. A client that pages both sees the difference immediately.
+ */
+export const DEFAULT_CONNECTION_PAGE_SIZE = API_QUERY_LIMITS.defaultPageSize;
 
-/** The largest page a caller may ask for, so one request cannot pull a table. */
-export const MAX_CONNECTION_PAGE_SIZE = 200;
+/**
+ * The largest page a caller may ask for, so one request cannot pull a table.
+ *
+ * The protocol's own ceiling for the same reason the default is: REST refuses a page above it, so a
+ * GraphQL field that accepted a larger one would answer a set the other surface declines to answer.
+ */
+export const MAX_CONNECTION_PAGE_SIZE = API_QUERY_LIMITS.maxPageSize;
 
 /**
  * The window a caller's page selection asks for, for a resource paged in the store.
@@ -816,30 +827,89 @@ export const MAX_CONNECTION_PAGE_SIZE = 200;
  * This is the offset scheme rather than the cursor one {@link buildConnection} implements, and the
  * difference is what the caller can be told. A cursor there names a row (it carries the row's id and its
  * sort value), which is stable under inserts because the walk resumes from a value rather than a count. A
- * cursor here names a *position* — the offset to resume at, encoded opaquely — which is what a store-paged
- * read can honour: `findAll({ skip, take })` has no way to resume from a value, and inventing a cursor
- * that looked row-addressed while behaving positionally is how a client ends up skipping rows after an
- * insert.
+ * cursor here names a *position* — the offset of the row it was handed out for, encoded opaquely — which is
+ * what a store-paged read can honour: `findAll({ skip, take })` has no way to resume from a value, and
+ * inventing a cursor that looked row-addressed while behaving positionally is how a client ends up skipping
+ * rows after an insert.
  *
- * `last`/`before` walk backwards from the cursor by the same arithmetic, which is why one function
- * answers both: the offset is the cursor's, and the direction only decides whether the page runs forward
- * or back. A caller that states both directions is refused.
+ * **Both cursors are exclusive, which is what the schema says they are.** A cursor names the row it was
+ * handed out for, so `after` resumes at the row *past* it and `before` ends the window at the row *before*
+ * it — the two arithmetic operations differ, and reading both as "the offset to resume at" is what made a
+ * backward walk answer the rows after its cursor, in the forward direction, instead of the rows before it.
+ * A backward walk is a window that ends at the cursor rather than one that starts there, so its `skip` is
+ * the page size subtracted from the cursor's offset: `last: 5, before: <offset 12>` reads rows 7 to 11.
+ *
+ * A backward walk needs its anchor: `last` with no `before` means "the last n rows", and the offset that
+ * starts is `total - n`, which this function cannot know before the read. It is refused rather than
+ * answered from the beginning, because answering the first page to a request for the last one is a wrong
+ * answer a client cannot detect.
  *
  * @param selection The requested page.
  * @returns The offset the page starts at and how many rows it holds.
- * @throws Error when a caller mixes forward and backward pagination.
+ * @throws Error when a caller mixes forward and backward pagination, mixes the two styles, states a cursor
+ * this platform did not mint, or asks for a backward walk with no anchor.
  */
 export function resolveConnectionWindow(selection?: IConnectionPageSelection): { skip: number; take: number } {
-	if (selection?.first !== undefined && selection?.last !== undefined) {
+	const stated = selection ?? {};
+
+	if (stated.first !== undefined && stated.last !== undefined) {
 		throw new Error('PAGINATION_DIRECTION_CONFLICT: state first or last, not both.');
 	}
 
-	const requested = selection?.first ?? selection?.last ?? selection?.limit ?? DEFAULT_CONNECTION_PAGE_SIZE;
-	const take = Math.min(Math.max(Math.trunc(requested) || DEFAULT_CONNECTION_PAGE_SIZE, 1), MAX_CONNECTION_PAGE_SIZE);
-	const cursor = selection?.first !== undefined ? selection?.after : selection?.before;
-	const offset = selection?.offset !== undefined ? Math.max(Math.trunc(selection.offset) || 0, 0) : 0;
+	if (stated.after !== undefined && stated.before !== undefined) {
+		throw new Error('PAGINATION_DIRECTION_CONFLICT: state after or before, not both.');
+	}
 
-	return { skip: Math.max(decodeOffsetCursor(cursor) || offset, 0), take };
+	if (stated.last !== undefined && stated.before === undefined) {
+		throw new Error(
+			'PAGINATION_ANCHOR_REQUIRED: last walks backwards from before; state before, or ask for first.'
+		);
+	}
+
+	const cursorsStated =
+		stated.first !== undefined || stated.after !== undefined || stated.last !== undefined || stated.before !== undefined;
+
+	if (cursorsStated && (stated.limit !== undefined || stated.offset !== undefined)) {
+		throw new Error(
+			'PAGINATION_STYLE_CONFLICT: state either a cursor window (first/after/last/before) or a page window (limit/offset), not both.'
+		);
+	}
+
+	const requested = stated.first ?? stated.last ?? stated.limit ?? DEFAULT_CONNECTION_PAGE_SIZE;
+	const take = Math.min(Math.max(Math.trunc(requested) || DEFAULT_CONNECTION_PAGE_SIZE, 1), MAX_CONNECTION_PAGE_SIZE);
+
+	if (stated.after !== undefined) {
+		return { skip: readCursorOffset(stated.after) + 1, take };
+	}
+
+	if (stated.before !== undefined) {
+		return { skip: Math.max(readCursorOffset(stated.before) - take, 0), take };
+	}
+
+	return { skip: stated.offset !== undefined ? Math.max(Math.trunc(stated.offset) || 0, 0) : 0, take };
+}
+
+/**
+ * The offset a cursor names, refused when it is not one this platform minted.
+ *
+ * {@link decodeOffsetCursor} answers a miss with zero, which is right for a caller that is asking "where
+ * does this resume" and wrong for a window: a cursor that cannot be read would silently become the first
+ * page, and a client that asked to continue would be handed rows it already has. The value is therefore
+ * round-tripped — a cursor is valid exactly when re-encoding what it decodes to reproduces it — so a
+ * truncated, foreign or hand-written cursor is refused where it is stated.
+ *
+ * @param cursor The cursor a caller handed back.
+ * @returns The offset of the row it was handed out for.
+ * @throws Error `PAGINATION_CURSOR_INVALID` when it is not a cursor this platform minted.
+ */
+export function readCursorOffset(cursor: string): number {
+	const offset = decodeOffsetCursor(cursor);
+
+	if (encodeOffsetCursor(offset) !== cursor) {
+		throw new Error('PAGINATION_CURSOR_INVALID: the cursor is not one this endpoint issued.');
+	}
+
+	return offset;
 }
 
 /**
@@ -872,9 +942,9 @@ export function encodeOffsetCursor(offset: number): string {
  * The store-paged page, as the connection the schema promises, with position cursors.
  *
  * {@link connectionFromPage} addresses each row by whatever identifies it, which is what a resource with
- * a natural key wants. This is the same shape with the offset scheme's cursors: the page's first row is
- * addressed by the offset the page started at and its last by the offset after it, so the next page is
- * `first: n, after: pageInfo.endCursor` and the walk cannot skip a row it has already answered.
+ * a natural key wants. This is the same shape with the offset scheme's cursors: every row is addressed by
+ * the offset it sits at, so the next page is `first: n, after: pageInfo.endCursor` — the cursor is
+ * exclusive, and the walk neither repeats nor skips a row it has already answered.
  *
  * @param page The page the service returned.
  * @param skip The offset the page started at.
@@ -888,16 +958,20 @@ export function connectionFromOffsetPage<T>(
 	const start = Math.max(skip, 0);
 	const totalCount = page?.total ?? nodes.length;
 	const end = start + nodes.length;
+	const cursorOf = (offset: number): string => encodeOffsetCursor(offset);
 
 	return {
 		nodes: [...nodes],
-		edges: nodes.map((node, index) => ({ node, cursor: encodeOffsetCursor(start + index) })),
+		edges: nodes.map((node, index) => ({ node, cursor: cursorOf(start + index) })),
 		totalCount,
 		pageInfo: {
 			hasNextPage: end < totalCount,
 			hasPreviousPage: start > 0,
-			startCursor: nodes.length > 0 ? encodeOffsetCursor(start) : null,
-			endCursor: nodes.length > 0 ? encodeOffsetCursor(end) : null
+			startCursor: nodes.length > 0 ? cursorOf(start) : null,
+			// The boundary cursor is the cursor of the last row rather than the offset past it: a client
+			// that walks from `edges[last].cursor` and a client that walks from `pageInfo.endCursor` are
+			// then taking the same step, and `after` being exclusive makes that step land on `end`.
+			endCursor: nodes.length > 0 ? cursorOf(end - 1) : null
 		}
 	};
 }
