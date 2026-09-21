@@ -43,7 +43,7 @@ interface IOrderLineInvoiceInput {
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
  */
-@Resolver('OrderLineInvoice')
+@Resolver('OrderLine')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)

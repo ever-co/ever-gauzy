@@ -57,6 +57,16 @@ permission on any route) are listed as exemptions inside the static gate rather 
 Two further divergences were found in the same pass and left as they are, each for a reason a reviewer can
 weigh rather than an oversight:
 
+- **`inventory`'s GraphQL fields are advertised but unbound.** Four packages declared their resolvers only
+  in the plugin metadata rather than as module providers, so Nest never registered them and every field
+  answered `Cannot return null for non-nullable field Query.<name>` with no guard running. `cart`, `order`
+  and `fulfillment` were fixed (their resolvers are providers now, and registering `order`'s exposed a
+  `@Resolver('OrderLineInvoice')` that had to be `OrderLine` for the field the SDL gives that type).
+  `inventory` is **not** fixed: it is a composite module reaching its services through a dozen sub-modules,
+  and providing the ten resolvers there fails the boot with
+  `Nest can't resolve dependencies of the TenantPermissionGuard … in the InventoryModule module`. Each
+  resolver has to be registered beside the sub-module that owns its service, which is a change to ten
+  modules rather than one.
 - **The capability gate is one-sided on REST.** Ten packages gate their GraphQL resolvers with
   `@FeatureFlag(FEATURE_GRAPHQL)` while their controllers carry only the tenant and permission guards, so a
   capability switched off still answers over REST. That is the intended asymmetry — `FEATURE_GRAPHQL` is the
