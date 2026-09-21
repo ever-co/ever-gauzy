@@ -140,7 +140,7 @@ export class CreateVendorProductTermTable1791000000345 implements MigrationInter
 		// twice with the same start. A second break, a second window and a second currency are further
 		// rows, which is exactly what the tuple expresses.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_vendor_product_term" ON "vendor_product_term" ("organizationId", "vendorId", "variantId", "currency", "minQuantity", "startsAt") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_vendor_product_term" ON "vendor_product_term" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "vendorId", "variantId", "currency", "minQuantity", COALESCE("startsAt", '1970-01-01 00:00:00')) WHERE "deletedAt" IS NULL`
 		);
 		// The three scans the domain actually runs: the resolution for one unit, one supplier's standing
 		// terms, and the supplier's own code matched against a quotation or a bill.
@@ -264,7 +264,7 @@ export class CreateVendorProductTermTable1791000000345 implements MigrationInter
 			`CREATE INDEX IF NOT EXISTS "IDX_vendor_term_organization" ON "vendor_product_term" ("organizationId")`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX IF NOT EXISTS "UQ_vendor_product_term" ON "vendor_product_term" ("organizationId", "vendorId", "variantId", "currency", "minQuantity", "startsAt") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX IF NOT EXISTS "UQ_vendor_product_term" ON "vendor_product_term" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "vendorId", "variantId", "currency", "minQuantity", COALESCE("startsAt", '1970-01-01 00:00:00')) WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX IF NOT EXISTS "IDX_vendor_term_resolve" ON "vendor_product_term" ("organizationId", "variantId", "status", "startsAt", "endsAt") WHERE "deletedAt" IS NULL`
@@ -346,20 +346,23 @@ export class CreateVendorProductTermTable1791000000345 implements MigrationInter
 	/**
 	 * MySQL Up Migration
 	 *
-	 * MySQL has no partial indexes, so the predicate that makes a unique index business-scoped is carried
-	 * by including `deletedAt` in the key, exactly as this package's other migrations do: a soft-deleted
-	 * row no longer collides with the live one that replaced it. The partial indexes that are not unique
-	 * lose their predicate instead, and the rules they supported stay where they were already enforced —
-	 * in the service and in the nightly audit.
+	 * MySQL has no partial index, so the predicate that makes the agreement unique among live rows is
+	 * carried by the stored generated `deletedKey` that `CreateSequenceTable1791000000000` documents for
+	 * the whole set. Two further members of this tuple are nullable and are folded rather than left raw:
+	 * `organizationKey` for the scope column, and `startsAtKey` for the start of the window, because an
+	 * agreement with no start date is one agreement and not an unlimited supply of them. Including
+	 * `deletedAt` itself in the key, which this file used to do, carries no rule at all — a unique index
+	 * in MySQL exempts every tuple that contains a null. The partial indexes that are not unique lose
+	 * their predicate instead, which is a narrowing rather than a rule.
 	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`vendor_product_term\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`vendorId\` varchar(36) NOT NULL, \`variantId\` varchar(36) NOT NULL, \`currency\` varchar(3) NOT NULL, \`unitCost\` decimal(20,6) NOT NULL, \`discountPercent\` decimal(9,6) NULL, \`minQuantity\` decimal(20,6) NOT NULL DEFAULT 0, \`packSize\` decimal(20,6) NULL, \`packLabel\` varchar(16) NULL, \`leadTimeDays\` int NULL, \`vendorProductCode\` varchar(64) NULL, \`vendorProductName\` varchar(255) NULL, \`overReceiptTolerancePercent\` decimal(9,6) NULL, \`priority\` int NOT NULL DEFAULT 100, \`startsAt\` datetime NULL, \`endsAt\` datetime NULL, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`metadata\` json NULL, INDEX \`IDX_vendor_term_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_vendor_term_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_vendor_term_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_vendor_term_is_active\` (\`isActive\`), INDEX \`IDX_vendor_term_is_archived\` (\`isArchived\`), INDEX \`IDX_vendor_term_tenant\` (\`tenantId\`), INDEX \`IDX_vendor_term_organization\` (\`organizationId\`), INDEX \`IDX_vendor_term_resolve\` (\`organizationId\`, \`variantId\`, \`status\`, \`startsAt\`, \`endsAt\`), INDEX \`IDX_vendor_term_vendor\` (\`vendorId\`, \`variantId\`, \`status\`), INDEX \`IDX_vendor_term_code\` (\`vendorId\`, \`vendorProductCode\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`vendor_product_term\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`vendorId\` varchar(36) NOT NULL, \`variantId\` varchar(36) NOT NULL, \`currency\` varchar(3) NOT NULL, \`unitCost\` decimal(20,6) NOT NULL, \`discountPercent\` decimal(9,6) NULL, \`minQuantity\` decimal(20,6) NOT NULL DEFAULT 0, \`packSize\` decimal(20,6) NULL, \`packLabel\` varchar(16) NULL, \`leadTimeDays\` int NULL, \`vendorProductCode\` varchar(64) NULL, \`vendorProductName\` varchar(255) NULL, \`overReceiptTolerancePercent\` decimal(9,6) NULL, \`priority\` int NOT NULL DEFAULT 100, \`startsAt\` datetime NULL, \`endsAt\` datetime NULL, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`startsAtKey\` datetime GENERATED ALWAYS AS (IFNULL(\`startsAt\`, '1970-01-01 00:00:00')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_vendor_term_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_vendor_term_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_vendor_term_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_vendor_term_is_active\` (\`isActive\`), INDEX \`IDX_vendor_term_is_archived\` (\`isArchived\`), INDEX \`IDX_vendor_term_tenant\` (\`tenantId\`), INDEX \`IDX_vendor_term_organization\` (\`organizationId\`), INDEX \`IDX_vendor_term_resolve\` (\`organizationId\`, \`variantId\`, \`status\`, \`startsAt\`, \`endsAt\`), INDEX \`IDX_vendor_term_vendor\` (\`vendorId\`, \`variantId\`, \`status\`), INDEX \`IDX_vendor_term_code\` (\`vendorId\`, \`vendorProductCode\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_vendor_product_term\` ON \`vendor_product_term\` (\`organizationId\`, \`vendorId\`, \`variantId\`, \`currency\`, \`minQuantity\`, \`startsAt\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_vendor_product_term\` ON \`vendor_product_term\` (\`organizationKey\`, \`vendorId\`, \`variantId\`, \`currency\`, \`minQuantity\`, \`startsAtKey\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`vendor_product_term\` ADD CONSTRAINT \`CHK_vendor_term_price\` CHECK (\`unitCost\` >= 0)`
@@ -908,15 +911,22 @@ export class CreateVendorProductTermTable1791000000345 implements MigrationInter
 		);
 
 		if (dialect === 'mysql') {
+			// `deletedKey` rather than `deletedAt`, and `expectedAtKey` rather than `expectedAt`: every
+			// live row carries a null `deletedAt`, and a unique index in MySQL exempts any tuple that
+			// contains a null, so this tuple constrained nothing at all. The date is folded for the same
+			// reason, and folded on the other two dialects as well — neither of them compares two nulls
+			// equal either, so a line with no expected date could be written twice on every dialect.
+			// Both generated columns are declared by `CreatePurchasingTables1791000000340`, which creates
+			// this table.
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX \`${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}\` ON \`purchase_order_line\` (\`purchaseOrderId\`, \`variantId\`, \`expectedAt\`, \`deletedAt\`)`
+				`CREATE UNIQUE INDEX \`${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}\` ON \`purchase_order_line\` (\`purchaseOrderId\`, \`variantId\`, \`expectedAtKey\`, \`deletedKey\`)`
 			);
 
 			return;
 		}
 
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX IF NOT EXISTS "${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}" ON "${CreateVendorProductTermTable1791000000345.LINE_TABLE}" ("purchaseOrderId", "variantId", "expectedAt") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX IF NOT EXISTS "${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}" ON "${CreateVendorProductTermTable1791000000345.LINE_TABLE}" ("purchaseOrderId", "variantId", COALESCE("expectedAt", '1970-01-01 00:00:00')) WHERE "deletedAt" IS NULL`
 		);
 	}
 
@@ -963,7 +973,7 @@ export class CreateVendorProductTermTable1791000000345 implements MigrationInter
 
 		if (dialect === 'mysql') {
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX \`${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}\` ON \`purchase_order_line\` (\`purchaseOrderId\`, \`variantId\`, \`deletedAt\`)`
+				`CREATE UNIQUE INDEX \`${CreateVendorProductTermTable1791000000345.LINE_BUSINESS_KEY}\` ON \`purchase_order_line\` (\`purchaseOrderId\`, \`variantId\`, \`deletedKey\`)`
 			);
 
 			return;

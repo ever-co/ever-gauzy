@@ -49,6 +49,10 @@ jest.mock('@gauzy/core', () => {
 		EventBus: class {},
 		EventOutboxService: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The decimal comparison the commission bands and the settlement's discrepancy are decided by is
+		// the kernel's own, so the double hands over the real one: a comparison doubled here would agree
+		// with the service about arithmetic the platform never performs.
+		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		isUniqueViolation: (error: any) => Boolean(error?.code === '23505'),
 		Merchant: class {},
 		OrganizationContact: class {},
@@ -486,6 +490,37 @@ describe('SellerTransactionService — what a scoped caller may read (MK-22)', (
 		const page = await fixture.service.listTransactions({}, { sellerId: SELLER, staff: true } as never);
 
 		expect(page.items).toHaveLength(2);
+	});
+
+	it('narrows the reconciliation to the caller’s own seller, at the read', async () => {
+		// The report is per order and it is built from the rows it reads, so narrowing it afterwards would
+		// hand a seller the other sellers' figures for every order it happens to appear on.
+		const fixture = transactionFixture({
+			transactions: [
+				row('t1', { orderId: 'order-a' }),
+				row('t2', { orderId: 'order-b', sellerId: 'seller-2' })
+			]
+		});
+
+		const report = await fixture.service.reconcile({}, { sellerId: SELLER, staff: false } as never);
+
+		expect(report.items.map((item) => item.orderId)).toEqual(['order-a']);
+		await expect(
+			fixture.service.reconcile({ sellerId: 'seller-2' }, { sellerId: SELLER, staff: false } as never)
+		).rejects.toBeInstanceOf(ForbiddenException);
+	});
+
+	it('refuses a scoped caller that advances or holds another seller’s row', async () => {
+		// The two writes on the ledger's own state take the scope the reads take: a seller-side credential
+		// that settled another seller's row would move money the platform owes somebody else.
+		const fixture = transactionFixture({ transactions: [row('t1')] });
+
+		await expect(
+			fixture.service.settle('t1', 'captured', { sellerId: 'seller-2', staff: false } as never)
+		).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(
+			fixture.service.hold('t1', 'DISPUTE' as never, undefined, { sellerId: 'seller-2', staff: false } as never)
+		).rejects.toBeInstanceOf(ForbiddenException);
 	});
 
 	it('refuses a row with no identifier at all', async () => {

@@ -49,6 +49,10 @@ jest.mock('@gauzy/core', () => {
 		EventBus: class {},
 		EventOutboxService: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The decimal comparison the commission bands and the settlement's discrepancy are decided by is
+		// the kernel's own, so the double hands over the real one: a comparison doubled here would agree
+		// with the service about arithmetic the platform never performs.
+		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		isUniqueViolation: (error: any) => Boolean(error?.code === '23505'),
 		Merchant: class {},
 		OrganizationContact: class {},
@@ -258,6 +262,21 @@ describe('SellerSettlementService — recording what the provider reported (doc 
 		expect(fixture.tables.seller_settlement).toHaveLength(1);
 	});
 
+	it('refuses a seller-scoped caller that records a settlement for another seller', async () => {
+		// The recorder is a write on a seller's own money, so it takes the scope every other write in this
+		// package takes: a provider callback is staff-scoped and unaffected, and a seller-side credential
+		// that named another seller is refused by name rather than writing a row against it.
+		const fixture = settlementFixture();
+
+		await expect(
+			fixture.service.record(
+				{ sellerId: 'seller-2', providerKey: 'acquirer', currency: EUR } as never,
+				{ sellerId: SELLER, staff: false } as never
+			)
+		).rejects.toBeInstanceOf(ForbiddenException);
+		expect(fixture.tables.seller_settlement).toHaveLength(1);
+	});
+
 	it('computes the discrepancy against the platform’s own lines when the provider states none', async () => {
 		// The platform's two rows for the seller and currency sum to 100.00; the provider reports 98.00, so
 		// the difference is the 2.00 the reconciliation is about.
@@ -414,6 +433,21 @@ describe('SellerSettlementService — closing and disputing (MK-25, doc 20 §7.3
 		expect(closed).toMatchObject({ status: SellerSettlementStatus.CLOSED, note: 'signed off' });
 		expect(closed.closedAt).toBeInstanceOf(Date);
 		expect(fixture.appended[0].data).toMatchObject({ reconciled: true });
+	});
+
+	it.each([
+		['a column the provider left null', null, true],
+		['a negative zero', '-0.000000', true],
+		['a zero written at another scale', '0.00', true],
+		['a difference of one millionth', '0.000001', false]
+	])('reads %s the way the money layer reads it when it announces the close', async (_label, discrepancy, reconciled) => {
+		// The announcement used to be decided by `Number(...) === 0` beside a string comparison against one
+		// spelling of zero, which is the one monetary decision in this class that left the decimal kernel.
+		const fixture = settlementFixture({ settlements: [settlementRow('s1', { discrepancyAmount: discrepancy })] });
+
+		await fixture.service.close('s1');
+
+		expect(fixture.appended[0].data).toMatchObject({ reconciled });
 	});
 
 	it('is idempotent when the settlement is already closed', async () => {

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import {
 	CommissionOn,
@@ -66,6 +66,71 @@ export interface IOrderSplitInput {
 	isTest?: boolean;
 }
 
+/** What one refund or chargeback reverses, as the order or payment package states it. */
+export interface IOrderSplitReversal {
+	transactionId: ID;
+	kind: SellerTransactionKind;
+	refundId?: ID;
+	/** The amount the buyer is made whole by; the platform's share is derived from it when completing. */
+	refundAmount?: DecimalString;
+	/**
+	 * The units being reversed.
+	 *
+	 * It is the numerator of the proration, and it needs a denominator: the ledger row carries five
+	 * monetary columns and no quantity, because a row's quantity is the order line's rather than the
+	 * ledger's. A caller that reverses part of a line therefore states either the refund — which fixes
+	 * the share against the row's own captured amount — or `originalQuantity` beside this one.
+	 */
+	quantity: DecimalString;
+	/**
+	 * The units the row being reversed covers, when the caller states the share as a quantity.
+	 *
+	 * The order package holds the line and knows it; the ledger does not. A reversal that states
+	 * neither a refund nor this reverses the whole row, which is what a full refund is.
+	 */
+	originalQuantity?: DecimalString;
+	completes?: boolean;
+	description?: string;
+}
+
+/**
+ * The seller split as the order lifecycle sees it.
+ *
+ * The marketplace is the only writer of `seller_transaction`, and the two moments it must be written
+ * at belong to another package: an order is placed, and a refund is recorded against one of its lines.
+ * Neither moment is observable from here — this package owns no order table and subscribes to no order
+ * event — so the split has to be **called**, and a capability port is how every other cross-package
+ * call on this branch is made.
+ *
+ * Declaring it is half the fix and the half that lives in this package; the other half is the order
+ * package injecting it and `apps/api/src/plugin-composition.ts` binding it, which is where every other
+ * port of the fourteen is bound. Until that binding exists nothing calls the split at all, so no
+ * `SALE` row is ever written, every payout run reports `NOTHING_SETTLEABLE`, and the conservation
+ * identities this package is built around are never evaluated because no row reaches them.
+ */
+export interface IOrderSplitPort {
+	/**
+	 * @param input The order and its lines.
+	 * @returns The ledger rows the order produced, which is the rows that already existed when the same
+	 * order is split a second time.
+	 */
+	split(input: IOrderSplitInput): Promise<SellerTransaction[]>;
+
+	/**
+	 * @param input What is being reversed.
+	 * @returns The reversal row.
+	 */
+	reverse(input: IOrderSplitReversal): Promise<SellerTransaction>;
+}
+
+/**
+ * Token the order split is provided under.
+ *
+ * A symbol rather than a string, as every other capability port on this branch declares: two packages
+ * that happened to choose the same string would silently share a binding.
+ */
+export const MARKETPLACE_ORDER_SPLIT = Symbol('MARKETPLACE_ORDER_SPLIT');
+
 /**
  * Writes the per-seller split of an order — the ledger the whole marketplace is reconciled against.
  *
@@ -87,7 +152,7 @@ export interface IOrderSplitInput {
  *   allows it.
  */
 @Injectable()
-export class SellerSplitService {
+export class SellerSplitService implements IOrderSplitPort {
 	constructor(
 		private readonly commissionService: SellerCommissionService,
 		private readonly sellerRepository: TypeOrmSellerRepository,
@@ -114,6 +179,27 @@ export class SellerSplitService {
 
 		const currency = input.currency;
 		const decimals = input.currencyDecimals;
+
+		// MK-16 is "one `SALE` row per seller-owned line", and the split is reached through a capability
+		// port from the order lifecycle: an order-placed step that is retried, an outbox event delivered
+		// twice or an operation replayed from its journal would otherwise write the whole split a second
+		// time, doubling every seller's entitlement and the platform's commission with nothing to refuse
+		// it. The already-written rows are the answer to "split this order", so a repeat is answered with
+		// them rather than refused: a caller that lost the first answer is not a caller that did something
+		// wrong.
+		const already = await this.transactionRepository.find({
+			where: {
+				orderId: input.orderId,
+				kind: SellerTransactionKind.SALE,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			} as FindOptionsWhere<SellerTransaction>
+		});
+
+		if (already.length) {
+			return already;
+		}
+
 		const rows: SellerTransaction[] = [];
 
 		for (const line of input.lines.filter((candidate) => !!candidate.sellerId)) {
@@ -161,29 +247,27 @@ export class SellerSplitService {
 	 * @param input What is being reversed.
 	 * @returns The reversal rows.
 	 */
-	async reverse(input: {
-		transactionId: ID;
-		kind: SellerTransactionKind;
-		refundId?: ID;
-		/** The amount the buyer is made whole by; the platform's share is derived from it when completing. */
-		refundAmount?: DecimalString;
-		quantity: DecimalString;
-		completes?: boolean;
-		description?: string;
-	}): Promise<SellerTransaction> {
+	async reverse(input: IOrderSplitReversal): Promise<SellerTransaction> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		// The row is read inside the caller's own tenant and organization, like every other read in this
+		// package. Without the two predicates a caller that supplied another tenant's `transactionId`
+		// reversed that tenant's sale row and read its gross, commission and net back in the response —
+		// the foreign key alone says nothing about who may reverse a row.
 		const original = await this.transactionRepository.findOne({
-			where: { id: input.transactionId } as FindOptionsWhere<SellerTransaction>
+			where: { id: input.transactionId, tenantId, organizationId } as FindOptionsWhere<SellerTransaction>
 		});
 
 		if (!original) {
-			throw new BadRequestException('The transaction to reverse does not exist.');
+			throw new NotFoundException('The transaction to reverse does not exist.');
 		}
 
 		const currency = original.currency as CurrencyCode;
 		const decimals = original.currencyDecimals;
 
 		const alreadyReversed = await this.transactionRepository.find({
-			where: { reversesTransactionId: original.id } as FindOptionsWhere<SellerTransaction>
+			where: { reversesTransactionId: original.id, tenantId, organizationId } as FindOptionsWhere<SellerTransaction>
 		});
 
 		/** The exact sum of one monetary column over the reversals already written for this row. */
@@ -194,18 +278,38 @@ export class SellerSplitService {
 				decimals
 			);
 
+		/** The share of the row this reversal covers. `undefined` means the whole of it. */
+		const share = this.reversalShare(original, input, currency, decimals);
+
 		/** The whole of one column of the row being reversed, carrying the sign a reversal needs. */
-		const reversedWhole = (column: 'grossAmount' | 'taxAmount' | 'sellerDiscountAmount'): Money =>
+		const reversedWhole = (column: 'grossAmount' | 'taxAmount' | 'sellerDiscountAmount' | 'commissionAmount'): Money =>
 			Money.fromStorage(original[column], currency, decimals).negate();
+
+		/**
+		 * One column of the row being reversed, scaled to the share this reversal covers.
+		 *
+		 * Every column is scaled by the same share, so the reversal is a proportional copy of the row
+		 * rather than a second statement of it: reversing one unit of a four-unit line used to write the
+		 * whole of every column, so a single returned unit took the seller's entire entitlement for the
+		 * line off its balance and a second return took it off again, with nothing on this path capping
+		 * either. A reversal that states no share reverses the whole row, which is what a full refund is.
+		 */
+		const reversedShare = (column: 'grossAmount' | 'taxAmount' | 'sellerDiscountAmount' | 'commissionAmount'): Money => {
+			if (!share) {
+				return reversedWhole(column);
+			}
+
+			return Money.fromStorage(original[column], currency, decimals)
+				.multiply(share.numerator)
+				.divide(share.denominator, { scale: decimals, mode: RoundingMode.HALF_UP })
+				.negate();
+		};
 
 		const originalNet = Money.fromStorage(original.netAmount, currency, decimals);
 
-		// A reversal states the negated amounts of what it reverses, so that adding it to the ledger
-		// moves the seller's balance and the platform's commission by exactly the amount reversed.
-		let gross = reversedWhole('grossAmount');
-		let tax = reversedWhole('taxAmount');
-		let sellerDiscount = reversedWhole('sellerDiscountAmount');
-
+		let gross: Money;
+		let tax: Money;
+		let sellerDiscount: Money;
 		let net: Money;
 		let commission: Money;
 
@@ -216,9 +320,14 @@ export class SellerSplitService {
 			// seller's net is the balancing figure and the platform's commission is what remains of the
 			// refund once the seller has been made whole, so any residue lands on the platform and never
 			// on a seller's net (§4.4 S9, §5.5).
-			gross = gross.subtract(reversedSoFar('grossAmount'));
-			tax = tax.subtract(reversedSoFar('taxAmount'));
-			sellerDiscount = sellerDiscount.subtract(reversedSoFar('sellerDiscountAmount'));
+			//
+			// The columns are taken **whole** here and not through the share: what remains is defined by
+			// what has already been reversed, which is a figure the ledger holds, not one the caller's own
+			// refund amount restates. A completing row that scaled itself first would reverse a fraction of
+			// a fraction and leave the row permanently short.
+			gross = reversedWhole('grossAmount').subtract(reversedSoFar('grossAmount'));
+			tax = reversedWhole('taxAmount').subtract(reversedSoFar('taxAmount'));
+			sellerDiscount = reversedWhole('sellerDiscountAmount').subtract(reversedSoFar('sellerDiscountAmount'));
 			net = originalNet.negate().subtract(reversedSoFar('netAmount'));
 
 			// What the buyer is made whole by: what is left of the row's captured amount. Where the
@@ -231,8 +340,18 @@ export class SellerSplitService {
 			);
 			commission = refund.add(net).negate();
 		} else {
-			commission = Money.fromStorage(original.commissionAmount, currency, decimals).negate();
+			// The platform's share is scaled by the same figure as the seller's, and the net is derived from
+			// the four columns rather than stated beside them, so MK-7 holds on the reversal by construction
+			// and any minor unit the scaling could not divide lands on the commission rather than on the
+			// seller's net (MK-10). What the scaling leaves over across a sequence of partials is carried by
+			// the completing row, which is what `completes` is for.
+			gross = reversedShare('grossAmount');
+			tax = reversedShare('taxAmount');
+			sellerDiscount = reversedShare('sellerDiscountAmount');
+			commission = reversedShare('commissionAmount');
 			net = gross.add(tax).add(sellerDiscount).subtract(commission);
+
+			this.assertWithinRemaining(original, gross, reversedSoFar('grossAmount'), currency, decimals);
 		}
 
 		const reversal = this.transactionRepository.create({
@@ -265,14 +384,19 @@ export class SellerSplitService {
 
 		this.assertRowIdentity(reversal as SellerTransaction, currency, decimals);
 
-		if (input.completes) {
-			original.status = SellerTransactionStatus.REVERSED;
-			await this.transactionRepository.save(original);
-		}
+		// The closing of the original, the reversal row and its outbox event are one transaction, as they
+		// are in `split()`. They used to be three writes in a row with the event in a transaction of its
+		// own, so a crash between the reversal and the append left a persisted reversal that no consumer —
+		// no statement, no payout release, no projection — ever learned about, which is the exact failure
+		// the transactional outbox exists to prevent.
+		return this.transactionRepository.manager.transaction(async (manager) => {
+			if (input.completes) {
+				original.status = SellerTransactionStatus.REVERSED;
+				await manager.save(SellerTransaction, original);
+			}
 
-		const persisted = await this.transactionRepository.save(reversal as SellerTransaction);
+			const persisted = (await manager.save(SellerTransaction, reversal as SellerTransaction)) as SellerTransaction;
 
-		await this.transactionRepository.manager.transaction(async (manager) => {
 			await this.outbox.append(manager, {
 				name: 'seller.transaction.reversed',
 				aggregateType: 'SELLER_TRANSACTION',
@@ -292,9 +416,98 @@ export class SellerSplitService {
 				tenantId: persisted.tenantId,
 				organizationId: persisted.organizationId
 			});
-		});
 
-		return persisted;
+			return persisted;
+		});
+	}
+
+	/**
+	 * The share of a row one reversal covers, as an exact numerator and denominator.
+	 *
+	 * Two ways to state it, because the ledger row cannot answer the question on its own — it carries five
+	 * monetary columns and no quantity, so "one unit of four" is not a fact the row holds:
+	 *
+	 * 1. **The refund.** `refundAmount` is what the buyer is made whole by, and the row's own captured
+	 *    amount is `gross + tax + sellerDiscount`, so the two are a share of the same thing. This is the
+	 *    form a refund path naturally has, and it is the one §4.4 S8 states its partials in.
+	 * 2. **The quantity.** `quantity` over `originalQuantity`, for a caller that reverses units rather
+	 *    than money and knows what the line held.
+	 *
+	 * A caller that states neither reverses the whole row, which is what a full refund of the line is and
+	 * what this method answers `undefined` for. A refund stated against a row whose captured amount is
+	 * zero has no share to take either, and answers the same.
+	 *
+	 * @param original The row being reversed.
+	 * @param input What the caller stated.
+	 * @param currency The row's currency.
+	 * @param decimals The currency's decimal places.
+	 * @returns The share, or undefined when the whole row is reversed.
+	 */
+	private reversalShare(
+		original: SellerTransaction,
+		input: { refundAmount?: DecimalString; quantity?: DecimalString; originalQuantity?: DecimalString },
+		currency: CurrencyCode,
+		decimals: number
+	): { numerator: DecimalString; denominator: DecimalString } | undefined {
+		if (input.refundAmount !== undefined && input.refundAmount !== null) {
+			const captured = Money.fromStorage(original.grossAmount, currency, decimals)
+				.add(Money.fromStorage(original.taxAmount, currency, decimals))
+				.add(Money.fromStorage(original.sellerDiscountAmount, currency, decimals));
+
+			if (captured.isZero()) {
+				return undefined;
+			}
+
+			return { numerator: Money.of(input.refundAmount, currency, decimals).amount, denominator: captured.amount };
+		}
+
+		if (input.originalQuantity === undefined || input.originalQuantity === null || input.quantity === undefined) {
+			return undefined;
+		}
+
+		const whole = Money.of(input.originalQuantity, currency, decimals);
+
+		if (whole.isZero()) {
+			return undefined;
+		}
+
+		return { numerator: Money.of(input.quantity, currency, decimals).amount, denominator: whole.amount };
+	}
+
+	/**
+	 * Refuses a reversal that would take more off a row than the row ever carried.
+	 *
+	 * A reversal is a new row rather than an edit (MK-16), so nothing about writing one consults what has
+	 * already been written — which means a caller that repeated a partial refund could reverse a line
+	 * twice over and drive the seller's balance negative with no rule stopping it. The cap is stated on
+	 * the gross because that is the column every other one is scaled from.
+	 *
+	 * @param original The row being reversed.
+	 * @param gross This reversal's gross, already negated.
+	 * @param reversedGross The gross of the reversals already written for this row.
+	 * @param currency The row's currency.
+	 * @param decimals The currency's decimal places.
+	 * @throws BadRequestException carrying `SELLER_SPLIT_MISMATCH` when the row is over-reversed.
+	 */
+	private assertWithinRemaining(
+		original: SellerTransaction,
+		gross: Money,
+		reversedGross: Money,
+		currency: CurrencyCode,
+		decimals: number
+	): void {
+		const whole = Money.fromStorage(original.grossAmount, currency, decimals);
+		const attempted = reversedGross.add(gross);
+
+		if (attempted.abs().greaterThan(whole.abs())) {
+			throw new BadRequestException(
+				`${SELLER_SPLIT_MISMATCH}: reversing ${gross.abs().toString()} of transaction '${String(
+					original.id
+				)}' would take the reversals to ${attempted.abs().toString()}, beyond the ${whole
+					.abs()
+					.toString()} the row carries.`
+			);
+		}
 	}
 
 	/**

@@ -424,9 +424,15 @@ export class AddMarketplaceAmendmentColumns1791000000435 implements MigrationInt
 
 		const statement =
 			dialect === 'mysql'
-				? `CREATE UNIQUE INDEX \`UQ_price_tier\` ON \`product_price\` (\`variantId\`, \`currency\`${
+				? // The three nullable members are named through the generated key columns
+				  // `CreatePricingTables1791000000120` declares, not raw. A unique index in MySQL exempts
+				  // any tuple that contains a null, so a price with no list and no quantity bounds — the
+				  // ordinary case — escaped this tuple entirely and the same tier could be written twice.
+				  // `sellerId` stays raw for the opposite reason: a row with no seller is the platform's
+				  // own price, and it is the seller rows this index makes unique per seller.
+				  `CREATE UNIQUE INDEX \`UQ_price_tier\` ON \`product_price\` (\`variantId\`, \`currency\`${
 						columns.includes('sellerId') ? ', `sellerId`' : ''
-				  }, \`priceListId\`, \`minQuantity\`, \`maxQuantity\`, \`deletedKey\`)`
+				  }, \`priceListKey\`, \`minQuantityKey\`, \`maxQuantityKey\`, \`deletedKey\`)`
 				: `CREATE UNIQUE INDEX "UQ_price_tier" ON "product_price" (${columns}) WHERE "deletedAt" IS NULL`;
 
 		await queryRunner.query(statement);

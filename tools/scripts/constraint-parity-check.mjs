@@ -21,6 +21,11 @@
  *   - **In force.** Every `CHK_` name any migration creates, read from the migration sources including
  *     the inline `CREATE TABLE` bodies they carry.
  *
+ * The script also reads every unique index the migrations create and fails on a tuple that names a
+ * nullable column with nothing to fold it and nothing to exempt it — the section below the promise
+ * comparison says why, and that half runs whether or not the specification is present, because it needs
+ * nothing but the migrations.
+ *
  * A promised rule whose table exists and which no migration creates is a **gap**, and the script exits
  * non-zero while one exists. A promise that cannot be created yet — for a table no migration creates, or
  * for a column that is still to be added — is listed in `DEFERRED` below with the reason, and does not
@@ -139,8 +144,375 @@ function statementTables(text) {
 	return names;
 }
 
+/*
+|--------------------------------------------------------------------------
+| A unique index that enforces nothing
+|--------------------------------------------------------------------------
+|
+| The second half of this gate. A `CHECK` that no migration creates is a rule that holds nowhere, and the
+| first half is what stops one being written; a **unique index whose tuple contains a nullable column** is
+| a rule that reads as though it held and does not, which is worse, because the statement is right there
+| in the migration and a reviewer's eye passes over it.
+|
+| Two shapes of that, both of which were in this repository and neither of which anything caught:
+|
+|   - **The MySQL soft-delete tuple.** Postgres and SQLite write "unique among the rows that are not
+|     deleted" as `CREATE UNIQUE INDEX … WHERE "deletedAt" IS NULL`. MySQL has no partial index, and the
+|     obvious-looking substitute is to put `deletedAt` into the tuple instead. It enforces nothing at all:
+|     a unique index in MySQL (and MariaDB) exempts **every** tuple that contains a `NULL`, and `deletedAt`
+|     is `NULL` on precisely the live rows the rule is about. Seventy-two such indexes were accepted into
+|     one branch, and every one of them accepted duplicate live rows in silence.
+|   - **The nullable scope column, on every dialect.** `organizationId`, `channelId`, `customerId` are
+|     nullable, and no SQL dialect compares two `NULL`s equal, so `("organizationId", "key")` does not fire
+|     for a row that has no organization — on Postgres and SQLite because the two rows differ, on MySQL for
+|     the same exemption rule as above. `UQ_idempotency_org_scope_key` is the worst of them: the retry lock
+|     of the whole API disappears for any caller with no organization.
+|
+| What the gate accepts, in place of a bare nullable column:
+|
+|   - the column folded — `COALESCE("organizationId", '00000000-…')` on Postgres and SQLite, a stored
+|     generated column on MySQL, which is what a dialect with no expression index has instead;
+|   - a predicate that names the column — `WHERE "externalId" IS NOT NULL` — because a `NULL` is then meant
+|     to exempt the row, and the exemption is stated in the SQL rather than happening by accident. The
+|     predicate may be written on any dialect's copy of the index: MySQL's own `NULL` rule is exactly that
+|     predicate, which is why its branch leaves such a column raw;
+|   - a comment carrying `null-exempt: <column>` (or `null-exempt: <table>.<column>`), for the cases where
+|     the exemption is a judgement about the domain rather than something the SQL can state. It has to be
+|     written out, so the next reader knows the bare column was read and kept rather than missed.
+|
+| `RULE_FROM` below is the boundary: the rule is held against the migrations of this programme and not
+| against the ones that were applied to production years ago, which cannot be rewritten in any case.
+|
+| What this half does **not** read, so that a green run is not mistaken for more than it is: a migration
+| that builds its SQL from a table of definitions rather than writing the statement out —
+| `AlterCoreTablesForExtensions1791000000095` is the one — is invisible to the scan, because there is no
+| `CREATE UNIQUE INDEX` for it to match. Its tuples are reviewed by hand, and a second file written that
+| way would need this scan taught the shape.
+*/
+
+/**
+ * The migration timestamp this rule starts at.
+ *
+ * Every migration before it has been applied in production and cannot be rewritten, and the pattern that
+ * dominates them is not this defect: TypeORM's generated `REL_…` index on a nullable one-to-one column,
+ * where a null means "no relation" and the exemption is correct. The rule therefore starts with the set
+ * that introduced the defect it is about, and the boundary is stated as a number rather than left to a
+ * list of five hundred names that nobody would read.
+ */
+const RULE_FROM = 1791000000000;
+
+/** Whether a migration file is one the rule applies to, read from the timestamp its name carries. */
+function underRule(file) {
+	const stamp = basename(file).match(/^(\d{13,})-/);
+
+	return stamp ? Number(stamp[1]) >= RULE_FROM : false;
+}
+
+/** The body of each `<dialect>UpQueryRunner` method, keyed by dialect. */
+function dialectBodies(source) {
+	const bodies = new Map();
+
+	for (const dialect of ['postgres', 'sqlite', 'mysql']) {
+		const start = source.search(new RegExp(`async ${dialect}UpQueryRunner\\(`));
+
+		if (start === -1) {
+			continue;
+		}
+
+		const rest = source.slice(start + 10);
+		const next = rest.search(/\n\t(?:public )?async \w+QueryRunner\(/);
+
+		bodies.set(dialect, rest.slice(0, next === -1 ? rest.length : next));
+	}
+
+	return bodies;
+}
+
+/** The index of the `)` that closes the `(` at `open`. */
+function closing(text, open) {
+	let depth = 0;
+
+	for (let i = open; i < text.length; i += 1) {
+		if (text[i] === '(') {
+			depth += 1;
+		} else if (text[i] === ')') {
+			depth -= 1;
+
+			if (depth === 0) {
+				return i;
+			}
+		}
+	}
+
+	return -1;
+}
+
+/** A comma-separated list split on its top-level commas. */
+function topLevel(text) {
+	const parts = [];
+	let depth = 0;
+	let current = '';
+
+	for (const character of text) {
+		if (character === '(') {
+			depth += 1;
+		} else if (character === ')') {
+			depth -= 1;
+		}
+
+		if (character === ',' && depth === 0) {
+			parts.push(current);
+			current = '';
+		} else {
+			current += character;
+		}
+	}
+
+	parts.push(current);
+
+	return parts.map((part) => part.trim()).filter(Boolean);
+}
+
+/**
+ * Every column a `CREATE TABLE` (or an `ALTER TABLE … ADD`) in this text declares, and whether the
+ * declaration says `NOT NULL`.
+ *
+ * A **generated** column is recorded as not nullable whatever its declaration says. It is the substitute
+ * for a partial index on a dialect that has none — `deletedKey`, `organizationKey`, `isDefaultKey` — and
+ * `isDefaultKey` is deliberately nullable, because on MySQL a null key part is what exempts the row.
+ * Flagging the fix as the defect would be the one way to make this gate useless.
+ */
+function declaredColumns(text, quoted) {
+	const declared = new Map();
+	const add = (table, column, nullable) => {
+		if (!declared.has(table)) {
+			declared.set(table, new Map());
+		}
+
+		declared.get(table).set(column, nullable);
+	};
+
+	const create = new RegExp(`CREATE TABLE (?:IF NOT EXISTS )?${quoted}([A-Za-z0-9_]+)${quoted}\\s*\\(`, 'g');
+
+	for (const match of text.matchAll(create)) {
+		const open = match.index + match[0].length - 1;
+		const close = closing(text, open);
+
+		if (close === -1) {
+			continue;
+		}
+
+		for (const part of topLevel(text.slice(open + 1, close))) {
+			const column = part.match(new RegExp(`^${quoted}([A-Za-z0-9_]+)${quoted}\\s+(.*)$`, 's'));
+
+			if (!column) {
+				continue;
+			}
+
+			const generated = /GENERATED\s+ALWAYS\s+AS/i.test(column[2]);
+
+			add(match[1], column[1], !generated && !/\bNOT NULL\b/i.test(column[2]));
+		}
+	}
+
+	const alter = new RegExp(
+		`ALTER TABLE ${quoted}([A-Za-z0-9_]+)${quoted}\\s+ADD\\s+(?:COLUMN\\s+)?${quoted}([A-Za-z0-9_]+)${quoted}\\s+([^\`"\\n]*)`,
+		'g'
+	);
+
+	for (const match of text.matchAll(alter)) {
+		const generated = /GENERATED\s+ALWAYS\s+AS/i.test(match[3]);
+
+		add(match[1], match[2], !generated && !/\bNOT NULL\b/i.test(match[3]));
+	}
+
+	return declared;
+}
+
+/**
+ * Every unique index a dialect body creates, in the two shapes the migrations of this repository use:
+ * the standalone `CREATE UNIQUE INDEX`, and the `UNIQUE INDEX` declared inside a `CREATE TABLE` body,
+ * which is how MySQL tables usually carry theirs.
+ */
+function uniqueIndexes(body, quoted) {
+	const found = [];
+	const statement = new RegExp(
+		`CREATE UNIQUE INDEX (?:IF NOT EXISTS )?${quoted}([A-Za-z0-9_]+)${quoted} ON ${quoted}([A-Za-z0-9_]+)${quoted}\\s*\\(`,
+		'g'
+	);
+
+	for (const match of body.matchAll(statement)) {
+		const open = match.index + match[0].length - 1;
+		const close = closing(body, open);
+
+		if (close === -1) {
+			continue;
+		}
+
+		const lineEnd = body.indexOf('\n', close);
+		const tail = body.slice(close + 1, lineEnd === -1 ? body.length : lineEnd);
+
+		found.push({
+			name: match[1],
+			table: match[2],
+			tuple: body.slice(open + 1, close),
+			predicate: (tail.match(/\bWHERE\s+([\s\S]*?)(?:`|$)/) ?? [])[1] ?? ''
+		});
+	}
+
+	const create = new RegExp(`CREATE TABLE (?:IF NOT EXISTS )?${quoted}([A-Za-z0-9_]+)${quoted}\\s*\\(`, 'g');
+
+	for (const match of body.matchAll(create)) {
+		const open = match.index + match[0].length - 1;
+		const close = closing(body, open);
+
+		if (close === -1) {
+			continue;
+		}
+
+		for (const part of topLevel(body.slice(open + 1, close))) {
+			const inline = part.match(
+				new RegExp(`^(?:CONSTRAINT\\s+${quoted}([A-Za-z0-9_]+)${quoted}\\s+)?UNIQUE(?:\\s+(?:INDEX|KEY))?\\s*(?:${quoted}([A-Za-z0-9_]+)${quoted})?\\s*\\(([^)]*)\\)`, 'i')
+			);
+
+			if (inline) {
+				found.push({
+					name: inline[1] ?? inline[2] ?? '(anonymous)',
+					table: match[1],
+					tuple: inline[3],
+					predicate: ''
+				});
+			}
+		}
+	}
+
+	return found;
+}
+
+/**
+ * The tuple members of an index, one per top-level comma.
+ *
+ * A member is *folded* when it is wrapped in `COALESCE` or `IFNULL`, and *bare* when it is a quoted
+ * column, with or without the key-part prefix length MySQL needs for a long `varchar`.
+ */
+function tupleMembers(tuple, quoted) {
+	return topLevel(tuple).map((part) => {
+		if (/^\s*(?:COALESCE|IFNULL)\s*\(/i.test(part)) {
+			return { folded: true, column: (part.match(new RegExp(`${quoted}([A-Za-z0-9_]+)${quoted}`)) ?? [])[1] };
+		}
+
+		const bare = part.match(new RegExp(`^${quoted}([A-Za-z0-9_]+)${quoted}(?:\\(\\d+\\))?$`));
+
+		return bare ? { folded: false, column: bare[1] } : { folded: true, column: undefined };
+	});
+}
+
+/*
+|--------------------------------------------------------------------------
+| The scan
+|--------------------------------------------------------------------------
+*/
+const QUOTED = { postgres: '"', sqlite: '"', mysql: '\\\\`' };
+const unguarded = [];
+
+for (const file of migrationFiles(join(ROOT, 'packages')).filter(underRule)) {
+	const source = readFileSync(file, 'utf8');
+	const bodies = dialectBodies(source);
+
+	if (bodies.size === 0) {
+		continue;
+	}
+
+	// A name the file itself exempts, written out so the bare column reads as a decision.
+	const exempted = new Set([...source.matchAll(/null-exempt:\s*([A-Za-z0-9_.]+)/g)].map((match) => match[1]));
+
+	// Every predicate any dialect writes for an index name, so that `WHERE "x" IS NOT NULL` on the
+	// Postgres copy is read as the exemption the MySQL copy relies on.
+	const asserted = new Map();
+	const indexes = [];
+
+	for (const [dialect, body] of bodies) {
+		for (const index of uniqueIndexes(body, QUOTED[dialect])) {
+			indexes.push({ ...index, dialect });
+
+			for (const match of index.predicate.matchAll(/["`]?([A-Za-z0-9_]+)["`]?\s+IS NOT NULL/g)) {
+				if (!asserted.has(index.name)) {
+					asserted.set(index.name, new Set());
+				}
+
+				asserted.get(index.name).add(match[1]);
+			}
+		}
+	}
+
+	const columns = new Map();
+
+	for (const [dialect, body] of bodies) {
+		for (const [table, declared] of declaredColumns(body, QUOTED[dialect])) {
+			if (!columns.has(table)) {
+				columns.set(table, new Map());
+			}
+
+			for (const [column, nullable] of declared) {
+				// A column the file declares nullable on any dialect is nullable for this purpose.
+				columns.get(table).set(column, (columns.get(table).get(column) ?? false) || nullable);
+			}
+		}
+	}
+
+	for (const index of indexes) {
+		const declared = columns.get(index.table);
+
+		if (!declared) {
+			continue;
+		}
+
+		for (const member of tupleMembers(index.tuple, QUOTED[index.dialect])) {
+			if (member.folded || !member.column || declared.get(member.column) !== true) {
+				continue;
+			}
+
+			if (asserted.get(index.name)?.has(member.column)) {
+				continue;
+			}
+
+			if (exempted.has(member.column) || exempted.has(`${index.table}.${member.column}`)) {
+				continue;
+			}
+
+			unguarded.push({
+				file: file.slice(ROOT.length + 1),
+				dialect: index.dialect,
+				name: index.name,
+				table: index.table,
+				column: member.column
+			});
+		}
+	}
+}
+
+console.log(
+	`constraint parity check: ${unguarded.length === 0 ? 'no' : unguarded.length} unique index tuple(s) name a nullable column without a fold, a predicate or a stated exemption.`
+);
+
+if (unguarded.length) {
+	console.log('\nUNGUARDED (%d) — a unique index that does not fire for the rows it is about:', unguarded.length);
+
+	for (const entry of unguarded) {
+		console.log(`  ✗ ${entry.name} (${entry.dialect}) — ${entry.table}.${entry.column} is nullable and bare`);
+		console.log(`      ${entry.file}`);
+	}
+
+	console.log(
+		'\n      Fold it — COALESCE/IFNULL on Postgres and SQLite, a stored generated column on MySQL — or'
+	);
+	console.log('      state the exemption: a predicate that names the column, or a `null-exempt: <column>` comment.');
+	console.log('\nconstraint parity check: FAILED');
+	process.exit(1);
+}
+
 if (!existsSync(DOCS)) {
-	console.log(`constraint parity check: the specification is not at ${DOCS}; nothing to compare against.`);
+	console.log(`constraint parity check: the specification is not at ${DOCS}; nothing else to compare against.`);
 	process.exit(0);
 }
 

@@ -23,8 +23,11 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  *   generated column, so the same mapping runs on the other two dialects.
  * - **MySQL** has no partial indexes, so the two partial unique indexes are expressed with stored
  *   generated key columns — `deletedKey` (`'0'` while live, the row id once deleted), `engineKeyKey`
- *   (the engine key, or the empty string for the built-in database provider) and `tenantKey` — and a
- *   `FULLTEXT` index over the title and the body carries the free-text load.
+ *   (the engine key, or the empty string for the built-in database provider), `tenantKey` and
+ *   `organizationKey` — and a `FULLTEXT` index over the title and the body carries the free-text
+ *   load. The last two fold a null the same way the Postgres and SQLite index expressions fold it
+ *   with `COALESCE`: a document or a definition that carries no tenant or no organization is one
+ *   row, and without the fold no dialect would hold it to the rule at all.
  * - **SQLite** supports partial indexes, so it uses them directly, and reads the title with a prefix
  *   `LIKE` served by `IDX_search_document_title`.
  *
@@ -119,10 +122,10 @@ export class CreateSearchTables1791000000080 implements MigrationInterface {
 		// One definition per entity per engine per organization: a definition with no engine is the
 		// built-in database provider's, and it is a legitimate distinct row rather than a duplicate.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_search_index_definition_org_entity_nokey" ON "search_index_definition" ("organizationId", "entity") WHERE "engineKey" IS NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_search_index_definition_org_entity_nokey" ON "search_index_definition" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "entity") WHERE "engineKey" IS NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_search_index_definition_org_entity_key" ON "search_index_definition" ("organizationId", "entity", "engineKey") WHERE "engineKey" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_search_index_definition_org_entity_key" ON "search_index_definition" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "entity", "engineKey") WHERE "engineKey" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_search_index_definition_active" ON "search_index_definition" ("organizationId", "isActive") WHERE "deletedAt" IS NULL`
@@ -140,10 +143,10 @@ export class CreateSearchTables1791000000080 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_search_document_organization" ON "search_document" ("organizationId")`);
 		// The row's identity: the same entity row is indexed once per tenant and per engine.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_search_document_entity_nokey" ON "search_document" ("tenantId", "entity", "entityId") WHERE "engineKey" IS NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_search_document_entity_nokey" ON "search_document" (COALESCE("tenantId", '00000000-0000-0000-0000-000000000000'), "entity", "entityId") WHERE "engineKey" IS NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_search_document_entity_key" ON "search_document" ("tenantId", "entity", "entityId", "engineKey") WHERE "engineKey" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_search_document_entity_key" ON "search_document" (COALESCE("tenantId", '00000000-0000-0000-0000-000000000000'), "entity", "entityId", "engineKey") WHERE "engineKey" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		// The scan every query starts from, and the two keys the reindex sweep reads.
 		await queryRunner.query(
@@ -201,10 +204,10 @@ export class CreateSearchTables1791000000080 implements MigrationInterface {
 			`CREATE INDEX "IDX_search_index_definition_organization" ON "search_index_definition" ("organizationId")`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_search_index_definition_org_entity_nokey" ON "search_index_definition" ("organizationId", "entity") WHERE "engineKey" IS NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_search_index_definition_org_entity_nokey" ON "search_index_definition" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "entity") WHERE "engineKey" IS NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_search_index_definition_org_entity_key" ON "search_index_definition" ("organizationId", "entity", "engineKey") WHERE "engineKey" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_search_index_definition_org_entity_key" ON "search_index_definition" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "entity", "engineKey") WHERE "engineKey" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_search_index_definition_active" ON "search_index_definition" ("organizationId", "isActive") WHERE "deletedAt" IS NULL`
@@ -221,10 +224,10 @@ export class CreateSearchTables1791000000080 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_search_document_tenant" ON "search_document" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_search_document_organization" ON "search_document" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_search_document_entity_nokey" ON "search_document" ("tenantId", "entity", "entityId") WHERE "engineKey" IS NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_search_document_entity_nokey" ON "search_document" (COALESCE("tenantId", '00000000-0000-0000-0000-000000000000'), "entity", "entityId") WHERE "engineKey" IS NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_search_document_entity_key" ON "search_document" ("tenantId", "entity", "entityId", "engineKey") WHERE "engineKey" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_search_document_entity_key" ON "search_document" (COALESCE("tenantId", '00000000-0000-0000-0000-000000000000'), "entity", "entityId", "engineKey") WHERE "engineKey" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_search_document_org_entity_updated" ON "search_document" ("organizationId", "entity", "sourceUpdatedAt") WHERE "deletedAt" IS NULL`
@@ -277,12 +280,12 @@ export class CreateSearchTables1791000000080 implements MigrationInterface {
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`search_index_definition\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`entity\` varchar(128) NOT NULL, \`label\` varchar(255) NOT NULL, \`engineKey\` varchar(64) NULL, \`fields\` json NOT NULL, \`defaultWeight\` decimal(9,6) NOT NULL DEFAULT 1, \`titleTemplate\` varchar(512) NULL, \`bodyTemplate\` varchar(1024) NULL, \`keywordFields\` json NULL, \`sourceUpdatedAtField\` varchar(64) NOT NULL DEFAULT 'updatedAt', \`isSystem\` tinyint NOT NULL DEFAULT 0, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`engineKeyKey\` varchar(64) GENERATED ALWAYS AS (IFNULL(\`engineKey\`, '')) STORED, INDEX \`IDX_search_index_definition_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_search_index_definition_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_search_index_definition_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_search_index_definition_is_active\` (\`isActive\`), INDEX \`IDX_search_index_definition_is_archived\` (\`isArchived\`), INDEX \`IDX_search_index_definition_tenant\` (\`tenantId\`), INDEX \`IDX_search_index_definition_organization\` (\`organizationId\`), INDEX \`IDX_search_index_definition_active\` (\`organizationId\`, \`isActive\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`search_index_definition\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`entity\` varchar(128) NOT NULL, \`label\` varchar(255) NOT NULL, \`engineKey\` varchar(64) NULL, \`fields\` json NOT NULL, \`defaultWeight\` decimal(9,6) NOT NULL DEFAULT 1, \`titleTemplate\` varchar(512) NULL, \`bodyTemplate\` varchar(1024) NULL, \`keywordFields\` json NULL, \`sourceUpdatedAtField\` varchar(64) NOT NULL DEFAULT 'updatedAt', \`isSystem\` tinyint NOT NULL DEFAULT 0, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`engineKeyKey\` varchar(64) GENERATED ALWAYS AS (IFNULL(\`engineKey\`, '')) STORED, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, INDEX \`IDX_search_index_definition_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_search_index_definition_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_search_index_definition_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_search_index_definition_is_active\` (\`isActive\`), INDEX \`IDX_search_index_definition_is_archived\` (\`isArchived\`), INDEX \`IDX_search_index_definition_tenant\` (\`tenantId\`), INDEX \`IDX_search_index_definition_organization\` (\`organizationId\`), INDEX \`IDX_search_index_definition_active\` (\`organizationId\`, \`isActive\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		// MySQL has no partial indexes: the two partial uniques of the Postgres branch are one unique
 		// over the defaulted engine key and the generated delete key.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_search_index_definition_org_entity_key\` ON \`search_index_definition\` (\`organizationId\`, \`entity\`, \`engineKeyKey\`, \`deletedKey\`)`
+			`CREATE UNIQUE INDEX \`UQ_search_index_definition_org_entity_key\` ON \`search_index_definition\` (\`organizationKey\`, \`entity\`, \`engineKeyKey\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(

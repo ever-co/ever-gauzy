@@ -189,20 +189,21 @@ export class CreateOrderLineInvoiceTable1791000000235 implements MigrationInterf
 	/**
 	 * MySQL Up Migration
 	 *
-	 * MySQL has no filtered index, so the two partial indexes of the pivot lose their predicates and
-	 * the rules they carried are the service checks plus the nightly `schema-uniqueness-audit`, exactly
-	 * as §1.7 of the schema specification provides for a dialect that cannot express them. The unique
-	 * tuple includes `deletedAt`, so a soft-deleted link no longer collides with the live one that
-	 * replaced it — which is the same property the predicate provides on the other two.
+	 * MySQL has no filtered index, so the pivot's uniqueness is carried by the stored generated
+	 * `deletedKey` that `CreateSequenceTable1791000000000` documents for the whole set: a soft-deleted
+	 * link takes its own id and no longer collides with the live one that replaced it, which is the same
+	 * property the predicate provides on the other two dialects. The tuple used to include `deletedAt`
+	 * itself, which provided nothing: a unique index in MySQL exempts every tuple that contains a null,
+	 * so every live link — the rows the rule is about — was outside the rule.
 	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE IF NOT EXISTS \`order_line_invoice\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderLineId\` varchar(36) NOT NULL, \`invoiceItemId\` varchar(36) NOT NULL, \`direction\` varchar(16) NOT NULL, \`quantity\` decimal(20,6) NOT NULL, \`amount\` decimal(20,6) NOT NULL, \`currency\` varchar(3) NOT NULL, \`metadata\` json NULL, INDEX \`IDX_order_line_invoice_line\` (\`orderLineId\`, \`direction\`), INDEX \`IDX_order_line_invoice_item\` (\`invoiceItemId\`, \`deletedAt\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE IF NOT EXISTS \`order_line_invoice\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderLineId\` varchar(36) NOT NULL, \`invoiceItemId\` varchar(36) NOT NULL, \`direction\` varchar(16) NOT NULL, \`quantity\` decimal(20,6) NOT NULL, \`amount\` decimal(20,6) NOT NULL, \`currency\` varchar(3) NOT NULL, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_order_line_invoice_line\` (\`orderLineId\`, \`direction\`), INDEX \`IDX_order_line_invoice_item\` (\`invoiceItemId\`, \`deletedAt\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_order_line_invoice_item\` ON \`order_line_invoice\` (\`invoiceItemId\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_order_line_invoice_item\` ON \`order_line_invoice\` (\`invoiceItemId\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`order_line_invoice\` ADD CONSTRAINT \`FK_order_line_invoice_line\` FOREIGN KEY (\`orderLineId\`) REFERENCES \`order_line\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`

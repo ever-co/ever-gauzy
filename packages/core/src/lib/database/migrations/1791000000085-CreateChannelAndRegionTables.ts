@@ -73,6 +73,12 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  *   non-default row is distinct. The predicate includes the soft-delete column, so a deleted default
  *   releases the key it held.
  *
+ * A third shape sits beside those two and is not a MySQL matter at all: `organizationId` is nullable,
+ * and no dialect compares two nulls equal, so `("organizationId", "code")` held a channel or a region
+ * that belongs to no organization to no rule whatever. The scope column is therefore folded on every
+ * dialect — the generated `organizationKey` here, `COALESCE("organizationId", '00000000-…')` in the
+ * Postgres and SQLite index expression.
+ *
  * Those generated columns exist on MySQL only, are declared by no entity, and are the documented price
  * of a filtered index on a dialect that has none. The remaining filtered indexes in this file are lookup
  * narrowings rather than uniqueness rules, so MySQL gets them without their predicate — a narrower index
@@ -149,13 +155,13 @@ export class CreateChannelAndRegionTables1791000000085 implements MigrationInter
 			await queryRunner.query(`CREATE INDEX "IDX_region_organization" ON "region" ("organizationId")`);
 			// The region's business key: one code per organization among the live rows.
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_region_org_code" ON "region" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_region_org_code" ON "region" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 			);
 			// At most one live default region per organization. An index states "at most one" and cannot
 			// move the flag, which is why the service releases it from the previous holder in the same
 			// transaction that claims it.
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_region_default" ON "region" ("organizationId") WHERE "isDefault" = true AND "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_region_default" ON "region" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
 			);
 			// The organization's region list as the administration surface reads it.
 			await queryRunner.query(
@@ -184,12 +190,12 @@ export class CreateChannelAndRegionTables1791000000085 implements MigrationInter
 			// The channel's business key: one code per organization among the live rows. It is written once
 			// and is what a storefront URL, a seed file and an import mapping name.
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_channel_org_code" ON "channel" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_channel_org_code" ON "channel" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 			);
 			// At most one live default channel per organization — the fallback of the administration
 			// surface, never of a request that failed to resolve a channel.
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_channel_default" ON "channel" ("organizationId") WHERE "isDefault" = true AND "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_channel_default" ON "channel" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
 			);
 			// The organization's channel list as the administration surface reads it.
 			await queryRunner.query(
@@ -356,10 +362,10 @@ export class CreateChannelAndRegionTables1791000000085 implements MigrationInter
 			await queryRunner.query(`CREATE INDEX "IDX_region_tenant" ON "region" ("tenantId")`);
 			await queryRunner.query(`CREATE INDEX "IDX_region_organization" ON "region" ("organizationId")`);
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_region_org_code" ON "region" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_region_org_code" ON "region" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 			);
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_region_default" ON "region" ("organizationId") WHERE "isDefault" = true AND "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_region_default" ON "region" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
 			);
 			await queryRunner.query(
 				`CREATE INDEX "IDX_region_org_status" ON "region" ("organizationId", "status") WHERE "deletedAt" IS NULL`
@@ -382,10 +388,10 @@ export class CreateChannelAndRegionTables1791000000085 implements MigrationInter
 			await queryRunner.query(`CREATE INDEX "IDX_channel_tenant" ON "channel" ("tenantId")`);
 			await queryRunner.query(`CREATE INDEX "IDX_channel_organization" ON "channel" ("organizationId")`);
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_channel_org_code" ON "channel" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_channel_org_code" ON "channel" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 			);
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_channel_default" ON "channel" ("organizationId") WHERE "isDefault" = true AND "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_channel_default" ON "channel" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
 			);
 			await queryRunner.query(
 				`CREATE INDEX "IDX_channel_org_status" ON "channel" ("organizationId", "status") WHERE "deletedAt" IS NULL`
@@ -522,7 +528,7 @@ export class CreateChannelAndRegionTables1791000000085 implements MigrationInter
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		if (!(await queryRunner.hasTable('region'))) {
 			await queryRunner.query(
-				`CREATE TABLE \`region\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`currency\` varchar(3) NOT NULL, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`isTaxInclusive\` tinyint NOT NULL DEFAULT 0, \`taxProviderKey\` varchar(64) NULL, \`paymentProviderKeys\` text NULL, \`fulfillmentProviderKeys\` text NULL, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`isDefaultKey\` tinyint GENERATED ALWAYS AS (IF(\`isDefault\` = 1 AND \`deletedAt\` IS NULL, 1, NULL)) STORED, INDEX \`IDX_region_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_region_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_region_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_region_is_active\` (\`isActive\`), INDEX \`IDX_region_is_archived\` (\`isArchived\`), INDEX \`IDX_region_tenant\` (\`tenantId\`), INDEX \`IDX_region_organization\` (\`organizationId\`), UNIQUE INDEX \`UQ_region_org_code\` (\`organizationId\`, \`code\`, \`deletedKey\`), UNIQUE INDEX \`UQ_region_default\` (\`organizationId\`, \`isDefaultKey\`), INDEX \`IDX_region_org_status\` (\`organizationId\`, \`status\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+				`CREATE TABLE \`region\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`currency\` varchar(3) NOT NULL, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`isTaxInclusive\` tinyint NOT NULL DEFAULT 0, \`taxProviderKey\` varchar(64) NULL, \`paymentProviderKeys\` text NULL, \`fulfillmentProviderKeys\` text NULL, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`isDefaultKey\` tinyint GENERATED ALWAYS AS (IF(\`isDefault\` = 1 AND \`deletedAt\` IS NULL, 1, NULL)) STORED, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, INDEX \`IDX_region_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_region_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_region_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_region_is_active\` (\`isActive\`), INDEX \`IDX_region_is_archived\` (\`isArchived\`), INDEX \`IDX_region_tenant\` (\`tenantId\`), INDEX \`IDX_region_organization\` (\`organizationId\`), UNIQUE INDEX \`UQ_region_org_code\` (\`organizationKey\`, \`code\`, \`deletedKey\`), UNIQUE INDEX \`UQ_region_default\` (\`organizationKey\`, \`isDefaultKey\`), INDEX \`IDX_region_org_status\` (\`organizationId\`, \`status\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 			);
 		}
 
@@ -532,7 +538,7 @@ export class CreateChannelAndRegionTables1791000000085 implements MigrationInter
 				: '';
 
 			await queryRunner.query(
-				`CREATE TABLE \`channel\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`description\` text NULL, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`isDefault\` tinyint NOT NULL DEFAULT 0, \`defaultCurrency\` varchar(3) NOT NULL DEFAULT 'USD', \`defaultRegionId\` varchar(36) NULL, \`defaultLocale\` varchar(10) NULL, \`orderNumberPrefix\` varchar(16) NULL, \`orderNumberPadding\` int NOT NULL DEFAULT 6, \`settings\` json NULL, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`isDefaultKey\` tinyint GENERATED ALWAYS AS (IF(\`isDefault\` = 1 AND \`deletedAt\` IS NULL, 1, NULL)) STORED, INDEX \`IDX_channel_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_channel_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_channel_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_channel_is_active\` (\`isActive\`), INDEX \`IDX_channel_is_archived\` (\`isArchived\`), INDEX \`IDX_channel_tenant\` (\`tenantId\`), INDEX \`IDX_channel_organization\` (\`organizationId\`), UNIQUE INDEX \`UQ_channel_org_code\` (\`organizationId\`, \`code\`, \`deletedKey\`), UNIQUE INDEX \`UQ_channel_default\` (\`organizationId\`, \`isDefaultKey\`), INDEX \`IDX_channel_org_status\` (\`organizationId\`, \`status\`), INDEX \`IDX_channel_default_region\` (\`defaultRegionId\`)${region}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+				`CREATE TABLE \`channel\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`description\` text NULL, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`isDefault\` tinyint NOT NULL DEFAULT 0, \`defaultCurrency\` varchar(3) NOT NULL DEFAULT 'USD', \`defaultRegionId\` varchar(36) NULL, \`defaultLocale\` varchar(10) NULL, \`orderNumberPrefix\` varchar(16) NULL, \`orderNumberPadding\` int NOT NULL DEFAULT 6, \`settings\` json NULL, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`isDefaultKey\` tinyint GENERATED ALWAYS AS (IF(\`isDefault\` = 1 AND \`deletedAt\` IS NULL, 1, NULL)) STORED, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, INDEX \`IDX_channel_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_channel_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_channel_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_channel_is_active\` (\`isActive\`), INDEX \`IDX_channel_is_archived\` (\`isArchived\`), INDEX \`IDX_channel_tenant\` (\`tenantId\`), INDEX \`IDX_channel_organization\` (\`organizationId\`), UNIQUE INDEX \`UQ_channel_org_code\` (\`organizationKey\`, \`code\`, \`deletedKey\`), UNIQUE INDEX \`UQ_channel_default\` (\`organizationKey\`, \`isDefaultKey\`), INDEX \`IDX_channel_org_status\` (\`organizationId\`, \`status\`), INDEX \`IDX_channel_default_region\` (\`defaultRegionId\`)${region}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 			);
 		}
 

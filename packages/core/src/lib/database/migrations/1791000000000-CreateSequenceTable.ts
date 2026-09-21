@@ -8,6 +8,46 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * A series hands out the human-facing numbers that documents are quoted by. The table is part of the
  * platform kernel rather than of any one capability, because invoices, orders, returns, purchase
  * orders and internal references all number their documents the same way.
+ *
+ * ## The generated key columns, which every migration after this one reuses
+ *
+ * This is the first migration of the set, so the convention the rest of the set follows is stated here
+ * once and referred to by name afterwards.
+ *
+ * Postgres and SQLite say "unique among the rows that satisfy P" with a **partial index**:
+ * `CREATE UNIQUE INDEX … WHERE "deletedAt" IS NULL`. MySQL and MariaDB have no such thing. Putting the
+ * predicate's column into the tuple instead — `(…, deletedAt)` — looks like the same rule and is
+ * not one: a unique index in MySQL exempts **every** tuple that contains a `NULL`, and `deletedAt` is
+ * `NULL` on every row that has not been deleted, so such an index accepts unlimited duplicates among
+ * exactly the rows it was written to constrain.
+ *
+ * What MySQL does have is the **stored generated column**, supported since MySQL 5.7 and MariaDB 10.2 —
+ * unlike a functional key part, which needs MySQL 8.0.13 and does not exist on MariaDB at all. The
+ * predicate is encoded into a column and the column joins the tuple:
+ *
+ * ```sql
+ * `deletedKey` varchar(36) GENERATED ALWAYS AS (IF(`deletedAt` IS NULL, '0', `id`)) STORED
+ * CREATE UNIQUE INDEX `UQ_x` ON `t` (`colA`, `colB`, `deletedKey`)
+ * ```
+ *
+ * A row that satisfies the predicate takes the shared constant, so all such rows compete on
+ * `(colA, colB)` exactly as the partial index makes them compete; a row that does not takes its own
+ * `id`, which nothing else can equal, so it can never collide — which is what "excluded from the index"
+ * means. The names are fixed across the set: **`deletedKey`** for `"deletedAt" IS NULL`, which is one
+ * column per table however many indexes use it, and `<column>Key` for anything else — `noChannelKey`
+ * here, `isDefaultKey`, `isPrimaryKey`, `openStatusKey` elsewhere. They exist on MySQL only, no entity
+ * declares them, and `down()` drops the table (or the index and then the column) that carries them.
+ *
+ * ## The nullable member of a tuple, which is a defect on all three dialects
+ *
+ * `organizationId` is nullable, and no dialect compares two `NULL`s equal, so
+ * `("organizationId", "key")` enforces nothing at all for a series that has no organization — on
+ * MySQL because a null key part is exempt, on Postgres and SQLite because the two rows differ. Where the
+ * rule means "two rows with no organization are the same row", the null is folded to the nil UUID:
+ * `COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')` in the Postgres and SQLite index
+ * expression, the generated `organizationKey` on MySQL. Where a null is meant to exempt the row the
+ * predicate says so — `WHERE "channelId" IS NOT NULL` below — and the column stays raw on every dialect,
+ * MySQL's own null rule being the exemption there.
  */
 export class CreateSequenceTable1791000000000 implements MigrationInterface {
 	name = 'CreateSequenceTable1791000000000';
@@ -82,10 +122,10 @@ export class CreateSequenceTable1791000000000 implements MigrationInterface {
 		// Two partial indexes express that, because a single index would let a channel series and an
 		// organization series coexist under the same key only by accident of null handling.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_sequence_org_key_no_channel" ON "sequence" ("organizationId", "key") WHERE "channelId" IS NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_sequence_org_key_no_channel" ON "sequence" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "key") WHERE "channelId" IS NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_sequence_org_channel_key" ON "sequence" ("organizationId", "channelId", "key") WHERE "channelId" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_sequence_org_channel_key" ON "sequence" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "channelId", "key") WHERE "channelId" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 	}
 
@@ -117,10 +157,10 @@ export class CreateSequenceTable1791000000000 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_sequence_key" ON "sequence" ("key")`);
 		await queryRunner.query(`CREATE INDEX "IDX_sequence_channel" ON "sequence" ("channelId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_sequence_org_key_no_channel" ON "sequence" ("organizationId", "key") WHERE "channelId" IS NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_sequence_org_key_no_channel" ON "sequence" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "key") WHERE "channelId" IS NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_sequence_org_channel_key" ON "sequence" ("organizationId", "channelId", "key") WHERE "channelId" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_sequence_org_channel_key" ON "sequence" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "channelId", "key") WHERE "channelId" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 	}
 
@@ -151,16 +191,19 @@ export class CreateSequenceTable1791000000000 implements MigrationInterface {
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`sequence\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`key\` varchar(255) NOT NULL, \`prefix\` varchar(255) NULL, \`padding\` int NOT NULL DEFAULT 1, \`nextValue\` int NOT NULL DEFAULT 1, \`step\` int NOT NULL DEFAULT 1, \`resetPolicy\` varchar(255) NOT NULL DEFAULT 'NEVER', \`lastResetAt\` datetime NULL, \`description\` varchar(255) NULL, \`channelId\` varchar(36) NULL, INDEX \`IDX_sequence_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_sequence_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_sequence_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_sequence_is_active\` (\`isActive\`), INDEX \`IDX_sequence_is_archived\` (\`isArchived\`), INDEX \`IDX_sequence_tenant\` (\`tenantId\`), INDEX \`IDX_sequence_organization\` (\`organizationId\`), INDEX \`IDX_sequence_key\` (\`key\`), INDEX \`IDX_sequence_channel\` (\`channelId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`sequence\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`key\` varchar(255) NOT NULL, \`prefix\` varchar(255) NULL, \`padding\` int NOT NULL DEFAULT 1, \`nextValue\` int NOT NULL DEFAULT 1, \`step\` int NOT NULL DEFAULT 1, \`resetPolicy\` varchar(255) NOT NULL DEFAULT 'NEVER', \`lastResetAt\` datetime NULL, \`description\` varchar(255) NULL, \`channelId\` varchar(36) NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`noChannelKey\` varchar(36) GENERATED ALWAYS AS (IF(\`channelId\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_sequence_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_sequence_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_sequence_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_sequence_is_active\` (\`isActive\`), INDEX \`IDX_sequence_is_archived\` (\`isArchived\`), INDEX \`IDX_sequence_tenant\` (\`tenantId\`), INDEX \`IDX_sequence_organization\` (\`organizationId\`), INDEX \`IDX_sequence_key\` (\`key\`), INDEX \`IDX_sequence_channel\` (\`channelId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
-		// MySQL has no partial indexes. Uniqueness is still expressed on both tuples; the
-		// organization-wide case additionally relies on a service check because MySQL treats nulls as
-		// distinct, which is recorded in the schema specification.
+		// The same two rules, through the generated key columns declared above: `organizationKey` folds
+		// the null organization so the tuple applies to a series that has none, `deletedKey` carries
+		// `"deletedAt" IS NULL`, and `noChannelKey` carries `"channelId" IS NULL` — a predicate MySQL's
+		// own null rule cannot stand in for, because it selects the null rows rather than excusing them.
+		// The channel-scoped index needs no such column: `channelId` is already a member of its tuple, so
+		// MySQL exempts the channel-less rows by itself, which is exactly `WHERE "channelId" IS NOT NULL`.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_sequence_org_key_no_channel\` ON \`sequence\` (\`organizationId\`, \`key\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_sequence_org_key_no_channel\` ON \`sequence\` (\`organizationKey\`, \`key\`, \`noChannelKey\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_sequence_org_channel_key\` ON \`sequence\` (\`organizationId\`, \`channelId\`, \`key\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_sequence_org_channel_key\` ON \`sequence\` (\`organizationKey\`, \`channelId\`, \`key\`, \`deletedKey\`)`
 		);
 	}
 

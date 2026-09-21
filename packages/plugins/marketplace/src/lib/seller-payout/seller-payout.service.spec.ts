@@ -49,6 +49,10 @@ jest.mock('@gauzy/core', () => {
 		EventBus: class {},
 		EventOutboxService: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The decimal comparison the commission bands and the settlement's discrepancy are decided by is
+		// the kernel's own, so the double hands over the real one: a comparison doubled here would agree
+		// with the service about arithmetic the platform never performs.
+		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		isUniqueViolation: (error: any) => Boolean(error?.code === '23505'),
 		Merchant: class {},
 		OrganizationContact: class {},
@@ -121,8 +125,13 @@ import { SellerPayoutService } from './seller-payout.service';
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const ORG = '00000000-0000-4000-8000-000000000002';
+const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
 const SELLER = 'seller-1';
 const EUR = 'EUR' as CurrencyCode;
+const DAY = 24 * 60 * 60 * 1000;
+/** A window a pass may be asked to cover, stated once so the seeded payout and the run agree on it. */
+const PERIOD_START = new Date('2026-01-01T00:00:00.000Z');
+const PERIOD_END = new Date('2026-02-01T00:00:00.000Z');
 
 type Row = Record<string, any>;
 
@@ -277,7 +286,18 @@ function payoutFixture(seed: { sellers?: Row[]; transactions?: Row[]; payouts?: 
 		manager,
 		create: (partial: Row) => ({ ...partial }),
 		save: async (row: Row) => await manager.save(SellerPayout, row),
-		findOne: async ({ where }: any = {}) => tables.seller_payout.find((row) => matches(row, where)) ?? null,
+		findOne: async ({ where, order }: any = {}) => {
+			const found = tables.seller_payout.filter((row) => matches(row, where));
+
+			// The schedule predicate asks for the *latest* payout, so the double has to order the way the
+			// service asked rather than answer whichever row it stored first: a double that ignored the
+			// order would make every assertion about a seller's period vacuous.
+			if (order?.scheduledAt === 'DESC') {
+				found.sort((left, right) => new Date(right.scheduledAt ?? 0).getTime() - new Date(left.scheduledAt ?? 0).getTime());
+			}
+
+			return found[0] ?? null;
+		},
 		find: async ({ where }: any = {}) => tables.seller_payout.filter((row) => matches(row, where)),
 		findAndCount: async ({ where }: any = {}) => {
 			const found = tables.seller_payout.filter((row) => matches(row, where));
@@ -303,8 +323,13 @@ function payoutFixture(seed: { sellers?: Row[]; transactions?: Row[]; payouts?: 
 			return found;
 		}
 	};
+	const lineWhere: Row[] = [];
 	const lineRepository: any = {
-		find: async ({ where }: any = {}) => tables.seller_payout_line.filter((row) => matches(row, where))
+		find: async ({ where }: any = {}) => {
+			lineWhere.push(where ?? {});
+
+			return tables.seller_payout_line.filter((row) => matches(row, where));
+		}
 	};
 	const sequenceService = {
 		allocate: async (key: string) => ({ key, formatted: 'PAY-0001', number: 'PAY-0001', value: 1 })
@@ -334,7 +359,9 @@ function payoutFixture(seed: { sellers?: Row[]; transactions?: Row[]; payouts?: 
 		appended,
 		events: () => appended.map((event) => event.name),
 		store: (id: string) => tables.seller_payout.find((row) => row.id === id),
-		rows: () => tables.seller_transaction
+		rows: () => tables.seller_transaction,
+		/** Every `where` the payout-line table was read with, which is what the exclusion is computed from. */
+		lineReads: () => lineWhere
 	};
 }
 
@@ -579,15 +606,28 @@ describe('SellerPayoutService — the run (doc 20 §7.5, MK-12, MK-21)', () => {
 		expect(fixture.rows()[0].status).toBe(SellerTransactionStatus.SETTLEABLE);
 	});
 
-	it('is idempotent: a second run does not pay a row that is already in a live payout line', async () => {
+	it('is idempotent: a second pass neither reconsiders a seller before its period nor re-pays a settled row', async () => {
 		// "a transaction can sit in at most one live payout line, and one period cannot produce two payouts
 		// for the same seller and currency, so a scheduler that fires twice pays nobody twice" (§7.5).
+		//
+		// Both halves are asserted, because only the second one used to hold. The seeded seller is monthly,
+		// so the pass that runs the next minute is not that seller's moment at all — it used to be, and a
+		// monthly seller on a daily pass therefore received about thirty payouts a month, each a separate
+		// provider transfer with its own fee.
 		const fixture = payoutFixture({ transactions: [transactionRow('t1', { netAmount: '80.000000' })] });
 
-		await fixture.service.run();
-		const second = await fixture.service.run();
+		const first = await fixture.service.run();
 
-		expect(second[0]).toMatchObject({ skippedReason: 'NOTHING_SETTLEABLE', payable: '0.000000' });
+		expect(first[0].payoutId).toBeDefined();
+		expect(await fixture.service.run()).toEqual([]);
+
+		// And once the period has elapsed the seller is considered again — and the row already covered by a
+		// live payout line is still not paid a second time, which is what this test was written for.
+		fixture.tables.seller_payout[0].scheduledAt = new Date(Date.now() - 70 * DAY);
+
+		const third = await fixture.service.run();
+
+		expect(third[0]).toMatchObject({ skippedReason: 'NOTHING_SETTLEABLE', payable: '0.000000' });
 		expect(fixture.tables.seller_payout).toHaveLength(1);
 		expect(fixture.tables.seller_payout_line).toHaveLength(1);
 	});
@@ -623,6 +663,158 @@ describe('SellerPayoutService — the run (doc 20 §7.5, MK-12, MK-21)', () => {
 		expect(results[0]).toMatchObject({ balance: '100.000000', reserveAmount: '90.000000', payable: '10.000000' });
 		expect(results[0].skippedReason).toBe('BELOW_THRESHOLD');
 		expect(fixture.tables.seller_payout).toEqual([]);
+	});
+});
+
+describe('SellerPayoutService — whose moment this pass is (doc 20 §7.5)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('pays a seller that has never been paid, whatever its period', async () => {
+		const fixture = payoutFixture({
+			sellers: [sellerRow({ payoutSchedule: SellerPayoutSchedule.WEEKLY })],
+			transactions: [transactionRow('t1', { netAmount: '80.000000' })]
+		});
+
+		expect((await fixture.service.run())[0].payoutId).toBeDefined();
+	});
+
+	it('holds a weekly seller back until a week has passed since its last payout', async () => {
+		const early = payoutFixture({
+			sellers: [sellerRow({ payoutSchedule: SellerPayoutSchedule.WEEKLY })],
+			payouts: [payoutRow('p1', { scheduledAt: new Date(Date.now() - 2 * DAY) })],
+			transactions: [transactionRow('t1', { netAmount: '80.000000' })]
+		});
+		const due = payoutFixture({
+			sellers: [sellerRow({ payoutSchedule: SellerPayoutSchedule.WEEKLY })],
+			payouts: [payoutRow('p1', { scheduledAt: new Date(Date.now() - 8 * DAY) })],
+			transactions: [transactionRow('t1', { netAmount: '80.000000' })]
+		});
+
+		// Not its moment: the seller is not considered at all, so the pass reports nothing about it.
+		expect(await early.service.run()).toEqual([]);
+		expect(early.tables.seller_payout).toHaveLength(1);
+
+		expect((await due.service.run())[0].payoutId).toBeDefined();
+		expect(due.tables.seller_payout).toHaveLength(2);
+	});
+
+	it('reads the latest payout rather than whichever one it finds first', async () => {
+		const fixture = payoutFixture({
+			sellers: [sellerRow({ payoutSchedule: SellerPayoutSchedule.WEEKLY })],
+			payouts: [
+				payoutRow('old', { scheduledAt: new Date(Date.now() - 400 * DAY) }),
+				payoutRow('recent', { scheduledAt: new Date(Date.now() - 1 * DAY) })
+			],
+			transactions: [transactionRow('t1', { netAmount: '80.000000' })]
+		});
+
+		expect(await fixture.service.run()).toEqual([]);
+	});
+
+	it('ignores a canceled payout, because the money it covered was released rather than paid', async () => {
+		const fixture = payoutFixture({
+			sellers: [sellerRow({ payoutSchedule: SellerPayoutSchedule.WEEKLY })],
+			payouts: [
+				payoutRow('canceled', { status: SellerPayoutStatus.CANCELED, scheduledAt: new Date(Date.now() - 1 * DAY) })
+			],
+			transactions: [transactionRow('t1', { netAmount: '80.000000' })]
+		});
+
+		expect((await fixture.service.run())[0].payoutId).toBeDefined();
+	});
+
+	it('considers a threshold seller at every pass and lets the threshold be what holds it back', async () => {
+		// A threshold schedule has no period: it is paid when its balance crosses the threshold, which is
+		// the one rule that decides for it.
+		const fixture = payoutFixture({
+			sellers: [sellerRow({ payoutSchedule: SellerPayoutSchedule.THRESHOLD, payoutThreshold: '500.00' })],
+			payouts: [payoutRow('p1', { scheduledAt: new Date(Date.now() - 1000) })],
+			transactions: [transactionRow('t1', { netAmount: '80.000000' })]
+		});
+
+		expect((await fixture.service.run())[0]).toMatchObject({ skippedReason: 'BELOW_THRESHOLD' });
+	});
+
+	it('still never pays a manual seller, whatever its history', async () => {
+		const fixture = payoutFixture({
+			sellers: [sellerRow({ payoutSchedule: SellerPayoutSchedule.MANUAL })],
+			transactions: [transactionRow('t1')]
+		});
+
+		expect(await fixture.service.run()).toEqual([]);
+	});
+
+	it('refuses to open a second payout over a period this seller and currency already have one for', async () => {
+		// `run()`'s own docstring claims "one period cannot produce two payouts for the same seller and
+		// currency" and nothing enforced it: the per-transaction constraint stops the same rows being paid
+		// twice, and a scheduler that double-fired between two settlements still opened a second window.
+		const fixture = payoutFixture({
+			payouts: [
+				payoutRow('p1', {
+					scheduledAt: new Date(Date.now() - 400 * DAY),
+					periodStart: PERIOD_START,
+					periodEnd: PERIOD_END
+				})
+			],
+			transactions: [transactionRow('t1', { netAmount: '80.000000' })]
+		});
+
+		const results = await fixture.service.run({ periodStart: PERIOD_START, periodEnd: PERIOD_END });
+
+		expect(results[0]).toMatchObject({ skippedReason: 'PERIOD_ALREADY_PAID', balance: '80.000000' });
+		expect(fixture.tables.seller_payout).toHaveLength(1);
+		expect(fixture.rows()[0].status).toBe(SellerTransactionStatus.SETTLEABLE);
+	});
+});
+
+describe('SellerPayoutService — what the settleable read costs and what it may see', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('does not let another organization’s payout line exclude this organization’s ledger row', async () => {
+		// The exclusion used to be computed from `find({ deletedAt: IsNull() })` — every payout line in the
+		// database, with no tenant, no organization, no seller and no restriction to the rows under
+		// consideration. A foreign line that happened to name the same transaction id therefore held this
+		// organization's row out of every payout, silently and for ever.
+		const fixture = payoutFixture({
+			transactions: [transactionRow('t1', { netAmount: '80.000000' })],
+			lines: [{ id: 'foreign', sellerPayoutId: 'foreign-payout', sellerTransactionId: 't1', tenantId: TENANT, organizationId: OTHER_ORG }]
+		});
+
+		const results = await fixture.service.run();
+
+		expect(results[0].payoutId).toBeDefined();
+		expect(results[0].balance).toBe('80.000000');
+	});
+
+	it('asks the payout-line table only about the rows it is testing, in this seller’s own scope', async () => {
+		const fixture = payoutFixture({
+			transactions: [transactionRow('t1', { netAmount: '80.000000' }), transactionRow('t2', { netAmount: '20.000000' })]
+		});
+
+		await fixture.service.run();
+
+		const read = fixture.lineReads()[0];
+
+		expect(read).toMatchObject({ tenantId: TENANT, organizationId: ORG });
+		expect((read.sellerTransactionId as any)?._value?.sort?.() ?? []).toEqual(['t1', 't2']);
+	});
+
+	it('does not read the payout-line table at all when the seller has nothing settleable', async () => {
+		const fixture = payoutFixture({ transactions: [] });
+
+		await fixture.service.run();
+
+		expect(fixture.lineReads()).toEqual([]);
 	});
 });
 

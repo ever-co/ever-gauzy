@@ -14,6 +14,7 @@ import { SellerSettlementModule } from './seller-settlement/seller-settlement.mo
 import { SellerCommissionService } from './commission/seller-commission.service';
 import { SellerSplitService } from './split/seller-split.service';
 import { SellerFundingService } from './funding/seller-funding.service';
+import { SellerAccessGuard } from './seller-scope/seller-access.guard';
 import { resolvers } from './graphql/resolvers';
 import { TypeOrmSellerRepository } from './seller/repository/type-orm-seller.repository';
 import { TypeOrmSellerOfferingRepository } from './seller-offering/repository/type-orm-seller-offering.repository';
@@ -55,6 +56,11 @@ import { TypeOrmSellerTransactionRepository } from './seller-transaction/reposit
 		SellerCommissionService,
 		SellerSplitService,
 		SellerFundingService,
+		// The resolver below carries the seller access guard the controllers carry, and an enhancer is
+		// instantiated in the injector of the module that hosts the handler it protects — so the guard is
+		// a provider here for the same reason each aggregate module declares it: it reads the seller table
+		// to resolve a caller's membership, and this module is where the resolver's own injector looks.
+		SellerAccessGuard,
 		TypeOrmSellerRepository,
 		TypeOrmSellerOfferingRepository,
 		TypeOrmSellerTransactionRepository,

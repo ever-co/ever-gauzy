@@ -178,14 +178,15 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	/**
 	 * Approves a payout.
 	 *
+	 * @param request The request.
 	 * @param id The payout id.
 	 * @returns The payout, in `APPROVED`.
 	 */
 	@ApiOperation({ summary: 'Approve a payout' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
 	@Post('/:id/approve')
-	async approve(@Param('id', UUIDValidationPipe) id: ID): Promise<SellerPayout> {
-		return this.sellerPayoutService.approve(id);
+	async approve(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<SellerPayout> {
+		return this.sellerPayoutService.approve(id, this.scope(request));
 	}
 
 	/**
@@ -200,6 +201,7 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	 * `resourceType` records what the key was holding, so an operator reading a stuck client's row knows
 	 * which payout it belongs to without reconstructing the request.
 	 *
+	 * @param request The request.
 	 * @param id The payout id.
 	 * @param body What the provider reported.
 	 * @returns The payout, in `PAID` or `FAILED`.
@@ -210,6 +212,7 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	@Post('/:id/pay')
 	@UseValidationPipe({ transform: true })
 	async pay(
+		@Req() request: any,
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body()
 		body: {
@@ -221,12 +224,13 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 			failureReason?: string;
 		}
 	): Promise<SellerPayout> {
-		return this.sellerPayoutService.recordExecution(id, body);
+		return this.sellerPayoutService.recordExecution(id, body, this.scope(request));
 	}
 
 	/**
 	 * Cancels an unpaid payout and releases its transactions.
 	 *
+	 * @param request The request.
 	 * @param id The payout id.
 	 * @param body The reason.
 	 * @returns The payout and the number of released rows.
@@ -235,10 +239,11 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CANCEL)
 	@Post('/:id/cancel')
 	async cancel(
+		@Req() request: any,
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() body: { reason: string }
 	): Promise<{ payout: SellerPayout; releasedTransactionCount: number }> {
-		return this.sellerPayoutService.cancel(id, body?.reason);
+		return this.sellerPayoutService.cancel(id, body?.reason, this.scope(request));
 	}
 
 	/**
@@ -249,6 +254,7 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	 * payout back in front of the execution route. A client that presents a key is answered from its
 	 * first attempt instead.
 	 *
+	 * @param request The request.
 	 * @param id The payout id.
 	 * @returns The payout, in `APPROVED`.
 	 */
@@ -256,8 +262,8 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
 	@Idempotent({ scope: 'seller.payout.retry', required: false, resourceType: 'seller_payout' })
 	@Post('/:id/retry')
-	async retry(@Param('id', UUIDValidationPipe) id: ID): Promise<SellerPayout> {
-		return this.sellerPayoutService.retry(id);
+	async retry(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<SellerPayout> {
+		return this.sellerPayoutService.retry(id, this.scope(request));
 	}
 
 	/**

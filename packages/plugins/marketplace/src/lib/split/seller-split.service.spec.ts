@@ -32,6 +32,10 @@ jest.mock('@gauzy/core', () => {
 		EventBus: class {},
 		EventOutboxService: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The decimal comparison the commission bands and the settlement's discrepancy are decided by is
+		// the kernel's own, so the double hands over the real one: a comparison doubled here would agree
+		// with the service about arithmetic the platform never performs.
+		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		isUniqueViolation: (error: any) => Boolean(error?.code === '23505'),
 		Merchant: class {},
 		OrganizationContact: class {},
@@ -98,6 +102,7 @@ import { SellerSplitService } from './seller-split.service';
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const ORG = '00000000-0000-4000-8000-000000000002';
 const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
+const OTHER_TENANT = '00000000-0000-4000-8000-000000000004';
 const NORD = 'seller-nord';
 const SUD = 'seller-sud';
 const ORDER = 'order-1';
@@ -190,6 +195,13 @@ function splitFixture(seed: { sellers?: Row[]; offerings?: Row[]; transactions?:
 		throw new Error('the in-memory double was handed an entity it does not know');
 	};
 
+	// Atomicity is a property of *where* a write happened, so the double records it: a depth of zero is a
+	// write outside every transaction, and more than one opened transaction is two units of work where the
+	// service claims one.
+	let depth = 0;
+	let opened = 0;
+	const journal: Array<{ what: string; depth: number }> = [];
+
 	const manager: any = {
 		save: async (entity: unknown, rowOrRows: any) => {
 			const list = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
@@ -197,6 +209,8 @@ function splitFixture(seed: { sellers?: Row[]; offerings?: Row[]; transactions?:
 
 			for (const row of list) {
 				const index = row.id ? table.findIndex((candidate) => candidate.id === row.id) : -1;
+
+				journal.push({ what: `save:${row.id ?? 'new'}`, depth });
 
 				if (index >= 0) {
 					table[index] = { ...table[index], ...row };
@@ -212,7 +226,16 @@ function splitFixture(seed: { sellers?: Row[]; offerings?: Row[]; transactions?:
 
 			return Array.isArray(rowOrRows) ? list : list[0];
 		},
-		transaction: async (run: (transactional: any) => Promise<any>) => await run(manager),
+		transaction: async (run: (transactional: any) => Promise<any>) => {
+			opened += 1;
+			depth += 1;
+
+			try {
+				return await run(manager);
+			} finally {
+				depth -= 1;
+			}
+		},
 		softRemove: async () => undefined
 	};
 
@@ -232,6 +255,7 @@ function splitFixture(seed: { sellers?: Row[]; offerings?: Row[]; transactions?:
 	};
 	const outbox = {
 		append: async (_manager: unknown, event: any) => {
+			journal.push({ what: `append:${event.name}`, depth });
 			appended.push(event);
 
 			return event;
@@ -253,7 +277,11 @@ function splitFixture(seed: { sellers?: Row[]; offerings?: Row[]; transactions?:
 		appended,
 		events: () => appended.map((event) => event.name),
 		ledger: () => tables.seller_transaction,
-		rowFor: (orderLineId: string) => tables.seller_transaction.find((row) => row.orderLineId === orderLineId)
+		rowFor: (orderLineId: string) => tables.seller_transaction.find((row) => row.orderLineId === orderLineId),
+		/** Every write and every outbox append, with the transaction depth it happened at. */
+		journal: () => journal,
+		/** How many transactions the service opened. */
+		openedTransactions: () => opened
 	};
 }
 
@@ -699,9 +727,14 @@ describe('SellerSplitService — reversal (doc 20 §4.4 S8/S9, §5.6)', () => {
 		).rejects.toThrow(/does not exist/);
 	});
 
-	it('writes a partial reversal as a new row that mirrors the original exactly, and never edits it', async () => {
+	it('reverses the whole row when the caller states no share of it, and never edits the original', async () => {
 		// MK-7 on the reversal: the negated amounts satisfy the same identity, so the seller's balance moves
 		// by exactly the amount that was reversed and the platform's commission by exactly its own share.
+		//
+		// A reversal that states neither a refund amount nor the quantity the row covers is a full refund of
+		// the line, and reverses all of it. A *partial* one states its share, which the cases below cover:
+		// the ledger row carries no quantity of its own, so `quantity` alone cannot say what fraction one
+		// unit is.
 		const fixture = splitFixture({ transactions: [saleRow()] });
 
 		const reversal = await fixture.service.reverse({
@@ -820,5 +853,213 @@ describe('SellerSplitService — reversal (doc 20 §4.4 S8/S9, §5.6)', () => {
 			netAmount: '98.800000',
 			commissionAmount: '14.250000'
 		});
+	});
+
+	it('prorates a partial reversal by the refund it states, instead of reversing the whole line', async () => {
+		// The defect this pins: `reverse()` declared `quantity` as a required member of its input and never
+		// read it, so a one-unit return of a four-unit line wrote the whole of every column — the seller's
+		// entire entitlement for the line came off its balance for one returned unit, and a second return
+		// took it off again.
+		//
+		// §4.4 S8's own partial: the row captured `100.00 + 18.05 − 5.00 = 113.05`, and a quarter of it is
+		// the 28.26 the buyer is made whole by.
+		const fixture = splitFixture({ transactions: [saleRow()] });
+
+		const reversal = await fixture.service.reverse({
+			transactionId: 'sale-1',
+			kind: SellerTransactionKind.REFUND,
+			refundId: 'refund-1',
+			refundAmount: '28.26',
+			quantity: '1'
+		});
+
+		expect(reversal).toMatchObject({
+			grossAmount: '-25.000000',
+			taxAmount: '-4.510000',
+			sellerDiscountAmount: '1.250000',
+			commissionAmount: '-3.560000',
+			netAmount: '-24.700000'
+		});
+		// MK-7 holds on the prorated row too, which is what makes the balance move by exactly the reversal.
+		const expected = Money.fromStorage(reversal.grossAmount, EUR, DECIMALS)
+			.add(Money.fromStorage(reversal.taxAmount, EUR, DECIMALS))
+			.add(Money.fromStorage(reversal.sellerDiscountAmount, EUR, DECIMALS))
+			.subtract(Money.fromStorage(reversal.commissionAmount, EUR, DECIMALS));
+
+		expect(expected.equals(Money.fromStorage(reversal.netAmount, EUR, DECIMALS))).toBe(true);
+	});
+
+	it('prorates by the quantity when the caller states what the row covers', async () => {
+		// The other way to state the same share, for a caller that reverses units rather than money. The
+		// denominator has to come from the caller because the ledger row carries no quantity column.
+		const fixture = splitFixture({ transactions: [saleRow()] });
+
+		const reversal = await fixture.service.reverse({
+			transactionId: 'sale-1',
+			kind: SellerTransactionKind.REFUND,
+			quantity: '1',
+			originalQuantity: '4'
+		});
+
+		expect(reversal).toMatchObject({
+			grossAmount: '-25.000000',
+			taxAmount: '-4.510000',
+			sellerDiscountAmount: '1.250000',
+			commissionAmount: '-3.560000',
+			netAmount: '-24.700000'
+		});
+	});
+
+	it('conserves every column across a sequence of partials that does not divide evenly', async () => {
+		// The tax and the commission are the two columns a quarter of this row does not divide evenly:
+		// `18.05 / 4 = 4.5125` and `14.25 / 4 = 3.5625`, so three partials leave 4.52 and 3.57 behind. The
+		// completing row carries exactly that remainder, and the residue lands on the platform's commission
+		// rather than on the seller's net (MK-10).
+		const fixture = splitFixture({ transactions: [saleRow()] });
+
+		for (const unit of ['r1', 'r2', 'r3']) {
+			await fixture.service.reverse({
+				transactionId: 'sale-1',
+				kind: SellerTransactionKind.REFUND,
+				refundId: unit,
+				quantity: '1',
+				originalQuantity: '4'
+			});
+		}
+
+		const completing = await fixture.service.reverse({
+			transactionId: 'sale-1',
+			kind: SellerTransactionKind.REFUND,
+			refundId: 'refund-4',
+			refundAmount: '28.27',
+			quantity: '1',
+			originalQuantity: '4',
+			completes: true
+		});
+
+		expect(completing).toMatchObject({ taxAmount: '-4.520000', commissionAmount: '-3.570000', netAmount: '-24.700000' });
+
+		const reversals = fixture.ledger().filter((row) => row.reversesTransactionId === 'sale-1');
+
+		expect(reversals).toHaveLength(4);
+		// Every column of the original is reversed exactly once, to the minor unit: nothing is created and
+		// nothing is destroyed by the four roundings.
+		expect(sumOf(reversals, 'grossAmount')).toBe('-100.000000');
+		expect(sumOf(reversals, 'taxAmount')).toBe('-18.050000');
+		expect(sumOf(reversals, 'sellerDiscountAmount')).toBe('5.000000');
+		expect(sumOf(reversals, 'commissionAmount')).toBe('-14.250000');
+		expect(sumOf(reversals, 'netAmount')).toBe('-98.800000');
+
+		// The conservation property the README states, over the reversals: what the platform kept and what
+		// the seller was entitled to add back up to what the buyer paid, with no residue anywhere.
+		expect(
+			Money.fromStorage(sumOf(reversals, 'netAmount'), EUR, DECIMALS)
+				.add(Money.fromStorage(sumOf(reversals, 'commissionAmount'), EUR, DECIMALS))
+				.toStorageString()
+		).toBe(
+			Money.fromStorage(sumOf(reversals, 'grossAmount'), EUR, DECIMALS)
+				.add(Money.fromStorage(sumOf(reversals, 'taxAmount'), EUR, DECIMALS))
+				.add(Money.fromStorage(sumOf(reversals, 'sellerDiscountAmount'), EUR, DECIMALS))
+				.toStorageString()
+		);
+		expect(fixture.ledger().find((row) => row.id === 'sale-1')).toMatchObject({
+			status: SellerTransactionStatus.REVERSED,
+			netAmount: '98.800000'
+		});
+	});
+
+	it('refuses a reversal that would take more off the row than the row ever carried', async () => {
+		// A reversal is a new row rather than an edit, so nothing about writing one used to consult what had
+		// already been written: a repeated refund handler could reverse a line twice over and drive the
+		// seller's balance negative with no rule stopping it.
+		const partial = (id: string) =>
+			saleRow({
+				id,
+				kind: SellerTransactionKind.REFUND,
+				reversesTransactionId: 'sale-1',
+				grossAmount: '-25.000000',
+				taxAmount: '-4.510000',
+				sellerDiscountAmount: '1.250000',
+				commissionAmount: '-3.560000',
+				netAmount: '-24.700000'
+			});
+		const fixture = splitFixture({ transactions: [saleRow(), partial('r1'), partial('r2'), partial('r3')] });
+
+		await expect(
+			fixture.service.reverse({ transactionId: 'sale-1', kind: SellerTransactionKind.REFUND, quantity: '1' })
+		).rejects.toThrow(/SELLER_SPLIT_MISMATCH/);
+		expect(fixture.ledger().filter((row) => row.reversesTransactionId === 'sale-1')).toHaveLength(3);
+	});
+
+	it('does not find a row of another tenant, so a reversal cannot reach across one', async () => {
+		// The read used to state only the id: a caller in one tenant that supplied another tenant's
+		// `transactionId` reversed that tenant's sale row and read its gross, commission and net back in the
+		// response.
+		const fixture = splitFixture({ transactions: [saleRow({ tenantId: OTHER_TENANT })] });
+
+		await expect(
+			fixture.service.reverse({ transactionId: 'sale-1', kind: SellerTransactionKind.REFUND, quantity: '1' })
+		).rejects.toThrow(/does not exist/);
+		expect(fixture.ledger()).toHaveLength(1);
+	});
+
+	it('writes the reversal, the original’s closing and the event in one transaction', async () => {
+		// A crash between the reversal row and the outbox append used to leave a persisted reversal that no
+		// consumer ever learned about — the exact failure the transactional outbox exists to prevent.
+		const fixture = splitFixture({ transactions: [saleRow()] });
+
+		await fixture.service.reverse({
+			transactionId: 'sale-1',
+			kind: SellerTransactionKind.REFUND,
+			refundAmount: '113.05',
+			quantity: '1',
+			completes: true
+		});
+
+		expect(fixture.openedTransactions()).toBe(1);
+		expect(fixture.journal().map((entry) => entry.what)).toEqual([
+			'save:sale-1',
+			'save:new',
+			'append:seller.transaction.reversed'
+		]);
+		expect(fixture.journal().every((entry) => entry.depth === 1)).toBe(true);
+	});
+});
+
+describe('SellerSplitService — splitting the same order twice (MK-16)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('answers a repeated split with the rows it already wrote, rather than writing them again', async () => {
+		// The split is reached from the order lifecycle through a capability port, so a placement step that
+		// is retried, an event delivered twice or an operation replayed from its journal would otherwise
+		// double every seller's entitlement and the platform's commission with nothing to refuse it.
+		const fixture = splitFixture();
+		const input = order({
+			lines: [line({ orderLineId: 'l1' }), line({ orderLineId: 'l2', sellerId: SUD, grossAmount: '120.00', taxAmount: '8.40' })]
+		});
+
+		const first = await fixture.service.split(input as never);
+		const second = await fixture.service.split(input as never);
+
+		expect(first).toHaveLength(2);
+		expect(second.map((row) => row.id)).toEqual(first.map((row) => row.id));
+		expect(fixture.ledger()).toHaveLength(2);
+		// One recorded event, because one split happened.
+		expect(fixture.events()).toEqual(['seller.transaction.recorded']);
+	});
+
+	it('still splits a different order of the same seller', async () => {
+		const fixture = splitFixture();
+
+		await fixture.service.split(order() as never);
+		await fixture.service.split(order({ orderId: 'order-2', orderNumber: 'SO-0002' }) as never);
+
+		expect(fixture.ledger()).toHaveLength(2);
+		expect(fixture.events()).toEqual(['seller.transaction.recorded', 'seller.transaction.recorded']);
 	});
 });

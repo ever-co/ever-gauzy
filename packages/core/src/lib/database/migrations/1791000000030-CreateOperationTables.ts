@@ -94,10 +94,14 @@ export class CreateOperationTables1791000000030 implements MigrationInterface {
 		);
 		// Caller-level idempotency: a retried submission returns the original operation.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_operation_idem" ON "operation" ("organizationId", "type", "idempotencyKey") WHERE "idempotencyKey" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_operation_idem" ON "operation" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "type", "idempotencyKey") WHERE "idempotencyKey" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		// The exclusivity rule: two concurrent checkouts of one cart, or two captures of one order,
 		// cannot both proceed — the second insert fails and the caller is handed the live operation.
+		// `aggregateId` is nullable and is deliberately left raw, so a null exempts the row: an operation
+		// that names a type and no particular aggregate has nothing to be exclusive over, and folding the
+		// null would serialise every operation of that type against every other.
+		// null-exempt: operation.aggregateId
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX "UQ_operation_aggregate_live" ON "operation" ("aggregateType", "aggregateId") WHERE "aggregateType" IS NOT NULL AND "status" IN ('PENDING','RUNNING','COMPENSATING') AND "deletedAt" IS NULL`
 		);
@@ -173,7 +177,7 @@ export class CreateOperationTables1791000000030 implements MigrationInterface {
 			`CREATE INDEX "IDX_operation_correlation" ON "operation" ("correlationId") WHERE "correlationId" IS NOT NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_operation_idem" ON "operation" ("organizationId", "type", "idempotencyKey") WHERE "idempotencyKey" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_operation_idem" ON "operation" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "type", "idempotencyKey") WHERE "idempotencyKey" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX "UQ_operation_aggregate_live" ON "operation" ("aggregateType", "aggregateId") WHERE "aggregateType" IS NOT NULL AND "status" IN ('PENDING','RUNNING','COMPENSATING') AND "deletedAt" IS NULL`
@@ -242,25 +246,30 @@ export class CreateOperationTables1791000000030 implements MigrationInterface {
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`operation\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`type\` varchar(64) NOT NULL, \`status\` varchar(255) NOT NULL DEFAULT 'PENDING', \`input\` json NOT NULL, \`state\` json NULL, \`result\` json NULL, \`attemptCount\` int NOT NULL DEFAULT 0, \`maxAttempts\` int NOT NULL DEFAULT 3, \`lastError\` text NULL, \`idempotencyKey\` varchar(255) NULL, \`parentOperationId\` varchar(36) NULL, \`startedAt\` datetime NULL, \`finishedAt\` datetime NULL, \`deadlineAt\` datetime NULL, \`aggregateType\` varchar(64) NULL, \`aggregateId\` varchar(36) NULL, \`correlationId\` varchar(36) NULL, INDEX \`IDX_operation_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_operation_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_operation_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_operation_is_active\` (\`isActive\`), INDEX \`IDX_operation_is_archived\` (\`isArchived\`), INDEX \`IDX_operation_tenant\` (\`tenantId\`), INDEX \`IDX_operation_organization\` (\`organizationId\`), INDEX \`IDX_operation_status_avail\` (\`status\`, \`createdAt\`), INDEX \`IDX_operation_org_type\` (\`organizationId\`, \`type\`, \`createdAt\`), INDEX \`IDX_operation_deadline\` (\`deadlineAt\`), INDEX \`IDX_operation_parent\` (\`parentOperationId\`), INDEX \`IDX_operation_correlation\` (\`correlationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`operation\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`type\` varchar(64) NOT NULL, \`status\` varchar(255) NOT NULL DEFAULT 'PENDING', \`input\` json NOT NULL, \`state\` json NULL, \`result\` json NULL, \`attemptCount\` int NOT NULL DEFAULT 0, \`maxAttempts\` int NOT NULL DEFAULT 3, \`lastError\` text NULL, \`idempotencyKey\` varchar(255) NULL, \`parentOperationId\` varchar(36) NULL, \`startedAt\` datetime NULL, \`finishedAt\` datetime NULL, \`deadlineAt\` datetime NULL, \`aggregateType\` varchar(64) NULL, \`aggregateId\` varchar(36) NULL, \`correlationId\` varchar(36) NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_operation_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_operation_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_operation_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_operation_is_active\` (\`isActive\`), INDEX \`IDX_operation_is_archived\` (\`isArchived\`), INDEX \`IDX_operation_tenant\` (\`tenantId\`), INDEX \`IDX_operation_organization\` (\`organizationId\`), INDEX \`IDX_operation_status_avail\` (\`status\`, \`createdAt\`), INDEX \`IDX_operation_org_type\` (\`organizationId\`, \`type\`, \`createdAt\`), INDEX \`IDX_operation_deadline\` (\`deadlineAt\`), INDEX \`IDX_operation_parent\` (\`parentOperationId\`), INDEX \`IDX_operation_correlation\` (\`correlationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
-		// MySQL cannot express the filtered tuples, so the soft-delete predicate becomes a trailing
-		// column and the null guards are left to the fact that MySQL treats nulls as distinct.
+		// `organizationKey` folds the null organization, which a raw `organizationId` would have left
+		// out of the rule altogether on every dialect, and `deletedKey` carries `"deletedAt" IS NULL`.
+		// `idempotencyKey` stays raw on purpose: it is already a member of this tuple, so MySQL's own
+		// null rule excuses the operations that carry no key — which is what `WHERE "idempotencyKey"
+		// IS NOT NULL` does on the other two dialects.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_operation_idem\` ON \`operation\` (\`organizationId\`, \`type\`, \`idempotencyKey\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_operation_idem\` ON \`operation\` (\`organizationKey\`, \`type\`, \`idempotencyKey\`, \`deletedKey\`)`
 		);
-		// The live-aggregate rule has no MySQL equivalent: the tuple cannot carry "status is one of
-		// three values" into a unique key. It is enforced by the operation service inside the writing
-		// transaction, and the schema-uniqueness reconciliation job reports any violation it finds.
+		// The live-aggregate rule is not carried by an index on this dialect. "Status is one of three
+		// values" is expressible here — a stored generated key of the shape this set uses elsewhere
+		// would encode it — but no such index is created yet, so the rule is enforced by the operation
+		// service inside the writing transaction and the schema-uniqueness reconciliation job reports
+		// any violation it finds. Postgres and SQLite carry it as a partial index.
 		await queryRunner.query(
 			`ALTER TABLE \`operation\` ADD CONSTRAINT \`FK_operation_parent\` FOREIGN KEY (\`parentOperationId\`) REFERENCES \`operation\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`operation_step\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`operationId\` varchar(36) NOT NULL, \`name\` varchar(64) NOT NULL, \`order\` int NOT NULL, \`status\` varchar(255) NOT NULL DEFAULT 'PENDING', \`input\` json NULL, \`output\` json NULL, \`compensationData\` json NULL, \`attemptCount\` int NOT NULL DEFAULT 0, \`lastError\` text NULL, \`startedAt\` datetime NULL, \`finishedAt\` datetime NULL, INDEX \`IDX_operation_step_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_operation_step_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_operation_step_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_operation_step_is_active\` (\`isActive\`), INDEX \`IDX_operation_step_is_archived\` (\`isArchived\`), INDEX \`IDX_operation_step_tenant\` (\`tenantId\`), INDEX \`IDX_operation_step_organization\` (\`organizationId\`), INDEX \`IDX_operation_step_order\` (\`operationId\`, \`order\`), INDEX \`IDX_operation_step_status\` (\`status\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`operation_step\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`operationId\` varchar(36) NOT NULL, \`name\` varchar(64) NOT NULL, \`order\` int NOT NULL, \`status\` varchar(255) NOT NULL DEFAULT 'PENDING', \`input\` json NULL, \`output\` json NULL, \`compensationData\` json NULL, \`attemptCount\` int NOT NULL DEFAULT 0, \`lastError\` text NULL, \`startedAt\` datetime NULL, \`finishedAt\` datetime NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_operation_step_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_operation_step_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_operation_step_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_operation_step_is_active\` (\`isActive\`), INDEX \`IDX_operation_step_is_archived\` (\`isArchived\`), INDEX \`IDX_operation_step_tenant\` (\`tenantId\`), INDEX \`IDX_operation_step_organization\` (\`organizationId\`), INDEX \`IDX_operation_step_order\` (\`operationId\`, \`order\`), INDEX \`IDX_operation_step_status\` (\`status\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_operation_step\` ON \`operation_step\` (\`operationId\`, \`name\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_operation_step\` ON \`operation_step\` (\`operationId\`, \`name\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`operation_step\` ADD CONSTRAINT \`FK_operation_step_operation\` FOREIGN KEY (\`operationId\`) REFERENCES \`operation\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`

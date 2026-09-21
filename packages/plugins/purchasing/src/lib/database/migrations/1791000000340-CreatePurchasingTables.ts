@@ -114,7 +114,7 @@ export class CreatePurchasingTables1791000000340 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_purchase_order_organization" ON "purchase_order" ("organizationId")`);
 		// One order number per organization: a supplier quoting a number means one document.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_purchase_order_number" ON "purchase_order" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_purchase_order_number" ON "purchase_order" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		// The three scans the domain actually runs: the open order queue, one supplier's orders, and
 		// the orders destined for one location.
@@ -168,7 +168,7 @@ export class CreatePurchasingTables1791000000340 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_goods_receipt_organization" ON "goods_receipt" ("organizationId")`);
 		// One receipt number per organization, and the two listings the domain runs.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_goods_receipt_number" ON "goods_receipt" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_goods_receipt_number" ON "goods_receipt" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_goods_receipt_po" ON "goods_receipt" ("purchaseOrderId", "receivedAt") WHERE "deletedAt" IS NULL`
@@ -351,7 +351,7 @@ export class CreatePurchasingTables1791000000340 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_purchase_order_tenant" ON "purchase_order" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_purchase_order_organization" ON "purchase_order" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_purchase_order_number" ON "purchase_order" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_purchase_order_number" ON "purchase_order" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_purchase_order_status" ON "purchase_order" ("organizationId", "status", "expectedAt") WHERE "deletedAt" IS NULL`
@@ -401,7 +401,7 @@ export class CreatePurchasingTables1791000000340 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_goods_receipt_tenant" ON "goods_receipt" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_goods_receipt_organization" ON "goods_receipt" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_goods_receipt_number" ON "goods_receipt" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_goods_receipt_number" ON "goods_receipt" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_goods_receipt_po" ON "goods_receipt" ("purchaseOrderId", "receivedAt") WHERE "deletedAt" IS NULL`
@@ -509,32 +509,36 @@ export class CreatePurchasingTables1791000000340 implements MigrationInterface {
 	/**
 	 * MySQL Up Migration
 	 *
-	 * MySQL has no partial indexes, so the predicates that make a unique index business-scoped are
-	 * carried by including `deletedAt` in the key, exactly as the platform's other migrations do: a
-	 * soft-deleted row no longer collides with the live one it was replaced by.
+	 * MySQL has no partial index, so the predicates that make a unique index business-scoped are
+	 * carried by the stored generated key columns `CreateSequenceTable1791000000000` documents for the
+	 * whole set: `deletedKey` for `"deletedAt" IS NULL`, and
+	 * `organizationKey` for the nullable scope column the document numbers are unique per. Including
+	 * `deletedAt` itself in the key, which this file used to do, carries no rule at all — a unique
+	 * index in MySQL exempts every tuple that contains a null, and `deletedAt` is null on exactly the
+	 * live rows.
 	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`purchase_order\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`number\` varchar(64) NOT NULL, \`vendorId\` varchar(36) NOT NULL, \`warehouseId\` varchar(36) NOT NULL, \`status\` varchar(32) NOT NULL DEFAULT 'DRAFT', \`currency\` varchar(3) NOT NULL, \`subtotal\` decimal(20,6) NOT NULL DEFAULT 0, \`discountTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`taxTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`shippingTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`grandTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`expectedAt\` datetime NULL, \`orderedAt\` datetime NULL, \`sentAt\` datetime NULL, \`acknowledgedAt\` datetime NULL, \`approvedAt\` datetime NULL, \`approvedByUserId\` varchar(36) NULL, \`approvalId\` varchar(36) NULL, \`receivedAt\` datetime NULL, \`canceledAt\` datetime NULL, \`closedAt\` datetime NULL, \`version\` int NOT NULL DEFAULT 1, \`note\` text NULL, \`metadata\` json NULL, INDEX \`IDX_purchase_order_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_purchase_order_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_purchase_order_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_purchase_order_is_active\` (\`isActive\`), INDEX \`IDX_purchase_order_is_archived\` (\`isArchived\`), INDEX \`IDX_purchase_order_tenant\` (\`tenantId\`), INDEX \`IDX_purchase_order_organization\` (\`organizationId\`), INDEX \`IDX_purchase_order_status\` (\`organizationId\`, \`status\`, \`expectedAt\`), INDEX \`IDX_purchase_order_vendor\` (\`vendorId\`, \`status\`), INDEX \`IDX_purchase_order_warehouse\` (\`warehouseId\`, \`status\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`purchase_order\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`number\` varchar(64) NOT NULL, \`vendorId\` varchar(36) NOT NULL, \`warehouseId\` varchar(36) NOT NULL, \`status\` varchar(32) NOT NULL DEFAULT 'DRAFT', \`currency\` varchar(3) NOT NULL, \`subtotal\` decimal(20,6) NOT NULL DEFAULT 0, \`discountTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`taxTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`shippingTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`grandTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`expectedAt\` datetime NULL, \`orderedAt\` datetime NULL, \`sentAt\` datetime NULL, \`acknowledgedAt\` datetime NULL, \`approvedAt\` datetime NULL, \`approvedByUserId\` varchar(36) NULL, \`approvalId\` varchar(36) NULL, \`receivedAt\` datetime NULL, \`canceledAt\` datetime NULL, \`closedAt\` datetime NULL, \`version\` int NOT NULL DEFAULT 1, \`note\` text NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_purchase_order_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_purchase_order_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_purchase_order_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_purchase_order_is_active\` (\`isActive\`), INDEX \`IDX_purchase_order_is_archived\` (\`isArchived\`), INDEX \`IDX_purchase_order_tenant\` (\`tenantId\`), INDEX \`IDX_purchase_order_organization\` (\`organizationId\`), INDEX \`IDX_purchase_order_status\` (\`organizationId\`, \`status\`, \`expectedAt\`), INDEX \`IDX_purchase_order_vendor\` (\`vendorId\`, \`status\`), INDEX \`IDX_purchase_order_warehouse\` (\`warehouseId\`, \`status\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_purchase_order_number\` ON \`purchase_order\` (\`organizationId\`, \`number\`, \`deletedAt\`)`
-		);
-
-		await queryRunner.query(
-			`CREATE TABLE \`purchase_order_line\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`purchaseOrderId\` varchar(36) NOT NULL, \`variantId\` varchar(36) NOT NULL, \`quantity\` decimal(20,6) NOT NULL, \`receivedQuantity\` decimal(20,6) NOT NULL DEFAULT 0, \`damagedQuantity\` decimal(20,6) NOT NULL DEFAULT 0, \`unitCost\` decimal(20,6) NOT NULL, \`taxRate\` decimal(9,6) NULL, \`discountTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`total\` decimal(20,6) NOT NULL DEFAULT 0, \`expectedAt\` datetime NULL, \`note\` text NULL, \`metadata\` json NULL, INDEX \`IDX_purchase_order_line_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_purchase_order_line_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_purchase_order_line_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_purchase_order_line_is_active\` (\`isActive\`), INDEX \`IDX_purchase_order_line_is_archived\` (\`isArchived\`), INDEX \`IDX_purchase_order_line_tenant\` (\`tenantId\`), INDEX \`IDX_purchase_order_line_organization\` (\`organizationId\`), INDEX \`IDX_purchase_order_line_variant\` (\`variantId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
-		);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_purchase_order_line\` ON \`purchase_order_line\` (\`purchaseOrderId\`, \`variantId\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_purchase_order_number\` ON \`purchase_order\` (\`organizationKey\`, \`number\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`goods_receipt\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`purchaseOrderId\` varchar(36) NOT NULL, \`warehouseId\` varchar(36) NOT NULL, \`number\` varchar(64) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'POSTED', \`receivedAt\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, \`receivedByUserId\` varchar(36) NULL, \`canceledAt\` datetime NULL, \`version\` int NOT NULL DEFAULT 1, \`note\` text NULL, \`metadata\` json NULL, INDEX \`IDX_goods_receipt_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_goods_receipt_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_goods_receipt_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_goods_receipt_is_active\` (\`isActive\`), INDEX \`IDX_goods_receipt_is_archived\` (\`isArchived\`), INDEX \`IDX_goods_receipt_tenant\` (\`tenantId\`), INDEX \`IDX_goods_receipt_organization\` (\`organizationId\`), INDEX \`IDX_goods_receipt_po\` (\`purchaseOrderId\`, \`receivedAt\`), INDEX \`IDX_goods_receipt_warehouse\` (\`warehouseId\`, \`receivedAt\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`purchase_order_line\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`purchaseOrderId\` varchar(36) NOT NULL, \`variantId\` varchar(36) NOT NULL, \`quantity\` decimal(20,6) NOT NULL, \`receivedQuantity\` decimal(20,6) NOT NULL DEFAULT 0, \`damagedQuantity\` decimal(20,6) NOT NULL DEFAULT 0, \`unitCost\` decimal(20,6) NOT NULL, \`taxRate\` decimal(9,6) NULL, \`discountTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`total\` decimal(20,6) NOT NULL DEFAULT 0, \`expectedAt\` datetime NULL, \`note\` text NULL, \`metadata\` json NULL, \`expectedAtKey\` datetime GENERATED ALWAYS AS (IFNULL(\`expectedAt\`, '1970-01-01 00:00:00')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_purchase_order_line_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_purchase_order_line_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_purchase_order_line_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_purchase_order_line_is_active\` (\`isActive\`), INDEX \`IDX_purchase_order_line_is_archived\` (\`isArchived\`), INDEX \`IDX_purchase_order_line_tenant\` (\`tenantId\`), INDEX \`IDX_purchase_order_line_organization\` (\`organizationId\`), INDEX \`IDX_purchase_order_line_variant\` (\`variantId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_goods_receipt_number\` ON \`goods_receipt\` (\`organizationId\`, \`number\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_purchase_order_line\` ON \`purchase_order_line\` (\`purchaseOrderId\`, \`variantId\`, \`deletedKey\`)`
+		);
+
+		await queryRunner.query(
+			`CREATE TABLE \`goods_receipt\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`purchaseOrderId\` varchar(36) NOT NULL, \`warehouseId\` varchar(36) NOT NULL, \`number\` varchar(64) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'POSTED', \`receivedAt\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, \`receivedByUserId\` varchar(36) NULL, \`canceledAt\` datetime NULL, \`version\` int NOT NULL DEFAULT 1, \`note\` text NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_goods_receipt_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_goods_receipt_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_goods_receipt_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_goods_receipt_is_active\` (\`isActive\`), INDEX \`IDX_goods_receipt_is_archived\` (\`isArchived\`), INDEX \`IDX_goods_receipt_tenant\` (\`tenantId\`), INDEX \`IDX_goods_receipt_organization\` (\`organizationId\`), INDEX \`IDX_goods_receipt_po\` (\`purchaseOrderId\`, \`receivedAt\`), INDEX \`IDX_goods_receipt_warehouse\` (\`warehouseId\`, \`receivedAt\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX \`UQ_goods_receipt_number\` ON \`goods_receipt\` (\`organizationKey\`, \`number\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(
@@ -660,21 +664,45 @@ export class CreatePurchasingTables1791000000340 implements MigrationInterface {
 		}
 
 		// The code is the key a purchase order or an import quotes, so it means one supplier inside one
-		// organization. MySQL has no partial index: the predicate becomes part of the key instead.
+		// organization. MySQL has no partial index, so the generated key columns carry the predicate and
+		// the nullable scope instead — the form `CreateSequenceTable1791000000000` documents for the whole
+		// set. `organization_vendor` is a table the platform already owned, so the two columns are added
+		// here by `ALTER` and guarded exactly as the six business columns above are.
 		if (dialect === 'mysql') {
+			const keys: Array<[string, string]> = [
+				['deletedKey', "varchar(36) GENERATED ALWAYS AS (IF(`deletedAt` IS NULL, '0', `id`)) STORED"],
+				[
+					'organizationKey',
+					"varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, '00000000-0000-0000-0000-000000000000')) STORED"
+				]
+			];
+
+			for (const [column, definition] of keys) {
+				if (await queryRunner.hasColumn(CreatePurchasingTables1791000000340.VENDOR_TABLE, column)) {
+					continue;
+				}
+
+				await queryRunner.query(
+					`ALTER TABLE \`${CreatePurchasingTables1791000000340.VENDOR_TABLE}\` ADD COLUMN \`${column}\` ${definition}`
+				);
+			}
+
 			if (await this.hasMysqlIndex(queryRunner, CreatePurchasingTables1791000000340.VENDOR_CODE_INDEX)) {
 				return;
 			}
 
+			// `code` stays bare on purpose: the other two dialects exclude a null code with
+			// `WHERE "code" IS NOT NULL`, and MySQL's exemption of any tuple that contains a null is
+			// exactly that predicate.
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX \`${CreatePurchasingTables1791000000340.VENDOR_CODE_INDEX}\` ON \`${CreatePurchasingTables1791000000340.VENDOR_TABLE}\` (\`organizationId\`, \`code\`, \`deletedAt\`)`
+				`CREATE UNIQUE INDEX \`${CreatePurchasingTables1791000000340.VENDOR_CODE_INDEX}\` ON \`${CreatePurchasingTables1791000000340.VENDOR_TABLE}\` (\`organizationKey\`, \`code\`, \`deletedKey\`)`
 			);
 
 			return;
 		}
 
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX IF NOT EXISTS "${CreatePurchasingTables1791000000340.VENDOR_CODE_INDEX}" ON "${CreatePurchasingTables1791000000340.VENDOR_TABLE}" ("organizationId", "code") WHERE "code" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX IF NOT EXISTS "${CreatePurchasingTables1791000000340.VENDOR_CODE_INDEX}" ON "${CreatePurchasingTables1791000000340.VENDOR_TABLE}" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "code" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 	}
 
@@ -707,7 +735,19 @@ export class CreatePurchasingTables1791000000340 implements MigrationInterface {
 
 		const quote = dialect === 'mysql' ? '`' : '"';
 		const table = `${quote}${CreatePurchasingTables1791000000340.VENDOR_TABLE}${quote}`;
-		const columns = ['metadata', 'minimumOrderAmount', 'leadTimeDays', 'paymentTermsDays', 'currency', 'code'];
+		// The two generated key columns are MySQL's stand-in for the other dialects' partial index, so
+		// they exist only there and they go first: they are dropped after the index that names them and
+		// before the `code` they sit beside in it. The `hasColumn` guard below makes the list safe on a
+		// dialect that never received them.
+		const columns = [
+			...(dialect === 'mysql' ? ['organizationKey', 'deletedKey'] : []),
+			'metadata',
+			'minimumOrderAmount',
+			'leadTimeDays',
+			'paymentTermsDays',
+			'currency',
+			'code'
+		];
 
 		for (const column of columns) {
 			if (!(await queryRunner.hasColumn(CreatePurchasingTables1791000000340.VENDOR_TABLE, column))) {

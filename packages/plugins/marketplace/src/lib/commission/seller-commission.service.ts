@@ -8,7 +8,7 @@ import {
 	IResolvedCommission,
 	RoundingMode
 } from '@gauzy/contracts';
-import { Money } from '@gauzy/core';
+import { Money, compareDecimalStrings } from '@gauzy/core';
 
 /**
  * A resolved commission and the arithmetic it produced, ready to be snapshotted onto a ledger row.
@@ -225,14 +225,19 @@ export class SellerCommissionService {
 		isShipping: boolean
 	): DecimalString {
 		if (commission.basis === CommissionBasis.TIERED_AMOUNT) {
-			return this.tierRate(commission.tiers, Number(basisAmount.amount));
+			// The basis amount is handed over as the exact decimal it is. It used to be converted with
+			// `Number` first, which is the one place in this class that left the decimal kernel: two band
+			// boundaries that differ in the sixth decimal of a `numeric(20,6)` value are the same double, so
+			// a line could be placed in the band below the one it belongs to — and the wrong rate is then
+			// snapshotted onto the ledger row and is a fact from that point on.
+			return this.tierRate(commission.tiers, basisAmount.amount);
 		}
 
 		if (commission.basis === CommissionBasis.TIERED_QUANTITY) {
 			// A shipping row has no quantity and takes the band evaluated at one, because buying the band
 			// with the order's total quantity would let a large order move a seller's shipping commission
 			// tier — which neither party would expect.
-			return this.tierRate(commission.tiers, isShipping ? 1 : Number(quantity));
+			return this.tierRate(commission.tiers, isShipping ? '1' : quantity);
 		}
 
 		return commission.rate;
@@ -241,14 +246,20 @@ export class SellerCommissionService {
 	/**
 	 * The rate of the band a value falls in.
 	 *
+	 * The comparison is made on the digits of the decimals rather than on the doubles they parse into,
+	 * the way `Money` compares everywhere else: a band boundary decides which rate a seller is charged,
+	 * so it is a monetary decision and it goes through the platform's exact arithmetic.
+	 *
 	 * @param tiers The schedule.
-	 * @param value The amount or quantity.
+	 * @param value The amount or quantity, as an exact decimal.
 	 * @returns The rate.
 	 * @throws BadRequestException when no band contains the value, which a validated schedule cannot produce.
 	 */
-	private tierRate(tiers: ICommissionTier[] | undefined, value: number): DecimalString {
+	private tierRate(tiers: ICommissionTier[] | undefined, value: DecimalString): DecimalString {
 		const band = (tiers ?? []).find(
-			(tier) => value >= Number(tier.from) && (tier.to === null || tier.to === undefined || value < Number(tier.to))
+			(tier) =>
+				compareDecimalStrings(value, tier.from) >= 0 &&
+				(tier.to === null || tier.to === undefined || compareDecimalStrings(value, tier.to) < 0)
 		);
 
 		if (!band) {
@@ -265,10 +276,13 @@ export class SellerCommissionService {
 	 * @throws BadRequestException when the schedule is not a partition of the number line.
 	 */
 	assertTiers(tiers: ICommissionTier[]): void {
-		const ordered = [...tiers].sort((left, right) => Number(left.from) - Number(right.from));
+		// Ordered and partitioned by exact comparison, for the reason `tierRate` compares exactly: two
+		// boundaries a double cannot tell apart would be reported as a gap or an overlap in a schedule that
+		// has neither, and the whole schedule would then be refused.
+		const ordered = [...tiers].sort((left, right) => compareDecimalStrings(left.from, right.from));
 
 		ordered.forEach((tier, index) => {
-			if (tier.to !== null && tier.to !== undefined && Number(tier.to) <= Number(tier.from)) {
+			if (tier.to !== null && tier.to !== undefined && compareDecimalStrings(tier.to, tier.from) <= 0) {
 				throw new BadRequestException(`The commission band starting at ${tier.from} does not end after it starts.`);
 			}
 
@@ -282,7 +296,7 @@ export class SellerCommissionService {
 				throw new BadRequestException('An open-ended commission band must be the last one.');
 			}
 
-			if (Number(tier.to) !== Number(next.from)) {
+			if (compareDecimalStrings(tier.to, next.from) !== 0) {
 				throw new BadRequestException(
 					`The commission schedule leaves a gap or an overlap between ${tier.to} and ${next.from}.`
 				);

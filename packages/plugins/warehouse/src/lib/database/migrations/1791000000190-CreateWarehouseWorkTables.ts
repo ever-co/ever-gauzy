@@ -99,7 +99,7 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		await queryRunner.query(`CREATE INDEX "IDX_pick_wave_tenant" ON "pick_wave" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_pick_wave_organization" ON "pick_wave" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_pick_wave_number" ON "pick_wave" ("organizationId", "warehouseId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_pick_wave_number" ON "pick_wave" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "warehouseId", "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_pick_wave_dispatch" ON "pick_wave" ("warehouseId", "status", "priority") WHERE "deletedAt" IS NULL`
@@ -122,12 +122,12 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		await queryRunner.query(`CREATE INDEX "IDX_pick_list_tenant" ON "pick_list" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_pick_list_organization" ON "pick_list" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_pick_list_number" ON "pick_list" ("organizationId", "warehouseId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_pick_list_number" ON "pick_list" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "warehouseId", "number") WHERE "deletedAt" IS NULL`
 		);
 		// Generation is idempotent per shipment and zone, which is what stops a re-run of the generator
 		// doubling the work.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_pick_list_fulfillment_zone" ON "pick_list" ("organizationId", "fulfillmentId", "zoneId") WHERE "fulfillmentId" IS NOT NULL AND "zoneId" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_pick_list_fulfillment_zone" ON "pick_list" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "fulfillmentId", "zoneId") WHERE "fulfillmentId" IS NOT NULL AND "zoneId" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_pick_list_wave" ON "pick_list" ("waveId", "status") WHERE "waveId" IS NOT NULL AND "deletedAt" IS NULL`
@@ -155,12 +155,12 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		await queryRunner.query(`CREATE INDEX "IDX_pack_slip_tenant" ON "pack_slip" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_pack_slip_organization" ON "pack_slip" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_pack_slip_number" ON "pack_slip" ("organizationId", "warehouseId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_pack_slip_number" ON "pack_slip" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "warehouseId", "number") WHERE "deletedAt" IS NULL`
 		);
 		// A tracking number is unique per carrier, which is what stops one label being attached to two
 		// packages.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_pack_slip_tracking" ON "pack_slip" ("carrierKey", "trackingNumber") WHERE "trackingNumber" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_pack_slip_tracking" ON "pack_slip" (COALESCE("carrierKey", ''), "trackingNumber") WHERE "trackingNumber" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_pack_slip_fulfillment" ON "pack_slip" ("fulfillmentId", "status") WHERE "fulfillmentId" IS NOT NULL`
@@ -219,7 +219,7 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		await queryRunner.query(`CREATE INDEX "IDX_carrier_manifest_tenant" ON "carrier_manifest" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_carrier_manifest_organization" ON "carrier_manifest" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_carrier_manifest_number" ON "carrier_manifest" ("organizationId", "warehouseId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_carrier_manifest_number" ON "carrier_manifest" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "warehouseId", "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_carrier_manifest_status" ON "carrier_manifest" ("warehouseId", "status", "manifestDate") WHERE "deletedAt" IS NULL`
@@ -263,7 +263,7 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		await queryRunner.query(`CREATE INDEX "IDX_pick_wave_tenant" ON "pick_wave" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_pick_wave_organization" ON "pick_wave" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_pick_wave_number" ON "pick_wave" ("organizationId", "warehouseId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_pick_wave_number" ON "pick_wave" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "warehouseId", "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_pick_wave_dispatch" ON "pick_wave" ("warehouseId", "status", "priority") WHERE "deletedAt" IS NULL`
@@ -286,10 +286,10 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		await queryRunner.query(`CREATE INDEX "IDX_pick_list_tenant" ON "pick_list" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_pick_list_organization" ON "pick_list" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_pick_list_number" ON "pick_list" ("organizationId", "warehouseId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_pick_list_number" ON "pick_list" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "warehouseId", "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_pick_list_fulfillment_zone" ON "pick_list" ("organizationId", "fulfillmentId", "zoneId") WHERE "fulfillmentId" IS NOT NULL AND "zoneId" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_pick_list_fulfillment_zone" ON "pick_list" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "fulfillmentId", "zoneId") WHERE "fulfillmentId" IS NOT NULL AND "zoneId" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_pick_list_wave" ON "pick_list" ("waveId", "status") WHERE "waveId" IS NOT NULL AND "deletedAt" IS NULL`
@@ -317,10 +317,10 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		await queryRunner.query(`CREATE INDEX "IDX_pack_slip_tenant" ON "pack_slip" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_pack_slip_organization" ON "pack_slip" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_pack_slip_number" ON "pack_slip" ("organizationId", "warehouseId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_pack_slip_number" ON "pack_slip" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "warehouseId", "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_pack_slip_tracking" ON "pack_slip" ("carrierKey", "trackingNumber") WHERE "trackingNumber" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_pack_slip_tracking" ON "pack_slip" (COALESCE("carrierKey", ''), "trackingNumber") WHERE "trackingNumber" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_pack_slip_fulfillment" ON "pack_slip" ("fulfillmentId", "status") WHERE "fulfillmentId" IS NOT NULL`
@@ -379,7 +379,7 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		await queryRunner.query(`CREATE INDEX "IDX_carrier_manifest_tenant" ON "carrier_manifest" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_carrier_manifest_organization" ON "carrier_manifest" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_carrier_manifest_number" ON "carrier_manifest" ("organizationId", "warehouseId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_carrier_manifest_number" ON "carrier_manifest" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "warehouseId", "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_carrier_manifest_status" ON "carrier_manifest" ("warehouseId", "status", "manifestDate") WHERE "deletedAt" IS NULL`
@@ -405,14 +405,24 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 	/**
 	 * MySQL Up Migration
 	 *
+	 * MySQL has no partial index, so the document-numbering rules are carried by the stored generated
+	 * key columns `CreateSequenceTable1791000000000` documents for the whole set: `deletedKey` for
+	 * `"deletedAt" IS NULL`, and `organizationKey` for the nullable scope the numbers are unique per.
+	 * `pack_slip` needs a third, `carrierKeyKey`, because a slip whose carrier is not yet known must
+	 * still not share a tracking number with another such slip.
+	 *
+	 * `fulfillmentId`, `zoneId` and `trackingNumber` stay raw, and that is the whole of their guard on
+	 * this dialect: each is already a member of its tuple, so MySQL's rule that a null key part exempts
+	 * the tuple is exactly the `IS NOT NULL` the Postgres predicate writes out.
+	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`pick_wave\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`warehouseId\` varchar(36) NOT NULL, \`channelId\` varchar(36) NULL, \`number\` varchar(32) NOT NULL, \`strategy\` varchar(16) NOT NULL DEFAULT 'BATCH', \`status\` varchar(32) NOT NULL DEFAULT 'DRAFT', \`priority\` int NOT NULL DEFAULT 0, \`pickerUserId\` varchar(36) NULL, \`plannedAt\` datetime NULL, \`releasedAt\` datetime NULL, \`startedAt\` datetime NULL, \`completedAt\` datetime NULL, \`orderCount\` int NOT NULL DEFAULT 0, \`lineCount\` int NOT NULL DEFAULT 0, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, INDEX \`IDX_pick_wave_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_pick_wave_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_pick_wave_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_pick_wave_is_active\` (\`isActive\`), INDEX \`IDX_pick_wave_is_archived\` (\`isArchived\`), INDEX \`IDX_pick_wave_tenant\` (\`tenantId\`), INDEX \`IDX_pick_wave_organization\` (\`organizationId\`), INDEX \`IDX_pick_wave_dispatch\` (\`warehouseId\`, \`status\`, \`priority\`), INDEX \`IDX_pick_wave_planned\` (\`warehouseId\`, \`status\`, \`plannedAt\`), INDEX \`IDX_pick_wave_picker\` (\`pickerUserId\`, \`status\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`pick_wave\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`warehouseId\` varchar(36) NOT NULL, \`channelId\` varchar(36) NULL, \`number\` varchar(32) NOT NULL, \`strategy\` varchar(16) NOT NULL DEFAULT 'BATCH', \`status\` varchar(32) NOT NULL DEFAULT 'DRAFT', \`priority\` int NOT NULL DEFAULT 0, \`pickerUserId\` varchar(36) NULL, \`plannedAt\` datetime NULL, \`releasedAt\` datetime NULL, \`startedAt\` datetime NULL, \`completedAt\` datetime NULL, \`orderCount\` int NOT NULL DEFAULT 0, \`lineCount\` int NOT NULL DEFAULT 0, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_pick_wave_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_pick_wave_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_pick_wave_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_pick_wave_is_active\` (\`isActive\`), INDEX \`IDX_pick_wave_is_archived\` (\`isArchived\`), INDEX \`IDX_pick_wave_tenant\` (\`tenantId\`), INDEX \`IDX_pick_wave_organization\` (\`organizationId\`), INDEX \`IDX_pick_wave_dispatch\` (\`warehouseId\`, \`status\`, \`priority\`), INDEX \`IDX_pick_wave_planned\` (\`warehouseId\`, \`status\`, \`plannedAt\`), INDEX \`IDX_pick_wave_picker\` (\`pickerUserId\`, \`status\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_pick_wave_number\` ON \`pick_wave\` (\`organizationId\`, \`warehouseId\`, \`number\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_pick_wave_number\` ON \`pick_wave\` (\`organizationKey\`, \`warehouseId\`, \`number\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`pick_wave\` ADD CONSTRAINT \`FK_pick_wave_warehouse\` FOREIGN KEY (\`warehouseId\`) REFERENCES \`warehouse\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`
@@ -425,13 +435,13 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`pick_list\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`waveId\` varchar(36) NULL, \`warehouseId\` varchar(36) NOT NULL, \`zoneId\` varchar(36) NULL, \`fulfillmentId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`number\` varchar(32) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'PENDING', \`assignedToUserId\` varchar(36) NULL, \`priority\` int NOT NULL DEFAULT 0, \`lineCount\` int NOT NULL DEFAULT 0, \`pickedCount\` int NOT NULL DEFAULT 0, \`shortCount\` int NOT NULL DEFAULT 0, \`startedAt\` datetime NULL, \`completedAt\` datetime NULL, \`note\` text NULL, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, INDEX \`IDX_pick_list_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_pick_list_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_pick_list_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_pick_list_is_active\` (\`isActive\`), INDEX \`IDX_pick_list_is_archived\` (\`isArchived\`), INDEX \`IDX_pick_list_tenant\` (\`tenantId\`), INDEX \`IDX_pick_list_organization\` (\`organizationId\`), INDEX \`IDX_pick_list_wave\` (\`waveId\`, \`status\`), INDEX \`IDX_pick_list_fulfillment\` (\`fulfillmentId\`), INDEX \`IDX_pick_list_assignee\` (\`assignedToUserId\`, \`status\`), INDEX \`IDX_pick_list_warehouse_status\` (\`warehouseId\`, \`status\`, \`priority\`), INDEX \`IDX_pick_list_zone\` (\`zoneId\`), INDEX \`IDX_pick_list_order\` (\`orderId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`pick_list\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`waveId\` varchar(36) NULL, \`warehouseId\` varchar(36) NOT NULL, \`zoneId\` varchar(36) NULL, \`fulfillmentId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`number\` varchar(32) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'PENDING', \`assignedToUserId\` varchar(36) NULL, \`priority\` int NOT NULL DEFAULT 0, \`lineCount\` int NOT NULL DEFAULT 0, \`pickedCount\` int NOT NULL DEFAULT 0, \`shortCount\` int NOT NULL DEFAULT 0, \`startedAt\` datetime NULL, \`completedAt\` datetime NULL, \`note\` text NULL, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_pick_list_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_pick_list_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_pick_list_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_pick_list_is_active\` (\`isActive\`), INDEX \`IDX_pick_list_is_archived\` (\`isArchived\`), INDEX \`IDX_pick_list_tenant\` (\`tenantId\`), INDEX \`IDX_pick_list_organization\` (\`organizationId\`), INDEX \`IDX_pick_list_wave\` (\`waveId\`, \`status\`), INDEX \`IDX_pick_list_fulfillment\` (\`fulfillmentId\`), INDEX \`IDX_pick_list_assignee\` (\`assignedToUserId\`, \`status\`), INDEX \`IDX_pick_list_warehouse_status\` (\`warehouseId\`, \`status\`, \`priority\`), INDEX \`IDX_pick_list_zone\` (\`zoneId\`), INDEX \`IDX_pick_list_order\` (\`orderId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_pick_list_number\` ON \`pick_list\` (\`organizationId\`, \`warehouseId\`, \`number\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_pick_list_number\` ON \`pick_list\` (\`organizationKey\`, \`warehouseId\`, \`number\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_pick_list_fulfillment_zone\` ON \`pick_list\` (\`organizationId\`, \`fulfillmentId\`, \`zoneId\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_pick_list_fulfillment_zone\` ON \`pick_list\` (\`organizationKey\`, \`fulfillmentId\`, \`zoneId\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`pick_list\` ADD CONSTRAINT \`FK_pick_list_wave\` FOREIGN KEY (\`waveId\`) REFERENCES \`pick_wave\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
@@ -447,13 +457,13 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`pack_slip\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`warehouseId\` varchar(36) NOT NULL, \`pickListId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`fulfillmentId\` varchar(36) NULL, \`number\` varchar(32) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'OPEN', \`carrierKey\` varchar(64) NULL, \`packageCount\` int NOT NULL DEFAULT 1, \`totalWeight\` decimal(12,4) NULL, \`totalVolume\` decimal(12,4) NULL, \`trackingNumber\` varchar(255) NULL, \`labelUrl\` varchar(1024) NULL, \`packedAt\` datetime NULL, \`packedByUserId\` varchar(36) NULL, \`note\` text NULL, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, INDEX \`IDX_pack_slip_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_pack_slip_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_pack_slip_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_pack_slip_is_active\` (\`isActive\`), INDEX \`IDX_pack_slip_is_archived\` (\`isArchived\`), INDEX \`IDX_pack_slip_tenant\` (\`tenantId\`), INDEX \`IDX_pack_slip_organization\` (\`organizationId\`), INDEX \`IDX_pack_slip_fulfillment\` (\`fulfillmentId\`, \`status\`), INDEX \`IDX_pack_slip_warehouse_status\` (\`warehouseId\`, \`status\`, \`createdAt\`), INDEX \`IDX_pack_slip_pick_list\` (\`pickListId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`pack_slip\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`warehouseId\` varchar(36) NOT NULL, \`pickListId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`fulfillmentId\` varchar(36) NULL, \`number\` varchar(32) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'OPEN', \`carrierKey\` varchar(64) NULL, \`packageCount\` int NOT NULL DEFAULT 1, \`totalWeight\` decimal(12,4) NULL, \`totalVolume\` decimal(12,4) NULL, \`trackingNumber\` varchar(255) NULL, \`labelUrl\` varchar(1024) NULL, \`packedAt\` datetime NULL, \`packedByUserId\` varchar(36) NULL, \`note\` text NULL, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`carrierKeyKey\` varchar(64) GENERATED ALWAYS AS (IFNULL(\`carrierKey\`, '')) STORED, INDEX \`IDX_pack_slip_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_pack_slip_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_pack_slip_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_pack_slip_is_active\` (\`isActive\`), INDEX \`IDX_pack_slip_is_archived\` (\`isArchived\`), INDEX \`IDX_pack_slip_tenant\` (\`tenantId\`), INDEX \`IDX_pack_slip_organization\` (\`organizationId\`), INDEX \`IDX_pack_slip_fulfillment\` (\`fulfillmentId\`, \`status\`), INDEX \`IDX_pack_slip_warehouse_status\` (\`warehouseId\`, \`status\`, \`createdAt\`), INDEX \`IDX_pack_slip_pick_list\` (\`pickListId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_pack_slip_number\` ON \`pack_slip\` (\`organizationId\`, \`warehouseId\`, \`number\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_pack_slip_number\` ON \`pack_slip\` (\`organizationKey\`, \`warehouseId\`, \`number\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_pack_slip_tracking\` ON \`pack_slip\` (\`carrierKey\`, \`trackingNumber\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_pack_slip_tracking\` ON \`pack_slip\` (\`carrierKeyKey\`, \`trackingNumber\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`pack_slip\` ADD CONSTRAINT \`CHK_pack_slip_package_count\` CHECK (\`packageCount\` >= 1)`
@@ -500,10 +510,10 @@ export class CreateWarehouseWorkTables1791000000190 implements MigrationInterfac
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`carrier_manifest\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`warehouseId\` varchar(36) NOT NULL, \`carrier\` varchar(64) NOT NULL, \`service\` varchar(64) NULL, \`number\` varchar(32) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'DRAFT', \`manifestDate\` date NOT NULL DEFAULT (CURRENT_DATE), \`windowFrom\` datetime NULL, \`windowTo\` datetime NULL, \`shipmentCount\` int NOT NULL DEFAULT 0, \`packageCount\` int NOT NULL DEFAULT 0, \`totalWeight\` decimal(12,4) NOT NULL DEFAULT 0, \`closedAt\` datetime NULL, \`handedOverAt\` datetime NULL, \`canceledAt\` datetime NULL, \`documentUrl\` varchar(1024) NULL, \`documentData\` json NULL, \`note\` text NULL, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, INDEX \`IDX_carrier_manifest_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_carrier_manifest_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_carrier_manifest_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_carrier_manifest_is_active\` (\`isActive\`), INDEX \`IDX_carrier_manifest_is_archived\` (\`isArchived\`), INDEX \`IDX_carrier_manifest_tenant\` (\`tenantId\`), INDEX \`IDX_carrier_manifest_organization\` (\`organizationId\`), INDEX \`IDX_carrier_manifest_status\` (\`warehouseId\`, \`status\`, \`manifestDate\`), INDEX \`IDX_carrier_manifest_carrier\` (\`carrier\`, \`manifestDate\`, \`status\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`carrier_manifest\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`warehouseId\` varchar(36) NOT NULL, \`carrier\` varchar(64) NOT NULL, \`service\` varchar(64) NULL, \`number\` varchar(32) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'DRAFT', \`manifestDate\` date NOT NULL DEFAULT (CURRENT_DATE), \`windowFrom\` datetime NULL, \`windowTo\` datetime NULL, \`shipmentCount\` int NOT NULL DEFAULT 0, \`packageCount\` int NOT NULL DEFAULT 0, \`totalWeight\` decimal(12,4) NOT NULL DEFAULT 0, \`closedAt\` datetime NULL, \`handedOverAt\` datetime NULL, \`canceledAt\` datetime NULL, \`documentUrl\` varchar(1024) NULL, \`documentData\` json NULL, \`note\` text NULL, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_carrier_manifest_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_carrier_manifest_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_carrier_manifest_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_carrier_manifest_is_active\` (\`isActive\`), INDEX \`IDX_carrier_manifest_is_archived\` (\`isArchived\`), INDEX \`IDX_carrier_manifest_tenant\` (\`tenantId\`), INDEX \`IDX_carrier_manifest_organization\` (\`organizationId\`), INDEX \`IDX_carrier_manifest_status\` (\`warehouseId\`, \`status\`, \`manifestDate\`), INDEX \`IDX_carrier_manifest_carrier\` (\`carrier\`, \`manifestDate\`, \`status\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_carrier_manifest_number\` ON \`carrier_manifest\` (\`organizationId\`, \`warehouseId\`, \`number\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_carrier_manifest_number\` ON \`carrier_manifest\` (\`organizationKey\`, \`warehouseId\`, \`number\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`carrier_manifest\` ADD CONSTRAINT \`FK_carrier_manifest_warehouse\` FOREIGN KEY (\`warehouseId\`) REFERENCES \`warehouse\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`

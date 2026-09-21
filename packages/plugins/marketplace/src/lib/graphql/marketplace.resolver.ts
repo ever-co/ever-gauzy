@@ -1,4 +1,4 @@
-import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Context, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import type { ID as Id } from '@gauzy/contracts';
@@ -35,6 +35,8 @@ import { SellerPayoutLine } from '../seller-payout-line/seller-payout-line.entit
 import { SellerPayoutLineService } from '../seller-payout-line/seller-payout-line.service';
 import { SellerSettlement } from '../seller-settlement/seller-settlement.entity';
 import { SellerSettlementService } from '../seller-settlement/seller-settlement.service';
+import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
+import { ISellerScope } from '../seller-scope/seller-scope';
 import {
 	BulkSellerOfferingsPayloadType,
 	SellerBalanceType,
@@ -65,9 +67,24 @@ import {
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * **The seller scope is part of that parity, and it was the half that was missing.** Every payout,
+ * ledger, offering and settlement service method takes an `ISellerScope` and only narrows when one is
+ * supplied; the REST controllers mount `SellerAccessGuard` and hand it on, and this class mounted
+ * neither. The consequence was not a subtler refusal but no isolation at all: a seller-side credential
+ * holding `SELLER_PAYOUTS_VIEW` asked for `sellerPayouts` and received every seller's payouts in the
+ * organization — every other seller's balances — while the same credential over REST saw only its own. The
+ * guard is therefore mounted here as the controllers mount it, and the scope it resolves is read off
+ * the GraphQL context and threaded into every field that takes one, so the two surfaces narrow a
+ * request by the same predicate rather than only claiming to.
+ *
+ * It is mounted **after** the feature gate rather than before it, which is the order the answers have
+ * to come in: a tenant that switched the capability off is owed the 404 a disabled capability answers,
+ * and a scope refusal evaluated first would tell a caller that the capability is there by refusing it
+ * for the wrong reason.
  */
 @Resolver(() => SellerType)
-@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class SellerEntityResolver {
 	constructor(
@@ -83,8 +100,8 @@ export class SellerEntityResolver {
 	/** Lists seller accounts. */
 	@Query(() => [SellerType], { name: 'sellers' })
 	@Permissions(PermissionsEnum.SELLERS_VIEW)
-	async sellers(): Promise<Seller[]> {
-		const page: IPagination<Seller> = await this.sellerService.listSellers({});
+	async sellers(@Context() context?: any): Promise<Seller[]> {
+		const page: IPagination<Seller> = await this.sellerService.listSellers({}, this.scope(context));
 
 		return page.items;
 	}
@@ -92,8 +109,11 @@ export class SellerEntityResolver {
 	/** Reads one seller by id or code. */
 	@Query(() => SellerType, { name: 'seller', nullable: true })
 	@Permissions(PermissionsEnum.SELLERS_VIEW)
-	async seller(@Args('idOrCode', { type: () => String }) idOrCode: string): Promise<Seller> {
-		return this.sellerService.getSeller(idOrCode);
+	async seller(
+		@Args('idOrCode', { type: () => String }) idOrCode: string,
+		@Context() context?: any
+	): Promise<Seller> {
+		return this.sellerService.getSeller(idOrCode, this.scope(context));
 	}
 
 	/** The seller's statement over a period. */
@@ -101,9 +121,10 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLERS_VIEW)
 	async sellerStatement(
 		@Args('sellerId', { type: () => ID }) sellerId: string,
-		@Args('currency', { type: () => String, nullable: true }) currency?: string
+		@Args('currency', { type: () => String, nullable: true }) currency?: string,
+		@Context() context?: any
 	): Promise<any> {
-		return this.sellerService.getStatement(sellerId, { currency });
+		return this.sellerService.getStatement(sellerId, { currency }, this.scope(context));
 	}
 
 	/** The seller's balance in one currency. */
@@ -111,9 +132,12 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLERS_VIEW)
 	async sellerBalance(
 		@Args('sellerId', { type: () => ID }) sellerId: string,
-		@Args('currency', { type: () => String, nullable: true }) currency?: string
+		@Args('currency', { type: () => String, nullable: true }) currency?: string,
+		@Context() context?: any
 	): Promise<any> {
-		const seller = await this.sellerService.getSeller(sellerId);
+		// As on the REST route: the scope is enforced on the read of the seller, because the balance is
+		// summed from that seller's own ledger rows.
+		const seller = await this.sellerService.getSeller(sellerId, this.scope(context));
 
 		return this.sellerService.getBalance(seller, currency ?? seller.payoutCurrency ?? 'USD');
 	}
@@ -121,8 +145,11 @@ export class SellerEntityResolver {
 	/** Lists offerings. */
 	@Query(() => [SellerOfferingType], { name: 'sellerOfferings' })
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_VIEW)
-	async sellerOfferings(): Promise<SellerOffering[]> {
-		const page: IPagination<SellerOffering> = await this.sellerOfferingService.listOfferings({});
+	async sellerOfferings(@Context() context?: any): Promise<SellerOffering[]> {
+		const page: IPagination<SellerOffering> = await this.sellerOfferingService.listOfferings(
+			{},
+			this.scope(context)
+		);
 
 		return page.items;
 	}
@@ -130,8 +157,11 @@ export class SellerEntityResolver {
 	/** Lists the per-seller split of orders. */
 	@Query(() => [SellerTransactionType], { name: 'sellerTransactions' })
 	@Permissions(PermissionsEnum.SELLER_TRANSACTIONS_VIEW)
-	async sellerTransactions(): Promise<SellerTransaction[]> {
-		const page: IPagination<SellerTransaction> = await this.sellerTransactionService.listTransactions({});
+	async sellerTransactions(@Context() context?: any): Promise<SellerTransaction[]> {
+		const page: IPagination<SellerTransaction> = await this.sellerTransactionService.listTransactions(
+			{},
+			this.scope(context)
+		);
 
 		return page.items;
 	}
@@ -141,9 +171,10 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLER_TRANSACTIONS_VIEW)
 	async sellerSplitReconciliation(
 		@Args('orderId', { type: () => ID, nullable: true }) orderId?: string,
-		@Args('sellerId', { type: () => ID, nullable: true }) sellerId?: string
+		@Args('sellerId', { type: () => ID, nullable: true }) sellerId?: string,
+		@Context() context?: any
 	): Promise<any> {
-		const report = await this.sellerTransactionService.reconcile({ orderId, sellerId });
+		const report = await this.sellerTransactionService.reconcile({ orderId, sellerId }, this.scope(context));
 
 		return report.items;
 	}
@@ -151,8 +182,8 @@ export class SellerEntityResolver {
 	/** Lists payouts. */
 	@Query(() => [SellerPayoutType], { name: 'sellerPayouts' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
-	async sellerPayouts(): Promise<SellerPayout[]> {
-		const page: IPagination<SellerPayout> = await this.sellerPayoutService.listPayouts({});
+	async sellerPayouts(@Context() context?: any): Promise<SellerPayout[]> {
+		const page: IPagination<SellerPayout> = await this.sellerPayoutService.listPayouts({}, this.scope(context));
 
 		return page.items;
 	}
@@ -160,17 +191,21 @@ export class SellerEntityResolver {
 	/** Reads one payout with its lines. */
 	@Query(() => SellerPayoutType, { name: 'sellerPayout', nullable: true })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
-	async sellerPayout(@Args('id', { type: () => ID }) id: string): Promise<SellerPayout> {
-		return this.sellerPayoutService.getPayout(id);
+	async sellerPayout(@Args('id', { type: () => ID }) id: string, @Context() context?: any): Promise<SellerPayout> {
+		return this.sellerPayoutService.getPayout(id, this.scope(context));
 	}
 
 	/** Lists the lines of a payout. */
 	@Query(() => [SellerPayoutLineType], { name: 'sellerPayoutLines' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
-	async sellerPayoutLines(@Args('sellerPayoutId', { type: () => ID }) sellerPayoutId: string): Promise<SellerPayoutLine[]> {
-		const page: IPagination<SellerPayoutLine> = await this.sellerPayoutLineService.listLines({
-			where: { sellerPayoutId }
-		});
+	async sellerPayoutLines(
+		@Args('sellerPayoutId', { type: () => ID }) sellerPayoutId: string,
+		@Context() context?: any
+	): Promise<SellerPayoutLine[]> {
+		const page: IPagination<SellerPayoutLine> = await this.sellerPayoutLineService.listLines(
+			{ where: { sellerPayoutId } },
+			this.scope(context)
+		);
 
 		return page.items;
 	}
@@ -178,8 +213,11 @@ export class SellerEntityResolver {
 	/** Lists settlements. */
 	@Query(() => [SellerSettlementType], { name: 'sellerSettlements' })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_VIEW)
-	async sellerSettlements(): Promise<SellerSettlement[]> {
-		const page: IPagination<SellerSettlement> = await this.sellerSettlementService.listSettlements({});
+	async sellerSettlements(@Context() context?: any): Promise<SellerSettlement[]> {
+		const page: IPagination<SellerSettlement> = await this.sellerSettlementService.listSettlements(
+			{},
+			this.scope(context)
+		);
 
 		return page.items;
 	}
@@ -187,15 +225,15 @@ export class SellerEntityResolver {
 	/** Submits a seller application for review. */
 	@Mutation(() => SellerType, { name: 'submitSeller' })
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
-	async submitSeller(@Args('id', { type: () => ID }) id: string): Promise<Seller> {
-		return this.sellerService.submit(id);
+	async submitSeller(@Args('id', { type: () => ID }) id: string, @Context() context?: any): Promise<Seller> {
+		return this.sellerService.submit(id, this.scope(context));
 	}
 
 	/** Activates an approved seller. */
 	@Mutation(() => SellerType, { name: 'activateSeller' })
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
-	async activateSeller(@Args('id', { type: () => ID }) id: string): Promise<Seller> {
-		return this.sellerService.activate(id);
+	async activateSeller(@Args('id', { type: () => ID }) id: string, @Context() context?: any): Promise<Seller> {
+		return this.sellerService.activate(id, this.scope(context));
 	}
 
 	/** Suspends a seller. */
@@ -203,16 +241,17 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
 	async suspendSeller(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('reason', { type: () => String }) reason: string
+		@Args('reason', { type: () => String }) reason: string,
+		@Context() context?: any
 	): Promise<Seller> {
-		return this.sellerService.suspend(id, reason);
+		return this.sellerService.suspend(id, reason, this.scope(context));
 	}
 
 	/** Returns a suspended seller to active. */
 	@Mutation(() => SellerType, { name: 'reinstateSeller' })
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
-	async reinstateSeller(@Args('id', { type: () => ID }) id: string): Promise<Seller> {
-		return this.sellerService.reinstate(id);
+	async reinstateSeller(@Args('id', { type: () => ID }) id: string, @Context() context?: any): Promise<Seller> {
+		return this.sellerService.reinstate(id, this.scope(context));
 	}
 
 	/**
@@ -229,23 +268,30 @@ export class SellerEntityResolver {
 	async publishSellerOffering(
 		@Args('id', { type: () => ID }) id: string,
 		@Args('channelIds', { type: () => [String], nullable: true }) channelIds?: string[],
-		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
 	): Promise<SellerOffering> {
-		return this.sellerOfferingService.publish(id, channelIds);
+		return this.sellerOfferingService.publish(id, channelIds, this.scope(context));
 	}
 
 	/** Pauses an offering. */
 	@Mutation(() => SellerOfferingType, { name: 'pauseSellerOffering' })
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
-	async pauseSellerOffering(@Args('id', { type: () => ID }) id: string): Promise<SellerOffering> {
-		return this.sellerOfferingService.unpause(id);
+	async pauseSellerOffering(
+		@Args('id', { type: () => ID }) id: string,
+		@Context() context?: any
+	): Promise<SellerOffering> {
+		return this.sellerOfferingService.unpause(id, this.scope(context));
 	}
 
 	/** Withdraws an offering. */
 	@Mutation(() => SellerOfferingType, { name: 'withdrawSellerOffering' })
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
-	async withdrawSellerOffering(@Args('id', { type: () => ID }) id: string): Promise<SellerOffering> {
-		return this.sellerOfferingService.withdraw(id);
+	async withdrawSellerOffering(
+		@Args('id', { type: () => ID }) id: string,
+		@Context() context?: any
+	): Promise<SellerOffering> {
+		return this.sellerOfferingService.withdraw(id, this.scope(context));
 	}
 
 	/**
@@ -269,10 +315,15 @@ export class SellerEntityResolver {
 	@Idempotent({ scope: 'seller_offering.bulk', required: false, resourceType: 'seller_offering' })
 	@Mutation(() => BulkSellerOfferingsPayloadType, { name: 'bulkSellerOfferings' })
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
-	async bulkSellerOfferings(@Args('input') input: IBulkSellerOfferingsInput): Promise<IBulkSellerOfferingsPayload> {
+	async bulkSellerOfferings(
+		@Args('input') input: IBulkSellerOfferingsInput,
+		@Context() context?: any
+	): Promise<IBulkSellerOfferingsPayload> {
+		const scope = this.scope(context);
+
 		const result = await this.bulkExecutor.execute<IBulkSellerOfferingItem>(
 			{ items: input.items, mode: input.mode, atomic: input.atomic },
-			(item, context) => this.applyBulkItem(item, context),
+			(item, itemContext) => this.applyBulkItem(item, itemContext, scope),
 			bulkOptionsOf(SellerOfferingController, 'bulk', {
 				requiredKeys: SELLER_OFFERING_BULK_REQUIRED_KEYS,
 				transaction: this.sellerOfferingService.transaction
@@ -302,14 +353,25 @@ export class SellerEntityResolver {
 	 * Applies one item of a batch through the service that owns the offering's writes.
 	 *
 	 * The field owns no write of its own, for the reason every other field here owns none: the item is
-	 * handed on with the batch's transactional manager exactly as the executor resolved it, and the outcome
-	 * names the offering that moved so a client can match an answer to the listing it asked about.
+	 * handed on with the batch's transactional manager exactly as the executor resolved it and with the
+	 * scope the guard resolved, and the outcome names the offering that moved so a client can match an
+	 * answer to the listing it asked about.
+	 *
+	 * The scope is handed on rather than stated as `undefined`, which is what the route does: a batch that
+	 * dropped it would be the one write on this surface a seller-scoped caller could aim at another
+	 * seller's listings, item by item, while the single-item mutations beside it refused.
+	 *
+	 * @param item The item.
+	 * @param context What the executor resolved for it.
+	 * @param scope The seller scope the guard resolved, when the caller is seller-scoped.
+	 * @returns The outcome the batch reports for the item.
 	 */
 	private async applyBulkItem(
 		item: BulkItemRequest<IBulkSellerOfferingItem>,
-		context: IBulkItemContext
+		context: IBulkItemContext,
+		scope?: ISellerScope
 	): Promise<{ index: number; id: Id }> {
-		const offering = await this.sellerOfferingService.applyBulkItem(item, undefined, context.manager);
+		const offering = await this.sellerOfferingService.applyBulkItem(item, scope, context.manager);
 
 		return { index: context.index, id: offering.id };
 	}
@@ -327,9 +389,10 @@ export class SellerEntityResolver {
 	async settleSellerTransaction(
 		@Args('id', { type: () => ID }) id: string,
 		@Args('note', { type: () => String, nullable: true }) note?: string,
-		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
 	): Promise<SellerTransaction> {
-		return this.sellerTransactionService.settle(id, note);
+		return this.sellerTransactionService.settle(id, note, this.scope(context));
 	}
 
 	/** Holds a ledger row out of payouts. */
@@ -337,9 +400,10 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLER_TRANSACTIONS_SETTLE)
 	async holdSellerTransaction(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('reason', { type: () => String }) reason: any
+		@Args('reason', { type: () => String }) reason: any,
+		@Context() context?: any
 	): Promise<SellerTransaction> {
-		return this.sellerTransactionService.hold(id, reason);
+		return this.sellerTransactionService.hold(id, reason, undefined, this.scope(context));
 	}
 
 	/**
@@ -357,16 +421,20 @@ export class SellerEntityResolver {
 		@Args('currency', { type: () => String }) currency: string,
 		@Args('transactionIds', { type: () => [String], nullable: true }) transactionIds?: string[],
 		@Args('note', { type: () => String, nullable: true }) note?: string,
-		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
 	): Promise<SellerPayout> {
-		return this.sellerPayoutService.createPayout({ sellerId, currency, transactionIds, note });
+		return this.sellerPayoutService.createPayout({ sellerId, currency, transactionIds, note }, this.scope(context));
 	}
 
 	/** Approves a payout. */
 	@Mutation(() => SellerPayoutType, { name: 'approveSellerPayout' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
-	async approveSellerPayout(@Args('id', { type: () => ID }) id: string): Promise<SellerPayout> {
-		return this.sellerPayoutService.approve(id);
+	async approveSellerPayout(
+		@Args('id', { type: () => ID }) id: string,
+		@Context() context?: any
+	): Promise<SellerPayout> {
+		return this.sellerPayoutService.approve(id, this.scope(context));
 	}
 
 	/**
@@ -385,13 +453,18 @@ export class SellerEntityResolver {
 		@Args('id', { type: () => ID }) id: string,
 		@Args('providerKey', { type: () => String, nullable: true }) providerKey?: string,
 		@Args('providerTransferId', { type: () => String, nullable: true }) providerTransferId?: string,
-		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
 	): Promise<SellerPayout> {
-		return this.sellerPayoutService.recordExecution(id, {
-			paid: true,
-			providerKey,
-			providerTransferId
-		});
+		return this.sellerPayoutService.recordExecution(
+			id,
+			{
+				paid: true,
+				providerKey,
+				providerTransferId
+			},
+			this.scope(context)
+		);
 	}
 
 	/** Cancels an unpaid payout. */
@@ -399,9 +472,10 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CANCEL)
 	async cancelSellerPayout(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('reason', { type: () => String }) reason: string
+		@Args('reason', { type: () => String }) reason: string,
+		@Context() context?: any
 	): Promise<SellerPayout> {
-		const { payout } = await this.sellerPayoutService.cancel(id, reason);
+		const { payout } = await this.sellerPayoutService.cancel(id, reason, this.scope(context));
 
 		return payout;
 	}
@@ -424,15 +498,35 @@ export class SellerEntityResolver {
 		@Args('grossAmount', { type: () => String }) grossAmount: string,
 		@Args('commissionAmount', { type: () => String, nullable: true }) commissionAmount?: string,
 		@Args('feeAmount', { type: () => String, nullable: true }) feeAmount?: string,
-		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
 	): Promise<SellerSettlement> {
-		return this.sellerSettlementService.record({
-			sellerId,
-			providerKey,
-			currency,
-			grossAmount,
-			commissionAmount,
-			feeAmount
-		} as Partial<SellerSettlement>);
+		return this.sellerSettlementService.record(
+			{
+				sellerId,
+				providerKey,
+				currency,
+				grossAmount,
+				commissionAmount,
+				feeAmount
+			} as Partial<SellerSettlement>,
+			this.scope(context)
+		);
+	}
+
+	/**
+	 * The seller scope the access guard resolved for this operation.
+	 *
+	 * Read off the operation's own context rather than from a thread-local, exactly as each controller
+	 * reads it off the request: the scope is a property of the call, and the guard is what put it there.
+	 * Both places the guard writes are read, because a GraphQL server does not have to carry a request —
+	 * `context.req` is the object an HTTP-backed server builds, and the context itself is what a server
+	 * without one hands the resolver.
+	 *
+	 * @param context The GraphQL context.
+	 * @returns The scope, when the operation carries one.
+	 */
+	private scope(context: any): ISellerScope | undefined {
+		return (context?.req?.sellerScope ?? context?.sellerScope) as ISellerScope | undefined;
 	}
 }

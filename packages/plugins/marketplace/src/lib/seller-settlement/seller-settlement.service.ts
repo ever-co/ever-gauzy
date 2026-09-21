@@ -6,7 +6,7 @@ import {
 	IPagination,
 	SellerSettlementStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext, TenantAwareCrudService, compareDecimalStrings } from '@gauzy/core';
 import { SellerSettlement } from './seller-settlement.entity';
 import { MikroOrmSellerSettlementRepository } from './repository/mikro-orm-seller-settlement.repository';
 import { TypeOrmSellerSettlementRepository } from './repository/type-orm-seller-settlement.repository';
@@ -72,10 +72,18 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 	 * The provider's own figures are stored as given, including its fee, which is not the platform's
 	 * commission and is never netted into it. The report id is unique per provider, so a replayed
 	 * callback cannot create a second settlement and a retried client cannot move money twice.
+	 *
+	 * @param input The settlement as the provider reported it.
+	 * @param scope The caller's seller scope.
+	 * @returns The recorded settlement.
 	 */
-	async record(input: Partial<SellerSettlement>): Promise<SellerSettlement> {
+	async record(input: Partial<SellerSettlement>, scope?: ISellerScope): Promise<SellerSettlement> {
 		if (!input.sellerId || !input.providerKey || !input.currency) {
 			throw new BadRequestException('A settlement needs a seller, a provider and a currency.');
+		}
+
+		if (scope && !scope.staff) {
+			assertSellerScope(scope, input.sellerId);
 		}
 
 		const decimals = input.currencyDecimals ?? 2;
@@ -185,7 +193,11 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 			providerKey: saved.providerKey,
 			netAmount: saved.netAmount,
 			closedAt: saved.closedAt,
-			reconciled: saved.discrepancyAmount === '0.000000' || Number(saved.discrepancyAmount) === 0
+			// The comparison goes through the kernel's exact comparison rather than through `Number`, which
+			// is the class docstring's own rule and the one place here that did not follow it: `0.000000`,
+			// `0`, `-0.000000` and a column the provider left null are one answer, and no monetary decision
+			// in this package is made by parsing a decimal into a double.
+			reconciled: compareDecimalStrings(saved.discrepancyAmount ?? '0', '0') === 0
 		});
 
 		return saved;
@@ -209,12 +221,20 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 		return this.typeOrmSellerSettlementRepository.save(settlement);
 	}
 
-	/** The platform's own rows for a settlement's period, which the reconciliation compares against. */
+	/**
+	 * The platform's own rows for a settlement's period, which the reconciliation compares against.
+	 *
+	 * The read carries the settlement's own tenant and organization: a ledger read that names only the
+	 * seller trusts the foreign key to be unique across the installation, and a leaked cross-organization
+	 * seller id would put another organization's rows into this organization's discrepancy figure.
+	 */
 	private async platformLines(settlement: SellerSettlement): Promise<SellerTransaction[]> {
 		const rows = await this.transactionRepository.find({
 			where: {
 				sellerId: settlement.sellerId,
-				currency: settlement.currency
+				currency: settlement.currency,
+				tenantId: settlement.tenantId,
+				organizationId: settlement.organizationId
 			} as FindOptionsWhere<SellerTransaction>,
 			order: { occurredAt: 'ASC' } as any
 		});
@@ -243,7 +263,14 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 		reportedNet: Money
 	): Promise<Money> {
 		const rows = await this.transactionRepository.find({
-			where: { sellerId, currency } as FindOptionsWhere<SellerTransaction>
+			where: {
+				sellerId,
+				currency,
+				// The discrepancy is a figure about this organization's ledger, so the read is scoped to it
+				// rather than to the seller id alone.
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			} as FindOptionsWhere<SellerTransaction>
 		});
 
 		const platformNet = Money.sum(

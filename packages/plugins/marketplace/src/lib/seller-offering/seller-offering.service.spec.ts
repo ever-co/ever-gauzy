@@ -49,6 +49,10 @@ jest.mock('@gauzy/core', () => {
 		EventBus: class {},
 		EventOutboxService: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The decimal comparison the commission bands and the settlement's discrepancy are decided by is
+		// the kernel's own, so the double hands over the real one: a comparison doubled here would agree
+		// with the service about arithmetic the platform never performs.
+		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		isUniqueViolation: (error: any) => Boolean(error?.code === '23505'),
 		// The batch path reads the operation an item declared and names a catalogue code when it refuses one,
 		// so the kernel's own reader and its own error classes answer rather than a second copy of either.

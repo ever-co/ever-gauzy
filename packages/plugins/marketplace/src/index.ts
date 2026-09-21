@@ -54,9 +54,15 @@ export * from './lib/seller-payout-line/repository/mikro-orm-seller-payout-line.
 export * from './lib/seller-settlement/repository/type-orm-seller-settlement.repository';
 export * from './lib/seller-settlement/repository/mikro-orm-seller-settlement.repository';
 
-/* Commission, the order split and the seller scope. */
+/* Commission, the order split, the discount funding reader and the seller scope.
+ *
+ * The funding reader was missing from this list, which made it unreachable: it is the service that
+ * fills `IOrderSplitLine.sellerDiscountAmount` and `platformDiscountAmount` from the adjustment ledger
+ * before the split is called, and a consumer outside this package — the order package, or the
+ * composition that binds the split port — cannot call what the barrel does not export. */
 export * from './lib/commission/seller-commission.service';
 export * from './lib/split/seller-split.service';
+export * from './lib/funding/seller-funding.service';
 export * from './lib/seller-scope/seller-scope';
 export * from './lib/seller-scope/seller-access.guard';
 

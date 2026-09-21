@@ -164,6 +164,9 @@ export class CreateAddressTable1791000000092 implements MigrationInterface {
 			);
 			// At most one default shipping address per party, among live rows. The index is what makes
 			// the rule a database guarantee on this dialect; the party's own column is its authority.
+			// `customerId` is nullable and is deliberately left raw rather than folded: an address that
+			// belongs to no customer has no party to be the default of, so the null exempts the row.
+			// null-exempt: address.customerId
 			await queryRunner.query(
 				`CREATE UNIQUE INDEX "UQ_address_default_shipping" ON "address" ("customerId") WHERE "isDefaultShipping" = true AND "deletedAt" IS NULL`
 			);

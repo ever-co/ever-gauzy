@@ -89,6 +89,10 @@ jest.mock('@gauzy/core', () => {
 		User: class {},
 		Warehouse: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The decimal comparison the commission bands and the settlement's discrepancy are decided by is
+		// the kernel's own, so the double hands over the real one: a comparison doubled here would agree
+		// with the service about arithmetic the platform never performs.
+		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		isUniqueViolation: (error: any) => Boolean(error?.code === '23505'),
 		// The retry-safety declaration is read back here, so the decorator that writes it and the key it
 		// writes it under are the kernel's own rather than a second copy of either.
@@ -128,7 +132,7 @@ jest.mock('@gauzy/core/src/lib/api/field-visibility.service', () => ({ FieldVisi
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MODULE_METADATA } from '@nestjs/common/constants';
+import { GUARDS_METADATA, MODULE_METADATA } from '@nestjs/common/constants';
 import {
 	buildSchema,
 	extendSchema,
@@ -168,6 +172,9 @@ import { SellerOfferingBulkOperation } from '../seller-offering/seller-offering.
 import { SellerPayoutController } from '../seller-payout/seller-payout.controller';
 import { SellerSettlementController } from '../seller-settlement/seller-settlement.controller';
 import { SellerTransactionController } from '../seller-transaction/seller-transaction.controller';
+import { SellerController } from '../seller/seller.controller';
+import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
+import { ISellerScope } from '../seller-scope/seller-scope';
 import * as graphqlSurface from './index';
 import { SellerEntityResolver } from './marketplace.resolver';
 import { schemaExtensions } from './schema-extensions';
@@ -545,6 +552,78 @@ function createResolver(): SellerEntityResolver {
 		sellerPayoutLineService as any,
 		sellerSettlementService as any,
 		new BulkExecutor(visibility as never)
+	);
+}
+
+/**
+ * The same six services, recording the scope each call was made with.
+ *
+ * The assertion the fixture exists for is not "a method ran" but "the scope reached the service that
+ * narrows by it": every one of these methods only narrows when it is handed a scope, so a field that
+ * called it without one runs unscoped and looks identical from the outside.
+ *
+ * @param calls Where each call records the service method it reached and the scope it carried.
+ * @returns A resolver over the recording doubles.
+ */
+function recordingResolver(calls: Array<{ field: string; scope?: ISellerScope }>): any {
+	const record =
+		(field: string, answer: unknown, position = 1) =>
+		(...args: unknown[]) => {
+			calls.push({ field, scope: args[position] as ISellerScope });
+
+			return Promise.resolve(answer);
+		};
+
+	const sellerService = {
+		listSellers: record('listSellers', { items: [SELLER], total: 1 }),
+		getSeller: record('getSeller', SELLER),
+		getStatement: record('getStatement', STATEMENT, 2),
+		getBalance: async () => BALANCE,
+		submit: record('submit', SELLER),
+		activate: record('activate', SELLER),
+		suspend: record('suspend', SELLER, 2),
+		reinstate: record('reinstate', SELLER)
+	};
+
+	const sellerOfferingService = {
+		listOfferings: record('listOfferings', { items: [OFFERING], total: 1 }),
+		publish: record('publish', OFFERING, 2),
+		unpause: record('unpause', OFFERING),
+		withdraw: record('withdraw', OFFERING),
+		applyBulkItem: record('applyBulkItem', OFFERING),
+		transaction: async (work: (manager: unknown) => Promise<unknown>) => await work(undefined)
+	};
+
+	const sellerTransactionService = {
+		listTransactions: record('listTransactions', { items: [TRANSACTION], total: 1 }),
+		reconcile: record('reconcile', { items: [RECONCILIATION], total: 1 }),
+		settle: record('settle', TRANSACTION, 2),
+		hold: record('hold', TRANSACTION, 3)
+	};
+
+	const sellerPayoutService = {
+		listPayouts: record('listPayouts', { items: [PAYOUT], total: 1 }),
+		getPayout: record('getPayout', PAYOUT),
+		createPayout: record('createPayout', PAYOUT),
+		approve: record('approve', PAYOUT),
+		recordExecution: record('recordExecution', PAYOUT, 2),
+		cancel: record('cancel', { payout: PAYOUT, releasedTransactionCount: 1 }, 2)
+	};
+
+	const sellerPayoutLineService = { listLines: record('listLines', { items: [PAYOUT_LINE], total: 1 }) };
+	const sellerSettlementService = {
+		listSettlements: record('listSettlements', { items: [SETTLEMENT], total: 1 }),
+		record: record('record', SETTLEMENT)
+	};
+
+	return new SellerEntityResolver(
+		sellerService as any,
+		sellerOfferingService as any,
+		sellerTransactionService as any,
+		sellerPayoutService as any,
+		sellerPayoutLineService as any,
+		sellerSettlementService as any,
+		new BulkExecutor({ assertCanSee: () => undefined, canSee: () => true } as never)
 	);
 }
 
@@ -937,6 +1016,80 @@ describe('the marketplace GraphQL contribution', () => {
 
 			expect(required).toEqual(['markSellerPayoutPaid']);
 			expect(retryOf(SellerPayoutController, 'pay')).toMatchObject({ required: true });
+		});
+	});
+
+	/* --------------------------------------------------------------------------------------------
+	 * The seller scope
+	 * ------------------------------------------------------------------------------------------ */
+
+	describe('the seller scope', () => {
+		it('mounts the seller access guard the controllers mount', () => {
+			// Parity of the *guard family*, which is what the class docstring claims and what was missing:
+			// the REST controllers carry the access guard and hand the scope it resolves to every service
+			// call, and this class carried neither — so a seller-side credential read every seller's rows
+			// over GraphQL while the same credential over REST saw only its own.
+			const onResolver = Reflect.getMetadata(GUARDS_METADATA, SellerEntityResolver) ?? [];
+			const onController = Reflect.getMetadata(GUARDS_METADATA, SellerController) ?? [];
+
+			expect(onResolver).toContain(SellerAccessGuard);
+			expect(onController).toContain(SellerAccessGuard);
+		});
+
+		it('threads the scope the guard resolved into every field that takes one', async () => {
+			const calls: Array<{ field: string; scope?: ISellerScope }> = [];
+			const scope: ISellerScope = { sellerId: 'seller-1', staff: false } as ISellerScope;
+			const resolver = recordingResolver(calls);
+			const context = { req: { sellerScope: scope } };
+
+			await resolver.sellers(context);
+			await resolver.seller('seller-1', context);
+			await resolver.sellerStatement('seller-1', 'USD', context);
+			await resolver.sellerBalance('seller-1', 'USD', context);
+			await resolver.sellerOfferings(context);
+			await resolver.sellerTransactions(context);
+			await resolver.sellerSplitReconciliation('order-1', 'seller-1', context);
+			await resolver.sellerPayouts(context);
+			await resolver.sellerPayout('payout-1', context);
+			await resolver.sellerPayoutLines('payout-1', context);
+			await resolver.sellerSettlements(context);
+			await resolver.createSellerPayout('seller-1', 'USD', ['transaction-1'], 'note', undefined, context);
+			await resolver.approveSellerPayout('payout-1', context);
+			await resolver.markSellerPayoutPaid('payout-1', 'provider-1', 'transfer-1', undefined, context);
+			await resolver.cancelSellerPayout('payout-1', 'duplicate run', context);
+			await resolver.settleSellerTransaction('transaction-1', 'captured', undefined, context);
+			await resolver.holdSellerTransaction('transaction-1', 'DISPUTE', context);
+			await resolver.createSellerSettlement('seller-1', 'provider-1', 'USD', '100.000000', undefined, undefined, undefined, context);
+			await resolver.submitSeller('seller-1', context);
+			await resolver.activateSeller('seller-1', context);
+			await resolver.suspendSeller('seller-1', 'under review', context);
+			await resolver.reinstateSeller('seller-1', context);
+			await resolver.publishSellerOffering('offering-1', ['channel-1'], undefined, context);
+			await resolver.pauseSellerOffering('offering-1', context);
+			await resolver.withdrawSellerOffering('offering-1', context);
+
+			// Not one of them may run unscoped: a field that dropped the scope is a field a seller-scoped
+			// credential reaches another seller's rows through, and it would look exactly like the others.
+			expect(calls.length).toBeGreaterThan(0);
+			expect(calls.filter((call) => call.scope !== scope).map((call) => call.field)).toEqual([]);
+		});
+
+		it('reads the scope off the context itself when the server carries no request', async () => {
+			// The guard writes it to both places, because a GraphQL server does not have to build a request.
+			const calls: Array<{ field: string; scope?: ISellerScope }> = [];
+			const scope: ISellerScope = { sellerId: 'seller-1', staff: false } as ISellerScope;
+
+			await recordingResolver(calls).sellerPayouts({ sellerScope: scope });
+
+			expect(calls).toEqual([{ field: 'listPayouts', scope }]);
+		});
+
+		it('answers a field called with no context at all, as a staff-free surface did before', async () => {
+			const calls: Array<{ field: string; scope?: ISellerScope }> = [];
+
+			await recordingResolver(calls).sellerPayouts();
+
+			expect(calls).toEqual([{ field: 'listPayouts', scope: undefined }]);
 		});
 	});
 });
