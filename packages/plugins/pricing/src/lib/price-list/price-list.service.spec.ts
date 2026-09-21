@@ -127,23 +127,22 @@ function serviceUnderTest(lists: IListRow[], prices: IPriceRow[] = []) {
 			return entity;
 		},
 		/**
-		 * The criteria a *tenant-aware* update states, not a bare id.
+		 * The statement the platform's update really issues.
 		 *
-		 * `TenantAwareCrudService.update` turns a string id into `{ ...scope, id }` before it reaches
-		 * the repository, so that the statement can only touch a row of the caller's own tenant. This
-		 * double only understood the string, so every update matched nothing, changed nothing and still
-		 * answered `affected: 1` — and the two cases that read the list back after activating or
-		 * withdrawing it read it unchanged.
+		 * `TenantAwareCrudService.update` resolves a bare id to a criteria *object* — `{ id, …tenant
+		 * scope }` — before it hands the write to the repository. A double that only understood a bare id
+		 * found no row, wrote nothing, and still answered `{ affected: 1 }`, so the read-back the service
+		 * performs returned the pre-update row and the suite failed on the status it never wrote.
 		 */
 		update: async (criteria: string | Record<string, unknown>, partial: Partial<IListRow>) => {
-			const id = typeof criteria === 'string' ? criteria : (criteria?.['id'] as string | undefined);
-			const row = lists.find((one) => same(one.id, id));
+			const where = typeof criteria === 'string' ? { id: criteria } : criteria;
+			const rows = lists.filter((row) => matches(row, where));
 
-			if (row) {
+			for (const row of rows) {
 				Object.assign(row, partial);
 			}
 
-			return { affected: row ? 1 : 0 };
+			return { affected: rows.length };
 		},
 		softDelete: async (criteria: string | { id?: string }) => {
 			softDeleted.push(String(typeof criteria === 'string' ? criteria : criteria?.id));

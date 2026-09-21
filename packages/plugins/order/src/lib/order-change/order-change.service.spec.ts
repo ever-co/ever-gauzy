@@ -121,6 +121,13 @@ jest.mock('@gauzy/core', () => {
 			.commitVersionedUpdate,
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.versionExpectationOf,
+		// The comparison a service makes before it writes a child row, and the refusal it raises, are the
+		// kernel's own: a doubled comparison would agree with the service by construction, and what this
+		// suite asserts is that a stale expectation is refused before an action is applied.
+		matchesExpectation: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').matchesExpectation,
+		parseEntityVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').parseEntityVersion,
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -1001,6 +1008,37 @@ describe('OrderChangeService — the record a change leaves (doc 10 §6.6)', () 
 
 		expect(declined.status).toBe(OrderChangeStatus.DECLINED);
 		expect(fixture.order.version).toBe(readAt + 2);
+	});
+
+	it('refuses a confirmation based on a stale order version before it applies anything', async () => {
+		// `confirm` applies every action and only then reaches the version-predicated write of the order,
+		// so a refusal that arrives from that write arrives *after* the change has landed. The check is
+		// therefore made first, and this case is what holds it there.
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
+
+		await fixture.totalsService.recompute('order-1', 'PLACED');
+
+		const change = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: [{ action: OrderChangeActionType.ITEM_ADD, details: { title: 'X', quantity: 1, unitPrice: 1 } }]
+		} as never);
+		const readAt = fixture.order.version;
+		const linesBefore = fixture.tables.order_line.length;
+
+		// Another caller moved the order on while this one still held the version it read.
+		await fixture.totalsService.recompute('order-1', 'PAYMENT_RECONCILED');
+
+		await expect(fixture.service.confirm(change.id, { wildcard: false, versions: [readAt] })).rejects.toMatchObject({
+			code: 'ENTITY_VERSION_CONFLICT',
+			status: 409
+		});
+
+		// Control: the action was not applied, the line it would have added is not there, and the change
+		// is still open — a caller told nothing happened must not be reading half an applied change.
+		expect(fixture.tables.order_line).toHaveLength(linesBefore);
+		expect(fixture.tables.order_change[0].status).toBe(OrderChangeStatus.PENDING);
+		expect(fixture.tables.order_change_action[0].applied).toBe(false);
 	});
 
 	it('refuses to apply a change twice, and refuses one that was declined', async () => {

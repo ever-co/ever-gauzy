@@ -1,6 +1,13 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
+		// Matches `packages/ui-core`: the ui-core sources use default imports of CommonJS packages
+		// (`import moment from 'moment'`), which the root tsconfig allows at the type level and leaves
+		// without a runtime helper — so ts-jest emitted `moment_1.default(...)` and every suite that
+		// reached the barrel died before its first assertion. `isolatedModules` travels with it for the
+		// reason `docs-ui` records: without it ts-jest cannot see Angular's `exports` map.
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
 		"outDir": "../../../dist/out-tsc",
 		"module": "preserve",
 		"target": "es2016",

@@ -396,6 +396,22 @@ describe('PurchaseOrderController — a retried create', () => {
 		await expect(send(surface, 'create', rebuilt, [rebuilt.body])).resolves.toMatchObject({
 			result: { id: ORDER }
 		});
+		expect(surface.service.create).toHaveBeenCalledTimes(1);
+	});
+
+	it('refuses bytes that are not JSON and do not match, because those are all there is to compare', async () => {
+		// The other half of the same rule: a body no parser can read has no canonical form, so the raw
+		// bytes are the fingerprint — and two different ones under one key are two different requests.
+		const surface = resource();
+		const first = { ...request(undefined, CREATE_KEY), rawBody: Buffer.from('variant=VARIANT&quantity=20') };
+		const different = { ...request(undefined, CREATE_KEY), rawBody: Buffer.from('variant=VARIANT&quantity=21') };
+
+		await send(surface, 'create', first, [first.body]);
+
+		await expect(send(surface, 'create', different, [different.body])).rejects.toMatchObject({
+			status: 409,
+			code: 'IDEMPOTENCY_KEY_REUSED'
+		});
 		// The property that matters either way: one key, one side effect.
 		expect(surface.service.create).toHaveBeenCalledTimes(1);
 	});

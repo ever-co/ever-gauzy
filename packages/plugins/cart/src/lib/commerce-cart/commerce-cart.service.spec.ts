@@ -11,7 +11,14 @@
  * is the part that needs a request context.
  */
 jest.mock('@gauzy/core', () => {
-	const { NotFoundException } = require('@nestjs/common');
+	const { NotFoundException, SetMetadata } = require('@nestjs/common');
+
+	/**
+	 * The concurrency metadata key, taken from the kernel's own constant rather than restated as a
+	 * string literal: a spec that spelled it out would keep passing after the decorator and the guard
+	 * stopped agreeing on the key they use.
+	 */
+	const { VERSIONED_METADATA_KEY } = jest.requireActual('@gauzy/core/src/lib/concurrency/version.util');
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
@@ -139,13 +146,26 @@ jest.mock('@gauzy/core', () => {
 		// The optimistic-lock column is the same `@MultiORMColumn` every other column is, so the
 		// decorator double above is what stands in for it.
 		VersionedColumn: decorator,
-		// The two conventions the routes adopt are used for real, not doubled: what the suite asserts
-		// about a versioned write is the behaviour of the kernel's own conditional update.
-		Versioned: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned.decorator').Versioned,
+		// The convention as this suite needs it: the metadata the real decorator records, written on the
+		// same key. The decorator itself is not required, because it also applies the version guard —
+		// and the guard injects the idempotency service, which extends the CRUD service, which imports
+		// the entity registry. Required here, `@gauzy/core` loads in an order where
+		// `class TenantAwareCrudService extends CrudService` runs before `CrudService` is defined, and
+		// the suite fails to load rather than failing an assertion. No guard runs in this suite.
+		Versioned: (options: unknown = {}) => SetMetadata(VERSIONED_METADATA_KEY, options),
+		// The conditional update the routes reach for is used for real, not doubled: what the suite
+		// asserts about a versioned write is the behaviour of the kernel's own statement.
 		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.commitVersionedUpdate,
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.versionExpectationOf,
+		// The comparison an aggregate makes before it writes a child row, and the refusal it raises, are
+		// the kernel's own too: a doubled comparison would agree with the service by construction, and
+		// what this suite asserts is that a stale expectation is refused before anything is written.
+		matchesExpectation: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').matchesExpectation,
+		parseEntityVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').parseEntityVersion,
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -1498,6 +1518,28 @@ describe('CommerceCartService — the versioned write', () => {
 				details: { expectedVersion: expected, actualVersion: Number(cart.version) }
 			}
 		);
+	});
+
+	it('refuses a stale version before the child row is written, not after', async () => {
+		// The refusal has to arrive before the line does. The conditional write in `recalculate` decides
+		// the same question again and is still the authority, but it runs *after* the line has been
+		// inserted or deleted — so a caller whose expectation no longer holds was answered `409` with
+		// its change already applied, which is a refusal whose side effect is committed.
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		const stale = { wildcard: false, versions: [Number(cart.version) - 1] };
+
+		await expect(
+			service.addLine(
+				cart.id,
+				{ variantId: 'variant-1', quantity: 1, unitPrice: '10.000000' } as any,
+				stale
+			)
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+
+		// Control: a store that wrote the line first would have left it behind, and the caller — told
+		// nothing happened — would be reading a cart with a line it never meant to add.
+		expect(tables.commerce_cart_line ?? []).toHaveLength(0);
 	});
 
 	it('applies the write and moves the cart on by one when the stated version is the current one', async () => {

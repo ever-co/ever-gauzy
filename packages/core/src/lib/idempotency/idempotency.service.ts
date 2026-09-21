@@ -155,6 +155,12 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	 * request then claims the key as if it had never been presented. Without this, a key reused
 	 * after its window would be answered with a response the platform promised not to keep.
 	 *
+	 * **A row is only cleared once nothing can still be working under it.** An expired row that a
+	 * live claim still owns *is* that claim's lease, and deleting it would hand one key to two
+	 * writers — the single outcome the key exists to prevent, and the rule `purgeExpired` applies to
+	 * the same row. The request is told the work is in flight instead, and the expiry is renewed by
+	 * the takeover once the lease really has gone stale.
+	 *
 	 * @param input The scope, key and request hash the caller presented.
 	 * @param policy Overrides for the retention and stale-lock windows.
 	 * @returns A claim the caller owns, or the stored response, or the reason it must wait.
@@ -162,7 +168,7 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	async claim(input: IIdempotencyStartInput, policy: IIdempotencyPolicy = {}): Promise<IIdempotencyClaim> {
 		const existing = await this.findByKey(input.scope, input.key);
 
-		if (existing && this.isExpired(existing)) {
+		if (existing && this.isExpired(existing) && !this.isLeaseLive(existing, policy)) {
 			await this.clearExpired(existing.id);
 		}
 
@@ -572,6 +578,32 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	}
 
 	/**
+	 * Whether another request may still be working under a stored row.
+	 *
+	 * This is the takeover decision in one place, because two callers depend on it agreeing with
+	 * itself: {@link claim} must not clear a row a live lease owns, and {@link resolveExisting} takes
+	 * a row over exactly when no live lease owns it. A row is a lease only while it is `IN_PROGRESS`
+	 * — a settled row holds a stored response rather than an owner — and its holder is presumed alive
+	 * until the lock has been held longer than the stale-lock window. A row with no recorded lock
+	 * counts as abandoned, which is the same reading {@link isLockStale} takes for the operator's
+	 * release: it was written by a build that did not stamp one.
+	 *
+	 * @param record The stored row.
+	 * @param policy Overrides for the stale-lock window.
+	 * @returns True while the row is a claim another request may still be executing.
+	 */
+	private isLeaseLive(
+		record: Pick<IdempotencyKey, 'status' | 'lockedAt'>,
+		policy: IIdempotencyPolicy = {}
+	): boolean {
+		if (record.status !== IdempotencyStatus.IN_PROGRESS || !record.lockedAt) {
+			return false;
+		}
+
+		return this.heldForMs(record) <= (policy.staleLockMs ?? IdempotencyService.DEFAULT_STALE_LOCK_MS);
+	}
+
+	/**
 	 * How long ago a claim was taken.
 	 *
 	 * @param record The stored row.
@@ -621,7 +653,10 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 		const lockedAt = existing.lockedAt ? new Date(existing.lockedAt).getTime() : 0;
 		const lockAgeMs = Date.now() - lockedAt;
 
-		if (lockAgeMs > staleLockMs) {
+		// The takeover happens exactly when no live lease owns the row — the same predicate `claim`
+		// consults before it clears an expired one, so the two cannot drift into disagreeing about
+		// whether a key is free.
+		if (!this.isLeaseLive(existing, policy)) {
 			const takenOver = await this.takeOver(existing.id, policy);
 
 			if (takenOver) {

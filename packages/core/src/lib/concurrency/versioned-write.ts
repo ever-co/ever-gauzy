@@ -1,6 +1,7 @@
 import { HttpStatus, NotFoundException } from '@nestjs/common';
 import type { ID } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
+import { RequestContext } from '../core/context/request-context';
 import { BaseEntity } from '../core/entities/base.entity';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
@@ -21,10 +22,52 @@ export interface IVersionedWriteOptions<T> {
 	expectation: IVersionExpectation;
 	/** The columns to write. `version` is set by this helper and must not be part of the patch. */
 	patch: Record<string, unknown> & Partial<T>;
-	/** Extra criteria the row must satisfy, for example the tenant and organization scope. */
+	/**
+	 * Extra criteria the row must satisfy, on top of the caller's tenant and organization.
+	 *
+	 * The scope is no longer the caller's to remember: this helper adds the tenant and the organization
+	 * the credential states to every statement it builds, so a versioned write cannot reach a row of
+	 * another organization. What belongs here is narrowing *within* that scope — a status, a foreign key,
+	 * a flag — and a member that repeats the scope is harmless because it carries the same value.
+	 */
 	where?: Record<string, unknown>;
 	/** A reader for the row's version, for a caller that has the row in hand already. */
 	readVersion?: () => Promise<number | null>;
+}
+
+/**
+ * The tenant and the organization a versioned write is scoped by.
+ *
+ * Both are read from the credential rather than from the row: a write is made *by* a caller, and the
+ * caller's scope is what the statement must be true of. The row's own scope is not available on every
+ * path — a job, a seeder and an expiry sweep write rows they never read — so the credential is the one
+ * source that is always there.
+ *
+ * Reading it here rather than at each call site is the point. `TenantAwareCrudService.update` adds the
+ * caller's **tenant** and nothing else, so before this the organization a write was made in travelled
+ * only where a call site remembered to pass `where` — which was four call sites out of twenty-five. A
+ * versioned write that reached a row of another organization was therefore accepted, and the caller
+ * that forgot was indistinguishable from the caller that meant it. Adding both here makes the scope a
+ * property of the convention instead of a line each route has to remember, and a member the credential
+ * does not state is left out entirely rather than set to `undefined`: a key present with an undefined
+ * value is a criterion the two ORMs interpret differently.
+ *
+ * @returns The scope conditions, empty for a caller outside a request.
+ */
+function callerScope(): Record<string, unknown> {
+	const tenantId = RequestContext.currentTenantId();
+	const organizationId = RequestContext.currentOrganizationId();
+	const scope: Record<string, unknown> = {};
+
+	if (tenantId) {
+		scope.tenantId = tenantId;
+	}
+
+	if (organizationId) {
+		scope.organizationId = organizationId;
+	}
+
+	return scope;
 }
 
 /**
@@ -89,15 +132,16 @@ export async function commitVersionedUpdate<T extends BaseEntity>(
 	}
 
 	const nextVersion = bumpVersion(expected);
-	// The caller's extra criteria go in FIRST and the two reserved columns go in last, because the
-	// spread order is the whole guarantee. `where` is documented as the tenant and organization scope,
-	// and every call site builds it by spreading a criteria object — so a `where` that already carried
-	// an `id` or a `version` would, written the other way round, silently replace the precondition and
-	// predicated the statement on a version this helper never validated. Reserving both columns makes
-	// that impossible rather than merely unlikely: a caller cannot state a precondition this function
-	// did not derive.
+	// The caller's extra criteria go in FIRST, the scope the credential states goes in next, and the two
+	// reserved columns go in last, because the spread order is the whole guarantee. `where` is documented
+	// as narrowing *within* the caller's scope, and every call site builds it by spreading a criteria
+	// object — so a `where` that already carried an `id` or a `version` would, written the other way
+	// round, silently replace the precondition and predicated the statement on a version this helper
+	// never validated. Reserving both columns makes that impossible rather than merely unlikely: a
+	// caller cannot state a precondition this function did not derive.
 	const criteria: Record<string, unknown> = {
 		...(options.where ?? {}),
+		...callerScope(),
 		id: options.id,
 		version: expected
 	};

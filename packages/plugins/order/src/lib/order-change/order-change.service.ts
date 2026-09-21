@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import {
 	AddressType,
@@ -10,7 +10,14 @@ import {
 	OrderStatus,
 	OrderTransactionType
 } from '@gauzy/contracts';
-import { TenantAwareCrudService, addDecimalStrings } from '@gauzy/core';
+import {
+	ApiErrorCode,
+	ApiException,
+	TenantAwareCrudService,
+	addDecimalStrings,
+	matchesExpectation,
+	parseEntityVersion
+} from '@gauzy/core';
 import { OrderChange } from './order-change.entity';
 import { TypeOrmOrderChangeRepository } from './repository/type-orm-order-change.repository';
 import { MikroOrmOrderChangeRepository } from './repository/mikro-orm-order-change.repository';
@@ -142,6 +149,44 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	}
 
 	/**
+	 * Refuses a write whose stated version the order has already moved past.
+	 *
+	 * The version-predicated write decides the same question again and is still the authority — the
+	 * comparison and the write are one statement there, which is what makes the guarantee. What it
+	 * cannot do is answer *first* when the operation has children to write: `confirm` applies every
+	 * action before it reaches `recompute`, so a caller whose expectation no longer holds was answered
+	 * `409` with its change already applied. Asking here, before the first action, means such a request
+	 * applies nothing.
+	 *
+	 * What this cannot do is close the window against a writer that commits in between — nothing short
+	 * of one transaction could — but a request refused for the version it stated has written nothing.
+	 *
+	 * @param orderId The order the write is predicated on.
+	 * @param expectation What the caller stated.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the order has moved on.
+	 */
+	private async assertOrderExpectationHolds(orderId: ID, expectation: OrderVersionExpectation): Promise<void> {
+		const order = await this.typeOrmOrderRepository.findOne({ where: { id: orderId } });
+		const actual = parseEntityVersion((order as { version?: unknown } | null)?.version);
+
+		// A missing row and a row with no usable version are both left to the conditional write: it is
+		// what reports a missing record, and it pins the stated version when the row carries none.
+		if (!order || actual === null || matchesExpectation(expectation, actual)) {
+			return;
+		}
+
+		throw new ApiException(
+			HttpStatus.CONFLICT,
+			ApiErrorCode.ENTITY_VERSION_CONFLICT,
+			'The order changed since you read it. Read it again and reapply your change.',
+			{
+				expectedVersion: expectation.wildcard ? actual : expectation.versions[0],
+				actualVersion: actual
+			}
+		);
+	}
+
+	/**
 	 * Finds the changes of an order that still hold its exclusivity slot.
 	 *
 	 * @param orderId The order.
@@ -253,6 +298,11 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 		const actions = [...(change.actions ?? [])].sort(
 			(left: OrderChangeAction, right: OrderChangeAction) => left.ordering - right.ordering
 		);
+
+		// Before a single action is applied, not after: the version-predicated write below is still the
+		// authority, but it runs once everything has been applied, so a caller whose expectation no
+		// longer holds would otherwise be refused with its change already applied.
+		await this.assertOrderExpectationHolds(change.orderId, expectation);
 
 		for (const action of actions) {
 			await this.applyAction(change, action);

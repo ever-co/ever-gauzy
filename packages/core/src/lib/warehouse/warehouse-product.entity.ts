@@ -26,7 +26,12 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany
 } from './../core/decorators/entity';
-import { VersionedColumn } from './../concurrency';
+// The decorator's own module rather than the `concurrency` barrel: the barrel re-exports the version
+// guard, which injects the idempotency service, which injects the idempotency repository, whose
+// `@InjectRepository(IdempotencyKey)` reads the entity registry — and an entity is imported while that
+// registry is still being built. Reached through the barrel the cycle is closed and Nest reports a
+// circular dependency the moment the entity is imported first.
+import { VersionedColumn } from './../concurrency/versioned-column.decorator';
 import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository';
 
 /**

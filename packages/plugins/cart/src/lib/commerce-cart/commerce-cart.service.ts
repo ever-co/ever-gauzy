@@ -325,7 +325,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		changes: DeepPartial<CommerceCartLine>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		const cart = await this.assertMutable(cartId);
+		await this.assertMutable(cartId);
 		const line = await this.assertLineBelongsToCart(cartId, lineId);
 
 		if (changes.quantity !== undefined && Number(changes.quantity) <= 0) {
@@ -389,7 +389,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		method: DeepPartial<CommerceCartShippingMethod>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		const cart = await this.assertMutable(cartId);
+		await this.assertMutable(cartId);
 
 		if (!method.name) {
 			throw new BadRequestException('CART_SHIPPING_METHOD_NAME_REQUIRED: a shipping method needs a name.');
@@ -444,7 +444,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		promotion: DeepPartial<CommerceCartPromotion>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		const cart = await this.assertMutable(cartId);
+		await this.assertMutable(cartId);
 
 		if (promotion.amount === undefined || promotion.amount === null) {
 			throw new BadRequestException(
@@ -1673,10 +1673,20 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
-	 * Loads a cart that must be mutable, or refuses.
-	 *
+/**
+ * Loads a cart that must be mutable, or refuses.
+ *
+ * @param cartId The cart.
+ * @returns The cart.
+ * @throws NotFoundException when no such cart exists.
+ * @throws BadRequestException when the cart is no longer mutable.
+ */
 	 * @param cartId The cart.
+	 * @param expectation The version the caller read the cart at, when it stated one.
 	 * @returns The cart.
+	 * @throws NotFoundException when no such cart exists.
+	 * @throws BadRequestException when the cart is no longer mutable.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the cart has moved past the stated version.
 	 */
 	private async assertMutable(cartId: ID): Promise<CommerceCart> {
 		const cart = await this.findOneByIdString(cartId);

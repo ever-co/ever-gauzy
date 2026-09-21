@@ -23,6 +23,8 @@ jest.mock('../commerce-checkout-session/commerce-checkout-session.service', () =
 }));
 
 jest.mock('@gauzy/core', () => {
+	const { SetMetadata } = require('@nestjs/common');
+
 	/** A no-op decorator factory: nothing here is mapped onto a module graph. */
 	const decorator = () => () => undefined;
 
@@ -41,10 +43,10 @@ jest.mock('@gauzy/core', () => {
 		Permissions: decorator,
 		PermissionGuard: class {},
 		TenantPermissionGuard: class {},
-		// The feature gate the resolvers gained when the platform flag was applied across the GraphQL
-		// surface. It was missing from this double, and `@UseGuards` — which is Nest's own, not one of
-		// the no-ops above — refuses an `undefined` guard at decoration time, so the whole file failed
-		// to load rather than failing an assertion.
+		// The feature gate the resolvers append to their guard chain, which was missing from this double:
+		// `@UseGuards` is real here (it is Nest's, not one of the no-ops above), and it refuses an
+		// argument that is not a guard — so every member of the chain has to be a class, not just the one
+		// the suite has an opinion about.
 		FeatureFlagGuard: class {},
 		UseGuards: decorator,
 		MultiORMEntity: decorator,
@@ -64,7 +66,13 @@ jest.mock('@gauzy/core', () => {
 		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
 		IDEMPOTENT_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy')
 			.IDEMPOTENT_METADATA_KEY,
-		Versioned: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned.decorator').Versioned,
+		// The convention as a declaration read needs it: the metadata the real decorator records, on the
+		// same key. The decorator itself is not required, because it also applies the version guard —
+		// which injects the idempotency service, which extends the CRUD service, which imports the
+		// entity registry, so requiring it here loads `@gauzy/core` in an order where
+		// `class TenantAwareCrudService extends CrudService` runs before `CrudService` is defined. No
+		// guard runs in this suite; what it asserts is the metadata below.
+		Versioned: (options: unknown = {}) => SetMetadata(VERSIONED_METADATA_KEY, options),
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.versionExpectationOf
 	};
