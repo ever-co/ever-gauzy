@@ -50,7 +50,8 @@ export const inventorySchemaExtensions = gql`
 		shippedQuantity: Float!
 		receivedQuantity: Float!
 		damagedQuantity: Float!
-		unitCost: Float
+		"Cost carried across the transfer for valuation, as an exact decimal."
+		unitCost: Decimal
 		note: String
 	}
 
@@ -121,7 +122,8 @@ export const inventorySchemaExtensions = gql`
 		freezeMovements: Boolean!
 		countedLineCount: Int!
 		varianceUnits: Float!
-		varianceValue: Float!
+		"Variance of the session valued at the recorded unit cost, as an exact decimal."
+		varianceValue: Decimal!
 		startedAt: DateTime
 		closedAt: DateTime
 		note: String
@@ -433,14 +435,16 @@ export const inventorySchemaExtensions = gql`
 		transferId: ID
 		variantId: ID!
 		requestedQuantity: Float!
-		unitCost: Float
+		"Cost carried across the transfer for valuation, as an exact decimal."
+		unitCost: Decimal
 		note: String
 	}
 
 	"""The variance of one count session, in units and valued at the recorded unit cost."""
 	type StockCountVariance {
 		units: Float!
-		value: Float!
+		"Variance valued at the recorded unit cost, as an exact decimal."
+		value: Decimal!
 		unpricedLines: Int!
 	}
 

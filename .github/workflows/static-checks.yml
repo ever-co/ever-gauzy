@@ -228,11 +228,18 @@ jobs:
 
       # The list surface is where GraphQL parity is easiest to lose: a bare array cannot be paged,
       # filtered or counted, so the client that has the REST list has no counterpart to move to. The
-      # gate names the 48 list fields and 52 connection types that are still not the canonical shape, so
-      # the remainder is countable and a new one cannot appear unnoticed.
+      # gate names whatever list field is still not a connection, so the remainder is countable and a
+      # new one cannot appear unnoticed.
       - name: The list surface follows the connection contract
         if: always()
         run: node tools/scripts/connection-shape-check.mjs
+
+      # Money is an exact decimal on this platform, and a field declared `Float` tells every generated
+      # client to parse the amount as a double — the loss then happens in the client, silently, after
+      # the server did everything right. The gate reads every money-named field in the composed schema.
+      - name: Money is never declared as a float
+        if: always()
+        run: node tools/scripts/money-type-check.mjs
 
       # An event name is an API contract for subscribers and webhook receivers, and the doctrine spells
       # its aggregate segment the way the table it names is spelled. A name whose aggregate follows the

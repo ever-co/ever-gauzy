@@ -338,6 +338,19 @@ describe('the inventory list surface answers the connection contract', () => {
 		expect(typeBody('StockLevelEdge')).toContain('cursor: String!');
 		expect(described).not.toMatch(/stockLevels\([^)]*take: Int/);
 	});
+
+	it('declares the money this package carries as an exact decimal, never a float', () => {
+		// The three amounts here are `numeric(20,6)` columns — a cost carried across a transfer and the
+		// variance of a count valued at it — and they were `Float` until this assertion existed, which told
+		// every generated client to parse them as doubles. `tools/scripts/money-type-check.mjs` reads the
+		// composed schema; this reads the package's own contribution, so a regression is caught by the
+		// suite that owns the field rather than only once the whole schema is composed.
+		expect(typeBody('StockTransferLine')).toContain('unitCost: Decimal');
+		// An input is not a `type`, so it is read as the document spells it rather than through `typeBody`.
+		expect(described).toMatch(/input StockTransferLineInput \{[^}]*unitCost: Decimal/);
+		expect(typeBody('StockCount')).toContain('varianceValue: Decimal!');
+		expect(typeBody('StockCountVariance')).toContain('value: Decimal!');
+	});
 });
 
 describe('every converted list field reads its page in the store', () => {
