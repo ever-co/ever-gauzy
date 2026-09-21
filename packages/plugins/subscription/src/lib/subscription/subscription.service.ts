@@ -4,6 +4,7 @@ import { DeepPartial } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	AdjustmentType,
+	CurrencyCode,
 	DecimalString,
 	ID,
 	IdempotencyOutcome
@@ -193,6 +194,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<Subscription> {
 		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
 			id,
 			expectation,
 			// The version is written by the conditional update and never by the caller's payload, so a body
@@ -398,6 +400,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const period = periodFrom(start, cadence);
 
 		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
 			id,
 			expectation,
 			patch: {
@@ -441,6 +444,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		this.assertStatus(subscription, [SubscriptionStatus.ACTIVE], 'pause');
 
 		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
 			id,
 			expectation,
 			patch: {
@@ -482,6 +486,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const nextBillingAt = periodEnd.getTime() > now.getTime() ? periodEnd : now;
 
 		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
 			id,
 			expectation,
 			patch: {
@@ -528,6 +533,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		const deferred = !options.immediate && subscription.status === SubscriptionStatus.ACTIVE;
 
 		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
 			id,
 			expectation,
 			patch: {
@@ -579,6 +585,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		);
 
 		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
 			id,
 			expectation,
 			patch: {
@@ -1026,6 +1033,21 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * `nextRetryAt`, and the cycle is reached again through its subscription, so the subscription is
 	 * selected while it is active and its billing instant has passed.
 	 *
+	 * **A subscription inside its trial is `PENDING`, and it is selected here.** It was not, and the
+	 * consequence was that no trial ever converted: `createSubscription` puts a trialing subscription
+	 * into `PENDING` — the status's own comment says that is what it covers — with `nextBillingAt` set
+	 * to the trial's end. The pass scanned `ACTIVE` and `PAUSED` only, so the instant the trial ran out
+	 * passed unnoticed, the trial ran on indefinitely and nothing was ever charged, in every tenant,
+	 * until a human called the activate endpoint for each one. `billCycle` needs no special case for
+	 * it: the period it bills starts at `nextBillingAt`, which is exactly the trial's end, and
+	 * `recordSuccess` is what moves the row to `ACTIVE` — so the trial's last instant and the first paid
+	 * period's first instant are the same instant, with no free interval between them.
+	 *
+	 * A `PENDING` subscription that is **not** in a trial is one nobody has activated yet, and it stays
+	 * where it is: `nextBillingAt` on such a row is a period boundary that was never bought, and billing
+	 * it would charge a customer who never started. The trial end recorded at creation is what tells the
+	 * two apart.
+	 *
 	 * @param now The instant to compare against.
 	 * @param limit How many subscriptions one pass may take.
 	 * @returns The subscriptions, oldest billing instant first.
@@ -1045,9 +1067,21 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			take: limit
 		});
 
-		return [...active, ...paused]
+		// The trial's end is carried in `metadata`, which is a JSON column no dialect narrows the same
+		// way, so the status is narrowed in SQL and the trial is recognised in memory. A tenant holds
+		// tens of pending rows per page, not thousands.
+		const pending = await this.typeOrmSubscriptionRepository.find({
+			where: { ...scope, status: SubscriptionStatus.PENDING },
+			order: { nextBillingAt: 'ASC' },
+			take: limit
+		});
+
+		return [...active, ...paused, ...pending.filter((subscription) => !!this.trialEndOf(subscription))]
 			.filter((subscription) => {
-				const due = subscription.status === SubscriptionStatus.ACTIVE ? subscription.nextBillingAt : subscription.pausedUntil;
+				const due =
+					subscription.status === SubscriptionStatus.PAUSED
+						? subscription.pausedUntil
+						: subscription.nextBillingAt;
 
 				return due ? new Date(due).getTime() <= now.getTime() : false;
 			})
@@ -1374,6 +1408,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			// The retry policy is spent. The subscription keeps its history and its period, and stops
 			// being billed automatically until an operator acts or the customer supplies an instrument.
 			await commitVersionedUpdate<Subscription>(this, {
+				where: currentScope(),
 				id: subscription.id,
 				expectation,
 				patch: { status: SubscriptionStatus.FAILED, nextBillingAt: null }
@@ -1382,6 +1417,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			// Still active, and still owed the same period: the cycle row's own retry instant decides
 			// when the next attempt happens, so the calendar does not move.
 			await commitVersionedUpdate<Subscription>(this, {
+				where: currentScope(),
 				id: subscription.id,
 				expectation,
 				patch: {
@@ -1447,6 +1483,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			plan.maxBillingCycles !== undefined && plan.maxBillingCycles !== null && cycleCount >= plan.maxBillingCycles;
 
 		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
 			id: subscription.id,
 			expectation,
 			patch: {
@@ -1457,6 +1494,19 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 				billingCycleCount: cycleCount
 			}
 		});
+
+		if (subscription.status === SubscriptionStatus.PENDING && !ceilingReached) {
+			// The trial converted. The write above is the transition, and this is what says so: a
+			// subscription that leaves `PENDING` because its first paid cycle settled has become active
+			// just as surely as one an operator activated by hand, and a consumer that only listens for
+			// `subscription.renewed` would never learn that the trial ended.
+			await this.emit('subscription.activated', subscription.id, {
+				subscriptionId: subscription.id,
+				planId: plan.id,
+				currentPeriodStart: period.start,
+				currentPeriodEnd: period.end
+			});
+		}
 
 		await this.emit('subscription.renewed', subscription.id, {
 			subscriptionId: subscription.id,
@@ -1546,6 +1596,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			};
 
 			await commitVersionedUpdate<Subscription>(this, {
+				where: currentScope(),
 				id: subscription.id,
 				expectation,
 				patch: { metadata }
@@ -1581,18 +1632,32 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			];
 			settlement = 'WAIVED';
 		} else if (net.isNegative()) {
+			// **The carried credit accumulates; it does not replace.** Assigning the new amount outright
+			// meant that two downgrades inside one period left only the second one's credit on the row and
+			// the first one simply stopped existing — the customer was owed 30.97 and 12.00 and was given
+			// 12.00. The money itself moves when the next cycle consumes what is carried here, which is
+			// what doc 11 §10.8 states: "no money moves now; a `CREDIT` adjustment is attached to the
+			// **next** billing order".
+			const carried = this.pendingCreditOf(metadata, currency);
+			const total = carried ? carried.add(net).round() : net;
+
 			metadata[PENDING_CREDIT] = {
-				amount: net.toStorageString(),
+				amount: total.toStorageString(),
 				currency,
 				at: new Date().toISOString(),
 				description: change.description
 			};
+			// And the adjustment written against the period the change happened in is the audit record of
+			// the decision rather than the money: that period's row has already settled, so nothing is
+			// collected or refunded by it. The pair is deliberate — one row says when the credit was
+			// decided, the next cycle's says when it was given.
 			await this.appendCredit(subscription, net, change.description);
 		} else {
 			settlement = 'WAIVED';
 		}
 
 		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
 			id: subscription.id,
 			expectation,
 			patch: {
@@ -1704,10 +1769,12 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	/**
 	 * Writes a proration credit against the cycle it will reduce.
 	 *
-	 * A credit is an adjustment on a billing row rather than a smaller amount, so the reduction stays
-	 * visible in the ledger. When the current period has no row to own it — which happens when a
-	 * change lands after the period settled and before the next cycle opened — the intent is recorded
-	 * on the subscription and consumed when the next cycle's row exists.
+	 * A credit is an adjustment on a billing row rather than a smaller amount, so the decision stays
+	 * visible in the ledger at the moment it was taken. The period this attaches to has already settled,
+	 * so this row moves no money: the money moves when the next cycle consumes the amount the change
+	 * carried on the subscription (`consumePendingCredit`). When the current period has no row at all —
+	 * which happens when a change lands after the period settled and before the next cycle opened —
+	 * there is nothing to attach the record to and the carried amount is the whole of it.
 	 *
 	 * @param subscription The subscription that changed.
 	 * @param net The negative difference the change produced.
@@ -1730,6 +1797,24 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			referenceId: subscription.id,
 			description
 		});
+	}
+
+	/**
+	 * @param metadata The subscription's metadata, as the change is building it.
+	 * @param currency The subscription's currency.
+	 * @returns The credit an earlier change already deferred, or null when none is carried. A deferred
+	 * credit stated in another currency is not carried forward: converting it would need an exchange
+	 * rate this service does not own, and adding it as if the currencies matched would be wrong by
+	 * whatever the rate is.
+	 */
+	private pendingCreditOf(metadata: Record<string, unknown>, currency: CurrencyCode): Money | null {
+		const pending = metadata?.[PENDING_CREDIT] as { amount?: string; currency?: string } | undefined;
+
+		if (!pending?.amount || (pending.currency && pending.currency !== currency)) {
+			return null;
+		}
+
+		return Money.of(pending.amount, currency).round();
 	}
 
 	/**
@@ -1913,6 +1998,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		}
 
 		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
 			id: subscription.id,
 			expectation,
 			patch: {
@@ -1934,6 +2020,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		delete metadata[PENDING_CREDIT];
 
 		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
 			id: subscription.id,
 			expectation,
 			patch: { metadata }

@@ -126,14 +126,24 @@ function serviceUnderTest(lists: IListRow[], prices: IPriceRow[] = []) {
 
 			return entity;
 		},
-		update: async (id: string, partial: Partial<IListRow>) => {
+		/**
+		 * The criteria a *tenant-aware* update states, not a bare id.
+		 *
+		 * `TenantAwareCrudService.update` turns a string id into `{ ...scope, id }` before it reaches
+		 * the repository, so that the statement can only touch a row of the caller's own tenant. This
+		 * double only understood the string, so every update matched nothing, changed nothing and still
+		 * answered `affected: 1` — and the two cases that read the list back after activating or
+		 * withdrawing it read it unchanged.
+		 */
+		update: async (criteria: string | Record<string, unknown>, partial: Partial<IListRow>) => {
+			const id = typeof criteria === 'string' ? criteria : (criteria?.['id'] as string | undefined);
 			const row = lists.find((one) => same(one.id, id));
 
 			if (row) {
 				Object.assign(row, partial);
 			}
 
-			return { affected: 1 };
+			return { affected: row ? 1 : 0 };
 		},
 		softDelete: async (criteria: string | { id?: string }) => {
 			softDeleted.push(String(typeof criteria === 'string' ? criteria : criteria?.id));
