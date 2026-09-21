@@ -413,7 +413,7 @@ describe('SellerPayoutService — building a payout (doc 20 §7.4, §7.5, MK-11)
 			SellerTransactionStatus.SETTLED,
 			SellerTransactionStatus.SETTLED
 		]);
-		expect(fixture.events()).toEqual(['seller-payout.created']);
+		expect(fixture.events()).toEqual(['seller_payout.created']);
 		expect(fixture.appended[0].data).toMatchObject({ transactionCount: 2, netAmount: '100.500000' });
 	});
 
@@ -882,7 +882,7 @@ describe('SellerPayoutService — approving and executing (doc 20 §7.4, MK-13)'
 		expect(paid.paidAmount).toBe('87.500000');
 		expect(fixture.rows()[0]).toMatchObject({ status: SellerTransactionStatus.PAID });
 		expect(fixture.rows()[0].paidAt).toBeInstanceOf(Date);
-		expect(fixture.events()).toEqual(['seller-payout.paid']);
+		expect(fixture.events()).toEqual(['seller_payout.paid']);
 	});
 
 	it('returns the rows to settleable when the provider refused the transfer', async () => {
@@ -905,7 +905,7 @@ describe('SellerPayoutService — approving and executing (doc 20 §7.4, MK-13)'
 			failureReason: 'the provider refused'
 		});
 		expect(fixture.rows()[0]).toMatchObject({ status: SellerTransactionStatus.SETTLEABLE, settledAt: null });
-		expect(fixture.events()).toEqual(['seller-payout.failed']);
+		expect(fixture.events()).toEqual(['seller_payout.failed']);
 		expect(fixture.appended[0].data).toMatchObject({ retryable: true });
 	});
 
@@ -960,7 +960,7 @@ describe('SellerPayoutService — canceling a payout (doc 20 §7.4, MK-12)', () 
 			SellerTransactionStatus.SETTLEABLE
 		]);
 		expect(fixture.tables.seller_payout_line.every((line) => line.deletedAt)).toBe(true);
-		expect(fixture.events()).toEqual(['seller-payout.canceled']);
+		expect(fixture.events()).toEqual(['seller_payout.canceled']);
 	});
 
 	it('allows the canceled rows to be paid by a later run', async () => {

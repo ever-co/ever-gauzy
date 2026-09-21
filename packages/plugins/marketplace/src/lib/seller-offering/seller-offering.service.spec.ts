@@ -300,7 +300,7 @@ describe('SellerOfferingService — authoring an offering (doc 20 §3.2, §3.3)'
 			tenantId: TENANT,
 			priceAmount: '12.50'
 		});
-		expect(fixture.events()).toEqual(['seller-offering.created']);
+		expect(fixture.events()).toEqual(['seller_offering.created']);
 	});
 
 	it('refuses an offering with no seller or no variant', async () => {
@@ -469,7 +469,7 @@ describe('SellerOfferingService — the state moves (doc 20 §3.4)', () => {
 
 		expect(withdrawn.status).toBe(OfferingStatus.WITHDRAWN);
 		expect(fixture.tables.seller_offering).toHaveLength(1);
-		expect(fixture.events()).toEqual(['seller-offering.updated', 'seller-offering.withdrawn']);
+		expect(fixture.events()).toEqual(['seller_offering.updated', 'seller_offering.withdrawn']);
 	});
 
 	it('replaces the publication sets, leaving each one alone when the caller does not state it', async () => {
@@ -663,7 +663,7 @@ describe('SellerOfferingService — one item of a batch (doc 20 §14.1, the bulk
 		// the withdrawal's own rather than the generic update.
 		expect(withdrawn.store()?.status).toBe(OfferingStatus.WITHDRAWN);
 		expect(withdrawn.tables.seller_offering).toHaveLength(1);
-		expect(withdrawn.events()).toEqual(['seller-offering.withdrawn']);
+		expect(withdrawn.events()).toEqual(['seller_offering.withdrawn']);
 	});
 
 	it('re-prices the amount and leaves every member the item did not state as it was', async () => {
@@ -693,7 +693,7 @@ describe('SellerOfferingService — one item of a batch (doc 20 §14.1, the bulk
 			commissionRate: '0.150000',
 			title: 'The seller’s own title'
 		});
-		expect(fixture.events()).toEqual(['seller-offering.updated']);
+		expect(fixture.events()).toEqual(['seller_offering.updated']);
 	});
 
 	it('re-prices the commission members when the item states them', async () => {

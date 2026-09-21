@@ -302,7 +302,7 @@ describe('EntitlementKeyService — issuance (doc 05 §19.3)', () => {
 
 		const { key, plaintext } = await fixture.service.issue({ entitlementId: RIGHT, assignedToEmail: 'buyer@example.com' });
 
-		expect(fixture.events()).toEqual(['entitlement-key.issued']);
+		expect(fixture.events()).toEqual(['entitlement_key.issued']);
 		expect(fixture.appended[0].data).toMatchObject({
 			keyId: key.id,
 			entitlementId: RIGHT,
@@ -495,7 +495,7 @@ describe('EntitlementKeyService — revocation and replacement (doc 05 §19.3)',
 
 		await fixture.service.revoke('k1', 'FRAUD');
 
-		expect(fixture.events()).toEqual(['entitlement-key.revoked']);
+		expect(fixture.events()).toEqual(['entitlement_key.revoked']);
 		expect(fixture.appended[0].data).toMatchObject({ keyId: 'k1', reason: 'FRAUD', activationIds: ['a1'] });
 	});
 

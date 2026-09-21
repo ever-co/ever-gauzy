@@ -343,8 +343,8 @@ export const EntitlementEventName = {
 	REDUCED: 'entitlement.reduced',
 	REVOKED: 'entitlement.revoked',
 	EXPIRED: 'entitlement.expired',
-	KEY_ISSUED: 'entitlement-key.issued',
-	KEY_REVOKED: 'entitlement-key.revoked'
+	KEY_ISSUED: 'entitlement_key.issued',
+	KEY_REVOKED: 'entitlement_key.revoked'
 } as const;
 
 /** The reasons a right is withdrawn with, when the platform rather than an operator decided. */
