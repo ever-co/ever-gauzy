@@ -49,7 +49,7 @@ const PLUGINS = {
 		'tag_product_variant'
 	],
 	pricing: ['exchange_rate', 'price_list', 'price_preference', 'product_price'],
-	tax: ['tax_category', 'tax_rate'],
+	tax: ['tax_category', 'tax_rate', 'tax_rate_part', 'tax_regime', 'tax_regime_rate'],
 	inventory: [
 		'channel_warehouse',
 		'stock_adjustment',
@@ -98,6 +98,7 @@ const PLUGINS = {
 		'order_history',
 		'order_line',
 		'order_shipping_method',
+		'order_line_invoice',
 		'order_summary',
 		'order_transaction'
 	],
@@ -108,6 +109,7 @@ const PLUGINS = {
 		'payment_session',
 		'payment_webhook_event',
 		'refund',
+		'refund_line',
 		'refund_reason'
 	],
 	fulfillment: ['fulfillment', 'fulfillment_line', 'shipping_option', 'shipping_profile', 'shipping_profile_variant'],
@@ -121,7 +123,7 @@ const PLUGINS = {
 		'order_return_reason'
 	],
 	subscription: ['subscription', 'subscription_billing', 'subscription_item', 'subscription_plan'],
-	purchasing: ['goods_receipt', 'goods_receipt_line', 'purchase_order', 'purchase_order_line'],
+	purchasing: ['goods_receipt', 'goods_receipt_line', 'purchase_order', 'purchase_order_line', 'vendor_product_term'],
 	entitlement: ['entitlement', 'entitlement_activation', 'entitlement_key'],
 	marketplace: [
 		'seller',
@@ -416,6 +418,25 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 		check(`${at}: table "${table}" has an entity`, declaredTables.has(table), 'no @MultiORMEntity declares it');
 	}
 
+	// 🛑 **The other direction, which is the one that was blind.** Every check below reads the
+	// hand-written `PLUGINS` map, so a table the map does not list is not checked at all — no entity
+	// check, no migration check, and no word about the omission. That is worse than a missing check,
+	// because the run reports every package green and the gate's own summary says how many packages it
+	// declared rather than how many tables it looked at.
+	//
+	// Two entities were already outside the map when this was added — `refund_line` and
+	// `vendor_product_term` — and both happened to have migrations, so nothing was broken yet. The
+	// failure it protects against is the next one: an entity added with no migration, whose table then
+	// does not exist on a fresh install while every test that ran against a synchronised schema passed.
+	for (const table of declaredTables) {
+		check(
+			`${at}: "${table}" is listed in the contract`,
+			tables.includes(table) || DERIVED_TABLES.has(table),
+			`an entity declares it, and PLUGINS in ${rel(import.meta.filename ?? '')} does not — add it there, ` +
+				'so the checks below actually run for it'
+		);
+	}
+
 	// --- entity hygiene ---------------------------------------------------------------------
 	for (const file of entities) {
 		const source = read(file);
@@ -501,7 +522,10 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 		// A contracted table that no migration creates is a table that will not exist on a fresh
 		// install — the entity maps it, every test that ran against a synchronised schema passed,
 		// and the first clean deployment fails. This is the check that catches that.
-		for (const table of tables) {
+		// The union, not the map: a table an entity declares must have a migration whether or not
+		// anybody remembered to list it above. `DERIVED_TABLES` are created by a migration and
+		// maintained by the ORM, so they belong here too.
+		for (const table of new Set([...tables, ...declaredTables])) {
 			check(
 				`${at}: a migration creates table "${table}"`,
 				new RegExp(`create\\s+table[^;]{0,120}?\\b${table}\\b`, 'i').test(migrationSource),
