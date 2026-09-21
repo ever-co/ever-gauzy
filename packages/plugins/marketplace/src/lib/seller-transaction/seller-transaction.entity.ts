@@ -289,7 +289,7 @@ export class SellerTransaction extends TenantOrganizationBaseEntity implements I
 		nullable: true,
 		onDelete: 'SET NULL'
 	})
-	@JoinColumn()
+	@JoinColumn({ name: 'reversesTransactionId' })
 	reverses?: SellerTransaction;
 
 	@ApiPropertyOptional({ type: () => String })
