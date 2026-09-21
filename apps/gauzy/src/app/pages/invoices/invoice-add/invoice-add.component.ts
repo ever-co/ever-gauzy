@@ -210,21 +210,23 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			// The old '<i class="nb-*">' markup relied on Nebular's long-removed icon
 			// font, so every row action rendered as a bare colored dot. FontAwesome is
 			// loaded globally; native `title` (not nbTooltip) because these strings are
-			// injected via [innerHTML], where directives never bind.
+			// injected via [innerHTML], where directives never bind. The OUTLINE set
+			// (`far`), so the row actions read like the eva outline icons the rest of
+			// the app uses rather than the heavier solid glyphs.
 			add: {
-				addButtonContent: `<i class="fas fa-plus" aria-hidden="true" title="${this.getTranslation('BUTTONS.ADD')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.ADD')}</span>`,
-				createButtonContent: `<i class="fas fa-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
-				cancelButtonContent: `<i class="fas fa-times" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
+				addButtonContent: `<i class="far fa-square-plus" aria-hidden="true" title="${this.getTranslation('BUTTONS.ADD')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.ADD')}</span>`,
+				createButtonContent: `<i class="far fa-circle-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
+				cancelButtonContent: `<i class="far fa-circle-xmark" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmCreate: true
 			},
 			edit: {
-				editButtonContent: `<i class="fas fa-edit" aria-hidden="true" title="${this.getTranslation('BUTTONS.EDIT')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.EDIT')}</span>`,
-				saveButtonContent: `<i class="fas fa-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
-				cancelButtonContent: `<i class="fas fa-times" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
+				editButtonContent: `<i class="far fa-pen-to-square" aria-hidden="true" title="${this.getTranslation('BUTTONS.EDIT')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.EDIT')}</span>`,
+				saveButtonContent: `<i class="far fa-circle-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
+				cancelButtonContent: `<i class="far fa-circle-xmark" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmSave: true
 			},
 			delete: {
-				deleteButtonContent: `<i class="fas fa-trash" aria-hidden="true" title="${this.getTranslation('BUTTONS.DELETE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.DELETE')}</span>`,
+				deleteButtonContent: `<i class="far fa-trash-can" aria-hidden="true" title="${this.getTranslation('BUTTONS.DELETE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.DELETE')}</span>`,
 				confirmDelete: true
 			},
 			columns: {}
