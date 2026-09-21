@@ -1,4 +1,4 @@
-import { JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId, Tree, TreeChildren, TreeParent } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
 import { ID, IImageAsset, IProductCategoryTranslatable } from '@gauzy/contracts';
@@ -26,7 +26,16 @@ import { MikroOrmProductCategoryRepository } from './repository/mikro-orm-produc
  * queryable column and the constraint that owns it is created by the migration that owns the table.
  * The three indexes are the navigation reads: one slug per organization, the sibling ordering under a
  * parent, and the lifecycle filter that the same navigation applies to categories and products alike.
+ *
+ * **`@Tree('closure-table')` is what makes the subtree cheap.** "Every descendant of a category" is the
+ * read a catalogue navigation does on every request, and the three ways to answer it are a recursive
+ * query, a materialised path or a closure table. The first is what SQLite and MySQL 5.7 cannot express
+ * efficiently — the embedded database is the one a demo runs on — and the second has to be rewritten on
+ * every re-parent. The closure table the ORM maintains is one row per (ancestor, descendant) pair,
+ * including the self-pair, so the read is one indexed join and a re-parent is a write the ORM makes. It
+ * is derived: `product_category_closure` is not an entity and no service queries it directly.
  */
+@Tree('closure-table')
 @ColumnIndex('UQ_product_category_org_slug', ['organizationId', 'slug'], {
 	unique: true,
 	where: '"slug" IS NOT NULL AND "deletedAt" IS NULL'
@@ -52,9 +61,32 @@ export class ProductCategory extends TranslatableBase
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
+	@RelationId((it: ProductCategory) => it.parent)
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'uuid', nullable: true })
+	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
 	parentId?: ID;
+
+	/**
+	 * The parent itself, as the tree repository reads and writes it.
+	 *
+	 * `SET NULL` is the rule the schema promises: deleting a parent makes its children roots rather than
+	 * deleting them, because a category that holds products is not something a delete should cascade
+	 * into. The column above keeps the relation id, so a caller that only needs the parent's identity
+	 * never loads the parent row.
+	 */
+	@ApiPropertyOptional({ type: () => ProductCategory })
+	@IsOptional()
+	@TreeParent({ onDelete: 'SET NULL' })
+	@JoinColumn()
+	parent?: ProductCategory;
+
+	/**
+	 * The children, as the tree repository reads them.
+	 */
+	@ApiPropertyOptional({ type: () => [ProductCategory] })
+	@IsOptional()
+	@TreeChildren()
+	children?: ProductCategory[];
 
 	/**
 	 * URL-safe identity used by `/categories/:slug`.
