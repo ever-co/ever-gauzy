@@ -4301,15 +4301,15 @@ type Query {
   collections(filter: CollectionFilter, page: PageInput, limit: Int, offset: Int): CollectionConnection!
   collection(id: ID!): Collection
   collectionBySlug(slug: String!): Collection
-  collectionProducts(filter: CollectionProductFilter, limit: Int, offset: Int): CollectionProductConnection!
-  collectionVariants(filter: CollectionVariantFilter, limit: Int, offset: Int): CollectionVariantConnection!
-  collectionChannels(filter: CollectionChannelFilter, limit: Int, offset: Int): CollectionChannelConnection!
-  productVariantFacets(filter: TagProductVariantFilter, limit: Int, offset: Int): TagProductVariantConnection!
-  productPublications(filter: ProductPublicationFilter, limit: Int, offset: Int): ProductPublicationConnection!
+  collectionProducts(filter: CollectionProductFilter, page: PageInput, limit: Int, offset: Int): CollectionProductConnection!
+  collectionVariants(filter: CollectionVariantFilter, page: PageInput, limit: Int, offset: Int): CollectionVariantConnection!
+  collectionChannels(filter: CollectionChannelFilter, page: PageInput, limit: Int, offset: Int): CollectionChannelConnection!
+  productVariantFacets(filter: TagProductVariantFilter, page: PageInput, limit: Int, offset: Int): TagProductVariantConnection!
+  productPublications(filter: ProductPublicationFilter, page: PageInput, limit: Int, offset: Int): ProductPublicationConnection!
   productPublication(id: ID!): ProductPublication
-  productVariantPublications(filter: ProductVariantPublicationFilter, limit: Int, offset: Int): ProductVariantPublicationConnection!
-  productRelations(filter: ProductRelationFilter, limit: Int, offset: Int): ProductRelationConnection!
-  productVariantMedia(filter: ProductVariantMediaFilter, limit: Int, offset: Int): ProductVariantMediaConnection!
+  productVariantPublications(filter: ProductVariantPublicationFilter, page: PageInput, limit: Int, offset: Int): ProductVariantPublicationConnection!
+  productRelations(filter: ProductRelationFilter, page: PageInput, limit: Int, offset: Int): ProductRelationConnection!
+  productVariantMedia(filter: ProductVariantMediaFilter, page: PageInput, limit: Int, offset: Int): ProductVariantMediaConnection!
 
   """Price lists of the caller's organization, most useful first."""
   priceLists(filter: PriceListFilter, sort: PriceListSort, page: PageInput, limit: Int, offset: Int): PriceListConnection!
@@ -4368,24 +4368,34 @@ type Query {
   Resolves the regime a document is taxed under, from the party's assignment and then the destination.
   """
   resolveTaxRegime(input: ResolveTaxRegimeInput!): ResolvedTaxRegime
+
+  """
+  The levels of a location, of a variant, or of both — the first page of them.
+  
+  **This field is the one list here that is not a connection, and the read it answers from is why.**
+  `StockLevelService.findLevels` takes a limit and no row offset, answers no count and declares no
+  order, so a connection over it could carry neither a `totalCount` that is true of the filtered set
+  nor a cursor walk that resumes without repeating or skipping a row. It stays the list it is until
+  that read can page; the nine fields beside it answer connections.
+  """
   stockLevels(warehouseId: ID, variantId: ID, take: Int): [StockLevel!]!
   stockLevel(warehouseId: ID!, variantId: ID!): StockLevel
   availableQuantity(warehouseId: ID!, variantId: ID!): Float!
-  stockMovements(warehouseId: ID!, variantId: ID!, take: Int): [StockMovement!]!
-  stockReservations(referenceType: String, referenceId: ID, status: String): [StockReservation!]!
+  stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput): StockMovementConnection!
+  stockReservations(referenceType: String, referenceId: ID, status: String, page: PageInput): StockReservationConnection!
   stockReservation(id: ID!): StockReservation
-  stockTransfers(status: String): [StockTransfer!]!
+  stockTransfers(status: String, page: PageInput): StockTransferConnection!
   stockTransfer(id: ID!): StockTransfer
-  stockTransferLines(transferId: ID!): [StockTransferLine!]!
+  stockTransferLines(transferId: ID!, page: PageInput): StockTransferLineConnection!
   stockTransferLine(id: ID!): StockTransferLine
-  stockAlerts(variantId: ID, isActive: Boolean): [StockAlert!]!
-  stockAdjustments(warehouseId: ID, variantId: ID, status: String): [StockAdjustment!]!
-  stockCounts(warehouseId: ID, status: String, mode: String): [StockCount!]!
+  stockAlerts(variantId: ID, isActive: Boolean, page: PageInput): StockAlertConnection!
+  stockAdjustments(warehouseId: ID, variantId: ID, status: String, page: PageInput): StockAdjustmentConnection!
+  stockCounts(warehouseId: ID, status: String, mode: String, page: PageInput): StockCountConnection!
   stockCount(id: ID!): StockCount
-  stockCountLines(stockCountId: ID!): [StockCountLine!]!
+  stockCountLines(stockCountId: ID!, page: PageInput): StockCountLineConnection!
   stockCountLine(id: ID!): StockCountLine
   stockCountVariance(stockCountId: ID!): StockCountVariance!
-  channelWarehouses(channelId: ID, warehouseId: ID): [ChannelWarehouse!]!
+  channelWarehouses(channelId: ID, warehouseId: ID, page: PageInput): ChannelWarehouseConnection!
 
   """Zones of the caller's organization."""
   warehouseZones(filter: WarehouseZoneFilter, page: PageInput): WarehouseZoneConnection!
@@ -4402,10 +4412,10 @@ type Query {
   """
   Everything under a bin, itself included, read through the closure table.
   """
-  warehouseBinSubtree(id: ID!): [WarehouseBin!]!
+  warehouseBinSubtree(id: ID!, page: PageInput): WarehouseBinSubtreeConnection!
 
   """The derived contents of a bin."""
-  warehouseBinContents(id: ID!): [WarehouseBinBalance!]!
+  warehouseBinContents(id: ID!, page: PageInput): WarehouseBinContentsConnection!
 
   """
   Measures a requested quantity against a bin's declared capacity, in the capacity's own unit.
@@ -4430,7 +4440,7 @@ type Query {
   pickList(id: ID!): PickList
 
   """The lines of a pick list, in the order the pick path visits them."""
-  pickListLines(pickListId: ID!): [PickListLine!]!
+  pickListLines(pickListId: ID!, page: PageInput): PickListLinesConnection!
 
   """One pick line."""
   pickListLine(id: ID!): PickListLine
@@ -4481,7 +4491,7 @@ type Query {
   orderTransactions(orderId: ID!, type: String, page: PageInput): OrderTransactionConnection!
 
   """The timeline of one order."""
-  orderHistory(orderId: ID!): [OrderHistory!]!
+  orderHistory(orderId: ID!, page: PageInput): OrderHistoryConnection!
 
   """The changes of one order."""
   orderChanges(orderId: ID!, status: String, page: PageInput): OrderChangeConnection!
@@ -4492,7 +4502,7 @@ type Query {
   """
   Every item and credit-note item one order line was billed through, oldest first.
   """
-  orderLineInvoices(orderLineId: ID!): [OrderLineInvoice!]!
+  orderLineInvoices(orderLineId: ID!, page: PageInput): OrderLineInvoiceConnection!
 
   """How much of one order line is left to bill."""
   orderLineInvoicingPosition(orderLineId: ID!, basisQuantity: Decimal): OrderLineInvoicingPosition!
@@ -4623,13 +4633,13 @@ type Query {
   orderExchange(id: ID!): OrderExchange
 
   """The lines of a return."""
-  orderReturnLines(returnId: ID!): [OrderReturnLine!]!
+  orderReturnLines(returnId: ID!, page: PageInput): OrderReturnLineConnection!
 
   """The lines of a claim."""
-  orderClaimLines(claimId: ID!): [OrderClaimLine!]!
+  orderClaimLines(claimId: ID!, page: PageInput): OrderClaimLineConnection!
 
   """The outbound lines of an exchange."""
-  orderExchangeLines(exchangeId: ID!): [OrderExchangeLine!]!
+  orderExchangeLines(exchangeId: ID!, page: PageInput): OrderExchangeLineConnection!
 
   """Subscription plans of the caller's organization."""
   subscriptionPlans(filter: SubscriptionPlanFilter, page: PageInput): SubscriptionPlanConnection!
@@ -4701,7 +4711,7 @@ type Query {
   checkEntitlement(input: CheckEntitlementInput!): EntitlementCheckResult!
 
   """Lists the seller accounts of the caller's organization."""
-  sellers: [Seller!]!
+  sellers(page: PageInput): SellerConnection!
 
   """Reads one seller by id or by its human-usable code."""
   seller(idOrCode: String!): Seller
@@ -4715,12 +4725,12 @@ type Query {
   sellerBalance(sellerId: ID!, currency: String): SellerBalance
 
   """Lists what sellers offer."""
-  sellerOfferings: [SellerOffering!]!
+  sellerOfferings(page: PageInput): SellerOfferingConnection!
 
   """
   Lists the per-seller split of orders: the ledger that says what each seller earned.
   """
-  sellerTransactions: [SellerTransaction!]!
+  sellerTransactions(page: PageInput): SellerTransactionConnection!
 
   """
   Reconciles the split of the orders in a window against the money they captured.
@@ -4728,16 +4738,16 @@ type Query {
   sellerSplitReconciliation(orderId: ID, sellerId: ID): [SellerSplitReconciliation!]!
 
   """Lists payout instructions."""
-  sellerPayouts: [SellerPayout!]!
+  sellerPayouts(page: PageInput): SellerPayoutConnection!
 
   """Reads one payout with its lines."""
   sellerPayout(id: ID!): SellerPayout
 
   """Lists the ledger rows one payout covers."""
-  sellerPayoutLines(sellerPayoutId: ID!): [SellerPayoutLine!]!
+  sellerPayoutLines(sellerPayoutId: ID!, page: PageInput): SellerPayoutLineConnection!
 
   """Lists what providers reported they settled."""
-  sellerSettlements: [SellerSettlement!]!
+  sellerSettlements(page: PageInput): SellerSettlementConnection!
 
   """Search every indexed entity the caller may see."""
   search(input: SearchInput!, page: PageInput): SearchResult!
@@ -4751,13 +4761,13 @@ type Query {
   searchFacets(input: SearchInput!): [SearchFacet!]!
 
   """Which entity fields are indexed, with their weights."""
-  searchIndexDefinitions(entity: String): [SearchIndexDefinition!]!
+  searchIndexDefinitions(entity: String, page: PageInput): SearchIndexDefinitionConnection!
 
   """One index definition."""
   searchIndexDefinition(id: ID!): SearchIndexDefinition
 
   """Index freshness and document counts."""
-  searchIndexStatus(entities: [String!]): [SearchIndexStatus!]!
+  searchIndexStatus(entities: [String!], page: PageInput): SearchIndexStatusConnection!
 }
 
 type Mutation {
@@ -44693,6 +44703,132 @@ type StockLevelReconciliation {
   corrections: [StockLevelCorrection!]!
 }
 
+"""A page of stock movements."""
+type StockMovementConnection {
+  nodes: [StockMovement!]!
+  edges: [StockMovementEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One stock movement in a page, with the cursor that addresses it."""
+type StockMovementEdge {
+  node: StockMovement!
+  cursor: String!
+}
+
+"""A page of stock reservations."""
+type StockReservationConnection {
+  nodes: [StockReservation!]!
+  edges: [StockReservationEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One stock reservation in a page, with the cursor that addresses it."""
+type StockReservationEdge {
+  node: StockReservation!
+  cursor: String!
+}
+
+"""A page of stock transfers."""
+type StockTransferConnection {
+  nodes: [StockTransfer!]!
+  edges: [StockTransferEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One stock transfer in a page, with the cursor that addresses it."""
+type StockTransferEdge {
+  node: StockTransfer!
+  cursor: String!
+}
+
+"""A page of stock transfer lines."""
+type StockTransferLineConnection {
+  nodes: [StockTransferLine!]!
+  edges: [StockTransferLineEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One stock transfer line in a page, with the cursor that addresses it."""
+type StockTransferLineEdge {
+  node: StockTransferLine!
+  cursor: String!
+}
+
+"""A page of stock alerts."""
+type StockAlertConnection {
+  nodes: [StockAlert!]!
+  edges: [StockAlertEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One stock alert in a page, with the cursor that addresses it."""
+type StockAlertEdge {
+  node: StockAlert!
+  cursor: String!
+}
+
+"""A page of stock adjustments."""
+type StockAdjustmentConnection {
+  nodes: [StockAdjustment!]!
+  edges: [StockAdjustmentEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One stock adjustment in a page, with the cursor that addresses it."""
+type StockAdjustmentEdge {
+  node: StockAdjustment!
+  cursor: String!
+}
+
+"""A page of stock count sessions."""
+type StockCountConnection {
+  nodes: [StockCount!]!
+  edges: [StockCountEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One stock count session in a page, with the cursor that addresses it."""
+type StockCountEdge {
+  node: StockCount!
+  cursor: String!
+}
+
+"""A page of stock count lines."""
+type StockCountLineConnection {
+  nodes: [StockCountLine!]!
+  edges: [StockCountLineEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One stock count line in a page, with the cursor that addresses it."""
+type StockCountLineEdge {
+  node: StockCountLine!
+  cursor: String!
+}
+
+"""A page of channel assignments."""
+type ChannelWarehouseConnection {
+  nodes: [ChannelWarehouse!]!
+  edges: [ChannelWarehouseEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One channel assignment in a page, with the cursor that addresses it."""
+type ChannelWarehouseEdge {
+  node: ChannelWarehouse!
+  cursor: String!
+}
+
 """
 What the caller wants a reconciliation run to walk. Everything may be left out.
 
@@ -45159,6 +45295,34 @@ type WarehouseBinEdge {
   node: WarehouseBin!
 }
 
+"""One page of the bins under a bin."""
+type WarehouseBinSubtreeConnection {
+  edges: [WarehouseBinSubtreeEdge!]!
+  nodes: [WarehouseBin!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"""One bin inside a page of a subtree."""
+type WarehouseBinSubtreeEdge {
+  cursor: String!
+  node: WarehouseBin!
+}
+
+"""One page of a bin's derived contents."""
+type WarehouseBinContentsConnection {
+  edges: [WarehouseBinContentsEdge!]!
+  nodes: [WarehouseBinBalance!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"""One variant's balance inside a page of a bin's contents."""
+type WarehouseBinContentsEdge {
+  cursor: String!
+  node: WarehouseBinBalance!
+}
+
 """One page of waves."""
 type PickWaveConnection {
   edges: [PickWaveEdge!]!
@@ -45185,6 +45349,20 @@ type PickListConnection {
 type PickListEdge {
   cursor: String!
   node: PickList!
+}
+
+"""One page of a pick list's lines."""
+type PickListLinesConnection {
+  edges: [PickListLinesEdge!]!
+  nodes: [PickListLine!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"""One line inside a page of a pick list's lines."""
+type PickListLinesEdge {
+  cursor: String!
+  node: PickListLine!
 }
 
 """One page of pack slips."""
@@ -46302,6 +46480,34 @@ type OrderTransactionConnection {
 """One transaction in a page, with the cursor that addresses it."""
 type OrderTransactionEdge {
   node: OrderTransaction!
+  cursor: String!
+}
+
+"""A page of order timeline entries."""
+type OrderHistoryConnection {
+  nodes: [OrderHistory!]!
+  edges: [OrderHistoryEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One history entry in a page, with the cursor that addresses it."""
+type OrderHistoryEdge {
+  node: OrderHistory!
+  cursor: String!
+}
+
+"""A page of line-to-invoice links."""
+type OrderLineInvoiceConnection {
+  nodes: [OrderLineInvoice!]!
+  edges: [OrderLineInvoiceEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One line-to-invoice link in a page, with the cursor that addresses it."""
+type OrderLineInvoiceEdge {
+  node: OrderLineInvoice!
   cursor: String!
 }
 
@@ -49318,6 +49524,48 @@ type OrderExchangeEdge {
   node: OrderExchange!
 }
 
+"""One page of return lines."""
+type OrderReturnLineConnection {
+  edges: [OrderReturnLineEdge!]!
+  nodes: [OrderReturnLine!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"""One return line inside a page."""
+type OrderReturnLineEdge {
+  cursor: String!
+  node: OrderReturnLine!
+}
+
+"""One page of claim lines."""
+type OrderClaimLineConnection {
+  edges: [OrderClaimLineEdge!]!
+  nodes: [OrderClaimLine!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"""One claim line inside a page."""
+type OrderClaimLineEdge {
+  cursor: String!
+  node: OrderClaimLine!
+}
+
+"""One page of exchange lines."""
+type OrderExchangeLineConnection {
+  edges: [OrderExchangeLineEdge!]!
+  nodes: [OrderExchangeLine!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"""One exchange line inside a page."""
+type OrderExchangeLineEdge {
+  cursor: String!
+  node: OrderExchangeLine!
+}
+
 """Filters a page of returns."""
 input OrderReturnFilter {
   status: OrderReturnStatus
@@ -52063,6 +52311,90 @@ type SellerSplitReconciliation {
   platformRetained: Decimal!
 }
 
+"""A page of sellers."""
+type SellerConnection {
+  nodes: [Seller!]!
+  edges: [SellerEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One seller in a page, with the cursor that addresses it."""
+type SellerEdge {
+  node: Seller!
+  cursor: String!
+}
+
+"""A page of what sellers offer."""
+type SellerOfferingConnection {
+  nodes: [SellerOffering!]!
+  edges: [SellerOfferingEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One offering in a page, with the cursor that addresses it."""
+type SellerOfferingEdge {
+  node: SellerOffering!
+  cursor: String!
+}
+
+"""A page of ledger rows."""
+type SellerTransactionConnection {
+  nodes: [SellerTransaction!]!
+  edges: [SellerTransactionEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One ledger row in a page, with the cursor that addresses it."""
+type SellerTransactionEdge {
+  node: SellerTransaction!
+  cursor: String!
+}
+
+"""A page of payout instructions."""
+type SellerPayoutConnection {
+  nodes: [SellerPayout!]!
+  edges: [SellerPayoutEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One payout in a page, with the cursor that addresses it."""
+type SellerPayoutEdge {
+  node: SellerPayout!
+  cursor: String!
+}
+
+"""A page of the ledger rows one payout covers."""
+type SellerPayoutLineConnection {
+  nodes: [SellerPayoutLine!]!
+  edges: [SellerPayoutLineEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One payout line in a page, with the cursor that addresses it."""
+type SellerPayoutLineEdge {
+  node: SellerPayoutLine!
+  cursor: String!
+}
+
+"""A page of settlements."""
+type SellerSettlementConnection {
+  nodes: [SellerSettlement!]!
+  edges: [SellerSettlementEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One settlement in a page, with the cursor that addresses it."""
+type SellerSettlementEdge {
+  node: SellerSettlement!
+  cursor: String!
+}
+
 """How the terms of a query are combined."""
 enum SearchMatchMode {
   """Any term may match."""
@@ -52434,4 +52766,32 @@ type DropSearchIndexPayload {
   """How many documents were dropped."""
   deletedCount: Int!
   userErrors: [UserError!]!
+}
+
+"""A page of index definitions."""
+type SearchIndexDefinitionConnection {
+  nodes: [SearchIndexDefinition!]!
+  edges: [SearchIndexDefinitionEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One index definition in a page, with the cursor that addresses it."""
+type SearchIndexDefinitionEdge {
+  node: SearchIndexDefinition!
+  cursor: String!
+}
+
+"""A page of index statuses."""
+type SearchIndexStatusConnection {
+  nodes: [SearchIndexStatus!]!
+  edges: [SearchIndexStatusEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+"""One index status in a page, with the cursor that addresses it."""
+type SearchIndexStatusEdge {
+  node: SearchIndexStatus!
+  cursor: String!
 }

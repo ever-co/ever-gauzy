@@ -25,7 +25,15 @@ jest.mock('@gauzy/core', () => {
 		FeatureFlagGuard: class FeatureFlagGuard {},
 		Permissions: (...permissions: string[]) => SetMetadata(PERMISSIONS_METADATA, permissions),
 		SearchDocument: class SearchDocument {},
-		SearchIndexDefinition: class SearchIndexDefinition {}
+		SearchIndexDefinition: class SearchIndexDefinition {},
+		// The connection helpers the two converted list fields page and answer with, taken from the
+		// kernel: a double that left them undefined would have the suite fail with "not a function" the
+		// moment a case reached one of those fields, rather than tell it anything about the page.
+		connectionFromOffsetPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.connectionFromOffsetPage,
+		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.resolveConnectionWindow,
+		paginateRows: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').paginateRows
 	};
 });
 

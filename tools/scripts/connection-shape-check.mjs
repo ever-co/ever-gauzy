@@ -20,13 +20,13 @@
  *
  * Both halves of the surface are read from the composed SDL, which is what the endpoint serves.
  *
- * **The two lists below are the baseline, and they are the point of this gate rather than an exception to
- * it.** 35 list root fields of this programme still answer a bare array — either the platform's own
- * application reads them, or the commerce programme introduced them and their connection type is a wave of
- * its own rather than a line in someone else's. Naming every one of them is what makes the remainder
- * countable and keeps a *new* one from appearing unnoticed — and each conversion is a line removed from
- * these lists. A name that no longer violates its rule is reported as stale, so the wave that lands it has
- * to take it out rather than leaving the list describing a state that has moved on.
+ * **The three lists below are the baseline, and they are the point of this gate rather than an exception to
+ * it.** A field that answers a bare array is in one of them, with the reason it is there: it is one of this
+ * programme's own list reads that has not been converted yet, it is a computed answer that has no page to
+ * walk, or it is the platform's own field whose clients already read it. Naming every one of them is what
+ * makes the remainder countable and keeps a *new* one from appearing unnoticed — and each conversion is a
+ * line removed from these lists. A name that no longer violates its rule is reported as stale, so the wave
+ * that lands it has to take it out rather than leaving the list describing a state that has moved on.
  *
  * The connection-shape baseline is empty: every `*Connection` type in the composed schema is canonical, so
  * a new one that is not fails here rather than being added to a list.
@@ -49,19 +49,46 @@ const schema = readFileSync(SDL, 'utf8')
 /**
  * List root fields this programme introduced that still answer a bare array.
  *
- * Each needs a connection type and the resolver arguments of its own, which is a wave rather than a line
- * in someone else's — see the branch's handover for the slice each package owns.
+ * One name is left, and it is not a matter of writing the connection: `stockLevels` reads through a
+ * service method that takes a limit and nothing else — no row offset, no count, and no `ORDER BY`, so a
+ * connection over it could not report a truthful `totalCount` or resume a cursor stably. It converts when
+ * that read grows an offset, an order and a count, which is a change to a service the REST route shares
+ * rather than a change to this field.
  */
-const PROGRAMME_BARE_ARRAYS = new Set([
-	'resolvePrice', 'taxRateParts', 'resolveTaxRate', 'taxRegimeRates',
-	'stockLevels', 'stockMovements', 'stockReservations', 'stockTransfers',
-	'stockTransferLines', 'stockAlerts', 'stockAdjustments', 'stockCounts',
-	'stockCountLines', 'channelWarehouses', 'warehouseBinSubtree', 'warehouseBinContents',
-	'warehouseBinCapacityWarnings', 'pickListLines', 'orderHistory', 'orderLineInvoices',
-	'shippingOptionsForContext', 'orderReturnLines', 'orderClaimLines', 'orderExchangeLines',
-	'sellers', 'sellerOfferings', 'sellerTransactions', 'sellerSplitReconciliation',
-	'sellerPayouts', 'sellerPayoutLines', 'sellerSettlements', 'searchSuggest',
-	'searchFacets', 'searchIndexDefinitions', 'searchIndexStatus',
+const PROGRAMME_BARE_ARRAYS = new Set(['stockLevels']);
+
+/**
+ * List root fields whose answer is **computed** rather than read: a resolution over a context, an
+ * aggregation, or the bounded components of one parent row.
+ *
+ * The rule above exists because a client that has a REST list route needs its counterpart over GraphQL —
+ * the same filters, the same paging, the same count. These fields have no such route. `resolveTaxRate`
+ * answers "which rates apply here", `searchFacets` answers "how many of each", and `taxRateParts` answers
+ * "what is this one rate made of": each is a question about a context or a parent, answered by a service
+ * that computes it, and none of them has a row set that could be paged, counted or resumed from a cursor.
+ * Dressing one as a connection would put a `totalCount` and a `pageInfo` on a field that can honour
+ * neither, which is a worse lie than a bare array.
+ *
+ * They are named here for the same reason the other two lists are: the exemption is visible and
+ * reviewable, and a field that stops being a computed answer has to leave this list to be caught.
+ */
+const COMPUTED_ANSWERS = new Set([
+	// A resolution: which rates apply to this destination, direction and category.
+	'resolveTaxRate',
+	// A resolution: what a variant costs in this context, per currency and quantity band.
+	'resolvePrice',
+	// The components of one parent row, bounded by that row's own composition.
+	'taxRateParts',
+	'taxRegimeRates',
+	// A resolution: which delivery options a cart may choose, each with its reason.
+	'shippingOptionsForContext',
+	// An aggregation over a search: the ranked completions for a prefix, and the bucket counts.
+	'searchSuggest',
+	'searchFacets',
+	// An aggregation over one seller's settlements.
+	'sellerSplitReconciliation',
+	// The capacity breaches of one bin's contents.
+	'warehouseBinCapacityWarnings',
 ]);
 
 /**
@@ -142,7 +169,11 @@ const queryFields = fieldsOf(typeBody('Query') ?? '');
 for (const field of queryFields) {
 	if (!/^\[/.test(field.type)) continue;
 
-	if (!PROGRAMME_BARE_ARRAYS.has(field.name) && !PLATFORM_BARE_ARRAYS.has(field.name)) {
+	if (
+		!COMPUTED_ANSWERS.has(field.name) &&
+		!PROGRAMME_BARE_ARRAYS.has(field.name) &&
+		!PLATFORM_BARE_ARRAYS.has(field.name)
+	) {
 		failures.push(
 			`Query.${field.name} -> returns \`${field.type}\`, a bare array; a list root field returns a connection`
 		);
@@ -189,9 +220,13 @@ for (const name of connections) {
 	}
 }
 
-for (const name of [...PROGRAMME_BARE_ARRAYS, ...PLATFORM_BARE_ARRAYS]) {
+for (const name of [...COMPUTED_ANSWERS, ...PROGRAMME_BARE_ARRAYS, ...PLATFORM_BARE_ARRAYS]) {
 	if (!queryFields.some((field) => field.name === name && /^\[/.test(field.type))) {
-		const list = PROGRAMME_BARE_ARRAYS.has(name) ? 'PROGRAMME_BARE_ARRAYS' : 'PLATFORM_BARE_ARRAYS';
+		const list = COMPUTED_ANSWERS.has(name)
+			? 'COMPUTED_ANSWERS'
+			: PROGRAMME_BARE_ARRAYS.has(name)
+				? 'PROGRAMME_BARE_ARRAYS'
+				: 'PLATFORM_BARE_ARRAYS';
 
 		stale.push(`Query.${name} no longer returns a bare array — take it out of ${list}`);
 	}
@@ -202,8 +237,8 @@ if (failures.length > 0) {
 	for (const failure of failures) console.error(`  ${failure}`);
 	console.error('');
 	console.error('A list root field returns a connection; a connection carries nodes, edges, totalCount');
-	console.error('and a non-null pageInfo; a count is nullable. A field that cannot follow the rule yet is');
-	console.error('named in the three lists at the top of this file, with the reason it is still there.');
+	console.error('and a non-null pageInfo; a count is nullable. A field that cannot follow the rule is named in');
+	console.error('one of the three lists at the top of this file, with the reason it is exempt.');
 	process.exit(1);
 }
 
@@ -217,8 +252,7 @@ if (stale.length > 0) {
 
 console.log(
 	`PASSED — ${queryFields.length} root field(s) read: ${PROGRAMME_BARE_ARRAYS.size} list field(s) of this ` +
-		`programme and ${PLATFORM_BARE_ARRAYS.size} the platform already answers a bare array, and ` +
-		`${LEGACY_CONNECTIONS.size} of ${connections.length} connection type(s) are not yet the canonical ` +
-		`shape — all three named in the baseline. Every other list field is a connection, and every other ` +
-		`connection carries nodes, edges, totalCount and a non-null pageInfo.`
+		`programme still answer a bare array, ${COMPUTED_ANSWERS.size} are computed answers that have no page to ` +
+		`walk, and ${PLATFORM_BARE_ARRAYS.size} predate the programme — each named in the baseline. All ` +
+		`${connections.length} connection type(s) are the canonical shape, and every other list field is a connection.`
 );

@@ -306,6 +306,34 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	"A page of index definitions."
+	type SearchIndexDefinitionConnection {
+		nodes: [SearchIndexDefinition!]!
+		edges: [SearchIndexDefinitionEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One index definition in a page, with the cursor that addresses it."
+	type SearchIndexDefinitionEdge {
+		node: SearchIndexDefinition!
+		cursor: String!
+	}
+
+	"A page of index statuses."
+	type SearchIndexStatusConnection {
+		nodes: [SearchIndexStatus!]!
+		edges: [SearchIndexStatusEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One index status in a page, with the cursor that addresses it."
+	type SearchIndexStatusEdge {
+		node: SearchIndexStatus!
+		cursor: String!
+	}
+
 	extend type Query {
 		"Search every indexed entity the caller may see."
 		search(input: SearchInput!, page: PageInput): SearchResult!
@@ -314,11 +342,11 @@ export const schemaExtensions = gql`
 		"Facet value counts for a filter set, on the same predicate a page would use."
 		searchFacets(input: SearchInput!): [SearchFacet!]!
 		"Which entity fields are indexed, with their weights."
-		searchIndexDefinitions(entity: String): [SearchIndexDefinition!]!
+		searchIndexDefinitions(entity: String, page: PageInput): SearchIndexDefinitionConnection!
 		"One index definition."
 		searchIndexDefinition(id: ID!): SearchIndexDefinition
 		"Index freshness and document counts."
-		searchIndexStatus(entities: [String!]): [SearchIndexStatus!]!
+		searchIndexStatus(entities: [String!], page: PageInput): SearchIndexStatusConnection!
 	}
 
 	extend type Mutation {

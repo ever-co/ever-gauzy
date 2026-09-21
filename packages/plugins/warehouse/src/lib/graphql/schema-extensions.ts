@@ -339,6 +339,34 @@ export const schemaExtensions = gql`
 		node: WarehouseBin!
 	}
 
+	"One page of the bins under a bin."
+	type WarehouseBinSubtreeConnection {
+		edges: [WarehouseBinSubtreeEdge!]!
+		nodes: [WarehouseBin!]!
+		pageInfo: PageInfo!
+		totalCount: Int!
+	}
+
+	"One bin inside a page of a subtree."
+	type WarehouseBinSubtreeEdge {
+		cursor: String!
+		node: WarehouseBin!
+	}
+
+	"One page of a bin's derived contents."
+	type WarehouseBinContentsConnection {
+		edges: [WarehouseBinContentsEdge!]!
+		nodes: [WarehouseBinBalance!]!
+		pageInfo: PageInfo!
+		totalCount: Int!
+	}
+
+	"One variant's balance inside a page of a bin's contents."
+	type WarehouseBinContentsEdge {
+		cursor: String!
+		node: WarehouseBinBalance!
+	}
+
 	"One page of waves."
 	type PickWaveConnection {
 		edges: [PickWaveEdge!]!
@@ -365,6 +393,20 @@ export const schemaExtensions = gql`
 	type PickListEdge {
 		cursor: String!
 		node: PickList!
+	}
+
+	"One page of a pick list's lines."
+	type PickListLinesConnection {
+		edges: [PickListLinesEdge!]!
+		nodes: [PickListLine!]!
+		pageInfo: PageInfo!
+		totalCount: Int!
+	}
+
+	"One line inside a page of a pick list's lines."
+	type PickListLinesEdge {
+		cursor: String!
+		node: PickListLine!
 	}
 
 	"One page of pack slips."
@@ -787,9 +829,9 @@ export const schemaExtensions = gql`
 		"One bin, with its place in the hierarchy."
 		warehouseBin(id: ID!): WarehouseBin
 		"Everything under a bin, itself included, read through the closure table."
-		warehouseBinSubtree(id: ID!): [WarehouseBin!]!
+		warehouseBinSubtree(id: ID!, page: PageInput): WarehouseBinSubtreeConnection!
 		"The derived contents of a bin."
-		warehouseBinContents(id: ID!): [WarehouseBinBalance!]!
+		warehouseBinContents(id: ID!, page: PageInput): WarehouseBinContentsConnection!
 		"Measures a requested quantity against a bin's declared capacity, in the capacity's own unit."
 		warehouseBinCapacity(input: WarehouseBinCapacityInput!): WarehouseBinCapacityCheck!
 		"Bins whose capacity is declared without the unit it is counted in; pallet positions first."
@@ -803,7 +845,7 @@ export const schemaExtensions = gql`
 		"One pick list, with its lines and their bins."
 		pickList(id: ID!): PickList
 		"The lines of a pick list, in the order the pick path visits them."
-		pickListLines(pickListId: ID!): [PickListLine!]!
+		pickListLines(pickListId: ID!, page: PageInput): PickListLinesConnection!
 		"One pick line."
 		pickListLine(id: ID!): PickListLine
 		"Pack slips of the caller's organization."

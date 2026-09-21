@@ -8,14 +8,18 @@
  */
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
-	Versioned
+	Versioned,
+	connectionFromOffsetPage,
+	resolveConnectionWindow
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
@@ -44,15 +48,32 @@ export class StockCountResolver {
 		private readonly service: StockCountService
 	) {}
 
-	/** Count sessions. */
+	/**
+	 * Count sessions, as a page a cursor can walk.
+	 *
+	 * **The window is read in the store, not sliced here.** `findCounts` is a wrapper over `paginate`, and
+	 * `paginate` reads a stated `skip` as a page *number* — it multiplies it by `take` before the query
+	 * runs — so a row offset handed to it would answer a different page than the cursor named: a walk
+	 * that repeats sessions and skips others, with nothing red anywhere. The service's own row-offset
+	 * read is `findAll`, which is what a connection's window states, so the page and its `totalCount`
+	 * come from one query and the count is the size of the filtered set rather than of the page.
+	 */
 	@Query('stockCounts')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
-	async stockCounts(@Args('warehouseId') warehouseId: string, @Args('status') status: StockCountStatus, @Args('mode') mode: StockCountMode): Promise<any> {
-		const page = await this.service.findCounts({ where: { warehouseId, status, mode } });
+	async stockCounts(
+		@Args('warehouseId') warehouseId: string,
+		@Args('status') status: StockCountStatus,
+		@Args('mode') mode: StockCountMode,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<StockCount>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const listing = (await this.service.findAll({
+			where: { warehouseId, status, mode },
+			skip,
+			take
+		})) as IPagination<StockCount>;
 
-		// The service answers a page, and the schema declares a list: a method that already
-		// answers one is returned as it is, so this holds either way.
-		return Array.isArray(page) ? page : (page as any)?.items ?? [];
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/** One session with its lines. */

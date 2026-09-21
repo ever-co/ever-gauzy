@@ -3,10 +3,15 @@ import { UseGuards } from '@nestjs/common';
 import { ID, ISearchIndexField, SearchFieldKind, SearchReindexScope } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
 	PermissionGuard,
 	Permissions,
 	SearchIndexDefinition,
-	TenantPermissionGuard
+	TenantPermissionGuard,
+	connectionFromOffsetPage,
+	paginateRows,
+	resolveConnectionWindow
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
@@ -76,13 +81,25 @@ export class SearchIndexDefinitionResolver {
 	/**
 	 * Lists the index definitions the caller may see.
 	 *
+	 * `list` answers the whole filtered set in the order it means — the platform's own rows first — and
+	 * takes no window of its own, so the page is cut here. Passing the store an offset it does not accept
+	 * is the failure this avoids: the field would answer the first page to every caller while its
+	 * `pageInfo` claimed otherwise.
+	 *
 	 * @param entity Narrows the list to one entity.
-	 * @returns The definitions.
+	 * @param page The page.
+	 * @returns A page of definitions.
 	 */
 	@Permissions(SearchPermissions.SEARCH_INDEX_DEFINITIONS_VIEW)
 	@Query('searchIndexDefinitions')
-	async searchIndexDefinitions(@Args('entity') entity?: string): Promise<SearchIndexDefinition[]> {
-		return await this.definitionService.list(entity);
+	async searchIndexDefinitions(
+		@Args('entity') entity?: string,
+		@Args('page') page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<SearchIndexDefinition>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const rows = await this.definitionService.list(entity);
+
+		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}
 
 	/**

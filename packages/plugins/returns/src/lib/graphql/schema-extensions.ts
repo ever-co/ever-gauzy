@@ -261,6 +261,48 @@ export const schemaExtensions = gql`
 		node: OrderExchange!
 	}
 
+	"One page of return lines."
+	type OrderReturnLineConnection {
+		edges: [OrderReturnLineEdge!]!
+		nodes: [OrderReturnLine!]!
+		pageInfo: PageInfo!
+		totalCount: Int!
+	}
+
+	"One return line inside a page."
+	type OrderReturnLineEdge {
+		cursor: String!
+		node: OrderReturnLine!
+	}
+
+	"One page of claim lines."
+	type OrderClaimLineConnection {
+		edges: [OrderClaimLineEdge!]!
+		nodes: [OrderClaimLine!]!
+		pageInfo: PageInfo!
+		totalCount: Int!
+	}
+
+	"One claim line inside a page."
+	type OrderClaimLineEdge {
+		cursor: String!
+		node: OrderClaimLine!
+	}
+
+	"One page of exchange lines."
+	type OrderExchangeLineConnection {
+		edges: [OrderExchangeLineEdge!]!
+		nodes: [OrderExchangeLine!]!
+		pageInfo: PageInfo!
+		totalCount: Int!
+	}
+
+	"One exchange line inside a page."
+	type OrderExchangeLineEdge {
+		cursor: String!
+		node: OrderExchangeLine!
+	}
+
 	"Filters a page of returns."
 	input OrderReturnFilter {
 		status: OrderReturnStatus
@@ -456,11 +498,11 @@ export const schemaExtensions = gql`
 		"One exchange, with its outbound lines and its inbound return."
 		orderExchange(id: ID!): OrderExchange
 		"The lines of a return."
-		orderReturnLines(returnId: ID!): [OrderReturnLine!]!
+		orderReturnLines(returnId: ID!, page: PageInput): OrderReturnLineConnection!
 		"The lines of a claim."
-		orderClaimLines(claimId: ID!): [OrderClaimLine!]!
+		orderClaimLines(claimId: ID!, page: PageInput): OrderClaimLineConnection!
 		"The outbound lines of an exchange."
-		orderExchangeLines(exchangeId: ID!): [OrderExchangeLine!]!
+		orderExchangeLines(exchangeId: ID!, page: PageInput): OrderExchangeLineConnection!
 	}
 
 	extend type Mutation {

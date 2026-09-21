@@ -182,6 +182,25 @@ function brief(result) {
 }
 
 /**
+ * Whether a GraphQL error is the endpoint refusing the request rather than breaking on it.
+ *
+ * A refusal is what a client can act on, and the platform answers one with its validation code and a 400 —
+ * `VALIDATION_FAILED` for anything the query protocol or a resolver rejects. An execution that broke answers
+ * `INTERNAL_SERVER_ERROR`, which is the distinction these checks exist to make.
+ *
+ * @param {any} error One entry of a GraphQL response's `errors`.
+ * @returns {boolean} True when the endpoint refused the request.
+ */
+function isRefusal(error) {
+	return error?.extensions?.code === 'VALIDATION_FAILED' && error?.extensions?.status === 400;
+}
+
+/** @param {any} error One entry of a GraphQL response's `errors`. @returns {string} Its code, for a detail line. */
+function briefCode(error) {
+	return String(error?.extensions?.code ?? 'no code');
+}
+
+/**
  * The feature codes the sweep's routes are gated behind.
  *
  * `FeatureFlagGuard` answers `404 Cannot GET …` for a route whose feature is switched off — it hides
@@ -491,6 +510,74 @@ async function main() {
 		record('the same row is served over GraphQL', false, 'nothing was written');
 		record('the two surfaces agree about the identity of the row', false, 'nothing was written');
 	}
+
+	// --- the cursors a connection hands out are the ones it accepts back -------------------------
+	//
+	// `PageInput` documents both cursors as exclusive, and the kernel read them inclusively until this
+	// wave: a client that walked with `pageInfo.endCursor` was re-answered the last row of the page it had
+	// just read. A unit spec pins the arithmetic; these checks pin that the endpoint the client talks to
+	// answers the same way, which is the half a unit spec cannot see.
+	console.log('');
+	const firstPage = await call('POST', '/graphql', {
+		token,
+		tenantId,
+		body: {
+			query:
+				'query { collections(page: { first: 1 }) { nodes { id } pageInfo { endCursor hasNextPage } } }'
+		}
+	});
+	const firstRow = firstPage.json?.data?.collections?.nodes?.[0]?.id;
+	const boundary = firstPage.json?.data?.collections?.pageInfo?.endCursor;
+	const more = firstPage.json?.data?.collections?.pageInfo?.hasNextPage === true;
+
+	record(
+		'a list field answers a boundary cursor a client can hand back',
+		typeof boundary === 'string' && boundary.length > 0,
+		boundary ?? JSON.stringify(firstPage.json?.errors ?? firstPage.json).slice(0, 200)
+	);
+
+	if (typeof boundary === 'string') {
+		const secondPage = await call('POST', '/graphql', {
+			token,
+			tenantId,
+			body: {
+				query: `query { collections(page: { first: 1, after: "${boundary}" }) { nodes { id } } }`
+			}
+		});
+		const nextRow = secondPage.json?.data?.collections?.nodes?.[0]?.id;
+
+		// Whether the organization has a second collection or not, the walk must never re-answer the row
+		// the cursor named — that repetition is exactly what an inclusive reading produced.
+		record(
+			'a walk from the boundary never re-answers the row the cursor named',
+			Boolean(secondPage.json?.data?.collections) && nextRow !== firstRow,
+			more ? `second page starts at ${nextRow ?? 'nothing'}` : 'one row: the walk is empty, as it must be'
+		);
+	}
+
+	const foreign = await call('POST', '/graphql', {
+		token,
+		tenantId,
+		body: { query: 'query { collections(page: { first: 1, after: "not-a-cursor" }) { totalCount } }' }
+	});
+	const foreignError = foreign.json?.errors?.[0];
+	record(
+		'a cursor this endpoint did not mint is refused rather than read as the first page',
+		/not one this endpoint issued/i.test(String(foreignError?.message)) && isRefusal(foreignError),
+		`${briefCode(foreignError)} ${String(foreignError?.message).slice(0, 120)}`
+	);
+
+	const mixed = await call('POST', '/graphql', {
+		token,
+		tenantId,
+		body: { query: 'query { collections(page: { first: 1 }, limit: 5) { totalCount } }' }
+	});
+	const mixedError = mixed.json?.errors?.[0];
+	record(
+		'a request that states both pagination styles is refused rather than silently preferring one',
+		/cursor window .*page window|both/i.test(String(mixedError?.message)) && isRefusal(mixedError),
+		`${briefCode(mixedError)} ${String(mixedError?.message).slice(0, 120)}`
+	);
 
 	// --- a refusal is a refusal, and it carries the error contract ------------------------------
 	console.log('');

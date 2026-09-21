@@ -8,7 +8,19 @@ import {
 	SearchMatchMode,
 	SearchSortDirection
 } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	DEFAULT_CONNECTION_PAGE_SIZE,
+	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
+	MAX_CONNECTION_PAGE_SIZE,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	connectionFromOffsetPage,
+	paginateRows,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { SearchService, decodeCursor } from '../../services/search.service';
@@ -130,13 +142,24 @@ export class SearchResolver {
 	/**
 	 * Reports how fresh each entity's index is.
 	 *
+	 * One status per entity is a page of rows, not an aggregation: `indexStatus` answers the whole
+	 * permitted set and takes no window, so the page is cut here. A field that accepted a page and
+	 * answered every row would leave a client walking a `pageInfo` nothing honours.
+	 *
 	 * @param entities The entities to report.
-	 * @returns One status per entity.
+	 * @param page The page.
+	 * @returns A page of statuses.
 	 */
 	@Permissions(SearchPermissions.SEARCH_VIEW)
 	@Query('searchIndexStatus')
-	async searchIndexStatus(@Args('entities') entities?: string[]): Promise<ISearchIndexStatus[]> {
-		return await this.searchService.indexStatus(entities);
+	async searchIndexStatus(
+		@Args('entities') entities?: string[],
+		@Args('page') page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<ISearchIndexStatus>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const rows = await this.searchService.indexStatus(entities);
+
+		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}
 
 	/**
@@ -171,13 +194,27 @@ export class SearchResolver {
 	/**
 	 * The page window a `PageInput` names.
 	 *
+	 * The size is clamped to the one the query protocol allows, which the search read was not: `take` came
+	 * straight from the caller, so `first: 1000000` asked the index for a million documents in one request,
+	 * and the default was this resolver's own 25 rather than the protocol's 20 — one request with two
+	 * answers depending on which field answered it.
+	 *
+	 * The cursor is search's own, and it means "resume at this position" rather than "after the row this
+	 * names": `SearchService` answers `pageInfo.endCursor` as the offset *past* its page, so decoding it and
+	 * reading from there is the documented walk. That is a different convention from the connections', and it
+	 * is stated here rather than left for a reader to infer from the arithmetic.
+	 *
 	 * @param input The search, whose own `skip`/`take` are the fallback.
 	 * @param page The page selection.
 	 * @returns The offset and the page size.
 	 */
 	private pageWindow(input: ISearchArgs, page?: IPageArgs): { skip: number; take: number } {
 		const forward = page?.first !== undefined;
-		const take = Math.max(1, Number((forward ? page?.first : page?.last) ?? input?.take ?? 25));
+		const requested = Number((forward ? page?.first : page?.last) ?? input?.take ?? DEFAULT_CONNECTION_PAGE_SIZE);
+		const take = Math.min(
+			Math.max(Number.isFinite(requested) ? Math.trunc(requested) : DEFAULT_CONNECTION_PAGE_SIZE, 1),
+			MAX_CONNECTION_PAGE_SIZE
+		);
 		const skip = decodeCursor(forward ? page?.after : page?.before) || Number(input?.skip ?? 0);
 
 		return { skip: Math.max(0, skip), take };

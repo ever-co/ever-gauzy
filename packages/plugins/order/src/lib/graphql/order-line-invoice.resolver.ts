@@ -1,8 +1,19 @@
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	connectionFromOffsetPage,
+	paginateRows,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
+import { OrderLineInvoice } from '../order-line-invoice/order-line-invoice.entity';
 import { OrderLineInvoiceService } from '../order-line-invoice/order-line-invoice.service';
 import { OrderLineService } from '../order-line/order-line.service';
 import { ORDER_PERMISSIONS } from '../order.permissions';
@@ -55,13 +66,25 @@ export class OrderLineInvoiceResolver {
 	/**
 	 * Lists the links of one order line.
 	 *
+	 * `listForLine` answers every link the line was billed through, oldest first, and takes no window of
+	 * its own — the order is the one the documents were issued in, which the field's own shape depends
+	 * on. The page is therefore cut over the rows it returned: a field that accepted a page and answered
+	 * the whole register would give a client a `pageInfo` nothing honours.
+	 *
 	 * @param orderLineId The line to read.
-	 * @returns Every item and credit-note item the line was billed through, oldest first.
+	 * @param page The page.
+	 * @returns A page of links, oldest first.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)
 	@Query('orderLineInvoices')
-	async orderLineInvoices(@Args('orderLineId', { type: () => ID }) orderLineId: string) {
-		return await this.service.listForLine(orderLineId);
+	async orderLineInvoices(
+		@Args('orderLineId', { type: () => ID }) orderLineId: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<OrderLineInvoice>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const rows = await this.service.listForLine(orderLineId);
+
+		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}
 
 	/**

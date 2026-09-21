@@ -92,3 +92,65 @@ describe('the returns document — the retry key', () => {
 		expect(typeOf(fieldNamed('ReceiveOrderReturnInput', 'idempotencyKey'))).toBe('String');
 	});
 });
+
+/**
+ * The three line fields answer a page of rows, as the schema prints it.
+ *
+ * Each used to answer a bare array — `[OrderReturnLine!]!` and its two siblings — which a client can
+ * neither page, count nor resume from, while the return, the claim and the exchange each already had a
+ * connection of their own. The shape is asserted here as the document prints it, because the document is
+ * what a client reads: an `edges` naming an edge type this file never declares fails the schema, and a
+ * field that kept answering `[T!]!` while its resolver answered a connection is a client reading `nodes`
+ * off an array.
+ */
+describe('the returns document — the three line lists answer a connection', () => {
+	/** The document, with the line breaks the template writes flattened so a declaration reads as one line. */
+	const schema = (schemaExtensions as any).loc.source.body.replace(/\s+/g, ' ');
+
+	/** The body of one type, as the document prints it. */
+	function bodyOf(type: string): string {
+		const start = schema.indexOf(`type ${type} {`);
+
+		return schema.slice(start, schema.indexOf('}', start));
+	}
+
+	it('declares a pageable connection, with its edge, for the return, claim and exchange lines', () => {
+		const converted: Array<[string, string, string, string]> = [
+			['orderReturnLines(returnId: ID!, page: PageInput)', 'OrderReturnLineConnection', 'OrderReturnLineEdge', 'OrderReturnLine'],
+			['orderClaimLines(claimId: ID!, page: PageInput)', 'OrderClaimLineConnection', 'OrderClaimLineEdge', 'OrderClaimLine'],
+			[
+				'orderExchangeLines(exchangeId: ID!, page: PageInput)',
+				'OrderExchangeLineConnection',
+				'OrderExchangeLineEdge',
+				'OrderExchangeLine'
+			]
+		];
+
+		for (const [field, connection, edge, row] of converted) {
+			const body = bodyOf(connection);
+
+			for (const member of [`nodes: [${row}!]!`, `edges: [${edge}!]!`, 'totalCount: Int!', 'pageInfo: PageInfo!']) {
+				expect({ connection, member, declares: body.includes(member) }).toEqual({
+					connection,
+					member,
+					declares: true
+				});
+			}
+
+			// The edge is what a client walks from, so it carries the row and the cursor that addresses
+			// it — the two members the connection's own `nodes` and `pageInfo` are read beside.
+			const edgeBody = bodyOf(edge);
+
+			for (const member of [`node: ${row}!`, 'cursor: String!']) {
+				expect({ edge, member, declares: edgeBody.includes(member) }).toEqual({ edge, member, declares: true });
+			}
+
+			expect({ field, connection: schema.includes(`${field}: ${connection}!`) }).toEqual({ field, connection: true });
+			// The control: the field no longer answers the bare array it used to, stated as the document
+			// spelled it before the conversion.
+			const wasBare = `${field.replace(', page: PageInput', '')}: [${row}!]!`;
+
+			expect({ wasBare, declared: schema.includes(wasBare) }).toEqual({ wasBare, declared: false });
+		}
+	});
+});

@@ -54,6 +54,14 @@ export class StockLevelResolver {
 	 * A GraphQL operation is always a `POST`, so the resolver states that this one reads rather than
 	 * letting the transport decide: the version travels out with the levels and is never demanded of
 	 * the caller.
+	 *
+	 * **This is the one list in the package that is not a connection, and the read is why.**
+	 * `StockLevelService.findLevels` applies `take` as a `LIMIT` from the start of the set: it takes no
+	 * row offset, answers no count and declares no order. A connection over it would therefore have to
+	 * invent its `totalCount` — a client reading "1–20 of 20" of a set of five hundred — and its pages
+	 * would be re-read in whatever order the store returned, so a cursor walk could repeat a level or
+	 * miss one. It stays the list it is until that read can page; the nine fields beside it, whose
+	 * services read `{ skip, take }` in the store, answer connections.
 	 */
 	@Query('stockLevels')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
@@ -62,12 +70,10 @@ export class StockLevelResolver {
 		@Args('warehouseId') warehouseId: string,
 		@Args('variantId') variantId: string,
 		@Args('take', { type: () => Int, nullable: true }) take: number
-	): Promise<any> {
-		const page = await this.service.findLevels({ warehouseId, variantId, take });
-
-		// The service answers a page, and the schema declares a list: a method that already
-		// answers one is returned as it is, so this holds either way.
-		return Array.isArray(page) ? page : (page as any)?.items ?? [];
+	): Promise<IStockAvailability[]> {
+		// The service answers the filtered levels themselves. There is no page to unwrap here: the
+		// `LIMIT` is the only paging it offers, which is exactly what the note above states.
+		return await this.service.findLevels({ warehouseId, variantId, take });
 	}
 
 	/** One level row with its derived availability, and the counter a write is conditioned on. */

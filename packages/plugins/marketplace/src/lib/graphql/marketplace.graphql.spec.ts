@@ -117,7 +117,16 @@ jest.mock('@gauzy/core', () => {
 		BulkExecutor: jest.requireActual('@gauzy/core/src/lib/api/bulk-executor.service').BulkExecutor,
 		// The per-item projection both surfaces answer with is the kernel's own, so the payload the resolver
 		// assembles here is the projection the REST body carries rather than a second rendering of it.
-		toBulkItemOutcomes: jest.requireActual('@gauzy/core/src/lib/api/bulk').toBulkItemOutcomes
+		toBulkItemOutcomes: jest.requireActual('@gauzy/core/src/lib/api/bulk').toBulkItemOutcomes,
+		// The three helpers the six converted list fields page and answer with are the kernel's own. A
+		// double that stubbed them would let a connection drift from the contract — a count that is not the
+		// filtered total, a window that is off by a page — in a suite that still passed, which is the whole
+		// class of defect this conversion removed.
+		connectionFromOffsetPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.connectionFromOffsetPage,
+		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.resolveConnectionWindow,
+		paginateRows: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').paginateRows
 	};
 });
 
@@ -209,11 +218,11 @@ const EXPORTED_RESOLVERS = Object.entries(graphqlSurface)
 /**
  * The platform's own contribution, reduced to what the marketplace references.
  *
- * The kernel declares the scalars, the `UserError` every payload that reports an expected outcome carries
- * and the three root operation types; a plugin extends the roots and may never redeclare a type.
- * Composing against this stub is what makes the assertion runnable with no container, no database and no
- * configuration — the same sequence the boot performs, on the part of the schema this package is
- * responsible for.
+ * The kernel declares the scalars, the `UserError` every payload that reports an expected outcome carries,
+ * the connection protocol's `PageInput` and `PageInfo`, and the three root operation types; a plugin
+ * extends the roots and may never redeclare a type. Composing against this stub is what makes the
+ * assertion runnable with no container, no database and no configuration — the same sequence the boot
+ * performs, on the part of the schema this package is responsible for.
  */
 const PLATFORM_STUB = `
 	scalar DateTime
@@ -225,6 +234,20 @@ const PLATFORM_STUB = `
 		message: String!
 		path: [String!]
 		details: JSON
+	}
+
+	input PageInput {
+		first: Int
+		after: String
+		last: Int
+		before: String
+	}
+
+	type PageInfo {
+		hasNextPage: Boolean!
+		hasPreviousPage: Boolean!
+		startCursor: String
+		endCursor: String
 	}
 
 	type Query {
@@ -637,19 +660,25 @@ function recordingResolver(calls: Array<{ field: string; scope?: ISellerScope }>
 	);
 }
 
-/** How each declared field is called, and the row its own type is read from. */
+/**
+ * How each declared field is called, and the row its own type is read from.
+ *
+ * A list field now states the page it is read at, because what it answers is the connection the SDL
+ * declares rather than a bare array: the argument sits where the resolver's own `page` parameter sits,
+ * which is before the context.
+ */
 const CALLS: Record<string, { args: unknown[]; row: Record<string, unknown> }> = {
-	sellers: { args: [], row: SELLER },
+	sellers: { args: [{ first: 20 }], row: SELLER },
 	seller: { args: ['seller-1'], row: SELLER },
 	sellerStatement: { args: ['seller-1', 'USD'], row: STATEMENT },
 	sellerBalance: { args: ['seller-1', 'USD'], row: BALANCE },
-	sellerOfferings: { args: [], row: OFFERING },
-	sellerTransactions: { args: [], row: TRANSACTION },
+	sellerOfferings: { args: [{ first: 20 }], row: OFFERING },
+	sellerTransactions: { args: [{ first: 20 }], row: TRANSACTION },
 	sellerSplitReconciliation: { args: ['order-1', 'seller-1'], row: RECONCILIATION },
-	sellerPayouts: { args: [], row: PAYOUT },
+	sellerPayouts: { args: [{ first: 20 }], row: PAYOUT },
 	sellerPayout: { args: ['payout-1'], row: PAYOUT },
-	sellerPayoutLines: { args: ['payout-1'], row: PAYOUT_LINE },
-	sellerSettlements: { args: [], row: SETTLEMENT },
+	sellerPayoutLines: { args: ['payout-1', { first: 20 }], row: PAYOUT_LINE },
+	sellerSettlements: { args: [{ first: 20 }], row: SETTLEMENT },
 	submitSeller: { args: ['seller-1'], row: SELLER },
 	activateSeller: { args: ['seller-1'], row: SELLER },
 	suspendSeller: { args: ['seller-1', 'under review'], row: SELLER },
@@ -718,6 +747,48 @@ const CONTRACT_ENUMS: Record<string, Record<string, string>> = {
 	SellerOfferingBulkOperation,
 	SellerOfferingBulkMode: { UPSERT: 'upsert', REPLACE: 'replace' }
 };
+
+/**
+ * The six list fields that answer a connection, and the two types each declares.
+ *
+ * Every one of them answered a bare array until now — a shape a client can neither page nor count — and
+ * the conversion is per field, so a field left behind is a client's problem to notice. The pairing is
+ * stated here because the halves of a connection drift apart silently: an `edges` naming an edge type the
+ * document does not declare compiles into a schema that serves the page and no way to walk it.
+ */
+const CONNECTIONS: ReadonlyArray<{ field: string; connection: string; edge: string; row: string }> = [
+	{ field: 'sellers', connection: 'SellerConnection', edge: 'SellerEdge', row: 'Seller' },
+	{
+		field: 'sellerOfferings',
+		connection: 'SellerOfferingConnection',
+		edge: 'SellerOfferingEdge',
+		row: 'SellerOffering'
+	},
+	{
+		field: 'sellerTransactions',
+		connection: 'SellerTransactionConnection',
+		edge: 'SellerTransactionEdge',
+		row: 'SellerTransaction'
+	},
+	{ field: 'sellerPayouts', connection: 'SellerPayoutConnection', edge: 'SellerPayoutEdge', row: 'SellerPayout' },
+	{
+		field: 'sellerPayoutLines',
+		connection: 'SellerPayoutLineConnection',
+		edge: 'SellerPayoutLineEdge',
+		row: 'SellerPayoutLine'
+	},
+	{
+		field: 'sellerSettlements',
+		connection: 'SellerSettlementConnection',
+		edge: 'SellerSettlementEdge',
+		row: 'SellerSettlement'
+	}
+];
+
+/** The members of one `type <name> { … }` declaration of the printed document, or an empty string. */
+function declaredBodyOf(printed: string, name: string): string {
+	return new RegExp(`type ${name} \\{([^}]*)\\}`).exec(printed)?.[1] ?? '';
+}
 
 /** Unwraps a root field's type to the object type a row is read as. */
 function rowTypeOf(field: DeclaredField): GraphQLObjectType {
@@ -935,6 +1006,52 @@ describe('the marketplace GraphQL contribution', () => {
 
 			expect(unanswered).toEqual([]);
 		});
+
+		it('answers each converted list field with a connection of its own row type', () => {
+			const printed = print(CONTRIBUTED_SCHEMA);
+			const mismatches: string[] = [];
+
+			for (const { field, connection, edge, row } of CONNECTIONS) {
+				const declared = COMPOSED.getQueryType()?.getFields()[field];
+
+				if (!declared) {
+					mismatches.push(`the schema declares no Query.${field}`);
+					continue;
+				}
+
+				// The root field itself, not only the types beside it: a connection declared and not answered
+				// is a page no client ever receives, and one the caller cannot state a window on is a page it
+				// cannot walk.
+				if (getNamedType(declared.type).name !== connection) {
+					mismatches.push(`Query.${field} does not answer ${connection}`);
+				}
+				if (!declared.args.some((argument) => argument.name === 'page')) {
+					mismatches.push(`Query.${field} states no page argument, so its connection cannot be walked`);
+				}
+
+				const connectionBody = declaredBodyOf(printed, connection);
+				const edgeBody = declaredBodyOf(printed, edge);
+
+				for (const member of [
+					`nodes: [${row}!]!`,
+					`edges: [${edge}!]!`,
+					'totalCount: Int!',
+					'pageInfo: PageInfo!'
+				]) {
+					if (!connectionBody.includes(member)) {
+						mismatches.push(`${connection} declares no \`${member}\``);
+					}
+				}
+
+				for (const member of [`node: ${row}!`, 'cursor: String!']) {
+					if (!edgeBody.includes(member)) {
+						mismatches.push(`${edge} declares no \`${member}\``);
+					}
+				}
+			}
+
+			expect(mismatches).toEqual([]);
+		});
 	});
 
 	describe('the rows the resolvers hand back', () => {
@@ -1052,17 +1169,17 @@ describe('the marketplace GraphQL contribution', () => {
 			const resolver = recordingResolver(calls);
 			const context = { req: { sellerScope: scope } };
 
-			await resolver.sellers(context);
+			await resolver.sellers(undefined, context);
 			await resolver.seller('seller-1', context);
 			await resolver.sellerStatement('seller-1', 'USD', context);
 			await resolver.sellerBalance('seller-1', 'USD', context);
-			await resolver.sellerOfferings(context);
-			await resolver.sellerTransactions(context);
+			await resolver.sellerOfferings(undefined, context);
+			await resolver.sellerTransactions(undefined, context);
 			await resolver.sellerSplitReconciliation('order-1', 'seller-1', context);
-			await resolver.sellerPayouts(context);
+			await resolver.sellerPayouts(undefined, context);
 			await resolver.sellerPayout('payout-1', context);
-			await resolver.sellerPayoutLines('payout-1', context);
-			await resolver.sellerSettlements(context);
+			await resolver.sellerPayoutLines('payout-1', undefined, context);
+			await resolver.sellerSettlements(undefined, context);
 			await resolver.createSellerPayout('seller-1', 'USD', ['transaction-1'], 'note', undefined, context);
 			await resolver.approveSellerPayout('payout-1', context);
 			await resolver.markSellerPayoutPaid('payout-1', 'provider-1', 'transfer-1', undefined, context);
@@ -1089,7 +1206,7 @@ describe('the marketplace GraphQL contribution', () => {
 			const calls: Array<{ field: string; scope?: ISellerScope }> = [];
 			const scope: ISellerScope = { sellerId: 'seller-1', staff: false } as ISellerScope;
 
-			await recordingResolver(calls).sellerPayouts({ sellerScope: scope });
+			await recordingResolver(calls).sellerPayouts(undefined, { sellerScope: scope });
 
 			expect(calls).toEqual([{ field: 'listPayouts', scope }]);
 		});

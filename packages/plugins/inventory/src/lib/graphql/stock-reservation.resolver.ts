@@ -9,15 +9,19 @@
 import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { map } from 'rxjs/operators';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	EventBus,
 	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
-	Versioned
+	Versioned,
+	connectionFromOffsetPage,
+	resolveConnectionWindow
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
@@ -48,16 +52,34 @@ export class StockReservationResolver {
 		private readonly eventBus: EventBus
 	) {}
 
-	/** Holds, filtered by the document that owns them. */
+	/**
+	 * Holds, filtered by the document that owns them, as a page a cursor can walk.
+	 *
+	 * **The window is read in the store, not sliced here.** `findReservations` is a wrapper over
+	 * `paginate`, and `paginate` reads a stated `skip` as a page *number* — it multiplies it by `take`
+	 * before the query runs — so a row offset handed to it would answer a different page than the cursor
+	 * named: a walk that repeats rows and skips others, with nothing red anywhere. The service's own
+	 * row-offset read is `findAll`, which is what a connection's window states, so the page and its
+	 * `totalCount` come from one query and the count is the size of the filtered set rather than of the
+	 * page.
+	 */
 	@Query('stockReservations')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
 	@Versioned({ write: false })
-	async stockReservations(@Args('referenceType') referenceType: StockReservationReferenceType, @Args('referenceId') referenceId: string, @Args('status') status: StockReservationStatus): Promise<any> {
-		const page = await this.service.findReservations({ where: { referenceType, referenceId, status } });
+	async stockReservations(
+		@Args('referenceType') referenceType: StockReservationReferenceType,
+		@Args('referenceId') referenceId: string,
+		@Args('status') status: StockReservationStatus,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<StockReservation>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const listing = (await this.service.findAll({
+			where: { referenceType, referenceId, status },
+			skip,
+			take
+		})) as IPagination<StockReservation>;
 
-		// The service answers a page, and the schema declares a list: a method that already
-		// answers one is returned as it is, so this holds either way.
-		return Array.isArray(page) ? page : (page as any)?.items ?? [];
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/** One hold. */

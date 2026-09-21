@@ -251,4 +251,42 @@ describe('The order schema states the version and the retry key a caller supplie
 			expect({ field, declared: schema.includes(field) }).toEqual({ field, declared: true });
 		}
 	});
+
+	it('answers the timeline and a line’s invoice links with that same shape, pageable', () => {
+		// Both fields used to answer a bare array — `[OrderHistory!]!` and `[OrderLineInvoice!]!` — so a
+		// client that had the REST list had nothing to page over GraphQL while the schema said otherwise.
+		for (const [type, edge, row, field] of [
+			['OrderHistoryConnection', 'OrderHistoryEdge', 'OrderHistory', 'orderHistory(orderId: ID!, page: PageInput)'],
+			[
+				'OrderLineInvoiceConnection',
+				'OrderLineInvoiceEdge',
+				'OrderLineInvoice',
+				'orderLineInvoices(orderLineId: ID!, page: PageInput)'
+			]
+		]) {
+			const body = schema.slice(schema.indexOf(`type ${type} {`), schema.indexOf('}', schema.indexOf(`type ${type} {`)));
+
+			for (const member of [`nodes: [${row}!]!`, `edges: [${edge}!]!`, 'totalCount: Int!', 'pageInfo: PageInfo!']) {
+				expect({ type, member, declares: body.includes(member) }).toEqual({ type, member, declares: true });
+			}
+
+			// The edge is what a client walks from, so it carries the row and the cursor that addresses
+			// it: an edge type the document never declares is a selection that fails at request time.
+			const edgeBody = schema.slice(
+				schema.indexOf(`type ${edge} {`),
+				schema.indexOf('}', schema.indexOf(`type ${edge} {`))
+			);
+
+			for (const member of [`node: ${row}!`, 'cursor: String!']) {
+				expect({ edge, member, declares: edgeBody.includes(member) }).toEqual({ edge, member, declares: true });
+			}
+
+			expect({ field, connection: schema.includes(`${field}: ${type}!`) }).toEqual({ field, connection: true });
+			// The control: the field no longer answers the bare array it used to.
+			expect({ field, bare: schema.includes(`${field.replace(', page: PageInput', '')}: [${row}!]!`) }).toEqual({
+				field,
+				bare: false
+			});
+		}
+	});
 });

@@ -1,7 +1,19 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard, Versioned } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	Versioned,
+	connectionFromOffsetPage,
+	paginateRows,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { WarehouseBin } from '../../warehouse-bin/warehouse-bin.entity';
@@ -10,7 +22,12 @@ import { WarehouseZone } from '../../warehouse-zone/warehouse-zone.entity';
 import { WarehouseZoneService } from '../../warehouse-zone/warehouse-zone.service';
 import { WarehouseFeatures } from '../../warehouse.features';
 import { WarehousePermissions } from '../../warehouse.permissions';
-import { IWarehouseBin, IWarehouseBinCapacityCheck, WarehouseBinType } from '../../warehouse.types';
+import {
+	IWarehouseBin,
+	IWarehouseBinBalance,
+	IWarehouseBinCapacityCheck,
+	WarehouseBinType
+} from '../../warehouse.types';
 import { buildConnection, IPageSelection, resolveWindow } from '../pagination';
 import { toUserError } from '../wire';
 
@@ -126,25 +143,52 @@ export class WarehouseBinResolver {
 	/**
 	 * Reads everything under a bin.
 	 *
+	 * The traversal answers the whole subtree in walking order and takes no window of its own, so the page
+	 * is cut here. Handing the window to a method that does not accept one is the failure this avoids: the
+	 * field would answer the first page to every caller while its `pageInfo` claimed to describe the page
+	 * that was asked for.
+	 *
 	 * @param id The root of the subtree.
-	 * @returns The subtree, in walking order.
+	 * @param page The page.
+	 * @returns One page of the subtree, in walking order.
+	 * @throws for a page the query protocol refuses — both styles at once, both directions at once, a
+	 * cursor this platform did not mint — which is deliberately not caught here, because answering a
+	 * refusal with the first page hands a client rows it did not ask for.
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_VIEW)
 	@Query('warehouseBinSubtree')
-	async warehouseBinSubtree(@Args('id') id: ID): Promise<WarehouseBin[]> {
-		return await this.warehouseBinService.findSubtree(id);
+	async warehouseBinSubtree(
+		@Args('id') id: ID,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<WarehouseBin>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const rows = await this.warehouseBinService.findSubtree(id);
+
+		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}
 
 	/**
 	 * Reads the derived contents of a bin.
 	 *
+	 * The capability answers one balance per variant the bin holds and pages nothing itself, so the page
+	 * is cut here for the reason the subtree states, and the count the connection reports is the whole
+	 * contents rather than the rows on this page.
+	 *
 	 * @param id The bin.
-	 * @returns One balance per variant the bin holds.
+	 * @param page The page.
+	 * @returns One page of balances, one per variant the bin holds.
+	 * @throws for a page the query protocol refuses, which is deliberately not caught here.
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_VIEW)
 	@Query('warehouseBinContents')
-	async warehouseBinContents(@Args('id') id: ID) {
-		return await this.warehouseBinService.findContents(id);
+	async warehouseBinContents(
+		@Args('id') id: ID,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<IWarehouseBinBalance>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const rows = await this.warehouseBinService.findContents(id);
+
+		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}
 
 	/**

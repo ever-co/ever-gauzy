@@ -302,17 +302,13 @@ const UNBOUND = new Map([
 	['Query.cartByToken', 'the cart service has no token lookup yet'],
 	['Mutation.addCollectionVariants', 'the variant service replaces a whole membership set; an add is not defined'],
 	['Mutation.removeCollectionVariants', 'as above, for removal'],
-	['Mutation.consumeStockReservation', 'the reservation service has no consume step yet'],
-	['Mutation.updateStockTransfer', 'the transfer service has no note update yet'],
 	['Subscription.events', 'the generic event stream a tenant subscribes to'],
 	['Subscription.paymentAuthorized', 'payment lifecycle streams'],
 	['Subscription.paymentCanceled', 'payment lifecycle streams'],
 	['Subscription.paymentCaptured', 'payment lifecycle streams'],
 	['Subscription.paymentFailed', 'payment lifecycle streams'],
 	['Subscription.paymentRefunded', 'payment lifecycle streams'],
-	['Subscription.refundCreated', 'payment lifecycle streams'],
-	['Subscription.stockLevelLow', 'stock threshold streams'],
-	['Subscription.stockLevelOutOfStock', 'stock threshold streams']
+	['Subscription.refundCreated', 'payment lifecycle streams']
 ]);
 
 const declaredRoots = ['Query', 'Mutation', 'Subscription'].flatMap((type) =>
@@ -323,12 +319,26 @@ const boundRoots = new Set(
 );
 const newlyUnbound = declaredRoots.filter((field) => !boundRoots.has(field) && !UNBOUND.has(field));
 const recorded = declaredRoots.filter((field) => UNBOUND.has(field));
+// An entry whose field now has a resolver is an entry describing a surface that has moved on, and leaving it
+// in place quietly overstates how much of the schema is unimplemented — `consumeStockReservation` and
+// `updateStockTransfer` were both recorded as unbound for a wave after they had been bound.
+const boundButRecorded = [...UNBOUND.keys()].filter((field) => boundRoots.has(field));
 
 if (newlyUnbound.length > 0) {
 	console.error('FAILED — root fields the schema declares and no resolver implements:');
 	for (const field of newlyUnbound) console.error(`  ${field}`);
 	console.error('');
 	console.error('Either bind the field to a resolver or record it in `UNBOUND` with the reason it cannot be.');
+	process.exit(1);
+}
+
+if (boundButRecorded.length > 0) {
+	console.error('FAILED — the baseline describes a surface that has moved on:');
+	for (const field of boundButRecorded) {
+		console.error(`  ${field} has a resolver now — take it out of UNBOUND (${UNBOUND.get(field)})`);
+	}
+	console.error('');
+	console.error('Remove each entry, so the count of what is still unbound stays true.');
 	process.exit(1);
 }
 

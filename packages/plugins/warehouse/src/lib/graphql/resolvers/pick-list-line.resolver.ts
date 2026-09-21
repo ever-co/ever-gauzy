@@ -1,7 +1,19 @@
 import { BadRequestException, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard, Versioned } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	Versioned,
+	connectionFromOffsetPage,
+	paginateRows,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { PickListLine } from '../../pick-list-line/pick-list-line.entity';
@@ -45,13 +57,26 @@ export class PickListLineResolver {
 	/**
 	 * Reads the lines of a list.
 	 *
+	 * The service answers every line of the list in the order the pick path visits them and takes no
+	 * window, so the page is cut here. Answering the whole list to a caller that asked for one page is the
+	 * failure this avoids: the walk would be over before the client knew there was one to continue.
+	 *
 	 * @param pickListId The list.
-	 * @returns The lines, in the order the pick path visits them.
+	 * @param page The page.
+	 * @returns One page of lines, in the order the pick path visits them.
+	 * @throws for a page the query protocol refuses — both styles at once, both directions at once, a
+	 * cursor this platform did not mint — which is deliberately not caught here.
 	 */
 	@Permissions(WarehousePermissions.PICK_LISTS_VIEW)
 	@Query('pickListLines')
-	async pickListLines(@Args('pickListId') pickListId: ID): Promise<PickListLine[]> {
-		return await this.pickListLineService.findForList(pickListId);
+	async pickListLines(
+		@Args('pickListId') pickListId: ID,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<PickListLine>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const rows = await this.pickListLineService.findForList(pickListId);
+
+		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}
 
 	/**

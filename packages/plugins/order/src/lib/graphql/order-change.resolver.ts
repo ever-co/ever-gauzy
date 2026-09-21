@@ -4,6 +4,7 @@ import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
+	GraphqlConnection,
 	IConnectionPageSelection,
 	Idempotent,
 	PermissionGuard,
@@ -11,6 +12,7 @@ import {
 	TenantPermissionGuard,
 	Versioned,
 	connectionFromOffsetPage,
+	paginateRows,
 	resolveConnectionWindow,
 	versionExpectationOf
 } from '@gauzy/core';
@@ -189,12 +191,24 @@ export class OrderChangeResolver {
 	/**
 	 * The timeline of an order.
 	 *
+	 * `timeline` answers every entry of the order in the order it happened and takes no window of its
+	 * own, so the page is cut here rather than asked of the store: a store-side window would have to
+	 * re-state the timeline's order, and a page cut after the rows were re-ordered answers a different
+	 * page than the offset names.
+	 *
 	 * @param orderId The order.
-	 * @returns The timeline entries.
+	 * @param page The page.
+	 * @returns A page of timeline entries, oldest first.
 	 */
-	@Query(() => [Object], { name: 'orderHistory' })
-	async orderHistory(@Args('orderId', { type: () => ID }) orderId: string): Promise<OrderHistory[]> {
-		return this.historyService.timeline(orderId);
+	@Query(() => Object, { name: 'orderHistory' })
+	async orderHistory(
+		@Args('orderId', { type: () => ID }) orderId: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<OrderHistory>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const rows = await this.historyService.timeline(orderId);
+
+		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}
 
 	/**

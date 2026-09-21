@@ -1,7 +1,17 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	connectionFromOffsetPage,
+	paginateRows,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { IOrderReturnLine } from '../../returns.types';
@@ -36,13 +46,24 @@ export class OrderReturnLineResolver {
 	/**
 	 * Lists the lines of a return.
 	 *
+	 * `findForReturn` answers every line of the return, oldest first, and takes no window of its own, so
+	 * the page is cut here. A field that declared a page and answered the whole set would leave a client
+	 * walking a `pageInfo` that never moves.
+	 *
 	 * @param returnId The return.
-	 * @returns The lines.
+	 * @param page The page.
+	 * @returns A page of lines, oldest first.
 	 */
 	@Query('orderReturnLines')
 	@Permissions(ReturnsPermissions.RETURNS_VIEW)
-	async orderReturnLines(@Args('returnId') returnId: ID): Promise<OrderReturnLine[]> {
-		return await this.orderReturnLineService.findForReturn(returnId);
+	async orderReturnLines(
+		@Args('returnId') returnId: ID,
+		@Args('page') page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<OrderReturnLine>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const rows = await this.orderReturnLineService.findForReturn(returnId);
+
+		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}
 
 	/**

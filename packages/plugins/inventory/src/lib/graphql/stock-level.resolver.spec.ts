@@ -83,7 +83,16 @@ jest.mock('@gauzy/core', () => {
 			currentOrganizationId: () => null,
 			currentEmployeeId: () => null,
 			hasPermission: () => false
-		}
+		},
+		// The three the package's list fields answer connections through. They are the kernel's own
+		// implementations rather than stand-ins written here: a `resolveConnectionWindow` this factory
+		// invented would let a suite agree with itself about a window the platform does not compute, which
+		// is the one thing a resolver suite must not do.
+		connectionFromOffsetPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.connectionFromOffsetPage,
+		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.resolveConnectionWindow,
+		paginateRows: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').paginateRows
 	};
 });
 

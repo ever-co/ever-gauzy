@@ -1,7 +1,17 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	connectionFromOffsetPage,
+	paginateRows,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { IOrderClaimLine } from '../../returns.types';
@@ -33,13 +43,24 @@ export class OrderClaimLineResolver {
 	/**
 	 * Lists the lines of a claim.
 	 *
+	 * `findForClaim` answers every line of the claim, oldest first, and takes no window of its own, so the
+	 * page is cut here: a store-side window would have to restate that order, and one that re-ordered
+	 * after the cut would answer a different page than the offset names.
+	 *
 	 * @param claimId The claim.
-	 * @returns The lines.
+	 * @param page The page.
+	 * @returns A page of lines, oldest first.
 	 */
 	@Query('orderClaimLines')
 	@Permissions(ReturnsPermissions.CLAIMS_VIEW)
-	async orderClaimLines(@Args('claimId') claimId: ID): Promise<OrderClaimLine[]> {
-		return await this.orderClaimLineService.findForClaim(claimId);
+	async orderClaimLines(
+		@Args('claimId') claimId: ID,
+		@Args('page') page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<OrderClaimLine>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const rows = await this.orderClaimLineService.findForClaim(claimId);
+
+		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}
 
 	/**

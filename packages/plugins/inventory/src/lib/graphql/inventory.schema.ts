@@ -173,25 +173,165 @@ export const inventorySchemaExtensions = gql`
 		corrections: [StockLevelCorrection!]!
 	}
 
+	"A page of stock movements."
+	type StockMovementConnection {
+		nodes: [StockMovement!]!
+		edges: [StockMovementEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One stock movement in a page, with the cursor that addresses it."
+	type StockMovementEdge {
+		node: StockMovement!
+		cursor: String!
+	}
+
+	"A page of stock reservations."
+	type StockReservationConnection {
+		nodes: [StockReservation!]!
+		edges: [StockReservationEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One stock reservation in a page, with the cursor that addresses it."
+	type StockReservationEdge {
+		node: StockReservation!
+		cursor: String!
+	}
+
+	"A page of stock transfers."
+	type StockTransferConnection {
+		nodes: [StockTransfer!]!
+		edges: [StockTransferEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One stock transfer in a page, with the cursor that addresses it."
+	type StockTransferEdge {
+		node: StockTransfer!
+		cursor: String!
+	}
+
+	"A page of stock transfer lines."
+	type StockTransferLineConnection {
+		nodes: [StockTransferLine!]!
+		edges: [StockTransferLineEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One stock transfer line in a page, with the cursor that addresses it."
+	type StockTransferLineEdge {
+		node: StockTransferLine!
+		cursor: String!
+	}
+
+	"A page of stock alerts."
+	type StockAlertConnection {
+		nodes: [StockAlert!]!
+		edges: [StockAlertEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One stock alert in a page, with the cursor that addresses it."
+	type StockAlertEdge {
+		node: StockAlert!
+		cursor: String!
+	}
+
+	"A page of stock adjustments."
+	type StockAdjustmentConnection {
+		nodes: [StockAdjustment!]!
+		edges: [StockAdjustmentEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One stock adjustment in a page, with the cursor that addresses it."
+	type StockAdjustmentEdge {
+		node: StockAdjustment!
+		cursor: String!
+	}
+
+	"A page of stock count sessions."
+	type StockCountConnection {
+		nodes: [StockCount!]!
+		edges: [StockCountEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One stock count session in a page, with the cursor that addresses it."
+	type StockCountEdge {
+		node: StockCount!
+		cursor: String!
+	}
+
+	"A page of stock count lines."
+	type StockCountLineConnection {
+		nodes: [StockCountLine!]!
+		edges: [StockCountLineEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One stock count line in a page, with the cursor that addresses it."
+	type StockCountLineEdge {
+		node: StockCountLine!
+		cursor: String!
+	}
+
+	"A page of channel assignments."
+	type ChannelWarehouseConnection {
+		nodes: [ChannelWarehouse!]!
+		edges: [ChannelWarehouseEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One channel assignment in a page, with the cursor that addresses it."
+	type ChannelWarehouseEdge {
+		node: ChannelWarehouse!
+		cursor: String!
+	}
+
 	extend type Query {
+		"""
+		The levels of a location, of a variant, or of both — the first page of them.
+
+		**This field is the one list here that is not a connection, and the read it answers from is why.**
+		\`StockLevelService.findLevels\` takes a limit and no row offset, answers no count and declares no
+		order, so a connection over it could carry neither a \`totalCount\` that is true of the filtered set
+		nor a cursor walk that resumes without repeating or skipping a row. It stays the list it is until
+		that read can page; the nine fields beside it answer connections.
+		"""
 		stockLevels(warehouseId: ID, variantId: ID, take: Int): [StockLevel!]!
 		stockLevel(warehouseId: ID!, variantId: ID!): StockLevel
 		availableQuantity(warehouseId: ID!, variantId: ID!): Float!
-		stockMovements(warehouseId: ID!, variantId: ID!, take: Int): [StockMovement!]!
-		stockReservations(referenceType: String, referenceId: ID, status: String): [StockReservation!]!
+		stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput): StockMovementConnection!
+		stockReservations(
+			referenceType: String
+			referenceId: ID
+			status: String
+			page: PageInput
+		): StockReservationConnection!
 		stockReservation(id: ID!): StockReservation
-		stockTransfers(status: String): [StockTransfer!]!
+		stockTransfers(status: String, page: PageInput): StockTransferConnection!
 		stockTransfer(id: ID!): StockTransfer
-		stockTransferLines(transferId: ID!): [StockTransferLine!]!
+		stockTransferLines(transferId: ID!, page: PageInput): StockTransferLineConnection!
 		stockTransferLine(id: ID!): StockTransferLine
-		stockAlerts(variantId: ID, isActive: Boolean): [StockAlert!]!
-		stockAdjustments(warehouseId: ID, variantId: ID, status: String): [StockAdjustment!]!
-		stockCounts(warehouseId: ID, status: String, mode: String): [StockCount!]!
+		stockAlerts(variantId: ID, isActive: Boolean, page: PageInput): StockAlertConnection!
+		stockAdjustments(warehouseId: ID, variantId: ID, status: String, page: PageInput): StockAdjustmentConnection!
+		stockCounts(warehouseId: ID, status: String, mode: String, page: PageInput): StockCountConnection!
 		stockCount(id: ID!): StockCount
-		stockCountLines(stockCountId: ID!): [StockCountLine!]!
+		stockCountLines(stockCountId: ID!, page: PageInput): StockCountLineConnection!
 		stockCountLine(id: ID!): StockCountLine
 		stockCountVariance(stockCountId: ID!): StockCountVariance!
-		channelWarehouses(channelId: ID, warehouseId: ID): [ChannelWarehouse!]!
+		channelWarehouses(channelId: ID, warehouseId: ID, page: PageInput): ChannelWarehouseConnection!
 	}
 
 	extend type Mutation {

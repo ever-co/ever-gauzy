@@ -325,4 +325,22 @@ describe('resolveConnectionWindow — the window a cursor names', () => {
 
 		expect(resolveConnectionWindow({ first: 5000 }).take).toBe(MAX_CONNECTION_PAGE_SIZE);
 	});
+
+	it('refuses with the platform’s own error class, not a bare Error', () => {
+		// The class is the whole point of the refusal: a `BadRequestException` reaches the caller as the
+		// platform's BAD_REQUEST code and status, and a bare `Error` reaches it as an internal fault — so a
+		// client that branches on the code cannot tell a request it can fix from a server that broke.
+		const thrown = (() => {
+			try {
+				resolveConnectionWindow({ first: 1, offset: 4 });
+
+				return undefined;
+			} catch (error) {
+				return error;
+			}
+		})();
+
+		expect(thrown).toBeInstanceOf(BadRequestException);
+		expect((thrown as BadRequestException).getStatus()).toBe(400);
+	});
 });

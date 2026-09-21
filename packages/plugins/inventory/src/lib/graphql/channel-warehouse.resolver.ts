@@ -8,8 +8,17 @@
  */
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
+import {
+	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	connectionFromOffsetPage,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { InventoryPermission } from './../inventory.permissions';
@@ -36,15 +45,32 @@ export class ChannelWarehouseResolver {
 		private readonly service: ChannelWarehouseService
 	) {}
 
-	/** Which locations a sales context may draw on. */
+	/**
+	 * Which locations a sales context may draw on, as a page a cursor can walk.
+	 *
+	 * **The window is read in the store, not sliced here.** `findAssignments` is a wrapper over
+	 * `paginate`, and `paginate` reads a stated `skip` as a page *number* — it multiplies it by `take`
+	 * before the query runs — so a row offset handed to it would answer a different page than the cursor
+	 * named: a walk that repeats assignments and skips others, with nothing red anywhere. The service's
+	 * own row-offset read is `findAll`, which is what a connection's window states, so the page and its
+	 * `totalCount` come from one query and the count is the size of the filtered set rather than of the
+	 * page.
+	 */
 	@Query('channelWarehouses')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
-	async channelWarehouses(@Args('channelId') channelId: string, @Args('warehouseId') warehouseId: string): Promise<any> {
-		const page = await this.service.findAssignments({ where: { channelId, warehouseId } });
+	async channelWarehouses(
+		@Args('channelId') channelId: string,
+		@Args('warehouseId') warehouseId: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<ChannelWarehouse>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const listing = (await this.service.findAll({
+			where: { channelId, warehouseId },
+			skip,
+			take
+		})) as IPagination<ChannelWarehouse>;
 
-		// The service answers a page, and the schema declares a list: a method that already
-		// answers one is returned as it is, so this holds either way.
-		return Array.isArray(page) ? page : (page as any)?.items ?? [];
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/** Enables a location for a context. */

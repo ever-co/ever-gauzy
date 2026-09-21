@@ -1,7 +1,18 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, Money, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
+	Money,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	connectionFromOffsetPage,
+	paginateRows,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { IOrderExchangeLine } from '../../returns.types';
@@ -34,13 +45,24 @@ export class OrderExchangeLineResolver {
 	/**
 	 * Lists the outbound lines of an exchange.
 	 *
+	 * `findForExchange` answers every line of the exchange, in the order it was written, and takes no
+	 * window of its own, so the page is cut here. Answering the whole set to a caller that stated a page
+	 * is the failure this avoids: the client would page a connection whose `pageInfo` never advances.
+	 *
 	 * @param exchangeId The exchange.
-	 * @returns The lines.
+	 * @param page The page.
+	 * @returns A page of lines, in the order they were written.
 	 */
 	@Query('orderExchangeLines')
 	@Permissions(ReturnsPermissions.EXCHANGES_VIEW)
-	async orderExchangeLines(@Args('exchangeId') exchangeId: ID): Promise<OrderExchangeLine[]> {
-		return await this.orderExchangeLineService.findForExchange(exchangeId);
+	async orderExchangeLines(
+		@Args('exchangeId') exchangeId: ID,
+		@Args('page') page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<OrderExchangeLine>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const rows = await this.orderExchangeLineService.findForExchange(exchangeId);
+
+		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}
 
 	/**

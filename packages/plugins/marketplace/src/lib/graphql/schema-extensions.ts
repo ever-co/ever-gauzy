@@ -19,6 +19,16 @@ import { gql } from 'graphql-tag';
  * compute is deliberately not declared here, because a schema field nothing populates is a null a
  * client cannot tell from an absent value.
  *
+ * **Every list root field answers a connection.** `sellers`, `sellerOfferings`, `sellerTransactions`,
+ * `sellerPayouts`, `sellerPayoutLines` and `sellerSettlements` used to answer a bare array, which a
+ * client can neither page nor count: each now takes the protocol's `page` and answers the one shape the
+ * rest of the platform answers with — `nodes`, `edges`, `totalCount` and a non-null `pageInfo` — so a
+ * client that can walk one domain's pages can walk them all. The names are the row types' own with
+ * `Connection` and `Edge` appended, following the naming the surrounding schema already uses.
+ * `sellerSplitReconciliation` is deliberately left as a list: it is an aggregation over settlements
+ * rather than a page of rows, and a `totalCount` and a `pageInfo` on it would be two figures it cannot
+ * honour.
+ *
  * The document is one half of the package's GraphQL contribution and the resolvers are the other: a
  * root field declared here with no resolver resolves to null with no error anywhere, and a field a
  * resolver declares without being declared here is never served at all. The two are written and
@@ -617,9 +627,93 @@ export const schemaExtensions = gql`
 		platformRetained: Decimal!
 	}
 
+	"A page of sellers."
+	type SellerConnection {
+		nodes: [Seller!]!
+		edges: [SellerEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One seller in a page, with the cursor that addresses it."
+	type SellerEdge {
+		node: Seller!
+		cursor: String!
+	}
+
+	"A page of what sellers offer."
+	type SellerOfferingConnection {
+		nodes: [SellerOffering!]!
+		edges: [SellerOfferingEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One offering in a page, with the cursor that addresses it."
+	type SellerOfferingEdge {
+		node: SellerOffering!
+		cursor: String!
+	}
+
+	"A page of ledger rows."
+	type SellerTransactionConnection {
+		nodes: [SellerTransaction!]!
+		edges: [SellerTransactionEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One ledger row in a page, with the cursor that addresses it."
+	type SellerTransactionEdge {
+		node: SellerTransaction!
+		cursor: String!
+	}
+
+	"A page of payout instructions."
+	type SellerPayoutConnection {
+		nodes: [SellerPayout!]!
+		edges: [SellerPayoutEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One payout in a page, with the cursor that addresses it."
+	type SellerPayoutEdge {
+		node: SellerPayout!
+		cursor: String!
+	}
+
+	"A page of the ledger rows one payout covers."
+	type SellerPayoutLineConnection {
+		nodes: [SellerPayoutLine!]!
+		edges: [SellerPayoutLineEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One payout line in a page, with the cursor that addresses it."
+	type SellerPayoutLineEdge {
+		node: SellerPayoutLine!
+		cursor: String!
+	}
+
+	"A page of settlements."
+	type SellerSettlementConnection {
+		nodes: [SellerSettlement!]!
+		edges: [SellerSettlementEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One settlement in a page, with the cursor that addresses it."
+	type SellerSettlementEdge {
+		node: SellerSettlement!
+		cursor: String!
+	}
+
 	extend type Query {
 		"Lists the seller accounts of the caller's organization."
-		sellers: [Seller!]!
+		sellers(page: PageInput): SellerConnection!
 		"Reads one seller by id or by its human-usable code."
 		seller(idOrCode: String!): Seller
 		"Reads a seller's statement over a period, in one currency."
@@ -627,19 +721,19 @@ export const schemaExtensions = gql`
 		"Reads what a seller is owed in one currency. A negative figure is a reported fact rather than an error."
 		sellerBalance(sellerId: ID!, currency: String): SellerBalance
 		"Lists what sellers offer."
-		sellerOfferings: [SellerOffering!]!
+		sellerOfferings(page: PageInput): SellerOfferingConnection!
 		"Lists the per-seller split of orders: the ledger that says what each seller earned."
-		sellerTransactions: [SellerTransaction!]!
+		sellerTransactions(page: PageInput): SellerTransactionConnection!
 		"Reconciles the split of the orders in a window against the money they captured."
 		sellerSplitReconciliation(orderId: ID, sellerId: ID): [SellerSplitReconciliation!]!
 		"Lists payout instructions."
-		sellerPayouts: [SellerPayout!]!
+		sellerPayouts(page: PageInput): SellerPayoutConnection!
 		"Reads one payout with its lines."
 		sellerPayout(id: ID!): SellerPayout
 		"Lists the ledger rows one payout covers."
-		sellerPayoutLines(sellerPayoutId: ID!): [SellerPayoutLine!]!
+		sellerPayoutLines(sellerPayoutId: ID!, page: PageInput): SellerPayoutLineConnection!
 		"Lists what providers reported they settled."
-		sellerSettlements: [SellerSettlement!]!
+		sellerSettlements(page: PageInput): SellerSettlementConnection!
 	}
 
 	extend type Mutation {

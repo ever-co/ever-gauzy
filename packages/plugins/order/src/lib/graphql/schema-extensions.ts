@@ -387,6 +387,34 @@ export const orderSchemaExtensions = gql`
 		cursor: String!
 	}
 
+	"A page of order timeline entries."
+	type OrderHistoryConnection {
+		nodes: [OrderHistory!]!
+		edges: [OrderHistoryEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One history entry in a page, with the cursor that addresses it."
+	type OrderHistoryEdge {
+		node: OrderHistory!
+		cursor: String!
+	}
+
+	"A page of line-to-invoice links."
+	type OrderLineInvoiceConnection {
+		nodes: [OrderLineInvoice!]!
+		edges: [OrderLineInvoiceEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"One line-to-invoice link in a page, with the cursor that addresses it."
+	type OrderLineInvoiceEdge {
+		node: OrderLineInvoice!
+		cursor: String!
+	}
+
 	input CreateOrderInput {
 		channelId: ID!
 		regionId: ID
@@ -478,13 +506,13 @@ export const orderSchemaExtensions = gql`
 		"The money ledger of one order."
 		orderTransactions(orderId: ID!, type: String, page: PageInput): OrderTransactionConnection!
 		"The timeline of one order."
-		orderHistory(orderId: ID!): [OrderHistory!]!
+		orderHistory(orderId: ID!, page: PageInput): OrderHistoryConnection!
 		"The changes of one order."
 		orderChanges(orderId: ID!, status: String, page: PageInput): OrderChangeConnection!
 		"Read one change with its actions."
 		orderChange(id: ID!): OrderChange
 		"Every item and credit-note item one order line was billed through, oldest first."
-		orderLineInvoices(orderLineId: ID!): [OrderLineInvoice!]!
+		orderLineInvoices(orderLineId: ID!, page: PageInput): OrderLineInvoiceConnection!
 		"How much of one order line is left to bill."
 		orderLineInvoicingPosition(orderLineId: ID!, basisQuantity: Decimal): OrderLineInvoicingPosition!
 	}

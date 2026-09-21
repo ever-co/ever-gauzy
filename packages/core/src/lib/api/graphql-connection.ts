@@ -846,22 +846,22 @@ export const MAX_CONNECTION_PAGE_SIZE = API_QUERY_LIMITS.maxPageSize;
  *
  * @param selection The requested page.
  * @returns The offset the page starts at and how many rows it holds.
- * @throws Error when a caller mixes forward and backward pagination, mixes the two styles, states a cursor
- * this platform did not mint, or asks for a backward walk with no anchor.
+ * @throws BadRequestException when a caller mixes forward and backward pagination, mixes the two styles,
+ * states a cursor this platform did not mint, or asks for a backward walk with no anchor.
  */
 export function resolveConnectionWindow(selection?: IConnectionPageSelection): { skip: number; take: number } {
 	const stated = selection ?? {};
 
 	if (stated.first !== undefined && stated.last !== undefined) {
-		throw new Error('PAGINATION_DIRECTION_CONFLICT: state first or last, not both.');
+		throw new BadRequestException('PAGINATION_DIRECTION_CONFLICT: state first or last, not both.');
 	}
 
 	if (stated.after !== undefined && stated.before !== undefined) {
-		throw new Error('PAGINATION_DIRECTION_CONFLICT: state after or before, not both.');
+		throw new BadRequestException('PAGINATION_DIRECTION_CONFLICT: state after or before, not both.');
 	}
 
 	if (stated.last !== undefined && stated.before === undefined) {
-		throw new Error(
+		throw new BadRequestException(
 			'PAGINATION_ANCHOR_REQUIRED: last walks backwards from before; state before, or ask for first.'
 		);
 	}
@@ -870,23 +870,45 @@ export function resolveConnectionWindow(selection?: IConnectionPageSelection): {
 		stated.first !== undefined || stated.after !== undefined || stated.last !== undefined || stated.before !== undefined;
 
 	if (cursorsStated && (stated.limit !== undefined || stated.offset !== undefined)) {
-		throw new Error(
+		throw new BadRequestException(
 			'PAGINATION_STYLE_CONFLICT: state either a cursor window (first/after/last/before) or a page window (limit/offset), not both.'
 		);
 	}
 
 	const requested = stated.first ?? stated.last ?? stated.limit ?? DEFAULT_CONNECTION_PAGE_SIZE;
 	const take = Math.min(Math.max(Math.trunc(requested) || DEFAULT_CONNECTION_PAGE_SIZE, 1), MAX_CONNECTION_PAGE_SIZE);
+	const window =
+		stated.after !== undefined
+			? { skip: readCursorOffset(stated.after) + 1, take }
+			: stated.before !== undefined
+				? { skip: Math.max(readCursorOffset(stated.before) - take, 0), take }
+				: { skip: stated.offset !== undefined ? Math.max(Math.trunc(stated.offset) || 0, 0) : 0, take };
 
-	if (stated.after !== undefined) {
-		return { skip: readCursorOffset(stated.after) + 1, take };
+	assertPageInRange(window.skip, take);
+
+	return window;
+}
+
+/**
+ * Refuses a page that starts past the deepest one the protocol allows.
+ *
+ * The same ceiling `buildConnection` applies to an offset, applied to the offset a cursor names: without it
+ * a caller could state any position at all — and a store-paged read that has to reach that position reads
+ * every row before it, so an offset is a cost, not just a number. `QUERY_PAGE_LIMIT_EXCEEDED` is the code
+ * REST raises for the same request.
+ *
+ * @param skip The offset the page starts at.
+ * @param take The page size.
+ * @throws BadRequestException when the page starts beyond `maxPageNumber` pages in.
+ */
+function assertPageInRange(skip: number, take: number): void {
+	const deepest = take * API_QUERY_LIMITS.maxPageNumber;
+
+	if (skip > deepest) {
+		throw new BadRequestException(
+			`${ApiErrorCode.QUERY_PAGE_LIMIT_EXCEEDED}: page[number] must not exceed ${API_QUERY_LIMITS.maxPageNumber}.`
+		);
 	}
-
-	if (stated.before !== undefined) {
-		return { skip: Math.max(readCursorOffset(stated.before) - take, 0), take };
-	}
-
-	return { skip: stated.offset !== undefined ? Math.max(Math.trunc(stated.offset) || 0, 0) : 0, take };
 }
 
 /**
@@ -900,13 +922,13 @@ export function resolveConnectionWindow(selection?: IConnectionPageSelection): {
  *
  * @param cursor The cursor a caller handed back.
  * @returns The offset of the row it was handed out for.
- * @throws Error `PAGINATION_CURSOR_INVALID` when it is not a cursor this platform minted.
+ * @throws BadRequestException `PAGINATION_CURSOR_INVALID` when it is not a cursor this platform minted.
  */
 export function readCursorOffset(cursor: string): number {
 	const offset = decodeOffsetCursor(cursor);
 
 	if (encodeOffsetCursor(offset) !== cursor) {
-		throw new Error('PAGINATION_CURSOR_INVALID: the cursor is not one this endpoint issued.');
+		throw new BadRequestException('PAGINATION_CURSOR_INVALID: the cursor is not one this endpoint issued.');
 	}
 
 	return offset;

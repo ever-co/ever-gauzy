@@ -5,12 +5,17 @@ import type { ID as Id } from '@gauzy/contracts';
 import {
 	BulkExecutor,
 	FeatureFlagGuard,
+	GraphqlConnection,
 	IBulkItemContext,
+	IConnectionPageSelection,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
 	bulkOptionsOf,
+	connectionFromOffsetPage,
+	paginateRows,
+	resolveConnectionWindow,
 	toBulkItemOutcomes
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
@@ -41,7 +46,6 @@ import {
 	BulkSellerOfferingsPayloadType,
 	SellerBalanceType,
 	SellerOfferingType,
-	SellerPayoutLineType,
 	SellerPayoutType,
 	SellerSettlementType,
 	SellerSplitReconciliationType,
@@ -82,6 +86,22 @@ import {
  * to come in: a tenant that switched the capability off is owed the 404 a disabled capability answers,
  * and a scope refusal evaluated first would tell a caller that the capability is there by refusing it
  * for the wrong reason.
+ *
+ * **Every list field answers a connection, and the page the caller states is honoured.** `sellers`,
+ * `sellerOfferings`, `sellerTransactions`, `sellerPayouts`, `sellerPayoutLines` and `sellerSettlements`
+ * answered a bare array until now — a shape a client can neither page nor count — and each answers the
+ * one connection shape the platform's other list fields answer with: the page's rows two ways, the count
+ * of the filtered set, and the boundary a cursor walk resumes from. `sellerSplitReconciliation` is left as
+ * a report, because it is an aggregation over settlements rather than a page of rows.
+ *
+ * **The window is translated rather than handed over.** The kernel's list methods state a page as a
+ * 1-based page number and a size, while the connection protocol states a row offset and a size; the two
+ * are not the same number, and a resolver that passed one for the other would answer the rows `skip` pages
+ * in and look like it had paged correctly. Each field therefore asks its service for the one page that
+ * ends where the caller's window ends — bounded by that window, not by the table — and slices the window
+ * out of it. Asking for the first page and slicing that instead would answer ten rows whatever the caller
+ * asked for, because ten is the store's default page size, and would report ten as the size of the whole
+ * collection: a client would read a paged surface as a complete one.
  */
 @Resolver(() => SellerType)
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
@@ -97,13 +117,47 @@ export class SellerEntityResolver {
 		private readonly bulkExecutor: BulkExecutor
 	) {}
 
-	/** Lists seller accounts. */
-	@Query(() => [SellerType], { name: 'sellers' })
-	@Permissions(PermissionsEnum.SELLERS_VIEW)
-	async sellers(@Context() context?: any): Promise<Seller[]> {
-		const page: IPagination<Seller> = await this.sellerService.listSellers({}, this.scope(context));
+	/**
+	 * Reads one page of a listing whose read is page-numbered.
+	 *
+	 * `TenantAwareCrudService.paginate` reads `skip` as a one-based **page number** (`take * (skip - 1)`) and
+	 * defaults `take` to ten, while a connection's window is a **row offset**. The two are different numbers,
+	 * so passing one as the other answers the wrong rows — the trap this helper exists to close.
+	 *
+	 * The read asks for the pages the window spans and no more. Reading page one and dropping the first `skip`
+	 * rows would also be correct, and is cheaper to write, but it reads every row before the window: one
+	 * request naming a deep offset would turn into a scan of the table, and the count it reports would still
+	 * be right, so nothing would look wrong.
+	 *
+	 * @param skip The offset the page starts at.
+	 * @param take The page size.
+	 * @param read The page-numbered listing read.
+	 * @returns The connection, with the count the listing itself reported rather than the size of the page.
+	 */
+	private async connectionOf<T>(
+		skip: number,
+		take: number,
+		read: (window: { skip: number; take: number }) => Promise<IPagination<T>>
+	): Promise<GraphqlConnection<T>> {
+		const firstPage = Math.floor(skip / take) + 1;
+		// How far into that page the window starts, which is how many rows of it are not the caller's.
+		const leading = skip - (firstPage - 1) * take;
+		const listing = await read({ skip: firstPage, take: leading > 0 ? take * 2 : take });
+		const window = paginateRows(listing.items, take, leading);
 
-		return page.items;
+		return connectionFromOffsetPage({ items: window.items, total: listing.total }, skip);
+	}
+
+	/** Lists seller accounts, one page at a time. */
+	@Query(() => Object, { name: 'sellers' })
+	@Permissions(PermissionsEnum.SELLERS_VIEW)
+	async sellers(
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Context() context?: any
+	): Promise<GraphqlConnection<Seller>> {
+		const { skip, take } = resolveConnectionWindow(page);
+
+		return this.connectionOf(skip, take, (window) => this.sellerService.listSellers(window, this.scope(context)));
 	}
 
 	/** Reads one seller by id or code. */
@@ -142,28 +196,28 @@ export class SellerEntityResolver {
 		return this.sellerService.getBalance(seller, currency ?? seller.payoutCurrency ?? 'USD');
 	}
 
-	/** Lists offerings. */
-	@Query(() => [SellerOfferingType], { name: 'sellerOfferings' })
+	/** Lists offerings, one page at a time. */
+	@Query(() => Object, { name: 'sellerOfferings' })
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_VIEW)
-	async sellerOfferings(@Context() context?: any): Promise<SellerOffering[]> {
-		const page: IPagination<SellerOffering> = await this.sellerOfferingService.listOfferings(
-			{},
-			this.scope(context)
-		);
+	async sellerOfferings(
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Context() context?: any
+	): Promise<GraphqlConnection<SellerOffering>> {
+		const { skip, take } = resolveConnectionWindow(page);
 
-		return page.items;
+		return this.connectionOf(skip, take, (window) => this.sellerOfferingService.listOfferings(window, this.scope(context)));
 	}
 
-	/** Lists the per-seller split of orders. */
-	@Query(() => [SellerTransactionType], { name: 'sellerTransactions' })
+	/** Lists the per-seller split of orders, one page at a time. */
+	@Query(() => Object, { name: 'sellerTransactions' })
 	@Permissions(PermissionsEnum.SELLER_TRANSACTIONS_VIEW)
-	async sellerTransactions(@Context() context?: any): Promise<SellerTransaction[]> {
-		const page: IPagination<SellerTransaction> = await this.sellerTransactionService.listTransactions(
-			{},
-			this.scope(context)
-		);
+	async sellerTransactions(
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Context() context?: any
+	): Promise<GraphqlConnection<SellerTransaction>> {
+		const { skip, take } = resolveConnectionWindow(page);
 
-		return page.items;
+		return this.connectionOf(skip, take, (window) => this.sellerTransactionService.listTransactions(window, this.scope(context)));
 	}
 
 	/** The split reconciliation report. */
@@ -179,13 +233,16 @@ export class SellerEntityResolver {
 		return report.items;
 	}
 
-	/** Lists payouts. */
-	@Query(() => [SellerPayoutType], { name: 'sellerPayouts' })
+	/** Lists payouts, one page at a time. */
+	@Query(() => Object, { name: 'sellerPayouts' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
-	async sellerPayouts(@Context() context?: any): Promise<SellerPayout[]> {
-		const page: IPagination<SellerPayout> = await this.sellerPayoutService.listPayouts({}, this.scope(context));
+	async sellerPayouts(
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Context() context?: any
+	): Promise<GraphqlConnection<SellerPayout>> {
+		const { skip, take } = resolveConnectionWindow(page);
 
-		return page.items;
+		return this.connectionOf(skip, take, (window) => this.sellerPayoutService.listPayouts(window, this.scope(context)));
 	}
 
 	/** Reads one payout with its lines. */
@@ -195,31 +252,31 @@ export class SellerEntityResolver {
 		return this.sellerPayoutService.getPayout(id, this.scope(context));
 	}
 
-	/** Lists the lines of a payout. */
-	@Query(() => [SellerPayoutLineType], { name: 'sellerPayoutLines' })
+	/** Lists the lines of a payout, one page at a time. */
+	@Query(() => Object, { name: 'sellerPayoutLines' })
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
 	async sellerPayoutLines(
 		@Args('sellerPayoutId', { type: () => ID }) sellerPayoutId: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
 		@Context() context?: any
-	): Promise<SellerPayoutLine[]> {
-		const page: IPagination<SellerPayoutLine> = await this.sellerPayoutLineService.listLines(
-			{ where: { sellerPayoutId } },
-			this.scope(context)
-		);
+	): Promise<GraphqlConnection<SellerPayoutLine>> {
+		const { skip, take } = resolveConnectionWindow(page);
 
-		return page.items;
+		return this.connectionOf(skip, take, (window) =>
+			this.sellerPayoutLineService.listLines({ where: { sellerPayoutId }, ...window }, this.scope(context))
+		);
 	}
 
-	/** Lists settlements. */
-	@Query(() => [SellerSettlementType], { name: 'sellerSettlements' })
+	/** Lists settlements, one page at a time. */
+	@Query(() => Object, { name: 'sellerSettlements' })
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_VIEW)
-	async sellerSettlements(@Context() context?: any): Promise<SellerSettlement[]> {
-		const page: IPagination<SellerSettlement> = await this.sellerSettlementService.listSettlements(
-			{},
-			this.scope(context)
-		);
+	async sellerSettlements(
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Context() context?: any
+	): Promise<GraphqlConnection<SellerSettlement>> {
+		const { skip, take } = resolveConnectionWindow(page);
 
-		return page.items;
+		return this.connectionOf(skip, take, (window) => this.sellerSettlementService.listSettlements(window, this.scope(context)));
 	}
 
 	/** Submits a seller application for review. */
