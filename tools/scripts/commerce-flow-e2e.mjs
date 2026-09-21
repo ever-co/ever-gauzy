@@ -1143,12 +1143,19 @@ async function main() {
 			// The billing route is retry-safe by design and states a versioned aggregate, so it asks for both
 			// a key and the version the caller read. The version is the row's own, which the read beside this
 			// probe already answers: a harness that sent neither would never reach the cycle it is testing.
+			//
+			// **The key is scoped to this run, deliberately.** A key fixed per subscription made the suite's
+			// verdict depend on its own history: the second run presented a key the first had consumed, and
+			// the kernel answered it with the *stored* refusal rather than by running the cycle — so a check
+			// that had failed once kept failing for a reason that had nothing to do with the platform, and the
+			// suite could not tell a real regression from its own replay. A key is what makes a retry inside
+			// one run safe; across runs it is a different request.
 			const cycle = await scoped(
 				'POST',
 				`/api/subscriptions/${subscription.id}/bill`,
 				{},
 				{
-					'Idempotency-Key': `flow-bill-${subscription.id}`,
+					'Idempotency-Key': `flow-bill-${subscription.id}-${Date.now()}`,
 					...(subscription.version !== undefined && subscription.version !== null
 						? { 'If-Match': `"${subscription.version}"` }
 						: {})

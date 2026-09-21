@@ -10,7 +10,23 @@ import { BaseEntityModel as IBaseEntityModel, ID, IUser } from '@gauzy/contracts
 import { PrimaryKey, Property } from '@mikro-orm/core';
 import { MultiORMColumn, MultiORMManyToOne } from '../decorators/entity';
 import { ColumnIndex } from '../decorators/entity/column-index.decorator';
-import { User } from './internal';
+
+/**
+ * The user entity, required lazily.
+ *
+ * `User extends TenantBaseEntity extends BaseEntity`, so a top-level import of it would evaluate
+ * `user.entity` while this file's `BaseEntity` is still being defined — and `class User extends
+ * TenantBaseEntity` would then extend `undefined`, which fails as "class extends value undefined is not
+ * a constructor or null" the moment anything imports an entity before the registry. Reaching it through
+ * the `entities/internal` barrel closed a second loop for the same reason: the barrel re-exports this
+ * file's `BaseEntity`, which is what the entities it pulls in while loading are waiting for.
+ *
+ * The three readers below are relation callbacks, and both ORMs invoke those while building metadata —
+ * long after every module has loaded — so the module is required from the callbacks instead of at the
+ * top of the file. Nothing else in this file reads it.
+ */
+type UserEntity = typeof import('../../user/user.entity').User;
+const userEntity = (): UserEntity => require('../../user/user.entity').User;
 
 /**
  * Abstract base class for dynamically assigning properties.
@@ -107,7 +123,7 @@ export abstract class BaseEntityActionByUser extends AccessTimestamps {
 	/**
 	 * The user who created the record.
 	 */
-	@MultiORMManyToOne(() => User, {
+	@MultiORMManyToOne(() => userEntity(), {
 		nullable: true, // Indicates if relation column value can be nullable.
 		onDelete: 'CASCADE' // Database cascade action on update.
 	})
@@ -124,7 +140,7 @@ export abstract class BaseEntityActionByUser extends AccessTimestamps {
 	/**
 	 * The user who last updated the record.
 	 */
-	@MultiORMManyToOne(() => User, {
+	@MultiORMManyToOne(() => userEntity(), {
 		nullable: true, // Allows the relation column to be null if no updater is specified.
 		onDelete: 'CASCADE' // Cascades the delete operation if the related User is removed.
 	})
@@ -141,7 +157,7 @@ export abstract class BaseEntityActionByUser extends AccessTimestamps {
 	/**
 	 * The user who performed the deletion.
 	 */
-	@MultiORMManyToOne(() => User, {
+	@MultiORMManyToOne(() => userEntity(), {
 		nullable: true, // Indicates if relation column value can be nullable.
 		onDelete: 'CASCADE' // Database cascade action on update.
 	})

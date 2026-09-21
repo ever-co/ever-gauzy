@@ -3,7 +3,7 @@ import { HTTP_CODE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { Observable, from, lastValueFrom } from 'rxjs';
-import type { ID } from '@gauzy/contracts';
+import type { ID, JsonData } from '@gauzy/contracts';
 import { executionRequest, executionResponse, readRequestHeader, setResponseHeader } from '../core/context/execution-context.util';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
@@ -243,12 +243,15 @@ export class IdempotencyInterceptor implements NestInterceptor {
 		try {
 			result = await lastValueFrom(next.handle());
 		} catch (error) {
-			// The key is settled as failed with the status the caller saw, so a retry of a request the
-			// server already refused is answered with that refusal instead of being run again. A
-			// caller that wants a fresh attempt uses a fresh key.
+			// The key is settled as failed with the status the caller saw **and the body it saw**, so a
+			// retry of a request the server already refused is answered with that refusal rather than with
+			// its status alone. The body is the whole reason the key stays claimed: a replayed `428` with
+			// no `code` tells a client nothing about what to change, and a client that cannot tell which
+			// refusal it met cannot act on it.
 			await this.settleQuietly(() =>
 				this.idempotencyService.fail(recordId, {
-					responseStatus: resolveErrorStatus(error)
+					responseStatus: resolveErrorStatus(error),
+					responseBody: storedErrorBody(error)
 				})
 			);
 
@@ -329,6 +332,52 @@ function resolveErrorStatus(error: unknown): number {
 	const status = (error as { getStatus?: () => number })?.getStatus?.();
 
 	return typeof status === 'number' ? status : HttpStatus.INTERNAL_SERVER_ERROR;
+}
+
+/**
+ * The body a refusal will be answered with, in the form the record stores.
+ *
+ * `HttpException.getResponse()` is what the exception filter serialises, and it is either a string —
+ * the everyday `new NotFoundException('CART_NOT_FOUND: …')` spelling — or the structured body a caller
+ * raised with `new ApiException(status, code, message, details)`. Both belong in the record: what a
+ * replayed refusal has to carry is the code, because that is what a client switches on.
+ *
+ * A thrown value that is not an HTTP exception carries no body of its own — the filter builds one for
+ * it — so nothing is stored and the replay keeps the status alone, which is exactly what it did before
+ * this. The same storage cap applies as for a successful response, so a refusal with a huge body cannot
+ * put more in the table than a success can.
+ *
+ * @param error What the handler threw.
+ * @returns The body to record, or undefined when the error carries none.
+ */
+function storedErrorBody(error: unknown): JsonData | undefined {
+	const response = (error as { getResponse?: () => unknown })?.getResponse?.();
+
+	if (response === undefined || response === null) {
+		return undefined;
+	}
+
+	const envelope: Record<string, unknown> =
+		typeof response === 'string' ? { message: response } : { ...(response as Record<string, unknown>) };
+
+	// `code` and `details` are **not** in `getResponse()`: the exception filter adds them when it renders
+	// the envelope, so an interceptor that stored only the response would keep a refusal a client cannot
+	// branch on — which is the whole reason the row keeps a body at all. Read from the exception itself,
+	// where `ApiException` declares them.
+	const code = (error as { code?: unknown })?.code;
+	const details = (error as { details?: unknown })?.details;
+
+	if (typeof code === 'string') {
+		envelope.code = code;
+	}
+
+	if (details !== undefined) {
+		envelope.details = details;
+	}
+
+	const { stored } = serializeResponseForStorage(envelope);
+
+	return stored;
 }
 
 /**
