@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { DecimalString } from './money.model';
 
 /**
  * The cart family.
@@ -130,8 +131,8 @@ export interface ICommerceCartLine extends IBasePerTenantAndOrganizationEntityMo
 	sku?: string;
 	thumbnail?: string;
 	quantity: number;
-	unitPrice: number;
-	originalUnitPrice: number;
+	unitPrice: CartMoneyAmount;
+	originalUnitPrice: CartMoneyAmount;
 	isTaxInclusive: boolean;
 	taxCategoryId?: ID;
 	isDiscountable: boolean;
@@ -145,13 +146,25 @@ export interface ICommerceCartLine extends IBasePerTenantAndOrganizationEntityMo
 }
 
 /**
+ * A money amount on a cart, stated exactly or as a number.
+ *
+ * The GraphQL schema types every money field `Decimal`, whose own definition promises that "a money
+ * value read here and the same value read over REST are string-identical" — and the REST DTOs typed
+ * the same fields `number`, so the two surfaces described two different wire formats for one field
+ * and a client generated from the OpenAPI document could not share a money type with one generated
+ * from the SDL. Both forms are carried here for the same reason the DTOs accept both: the exact
+ * decimal string is what the schema promises, and the number is what every existing caller sends.
+ */
+export type CartMoneyAmount = DecimalString | number;
+
+/**
  * A delivery choice held against a cart.
  */
 export interface ICommerceCartShippingMethod extends IBasePerTenantAndOrganizationEntityModel {
 	cartId: ID;
 	shippingOptionId?: ID;
 	name: string;
-	amount: number;
+	amount: CartMoneyAmount;
 	isTaxInclusive: boolean;
 	data?: Record<string, unknown>;
 	isManual: boolean;
@@ -168,7 +181,7 @@ export interface ICommerceCartPromotion extends IBasePerTenantAndOrganizationEnt
 	promotionId?: ID;
 	couponId?: ID;
 	code?: string;
-	amount: number;
+	amount: CartMoneyAmount;
 	isAutomatic: boolean;
 	appliedAt?: Date;
 }

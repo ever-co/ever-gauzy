@@ -41,6 +41,11 @@ jest.mock('@gauzy/core', () => {
 		Permissions: decorator,
 		PermissionGuard: class {},
 		TenantPermissionGuard: class {},
+		// The feature gate the resolvers gained when the platform flag was applied across the GraphQL
+		// surface. It was missing from this double, and `@UseGuards` — which is Nest's own, not one of
+		// the no-ops above — refuses an `undefined` guard at decoration time, so the whole file failed
+		// to load rather than failing an assertion.
+		FeatureFlagGuard: class {},
 		UseGuards: decorator,
 		MultiORMEntity: decorator,
 		MultiORMColumn: decorator,

@@ -1,3 +1,4 @@
+import { DecimalAmount } from '../shared/is-decimal-amount.validator';
 import { JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
@@ -94,14 +95,14 @@ export class CommerceCartLine extends TenantOrganizationBaseEntity implements IC
 	@IsNotEmpty()
 	@IsNumber()
 	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, transformer: new ColumnNumericTransformerPipe() })
-	unitPrice: number;
+	unitPrice: DecimalAmount;
 
 	/** The pre-discount price, kept so a struck-through price can be shown. */
 	@ApiProperty({ type: () => Number })
 	@IsNotEmpty()
 	@IsNumber()
 	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, transformer: new ColumnNumericTransformerPipe() })
-	originalUnitPrice: number;
+	originalUnitPrice: DecimalAmount;
 
 	/** Whether `unitPrice` is a gross. An inclusive line is normalised to net before totals are summed. */
 	@ApiPropertyOptional({ type: () => Boolean })

@@ -7,6 +7,8 @@ import {
 	ID,
 	IPagination,
 	ICommerceCart,
+	ICommerceCartLine,
+	ICommerceCartShippingMethod,
 	OrderChangeStatus,
 	OrderStatus
 } from '@gauzy/contracts';
@@ -111,7 +113,12 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 * @returns The placed and confirmed order.
 	 */
 	public async createFromCart(
-		cart: ICommerceCart & { lines?: DeepPartial<OrderLine>[]; shippingMethods?: DeepPartial<OrderShippingMethod>[] },
+		// The lines this receives are *cart* lines, and typing them as partial order lines was a
+		// convenience that stopped being true the moment the two shapes diverged: a cart's money members
+		// accept the exact decimal string the GraphQL schema promises, and an order line's are numbers.
+		// Naming the shape it is actually handed is what lets the conversion below be the one place the
+		// two vocabularies meet.
+		cart: ICommerceCart & { lines?: ICommerceCartLine[]; shippingMethods?: ICommerceCartShippingMethod[] },
 		options: { idempotencyKey?: string; source?: string; parentOrderId?: ID } = {}
 	): Promise<Order> {
 		if (cart.orderId) {

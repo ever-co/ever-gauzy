@@ -216,7 +216,7 @@ describe('TotalsCalculator', () => {
 		expect(totals.grandTotal).toBe(20);
 	});
 
-	it('counts only negative ledger rows as a discount', () => {
+	it('counts only negative ledger rows as a discount, and charges the positive ones', () => {
 		const totals = TotalsCalculator.compute(
 			context({
 				lines: [line('L1', 1, 20)],
@@ -228,9 +228,83 @@ describe('TotalsCalculator', () => {
 
 		expect(totals.itemDiscountTotal).toBe(0);
 		expect(totals.discountTotal).toBe(0);
-		// The chain has no term for a line fee on its own, so the total is unchanged; what matters
-		// here is that the fee was not booked as a discount.
-		expect(totals.grandTotal).toBe(20);
+		// The fee is charged. This case previously asserted `grandTotal === 20` on the grounds that
+		// "the chain has no term for a line fee" — which was the defect rather than the contract: a
+		// `FEE` row of `+2.50` was written into the ledger, echoed back on the adjustment routes, and
+		// then dropped from every total, so the customer paid 2.50 less than the ledger said. The rule
+		// the case was really covering — a fee is not a discount — is asserted above and unchanged.
+		expect(totals.itemSubtotal).toBe(22.5);
+		expect(totals.grandTotal).toBe(22.5);
+	});
+
+	it('charges a fee owned by the document itself', () => {
+		// `AdjustmentOwnerType.CART` is documented as "an order-level discount, a fee, a rounding
+		// correction". Nothing read those rows at all: the chain consumed the line and shipping
+		// ledgers only, so a cash-on-delivery fee against the cart was stored and charged to nobody.
+		const totals = TotalsCalculator.compute(
+			context({
+				lines: [line('L1', 1, 20)],
+				documentAdjustments: [adjustment('CART', 3), adjustment('CART', -1)]
+			})
+		);
+
+		expect(totals.itemSubtotal).toBe(23);
+		expect(totals.itemDiscountTotal).toBe(1);
+		expect(totals.discountTotal).toBe(1);
+		expect(totals.grandTotal).toBe(22);
+	});
+
+	it('charges a positive rounding correction on a shipping method', () => {
+		// A `ROUNDING` adjustment is explicitly allowed to go either way, and the positive direction
+		// is the one that lets a cash-rounded paid total reach the grand total.
+		const totals = TotalsCalculator.compute(
+			context({
+				lines: [line('L1', 1, 10)],
+				shippingMethods: [{ id: 'S1', amount: 5, isTaxInclusive: false }],
+				shippingAdjustments: [adjustment('S1', 0.02), adjustment('S1', -1)]
+			})
+		);
+
+		expect(totals.shippingSubtotal).toBe(5.02);
+		expect(totals.shippingDiscountTotal).toBe(1);
+		expect(totals.grandTotal).toBe(14.02);
+	});
+
+	it('keeps the parts of an unevenly divisible fee summing to the whole', () => {
+		// A 0.10 fee split three ways divides evenly in no scale the currency has. The parts are
+		// allocated by largest remainder, so they sum back to the whole exactly, and the totals chain
+		// has to carry all three without losing the odd minor unit: 0.04 + 0.03 + 0.03 = 0.10.
+		const parts = Money.of(0.1, USD, 2).allocate([1, 1, 1]);
+
+		expect(parts.map((part) => Number(part.toStorageString()))).toEqual([0.04, 0.03, 0.03]);
+
+		const totals = TotalsCalculator.compute(
+			context({
+				lines: [line('L1', 1, 10), line('L2', 1, 10), line('L3', 1, 10)],
+				lineAdjustments: parts.map((part, index) =>
+					adjustment(`L${index + 1}`, Number(part.toStorageString()))
+				)
+			})
+		);
+
+		expect(totals.itemSubtotal).toBe(30.1);
+		expect(totals.grandTotal).toBe(30.1);
+		// The naive alternative — a third of ten cents rounded per line — loses a cent, which is the
+		// whole reason the allocation exists.
+		expect([0.03, 0.03, 0.03].reduce((sum, part) => sum + part, 0)).not.toBe(0.1);
+	});
+
+	it('refuses a total the column cannot carry without losing a digit', () => {
+		// `numeric(20,6)` holds fourteen integer digits; a double holds fifteen significant ones, so an
+		// amount inside the column's declared range can still be past the double's. Three lines of
+		// 33333333333333.33 total exactly 99999999999999.99 in decimal arithmetic, and the conversion
+		// to a `number` silently rewrites that as ...98. `assertSettled` cannot see the loss, because
+		// each component loses different digits and they still agree with each other; the write is
+		// refused instead of being stored as an approximation.
+		expect(Number('99999999999999.99')).toBe(99999999999999.98);
+		expect(() =>
+			TotalsCalculator.compute(context({ lines: [line('L1', 3, 33333333333333.33)] }))
+		).toThrow(/TOTALS_PRECISION_LOST/);
 	});
 
 	it('uses the net part an inclusive adjustment carries rather than its gross', () => {

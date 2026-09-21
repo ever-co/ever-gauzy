@@ -1,3 +1,4 @@
+import { DecimalAmount } from '../shared/is-decimal-amount.validator';
 import { JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
@@ -65,7 +66,7 @@ export class CommerceCartPromotion extends TenantOrganizationBaseEntity implemen
 	@IsNotEmpty()
 	@IsNumber()
 	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, transformer: new ColumnNumericTransformerPipe() })
-	amount: number;
+	amount: DecimalAmount;
 
 	/** True when the promotion applied without a code being entered. */
 	@ApiPropertyOptional({ type: () => Boolean })
