@@ -51,8 +51,13 @@ jest.mock('@gauzy/core', () => {
 			currentTenantId: () => null,
 			currentOrganizationId: () => null,
 			currentEmployeeId: () => null,
-			hasPermission: () => false
-		}
+			hasPermission: () => false,
+			hasRoles: () => false
+		},
+		// The source connection asks which ORM is configured before it reads; the double answers
+		// TypeORM, which is the arm these suites exercise through their in-memory connection.
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
+		getORMType: () => 'typeorm'
 	};
 });
 
@@ -66,7 +71,7 @@ jest.mock('@gauzy/config', () => ({
 	}
 }));
 
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import {
 	ISearchIndexRegistration,
 	SearchFieldKind,
@@ -78,6 +83,7 @@ import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { DatabaseSearchProvider } from '../providers/database-search.provider';
 import { SearchProviderRegistry } from '../providers/search-provider.registry';
 import { SearchIndexerService } from './search-indexer.service';
+import { SearchSourceConnection } from './search-source.connection';
 import { SearchService, decodeCursor, encodeCursor } from './search.service';
 
 /**
@@ -164,18 +170,53 @@ function closingIndex(expression: string, start: number): number {
 	return -1;
 }
 
-/** The text a document holds in one of the columns a token predicate reads. */
+/**
+ * The text a document holds in one of the columns a token predicate reads.
+ *
+ * The token list is a JSON array on every dialect — `@JsonArrayColumn` resolves to `jsonb`, `json` or
+ * a `simple-json` text column — so the double renders it the way the column really holds it. It used
+ * to join the tokens with commas, which is the shape the provider's old token predicate assumed and
+ * exactly why that predicate matched nothing against a real database.
+ */
 function textOf(doc: Row, column: string): string {
 	const value = doc[column];
 
-	return Array.isArray(value) ? value.join(',') : String(value ?? '');
+	return Array.isArray(value) ? JSON.stringify(value) : String(value ?? '');
 }
 
-/** A `LIKE` pattern, as the provider builds it. */
+/**
+ * A `LIKE` pattern, as the provider builds it.
+ *
+ * `%` and `_` are wildcards, `!` escapes either of them and itself, and the provider states
+ * `ESCAPE '!'` on every fragment whose pattern came from a caller. Modelling the escape is what makes
+ * "a caller who types `%` cannot enumerate the index" a statement about the predicate rather than
+ * about the double.
+ */
 function like(value: string, pattern: string): boolean {
-	const expression = String(pattern ?? '')
-		.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-		.replace(/%/g, '.*');
+	const text = String(pattern ?? '');
+	let expression = '';
+
+	for (let index = 0; index < text.length; index += 1) {
+		const character = text[index];
+
+		if (character === '!' && index + 1 < text.length) {
+			expression += text[index + 1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			index += 1;
+			continue;
+		}
+
+		if (character === '%') {
+			expression += '[\\s\\S]*';
+			continue;
+		}
+
+		if (character === '_') {
+			expression += '[\\s\\S]';
+			continue;
+		}
+
+		expression += character.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	}
 
 	return new RegExp(`^${expression}$`).test(String(value ?? '').toLowerCase());
 }
@@ -190,10 +231,23 @@ function like(value: string, pattern: string): boolean {
  * @throws Error when the fragment is one this double does not model, rather than answering wrongly.
  */
 function evaluate(sql: string, doc: Row, params: Row): boolean {
-	const expression = sql.trim();
+	// Every caller-supplied pattern carries the provider's escape clause. It belongs to the `LIKE` and
+	// not to the predicate's structure, so it is removed before the shape is read.
+	const expression = sql.trim().replace(/\s+ESCAPE\s+'!'/g, '');
 
 	if (/^doc\.deletedAt IS NULL$/.test(expression)) {
 		return !doc.deletedAt;
+	}
+
+	if (/^doc\.tenantId IS NULL$/.test(expression)) {
+		// A read with no resolved tenant narrows to the genuinely tenant-less rows rather than dropping
+		// the predicate and matching every tenant's documents.
+		return !doc.tenantId;
+	}
+
+	if (expression === '1 = 0') {
+		// The branch a range filter takes when the connection cannot read the attribute map.
+		return false;
 	}
 
 	if (/^doc\.entity IN \(:\.\.\.scopedEntities\)$/.test(expression)) {
@@ -527,7 +581,7 @@ function searchFixture(
 
 	const provider = new DatabaseSearchProvider(documentRepository, indexRegistry);
 	const providerRegistry = new SearchProviderRegistry(provider);
-	const indexer = new SearchIndexerService(dataSource, indexRegistry, providerRegistry, { findOne: async () => null } as never);
+	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, { findOne: async () => null } as never);
 	const reindex = {
 		status: async (entities: string[]) => entities.map((entity) => ({ entity, indexedCount: tables.search_document.length, pendingCount: 0 }))
 	};
@@ -1046,5 +1100,123 @@ describe('SearchService — the page it answers with (doc 05 §3.18)', () => {
 		expect(suggestions).toHaveLength(1);
 		expect(suggestions[0]).toMatchObject({ entity: 'product_variant' });
 		expect(suggestions[0].text).toContain('Blue widget');
+	});
+});
+
+describe('SearchService — the organization a search is answered inside', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
+		jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(false);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses an organization the caller is not authenticated for', async () => {
+		// The defect: `organizationId` is a declared, optional member of both public request shapes, and
+		// it used to be the only organization predicate the read carried. A caller in organization X
+		// could ask for organization Y and receive the indexed titles, bodies, keywords and highlight
+		// fragments of an organization it has no membership in.
+		const fixture = searchFixture();
+
+		await indexAll(fixture);
+
+		await expect(
+			fixture.service.search({ q: 'blue', entities: ['product_variant'], organizationId: 'another-organization' })
+		).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(
+			fixture.service.suggest({ q: 'blue', entities: ['product_variant'], organizationId: 'another-organization' })
+		).rejects.toBeInstanceOf(ForbiddenException);
+	});
+
+	it('accepts the organization the credential already carries, which is the membership check', async () => {
+		// `lastOrganizationId` is set by the JWT strategy only after the user's membership is verified,
+		// so restating it is a narrowing that agrees with the credential rather than a choice.
+		const fixture = searchFixture();
+
+		await indexAll(fixture);
+
+		const page = await fixture.service.search({ q: 'blue', entities: ['product_variant'], organizationId: ORG });
+
+		expect(page.items.length).toBeGreaterThan(0);
+	});
+
+	it('lets a tenant super administrator narrow to another of the tenant’s organizations', async () => {
+		// The documented exception, and the same one `TenantPermissionGuard` makes: the role is
+		// tenant-scoped, the tenant predicate still applies, and moving between the tenant's
+		// organizations is the workflow the role exists for.
+		jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(true);
+
+		const fixture = searchFixture();
+
+		await indexAll(fixture);
+
+		await expect(
+			fixture.service.search({ q: 'blue', entities: ['product_variant'], organizationId: 'another-organization' })
+		).resolves.toMatchObject({ items: [] });
+	});
+});
+
+describe('SearchService — a caller’s wildcard is a character, not a wildcard', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('does not let a term of one percent sign enumerate the whole index', async () => {
+		// The defect: `%` and `_` are wildcards inside the *value* of a LIKE, and the term went in
+		// unescaped — `q=%` produced `LIKE '%%%'`, which matches every document in scope, so the term
+		// filter was bypassed wholesale and the index could be read out a page at a time.
+		const fixture = searchFixture();
+
+		await indexAll(fixture);
+
+		const everything = await fixture.service.search({ q: 'blue', entities: ['product_variant'] });
+		const wildcard = await fixture.service.search({ q: '%', entities: ['product_variant'] });
+
+		expect(everything.total).toBeGreaterThan(0);
+		expect(wildcard.total).toBe(0);
+	});
+});
+
+describe('SearchService — a channel-scoped search reads the token the builder actually wrote', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('matches the channel token as one element of the JSON array, not as part of a comma-joined string', async () => {
+		// The defect: the token predicate was written for a scalar `a,b,c` column — `= 'x'`, `LIKE 'x,%'`,
+		// `LIKE '%,x'`, `LIKE '%,x,%'` — while the builder writes a JSON array. None of those four
+		// patterns can match `["channelid:channel-1"]`, so a channel-scoped search returned nothing for
+		// every tenant on every dialect.
+		const fixture = searchFixture();
+
+		await indexAll(fixture);
+		fixture.tables.search_document[0].keywords = [
+			...(fixture.tables.search_document[0].keywords ?? []),
+			'channelid:channel-1'
+		];
+
+		const inChannel = await fixture.service.search({
+			q: 'blue',
+			entities: ['product_variant'],
+			channelId: 'Channel-1'
+		});
+		const elsewhere = await fixture.service.search({
+			q: 'blue',
+			entities: ['product_variant'],
+			channelId: 'channel-2'
+		});
+
+		expect(inChannel.total).toBe(1);
+		expect(elsewhere.total).toBe(0);
 	});
 });

@@ -55,14 +55,16 @@ interface IPageArgs {
  * for a REST call, and the service removes an entity the caller may not read before the merge rather
  * than after it.
  *
- * **The chain is the controller's, and the tenant guard is first because it was missing.** `SearchController`
- * carries `@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)`; this class carried only
- * the last two, so over GraphQL a caller that stated a `Tenant-Id` header naming a tenant other than the
- * one its own credential was issued for was never compared against it. `TenantBaseGuard` is what performs
- * that comparison for an operation (`tenant-base.guard.ts`, `canActivateGraphqlOperation`), and a
- * resolver that does not run it is a resolver the same header can be pointed at another tenant through.
- * The guard is stated first for the same reason it is first on the route: a caller that states the wrong
- * tenant is refused as a tenancy problem before its grants are consulted.
+ * **The guard chain is the controller's, in full.** `TenantPermissionGuard` used to be missing here
+ * and on the definition resolver, and those two were the only surfaces on the branch without it —
+ * their own REST counterpart carries all three (`search.controller.ts`). The two guards are not
+ * interchangeable: `PermissionGuard` checks the caller's *role* grants and asserts nothing about the
+ * tenant, while `TenantPermissionGuard` refuses a request with no resolved tenant outright, verifies
+ * the tenant row itself, runs the separate *tenant*-level grant lookup that decides whether the tenant
+ * was ever given the capability, and carries the super-administrator short circuit. Without it a
+ * caller whose tenant was never granted search could run these fields although the identical REST
+ * route refused them, and a super administrator authorised on `GET /api/search` was refused on the
+ * GraphQL `search` field — a parity break in both directions on one capability.
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
  * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the

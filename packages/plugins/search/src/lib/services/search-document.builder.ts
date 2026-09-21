@@ -351,6 +351,17 @@ export function buildAttributes(
 			continue;
 		}
 
+		if (value instanceof Date) {
+			// A `Date` is an object, and the guard below dropped it — so a declared `DATE` field never
+			// reached the attribute map at all and every date filter, sort and facet addressed an
+			// attribute that was not there. It is written as the ISO-8601 string the rest of the
+			// pipeline is built around: the provider compares dates as text because ISO-8601 text
+			// compares chronologically, and `toSearchText` renders a date the same way.
+			attributes[field.name] = value.toISOString();
+
+			continue;
+		}
+
 		if (typeof value === 'object') {
 			continue;
 		}

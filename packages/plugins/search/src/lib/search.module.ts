@@ -7,6 +7,7 @@ import { SearchProviderRegistry } from './providers/search-provider.registry';
 import { SearchIndexRegistry } from './registry/search-index.registry';
 import { SearchIndexDefinitionService } from './services/search-index-definition.service';
 import { SearchIndexerService } from './services/search-indexer.service';
+import { SearchSourceConnection } from './services/search-source.connection';
 import { SearchReindexService } from './services/search-reindex.service';
 import { SearchService } from './services/search.service';
 import { SearchIndexDefinitionResolver } from './graphql/resolvers/search-index-definition.resolver';
@@ -51,6 +52,11 @@ import { SearchResolver } from './graphql/resolvers/search.resolver';
 		SearchIndexRegistry,
 		SearchProviderRegistry,
 		DatabaseSearchProvider,
+		// The connection the source rows are read through, over whichever ORM the installation
+		// selected. Both ORMs' root modules are global and both connections are started on every boot,
+		// so both are injected optionally and the configured one reads; see the class for what used to
+		// happen under `DB_ORM=mikro-orm`.
+		SearchSourceConnection,
 		// The pipeline and the two read models.
 		SearchIndexerService,
 		SearchReindexService,
@@ -71,7 +77,8 @@ import { SearchResolver } from './graphql/resolvers/search.resolver';
 		SearchReindexService,
 		SearchIndexDefinitionService,
 		SearchIndexRegistry,
-		SearchProviderRegistry
+		SearchProviderRegistry,
+		SearchSourceConnection
 	]
 })
 export class SearchPluginModule {}

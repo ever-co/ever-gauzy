@@ -46,8 +46,13 @@ jest.mock('@gauzy/core', () => {
 			currentTenantId: () => null,
 			currentOrganizationId: () => null,
 			currentEmployeeId: () => null,
-			hasPermission: () => false
-		}
+			hasPermission: () => false,
+			hasRoles: () => false
+		},
+		// The source connection asks which ORM is configured before it reads; the double answers
+		// TypeORM, which is the arm these suites exercise through their in-memory connection.
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
+		getORMType: () => 'typeorm'
 	};
 });
 
@@ -68,7 +73,9 @@ import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { DatabaseSearchProvider } from '../providers/database-search.provider';
 import { SearchProviderRegistry } from '../providers/search-provider.registry';
 import { SearchIndexerService } from './search-indexer.service';
+import { SearchSourceConnection } from './search-source.connection';
 import { SearchReindexService } from './search-reindex.service';
+import { SEARCH_SETTING_DEFAULTS } from '../search.settings';
 
 /**
  * The reindex job: rebuild the index from the source rows, in batches, without stopping the API
@@ -118,6 +125,14 @@ function matches(row: Row, where: any = {}): boolean {
 					return (
 						row[field] !== undefined && new Date(row[field]).getTime() >= new Date(operator._value as any).getTime()
 					);
+				case 'lessThan':
+					// The stale-document count compares the definition version a document was stamped with
+					// against the one the sweep wrote, which is the one read the version column exists for.
+					return row[field] !== undefined && Number(row[field]) < Number(operator._value);
+				case 'moreThan':
+					// The sweeps page by a cursor on the row's own id rather than by an offset, because the
+					// set an offset counts into is the set they are shrinking.
+					return row[field] !== undefined && String(row[field]) > String(operator._value);
 				default:
 					throw new Error(`the in-memory double does not implement the "${operator._type}" operator`);
 			}
@@ -262,6 +277,11 @@ function reindexFixture(
 				);
 			}
 
+			if (order?.id === 'ASC') {
+				// The order the cursor paging depends on: a cursor is only monotonic over a total order.
+				found = [...found].sort((left, right) => String(left.id).localeCompare(String(right.id)));
+			}
+
 			if (skip) {
 				found = found.slice(skip);
 			}
@@ -320,7 +340,7 @@ function reindexFixture(
 
 	const provider = new DatabaseSearchProvider(documentRepository, indexRegistry);
 	const providerRegistry = new SearchProviderRegistry(provider);
-	const indexer = new SearchIndexerService(dataSource, indexRegistry, providerRegistry, { findOne: async () => null } as never);
+	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, { findOne: async () => null } as never);
 	const definitionService = {
 		findFor: async (entity: string) => (seed.definitions ?? []).find((row) => row.entity === entity) ?? null
 	};
@@ -568,5 +588,176 @@ describe('SearchReindexService — dropping an index (doc 12)', () => {
 		const fixture = reindexFixture();
 
 		await expect(fixture.service.drop('nothing_declares_this')).rejects.toThrow(/holds no documents/);
+	});
+
+	it('leaves another tenant’s documents of the same entity alone', async () => {
+		// The defect: neither the read nor the `softDelete` carried a tenant, so an operator in tenant A
+		// dropping an entity's index emptied tenant B's index for the same entity.
+		const fixture = reindexFixture();
+
+		await fixture.service.run({ scope: SearchReindexScope.ALL } as never);
+		fixture.tables.search_document.push(foreignDocument());
+
+		const dropped = await fixture.service.drop('product_variant');
+
+		expect(dropped.deletedCount).toBe(2);
+		expect(fixture.documents().some((document) => document.id === 'foreign')).toBe(true);
+	});
+
+	it('leaves another tenant’s documents alone when one channel is dropped', async () => {
+		const fixture = reindexFixture();
+
+		await fixture.service.run({ scope: SearchReindexScope.ALL } as never);
+		fixture.tables.search_document.push(foreignDocument());
+
+		const dropped = await fixture.service.drop('product_variant', CHANNEL);
+
+		expect(dropped.deletedCount).toBe(1);
+		expect(fixture.documents().some((document) => document.id === 'foreign')).toBe(true);
+	});
+});
+
+/**
+ * One document of another tenant, carrying the same entity, the same source id and the same channel
+ * token as the fixture's own — which is exactly the row an unscoped drop used to take with it.
+ *
+ * @returns The document row.
+ */
+function foreignDocument(): Row {
+	return {
+		id: 'foreign',
+		entity: 'product_variant',
+		entityId: 'v1',
+		title: 'A document of another tenant',
+		body: null,
+		keywords: [`channelid:${CHANNEL}`],
+		attributes: null,
+		tenantId: 'another-tenant',
+		organizationId: ORG,
+		definitionVersion: 1,
+		indexedAt: new Date('2026-01-01T00:00:00.000Z')
+	};
+}
+
+/**
+ * Runs a body with a smaller reindex batch, so a paging defect is reproducible in a handful of rows
+ * rather than in five hundred.
+ *
+ * The settings object is the documented fallback the services are written against, and a test that
+ * needs a different page size has to state it somewhere; overriding it here and restoring it
+ * afterwards keeps the override out of every other suite.
+ *
+ * @param size The batch size to run with.
+ * @param body The test body.
+ */
+async function withBatchSize(size: number, body: () => Promise<void>): Promise<void> {
+	const original = SEARCH_SETTING_DEFAULTS.reindexBatchSize;
+
+	Object.defineProperty(SEARCH_SETTING_DEFAULTS, 'reindexBatchSize', {
+		value: size,
+		configurable: true,
+		writable: true
+	});
+
+	try {
+		await body();
+	} finally {
+		Object.defineProperty(SEARCH_SETTING_DEFAULTS, 'reindexBatchSize', {
+			value: original,
+			configurable: true,
+			writable: true
+		});
+	}
+}
+
+describe('SearchReindexService — what a paged sweep must not do to the documents it just wrote', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('keeps the documents of an id-scoped run whose id set fills exactly one batch', async () => {
+		// The defect: the sweep paged an id-scoped run and re-passed the whole id set on every iteration,
+		// so the second iteration read zero rows — which the indexer reads as "the sources are gone" and
+		// answers by removing the documents the first iteration had just written. A request naming
+		// exactly `reindexBatchSize` ids indexed them all and then deleted them all, and reported
+		// `{ indexed: n, removed: 0 }` while doing it.
+		await withBatchSize(2, async () => {
+			const fixture = reindexFixture();
+
+			const runs = await fixture.service.run({
+				scope: SearchReindexScope.ENTITY,
+				entity: 'product_variant',
+				ids: ['v1', 'v2']
+			} as never);
+
+			expect(runs[0]).toMatchObject({ indexed: 2, removed: 0 });
+			expect(
+				fixture
+					.documents()
+					.map((document) => document.entityId)
+					.sort()
+			).toEqual(['v1', 'v2']);
+		});
+	});
+
+	it('examines every document when removing orphans, including the ones a shrinking page pushed back', async () => {
+		// The defect: the orphan sweep paged with an offset over a set it was simultaneously shrinking. A
+		// page that soft-deleted rows dropped them out of the `deletedAt IS NULL` predicate, so the next
+		// offset stepped over exactly that many unexamined documents — whose sources could be long gone
+		// while they kept being returned as hits.
+		await withBatchSize(2, async () => {
+			const fixture = reindexFixture({
+				variants: [variantRow('v1'), variantRow('v2'), variantRow('v3'), variantRow('v4')]
+			});
+
+			await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+			expect(fixture.documents()).toHaveLength(4);
+
+			// The first two sources disappear, so the first page is entirely orphans and everything after
+			// it shifts back by two.
+			fixture.tables.product_variant = fixture.tables.product_variant.filter(
+				(row) => row.id !== 'v1' && row.id !== 'v2'
+			);
+
+			const runs = await fixture.service.run({
+				scope: SearchReindexScope.ENTITY,
+				entity: 'product_variant'
+			} as never);
+
+			expect(runs[0].removed).toBe(2);
+			expect(
+				fixture
+					.documents()
+					.map((document) => document.entityId)
+					.sort()
+			).toEqual(['v3', 'v4']);
+		});
+	});
+
+	it('reports the removals a sweep performed rather than dropping them on the floor', async () => {
+		const fixture = reindexFixture();
+
+		await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+		fixture.tables.product_variant = fixture.tables.product_variant.filter((row) => row.id !== 'v2');
+
+		const runs = await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+
+		expect(runs[0].removed).toBe(1);
+	});
+
+	it('reads the version column it stamps, so a finished rebuild is distinguishable from a half-finished one', async () => {
+		// `definitionVersion` was written by every writer and compared by nothing, and the schema carries
+		// `(entity, definitionVersion, indexedAt)` for exactly this read.
+		const fixture = reindexFixture({
+			definitions: [{ entity: 'product_variant', version: 4, isActive: true }]
+		});
+
+		const runs = await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+
+		expect(runs[0].stale).toBe(0);
+		expect(fixture.documents().every((document) => document.definitionVersion === 4)).toBe(true);
 	});
 });

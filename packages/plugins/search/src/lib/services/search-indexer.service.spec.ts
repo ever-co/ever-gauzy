@@ -48,8 +48,13 @@ jest.mock('@gauzy/core', () => {
 			currentTenantId: () => null,
 			currentOrganizationId: () => null,
 			currentEmployeeId: () => null,
-			hasPermission: () => false
-		}
+			hasPermission: () => false,
+			hasRoles: () => false
+		},
+		// The source connection asks which ORM is configured before it reads; the double answers
+		// TypeORM, which is the arm these suites exercise through their in-memory connection.
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
+		getORMType: () => 'typeorm'
 	};
 });
 
@@ -70,6 +75,7 @@ import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { DatabaseSearchProvider } from '../providers/database-search.provider';
 import { SearchProviderRegistry } from '../providers/search-provider.registry';
 import { SearchIndexerService } from './search-indexer.service';
+import { SearchSourceConnection } from './search-source.connection';
 
 /**
  * The write half of the index: a platform event, or a range of source rows, becomes documents
@@ -177,7 +183,16 @@ const sourceRow = (id: string, overrides: Row = {}) => ({
  *
  * @param seed What the fixture holds.
  */
-function searchFixture(seed: { rows?: Row[]; documents?: Row[]; channels?: Row[]; engineKey?: string | null; mapPivot?: boolean } = {}) {
+function searchFixture(
+	seed: {
+		rows?: Row[];
+		documents?: Row[];
+		channels?: Row[];
+		engineKey?: string | null;
+		version?: number;
+		mapPivot?: boolean;
+	} = {}
+) {
 	let sequence = 0;
 	const tables = {
 		product_variant: [...(seed.rows ?? [sourceRow('v1')])],
@@ -280,7 +295,13 @@ function searchFixture(seed: { rows?: Row[]; documents?: Row[]; channels?: Row[]
 		}
 	};
 	const definitionRepository: any = {
-		findOne: async () => (seed.engineKey ? { entity: 'product_variant', engineKey: seed.engineKey } : null)
+		// The persisted half of a declaration carries the engine an installation chose *and* the version
+		// an operator's edits have reached, and the live path needs both: the engine selects the provider
+		// and the version is what the document is stamped with.
+		findOne: async () =>
+			seed.engineKey || seed.version
+				? { entity: 'product_variant', engineKey: seed.engineKey ?? null, version: seed.version ?? 1 }
+				: null
 	};
 
 	const indexRegistry = new SearchIndexRegistry(dataSource);
@@ -289,7 +310,7 @@ function searchFixture(seed: { rows?: Row[]; documents?: Row[]; channels?: Row[]
 
 	indexRegistry.register(DECLARATION);
 
-	const indexer = new SearchIndexerService(dataSource, indexRegistry, providerRegistry, definitionRepository);
+	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, definitionRepository);
 
 	return {
 		indexer,
@@ -546,6 +567,83 @@ describe('SearchIndexerService — turning an aggregate name into an entity key 
 		expect(fixture.indexer.entityKeyOf('Invoice')).toBeUndefined();
 		expect(fixture.indexer.entityKeyOf('')).toBeUndefined();
 		expect(fixture.indexer.entityKeyOf(undefined as never)).toBeUndefined();
+	});
+
+	it('maps the SCREAMING_SNAKE aggregate type the outbox rows on this branch actually carry', () => {
+		// The producers write `aggregateType: 'PRODUCT_VARIANT'` (see the entitlement, marketplace and
+		// seller services), while a declaration names the table and a class is `ProductVariant`. All
+		// three are the same entity, and the third spelling used to resolve to nothing at all — so the
+		// consumer would have answered `undefined` for every event the dispatcher handed it.
+		expect(searchFixture().indexer.entityKeyOf('PRODUCT_VARIANT')).toBe('product_variant');
+		expect(searchFixture().indexer.entityKeyOf('product-variant')).toBe('product_variant');
+	});
+});
+
+describe('SearchIndexerService — what the delivery path owes the index', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('stamps the declaration’s real version on a document an event rebuilt', async () => {
+		// The defect: the live path passed no version at all, so every event-driven write stamped the
+		// default `1`. The first ordinary update after a re-weighting rewrote a document the sweep had
+		// just stamped at version 3 back down to 1, and the column the reindex index exists to read
+		// stopped identifying stale documents.
+		const fixture = searchFixture({ version: 5 });
+
+		await fixture.indexer.handleEvent({
+			name: 'product_variant.updated',
+			aggregate: { type: 'ProductVariant', id: 'v1' },
+			tenantId: TENANT,
+			organizationId: ORG
+		} as never);
+
+		expect(fixture.documents()[0].definitionVersion).toBe(5);
+	});
+
+	it('removes only the copies of a document this tenant and this engine own', async () => {
+		// A document is keyed by `(tenant, entity, entityId, engine)`. The removal used to name two of
+		// those four, so a `product.deleted` event took out every tenant's document for the same source
+		// id and an external engine's rows for the same product as well.
+		const fixture = searchFixture();
+
+		await fixture.indexer.index('product_variant', { tenantId: TENANT });
+		fixture.tables.search_document.push({
+			id: 'foreign',
+			entity: 'product_variant',
+			entityId: 'v1',
+			title: 'The same source, indexed by another tenant',
+			tenantId: 'another-tenant',
+			organizationId: ORG,
+			engineKey: null
+		});
+
+		await fixture.indexer.handleEvent({
+			name: 'product_variant.deleted',
+			aggregate: { type: 'ProductVariant', id: 'v1' },
+			tenantId: TENANT
+		} as never);
+
+		expect(fixture.documents().map((document) => document.id)).toEqual(['foreign']);
+	});
+
+	it('does not read an empty page of a paged run as a deletion', async () => {
+		// The defect: an empty page is only a deletion when it is the *first* page. A paged run
+		// re-passes the whole id set on every iteration, so the page after the last one is empty for the
+		// ordinary reason that the rows have all been read — and treating that as "the sources are gone"
+		// soft-deleted everything the run had just written.
+		const fixture = searchFixture();
+
+		await fixture.indexer.index('product_variant', { ids: ['v1'] });
+		expect(fixture.documents()).toHaveLength(1);
+
+		const outcome = await fixture.indexer.index('product_variant', { ids: ['v1'], skip: 1, take: 1 });
+
+		expect(outcome).toMatchObject({ indexed: 0, removed: 0 });
+		expect(fixture.documents()).toHaveLength(1);
 	});
 });
 
