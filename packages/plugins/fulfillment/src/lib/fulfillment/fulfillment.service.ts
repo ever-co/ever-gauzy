@@ -490,10 +490,22 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			});
 		}
 
-		await this.update(fulfillment.id, {
-			status: to,
-			version: Number(fulfillment.version ?? 1) + 1
-		} as any);
+		// The status and the version move in one statement, predicated on the version this read saw.
+		//
+		// Computing the next version here and writing it through the generic update made the transition
+		// check the only thing standing between two callers: both read the same row, both passed the check
+		// against the same status, and whichever wrote second silently erased the first — with a version
+		// number that said nothing about what it had overwritten. The conditional write refuses that
+		// second caller with the conflict instead, and `version` is set by the helper, not here.
+		await commitVersionedUpdate<Fulfillment>(this, {
+			id: fulfillment.id,
+			expectation: { wildcard: false, versions: [Number(fulfillment.version ?? 1)] },
+			patch: { status: to },
+			where: {
+				...(fulfillment.tenantId ? { tenantId: fulfillment.tenantId } : {}),
+				...(fulfillment.organizationId ? { organizationId: fulfillment.organizationId } : {})
+			}
+		});
 
 		return { fulfillment: await this.findOneByIdString(fulfillment.id), moved: true };
 	}
