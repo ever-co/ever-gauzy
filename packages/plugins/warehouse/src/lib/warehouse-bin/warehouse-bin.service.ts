@@ -3,10 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, In, Repository } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
 import {
+	commitVersionedUpdate,
 	prepareSQLQuery,
 	RequestContext,
 	TenantAwareCrudService,
 	toPositionalStatement,
+	versionExpectationOf,
 	Warehouse
 } from '@gauzy/core';
 import { WarehouseZone } from '../warehouse-zone/warehouse-zone.entity';
@@ -58,6 +60,51 @@ const RECONCILIATION_REASON = 'RECONCILIATION';
 /** The key a bin caches its derived balances under, and the key the instant they were read at. */
 const BIN_BALANCES_KEY = 'balances';
 const BIN_BALANCE_UPDATED_AT_KEY = 'balanceUpdatedAt';
+
+/**
+ * The version a request accepted, as the kernel states it.
+ *
+ * `versionExpectationOf` answers with the kernel's own shape; the two members are restated here
+ * because that interface is not part of this package's public surface and these writes read nothing
+ * else from it — whether the caller accepted any existing version, and which versions it named.
+ */
+type TVersionExpectation = { wildcard: boolean; versions: number[] };
+
+/**
+ * Any version the row currently holds.
+ *
+ * A caller that stated no precondition has no decision for a version to protect, so the write is
+ * predicated on the version this service read a moment earlier rather than on nothing at all. That
+ * is still a conditional write: a concurrent editor that moved the row between the read and the
+ * statement is refused instead of overwritten, which is the whole difference from the unpredicated
+ * `UPDATE … WHERE id = ?` these three writes used to issue.
+ */
+const ANY_VERSION: TVersionExpectation = { wildcard: true, versions: [] };
+
+/**
+ * The version the current request accepted, when it accepted one.
+ *
+ * A versioned route leaves what the caller stated on the request, and the write reads it from there
+ * rather than parsing the header again, so the value the guard validated is the value the `UPDATE`
+ * is predicated on. A request that carries none — a route that did not opt in, a worker, a seed —
+ * states no precondition. `versionExpectationOf` is the kernel's reader and refuses a request that
+ * states nothing, which is exactly the case this treats as "the caller accepted no version".
+ *
+ * @returns The accepted version, or undefined when the caller accepted none.
+ */
+function acceptedVersionExpectation(): TVersionExpectation | undefined {
+	const request = RequestContext.currentRequest();
+
+	if (!request) {
+		return undefined;
+	}
+
+	try {
+		return versionExpectationOf(request) as TVersionExpectation;
+	} catch {
+		return undefined;
+	}
+}
 
 /**
  * The positions inside a location: the tree, the closure it is walked through, and the count that
@@ -201,9 +248,20 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * historical pick that named it, and moving physical shelving is modelled by deactivating the old
 	 * position and creating a new one.
 	 *
+	 * The write is the platform's conditional one. It used to be a read followed by
+	 * `super.update(id, { …, version: bin.version + 1 })` — an `UPDATE … WHERE id = ?` with the next
+	 * version computed in application code and no predicate at all — so two operators holding the same
+	 * reading of a position both wrote, both claimed the version they had computed, and the first
+	 * change was erased with nobody told. `commitVersionedUpdate` predicates the statement on the
+	 * version this method read and increments it in the same statement, so the second write matches no
+	 * row and is answered with a conflict.
+	 *
 	 * @param id The bin to update.
-	 * @param entity The fields to change.
+	 * @param entity The fields to change. A `version` carried in the body is not written: the
+	 * statement's own predicate is the only writer of that column.
 	 * @returns The updated bin.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the position moved past the version this
+	 * update was computed from.
 	 */
 	public async update(id: ID, entity: Partial<WarehouseBin>): Promise<WarehouseBin> {
 		const bin = await this.findOneScoped(id);
@@ -235,13 +293,19 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			);
 		}
 
-		await super.update(id, {
-			...entity,
+		// The version a caller put in the body is a precondition it states, never a column it writes:
+		// keeping it out of the patch is what stops a payload from moving the row past the version the
+		// statement below is predicated on.
+		const changes: Record<string, unknown> = { ...(entity as Record<string, unknown>) };
+
+		delete changes.version;
+
+		await this.commitBinUpdate(bin, {
+			...changes,
 			warehouseId: bin.warehouseId,
 			zoneId: bin.zoneId,
-			parentId: bin.parentId,
-			version: (bin.version ?? 1) + 1
-		} as any);
+			parentId: bin.parentId
+		});
 
 		return await this.findOneScoped(id);
 	}
@@ -455,10 +519,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			}
 		}
 
-		await super.update(id, {
-			parentId: parentId ?? null,
-			version: (bin.version ?? 1) + 1
-		} as any);
+		await this.commitBinUpdate(bin, { parentId: parentId ?? null });
 
 		await this.relinkClosure(id, parentId ?? undefined);
 
@@ -475,11 +536,14 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @param id The bin.
 	 * @param isBlocked Whether the position is out of service.
 	 * @returns The bin.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the position moved past the version this
+	 * write was computed from — a rename that landed between the read and this statement is not a
+	 * change a block may erase.
 	 */
 	public async setBlocked(id: ID, isBlocked: boolean): Promise<WarehouseBin> {
 		const bin = await this.findOneScoped(id);
 
-		await super.update(id, { isBlocked, version: (bin.version ?? 1) + 1 } as any);
+		await this.commitBinUpdate(bin, { isBlocked });
 
 		return await this.findOneScoped(id);
 	}
@@ -704,11 +768,20 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * The write goes through the inventory capability rather than through a level this package would have
 	 * to map: the level table is not this domain's, and two writers of one level is how a level drifts.
 	 *
+	 * **A bin of another location may not be declared.** The movement path refuses exactly this — a
+	 * movement that names a bin belonging to another location is answered with `BIN_LOCATION_MISMATCH`
+	 * before anything is written — but a declaration writes no movement, so it never reached that
+	 * guard: the level row of warehouse A could be pointed at a bin standing in warehouse B, the write
+	 * succeeded, and a pick generated from that level sent a picker to an address that is not in their
+	 * building. Reconciliation could never close it either, because a bin outside the location can
+	 * never be in the partition a run over that location walks. The same refusal is therefore made
+	 * here, before the capability is asked for anything.
+	 *
 	 * @param id The bin being named.
 	 * @param input The level, or the variant and location, the declaration is about.
 	 * @returns Whether the declaration was written — false when the location does not stock the variant.
-	 * @throws BadRequestException when neither a level nor a variant and location are stated, or when no
-	 * inventory capability is registered.
+	 * @throws BadRequestException when neither a level nor a variant and location are stated, when the
+	 * bin belongs to another location, or when no inventory capability is registered.
 	 */
 	public async assignHomeBin(
 		id: ID,
@@ -725,6 +798,12 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 		if (!input?.variantId || !input?.warehouseId) {
 			throw new BadRequestException(
 				'A home bin is declared for one variant at one location: state both `variantId` and `warehouseId`.'
+			);
+		}
+
+		if (String(bin.warehouseId ?? '') !== String(input.warehouseId)) {
+			throw new BadRequestException(
+				`BIN_LOCATION_MISMATCH: bin ${bin.code} belongs to another location, so it cannot be declared as the home bin of a level at this one.`
 			);
 		}
 
@@ -1572,6 +1651,77 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 		});
 
 		return bins.map((bin) => bin.id);
+	}
+
+	/**
+	 * Writes one position under the version it was read at, or refuses.
+	 *
+	 * `commitVersionedUpdate` is the platform's conditional write: it resolves the version the caller
+	 * accepted, predicates the `UPDATE` on it and increments it in the same statement, so the
+	 * affected-row count is the whole answer and there is no window between deciding and acting. Three
+	 * writes on this service used to compute `version + 1` in application code and issue it through the
+	 * unconditional base updater — the same shape the branch notes name on `FulfillmentService.move()`
+	 * — which meant two operators editing one position from the same reading both landed, both claimed
+	 * the version they had computed, and any client holding an entity tag of that version read a row
+	 * neither write produced.
+	 *
+	 * **The tenant and the organization go in `where`, not in the patch.** That member is the kernel's
+	 * place for the scope a statement must also satisfy, and the row's own scope is what is stated
+	 * rather than the request's: a write reached from a worker or a job has no request scope to read,
+	 * and the row it is correcting still belongs to exactly one tenant.
+	 *
+	 * The kernel reaches storage through the service it is handed, and this service's own `update` is
+	 * an override that validates a caller's edit rather than a storage surface — handing it to the
+	 * kernel would re-enter the validation with a criteria object in place of an id. The adapter below
+	 * is the base class's own dual-ORM `update` and read-back, which is the surface the kernel expects,
+	 * so the statement, the conflict and the increment stay the kernel's.
+	 *
+	 * @param bin The position as it was read, which is the version the statement is predicated on.
+	 * @param patch The columns to write. `version` is the statement's own and must not be in it.
+	 * @returns The version the position now holds.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the position moved past that version, or
+	 * with `RESOURCE_NOT_FOUND` when it is gone.
+	 */
+	private async commitBinUpdate(bin: WarehouseBin, patch: Record<string, unknown>): Promise<number> {
+		const writer = {
+			update: (criteria: Record<string, unknown>, columns: Record<string, unknown>) =>
+				super.update(criteria as never, columns as never),
+			findOneByIdString: (id: ID) => super.findOneByIdString(id)
+		};
+
+		const committed = await commitVersionedUpdate(
+			writer as unknown as Parameters<typeof commitVersionedUpdate>[0],
+			{
+				id: bin.id,
+				expectation: acceptedVersionExpectation() ?? ANY_VERSION,
+				patch,
+				where: {
+					...(bin.tenantId ? { tenantId: bin.tenantId } : {}),
+					...(bin.organizationId ? { organizationId: bin.organizationId } : {})
+				},
+				// The version this service already read under its own scoped read, so the wildcard case
+				// reaches the statement without a second round trip for a value that is in hand.
+				readVersion: async () => this.readVersion(bin)
+			}
+		);
+
+		return committed.version;
+	}
+
+	/**
+	 * The counter a position holds.
+	 *
+	 * A row written before the column existed, or one whose value is unusable, is treated as being at
+	 * one — the value the column's own default gives it — so the comparison has a number to work with
+	 * rather than a gap.
+	 *
+	 * @param bin The position.
+	 * @returns The version.
+	 */
+	private readVersion(bin: WarehouseBin): number {
+		const version = Number((bin as { version?: unknown })?.version ?? 1);
+
+		return Number.isSafeInteger(version) && version > 0 ? version : 1;
 	}
 }
 

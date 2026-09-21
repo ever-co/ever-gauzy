@@ -104,6 +104,10 @@ jest.mock('@gauzy/core', () => {
 		// answer unconditionally, so a versioned write is refused here as it is refused in production.
 		commitVersionedUpdate,
 		versionExpectationOf,
+		// The exact-decimal primitives the variance and the correcting movement are computed with. The
+		// real ones, because a variance asserted against arithmetic this suite re-implemented would be
+		// a variance nobody has tested.
+		...jest.requireActual('@gauzy/core/src/lib/money/decimal'),
 		RequestContext: {
 			// The engine reads the version the current request accepted from here, and a unit test has no
 			// request: the accepted version is then absent, which is the case the engine's own
@@ -228,6 +232,11 @@ function datastore(tables: Record<string, Row[]>) {
 						return row[field] === null || row[field] === undefined;
 					case 'not':
 						return !same(row[field], expected.value);
+					// The exclusivity read states the statuses that count as open with `In([...])`, so a
+					// double that refused the operator failed every case that opens a session rather than
+					// the one case that is about exclusivity.
+					case 'in':
+						return (expected.value as unknown[]).some((candidate) => same(row[field], candidate));
 					default:
 						throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
 				}

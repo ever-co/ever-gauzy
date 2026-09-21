@@ -104,6 +104,7 @@ jest.mock(
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { print } from 'graphql';
+import { Observable, from } from 'rxjs';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { StockLevelController } from './../stock-level/stock-level.controller';
@@ -260,8 +261,54 @@ describe('StockLevelResolver — one concept, two protocols, the same names (doc
 		expect(resolverSource).toMatch(/@Query\('stockLevel'\)/);
 		expect(resolverSource).toMatch(/@Mutation\('reconcileStockLevels'\)/);
 		expect(resolverSource).toMatch(/@Subscription\('stockLevelChanged'\)/);
+		// The two derived level streams were declared in the schema and bound to nothing, so a client
+		// that subscribed to either was accepted and then never heard anything — which is the one
+		// failure a subscription cannot be told apart from a quiet warehouse.
+		expect(schemaText).toMatch(/stockLevelLow\(warehouseId: ID\): StockLevel!/);
+		expect(schemaText).toMatch(/stockLevelOutOfStock\(warehouseId: ID\): StockLevel!/);
+		expect(resolverSource).toMatch(/@Subscription\('stockLevelLow'\)/);
+		expect(resolverSource).toMatch(/@Subscription\('stockLevelOutOfStock'\)/);
 		// The availability a level derives stays a computation over the level rather than a level of its
 		// own: it is named for what it answers.
 		expect(resolverSource).toMatch(/@Query\('availableQuantity'\)/);
 	});
+
+	it('narrows a level stream to the location and the variant the subscriber asked about', async () => {
+		// The arguments are declared in the schema and were read by nothing, so a client that subscribed
+		// to one location's levels was handed every level of the tenant and had to filter them itself —
+		// the opposite of what a subscription argument is for, on the one transport where the server pays
+		// for every frame it sends.
+		const published = [
+			{ level: { warehouseId: WAREHOUSE, variantId: VARIANT, availableQuantity: 1 } },
+			{ level: { warehouseId: 'another-location', variantId: VARIANT, availableQuantity: 2 } },
+			{ level: { warehouseId: WAREHOUSE, variantId: 'another-variant', availableQuantity: 3 } }
+		];
+		const resolver = new StockLevelResolver({} as never, { ofType: () => from(published) } as never);
+
+		await expect(collect(resolver.stockLevelChanged(WAREHOUSE, VARIANT))).resolves.toEqual([
+			{ warehouseId: WAREHOUSE, variantId: VARIANT, availableQuantity: 1 }
+		]);
+		// A stream the caller narrowed to a location alone keeps every variant of it, and a caller that
+		// narrowed nothing is handed everything, which is what a nullable argument means.
+		await expect(collect(resolver.stockLevelLow(WAREHOUSE))).resolves.toHaveLength(2);
+		await expect(collect(resolver.stockLevelOutOfStock(undefined as never))).resolves.toHaveLength(3);
+	});
 });
+
+/**
+ * Reads a subscription stream to its end.
+ *
+ * @param stream The observable a subscription field answered with.
+ * @returns Everything it published, in order.
+ */
+function collect(stream: unknown): Promise<unknown[]> {
+	const seen: unknown[] = [];
+
+	return new Promise((resolve, reject) => {
+		(stream as Observable<unknown>).subscribe({
+			next: (value) => seen.push(value),
+			error: reject,
+			complete: () => resolve(seen)
+		});
+	});
+}

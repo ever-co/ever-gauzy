@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { FindManyOptions, LessThanOrEqual } from 'typeorm';
+import { EntityManager, FindManyOptions, LessThanOrEqual } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType, StockReservationReferenceType, StockReservationStatus } from './../inventory.enums';
@@ -20,6 +20,26 @@ const DEFAULT_TTL_MINUTES: Record<StockReservationReferenceType, number> = {
 	[StockReservationReferenceType.TRANSFER]: 10080,
 	[StockReservationReferenceType.SUBSCRIPTION]: 4320
 };
+
+/**
+ * The movement kind a consumed hold produces.
+ *
+ * Consuming a hold is the moment the held units physically leave, so the row it writes is a
+ * *removal* and not a release: the document that caused it is already recorded in the movement's own
+ * `referenceType`, and what the `type` column says is what happened to the stock. The ledger's
+ * vocabulary has one word for units leaving because they were sold and fulfilled — `SALE` — and one
+ * for units leaving for another location of the same network, which is what a transfer hold becomes.
+ * Everything else a hold can belong to ends with the units in a customer's hands, so `SALE` is the
+ * honest reading rather than a default.
+ *
+ * @param type The kind of document the hold belongs to.
+ * @returns The movement type the consumption is written under.
+ */
+function toConsumptionType(type: StockReservationReferenceType): StockMovementType {
+	return type === StockReservationReferenceType.TRANSFER
+		? StockMovementType.TRANSFER_OUT
+		: StockMovementType.SALE;
+}
 
 /** The reservation reference kind a movement’s provenance string maps onto. */
 function toMovementReference(type: StockReservationReferenceType): StockMovementReferenceType {
@@ -66,6 +86,17 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	 * The level row is locked by the ledger engine before the hold is written, which is what makes a
 	 * concurrent allocation safe: two carts competing for the last unit are serialised on the row,
 	 * the second one sees the first one’s reservation, and it is refused rather than oversold.
+	 *
+	 * **The availability read below is a fast-fail, and the authoritative check is the engine’s.** This
+	 * method reads the level before the transaction opens, so the values it decides on are values a
+	 * competing writer may move before the row lock is taken. That is fine for the refusals it produces
+	 * — a hold the level plainly cannot cover is worth refusing without opening a transaction — but it
+	 * cannot be the guarantee. The guarantee is `respectSafetyStock` on the movement: it makes the
+	 * engine evaluate the same rule against the values it read *under* the lock, beside every other
+	 * invariant, so two holds racing for the last sellable unit are serialised on the row and the second
+	 * one is refused. Without it the only rule running under the lock asked whether the holds fit inside
+	 * the on-hand quantity, which says nothing about the floor a count is protected by, and the buffer
+	 * was sold through with nobody told.
 	 *
 	 * The hold row and the movement that explains it are **one write**: the reservation is created
 	 * inside the transaction that moves the level, so a refusal from the engine — a hold the level may
@@ -132,6 +163,10 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 					referenceType: toMovementReference(input.referenceType),
 					referenceId: input.referenceId,
 					levelId: level?.id,
+					// A hold is a new demand on availability, so the unsellable buffer is a floor it may not
+					// consume — and that rule has to be evaluated where the level row is locked rather than
+					// against the pre-flight read above, which a competing writer can overtake.
+					respectSafetyStock: true,
 					// The caller's policy for this call travels with the movement. The level's own column is
 					// what the hold rule reads when the caller states nothing; when the caller states the
 					// policy the demand is allowed under, that is what the rule measures it against — which is
@@ -157,13 +192,80 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	}
 
 	/**
+	 * Consumes a hold: the held units leave, and the hold closes with them.
+	 *
+	 * **This is the third transition the class was written for and the one that was never written.**
+	 * `CONSUMED` is declared in the status vocabulary as "the stock actually left; a matching movement
+	 * was written in the same transaction", `consumedAt` is a column of the row, and the mutation was
+	 * declared in the composed GraphQL schema — with nothing bound to it, so a client that called it
+	 * was answered `Cannot return null for non-nullable field Mutation.consumeStockReservation` after
+	 * the document had already passed validation.
+	 *
+	 * It is not a release. A release gives the reserved quantity back to availability and leaves the
+	 * on-hand quantity where it was; a consumption removes **both**, in one movement, because the units
+	 * are gone and the hold on them is gone with them. Writing it as a release followed by a sale would
+	 * be two movements and a window in between where the units are unheld and still on the shelf, which
+	 * is exactly the window a hold exists to close.
+	 *
+	 * The movement and the status are one write, for the same reason every other transition here is:
+	 * a hold that reads `CONSUMED` while the level still counts its units would understate nothing and
+	 * oversell everything.
+	 *
+	 * @param id The hold to consume.
+	 * @param reason Machine-readable reason recorded on the ledger row.
+	 * @returns The hold, closed.
+	 * @throws ApiException with `RESERVATION_NOT_FOUND` when no hold carries the id, or with
+	 * `RESERVATION_ALREADY_CLOSED` when it is not `ACTIVE`.
+	 */
+	public async consume(id: ID, reason?: string): Promise<StockReservation> {
+		return await this.typeOrmStockReservationRepository.manager.transaction(async (manager) => {
+			const reservation = await this.requireActive(manager, id);
+			const quantity = Number(reservation.quantity);
+
+			reservation.status = StockReservationStatus.CONSUMED;
+			reservation.consumedAt = new Date();
+			const saved = await manager.save(StockReservation, reservation);
+
+			await this.stockLevelService.applyMovement(
+				{
+					warehouseId: reservation.warehouseId,
+					variantId: reservation.variantId,
+					type: toConsumptionType(reservation.referenceType),
+					quantityDelta: -quantity,
+					reservedDelta: -quantity,
+					referenceType: toMovementReference(reservation.referenceType),
+					referenceId: reservation.referenceId,
+					reason,
+					levelId: reservation.warehouseProductVariantId
+				},
+				manager
+			);
+
+			return saved;
+		});
+	}
+
+	/**
 	 * Expires every hold of a batch whose expiry has passed. Job body of the reservation expiry sweep.
 	 *
-	 * The batch is selected with a row lock where the dialect supports skipping locked rows, so two
-	 * workers running the sweep concurrently cannot both claim the same hold. The update is guarded by
-	 * the state, which turns a second claim into a no-op rather than a double release.
+	 * **Correctness is the state guard, not a row lock.** The batch is an ordinary read — no dialect the
+	 * platform runs on is asked for `FOR UPDATE SKIP LOCKED` here, and the docstring used to claim one
+	 * that the statement below never took. It does not need one: `close` refuses a hold that is not
+	 * `ACTIVE`, inside the transaction that would release it, so a hold another worker has already
+	 * closed is a refusal rather than a second release, and two sweeps running at once cannot double
+	 * count.
 	 *
-	 * @param batchSize how many holds one transaction claims; the default is the documented 500.
+	 * **What the missing lock did break was the loop, and that is fixed here.** The walk used to stop
+	 * only when a batch came back short, and a row that failed to close stayed `ACTIVE` and expired — so
+	 * two workers reading the same batch, or one row that could not be released for a real reason, made
+	 * every batch come back full of rows the sweep had already tried and the walk spent its whole budget
+	 * re-reading them: two hundred batches of five hundred `findOne`-plus-transaction round trips, with
+	 * `released` reported as zero. The walk now also stops when a batch closed nothing, because a batch
+	 * that produced no progress will produce none on the next pass either, and the rows it could not
+	 * close are named in the log rather than silently retried.
+	 *
+	 * @param batchSize how many holds one pass claims; the default is the documented 500.
+	 * @param maxBatches how many passes one sweep walks at most.
 	 * @returns how many holds were expired, and how many batches were walked.
 	 */
 	public async releaseExpired(batchSize = 500, maxBatches = 200): Promise<{ released: number; batches: number }> {
@@ -187,15 +289,34 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 			}
 
 			batches += 1;
+			let closed = 0;
+
 			for (const reservation of expired) {
 				try {
 					await this.close(reservation.id, StockReservationStatus.EXPIRED, 'EXPIRED');
 					released += 1;
+					closed += 1;
 				} catch (error) {
 					// A hold another worker closed between the read and the write is not a failure: the
-					// state guard already refused the transition, which is exactly the intent.
-					this.logger.debug(`Reservation ${reservation.id} was closed by another worker.`);
+					// state guard already refused the transition, which is exactly the intent. A hold that
+					// failed for any other reason is not a failure of the sweep either, but it is a row the
+					// next pass would read again, which is what the progress check below is about.
+					this.logger.debug(
+						`Reservation ${reservation.id} was not expired by this sweep: ${
+							(error as Error)?.message ?? error
+						}`
+					);
 				}
+			}
+
+			// A pass that closed nothing has made no progress, and the rows it read are exactly the rows
+			// the next read would return. Stopping is the difference between reporting "nothing could be
+			// expired" once and spending the whole batch budget discovering it two hundred times.
+			if (!closed) {
+				this.logger.warn(
+					`The reservation expiry sweep read ${expired.length} expired hold(s) and could close none of them; the sweep stops rather than re-reading them.`
+				);
+				break;
 			}
 
 			if (expired.length < batchSize) {
@@ -209,18 +330,34 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	/**
 	 * Pushes the expiry of every active hold of a document.
 	 *
-	 * @param referenceType kind of the owning document.
+	 * The read is narrowed to the tenant the request runs in, exactly as the expiry sweep's is: a
+	 * document id is not a secret, but a hold of another tenant is not a hold this caller may push. A
+	 * caller with no tenant — a worker, a migration, a system context — is not narrowed, which is how
+	 * every other read in this package treats one.
+	 *
+	 * The kind of document is a narrowing rather than a requirement. A document id identifies the
+	 * document; stating the kind as well narrows the holds to the ones taken under it, and stating
+	 * nothing means every active hold of that document — which is what the operator-facing route asks
+	 * for, and what it could never get while it was passing the document id as the kind.
+	 *
+	 * @param referenceType kind of the owning document, when the caller narrows it to one.
 	 * @param referenceId id of the owning document.
 	 * @param expiresAt the new expiry.
 	 * @returns how many holds were extended.
 	 */
 	public async extend(
-		referenceType: StockReservationReferenceType,
+		referenceType: StockReservationReferenceType | undefined,
 		referenceId: ID,
 		expiresAt: Date
 	): Promise<number> {
+		const tenantId = RequestContext.currentTenantId();
 		const active = await this.typeOrmStockReservationRepository.find({
-			where: { referenceType, referenceId, status: StockReservationStatus.ACTIVE } as any
+			where: {
+				...(referenceType ? { referenceType } : {}),
+				referenceId,
+				status: StockReservationStatus.ACTIVE,
+				...(tenantId ? { tenantId } : {})
+			} as any
 		});
 		for (const reservation of active) {
 			reservation.expiresAt = expiresAt;
@@ -233,6 +370,9 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	 * Re-points holds from one owner to another without changing quantities, which is how a cart’s
 	 * holds become an order’s holds at placement.
 	 *
+	 * The read is narrowed to the tenant the request runs in, for the same reason `extend`'s is: a hold
+	 * of another tenant is not a hold this caller may re-point.
+	 *
 	 * @param from the document the holds belong to today.
 	 * @param to the document they will belong to.
 	 * @param lineMap the line ids keyed by the line id they replace.
@@ -243,8 +383,14 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 		to: { referenceType: StockReservationReferenceType; referenceId: ID },
 		lineMap: Record<string, string> = {}
 	): Promise<number> {
+		const tenantId = RequestContext.currentTenantId();
 		const active = await this.typeOrmStockReservationRepository.find({
-			where: { referenceType: from.referenceType, referenceId: from.referenceId, status: StockReservationStatus.ACTIVE } as any
+			where: {
+				referenceType: from.referenceType,
+				referenceId: from.referenceId,
+				status: StockReservationStatus.ACTIVE,
+				...(tenantId ? { tenantId } : {})
+			} as any
 		});
 		for (const reservation of active) {
 			reservation.referenceType = to.referenceType;
@@ -280,23 +426,42 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	|--------------------------------------------------------------------------
 	*/
 
+	/**
+	 * Loads a hold and refuses one that has already been closed.
+	 *
+	 * The guard is inside the transaction that would close it, which is what makes a second closer a
+	 * refusal rather than a second credit — and it is stated once because both closing paths, the
+	 * release and the consumption, need exactly the same one.
+	 *
+	 * @param manager The transaction the close runs in.
+	 * @param id The hold.
+	 * @returns The hold, `ACTIVE`.
+	 * @throws ApiException with `RESERVATION_NOT_FOUND` or `RESERVATION_ALREADY_CLOSED`.
+	 */
+	private async requireActive(manager: EntityManager, id: ID): Promise<StockReservation> {
+		const reservation = await manager.findOne(StockReservation, { where: { id } });
+
+		if (!reservation) {
+			throw inventoryError(InventoryErrorCode.RESERVATION_NOT_FOUND, 'The reservation does not exist.', {
+				notFound: true,
+				details: { reservationId: id }
+			});
+		}
+		if (reservation.status !== StockReservationStatus.ACTIVE) {
+			throw inventoryError(
+				InventoryErrorCode.RESERVATION_ALREADY_CLOSED,
+				`The reservation is already ${reservation.status} and can only be closed once.`,
+				{ details: { reservationId: id, status: reservation.status } }
+			);
+		}
+
+		return reservation;
+	}
+
 	/** Closes a hold exactly once and writes the matching ledger row. */
 	private async close(id: ID, status: StockReservationStatus, reason?: string): Promise<StockReservation> {
 		return await this.typeOrmStockReservationRepository.manager.transaction(async (manager) => {
-			const reservation = await manager.findOne(StockReservation, { where: { id } });
-			if (!reservation) {
-				throw inventoryError(InventoryErrorCode.RESERVATION_NOT_FOUND, 'The reservation does not exist.', {
-					notFound: true,
-					details: { reservationId: id }
-				});
-			}
-			if (reservation.status !== StockReservationStatus.ACTIVE) {
-				throw inventoryError(
-					InventoryErrorCode.RESERVATION_ALREADY_CLOSED,
-					`The reservation is already ${reservation.status} and can only be closed once.`,
-					{ details: { reservationId: id, status: reservation.status } }
-				);
-			}
+			const reservation = await this.requireActive(manager, id);
 
 			reservation.status = status;
 			reservation.releasedAt = new Date();
@@ -332,11 +497,14 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 	}
 
 	/**
-	 * Refuses a hold that availability cannot cover.
+	 * Refuses a hold that availability cannot cover, before a transaction is opened for it.
 	 *
-	 * This is the second half of the oversell guard: the level row is locked by the ledger engine, and
-	 * this check reads the locked values, so a level that allows no backorder can never be driven
-	 * negative by concurrent allocation.
+	 * **This is the fast half of the oversell guard, not the authoritative one.** It reads the level
+	 * outside the transaction, so the numbers it decides on are numbers a competing writer may move
+	 * before the row lock is taken; it exists so a hold the level plainly cannot cover is refused
+	 * cheaply, with the two quantities that decided it. The half that cannot be overtaken is the ledger
+	 * engine's own rule, which `reserve` asks for with `respectSafetyStock` and which reads the values
+	 * under the lock.
 	 */
 	private assertAvailable(level: WarehouseProductVariant | null, quantity: number, allowBackorder?: boolean): void {
 		if (!level) {
