@@ -135,7 +135,7 @@ export class OfficialHolidayService extends TenantAwareCrudService<OfficialHolid
 	 * written by a caller who no longer has any claim on it. Naming the authorized organization in the
 	 * criteria closes that: `TenantAwareCrudService.update()` resolves an object criteria through
 	 * `findOneByWhereOptions()`, which 404s when nothing matches, and the same predicate then lands in the
-	 * UPDATE's own WHERE.
+	 * UPDATE's own WHERE, so a row that moves after that read is simply not matched.
 	 *
 	 * @param id the holiday to update
 	 * @param partialEntity the fields to change
@@ -148,8 +148,18 @@ export class OfficialHolidayService extends TenantAwareCrudService<OfficialHolid
 		partialEntity: QueryDeepPartialEntity<OfficialHoliday>
 	): Promise<OfficialHoliday | UpdateResult> {
 		const organizationId = await this.authorizedOrganizationOf(await super.findOneByIdString(id));
+		const criteria = { id, organizationId } as FindOptionsWhere<OfficialHoliday>;
 
-		return super.update({ id, organizationId } as FindOptionsWhere<OfficialHoliday>, partialEntity);
+		const result = await super.update(criteria, partialEntity);
+
+		// A zero count cannot be read as "it moved" on its own: MySQL reports rows CHANGED rather than rows
+		// matched, so a PUT that writes the values the row already holds reports zero as well. Ask instead —
+		// this only costs a query in the zero case, and `findOneByWhereOptions()` raises the 404 itself.
+		if (result && 'affected' in result && result.affected === 0) {
+			await this.findOneByWhereOptions(criteria);
+		}
+
+		return result;
 	}
 
 	/**

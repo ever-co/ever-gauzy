@@ -220,6 +220,26 @@ describe('OfficialHolidayService by-id organization scope', () => {
 		expect(repository.update).not.toHaveBeenCalled();
 	});
 
+	it('refuses an update whose holiday moved after the re-read, so the write matched nothing', async () => {
+		repository.update.mockResolvedValue({ affected: 0, raw: [] });
+		// Present for the re-read that precedes the write, gone by the time we ask again.
+		repository.findOneBy.mockResolvedValueOnce({ id: HOLIDAY_ID }).mockResolvedValueOnce(null);
+
+		await expect(service.update(HOLIDAY_ID, { name: 'Renamed' } as any)).rejects.toBeInstanceOf(NotFoundException);
+	});
+
+	it('accepts an update that changed nothing, which MySQL also reports as zero rows', async () => {
+		// MySQL counts rows CHANGED, not matched, so rewriting a field with its current value reports zero.
+		// The row is still ours, so that must not become a 404.
+		repository.update.mockResolvedValue({ affected: 0, raw: [] });
+
+		await expect(service.update(HOLIDAY_ID, { name: 'Christmas Day' } as any)).resolves.toEqual({
+			affected: 0,
+			raw: []
+		});
+		expect(repository.findOneBy).toHaveBeenCalledTimes(2);
+	});
+
 	it('refuses a delete whose holiday was re-parented between the check and the write', async () => {
 		// The organization predicate is on the DELETE, so the row that moved is simply not matched.
 		repository.delete.mockResolvedValue({ affected: 0, raw: [] });
