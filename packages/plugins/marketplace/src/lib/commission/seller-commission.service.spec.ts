@@ -10,6 +10,10 @@
  */
 jest.mock('@gauzy/core', () => ({
 	Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+	// The decimal comparison the commission bands are decided by is the kernel's own, so the double
+	// hands over the real one: a comparison doubled here would agree with the service about arithmetic
+	// the platform never performs.
+	compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 	RequestContext: {
 		currentUser: () => null,
 		currentUserId: () => null,
@@ -359,6 +363,53 @@ describe('SellerCommissionService — the band boundaries of a graduated schedul
 				resolved({ basis: CommissionBasis.TIERED_AMOUNT, tiers: [{ from: 0, to: 100, rate: '0.12' }], rate: '0' })
 			)
 		).toThrow(/no band containing/);
+	});
+
+	it('places a line by the exact digits of its basis, never by the double the basis parses into', () => {
+		// A `numeric(20,6)` column used at its declared width. `Number('10000000000.000001')` **is**
+		// `10000000000.000002` — the two are one double — so the old comparison read the basis as equal to
+		// the upper band's lower bound and gave the line the band above the one it belongs to. The rate is
+		// then snapshotted onto the ledger row and is a fact from that point on, so a seller is charged the
+		// wrong commission permanently and nothing anywhere reports it.
+		const boundary = 10000000000.000002;
+		const tiers: ICommissionTier[] = [
+			{ from: 0, to: boundary, rate: '0.12' },
+			{ from: boundary, to: null, rate: '0.09' }
+		];
+
+		expect(Number('10000000000.000001')).toBe(boundary);
+
+		const outcome = service.compute(
+			lineInput({
+				grossAmount: '10000000000.000001',
+				taxAmount: '0.00',
+				sellerDiscountAmount: '0.00',
+				quantity: '1'
+			}),
+			resolved({ basis: CommissionBasis.TIERED_AMOUNT, tiers, rate: '0' })
+		);
+
+		// Below the boundary by one millionth, so the lower band's rate is the one that applies.
+		expect(outcome.rate).toBe('0.120000');
+	});
+
+	it('partitions a schedule by exact comparison, so two boundaries a double cannot tell apart are two', () => {
+		// The boundaries are stated as exact decimals here. `ICommissionTier` types them as `number` today,
+		// which is the remaining half of this defect and lives in `@gauzy/contracts`: a schedule whose
+		// bands meet below a double's resolution cannot be *expressed* through that type, so the widening
+		// to `DecimalString | number` is what makes the gap below reachable from a real tenant's data. The
+		// comparison itself is already exact, which is what this pins.
+		const exact = [
+			{ from: '0', to: '10000000000.000001', rate: '0.12' },
+			{ from: '10000000000.000002', to: null, rate: '0.09' }
+		] as unknown as ICommissionTier[];
+		const partition = [
+			{ from: '0', to: '10000000000.000001', rate: '0.12' },
+			{ from: '10000000000.000001', to: null, rate: '0.09' }
+		] as unknown as ICommissionTier[];
+
+		expect(() => service.assertTiers(exact)).toThrow(/gap or an overlap/);
+		expect(() => service.assertTiers(partition)).not.toThrow();
 	});
 });
 

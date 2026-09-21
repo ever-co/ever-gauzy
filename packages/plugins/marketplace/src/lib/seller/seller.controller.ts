@@ -58,14 +58,15 @@ export class SellerController extends CrudController<Seller> {
 	/**
 	 * Reads one seller, by id or by its code.
 	 *
+	 * @param request The request.
 	 * @param idOrCode The seller id or code.
 	 * @returns The seller.
 	 */
 	@ApiOperation({ summary: 'Read one seller account' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Seller retrieved successfully', type: Seller })
 	@Get('/:idOrCode')
-	async findOne(@Param('idOrCode') idOrCode: string): Promise<Seller> {
-		return this.sellerService.getSeller(idOrCode);
+	async findOne(@Req() request: any, @Param('idOrCode') idOrCode: string): Promise<Seller> {
+		return this.sellerService.getSeller(idOrCode, this.scope(request));
 	}
 
 	/**
@@ -114,14 +115,15 @@ export class SellerController extends CrudController<Seller> {
 	/**
 	 * Submits a draft application for review.
 	 *
+	 * @param request The request.
 	 * @param id The seller id.
 	 * @returns The seller, in `SUBMITTED`.
 	 */
 	@ApiOperation({ summary: 'Submit a seller application for review' })
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
 	@Post('/:id/submit')
-	async submit(@Param('id', UUIDValidationPipe) id: ID): Promise<Seller> {
-		return this.sellerService.submit(id);
+	async submit(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<Seller> {
+		return this.sellerService.submit(id, this.scope(request));
 	}
 
 	/**
@@ -159,14 +161,15 @@ export class SellerController extends CrudController<Seller> {
 	/**
 	 * Activates an approved seller, which is the only act that lets it trade.
 	 *
+	 * @param request The request.
 	 * @param id The seller id.
 	 * @returns The seller, in `ACTIVE`.
 	 */
 	@ApiOperation({ summary: 'Activate an approved seller' })
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
 	@Post('/:id/activate')
-	async activate(@Param('id', UUIDValidationPipe) id: ID): Promise<Seller> {
-		return this.sellerService.activate(id);
+	async activate(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<Seller> {
+		return this.sellerService.activate(id, this.scope(request));
 	}
 
 	/**
@@ -179,8 +182,12 @@ export class SellerController extends CrudController<Seller> {
 	@ApiOperation({ summary: 'Suspend a seller' })
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
 	@Post('/:id/suspend')
-	async suspend(@Param('id', UUIDValidationPipe) id: ID, @Body() body: { reason: string }): Promise<Seller> {
-		return this.sellerService.suspend(id, body?.reason);
+	async suspend(
+		@Req() request: any,
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() body: { reason: string }
+	): Promise<Seller> {
+		return this.sellerService.suspend(id, body?.reason, this.scope(request));
 	}
 
 	/**
@@ -192,8 +199,8 @@ export class SellerController extends CrudController<Seller> {
 	@ApiOperation({ summary: 'Reinstate a suspended seller' })
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
 	@Post('/:id/reinstate')
-	async reinstate(@Param('id', UUIDValidationPipe) id: ID): Promise<Seller> {
-		return this.sellerService.reinstate(id);
+	async reinstate(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<Seller> {
+		return this.sellerService.reinstate(id, this.scope(request));
 	}
 
 	/**
@@ -264,10 +271,14 @@ export class SellerController extends CrudController<Seller> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Balance retrieved successfully' })
 	@Get('/:id/balance')
 	async balance(
+		@Req() request: any,
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query('currency') currency?: string
 	): Promise<ISellerBalance> {
-		const seller = await this.sellerService.getSeller(id);
+		// The scope is enforced on the read of the seller rather than on the figure: a balance is summed
+		// from the seller's own ledger rows, so a caller that may not read the seller may not read the sum
+		// either, and refusing at the row is what keeps the two answers from diverging.
+		const seller = await this.sellerService.getSeller(id, this.scope(request));
 
 		return this.sellerService.getBalance(seller, currency ?? seller.payoutCurrency ?? 'USD');
 	}

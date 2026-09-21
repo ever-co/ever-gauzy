@@ -88,19 +88,23 @@ export class SellerTransactionController extends CrudController<SellerTransactio
 	@ApiResponse({ status: 200, description: 'Reconciliation produced successfully' })
 	@Get('/reconciliation')
 	async reconciliation(
+		@Req() request: any,
 		@Query('from') from?: string,
 		@Query('to') to?: string,
 		@Query('sellerId') sellerId?: ID,
 		@Query('orderId') orderId?: ID,
 		@Query('onlyMismatched') onlyMismatched?: string
 	): Promise<IPagination<ISellerSplitReconciliation>> {
-		return this.sellerTransactionService.reconcile({
-			from: from ? new Date(from) : undefined,
-			to: to ? new Date(to) : undefined,
-			sellerId,
-			orderId,
-			onlyMismatched: onlyMismatched === 'true'
-		});
+		return this.sellerTransactionService.reconcile(
+			{
+				from: from ? new Date(from) : undefined,
+				to: to ? new Date(to) : undefined,
+				sellerId,
+				orderId,
+				onlyMismatched: onlyMismatched === 'true'
+			},
+			this.scope(request)
+		);
 	}
 
 	/**
@@ -167,6 +171,7 @@ export class SellerTransactionController extends CrudController<SellerTransactio
 	 * instead. The key stays optional because the row is advanced, never re-amounted, so the second
 	 * write converges on the same status.
 	 *
+	 * @param request The request.
 	 * @param id The row id.
 	 * @param body The note.
 	 * @returns The row, in `SETTLEABLE`.
@@ -175,13 +180,18 @@ export class SellerTransactionController extends CrudController<SellerTransactio
 	@Permissions(PermissionsEnum.SELLER_TRANSACTIONS_SETTLE)
 	@Idempotent({ scope: 'seller.transaction.settle', required: false, resourceType: 'seller_transaction' })
 	@Post('/:id/settle')
-	async settle(@Param('id', UUIDValidationPipe) id: ID, @Body() body: { note?: string }): Promise<SellerTransaction> {
-		return this.sellerTransactionService.settle(id, body?.note);
+	async settle(
+		@Req() request: any,
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() body: { note?: string }
+	): Promise<SellerTransaction> {
+		return this.sellerTransactionService.settle(id, body?.note, this.scope(request));
 	}
 
 	/**
 	 * Holds a row out of payouts.
 	 *
+	 * @param request The request.
 	 * @param id The row id.
 	 * @param body The reason and the note.
 	 * @returns The row, in `HELD`.
@@ -190,10 +200,11 @@ export class SellerTransactionController extends CrudController<SellerTransactio
 	@Permissions(PermissionsEnum.SELLER_TRANSACTIONS_SETTLE)
 	@Post('/:id/hold')
 	async hold(
+		@Req() request: any,
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() body: { reason: SellerHoldReason; note?: string }
 	): Promise<SellerTransaction> {
-		return this.sellerTransactionService.hold(id, body?.reason, body?.note);
+		return this.sellerTransactionService.hold(id, body?.reason, body?.note, this.scope(request));
 	}
 
 	/**

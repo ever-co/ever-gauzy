@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere, In, IsNull } from 'typeorm';
+import { FindOptionsWhere, In, IsNull, Not } from 'typeorm';
 import {
 	CurrencyCode,
 	DecimalString,
@@ -166,8 +166,11 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	 * Runs the payout pass for the sellers whose schedule is due.
 	 *
 	 * The run decides, per seller and currency, and it is idempotent by construction rather than by
-	 * memory: a transaction can sit in at most one live payout line, and one period cannot produce two
-	 * payouts for the same seller and currency, so a scheduler that fires twice pays nobody twice.
+	 * memory: a transaction can sit in at most one live payout line, one period cannot produce two
+	 * payouts for the same seller and currency — `hasPayoutForPeriod` is what makes that second claim
+	 * true rather than only stated — and a seller is only considered at all when its own schedule says
+	 * this pass is its moment. A scheduler that fires twice therefore pays nobody twice, and a pass that
+	 * runs more often than a seller's schedule does not silently replace that schedule with its own.
 	 *
 	 * @param input The period, the optional sellers and currency, and whether to only report.
 	 * @returns What the run decided for each seller, whether or not it created a payout.
@@ -223,6 +226,21 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 				continue;
 			}
 
+			if (await this.hasPayoutForPeriod(seller, currency, { periodStart: input.periodStart, periodEnd: input.periodEnd })) {
+				// The pass already covered this window for this seller and currency. Reporting it is what
+				// makes a double-fired scheduler visible instead of silent — and it is reported before the
+				// dry-run branch, because "what this pass would pay" for a window already covered is nothing.
+				results.push({
+					sellerId: seller.id as ID,
+					currency,
+					balance: balance.toStorageString(),
+					reserveAmount: reserve.toStorageString(),
+					payable: payable.toStorageString(),
+					skippedReason: 'PERIOD_ALREADY_PAID'
+				} as ISellerPayoutRunResult);
+				continue;
+			}
+
 			if (input.dryRun) {
 				results.push({
 					sellerId: seller.id as ID,
@@ -259,11 +277,12 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	 * Approves a payout.
 	 *
 	 * @param id The payout id.
+	 * @param scope The caller's seller scope.
 	 * @returns The payout, in `APPROVED`.
 	 * @throws ConflictException when the payout is not awaiting approval.
 	 */
-	async approve(id: ID): Promise<SellerPayout> {
-		const payout = await this.getPayout(id);
+	async approve(id: ID, scope?: ISellerScope): Promise<SellerPayout> {
+		const payout = await this.getPayout(id, scope);
 
 		if (payout.status === SellerPayoutStatus.APPROVED) {
 			return payout;
@@ -289,6 +308,7 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	 *
 	 * @param id The payout id.
 	 * @param result What the provider reported.
+	 * @param scope The caller's seller scope.
 	 * @returns The updated payout.
 	 * @throws ConflictException when the payout is already paid or canceled.
 	 */
@@ -301,9 +321,10 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 			feeAmount?: DecimalString;
 			failureCode?: string;
 			failureReason?: string;
-		}
+		},
+		scope?: ISellerScope
 	): Promise<SellerPayout> {
-		const payout = await this.getPayout(id);
+		const payout = await this.getPayout(id, scope);
 
 		if (payout.status === SellerPayoutStatus.PAID || payout.status === SellerPayoutStatus.CANCELED) {
 			// A paid payout is a fact. The honest representation of a mistake is a compensating entry,
@@ -399,11 +420,16 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	 *
 	 * @param id The payout id.
 	 * @param reason Why it was canceled.
+	 * @param scope The caller's seller scope.
 	 * @returns The payout and how many rows were released.
 	 * @throws ConflictException when the payout has been paid.
 	 */
-	async cancel(id: ID, reason: string): Promise<{ payout: SellerPayout; releasedTransactionCount: number }> {
-		const payout = await this.getPayout(id);
+	async cancel(
+		id: ID,
+		reason: string,
+		scope?: ISellerScope
+	): Promise<{ payout: SellerPayout; releasedTransactionCount: number }> {
+		const payout = await this.getPayout(id, scope);
 
 		if (payout.status === SellerPayoutStatus.PAID) {
 			throw new ConflictException('A paid payout is not canceled; a refund is written as a reversal row instead.');
@@ -460,11 +486,12 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	 * Re-drives a failed payout by returning it to the approved state it can be executed from.
 	 *
 	 * @param id The payout id.
+	 * @param scope The caller's seller scope.
 	 * @returns The payout, in `APPROVED`.
 	 * @throws ConflictException when the payout did not fail.
 	 */
-	async retry(id: ID): Promise<SellerPayout> {
-		const payout = await this.getPayout(id);
+	async retry(id: ID, scope?: ISellerScope): Promise<SellerPayout> {
+		const payout = await this.getPayout(id, scope);
 
 		if (payout.status !== SellerPayoutStatus.FAILED) {
 			throw new ConflictException(`A payout in ${payout.status} is not retryable.`);
@@ -512,8 +539,25 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 
 		const rows = await this.transactionRepository.find({ where, order: { occurredAt: 'ASC' } as any });
 
+		if (rows.length === 0) {
+			return [];
+		}
+
+		// The exclusion is computed from the lines of *these* rows, in *this* organization. It used to read
+		// the whole `seller_payout_line` table with no predicate at all — no tenant, no organization, no
+		// seller, no restriction to the transactions under consideration — and `run()` calls this method
+		// once per due seller, so a pass over five hundred sellers performed five hundred full-table reads
+		// and built a Set of every payout line the installation had ever written, five hundred times. It
+		// also pulled other tenants' payout lines into the process, which is the one thing every other read
+		// in this class is careful not to do.
 		const live = await this.lineRepository.find({
-			where: { deletedAt: IsNull() } as FindOptionsWhere<SellerPayoutLine>
+			where: {
+				deletedAt: IsNull(),
+				sellerTransactionId: In(rows.map((row) => row.id)),
+				tenantId: seller.tenantId,
+				organizationId: seller.organizationId
+			} as FindOptionsWhere<SellerPayoutLine>,
+			select: ['sellerTransactionId'] as any
 		});
 		const alreadyPaidIn = new Set(live.map((line) => String(line.sellerTransactionId)));
 
@@ -563,33 +607,158 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 		}
 
 		const sellers = await this.sellerRepository.find({ where });
+		const due: Seller[] = [];
 
-		return sellers.filter((seller) => this.isDue(seller));
+		for (const seller of sellers) {
+			// Sequential rather than concurrent: the lookup is one indexed read per seller and a pass is a
+			// background job, so the predictable load is worth more here than the wall time.
+			if (await this.isDue(seller)) {
+				due.push(seller);
+			}
+		}
+
+		return due;
 	}
 
 	/**
 	 * Whether a seller's schedule makes this pass a payout moment.
 	 *
+	 * This used to answer `true` for every schedule but `MANUAL`, on the argument that "the balance and
+	 * threshold checks below are what actually hold a payout back, so a pass that runs too often pays
+	 * nothing extra". That argument does not survive `writePayout`, which marks the transactions it covers
+	 * `SETTLED`: each pass therefore pays whatever accrued since the previous one, so a `MONTHLY` seller
+	 * on a daily pass received roughly thirty payouts a month instead of one. Each is a separate provider
+	 * transfer with its own fee, which `recordExecution` subtracts from the seller's own paid amount — so
+	 * the seller's configured schedule was silently replaced by the pass frequency and the seller absorbed
+	 * the difference in transfer fees.
+	 *
+	 * The predicate is therefore stated against the seller's own last payout: a seller that has never been
+	 * paid is due, and a seller that has is due once its schedule's period has elapsed since that payout
+	 * was scheduled. `THRESHOLD` is the one schedule with no period — it is due at every pass and
+	 * `isBelowThreshold` is what holds it back, which is what the schedule means.
+	 *
 	 * @param seller The seller.
+	 * @param now The moment the pass is running at.
 	 * @returns True when the schedule is due.
 	 */
-	private isDue(seller: Seller): boolean {
+	private async isDue(seller: Seller, now: Date = new Date()): Promise<boolean> {
 		switch (seller.payoutSchedule) {
 			case SellerPayoutSchedule.MANUAL:
 				// A manual seller is paid when an operator asks, and never by a pass.
 				return false;
-			case SellerPayoutSchedule.DAILY:
-			case SellerPayoutSchedule.WEEKLY:
-			case SellerPayoutSchedule.BI_WEEKLY:
-			case SellerPayoutSchedule.SEMI_MONTHLY:
-			case SellerPayoutSchedule.MONTHLY:
 			case SellerPayoutSchedule.THRESHOLD:
-			default:
-				// The caller decides which schedule values this pass considers; the balance and threshold
-				// checks below are what actually hold a payout back, so a pass that runs too often pays
-				// nothing extra.
+				// A threshold seller has no period: it is paid when its balance crosses the threshold, which
+				// is the check the run already applies to every seller.
 				return true;
+			default:
+				break;
 		}
+
+		const last = await this.lastScheduledPayout(seller);
+
+		if (!last?.scheduledAt) {
+			// A seller with no payout behind it is due on the first pass that sees it, whatever its period.
+			return true;
+		}
+
+		return now.getTime() >= this.nextDueAt(new Date(last.scheduledAt), seller.payoutSchedule).getTime();
+	}
+
+	/**
+	 * The seller's most recent payout that still counts as one.
+	 *
+	 * A canceled payout is excluded because cancelling releases its lines back to settleable: the money it
+	 * covered was never paid, so it cannot hold the next pass back.
+	 *
+	 * @param seller The seller.
+	 * @returns The payout, or null when the seller has never been paid.
+	 */
+	private async lastScheduledPayout(seller: Seller): Promise<SellerPayout | null> {
+		return this.typeOrmSellerPayoutRepository.findOne({
+			where: {
+				sellerId: seller.id,
+				tenantId: seller.tenantId,
+				organizationId: seller.organizationId,
+				status: Not(SellerPayoutStatus.CANCELED)
+			} as FindOptionsWhere<SellerPayout>,
+			order: { scheduledAt: 'DESC' } as any
+		});
+	}
+
+	/**
+	 * The moment a schedule next falls due after a payout was scheduled.
+	 *
+	 * The periods are the ones `SellerService.nextPayoutAt` promises a seller in its statement, so the
+	 * date the platform tells a seller to expect and the date the pass acts on are the same arithmetic
+	 * rather than two independent readings of one policy.
+	 *
+	 * @param from The moment the previous payout was scheduled at.
+	 * @param schedule The seller's schedule.
+	 * @returns The next due moment.
+	 */
+	private nextDueAt(from: Date, schedule: SellerPayoutSchedule): Date {
+		const next = new Date(from.getTime());
+
+		switch (schedule) {
+			case SellerPayoutSchedule.DAILY:
+				next.setDate(next.getDate() + 1);
+				return next;
+			case SellerPayoutSchedule.WEEKLY:
+				next.setDate(next.getDate() + 7);
+				return next;
+			case SellerPayoutSchedule.BI_WEEKLY:
+				next.setDate(next.getDate() + 14);
+				return next;
+			case SellerPayoutSchedule.SEMI_MONTHLY:
+				// The 1st and the 16th, which is what "twice a month" means to a finance function.
+				return next.getDate() < 16
+					? new Date(next.getFullYear(), next.getMonth(), 16)
+					: new Date(next.getFullYear(), next.getMonth() + 1, 1);
+			case SellerPayoutSchedule.MONTHLY:
+				return new Date(next.getFullYear(), next.getMonth() + 1, 1);
+			default:
+				// A schedule this method does not know is due immediately rather than never: a seller is not
+				// left unpaid by a value nobody taught the pass about.
+				return next;
+		}
+	}
+
+	/**
+	 * Whether the seller already has a live payout covering exactly this period and currency.
+	 *
+	 * `run()`'s own docstring claims "one period cannot produce two payouts for the same seller and
+	 * currency", and nothing enforced it: the "at most one live payout line per transaction" constraint
+	 * stops the same *rows* being paid twice, but a scheduler that double-fires between two settlements
+	 * would still open a second payout over the same window. The check is only applied where the caller
+	 * states a window, because a pass without one is not claiming to cover a period at all.
+	 *
+	 * @param seller The seller.
+	 * @param currency The payout currency.
+	 * @param period The window the pass is covering.
+	 * @returns True when a payout for that window already exists.
+	 */
+	private async hasPayoutForPeriod(
+		seller: Seller,
+		currency: CurrencyCode,
+		period: { periodStart?: Date; periodEnd?: Date }
+	): Promise<boolean> {
+		if (!period.periodStart || !period.periodEnd) {
+			return false;
+		}
+
+		const existing = await this.typeOrmSellerPayoutRepository.findOne({
+			where: {
+				sellerId: seller.id,
+				currency,
+				periodStart: period.periodStart,
+				periodEnd: period.periodEnd,
+				tenantId: seller.tenantId,
+				organizationId: seller.organizationId,
+				status: Not(SellerPayoutStatus.CANCELED)
+			} as FindOptionsWhere<SellerPayout>
+		});
+
+		return Boolean(existing);
 	}
 
 	/**

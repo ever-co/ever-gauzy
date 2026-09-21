@@ -156,7 +156,12 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 	async updateSeller(id: ID, input: Partial<Seller>, scope?: ISellerScope): Promise<Seller> {
 		const seller = await this.getSeller(id);
 
-		if (scope) {
+		if (scope && !scope.staff) {
+			// `!scope.staff` rather than a bare `scope`: a staff scope carries the seller the *request*
+			// named, and this route names the seller in `:id`, which the guard does not read as a seller
+			// argument — so a staff scope reaches here with no seller at all and `assertSellerScope` refused
+			// every staff caller by comparing that absent seller against the row's own. Staff is not narrowed
+			// by membership; the tenant and organization predicates in `getSeller` are what still apply to it.
 			assertSellerScope(scope, seller.id);
 		}
 
@@ -185,11 +190,19 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 	/**
 	 * Reads a seller by id or by its human-usable code.
 	 *
+	 * The scope is optional because the read is also the way every lifecycle method and every internal
+	 * caller reaches the row, and those callers already hold whatever scope applies. Where a scope *is*
+	 * supplied it is enforced here rather than by each caller in turn: this is the single read the whole
+	 * aggregate goes through, so a seller-scoped caller that names another seller's id or code is
+	 * refused by name at one place instead of at nine.
+	 *
 	 * @param idOrCode The seller id or code.
+	 * @param scope The caller's seller scope.
 	 * @returns The seller.
 	 * @throws NotFoundException when no seller matches.
+	 * @throws ForbiddenException when the row is outside the caller's scope.
 	 */
-	async getSeller(idOrCode: ID | string): Promise<Seller> {
+	async getSeller(idOrCode: ID | string, scope?: ISellerScope): Promise<Seller> {
 		const where: FindOptionsWhere<Seller> = {
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: RequestContext.currentOrganizationId()
@@ -201,6 +214,10 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 
 		if (!seller) {
 			throw new NotFoundException('The seller does not exist.');
+		}
+
+		if (scope && !scope.staff) {
+			assertSellerScope(scope, seller.id);
 		}
 
 		return seller;
@@ -233,8 +250,8 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 	 * @param id The seller id.
 	 * @returns The updated seller.
 	 */
-	async submit(id: ID): Promise<Seller> {
-		const seller = await this.getSeller(id);
+	async submit(id: ID, scope?: ISellerScope): Promise<Seller> {
+		const seller = await this.getSeller(id, scope);
 		this.assertTransition(seller, SellerStatus.SUBMITTED);
 
 		seller.status = SellerStatus.SUBMITTED;
@@ -348,8 +365,8 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 	 * @returns The updated seller.
 	 * @throws BadRequestException when the seller is not approved, or its payout account is not verified.
 	 */
-	async activate(id: ID): Promise<Seller> {
-		const seller = await this.getSeller(id);
+	async activate(id: ID, scope?: ISellerScope): Promise<Seller> {
+		const seller = await this.getSeller(id, scope);
 
 		if (seller.status === SellerStatus.ACTIVE) {
 			// Idempotent at the endpoint: activating an active seller returns it unchanged rather than
@@ -396,8 +413,8 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 	 * @param reason Why it was suspended.
 	 * @returns The updated seller.
 	 */
-	async suspend(id: ID, reason: string): Promise<Seller> {
-		const seller = await this.getSeller(id);
+	async suspend(id: ID, reason: string, scope?: ISellerScope): Promise<Seller> {
+		const seller = await this.getSeller(id, scope);
 
 		if (!reason) {
 			throw new BadRequestException('A suspension needs a reason the seller can read and remedy.');
@@ -435,8 +452,8 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 	 * @param id The seller id.
 	 * @returns The updated seller.
 	 */
-	async reinstate(id: ID): Promise<Seller> {
-		const seller = await this.getSeller(id);
+	async reinstate(id: ID, scope?: ISellerScope): Promise<Seller> {
+		const seller = await this.getSeller(id, scope);
 
 		if (seller.status === SellerStatus.ACTIVE) {
 			return seller;
@@ -603,7 +620,9 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 	): Promise<ISellerStatement> {
 		const seller = await this.getSeller(id);
 
-		if (scope) {
+		if (scope && !scope.staff) {
+			// As on `updateSeller`: a staff scope carries the seller the request named, and this route names
+			// it in `:id`, so comparing it against the row refused every staff caller a statement.
 			assertSellerScope(scope, seller.id);
 		}
 

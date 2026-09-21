@@ -94,10 +94,11 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 	 *
 	 * @param id The row id.
 	 * @param note Why it was advanced.
+	 * @param scope The caller's seller scope.
 	 * @returns The updated row.
 	 */
-	async settle(id: ID, note?: string): Promise<SellerTransaction> {
-		const transaction = await this.getTransaction(id);
+	async settle(id: ID, note?: string, scope?: ISellerScope): Promise<SellerTransaction> {
+		const transaction = await this.getTransaction(id, scope);
 
 		if (transaction.status === SellerTransactionStatus.SETTLED || transaction.status === SellerTransactionStatus.PAID) {
 			// A row already inside a payout must not be pulled back into another one.
@@ -127,10 +128,11 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 	 * @param id The row id.
 	 * @param reason Why it is held.
 	 * @param note Free-text note.
+	 * @param scope The caller's seller scope.
 	 * @returns The updated row.
 	 */
-	async hold(id: ID, reason: SellerHoldReason, note?: string): Promise<SellerTransaction> {
-		const transaction = await this.getTransaction(id);
+	async hold(id: ID, reason: SellerHoldReason, note?: string, scope?: ISellerScope): Promise<SellerTransaction> {
+		const transaction = await this.getTransaction(id, scope);
 
 		if (!reason) {
 			throw new BadRequestException('A hold needs a reason.');
@@ -156,15 +158,19 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 	 * safe to recompute.
 	 *
 	 * @param filter The window and the optional seller or order.
+	 * @param scope The caller's seller scope.
 	 * @returns The per-order reconciliation.
 	 */
-	async reconcile(filter: {
-		from?: Date;
-		to?: Date;
-		sellerId?: ID;
-		orderId?: ID;
-		onlyMismatched?: boolean;
-	}): Promise<IPagination<ISellerSplitReconciliation>> {
+	async reconcile(
+		filter: {
+			from?: Date;
+			to?: Date;
+			sellerId?: ID;
+			orderId?: ID;
+			onlyMismatched?: boolean;
+		},
+		scope?: ISellerScope
+	): Promise<IPagination<ISellerSplitReconciliation>> {
 		const where: FindOptionsWhere<SellerTransaction> = {
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: RequestContext.currentOrganizationId()
@@ -172,6 +178,15 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 
 		if (filter.sellerId) {
 			where.sellerId = filter.sellerId;
+		}
+
+		if (scope && !scope.staff) {
+			// The reconciliation is a per-order report built from the rows it reads, so narrowing it after
+			// the fact would hand a seller the other sellers' figures for the orders it happens to appear
+			// on. The predicate is applied to the read instead, and a caller that named a seller other
+			// than its own is refused by name rather than answered with an emptier report.
+			assertSellerScope(scope, filter.sellerId);
+			where.sellerId = scope.sellerId;
 		}
 
 		if (filter.orderId) {

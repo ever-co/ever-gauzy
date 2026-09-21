@@ -72,8 +72,8 @@ export class SellerSettlementController extends CrudController<SellerSettlement>
 	@Idempotent({ scope: 'seller.settlement.record', required: false, resourceType: 'seller_settlement' })
 	@Post('/')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(@Body() entity: CreateSellerSettlementDTO): Promise<SellerSettlement> {
-		return this.sellerSettlementService.record(entity as Partial<SellerSettlement>);
+	async create(@Req() request: any, @Body() entity: CreateSellerSettlementDTO): Promise<SellerSettlement> {
+		return this.sellerSettlementService.record(entity as Partial<SellerSettlement>, this.scope(request));
 	}
 
 	/**
