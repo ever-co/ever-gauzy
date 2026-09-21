@@ -1,5 +1,6 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
-import { Between, DeleteResult } from 'typeorm';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Between, DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IOfficialHoliday, IOfficialHolidayFindInput, IPagination } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
@@ -15,9 +16,9 @@ import { TypeOrmOfficialHolidayRepository } from './repository/type-orm-official
  * `TenantAwareCrudService` already forces `tenantId` onto every read and write, so the extra
  * filters below only narrow within the caller's own tenant.
  *
- * Only `findAllByFilter()`, `findOneByIdString()` and `delete()` narrow further than that: every other
- * inherited read and write stops at the tenant, which holds many organizations. A new route has to go
- * through one of those three, or make the membership check itself.
+ * Only `findAllByFilter()`, `findOneByIdString()`, `update()` and `delete()` narrow further than that:
+ * every other inherited read and write stops at the tenant, which holds many organizations. A new route
+ * has to go through one of those four, or make the membership check itself.
  */
 @Injectable()
 export class OfficialHolidayService extends TenantAwareCrudService<OfficialHoliday> {
@@ -71,17 +72,13 @@ export class OfficialHolidayService extends TenantAwareCrudService<OfficialHolid
 	}
 
 	/**
-	 * Read one official holiday, refusing one that belongs to another organization of the tenant.
+	 * The organization a stored holiday belongs to, once the caller is confirmed to be a member of it.
 	 *
 	 * The by-id routes name no organization, so there is nothing for a request DTO to validate and the
 	 * inherited CRUD methods scope to the tenant and stop there — but a tenant holds many organizations.
 	 * A holder of the Time Off policy permissions could therefore pass the id of a sibling organization's
-	 * holiday and read the row the listing would have refused them. The organization has to come from the
-	 * STORED row instead, and the caller is checked against that one.
-	 *
-	 * `TenantAwareCrudService.update()` resolves its row through this method before it writes, so the
-	 * update route is covered by the same check and must not repeat it; `delete()` never reads the row
-	 * at all, hence the override below. Taking the organization off the STORED row is also what stops a
+	 * holiday and read or write the row the listing would have refused them. The organization has to come
+	 * from the STORED row instead, and the caller is checked against that one. That is also what stops a
 	 * PUT body from moving a foreign holiday into the caller's own organization: the request names the
 	 * organization it WANTS, which proves nothing about the one the row lives in.
 	 *
@@ -89,16 +86,11 @@ export class OfficialHolidayService extends TenantAwareCrudService<OfficialHolid
 	 * this check fails CLOSED: these routes are HTTP-only, and a background caller must not inherit a
 	 * silently unscoped read.
 	 *
-	 * @param id the holiday to read
-	 * @param options additional find options
-	 * @returns the holiday
-	 * @throws NotFoundException when no holiday of the caller's tenant has that id
-	 * @throws ForbiddenException when the caller is not a member of the holiday's organization
+	 * @param holiday the stored holiday the request named
+	 * @returns the organization the caller was authorized against, to pin onto any write that follows
+	 * @throws ForbiddenException when the holiday belongs to no organization, or the caller is not a member
 	 */
-	async findOneByIdString(id: ID, options?: LegacyFindOneOptions<OfficialHoliday>): Promise<OfficialHoliday> {
-		// Throws NotFoundException when the id names no row of the caller's tenant, so the row below is real.
-		const holiday = await super.findOneByIdString(id, options);
-
+	private async authorizedOrganizationOf(holiday: OfficialHoliday): Promise<ID> {
 		// `organizationId` is a relation-id mirror, which MikroORM maps to `persist: false` and does not
 		// always hydrate, so read the relation as a fallback before deciding — the same shape the
 		// organization-scoped validators use.
@@ -114,24 +106,77 @@ export class OfficialHolidayService extends TenantAwareCrudService<OfficialHolid
 
 		await assertCurrentUserBelongsToOrganization(this.typeOrmRepository.manager, organizationId);
 
+		return organizationId;
+	}
+
+	/**
+	 * Read one official holiday, refusing one that belongs to another organization of the tenant.
+	 *
+	 * @param id the holiday to read
+	 * @param options additional find options
+	 * @returns the holiday
+	 * @throws NotFoundException when no holiday of the caller's tenant has that id
+	 * @throws ForbiddenException when the caller is not a member of the holiday's organization
+	 */
+	async findOneByIdString(id: ID, options?: LegacyFindOneOptions<OfficialHoliday>): Promise<OfficialHoliday> {
+		// Throws NotFoundException when the id names no row of the caller's tenant, so the row below is real.
+		const holiday = await super.findOneByIdString(id, options);
+
+		await this.authorizedOrganizationOf(holiday);
+
 		return holiday;
+	}
+
+	/**
+	 * Update one official holiday, refusing one that belongs to another organization of the tenant.
+	 *
+	 * The membership check is an unlocked read, and `CrudService.update()` writes by RAW id — no tenant
+	 * predicate, let alone an organization one. A holiday re-parented between the two would therefore be
+	 * written by a caller who no longer has any claim on it. Naming the authorized organization in the
+	 * criteria closes that: `TenantAwareCrudService.update()` resolves an object criteria through
+	 * `findOneByWhereOptions()`, which 404s when nothing matches, and the same predicate then lands in the
+	 * UPDATE's own WHERE.
+	 *
+	 * @param id the holiday to update
+	 * @param partialEntity the fields to change
+	 * @returns the update result
+	 * @throws NotFoundException when no holiday of the caller's tenant has that id, or it moved meanwhile
+	 * @throws ForbiddenException when the caller is not a member of the holiday's organization
+	 */
+	async update(
+		id: ID,
+		partialEntity: QueryDeepPartialEntity<OfficialHoliday>
+	): Promise<OfficialHoliday | UpdateResult> {
+		const organizationId = await this.authorizedOrganizationOf(await super.findOneByIdString(id));
+
+		return super.update({ id, organizationId } as FindOptionsWhere<OfficialHoliday>, partialEntity);
 	}
 
 	/**
 	 * Delete one official holiday, refusing one that belongs to another organization of the tenant.
 	 *
 	 * `TenantAwareCrudService.delete()` merges the tenant conditions straight into the criteria and never
-	 * reads the row, so — unlike `update()` — it inherits no organization check from
-	 * {@link findOneByIdString}. Resolve the holiday through it first.
+	 * reads the row, so it carries no organization check of its own. Resolve the holiday first, then pin
+	 * the authorized organization onto the DELETE as well — the same race {@link update} guards against —
+	 * and treat a zero-row result as "not yours any more" rather than reporting a successful no-op.
 	 *
 	 * @param id the holiday to delete
 	 * @returns the delete result
-	 * @throws NotFoundException when no holiday of the caller's tenant has that id
+	 * @throws NotFoundException when no holiday of the caller's tenant has that id, or it moved meanwhile
 	 * @throws ForbiddenException when the caller is not a member of the holiday's organization
 	 */
 	async delete(id: ID): Promise<DeleteResult> {
-		await this.findOneByIdString(id);
+		const organizationId = await this.authorizedOrganizationOf(await super.findOneByIdString(id));
 
-		return super.delete(id);
+		const result = await super.delete(id, {
+			where: { organizationId } as FindOptionsWhere<OfficialHoliday>
+		});
+
+		// Only an explicit zero: a driver that reports no count at all must not turn a real delete into a 404.
+		if (result?.affected === 0) {
+			throw new NotFoundException('The requested record was not found');
+		}
+
+		return result;
 	}
 }

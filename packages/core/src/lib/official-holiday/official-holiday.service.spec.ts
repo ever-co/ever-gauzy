@@ -1,6 +1,6 @@
 import '../core/entities/internal';
 
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { RequestContext } from '../core/context';
 import { OfficialHolidayService } from './official-holiday.service';
 
@@ -110,6 +110,7 @@ describe('OfficialHolidayService by-id organization scope', () => {
 	let service: OfficialHolidayService;
 	let repository: {
 		findOne: jest.Mock;
+		findOneBy: jest.Mock;
 		update: jest.Mock;
 		delete: jest.Mock;
 		metadata: { hasColumnWithPropertyPath: jest.Mock };
@@ -132,6 +133,9 @@ describe('OfficialHolidayService by-id organization scope', () => {
 		// The caller is a member of ORGANIZATION_ID only.
 		repository = {
 			findOne: jest.fn(),
+			// The re-read `TenantAwareCrudService.update()` does for an object criteria; it 404s on a miss,
+			// which is what rejects a holiday re-parented between the check and the write.
+			findOneBy: jest.fn(async () => ({ id: HOLIDAY_ID })),
 			update: jest.fn(async () => ({ affected: 1, raw: [] })),
 			delete: jest.fn(async () => ({ affected: 1, raw: [] })),
 			metadata: {
@@ -199,6 +203,30 @@ describe('OfficialHolidayService by-id organization scope', () => {
 		expect(repository.update).not.toHaveBeenCalled();
 	});
 
+	it('updates a holiday of its own organization, and pins that organization onto the write', async () => {
+		await expect(service.update(HOLIDAY_ID, { name: 'Renamed' } as any)).resolves.toBeDefined();
+
+		// The membership check is an unlocked read and the base class otherwise writes by raw id, so the
+		// organization it was decided on has to reach the UPDATE's own WHERE.
+		expect(repository.update.mock.calls[0][0]).toEqual({ id: HOLIDAY_ID, organizationId: ORGANIZATION_ID });
+		expect(repository.manager.count).toHaveBeenCalledTimes(1);
+	});
+
+	it('refuses an update whose holiday was re-parented between the check and the write', async () => {
+		// The re-read that carries the organization finds nothing, because the row has moved on.
+		repository.findOneBy.mockResolvedValue(null);
+
+		await expect(service.update(HOLIDAY_ID, { name: 'Renamed' } as any)).rejects.toBeInstanceOf(NotFoundException);
+		expect(repository.update).not.toHaveBeenCalled();
+	});
+
+	it('refuses a delete whose holiday was re-parented between the check and the write', async () => {
+		// The organization predicate is on the DELETE, so the row that moved is simply not matched.
+		repository.delete.mockResolvedValue({ affected: 0, raw: [] });
+
+		await expect(service.delete(HOLIDAY_ID)).rejects.toBeInstanceOf(NotFoundException);
+	});
+
 	it('refuses to delete a holiday of a sibling organization, before it deletes', async () => {
 		storedIn(SIBLING_ORGANIZATION_ID);
 
@@ -209,8 +237,9 @@ describe('OfficialHolidayService by-id organization scope', () => {
 	it('deletes a holiday of an organization the caller belongs to', async () => {
 		await expect(service.delete(HOLIDAY_ID)).resolves.toEqual({ affected: 1, raw: [] });
 		expect(repository.delete).toHaveBeenCalledTimes(1);
+		// Tenant scoped as before, plus the organization the caller was authorized against.
 		expect(repository.delete.mock.calls[0][0]).toEqual(
-			expect.objectContaining({ id: HOLIDAY_ID, tenantId: TENANT_ID })
+			expect.objectContaining({ id: HOLIDAY_ID, tenantId: TENANT_ID, organizationId: ORGANIZATION_ID })
 		);
 	});
 
