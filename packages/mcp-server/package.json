@@ -17,8 +17,8 @@
 	},
 	"private": true,
 	"type": "commonjs",
-	"main": "../../../dist/packages/mcp-server/src/index.js",
-	"types": "../../../dist/packages/mcp-server/src/index.d.ts",
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
 	"homepage": "https://ever.co",
 	"license": "AGPL-3.0",
 	"scripts": {
