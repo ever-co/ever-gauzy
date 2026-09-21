@@ -112,10 +112,10 @@ client cannot reach through GraphQL what REST would deny.
 
 The state changes themselves are emitted on the platform's transactional outbox — `seller.created`,
 `seller.verified`, `seller.activated`, `seller.suspended`, `seller.rejected`,
-`seller-offering.created`/`.updated`/`.withdrawn`,
+`seller_offering.created`/`.updated`/`.withdrawn`,
 `seller.transaction.recorded`/`.settleable`/`.reversed`,
-`seller-payout.created`/`.paid`/`.failed`/`.canceled` and
-`seller-settlement.recorded`/`.closed` — in the same transaction as the row that changed, which is
+`seller_payout.created`/`.paid`/`.failed`/`.canceled` and
+`seller_settlement.recorded`/`.closed` — in the same transaction as the row that changed, which is
 what lets a subscriber, a projection or a scheduled job observe the marketplace without polling it.
 Three state changes have no event because the catalogue names none for them, and inventing a name
 would put this package's vocabulary into a catalogue the whole platform reads: a seller profile edit,

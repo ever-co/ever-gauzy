@@ -354,7 +354,7 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 
 			await this.transactionRepository.save(transactions);
 
-			await this.emit(saved, 'seller-payout.failed', {
+			await this.emit(saved, 'seller_payout.failed', {
 				failureCode: result.failureCode,
 				failureReason: result.failureReason,
 				retryable: true
@@ -388,7 +388,7 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 			const persisted = await manager.save(SellerPayout, payout);
 
 			await this.outbox.append(manager, {
-				name: 'seller-payout.paid',
+				name: 'seller_payout.paid',
 				aggregateType: 'SELLER_PAYOUT',
 				aggregateId: persisted.id as ID,
 				data: {
@@ -460,7 +460,7 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 			const persisted = await manager.save(SellerPayout, payout);
 
 			await this.outbox.append(manager, {
-				name: 'seller-payout.canceled',
+				name: 'seller_payout.canceled',
 				aggregateType: 'SELLER_PAYOUT',
 				aggregateId: persisted.id as ID,
 				data: {
@@ -926,7 +926,7 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 			await manager.save(SellerTransaction, rows);
 
 			await this.outbox.append(manager, {
-				name: 'seller-payout.created',
+				name: 'seller_payout.created',
 				aggregateType: 'SELLER_PAYOUT',
 				aggregateId: persisted.id as ID,
 				data: {

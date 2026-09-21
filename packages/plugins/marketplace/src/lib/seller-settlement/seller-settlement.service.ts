@@ -117,7 +117,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 
 		const saved = await this.typeOrmSellerSettlementRepository.save(settlement as SellerSettlement);
 
-		await this.emit(saved, 'seller-settlement.recorded', {
+		await this.emit(saved, 'seller_settlement.recorded', {
 			providerKey: saved.providerKey,
 			grossAmount: saved.grossAmount,
 			commissionAmount: saved.commissionAmount,
@@ -189,7 +189,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 
 		const saved = await this.typeOrmSellerSettlementRepository.save(settlement);
 
-		await this.emit(saved, 'seller-settlement.closed', {
+		await this.emit(saved, 'seller_settlement.closed', {
 			providerKey: saved.providerKey,
 			netAmount: saved.netAmount,
 			closedAt: saved.closedAt,

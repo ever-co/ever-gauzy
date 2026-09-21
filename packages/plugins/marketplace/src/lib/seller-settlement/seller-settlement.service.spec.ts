@@ -256,7 +256,7 @@ describe('SellerSettlementService — recording what the provider reported (doc 
 		expect(recorded).toMatchObject({ netAmount: '98.000000', status: SellerSettlementStatus.OPEN });
 		// The provider's figures agree with the platform's own line, so nothing is flagged.
 		expect(recorded.discrepancyAmount).toBe('0.000000');
-		expect(fixture.events()).toEqual(['seller-settlement.recorded']);
+		expect(fixture.events()).toEqual(['seller_settlement.recorded']);
 		expect(fixture.appended[0].data).toMatchObject({ providerKey: 'acquirer', netAmount: '98.000000' });
 	});
 

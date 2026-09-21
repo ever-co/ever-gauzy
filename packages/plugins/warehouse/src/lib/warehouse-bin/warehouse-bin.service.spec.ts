@@ -193,27 +193,6 @@ jest.mock('@gauzy/core', () => {
 				{ expectedVersion: expected, ...(actualVersion === null ? {} : { actualVersion }) }
 			);
 		},
-		// The dialect helpers every closure statement is written through. The service imports them from
-		// the barrel this factory replaces, and a name a factory does not answer for is `undefined` at
-		// the call site — so the first descendant read would throw before it read anything. They are
-		// doubled for the embedded dialect this suite runs against: a statement is left as it was
-		// written, and a named parameter becomes the `?` both SQLite drivers bind, with the values in
-		// the order the placeholders appear.
-		prepareSQLQuery: (sql: string) => sql,
-		toPositionalStatement: (sql: string, parameters: Record<string, unknown>) => {
-			const values: unknown[] = [];
-			const positional = sql.replace(/(?<!:):(\w+)\b/g, (match: string, name: string) => {
-				if (!Object.prototype.hasOwnProperty.call(parameters ?? {}, name)) {
-					return match;
-				}
-
-				values.push(parameters[name]);
-
-				return '?';
-			});
-
-			return { sql: positional, parameters: values };
-		},
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,

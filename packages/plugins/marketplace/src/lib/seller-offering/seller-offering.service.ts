@@ -140,7 +140,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		try {
 			const created = await this.typeOrmSellerOfferingRepository.save(offering as SellerOffering);
 
-			await this.emit(created, 'seller-offering.created', {
+			await this.emit(created, 'seller_offering.created', {
 				variantId: created.variantId,
 				productId: created.productId,
 				sellerSku: created.sellerSku,
@@ -195,7 +195,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		const saved = await this.repository(manager).save(offering);
 
-		await this.emit(saved, 'seller-offering.updated', { changed: Object.keys(values), status: saved.status }, manager);
+		await this.emit(saved, 'seller_offering.updated', { changed: Object.keys(values), status: saved.status }, manager);
 
 		return saved;
 	}
@@ -212,7 +212,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		const submitted = await this.typeOrmSellerOfferingRepository.save(offering);
 
-		await this.emit(submitted, 'seller-offering.updated', { changed: ['status'], status: submitted.status });
+		await this.emit(submitted, 'seller_offering.updated', { changed: ['status'], status: submitted.status });
 
 		return submitted;
 	}
@@ -246,7 +246,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		await this.emit(
 			published,
-			'seller-offering.updated',
+			'seller_offering.updated',
 			{
 				changed: ['status', 'channelIds'],
 				status: published.status
@@ -265,7 +265,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		const paused = await this.repository(manager).save(offering);
 
-		await this.emit(paused, 'seller-offering.updated', { changed: ['status'], status: paused.status }, manager);
+		await this.emit(paused, 'seller_offering.updated', { changed: ['status'], status: paused.status }, manager);
 
 		return paused;
 	}
@@ -278,7 +278,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		const withdrawn = await this.repository(manager).save(offering);
 
-		await this.emit(withdrawn, 'seller-offering.withdrawn', { reason: 'WITHDRAWN' }, manager);
+		await this.emit(withdrawn, 'seller_offering.withdrawn', { reason: 'WITHDRAWN' }, manager);
 
 		return withdrawn;
 	}
@@ -301,7 +301,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 
 		const saved = await this.typeOrmSellerOfferingRepository.save(offering);
 
-		await this.emit(saved, 'seller-offering.updated', {
+		await this.emit(saved, 'seller_offering.updated', {
 			changed: ['channelIds', 'regionIds'],
 			status: saved.status
 		});

@@ -225,3 +225,12 @@ jobs:
       - name: Resolver fields exist on the type that resolves them
         if: always()
         run: node tools/scripts/graphql-field-binding-check.mjs
+
+      # An event name is an API contract for subscribers and webhook receivers, and the doctrine spells
+      # its aggregate segment the way the table it names is spelled. A name whose aggregate follows the
+      # *package* spelling instead (`seller-offering.created`) names one concept two ways and cannot be
+      # derived from the table, which is the kind of inconsistency that is cheap now and expensive once
+      # anything is subscribed to it.
+      - name: Durable event names spell their aggregate in snake_case
+        if: always()
+        run: node tools/scripts/event-name-check.mjs
