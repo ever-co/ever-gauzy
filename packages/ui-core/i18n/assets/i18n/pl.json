@@ -1955,6 +1955,7 @@
 		"EXPECTED": "Oczekiwany",
 		"UPDATES": "Aktualizacje",
 		"UPDATE": "Aktualizuj",
+		"ALIGNMENTS": "Wyrównania",
 		"COMMENTS": "Komentarze",
 		"KEY_RESULTS": "Wyniki kluczowe",
 		"GROUP_BY": "Grupuj według",
@@ -1971,6 +1972,8 @@
 		"GOAL_TEMPLATES": "Szablony celów",
 		"CREATE_NEW_MENU": "Utwórz nowe",
 		"CREATE_FROM_PRESET": "Utwórz z szablonu",
+		"SELECT_A_PRESET": "Wybierz szablon",
+		"ADDITIONAL_DETAILS": "Dodatkowe szczegóły",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Pracownicy",
 			"TEAMS": "Zespoły",
@@ -2000,7 +2003,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Brak wyników kluczowych do wyświetlenia",
 			"NO_UPDATES": "Nie ma jeszcze aktualizacji",
-			"NO_ALIGNMENT": "Brak jeszcze wyrównań"
+			"NO_ALIGNMENT": "Brak jeszcze wyrównań",
+			"NO_PROGRESS_DATA": "Brak jeszcze danych postępu do wykresu"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organizacja",
@@ -2456,6 +2460,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Czas trwania dialogu odliczania próby aktywności, reprezentuje liczbę minut, które zostały przypisane do udowodnienia aktywności",
 				"ENABLE_DETECTION_INACTIVITY": "Włącz wykrywanie bezczynności pracownika",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Włączone - system wykryje brak aktywności i wyświetli ostrzeżenie. Wyłączone - nie będzie wyświetlane żadne ostrzeżenie, gdy pracownik jest nieaktywny",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Częstotliwość zrzutów ekranu",
 				"SCREENSHOT_FREQUENCY_INFO": "Określ częstotliwość aktualizacji lub interwały czasowe synchronizacji.",
 				"RANDOM_SCREENSHOT": "Losowy zrzut ekranu",
@@ -4911,7 +4917,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Zrzuty ekranu",
 			"OF": "z",
-			"TIME_LOG": "Rejestr czasu"
+			"TIME_LOG": "Rejestr czasu",
+			"TAKEN_AT": "Zrzut ekranu wykonany o {{ time }}",
+			"POSITION": "Zrzut ekranu {{ position }} z {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Ostrzeżenie. Licznik jest aktywny, możesz usunąć zrzuty ekranu tylko w przypadku zatrzymania licznika lub w aplikacji Timer",
 		"DELETE_CONFIRM": "Jesteś pewny, że chcesz usunąć te zrzuty ekranu i dziennik czasu?",

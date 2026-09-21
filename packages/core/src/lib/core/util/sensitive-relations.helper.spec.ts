@@ -25,7 +25,7 @@ describe('assertSensitiveRelationsAllowed', () => {
 			tableName: name.toLowerCase(),
 			findRelationWithPropertyPath: (propertyPath: string) =>
 				relations[propertyPath] ? { inverseEntityMetadata: relations[propertyPath]() } : undefined
-		} as unknown as EntityMetadata);
+		}) as unknown as EntityMetadata;
 
 	const USER = () => entity('User');
 	const PAYMENT = () => entity('Payment', { invoice: () => entity('Invoice') });
@@ -173,6 +173,66 @@ describe('assertSensitiveRelationsAllowed', () => {
 
 			expect(() => assertSensitiveRelationsAllowed(TAG(), polluted)).toThrow(BadRequestException);
 			expect(({} as any).payments).toBeUndefined();
+		});
+	});
+
+	describe('tracked data reached from an entity the whole organization may read', () => {
+		const TIME_SLOT = () => entity('TimeSlot', { screenshots: () => entity('Screenshot') });
+		const TIME_LOG = () => entity('TimeLog', { timeSlots: TIME_SLOT });
+		const TRACKED_EMPLOYEE = () =>
+			entity('Employee', {
+				timeSlots: TIME_SLOT,
+				timeLogs: TIME_LOG,
+				user: USER,
+				organization: ORGANIZATION
+			});
+		const TASK = () => entity('Task', { timeLogs: TIME_LOG });
+		const TEAM = () =>
+			entity('OrganizationTeam', {
+				members: () => entity('OrganizationTeamEmployee', { employee: TRACKED_EMPLOYEE })
+			});
+
+		/**
+		 * The per-employee restriction in TenantAwareCrudService applies to the ROOT entity only, so a
+		 * relation that starts from a shared row walks into everyone's tracked data. Both paths below are
+		 * reachable with default EMPLOYEE permissions (ORG_TASK_VIEW, ORG_TEAM_VIEW).
+		 */
+		it.each([
+			['a task', TASK, 'timeLogs.timeSlots.screenshots'],
+			['a team', TEAM, 'members.employee.timeSlots.screenshots'],
+			['an employee', TRACKED_EMPLOYEE, 'timeSlots.screenshots']
+		])('refuses tracked data reached from %s', (_label, root: () => EntityMetadata, path: string) => {
+			expect(() => assertSensitiveRelationsAllowed(root(), [path])).toThrow(ForbiddenException);
+			expect(() => assertSensitiveRelationsAllowed(root(), [path])).toThrow(
+				new RegExp(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+			);
+		});
+
+		it('allows them for a caller who may act for other employees', () => {
+			granted = [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE];
+
+			expect(() => assertSensitiveRelationsAllowed(TASK(), ['timeLogs.timeSlots.screenshots'])).not.toThrow();
+			expect(() =>
+				assertSensitiveRelationsAllowed(TEAM(), ['members.employee.timeSlots.screenshots'])
+			).not.toThrow();
+		});
+
+		/**
+		 * A read whose ROOT row is already scoped to the caller's own employee id — the desktop retry
+		 * queue and the screenshot modal — must keep working without any extra permission.
+		 */
+		it.each([
+			['a time log', TIME_LOG, 'timeSlots.screenshots'],
+			['a time slot', TIME_SLOT, 'screenshots']
+		])('leaves self-service reads from %s alone', (_label, root: () => EntityMetadata, path: string) => {
+			expect(() => assertSensitiveRelationsAllowed(root(), [path])).not.toThrow();
+		});
+
+		it('leaves an unrelated relation of the same name alone', () => {
+			// Timesheet.timeLogs is not in the table: the walk gates by the entity it stands on.
+			const TIMESHEET = () => entity('Timesheet', { timeLogs: TIME_LOG });
+
+			expect(() => assertSensitiveRelationsAllowed(TIMESHEET(), ['timeLogs'])).not.toThrow();
 		});
 	});
 });

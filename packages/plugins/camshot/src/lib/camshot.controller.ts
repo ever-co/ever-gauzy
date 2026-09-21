@@ -8,6 +8,7 @@ import {
 	imageUploadFileFilter,
 	shouldScanForMarkup,
 	LazyFileInterceptor,
+	EmployeeTrackedDataGuard,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -84,6 +85,7 @@ export class CamshotController {
 		status: HttpStatus.FORBIDDEN,
 		description: 'User does not have permission to list camshots.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get()
 	public async list(@Query() params: BaseQueryDTO<ICamshot>): Promise<IPagination<ICamshot>> {
 		return this.queryBus.execute(new ListCamshotQuery(params));
@@ -190,6 +192,7 @@ export class CamshotController {
 		status: HttpStatus.INTERNAL_SERVER_ERROR,
 		description: 'An error occurred while retrieving the camshot count.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('count')
 	@UseValidationPipe({
 		whitelist: true,
@@ -230,6 +233,7 @@ export class CamshotController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get(':id')
 	public async findById(
 		@Param('id', UUIDValidationPipe) id: ID,

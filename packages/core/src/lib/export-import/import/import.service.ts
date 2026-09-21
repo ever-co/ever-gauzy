@@ -14,6 +14,8 @@ import { convertToDatetime } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
 import { Organization } from '../../core/entities/internal';
 import { RequestContext } from '../../core';
+import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
+import { usesSpreadsheetSafeCells } from '../export-manifest';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
 import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 import {
@@ -107,6 +109,10 @@ export class ImportService {
 		 */
 		const tenantId = RequestContext.currentTenantId();
 		const repositories = await this.getRepositories();
+		// Only an archive this server wrote carries the escape, so only such an archive is decoded: a
+		// legacy dump, a filled-in `/export/template` or an externally built CSV set would otherwise
+		// lose a legitimate leading apostrophe from a value such as `'=notes` (GHSA-7xp5-j564-4752).
+		const decodeCells = await usesSpreadsheetSafeCells(extractPath);
 		for await (const item of repositories) {
 			const { repository, isStatic = false, relations = [] } = item;
 			const nameFile = repository.metadata.tableName;
@@ -140,7 +146,8 @@ export class ImportService {
 					let results = [];
 					const stream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
 					stream.on('data', (data) => {
-						results.push(data);
+						// Undo the spreadsheet formula escape the export adds (GHSA-7xp5-j564-4752).
+						results.push(decodeCells ? fromSpreadsheetSafeCsvRow(data) : data);
 					});
 					stream.on('error', (error) => {
 						console.log(chalk.red(`Failed to parse CSV for table: ${masterTable}`), error);
@@ -169,12 +176,27 @@ export class ImportService {
 
 			// export pivot relational tables
 			if (isNotEmpty(relations)) {
-				await this.parseRelationalTables(extractPath, item, cleanup);
+				await this.parseRelationalTables(extractPath, item, cleanup, decodeCells);
 			}
 		}
 	}
 
-	async parseRelationalTables(extractPath: string, entity: IRepositoryModel, cleanup: boolean = false) {
+	/**
+	 * Imports the junction tables of one entity.
+	 *
+	 * @param extractPath - This request's extraction directory.
+	 * @param entity - The entity whose junction tables to read.
+	 * @param cleanup - Whether the tenant's existing rows were wiped first.
+	 * @param decodeCells - Whether the archive is a marked Gauzy export whose cells carry the
+	 * spreadsheet-formula escape. Resolved from the archive manifest when the caller does not say.
+	 */
+	async parseRelationalTables(
+		extractPath: string,
+		entity: IRepositoryModel,
+		cleanup: boolean = false,
+		decodeCells?: boolean
+	) {
+		const decode = decodeCells ?? (await usesSpreadsheetSafeCells(extractPath));
 		const { relations } = entity;
 		for await (const item of relations) {
 			const { joinTableName } = item;
@@ -192,7 +214,8 @@ export class ImportService {
 					let results = [];
 					const stream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
 					stream.on('data', (data) => {
-						results.push(data);
+						// Undo the spreadsheet formula escape the export adds (GHSA-7xp5-j564-4752).
+						results.push(decode ? fromSpreadsheetSafeCsvRow(data) : data);
 					});
 					stream.on('error', (error) => {
 						console.log(chalk.red(`Failed to parse CSV for table: ${joinTableName}`), error);
@@ -398,12 +421,14 @@ export class ImportService {
 		const userId = RequestContext.currentUserId();
 
 		const organizationsCsvPath = path.join(extractPath, 'organization.csv');
+		const decodeCells = await usesSpreadsheetSafeCells(extractPath);
 
 		return new Promise(async (resolve, reject) => {
 			const results: Organization[] = [];
 			const stream = fs.createReadStream(organizationsCsvPath, 'utf8').pipe(csv());
 			stream.on('data', (data) => {
-				if (isNotEmpty(data)) results.push(data);
+				// Undo the spreadsheet formula escape the export adds (GHSA-7xp5-j564-4752).
+				if (isNotEmpty(data)) results.push(decodeCells ? fromSpreadsheetSafeCsvRow(data) : data);
 			});
 			stream.on('error', (error) => {
 				console.log(chalk.red(`Failed to parse CSV for table: organization`), error);

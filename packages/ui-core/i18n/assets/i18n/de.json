@@ -1956,6 +1956,7 @@
 		"EXPECTED": "Erwartet",
 		"UPDATES": "Aktualisierungen",
 		"UPDATE": "Aktualisierung",
+		"ALIGNMENTS": "Ausrichtungen",
 		"COMMENTS": "Kommentare",
 		"KEY_RESULTS": "Schlüsselergebnisse",
 		"GROUP_BY": "Gruppieren nach",
@@ -1972,6 +1973,8 @@
 		"GOAL_TEMPLATES": "Zielvorlagen",
 		"CREATE_NEW_MENU": "Erstellen Sie neu",
 		"CREATE_FROM_PRESET": "Erstellen aus Vorlage",
+		"SELECT_A_PRESET": "Vorlage auswählen",
+		"ADDITIONAL_DETAILS": "Weitere Details",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Mitarbeiter",
 			"TEAMS": "Teams ist eine Kollaborationsplattform, die es Benutzern ermöglicht, zusammenzuarbeiten, zu kommunizieren und Dateien gemeinsam zu bearbeiten. Mit Teams können Benutzer Chatnachrichten senden, Audio- und Videoanrufe tätigen, Onlinebesprechungen abhalten und gemeinsam an Dokumenten arbeiten. Es ist eine vielseitige und benutzerfreundliche Plattform, die Teams in Unternehmen oder Bildungseinrichtungen bei der effektiven Kommunikation und Zusammenarbeit unterstützt.",
@@ -2001,7 +2004,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Keine Key Results anzuzeigen.",
 			"NO_UPDATES": "Keine Updates bisher.",
-			"NO_ALIGNMENT": "Noch keine Ausrichtungen vorhanden."
+			"NO_ALIGNMENT": "Noch keine Ausrichtungen vorhanden.",
+			"NO_PROGRESS_DATA": "Noch keine Fortschrittsdaten für das Diagramm vorhanden."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organisation",
@@ -2451,6 +2455,8 @@
 				"REQUIRE_CLIENT": "Kunde benötigt werden",
 				"REQUIRE_CLIENT_INFO": "Für den Start des Timers und auch für das Hinzufügen oder Bearbeiten von manueller Zeit in den Zeitprotokollen wird der Kunde der erfassten Zeit benötigt.",
 				"ALLOW_TO_SET_DEFAULT_ORGANIZATION": "Erlaube dem Benutzer, die Standardorganisation festzulegen.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Frequentie schermafbeeldingen",
 				"SCREENSHOT_FREQUENCY_INFO": "Geef de updatefrequentie of tijdintervallen voor synchronisatie op.",
 				"RANDOM_SCREENSHOT": "Willekeurige schermafbeelding",
@@ -4908,7 +4914,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Fotos des Bildschirms",
 			"OF": "von",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Bildschirmfoto, aufgenommen um {{ time }}",
+			"POSITION": "Bildschirmfoto {{ position }} von {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Achtung. Der Timer läuft, du kannst nur Screenshots entfernen, wenn du den Timer stoppst oder die Inside Timer App benutzt.",
 		"DELETE_CONFIRM": "Bist du sicher, diese Screenshots und Zeitprotokolle zu löschen?",

@@ -1,4 +1,5 @@
 import { Controller, UseGuards, HttpStatus, Get, Query, Body, Post } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	ICountsStatistics,
@@ -12,7 +13,12 @@ import {
 	ITasksStatistics
 } from '@gauzy/contracts';
 import { Permissions } from './../../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import {
+	canViewTrackedData,
+	EmployeeTrackedDataGuard,
+	PermissionGuard,
+	TenantPermissionGuard
+} from './../../shared/guards';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TimeTrackingStatisticQueryDTO } from './dto';
 import { StatisticService } from './statistic.service';
@@ -27,7 +33,33 @@ import { StatisticService } from './statistic.service';
 )
 @Controller('/timesheet/statistics')
 export class StatisticController {
-	constructor(private readonly statisticService: StatisticService) {}
+	constructor(
+		private readonly statisticService: StatisticService,
+		private readonly dataSource: DataSource
+	) {}
+
+	/**
+	 * Tells whether the current user can view tracked data in the organization, applying the
+	 * `allowEmployeeToSeeTrackedData` setting with the same rule as {@link EmployeeTrackedDataGuard}
+	 * (admins, callers without an employee record and team/project managers are exempt).
+	 * The web UI uses it to hide navigation to tracked-data pages. It answers for the caller's own
+	 * organization only, so it cannot be used to read the setting of any other organization.
+	 *
+	 * @returns {Promise<{ allowed: boolean }>} - Whether tracked data is visible to the caller.
+	 */
+	@ApiOperation({
+		summary: 'Check tracked data visibility',
+		description:
+			'Whether the organization setting allowEmployeeToSeeTrackedData lets the current user view tracked data.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The visibility decision for the current user.'
+	})
+	@Get('/tracked-data-access')
+	async getTrackedDataAccess(): Promise<{ allowed: boolean }> {
+		return { allowed: await canViewTrackedData(this.dataSource) };
+	}
 
 	/**
 	 * Retrieve statistics for counts based on the provided query parameters.
@@ -47,6 +79,7 @@ export class StatisticController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/counts')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getCountsStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<ICountsStatistics> {
@@ -72,6 +105,7 @@ export class StatisticController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/members')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getMembersStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<IMembersStatistics[]> {
@@ -97,6 +131,7 @@ export class StatisticController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/projects')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getProjectsStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<IProjectsStatistics[]> {
@@ -122,6 +157,7 @@ export class StatisticController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	// Not guarded by EmployeeTrackedDataGuard: the desktop timer's task picker needs it to start tracking.
 	@Post('/tasks')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getTasksStatistics(@Body() request: TimeTrackingStatisticQueryDTO): Promise<ITasksStatistics[]> {
@@ -147,6 +183,7 @@ export class StatisticController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/manual-times')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getManualTimesStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<IManualTimesStatistics[]> {
@@ -172,6 +209,7 @@ export class StatisticController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/time-slots')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getEmployeeTimeSlotsStatistics(
@@ -199,6 +237,7 @@ export class StatisticController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/activities')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getActivitiesStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<IActivitiesStatistics[]> {

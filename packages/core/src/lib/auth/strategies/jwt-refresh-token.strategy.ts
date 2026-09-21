@@ -6,6 +6,7 @@ import { JwtPayload } from 'jsonwebtoken';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { RefreshTokenService } from '../../refresh-token/refresh-token.service';
 import { UserService } from './../../user/user.service';
+import { JWT_ALGORITHMS } from '../purpose-token';
 
 @Injectable()
 export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh-token') {
@@ -13,6 +14,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 		super({
 			jwtFromRequest: ExtractJwt.fromBodyField('refresh_token'),
 			secretOrKey: environment.JWT_REFRESH_TOKEN_SECRET,
+			algorithms: JWT_ALGORITHMS,
 			passReqToCallback: true,
 			ignoreExpiration: false
 		});

@@ -7,6 +7,7 @@ import {
 	shouldScanForMarkup,
 	videoUploadFileFilter,
 	BaseQueryDTO,
+	EmployeeTrackedDataGuard,
 	PermissionGuard,
 	Permissions,
 	RequestContext,
@@ -74,6 +75,7 @@ export class VideosController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No videos found matching the provided criteria.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/')
 	public async findAll(@Query() params: BaseQueryDTO<Video>): Promise<IPagination<IVideo>> {
 		return this.queryBus.execute(new GetVideosQuery(params));
@@ -207,6 +209,7 @@ export class VideosController {
 		status: HttpStatus.INTERNAL_SERVER_ERROR,
 		description: 'An error occurred while retrieving the video count.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('count')
 	@UseValidationPipe({
 		whitelist: true,
@@ -267,6 +270,7 @@ export class VideosController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@UseValidationPipe({
 		whitelist: true,
 		transform: true,

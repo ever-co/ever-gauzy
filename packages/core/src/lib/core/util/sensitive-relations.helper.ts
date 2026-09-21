@@ -5,6 +5,10 @@ import { SensitiveRelationConfig } from '../decorators/sensitive-relations.decor
 import { RequestContext } from '../context';
 import { normalizeRelationsToPaths } from '../utils';
 import { ORGANIZATION_SENSITIVE_RELATIONS } from './organization-sensitive-relations.config';
+import {
+	TRACKED_DATA_SENSITIVE_RELATION_NAMES,
+	TRACKED_DATA_SENSITIVE_RELATIONS
+} from './tracked-data-sensitive-relations.config';
 
 /**
  * Key a {@link SensitiveRelationConfig} node uses to declare the permission required to load the
@@ -148,6 +152,34 @@ function isOrganizationEntity(metadata: EntityMetadata | undefined): boolean {
 }
 
 /**
+ * The table that applies while standing on this entity, merged with whatever the parent node already
+ * declared for it. Arming per entity is what makes a relation gated by WHICH entity it is loaded from;
+ * merging is what keeps a nested declaration of the organization table (`organization.employees.user`)
+ * in force after the walk lands on an entity that owns tracked data.
+ *
+ * @param metadata - Entity metadata of the hop the walk has reached.
+ * @param inherited - The config the parent node declared for this hop, if any.
+ * @returns The config to apply for the next segment, if any.
+ */
+function configForEntity(
+	metadata: EntityMetadata | undefined,
+	inherited?: SensitiveRelationConfig
+): SensitiveRelationConfig | undefined {
+	// Landing on an organization (re)arms the organization table, so `employee.organization.payments` is
+	// gated exactly like `organization.payments`.
+	if (isOrganizationEntity(metadata)) {
+		return ORGANIZATION_RELATION_PERMISSIONS;
+	}
+
+	const tracked = metadata ? TRACKED_DATA_SENSITIVE_RELATIONS[metadata.name] : undefined;
+	if (!tracked) {
+		return inherited;
+	}
+	// Tracked-data entries win over an inherited declaration of the same name: they are the stricter rule.
+	return inherited ? { ...inherited, ...tracked } : tracked;
+}
+
+/**
  * Enforces {@link ORGANIZATION_SENSITIVE_RELATIONS} at the data-access boundary, for EVERY entity.
  *
  * `SensitiveRelationsInterceptor` is the declarative, per-controller layer of this protection, but it
@@ -199,7 +231,13 @@ export function assertSensitiveRelationsAllowed(metadata: EntityMetadata | undef
 
 	// Cheap pre-filter: unless a requested segment is a name the table declares, no walk is needed.
 	const touchesSensitiveName = paths.some((path: string) =>
-		path.split('.').some((segment: string) => SENSITIVE_ORGANIZATION_RELATION_NAMES.has(segment))
+		path
+			.split('.')
+			.some(
+				(segment: string) =>
+					SENSITIVE_ORGANIZATION_RELATION_NAMES.has(segment) ||
+					TRACKED_DATA_SENSITIVE_RELATION_NAMES.has(segment)
+			)
 	);
 	if (!touchesSensitiveName) {
 		return;
@@ -219,9 +257,7 @@ export function assertSensitiveRelationsAllowed(metadata: EntityMetadata | undef
 
 	for (const path of paths) {
 		let entityMetadata: EntityMetadata | undefined = metadata;
-		let config: SensitiveRelationConfig | undefined = isOrganizationEntity(entityMetadata)
-			? ORGANIZATION_RELATION_PERMISSIONS
-			: undefined;
+		let config: SensitiveRelationConfig | undefined = configForEntity(entityMetadata);
 
 		for (const segment of path.split('.')) {
 			if (config) {
@@ -242,11 +278,9 @@ export function assertSensitiveRelationsAllowed(metadata: EntityMetadata | undef
 			const relation = entityMetadata.findRelationWithPropertyPath(segment);
 			entityMetadata = relation ? relation.inverseEntityMetadata : undefined;
 
-			// Landing on an organization (re)arms the organization table for the hops below, so
-			// `employee.organization.payments` is gated exactly like `organization.payments`.
-			if (isOrganizationEntity(entityMetadata)) {
-				config = ORGANIZATION_RELATION_PERMISSIONS;
-			}
+			// Landing on an entity that owns tracked data arms that table for the hops below, so
+			// `members.employee.timeSlots` is gated exactly like `employee.timeSlots`.
+			config = configForEntity(entityMetadata, config);
 		}
 	}
 }

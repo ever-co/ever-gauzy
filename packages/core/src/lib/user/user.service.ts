@@ -49,7 +49,12 @@ import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
 import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
 import { PasswordHashService } from '../password-hash/password-hash.service';
-import { assertRoleAssignmentAllowed } from './role-assignment.helper';
+import {
+	assertRoleAssignmentAllowed,
+	extractRoleIds,
+	IRoleAssignmentPayload,
+	normalizeRolePayload
+} from './role-assignment.helper';
 import {
 	emailVerificationClaimWhere,
 	emailVerificationClaimWhereMikroOrm,
@@ -66,6 +71,19 @@ import {
  * archived account while every other endpoint answered 401.
  */
 const ACTIVE_ACCOUNT = { isActive: true, isArchived: false } as const;
+
+/**
+ * How many rows {@link UserService.findAccountsUsingPasswords} reads and verifies PER CANDIDATE
+ * ADDRESS. That check runs on the boot path, `user.email` carries a plain (non-unique) index, and a
+ * password verification costs tens to hundreds of milliseconds by design — so the work has to be
+ * capped rather than scale with the number of tenants that happen to hold the same seeded address
+ * (GHSA-4r2r-mv32-3468).
+ *
+ * The budget is per address rather than global: one shared `IN (...)` limit let the rows of whichever
+ * address the database returned first use up the whole allowance, so a rotated `admin@ever.co` in ten
+ * tenants could hide an `employee@ever.co` that still had its published password.
+ */
+const MAX_ROWS_PER_ACCOUNT = 5;
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -475,6 +493,13 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 		}
 
+		// Read the role the body assigns in EVERY form it can take — `roleId`, `role` as a bare id string,
+		// `role: { id }` — and make the payload persist exactly that id (GHSA-x4mv-fhwj-g3rp). A string
+		// `role` used to be invisible to the checks below while TypeORM still wrote it as the FK, and a
+		// `null` role cleared the caller's own role. A malformed role key or a `role`/`roleId` pair that
+		// disagrees is a 400; this runs before the `try`, which turns every error into a 403.
+		normalizeRolePayload(entity);
+
 		let user: IUser;
 
 		try {
@@ -498,15 +523,14 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 
 			// Restrict users from updating their own role.
-			// Check BOTH the nested `role` object and the flat `roleId` field INDEPENDENTLY, otherwise a
-			// user could escalate their own privileges (e.g. to SUPER_ADMIN). `role?.id ?? roleId` is not
-			// enough: a crafted body could send an empty `role: { id: '' }` (non-nullish) to mask a
-			// privileged `roleId` and slip through. Reject if any provided role identifier differs from the
-			// caller's current role.
+			// Every role identifier the (normalized) payload carries is checked — `roleId`, `role` as an
+			// id string and `role: { id }` alike — otherwise a user could escalate their own privileges
+			// (e.g. to SUPER_ADMIN) through whichever form the check forgot. Reject if any of them differs
+			// from the caller's current role.
 			// Compare as strings: `id` is typed `ID | number`, so a numeric-equivalent value must not
 			// slip past the self-update check on a strict `===`.
 			if (String(currentUserId) === String(id)) {
-				const requestedRoleIds = [entity.role?.id, entity.roleId].filter((roleId) => isNotEmpty(roleId));
+				const requestedRoleIds = extractRoleIds(entity);
 				if (requestedRoleIds.some((roleId) => String(roleId) !== String(currentRoleId))) {
 					throw new ForbiddenException();
 				}
@@ -514,7 +538,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				// Updating SOMEONE ELSE: granting SUPER_ADMIN is reserved to callers who may edit super
 				// admins (the same boundary the register handler and invite creation enforce). The role is
 				// resolved from the database — never from a client-supplied role name.
-				await this.assertCanAssignRoles([entity.role?.id, entity.roleId]);
+				await this.assertCanAssignRoles(entity);
 			}
 
 			// Update password hash if provided
@@ -884,6 +908,102 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
+	 * Returns the emails of the given accounts whose stored password still verifies against the given
+	 * password. One query for all candidates; used at boot to warn about seeded accounts that still
+	 * use their published default password (GHSA-4r2r-mv32-3468).
+	 *
+	 * Best effort, and deliberately bounded: `email` is not unique across tenants, so the same seeded
+	 * address can exist many times, while one verification is expensive on purpose (scrypt, or bcrypt
+	 * at 12 rounds for a legacy hash). This runs before the API starts listening, so each candidate
+	 * address is queried on its own and at most {@link MAX_ROWS_PER_ACCOUNT} of its rows are read and
+	 * verified — every candidate gets looked at, and a boot cannot be held up.
+	 *
+	 * The cap makes a clean result non-conclusive: with the same address in more tenants than the cap,
+	 * a vulnerable row can sit outside the sample. That is reported rather than hidden — `inconclusive`
+	 * names the addresses whose rows filled the budget without a match, so the caller can say "not
+	 * exhaustively checked" instead of implying "clean".
+	 *
+	 * @param candidates Account emails, each with the password to test.
+	 * @returns `matches`, the emails that still use one of the given passwords (each reported once
+	 * however many tenants hold it), and `inconclusive`, the emails whose search hit the row budget
+	 * without matching.
+	 */
+	public async findAccountsUsingPasswords(
+		candidates: ReadonlyArray<{ email: string; password: string }>
+	): Promise<{ matches: string[]; inconclusive: string[] }> {
+		// One Set of passwords per address: `getPublishedSeedAccounts()` can propose the same address
+		// twice (the canonical one and the configured one), and a Map keeps one query per address while
+		// still testing every password proposed for it. Insertion order is the candidate order.
+		const passwordsByEmail = new Map<string, Set<string>>();
+		for (const { email, password } of candidates) {
+			if (!email) {
+				continue;
+			}
+			const passwords = passwordsByEmail.get(email) ?? new Set<string>();
+			passwords.add(password);
+			passwordsByEmail.set(email, passwords);
+		}
+
+		const matches: string[] = [];
+		const inconclusive: string[] = [];
+		for (const [email, passwords] of passwordsByEmail) {
+			const rows = await this.findUsersByEmail(email);
+			// Re-checked against the row AND sliced again here, so a repository that ignored the filter
+			// or the limit can neither cross-match one account's password onto another nor make the
+			// expensive part unbounded.
+			const relevant = rows.filter((row) => row?.email === email && !!row.hash).slice(0, MAX_ROWS_PER_ACCOUNT);
+			if (await this.anyPasswordVerifies(relevant, passwords)) {
+				matches.push(email);
+			} else if (relevant.length >= MAX_ROWS_PER_ACCOUNT) {
+				// The budget ran out before the rows did: there may be a vulnerable one past it.
+				inconclusive.push(email);
+			}
+		}
+		return { matches, inconclusive };
+	}
+
+	/**
+	 * Reads at most {@link MAX_ROWS_PER_ACCOUNT} users with this exact email, with their hash.
+	 *
+	 * @param email The address to look up.
+	 */
+	private async findUsersByEmail(email: string): Promise<Array<Pick<User, 'email' | 'hash'>>> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				// Raw entities, not `serialize()`d: serialization strips `hash`.
+				return this.mikroOrmUserRepository.find({ email } as any, { limit: MAX_ROWS_PER_ACCOUNT });
+			case MultiORMEnum.TypeORM:
+			default:
+				return this.typeOrmUserRepository.find({
+					where: { email },
+					select: { id: true, email: true, hash: true },
+					take: MAX_ROWS_PER_ACCOUNT
+				});
+		}
+	}
+
+	/**
+	 * Whether any of `passwords` verifies against any of the given rows' hashes. Stops at the first
+	 * match, since one is enough to warn about the account.
+	 *
+	 * @param rows Rows already narrowed to one address and known to carry a hash.
+	 * @param passwords The passwords to test.
+	 */
+	private async anyPasswordVerifies(
+		rows: ReadonlyArray<Pick<User, 'hash'>>,
+		passwords: Iterable<string>
+	): Promise<boolean> {
+		for (const row of rows) {
+			for (const password of passwords) {
+				if (await this._passwordHashService.verify(password, row.hash)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Generates a hash from the provided password using PasswordHashService.
 	 *
 	 * @param password The password to hash.
@@ -896,15 +1016,18 @@ export class UserService extends TenantAwareCrudService<User> {
 	/**
 	 * Refuses a payload that assigns a role the caller may not grant.
 	 *
-	 * @param roleIds Every role identifier in the payload — both the flat `roleId` and `role.id`.
-	 * @throws BadRequestException When an id does not resolve inside the caller's tenant.
+	 * @param payload The payload that assigns the role. Its identifiers are extracted here, in every
+	 *                form (`roleId`, `role` as an id string, `role: { id }`), so a caller cannot forget one.
+	 * @throws BadRequestException When a role key does not reference a role, or an id does not resolve
+	 *                             inside the caller's tenant.
 	 * @throws ForbiddenException When SUPER_ADMIN is requested without `SUPER_ADMIN_EDIT`.
 	 */
-	public async assertCanAssignRoles(roleIds: Array<ID | undefined>): Promise<void> {
+	public async assertCanAssignRoles(payload: IRoleAssignmentPayload): Promise<void> {
 		// EVERY candidate is checked, not just the first: the entity carries both a `role` relation and a
-		// flat `roleId` column, and the RELATION wins when the row is persisted — so a body sending a
-		// harmless `roleId` next to a privileged `role: { id }` must not validate the harmless one.
-		const candidates = roleIds.filter((roleId) => isNotEmpty(roleId)) as ID[];
+		// flat `roleId` column, so a body sending a harmless `roleId` next to a privileged `role` must not
+		// validate the harmless one. A role key that is present but references nothing throws inside
+		// `extractRoleIds` rather than leaving an empty list that checks nothing (GHSA-x4mv-fhwj-g3rp).
+		const candidates = extractRoleIds(payload);
 		const canEditSuperAdmin = RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT);
 		for (const roleId of candidates) {
 			assertRoleAssignmentAllowed(await this.resolveRoleName(roleId), canEditSuperAdmin);

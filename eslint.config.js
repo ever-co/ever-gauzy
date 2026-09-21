@@ -70,7 +70,62 @@ module.exports = [
 				{
 					enforceBuildableLibDependency: true,
 					allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
-					depConstraints: [{ sourceTag: '*', onlyDependOnLibsWithTags: ['*'] }]
+					depConstraints: [
+						// TASK 6 (improvement roadmap) — Plugin/Core Boundary Enforcement. `packages/core`
+						// (`type:core`) may depend on itself and the foundational shared libs it actually
+						// uses (`type:shared`: auth/common/config/constants/contracts/plugin/scheduler/utils,
+						// plus the UI foundations below), but never on a specific integration (`type:plugin`,
+						// every package under `packages/plugins/*`). Core already depends on plugins only
+						// through `@gauzy/plugin`'s neutral contract (`GauzyCorePlugin`/`IOnPluginBootstrap`),
+						// never a concrete plugin package by name — this rule makes that direction
+						// structurally impossible to regress, rather than relying on it staying true by
+						// convention.
+						//
+						// Every `enforce-module-boundaries` constraint whose `sourceTag` matches a project
+						// applies (AND, not first-match/OR) — so each entry below narrows its own source tag
+						// alongside the wildcard fallback at the end without needing to reorder anything.
+						{ sourceTag: 'type:core', onlyDependOnLibsWithTags: ['type:core', 'type:shared'] },
+
+						// TASK 8 (improvement roadmap) — Nx Dependency Boundary Enforcement, the plugin-layer
+						// analog of TASK 6. A `type:plugin` package (one integration/feature) may depend on
+						// core/shared infra, but not reach into ANOTHER plugin's internals directly — that is
+						// "Feature A imports Feature B's internals" from the roadmap's own problem statement.
+						//
+						// `type:plugin-extension-point` is a second tag layered onto the small set of plugins
+						// that are genuinely, currently depended on by other plugins (confirmed by grepping
+						// every real `@gauzy/plugin-*` import across `packages/plugins/*/src` while building
+						// this rule):
+						//   - `ai-chat`            — a real, intentional SPI: 15 `ai-provider-*` plugins
+						//                            implement its provider interface; `docs` feature-detects
+						//                            it at runtime via `require(...)`, never a static import.
+						//   - `job-proposal`       — imported by `integration-upwork` (ProposalModule /
+						//                            ProposalCreateCommand). NOT a designed extension point —
+						//                            grandfathered so a real, working integration isn't broken
+						//                            by this rule; a real fix (a shared contract or a
+						//                            command/event instead of a direct import) is follow-up work.
+						//   - `integration-ai`     — imported by `job-search` (GauzyAIService/GauzyAIModule).
+						//                            Same grandfathered-not-endorsed status as `job-proposal`.
+						//   - `job-employee-ui`, `job-matching-ui`, `job-proposal-ui`, `job-search-ui` —
+						//                            assembled by the `jobs-ui` aggregator plugin, an
+						//                            intentional composition-root pattern (bundles the four
+						//                            sub-UI plugins into one), not accidental coupling.
+						//
+						// The allowance is per TARGET, not per source-target pair: any `type:plugin` package may
+						// import any package tagged `type:plugin-extension-point`, so a new import of, say,
+						// `job-proposal` from a plugin other than `integration-upwork` still passes lint. What the
+						// rule does catch is a new import of any plugin WITHOUT that tag, which stops the problem
+						// from getting worse without requiring the two grandfathered integrations to be refactored
+						// in the same change that adds the rule. Pinning each grandfathered pair takes more than a
+						// tag on the target: the constraints matching a project AND together and can only narrow,
+						// so each consumer (`integration-upwork`, `job-search`, `jobs-ui`) would need a source tag
+						// of its own in place of `type:plugin`. That belongs with the follow-up refactor above.
+						{
+							sourceTag: 'type:plugin',
+							onlyDependOnLibsWithTags: ['type:core', 'type:shared', 'type:plugin-extension-point']
+						},
+
+						{ sourceTag: '*', onlyDependOnLibsWithTags: ['*'] }
+					]
 				}
 			],
 

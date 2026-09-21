@@ -5,9 +5,9 @@ import { EmailTemplateSaveCommand } from '../email-template.save.command';
 import { EmailTemplateService } from '../../email-template.service';
 import { EmailTemplate } from '../../email-template.entity';
 import { LanguagesEnum, EmailTemplateEnum, IEmailTemplate } from '@gauzy/contracts';
-import * as mjml2html from 'mjml';
 import { BadRequestException } from '@nestjs/common';
 import { RequestContext } from './../../../core/context';
+import { compileMjml } from '../../compile-mjml';
 
 @CommandHandler(EmailTemplateSaveCommand)
 export class EmailTemplateSaveHandler
@@ -88,7 +88,7 @@ export class EmailTemplateSaveHandler
 					entity = {
 						...record,
 						mjml: content,
-						hbs: mjml2html(content).html
+						hbs: compileMjml(content).html
 					};
 					break;
 			}
@@ -108,7 +108,7 @@ export class EmailTemplateSaveHandler
 					break;
 				case 'html':
 					entity.mjml = content;
-					entity.hbs = mjml2html(content).html;
+					entity.hbs = compileMjml(content).html;
 					break;
 			}
 			await this.emailTemplateService.create(entity);

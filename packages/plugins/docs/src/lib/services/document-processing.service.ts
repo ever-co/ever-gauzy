@@ -339,17 +339,21 @@ export class DocumentProcessingService {
 	 */
 	public snapshotOf(document: IDocument, reason: DocsJobReason): IDocsJobBase {
 		let initiatedByUserId: ID | undefined;
+		let correlationId: ID | undefined;
 		try {
 			initiatedByUserId = RequestContext.currentUserId() ?? undefined;
+			correlationId = RequestContext.currentCorrelationId() ?? undefined;
 		} catch {
 			initiatedByUserId = undefined; // queue threads have no request context
+			correlationId = undefined;
 		}
 		return {
 			documentId: document.id,
 			tenantId: document.tenantId,
 			organizationId: document.organizationId,
 			reason,
-			initiatedByUserId
+			initiatedByUserId,
+			correlationId
 		};
 	}
 

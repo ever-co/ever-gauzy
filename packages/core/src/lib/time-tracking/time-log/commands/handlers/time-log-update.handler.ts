@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum } from '@gauzy/contracts';
@@ -13,6 +14,24 @@ import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../../../time-slot/repository/mikro-orm-time-slot.repository';
+
+/**
+ * Input keys that decide WHERE a time log lives. They are never taken from the input.
+ */
+const TIME_LOG_SCOPE_FIELDS = ['id', 'tenantId', 'tenant', 'organizationId', 'organization', 'employee'] as const;
+
+/**
+ * Returns a copy of the input without the scope fields.
+ *
+ * @param input - The requested time log changes.
+ */
+export function omitScopeFields<T extends object>(input: T): Partial<T> {
+	const changes: Partial<T> = { ...input };
+	for (const field of TIME_LOG_SCOPE_FIELDS) {
+		delete (changes as any)[field];
+	}
+	return changes;
+}
 
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
@@ -41,14 +60,15 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		const { id, input, manualTimeSlot, forceDelete = false } = command;
 		console.log('Executing TimeLogUpdateCommand:', { id, input, manualTimeSlot, forceDelete });
 
-		// Retrieve the tenant ID from the request context or the provided input
-		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-		console.log('Tenant ID:', tenantId);
-
 		let timeLog: ITimeLog = await this.getTimeLogByIdOrInstance(id);
 		console.log('Retrieved TimeLog:', timeLog);
 
-		const { employeeId, organizationId } = timeLog;
+		// Tenant and organization always come from the stored row, never from the input: the input is
+		// (partly) a request body, and spreading its tenantId/organizationId into the update re-pointed
+		// the log at another tenant (GHSA-6qvm-3wg4-26w4).
+		const { employeeId, organizationId, tenantId } = timeLog;
+		console.log('Tenant ID:', tenantId);
+		const changes = omitScopeFields(input);
 
 		let timesheet: ITimesheet;
 		let updateTimeSlots: ITimeSlot[] = [];
@@ -64,17 +84,20 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			console.log('Generated or retrieved Timesheet:', timesheet);
 
 			// Generate time slots based on the updated time log details
-			const { startedAt, stoppedAt } = { ...timeLog, ...input };
+			const { startedAt, stoppedAt } = { ...timeLog, ...changes };
 			updateTimeSlots = this.timeSlotService.generateTimeSlots(startedAt, stoppedAt);
 			console.log('Generated updated TimeSlots:', updateTimeSlots);
 		}
 
 		// Update the time log in the repository
-		await this.typeOrmTimeLogRepository.update(timeLog.id, {
-			...input,
-			...(timesheet ? { timesheetId: timesheet.id } : {})
-		});
-		console.log('Updated TimeLog in the repository:', { id: timeLog.id, input });
+		await this.typeOrmTimeLogRepository.update(
+			{ id: timeLog.id, tenantId },
+			{
+				...changes,
+				...(timesheet ? { timesheetId: timesheet.id } : {})
+			}
+		);
+		console.log('Updated TimeLog in the repository:', { id: timeLog.id, input: changes });
 
 		// Regenerate the existing time slots for the time log
 		const timeSlots = this.timeSlotService.generateTimeSlots(timeLog.startedAt, timeLog.stoppedAt);
@@ -127,7 +150,16 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	 * @returns A promise that resolves to the `ITimeLog` instance.
 	 */
 	private async getTimeLogByIdOrInstance(id: ID | TimeLog): Promise<ITimeLog> {
-		return id instanceof TimeLog ? id : this.typeOrmTimeLogRepository.findOneBy({ id });
+		if (id instanceof TimeLog) {
+			return id;
+		}
+		// An id is resolved inside the caller's tenant only (the raw repository has no tenant scoping).
+		const tenantId = RequestContext.currentTenantId();
+		const timeLog = tenantId ? await this.typeOrmTimeLogRepository.findOneBy({ id, tenantId }) : null;
+		if (!timeLog) {
+			throw new NotFoundException('The time log was not found');
+		}
+		return timeLog;
 	}
 
 	/**

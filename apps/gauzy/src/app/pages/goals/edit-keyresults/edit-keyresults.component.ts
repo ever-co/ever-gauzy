@@ -45,6 +45,14 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	orgName: string;
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	helperText = '';
+	/**
+	 * The field the pointer is over, the field holding keyboard focus, and the field the level picker reports
+	 * (it resolves its own hover and focus before emitting). Tracked apart: held in one value, ending any one
+	 * interaction cleared the help while another was still on a field.
+	 */
+	private hoveredField = '';
+	private focusedField = '';
+	private levelField = '';
 	teams: IOrganizationTeam[] = [];
 	hideOrg = false;
 	hideTeam = false;
@@ -160,6 +168,33 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			this.keyResultsForm.controls['hardDeadline'].setValidators([Validators.required]);
 			this.keyResultsForm.controls['hardDeadline'].updateValueAndValidity();
 		}
+	}
+
+	/** Records the field the pointer moved onto, or `''` when it left one. */
+	hoverHelper(field: string) {
+		this.hoveredField = field;
+		this.showHelper();
+	}
+
+	/** Records the field that took keyboard focus, or `''` when it lost it. */
+	focusHelper(field: string) {
+		this.focusedField = field;
+		this.showHelper();
+	}
+
+	/** Records whichever of Level or Owner the aligned-objective picker is reporting, or `''` for none. */
+	levelHelper(field: string) {
+		this.levelField = field;
+		this.showHelper();
+	}
+
+	/**
+	 * Picks the help the aside shows. The pointer wins while it is over a field, so hovering one field while
+	 * another holds focus still reads as before; the help falls back to whatever is left and only clears once
+	 * every interaction has ended.
+	 */
+	private showHelper() {
+		this.helperText = this.hoveredField || this.levelField || this.focusedField;
 	}
 
 	selectEmployee(event, control) {

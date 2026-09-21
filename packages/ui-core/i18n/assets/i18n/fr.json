@@ -1957,6 +1957,7 @@
 		"EXPECTED": "Attendu",
 		"UPDATES": "Mises à jour",
 		"UPDATE": "Mettre à jour",
+		"ALIGNMENTS": "Alignements",
 		"COMMENTS": "Commentaires",
 		"KEY_RESULTS": "Résultats clés",
 		"GROUP_BY": "Grouper par",
@@ -1973,6 +1974,8 @@
 		"GOAL_TEMPLATES": "Modèles d'objectifs",
 		"CREATE_NEW_MENU": "Créer Nouveau",
 		"CREATE_FROM_PRESET": "Créer à partir d'un préréglage",
+		"SELECT_A_PRESET": "Sélectionner un préréglage",
+		"ADDITIONAL_DETAILS": "Détails supplémentaires",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Employés",
 			"TEAMS": "Équipes",
@@ -2002,7 +2005,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Aucun résultat clé à afficher.",
 			"NO_UPDATES": "Aucune mise à jour pour l'instant.",
-			"NO_ALIGNMENT": "Aucun alignement encore."
+			"NO_ALIGNMENT": "Aucun alignement encore.",
+			"NO_PROGRESS_DATA": "Aucune donnée de progression à afficher pour l'instant."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "L'organisation",
@@ -2458,6 +2462,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Durée du compte à rebours de la preuve d'activité, cela représente un certain nombre de minutes données pour prouver l'activité.",
 				"ENABLE_DETECTION_INACTIVITY": "Permettre la détection de l'inactivité des employés",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Activé - le système détectera l'inactivité et affichera un avertissement. Désactivé - aucun avertissement ne sera affiché lorsqu'un employé est inactif.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Fréquence des captures d'écran",
 				"SCREENSHOT_FREQUENCY_INFO": "Spécifiez la fréquence de mise à jour ou les intervalles de synchronisation.",
 				"RANDOM_SCREENSHOT": "Capture d'écran aléatoire",
@@ -4903,7 +4909,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Captures d'écran",
 			"OF": "du",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Capture d’écran prise à {{ time }}",
+			"POSITION": "Capture d’écran {{ position }} sur {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Avertissement. Le compte à rebours est en marche, vous ne pouvez supprimer les captures d'écran que si vous arrêtez le minuteur ou depuis l'application Timer.",
 		"DELETE_CONFIRM": "Êtes-vous certain de vouloir supprimer ces captures d'écran et ce journal des temps ?",

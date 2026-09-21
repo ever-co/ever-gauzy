@@ -63,7 +63,9 @@ export class GalleryDirective implements OnDestroy, OnInit {
 				item,
 				employeeId: this.employeeId
 			},
-			dialogClass: 'fullscreen'
+			dialogClass: 'fullscreen',
+			// The gallery focuses itself; see `GalleryComponent.ngAfterViewInit`.
+			autoFocus: false
 		});
 	}
 

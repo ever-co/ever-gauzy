@@ -838,9 +838,16 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns A promise that resolves to the softly removed entity.
 	 */
 	public async softRemove(id: ID, options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
+		// The inherited `DELETE :id/soft` route hands over its rest parameter, an ARRAY; never treat it
+		// as find options.
+		options = toFindOneOptions<T>(options);
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
+					// Resolve through `findOneByIdString` first: `TenantAwareCrudService` overrides it to add
+					// the caller's tenant, which the raw repository lookup below does not. Without it the
+					// MikroORM branch soft-deleted a row of ANY tenant by id.
+					await this.findOneByIdString(id, options);
 					// Convert the filter to MikroORM-specific where and options
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
 					const entity = (await this.mikroOrmRepository.findOne(
@@ -877,9 +884,16 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns A promise that resolves with the recovered entity.
 	 */
 	public async softRecover(id: ID, options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
+		// The row to recover IS soft-deleted, so the lookup must include deleted rows: without
+		// `withDeleted` every inherited `PUT :id/recover` route answered 404 for the very row it was
+		// meant to restore. The inherited route also hands over its rest parameter, an ARRAY; never treat
+		// it as find options.
+		options = { ...toFindOneOptions<T>(options), withDeleted: true } as IFindOneOptions<T>;
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
+					// Tenant-scoped existence check first — see softRemove.
+					await this.findOneByIdString(id, options);
 					// Convert the filter to MikroORM-specific where and options
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
 					// Find the soft-deleted entity with relations
@@ -995,4 +1009,19 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		// If using other ORM types, return the entity as is
 		return entity;
 	}
+}
+
+/**
+ * Narrows the `options` argument of `softRemove` / `softRecover` to real find options.
+ *
+ * `CrudController` forwards its `...options` rest parameter, which Nest fills with an empty ARRAY, so the
+ * value is not an options object at all on the inherited routes.
+ *
+ * @param options - The value received as find options.
+ * @returns The options object, or `undefined` when none was given.
+ */
+function toFindOneOptions<T>(options: unknown): IFindOneOptions<T> | undefined {
+	return options && typeof options === 'object' && !Array.isArray(options)
+		? (options as IFindOneOptions<T>)
+		: undefined;
 }

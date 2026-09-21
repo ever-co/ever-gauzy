@@ -4,12 +4,17 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { OrganizationPolicyTarget, Permissions } from './../../shared/decorators';
-import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import {
+	EmployeeTrackedDataGuard,
+	OrganizationPermissionGuard,
+	PermissionGuard,
+	TenantPermissionGuard
+} from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
 import { TimeSlot } from './time-slot.entity';
 import { TimeSlotService } from './time-slot.service';
-import { DeleteTimeSlotDTO, TimeSlotQueryDTO } from './dto';
+import { DeleteTimeSlotDTO, TimeSlotQueryDTO, UpdateTimeSlotDTO } from './dto';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -33,6 +38,7 @@ export class TimeSlotController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async findAll(@Query() options: TimeSlotQueryDTO): Promise<ITimeSlot[]> {
@@ -100,7 +106,8 @@ export class TimeSlotController {
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
 	@OrganizationPolicyTarget(TimeSlot)
 	@Put('/:id')
-	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() request: ITimeSlot): Promise<ITimeSlot> {
+	@UseValidationPipe({ whitelist: true })
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() request: UpdateTimeSlotDTO): Promise<ITimeSlot> {
 		return await this._commandBus.execute(new UpdateTimeSlotCommand(id, request));
 	}
 
@@ -125,6 +132,9 @@ export class TimeSlotController {
 	})
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
+	// See the time-log delete route: the organization of every addressed slot is checked, not only the
+	// one the request names (GHSA-rmq9-85v7-f365).
+	@OrganizationPolicyTarget(TimeSlot, 'ids', 'query')
 	@Delete('/')
 	@UseValidationPipe({ transform: true })
 	async deleteTimeSlot(@Query() options: DeleteTimeSlotDTO): Promise<DeleteResult | UpdateResult> {

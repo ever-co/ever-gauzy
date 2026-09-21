@@ -3,7 +3,7 @@ import { CanActivate, ExecutionContext, Inject, Injectable, Type } from '@nestjs
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { Brackets, EntityTarget, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, EntityTarget, In, WhereExpressionBuilder } from 'typeorm';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { ID, IOrganization, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty, isNotEmpty } from '@gauzy/utils';
@@ -119,7 +119,11 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 		// Check if super admin role is allowed from the .env file
 		if (env.allowSuperAdminRole && RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])) {
-			return true;
+			// The exemption covers the organization POLICY only. On a route that addresses a record by
+			// id, the tenant-scoped target lookup is also the ownership check: every tenant owner is a
+			// SUPER_ADMIN, so returning early here let one reach another tenant's record by its UUID
+			// (GHSA-6qvm-3wg4-26w4). The record still has to exist in the caller's tenant.
+			return await this.superAdminTargetIsInTenant(context);
 		}
 
 		const tenantId = RequestContext.currentTenantId();
@@ -160,6 +164,40 @@ export class OrganizationPermissionGuard implements CanActivate {
 		}
 
 		return isAuthorized;
+	}
+
+	/**
+	 * For an exempt SUPER_ADMIN: allows the request unless the route declares an
+	 * `@OrganizationPolicyTarget()` whose record is missing from the caller's tenant.
+	 *
+	 * @param context The execution context.
+	 * @returns true when the route has no policy target, or its record belongs to the caller's tenant.
+	 */
+	private async superAdminTargetIsInTenant(context: ExecutionContext): Promise<boolean> {
+		// The tenant is resolved BEFORE the no-target shortcut: an exemption granted without one would
+		// hand the route to a caller whose tenant scoping cannot be evaluated anywhere downstream.
+		const tenantId = RequestContext.currentTenantId();
+
+		if (isEmpty(tenantId)) {
+			console.log('OrganizationPermissionGuard: no tenant on the request, access denied');
+			return false;
+		}
+
+		const target = this._reflector.get<IOrganizationPolicyTarget | undefined>(
+			ORGANIZATION_POLICY_TARGET_METADATA,
+			context.getHandler()
+		);
+
+		if (!target) {
+			return true;
+		}
+
+		if (!(await this.findTargetOrganizationId(context, tenantId, target))) {
+			console.log('OrganizationPermissionGuard: the target record is not in the caller tenant, access denied');
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -209,21 +247,32 @@ export class OrganizationPermissionGuard implements CanActivate {
 		);
 
 		if (target) {
-			const targetOrganizationId = await this.findTargetOrganizationId(context, tenantId, target);
+			const targetOrganizationIds = await this.findTargetOrganizationIds(context, tenantId, target);
 
-			if (!targetOrganizationId) {
+			if (targetOrganizationIds === null) {
 				// The record does not exist in the caller's tenant (or the id is missing).
 				return null;
 			}
 
-			organizationIds.add(targetOrganizationId);
+			for (const targetOrganizationId of targetOrganizationIds) {
+				organizationIds.add(targetOrganizationId);
+			}
 		}
 
-		// The organization the request itself targets. It is validated against the caller's tenant
-		// by the policy query below, which only counts rows of this tenant.
-		const requestOrganizationId = this.extractRequestOrganizationId(context);
+		// EVERY organization the request itself names, in the body, the query string and the params. All
+		// of them are checked: the handler decides which one it reads, and a body value used to shadow the
+		// query value the bulk delete services actually filter by (GHSA-rmq9-85v7-f365). They are
+		// validated against the caller's tenant by the policy query below, which only counts rows of this
+		// tenant.
+		const requestOrganizationIds = this.extractRequestOrganizationIds(context);
 
-		if (requestOrganizationId) {
+		if (requestOrganizationIds === null) {
+			// A malformed organization id (an array, an object...) on the request: fail closed rather than
+			// check something other than what the handler will read.
+			return null;
+		}
+
+		for (const requestOrganizationId of requestOrganizationIds) {
 			organizationIds.add(requestOrganizationId);
 		}
 
@@ -241,13 +290,17 @@ export class OrganizationPermissionGuard implements CanActivate {
 	}
 
 	/**
-	 * Reads the organization id the request targets from the body, the query string or the route
-	 * params, without trusting it: it is only ever used as a lookup key of a tenant-scoped query.
+	 * Reads EVERY organization id the request names — body, query string and route params — without
+	 * trusting any of them: they are only ever used as lookup keys of a tenant-scoped query.
+	 *
+	 * Taking the FIRST match let one source shadow another: the guard checked `body.organizationId`
+	 * while `DELETE /timesheet/time-log` filters the rows it deletes by `query.organizationId`
+	 * (GHSA-rmq9-85v7-f365). All of them have to allow the action now.
 	 *
 	 * @param context The execution context.
-	 * @returns The organization id found on the request, or undefined.
+	 * @returns The organization ids found on the request, or `null` when one of them is malformed.
 	 */
-	private extractRequestOrganizationId(context: ExecutionContext): ID | undefined {
+	private extractRequestOrganizationIds(context: ExecutionContext): ID[] | null {
 		try {
 			const request = context.switchToHttp().getRequest();
 
@@ -257,16 +310,23 @@ export class OrganizationPermissionGuard implements CanActivate {
 				request?.params?.organizationId
 			];
 
+			const organizationIds: ID[] = [];
+
 			for (const candidate of candidates) {
-				if (typeof candidate === 'string' && candidate.trim().length > 0) {
-					return candidate;
+				if (candidate === undefined || candidate === null || candidate === '') {
+					continue;
 				}
+				if (typeof candidate !== 'string' || candidate.trim().length === 0) {
+					return null;
+				}
+				organizationIds.push(candidate);
 			}
+
+			return deduplicate(organizationIds);
 		} catch (error) {
 			console.log('OrganizationPermissionGuard: unable to read the request organization id', error);
+			return null;
 		}
-
-		return undefined;
 	}
 
 	/**
@@ -277,6 +337,96 @@ export class OrganizationPermissionGuard implements CanActivate {
 	 * @param target The entity and route param declared with `@OrganizationPolicyTarget()`.
 	 * @returns The record's organization id, or undefined when the id is missing or the record is not
 	 * in this tenant.
+	 */
+	private async findTargetOrganizationIds(
+		context: ExecutionContext,
+		tenantId: ID,
+		target: IOrganizationPolicyTarget
+	): Promise<ID[] | null> {
+		if (target.source === 'query') {
+			return await this.findQueryTargetOrganizationIds(context, tenantId, target);
+		}
+
+		const organizationId = await this.findTargetOrganizationId(context, tenantId, target);
+		return organizationId ? [organizationId] : null;
+	}
+
+	/**
+	 * Resolves the organizations of the records a BULK route addresses through a query parameter of ids.
+	 *
+	 * The ids are looked up inside the caller's tenant, soft-deleted rows included, and every distinct
+	 * organization is returned, so the policy of each organization the request would touch is checked.
+	 * Ids that match nothing in this tenant are ignored — the services filter by tenant as well, so those
+	 * rows cannot be deleted either — and a request that addresses only such ids simply falls back to the
+	 * organization the request names, exactly as before, instead of being refused.
+	 *
+	 * @param context The execution context.
+	 * @param tenantId The caller's tenant.
+	 * @param target The entity and query parameter declared with `@OrganizationPolicyTarget()`.
+	 * @returns The organizations of the addressed records, or `null` when no usable id was given.
+	 */
+	private async findQueryTargetOrganizationIds(
+		context: ExecutionContext,
+		tenantId: ID,
+		target: IOrganizationPolicyTarget
+	): Promise<ID[] | null> {
+		try {
+			const raw = context.switchToHttp().getRequest()?.query?.[target.param];
+			const values: unknown[] = Array.isArray(raw) ? raw : [raw];
+			const ids = values.filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+			if (ids.length === 0) {
+				return null;
+			}
+
+			let records: { organizationId?: ID }[] = [];
+
+			switch (ormType) {
+				case MultiORMEnum.MikroORM: {
+					// Soft-deleted rows count too: `forceDelete` can still hard-delete them.
+					records = (await this._mikroOrmOrganizationRepository
+						.getEntityManager()
+						.find(target.entity as any, { id: { $in: ids }, tenantId } as any, {
+							fields: ['id', 'organizationId'] as any,
+							filters: false
+						})) as any[];
+					break;
+				}
+				case MultiORMEnum.TypeORM: {
+					records = await this._typeOrmOrganizationRepository.manager.find(
+						target.entity as EntityTarget<{ id: ID; tenantId: ID; organizationId: ID }>,
+						{
+							where: { id: In(ids), tenantId },
+							select: { id: true, organizationId: true },
+							withDeleted: true
+						}
+					);
+					break;
+				}
+				default:
+					return null;
+			}
+
+			return deduplicate(
+				records
+					.map((record) => record?.organizationId)
+					.filter((organizationId): organizationId is ID => !!organizationId)
+			);
+		} catch (error) {
+			console.log('Error occurred while resolving the organizations of the target records:', error);
+			return null;
+		}
+	}
+
+	/**
+	 * Finds the organization of the record a route addresses by a single route param, scoped to the
+	 * caller's tenant.
+	 *
+	 * @param context The execution context, used to read the route param carrying the record id.
+	 * @param tenantId The caller's tenant.
+	 * @param target The entity and route param declared with `@OrganizationPolicyTarget()`.
+	 * @returns The record's organization id, or undefined when the id is missing or the record is not in
+	 * this tenant.
 	 */
 	private async findTargetOrganizationId(
 		context: ExecutionContext,

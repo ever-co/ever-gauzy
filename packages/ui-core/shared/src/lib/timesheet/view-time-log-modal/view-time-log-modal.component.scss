@@ -32,6 +32,12 @@
       text-align: left;
       margin-bottom: 10px;
     }
+
+    // The text under each label (To-do, Notes, Reason).
+    > .value {
+      font-size: 12px;
+      line-height: 15px;
+    }
   }
 
   nb-alert {
@@ -44,6 +50,9 @@
   nb-card {
     background-color: nb-theme(gauzy-card-1);
     width: 328px;
+    // The pane is sized to this card now, so the card is what has to give way
+    // on a phone.
+    max-width: 90vw;
   }
 
   .title,

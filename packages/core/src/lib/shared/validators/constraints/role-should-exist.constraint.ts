@@ -5,6 +5,7 @@ import { RequestContext } from '../../../core/context';
 import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
 import { TypeOrmRoleRepository } from '../../../role/repository/type-orm-role.repository';
 import { MikroOrmRoleRepository } from '../../../role/repository/mikro-orm-role.repository';
+import { resolveRoleReference } from '../../../user/role-assignment.helper';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -30,9 +31,9 @@ export class RoleShouldExistConstraint implements ValidatorConstraintInterface {
 	 * @returns True if the role exists, false otherwise.
 	 */
 	async validate(role: string | IRole): Promise<boolean> {
-		if (!role) return false;
-
-		const roleId: string = typeof role === 'string' ? role : role.id;
+		// The same allowlisted reading the services use (GHSA-x4mv-fhwj-g3rp): an id string or an object
+		// with a non-empty string `id`. Anything else (a number, an array, `{ id: 42 }`) is not a role.
+		const roleId = resolveRoleReference(role);
 		if (!roleId) return false;
 
 		const tenantId = RequestContext.currentTenantId();

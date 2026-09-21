@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { JwtPayload, sign, verify } from 'jsonwebtoken';
+import { JwtPayload } from 'jsonwebtoken';
 import {
 	FindManyOptions,
 	FindOptionsWhere,
@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 import { addDays } from 'date-fns';
 import { pick } from 'underscore';
-import { ConfigService, environment } from '@gauzy/config';
+import { ConfigService } from '@gauzy/config';
 import { DEFAULT_INVITE_EXPIRY_PERIOD } from '@gauzy/constants';
 import {
 	ICreateEmailInvitesInput,
@@ -40,6 +40,7 @@ import { IAppIntegrationConfig } from '@gauzy/common';
 import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { signPurposeToken, TokenPurposeEnum, verifyPurposeToken } from '../auth/purpose-token';
 import {
 	MultiORMEnum,
 	freshTimestamp,
@@ -51,6 +52,7 @@ import { LIKE_OPERATOR } from './../core/util';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';
+import { extractRoleIds } from '../user/role-assignment.helper';
 import { OrganizationService } from './../organization/organization.service';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
 import { OrganizationDepartmentService } from './../organization-department/organization-department.service';
@@ -162,7 +164,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			organizationContactIds = [],
 			departmentIds = [],
 			teamIds = [],
-			roleId,
 			organizationId,
 			startedWorkOn,
 			appliedDate,
@@ -192,6 +193,17 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			relations: { role: true }
 		});
 
+		// The role the body asks for, read in every form it can carry it (`roleId`, `role` as an id
+		// string or `{ id }`). Validated BEFORE the inviter's own role is looked at, so a malformed or
+		// self-contradicting payload is refused for every caller and not just for the ones that reach
+		// the fallback below — an EMPLOYEE inviter is force-assigned the EMPLOYEE role, but that is an
+		// authorization decision and must not double as permission to ignore bad input.
+		// `extractRoleIds` itself throws on a role key that is present but references nothing.
+		const requestedRoleIds = extractRoleIds(input);
+		if (requestedRoleIds.length > 1) {
+			throw new BadRequestException('The role and roleId fields must reference the same role.');
+		}
+
 		// Invited Role
 		let role: IRole;
 
@@ -203,8 +215,13 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				where: { name: RolesEnum.EMPLOYEE }
 			});
 		} catch (error) {
-			// If the current role is not an 'EMPLOYEE' role, fallback to specified 'roleId'
-			role = await this.roleService.findOneByIdString(roleId);
+			// If the current role is not an 'EMPLOYEE' role, fallback to the requested role. Exactly one
+			// role must be named: a second, unchecked identifier must not ride along, and an invitation
+			// cannot be issued for no role at all (GHSA-x4mv-fhwj-g3rp).
+			if (requestedRoleIds.length !== 1) {
+				throw new BadRequestException('Exactly one valid role must be specified for the invitation.');
+			}
+			role = await this.roleService.findOneByIdString(requestedRoleIds[0]);
 
 			// Handle unauthorized access if the invitedByUser is not a 'SUPER_ADMIN'
 			if (role.name === RolesEnum.SUPER_ADMIN && invitedByUser.role.name !== RolesEnum.SUPER_ADMIN) {
@@ -242,7 +259,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 		for await (const email of emailIds) {
 			const code = generateAlphaNumericCode();
-			const token = sign({ email, code }, environment.JWT_SECRET, {});
+			const token = signPurposeToken(TokenPurposeEnum.INVITE, { email, code });
 
 			// Retrieve organization team employees for the email.
 			const organizationTeamEmployees = await this.typeOrmOrganizationTeamEmployeeRepository.findBy({
@@ -287,7 +304,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				new Invite({
 					token,
 					email,
-					roleId,
+					// The role that was CHECKED above — never the body `roleId`. For an EMPLOYEE inviter that
+					// is the EMPLOYEE role whatever the body asked for; persisting the body value let an
+					// employee issue invitations for any role, SUPER_ADMIN included (GHSA-x4mv-fhwj-g3rp).
+					roleId: role.id,
 					organizationId,
 					tenantId,
 					invitedByUserId,
@@ -425,7 +445,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const code = generateAlphaNumericCode();
 
 		// Generate a JWT token containing the email and invite code
-		const token = sign({ email, code }, environment.JWT_SECRET, {});
+		const token = signPurposeToken(TokenPurposeEnum.INVITE, { email, code });
 
 		return { code, token };
 	}
@@ -605,7 +625,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	async validateByToken(where: FindOptionsWhere<Invite>): Promise<IInvite> {
 		try {
 			const { email, token } = where;
-			const payload: string | JwtPayload = verify(token as string, environment.JWT_SECRET);
+			// Only an invite token is accepted. Invites mailed before tokens were purpose-typed carry
+			// no purpose; they still work because the lookup below also requires the STORED token.
+			const payload: string | JwtPayload = verifyPurposeToken(token, TokenPurposeEnum.INVITE, {
+				requiredClaims: ['email'],
+				allowLegacyUntyped: true
+			});
 
 			if (typeof payload === 'object' && 'email' in payload) {
 				if (payload.email === email) {
@@ -728,7 +753,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	}
 
 	createToken(email: string): string {
-		const token: string = sign({ email }, environment.JWT_SECRET, {});
+		const token: string = signPurposeToken(TokenPurposeEnum.INVITE, { email });
 		return token;
 	}
 
