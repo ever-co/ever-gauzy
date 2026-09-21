@@ -52,7 +52,17 @@ concurrency:
   # workflow's conclusion (no `workflow_run` consumer), and none of develop/stage/master declares
   # a required status check, so a cancelled run cannot wedge a pull request's merge gate either.
   # If required checks are ever introduced, re-check this line before trusting it.
-  group: ${{ github.workflow }}-${{ github.ref }}
+  #
+  # Keyed on the HEAD REF rather than `github.ref`, for the same reason and with the same trade-off
+  # as `build.yml`: both triggers above cover develop/stage/master, so while a cascade pull request
+  # is open (develop -> stage), one push to `develop` fires a push run on `refs/heads/develop` AND a
+  # pull_request run on `refs/pull/N/merge`. Under `github.ref` those are different strings, so
+  # neither could cancel the other and the same tree was analysed twice. Qualified by the head
+  # REPOSITORY as well, because a fork pull request's run claims the group before its job skips.
+  group: >-
+    ${{ github.workflow }}-${{ github.event_name == 'pull_request'
+    && format('{0}@{1}', github.event.pull_request.head.repo.full_name, github.event.pull_request.head.ref)
+    || format('{0}@{1}', github.repository, github.ref_name) }}
   cancel-in-progress: true
 
 # Least privilege at the workflow level; the analyze job widens only what CodeQL needs.
