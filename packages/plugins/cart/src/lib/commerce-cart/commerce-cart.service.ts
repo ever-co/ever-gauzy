@@ -1,6 +1,7 @@
 import {
 	BadRequestException,
 	ConflictException,
+	HttpStatus,
 	Inject,
 	Injectable,
 	NotFoundException,
@@ -19,10 +20,14 @@ import {
 } from '@gauzy/contracts';
 import {
 	AdjustmentService,
+	ApiErrorCode,
+	ApiException,
 	IVersionExpectation,
 	TaxLineService,
 	TenantAwareCrudService,
-	commitVersionedUpdate
+	commitVersionedUpdate,
+	matchesExpectation,
+	parseEntityVersion
 } from '@gauzy/core';
 import { CommerceCart } from './commerce-cart.entity';
 import { CommerceCartLine } from '../commerce-cart-line/commerce-cart-line.entity';
@@ -198,7 +203,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		line: DeepPartial<CommerceCartLine>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		const cart = await this.assertMutable(cartId);
+		const cart = await this.assertMutable(cartId, expectation);
 
 		if (!line.variantId) {
 			throw new BadRequestException('CART_LINE_VARIANT_REQUIRED: a line needs a variant.');
@@ -266,7 +271,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		changes: DeepPartial<CommerceCartLine>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		await this.assertMutable(cartId);
+		await this.assertMutable(cartId, expectation);
 		const line = await this.assertLineBelongsToCart(cartId, lineId);
 
 		if (changes.quantity !== undefined && Number(changes.quantity) <= 0) {
@@ -295,7 +300,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * @returns The cart after the removal, re-priced.
 	 */
 	public async removeLine(cartId: ID, lineId: ID, expectation: IVersionExpectation = ANY_VERSION): Promise<CommerceCart> {
-		await this.assertMutable(cartId);
+		await this.assertMutable(cartId, expectation);
 		await this.assertLineBelongsToCart(cartId, lineId);
 
 		await this.lineService.delete(lineId);
@@ -319,7 +324,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		method: DeepPartial<CommerceCartShippingMethod>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		await this.assertMutable(cartId);
+		await this.assertMutable(cartId, expectation);
 
 		if (!method.name) {
 			throw new BadRequestException('CART_SHIPPING_METHOD_NAME_REQUIRED: a shipping method needs a name.');
@@ -365,7 +370,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		promotion: DeepPartial<CommerceCartPromotion>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		await this.assertMutable(cartId);
+		await this.assertMutable(cartId, expectation);
 
 		if (promotion.amount === undefined || promotion.amount === null) {
 			throw new BadRequestException(
@@ -408,7 +413,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * @returns The cart after the removal, re-priced.
 	 */
 	public async removePromotion(cartId: ID, code: string, expectation: IVersionExpectation = ANY_VERSION): Promise<CommerceCart> {
-		await this.assertMutable(cartId);
+		await this.assertMutable(cartId, expectation);
 
 		const existing = (await this.promotionService.findAll({
 			where: { cartId }
@@ -1029,12 +1034,33 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
-	 * Loads a cart that must be mutable, or refuses.
+	 * Reads a cart that is still open, and — when the caller states the version it read — still at
+	 * that version.
+	 *
+	 * The version is checked **before** the child row is written, and that ordering is the whole point
+	 * of taking it here. The conditional write in `recalculate` decides the same question again and is
+	 * still the authority, but it runs after the line has been inserted, changed or deleted — so a
+	 * caller whose expectation no longer holds used to be answered `409` with its change already
+	 * applied, which is a refusal whose side effect is committed and the exact outcome a precondition
+	 * exists to prevent. Checking here means such a request writes nothing.
+	 *
+	 * What the check cannot do is close the window against a writer that commits between this read and
+	 * the child write — nothing short of one transaction could, and the write's own predicate is what
+	 * answers that case. What it can do is stop the ordinary case: a caller working from a read the
+	 * cart has already moved past.
+	 *
+	 * A cart carrying no usable version is allowed through: the stated version is then pinned by the
+	 * conditional write, which is the same reading `evaluateVersionPrecondition` takes of a row whose
+	 * version is unknown.
 	 *
 	 * @param cartId The cart.
+	 * @param expectation The version the caller read the cart at, when it stated one.
 	 * @returns The cart.
+	 * @throws NotFoundException when no such cart exists.
+	 * @throws BadRequestException when the cart is no longer mutable.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the cart has moved past the stated version.
 	 */
-	private async assertMutable(cartId: ID): Promise<CommerceCart> {
+	private async assertMutable(cartId: ID, expectation?: IVersionExpectation): Promise<CommerceCart> {
 		const cart = await this.findOneByIdString(cartId);
 
 		if (!cart) {
@@ -1045,7 +1071,42 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			throw new BadRequestException(`CART_STATUS_INVALID: a ${cart.status} cart is immutable.`);
 		}
 
+		if (expectation) {
+			this.assertExpectationHolds(cart, expectation);
+		}
+
 		return cart;
+	}
+
+	/**
+	 * Refuses a cart the caller's stated version no longer describes.
+	 *
+	 * The refusal is the same one `commitVersionedUpdate` raises from the conditional write, code and
+	 * all, so a caller cannot tell which half of the convention answered it — and it is raised before
+	 * anything has been written, which is the only difference that matters to the caller.
+	 *
+	 * @param cart The cart as it was just read.
+	 * @param expectation What the caller stated.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the version moved on.
+	 */
+	private assertExpectationHolds(cart: CommerceCart, expectation: IVersionExpectation): void {
+		const actual = parseEntityVersion(cart.version);
+
+		// No usable version on the row: the conditional write pins the stated one, so there is nothing
+		// here to refuse.
+		if (actual === null || matchesExpectation(expectation, actual)) {
+			return;
+		}
+
+		throw new ApiException(
+			HttpStatus.CONFLICT,
+			ApiErrorCode.ENTITY_VERSION_CONFLICT,
+			'The cart changed since you read it. Read it again and reapply your change.',
+			{
+				expectedVersion: expectation.wildcard ? actual : expectation.versions[0],
+				actualVersion: actual
+			}
+		);
 	}
 
 	/**

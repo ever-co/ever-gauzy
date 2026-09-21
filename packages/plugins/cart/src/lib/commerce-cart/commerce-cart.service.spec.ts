@@ -149,6 +149,13 @@ jest.mock('@gauzy/core', () => {
 			.commitVersionedUpdate,
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.versionExpectationOf,
+		// The comparison an aggregate makes before it writes a child row, and the refusal it raises, are
+		// the kernel's own too: a doubled comparison would agree with the service by construction, and
+		// what this suite asserts is that a stale expectation is refused before anything is written.
+		matchesExpectation: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').matchesExpectation,
+		parseEntityVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').parseEntityVersion,
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -1122,6 +1129,28 @@ describe('CommerceCartService — the versioned write', () => {
 				details: { expectedVersion: expected, actualVersion: Number(cart.version) }
 			}
 		);
+	});
+
+	it('refuses a stale version before the child row is written, not after', async () => {
+		// The refusal has to arrive before the line does. The conditional write in `recalculate` decides
+		// the same question again and is still the authority, but it runs *after* the line has been
+		// inserted or deleted — so a caller whose expectation no longer holds was answered `409` with
+		// its change already applied, which is a refusal whose side effect is committed.
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		const stale = { wildcard: false, versions: [Number(cart.version) - 1] };
+
+		await expect(
+			service.addLine(
+				cart.id,
+				{ variantId: 'variant-1', quantity: 1, unitPrice: '10.000000' } as any,
+				stale
+			)
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+
+		// Control: a store that wrote the line first would have left it behind, and the caller — told
+		// nothing happened — would be reading a cart with a line it never meant to add.
+		expect(tables.commerce_cart_line ?? []).toHaveLength(0);
 	});
 
 	it('applies the write and moves the cart on by one when the stated version is the current one', async () => {

@@ -241,9 +241,15 @@ export {
 } from './lib/idempotency';
 // The concurrency kernel's surface is the decorator a route adopts *and* the pieces a plugin has to
 // name to implement one: the type of the expectation its write is predicated on, the increment that
-// keeps every writer moving the counter by the same step, and the metadata key a spec reads to assert
-// a route declared the convention. A plugin that has to derive or restate any of the three from the
-// outside is a plugin that can drift from the kernel it is implementing.
+// keeps every writer moving the counter by the same step, the comparison a write makes when it has a
+// child row to write first, and the metadata key a spec reads to assert a route declared the
+// convention. A plugin that has to derive or restate any of them from the outside is a plugin that can
+// drift from the kernel it is implementing.
+//
+// `matchesExpectation` and `parseEntityVersion` are on that list because an aggregate whose child rows
+// are written before the parent's conditional write has to ask the question *before* it writes them —
+// otherwise a caller whose version no longer holds is refused after its change has landed. Asking it
+// with a second, hand-written comparison is how the two answers drift apart.
 export {
 	Versioned,
 	VersionGuard,
@@ -254,6 +260,8 @@ export {
 	formatEntityTag,
 	versionExpectationOf,
 	bumpVersion,
+	matchesExpectation,
+	parseEntityVersion,
 	IVersionExpectation,
 	VERSIONED_METADATA_KEY,
 	VERSION_EXPECTATION_PROPERTY
