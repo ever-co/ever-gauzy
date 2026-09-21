@@ -89,12 +89,12 @@ export class CreateTaxTables1791000000140 implements MigrationInterface {
 		// A category's code is its identity inside the organization; the soft-deleted rows are excluded so
 		// that a code can be used again after the category that held it was retired.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_tax_category_org_code" ON "tax_category" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_tax_category_org_code" ON "tax_category" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 		);
 		// One default category per organization: a second default would make "the category of a variant that
 		// names none" depend on the order rows come back in.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_tax_category_default" ON "tax_category" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_tax_category_default" ON "tax_category" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_tax_category_org" ON "tax_category" ("organizationId") WHERE "deletedAt" IS NULL`
@@ -163,10 +163,10 @@ export class CreateTaxTables1791000000140 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_tax_category_tenant" ON "tax_category" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_tax_category_organization" ON "tax_category" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_tax_category_org_code" ON "tax_category" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_tax_category_org_code" ON "tax_category" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_tax_category_default" ON "tax_category" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')) WHERE "isDefault" = 1 AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_tax_category_default" ON "tax_category" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\')) WHERE "isDefault" = 1 AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_tax_category_org" ON "tax_category" ("organizationId") WHERE "deletedAt" IS NULL`
@@ -233,7 +233,7 @@ export class CreateTaxTables1791000000140 implements MigrationInterface {
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`tax_category\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`description\` text NULL, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_tax_category_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_tax_category_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_tax_category_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_tax_category_is_active\` (\`isActive\`), INDEX \`IDX_tax_category_is_archived\` (\`isArchived\`), INDEX \`IDX_tax_category_tenant\` (\`tenantId\`), INDEX \`IDX_tax_category_organization\` (\`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`tax_category\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`description\` text NULL, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, \'00000000-0000-0000-0000-000000000000\')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_tax_category_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_tax_category_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_tax_category_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_tax_category_is_active\` (\`isActive\`), INDEX \`IDX_tax_category_is_archived\` (\`isArchived\`), INDEX \`IDX_tax_category_tenant\` (\`tenantId\`), INDEX \`IDX_tax_category_organization\` (\`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		// MySQL has no partial index, so the rule is carried by the two stored generated key columns
 		// declared above: `organizationKey` folds the nullable scope column, and `deletedKey` is `'0'`

@@ -154,7 +154,7 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 		 * "one per organization" means when there is no organization.
 		 */
 		organizationKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, '00000000-0000-0000-0000-000000000000')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) STORED"
 		}
 	},
 
@@ -188,7 +188,7 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 		},
 		/** MySQL only: the organization scope with its null folded, as on `product` above. */
 		organizationKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, '00000000-0000-0000-0000-000000000000')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) STORED"
 		}
 	},
 
@@ -245,7 +245,7 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 		},
 		/** MySQL only: the organization scope with its null folded, as on `product` above. */
 		organizationKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, '00000000-0000-0000-0000-000000000000')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) STORED"
 		},
 		isDefaultKey: {
 			mysql: "varchar(1) GENERATED ALWAYS AS (IF(`isDefault`, '1', NULL)) STORED"
@@ -449,7 +449,7 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 		},
 		/** MySQL only: the organization scope with its null folded, as on `product` above. */
 		organizationKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, '00000000-0000-0000-0000-000000000000')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) STORED"
 		}
 	},
 
@@ -560,7 +560,7 @@ const EXTENDED_COLUMNS: Record<string, Record<string, ColumnDefinition>> = {
 		},
 		/** MySQL only: the organization scope with its null folded, as on `product` above. */
 		organizationKey: {
-			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, '00000000-0000-0000-0000-000000000000')) STORED"
+			mysql: "varchar(36) GENERATED ALWAYS AS (IFNULL(`organizationId`, \'00000000-0000-0000-0000-000000000000\')) STORED"
 		}
 	},
 
@@ -589,7 +589,7 @@ const EXTENDED_INDEXES: Record<string, IndexDefinition[]> = {
 		{
 			name: 'UQ_product_org_slug',
 			unique: true,
-			postgres: '(COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "slug") WHERE "slug" IS NOT NULL AND "deletedAt" IS NULL',
+			postgres: '(COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "slug") WHERE "slug" IS NOT NULL AND "deletedAt" IS NULL',
 			mysql: '(`organizationKey`, `slug`, `deletedKey`)'
 		},
 		{
@@ -612,7 +612,7 @@ const EXTENDED_INDEXES: Record<string, IndexDefinition[]> = {
 		{
 			name: 'UQ_product_category_org_slug',
 			unique: true,
-			postgres: '(COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "slug") WHERE "slug" IS NOT NULL AND "deletedAt" IS NULL',
+			postgres: '(COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "slug") WHERE "slug" IS NOT NULL AND "deletedAt" IS NULL',
 			mysql: '(`organizationKey`, `slug`, `deletedKey`)'
 		},
 		{
@@ -647,7 +647,7 @@ const EXTENDED_INDEXES: Record<string, IndexDefinition[]> = {
 		{
 			name: 'UQ_product_variant_org_external',
 			unique: true,
-			postgres: '(COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "externalId") WHERE "externalId" IS NOT NULL AND "deletedAt" IS NULL',
+			postgres: '(COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "externalId") WHERE "externalId" IS NOT NULL AND "deletedAt" IS NULL',
 			mysql: '(`organizationKey`, `externalId`, `deletedKey`)'
 		},
 		{
@@ -727,13 +727,13 @@ const EXTENDED_INDEXES: Record<string, IndexDefinition[]> = {
 		{
 			name: 'UQ_organization_contact_org_external',
 			unique: true,
-			postgres: '(COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "externalId") WHERE "externalId" IS NOT NULL AND "deletedAt" IS NULL',
+			postgres: '(COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "externalId") WHERE "externalId" IS NOT NULL AND "deletedAt" IS NULL',
 			mysql: '(`organizationKey`, `externalId`, `deletedKey`)'
 		},
 		{
 			name: 'UQ_organization_contact_org_email',
 			unique: true,
-			postgres: '(COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "emailKey") WHERE "emailKey" IS NOT NULL AND "deletedAt" IS NULL',
+			postgres: '(COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "emailKey") WHERE "emailKey" IS NOT NULL AND "deletedAt" IS NULL',
 			mysql: '(`organizationKey`, `emailKey`, `deletedKey`)'
 		},
 		{
@@ -848,7 +848,7 @@ const EXTENDED_INDEXES: Record<string, IndexDefinition[]> = {
 		{
 			name: 'UQ_organization_vendor_org_code',
 			unique: true,
-			postgres: '(COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "code" IS NOT NULL AND "deletedAt" IS NULL',
+			postgres: '(COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "code" IS NOT NULL AND "deletedAt" IS NULL',
 			mysql: '(`organizationKey`, `code`, `deletedKey`)'
 		},
 		{

@@ -96,11 +96,11 @@ export class CreatePaymentTermTables1791000000160 implements MigrationInterface 
 			// The operator's key for the agreement, unique per organization among live rows so a
 			// soft-deleted term does not keep its code occupied for ever.
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_payment_term_org_code" ON "payment_term" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_payment_term_org_code" ON "payment_term" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 			);
 			// One default per organization: the term a document with no other answer is settled against.
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_payment_term_default" ON "payment_term" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_payment_term_default" ON "payment_term" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
 			);
 			await queryRunner.query(
 				`CREATE INDEX "IDX_payment_term_org" ON "payment_term" ("organizationId", "isDefault") WHERE "deletedAt" IS NULL`
@@ -157,10 +157,10 @@ export class CreatePaymentTermTables1791000000160 implements MigrationInterface 
 			await queryRunner.query(`CREATE INDEX "IDX_payment_term_is_archived" ON "payment_term" ("isArchived")`);
 			await queryRunner.query(`CREATE INDEX "IDX_payment_term_tenant" ON "payment_term" ("tenantId")`);
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_payment_term_org_code" ON "payment_term" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_payment_term_org_code" ON "payment_term" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 			);
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_payment_term_default" ON "payment_term" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_payment_term_default" ON "payment_term" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
 			);
 			await queryRunner.query(
 				`CREATE INDEX "IDX_payment_term_org" ON "payment_term" ("organizationId", "isDefault") WHERE "deletedAt" IS NULL`
@@ -215,7 +215,7 @@ export class CreatePaymentTermTables1791000000160 implements MigrationInterface 
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		if (!(await queryRunner.hasTable('payment_term'))) {
 			await queryRunner.query(
-				`CREATE TABLE \`payment_term\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`description\` text NULL, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`isDefaultKey\` varchar(1) GENERATED ALWAYS AS (IF(\`isDefault\`, '1', NULL)) STORED, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, INDEX \`IDX_payment_term_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_payment_term_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_payment_term_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_payment_term_is_active\` (\`isActive\`), INDEX \`IDX_payment_term_is_archived\` (\`isArchived\`), INDEX \`IDX_payment_term_tenant\` (\`tenantId\`), UNIQUE INDEX \`UQ_payment_term_org_code\` (\`organizationKey\`, \`code\`, \`deletedKey\`), UNIQUE INDEX \`UQ_payment_term_default\` (\`organizationKey\`, \`isDefaultKey\`, \`deletedKey\`), INDEX \`IDX_payment_term_org\` (\`organizationId\`, \`isDefault\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+				`CREATE TABLE \`payment_term\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`description\` text NULL, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`isDefaultKey\` varchar(1) GENERATED ALWAYS AS (IF(\`isDefault\`, '1', NULL)) STORED, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, \'00000000-0000-0000-0000-000000000000\')) STORED, INDEX \`IDX_payment_term_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_payment_term_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_payment_term_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_payment_term_is_active\` (\`isActive\`), INDEX \`IDX_payment_term_is_archived\` (\`isArchived\`), INDEX \`IDX_payment_term_tenant\` (\`tenantId\`), UNIQUE INDEX \`UQ_payment_term_org_code\` (\`organizationKey\`, \`code\`, \`deletedKey\`), UNIQUE INDEX \`UQ_payment_term_default\` (\`organizationKey\`, \`isDefaultKey\`, \`deletedKey\`), INDEX \`IDX_payment_term_org\` (\`organizationId\`, \`isDefault\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 			);
 		}
 

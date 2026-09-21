@@ -44,7 +44,7 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * `("organizationId", "key")` enforces nothing at all for a series that has no organization — on
  * MySQL because a null key part is exempt, on Postgres and SQLite because the two rows differ. Where the
  * rule means "two rows with no organization are the same row", the null is folded to the nil UUID:
- * `COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')` in the Postgres and SQLite index
+ * `COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\')` in the Postgres and SQLite index
  * expression, the generated `organizationKey` on MySQL. Where a null is meant to exempt the row the
  * predicate says so — `WHERE "channelId" IS NOT NULL` below — and the column stays raw on every dialect,
  * MySQL's own null rule being the exemption there.
@@ -122,10 +122,10 @@ export class CreateSequenceTable1791000000000 implements MigrationInterface {
 		// Two partial indexes express that, because a single index would let a channel series and an
 		// organization series coexist under the same key only by accident of null handling.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_sequence_org_key_no_channel" ON "sequence" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "key") WHERE "channelId" IS NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_sequence_org_key_no_channel" ON "sequence" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "key") WHERE "channelId" IS NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_sequence_org_channel_key" ON "sequence" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "channelId", "key") WHERE "channelId" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_sequence_org_channel_key" ON "sequence" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "channelId", "key") WHERE "channelId" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 	}
 
@@ -157,10 +157,10 @@ export class CreateSequenceTable1791000000000 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_sequence_key" ON "sequence" ("key")`);
 		await queryRunner.query(`CREATE INDEX "IDX_sequence_channel" ON "sequence" ("channelId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_sequence_org_key_no_channel" ON "sequence" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "key") WHERE "channelId" IS NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_sequence_org_key_no_channel" ON "sequence" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "key") WHERE "channelId" IS NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_sequence_org_channel_key" ON "sequence" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "channelId", "key") WHERE "channelId" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_sequence_org_channel_key" ON "sequence" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "channelId", "key") WHERE "channelId" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 	}
 
@@ -191,7 +191,7 @@ export class CreateSequenceTable1791000000000 implements MigrationInterface {
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`sequence\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`key\` varchar(255) NOT NULL, \`prefix\` varchar(255) NULL, \`padding\` int NOT NULL DEFAULT 1, \`nextValue\` int NOT NULL DEFAULT 1, \`step\` int NOT NULL DEFAULT 1, \`resetPolicy\` varchar(255) NOT NULL DEFAULT 'NEVER', \`lastResetAt\` datetime NULL, \`description\` varchar(255) NULL, \`channelId\` varchar(36) NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`noChannelKey\` varchar(36) GENERATED ALWAYS AS (IF(\`channelId\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_sequence_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_sequence_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_sequence_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_sequence_is_active\` (\`isActive\`), INDEX \`IDX_sequence_is_archived\` (\`isArchived\`), INDEX \`IDX_sequence_tenant\` (\`tenantId\`), INDEX \`IDX_sequence_organization\` (\`organizationId\`), INDEX \`IDX_sequence_key\` (\`key\`), INDEX \`IDX_sequence_channel\` (\`channelId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`sequence\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`key\` varchar(255) NOT NULL, \`prefix\` varchar(255) NULL, \`padding\` int NOT NULL DEFAULT 1, \`nextValue\` int NOT NULL DEFAULT 1, \`step\` int NOT NULL DEFAULT 1, \`resetPolicy\` varchar(255) NOT NULL DEFAULT 'NEVER', \`lastResetAt\` datetime NULL, \`description\` varchar(255) NULL, \`channelId\` varchar(36) NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, \'00000000-0000-0000-0000-000000000000\')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`noChannelKey\` varchar(36) GENERATED ALWAYS AS (IF(\`channelId\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_sequence_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_sequence_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_sequence_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_sequence_is_active\` (\`isActive\`), INDEX \`IDX_sequence_is_archived\` (\`isArchived\`), INDEX \`IDX_sequence_tenant\` (\`tenantId\`), INDEX \`IDX_sequence_organization\` (\`organizationId\`), INDEX \`IDX_sequence_key\` (\`key\`), INDEX \`IDX_sequence_channel\` (\`channelId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		// The same two rules, through the generated key columns declared above: `organizationKey` folds
 		// the null organization so the tuple applies to a series that has none, `deletedKey` carries

@@ -111,7 +111,7 @@ export class CreatePaymentTables1791000000280 implements MigrationInterface {
 		// A reason code is the tenant's own reporting key: it has to mean one thing inside one
 		// organization, and a retired reason must not block the code that replaced it.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_refund_reason_org_code" ON "refund_reason" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_refund_reason_org_code" ON "refund_reason" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_refund_reason_parent" ON "refund_reason" ("parentId") WHERE "parentId" IS NOT NULL`
@@ -137,7 +137,7 @@ export class CreatePaymentTables1791000000280 implements MigrationInterface {
 		);
 		// The strategy key the adapter is resolved from: one registration per organization.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_payment_provider_org_code" ON "payment_provider" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_payment_provider_org_code" ON "payment_provider" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 		);
 		// Exactly the scan the payment step runs: the enabled providers of an organization, in the
 		// order they are offered.
@@ -494,7 +494,7 @@ export class CreatePaymentTables1791000000280 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_refund_reason_tenant" ON "refund_reason" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_refund_reason_organization" ON "refund_reason" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_refund_reason_org_code" ON "refund_reason" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_refund_reason_org_code" ON "refund_reason" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_refund_reason_parent" ON "refund_reason" ("parentId") WHERE "parentId" IS NOT NULL`
@@ -519,7 +519,7 @@ export class CreatePaymentTables1791000000280 implements MigrationInterface {
 			`CREATE INDEX "IDX_payment_provider_organization" ON "payment_provider" ("organizationId")`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_payment_provider_org_code" ON "payment_provider" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_payment_provider_org_code" ON "payment_provider" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_payment_provider_enabled" ON "payment_provider" ("organizationId", "isEnabled", "sortOrder") WHERE "deletedAt" IS NULL`
@@ -795,14 +795,14 @@ export class CreatePaymentTables1791000000280 implements MigrationInterface {
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`refund_reason\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`code\` varchar(64) NOT NULL, \`label\` varchar(255) NOT NULL, \`description\` text NULL, \`parentId\` varchar(36) NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_refund_reason_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_refund_reason_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_refund_reason_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_refund_reason_is_active\` (\`isActive\`), INDEX \`IDX_refund_reason_is_archived\` (\`isArchived\`), INDEX \`IDX_refund_reason_tenant\` (\`tenantId\`), INDEX \`IDX_refund_reason_organization\` (\`organizationId\`), INDEX \`IDX_refund_reason_parent\` (\`parentId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`refund_reason\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`code\` varchar(64) NOT NULL, \`label\` varchar(255) NOT NULL, \`description\` text NULL, \`parentId\` varchar(36) NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, \'00000000-0000-0000-0000-000000000000\')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_refund_reason_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_refund_reason_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_refund_reason_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_refund_reason_is_active\` (\`isActive\`), INDEX \`IDX_refund_reason_is_archived\` (\`isArchived\`), INDEX \`IDX_refund_reason_tenant\` (\`tenantId\`), INDEX \`IDX_refund_reason_organization\` (\`organizationId\`), INDEX \`IDX_refund_reason_parent\` (\`parentId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX \`UQ_refund_reason_org_code\` ON \`refund_reason\` (\`organizationKey\`, \`code\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`payment_provider\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`code\` varchar(64) NOT NULL, \`name\` varchar(255) NOT NULL, \`isEnabled\` tinyint NOT NULL DEFAULT 1, \`isTestMode\` tinyint NOT NULL DEFAULT 0, \`integrationId\` varchar(36) NULL, \`supportedCurrencies\` json NULL, \`supportedCountries\` json NULL, \`supportedPaymentMethods\` json NULL, \`sortOrder\` int NOT NULL DEFAULT 0, \`configuration\` json NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_payment_provider_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_payment_provider_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_payment_provider_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_payment_provider_is_active\` (\`isActive\`), INDEX \`IDX_payment_provider_is_archived\` (\`isArchived\`), INDEX \`IDX_payment_provider_tenant\` (\`tenantId\`), INDEX \`IDX_payment_provider_organization\` (\`organizationId\`), INDEX \`IDX_payment_provider_enabled\` (\`organizationId\`, \`isEnabled\`, \`sortOrder\`), INDEX \`IDX_payment_provider_integration\` (\`integrationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`payment_provider\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`code\` varchar(64) NOT NULL, \`name\` varchar(255) NOT NULL, \`isEnabled\` tinyint NOT NULL DEFAULT 1, \`isTestMode\` tinyint NOT NULL DEFAULT 0, \`integrationId\` varchar(36) NULL, \`supportedCurrencies\` json NULL, \`supportedCountries\` json NULL, \`supportedPaymentMethods\` json NULL, \`sortOrder\` int NOT NULL DEFAULT 0, \`configuration\` json NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, \'00000000-0000-0000-0000-000000000000\')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_payment_provider_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_payment_provider_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_payment_provider_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_payment_provider_is_active\` (\`isActive\`), INDEX \`IDX_payment_provider_is_archived\` (\`isArchived\`), INDEX \`IDX_payment_provider_tenant\` (\`tenantId\`), INDEX \`IDX_payment_provider_organization\` (\`organizationId\`), INDEX \`IDX_payment_provider_enabled\` (\`organizationId\`, \`isEnabled\`, \`sortOrder\`), INDEX \`IDX_payment_provider_integration\` (\`integrationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX \`UQ_payment_provider_org_code\` ON \`payment_provider\` (\`organizationKey\`, \`code\`, \`deletedKey\`)`

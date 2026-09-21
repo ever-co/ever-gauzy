@@ -91,7 +91,7 @@ export class CreateIdempotencyKeyTable1791000000010 implements MigrationInterfac
 		// The claim itself: one row per key scope, and the insert is what serialises two concurrent
 		// identical requests. The soft-delete predicate keeps a released key reusable.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_idempotency_org_scope_key" ON "idempotency_key" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "scope", "key") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_idempotency_org_scope_key" ON "idempotency_key" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "scope", "key") WHERE "deletedAt" IS NULL`
 		);
 	}
 
@@ -131,7 +131,7 @@ export class CreateIdempotencyKeyTable1791000000010 implements MigrationInterfac
 			`CREATE INDEX "IDX_idempotency_resource" ON "idempotency_key" ("resourceType", "resourceId")`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_idempotency_org_scope_key" ON "idempotency_key" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "scope", "key") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_idempotency_org_scope_key" ON "idempotency_key" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "scope", "key") WHERE "deletedAt" IS NULL`
 		);
 	}
 
@@ -161,7 +161,7 @@ export class CreateIdempotencyKeyTable1791000000010 implements MigrationInterfac
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`idempotency_key\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`key\` varchar(255) NOT NULL, \`scope\` varchar(64) NOT NULL, \`requestHash\` varchar(64) NOT NULL, \`status\` varchar(255) NOT NULL DEFAULT 'IN_PROGRESS', \`responseStatus\` int NULL, \`responseBody\` json NULL, \`resourceType\` varchar(64) NULL, \`resourceId\` varchar(36) NULL, \`expiresAt\` datetime NOT NULL, \`lockedAt\` datetime NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_idempotency_key_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_idempotency_key_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_idempotency_key_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_idempotency_key_is_active\` (\`isActive\`), INDEX \`IDX_idempotency_key_is_archived\` (\`isArchived\`), INDEX \`IDX_idempotency_key_tenant\` (\`tenantId\`), INDEX \`IDX_idempotency_key_organization\` (\`organizationId\`), INDEX \`IDX_idempotency_expiry\` (\`expiresAt\`), INDEX \`IDX_idempotency_resource\` (\`resourceType\`, \`resourceId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`idempotency_key\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`key\` varchar(255) NOT NULL, \`scope\` varchar(64) NOT NULL, \`requestHash\` varchar(64) NOT NULL, \`status\` varchar(255) NOT NULL DEFAULT 'IN_PROGRESS', \`responseStatus\` int NULL, \`responseBody\` json NULL, \`resourceType\` varchar(64) NULL, \`resourceId\` varchar(36) NULL, \`expiresAt\` datetime NOT NULL, \`lockedAt\` datetime NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, \'00000000-0000-0000-0000-000000000000\')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_idempotency_key_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_idempotency_key_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_idempotency_key_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_idempotency_key_is_active\` (\`isActive\`), INDEX \`IDX_idempotency_key_is_archived\` (\`isArchived\`), INDEX \`IDX_idempotency_key_tenant\` (\`tenantId\`), INDEX \`IDX_idempotency_key_organization\` (\`organizationId\`), INDEX \`IDX_idempotency_expiry\` (\`expiresAt\`), INDEX \`IDX_idempotency_resource\` (\`resourceType\`, \`resourceId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		// The retry lock, through the two stored generated key columns declared above. `organizationKey`
 		// is the one that matters most here: `organizationId` is nullable, and a unique index in MySQL

@@ -92,12 +92,12 @@ export class CreateFulfillmentTables1791000000240 implements MigrationInterface 
 		await queryRunner.query(`CREATE INDEX "IDX_shipping_profile_organization" ON "shipping_profile" ("organizationId")`);
 		// A code identifies a profile inside an organization.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_shipping_profile_org_code" ON "shipping_profile" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_shipping_profile_org_code" ON "shipping_profile" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 		);
 		// One default profile per organization: two would make a variant's shipping behaviour depend on
 		// row order.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_shipping_profile_default" ON "shipping_profile" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_shipping_profile_default" ON "shipping_profile" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\')) WHERE "isDefault" = true AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_shipping_profile_code" ON "shipping_profile" ("code") WHERE "deletedAt" IS NULL`);
 
@@ -153,7 +153,7 @@ export class CreateFulfillmentTables1791000000240 implements MigrationInterface 
 		await queryRunner.query(`CREATE INDEX "IDX_shipping_option_tenant" ON "shipping_option" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_shipping_option_organization" ON "shipping_option" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_shipping_option_org_code" ON "shipping_option" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_shipping_option_org_code" ON "shipping_option" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 		);
 		// The eligibility read: an active option of this organization, on this channel and region, in
 		// priority order.
@@ -295,10 +295,10 @@ export class CreateFulfillmentTables1791000000240 implements MigrationInterface 
 		await queryRunner.query(`CREATE INDEX "IDX_shipping_profile_tenant" ON "shipping_profile" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_shipping_profile_organization" ON "shipping_profile" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_shipping_profile_org_code" ON "shipping_profile" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_shipping_profile_org_code" ON "shipping_profile" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_shipping_profile_default" ON "shipping_profile" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000')) WHERE "isDefault" = 1 AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_shipping_profile_default" ON "shipping_profile" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\')) WHERE "isDefault" = 1 AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(`CREATE INDEX "IDX_shipping_profile_code" ON "shipping_profile" ("code") WHERE "deletedAt" IS NULL`);
 
@@ -346,7 +346,7 @@ export class CreateFulfillmentTables1791000000240 implements MigrationInterface 
 		await queryRunner.query(`CREATE INDEX "IDX_shipping_option_tenant" ON "shipping_option" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_shipping_option_organization" ON "shipping_option" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_shipping_option_org_code" ON "shipping_option" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_shipping_option_org_code" ON "shipping_option" (COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_shipping_option_eligibility" ON "shipping_option" ("organizationId", "isActive", "channelId", "regionId", "priority") WHERE "deletedAt" IS NULL`
@@ -487,7 +487,7 @@ export class CreateFulfillmentTables1791000000240 implements MigrationInterface 
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`shipping_profile\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`description\` text NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_shipping_profile_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_shipping_profile_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_shipping_profile_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_shipping_profile_is_active\` (\`isActive\`), INDEX \`IDX_shipping_profile_is_archived\` (\`isArchived\`), INDEX \`IDX_shipping_profile_tenant\` (\`tenantId\`), INDEX \`IDX_shipping_profile_organization\` (\`organizationId\`), INDEX \`IDX_shipping_profile_code\` (\`code\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`shipping_profile\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`description\` text NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, \'00000000-0000-0000-0000-000000000000\')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_shipping_profile_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_shipping_profile_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_shipping_profile_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_shipping_profile_is_active\` (\`isActive\`), INDEX \`IDX_shipping_profile_is_archived\` (\`isArchived\`), INDEX \`IDX_shipping_profile_tenant\` (\`tenantId\`), INDEX \`IDX_shipping_profile_organization\` (\`organizationId\`), INDEX \`IDX_shipping_profile_code\` (\`code\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		// MySQL has no filtered index, so "one code per organization" is carried by the generated key
 		// columns declared above — `organizationKey` for the nullable scope, `deletedKey` for the
@@ -519,7 +519,7 @@ export class CreateFulfillmentTables1791000000240 implements MigrationInterface 
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`shipping_option\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`priceType\` varchar(16) NOT NULL DEFAULT 'FLAT', \`amount\` decimal(20,6) NULL, \`currency\` varchar(3) NULL, \`isTaxInclusive\` tinyint NOT NULL DEFAULT 0, \`taxCategoryId\` varchar(36) NULL, \`providerKey\` varchar(64) NULL, \`profileId\` varchar(36) NULL, \`channelId\` varchar(36) NULL, \`regionId\` varchar(36) NULL, \`priority\` int NOT NULL DEFAULT 0, \`estimatedMinDays\` int NULL, \`estimatedMaxDays\` int NULL, \`requiresShippingAddress\` tinyint NOT NULL DEFAULT 1, \`allowPickup\` tinyint NOT NULL DEFAULT 0, \`maxWeight\` decimal(12,4) NULL, \`maxItemCount\` int NULL, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_shipping_option_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_shipping_option_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_shipping_option_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_shipping_option_is_active\` (\`isActive\`), INDEX \`IDX_shipping_option_is_archived\` (\`isArchived\`), INDEX \`IDX_shipping_option_tenant\` (\`tenantId\`), INDEX \`IDX_shipping_option_organization\` (\`organizationId\`), INDEX \`IDX_shipping_option_eligibility\` (\`organizationId\`, \`isActive\`, \`channelId\`, \`regionId\`, \`priority\`), INDEX \`IDX_shipping_option_profile\` (\`profileId\`), INDEX \`IDX_shipping_option_tax_category\` (\`taxCategoryId\`), INDEX \`IDX_shipping_option_channel\` (\`channelId\`), INDEX \`IDX_shipping_option_region\` (\`regionId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`shipping_option\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`code\` varchar(64) NOT NULL, \`priceType\` varchar(16) NOT NULL DEFAULT 'FLAT', \`amount\` decimal(20,6) NULL, \`currency\` varchar(3) NULL, \`isTaxInclusive\` tinyint NOT NULL DEFAULT 0, \`taxCategoryId\` varchar(36) NULL, \`providerKey\` varchar(64) NULL, \`profileId\` varchar(36) NULL, \`channelId\` varchar(36) NULL, \`regionId\` varchar(36) NULL, \`priority\` int NOT NULL DEFAULT 0, \`estimatedMinDays\` int NULL, \`estimatedMaxDays\` int NULL, \`requiresShippingAddress\` tinyint NOT NULL DEFAULT 1, \`allowPickup\` tinyint NOT NULL DEFAULT 0, \`maxWeight\` decimal(12,4) NULL, \`maxItemCount\` int NULL, \`version\` int NOT NULL DEFAULT 1, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, \'00000000-0000-0000-0000-000000000000\')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_shipping_option_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_shipping_option_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_shipping_option_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_shipping_option_is_active\` (\`isActive\`), INDEX \`IDX_shipping_option_is_archived\` (\`isArchived\`), INDEX \`IDX_shipping_option_tenant\` (\`tenantId\`), INDEX \`IDX_shipping_option_organization\` (\`organizationId\`), INDEX \`IDX_shipping_option_eligibility\` (\`organizationId\`, \`isActive\`, \`channelId\`, \`regionId\`, \`priority\`), INDEX \`IDX_shipping_option_profile\` (\`profileId\`), INDEX \`IDX_shipping_option_tax_category\` (\`taxCategoryId\`), INDEX \`IDX_shipping_option_channel\` (\`channelId\`), INDEX \`IDX_shipping_option_region\` (\`regionId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
 			`CREATE UNIQUE INDEX \`UQ_shipping_option_org_code\` ON \`shipping_option\` (\`organizationKey\`, \`code\`, \`deletedKey\`)`
