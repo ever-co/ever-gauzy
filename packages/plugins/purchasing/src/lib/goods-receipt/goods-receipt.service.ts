@@ -261,16 +261,9 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		const orders = new Map<ID, PurchaseOrder>();
 
 		for (const orderLine of orderLines.values()) {
-			const order = await this.purchaseOrderService.findOneScoped(orderLine.purchaseOrderId);
-
-			if (
-				order.status === PurchaseOrderStatus.CANCELED ||
-				order.status === PurchaseOrderStatus.CLOSED
-			) {
-				throw new ConflictException(
-					`PURCHASE_ORDER_INVALID_STATE: purchase order '${order.number}' is ${order.status}, so nothing further can be received against it.`
-				);
-			}
+			// The same predicate the posting path uses: a line added to a posted receipt receives goods
+			// exactly as the original delivery did, so it has to be refused for the same reasons.
+			const order = await this.assertOrderReceivable(orderLine.purchaseOrderId);
 
 			orders.set(order.id, order);
 		}
@@ -632,18 +625,55 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 	}
 
 	/**
+	 * Reads one order and refuses it when goods may not be received against it.
+	 *
+	 * **Every order a delivery touches goes through this, anchored or not.** It did not used to: the
+	 * order a receipt named reached `PurchaseOrderService.assertReceivable`, and a consolidated delivery
+	 * — the routine case, which names no order at all — was gated on nothing but `CANCELED` and
+	 * `CLOSED`. `assertReceivable` refuses three more things that gate missed: an order still in `DRAFT`,
+	 * which was never approved and never sent to the supplier; one already `RECEIVED`, which has nothing
+	 * left to arrive; and any status outside the receivable set. So a receipt posted with no
+	 * `purchaseOrderId` against a line of a draft order wrote `RECEIPT` movements that incremented stock
+	 * and moved that order from `DRAFT` straight to `PARTIALLY_RECEIVED` — stepping around the approval
+	 * gate `send()` enforces — and the same call against a `RECEIVED` order received it a second time.
+	 *
+	 * The finished-order refusal is made here rather than being left to `assertReceivable`, because the
+	 * two answer a `CLOSED` order differently and this surface's answer is the accurate one: an order
+	 * closed short of its quantity is in a state nothing may be received against, which is not the same
+	 * fact as an order that has already been received in full. Both codes are part of the wire contract
+	 * and both keep the meaning they have always had here.
+	 *
+	 * @param orderId The order behind a line of the delivery.
+	 * @param expectedVersion The version the caller read, for the order the receipt is anchored to.
+	 * @returns The order.
+	 * @throws ConflictException when the order is finished, was never sent, is already received, or has
+	 * moved past the version the caller stated.
+	 */
+	private async assertOrderReceivable(orderId: ID, expectedVersion?: number): Promise<PurchaseOrder> {
+		const order = await this.purchaseOrderService.findOneScoped(orderId);
+
+		if (order.status === PurchaseOrderStatus.CANCELED || order.status === PurchaseOrderStatus.CLOSED) {
+			throw new ConflictException(
+				`PURCHASE_ORDER_INVALID_STATE: purchase order '${order.number}' is ${order.status}, so nothing further can be received against it.`
+			);
+		}
+
+		return await this.purchaseOrderService.assertReceivable(orderId, expectedVersion);
+	}
+
+	/**
 	 * Reads the orders a delivery touches, and refuses the ones it cannot be received against.
 	 *
 	 * A delivery anchored to an order is checked exactly as it always was: the order has to be receivable
 	 * and the version the caller read has to be the current one. A consolidated delivery names no order,
-	 * so it is checked line by line instead — every line's own order has to be one that is still open —
+	 * so it is checked line by line instead — every line's own order has to pass the same predicate —
 	 * and every line has to belong to the anchored order when there is one.
 	 *
 	 * @param input The delivery.
 	 * @param orderLines The order lines it names.
 	 * @returns The orders, keyed by id.
 	 * @throws ConflictException when the lines of an anchored receipt span more than one order, or one of
-	 * the orders is finished.
+	 * the orders cannot be received against.
 	 */
 	private async resolveOrders(
 		input: IGoodsReceiptInput,
@@ -664,19 +694,15 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		const orders = new Map<ID, PurchaseOrder>();
 
 		for (const orderId of orderIds) {
-			const order =
+			// **Every order a delivery touches is checked with the same predicate.** Only the version
+			// precondition stays specific to the anchored order: the caller read one order and can only
+			// state that one's version.
+			const order = await this.assertOrderReceivable(
+				orderId,
 				input.purchaseOrderId && String(input.purchaseOrderId) === String(orderId)
-					? await this.purchaseOrderService.assertReceivable(orderId, input.expectedVersion)
-					: await this.purchaseOrderService.findOneScoped(orderId);
-
-			if (
-				!input.purchaseOrderId &&
-				(order.status === PurchaseOrderStatus.CANCELED || order.status === PurchaseOrderStatus.CLOSED)
-			) {
-				throw new ConflictException(
-					`PURCHASE_ORDER_INVALID_STATE: purchase order '${order.number}' is ${order.status}, so nothing further can be received against it.`
-				);
-			}
+					? input.expectedVersion
+					: undefined
+			);
 
 			orders.set(order.id, order);
 		}
@@ -896,6 +922,13 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		for (const line of lines) {
 			const good = toQuantityUnits(line.quantity) > 0n;
 			const damaged = toQuantityUnits(line.damagedQuantity) > 0n;
+			// The movement the good units arrived under, held in the loop rather than read back off the
+			// line. `stampMovement` writes the column on its OWN copy of the row and answers with it; it
+			// does not mutate the object this loop is iterating, so `line.stockMovementId` was still
+			// `undefined` when the put-away below read it — the line came from `writeLines`, which creates
+			// it before any movement exists. The bin transfer therefore carried no link to the movement the
+			// units arrived under, which is exactly the link this method's contract promises.
+			let receiptMovementId: ID | undefined;
 
 			if (good) {
 				const result = await this.inventory.recordMovement({
@@ -912,7 +945,10 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 				});
 
 				if (result?.movementId) {
-					await this.receiptLineService.stampMovement(line.id, result.movementId);
+					const stamped = await this.receiptLineService.stampMovement(line.id, result.movementId);
+
+					receiptMovementId = stamped?.stockMovementId ?? result.movementId;
+					line.stockMovementId = receiptMovementId;
 					movementIds.push(result.movementId);
 				}
 			}
@@ -942,7 +978,7 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 					binId: line.warehouseBinId,
 					variantId: line.variantId,
 					quantity: line.quantity,
-					stockMovementId: line.stockMovementId,
+					stockMovementId: receiptMovementId,
 					referenceId: line.id,
 					reason: `Put-away of goods received against purchase order ${purchaseOrderNumber}.`
 				});

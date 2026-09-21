@@ -19,6 +19,9 @@ jest.mock('@gauzy/core', () => {
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
+	// The order service reaches the kernel's conditional write by name through this barrel, so a
+	// factory that replaces the barrel has to answer for it even where no transition is exercised.
+	const { ApiErrorCode, commitVersionedUpdate } = require('../testing/versioned-write.double');
 
 	class BaseEntity {}
 
@@ -35,6 +38,8 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		ApiErrorCode,
+		commitVersionedUpdate,
 		CrudController,
 		CrudService,
 		TenantAwareCrudService: CrudService,
@@ -369,10 +374,14 @@ describe('PurchaseOrderController — a retried create', () => {
 		expect(surface.service.create).toHaveBeenCalledTimes(1);
 	});
 
-	it('refuses the same body sent as different bytes, because that is a different request', async () => {
-		// Key order, whitespace and number formatting survive the wire but not a parse-and-reserialize
-		// round trip, so a rebuilt body is a different request under the same key and is refused as a
-		// reuse rather than answered with the first attempt's order.
+	it('answers the same body sent as different bytes from the first attempt, because it is the same request', async () => {
+		// This case used to pin the opposite, and the opposite was the defect. Key order, whitespace and
+		// number formatting do not survive a parse-and-reserialize round trip, so an SDK, a proxy or a
+		// gateway that rebuilds the body sends different bytes for the same request — and the fingerprint
+		// hashed the bytes. A client that lost its response and retried was therefore answered `409
+		// IDEMPOTENCY_KEY_REUSED`, which is the one outcome it cannot recover from: it has no response
+		// and it may not ask again. The fingerprint canonicalizes the parsed body now, so the retry is
+		// recognised and replayed, and the order is still created exactly once.
 		const surface = resource();
 		const first = { ...request(body(), CREATE_KEY), rawBody: Buffer.from(JSON.stringify(body())) };
 		const rebuilt = {
@@ -384,10 +393,10 @@ describe('PurchaseOrderController — a retried create', () => {
 
 		await send(surface, 'create', first, [first.body]);
 
-		await expect(send(surface, 'create', rebuilt, [rebuilt.body])).rejects.toMatchObject({
-			status: 409,
-			code: 'IDEMPOTENCY_KEY_REUSED'
+		await expect(send(surface, 'create', rebuilt, [rebuilt.body])).resolves.toMatchObject({
+			result: { id: ORDER }
 		});
+		// The property that matters either way: one key, one side effect.
 		expect(surface.service.create).toHaveBeenCalledTimes(1);
 	});
 
