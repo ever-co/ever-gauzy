@@ -84,11 +84,21 @@ function main(argv) {
 
 	// What the change is compared against. Reported either way, so a green run states what it
 	// actually compared.
+	//
+	// 🛑 **An unresolvable baseline is a failure wherever a comparison was asked for.** Every check
+	// below it — the deprecation window, the breaking-change classification — is skipped without one,
+	// so a warning here made the gate silently answer "nothing to report" precisely when it could not
+	// look. That is the worst thing a gate can do: the run is green, the pull request says the schema
+	// was checked, and no comparison happened. It stays a warning only where there is genuinely
+	// nothing to compare against — a checkout with no base ref named and no `origin/develop` — which
+	// is the case the message below describes.
 	const previous = resolvePreviousSnapshot(repositoryRoot, options);
 	results.push(
-		previous.text === undefined
-			? warning('baseline', previous.detail)
-			: pass('baseline', previous.detail)
+		previous.text !== undefined
+			? pass('baseline', previous.detail)
+			: previous.requested
+				? failure('baseline', previous.detail)
+				: warning('baseline', previous.detail)
 	);
 
 	if (loaded.module && previous.text !== undefined) {
@@ -162,9 +172,18 @@ function resolvePreviousSnapshot(repositoryRoot, options) {
 		const file = path.resolve(options.previousFile);
 		return fs.existsSync(file)
 			? { text: fs.readFileSync(file, 'utf8'), detail: `Compared against '${file}'.` }
-			: { detail: `The file given by --previous does not exist: '${file}'.` };
+			: {
+					// A baseline was named and is not there. The caller asked for a comparison, so the
+					// absence is a refusal rather than a note.
+					requested: true,
+					detail: `The file given by --previous does not exist: '${file}'.`
+			  };
 	}
 
+	// `requested` is what separates "the caller told us what to compare against" from "we guessed".
+	// A named base — the flag, or the base branch a pull request carries — is a comparison that was
+	// asked for, and failing to resolve it must fail the gate rather than skip it.
+	const requested = Boolean(options.base || process.env.GITHUB_BASE_REF);
 	const candidates = options.base
 		? [options.base]
 		: process.env.GITHUB_BASE_REF
@@ -179,9 +198,13 @@ function resolvePreviousSnapshot(repositoryRoot, options) {
 	}
 
 	return {
-		detail:
-			`No earlier snapshot of ${SNAPSHOT_PATH} exists at ${candidates.join(', ')}, so there is nothing to ` +
-			'compare against. This is expected while the snapshot is being introduced.'
+		requested,
+		detail: requested
+			? `No snapshot of ${SNAPSHOT_PATH} could be read at ${candidates.join(', ')}, and a base was ` +
+			  'named, so the comparison this gate exists to make did not happen. Fetch the base revision — ' +
+			  'the default checkout is one commit deep — and run it again.'
+			: `No earlier snapshot of ${SNAPSHOT_PATH} exists at ${candidates.join(', ')}, so there is nothing to ` +
+			  'compare against. This is expected while the snapshot is being introduced.'
 	};
 }
 
