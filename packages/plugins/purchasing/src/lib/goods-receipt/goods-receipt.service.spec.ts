@@ -9,6 +9,9 @@
  */
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
+	// The order service reaches the kernel's conditional write by name through this barrel, so a factory
+	// that replaces the barrel has to answer for it. The double decides rather than succeeds.
+	const { ApiErrorCode, commitVersionedUpdate } = require('../testing/versioned-write.double');
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
@@ -70,6 +73,8 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		ApiErrorCode,
+		commitVersionedUpdate,
 		TenantAwareCrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
@@ -194,9 +199,13 @@ interface ITables {
  *
  * @param tables The whole datastore.
  * @param tableName The table this repository writes.
- * @param options.detached Whether a read hands back a detached copy. The receipt's own lines are read
- * back within the same operation that wrote them — the movement a line produced is stamped onto it and
- * then read again — so that table answers with the row itself, the way an identity map does.
+ * @param options.detached Whether a read hands back a detached copy. It does, for every table, because
+ * that is what TypeORM does: `findOne` builds a fresh entity per read and there is no identity map to
+ * hand the caller back the object it already holds. The receipt-line table used to be aliased here, on
+ * the reasoning that a line is stamped and read again inside one operation — and that alias hid a real
+ * defect, because `stampMovement` writes the movement id onto ITS OWN copy of the row and the put-away
+ * a few lines later read the caller's untouched one. Under the alias the two were the same object and
+ * the suite saw a link that production never made.
  */
 function repository(tables: ITables, tableName: keyof ITables, options: { detached?: boolean } = {}) {
 	const detached = options.detached ?? true;
@@ -306,14 +315,17 @@ function repository(tables: ITables, tableName: keyof ITables, options: { detach
 			return Array.isArray(rowOrRows) ? list : list[0];
 		},
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = tables[tableName].findIndex((row) => same(row.id, id));
+			// A conditional write is a WHERE, not an id: `commitVersionedUpdate` predicates its statement on
+			// the version and the tenant scope too, and a double that matched on the id alone would report
+			// every conditional write as landing.
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const matching = tables[tableName].filter((row) => matches(row, where));
 
-			if (index >= 0) {
-				Object.assign(tables[tableName][index], partial);
+			for (const row of matching) {
+				Object.assign(row, partial);
 			}
 
-			return { affected: index >= 0 ? 1 : 0 };
+			return { affected: matching.length };
 		},
 		softDelete: async (criteria: any) => {
 			const where = typeof criteria === 'string' ? { id: criteria } : criteria;
@@ -505,7 +517,7 @@ function receiptFixture(
 		sequenceService as never
 	);
 
-	const receiptLineRepository = repository(tables, 'goods_receipt_line', { detached: false });
+	const receiptLineRepository = repository(tables, 'goods_receipt_line');
 	const receiptLineService = new GoodsReceiptLineService(receiptLineRepository as never, {} as never);
 	const settingsAsked: string[][] = [];
 	const tenantSettingService = {
@@ -1082,6 +1094,38 @@ describe('GoodsReceiptService — the location and the orders a delivery touches
 			'another-order': PurchaseOrderStatus.PARTIALLY_RECEIVED
 		});
 		expect(receipt.outstandingQuantity).toBe('1.000000');
+	});
+
+	it('refuses a consolidated delivery against an order that was never sent, or one already received', async () => {
+		// **The corrected contract: every order a delivery touches is checked with the same predicate.**
+		// Only the anchored order used to reach `assertReceivable`; a consolidated delivery — the routine
+		// case, which names no order — was gated on `CANCELED` and `CLOSED` alone. So a receipt with no
+		// `purchaseOrderId` naming a line of a DRAFT order posted, wrote `RECEIPT` movements that
+		// incremented stock, and moved that order from `DRAFT` straight to `PARTIALLY_RECEIVED` — around
+		// the approval gate `send()` enforces — and the same call against a `RECEIVED` order received it
+		// a second time.
+		const draft = receiptFixture({ orders: [orderRow(ORDER, { status: PurchaseOrderStatus.DRAFT })] });
+		const received = receiptFixture({ orders: [orderRow(ORDER, { status: PurchaseOrderStatus.RECEIVED })] });
+
+		await expect(
+			draft.service.receive({
+				warehouseId: WAREHOUSE,
+				lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '1' }]
+			})
+		).rejects.toThrow(/PURCHASE_ORDER_NOT_SENT/);
+		await expect(
+			received.service.receive({
+				warehouseId: WAREHOUSE,
+				lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '1' }]
+			})
+		).rejects.toThrow(/PURCHASE_ORDER_ALREADY_RECEIVED/);
+
+		// Nothing was posted and no stock moved for either of them.
+		expect(draft.tables.goods_receipt).toEqual([]);
+		expect(received.tables.goods_receipt).toEqual([]);
+		expect(draft.movements).toEqual([]);
+		expect(received.movements).toEqual([]);
+		expect(draft.order(ORDER)).toMatchObject({ status: PurchaseOrderStatus.DRAFT });
 	});
 
 	it('refuses a consolidated delivery whose line belongs to a finished order', async () => {

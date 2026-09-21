@@ -1,7 +1,13 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, ISearchIndexField, SearchFieldKind, SearchReindexScope } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, SearchIndexDefinition, TenantPermissionGuard } from '@gauzy/core';
+import {
+	FeatureFlagGuard,
+	PermissionGuard,
+	Permissions,
+	SearchIndexDefinition,
+	TenantPermissionGuard
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { SearchIndexDefinitionService } from '../../services/search-index-definition.service';
@@ -42,16 +48,11 @@ interface IDefinitionUpdateArgs {
  * The rebuild fields live here rather than beside the query fields because a rebuild is a write: it
  * changes the index for everybody, and it carries the operator grant that says so.
  *
- * **The chain is the controller's, and the tenant guard is first because it was missing.**
- * `SearchController` carries `@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)`; this
- * class carried only the last two, so over GraphQL a caller that stated a `Tenant-Id` header naming a
- * tenant other than the one its own credential was issued for was never compared against it.
- * `TenantBaseGuard` is what performs that comparison for an operation (`tenant-base.guard.ts`,
- * `canActivateGraphqlOperation`), and a resolver that does not run it is a resolver the same header can
- * be pointed at another tenant through. That matters here more than beside the read fields, because the
- * rebuild and drop mutations below change the index for every caller of the tenant they name. The guard
- * is stated first for the same reason it is first on the route: a caller that states the wrong tenant is
- * refused as a tenancy problem before its grants are consulted.
+ * **The guard chain is the controller's, in full.** `TenantPermissionGuard` used to be missing, and
+ * it is what refuses a request with no resolved tenant, verifies the tenant row and runs the separate
+ * *tenant*-level grant lookup. A caller whose user role carried `SEARCH_REINDEX` but whose tenant was
+ * never granted the search capability could therefore run `reindexAll` and `dropSearchIndex` over
+ * GraphQL while `POST /api/search/reindex` and `DELETE /api/search/index` refused the same caller.
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
  * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the

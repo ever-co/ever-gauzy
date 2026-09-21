@@ -102,6 +102,16 @@ jest.mock('@gauzy/core', () => {
 			return this.typeOrmRepository.delete(criteria);
 		}
 
+		/**
+		 * The soft counterpart. The cart's child writes go through this rather than through `delete`,
+		 * because three docstrings in the service promise a row that keeps its `deletedAt` — and the
+		 * ledger rows that name a removed line stay attributable only if the row is still there. The
+		 * double marks the row and hides it from every read, which is what the real one does.
+		 */
+		async softDelete(criteria: any): Promise<any> {
+			return this.typeOrmRepository.softDelete(criteria);
+		}
+
 		async count(options?: any): Promise<number> {
 			return this.typeOrmRepository.count(options);
 		}
@@ -165,6 +175,11 @@ jest.mock('@gauzy/core', () => {
 			}
 		},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The precision table decides how many decimals a cart is priced at when the caller states
+		// none, so the real one is used: a double that answered "two" for every currency would make
+		// the three-decimal case below pass for the wrong reason.
+		currencyPrecision: jest.requireActual('@gauzy/core/src/lib/money/currency-precision').currencyPrecision,
+		normalizeDecimalString: jest.requireActual('@gauzy/core/src/lib/money/decimal').normalizeDecimalString,
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
@@ -241,10 +256,37 @@ const RELATIONS: Record<string, Record<string, { table: keyof ITables; foreignKe
  */
 function repository(tables: ITables, tableName: keyof ITables) {
 	let sequence = 0;
-	const rows = () => tables[tableName];
+	/** Every row of the table, including the ones a soft delete marked. */
+	const allRows = () => tables[tableName];
+	/** What a read sees: a soft-deleted row is invisible, exactly as both ORMs hide it by default. */
+	const rows = () => allRows().filter((row: any) => !row.deletedAt);
+	/**
+	 * Evaluates one condition.
+	 *
+	 * A criterion is usually a value, but the expiry and abandonment sweeps push their predicates into
+	 * the query — `In([...])` and `LessThanOrEqual(new Date())` — and a double that compared a
+	 * `FindOperator` with `String()` would silently match nothing, which is a sweep that passes its
+	 * suite by doing no work at all.
+	 */
+	const satisfies = (value: any, expected: any): boolean => {
+		if (expected && typeof expected === 'object' && typeof expected.type === 'string') {
+			switch (expected.type) {
+				case 'in':
+					return (expected.value ?? []).some((candidate: any) => String(value ?? '') === String(candidate));
+				case 'lessThanOrEqual':
+					return value !== undefined && value !== null && new Date(value) <= new Date(expected.value);
+				case 'moreThanOrEqual':
+					return value !== undefined && value !== null && new Date(value) >= new Date(expected.value);
+				default:
+					return false;
+			}
+		}
+
+		return String(value ?? '') === String(expected);
+	};
 	const matches = (row: any, where: any): boolean =>
 		Object.entries(where ?? {}).every(
-			([field, expected]) => expected === undefined || String(row[field] ?? '') === String(expected)
+			([field, expected]) => expected === undefined || satisfies(row[field], expected)
 		);
 	const attach = (row: any, relations?: string[]) => {
 		const resolved: any = { ...row };
@@ -253,7 +295,12 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			const link = RELATIONS[tableName]?.[relation];
 
 			if (link) {
-				resolved[relation] = tables[link.table].filter((child) => child[link.foreignKey] === row.id);
+				// A soft-deleted child is invisible to a relation for the same reason it is invisible to
+				// a direct read: both ORMs filter it out by default, and a double that joined it back in
+				// would report a cart as still holding the line that was removed from it.
+				resolved[relation] = tables[link.table].filter(
+					(child) => child[link.foreignKey] === row.id && !child.deletedAt
+				);
 			}
 		}
 
@@ -262,11 +309,13 @@ function repository(tables: ITables, tableName: keyof ITables) {
 
 	return {
 		rows,
+		allRows,
 		metadata: { tableName, hasColumnWithPropertyPath: () => false },
 		find: async (options: any = {}) =>
 			rows()
 				.filter((row) => matches(row, options.where))
-				.map((row) => attach(row, options.relations)),
+				.map((row) => attach(row, options.relations))
+				.slice(0, options.take ?? undefined),
 		findOne: async (options: any = {}) => {
 			const row = rows().find((candidate) => matches(candidate, options.where));
 
@@ -274,29 +323,36 @@ function repository(tables: ITables, tableName: keyof ITables) {
 		},
 		findOneBy: async (where: any) => rows().find((candidate) => matches(candidate, where)) ?? null,
 		findAndCount: async (options: any = {}) => {
-			const items = rows()
+			// The bound belongs to the query, not to the loop that reads the answer: a sweep that asked
+			// for every row and then stopped after five hundred is the defect the `take` exists to fix,
+			// and a double that ignored `take` could not tell the two apart.
+			const matching = rows()
 				.filter((row) => matches(row, options.where))
 				.map((row) => attach(row, options.relations));
+			const items = options.take === undefined ? matching : matching.slice(0, options.take);
 
-			return [items, items.length];
+			return [items, matching.length];
 		},
 		count: async () => rows().length,
 		create: (partial: any) => ({ ...partial }),
+		// A write addresses the table itself and a read addresses the live view of it, which is the
+		// whole of the soft-delete difference: the stored array keeps the marked row, and nothing that
+		// reads can see it.
 		save: async (entity: any) => {
 			if (entity.id) {
-				const index = rows().findIndex((row) => row.id === entity.id);
+				const stored = allRows().find((row: any) => row.id === entity.id);
 
-				if (index >= 0) {
-					rows()[index] = { ...rows()[index], ...entity };
+				if (stored) {
+					Object.assign(stored, entity);
 
-					return rows()[index];
+					return stored;
 				}
 			}
 
 			// Generated ids carry an infix, so one can never collide with an id a fixture seeded.
 			const created = { id: `${tableName}-new-${++sequence}`, ...entity };
 
-			rows().push(created);
+			allRows().push(created);
 
 			return created;
 		},
@@ -305,27 +361,37 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			// A criteria that names a version is a conditional update: the row has to still be at that
 			// version for the statement to change it, and the affected count is what reports which of
 			// the two happened. Without this the double could not tell a lost race from a won one.
-			const index = rows().findIndex(
-				(row) =>
+			const stored = rows().find(
+				(row: any) =>
 					String(row.id ?? '') === String(id ?? '') &&
 					(criteria?.version === undefined || String(row.version ?? '') === String(criteria.version))
 			);
 
+			if (stored) {
+				Object.assign(stored, partial);
+			}
+
+			return { affected: stored ? 1 : 0 };
+		},
+		delete: async (criteria: any) => {
+			const id = typeof criteria === 'string' ? criteria : criteria?.id;
+			const index = allRows().findIndex((row: any) => row.id === id);
+
 			if (index >= 0) {
-				Object.assign(rows()[index], partial);
+				allRows().splice(index, 1);
 			}
 
 			return { affected: index >= 0 ? 1 : 0 };
 		},
-		delete: async (criteria: any) => {
+		softDelete: async (criteria: any) => {
 			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows().findIndex((row) => row.id === id);
+			const row = allRows().find((candidate: any) => candidate.id === id);
 
-			if (index >= 0) {
-				rows().splice(index, 1);
+			if (row) {
+				row.deletedAt = new Date();
 			}
 
-			return { affected: index >= 0 ? 1 : 0 };
+			return { affected: row ? 1 : 0 };
 		}
 	};
 }
@@ -362,7 +428,7 @@ type StockLevel = number | { sellableQuantity: number; allowBackorder?: boolean;
  * @param options.stock Per-variant levels, overriding `DEFAULT_STOCK_LEVEL`; `false` for an
  * installation with no stock capability registered.
  */
-function cartFixture(options: { stock?: Record<string, StockLevel> | false } = {}) {
+function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxRate?: number } = {}) {
 	const tables: ITables = {
 		commerce_cart: [],
 		commerce_cart_line: [],
@@ -370,37 +436,84 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false } = {
 		commerce_cart_promotion: [],
 		commerce_checkout_session: []
 	};
+	let ledgerSequence = 0;
 	const ledger = {
-		adjustments: [] as Array<{ ownerType: string; ownerId: string; amount: number; isTaxInclusive?: boolean }>,
-		taxLines: [] as Array<{ ownerType: string; ownerId: string; amount: number }>,
+		adjustments: [] as Array<{
+			id: string;
+			ownerType: string;
+			ownerId: string;
+			amount: number;
+			currency?: string;
+			type?: string;
+			isTaxInclusive?: boolean;
+			metadata?: Record<string, unknown>;
+		}>,
+		taxLines: [] as Array<{ id: string; ownerType: string; ownerId: string; amount: number }>,
 		/** Records a row the way the tax package would. */
 		recordTax(ownerType: string, ownerId: string, amount: number) {
-			ledger.taxLines.push({ ownerType, ownerId, amount });
+			ledger.taxLines.push({ id: `tax-${++ledgerSequence}`, ownerType, ownerId, amount });
 		},
-		/** Records a row the way the promotion package would. */
+		/** Records a row the way an operator entering a manual movement would. */
 		recordAdjustment(ownerType: string, ownerId: string, amount: number, isTaxInclusive = false) {
-			ledger.adjustments.push({ ownerType, ownerId, amount, isTaxInclusive });
+			ledger.adjustments.push({
+				id: `adjustment-${++ledgerSequence}`,
+				ownerType,
+				ownerId,
+				amount,
+				isTaxInclusive
+			});
 		}
 	};
 
+	/**
+	 * The platform's adjustment ledger, as a store rather than as a projection.
+	 *
+	 * **The double used to synthesise a row per `commerce_cart_promotion` row**, on the assumption
+	 * that "the promotion engine is what turns each applied promotion into one signed adjustment".
+	 * Nothing did: applying a promotion wrote the snapshot row and no ledger row at all, so the cart's
+	 * discount total stayed zero in production while the suite watched a discount that only the double
+	 * produced. The ledger is now a real store with the three methods the service uses, and the rows
+	 * in it are the rows the service wrote.
+	 */
 	const adjustmentService = {
-		findByOwner: async (ownerType: string, ownerId: string) => [
-			...ledger.adjustments.filter((row) => row.ownerType === ownerType && row.ownerId === ownerId),
-			// What the promotion engine applied to this owner: one signed row per applied promotion,
-			// on the line the promotion targeted.
-			...tables.commerce_cart_promotion
-				.filter(() => String(tables.commerce_cart_line[0]?.id ?? '') === String(ownerId))
-				.map((row) => ({
-					ownerId,
-					amount: -Number(row.amount),
-					isTaxInclusive: Boolean(row.isTaxInclusive),
-					metadata: undefined
-				}))
-		]
+		findByOwner: async (ownerType: string, ownerId: string) =>
+			ledger.adjustments.filter((row) => row.ownerType === ownerType && String(row.ownerId) === String(ownerId)),
+		append: async (input: any) => {
+			const row = { id: `adjustment-${++ledgerSequence}`, ...input, amount: Number(input.amount) };
+
+			ledger.adjustments.push(row);
+
+			return row;
+		},
+		delete: async (id: string) => {
+			const index = ledger.adjustments.findIndex((row) => row.id === id);
+
+			if (index >= 0) {
+				ledger.adjustments.splice(index, 1);
+			}
+
+			return { affected: index >= 0 ? 1 : 0 };
+		}
 	};
 	const taxLineService = {
 		findByOwner: async (ownerType: string, ownerId: string) =>
-			ledger.taxLines.filter((row) => row.ownerType === ownerType && row.ownerId === ownerId)
+			ledger.taxLines.filter((row) => row.ownerType === ownerType && String(row.ownerId) === String(ownerId)),
+		append: async (input: any) => {
+			const row = { id: `tax-${++ledgerSequence}`, ...input, amount: Number(input.amount) };
+
+			ledger.taxLines.push(row);
+
+			return row;
+		},
+		delete: async (id: string) => {
+			const index = ledger.taxLines.findIndex((row) => row.id === id);
+
+			if (index >= 0) {
+				ledger.taxLines.splice(index, 1);
+			}
+
+			return { affected: index >= 0 ? 1 : 0 };
+		}
 	};
 
 	const lineService = new CommerceCartLineService(
@@ -431,6 +544,49 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false } = {
 							: { allowBackorder: false, ...level };
 					}
 				};
+	/**
+	 * The tax capability, when the fixture states a rate.
+	 *
+	 * It is the same seam the real one is reached through — `CART_TAX_CALCULATION`, bound in the
+	 * installation to the tax package's `TaxRateService` — and it answers the same shape: drafts,
+	 * which the cart writes into the platform's ledger. With no rate stated the port is absent, which
+	 * is the installation that has no tax package, and the cart must total exactly as it did before
+	 * the port existed.
+	 */
+	const taxPort =
+		options.taxRate === undefined
+			? undefined
+			: {
+					calculate: async (query: any) => ({
+						currency: query.currency,
+						taxTotal: '0',
+						lines: (query.lines ?? []).map((line: any) => {
+							const base = Number(line.amount);
+							const amount = Math.round(base * (options.taxRate as number) * 100) / 100;
+
+							return {
+								referenceId: line.referenceId,
+								currency: query.currency,
+								netAmount: String(base),
+								taxAmount: String(amount),
+								grossAmount: String(base + amount),
+								taxLines: [
+									{
+										name: 'VAT',
+										code: 'VAT',
+										rate: String(options.taxRate),
+										isCompound: false,
+										isInclusive: false,
+										baseAmount: String(base),
+										amount: String(amount),
+										currency: query.currency
+									}
+								]
+							};
+						})
+					})
+				};
+
 	const service = new CommerceCartService(
 		repository(tables, 'commerce_cart') as never,
 		{} as never,
@@ -440,7 +596,8 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false } = {
 		checkoutSessionService,
 		adjustmentService as never,
 		taxLineService as never,
-		stockPort as never
+		stockPort as never,
+		taxPort as never
 	);
 
 	return {
@@ -686,7 +843,11 @@ describe('CommerceCartService — lines', () => {
 
 		const emptied = await service.findOneWithContent(cart.id);
 
-		expect(tables.commerce_cart_line).toHaveLength(0);
+		// The rows are soft-deleted rather than destroyed — `removeLine` reaches `softDelete`, so the
+		// `CART_LINE` ledger rows that name a removed line stay attributable — and no read can see
+		// them, which is what "the cart is empty" has to mean to every caller.
+		expect(tables.commerce_cart_line.filter((line: any) => !line.deletedAt)).toHaveLength(0);
+		expect(tables.commerce_cart_line.every((line: any) => Boolean(line.deletedAt))).toBe(true);
 		expect(emptied.lines).toEqual([]);
 		expect(emptied.status).toBe(CommerceCartStatus.ACTIVE);
 		expect(emptied.itemSubtotal).toBe(0);
@@ -875,6 +1036,184 @@ describe('CommerceCartService — money', () => {
 
 		expect(removed.discountTotal).toBe(0);
 		expect(removed.grandTotal).toBe(40);
+	});
+
+	it('writes the ledger row an applied promotion represents, split across the lines it discounts', async () => {
+		// The defect this pins: applying a promotion wrote a `commerce_cart_promotion` row and nothing
+		// else, so the buyer saw the promotion listed and was charged the undiscounted price. The row
+		// in the ledger is what the totals chain reads, so the discount has to be there and it has to
+		// be attributed to the lines.
+		const { service, ledger, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 10 });
+		await service.addLine(cart.id, { variantId: 'v2', title: 'B', quantity: 1, unitPrice: 30 });
+
+		const priced = await service.applyPromotion(cart.id, { code: 'TENOFF', amount: 4 });
+		const written = ledger.adjustments.filter((row) => row.ownerType === AdjustmentOwnerType.CART_LINE);
+
+		expect(written).toHaveLength(2);
+		// Proportional to what each line is worth: a quarter of the cart is the first line, so a
+		// quarter of the discount is.
+		expect(written.map((row) => row.amount).sort((left, right) => left - right)).toEqual([-3, -1]);
+		expect(written.every((row) => row.type === 'PROMOTION')).toBe(true);
+		expect(priced.itemDiscountTotal).toBe(4);
+		expect(priced.grandTotal).toBe(36);
+		expect(tables.commerce_cart_promotion).toHaveLength(1);
+	});
+
+	it('splits a promotion that does not divide evenly so the parts still sum to the whole', async () => {
+		// Ten pence over three equal lines divides into no whole number of pence. The parts are
+		// allocated by largest remainder — 0.04, 0.03, 0.03 — and the cart's discount total is the
+		// whole 0.10, not the 0.09 three independently rounded thirds would leave.
+		const { service, ledger } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		for (const variant of ['v1', 'v2', 'v3']) {
+			await service.addLine(cart.id, { variantId: variant, title: variant, quantity: 1, unitPrice: 10 });
+		}
+
+		const priced = await service.applyPromotion(cart.id, { code: 'PENNIES', amount: 0.1 });
+		const parts = ledger.adjustments
+			.filter((row) => row.ownerType === AdjustmentOwnerType.CART_LINE)
+			.map((row) => Math.abs(row.amount))
+			.sort((left, right) => right - left);
+
+		expect(parts).toEqual([0.04, 0.03, 0.03]);
+		expect(parts.reduce((total, part) => total + part, 0)).toBeCloseTo(0.1, 10);
+		expect(priced.discountTotal).toBe(0.1);
+		expect(priced.grandTotal).toBe(29.9);
+	});
+
+	it('leaves a ledger row an operator entered where it is when the promotion set is rebuilt', async () => {
+		// The rebuild replaces the rows it wrote and nothing else. A manual movement carries no
+		// `cartPromotionId`, so re-pricing the cart must not sweep it away.
+		const { service, tables, ledger } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+		ledger.recordAdjustment(AdjustmentOwnerType.CART_LINE, tables.commerce_cart_line[0].id, -2);
+
+		const priced = await service.applyPromotion(cart.id, { code: 'TENOFF', amount: 4 });
+
+		expect(ledger.adjustments).toHaveLength(2);
+		expect(priced.discountTotal).toBe(6);
+		expect(priced.grandTotal).toBe(14);
+
+		const removed = await service.removePromotion(cart.id, 'TENOFF');
+
+		// The promotion's row went with the promotion; the manual one stayed.
+		expect(ledger.adjustments).toHaveLength(1);
+		expect(removed.discountTotal).toBe(2);
+	});
+
+	it('charges a fee the ledger carries instead of dropping it', async () => {
+		const { service, tables, ledger } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+		// A handling fee: positive, on the line. It used to be read by nothing at all.
+		ledger.recordAdjustment(AdjustmentOwnerType.CART_LINE, tables.commerce_cart_line[0].id, 4.95);
+
+		const priced = await service.recalculate(cart.id, 'MANUAL');
+
+		expect(priced.itemDiscountTotal).toBe(0);
+		expect(priced.itemSubtotal).toBe(24.95);
+		expect(priced.grandTotal).toBe(24.95);
+	});
+
+	it('writes the tax breakdown when a tax capability is registered, and none when it is not', async () => {
+		// Nothing in this package ever wrote a tax line, so every cart's tax total was structurally
+		// zero and a buyer in a VAT jurisdiction was quoted a tax-free price. The capability is
+		// optional, so both halves are pinned: with it, the ledger carries the breakdown and the cart
+		// totals it; without it, the cart totals exactly as it did before the port existed.
+		const taxed = cartFixture({ taxRate: 0.2 });
+		const cart = await taxed.service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await taxed.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 25 });
+		const priced = await taxed.service.findOneByIdString(cart.id);
+
+		expect(taxed.ledger.taxLines).toHaveLength(1);
+		expect(priced.itemTaxTotal).toBe(10);
+		expect(priced.taxTotal).toBe(10);
+		expect(priced.grandTotal).toBe(60);
+
+		const untaxed = cartFixture();
+		const plain = await untaxed.service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await untaxed.service.addLine(plain.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 25 });
+		const unpriced = await untaxed.service.findOneByIdString(plain.id);
+
+		expect(untaxed.ledger.taxLines).toHaveLength(0);
+		expect(unpriced.taxTotal).toBe(0);
+		expect(unpriced.grandTotal).toBe(50);
+	});
+
+	it('rates the amount the buyer actually pays, after the discount the promotion allocated', async () => {
+		// The money specification's rule: `baseAmount` is the owner's net after discount. Rating the
+		// catalogue price instead would charge tax on money nobody pays.
+		const { service, ledger } = cartFixture({ taxRate: 0.2 });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
+		const priced = await service.applyPromotion(cart.id, { code: 'TENOFF', amount: 10 });
+
+		expect(ledger.taxLines.map((row) => row.amount)).toEqual([18]);
+		expect(priced.itemDiscountTotal).toBe(10);
+		expect(priced.taxTotal).toBe(18);
+		expect(priced.grandTotal).toBe(108);
+	});
+
+	it('prices a three-decimal currency at three decimals and a zero-decimal one at none', async () => {
+		// `currencyDecimals` defaulted to the literal 2 for every currency, so a KWD cart computed its
+		// totals at the wrong scale - a 1.234 line became 1.230 and the buyer was undercharged - while
+		// a JPY cart could hold a grand total of 100.25 that no payment provider accepts. The platform
+		// has a precision table and it was dead code outside the money layer.
+		const { service } = cartFixture();
+		const dinars = await service.create({ channelId: 'channel-1', currency: 'KWD' });
+		const yen = await service.create({ channelId: 'channel-1', currency: 'JPY' });
+
+		expect(dinars.currencyDecimals).toBe(3);
+		expect(yen.currencyDecimals).toBe(0);
+
+		const pricedDinars = await service.addLine(dinars.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 1.234
+		});
+		const pricedYen = await service.addLine(yen.id, { variantId: 'v1', title: 'A', quantity: 3, unitPrice: 33.4 });
+
+		expect(pricedDinars.itemSubtotal).toBe(1.234);
+		expect(pricedDinars.grandTotal).toBe(1.234);
+		// 100.2 rounded at the currency's own scale, which for the yen is none at all.
+		expect(pricedYen.grandTotal).toBe(100);
+
+		// A caller that states a scale still gets it: the table is the default, not an override.
+		const stated = await service.create({ channelId: 'channel-1', currency: 'KWD', currencyDecimals: 2 });
+		expect(stated.currencyDecimals).toBe(2);
+	});
+
+	it('accepts a money amount stated as the exact decimal string the GraphQL schema promises', async () => {
+		// The REST DTOs typed money `@IsNumber() number` while the schema typed the same field
+		// `Decimal`, whose definition says a money value read over either surface is string-identical.
+		// Both forms are accepted and both store the same amount.
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		const priced = await service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 2,
+			unitPrice: '19.990000' as never
+		});
+
+		expect(tables.commerce_cart_line[0].unitPrice).toBe(19.99);
+		expect(priced.itemSubtotal).toBe(39.98);
+
+		await expect(
+			service.addLine(cart.id, { variantId: 'v2', title: 'B', quantity: 1, unitPrice: 'nineteen' as never })
+		).rejects.toThrow(/CART_AMOUNT_INVALID/);
 	});
 
 	it('refreshes the cart lifetime on every write, from the documented default TTLs', async () => {
@@ -1070,9 +1409,59 @@ describe('CommerceCartService — merge', () => {
 		const emptied = await fixture.service.findOneByIdString(source.id);
 		expect(emptied.status).toBe(CommerceCartStatus.MERGED);
 		expect(emptied.metadata?.mergedIntoCartId).toBe(target.id);
+		// Soft, as the method's docstring promises: the source keeps no *readable* line, and the rows
+		// survive so that "what was in this cart before it was merged" can still be answered.
+		expect(
+			fixture.tables.commerce_cart_line.filter((line: any) => line.cartId === source.id && !line.deletedAt)
+		).toHaveLength(0);
 		expect(
 			fixture.tables.commerce_cart_line.filter((line: any) => line.cartId === source.id)
-		).toHaveLength(0);
+		).not.toHaveLength(0);
+	});
+
+	it('keeps the surviving cart delivery choice when it already has one', async () => {
+		// `merge` promises "the target wins", and guarded the shipping copy with
+		// `target.shippingMethods.length === 0` - on a target loaded without its relations, so the
+		// guard read `(undefined ?? []).length === 0` and was true for every cart that ever existed.
+		// A buyer signing in had the delivery choice on their saved cart replaced by the anonymous
+		// one, every time.
+		const fixture = cartFixture();
+		const target = await fixture.service.create({ channelId: 'channel-1', currency: 'USD' });
+		const source = await fixture.service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await fixture.service.addLine(target.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 10 });
+		await fixture.service.addLine(source.id, { variantId: 'v2', title: 'B', quantity: 1, unitPrice: 10 });
+		await fixture.service.setShippingMethod(target.id, { name: 'Standard', amount: 5 });
+		await fixture.service.setShippingMethod(source.id, { name: 'Express', amount: 15 });
+
+		const merged = await fixture.service.merge(target.id, source.id);
+		const methods = fixture.tables.commerce_cart_shipping_method.filter(
+			(row: any) => row.cartId === target.id && !row.deletedAt
+		);
+
+		expect(methods).toHaveLength(1);
+		expect(methods[0].name).toBe('Standard');
+		expect(merged.shippingSubtotal).toBe(5);
+	});
+
+	it('takes the source delivery choice when the surviving cart has none', async () => {
+		// The other half of the same rule: the target wins only where it has something to win with.
+		const fixture = cartFixture();
+		const target = await fixture.service.create({ channelId: 'channel-1', currency: 'USD' });
+		const source = await fixture.service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await fixture.service.addLine(target.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 10 });
+		await fixture.service.addLine(source.id, { variantId: 'v2', title: 'B', quantity: 1, unitPrice: 10 });
+		await fixture.service.setShippingMethod(source.id, { name: 'Express', amount: 15 });
+
+		const merged = await fixture.service.merge(target.id, source.id);
+		const methods = fixture.tables.commerce_cart_shipping_method.filter(
+			(row: any) => row.cartId === target.id && !row.deletedAt
+		);
+
+		expect(methods).toHaveLength(1);
+		expect(methods[0].name).toBe('Express');
+		expect(merged.shippingSubtotal).toBe(15);
 	});
 
 	it('refuses to merge a cart into itself and refuses to merge a completed source', async () => {
@@ -1193,6 +1582,57 @@ describe('CommerceCartService — the versioned write', () => {
 
 		expect(tables.commerce_cart[0].note).toBeUndefined();
 		expect(tables.commerce_cart[0].version).toBe(Number(cart.version));
+	});
+
+	it('refuses a stale removal before the line is touched, so a 409 leaves the cart whole', async () => {
+		// The delete-before-conditional-write defect. `removeLine` used to hard-delete the row and only
+		// then let `recalculate` evaluate the caller's version, so a client told
+		// `ENTITY_VERSION_CONFLICT` - "read it again and reapply your change" - re-read the cart and
+		// found the line already gone. The write it was told had not happened, had, and nothing could
+		// take it back.
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		const added = await service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 19.99
+		});
+		const line = tables.commerce_cart_line[0];
+		const stale = { wildcard: false, versions: [Number(added.version) - 1] };
+
+		await expect(service.removeLine(cart.id, line.id, stale)).rejects.toMatchObject({
+			code: 'ENTITY_VERSION_CONFLICT'
+		});
+
+		const untouched = await service.findOneWithContent(cart.id);
+
+		expect(untouched.lines).toHaveLength(1);
+		expect(tables.commerce_cart_line[0].deletedAt).toBeUndefined();
+		expect(untouched.version).toBe(Number(added.version));
+		expect(untouched.itemSubtotal).toBe(19.99);
+	});
+
+	it('refuses a stale addition, a stale delivery choice and a stale promotion before writing a row', async () => {
+		// The same inversion on the three other methods that write a child row.
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		const added = await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 10 });
+		const stale = { wildcard: false, versions: [Number(added.version) - 1] };
+
+		await expect(
+			service.addLine(cart.id, { variantId: 'v2', title: 'B', quantity: 1, unitPrice: 10 }, stale)
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+		await expect(
+			service.setShippingMethod(cart.id, { name: 'Flat', amount: 5 }, stale)
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+		await expect(
+			service.applyPromotion(cart.id, { code: 'TENOFF', amount: 4 }, stale)
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+
+		expect(tables.commerce_cart_line.filter((row: any) => !row.deletedAt)).toHaveLength(1);
+		expect(tables.commerce_cart_shipping_method).toHaveLength(0);
+		expect(tables.commerce_cart_promotion).toHaveLength(0);
 	});
 
 	it('predicates a write that no caller conditioned on the version the cart holds', async () => {

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
+import { DecimalAmount, IsDecimalAmount } from '../../shared/is-decimal-amount.validator';
 
 /**
  * The writable surface of an applied promotion.
@@ -30,9 +31,13 @@ export class CommerceCartPromotionDTO extends TenantOrganizationBaseDTO {
 	@MaxLength(64)
 	readonly code: string;
 
-	@ApiProperty({ type: () => Number })
-	@IsNumber()
-	readonly amount: number;
+	/**
+	 * The discount the promotion engine granted. A decimal string or a number, for the same reason the
+	 * other money members of this package take both: the GraphQL schema types it `Decimal!`.
+	 */
+	@ApiProperty({ type: () => String })
+	@IsDecimalAmount()
+	readonly amount: DecimalAmount;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()

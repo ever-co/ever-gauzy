@@ -357,17 +357,27 @@ export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrd
 	 * remainder would be a second source of truth for a figure the two quantities it is the difference
 	 * of already answer, and a stored remainder is exactly what goes stale when a receipt is reversed.
 	 *
+	 * **Damaged units count.** Under `ON_RECEIVED` the basis is what the supplier *delivered*, and a unit
+	 * that arrived broken was delivered: the entity says so in as many words — `damagedQuantity` is
+	 * "counted against the ordered quantity exactly like a good unit, because the supplier delivered it
+	 * and the organization paid for it" — and every other consumer of the pair treats them together
+	 * (`statusFromLines`, `outstandingQuantity`, the over-receipt ceiling). Leaving the damaged units out
+	 * of the basis measured a ten-unit delivery of eight good and two broken as eight billable, so the
+	 * supplier's invoice for the ten units the organization is contractually liable for was refused as
+	 * over-billing and could not be posted at all. Recovering the value of the broken units is a debit
+	 * note against a bill that exists, which is a different document from the bill this refuses.
+	 *
 	 * @param line The line being read.
 	 * @param policy What the supplier's bill is matched against.
 	 * @returns What is still unbilled, floored at zero, as an exact decimal.
 	 */
 	public toBillQuantity(
-		line: Pick<IPurchaseOrderLine, 'quantity' | 'receivedQuantity' | 'billedQuantity'>,
+		line: Pick<IPurchaseOrderLine, 'quantity' | 'receivedQuantity' | 'damagedQuantity' | 'billedQuantity'>,
 		policy: PurchaseBillingPolicy
 	): DecimalString {
 		const against =
 			policy === PurchaseBillingPolicy.ON_RECEIVED
-				? normalizeQuantity(line.receivedQuantity ?? 0)
+				? sumQuantity([line.receivedQuantity ?? 0, line.damagedQuantity ?? 0])
 				: normalizeQuantity(line.quantity ?? 0);
 		const remaining = sumQuantity([against, negateQuantity(line.billedQuantity ?? 0)]);
 

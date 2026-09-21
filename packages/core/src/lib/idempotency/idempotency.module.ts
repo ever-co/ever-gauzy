@@ -4,6 +4,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { IdempotencyKey } from './idempotency-key.entity';
 import { IdempotencyService } from './idempotency.service';
+import { IDEMPOTENCY_SERVICE } from './idempotency-constant';
 import { TypeOrmIdempotencyKeyRepository } from './repository/type-orm-idempotency-key.repository';
 import { MikroOrmIdempotencyKeyRepository } from './repository/mikro-orm-idempotency-key.repository';
 import { IdempotencyKeyController } from './idempotency-key.controller';
@@ -37,11 +38,20 @@ import { IdempotencyKeyResolver } from './idempotency-key.resolver';
 	controllers: [IdempotencyKeyController],
 	providers: [
 		IdempotencyService,
+		// The same instance under a token that carries no module graph, so a consumer that only needs
+		// to ask the store a question — the concurrency guard — can reach it without importing the
+		// service class and everything the service class imports. `useExisting`, so there is one store.
+		{ provide: IDEMPOTENCY_SERVICE, useExisting: IdempotencyService },
 		TypeOrmIdempotencyKeyRepository,
 		MikroOrmIdempotencyKeyRepository,
 		// The GraphQL view of the same resource.
 		IdempotencyKeyResolver
 	],
-	exports: [IdempotencyService, TypeOrmIdempotencyKeyRepository, MikroOrmIdempotencyKeyRepository]
+	exports: [
+		IdempotencyService,
+		IDEMPOTENCY_SERVICE,
+		TypeOrmIdempotencyKeyRepository,
+		MikroOrmIdempotencyKeyRepository
+	]
 })
 export class IdempotencyModule {}

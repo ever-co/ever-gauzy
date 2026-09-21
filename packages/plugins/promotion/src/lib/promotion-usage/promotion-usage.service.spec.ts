@@ -93,6 +93,26 @@ function same(left: unknown, right: unknown): boolean {
 	return String(left ?? '') === String(right ?? '');
 }
 
+/**
+ * What a write addresses, as a conditions object.
+ *
+ * Every write of these services is scoped to the caller's tenant, so the criteria that reaches the
+ * repository is `{ id, tenantId }` rather than a bare identifier — which is the whole point of the
+ * scoping: a statement that names only an identifier is one another tenant's identifier can satisfy.
+ * A double that understood only the identifier form would report a scoped write as having changed a
+ * row it never matched.
+ *
+ * @param criteria What the service addressed the row by.
+ * @returns The same thing as a conditions object.
+ */
+function criteriaOf(criteria: unknown): Record<string, unknown> {
+	if (typeof criteria === 'string' || typeof criteria === 'number') {
+		return { id: criteria };
+	}
+
+	return (criteria ?? {}) as Record<string, unknown>;
+}
+
 function serviceUnderTest(rows: IUsageRow[]) {
 	const repository = {
 		find: async (options?: { where?: Record<string, unknown> | Array<Record<string, unknown>> }) =>
@@ -108,8 +128,10 @@ function serviceUnderTest(rows: IUsageRow[]) {
 
 			return entity;
 		},
-		update: async (id: string, partial: Partial<IUsageRow>) => {
-			const row = rows.find((one) => same(one.id, id));
+		// Scoped criteria: `TenantScopedCrudService` merges the caller's tenant into every write, so
+		// what reaches the repository is `{ id, tenantId }` and not the identifier alone.
+		update: async (criteria: string | Record<string, unknown>, partial: Partial<IUsageRow>) => {
+			const row = rows.find((one) => matches(one, criteriaOf(criteria)));
 
 			if (row) {
 				Object.assign(row, partial);
@@ -182,6 +204,63 @@ describe('PromotionUsageService — the redemption lifecycle (doc 08 §14.1–§
 		expect(result.reverted).toBe('0');
 		expect(result.usage?.status).toBe(PromotionUsageStatus.REGISTERED);
 		expect(Money.of(result.usage?.amount ?? '0', 'USD').toStorageString()).toBe('25.000000');
+	});
+
+	it('reverts a near-total share without the residual leaving the decimal domain', async () => {
+		// `registered.allocate([share, 1 - share])` computed the residual in binary: for a returned
+		// share of 0.9999999 that is `9.999999994736442e-8`, exponential notation, which is not a
+		// decimal string at all — `Money.allocate` refused it and a `PROPORTIONAL` revert threw
+		// `MONEY_NOT_DECIMAL_STRING` out of the return path as a 500 rather than reversing anything.
+		const { service } = serviceUnderTest([
+			usage({ id: 'u-1', orderId: ORDER, status: PromotionUsageStatus.REGISTERED, amount: '25.000000' })
+		]);
+
+		// The control is the *property*, not the digits: a literal pins one engine's rendering of the
+		// same double and says nothing about why the old code failed. What matters is that the binary
+		// residual does not render as a decimal at all, which is precisely what the money layer refuses.
+		expect(String(1 - 0.9999999)).toMatch(/e-/);
+		expect(1 - 0.9999999).not.toBe(1e-7);
+
+		const result = await service.revert(PROMOTION, ORDER, RevertOnReturnPolicy.PROPORTIONAL, 0.9999999);
+
+		expect(Money.of(result.reverted, 'USD').toStorageString()).toBe('25.000000');
+		expect(result.usage?.status).toBe(PromotionUsageStatus.REVERTED);
+	});
+
+	it('splits a proportional reversal so the two parts sum back to what was registered', async () => {
+		// The quieter half of the same defect: `1 - 0.07` is 0.9299999999999999 rather than 0.93, so
+		// the weights are skewed and the largest-remainder tiebreak can hand the odd minor unit to the
+		// wrong side. Seven percent of 10.01 divides into no whole number of pence, which is exactly
+		// the case an allocation exists for: the reverted part and the residual the customer keeps must
+		// still add up to 10.01 to the last penny.
+		const { service, rows } = serviceUnderTest([
+			usage({ id: 'u-1', orderId: ORDER, status: PromotionUsageStatus.REGISTERED, amount: '10.010000' })
+		]);
+
+		expect(1 - 0.07).toBe(0.9299999999999999);
+
+		const result = await service.revert(PROMOTION, ORDER, RevertOnReturnPolicy.PROPORTIONAL, 0.07);
+		const reverted = Money.of(result.reverted, 'USD');
+		const residual = Money.of(rows[0].amount, 'USD');
+
+		expect(reverted.add(residual).toStorageString()).toBe('10.010000');
+		expect(reverted.toStorageString()).toBe('0.700000');
+		// A partial reversal keeps the row registered: the customer kept part of the benefit.
+		expect(rows[0].status).toBe(PromotionUsageStatus.REGISTERED);
+	});
+
+	it('reverts nothing for a share that is not a number at all', async () => {
+		// A share computed upstream as a float and rendered exponentially, a NaN, an infinity: a
+		// reversal is a compensating action and failing one leaves the order's money in a state nobody
+		// asked for, so the nearest legal share is used instead of an exception.
+		const { service } = serviceUnderTest([
+			usage({ id: 'u-1', orderId: ORDER, status: PromotionUsageStatus.REGISTERED, amount: '10.000000' })
+		]);
+
+		const result = await service.revert(PROMOTION, ORDER, RevertOnReturnPolicy.PROPORTIONAL, Number.NaN);
+
+		expect(Money.of(result.reverted, 'USD').toStorageString()).toBe('0.000000');
+		expect(result.usage?.status).toBe(PromotionUsageStatus.REGISTERED);
 	});
 
 	it('never reverts more than was registered', async () => {

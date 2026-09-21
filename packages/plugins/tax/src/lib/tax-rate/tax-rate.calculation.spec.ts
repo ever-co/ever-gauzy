@@ -113,7 +113,19 @@ function same(left: unknown, right: unknown): boolean {
 	return String(left ?? '') === String(right ?? '');
 }
 
-function serviceUnderTest(rates: IRateRow[]) {
+/** One `tax_rate_part` row, as the part service hands it over. */
+interface IPartRow {
+	id: string;
+	taxRateId: string;
+	sequence: number;
+	partType?: string;
+	factorPercent?: number;
+	baseFactor?: number;
+	label?: string;
+	postingKey?: string;
+}
+
+function serviceUnderTest(rates: IRateRow[], parts: IPartRow[] = []) {
 	const repository = {
 		find: async (options?: { where?: Record<string, unknown> }) =>
 			rates.filter((row) => matches(row, options?.where)),
@@ -125,11 +137,15 @@ function serviceUnderTest(rates: IRateRow[]) {
 		findDefault: async () => null
 	};
 
-	// No rate declares parts and none belongs to a regime, which is what an installation that uses
-	// neither looks like; the regime resolver therefore selects the general set.
+	// No rate declares parts unless a case supplies them, and none belongs to a regime, which is what an
+	// installation that uses neither looks like; the regime resolver therefore selects the general set.
 	const taxRatePartService = {
-		listForRates: async () => [],
-		listForRate: async () => []
+		listForRates: async (ids: string[]) =>
+			parts
+				.filter((part) => ids.some((id) => same(id, part.taxRateId)))
+				.sort((left, right) => left.sequence - right.sequence),
+		listForRate: async (id: string) =>
+			parts.filter((part) => same(id, part.taxRateId)).sort((left, right) => left.sequence - right.sequence)
 	};
 
 	const taxRegimeService = {
@@ -147,8 +163,13 @@ function serviceUnderTest(rates: IRateRow[]) {
 }
 
 /** A calculation request for one line of `amount`, at the fixture destination. */
-const request = (rates: IRateRow[], amounts: string[], overrides: Record<string, unknown> = {}) =>
-	serviceUnderTest(rates).calculate({
+const request = (
+	rates: IRateRow[],
+	amounts: string[],
+	overrides: Record<string, unknown> = {},
+	parts: IPartRow[] = []
+) =>
+	serviceUnderTest(rates, parts).calculate({
 		currency: 'CAD',
 		taxCategoryId: CATEGORY,
 		countryCode: 'CA',
@@ -327,6 +348,83 @@ describe('TaxRateService.calculate — several rates on one line (doc 07 §4.4, 
 
 		// Control: rounding once per rate over the whole document gives 1.50 + 3.14 = 4.64.
 		expect(result.taxTotal).not.toBe('4.640000');
+	});
+
+	it('compounds the parts of one compound rate on each other, not all on the same base', async () => {
+		// The rule the service documents is "within a rate the parts apply in `sequence` order, each on
+		// its own base: the part's `baseFactor` share of the owner's net, plus the already rounded amounts
+		// of the preceding parts when the rate compounds". The base was read once per rate and then
+		// frozen, so part 2 of a compound rate was assessed on exactly the base part 1 was — the same
+		// under-collection as assessing a compound *rate* on the net, expressed one level down.
+		//
+		// The fixture is the Canadian chain written as one compound rate rather than two rates: a rate of
+		// 14.975 % split into a 5/14.975 share and a 9.975/14.975 share. Part 1 is 100.00 x 5 % = 5.00;
+		// part 2 is then assessed on 105.00 and comes to 10.47, so the rate collects 15.47 — the same
+		// number the two-rate spelling collects, which is the property that makes the split a
+		// presentation choice rather than a different tax.
+		const split = rate({
+			id: 'r-split',
+			code: 'HST-SPLIT',
+			name: 'Split',
+			rate: 0.14975,
+			countryCode: 'CA',
+			provinceCode: 'ON',
+			isCompound: true,
+			priority: 10
+		});
+		const result = await request(
+			[split],
+			['100.000000'],
+			{},
+			[
+				// 5 / 14.975 of the rate, then 9.975 / 14.975 of it: the two shares are the rate.
+				{ id: 'p-gst', taxRateId: 'r-split', sequence: 1, factorPercent: 33.388982, label: 'GST' },
+				{ id: 'p-qst', taxRateId: 'r-split', sequence: 2, factorPercent: 66.611018, label: 'QST' }
+			]
+		);
+		const line = result.lines[0];
+
+		expect(line.taxLines).toHaveLength(2);
+		expect(line.taxLines[0]).toMatchObject({ name: 'GST', baseAmount: '100.000000', amount: '5.000000' });
+		// The second part's base is the first part's already-rounded amount added to the net. Freezing the
+		// base gave `100.00` here and `9.97` for the amount, which is the control.
+		expect(line.taxLines[1]).toMatchObject({ name: 'QST', baseAmount: '105.000000', amount: '10.470000' });
+		expect(line.taxLines[1].baseAmount).not.toBe('100.000000');
+		expect(line.taxAmount).toBe('15.470000');
+		expect(line.grossAmount).toBe('115.470000');
+
+		// The two spellings of the same jurisdiction agree to the cent.
+		const asTwoRates = await request(canadianChain(), ['100.000000']);
+		expect(line.taxAmount).toBe(asTwoRates.lines[0].taxAmount);
+	});
+
+	it('leaves a rate that does not compound assessing every part on the net', async () => {
+		// The control for the case above: `running` moves as each part is posted, so reading it per part
+		// would be wrong for a rate that does not compound. Two equal halves of a 10 % rate on 100.00 are
+		// 5.00 and 5.00 — never 5.00 and 5.25.
+		const split = rate({
+			id: 'r-flat',
+			code: 'FLAT',
+			name: 'Flat',
+			rate: 0.1,
+			countryCode: 'CA',
+			provinceCode: 'ON',
+			isCompound: false
+		});
+		const result = await request(
+			[split],
+			['100.000000'],
+			{},
+			[
+				{ id: 'p-a', taxRateId: 'r-flat', sequence: 1, factorPercent: 50, label: 'A' },
+				{ id: 'p-b', taxRateId: 'r-flat', sequence: 2, factorPercent: 50, label: 'B' }
+			]
+		);
+		const line = result.lines[0];
+
+		expect(line.taxLines.map((draft) => draft.baseAmount)).toEqual(['100.000000', '100.000000']);
+		expect(line.taxLines.map((draft) => draft.amount)).toEqual(['5.000000', '5.000000']);
+		expect(line.taxAmount).toBe('10.000000');
 	});
 
 	it('gives every line its own tax lines and its own reference', async () => {

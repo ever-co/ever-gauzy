@@ -154,6 +154,10 @@ jest.mock('@gauzy/core', () => {
 		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
 		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The exact-decimal primitives the proration reads. The real ones, for the same reason `Money`
+		// is real here: a proration that rounded differently from the platform would be asserted
+		// against a rounding this suite invented rather than the one the money layer performs.
+		...jest.requireActual('@gauzy/core/src/lib/money/decimal'),
 		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
 		SequenceService: class SequenceService {},
 		RequestContext: {
@@ -1335,6 +1339,33 @@ describe('SubscriptionService — plan changes and proration (doc 11 §10.8)', (
 		expect(fixture.prorationCalls).toEqual([]);
 	});
 
+	it('adds a second deferred credit to the first rather than replacing it', async () => {
+		// The corrected contract. The carried amount was **assigned** on every change, so a customer who
+		// downgraded twice inside one period was owed both credits and given only the second: the first
+		// one's amount was overwritten on the subscription and nothing anywhere remembered it. The money
+		// moves when the next cycle consumes what is carried, so what is carried has to be the whole of
+		// what is owed.
+		const fixture = subscriptionFixture({
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '60.00' },
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					metadata: { pendingCredit: { amount: '-12.000000', currency: 'USD' } }
+				})
+			]
+		});
+
+		const outcome = await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(outcome).toMatchObject({ net: '-30.970000', settlement: 'DEFERRED' });
+		// -12.00 already carried, -30.97 decided now: the row carries the sum.
+		expect(outcome.subscription.metadata?.['pendingCredit']).toMatchObject({
+			amount: '-42.970000',
+			currency: 'USD'
+		});
+		// The control: assigning rather than adding left only the second amount behind.
+		expect(outcome.subscription.metadata?.['pendingCredit']).not.toMatchObject({ amount: '-30.970000' });
+	});
+
 	it('schedules a change the caller wants from the next period, with no proration at all', async () => {
 		// "`effective = 'NEXT_PERIOD'` — no proration at all: the change is scheduled in
 		// `metadata.scheduledPlanChange = { planId, effectiveAt: periodEnd}`."
@@ -2151,6 +2182,43 @@ describe('SubscriptionService — the billing run and the due scan (doc 11 §10.
 		// subscription that is due to resume is ordered by the same key, not by the instant it paused.
 		expect(due.map((row) => row.id)).toEqual(['earlier', 'later', 'paused-due']);
 		expect((await fixture.service.findDue(APRIL, 2)).map((row) => row.id)).toEqual(['earlier', 'later']);
+	});
+
+	it('selects a trial whose end has passed, and leaves a pending subscription that has no trial alone', async () => {
+		// **The defect this pins: no trial ever converted.** A trialing subscription is `PENDING` — the
+		// status's own comment says that is what it covers — with `nextBillingAt` at the trial's end, and
+		// the pass scanned `ACTIVE` and `PAUSED` only. The instant the trial ran out passed unnoticed, the
+		// trial ran on for ever and nothing was charged, in every tenant, until a human called the
+		// activate endpoint for each one.
+		//
+		// A `PENDING` subscription with no trial is a different thing — one nobody has started — and its
+		// `nextBillingAt` is a period boundary that was never bought, so it stays where it is. The trial
+		// end recorded at creation is what tells the two apart.
+		const trialEnd = new Date('2026-03-12T00:00:00.000Z');
+		const fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow('trial-over', {
+					status: SubscriptionStatus.PENDING,
+					nextBillingAt: trialEnd,
+					currentPeriodEnd: trialEnd,
+					metadata: { trialEndsAt: trialEnd.toISOString() }
+				}),
+				subscriptionRow('trial-running', {
+					status: SubscriptionStatus.PENDING,
+					nextBillingAt: new Date('2026-09-01T00:00:00.000Z'),
+					currentPeriodEnd: new Date('2026-09-01T00:00:00.000Z'),
+					metadata: { trialEndsAt: '2026-09-01T00:00:00.000Z' }
+				}),
+				subscriptionRow('never-activated', {
+					status: SubscriptionStatus.PENDING,
+					nextBillingAt: new Date('2026-03-01T00:00:00.000Z')
+				})
+			],
+			items: [],
+			billings: []
+		});
+
+		expect((await fixture.service.findDue(APRIL, 10)).map((row) => row.id)).toEqual(['trial-over']);
 	});
 
 	it('reads across tenants when there is no request in context', async () => {

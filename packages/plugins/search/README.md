@@ -38,6 +38,29 @@ installation with only the built-in provider boots — which is the whole point 
 `FEATURE_SEARCH` is off by default, so the tables exist, empty, and none of the endpoints resolve
 until a tenant enables it.
 
+### How the four dialects and the two ORMs are served
+
+Three things in the read path differ per dialect, and each is resolved from the live connection rather
+than from an environment variable:
+
+- **The promoted token list is a JSON array.** `search_document.keywords` is `jsonb` on Postgres,
+  `json` on MySQL and a `simple-json` text column on SQLite, and the builder writes
+  `["colour:red","channelid:abc"]` into all of them. A reader renders the column as text before it
+  lowercases it — Postgres has no `lower(jsonb)` — and matches one entry by its quotes, which is what
+  makes a token match insensitive to the whitespace each dialect renders an array with.
+- **An attribute expression is built for the field's declared kind.** A number is compared as a
+  decimal, a boolean is normalised to 1 or 0 because the three dialects extract a JSON `true`
+  differently, and text, keywords, entity ids and dates are compared as text — a date is stored as the
+  ISO-8601 string its column carried, and ISO-8601 text compares chronologically.
+- **A caller's `%` and `_` are characters, not wildcards.** Every pattern built from request text is
+  escaped and carries `ESCAPE '!'`, which is the one escape character all four dialects read the same
+  way inside a string literal.
+
+The **write** path reads its source rows through `SearchSourceConnection`, which resolves the metadata
+and the rows over whichever ORM `DB_ORM` selects. That indirection is not decoration:
+`@MultiORMColumn` emits only the active ORM's decorator, so under `DB_ORM=mikro-orm` TypeORM's
+metadata for a searchable entity carries four columns and nothing else.
+
 ## The index is disposable
 
 A document is a projection and never authoritative. It carries an entity type, an id, display text and
@@ -54,7 +77,7 @@ REST (one surface, no admin/public split):
 |---|---|---|
 | `GET` | `/api/search` | `SEARCH_VIEW` |
 | `GET` | `/api/search/suggest` | `SEARCH_VIEW` |
-| `GET` | `/api/facets` | `SEARCH_VIEW` |
+| `GET` | `/api/search/facets` (also `/api/facets`, kept for clients that already call it) | `SEARCH_VIEW` |
 | `GET` | `/api/search/index-status` | `SEARCH_VIEW` |
 | `GET` | `/api/search/index-definitions` | `SEARCH_INDEX_DEFINITIONS_VIEW` |
 | `GET` | `/api/search/index-definitions/:id` | `SEARCH_INDEX_DEFINITIONS_VIEW` |

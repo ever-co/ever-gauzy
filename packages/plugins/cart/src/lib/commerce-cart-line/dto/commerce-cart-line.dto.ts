@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsInt, IsNumber, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
+import { DecimalAmount, IsDecimalAmount } from '../../shared/is-decimal-amount.validator';
 
 /**
  * The writable surface of a cart line.
@@ -8,6 +9,13 @@ import { TenantOrganizationBaseDTO } from '@gauzy/core';
  * `unitPrice` is the price the price resolver returned; this DTO accepts it because a cart is priced
  * by the pricing package and the cart simply records the result. The snapshot fields (`title`, `sku`,
  * `thumbnail`) are written by the add-to-cart path from the variant, not authored by a caller.
+ *
+ * **The money members take a decimal string as well as a number.** The GraphQL schema types the same
+ * two fields `Decimal!` and states that a money value read over GraphQL and the same value read over
+ * REST are string-identical; typing them `@IsNumber() number` here made that untrue and left the REST
+ * surface with no guard at all against an amount a double cannot hold. Both forms are accepted, the
+ * service normalises whichever arrives through the money layer, and the documented type is the string
+ * the schema promises. See `is-decimal-amount.validator.ts`.
  */
 export class CommerceCartLineDTO extends TenantOrganizationBaseDTO {
 	@ApiProperty({ type: () => String })
@@ -51,15 +59,15 @@ export class CommerceCartLineDTO extends TenantOrganizationBaseDTO {
 	@IsNumber()
 	readonly quantity: number;
 
-	@ApiPropertyOptional({ type: () => Number })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@IsNumber()
-	readonly unitPrice: number;
+	@IsDecimalAmount()
+	readonly unitPrice: DecimalAmount;
 
-	@ApiPropertyOptional({ type: () => Number })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@IsNumber()
-	readonly originalUnitPrice: number;
+	@IsDecimalAmount()
+	readonly originalUnitPrice: DecimalAmount;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()

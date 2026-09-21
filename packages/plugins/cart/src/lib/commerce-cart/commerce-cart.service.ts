@@ -1,33 +1,35 @@
 import {
 	BadRequestException,
 	ConflictException,
-	HttpStatus,
 	Inject,
 	Injectable,
 	NotFoundException,
 	Optional,
 	ServiceUnavailableException
 } from '@nestjs/common';
-import { DeepPartial, FindOptionsWhere } from 'typeorm';
+import { DeepPartial, FindOptionsWhere, In, LessThanOrEqual } from 'typeorm';
 import {
 	AdjustmentOwnerType,
+	AdjustmentType,
 	CommerceCartStatus,
 	CommerceCartValidationMode,
 	CommerceCheckoutSessionStatus,
+	CurrencyCode,
 	ID,
 	IPagination,
+	RoundingMode,
 	TaxLineOwnerType
 } from '@gauzy/contracts';
 import {
 	AdjustmentService,
-	ApiErrorCode,
-	ApiException,
 	IVersionExpectation,
+	Money,
+	RequestContext,
 	TaxLineService,
 	TenantAwareCrudService,
 	commitVersionedUpdate,
-	matchesExpectation,
-	parseEntityVersion
+	currencyPrecision,
+	normalizeDecimalString
 } from '@gauzy/core';
 import { CommerceCart } from './commerce-cart.entity';
 import { CommerceCartLine } from '../commerce-cart-line/commerce-cart-line.entity';
@@ -49,7 +51,7 @@ import {
 	TotalsCalculator
 } from '../totals/totals-calculator';
 import { cartCheckoutRegistry } from '../checkout/cart-checkout.registry';
-import { CART_STOCK_AVAILABILITY, ICartStockPort } from '../cart.types';
+import { CART_STOCK_AVAILABILITY, CART_TAX_CALCULATION, ICartStockPort, ICartTaxPort } from '../cart.types';
 
 /**
  * How long a cart lives, in hours, when nothing narrower is configured.
@@ -60,6 +62,23 @@ import { CART_STOCK_AVAILABILITY, ICartStockPort } from '../cart.types';
  */
 const DEFAULT_TTL_HOURS_ANONYMOUS = 168;
 const DEFAULT_TTL_HOURS_CUSTOMER = 720;
+
+/**
+ * How long a cart may sit untouched before the sweep treats it as abandoned.
+ *
+ * The documented default of the settings key `cart.abandonedAfterHours`, which `CART_SETTING_CONTRIBUTIONS`
+ * declares and which nothing in the package read until the abandonment sweep existed.
+ */
+const DEFAULT_ABANDON_AFTER_HOURS = 24;
+
+/**
+ * The metadata key a ledger row written by the promotion rebuild carries.
+ *
+ * It is what makes the rebuild idempotent: the rows this service derives from the cart's promotion
+ * snapshots are exactly the rows it may replace on the next recalculation, and a row an operator
+ * entered by hand — a manual credit, a handling fee — carries no such key and is never touched.
+ */
+const CART_PROMOTION_ADJUSTMENT_KEY = 'cartPromotionId';
 
 /**
  * The version a write that no caller conditioned on is predicated on.
@@ -105,9 +124,30 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		private readonly taxLineService: TaxLineService,
 		@Optional()
 		@Inject(CART_STOCK_AVAILABILITY)
-		private readonly stockAvailability?: ICartStockPort
+		private readonly stockAvailability?: ICartStockPort,
+		@Optional()
+		@Inject(CART_TAX_CALCULATION)
+		private readonly taxCalculation?: ICartTaxPort
 	) {
 		super(typeOrmCommerceCartRepository, mikroOrmCommerceCartRepository);
+	}
+
+	/**
+	 * The scope a conditional write on a cart is predicated on, beyond the row's own identity.
+	 *
+	 * `commitVersionedUpdate` documents its `where` as the place the tenant and organization scope
+	 * belongs, and states it in the negative: a conditional statement that names only an identifier is
+	 * one another tenant's identifier can satisfy. The base class merges the caller's tenant into every
+	 * `UPDATE` it issues, so this is belt and braces rather than the only guard — but it is the guard
+	 * that survives a future call that assembles its criteria by hand, and it costs a predicate.
+	 *
+	 * @returns The conditions a write is scoped by, or nothing when there is no caller in context —
+	 * a job, a seeder or a test has no tenant to be scoped by and must not be scoped by an absent one.
+	 */
+	private get writeScope(): Record<string, unknown> {
+		const tenantId = RequestContext.currentTenantId();
+
+		return tenantId ? { tenantId } : {};
 	}
 
 	/**
@@ -133,6 +173,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id,
 			expectation,
+			where: this.writeScope,
 			// The version is written by the conditional update and never by the caller's payload, so a
 			// body that carried one cannot move the row past the version the write was predicated on.
 			patch: { ...(changes as Record<string, unknown>) }
@@ -160,7 +201,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		entity.status = CommerceCartStatus.ACTIVE;
 		entity.version = 1;
 		entity.lastActivityAt = now;
-		entity.currencyDecimals = entity.currencyDecimals ?? 2;
+		// **Not two.** The literal default priced every currency at two decimals, so a KWD cart — three
+		// decimal places — had every amount computed and rounded at the wrong scale (a 1.234 KWD line
+		// became 1.23 while the unit price column kept 1.234, and the buyer was undercharged), and a JPY
+		// cart, which has none, could hold a grand total of 100.25 that no payment provider will accept.
+		// The platform has a precision table for exactly this question and it was dead code outside the
+		// money layer itself; the stored column remains the override, so a caller that states a scale
+		// still gets it and existing rows are untouched.
+		entity.currencyDecimals = entity.currencyDecimals ?? this.decimalsOf(entity.currency as CurrencyCode);
 
 		const cart = await super.create(entity);
 
@@ -203,7 +251,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		line: DeepPartial<CommerceCartLine>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		const cart = await this.assertMutable(cartId, expectation);
+		const cart = await this.assertMutable(cartId);
 
 		if (!line.variantId) {
 			throw new BadRequestException('CART_LINE_VARIANT_REQUIRED: a line needs a variant.');
@@ -237,6 +285,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			quantity: Number(line.quantity) + Number(match?.quantity ?? 0)
 		});
 
+		// The caller's version decides before a row is written, not after: an addition the cart is
+		// going to refuse must not leave a line behind, for the same reason a removal it refuses must
+		// not destroy one.
+		await this.spendVersion(cart.id, expectation);
+
 		if (match) {
 			await this.lineService.update(match.id, {
 				quantity: Number(match.quantity) + Number(line.quantity)
@@ -245,7 +298,8 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			await this.lineService.create({
 				...line,
 				cartId: cart.id,
-				originalUnitPrice: line.originalUnitPrice ?? line.unitPrice,
+				unitPrice: this.toColumnAmount(line.unitPrice, cart),
+				originalUnitPrice: this.toColumnAmount(line.originalUnitPrice ?? line.unitPrice, cart),
 				isTaxInclusive: line.isTaxInclusive ?? false,
 				isDiscountable: line.isDiscountable ?? true,
 				requiresShipping: line.requiresShipping ?? true,
@@ -253,7 +307,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			} as DeepPartial<CommerceCartLine>);
 		}
 
-		return this.recalculate(cart.id, 'LINE_ADDED', expectation);
+		return this.recalculate(cart.id, 'LINE_ADDED', ANY_VERSION);
 	}
 
 	/**
@@ -271,7 +325,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		changes: DeepPartial<CommerceCartLine>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		await this.assertMutable(cartId, expectation);
+		await this.assertMutable(cartId);
 		const line = await this.assertLineBelongsToCart(cartId, lineId);
 
 		if (changes.quantity !== undefined && Number(changes.quantity) <= 0) {
@@ -286,13 +340,23 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			});
 		}
 
-		await this.lineService.update(lineId, changes as any);
+		// The caller's version is spent before the child row is touched — see `spendVersion`.
+		await this.spendVersion(cartId, expectation);
+		await this.lineService.update(lineId, this.editableLineFields(changes, cart));
 
-		return this.recalculate(cartId, 'LINE_UPDATED', expectation);
+		return this.recalculate(cartId, 'LINE_UPDATED', ANY_VERSION);
 	}
 
 	/**
 	 * Removes a line.
+	 *
+	 * **The version is spent before the line is touched**, which is the whole of this method's
+	 * ordering. It used to delete the row first and let `recalculate` evaluate the caller's version
+	 * afterwards: two operators reading version 7, the first removing a line and taking the cart to 8,
+	 * and the second was told `409 ENTITY_VERSION_CONFLICT` — "read it again and reapply your change" —
+	 * about a line that had already been destroyed by the refusal itself. `CrudService.delete` is a
+	 * hard delete and nothing rolled it back, so the write the caller was told did not happen had
+	 * happened, irrecoverably, and the cart's cached totals still described a cart containing the line.
 	 *
 	 * @param cartId The cart.
 	 * @param lineId The line.
@@ -300,12 +364,13 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * @returns The cart after the removal, re-priced.
 	 */
 	public async removeLine(cartId: ID, lineId: ID, expectation: IVersionExpectation = ANY_VERSION): Promise<CommerceCart> {
-		await this.assertMutable(cartId, expectation);
+		await this.assertMutable(cartId);
 		await this.assertLineBelongsToCart(cartId, lineId);
 
-		await this.lineService.delete(lineId);
+		await this.spendVersion(cartId, expectation);
+		await this.lineService.softDelete(lineId);
 
-		return this.recalculate(cartId, 'LINE_REMOVED', expectation);
+		return this.recalculate(cartId, 'LINE_REMOVED', ANY_VERSION);
 	}
 
 	/**
@@ -324,7 +389,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		method: DeepPartial<CommerceCartShippingMethod>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		await this.assertMutable(cartId, expectation);
+		await this.assertMutable(cartId);
 
 		if (!method.name) {
 			throw new BadRequestException('CART_SHIPPING_METHOD_NAME_REQUIRED: a shipping method needs a name.');
@@ -339,18 +404,27 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			where: { cartId }
 		})) as IPagination<CommerceCartShippingMethod>;
 
+		// The caller's version decides before any row is replaced: the docstring above promises the
+		// previous choice is replaced by this one, not that it is destroyed by a request the cart then
+		// refuses.
+		await this.spendVersion(cartId, expectation);
+
 		for (const previous of existing.items) {
-			await this.shippingMethodService.delete(previous.id);
+			// Soft, as this method's own docstring says: the row keeps its `deletedAt`, so the
+			// `CART_SHIPPING` adjustments and tax lines that name it stay attributable and a reader can
+			// still answer what delivery the buyer had chosen before.
+			await this.shippingMethodService.softDelete(previous.id);
 		}
 
 		await this.shippingMethodService.create({
 			...method,
 			cartId,
+			amount: this.toColumnAmount(method.amount, cart),
 			isTaxInclusive: method.isTaxInclusive ?? false,
 			isManual: method.isManual ?? false
 		} as DeepPartial<CommerceCartShippingMethod>);
 
-		return this.recalculate(cartId, 'SHIPPING_CHANGED', expectation);
+		return this.recalculate(cartId, 'SHIPPING_CHANGED', ANY_VERSION);
 	}
 
 	/**
@@ -370,7 +444,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		promotion: DeepPartial<CommerceCartPromotion>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<CommerceCart> {
-		await this.assertMutable(cartId, expectation);
+		await this.assertMutable(cartId);
 
 		if (promotion.amount === undefined || promotion.amount === null) {
 			throw new BadRequestException(
@@ -388,20 +462,26 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 				(promotion.code && candidate.code === promotion.code)
 		);
 
+		await this.spendVersion(cartId, expectation);
+
 		if (duplicate) {
 			await this.promotionService.update(duplicate.id, {
-				amount: promotion.amount
+				amount: this.toColumnAmount(promotion.amount, cart)
 			} as any);
 		} else {
 			await this.promotionService.create({
 				...promotion,
 				cartId,
+				amount: this.toColumnAmount(promotion.amount, cart),
 				isAutomatic: promotion.isAutomatic ?? false,
 				appliedAt: new Date()
 			} as DeepPartial<CommerceCartPromotion>);
 		}
 
-		return this.recalculate(cartId, 'PROMOTION_CHANGED', expectation);
+		// The recalculation rebuilds the `adjustment` ledger from these snapshot rows before it totals
+		// anything, which is what turns an applied promotion into a discount the buyer is actually
+		// given — see `syncPromotionAdjustments`.
+		return this.recalculate(cartId, 'PROMOTION_CHANGED', ANY_VERSION);
 	}
 
 	/**
@@ -413,19 +493,23 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * @returns The cart after the removal, re-priced.
 	 */
 	public async removePromotion(cartId: ID, code: string, expectation: IVersionExpectation = ANY_VERSION): Promise<CommerceCart> {
-		await this.assertMutable(cartId, expectation);
+		await this.assertMutable(cartId);
 
 		const existing = (await this.promotionService.findAll({
 			where: { cartId }
 		})) as IPagination<CommerceCartPromotion>;
 
+		await this.spendVersion(cartId, expectation);
+
 		for (const applied of existing.items) {
 			if (applied.code === code || applied.promotionId === code) {
-				await this.promotionService.delete(applied.id);
+				await this.promotionService.softDelete(applied.id);
 			}
 		}
 
-		return this.recalculate(cartId, 'PROMOTION_REMOVED', expectation);
+		// The recalculation rebuilds the ledger from whatever promotion rows survive, so the removed
+		// promotion's adjustments go with it and the discount total really does fall back.
+		return this.recalculate(cartId, 'PROMOTION_REMOVED', ANY_VERSION);
 	}
 
 	/**
@@ -456,12 +540,23 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			throw new NotFoundException(`CART_NOT_FOUND: no cart exists with id ${cartId}.`);
 		}
 
+		// The two ledgers are rebuilt before they are read. A promotion the buyer applied is a row in
+		// `commerce_cart_promotion`, and it was *only* that row: nothing wrote the matching `adjustment`,
+		// so the cart came back with `discountTotal = 0` and the buyer paid the undiscounted price while
+		// the promotion sat there in the response. Tax had the same shape of hole — no cart operation
+		// ever produced a tax line — so `taxTotal` was structurally zero. Both are derived here, from
+		// the rows that describe what the cart is now, rather than appended at the moment of a mutation:
+		// a discount is allocated across the lines it applies to, and the lines move.
+		await this.syncPromotionAdjustments(cart);
+		await this.syncTaxLines(cart);
+
 		const snapshot = await this.computeTotals(cart);
 		const now = new Date();
 
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id: cart.id,
 			expectation,
+			where: this.writeScope,
 			patch: {
 				itemSubtotal: snapshot.itemSubtotal,
 				itemDiscountTotal: snapshot.itemDiscountTotal,
@@ -642,6 +737,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			// The caller's version was spent by the recomputation above; this write rides on the version
 			// that recomputation produced.
 			expectation: ANY_VERSION,
+			where: this.writeScope,
 			patch: {
 				status: CommerceCartStatus.COMPLETED,
 				orderId: result.orderId,
@@ -685,6 +781,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id: cart.id,
 			expectation,
+			where: this.writeScope,
 			patch: { status: CommerceCartStatus.ABANDONED, abandonedAt: new Date() }
 		});
 
@@ -711,7 +808,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			throw new BadRequestException('CART_MERGE_INVALID: a cart cannot be merged into itself.');
 		}
 
-		const target = await this.assertMutable(targetCartId);
+		await this.assertMutable(targetCartId);
+		// **With its content.** `assertMutable` reads the row and nothing else, so `target.shippingMethods`
+		// was always `undefined` and the guard below — "copy the source's delivery choice only when the
+		// target has none" — read `(undefined ?? []).length === 0`, which is true for every cart that has
+		// ever existed. A buyer signing in with an anonymous cart therefore had the delivery choice on
+		// their saved cart replaced by the anonymous one on every merge, which is the exact opposite of
+		// the rule this method's own docstring states.
+		const target = await this.findOneWithContent(targetCartId);
 		const source = await this.findOneWithContent(sourceCartId);
 
 		if (!source || source.status === CommerceCartStatus.COMPLETED || source.status === CommerceCartStatus.MERGED) {
@@ -781,6 +885,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id: source.id,
 			expectation: ANY_VERSION,
+			where: this.writeScope,
 			patch: {
 				status: CommerceCartStatus.MERGED,
 				metadata: { ...(source.metadata ?? {}), mergedIntoCartId: target.id, mergedAt: mergedAt.toISOString() }
@@ -788,9 +893,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		});
 
 		// The source keeps no lines: its rows are soft-deleted so that the totals of a merged cart and
-		// the promise that it is empty agree.
+		// the promise that it is empty agree. Soft, and not the hard `delete` this used to call — the
+		// docstring promised one and the code did the other, which destroyed the audit trail the
+		// `mergedIntoCartId` metadata written above exists to point at.
 		for (const line of source.lines ?? []) {
-			await this.lineService.delete(line.id);
+			await this.lineService.softDelete(line.id);
 		}
 
 		const recalculated = await this.recalculate(target.id, 'CART_MERGED', spend());
@@ -798,6 +905,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id: recalculated.id,
 			expectation: ANY_VERSION,
+			where: this.writeScope,
 			patch: {
 				metadata: {
 					...(recalculated.metadata ?? {}),
@@ -815,11 +923,27 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	/**
 	 * Expires every cart past its expiry instant.
 	 *
+	 * **Three things were wrong with the scan and all three were about which rows it read.** It
+	 * selected `ACTIVE` only, while an `ABANDONED` cart is still mutable (`assertMutable` admits it) and
+	 * still carries an `expiresAt` that every recalculation refreshes — so an abandoned cart could never
+	 * reach `EXPIRED` at all. It compared `expiresAt` in the application, so the predicate the database
+	 * could have evaluated was evaluated on rows it had already shipped. And it took no bound, so a
+	 * tenant with two hundred thousand live carts materialised all of them to expire at most five
+	 * hundred. The bound is now the query's, and the loop's `break` is the safety net it was meant to be
+	 * rather than the only limit.
+	 *
 	 * @param limit The maximum number of carts to process in one run.
 	 * @returns The ids of the carts that were expired.
 	 */
 	public async expireDueCarts(limit = 500): Promise<ID[]> {
-		const due = (await this.findAll({ where: { status: CommerceCartStatus.ACTIVE } })) as IPagination<CommerceCart>;
+		const due = (await this.findAll({
+			where: {
+				status: In([CommerceCartStatus.ACTIVE, CommerceCartStatus.ABANDONED]),
+				expiresAt: LessThanOrEqual(new Date())
+			},
+			order: { expiresAt: 'ASC' },
+			take: limit
+		} as never)) as IPagination<CommerceCart>;
 		const now = Date.now();
 		const expired: ID[] = [];
 
@@ -835,6 +959,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 				await commitVersionedUpdate<CommerceCart>(this, {
 					id: cart.id,
 					expectation: ANY_VERSION,
+					where: this.writeScope,
 					patch: { status: CommerceCartStatus.EXPIRED }
 				});
 				expired.push(cart.id);
@@ -842,6 +967,49 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		}
 
 		return expired;
+	}
+
+	/**
+	 * Marks as abandoned every active cart nobody has touched for longer than the configured window.
+	 *
+	 * `cart.abandonedAfterHours` is declared in `CART_SETTING_CONTRIBUTIONS` — "how long a cart may sit
+	 * untouched before it is treated as abandoned" — and was read by nothing at all, so no cart was ever
+	 * abandoned automatically and the abandoned-cart audience that setting describes never existed. It
+	 * is a status change and not a deletion: the cart and its lines stay readable, which is what lets a
+	 * buyer come back to it, and an abandoned cart is still expired by the sweep above once its own TTL
+	 * runs out.
+	 *
+	 * @param hours How long a cart may sit untouched; the setting's documented default when omitted.
+	 * @param limit The maximum number of carts to process in one run.
+	 * @returns The ids of the carts that were abandoned.
+	 */
+	public async abandonDueCarts(hours = DEFAULT_ABANDON_AFTER_HOURS, limit = 500): Promise<ID[]> {
+		const cutoff = new Date(Date.now() - Math.max(1, hours) * 60 * 60 * 1000);
+		const due = (await this.findAll({
+			where: {
+				status: CommerceCartStatus.ACTIVE,
+				lastActivityAt: LessThanOrEqual(cutoff)
+			},
+			order: { lastActivityAt: 'ASC' },
+			take: limit
+		} as never)) as IPagination<CommerceCart>;
+		const abandoned: ID[] = [];
+
+		for (const cart of due.items) {
+			if (abandoned.length >= limit) {
+				break;
+			}
+
+			await commitVersionedUpdate<CommerceCart>(this, {
+				id: cart.id,
+				expectation: ANY_VERSION,
+				where: this.writeScope,
+				patch: { status: CommerceCartStatus.ABANDONED, abandonedAt: new Date() }
+			});
+			abandoned.push(cart.id);
+		}
+
+		return abandoned;
 	}
 
 	/**
@@ -863,42 +1031,75 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		const lineTaxLines: ITotalsTaxLine[] = [];
 		const shippingTaxLines: ITotalsTaxLine[] = [];
 
-		for (const line of lines) {
-			for (const adjustment of await this.adjustmentService.findByOwner(AdjustmentOwnerType.CART_LINE, line.id)) {
+		// **The four lookups per owner are independent, so they are not serialised.** Each one is keyed
+		// by nothing but the owner's id; a fifty-line cart with three delivery options used to spend a
+		// hundred and six sequential round trips here, on every add-line, remove-line, apply-coupon and
+		// set-shipping call, because the reads sat inside the `for` bodies that consume them. The loop
+		// bodies below are unchanged — they read from what was fetched rather than fetching.
+		const [lineLedgers, shippingLedgers, documentAdjustmentRows] = await Promise.all([
+			Promise.all(
+				lines.map(async (line) => ({
+					id: line.id,
+					adjustments: await this.adjustmentService.findByOwner(AdjustmentOwnerType.CART_LINE, line.id),
+					taxLines: await this.taxLineService.findByOwner(TaxLineOwnerType.CART_LINE, line.id)
+				}))
+			),
+			Promise.all(
+				shippingMethods.map(async (method) => ({
+					id: method.id,
+					adjustments: await this.adjustmentService.findByOwner(
+						AdjustmentOwnerType.CART_SHIPPING,
+						method.id
+					),
+					taxLines: await this.taxLineService.findByOwner(TaxLineOwnerType.CART_SHIPPING, method.id)
+				}))
+			),
+			// The cart-level ledger: `AdjustmentOwnerType.CART` is documented as "an order-level
+			// discount, a fee, a rounding correction", and until the chain was given a document leg
+			// every one of those rows was written and then read by nothing.
+			this.adjustmentService.findByOwner(AdjustmentOwnerType.CART, cart.id)
+		]);
+
+		for (const ledger of lineLedgers) {
+			for (const adjustment of ledger.adjustments) {
 				lineAdjustments.push({
-					ownerId: line.id,
+					ownerId: ledger.id,
 					amount: Number(adjustment.amount),
 					isTaxInclusive: Boolean(adjustment.isTaxInclusive),
 					netAmount: this.netAmountOf(adjustment.metadata)
 				});
 			}
 
-			for (const taxLine of await this.taxLineService.findByOwner(TaxLineOwnerType.CART_LINE, line.id)) {
-				lineTaxLines.push({ ownerId: line.id, amount: Number(taxLine.amount) });
+			for (const taxLine of ledger.taxLines) {
+				lineTaxLines.push({ ownerId: ledger.id, amount: Number(taxLine.amount) });
 			}
 		}
 
-		for (const method of shippingMethods) {
-			for (const adjustment of await this.adjustmentService.findByOwner(
-				AdjustmentOwnerType.CART_SHIPPING,
-				method.id
-			)) {
+		for (const ledger of shippingLedgers) {
+			for (const adjustment of ledger.adjustments) {
 				shippingAdjustments.push({
-					ownerId: method.id,
+					ownerId: ledger.id,
 					amount: Number(adjustment.amount),
 					isTaxInclusive: Boolean(adjustment.isTaxInclusive),
 					netAmount: this.netAmountOf(adjustment.metadata)
 				});
 			}
 
-			for (const taxLine of await this.taxLineService.findByOwner(TaxLineOwnerType.CART_SHIPPING, method.id)) {
-				shippingTaxLines.push({ ownerId: method.id, amount: Number(taxLine.amount) });
+			for (const taxLine of ledger.taxLines) {
+				shippingTaxLines.push({ ownerId: ledger.id, amount: Number(taxLine.amount) });
 			}
 		}
+
+		const documentAdjustments: ITotalsAdjustment[] = documentAdjustmentRows.map((adjustment) => ({
+			ownerId: cart.id,
+			amount: Number(adjustment.amount),
+			isTaxInclusive: Boolean(adjustment.isTaxInclusive),
+			netAmount: this.netAmountOf(adjustment.metadata)
+		}));
 
 		const context: ITotalsContext = {
 			currency: cart.currency,
-			currencyDecimals: cart.currencyDecimals ?? 2,
+			currencyDecimals: cart.currencyDecimals ?? this.decimalsOf(cart.currency as CurrencyCode),
 			lines: lines.map(
 				(line): ITotalsLine => ({
 					id: line.id,
@@ -916,6 +1117,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			),
 			lineAdjustments,
 			shippingAdjustments,
+			documentAdjustments,
 			lineTaxLines,
 			shippingTaxLines
 		};
@@ -1034,25 +1236,451 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
-	 * Reads a cart that is still open, and — when the caller states the version it read — still at
-	 * that version.
+	 * Spends the caller's version on the cart before a child row of it is written.
 	 *
-	 * The version is checked **before** the child row is written, and that ordering is the whole point
-	 * of taking it here. The conditional write in `recalculate` decides the same question again and is
-	 * still the authority, but it runs after the line has been inserted, changed or deleted — so a
-	 * caller whose expectation no longer holds used to be answered `409` with its change already
-	 * applied, which is a refusal whose side effect is committed and the exact outcome a precondition
-	 * exists to prevent. Checking here means such a request writes nothing.
+	 * **This is a precondition, not a replacement for the conditional update.** The authority is still
+	 * the predicated `UPDATE` inside `recalculate`; what this adds is that the predicate is evaluated
+	 * *first*, so a request the cart is going to refuse refuses before it has destroyed a line, replaced
+	 * a delivery choice or removed a promotion. The cart's own revision moves with this write — a child
+	 * change is a change to the cart, and the buyer reading the cart afterwards has to see a new version
+	 * whether the recalculation that follows changes a total or not — so the recalculation that follows
+	 * rides on `ANY_VERSION`: the revision the caller stated has been spent and no longer exists.
 	 *
-	 * What the check cannot do is close the window against a writer that commits between this read and
-	 * the child write — nothing short of one transaction could, and the write's own predicate is what
-	 * answers that case. What it can do is stop the ordinary case: a caller working from a read the
-	 * cart has already moved past.
+	 * The child write and the recomputation are still two statements rather than one transaction. Making
+	 * them one would mean threading an `EntityManager` through every child service and through both
+	 * ORMs, and it would not close the window this method closes: the refusal now happens before the
+	 * irreversible half, which is what the caller was promised.
 	 *
-	 * A cart carrying no usable version is allowed through: the stated version is then pinned by the
-	 * conditional write, which is the same reading `evaluateVersionPrecondition` takes of a row whose
-	 * version is unknown.
+	 * @param cartId The cart the caller conditioned its request on.
+	 * @param expectation The version the caller read the cart at.
+	 * @throws ApiException `ENTITY_VERSION_CONFLICT` when the cart moved on, before anything is written.
+	 */
+	private async spendVersion(cartId: ID, expectation: IVersionExpectation): Promise<void> {
+		await commitVersionedUpdate<CommerceCart>(this, {
+			id: cartId,
+			expectation,
+			where: this.writeScope,
+			patch: { lastActivityAt: new Date() }
+		});
+	}
+
+	/**
+	 * The fields of a line a caller may change.
 	 *
+	 * A change set reaches `CrudService.update` and from there the ORM's update builder, which raises
+	 * `EntityPropertyNotFoundError` for a member it cannot map to a column — so a GraphQL mutation that
+	 * forwarded its whole input, routing members and all, failed every time with a 400 naming a property
+	 * the caller never meant as a column. The REST surface escaped it only because its validation pipe
+	 * whitelists against a DTO. Filtering here puts the same guarantee under both surfaces, and it is a
+	 * whitelist rather than a blacklist so a member nobody anticipated cannot smuggle itself into a
+	 * write either.
+	 *
+	 * @param changes What the caller asked to change.
+	 * @param cart The cart the line belongs to, whose currency the money members are normalised in.
+	 * @returns The subset of it the line owns.
+	 */
+	private editableLineFields(
+		changes: DeepPartial<CommerceCartLine>,
+		cart: Pick<CommerceCart, 'currency' | 'currencyDecimals'>
+	): DeepPartial<CommerceCartLine> {
+		const editable: Array<keyof CommerceCartLine> = [
+			'quantity',
+			'unitPrice',
+			'originalUnitPrice',
+			'title',
+			'sku',
+			'thumbnail',
+			'isTaxInclusive',
+			'taxCategoryId',
+			'isDiscountable',
+			'requiresShipping',
+			'weight',
+			'position',
+			'note',
+			'warehouseId',
+			'subscriptionPlanId',
+			'metadata'
+		];
+		const money: Array<keyof CommerceCartLine> = ['unitPrice', 'originalUnitPrice'];
+		const filtered: Record<string, unknown> = {};
+
+		for (const field of editable) {
+			if (changes[field] === undefined) {
+				continue;
+			}
+
+			filtered[field as string] = money.includes(field)
+				? this.toColumnAmount(changes[field], cart)
+				: changes[field];
+		}
+
+		return filtered as DeepPartial<CommerceCartLine>;
+	}
+
+	/**
+	 * @param currency The currency a document is priced in.
+	 * @returns How many decimal places that currency carries.
+	 */
+	private decimalsOf(currency?: CurrencyCode): number {
+		return currencyPrecision.decimalsFor(currency as CurrencyCode);
+	}
+
+	/**
+	 * Normalises a money amount a caller stated into the form its column carries.
+	 *
+	 * The REST DTOs accept an exact decimal string as well as a number, because the GraphQL schema
+	 * declares money as `Decimal` and the two surfaces have to mean the same thing by one field. The
+	 * column is `numeric(20,6)` read through the platform's numeric transformer, so the value becomes a
+	 * `number` exactly once, here, after the money layer has confirmed it is an amount that can be
+	 * carried exactly. A value the money layer refuses is a 400 rather than a silently truncated price:
+	 * `unitPrice: 1234567890.123456` used to pass `@IsNumber()` and be stored as `1234567890.1234560`,
+	 * a different amount, with nothing reporting the loss.
+	 *
+	 * The amount is **not** rounded to the currency's scale. A unit price legitimately carries more
+	 * digits than the currency does — a price per litre, a three-decimal dinar — and the rounding
+	 * boundary is the totals chain's, not this one's.
+	 *
+	 * @param value The amount as the caller stated it.
+	 * @param cart The cart it belongs to, which carries the currency.
+	 * @returns The amount as the column carries it.
+	 * @throws BadRequestException when the value is not an amount a money column can hold exactly.
+	 */
+	private toColumnAmount(value: unknown, cart: Pick<CommerceCart, 'currency' | 'currencyDecimals'>): number {
+		if (value === undefined || value === null || value === '') {
+			return 0;
+		}
+
+		const currency = cart.currency as CurrencyCode;
+		const decimals = cart.currencyDecimals ?? this.decimalsOf(currency);
+
+		try {
+			return Number(Money.of(value as never, currency, decimals).toStorageString());
+		} catch (error) {
+			throw new BadRequestException(
+				`CART_AMOUNT_INVALID: "${String(value)}" is not a money amount this platform can carry exactly ` +
+					`(${error instanceof Error ? error.message : String(error)}).`
+			);
+		}
+	}
+
+	/**
+	 * Rebuilds the `adjustment` rows that the cart's applied promotions represent.
+	 *
+	 * **Why a rebuild and not an append at the moment of application.** A promotion's discount is an
+	 * amount against the cart, and it has to be attributed to the lines it applies to before the totals
+	 * chain can read it — but the lines move: one is added, one is removed, a quantity changes, and an
+	 * attribution computed when the promotion was applied no longer describes the cart it is attached
+	 * to. The snapshot rows in `commerce_cart_promotion` are the record of *which* promotions apply and
+	 * for how much; this derives the ledger that says *where* each of those amounts lands, from the cart
+	 * as it is now. The entity's own docstring states the same rule: "the set of rows is rebuilt on
+	 * every totals recalculation, never appended to blindly".
+	 *
+	 * The split across lines is `Money.allocateBy`, the largest-remainder allocation, so the parts sum
+	 * back to the promotion's amount exactly — a 10.00 discount over three equal lines is 3.34/3.33/3.33
+	 * and never 9.99.
+	 *
+	 * Only the rows this method wrote before are replaced. A row an operator entered by hand carries no
+	 * `cartPromotionId` in its metadata and is left exactly where it is.
+	 *
+	 * @param cart The cart being recalculated.
+	 */
+	private async syncPromotionAdjustments(cart: CommerceCart): Promise<void> {
+		const currency = cart.currency as CurrencyCode;
+		const decimals = cart.currencyDecimals ?? this.decimalsOf(currency);
+		const lines = ((await this.lineService.findAll({
+			where: { cartId: cart.id }
+		})) as IPagination<CommerceCartLine>).items;
+		const promotions = ((await this.promotionService.findAll({
+			where: { cartId: cart.id }
+		})) as IPagination<CommerceCartPromotion>).items;
+
+		// What the ledger should hold, per line, for every promotion on the cart.
+		const desired = new Map<string, Money>();
+
+		for (const promotion of promotions) {
+			const amount = Money.fromStorage(promotion.amount, currency, decimals).abs();
+
+			if (!amount.isPositive()) {
+				continue;
+			}
+
+			// A promotion discounts the lines that accept a discount. A cart whose lines all refuse one
+			// — or a cart with no lines at all — has nothing to attribute the amount to, and inventing an
+			// owner for it would mean charging a discount to a line the catalogue excluded from
+			// promotions: the promotion stays listed on the cart and moves no total, which is the honest
+			// answer rather than a silent one.
+			const targets = lines.filter((line) => line.isDiscountable !== false);
+
+			if (!targets.length) {
+				continue;
+			}
+
+			const weights = targets.map((line) =>
+				Money.fromStorage(line.unitPrice, currency, decimals).multiply(Number(line.quantity ?? 0))
+			);
+			const parts = amount.allocateBy(weights);
+
+			for (const [index, part] of parts.entries()) {
+				if (!part.isPositive()) {
+					continue;
+				}
+
+				const lineId = targets[index].id;
+				desired.set(lineId, (desired.get(lineId) ?? Money.zero(currency, decimals)).add(part));
+			}
+		}
+
+		// The rows currently owned by this rebuild, per line, read once per line rather than per
+		// promotion.
+		const owned = await Promise.all(
+			lines.map(async (line) => ({
+				lineId: line.id,
+				rows: (await this.adjustmentService.findByOwner(AdjustmentOwnerType.CART_LINE, line.id)).filter(
+					(row) => Boolean(row.metadata?.[CART_PROMOTION_ADJUSTMENT_KEY])
+				)
+			}))
+		);
+
+		for (const { lineId, rows } of owned) {
+			const target = desired.get(lineId) ?? Money.zero(currency, decimals);
+			const current = rows.reduce(
+				(total, row) => total.add(Money.fromStorage(row.amount, currency, decimals).abs()),
+				Money.zero(currency, decimals)
+			);
+
+			// The ledger already says what it should say, in the one row this rebuild writes. Rewriting
+			// it would churn rows and move their `createdAt`, which is the order `findByOwner` reports
+			// the ledger in.
+			if (rows.length <= 1 && current.equals(target)) {
+				desired.delete(lineId);
+				continue;
+			}
+
+			for (const row of rows) {
+				await this.adjustmentService.delete(row.id);
+			}
+		}
+
+		for (const [lineId, amount] of desired.entries()) {
+			if (!amount.isPositive()) {
+				continue;
+			}
+
+			const line = lines.find((candidate) => candidate.id === lineId);
+
+			await this.adjustmentService.append({
+				ownerType: AdjustmentOwnerType.CART_LINE,
+				ownerId: lineId,
+				// Negative: the ledger's sign convention is that a row which reduces what the customer
+				// pays is below zero, and `AdjustmentService` refuses a `PROMOTION` row that is not.
+				amount: amount.negate().toStorageString(),
+				currency,
+				type: AdjustmentType.PROMOTION,
+				isTaxInclusive: Boolean(line?.isTaxInclusive),
+				description: 'Promotion applied to the cart',
+				metadata: { [CART_PROMOTION_ADJUSTMENT_KEY]: cart.id }
+			});
+		}
+	}
+
+	/**
+	 * Rebuilds the cart's rows in the platform's `tax_line` ledger.
+	 *
+	 * With no `CART_TAX_CALCULATION` provider registered this does nothing at all and the cart's tax
+	 * totals stay zero, which is exactly how the package behaved before the port existed. With one
+	 * registered, every line and every shipping method that the capability rates gets its breakdown
+	 * written through `TaxLineService` — the platform's ledger, never a table of this package's own —
+	 * and `computeTotals` reads it back on the next line of `recalculate`.
+	 *
+	 * The taxable base is the line's amount **after** the discounts the rebuild above just attributed to
+	 * it, which is the rule the money specification states: tax is charged on what the customer actually
+	 * pays for the line, not on what the catalogue asked for it.
+	 *
+	 * @param cart The cart being recalculated.
+	 */
+	private async syncTaxLines(cart: CommerceCart): Promise<void> {
+		if (!this.taxCalculation) {
+			return;
+		}
+
+		const currency = cart.currency as CurrencyCode;
+		const decimals = cart.currencyDecimals ?? this.decimalsOf(currency);
+		const lines = ((await this.lineService.findAll({
+			where: { cartId: cart.id }
+		})) as IPagination<CommerceCartLine>).items;
+		const shippingMethods = ((await this.shippingMethodService.findAll({
+			where: { cartId: cart.id }
+		})) as IPagination<CommerceCartShippingMethod>).items;
+
+		if (!lines.length && !shippingMethods.length) {
+			return;
+		}
+
+		const address = (cart.shippingAddressSnapshot ?? cart.billingAddressSnapshot ?? {}) as Record<string, unknown>;
+		const discounts = await this.discountByOwner(lines, shippingMethods, currency, decimals);
+		const query = {
+			currency,
+			...(cart.regionId ? { regionId: cart.regionId } : {}),
+			...(typeof address['countryCode'] === 'string' ? { countryCode: address['countryCode'] } : {}),
+			...(typeof address['provinceCode'] === 'string' ? { provinceCode: address['provinceCode'] } : {}),
+			...(typeof address['postalCode'] === 'string' ? { postalCode: address['postalCode'] } : {}),
+			// A cart is re-priced on every edit and there is nobody to answer a refusal in the middle of
+			// one, so a destination no rate matches is rated at zero rather than made uneditable.
+			allowUntaxedCatalog: true,
+			lines: [
+				...lines.map((line) => ({
+					referenceId: line.id,
+					...(line.taxCategoryId ? { taxCategoryId: line.taxCategoryId } : {}),
+					amount: this.taxableBaseOf(
+						Money.fromStorage(line.unitPrice, currency, decimals).multiply(Number(line.quantity ?? 0)),
+						discounts.get(`LINE:${line.id}`),
+						currency,
+						decimals
+					),
+					quantity: normalizeDecimalString(Number(line.quantity ?? 0))
+				})),
+				...shippingMethods.map((method) => ({
+					referenceId: method.id,
+					...(method.taxCategoryId ? { taxCategoryId: method.taxCategoryId } : {}),
+					amount: this.taxableBaseOf(
+						Money.fromStorage(method.amount, currency, decimals),
+						discounts.get(`SHIPPING:${method.id}`),
+						currency,
+						decimals
+					),
+					quantity: '1'
+				}))
+			]
+		};
+
+		const calculation = await this.taxCalculation.calculate(query);
+		const ownerOf = new Map<string, TaxLineOwnerType>([
+			...lines.map((line): [string, TaxLineOwnerType] => [line.id, TaxLineOwnerType.CART_LINE]),
+			...shippingMethods.map((method): [string, TaxLineOwnerType] => [
+				method.id,
+				TaxLineOwnerType.CART_SHIPPING
+			])
+		]);
+
+		// A recomputed breakdown replaces the previous one whole: `TaxLineService.append` refuses a
+		// second basis for a rate an owner already carries, and a half-rewritten breakdown reconciles
+		// against nothing.
+		for (const [ownerId, ownerType] of ownerOf.entries()) {
+			for (const existing of await this.taxLineService.findByOwner(ownerType, ownerId)) {
+				await this.taxLineService.delete(existing.id);
+			}
+		}
+
+		for (const computed of calculation?.lines ?? []) {
+			const ownerId = computed.referenceId;
+			const ownerType = ownerId ? ownerOf.get(String(ownerId)) : undefined;
+
+			if (!ownerId || !ownerType) {
+				continue;
+			}
+
+			for (const draft of computed.taxLines ?? []) {
+				await this.taxLineService.append({
+					ownerType,
+					ownerId,
+					taxRateId: draft.taxRateId,
+					code: draft.code,
+					name: draft.name,
+					rate: draft.rate,
+					isCompound: draft.isCompound,
+					isInclusive: draft.isInclusive,
+					baseAmount: draft.baseAmount,
+					amount: draft.amount,
+					currency: draft.currency,
+					providerKey: draft.providerKey,
+					metadata: {
+						...(draft.metadata ?? {}),
+						...(draft.quantity ? { quantity: draft.quantity } : {}),
+						...(draft.taxRatePartId ? { taxRatePartId: draft.taxRatePartId } : {}),
+						...(draft.taxRegimeId ? { taxRegimeId: draft.taxRegimeId } : {}),
+						...(draft.postingKey ? { postingKey: draft.postingKey } : {})
+					}
+				});
+			}
+		}
+	}
+
+	/**
+	 * The discount each taxable owner carries, read from the ledger the promotion rebuild just wrote.
+	 *
+	 * @param lines The cart's lines.
+	 * @param shippingMethods The cart's shipping methods.
+	 * @param currency The currency the cart is priced in.
+	 * @param decimals The currency's scale.
+	 * @returns The discount per owner key, as a positive magnitude.
+	 */
+	private async discountByOwner(
+		lines: CommerceCartLine[],
+		shippingMethods: CommerceCartShippingMethod[],
+		currency: CurrencyCode,
+		decimals: number
+	): Promise<Map<string, Money>> {
+		const discounts = new Map<string, Money>();
+		const owners: Array<{ key: string; ownerType: AdjustmentOwnerType; ownerId: ID }> = [
+			...lines.map((line) => ({
+				key: `LINE:${line.id}`,
+				ownerType: AdjustmentOwnerType.CART_LINE,
+				ownerId: line.id
+			})),
+			...shippingMethods.map((method) => ({
+				key: `SHIPPING:${method.id}`,
+				ownerType: AdjustmentOwnerType.CART_SHIPPING,
+				ownerId: method.id
+			}))
+		];
+
+		const read = await Promise.all(
+			owners.map(async (owner) => ({
+				key: owner.key,
+				rows: await this.adjustmentService.findByOwner(owner.ownerType, owner.ownerId)
+			}))
+		);
+
+		for (const { key, rows } of read) {
+			let discount = Money.zero(currency, decimals);
+
+			for (const row of rows) {
+				const amount = Money.fromStorage(row.amount, currency, decimals);
+
+				if (amount.isNegative()) {
+					discount = discount.add(amount.abs());
+				}
+			}
+
+			discounts.set(key, discount);
+		}
+
+		return discounts;
+	}
+
+	/**
+	 * @param gross What the owner is worth before the adjustment layer.
+	 * @param discount What the ledger takes off it, when anything does.
+	 * @param currency The currency.
+	 * @param decimals The currency's scale.
+	 * @returns The amount the owner is rated on, never below zero.
+	 */
+	private taxableBaseOf(gross: Money, discount: Money | undefined, currency: CurrencyCode, decimals: number): string {
+		const rounded = gross.round(RoundingMode.HALF_UP, decimals);
+		const discounted = discount?.isPositive() ? rounded.subtract(discount) : rounded;
+
+		return (discounted.isNegative() ? Money.zero(currency, decimals) : discounted).toStorageString();
+	}
+
+	/**
+/**
+ * Loads a cart that must be mutable, or refuses.
+ *
+ * @param cartId The cart.
+ * @returns The cart.
+ * @throws NotFoundException when no such cart exists.
+ * @throws BadRequestException when the cart is no longer mutable.
+ */
 	 * @param cartId The cart.
 	 * @param expectation The version the caller read the cart at, when it stated one.
 	 * @returns The cart.
@@ -1060,7 +1688,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * @throws BadRequestException when the cart is no longer mutable.
 	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the cart has moved past the stated version.
 	 */
-	private async assertMutable(cartId: ID, expectation?: IVersionExpectation): Promise<CommerceCart> {
+	private async assertMutable(cartId: ID): Promise<CommerceCart> {
 		const cart = await this.findOneByIdString(cartId);
 
 		if (!cart) {
@@ -1071,42 +1699,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			throw new BadRequestException(`CART_STATUS_INVALID: a ${cart.status} cart is immutable.`);
 		}
 
-		if (expectation) {
-			this.assertExpectationHolds(cart, expectation);
-		}
-
 		return cart;
-	}
-
-	/**
-	 * Refuses a cart the caller's stated version no longer describes.
-	 *
-	 * The refusal is the same one `commitVersionedUpdate` raises from the conditional write, code and
-	 * all, so a caller cannot tell which half of the convention answered it — and it is raised before
-	 * anything has been written, which is the only difference that matters to the caller.
-	 *
-	 * @param cart The cart as it was just read.
-	 * @param expectation What the caller stated.
-	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the version moved on.
-	 */
-	private assertExpectationHolds(cart: CommerceCart, expectation: IVersionExpectation): void {
-		const actual = parseEntityVersion(cart.version);
-
-		// No usable version on the row: the conditional write pins the stated one, so there is nothing
-		// here to refuse.
-		if (actual === null || matchesExpectation(expectation, actual)) {
-			return;
-		}
-
-		throw new ApiException(
-			HttpStatus.CONFLICT,
-			ApiErrorCode.ENTITY_VERSION_CONFLICT,
-			'The cart changed since you read it. Read it again and reapply your change.',
-			{
-				expectedVersion: expectation.wildcard ? actual : expectation.versions[0],
-				actualVersion: actual
-			}
-		);
 	}
 
 	/**
@@ -1146,6 +1739,21 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	private netAmountOf(metadata: Record<string, unknown> | undefined): number | undefined {
 		const netAmount = metadata?.['netAmount'];
 
-		return typeof netAmount === 'number' ? netAmount : undefined;
+		if (typeof netAmount === 'number') {
+			return Number.isFinite(netAmount) ? netAmount : undefined;
+		}
+
+		// **A decimal string counts too.** Money crosses every boundary on this branch as an exact
+		// decimal string, so a producer that followed that convention wrote `"4.950000"` here and the
+		// `typeof === 'number'` test silently answered "this row carries no net" — which makes an
+		// inclusive discount reduce the taxable base by its gross. A value that is not a number the
+		// totals chain can read is still ignored, which is the behaviour a malformed row had before.
+		if (typeof netAmount === 'string' && netAmount.trim() !== '') {
+			const parsed = Number(netAmount);
+
+			return Number.isFinite(parsed) ? parsed : undefined;
+		}
+
+		return undefined;
 	}
 }

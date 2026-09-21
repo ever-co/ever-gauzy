@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { PaymentInstrumentEligibilityService, PaymentInstrumentModule } from '@gauzy/core';
-import { CART_STOCK_AVAILABILITY } from '@gauzy/plugin-cart';
+import { CART_STOCK_AVAILABILITY, CART_TAX_CALCULATION } from '@gauzy/plugin-cart';
 import { CatalogItemService, CatalogModule, ProductVariantSaleService } from '@gauzy/plugin-catalog';
 import {
 	FulfillmentModule,
@@ -35,6 +35,7 @@ import {
 	SUBSCRIPTION_ORDER_GATEWAY,
 	SUBSCRIPTION_PRICING
 } from '@gauzy/plugin-subscription';
+import { TaxModule, TaxRateService } from '@gauzy/plugin-tax';
 import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-warehouse';
 
 /**
@@ -95,7 +96,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// both the fulfilment package's own rows.
 		FulfillmentModule,
 		// The refund a return asks for is a row of the payment package's refund register.
-		PaymentModule
+		PaymentModule,
+		// What a line is taxed at is the tax package's rate tables, its regimes and its rounding — none
+		// of which the cart may read for itself.
+		TaxModule
 	],
 	providers: [
 		// The payment package reports what a succeeded refund paid back per line; the order package is
@@ -126,6 +130,13 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// The cart asks what may be sold before it accepts a line, and the inventory package owns the
 		// level rows the answer is derived from.
 		{ provide: CART_STOCK_AVAILABILITY, useExisting: StockAvailabilityService },
+		// A cart asks what its lines are taxed and writes the answer into the platform's own `tax_line`
+		// ledger; the tax package decides what a rate is. Unbound, a cart's tax total stays zero — which
+		// is the state the package shipped in, and it was a defect rather than a decision: nothing in
+		// the cart ever wrote a tax line, so a buyer in a VAT jurisdiction was quoted a tax-free total,
+		// and a tax-inclusive catalogue had each line's net computed as `gross - 0`, folding the tax the
+		// price already contained into the subtotal without declaring it anywhere.
+		{ provide: CART_TAX_CALCULATION, useExisting: TaxRateService },
 		// The warehouse reads bin contents from the ledger and writes every physical move back through
 		// it; a return restocks what came back through the same ledger, in the same instance.
 		{ provide: WAREHOUSE_STOCK_LEDGER, useExisting: StockLedgerService },
@@ -151,6 +162,7 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		SUBSCRIPTION_INSTRUMENTS,
 		SUBSCRIPTION_ORDER_GATEWAY,
 		CART_STOCK_AVAILABILITY,
+		CART_TAX_CALCULATION,
 		WAREHOUSE_STOCK_LEDGER,
 		RETURNS_STOCK_LEDGER,
 		PURCHASING_INVENTORY,

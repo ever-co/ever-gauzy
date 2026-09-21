@@ -7,6 +7,7 @@ export * from './lib/tax.features';
 export * from './lib/tax.permissions';
 export * from './lib/tax.settings';
 export * from './lib/tax.types';
+export * from './lib/postal-code.matcher';
 export * from './lib/database/migrations';
 export * from './lib/graphql';
 export * from './lib/tax-category/tax-category.controller';

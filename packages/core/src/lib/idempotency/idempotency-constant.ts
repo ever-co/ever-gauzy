@@ -14,6 +14,21 @@ export const IDEMPOTENCY_CLEANUP_SCHEDULE = 'idempotency.cleanup.schedule';
 /** The queue job the schedule produces and the worker consumes. */
 export const IDEMPOTENCY_CLEANUP_JOB = 'idempotency.cleanup';
 
+/**
+ * The retry-safety store, addressed as a token rather than as a class.
+ *
+ * `IdempotencyService` reaches the whole persistence graph — the CRUD base, the entity barrel, the
+ * repositories — so importing the *class* to use it as a lookup key drags all of that into whatever
+ * imports it. The concurrency kernel's guard needs to ask the store one question and must not carry
+ * that weight: a guard is loaded by every route that adopts `@Versioned()`, including in packages
+ * whose test configuration never expected the persistence graph to be in the module tree at all. The
+ * token is declared here, beside the other names, because this file imports nothing.
+ *
+ * `IdempotencyModule` aliases it to the service with `useExisting`, so there is one instance and the
+ * two names cannot drift apart.
+ */
+export const IDEMPOTENCY_SERVICE = 'IDEMPOTENCY_SERVICE';
+
 /** The queue the cleanup travels on. */
 export const IDEMPOTENCY_QUEUE_NAME = 'idempotency-maintenance';
 

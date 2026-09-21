@@ -123,6 +123,7 @@ jest.mock('@gauzy/core', () => {
 		versionExpectationOf: versionedWrite.versionExpectationOf,
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
 		SequenceService: class SequenceService {},
+		EventOutboxService: class EventOutboxService {},
 		TenantSettingService: class TenantSettingService {},
 		Warehouse: class Warehouse {},
 		Product: class Product {},
@@ -282,6 +283,17 @@ function repository(tables: ITables, tableName: keyof ITables) {
 				}
 
 				entity.id = `${String(tableName)}-new-${++sequence}`;
+
+				// The column's own default, which the database applies and an in-memory table does not.
+				// `@VersionedColumn()` declares `DEFAULT 1`, so a freshly inserted header is at version
+				// one — and without that here, the first conditional write found a row carrying no
+				// version at all, took the platform's unversioned-row path and landed the return back on
+				// one. The suite then read a version that never moved and could not have caught a write
+				// that failed to move it.
+				if (tableName === 'order_return' && entity.version === undefined) {
+					entity.version = 1;
+				}
+
 				tables[tableName].push(entity);
 			}
 
@@ -483,11 +495,31 @@ function returnFixture(
 						};
 					}
 			  };
+	/** Every `return.*` row the service appended, in the order it appended them. */
+	const events: Row[] = [];
+	/**
+	 * The platform outbox, reduced to the one call this service makes on it.
+	 *
+	 * The manager it is handed is the return repository's own, which is what the assertions below
+	 * check: an event appended through some other connection is an event a crash can separate from the
+	 * write it describes, and the outbox is a table rather than a bus for exactly that reason.
+	 */
+	const outbox = {
+		append: async (manager: any, input: Row) => {
+			events.push({ manager, ...input });
+
+			return input;
+		}
+	};
+
+	// The entity manager the conditional update and the event both go through.
+	(typeOrmOrderReturnRepository as Row).manager = { name: 'return-manager' };
 	const service = new OrderReturnService(
 		typeOrmOrderReturnRepository as never,
 		{} as never,
 		lineService,
 		sequenceService as never,
+		outbox as never,
 		ledger as never,
 		refundGateway as never,
 		shipmentGateway as never
@@ -497,6 +529,8 @@ function returnFixture(
 		service,
 		lineService,
 		tables,
+		events,
+		manager: (typeOrmOrderReturnRepository as Row).manager,
 		movements,
 		refundCalls,
 		shipmentCalls,
@@ -539,6 +573,55 @@ describe('OrderReturnService — requesting a return (doc 10 §11.5)', () => {
 		expect(fixture.sequenceCalls).toEqual(['RETURN']);
 		expect(created.lines).toHaveLength(1);
 		expect(created.lines?.[0]).toMatchObject({ returnId: created.id, orderLineId: ORDER_LINE, quantity: '2.000000' });
+	});
+
+	it('announces every lifecycle move into the outbox, through the write’s own manager', async () => {
+		// The package emitted nothing at all, so goods and money could travel back without the search
+		// index, the buyer's notifications, an outbound webhook or the accounting export learning of it.
+		// Each event is appended by the call that committed the move — through the return repository's
+		// own entity manager — so a crash cannot separate the fact from the change it describes.
+		const fixture = returnFixture({ returns: [], lines: [] });
+
+		const created = await fixture.service.create({
+			orderId: ORDER,
+			currency: 'USD',
+			lines: [{ orderLineId: ORDER_LINE, quantity: 2 }]
+		} as never);
+
+		await fixture.service.approve(created.id, 'Approved by supervisor');
+		await fixture.service.reject(created.id, 'Changed our mind');
+
+		expect(fixture.events.map((event) => event.name)).toEqual([
+			'return.requested',
+			'return.approved',
+			'return.rejected'
+		]);
+		expect(fixture.events.every((event) => event.manager === fixture.manager)).toBe(true);
+		expect(fixture.events.every((event) => event.aggregateType === 'ORDER_RETURN')).toBe(true);
+		expect(fixture.events.every((event) => event.aggregateId === created.id)).toBe(true);
+		// A projection, not a row: the identity, where the return is in its lifecycle, what it has paid
+		// back and the version the write landed on.
+		expect(fixture.events[1].data).toMatchObject({
+			returnId: created.id,
+			orderId: ORDER,
+			number: 'RET-000001',
+			status: OrderReturnStatus.APPROVED,
+			currency: 'USD',
+			version: 2
+		});
+	});
+
+	it('announces nothing when the conditional write was refused', async () => {
+		// The reason the event is appended inside `commitHeader` rather than by the caller afterwards: a
+		// caller that announced on its own would have told every consumer about an approval the version
+		// predicate declined.
+		const fixture = returnFixture({ returns: [returnRow('return-1', { version: 7 })] });
+
+		await expect(
+			fixture.service.approve('return-1', undefined, { wildcard: false, versions: [3] })
+		).rejects.toBeDefined();
+
+		expect(fixture.events).toEqual([]);
 	});
 
 	it('refuses a return that names no order, no currency or no line', async () => {

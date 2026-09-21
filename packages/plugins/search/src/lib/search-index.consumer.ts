@@ -45,17 +45,35 @@ export class SearchIndexConsumer implements IEventConsumer, OnApplicationBootstr
 	) {}
 
 	/**
-	 * The event names this consumer wants, one triple per registered entity.
+	 * The event names this consumer wants, one triple per registered entity per spelling of its name.
 	 *
 	 * It is a getter rather than a field, and it reads the registry rather than a list captured at
 	 * construction, because a declaration registered after this class was built still has to be
 	 * indexed: the delivery registry asks a consumer what it handles at the moment it has an event to
 	 * fan out, so a declaration that arrives later is served without anything being re-registered.
+	 *
+	 * **The match is exact, so every spelling has to be declared.** `EventConsumerRegistry.consumersFor`
+	 * selects with `events.includes(eventName)` — no normalisation, no pattern. A declaration names its
+	 * entity by the table it lives in (`product_variant`), while the producers on this branch name an
+	 * event after the domain noun in whichever form that package writes it: `seller.created`,
+	 * `productVariant.updated`, `PRODUCT_VARIANT.deleted`. A consumer that declared only the table
+	 * spelling would be registered, would report a healthy event list, and would never once be invoked
+	 * — which is indistinguishable from a dispatcher that is not running. The four spellings are
+	 * derived from the entity key rather than listed, so a new declaration is covered by all of them
+	 * without anybody remembering to add one.
 	 */
 	get events(): string[] {
-		return this.indexRegistry
-			.registeredEntities()
-			.flatMap((entity) => [`${entity}.created`, `${entity}.updated`, `${entity}.deleted`]);
+		const names = new Set<string>();
+
+		for (const entity of this.indexRegistry.registeredEntities()) {
+			for (const spelling of spellingsOf(entity)) {
+				for (const action of ['created', 'updated', 'deleted']) {
+					names.add(`${spelling}.${action}`);
+				}
+			}
+		}
+
+		return Array.from(names);
 	}
 
 	/**
@@ -79,6 +97,15 @@ export class SearchIndexConsumer implements IEventConsumer, OnApplicationBootstr
 	/**
 	 * Applies one delivered event to the index.
 	 *
+	 * What the dispatcher owes this consumer is narrow and worth stating, because the index is only as
+	 * fresh as the delivery: the envelope must carry `aggregate.type` and `aggregate.id` (the type is
+	 * how the entity is resolved and the id is the row that is re-read), and `tenantId` /
+	 * `organizationId` where the source row has them — the document is written into the scope the
+	 * envelope names, not into the scope of whichever thread happens to be running. A failure here is
+	 * thrown rather than swallowed so that the delivery record marks the attempt failed and the event
+	 * is redelivered; a redelivery costs one re-read and one idempotent write of the same document,
+	 * which is the whole reason this is a consumer rather than a listener.
+	 *
 	 * @param event The event envelope.
 	 * @param context The delivery context; the runner records the outcome, so nothing is written here.
 	 */
@@ -88,6 +115,14 @@ export class SearchIndexConsumer implements IEventConsumer, OnApplicationBootstr
 		const outcome = await this.indexer.handleEvent(event);
 
 		if (!outcome) {
+			// The event named an aggregate nothing indexes, or carried no id. It is a successful
+			// delivery — there is nothing to do — but it is logged, because a consumer that quietly does
+			// nothing for every event it receives looks exactly like a dispatcher that is not running.
+			this.logger.debug(
+				`The event "${event?.name}" named the aggregate "${event?.aggregate?.type}", which no index ` +
+					'declaration describes, so the index was not changed.'
+			);
+
 			return;
 		}
 
@@ -98,6 +133,32 @@ export class SearchIndexConsumer implements IEventConsumer, OnApplicationBootstr
 			);
 		}
 	}
+}
+
+/**
+ * The spellings one entity key is written in across the platform's event producers.
+ *
+ * `product_variant` is also written `productVariant`, `product-variant` and `PRODUCT_VARIANT`
+ * depending on which package emits the event and whether the name came from the table, the class or
+ * the outbox row's aggregate type. The set is derived rather than listed, and it is a set, so a
+ * single-word entity such as `invoice` contributes one spelling and not four.
+ *
+ * @param entity The entity key, as a declaration states it.
+ * @returns The spellings, without duplicates.
+ */
+function spellingsOf(entity: string): string[] {
+	const key = String(entity ?? '').trim();
+
+	if (!key) {
+		return [];
+	}
+
+	const words = key.split('_').filter(Boolean);
+	const camel = words
+		.map((word, index) => (index === 0 ? word : `${word.charAt(0).toUpperCase()}${word.slice(1)}`))
+		.join('');
+
+	return Array.from(new Set([key, camel, words.join('-'), key.toUpperCase()]));
 }
 
 /**

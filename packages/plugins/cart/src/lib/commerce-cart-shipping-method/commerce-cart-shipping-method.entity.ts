@@ -1,3 +1,4 @@
+import { DecimalAmount } from '../shared/is-decimal-amount.validator';
 import { JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
@@ -61,7 +62,7 @@ export class CommerceCartShippingMethod
 	@IsNotEmpty()
 	@IsNumber()
 	@MultiORMColumn({ type: 'numeric', precision: 20, scale: 6, transformer: new ColumnNumericTransformerPipe() })
-	amount: number;
+	amount: DecimalAmount;
 
 	/** Whether `amount` is a gross. */
 	@ApiPropertyOptional({ type: () => Boolean })

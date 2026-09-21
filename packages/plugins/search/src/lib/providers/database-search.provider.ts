@@ -33,6 +33,67 @@ const FACET_VALUE_LIMIT = 50;
 const WEIGHT_ATTRIBUTE = '_weight';
 
 /**
+ * The character a `LIKE` pattern escapes its own wildcards with.
+ *
+ * `%` and `_` are wildcards inside the *value* of a `LIKE`, not inside the statement, so a
+ * parameterised pattern is safe from injection and still completely open to a caller who types one:
+ * `q=%` used to build `LIKE '%%%'`, which matches every document in scope and turns the term filter
+ * into a full enumeration of the index. The wildcards are therefore escaped in the value and every
+ * fragment that carries a caller-supplied pattern states its escape character.
+ *
+ * `!` is used rather than a backslash because the three dialects do not agree about backslashes in a
+ * string literal: MySQL reads `'\'` as the start of an escape sequence and the statement no longer
+ * parses, while Postgres and SQLite read it as one character. `!` has no meaning in any of them, so
+ * one clause is correct everywhere — at the cost of escaping `!` itself, which {@link escapeLike}
+ * does.
+ */
+const LIKE_ESCAPE = '!';
+
+/** The clause every fragment whose pattern came from a caller carries. */
+const LIKE_ESCAPE_CLAUSE = ` ESCAPE '${LIKE_ESCAPE}'`;
+
+/**
+ * How long a capability a failed statement proved unusable stays switched off.
+ *
+ * A capability flag with no expiry is a one-way door: one failure disables a feature of the whole
+ * process for every tenant until the pod restarts, and nothing in the platform ever turns it back
+ * on. A genuine capability gap — a table that predates the full-text index, a SQLite build compiled
+ * without JSON1 — reasserts itself on the next probe and costs one failed statement every five
+ * minutes, which is a price worth paying to make a transient or request-induced failure self-heal.
+ */
+const DEGRADED_CAPABILITY_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * Which copies of a document a removal is about.
+ *
+ * A document is keyed by `(tenant, entity, entityId, engine)`, so a removal that names only the
+ * entity and the id is a removal of every tenant's and every engine's copy of it. The scope is what
+ * lets a caller that knows the other two members say so.
+ *
+ * `ISearchProvider.delete` in `@gauzy/contracts` still declares two parameters; the third is
+ * additive and optional, so a provider that ignores it — an external engine that has not been
+ * widened yet — keeps satisfying the contract and keeps behaving exactly as it did.
+ */
+export interface ISearchDeleteScope {
+	/** The tenant whose documents are removed; `null` for the genuinely tenant-less rows. */
+	tenantId?: ID | null;
+	/** The engine whose documents are removed; `null` or absent for the built-in provider's own. */
+	engineKey?: string | null;
+}
+
+/**
+ * A provider that can narrow a removal the way {@link ISearchDeleteScope} describes.
+ *
+ * It exists because the scope is an additive third parameter on a contract that declares two: a
+ * caller holding an `ISearchProvider` cannot pass it without saying, once and in one place, that it
+ * is calling the widened form. A provider that does not implement it ignores the extra argument,
+ * which is exactly the previous behaviour.
+ */
+export interface IScopedSearchDelete {
+	delete(entity: string, entityIds: ID[], scope?: ISearchDeleteScope): Promise<number>;
+}
+
+/**
  * Everything one query needs, resolved once and shared by the page, the count and every facet.
  *
  * The facet queries are built from the same object as the page deliberately: a facet counted against a
@@ -81,8 +142,15 @@ export class DatabaseSearchProvider implements ISearchProvider {
 
 	private readonly logger = new Logger(DatabaseSearchProvider.name);
 
-	/** Capabilities of the live dialect that a failed query proved unusable. */
-	private readonly degraded = new Set<string>();
+	/**
+	 * Capabilities of the live dialect that a failed query proved unusable, and the moment each one
+	 * is probed again.
+	 *
+	 * It is a map of expiries rather than a set of names because a capability that is switched off
+	 * forever is switched off for every tenant of the process, and the thing that switched it off was
+	 * a single statement — possibly one a caller shaped. See {@link DEGRADED_CAPABILITY_TTL_MS}.
+	 */
+	private readonly degraded = new Map<string, number>();
 
 	constructor(
 		private readonly typeOrmSearchDocumentRepository: TypeOrmSearchDocumentRepository,
@@ -166,21 +234,41 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	 * The row is soft-deleted: the index is a projection and a rebuild reproduces it, so nothing is
 	 * gained by destroying the record of what was indexed, and re-indexing the same source revives it.
 	 *
+	 * The removal is keyed on the same four members the write is — `(tenant, entity, entityId,
+	 * engine)` — and not on two of them. A removal keyed on `(entity, entityId)` alone removes the
+	 * document of every tenant that ever indexed a row with that id, and it removes an external
+	 * engine's row for the same source as well, which then leaves that engine's own delete with
+	 * nothing to do and its index out of step with the one it is supposed to own. The scope is
+	 * optional so that a caller that genuinely means "every copy of this document" — a sweep that has
+	 * already established there is only one — keeps working unchanged.
+	 *
 	 * @param entity The entity key.
 	 * @param entityIds The ids to remove.
+	 * @param scope The tenant and engine the removal belongs to; every tenant and every engine when
+	 * the caller states none.
 	 * @returns How many documents were removed.
 	 */
-	async delete(entity: string, entityIds: ID[]): Promise<number> {
+	async delete(entity: string, entityIds: ID[], scope?: ISearchDeleteScope): Promise<number> {
 		const ids = (entityIds ?? []).map((id) => String(id)).filter(Boolean);
 
 		if (!entity || ids.length === 0) {
 			return 0;
 		}
 
-		const result = await this.typeOrmSearchDocumentRepository.softDelete({
+		const criteria: Record<string, unknown> = {
 			entity: String(entity),
 			entityId: In(ids)
-		} as any);
+		};
+
+		if (scope && 'tenantId' in scope) {
+			criteria.tenantId = scope.tenantId ? scope.tenantId : IsNull();
+		}
+
+		if (scope && 'engineKey' in scope) {
+			criteria.engineKey = scope.engineKey ? scope.engineKey : IsNull();
+		}
+
+		const result = await this.typeOrmSearchDocumentRepository.softDelete(criteria as any);
 
 		return Number(result?.affected ?? 0);
 	}
@@ -238,13 +326,51 @@ export class DatabaseSearchProvider implements ISearchProvider {
 
 		const context = this.createContext(request, entities);
 		const take = Math.max(1, Math.min(Number(limit) || SEARCH_SETTING_DEFAULTS.suggestLimit, 100));
+
+		// Type-ahead degrades and retries exactly as a query does. It used to be the one read path
+		// with no recovery at all, which meant a capability the connection had just proved unusable
+		// surfaced here as a 500 on every keystroke while the search box beside it recovered.
+		try {
+			return await this.runSuggest(context, term, take);
+		} catch (error) {
+			if (!this.degrade(context, error)) {
+				throw error;
+			}
+
+			return await this.runSuggest(context, term, take);
+		}
+	}
+
+	/**
+	 * One attempt at the type-ahead read.
+	 *
+	 * @param context The resolved query context.
+	 * @param term The lower-cased term being completed.
+	 * @param take The largest number of suggestions to return.
+	 * @returns The suggestions.
+	 */
+	private async runSuggest(
+		context: ISearchQueryContext,
+		term: string,
+		take: number
+	): Promise<ISearchSuggestion[]> {
 		const params: Record<string, unknown> = {};
 		const query = this.createBaseQuery(context, params);
+		const escaped = this.escapeLike(term);
+		const keywords = this.keywordsExpression();
 
 		query.andWhere(
-			`(LOWER(doc.title) LIKE :${this.addParam(params, 'suggestPrefix', `${term}%`)} ` +
-				`OR LOWER(doc.title) LIKE :${this.addParam(params, 'suggestWithin', `%${term}%`)} ` +
-				`OR LOWER(doc.keywords) LIKE :${this.addParam(params, 'suggestToken', `%${term}%`)})`,
+			`(LOWER(doc.title) LIKE :${this.addParam(params, 'suggestPrefix', `${escaped}%`)}${LIKE_ESCAPE_CLAUSE} ` +
+				`OR LOWER(doc.title) LIKE :${this.addParam(
+					params,
+					'suggestWithin',
+					`%${escaped}%`
+				)}${LIKE_ESCAPE_CLAUSE} ` +
+				`OR LOWER(${keywords}) LIKE :${this.addParam(
+					params,
+					'suggestToken',
+					`%${escaped}%`
+				)}${LIKE_ESCAPE_CLAUSE})`,
 			params
 		);
 
@@ -331,6 +457,13 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	/**
 	 * Resolves a request into everything the query builders share.
 	 *
+	 * The organization on the request is the caller's **already validated** scope, not a value the
+	 * client chose: `SearchService.scopedOrganizationId` refuses a stated organization that the
+	 * credential does not authorise before the request ever reaches a provider. The provider reads it
+	 * rather than the credential because the service is the one place that knows which organizations
+	 * a caller may narrow to, and because a provider is also driven by callers that are not requests
+	 * at all.
+	 *
 	 * @param request The request.
 	 * @param entities The entity keys in scope.
 	 * @returns The context.
@@ -345,9 +478,34 @@ export class DatabaseSearchProvider implements ISearchProvider {
 			organizationId: request?.organizationId ?? RequestContext.currentOrganizationId(),
 			matchMode: request?.matchMode ?? SearchMatchMode.ANY,
 			terms: this.tokenise(request?.q),
-			useFullText: !this.degraded.has(`${dialect}:fulltext`),
-			useJsonPath: !this.degraded.has(`${dialect}:json`)
+			useFullText: !this.isDegraded(`${dialect}:fulltext`),
+			useJsonPath: !this.isDegraded(`${dialect}:json`)
 		};
+	}
+
+	/**
+	 * Whether a capability is currently switched off.
+	 *
+	 * An entry whose expiry has passed is removed as it is read, so the next query probes the
+	 * capability again rather than inheriting a verdict that a single statement reached minutes ago.
+	 *
+	 * @param capability The capability key, `<dialect>:<capability>`.
+	 * @returns True while the capability is switched off.
+	 */
+	private isDegraded(capability: string): boolean {
+		const until = this.degraded.get(capability);
+
+		if (until === undefined) {
+			return false;
+		}
+
+		if (until > Date.now()) {
+			return true;
+		}
+
+		this.degraded.delete(capability);
+
+		return false;
 	}
 
 	/**
@@ -383,6 +541,13 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	 * A document with no organization is a genuinely global row, so it is visible inside any
 	 * organization scope rather than belonging to none — the same reading the schema gives the column.
 	 *
+	 * **A scope that does not resolve narrows the read; it never widens it.** The tenant predicate
+	 * used to be applied only when a tenant was resolved, so a call that reached the provider outside
+	 * an authenticated request — a scheduled sweep, an outbox consumer, any future internal caller —
+	 * emitted a statement with no tenant restriction at all and matched every tenant's documents.
+	 * When no tenant resolves the predicate is now `doc.tenantId IS NULL`, which selects the
+	 * genuinely tenant-less rows the indexer writes and nothing else.
+	 *
 	 * @param context The query context.
 	 * @param params The parameter bag shared by the whole statement.
 	 * @returns The builder.
@@ -398,6 +563,8 @@ export class DatabaseSearchProvider implements ISearchProvider {
 
 		if (context.tenantId) {
 			query.andWhere('doc.tenantId = :scopedTenantId', { scopedTenantId: context.tenantId });
+		} else {
+			query.andWhere('doc.tenantId IS NULL');
 		}
 
 		if (context.organizationId) {
@@ -411,7 +578,7 @@ export class DatabaseSearchProvider implements ISearchProvider {
 			// are the schema's and the schema gives the document no channel of its own.
 			const fragment = this.tokenFragment(
 				params,
-				'doc.keywords',
+				this.keywordsExpression(),
 				`channelid:${String(context.request.channelId).toLowerCase()}`,
 				'EQ'
 			);
@@ -468,16 +635,30 @@ export class DatabaseSearchProvider implements ISearchProvider {
 			return null;
 		}
 
-		if (context.useFullText && this.dialect === 'postgres') {
+		// A dialect's own text-search capability answers only when every term is one its parser can
+		// read. One term of pure punctuation used to reach `to_tsquery` and raise `syntax error in
+		// tsquery` — a 500 produced by a search box — and the alternative of silently dropping the term
+		// would answer a different question from the one the caller asked. The portable path below can
+		// match any character, so the whole query falls back to it instead.
+		const parsable = context.terms.every((term) => this.isParsable(term));
+
+		if (parsable && context.useFullText && this.dialect === 'postgres') {
 			// The query is built from sanitised terms and passed as a parameter, never concatenated into
 			// the statement, so a term that looks like an operator cannot change the question.
+			//
+			// Each lexeme is quoted inside the tsquery as well. `to_tsquery` parses its argument, so a
+			// term that still carries a character the parser reads as a separator — `a%b`, `page/2` —
+			// raises `syntax error in tsquery` and turns a search box into a 500. A quoted lexeme is
+			// taken verbatim, and `'` is already removed by {@link tokenise}, so nothing inside the
+			// quotes can close them.
+			const lexemes = context.terms.map((term) => `'${term}'`);
 			const expression =
 				context.matchMode === SearchMatchMode.PHRASE
 					? `phraseto_tsquery('simple', :${this.addParam(params, 'tsPhrase', context.terms.join(' '))})`
 					: `to_tsquery('simple', :${this.addParam(
 							params,
 							'tsQuery',
-							context.terms.join(context.matchMode === SearchMatchMode.ALL ? ' & ' : ' | ')
+							lexemes.join(context.matchMode === SearchMatchMode.ALL ? ' & ' : ' | ')
 						)})`;
 
 			query.andWhere(`doc."searchVector" @@ ${expression}`, params);
@@ -485,7 +666,7 @@ export class DatabaseSearchProvider implements ISearchProvider {
 			return `ts_rank(doc."searchVector", ${expression}) * ${this.weightExpression(context)}`;
 		}
 
-		if (context.useFullText && this.dialect === 'mysql') {
+		if (parsable && context.useFullText && this.dialect === 'mysql') {
 			const matchAgainst =
 				context.matchMode === SearchMatchMode.PHRASE
 					? `"${context.terms.join(' ')}"`
@@ -516,11 +697,16 @@ export class DatabaseSearchProvider implements ISearchProvider {
 		// Every fragment that is built here is used, and no fragment is built twice: a parameter that
 		// reaches the driver without appearing in the statement is a binding error on some dialects.
 		const terms = context.matchMode === SearchMatchMode.PHRASE ? [context.terms.join(' ')] : context.terms;
+		const keywords = this.keywordsExpression();
 
 		const fragments = terms.map((term) => {
-			const name = this.addParam(params, 'likeTerm', `%${term}%`);
+			const name = this.addParam(params, 'likeTerm', `%${this.escapeLike(term)}%`);
 
-			return `(LOWER(doc.title) LIKE :${name} OR LOWER(doc.body) LIKE :${name} OR LOWER(doc.keywords) LIKE :${name})`;
+			return (
+				`(LOWER(doc.title) LIKE :${name}${LIKE_ESCAPE_CLAUSE}` +
+				` OR LOWER(doc.body) LIKE :${name}${LIKE_ESCAPE_CLAUSE}` +
+				` OR LOWER(${keywords}) LIKE :${name}${LIKE_ESCAPE_CLAUSE})`
+			);
 		});
 
 		const joined = fragments.join(context.matchMode === SearchMatchMode.ALL ? ' AND ' : ' OR ');
@@ -581,7 +767,7 @@ export class DatabaseSearchProvider implements ISearchProvider {
 				}
 
 				const entityParam = this.addParam(params, 'filterEntity', target.entity);
-				const predicate = this.filterFragment(params, target.definition, field, filter);
+				const predicate = this.filterFragment(params, context, target.definition, field, filter);
 
 				branches.push(`(doc.entity = :${entityParam} AND ${predicate})`);
 			}
@@ -593,7 +779,21 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	/**
 	 * Builds the predicate of one filter on one declared field.
 	 *
+	 * Every expression is built for the **declared kind** of the field rather than for one assumed
+	 * kind. The attribute map holds text, dates, numbers, booleans and lists side by side, so an
+	 * expression that casts whatever it finds to a decimal is correct for exactly one of them: on
+	 * Postgres it aborts the statement with `invalid input syntax for type numeric`, on MySQL it
+	 * truncates to zero with a warning, and on SQLite it silently evaluates to zero — which is why a
+	 * SQLite-only verification saw nothing wrong. {@link attributeExpression} therefore takes the
+	 * kind, and every call site here passes the field it already holds.
+	 *
+	 * When the connection's JSON path capability is unavailable the attribute map cannot be read at
+	 * all, so a filter is answered from the promoted token list instead. That is weaker, and it is
+	 * described as weaker: a field the declaration does not promote carries no token, so its branch
+	 * matches nothing rather than matching rows the filter did not select.
+	 *
 	 * @param params The parameter bag.
+	 * @param context The query context, which says which capabilities this statement may use.
 	 * @param definition The declaration the field belongs to.
 	 * @param field The declared field.
 	 * @param filter The filter.
@@ -601,6 +801,7 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	 */
 	private filterFragment(
 		params: Record<string, unknown>,
+		context: ISearchQueryContext,
 		definition: ISearchIndexRegistration,
 		field: ISearchIndexField,
 		filter: ISearchFilter
@@ -610,40 +811,54 @@ export class DatabaseSearchProvider implements ISearchProvider {
 
 		switch (filter.operator) {
 			case SearchFilterOperator.EQ:
-				return this.valueFragment(params, promoted, field, filter.value, 'EQ');
+				return this.valueFragment(params, context, promoted, field, filter.value, 'EQ');
 
 			case SearchFilterOperator.NEQ:
-				return `NOT (${this.valueFragment(params, promoted, field, filter.value, 'EQ')})`;
+				return `NOT (${this.valueFragment(params, context, promoted, field, filter.value, 'EQ')})`;
 
 			case SearchFilterOperator.IN:
 				return `(${values
-					.map((value) => this.valueFragment(params, promoted, field, value, 'EQ'))
+					.map((value) => this.valueFragment(params, context, promoted, field, value, 'EQ'))
 					.join(' OR ')})`;
 
 			case SearchFilterOperator.NIN:
 				return `NOT (${values
-					.map((value) => this.valueFragment(params, promoted, field, value, 'EQ'))
+					.map((value) => this.valueFragment(params, context, promoted, field, value, 'EQ'))
 					.join(' OR ')})`;
 
 			case SearchFilterOperator.CONTAINS:
-				return this.valueFragment(params, promoted, field, filter.value, 'CONTAINS');
+				return this.valueFragment(params, context, promoted, field, filter.value, 'CONTAINS');
 
 			case SearchFilterOperator.STARTS_WITH:
-				return this.valueFragment(params, promoted, field, filter.value, 'STARTS_WITH');
+				return this.valueFragment(params, context, promoted, field, filter.value, 'STARTS_WITH');
 
 			case SearchFilterOperator.EXISTS:
-				return `${this.attributeExpression(field.name)} IS NOT NULL`;
+				if (!context.useJsonPath) {
+					// Without the attribute map, "the document carries this field" is answered by the
+					// presence of the field's own promoted token.
+					return `LOWER(${this.keywordsExpression()}) LIKE :${this.addParam(
+						params,
+						'existsToken',
+						`%"${this.escapeLike(this.safePath(field.name).toLowerCase())}:%`
+					)}${LIKE_ESCAPE_CLAUSE}`;
+				}
+
+				return `${this.attributeExpression(field.name, field.kind)} IS NOT NULL`;
 
 			case SearchFilterOperator.BETWEEN: {
 				const [from, to] = values;
 
+				if (!context.useJsonPath) {
+					return this.unrankableFragment(field, filter.operator);
+				}
+
 				return (
-					`${this.attributeExpression(field.name)} >= :${this.addParam(
+					`${this.attributeExpression(field.name, field.kind)} >= :${this.addParam(
 						params,
 						'betweenFrom',
 						this.comparable(field, from)
 					)} AND ` +
-					`${this.attributeExpression(field.name)} <= :${this.addParam(
+					`${this.attributeExpression(field.name, field.kind)} <= :${this.addParam(
 						params,
 						'betweenTo',
 						this.comparable(field, to)
@@ -664,7 +879,11 @@ export class DatabaseSearchProvider implements ISearchProvider {
 								? '<'
 								: '<=';
 
-				return `${this.attributeExpression(field.name)} ${operator} :${this.addParam(
+				if (!context.useJsonPath) {
+					return this.unrankableFragment(field, filter.operator);
+				}
+
+				return `${this.attributeExpression(field.name, field.kind)} ${operator} :${this.addParam(
 					params,
 					'compare',
 					this.comparable(field, filter.value)
@@ -672,8 +891,29 @@ export class DatabaseSearchProvider implements ISearchProvider {
 			}
 
 			default:
-				return this.valueFragment(params, promoted, field, filter.value, 'CONTAINS');
+				return this.valueFragment(params, context, promoted, field, filter.value, 'CONTAINS');
 		}
+	}
+
+	/**
+	 * The predicate of a range comparison the connection cannot evaluate.
+	 *
+	 * A range over an attribute needs the attribute's value, and a connection whose JSON path
+	 * capability is unavailable cannot produce one. There is no weaker form of "greater than" over a
+	 * token list, so the branch selects nothing and says so in the log rather than dropping the
+	 * predicate, which would return rows the caller asked to exclude.
+	 *
+	 * @param field The declared field.
+	 * @param operator The operator that cannot be evaluated.
+	 * @returns A fragment that matches nothing.
+	 */
+	private unrankableFragment(field: ISearchIndexField, operator: SearchFilterOperator): string {
+		this.logger.warn(
+			`The ${this.dialect} JSON path capability is unavailable, so the "${operator}" filter on ` +
+				`"${field.name}" cannot be evaluated and its branch selects nothing.`
+		);
+
+		return '1 = 0';
 	}
 
 	/**
@@ -681,6 +921,7 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	 * map where it is not.
 	 *
 	 * @param params The parameter bag.
+	 * @param context The query context, which says whether the attribute map can be read at all.
 	 * @param promoted Whether the field is promoted into the document's keywords.
 	 * @param field The declared field.
 	 * @param value The value.
@@ -689,51 +930,112 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	 */
 	private valueFragment(
 		params: Record<string, unknown>,
+		context: ISearchQueryContext,
 		promoted: boolean,
 		field: ISearchIndexField,
 		value: unknown,
 		mode: 'EQ' | 'CONTAINS' | 'STARTS_WITH'
 	): string {
+		const keywords = this.keywordsExpression();
+
 		if (promoted && field.kind !== SearchFieldKind.NUMBER && field.kind !== SearchFieldKind.DATE) {
 			// A promoted field is addressable through its tokens, which is the path that works on every
 			// dialect: the token carries the field name, so one token list serves every facet and filter.
-			const token = mode === 'CONTAINS' ? String(value).toLowerCase() : `${field.name}:${String(value).toLowerCase()}`;
+			const token =
+				mode === 'CONTAINS'
+					? String(value).toLowerCase()
+					: `${field.name.toLowerCase()}:${String(value).toLowerCase()}`;
 
-			return this.tokenFragment(params, 'doc.keywords', token, mode);
+			return this.tokenFragment(params, keywords, token, mode);
 		}
 
 		if (field.kind === SearchFieldKind.TEXT) {
-			const lowered = String(value).toLowerCase();
+			const lowered = this.escapeLike(String(value).toLowerCase());
 			const name = this.addParam(
 				params,
 				'text',
-				mode === 'CONTAINS' ? `%${lowered}%` : mode === 'STARTS_WITH' ? `${lowered}%` : lowered
+				mode === 'CONTAINS'
+					? `%${lowered}%`
+					: mode === 'STARTS_WITH'
+						? `${lowered}%`
+						: String(value).toLowerCase()
 			);
 
 			return mode === 'EQ'
 				? `LOWER(doc.title) = :${name}`
-				: `(LOWER(doc.title) LIKE :${name} OR LOWER(doc.body) LIKE :${name} OR LOWER(doc.keywords) LIKE :${name})`;
+				: `(LOWER(doc.title) LIKE :${name}${LIKE_ESCAPE_CLAUSE}` +
+						` OR LOWER(doc.body) LIKE :${name}${LIKE_ESCAPE_CLAUSE}` +
+						` OR LOWER(${keywords}) LIKE :${name}${LIKE_ESCAPE_CLAUSE})`;
 		}
 
-		const name = this.addParam(params, 'attribute', this.comparable(field, value));
+		if (!context.useJsonPath) {
+			// The attribute map cannot be read on this connection, so the field is answered from its
+			// promoted token. A field the declaration does not promote carries none, and the branch then
+			// matches nothing — which is the honest answer rather than an unfiltered one.
+			const token =
+				mode === 'CONTAINS'
+					? String(value).toLowerCase()
+					: `${field.name.toLowerCase()}:${String(value).toLowerCase()}`;
 
-		return mode === 'EQ'
-			? `${this.attributeExpression(field.name)} = :${name}`
-			: `${this.attributeExpression(field.name)} LIKE :${this.addParam(
+			return this.tokenFragment(params, keywords, token, mode);
+		}
+
+		if (mode === 'EQ') {
+			const name = this.addParam(params, 'attribute', this.comparable(field, value));
+			const expression = this.attributeExpression(field.name, field.kind);
+
+			if (field.kind === SearchFieldKind.KEYWORD || field.kind === SearchFieldKind.ENTITY) {
+				// A keyword attribute holds either one value or the JSON array the builder writes for a
+				// multi-valued field — `["urgent","legal"]` — so equality against the scalar alone matches
+				// none of the list's members. The second half of the predicate matches one member of the
+				// encoded list, which is the same element-boundary match the token predicate uses.
+				const member = this.addParam(
 					params,
-					'attributeLike',
-					`%${String(value)}%`
-				)}`;
+					'attributeMember',
+					`%"${this.escapeLike(String(value).toLowerCase())}"%`
+				);
+
+				return `(${expression} = :${name} OR LOWER(${expression}) LIKE :${member}${LIKE_ESCAPE_CLAUSE})`;
+			}
+
+			return `${expression} = :${name}`;
+		}
+
+		// A substring match is a text operation whatever the declared kind is, so it is built over the
+		// text extraction rather than over the kind's own expression: `LOWER()` of a decimal cast is not
+		// a function Postgres has, and a prefix of a number is not a number.
+		const text = this.attributeTextExpression(this.safePath(field.name));
+		const lowered = this.escapeLike(String(value).toLowerCase());
+		const pattern = this.addParam(
+			params,
+			'attributeLike',
+			mode === 'STARTS_WITH' ? `${lowered}%` : `%${lowered}%`
+		);
+
+		return `LOWER(${text}) LIKE :${pattern}${LIKE_ESCAPE_CLAUSE}`;
 	}
 
 	/**
-	 * A token predicate over a comma-joined token column.
+	 * A token predicate over the promoted token list.
+	 *
+	 * **The list is a JSON array, not a comma-joined string.** `SearchDocument.keywords` is declared
+	 * `@JsonArrayColumn<string>`, which is `jsonb` on Postgres, `json` on MySQL and a `simple-json`
+	 * text column on SQLite, and the builder writes `["colour:red","channelid:abc"]` into it on every
+	 * one of them. The exact-match predicate used to be written for a scalar `a,b,c` column — `= 'x'`,
+	 * `LIKE 'x,%'`, `LIKE '%,x'`, `LIKE '%,x,%'` — and none of those four patterns can match a JSON
+	 * array, whose separator is `","` and which starts with `["`. That is why a channel-scoped search
+	 * returned nothing on every dialect and every promoted `EQ` filter matched no row at all.
+	 *
+	 * The match is therefore made against the JSON encoding of one element: `%"token"%`. The quotes
+	 * are the element boundary, so `status:pai` cannot match `status:paid`, and the pattern is
+	 * insensitive to the whitespace the three dialects render an array with — Postgres and MySQL emit
+	 * `", "` between elements and SQLite emits `","`.
 	 *
 	 * The patterns are built in JavaScript and passed as parameters, so the fragment is identical on
 	 * every dialect and no dialect's string-concatenation operator appears in the statement.
 	 *
 	 * @param params The parameter bag.
-	 * @param column The token column.
+	 * @param column The expression that renders the token list as text; see {@link keywordsExpression}.
 	 * @param token The token; a prefixed one for an exact match, a bare value for a contains match.
 	 * @param mode How the token must match.
 	 * @returns The SQL fragment.
@@ -744,16 +1046,31 @@ export class DatabaseSearchProvider implements ISearchProvider {
 		token: string,
 		mode: 'EQ' | 'CONTAINS' | 'STARTS_WITH'
 	): string {
-		if (mode === 'CONTAINS' || mode === 'STARTS_WITH') {
-			return `LOWER(${column}) LIKE :${this.addParam(params, 'tokenLike', `%${token}%`)}`;
+		const escaped = this.escapeLike(String(token ?? '').toLowerCase());
+
+		if (mode === 'CONTAINS') {
+			return `LOWER(${column}) LIKE :${this.addParam(
+				params,
+				'tokenLike',
+				`%${escaped}%`
+			)}${LIKE_ESCAPE_CLAUSE}`;
 		}
 
-		const exact = this.addParam(params, 'tokenExact', token);
-		const head = this.addParam(params, 'tokenHead', `${token},%`);
-		const tail = this.addParam(params, 'tokenTail', `%,${token}`);
-		const middle = this.addParam(params, 'tokenMiddle', `%,${token},%`);
+		if (mode === 'STARTS_WITH') {
+			// Anchored on the opening quote of an element, so the token really is a prefix of one entry
+			// rather than a substring of the encoded list.
+			return `LOWER(${column}) LIKE :${this.addParam(
+				params,
+				'tokenHead',
+				`%"${escaped}%`
+			)}${LIKE_ESCAPE_CLAUSE}`;
+		}
 
-		return `(LOWER(${column}) = :${exact} OR LOWER(${column}) LIKE :${head} OR LOWER(${column}) LIKE :${tail} OR LOWER(${column}) LIKE :${middle})`;
+		return `LOWER(${column}) LIKE :${this.addParam(
+			params,
+			'tokenExact',
+			`%"${escaped}"%`
+		)}${LIKE_ESCAPE_CLAUSE}`;
 	}
 
 	/**
@@ -784,7 +1101,22 @@ export class DatabaseSearchProvider implements ISearchProvider {
 
 			const field = this.fieldOf(target.definition, sort.attribute);
 
-			query.orderBy(this.attributeExpression(field.name), direction);
+			if (!context.useJsonPath) {
+				// The attribute cannot be extracted on this connection, so the page falls back to the
+				// documented weaker ordering rather than emitting a statement that cannot run. Naming the
+				// field in the warning is what makes the weaker answer traceable.
+				this.logger.warn(
+					`The ${this.dialect} JSON path capability is unavailable, so the page could not be ordered ` +
+						`by "${field.name}" and is ordered by relevance and title instead.`
+				);
+
+				query.orderBy('score', 'DESC');
+				query.addOrderBy('doc.title', 'ASC');
+
+				return;
+			}
+
+			query.orderBy(this.attributeExpression(field.name, field.kind), direction);
 			query.addOrderBy('score', 'DESC');
 			query.addOrderBy('doc.title', 'ASC');
 
@@ -844,7 +1176,7 @@ export class DatabaseSearchProvider implements ISearchProvider {
 					continue;
 				}
 
-				await this.countAttributeFacet(context, entity, name, counts);
+				await this.countAttributeFacet(context, entity, field, counts);
 			}
 		}
 
@@ -860,6 +1192,12 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	/**
 	 * Counts the values of a field promoted into the documents' keywords.
 	 *
+	 * The bucket a group carries is the whole token list, and the list is a JSON array — so it is
+	 * parsed as one rather than split on commas. Splitting `["colour:red","size:m"]` on `,` yields
+	 * `["colour` and `"size:m"]`, whose field names are `["colour` and `"size`, which match nothing
+	 * and made every promoted facet come back empty. The driver hands the column back already parsed
+	 * on the two dialects with a real JSON type and as text on SQLite, so both shapes are accepted.
+	 *
 	 * @param context The query context.
 	 * @param entity The entity type whose declaration is being counted.
 	 * @param attribute The declared field name.
@@ -873,10 +1211,15 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	): Promise<void> {
 		const params: Record<string, unknown> = {};
 		const query = this.buildQuery(context, false, params);
+		const keywords = this.keywordsExpression();
 
 		query.andWhere(`doc.entity = :${this.addParam(params, 'facetEntity', entity)}`, params);
 		query.andWhere(
-			`LOWER(doc.keywords) LIKE :${this.addParam(params, 'facetToken', `%${attribute.toLowerCase()}:%`)}`,
+			`LOWER(${keywords}) LIKE :${this.addParam(
+				params,
+				'facetToken',
+				`%"${this.escapeLike(attribute.toLowerCase())}:%`
+			)}${LIKE_ESCAPE_CLAUSE}`,
 			params
 		);
 		query.select('doc.keywords', 'bucket');
@@ -886,7 +1229,7 @@ export class DatabaseSearchProvider implements ISearchProvider {
 		const rows = await query.getRawMany();
 
 		for (const row of rows ?? []) {
-			for (const token of String((row as any)?.bucket ?? '').split(',')) {
+			for (const token of this.keywordTokens((row as any)?.bucket)) {
 				const separator = token.indexOf(':');
 
 				if (separator <= 0) {
@@ -905,18 +1248,25 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	/**
 	 * Counts the values of a field that lives in the attribute map.
 	 *
+	 * The bucket is grouped on the field's own expression, which is the text extraction for every
+	 * kind but a number — grouping a date or a tag list by a decimal cast buckets everything under
+	 * zero on SQLite and aborts the statement on Postgres. A bucket that is itself a list is counted
+	 * once per member, because a multi-valued field's facet is a count of its values and not a count
+	 * of the combinations they occur in.
+	 *
 	 * @param context The query context.
 	 * @param entity The entity type whose declaration is being counted.
-	 * @param attribute The declared field name.
+	 * @param field The declared field.
 	 * @param counts The accumulator.
 	 */
 	private async countAttributeFacet(
 		context: ISearchQueryContext,
 		entity: string,
-		attribute: string,
+		field: ISearchIndexField,
 		counts: Map<string, Map<string, number>>
 	): Promise<void> {
-		const expression = this.attributeExpression(attribute);
+		const attribute = field.name;
+		const expression = this.attributeExpression(attribute, field.kind);
 		const params: Record<string, unknown> = {};
 		const query = this.buildQuery(context, false, params);
 
@@ -935,8 +1285,76 @@ export class DatabaseSearchProvider implements ISearchProvider {
 				continue;
 			}
 
-			this.increment(counts, attribute, String(bucket), Number((row as any)?.count ?? 0));
+			for (const value of this.facetValues(bucket)) {
+				this.increment(counts, attribute, value, Number((row as any)?.count ?? 0));
+			}
 		}
+	}
+
+	/**
+	 * The tokens one grouped keyword bucket holds.
+	 *
+	 * @param bucket Whatever the driver returned for the token column: a parsed array on Postgres and
+	 * MySQL, the stored JSON text on SQLite, and — for a row written before the column became JSON —
+	 * possibly still a comma-joined string, which is accepted rather than discarded.
+	 * @returns The tokens.
+	 */
+	private keywordTokens(bucket: unknown): string[] {
+		if (Array.isArray(bucket)) {
+			return bucket.map((token) => String(token));
+		}
+
+		const text = String(bucket ?? '').trim();
+
+		if (!text) {
+			return [];
+		}
+
+		if (text.startsWith('[')) {
+			try {
+				const parsed = JSON.parse(text);
+
+				if (Array.isArray(parsed)) {
+					return parsed.map((token) => String(token));
+				}
+			} catch (error) {
+				// Not valid JSON after all: fall through to the comma reading below rather than losing the
+				// whole bucket over one malformed row.
+			}
+		}
+
+		return text
+			.split(',')
+			.map((token) => token.trim())
+			.filter(Boolean);
+	}
+
+	/**
+	 * The facet values one grouped attribute bucket contributes.
+	 *
+	 * @param bucket Whatever the driver returned for the grouped expression.
+	 * @returns One value per member of a list, or the single value the bucket is.
+	 */
+	private facetValues(bucket: unknown): string[] {
+		if (Array.isArray(bucket)) {
+			return bucket.map((value) => String(value)).filter((value) => value !== '');
+		}
+
+		const text = String(bucket).trim();
+
+		if (text.startsWith('[')) {
+			try {
+				const parsed = JSON.parse(text);
+
+				if (Array.isArray(parsed)) {
+					return parsed.map((value) => String(value)).filter((value) => value !== '');
+				}
+			} catch (error) {
+				// A value that merely begins with a bracket is still a value.
+			}
+		}
+
+		return text ? [text] : [];
 	}
 
 	/**
@@ -989,29 +1407,94 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	 * @returns The expression, or the constant `1` when the dialect cannot evaluate one.
 	 */
 	private weightExpression(context: ISearchQueryContext): string {
-		return context.useJsonPath ? `COALESCE(${this.attributeExpression(WEIGHT_ATTRIBUTE)}, 1)` : '1';
+		return context.useJsonPath
+			? `COALESCE(${this.attributeExpression(WEIGHT_ATTRIBUTE, SearchFieldKind.NUMBER)}, 1)`
+			: '1';
 	}
 
 	/**
-	 * The expression that reads one attribute out of the document's attribute map.
+	 * The expression that renders the promoted token list as text.
 	 *
-	 * The comparison is numeric on every dialect: a weight, a price or a quantity is compared as a
-	 * number, and a decimal cast keeps the comparison exact rather than approximate.
+	 * `keywords` is a JSON column on two of the four dialects — `jsonb` on Postgres, `json` on MySQL
+	 * — and a `simple-json` text column on SQLite and better-sqlite3. `LOWER()` and `LIKE` are text
+	 * operations, and Postgres has no `lower(jsonb)`: every keyword predicate used to abort the whole
+	 * statement there with `function lower(jsonb) does not exist`, which took out type-ahead, every
+	 * channel-scoped search and every promoted filter, while SQLite — where the column really is text
+	 * — saw nothing wrong. The column is therefore rendered as text first, and the token predicate is
+	 * written against that rendering.
 	 *
-	 * @param name The declared field name.
 	 * @returns The SQL expression.
 	 */
-	private attributeExpression(name: string): string {
-		const path = this.safePath(name);
-
+	private keywordsExpression(): string {
 		switch (this.dialect) {
 			case 'postgres':
-				return `CAST(doc.attributes ->> '${path}' AS DECIMAL(20,6))`;
+				return `CAST(doc.keywords AS TEXT)`;
 			case 'mysql':
-				return `CAST(JSON_UNQUOTE(JSON_EXTRACT(doc.attributes, '$.${path}')) AS DECIMAL(20,6))`;
+				return `CAST(doc.keywords AS CHAR)`;
 			default:
-				return `CAST(json_extract(doc.attributes, '$.${path}') AS NUMERIC)`;
+				return `doc.keywords`;
 		}
+	}
+
+	/**
+	 * The expression that reads one attribute out of the document's attribute map, as text.
+	 *
+	 * This is the form every kind but a number is compared, grouped and ordered by. A date is stored
+	 * as the ISO-8601 string its column carried and ISO-8601 strings compare chronologically, a
+	 * keyword is a token, and a tag list is the JSON array the builder wrote — none of which is a
+	 * number, and none of which survives a numeric cast.
+	 *
+	 * @param path The validated attribute path.
+	 * @returns The SQL expression.
+	 */
+	private attributeTextExpression(path: string): string {
+		switch (this.dialect) {
+			case 'postgres':
+				return `doc.attributes ->> '${path}'`;
+			case 'mysql':
+				return `JSON_UNQUOTE(JSON_EXTRACT(doc.attributes, '$.${path}'))`;
+			default:
+				return `json_extract(doc.attributes, '$.${path}')`;
+		}
+	}
+
+	/**
+	 * The expression that reads one attribute out of the document's attribute map, for its kind.
+	 *
+	 * The expression used to be numeric for every attribute whatever its declaration said, and the
+	 * value on the other side of the comparison was text for everything that is not a number or a
+	 * boolean — so the two halves disagreed for four of the six kinds. On Postgres that is
+	 * `ERROR 22P02: invalid input syntax for type numeric` or `operator does not exist: numeric >=
+	 * text`; on MySQL it is a truncation to zero; on SQLite `CAST('2024-01-01T…' AS NUMERIC)` is
+	 * `2024`, so every date in one year compared equal and the filter returned the wrong rows without
+	 * an error anywhere. Reading the kind is what makes the two halves agree.
+	 *
+	 * A boolean is normalised to 1 or 0 rather than compared as text, because the three dialects
+	 * disagree about what a JSON `true` extracts as: Postgres and MySQL yield the string `'true'` and
+	 * SQLite's `json_extract` yields the integer `1`. {@link comparable} produces 1 or 0 for the
+	 * value, and the `CASE` produces 1 or 0 for the column, so one predicate is right on all four.
+	 *
+	 * @param name The declared field name.
+	 * @param kind The declared kind; a number when the caller is reading the document's own weight.
+	 * @returns The SQL expression.
+	 */
+	private attributeExpression(name: string, kind: SearchFieldKind = SearchFieldKind.NUMBER): string {
+		const path = this.safePath(name);
+		const text = this.attributeTextExpression(path);
+
+		if (kind === SearchFieldKind.NUMBER) {
+			// A weight, a price or a quantity is compared as a number, and a decimal cast keeps the
+			// comparison exact rather than approximate.
+			return this.dialect === 'sqlite'
+				? `CAST(${text} AS NUMERIC)`
+				: `CAST(${text} AS DECIMAL(20,6))`;
+		}
+
+		if (kind === SearchFieldKind.BOOLEAN) {
+			return `CASE WHEN ${text} IS NULL THEN NULL WHEN LOWER(${text}) IN ('true', '1', 't', 'yes') THEN 1 ELSE 0 END`;
+		}
+
+		return text;
 	}
 
 	/**
@@ -1036,7 +1519,34 @@ export class DatabaseSearchProvider implements ISearchProvider {
 			return value === true || String(value).toLowerCase() === 'true' ? 1 : 0;
 		}
 
+		if (field.kind === SearchFieldKind.DATE && value instanceof Date) {
+			// A `Date` rendered with `String()` is `Mon Dec 31 2024 …`, which does not compare
+			// chronologically against the ISO-8601 text the document holds. GraphQL hands a parsed date
+			// through, so this is the shape a range filter over a date arrives in on that surface.
+			return value.toISOString();
+		}
+
 		return value === null || value === undefined ? '' : String(value);
+	}
+
+	/**
+	 * Escapes the wildcards of a `LIKE` pattern.
+	 *
+	 * A parameterised pattern is safe from injection and completely open to a caller who types a
+	 * wildcard into it: `%` matches anything and `_` matches one character, and both live in the
+	 * *value* rather than in the statement. `q=%` produced `LIKE '%%%'`, which matches every document
+	 * the caller may see — the term filter was bypassed wholesale and the index could be enumerated a
+	 * page at a time.
+	 *
+	 * Every fragment that carries an escaped pattern states {@link LIKE_ESCAPE_CLAUSE}, because SQLite
+	 * has no default escape character at all and the other two dialects' default is a backslash, which
+	 * cannot be written portably inside a string literal.
+	 *
+	 * @param value The pattern fragment a caller supplied.
+	 * @returns The fragment, with its wildcards and the escape character itself escaped.
+	 */
+	private escapeLike(value: string): string {
+		return String(value ?? '').replace(/[!%_]/g, (character) => `${LIKE_ESCAPE}${character}`);
 	}
 
 	/**
@@ -1107,6 +1617,20 @@ export class DatabaseSearchProvider implements ISearchProvider {
 	 * The characters that carry meaning in a text-search expression are removed, because a term that
 	 * reaches an expression as an operator is a term that changes the question.
 	 *
+	 * Three things are handled here that were not:
+	 *
+	 * - MySQL's boolean mode reads `+`, `-`, `~` and `@` as **prefix** operators, and the `ALL` branch
+	 *   already prefixes its own `+`. A term such as `-foo` therefore built `AGAINST ('+-foo*' IN
+	 *   BOOLEAN MODE)`, which the server refuses with a syntax error — a search box turning a user's
+	 *   typing into a 500. They are stripped from the front of a term and left inside it, so
+	 *   `t-shirt` is still the word a person typed.
+	 * - A term that is nothing but punctuation reached `to_tsquery`, which refuses it with
+	 *   `syntax error in tsquery`. It is kept here — it is what the caller typed, and the portable
+	 *   path can match it — and {@link isParsable} is what keeps it away from a text-search parser.
+	 * - `%` and `_` are left in the term rather than removed, because they are legitimate characters
+	 *   to search for; they are escaped where the term becomes a `LIKE` pattern. See
+	 *   {@link escapeLike}.
+	 *
 	 * @param q The query.
 	 * @returns The terms, lower-cased.
 	 */
@@ -1114,8 +1638,28 @@ export class DatabaseSearchProvider implements ISearchProvider {
 		return String(q ?? '')
 			.toLowerCase()
 			.split(/\s+/)
-			.map((term) => term.replace(/[&|!()<>:*'\\"]/g, '').trim())
+			.map((term) =>
+				term
+					.replace(/[&|!()<>:*'\\"]/g, '')
+					.replace(/^[+\-~@]+/, '')
+					.trim()
+			)
 			.filter(Boolean);
+	}
+
+	/**
+	 * Whether a term is one a dialect's own text-search parser will accept.
+	 *
+	 * `to_tsquery` and MySQL's boolean mode both parse their argument, and a term that carries no
+	 * letter and no digit is not a lexeme to either of them — `to_tsquery('simple', ',')` raises
+	 * `syntax error in tsquery`, which is a 500 produced by a search box. The term is not discarded;
+	 * the *query* falls back to the portable path, which matches any character the caller typed.
+	 *
+	 * @param term The term.
+	 * @returns True when a text-search parser can read it.
+	 */
+	private isParsable(term: string): boolean {
+		return /[\p{L}\p{N}]/u.test(term);
 	}
 
 	/**
@@ -1221,8 +1765,15 @@ export class DatabaseSearchProvider implements ISearchProvider {
 		const message = String((error as Error)?.message ?? error).toLowerCase();
 		const dialect = this.dialect;
 
+		if (this.isRequestShaped(message)) {
+			// A value the caller supplied was not one the column could hold. That is a fact about the
+			// request, not about the connection, and degrading a capability over it lets unprivileged
+			// input switch a feature off for every tenant of the process.
+			return false;
+		}
+
 		if (context.useFullText && dialect !== 'sqlite' && /fulltext|match |against|tsquery|tsvector|searchvector/.test(message)) {
-			this.degraded.add(`${dialect}:fulltext`);
+			this.degraded.set(`${dialect}:fulltext`, Date.now() + DEGRADED_CAPABILITY_TTL_MS);
 			context.useFullText = false;
 
 			this.logger.warn(
@@ -1232,8 +1783,12 @@ export class DatabaseSearchProvider implements ISearchProvider {
 			return true;
 		}
 
-		if (context.useJsonPath && /json|jsonb|json_extract|operator does not exist/.test(message)) {
-			this.degraded.add(`${dialect}:json`);
+		// The trigger names the JSON capability itself. A bare `operator does not exist` used to be
+		// enough, and that is the exact wording Postgres uses for an ordinary type mismatch between a
+		// column and a parameter — a request-shaped failure, which is how one malformed filter could
+		// disable JSON-path ranking and every attribute facet for the whole installation.
+		if (context.useJsonPath && /json|jsonb|json_extract|json_unquote|jsonb_path|->>/.test(message)) {
+			this.degraded.set(`${dialect}:json`, Date.now() + DEGRADED_CAPABILITY_TTL_MS);
 			context.useJsonPath = false;
 
 			this.logger.warn(
@@ -1244,5 +1799,22 @@ export class DatabaseSearchProvider implements ISearchProvider {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether a failure describes the request rather than the connection.
+	 *
+	 * A capability is degraded because the *connection* cannot do something, and a capability that is
+	 * degraded stays degraded for every tenant of the process. So a failure that a caller's own value
+	 * produced — a number that was not a number, a date that was not a date — must never be the thing
+	 * that switches one off.
+	 *
+	 * @param message The lower-cased driver message.
+	 * @returns True when the failure is about the request's values.
+	 */
+	private isRequestShaped(message: string): boolean {
+		return /invalid input syntax|22p02|out of range|truncated incorrect|incorrect .* value|invalid text representation/.test(
+			message
+		);
 	}
 }

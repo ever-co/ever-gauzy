@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { assertPostalCodePattern, matchesPostalCode } from '../postal-code.matcher';
 import { TypeOrmTaxRateRepository } from '../tax-rate/repository/type-orm-tax-rate.repository';
 import {
 	IResolvedTaxRegime,
@@ -392,20 +393,17 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 	}
 
 	/**
+	 * Delegates to the package's one matcher, so a regime and a rate answer the same question of the same
+	 * destination. The expression used to be built and tested here, unanchored, so a regime configured
+	 * for `90210` also claimed `190210`.
+	 *
 	 * @param pattern The regime's postal pattern.
 	 * @param postalCode The destination's postal code.
-	 * @returns Whether the pattern matches, case-insensitively and with the spacing of the code ignored,
-	 * because the same code is written with and without its space.
+	 * @returns Whether the pattern is the whole of the code, case-insensitively and with the spacing of
+	 * the code ignored, because the same code is written with and without its space.
 	 */
 	private matchesPostalCode(pattern: string, postalCode?: string): boolean {
-		if (!postalCode) {
-			return false;
-		}
-
-		const expression = new RegExp(pattern, 'i');
-		const compact = postalCode.replace(/\s+/g, '');
-
-		return expression.test(postalCode) || expression.test(compact);
+		return matchesPostalCode(pattern, postalCode);
 	}
 
 	/**
@@ -476,19 +474,12 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 
 	/**
 	 * @param pattern The postal pattern, when the caller supplied one.
-	 * @throws BadRequestException when it does not compile as a pattern. A pattern, never a list: a list of
-	 * postal codes would need a table of its own.
+	 * @throws BadRequestException when it does not compile as a pattern, or when its cost depends on the
+	 * postal code it is matched against. A pattern, never a list: a list of postal codes would need a
+	 * table of its own.
 	 */
 	private assertPostalCodePattern(pattern?: string): void {
-		if (!pattern) {
-			return;
-		}
-
-		try {
-			new RegExp(pattern);
-		} catch {
-			throw new BadRequestException(`The postal code pattern "${pattern}" is not a valid pattern.`);
-		}
+		assertPostalCodePattern(pattern, 'tax regime');
 	}
 
 	/**

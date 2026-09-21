@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { CrudService, RequestContext } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { PromotionAction } from './promotion-action.entity';
 import { TypeOrmPromotionActionRepository } from './repository/type-orm-promotion-action.repository';
 import { MikroOrmPromotionActionRepository } from './repository/mikro-orm-promotion-action.repository';
@@ -11,6 +11,7 @@ import {
 	PromotionActionType,
 	PromotionType
 } from '../promotion.types';
+import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
 
 /**
  * The effect half of a promotion.
@@ -23,7 +24,7 @@ import {
  * promotion around it changes type.
  */
 @Injectable()
-export class PromotionActionService extends CrudService<PromotionAction> {
+export class PromotionActionService extends TenantScopedCrudService<PromotionAction> {
 	constructor(
 		readonly typeOrmPromotionActionRepository: TypeOrmPromotionActionRepository,
 		readonly mikroOrmPromotionActionRepository: MikroOrmPromotionActionRepository
@@ -157,9 +158,22 @@ export class PromotionActionService extends CrudService<PromotionAction> {
 		const stored: IPromotionAction[] = [];
 
 		for (const [index, action] of actions.entries()) {
+			// **The primary key is stripped before the write.** `CrudService.create` is an upsert when
+			// the payload carries one: the MikroORM arm looks the row up by id and assigns onto it, and
+			// TypeORM's `save` does the same — neither with a tenant predicate. The route that reaches
+			// here declares its body as an inline type literal with no validation pipe, so a caller
+			// could name the id of a `promotion_action` row in *another* tenant and have it re-parented
+			// into theirs, with the attacker's `promotionId`, `tenantId` and `organizationId` assigned
+			// onto it. The replacement writes new rows and the set is replaced whole, so nothing here
+			// ever needs a key the caller supplied. The tenancy columns are stripped for the same
+			// reason: the scope spread below is the only thing allowed to state them.
+			const { id: _key, tenantId: _tenant, organizationId: _organization, ...fields } = action as Partial<
+				IPromotionAction
+			> & { tenantId?: ID; organizationId?: ID };
+
 			stored.push(
 				await this.create({
-					...action,
+					...fields,
 					promotionId,
 					position: action.position ?? index,
 					...this.scope

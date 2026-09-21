@@ -68,6 +68,11 @@ export class CommerceCartLineResolver {
 	/**
 	 * Adds a line.
 	 *
+	 * The routing members are taken out of the input before the rest of it is handed to the service:
+	 * `cartId` names the aggregate the mutation writes and is not a field of the change set, and this
+	 * mutation's argument is declared `Object` rather than a validated input type, so nothing else
+	 * strips it. See {@link updateCartLine} for what that cost on the sibling mutation.
+	 *
 	 * @param input The line to add.
 	 * @param context The operation context, which carries the version the caller read the cart at.
 	 * @returns The cart after the addition.
@@ -80,11 +85,23 @@ export class CommerceCartLineResolver {
 		@Args('input', { type: () => Object }) input: Record<string, any>,
 		@Context() context: any
 	): Promise<CommerceCart> {
-		return this.commerceCartService.addLine(input.cartId, input as any, versionExpectationOf(context?.req));
+		const { cartId, ...line } = input ?? {};
+
+		return this.commerceCartService.addLine(cartId, line as any, versionExpectationOf(context?.req));
 	}
 
 	/**
 	 * Changes a line.
+	 *
+	 * **`lineId` is a routing member and never a column.** The whole input object used to be forwarded
+	 * as the change set, so it reached the ORM's update builder carrying a property `CommerceCartLine`
+	 * has no column for — `cartId` is a column, `lineId` is not — and TypeORM raised
+	 * `EntityPropertyNotFoundError`, which `CrudService.update` rethrows as a 400. Every well-formed
+	 * `updateCartLine` mutation therefore failed, naming a property the caller never meant as a field,
+	 * while the REST sibling worked because its validation pipe whitelists the body against a DTO. The
+	 * destructure here is the GraphQL half of that guarantee; the service whitelists the change set to
+	 * the line's editable columns as the other half, so neither surface can smuggle an unmapped
+	 * property into a write.
 	 *
 	 * @param input The line and the fields to change.
 	 * @param context The operation context, which carries the version the caller read the cart at.
@@ -97,10 +114,12 @@ export class CommerceCartLineResolver {
 		@Args('input', { type: () => Object }) input: Record<string, any>,
 		@Context() context: any
 	): Promise<CommerceCart> {
+		const { cartId, lineId, ...changes } = input ?? {};
+
 		return this.commerceCartService.updateLine(
-			input.cartId,
-			input.lineId,
-			input as any,
+			cartId,
+			lineId,
+			changes as any,
 			versionExpectationOf(context?.req)
 		);
 	}

@@ -105,7 +105,7 @@ const GRAPHQL_ONLY = {
 	sellerStatement: 'A seller’s statement, an aggregation of that seller’s transactions.',
 	sellerBalance: 'What a seller is owed, an aggregation of settlements and payouts.',
 	sellerSplitReconciliation: 'Whether the splits of a period reconcile, a check over split rows.',
-	searchFacets: 'The facet counts of a search, which REST serves at its own facets route.'
+	searchFacets: 'The facet counts of a search, which REST serves at `/search/facets` on the search resource.'
 };
 
 /**
@@ -119,8 +119,7 @@ const GRAPHQL_ONLY = {
 const REST_ONLY = {
 	'product-channels': 'The link between a product and a channel, reached over GraphQL through the product.',
 	'product-variant-channels': 'The link between a variant and a channel, reached over GraphQL through the variant.',
-	'product-variant-tags': 'The link between a variant and a tag, reached over GraphQL through the variant.',
-	facets: 'The search facet counts, served over GraphQL as its own root field of the same concept.'
+	'product-variant-tags': 'The link between a variant and a tag, reached over GraphQL through the variant.'
 };
 
 /** Reads a file, or the empty string when it cannot be read. */

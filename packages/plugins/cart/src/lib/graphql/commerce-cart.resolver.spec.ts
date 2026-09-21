@@ -43,9 +43,10 @@ jest.mock('@gauzy/core', () => {
 		Permissions: decorator,
 		PermissionGuard: class {},
 		TenantPermissionGuard: class {},
-		// The feature gate the resolvers append to their guard chain. `@UseGuards` is real here (it is
-		// Nest's, not a double), and it refuses an argument that is not a guard — so every member of the
-		// chain has to be a class, not just the one the suite has an opinion about.
+		// The feature gate the resolvers append to their guard chain, which was missing from this double:
+		// `@UseGuards` is real here (it is Nest's, not one of the no-ops above), and it refuses an
+		// argument that is not a guard — so every member of the chain has to be a class, not just the one
+		// the suite has an opinion about.
 		FeatureFlagGuard: class {},
 		UseGuards: decorator,
 		MultiORMEntity: decorator,

@@ -1,6 +1,6 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { NotFoundException, UseGuards } from '@nestjs/common';
-import { FindManyOptions, FindOptionsWhere, In, Raw } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
@@ -11,6 +11,7 @@ import { TaxRegimeRate } from '../../tax-regime-rate/tax-regime-rate.entity';
 import { TaxRegime } from '../../tax-regime/tax-regime.entity';
 import { TaxRegimeService } from '../../tax-regime/tax-regime.service';
 import { toConnection } from '../connection.helper';
+import { applyPageWindow, liveWindowConditions } from '../predicate.helper';
 import {
 	CreateTaxRegimeInput,
 	PageInput,
@@ -75,9 +76,11 @@ export class TaxRegimeResolver {
 		@Args('offset') offset?: number,
 		@Args('withDeleted') withDeleted?: boolean
 	): Promise<TaxRegimeConnection> {
-		const options = this.toFindOptions(filter, sort, withDeleted);
-		options.take = limit ?? page?.first ?? undefined;
-		options.skip = offset ?? undefined;
+		const options = applyPageWindow(this.toFindOptions(filter, sort, withDeleted), {
+			limit,
+			first: page?.first,
+			offset
+		});
 
 		const { items, total } = await this.taxRegimeService.paginate(options);
 
@@ -221,12 +224,9 @@ export class TaxRegimeResolver {
 		if (filter?.isActive !== undefined) {
 			where.isActive = filter.isActive;
 		}
-		if (filter?.liveAt) {
-			this.applyLiveWindow(where, filter.liveAt);
-		}
 
 		return {
-			where,
+			where: filter?.liveAt ? this.applyLiveWindow(where, filter.liveAt) : where,
 			order: this.toOrder(sort),
 			...(withDeleted ? { withDeleted: true } : {})
 		};
@@ -236,12 +236,16 @@ export class TaxRegimeResolver {
 	 * Narrows the listing to the regimes whose validity window contains a moment. An open bound is
 	 * unbounded, so a regime that never started and one that was never ended both stay eligible.
 	 *
-	 * @param where The conditions being built.
+	 * The window used to be written as two `Raw()` SQL fragments, which only TypeORM can read: under
+	 * `DB_ORM=mikro-orm` the predicate was answered as no predicate at all and the listing returned
+	 * regimes that are not in force. It is now stated with operators both ORMs translate.
+	 *
+	 * @param where The conditions built so far.
 	 * @param liveAt The moment to test.
+	 * @returns The conditions to read as a disjunction.
 	 */
-	private applyLiveWindow(where: FindOptionsWhere<TaxRegime>, liveAt: Date): void {
-		where.startsAt = Raw((alias: string) => `(${alias} IS NULL OR ${alias} <= :liveAt)`, { liveAt });
-		where.endsAt = Raw((alias: string) => `(${alias} IS NULL OR ${alias} > :liveAt)`, { liveAt });
+	private applyLiveWindow(where: FindOptionsWhere<TaxRegime>, liveAt: Date): Array<FindOptionsWhere<TaxRegime>> {
+		return liveWindowConditions<TaxRegime>(where, liveAt);
 	}
 
 	/**

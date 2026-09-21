@@ -194,19 +194,45 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	/**
 	 * One definition by id, scoped to what the caller may see.
 	 *
+	 * **The scope is in the query, and it is not conditional.** The lookup used to carry no predicate
+	 * at all and the guard that followed it required *both* the row's organization and the caller's to
+	 * be present — so a caller who had never selected an organization (`lastOrganizationId` is null
+	 * until they do) read any definition row in the installation, including another tenant's
+	 * organization-specific one with its fields, promoted fields and source configuration. There was
+	 * no tenant comparison anywhere in the method, and this is the method `updateDefinition` and every
+	 * `SEARCH_INDEX_DEFINITIONS_EDIT` route resolve through, so the same id reached the writer.
+	 *
+	 * A platform row — one with no organization — stays readable by every caller in its tenant,
+	 * because that is what a shipped declaration is. An organization-specific row is bound to the
+	 * caller's tenant *and* organization. A caller with no tenant at all is refused rather than
+	 * widened: the whole table is one tenant boundary away from being shared.
+	 *
 	 * @param id The row.
 	 * @returns The row.
 	 * @throws NotFoundException when it is not the caller's.
 	 */
 	async findOneScoped(id: ID): Promise<SearchIndexDefinition> {
+		const tenantId = RequestContext.currentTenantId() ?? null;
 		const organization = RequestContext.currentOrganizationId() ?? null;
-		const row = await this.typeOrmSearchIndexDefinitionRepository.findOne({ where: { id } as any });
 
-		if (!row) {
+		if (!tenantId) {
 			throw new NotFoundException(`No search index definition has the id "${id}".`);
 		}
 
-		if (row.organizationId && organization && String(row.organizationId) !== String(organization)) {
+		const where: FindOptionsWhere<SearchIndexDefinition>[] = [
+			{ id, tenantId, organizationId: IsNull() } as any,
+			// A shipped row is seeded without a tenant, and it is the platform's rather than anybody's:
+			// it stays readable, and `isSystem` is what stops it from being deleted.
+			{ id, tenantId: IsNull(), organizationId: IsNull() } as any
+		];
+
+		if (organization) {
+			where.push({ id, tenantId, organizationId: organization as string } as any);
+		}
+
+		const row = await this.typeOrmSearchIndexDefinitionRepository.findOne({ where });
+
+		if (!row) {
 			throw new NotFoundException(`No search index definition has the id "${id}".`);
 		}
 

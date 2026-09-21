@@ -45,8 +45,13 @@ jest.mock('@gauzy/core', () => {
 			currentTenantId: () => null,
 			currentOrganizationId: () => null,
 			currentEmployeeId: () => null,
-			hasPermission: () => false
-		}
+			hasPermission: () => false,
+			hasRoles: () => false
+		},
+		// The source connection asks which ORM is configured before it reads; the double answers
+		// TypeORM, which is the arm these suites exercise through their in-memory connection.
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
+		getORMType: () => 'typeorm'
 	};
 });
 
@@ -200,7 +205,15 @@ function definitionFixture(seed: { definitions?: Row[]; declarations?: ISearchIn
 
 			return row;
 		},
-		findOne: async ({ where }: any = {}) => tables.search_index_definition.find((row) => matches(row, where)) ?? null,
+		// `findOne` takes a list of alternatives the same way `find` does: a scoped read states one
+		// condition per shape of row it admits — the caller's organization's, and the platform's.
+		findOne: async ({ where }: any = {}) => {
+			const conditions = Array.isArray(where) ? where : [where ?? {}];
+
+			return (
+				tables.search_index_definition.find((row) => conditions.some((condition) => matches(row, condition))) ?? null
+			);
+		},
 		find: async ({ where, order }: any = {}) => {
 			const conditions = Array.isArray(where) ? where : [where ?? {}];
 			const found = tables.search_index_definition.filter((row) => conditions.some((condition) => matches(row, condition)));
@@ -235,6 +248,7 @@ function definitionFixture(seed: { definitions?: Row[]; declarations?: ISearchIn
 
 describe('SearchIndexDefinitionService — making the rows match the declarations (doc 05 §3.17)', () => {
 	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
 	});
 
@@ -335,6 +349,7 @@ describe('SearchIndexDefinitionService — making the rows match the declaration
 
 describe('SearchIndexDefinitionService — which definition is in force (doc 05 §3.17)', () => {
 	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
 	});
 
@@ -370,6 +385,7 @@ describe('SearchIndexDefinitionService — which definition is in force (doc 05 
 
 describe('SearchIndexDefinitionService — what an operator may change (doc 05 §3.17)', () => {
 	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
 	});
 

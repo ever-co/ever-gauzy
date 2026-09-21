@@ -1,6 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, EventBus, Money, RequestContext, compareDecimalStrings } from '@gauzy/core';
+import {
+	EventBus,
+	Money,
+	RequestContext,
+	compareDecimalStrings,
+	normalizeDecimalString,
+	quoteIdentifier,
+	readAffectedRows,
+	toPositionalStatement
+} from '@gauzy/core';
 import { PromotionChangedEvent } from '../events';
 import { Promotion } from './promotion.entity';
 import { TypeOrmPromotionRepository } from './repository/type-orm-promotion.repository';
@@ -25,8 +34,11 @@ import {
 	PromotionNotice,
 	PromotionFunding,
 	PromotionStatus,
-	PromotionType
+	PromotionType,
+	PromotionUsageStatus,
+	RevertOnReturnPolicy
 } from '../promotion.types';
+import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
 
 /** One line an evaluation may discount. */
 export interface IPromotionEvaluationLine {
@@ -114,7 +126,7 @@ interface IPromotionAdjustmentPlan {
  * context" — and never re-implements what "matches" means.
  */
 @Injectable()
-export class PromotionService extends CrudService<Promotion> {
+export class PromotionService extends TenantScopedCrudService<Promotion> {
 	constructor(
 		readonly typeOrmPromotionRepository: TypeOrmPromotionRepository,
 		readonly mikroOrmPromotionRepository: MikroOrmPromotionRepository,
@@ -331,6 +343,186 @@ export class PromotionService extends CrudService<Promotion> {
 	}
 
 	/**
+	 * Takes one use of a promotion against its global limit, or refuses it.
+	 *
+	 * **`usageCount` was incremented by nothing at all.** `isEligible` gates on it — a promotion whose
+	 * `usageCount` has reached its `usageLimit` is excluded with `USAGE_LIMIT_EXCEEDED` — and a
+	 * repository-wide search for a write to that column found the two literal initialisations of
+	 * *coupon* rows and nothing else. A promotion created with `usageLimit: 100` therefore read zero on
+	 * every evaluation for ever and could be applied an unbounded number of times: the global cap
+	 * advertised on the entity, in the DTOs and in the GraphQL schema was silently a no-op on every
+	 * database and both ORMs.
+	 *
+	 * The increment is a single conditional statement, exactly as the coupon counter's is, so a
+	 * promotion with one use left cannot be granted twice by two concurrent checkouts:
+	 *
+	 * ```sql
+	 * UPDATE promotion SET "usageCount" = "usageCount" + 1
+	 *  WHERE id = :promotionId AND "tenantId" = :tenantId AND "deletedAt" IS NULL
+	 *    AND ("usageLimit" IS NULL OR "usageCount" < "usageLimit");
+	 * ```
+	 *
+	 * @param promotionId The promotion to consume.
+	 * @returns True when a use was taken; false when the ceiling refused it.
+	 */
+	async consume(promotionId: ID): Promise<boolean> {
+		const q = quoteIdentifier;
+		const tenantId = RequestContext.currentTenantId();
+		const sql =
+			`UPDATE ${q('promotion')} SET ${q('usageCount')} = ${q('usageCount')} + 1 ` +
+			`WHERE ${q('id')} = :promotionId ` +
+			// A promotion belongs to the tenant that published it, and a conditional statement that does
+			// not say so is one another tenant's identifier can satisfy.
+			(tenantId ? `AND ${q('tenantId')} = :tenantId ` : '') +
+			`AND ${q('deletedAt')} IS NULL ` +
+			`AND (${q('usageLimit')} IS NULL OR ${q('usageCount')} < ${q('usageLimit')})`;
+		// Nothing below `QueryBuilder` substitutes a named parameter, and the drivers disagree about
+		// the positional form — `$1` on Postgres, `?` on the rest — so the statement is rewritten once,
+		// here, by the helper every package on this branch shares.
+		const bound = toPositionalStatement(sql, { promotionId, ...(tenantId ? { tenantId } : {}) });
+
+		return readAffectedRows(await this.typeOrmPromotionRepository.query(bound.sql, bound.parameters)) > 0;
+	}
+
+	/**
+	 * Returns one use of a promotion, on a reversal.
+	 *
+	 * The counter is floored at zero, so a replayed reversal cannot make a promotion look less used
+	 * than it is and hand out a use nobody gave back.
+	 *
+	 * @param promotionId The promotion to restore.
+	 * @returns True when a use was returned.
+	 */
+	async releaseConsumption(promotionId: ID): Promise<boolean> {
+		const usageCount = quoteIdentifier('usageCount');
+		const tenantId = RequestContext.currentTenantId();
+		const released = this.typeOrmPromotionRepository
+			.createQueryBuilder()
+			.update(Promotion)
+			.set({ usageCount: () => `${usageCount} - 1` })
+			.where(`${usageCount} > 0`)
+			.andWhere('id = :promotionId', { promotionId });
+
+		if (tenantId) {
+			released.andWhere('tenantId = :tenantId', { tenantId });
+		}
+
+		return readAffectedRows(await released.execute()) > 0;
+	}
+
+	/**
+	 * Reserves a redemption of a promotion and takes the use it costs.
+	 *
+	 * **This is the entry point a checkout uses, and the counter is why.** The redemption ledger and
+	 * the cached counter are two halves of one fact — how many times this promotion has been granted —
+	 * and writing one without the other is what made `usageLimit` unenforceable. A reservation that
+	 * already exists for the cart is reused and costs nothing further, which is what lets a cart be
+	 * recalculated on every edit without leaking uses; a new one is counted once, and a promotion whose
+	 * ceiling refuses the use has its reservation released again rather than being granted quietly.
+	 *
+	 * @param input The redemption being reserved.
+	 * @returns The reservation row.
+	 * @throws BadRequestException when the promotion's global usage limit is already reached.
+	 */
+	async reserveUsage(input: {
+		promotionId: ID;
+		couponId?: ID;
+		cartId?: ID;
+		orderId?: ID;
+		customerId?: ID;
+		code?: string;
+		amount: DecimalString;
+		currency: string;
+	}): Promise<IPromotionUsage> {
+		const existing = await this.promotionUsageService.hasLiveReservation(input.promotionId, input.cartId);
+		const usage = await this.promotionUsageService.reserve(input);
+
+		if (existing) {
+			return usage;
+		}
+
+		if (!(await this.consume(input.promotionId))) {
+			// The use was refused after the row was written, so the row goes back: a reservation nobody
+			// may redeem would hold budget and count against the per-customer limit for ever.
+			await this.promotionUsageService.releaseUsage(usage.id);
+
+			throw new BadRequestException(
+				`PROMOTION_USAGE_LIMIT_EXCEEDED: promotion ${input.promotionId} has reached its usage limit.`
+			);
+		}
+
+		return usage;
+	}
+
+	/**
+	 * Reverts a redemption and gives back the use it took, when the whole of it is reverted.
+	 *
+	 * @param promotionId The promotion whose redemption is being reverted.
+	 * @param orderId The order the redemption belongs to.
+	 * @param policy What the domain says about reversibility on a return.
+	 * @param returnedShare The share of the order that came back, for a proportional policy.
+	 * @returns What was reverted, and the row.
+	 */
+	async revertUsage(
+		promotionId: ID,
+		orderId: ID,
+		policy?: RevertOnReturnPolicy,
+		returnedShare: DecimalString | number = 1
+	): Promise<{ reverted: DecimalString; usage: IPromotionUsage | null }> {
+		const result = await this.promotionUsageService.revert(promotionId, orderId, policy, returnedShare);
+
+		// A partial reversal leaves the redemption registered — the customer kept part of what the
+		// promotion gave them — so the use it took stays taken. Only a redemption that is wholly
+		// reverted gives its use back.
+		if (result.usage?.status === PromotionUsageStatus.REVERTED) {
+			await this.releaseConsumption(promotionId);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Releases every reservation a cart holds and gives back the uses they took.
+	 *
+	 * @param cartId The cart whose reservations are released.
+	 * @returns The rows that were released.
+	 */
+	async releaseCartUsage(cartId: ID): Promise<IPromotionUsage[]> {
+		const released = await this.promotionUsageService.releaseCart(cartId);
+
+		for (const row of released) {
+			await this.releaseConsumption(row.promotionId);
+		}
+
+		return released;
+	}
+
+	/**
+	 * Re-derives a promotion's cached counter from the redemption ledger.
+	 *
+	 * The entity's own docstring defers the maintenance of `usageCount` to a nightly job, and no such
+	 * job existed anywhere in the package — a search for `Cron` or `reconcil` in it returned prose in
+	 * comments. This is what that job calls: the ledger is the authority, the counter is a cache, and a
+	 * cache that has drifted is repaired from the authority rather than trusted.
+	 *
+	 * @param promotionId The promotion to audit.
+	 * @returns What the counter held, what the ledger says, and whether the two disagreed.
+	 */
+	async auditUsageCount(promotionId: ID): Promise<{ cached: number; ledger: number; repaired: boolean }> {
+		const promotion = await this.findPromotionOrFail(promotionId);
+		const ledger = await this.promotionUsageService.countLive(promotionId);
+		const cached = Number(promotion.usageCount ?? 0);
+
+		if (cached === ledger) {
+			return { cached, ledger, repaired: false };
+		}
+
+		await this.update(promotionId, { usageCount: ledger } as never);
+
+		return { cached, ledger, repaired: true };
+	}
+
+	/**
 	 * Reads the redemption ledger of a promotion.
 	 *
 	 * @param id The promotion to read.
@@ -422,7 +614,28 @@ export class PromotionService extends CrudService<Promotion> {
 			remaining.set(`SHIPPING:${method.id}`, Money.of(method.amount, context.currency));
 		}
 
+		// **Exclusivity, which was declared everywhere and enforced nowhere.** `isCombinable` and
+		// `stackingGroup` are columns, DTO members and GraphQL fields, and `STACKING_CONFLICT` is a
+		// notice code — and nothing read any of the three: a merchant could mark a fifty-percent offer
+		// non-combinable in a group and watch a ten-percent offer in the same group stack on top of it
+		// for fifty-five percent off, with no notice saying why the exclusivity they configured did
+		// nothing. A group closes as soon as a non-combinable promotion in it wins something, and every
+		// later candidate of that group is refused with the notice.
+		const closedGroups = new Set<string>();
+
 		for (const promotion of ordered) {
+			if (promotion.stackingGroup && closedGroups.has(promotion.stackingGroup)) {
+				notices.push(
+					this.notice(
+						promotion,
+						PromotionNotice.STACKING_CONFLICT,
+						'Another promotion of this stacking group is exclusive and has already been applied.',
+						{ stackingGroup: promotion.stackingGroup }
+					)
+				);
+				continue;
+			}
+
 			const eligible = await this.isEligible(promotion, context, at, notices);
 
 			if (!eligible) {
@@ -484,6 +697,13 @@ export class PromotionService extends CrudService<Promotion> {
 				amount: appliedTotal.toStorageString(),
 				currency: context.currency
 			});
+
+			// The group closes on a promotion that actually gave something away. A non-combinable offer
+			// the budget refused outright has taken nothing off the cart, and closing the group behind it
+			// would deny the customer an offer that could still have applied.
+			if (promotion.isCombinable === false && promotion.stackingGroup) {
+				closedGroups.add(promotion.stackingGroup);
+			}
 		}
 
 		const discountTotal = Money.sum(
@@ -715,14 +935,22 @@ export class PromotionService extends CrudService<Promotion> {
 		if (percentage) {
 			// `f(value, Σ discountable)`: an exact decimal scaled by the percentage and divided by a
 			// hundred, so ten percent of `49.98` is the `4.998` the currency scale then resolves, never
-			// the `4.997999999999999` a binary floating-point product would leave behind. A tiered
-			// percentage carries its percentage in `metadata.tiers` rather than in `value`, and an
-			// action that states no percentage has none to take off.
-			if (!stated) {
+			// the `4.997999999999999` a binary floating-point product would leave behind.
+			//
+			// **A tiered percentage takes its percentage from the band the amount falls in.** The
+			// comment here already said the percentage "carries its percentage in `metadata.tiers`
+			// rather than in `value`", and the line under it then used `action.value` for both action
+			// types — so a `TIERED_PERCENTAGE` with a schedule and no `value` computed nothing at all
+			// and reported `NO_DISCOUNTABLE_AMOUNT`, while one that also carried a `value` applied that
+			// flat percentage to every order regardless of which band it reached. `assertTiers`
+			// validated the schedule on write and nothing ever read it.
+			const percentText = this.percentageFor(action, discountable);
+
+			if (percentText === null) {
 				return null;
 			}
 
-			discount = discountable.multiply(action.value).divide(100);
+			discount = discountable.multiply(percentText).divide(100);
 		} else if (action.type === PromotionActionType.FREE_SHIPPING && !stated) {
 			// Free shipping discounts the targeted methods to zero (doc 08 §10.1); a stated value is the
 			// cap the operator put on it.
@@ -777,6 +1005,74 @@ export class PromotionService extends CrudService<Promotion> {
 		}
 
 		return { action, parts: charges, total };
+	}
+
+	/**
+	 * The percentage one action takes off, for the amount it is applied to.
+	 *
+	 * A `PERCENTAGE` states its percentage in `value` and this is that value. A `TIERED_PERCENTAGE`
+	 * states a schedule in `metadata.tiers` — validated on write by `PromotionActionService.assertTiers`
+	 * as at least one tier with strictly increasing thresholds and a percentage in `(0, 100]` — and
+	 * the band that applies is the last one whose threshold the amount reaches. A tiered action whose
+	 * schedule no band of matches falls back to its stated `value`, so an operator can express "five
+	 * percent below a hundred" either as a first tier or as the action's own value.
+	 *
+	 * The comparison is `compareDecimalStrings` and not `Number`: a threshold is money, the amount it
+	 * is measured against is money, and deciding which side of a boundary an order falls on by
+	 * subtracting two doubles is how an order of exactly a hundred lands in the wrong band.
+	 *
+	 * @param action The action to read.
+	 * @param discountable The amount the action would be applied to.
+	 * @returns The percentage as an exact decimal, or null when the action states none and no band
+	 * matches — an action with no percentage has nothing to take off.
+	 */
+	private percentageFor(action: IPromotionAction, discountable: Money): DecimalString | null {
+		const stated =
+			action.value !== null && action.value !== undefined && String(action.value).trim() !== ''
+				? normalizeDecimalString(action.value as DecimalString)
+				: null;
+
+		if (action.type !== PromotionActionType.TIERED_PERCENTAGE) {
+			return stated;
+		}
+
+		const tiers = (action.metadata as { tiers?: Array<{ threshold?: unknown; percent?: unknown }> } | undefined)
+			?.tiers;
+
+		if (!Array.isArray(tiers) || tiers.length === 0) {
+			return stated;
+		}
+
+		let winner: DecimalString | null = null;
+		let winningThreshold: DecimalString | null = null;
+
+		for (const tier of tiers) {
+			let threshold: DecimalString;
+			let percent: DecimalString;
+
+			try {
+				threshold = normalizeDecimalString(tier?.threshold as DecimalString);
+				percent = normalizeDecimalString(tier?.percent as DecimalString);
+			} catch {
+				// A malformed tier is skipped rather than fatal: the schedule was validated when it was
+				// written, and an evaluation is not the place to fail a checkout over a row that was.
+				continue;
+			}
+
+			// The band applies when the amount reaches its threshold, and the highest such band wins —
+			// the list is validated as strictly increasing, but nothing guarantees the order it is
+			// stored in, so the winner is chosen by comparison rather than by position.
+			if (compareDecimalStrings(discountable.amount, threshold) < 0) {
+				continue;
+			}
+
+			if (winningThreshold === null || compareDecimalStrings(threshold, winningThreshold) > 0) {
+				winner = percent;
+				winningThreshold = threshold;
+			}
+		}
+
+		return winner ?? stated;
 	}
 
 	/**

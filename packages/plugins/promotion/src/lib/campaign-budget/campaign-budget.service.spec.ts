@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
-import { CampaignBudgetService } from './campaign-budget.service';
+import { CampaignBudgetService, UNLIMITED_BUDGET_HEADROOM } from './campaign-budget.service';
 import { CampaignBudgetType } from '../promotion.types';
 
 /**
@@ -90,6 +90,26 @@ function same(left: unknown, right: unknown): boolean {
 }
 
 /**
+ * What a write addresses, as a conditions object.
+ *
+ * Every write of these services is scoped to the caller's tenant, so the criteria that reaches the
+ * repository is `{ id, tenantId }` rather than a bare identifier — which is the whole point of the
+ * scoping: a statement that names only an identifier is one another tenant's identifier can satisfy.
+ * A double that understood only the identifier form would report a scoped write as having changed a
+ * row it never matched.
+ *
+ * @param criteria What the service addressed the row by.
+ * @returns The same thing as a conditions object.
+ */
+function criteriaOf(criteria: unknown): Record<string, unknown> {
+	if (typeof criteria === 'string' || typeof criteria === 'number') {
+		return { id: criteria };
+	}
+
+	return (criteria ?? {}) as Record<string, unknown>;
+}
+
+/**
  * @param budgets The `campaign_budget` rows.
  * @param usages The `campaign_budget_usage` rows.
  * @returns The service and the two tables it writes to.
@@ -120,8 +140,12 @@ function serviceUnderTest(budgets: IBudgetRow[], usages: IUsageRow[] = []) {
 
 			return entity;
 		},
-		update: async (id: string, partial: Partial<IBudgetRow>) => {
-			const row = budgets.find((one) => same(one.id, id));
+		// The service's writes are tenant-scoped, so the criteria reaching the repository is the
+		// conditions object `TenantScopedCrudService` assembled — `{ id, tenantId }` — and not the bare
+		// identifier it used to be. A double that only understood a string would report every scoped
+		// write as having changed a row it never found.
+		update: async (criteria: string | Record<string, unknown>, partial: Partial<IBudgetRow>) => {
+			const row = budgets.find((one) => matches(one, criteriaOf(criteria)));
 
 			if (row) {
 				Object.assign(row, partial);
@@ -139,21 +163,37 @@ function serviceUnderTest(budgets: IBudgetRow[], usages: IUsageRow[] = []) {
 		 * - the per-value row is the gate, and the parent advances by the same amount.
 		 */
 		query: async (sql: string, values: unknown[]) => {
-			// The service binds one placeholder per *occurrence* of a name, not one per name: `release`
-			// compares `used - :amount` and subtracts the same `:amount`, so the amount travels twice and
-			// the statement carries `[amount, amount, budgetId]`. Reading `values[1]` as the budget id —
-			// right only while each name is bound once — found no row, wrote nothing and still answered
-			// one affected row, which is how this double went stale without failing.
+			// **One value per placeholder, read in the order the placeholders appear.**
 			//
-			// So the values are resolved against what the double knows rather than by position: the one
-			// that names a stored budget is the budget, the first is the amount, and for a per-value
-			// statement the first value that is neither is the attribute value.
-			const reset = sql.includes('= 0');
-			const perValue = sql.includes('campaign_budget_usage');
-			const budgetId = values.find((one) => budgets.some((row) => same(row.id, one)));
-			const amount = reset ? '0' : String(values[0]);
-			const attributeValue = perValue
-				? values.find((one) => !same(one, budgetId) && !same(one, amount))
+			// This double used to read the values by the statement's *arity* — first is the amount,
+			// second is the budget, a length of one means a reset — which held only while the service
+			// bound its named parameters with `Object.values()`. That was the defect: a statement that
+			// names `:amount` twice has three placeholders and `Object.values()` supplied two, so no
+			// real driver could have run any of these. The binding now emits one value per occurrence,
+			// which is what every driver expects, and reading them that way here is what makes this
+			// double describe a database rather than the old mistake.
+			//
+			// The arity is asserted rather than assumed, because a silently-wrong count is exactly what
+			// went unnoticed before: a mismatch fails the suite instead of quietly mapping the wrong
+			// value onto the wrong column.
+			const placeholders = (sql.match(/\?|\$\d+/g) ?? []).length;
+
+			if (placeholders !== values.length) {
+				throw new Error(
+					`the statement declares ${placeholders} placeholder(s) and was handed ${values.length} value(s): ${sql}`
+				);
+			}
+
+			// Which position carries what is a property of each statement's own text, so it is read
+			// from the text rather than guessed from the length.
+			const isReset = sql.includes('= 0');
+			const isRelease = sql.includes('CASE WHEN');
+			// A release binds `:amount` twice before the identifiers; a reset binds no amount at all.
+			const identifiers = values.slice(isReset ? 0 : isRelease ? 2 : 1);
+			const amount = String(isReset ? '0' : values[0]);
+			const budgetId = isReset || isRelease ? identifiers[0] : values[1];
+			const attributeValue = sql.includes('attributeValue')
+				? String(isReset || isRelease ? identifiers[1] : values[2])
 				: undefined;
 			const row = budgets.find((one) => same(one.id, budgetId));
 
@@ -299,11 +339,61 @@ describe('CampaignBudgetService — the shape of a ceiling (doc 08 §12.2)', () 
 		expect(() => service.assertShape({ type: CampaignBudgetType.USAGE, limit: '2' })).not.toThrow();
 	});
 
-	it('reports the headroom as the ceiling less what is spent', () => {
+	it('reports the headroom as the ceiling less what is spent, at the scale the column holds', () => {
 		const { service } = serviceUnderTest([]);
 
-		expect(service.headroom(budget({ limit: '100.000000', used: '80.000000' }) as never)).toBe('20');
-		expect(service.headroom(budget({ limit: '100.000000', used: '100.000000' }) as never)).toBe('0');
+		expect(service.headroom(budget({ limit: '100.000000', used: '80.000000' }) as never)).toBe('20.000000');
+		expect(service.headroom(budget({ limit: '100.000000', used: '100.000000' }) as never)).toBe('0.000000');
+	});
+
+	it('subtracts exactly, so the answer is a decimal string a money layer will accept', () => {
+		// `String(Number(limit) - Number(used))` was three defects in one line, and every one of them
+		// reached a caller: the value is declared `DecimalString`, is returned as
+		// `IBudgetReservation.headroom`, and a consumer that feeds it to `Money.of` is entitled to an
+		// amount. A limit of 1000.10 against a spend of 0.30 gave thirteen fractional digits, which the
+		// money layer refuses outright.
+		const { service } = serviceUnderTest([]);
+
+		expect(Number('1000.1') - Number('0.3')).toBe(999.8000000000001);
+		expect(service.headroom(budget({ limit: '1000.100000', used: '0.300000' }) as never)).toBe('999.800000');
+	});
+
+	it('reports a sub-microunit headroom as a decimal rather than in exponential notation', () => {
+		// `String(9.999999974752427e-7)` is not a decimal string at all — and it is not the right
+		// figure either: the true headroom of a ceiling of 100 against a spend of 99.999999 is
+		// 0.000001.
+		const { service } = serviceUnderTest([]);
+
+		expect(String(Number('100') - Number('99.999999'))).toBe('9.999999974752427e-7');
+		expect(service.headroom(budget({ limit: '100.000000', used: '99.999999' }) as never)).toBe('0.000001');
+	});
+
+	it('reports an unbudgeted campaign as unlimited rather than as overdrawn', () => {
+		// A campaign may run with no money ceiling — the conditional statement already treats a null
+		// `limit` as "no ceiling" — but `Number(null)` is zero, so the headroom reported beside every
+		// reservation of an unbudgeted campaign was *negative* by whatever had been spent.
+		const { service } = serviceUnderTest([]);
+
+		expect(service.headroom(budget({ limit: null as never, used: '25.000000' }) as never)).toBe(
+			UNLIMITED_BUDGET_HEADROOM
+		);
+	});
+
+	it('measures a counting budget, which carries no currency at all', () => {
+		// A `USAGE` ceiling counts redemptions. The subtraction is still exact and still a decimal
+		// string, and it must not require a currency the row does not have.
+		const { service } = serviceUnderTest([]);
+
+		expect(
+			service.headroom(
+				budget({
+					type: CampaignBudgetType.USAGE,
+					limit: '10.000000',
+					used: '3.000000',
+					currency: undefined
+				}) as never
+			)
+		).toBe('7.000000');
 	});
 });
 
@@ -320,7 +410,7 @@ describe('CampaignBudgetService.reserve — a budget is never oversold (doc 08 �
 
 		const reservation = await service.reserve('budget-1', '20.000000');
 
-		expect(reservation).toEqual({ reserved: true, headroom: '20', amount: '20.000000' });
+		expect(reservation).toEqual({ reserved: true, headroom: '20.000000', amount: '20.000000' });
 		expect(budgets[0].used).toBe('100');
 	});
 
@@ -332,7 +422,7 @@ describe('CampaignBudgetService.reserve — a budget is never oversold (doc 08 �
 
 		expect(reservation.reserved).toBe(false);
 		expect(reservation.amount).toBe('0');
-		expect(reservation.headroom).toBe('20');
+		expect(reservation.headroom).toBe('20.000000');
 		expect(budgets[0].used).toBe('80.000000');
 	});
 
@@ -357,7 +447,7 @@ describe('CampaignBudgetService.reserve — a budget is never oversold (doc 08 �
 		const reservation = await service.reserve('budget-1', '1.000000');
 
 		expect(reservation.reserved).toBe(false);
-		expect(reservation.headroom).toBe('0');
+		expect(reservation.headroom).toBe('0.000000');
 	});
 
 	it('gives each attribute value its own headroom in a budget split by attribute', async () => {
