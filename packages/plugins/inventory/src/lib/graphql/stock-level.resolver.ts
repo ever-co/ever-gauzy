@@ -61,7 +61,11 @@ export class StockLevelResolver {
 		@Args('variantId') variantId: string,
 		@Args('take', { type: () => Int, nullable: true }) take: number
 	): Promise<any> {
-		return await this.service.findLevels({ warehouseId, variantId, take });
+		const page = await this.service.findLevels({ warehouseId, variantId, take });
+
+		// The service answers a page, and the schema declares a list: a method that already
+		// answers one is returned as it is, so this holds either way.
+		return Array.isArray(page) ? page : (page as any)?.items ?? [];
 	}
 
 	/** One level row with its derived availability, and the counter a write is conditioned on. */

@@ -49,7 +49,11 @@ export class StockAdjustmentResolver {
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
 	@Versioned({ write: false })
 	async stockAdjustments(@Args('warehouseId') warehouseId: string, @Args('variantId') variantId: string, @Args('status') status: StockAdjustmentStatus): Promise<any> {
-		return await this.service.findAdjustments({ where: { warehouseId, variantId, status } });
+		const page = await this.service.findAdjustments({ where: { warehouseId, variantId, status } });
+
+		// The service answers a page, and the schema declares a list: a method that already
+		// answers one is returned as it is, so this holds either way.
+		return Array.isArray(page) ? page : (page as any)?.items ?? [];
 	}
 
 	/** Drafts a manual correction. */

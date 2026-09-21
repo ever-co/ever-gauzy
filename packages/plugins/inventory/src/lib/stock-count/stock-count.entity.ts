@@ -181,7 +181,7 @@ export class StockCount extends TenantOrganizationBaseEntity {
 		nullable: true,
 		onDelete: 'SET NULL'
 	})
-	@JoinColumn()
+	@JoinColumn({ name: 'startedByUserId' })
 	startedBy?: User;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -199,7 +199,7 @@ export class StockCount extends TenantOrganizationBaseEntity {
 		nullable: true,
 		onDelete: 'SET NULL'
 	})
-	@JoinColumn()
+	@JoinColumn({ name: 'closedByUserId' })
 	closedBy?: User;
 
 	@ApiPropertyOptional({ type: () => String })

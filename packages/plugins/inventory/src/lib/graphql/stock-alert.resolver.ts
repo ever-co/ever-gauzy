@@ -46,7 +46,11 @@ export class StockAlertResolver {
 	@Query('stockAlerts')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
 	async stockAlerts(@Args('variantId') variantId: string, @Args('isActive') isActive: boolean): Promise<any> {
-		return await this.service.findAlerts({ where: { variantId, isActive } });
+		const page = await this.service.findAlerts({ where: { variantId, isActive } });
+
+		// The service answers a page, and the schema declares a list: a method that already
+		// answers one is returned as it is, so this holds either way.
+		return Array.isArray(page) ? page : (page as any)?.items ?? [];
 	}
 
 	/**

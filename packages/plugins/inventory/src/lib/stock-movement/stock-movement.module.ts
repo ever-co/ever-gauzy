@@ -12,11 +12,12 @@ import { StockMovementController } from './stock-movement.controller';
 import { StockMovementService } from './stock-movement.service';
 import { TypeOrmStockMovementRepository } from './repository/type-orm-stock-movement.repository';
 import { MikroOrmStockMovementRepository } from './repository/mikro-orm-stock-movement.repository';
+import { StockMovementResolver } from '../graphql/stock-movement.resolver';
 
 @Module({
 	controllers: [StockMovementController],
 	imports: [TypeOrmModule.forFeature([StockMovement]), MikroOrmModule.forFeature([StockMovement]), RolePermissionModule],
-	providers: [StockMovementService, TypeOrmStockMovementRepository, MikroOrmStockMovementRepository],
+	providers: [StockMovementService, TypeOrmStockMovementRepository, MikroOrmStockMovementRepository, StockMovementResolver],
 	exports: [StockMovementService]
 })
 export class StockMovementModule {}

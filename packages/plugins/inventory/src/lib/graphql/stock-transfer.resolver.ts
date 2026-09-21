@@ -53,7 +53,11 @@ export class StockTransferResolver {
 	@Permissions(InventoryPermission.STOCK_TRANSFER_VIEW as PermissionsEnum)
 	@Versioned({ write: false })
 	async stockTransfers(@Args('status') status: StockTransferStatus): Promise<any> {
-		return await this.service.findTransfers({ where: { status } });
+		const page = await this.service.findTransfers({ where: { status } });
+
+		// The service answers a page, and the schema declares a list: a method that already
+		// answers one is returned as it is, so this holds either way.
+		return Array.isArray(page) ? page : (page as any)?.items ?? [];
 	}
 
 	/** One transfer with its lines. */

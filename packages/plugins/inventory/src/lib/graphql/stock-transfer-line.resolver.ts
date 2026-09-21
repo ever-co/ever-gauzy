@@ -40,7 +40,11 @@ export class StockTransferLineResolver {
 	@Query('stockTransferLines')
 	@Permissions(InventoryPermission.STOCK_TRANSFER_VIEW as PermissionsEnum)
 	async stockTransferLines(@Args('transferId') transferId: string): Promise<any> {
-		return await this.service.findLines({ where: { transferId } });
+		const page = await this.service.findLines({ where: { transferId } });
+
+		// The service answers a page, and the schema declares a list: a method that already
+		// answers one is returned as it is, so this holds either way.
+		return Array.isArray(page) ? page : (page as any)?.items ?? [];
 	}
 
 	/** One transfer line. */

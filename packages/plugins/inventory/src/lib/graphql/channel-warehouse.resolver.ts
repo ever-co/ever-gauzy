@@ -40,7 +40,11 @@ export class ChannelWarehouseResolver {
 	@Query('channelWarehouses')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
 	async channelWarehouses(@Args('channelId') channelId: string, @Args('warehouseId') warehouseId: string): Promise<any> {
-		return await this.service.findAssignments({ where: { channelId, warehouseId } });
+		const page = await this.service.findAssignments({ where: { channelId, warehouseId } });
+
+		// The service answers a page, and the schema declares a list: a method that already
+		// answers one is returned as it is, so this holds either way.
+		return Array.isArray(page) ? page : (page as any)?.items ?? [];
 	}
 
 	/** Enables a location for a context. */

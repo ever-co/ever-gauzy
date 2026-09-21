@@ -12,11 +12,12 @@ import { StockAlertController } from './stock-alert.controller';
 import { StockAlertService } from './stock-alert.service';
 import { TypeOrmStockAlertRepository } from './repository/type-orm-stock-alert.repository';
 import { MikroOrmStockAlertRepository } from './repository/mikro-orm-stock-alert.repository';
+import { StockAlertResolver } from '../graphql/stock-alert.resolver';
 
 @Module({
 	controllers: [StockAlertController],
 	imports: [TypeOrmModule.forFeature([StockAlert]), MikroOrmModule.forFeature([StockAlert]), RolePermissionModule],
-	providers: [StockAlertService, TypeOrmStockAlertRepository, MikroOrmStockAlertRepository],
+	providers: [StockAlertService, TypeOrmStockAlertRepository, MikroOrmStockAlertRepository, StockAlertResolver],
 	exports: [StockAlertService]
 })
 export class StockAlertModule {}

@@ -14,11 +14,12 @@ import { StockCountController } from './stock-count.controller';
 import { StockCountService } from './stock-count.service';
 import { TypeOrmStockCountRepository } from './repository/type-orm-stock-count.repository';
 import { MikroOrmStockCountRepository } from './repository/mikro-orm-stock-count.repository';
+import { StockCountResolver } from '../graphql/stock-count.resolver';
 
 @Module({
 	controllers: [StockCountController],
 	imports: [TypeOrmModule.forFeature([StockCount]), MikroOrmModule.forFeature([StockCount]), RolePermissionModule, StockLevelModule, InventorySequenceModule],
-	providers: [StockCountService, TypeOrmStockCountRepository, MikroOrmStockCountRepository],
+	providers: [StockCountService, TypeOrmStockCountRepository, MikroOrmStockCountRepository, StockCountResolver],
 	exports: [StockCountService]
 })
 export class StockCountModule {}

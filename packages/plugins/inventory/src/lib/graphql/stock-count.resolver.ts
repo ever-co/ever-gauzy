@@ -48,7 +48,11 @@ export class StockCountResolver {
 	@Query('stockCounts')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
 	async stockCounts(@Args('warehouseId') warehouseId: string, @Args('status') status: StockCountStatus, @Args('mode') mode: StockCountMode): Promise<any> {
-		return await this.service.findCounts({ where: { warehouseId, status, mode } });
+		const page = await this.service.findCounts({ where: { warehouseId, status, mode } });
+
+		// The service answers a page, and the schema declares a list: a method that already
+		// answers one is returned as it is, so this holds either way.
+		return Array.isArray(page) ? page : (page as any)?.items ?? [];
 	}
 
 	/** One session with its lines. */

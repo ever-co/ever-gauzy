@@ -12,11 +12,12 @@ import { StockTransferLineController } from './stock-transfer-line.controller';
 import { StockTransferLineService } from './stock-transfer-line.service';
 import { TypeOrmStockTransferLineRepository } from './repository/type-orm-stock-transfer-line.repository';
 import { MikroOrmStockTransferLineRepository } from './repository/mikro-orm-stock-transfer-line.repository';
+import { StockTransferLineResolver } from '../graphql/stock-transfer-line.resolver';
 
 @Module({
 	controllers: [StockTransferLineController],
 	imports: [TypeOrmModule.forFeature([StockTransferLine]), MikroOrmModule.forFeature([StockTransferLine]), RolePermissionModule],
-	providers: [StockTransferLineService, TypeOrmStockTransferLineRepository, MikroOrmStockTransferLineRepository],
+	providers: [StockTransferLineService, TypeOrmStockTransferLineRepository, MikroOrmStockTransferLineRepository, StockTransferLineResolver],
 	exports: [StockTransferLineService]
 })
 export class StockTransferLineModule {}

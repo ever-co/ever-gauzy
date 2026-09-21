@@ -40,6 +40,10 @@ export class StockMovementResolver {
 	@Query('stockMovements')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
 	async stockMovements(@Args('warehouseId') warehouseId: string, @Args('variantId') variantId: string, @Args('take') take: number): Promise<any> {
-		return await this.service.findLedger({ warehouseId, variantId, take });
+		const page = await this.service.findLedger({ warehouseId, variantId, take });
+
+		// The service answers a page, and the schema declares a list: a method that already
+		// answers one is returned as it is, so this holds either way.
+		return Array.isArray(page) ? page : (page as any)?.items ?? [];
 	}
 }

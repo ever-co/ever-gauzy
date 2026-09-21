@@ -108,7 +108,7 @@ export class StockCountLine extends TenantOrganizationBaseEntity {
 		nullable: true,
 		onDelete: 'SET NULL'
 	})
-	@JoinColumn()
+	@JoinColumn({ name: 'countedByUserId' })
 	countedBy?: User;
 
 	@ApiPropertyOptional({ type: () => String })

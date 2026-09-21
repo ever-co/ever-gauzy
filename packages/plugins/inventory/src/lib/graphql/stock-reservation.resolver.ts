@@ -53,7 +53,11 @@ export class StockReservationResolver {
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
 	@Versioned({ write: false })
 	async stockReservations(@Args('referenceType') referenceType: StockReservationReferenceType, @Args('referenceId') referenceId: string, @Args('status') status: StockReservationStatus): Promise<any> {
-		return await this.service.findReservations({ where: { referenceType, referenceId, status } });
+		const page = await this.service.findReservations({ where: { referenceType, referenceId, status } });
+
+		// The service answers a page, and the schema declares a list: a method that already
+		// answers one is returned as it is, so this holds either way.
+		return Array.isArray(page) ? page : (page as any)?.items ?? [];
 	}
 
 	/** One hold. */

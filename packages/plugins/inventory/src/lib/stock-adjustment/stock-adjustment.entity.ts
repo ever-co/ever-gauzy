@@ -163,7 +163,7 @@ export class StockAdjustment extends TenantOrganizationBaseEntity {
 		nullable: true,
 		onDelete: 'SET NULL'
 	})
-	@JoinColumn()
+	@JoinColumn({ name: 'appliedByUserId' })
 	appliedBy?: User;
 
 	@ApiPropertyOptional({ type: () => String })

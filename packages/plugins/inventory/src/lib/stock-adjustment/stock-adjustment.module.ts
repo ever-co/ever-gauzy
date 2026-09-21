@@ -14,11 +14,12 @@ import { StockAdjustmentController } from './stock-adjustment.controller';
 import { StockAdjustmentService } from './stock-adjustment.service';
 import { TypeOrmStockAdjustmentRepository } from './repository/type-orm-stock-adjustment.repository';
 import { MikroOrmStockAdjustmentRepository } from './repository/mikro-orm-stock-adjustment.repository';
+import { StockAdjustmentResolver } from '../graphql/stock-adjustment.resolver';
 
 @Module({
 	controllers: [StockAdjustmentController],
 	imports: [TypeOrmModule.forFeature([StockAdjustment]), MikroOrmModule.forFeature([StockAdjustment]), RolePermissionModule, StockLevelModule, InventorySequenceModule],
-	providers: [StockAdjustmentService, TypeOrmStockAdjustmentRepository, MikroOrmStockAdjustmentRepository],
+	providers: [StockAdjustmentService, TypeOrmStockAdjustmentRepository, MikroOrmStockAdjustmentRepository, StockAdjustmentResolver],
 	exports: [StockAdjustmentService]
 })
 export class StockAdjustmentModule {}

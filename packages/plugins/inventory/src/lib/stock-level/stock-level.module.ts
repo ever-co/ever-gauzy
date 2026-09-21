@@ -6,14 +6,15 @@
  * exported so every aggregate that changes stock injects it instead of writing a level row directly.
  */
 import { Module } from '@nestjs/common';
-import { RolePermissionModule } from '@gauzy/core';
+import { EventBusModule, RolePermissionModule } from '@gauzy/core';
 import { StockLevelController } from './stock-level.controller';
 import { StockLevelService } from './stock-level.service';
+import { StockLevelResolver } from '../graphql/stock-level.resolver';
 
 @Module({
 	controllers: [StockLevelController],
-	imports: [RolePermissionModule],
-	providers: [StockLevelService],
+	imports: [RolePermissionModule, EventBusModule],
+	providers: [StockLevelService, StockLevelResolver],
 	exports: [StockLevelService]
 })
 export class StockLevelModule {}
