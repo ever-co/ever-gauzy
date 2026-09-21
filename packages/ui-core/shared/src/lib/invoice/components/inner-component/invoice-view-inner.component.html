@@ -19,43 +19,38 @@
               </ng-container>
             </div>
           </div>
-          <div class="d-flex justify-content-between w-100">
-            <div>
-              <div class="d-flex">
-                <div>
-                  <div class="font-weight-bold">
-                    {{
-                    (!isEstimate ? 'INVOICES_PAGE.INVOICE_DATE' : 'INVOICES_PAGE.ESTIMATE_DATE')
-                    | translate
-                    }}:
-                  </div>
-                  <div class="font-weight-bold text-left">
-                    {{ 'INVOICES_PAGE.DUE_DATE' | translate }}:
-                  </div>
-                </div>
+          <!-- Dates on the left, the parties on the right, every one of them a label against its value on
+               one line. "From:" and "To:" used to stand ABOVE their values in two stacked columns, so the
+               same pair of facts was spelled two different ways on one row. -->
+          <div class="meta-row">
+            <dl class="meta">
+              <div class="meta-item">
+                <dt>
+                  {{
+                  (!isEstimate ? 'INVOICES_PAGE.INVOICE_DATE' : 'INVOICES_PAGE.ESTIMATE_DATE')
+                  | translate
+                  }}:
+                </dt>
                 <!-- `dueDate` is optional and `dateFormat` yields undefined for an unset
                      date, so these labels used to stand over blanks. -->
-                <div class="ml-3 mr-3">
-                  <div>{{ (invoice?.invoiceDate | dateFormat) || '—' }}</div>
-                  <div>{{ (invoice?.dueDate | dateFormat) || '—' }}</div>
-                </div>
+                <dd>{{ (invoice?.invoiceDate | dateFormat) || '—' }}</dd>
               </div>
-            </div>
-            <div class="d-flex">
-              <div>
-                <div class="font-weight-bold text-left">
-                  {{ 'INVOICES_PAGE.VIEW.FROM' | translate | titlecase }}:
-                </div>
-                <div>{{ invoice?.fromOrganization?.name || '—' }}</div>
+              <div class="meta-item">
+                <dt>{{ 'INVOICES_PAGE.DUE_DATE' | translate }}:</dt>
+                <dd>{{ (invoice?.dueDate | dateFormat) || '—' }}</dd>
               </div>
-              <div class="ml-3">
-                <div class="font-weight-bold text-left">
-                  {{ 'INVOICES_PAGE.VIEW.TO' | translate | titlecase }}:
-                </div>
+            </dl>
+            <dl class="meta meta-parties">
+              <div class="meta-item">
+                <dt>{{ 'INVOICES_PAGE.VIEW.FROM' | translate | titlecase }}:</dt>
+                <dd>{{ invoice?.fromOrganization?.name || '—' }}</dd>
+              </div>
+              <div class="meta-item">
+                <dt>{{ 'INVOICES_PAGE.VIEW.TO' | translate | titlecase }}:</dt>
                 <!-- A draft invoice can have no contact yet; the label used to sit over a blank. -->
-                <div>{{ invoice?.toContact?.name || '—' }}</div>
+                <dd>{{ invoice?.toContact?.name || '—' }}</dd>
               </div>
-            </div>
+            </dl>
           </div>
         </div>
       </div>

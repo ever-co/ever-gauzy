@@ -122,3 +122,48 @@
   --gauzy-table-cell-padding-y: 0.5rem;
   --gauzy-table-header-padding-y: 0.5rem;
 }
+
+// ── Dates and parties ────────────────────────────────────────────────────────
+// Every fact on this row reads "Label: value" on one line. From / To used to
+// stack their value under the label in two columns while the dates beside them
+// were already inline, so one row spelled the same kind of fact two ways.
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.25rem 2rem;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.meta-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+
+  dt {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  dd {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+}
+
+// The parties hug the right edge, under the actions above them.
+.meta-parties .meta-item {
+  justify-content: flex-end;
+}
