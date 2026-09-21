@@ -2,7 +2,7 @@ import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { filter, Observable } from 'rxjs';
 import { ID } from '@gauzy/contracts';
-import { connectionFromOffsetPage, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { connectionFromOffsetPage, IConnectionPageSelection, resolveConnectionWindow, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
@@ -49,15 +49,17 @@ export class ProductPublicationResolver {
 	async productPublications(
 		@Args('filter') filterBy: { productId?: ID; channelId?: ID; status?: PublicationStatus } = {},
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('page') page?: IConnectionPageSelection
 	): Promise<GraphqlConnection<ProductChannel>> {
-		const page = await this.productChannelService.paginate({
+		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
+		const listing = await this.productChannelService.findAll({
 			where: { ...filterBy },
-			...(limit ? { take: limit } : {}),
-			...(offset ? { skip: offset } : {})
+			skip,
+			take
 		});
 
-		return connectionFromOffsetPage<ProductChannel>(page, offset ?? 0);
+		return connectionFromOffsetPage<ProductChannel>(listing, skip);
 	}
 
 	/**
@@ -77,15 +79,17 @@ export class ProductPublicationResolver {
 	async productVariantPublications(
 		@Args('filter') filterBy: { variantId?: ID; channelId?: ID; status?: PublicationStatus } = {},
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('page') page?: IConnectionPageSelection
 	): Promise<GraphqlConnection<ProductVariantChannel>> {
-		const page = await this.productVariantChannelService.paginate({
+		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
+		const listing = await this.productVariantChannelService.findAll({
 			where: { ...filterBy },
-			...(limit ? { take: limit } : {}),
-			...(offset ? { skip: offset } : {})
+			skip,
+			take
 		});
 
-		return connectionFromOffsetPage<ProductVariantChannel>(page, offset ?? 0);
+		return connectionFromOffsetPage<ProductVariantChannel>(listing, skip);
 	}
 
 	/**

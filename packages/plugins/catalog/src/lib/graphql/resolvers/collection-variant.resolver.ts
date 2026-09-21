@@ -1,7 +1,7 @@
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { connectionFromOffsetPage, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { connectionFromOffsetPage, IConnectionPageSelection, resolveConnectionWindow, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
@@ -39,15 +39,17 @@ export class CollectionVariantResolver {
 	async collectionVariants(
 		@Args('filter') filter: { collectionId?: ID; variantId?: ID } = {},
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('page') page?: IConnectionPageSelection
 	): Promise<GraphqlConnection<CollectionVariant>> {
-		const page = await this.collectionVariantService.paginate({
+		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
+		const listing = await this.collectionVariantService.findAll({
 			where: { ...filter },
 			order: { position: 'ASC', addedAt: 'ASC' },
-			...(limit ? { take: limit } : {}),
-			...(offset ? { skip: offset } : {})
+			skip,
+			take
 		});
 
-		return connectionFromOffsetPage<CollectionVariant>(page, offset ?? 0);
+		return connectionFromOffsetPage<CollectionVariant>(listing, skip);
 	}
 }

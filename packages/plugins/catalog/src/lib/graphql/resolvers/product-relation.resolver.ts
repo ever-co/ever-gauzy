@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { connectionFromOffsetPage, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { connectionFromOffsetPage, IConnectionPageSelection, resolveConnectionWindow, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
@@ -39,17 +39,19 @@ export class ProductRelationResolver {
 	async productRelations(
 		@Args('filter') filter: { productId?: ID; relatedProductId?: ID; type?: ProductRelationType } = {},
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('page') page?: IConnectionPageSelection
 	): Promise<GraphqlConnection<ProductRelation>> {
-		const page = await this.productRelationService.paginate({
+		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
+		const listing = await this.productRelationService.findAll({
 			where: { ...filter },
 			relations: ['relatedProduct'],
 			order: { type: 'ASC', position: 'ASC' },
-			...(limit ? { take: limit } : {}),
-			...(offset ? { skip: offset } : {})
+			skip,
+			take
 		});
 
-		return connectionFromOffsetPage<ProductRelation>(page, offset ?? 0);
+		return connectionFromOffsetPage<ProductRelation>(listing, skip);
 	}
 
 	/**
