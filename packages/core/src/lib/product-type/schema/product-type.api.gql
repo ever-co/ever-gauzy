@@ -59,7 +59,7 @@ extend type Query {
 	"""
 	How many product types the caller's tenant has.
 	"""
-	productTypeCount: Int!
+	productTypeCount: Int
 }
 
 extend type Mutation {

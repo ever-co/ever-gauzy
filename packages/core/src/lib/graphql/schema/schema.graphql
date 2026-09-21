@@ -2062,7 +2062,7 @@ type Query {
   productCategory(id: ID!): ProductCategory
 
   """How many categories the caller's tenant has."""
-  productCategoryCount: Int!
+  productCategoryCount: Int
 
   """The options of the caller's tenant."""
   productOptions(filter: ProductOptionFilter, sort: [ProductOptionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ProductOptionConnection!
@@ -2105,7 +2105,7 @@ type Query {
   productType(id: ID!): ProductType
 
   """How many product types the caller's tenant has."""
-  productTypeCount: Int!
+  productTypeCount: Int
 
   """The prices of the caller's tenant."""
   productVariantPrices(filter: ProductVariantPriceFilter, sort: [ProductVariantPriceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ProductVariantPriceConnection!

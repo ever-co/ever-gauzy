@@ -226,6 +226,14 @@ jobs:
         if: always()
         run: node tools/scripts/graphql-field-binding-check.mjs
 
+      # The list surface is where GraphQL parity is easiest to lose: a bare array cannot be paged,
+      # filtered or counted, so the client that has the REST list has no counterpart to move to. The
+      # gate names the 48 list fields and 52 connection types that are still not the canonical shape, so
+      # the remainder is countable and a new one cannot appear unnoticed.
+      - name: The list surface follows the connection contract
+        if: always()
+        run: node tools/scripts/connection-shape-check.mjs
+
       # An event name is an API contract for subscribers and webhook receivers, and the doctrine spells
       # its aggregate segment the way the table it names is spelled. A name whose aggregate follows the
       # *package* spelling instead (`seller-offering.created`) names one concept two ways and cannot be
