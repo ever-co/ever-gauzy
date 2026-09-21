@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import type { ID } from '@gauzy/contracts';
 import type { CrudService } from '../core/crud/crud.service';
+import { RequestContext } from '../core/context/request-context';
 import type { BaseEntity } from '../core/entities/base.entity';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
@@ -185,6 +186,56 @@ describe('the criteria the update is predicated on', () => {
 			tenantId: 'tenant-1',
 			organizationId: 'org-1'
 		});
+	});
+
+	it('scopes the statement by the credential, whether or not the caller remembered to', async () => {
+		// The scope is a property of the convention, not a line each route has to remember: before this
+		// the tenant travelled only through `TenantAwareCrudService.update` and the organization travelled
+		// only where a call site passed `where`, which was four call sites out of twenty-five. Control: a
+		// write that reached a row of another organization was accepted, and a caller that forgot was
+		// indistinguishable from one that meant it.
+		const { service, table } = serviceWith();
+
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-1');
+
+		try {
+			await commitVersionedUpdate(service, {
+				id: 'invoice-1',
+				expectation: { wildcard: false, versions: [3] },
+				patch: { status: 'PAID' }
+			});
+
+			expect(table.criteria[0]).toEqual({
+				id: 'invoice-1',
+				version: 3,
+				tenantId: 'tenant-1',
+				organizationId: 'org-1'
+			});
+		} finally {
+			jest.restoreAllMocks();
+		}
+	});
+
+	it('leaves the scope out for a caller outside a request, rather than stating it as undefined', async () => {
+		// A job, a seeder and an expiry sweep write rows they never read. A key present with an undefined
+		// value is a criterion the two ORMs interpret differently, so the member is left out entirely.
+		const { service, table } = serviceWith();
+
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(undefined);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(undefined);
+
+		try {
+			await commitVersionedUpdate(service, {
+				id: 'invoice-1',
+				expectation: { wildcard: false, versions: [3] },
+				patch: { status: 'PAID' }
+			});
+
+			expect(table.criteria[0]).toEqual({ id: 'invoice-1', version: 3 });
+		} finally {
+			jest.restoreAllMocks();
+		}
 	});
 
 	it('reserves the precondition, so an extra criterion cannot replace the version it was predicated on', async () => {
