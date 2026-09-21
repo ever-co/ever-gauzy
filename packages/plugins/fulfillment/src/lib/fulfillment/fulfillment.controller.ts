@@ -33,6 +33,7 @@ import {
 import { Fulfillment } from './fulfillment.entity';
 import { FulfillmentService } from './fulfillment.service';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
+import { fulfillmentVersionOf } from '../fulfillment.types';
 import {
 	CreateFulfillmentDTO,
 	FulfillmentTransitionDTO,
@@ -54,6 +55,14 @@ import {
  * the carrier honours a key when it is presented: a repeated `ship` is refused by the status machine
  * rather than by the key, so the key is offered rather than required, and a caller that never sends one
  * is unaffected.
+ *
+ * The four transition routes honour a version rather than demanding one. A status move is the outcome
+ * of an event a carrier or an operator reports, and a carrier callback has never read an `ETag` — so a
+ * route that required `If-Match` would make the shipment unmovable from the one caller that reports
+ * most of these events. What changed is the write underneath: the move is a conditional
+ * `UPDATE … WHERE id = :id AND version = :expected` either way, so two operators shipping the same
+ * parcel at once no longer both succeed and both move the order line's counters. A caller that does
+ * state a version gets its own precondition compared as well.
  *
  * The label route adopts both of the platform's write conventions, because it is the route where they
  * meet. Requesting a label asks a carrier for a document, and asking again for one the carrier has
@@ -140,35 +149,45 @@ export class FulfillmentController extends CrudController<Fulfillment> {
 	 *
 	 * @param id The fulfilment.
 	 * @param body The tracking details.
+	 * @param request The request, which carries the version the caller read the shipment at when it
+	 * stated one.
 	 * @returns The shipped fulfilment.
 	 */
 	@ApiOperation({ summary: 'Mark a fulfillment shipped' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Fulfillment shipped' })
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
 	@Idempotent({ scope: 'fulfillment.ship', required: false, resourceType: 'fulfillment' })
+	@Versioned({ resource: FulfillmentService, required: false })
 	@Post(':id/ship')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async ship(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: FulfillmentTransitionDTO
+		@Body() body: FulfillmentTransitionDTO,
+		@Req() request?: Request
 	): Promise<Fulfillment> {
-		return this.fulfillmentService.ship(id, body ?? {});
+		return this.fulfillmentService.ship(id, body ?? {}, fulfillmentVersionOf(request));
 	}
 
 	/**
 	 * Records that the carrier reported movement.
 	 *
 	 * @param id The fulfilment.
+	 * @param request The request, which carries the version the caller read the shipment at when it
+	 * stated one.
 	 * @returns The updated fulfilment.
 	 */
 	@ApiOperation({ summary: 'Mark a fulfillment in transit' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Fulfillment in transit' })
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Versioned({ resource: FulfillmentService, required: false })
 	@Post(':id/in-transit')
 	@HttpCode(HttpStatus.OK)
-	async markInTransit(@Param('id', UUIDValidationPipe) id: string): Promise<Fulfillment> {
-		return this.fulfillmentService.markInTransit(id);
+	async markInTransit(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Req() request?: Request
+	): Promise<Fulfillment> {
+		return this.fulfillmentService.markInTransit(id, fulfillmentVersionOf(request));
 	}
 
 	/**
@@ -176,19 +195,23 @@ export class FulfillmentController extends CrudController<Fulfillment> {
 	 *
 	 * @param id The fulfilment.
 	 * @param body The delivery instant, when the carrier supplied one.
+	 * @param request The request, which carries the version the caller read the shipment at when it
+	 * stated one.
 	 * @returns The delivered fulfilment.
 	 */
 	@ApiOperation({ summary: 'Mark a fulfillment delivered' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Fulfillment delivered' })
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Versioned({ resource: FulfillmentService, required: false })
 	@Post(':id/deliver')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async deliver(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: FulfillmentTransitionDTO
+		@Body() body: FulfillmentTransitionDTO,
+		@Req() request?: Request
 	): Promise<Fulfillment> {
-		return this.fulfillmentService.deliver(id);
+		return this.fulfillmentService.deliver(id, undefined, fulfillmentVersionOf(request));
 	}
 
 	/**
@@ -196,19 +219,23 @@ export class FulfillmentController extends CrudController<Fulfillment> {
 	 *
 	 * @param id The fulfilment.
 	 * @param body The reason.
+	 * @param request The request, which carries the version the caller read the shipment at when it
+	 * stated one.
 	 * @returns The cancelled fulfilment.
 	 */
 	@ApiOperation({ summary: 'Cancel a fulfillment' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Fulfillment cancelled' })
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Versioned({ resource: FulfillmentService, required: false })
 	@Post(':id/cancel')
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async cancel(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: FulfillmentTransitionDTO
+		@Body() body: FulfillmentTransitionDTO,
+		@Req() request?: Request
 	): Promise<Fulfillment> {
-		return this.fulfillmentService.cancel(id, body?.reason);
+		return this.fulfillmentService.cancel(id, body?.reason, fulfillmentVersionOf(request));
 	}
 
 	/**

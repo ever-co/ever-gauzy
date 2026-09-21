@@ -1,9 +1,16 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	Inject,
+	Injectable,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import * as chalk from 'chalk';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, EventBus, Money, Payment, RequestContext } from '@gauzy/core';
+import { BaseEvent, CrudService, EventBus, Money, Payment, RequestContext, readAffectedRows } from '@gauzy/core';
 import { Refund } from './refund.entity';
 import { TypeOrmRefundRepository } from './repository/type-orm-refund.repository';
 import { MikroOrmRefundRepository } from './repository/mikro-orm-refund.repository';
@@ -153,14 +160,15 @@ export class RefundService extends CrudService<Refund> {
 			return saved;
 		});
 
-		this.eventBus.publish(
+		await this.publish(
 			new RefundCreatedEvent(
 				refund.id,
 				refund.orderId,
 				refund.amount,
 				refund.currency,
 				refund.organizationId ?? this.scope.organizationId
-			)
+			),
+			`refund ${refund.id}`
 		);
 
 		return refund;
@@ -201,12 +209,29 @@ export class RefundService extends CrudService<Refund> {
 	 * Approves a pending refund: it becomes `SUCCEEDED`, and the payment and its collection are moved
 	 * with it.
 	 *
+	 * **The ceiling and the write are joined, or neither holds.** `assertRefundable` measures the
+	 * request against `Σ captures − Σ succeeded refunds`, and the payment row is then written with an
+	 * *absolute* new `refundedAmount` computed from the value this call read. Written unconditionally,
+	 * two refunds for the whole captured amount approved at the same moment both see zero succeeded, both
+	 * pass the ceiling, and both write the same total: the payment reports one refund while two are
+	 * `SUCCEEDED` and twice the captured money has gone back. The `UPDATE` therefore names
+	 * `refundedAmount` among its criteria, so the second writer changes no row and is refused with
+	 * `REFUND_APPROVAL_CONFLICT`.
+	 *
+	 * **A pending refund counts towards the ceiling while it is being approved.** Two pending refunds are
+	 * two intentions to give the same money back, and measuring an approval only against what has already
+	 * succeeded admits both of them before either has moved. The approval therefore measures against the
+	 * succeeded refunds *and* the other pending ones, which is what makes the compare-and-swap a refusal
+	 * of the second rather than a race it happens to lose.
+	 *
 	 * @param id The refund to approve.
 	 * @param note An optional operator note recorded on the refund.
 	 * @returns The stored refund.
 	 * @throws NotFoundException when the refund is not in the caller's organization.
 	 * @throws BadRequestException when the refund is no longer pending, or when approving it would
 	 * exceed what the payment captured.
+	 * @throws ConflictException with `REFUND_APPROVAL_CONFLICT` when another refund moved the payment's
+	 * running total between this call reading it and writing it.
 	 */
 	async approveRefund(id: ID, note?: string): Promise<IRefund> {
 		const refund = await this.findRefundOrFail(id);
@@ -217,7 +242,7 @@ export class RefundService extends CrudService<Refund> {
 
 		if (refund.paymentId) {
 			const payment = await this.paymentCaptureService.findPaymentOrFail(refund.paymentId);
-			await this.assertRefundable(payment, refund.amount, refund.currency);
+			await this.assertRefundable(payment, refund.amount, refund.currency, { excludeRefundId: refund.id });
 
 			const captured = Money.of(
 				await this.paymentCaptureService.sumCapturedForPayment(payment.id),
@@ -227,13 +252,32 @@ export class RefundService extends CrudService<Refund> {
 				Money.of(refund.amount, refund.currency)
 			);
 
-			await this.paymentRepository.update(
-				{ id: payment.id, ...this.scope } as never,
+			const written = await this.paymentRepository.update(
+				{
+					id: payment.id,
+					// The running total this approval reasoned about. The statement lands only while the
+					// payment still holds it, which is what turns the ceiling above into a guarantee rather
+					// than a check two concurrent approvals can both pass. A total read as absent is stated
+					// as `IS NULL`, because `= NULL` matches nothing and would make the payment permanently
+					// unrefundable rather than merely protected.
+					refundedAmount: (payment.refundedAmount === null || payment.refundedAmount === undefined
+						? IsNull()
+						: payment.refundedAmount) as never,
+					...this.scope
+				} as never,
 				{
 					refundedAmount: refunded.amount,
 					status: this.paymentCaptureService.derivePaymentStatus(payment, captured, refunded)
 				} as never
 			);
+
+			if (readAffectedRows(written) === 0) {
+				throw new ConflictException({
+					message: `REFUND_APPROVAL_CONFLICT: payment '${payment.id}' was refunded by another write between this approval reading its running total and writing it, so nothing was overwritten. Read the payment and approve again.`,
+					code: 'REFUND_APPROVAL_CONFLICT',
+					details: { paymentId: payment.id, refundId: refund.id, refundedAmount: payment.refundedAmount ?? '0' }
+				});
+			}
 
 			if (payment.paymentCollectionId) {
 				await this.paymentCollectionService.recordRefund(payment.paymentCollectionId, refund.amount);
@@ -254,14 +298,15 @@ export class RefundService extends CrudService<Refund> {
 		 */
 		await this.mirrorToOrderLines(await this.findRefundOrFail(id));
 
-		this.eventBus.publish(
+		await this.publish(
 			new PaymentRefundedEvent(
 				refund.id,
 				refund.paymentId,
 				refund.amount,
 				refund.currency,
 				refund.organizationId ?? this.scope.organizationId
-			)
+			),
+			`refund ${refund.id}`
 		);
 
 		return this.findRefundOrFail(id);
@@ -325,6 +370,35 @@ export class RefundService extends CrudService<Refund> {
 					)
 				);
 			}
+		}
+	}
+
+	/**
+	 * Announces one refund event, awaited and with its failure absorbed.
+	 *
+	 * **Awaited**, because `EventBus.publish` is asynchronous and a call left dangling turns a consumer's
+	 * throw into an unhandled promise rejection — which, under Node's default policy, terminates the API
+	 * process and every in-flight request with it. It also ordered the publish after the response, so a
+	 * client reading derived state immediately afterwards saw it stale.
+	 *
+	 * **Absorbed**, for the reason `mirrorToOrderLines` states just above: by the time this runs the
+	 * money has gone back at the provider and the refund is already `SUCCEEDED`, so failing the request
+	 * over a consumer would tell the caller the refund failed when it did not, and the caller would
+	 * refund again.
+	 *
+	 * @param event The event to publish.
+	 * @param what What the event is about, used in the log line.
+	 */
+	private async publish(event: BaseEvent, what: string): Promise<void> {
+		try {
+			await this.eventBus.publish(event);
+		} catch (error) {
+			console.log(
+				chalk.yellow(
+					`PAYMENT_EVENT_PUBLISH_FAILED: ${what} was recorded and its event was not delivered ` +
+						`(${this.describe(error)}). The refund stands.`
+				)
+			);
 		}
 	}
 
@@ -458,21 +532,65 @@ export class RefundService extends CrudService<Refund> {
 	 * the path that has no payment to compare it against, rather than the money kernel's own error
 	 * escaping as a server fault.
 	 *
+	 * **An approval measures against the pending refunds too.** At creation the question is "could this
+	 * refund be paid?", and a pending refund is an intention rather than money that moved — counting it
+	 * would refuse a second request that a cancellation of the first would have made room for. At
+	 * approval the question is "may this money leave now?", and every other pending refund of the same
+	 * payment is money that is about to leave as well: measuring only against what has already succeeded
+	 * admits two full refunds of one capture, because neither has succeeded when either is approved. The
+	 * refund being approved is excluded from that sum, since it is the one whose amount is the request.
+	 *
 	 * @param payment The payment being given back.
 	 * @param amount The amount requested.
 	 * @param currency The currency of the request.
+	 * @param options The refund being approved, whose own pending row is not counted against it. Absent
+	 * on the creation path, which measures against the succeeded refunds only.
 	 * @throws BadRequestException when the amount is not an exact decimal or when the request exceeds
 	 * what is refundable.
 	 */
-	private async assertRefundable(payment: Payment, amount: DecimalString | number, currency: string): Promise<void> {
+	private async assertRefundable(
+		payment: Payment,
+		amount: DecimalString | number,
+		currency: string,
+		options: { excludeRefundId?: ID } = {}
+	): Promise<void> {
 		const requested = this.toMoney(amount, currency);
 		const captured = Money.of(await this.paymentCaptureService.sumCapturedForPayment(payment.id), currency);
 		const succeeded = Money.of(await this.sumSucceededForPayment(payment.id), currency);
-		const refundable = captured.subtract(succeeded);
+		const committed = options.excludeRefundId
+			? succeeded.add(
+					Money.of(await this.sumPendingForPayment(payment.id, options.excludeRefundId), currency)
+			  )
+			: succeeded;
+		const refundable = captured.subtract(committed);
 
 		if (requested.greaterThan(refundable)) {
 			throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
 		}
+	}
+
+	/**
+	 * Sums the refunds of a payment that are still waiting for a decision.
+	 *
+	 * @param paymentId The payment to sum for.
+	 * @param exceptRefundId A refund to leave out, which is the one being approved.
+	 * @returns The pending total as an exact decimal.
+	 */
+	private async sumPendingForPayment(paymentId: ID, exceptRefundId: ID): Promise<DecimalString> {
+		const refunds: IRefund[] = await this.find({
+			where: { paymentId, status: RefundStatus.PENDING, ...this.scope } as never
+		});
+		const others = refunds.filter((refund) => refund.id !== exceptRefundId);
+		const currency = others.length ? others[0].currency : undefined;
+
+		if (!currency) {
+			return '0';
+		}
+
+		return Money.sum(
+			others.map((refund) => Money.of(refund.amount, currency)),
+			currency
+		).amount;
 	}
 
 	/**

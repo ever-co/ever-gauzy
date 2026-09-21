@@ -86,6 +86,11 @@ jest.mock('@gauzy/core', () => {
 			}
 		},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The affected-row reader is the platform's own, pulled through the seam rather than written
+		// again here: an approval decides whether its compare-and-swap was refused from whatever the
+		// driver answered the `UPDATE` with, and a double that understood a different set of shapes
+		// would pass this suite while the four supported drivers disagreed with it.
+		readAffectedRows: jest.requireActual('@gauzy/core/src/lib/database/database.helper').readAffectedRows,
 		BaseEvent: class {},
 		EventBus: class {},
 		Payment: class Payment {},
@@ -105,6 +110,7 @@ jest.mock(
 	'@gauzy/config',
 	() => ({
 		isMySQL: () => false,
+		isPostgres: () => false,
 		DatabaseTypeEnum: {
 			mongodb: 'mongodb',
 			sqlite: 'sqlite',
@@ -116,7 +122,8 @@ jest.mock(
 	{ virtual: true }
 );
 
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { RefundStatus } from '../payment.types';
 import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
@@ -200,6 +207,13 @@ function datastore(tables: ITables) {
 			// an `undefined` member from the condition rather than matching nothing.
 			if (expected === undefined) {
 				return true;
+			}
+
+			// A compare-and-swap on a running total states `IS NULL` for a column it read as absent,
+			// because `= NULL` matches nothing in SQL. The double has to make the same distinction, or a
+			// criteria the database would honour would silently match nothing here.
+			if (expected instanceof FindOperator && expected.type === 'isNull') {
+				return row[field] === null || row[field] === undefined;
 			}
 
 			return String(row[field] ?? '') === String(expected ?? '');
@@ -317,8 +331,13 @@ function datastore(tables: ITables) {
 		count: async () => tables[table].length,
 		create: (partial: Row) => ({ ...partial }),
 		save: async (entity: Row) => save(table, entity),
+		// TypeORM applies the WHOLE criteria it was handed, not the id alone. The running total an
+		// approval predicates its compare-and-swap on is part of that criteria, so a double that matched
+		// on the id only would answer one affected row for a statement the database would have matched
+		// nothing with — which is to say it would report a lost race as a write that landed.
 		update: async (criteria: any, partial: Row) => {
-			const index = tables[table].findIndex((row) => row.id === identify(criteria));
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = tables[table].findIndex((row) => matches(row, where));
 
 			if (index >= 0) {
 				Object.assign(tables[table][index], partial);
@@ -853,20 +872,85 @@ describe('RefundService — approving, cancelling and failing (doc 10 §9.4, §9
 	});
 
 	it('moves the register of a refunded amount once, whatever else is queued', async () => {
-		// Two refunds of the whole captured amount may both be recorded — a pending refund is an
-		// intention — but only one of them can succeed, because Σ succeeded <= Σ captured (doc 10 §9.5).
+		// Two refunds of the whole captured amount may both be *recorded* — a pending refund is an
+		// intention, and cancelling one is what makes room for the other — but only one of them can ever
+		// move money, because Σ succeeded <= Σ captured (doc 10 §9.5).
+		//
+		// An approval measures against the other pending intentions as well as against what has already
+		// succeeded, which is the correction this rule needed: measuring only against the succeeded
+		// refunds admits both of them, because neither has succeeded when either is approved, and the
+		// payment then reports one refund while two are SUCCEEDED and twice the captured money has gone
+		// back. So while both are queued neither may be approved — the queue is resolved by withdrawing
+		// one, not by whichever approval happens to arrive first.
 		const fixture = refundFixture();
 		const first = await fixture.service.createRefund(refundInput({ amount: '100' }) as never);
 		const second = await fixture.service.createRefund(refundInput({ amount: '100' }) as never);
 
+		await expect(fixture.service.approveRefund(first.id)).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
+		expect(fixture.payment().refundedAmount).toBe('0');
+		expect(fixture.tables.refund.map((row) => row.status)).toEqual([RefundStatus.PENDING, RefundStatus.PENDING]);
+
+		await fixture.service.cancelRefund(second.id, 'recorded twice');
+
 		await fixture.service.approveRefund(first.id);
 
 		expect(fixture.payment()).toMatchObject({ refundedAmount: '100', status: 'REFUNDED' });
-
-		await expect(fixture.service.approveRefund(second.id)).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
-		expect(fixture.tables.refund[1].status).toBe(RefundStatus.PENDING);
-		expect(fixture.payment().refundedAmount).toBe('100');
+		expect(fixture.tables.refund[1].status).toBe(RefundStatus.CANCELED);
 		expect(await fixture.service.sumSucceededForPayment(PAYMENT)).toBe('100');
+
+		// And the ceiling still holds against a refund recorded after the money went back: what already
+		// succeeded leaves nothing to give, so the third request is refused where it is written rather
+		// than where it is approved.
+		await expect(fixture.service.createRefund(refundInput({ amount: '0.01' }) as never)).rejects.toThrow(
+			/REFUND_AMOUNT_EXCEEDS_CAPTURED/
+		);
+		expect(fixture.tables.refund).toHaveLength(2);
+	});
+
+	it('refuses an approval whose payment was refunded between the ceiling being measured and the row being written', async () => {
+		// The payment row is written with an absolute new `refundedAmount` computed from the figure this
+		// approval read, so the write has to be conditional on the payment still holding that figure.
+		// Written unconditionally, an approval that lost the race silently overwrote the winner's total
+		// and the payment reported one refund while two had succeeded.
+		//
+		// The other writer is reproduced here by moving the payment between the read and the write, which
+		// is the only ordering a single-threaded suite can state. The interleaving is real: the read is
+		// `findPaymentOrFail`, the write is the compare-and-swap a few lines later, and any other approval
+		// that commits in between takes this branch.
+		const fixture = refundFixture({ refunds: [refundRow('mine', { amount: '40' })] });
+		const captureService = (fixture.service as never as { paymentCaptureService: PaymentCaptureService })
+			.paymentCaptureService;
+		const read = captureService.findPaymentOrFail.bind(captureService);
+		jest.spyOn(captureService, 'findPaymentOrFail').mockImplementation(async (paymentId) => {
+			// The read hands back a detached row, which is what a read from a database hands back: the
+			// object the caller reasons about does not follow the table afterwards.
+			const payment = { ...(await read(paymentId)) } as never;
+
+			// The other approval lands, taking the payment's refunded total to 10.
+			fixture.payment().refundedAmount = '10';
+
+			return payment;
+		});
+
+		const refusal = await fixture.service
+			.approveRefund('mine')
+			.then(() => undefined)
+			.catch((thrown) => thrown);
+
+		expect(refusal).toBeInstanceOf(ConflictException);
+		expect(String(refusal.message)).toContain('REFUND_APPROVAL_CONFLICT');
+		// The refusal names the figure it reasoned about, so the caller can tell a lost race from a
+		// request that was always too large and knows to read the payment again.
+		expect(refusal.getResponse()).toMatchObject({
+			code: 'REFUND_APPROVAL_CONFLICT',
+			details: { paymentId: PAYMENT, refundId: 'mine', refundedAmount: '0' }
+		});
+
+		// Nothing of the refused approval stands: the payment keeps the winner's total and the refund is
+		// still an intention, so the caller may approve it again once it has read the payment.
+		expect(fixture.payment().refundedAmount).toBe('10');
+		expect(fixture.tables.refund[0].status).toBe(RefundStatus.PENDING);
+		expect(fixture.collection().refundedAmount).toBe('0');
 	});
 
 	it('re-checks the ceiling on approval against the captures, not against the authorisation', async () => {

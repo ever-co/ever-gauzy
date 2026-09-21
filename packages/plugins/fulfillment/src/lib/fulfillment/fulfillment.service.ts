@@ -16,11 +16,15 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import {
+	ApiErrorCode,
+	ApiException,
+	EventOutboxService,
 	IVersionExpectation,
 	RequestContext,
 	TenantAwareCrudService,
 	commitVersionedUpdate,
-	compareDecimalStrings
+	compareDecimalStrings,
+	subtractDecimalStrings
 } from '@gauzy/core';
 import { OrderLineService } from '@gauzy/plugin-order';
 import { Fulfillment } from './fulfillment.entity';
@@ -28,8 +32,21 @@ import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.
 import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
 import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
-import { addQuantities, isNegativeQuantity, isPositiveQuantity, remainingQuantity } from '../fulfillment.quantity';
-import { FULFILLMENT_LABEL_PROVIDER, IFulfillmentLabelProviderPort } from '../fulfillment.types';
+import {
+	Quantity,
+	addQuantities,
+	isNegativeQuantity,
+	isPositiveQuantity,
+	remainingQuantity,
+	toQuantityText
+} from '../fulfillment.quantity';
+import {
+	ANY_FULFILLMENT_VERSION,
+	FULFILLMENT_AGGREGATE_TYPE,
+	FULFILLMENT_EVENTS,
+	FULFILLMENT_LABEL_PROVIDER,
+	IFulfillmentLabelProviderPort
+} from '../fulfillment.types';
 
 /**
  * The transitions the fulfilment lifecycle allows, and nothing else.
@@ -83,6 +100,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		readonly mikroOrmFulfillmentRepository: MikroOrmFulfillmentRepository,
 		private readonly lineService: FulfillmentLineService,
 		private readonly orderLineService: OrderLineService,
+		private readonly outbox: EventOutboxService,
 		@Optional()
 		@Inject(FULFILLMENT_LABEL_PROVIDER)
 		private readonly labelProvider?: IFulfillmentLabelProviderPort
@@ -119,6 +137,17 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * What this method guarantees is that the quantities are legal against the order — the precondition
 	 * the stock movement depends on.
 	 *
+	 * **A return-direction shipment writes lines but moves no counter**, which is the rule
+	 * `createReturnLeg` states below and the rule this method used to break. `fulfilledQuantity` counts
+	 * the units that left the building; a shipment whose goods are coming *back* has not fulfilled
+	 * anything, so adding its quantity to that counter counts the same units twice — once when they went
+	 * out and once when they returned. A line ordered for 10 that shipped 10 and was then returned 4
+	 * through `POST /fulfillments/returns` reached `fulfilledQuantity = 14` against a `quantity` of 10:
+	 * the outstanding remainder went negative, every later outbound shipment on that line was refused
+	 * with `FULFILLMENT_QUANTITY_EXCEEDED`, and the order stayed `FULFILLED` after the goods came back.
+	 * The lines themselves are still written — they are what the returns package reconciles the receipt
+	 * against — and only the counter move is withheld.
+	 *
 	 * @param entity The fulfilment, with its lines.
 	 * @returns The created fulfilment, with its lines.
 	 */
@@ -129,25 +158,37 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			throw new BadRequestException('FULFILLMENT_EMPTY: a fulfilment needs at least one line.');
 		}
 
+		// Resolved once, because the guard above and the counter move below have to agree about which
+		// way the goods are travelling: a direction read twice from a defaulted member is a direction
+		// two halves of one method can disagree about.
+		const direction = entity.direction ?? FulfillmentDirection.OUTBOUND;
+
 		for (const line of lines) {
-			await this.assertQuantityAvailable(
-				line.orderLineId as ID,
-				Number(line.quantity),
-				entity.direction ?? FulfillmentDirection.OUTBOUND
-			);
+			await this.assertQuantityAvailable(line.orderLineId as ID, line.quantity as Quantity, direction);
 		}
 
 		const fulfillment = await super.create({
 			...entity,
-			direction: entity.direction ?? FulfillmentDirection.OUTBOUND,
+			direction,
 			status: FulfillmentStatusDetail.PENDING,
 			version: 1
 		} as DeepPartial<Fulfillment>);
 
 		for (const line of lines) {
 			await this.lineService.create({ ...line, fulfillmentId: fulfillment.id } as DeepPartial<FulfillmentLine>);
-			await this.bumpOrderLineCounters(line.orderLineId as ID, Number(line.quantity), 'FULFILLED');
+
+			if (direction !== FulfillmentDirection.RETURN) {
+				await this.bumpOrderLineCounters(line.orderLineId as ID, line.quantity as Quantity, 'FULFILLED');
+			}
 		}
+
+		// Announced after the lines exist, because a picking list is what a consumer of this event
+		// builds and a shipment with no lines yet is not one it could build anything from.
+		await this.announce(
+			FULFILLMENT_EVENTS[FulfillmentStatusDetail.PENDING],
+			fulfillment,
+			Number(fulfillment.version ?? 1)
+		);
 
 		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
 	}
@@ -196,7 +237,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			);
 		}
 
-		return await super.create({
+		const leg = await super.create({
 			...entity,
 			direction: FulfillmentDirection.RETURN,
 			status: FulfillmentStatusDetail.PENDING,
@@ -205,6 +246,10 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: RequestContext.currentOrganizationId()
 		} as DeepPartial<Fulfillment>);
+
+		await this.announce(FULFILLMENT_EVENTS[FulfillmentStatusDetail.PENDING], leg, Number(leg.version ?? 1));
+
+		return leg;
 	}
 
 	/**
@@ -214,15 +259,29 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * absorbed: the counters below are a cache of the shipment lines that caused them, so a repeat
 	 * would count the same units again (doc 06 §6.9, `409 FULFILLMENT_ALREADY_SHIPPED`).
 	 *
+	 * **The tracking details are part of the move, not a write after it.** They are what the hand-over
+	 * *is*, so they ride in the same conditional statement as the status: one version per move rather
+	 * than a bump followed by an unconditional second write, and the `fulfillment.shipped` event the
+	 * move appends describes a row that already carries the number the carrier issued.
+	 *
 	 * @param fulfillmentId The fulfilment.
 	 * @param details The tracking details the carrier returned.
+	 * @param expectation The version the caller read the shipment at, when its route stated one.
 	 * @returns The shipped fulfilment.
 	 */
 	public async ship(
 		fulfillmentId: ID,
-		details: { trackingNumber?: string; carrier?: string; service?: string; noNotification?: boolean } = {}
+		details: { trackingNumber?: string; carrier?: string; service?: string; noNotification?: boolean } = {},
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
 	): Promise<Fulfillment> {
-		const { fulfillment, moved } = await this.move(fulfillmentId, FulfillmentStatusDetail.SHIPPED);
+		const current = await this.findOneByIdString(fulfillmentId);
+		const { fulfillment, moved } = await this.move(fulfillmentId, FulfillmentStatusDetail.SHIPPED, expectation, {
+			trackingNumber: details.trackingNumber ?? current?.trackingNumber,
+			carrier: details.carrier ?? current?.carrier,
+			service: details.service ?? current?.service,
+			noNotification: details.noNotification ?? current?.noNotification,
+			shippedAt: new Date()
+		});
 
 		if (!moved) {
 			throw new ConflictException({
@@ -236,17 +295,14 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			where: { fulfillmentId }
 		})) as IPagination<FulfillmentLine>).items;
 
-		for (const line of lines) {
-			await this.bumpOrderLineCounters(line.orderLineId, Number(line.quantity), 'SHIPPED');
+		// A return leg's lines describe goods coming back, so they move no shipped counter for the same
+		// reason they move no fulfilled one: the units they name already left, and counting them again
+		// as they return would double the quantity the order line believes it handed over.
+		if (fulfillment.direction !== FulfillmentDirection.RETURN) {
+			for (const line of lines) {
+				await this.bumpOrderLineCounters(line.orderLineId, line.quantity as Quantity, 'SHIPPED');
+			}
 		}
-
-		await this.update(fulfillment.id, {
-			trackingNumber: details.trackingNumber ?? fulfillment.trackingNumber,
-			carrier: details.carrier ?? fulfillment.carrier,
-			service: details.service ?? fulfillment.service,
-			noNotification: details.noNotification ?? fulfillment.noNotification,
-			shippedAt: new Date()
-		} as any);
 
 		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
 	}
@@ -255,10 +311,14 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * Marks a fulfilment as moving, without changing what has shipped.
 	 *
 	 * @param fulfillmentId The fulfilment.
+	 * @param expectation The version the caller read the shipment at, when its route stated one.
 	 * @returns The updated fulfilment.
 	 */
-	public async markInTransit(fulfillmentId: ID): Promise<Fulfillment> {
-		return this.transition(fulfillmentId, FulfillmentStatusDetail.IN_TRANSIT);
+	public async markInTransit(
+		fulfillmentId: ID,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
+		return this.transition(fulfillmentId, FulfillmentStatusDetail.IN_TRANSIT, expectation);
 	}
 
 	/**
@@ -270,10 +330,17 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 *
 	 * @param fulfillmentId The fulfilment.
 	 * @param deliveredAt When the carrier reported delivery.
+	 * @param expectation The version the caller read the shipment at, when its route stated one.
 	 * @returns The delivered fulfilment.
 	 */
-	public async deliver(fulfillmentId: ID, deliveredAt?: Date): Promise<Fulfillment> {
-		const { fulfillment, moved } = await this.move(fulfillmentId, FulfillmentStatusDetail.DELIVERED);
+	public async deliver(
+		fulfillmentId: ID,
+		deliveredAt?: Date,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
+		const { fulfillment, moved } = await this.move(fulfillmentId, FulfillmentStatusDetail.DELIVERED, expectation, {
+			deliveredAt: deliveredAt ?? new Date()
+		});
 
 		if (!moved) {
 			return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
@@ -283,11 +350,14 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			where: { fulfillmentId }
 		})) as IPagination<FulfillmentLine>).items;
 
-		for (const line of lines) {
-			await this.bumpOrderLineCounters(line.orderLineId, Number(line.quantity), 'DELIVERED');
+		// A return leg that arrives is goods coming back, not goods delivered to a buyer: the order
+		// line's delivered counter measures what reached the customer, and a return reaching the
+		// warehouse is the returns package's receipt rather than a delivery of this order's units.
+		if (fulfillment.direction !== FulfillmentDirection.RETURN) {
+			for (const line of lines) {
+				await this.bumpOrderLineCounters(line.orderLineId, line.quantity as Quantity, 'DELIVERED');
+			}
 		}
-
-		await this.update(fulfillment.id, { deliveredAt: deliveredAt ?? new Date() } as any);
 
 		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
 	}
@@ -308,9 +378,14 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 *
 	 * @param fulfillmentId The fulfilment.
 	 * @param reason Why it was cancelled.
+	 * @param expectation The version the caller read the shipment at, when its route stated one.
 	 * @returns The cancelled fulfilment.
 	 */
-	public async cancel(fulfillmentId: ID, reason?: string): Promise<Fulfillment> {
+	public async cancel(
+		fulfillmentId: ID,
+		reason?: string,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
 		const current = await this.findOneByIdString(fulfillmentId);
 
 		if (current.status === FulfillmentStatusDetail.CANCELED) {
@@ -325,19 +400,27 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			});
 		}
 
-		const fulfillment = await this.transition(fulfillmentId, FulfillmentStatusDetail.CANCELED);
+		const { fulfillment } = await this.move(fulfillmentId, FulfillmentStatusDetail.CANCELED, expectation, {
+			canceledAt: new Date(),
+			metadata: { ...(current.metadata ?? {}), ...(reason ? { cancelReason: reason } : {}) }
+		});
 		const lines = ((await this.lineService.findAll({
 			where: { fulfillmentId }
 		})) as IPagination<FulfillmentLine>).items;
 
-		for (const line of lines) {
-			await this.bumpOrderLineCounters(line.orderLineId, -Number(line.quantity), 'FULFILLED');
+		// Only an outbound shipment ever moved the counter, so only an outbound shipment gives it back.
+		// Crediting a cancelled return leg would subtract units the line never accounted for and take
+		// `fulfilledQuantity` below what actually shipped. The negation is exact rather than a `-Number(…)`:
+		// the quantity is a `numeric(20,6)` and the counter it moves is compared against a remainder.
+		if (fulfillment.direction !== FulfillmentDirection.RETURN) {
+			for (const line of lines) {
+				await this.bumpOrderLineCounters(
+					line.orderLineId,
+					subtractDecimalStrings('0', `${line.quantity ?? 0}`),
+					'FULFILLED'
+				);
+			}
 		}
-
-		await this.update(fulfillment.id, {
-			canceledAt: new Date(),
-			metadata: { ...(fulfillment.metadata ?? {}), cancelReason: reason }
-		} as any);
 
 		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
 	}
@@ -351,10 +434,15 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 *
 	 * @param fulfillmentId The fulfilment.
 	 * @param to The requested status.
+	 * @param expectation The version the caller read the shipment at, when its route stated one.
 	 * @returns The fulfilment, with its optimistic lock bumped when it moved.
 	 */
-	public async transition(fulfillmentId: ID, to: FulfillmentStatusDetail): Promise<Fulfillment> {
-		return (await this.move(fulfillmentId, to)).fulfillment;
+	public async transition(
+		fulfillmentId: ID,
+		to: FulfillmentStatusDetail,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
+		return (await this.move(fulfillmentId, to, expectation)).fulfillment;
 	}
 
 	/**
@@ -464,13 +552,49 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * counter beside the status tell "the row is now the target" from "the row was already the
 	 * target" — a distinction that is invisible to a caller reading only the moved row.
 	 *
+	 * **The status and the version move in one statement.** This method used to read the row, compute
+	 * `version + 1` in JavaScript and write both columns with an unconditional `UPDATE … WHERE id = ?`,
+	 * which is exactly the read-then-write window the concurrency kernel exists to close — and it is a
+	 * money and quantity defect rather than merely a lost update, because the callers move an order
+	 * line's counters on the strength of the `moved` flag. Two operators both posting `:id/ship` on a
+	 * PENDING shipment both read version 3, both passed the transition check, both wrote
+	 * `SHIPPED, version = 4`, and both were told they had moved it: `shippedQuantity` ended at twice the
+	 * units handed over, and the `409 FULFILLMENT_ALREADY_SHIPPED` the caller documents never fired. The
+	 * write is now the kernel's conditional update, which decides the outcome from the affected-row
+	 * count, and the version is set by that statement rather than by this one.
+	 *
+	 * **A racer that lost to a mover heading for the same status is told what actually happened.** The
+	 * kernel answers a lost race with `ENTITY_VERSION_CONFLICT`, which is the right answer when the row
+	 * moved somewhere else. When it moved to the status this call asked for, the honest answer is the
+	 * one this method already has a vocabulary for: the row is at the target and this caller did not put
+	 * it there, which is `moved: false` — so `ship` raises its documented conflict and `deliver` answers
+	 * the resource unchanged, exactly as each does for a repeat submission. Any other conflict is
+	 * re-raised untouched.
+	 *
+	 * **The move announces itself, from inside the write that made it.** The package's shipments are
+	 * what the search index, the outbound webhooks and the buyer's notifications are driven by, and
+	 * none of them could observe one: a parcel could be handed over, tracked and delivered and nothing
+	 * outside this package would learn of it. The fact is appended to the platform outbox immediately
+	 * after the conditional statement returned, through the shipment repository's own entity manager —
+	 * a statement that was refused throws before that line is reached, so no event is ever produced for
+	 * a move that did not happen, and an event written as a row cannot be lost by a crash the way one
+	 * published over a bus after the commit can.
+	 *
 	 * @param fulfillmentId The fulfilment.
 	 * @param to The requested status.
+	 * @param expectation The version the caller read the shipment at. A caller inside the platform
+	 * states the wildcard, and the write is then predicated on the version the row holds when the
+	 * statement runs.
+	 * @param patch The columns that belong to this move — the tracking a hand-over carries, the instant
+	 * a delivery happened, the reason a cancelation records. They ride the same statement as the status
+	 * so that one move is one version, and so that the event describes a complete row.
 	 * @returns The fulfilment, and whether the move happened.
 	 */
 	private async move(
 		fulfillmentId: ID,
-		to: FulfillmentStatusDetail
+		to: FulfillmentStatusDetail,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION,
+		patch: Record<string, unknown> = {}
 	): Promise<{ fulfillment: Fulfillment; moved: boolean }> {
 		const fulfillment = await this.findOneByIdString(fulfillmentId);
 
@@ -490,24 +614,75 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			});
 		}
 
-		// The status and the version move in one statement, predicated on the version this read saw.
-		//
-		// Computing the next version here and writing it through the generic update made the transition
-		// check the only thing standing between two callers: both read the same row, both passed the check
-		// against the same status, and whichever wrote second silently erased the first — with a version
-		// number that said nothing about what it had overwritten. The conditional write refuses that
-		// second caller with the conflict instead, and `version` is set by the helper, not here.
-		await commitVersionedUpdate<Fulfillment>(this, {
-			id: fulfillment.id,
-			expectation: { wildcard: false, versions: [Number(fulfillment.version ?? 1)] },
-			patch: { status: to },
-			where: {
-				...(fulfillment.tenantId ? { tenantId: fulfillment.tenantId } : {}),
-				...(fulfillment.organizationId ? { organizationId: fulfillment.organizationId } : {})
+		try {
+			// The same call `requestLabel` makes. `version` is deliberately absent from the patch: the
+			// conditional update writes the next version in the statement that checks the current one,
+			// and the tenancy columns are criteria so that the row this statement may touch is the
+			// caller's row and not merely a row with this id.
+			const { version } = await commitVersionedUpdate<Fulfillment>(this, {
+				id: fulfillment.id,
+				expectation,
+				patch: { ...patch, status: to },
+				where: {
+					...(fulfillment.tenantId ? { tenantId: fulfillment.tenantId } : {}),
+					...(fulfillment.organizationId ? { organizationId: fulfillment.organizationId } : {})
+				}
+			});
+
+			await this.announce(FULFILLMENT_EVENTS[to], { ...fulfillment, ...patch, status: to }, version);
+		} catch (error) {
+			if (!(error instanceof ApiException) || error.code !== ApiErrorCode.ENTITY_VERSION_CONFLICT) {
+				throw error;
 			}
-		});
+
+			const current = await this.findOneByIdString(fulfillment.id);
+
+			if (current?.status !== to) {
+				throw error;
+			}
+
+			return { fulfillment: current, moved: false };
+		}
 
 		return { fulfillment: await this.findOneByIdString(fulfillment.id), moved: true };
+	}
+
+	/**
+	 * Appends one `fulfillment.*` event to the platform outbox.
+	 *
+	 * The append goes through the shipment repository's own entity manager — the manager the
+	 * conditional update was written through — and only after that update returned, which is what binds
+	 * the fact to the write that earned it. A move the version predicate refused throws before this is
+	 * reached, so no event is ever produced for a shipment that did not move.
+	 *
+	 * The projection carries what a consumer routes on: the parcel, the order it satisfies, which way
+	 * the goods are travelling, where it is in its lifecycle and how to track it. It does not carry the
+	 * row, and in particular it never carries `labelData` — the carrier's own document is as large as
+	 * the carrier chose to make it, and an event is not where a document belongs.
+	 *
+	 * @param name The event name, taken from the status the shipment reached.
+	 * @param fulfillment The shipment as the move left it.
+	 * @param version The version the conditional update produced.
+	 */
+	private async announce(name: string, fulfillment: Fulfillment, version: number): Promise<void> {
+		await this.outbox.append(this.typeOrmFulfillmentRepository.manager, {
+			name,
+			aggregateType: FULFILLMENT_AGGREGATE_TYPE,
+			aggregateId: fulfillment.id,
+			data: {
+				fulfillmentId: fulfillment.id,
+				orderId: fulfillment.orderId ?? null,
+				direction: fulfillment.direction ?? null,
+				status: fulfillment.status,
+				warehouseId: fulfillment.warehouseId ?? null,
+				carrier: fulfillment.carrier ?? null,
+				service: fulfillment.service ?? null,
+				trackingNumber: fulfillment.trackingNumber ?? null,
+				version
+			},
+			tenantId: fulfillment.tenantId,
+			organizationId: fulfillment.organizationId
+		});
 	}
 
 	/**
@@ -548,7 +723,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 */
 	private async assertQuantityAvailable(
 		orderLineId: ID,
-		quantity: number,
+		quantity: Quantity,
 		direction: FulfillmentDirection
 	): Promise<void> {
 		// The requirement is a quantity, and a quantity greater than zero: `NaN` and the infinities are
@@ -561,15 +736,19 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			return;
 		}
 
+		const requested = toQuantityText(quantity);
 		const outstanding = await this.outstandingQuantityTextOf(orderLineId);
 
 		// Compared as decimals rather than as numbers, so that a request for exactly the remainder is
 		// accepted even when the remainder has no exact binary representation.
-		if (compareDecimalStrings(quantity, outstanding) > 0) {
+		if (compareDecimalStrings(requested, outstanding) > 0) {
 			throw new BadRequestException({
 				message: 'The shipment would exceed what the order line still has to ship.',
 				code: 'FULFILLMENT_QUANTITY_EXCEEDED',
-				details: { orderLineId, requested: quantity, outstanding: Number(outstanding) }
+				// Both figures are reported as the digits the comparison was made on. Rendering the
+				// remainder through `Number` would print a value that differs from the one the guard
+				// refused it against, which is the least helpful thing a refusal about a boundary can do.
+				details: { orderLineId, requested, outstanding }
 			});
 		}
 	}
@@ -582,13 +761,18 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * exact for the same reason the remainder above is: a counter that drifted by a rounding error
 	 * would make every later remainder wrong in the same direction.
 	 *
+	 * The delta is a `Quantity` rather than a `number`, which is the whole point: a shipment line's
+	 * quantity comes off a `numeric(20,6)` column, and routing it through a double on its way to a
+	 * counter that is compared against a remainder is the same rounding error the remainder was made
+	 * exact to avoid — arriving one call frame earlier.
+	 *
 	 * @param orderLineId The order line.
 	 * @param delta The signed quantity.
 	 * @param counter Which counter to move.
 	 */
 	private async bumpOrderLineCounters(
 		orderLineId: ID,
-		delta: number,
+		delta: Quantity,
 		counter: 'FULFILLED' | 'SHIPPED' | 'DELIVERED'
 	): Promise<void> {
 		const line: IOrderLine = await this.orderLineService.findOneByIdString(orderLineId);
@@ -598,9 +782,12 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		}
 
 		/** The counter after the move, which a cancelation may take to zero but never below. */
-		const moved = (current: number): number => {
+		const moved = (current: Quantity): number => {
 			const total = addQuantities(current, delta);
 
+			// The column's transformer takes a `number`, so the value is rendered once, at the boundary,
+			// from digits that were exact up to that point — rather than being carried as a double
+			// through the addition and the sign test that decide what the counter becomes.
 			return isNegativeQuantity(total) ? 0 : Number(total);
 		};
 

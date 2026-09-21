@@ -1,4 +1,82 @@
-import { DecimalString, ID } from '@gauzy/contracts';
+import { DecimalString, FulfillmentStatusDetail, ID } from '@gauzy/contracts';
+import { IVersionExpectation, VERSION_EXPECTATION_PROPERTY } from '@gauzy/core';
+
+/*
+|--------------------------------------------------------------------------
+| What a shipment announces
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * The aggregate name every `fulfillment.*` outbox row is written under.
+ *
+ * The outbox partitions by `<aggregateType>:<aggregateId>` and promises ordering inside a partition
+ * and nowhere else, so this string is what makes "one parcel's events arrive in the order they
+ * happened" true — a shipment that was delivered cannot be announced before it was shipped. It is a
+ * constant rather than a literal at each call site for exactly that reason.
+ */
+export const FULFILLMENT_AGGREGATE_TYPE = 'FULFILLMENT';
+
+/**
+ * The fact each lifecycle status announces when a shipment reaches it.
+ *
+ * A shipment is what the buyer's notifications, the outbound webhooks and the search index are driven
+ * by, and none of them could observe one: this package emitted nothing at all, so a parcel could be
+ * handed over, tracked and delivered without anything outside it learning of it. The map is keyed by
+ * the status rather than written at each caller so that the lifecycle and the events it announces
+ * cannot drift: a status added to the machine has no event until it is named here, which is a
+ * compile-time failure rather than a silent omission.
+ */
+export const FULFILLMENT_EVENTS: Record<FulfillmentStatusDetail, string> = {
+	/** The shipment exists and is waiting to be picked. */
+	[FulfillmentStatusDetail.PENDING]: 'fulfillment.created',
+	/** The carrier has taken the parcel. */
+	[FulfillmentStatusDetail.SHIPPED]: 'fulfillment.shipped',
+	/** The carrier reported movement. */
+	[FulfillmentStatusDetail.IN_TRANSIT]: 'fulfillment.in_transit',
+	/** The goods reached the buyer. */
+	[FulfillmentStatusDetail.DELIVERED]: 'fulfillment.delivered',
+	/** The shipment was abandoned before anything was handed over. */
+	[FulfillmentStatusDetail.CANCELED]: 'fulfillment.canceled'
+};
+
+/*
+|--------------------------------------------------------------------------
+| The version a write of a shipment is predicated on
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * The version a write that no caller conditioned on is predicated on.
+ *
+ * A shipment carries a `version`, and every write of it is a conditional `UPDATE … WHERE id = :id AND
+ * version = :expected`. A route is predicated on the version its caller stated; a write that arrives
+ * from anywhere else — a carrier callback, a return leg raised by the returns package, a caller inside
+ * the platform — has no client version behind it and is predicated on the version the row holds when
+ * the statement runs. The wildcard is therefore not an escape from the protection: the comparison and
+ * the increment are still one statement, so a shipment that moved on between the read and the write is
+ * refused either way. What it is *not* is a licence to skip the conditional write, which is what an
+ * application-computed `version + 1` amounts to.
+ */
+export const ANY_FULFILLMENT_VERSION: IVersionExpectation = { wildcard: true, versions: [] };
+
+/**
+ * The version a request accepted, when it stated one.
+ *
+ * The platform's own reader refuses a request that states none, which is right for a route that
+ * **demands** a version — `POST :id/label` does — and wrong for the four transition routes, which
+ * honour one when it is offered and stay usable by a carrier callback that has never read an `ETag`.
+ * The expectation the guard left on the request is therefore read directly, and its absence means the
+ * wildcard rather than a refusal.
+ *
+ * @param request The request the version guard ran on, when the route carries `@Versioned()`.
+ * @returns What the caller accepted, or the wildcard when it stated nothing.
+ */
+export function fulfillmentVersionOf(request: unknown): IVersionExpectation {
+	const expectation = (request as Record<string, unknown> | null | undefined)?.[VERSION_EXPECTATION_PROPERTY];
+
+	return (expectation as IVersionExpectation) ?? ANY_FULFILLMENT_VERSION;
+}
 
 /**
  * The shapes this domain answers another domain's question with.

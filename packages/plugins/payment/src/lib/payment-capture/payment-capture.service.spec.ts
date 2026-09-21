@@ -84,6 +84,11 @@ jest.mock('@gauzy/core', () => {
 			}
 		},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The affected-row reader is the platform's own, pulled through the seam rather than written
+		// again here: a capture decides whether its compare-and-swap was refused from whatever the
+		// driver answered the `UPDATE` with, and a double that understood a different set of shapes
+		// would pass this suite while the four supported drivers disagreed with it.
+		readAffectedRows: jest.requireActual('@gauzy/core/src/lib/database/database.helper').readAffectedRows,
 		BaseEvent: class {},
 		EventBus: class {},
 		Payment: class Payment {},
@@ -99,10 +104,34 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { NotFoundException } from '@nestjs/common';
-import { Money, RequestContext } from '@gauzy/core';
+/**
+ * The affected-row reader above is the real one, and it asks the configuration which dialect is in
+ * play; the configuration reads the process environment at import time and there is none here. The
+ * dialect is answered as the default the platform develops against, which is also the one whose
+ * quoting the reader leaves alone.
+ */
+jest.mock(
+	'@gauzy/config',
+	() => ({
+		isMySQL: () => false,
+		isPostgres: () => false,
+		DatabaseTypeEnum: {
+			mongodb: 'mongodb',
+			sqlite: 'sqlite',
+			betterSqlite3: 'better-sqlite3',
+			postgres: 'postgres',
+			mysql: 'mysql'
+		}
+	}),
+	{ virtual: true }
+);
+
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { FindOperator } from 'typeorm';
+import { Money, Payment, RequestContext } from '@gauzy/core';
 import { PaymentCapturedEvent } from '../events';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
+import { PaymentCapture } from './payment-capture.entity';
 import { PaymentCaptureService } from './payment-capture.service';
 
 /**
@@ -128,9 +157,20 @@ import { PaymentCaptureService } from './payment-capture.service';
  * - **the derived status is a function of the row's own amounts** (doc 10 §8.7), which is what makes it
  *   answerable for a payment that settles an invoice only and has no collection at all.
  *
- * The service is constructed directly with in-memory doubles of its repositories. The double states the
- * `where` the service states and applies updates to the stored row, so "nothing was written by the
- * refusal" is asserted against state rather than against a mock's call log.
+ * To those three the ledger adds a fourth, without which the first two hold only while nothing else is
+ * writing:
+ *
+ * - **the payment row is written conditionally on what the ceiling was measured from.** The `UPDATE`
+ *   names the running total this call read among its criteria, so a second capture that reasoned about
+ *   the same total changes no row and is refused with `PAYMENT_CAPTURE_CONFLICT` rather than
+ *   overwriting the first one's figure. A ceiling checked against a value that may have moved by the
+ *   time it is written is not a ceiling.
+ *
+ * The service is constructed directly with in-memory doubles of its repositories, over one datastore
+ * that also hands out the entity manager the capture is written through. The double states the `where`
+ * the service states — the whole of it, including the running total a compare-and-swap predicates
+ * itself on — and applies updates to the stored row, so both "nothing was written by the refusal" and
+ * "the second writer changed nothing" are asserted against state rather than against a mock's call log.
  */
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
@@ -149,14 +189,25 @@ interface ITables {
 }
 
 /**
- * An in-memory stand-in for one table's TypeORM repository.
+ * The entity classes the capture service hands its transaction manager, resolved to tables.
+ *
+ * `Payment` is the class the mocked `@gauzy/core` above exports and `PaymentCapture` is this package's
+ * own entity, and the service imports those same two, so the identity the manager is keyed by is the
+ * identity it is handed.
+ */
+const ENTITY_TABLES = new Map<unknown, keyof ITables>([
+	[Payment, 'payment'],
+	[PaymentCapture, 'payment_capture']
+]);
+
+/**
+ * An in-memory stand-in for the datastore this suite drives: one TypeORM repository per table, and the
+ * entity manager those repositories hand out.
  *
  * @param tables The whole datastore.
- * @param tableName The table this repository writes.
  */
-function repository(tables: ITables, tableName: keyof ITables) {
+function datastore(tables: ITables) {
 	let sequence = 0;
-	const rows = () => tables[tableName];
 	const matches = (row: Row, where: Row = {}): boolean =>
 		Object.entries(where).every(([field, expected]) => {
 			// A missing column and a null column are the same thing to the database, and TypeORM drops
@@ -165,61 +216,131 @@ function repository(tables: ITables, tableName: keyof ITables) {
 				return true;
 			}
 
+			// A compare-and-swap on a running total states `IS NULL` for a column it read as absent,
+			// because `= NULL` matches nothing in SQL. The double has to make the same distinction, or a
+			// criteria the database would honour would silently match nothing here.
+			if (expected instanceof FindOperator && expected.type === 'isNull') {
+				return row[field] === null || row[field] === undefined;
+			}
+
 			return String(row[field] ?? '') === String(expected ?? '');
 		});
-	const identify = (criteria: any) =>
-		typeof criteria === 'string' ? criteria : (criteria?.id ?? undefined);
+	const identify = (criteria: any) => (typeof criteria === 'string' ? criteria : (criteria?.id ?? undefined));
+	const tableOf = (entity: unknown): keyof ITables => {
+		const table = ENTITY_TABLES.get(entity);
 
-	return {
-		metadata: { tableName, hasColumnWithPropertyPath: () => false },
-		find: async (options: any = {}) => rows().filter((row) => matches(row, options.where)),
-		findOne: async (options: any = {}) => rows().find((row) => matches(row, options.where)) ?? null,
-		findOneBy: async (where: Row) => rows().find((row) => matches(row, where)) ?? null,
+		if (!table) {
+			throw new Error('the in-memory double was handed an entity it does not know');
+		}
+
+		return table;
+	};
+	const save = (table: keyof ITables, entity: Row) => {
+		const rows = tables[table];
+
+		if (entity.id) {
+			const index = rows.findIndex((row) => row.id === entity.id);
+
+			if (index >= 0) {
+				rows[index] = { ...rows[index], ...entity };
+
+				return rows[index];
+			}
+		}
+
+		const created = { id: `${String(table)}-new-${++sequence}`, ...entity };
+
+		rows.push(created);
+
+		return created;
+	};
+	/**
+	 * One `UPDATE`, applied the way the database applies it.
+	 *
+	 * TypeORM states the **whole** criteria it was handed, not the id alone. The running total a
+	 * compare-and-swap predicates its statement on is part of that criteria, so a double that matched on
+	 * the id only would answer one affected row for a statement the database would have matched nothing
+	 * with — which is to say it would report a lost race as a write that landed, and the refusal this
+	 * suite is about could never be observed.
+	 *
+	 * @param table The table to write.
+	 * @param criteria The criteria, as an id or as a `where` object.
+	 * @param partial The columns to set.
+	 * @returns The affected-row count, in the shape TypeORM's own driver answers with.
+	 */
+	const applyUpdate = (table: keyof ITables, criteria: any, partial: Row) => {
+		const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+		const index = tables[table].findIndex((row) => matches(row, where));
+
+		if (index >= 0) {
+			Object.assign(tables[table][index], partial);
+		}
+
+		return { affected: index >= 0 ? 1 : 0 };
+	};
+
+	/**
+	 * The entity manager the capture service writes the payment row and the ledger row through.
+	 *
+	 * It models the manager's **entity-keyed** API — the entity class chooses the table, and the tables
+	 * are the very arrays the repositories below read — so a compare-and-swap whose criteria match no
+	 * row answers zero affected rows here exactly as it would against a database, which is the whole of
+	 * what `PAYMENT_CAPTURE_CONFLICT` is decided from.
+	 *
+	 * **`transaction` is not a transaction, and this suite does not pretend it is.** It runs the work
+	 * against the same arrays and hands it this same manager; an array has nothing to roll back to, so a
+	 * body that threw half way would leave its earlier write standing. Asserting atomicity against a
+	 * double that cannot provide it would be asserting a guarantee nobody has. What the double can be
+	 * held to is the *order* the service writes in — the payment's compare-and-swap first, the ledger
+	 * row only once it landed — and that order is what keeps a refused swap from leaving a capture row
+	 * behind whatever the storage does afterwards. Atomicity itself is the database's, and is the reason
+	 * the service asks for a transaction at all.
+	 */
+	const manager: any = {
+		transaction: async (run: (transactional: any) => Promise<any>) => run(manager),
+		create: (_entity: unknown, partial: Row) => ({ ...partial }),
+		save: async (entity: unknown, rowOrRows: any) => {
+			const list = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
+			const saved = list.map((row) => save(tableOf(entity), row));
+
+			return Array.isArray(rowOrRows) ? saved : saved[0];
+		},
+		find: async (entity: unknown, options: any = {}) =>
+			tables[tableOf(entity)].filter((row) => matches(row, options.where)),
+		findOne: async (entity: unknown, options: any = {}) =>
+			tables[tableOf(entity)].find((row) => matches(row, options.where)) ?? null,
+		update: async (entity: unknown, criteria: any, partial: Row) =>
+			applyUpdate(tableOf(entity), criteria, partial)
+	};
+
+	/** One table's TypeORM repository, as the base CRUD class reads it. */
+	const repository = (table: keyof ITables) => ({
+		manager,
+		metadata: { tableName: table, hasColumnWithPropertyPath: () => false },
+		find: async (options: any = {}) => tables[table].filter((row) => matches(row, options.where)),
+		findOne: async (options: any = {}) => tables[table].find((row) => matches(row, options.where)) ?? null,
+		findOneBy: async (where: Row) => tables[table].find((row) => matches(row, where)) ?? null,
 		findAndCount: async (options: any = {}) => {
-			const items = rows().filter((row) => matches(row, options.where));
+			const items = tables[table].filter((row) => matches(row, options.where));
 
 			return [items, items.length];
 		},
-		count: async () => rows().length,
+		count: async () => tables[table].length,
 		create: (partial: Row) => ({ ...partial }),
-		save: async (entity: Row) => {
-			if (entity.id) {
-				const index = rows().findIndex((row) => row.id === entity.id);
-
-				if (index >= 0) {
-					rows()[index] = { ...rows()[index], ...entity };
-
-					return rows()[index];
-				}
-			}
-
-			const created = { id: `${String(tableName)}-new-${++sequence}`, ...entity };
-
-			rows().push(created);
-
-			return created;
-		},
-		update: async (criteria: any, partial: Row) => {
-			const id = identify(criteria);
-			const index = rows().findIndex((row) => row.id === id);
-
-			if (index >= 0) {
-				Object.assign(rows()[index], partial);
-			}
-
-			return { affected: index >= 0 ? 1 : 0 };
-		},
+		save: async (entity: Row) => save(table, entity),
+		update: async (criteria: any, partial: Row) => applyUpdate(table, criteria, partial),
 		delete: async (criteria: any) => {
-			const id = identify(criteria);
-			const index = rows().findIndex((row) => row.id === id);
+			const index = tables[table].findIndex((row) => row.id === identify(criteria));
 
 			if (index >= 0) {
-				rows().splice(index, 1);
+				tables[table].splice(index, 1);
 			}
 
 			return { affected: index >= 0 ? 1 : 0 };
 		}
-	};
+	});
+
+	return { repository, manager };
 }
 
 /**
@@ -272,15 +393,13 @@ function captureFixture(options: { payments?: Row[]; captures?: Row[]; collectio
 		payment_capture: options.captures ?? [],
 		payment_collection: options.collections ?? [collectionRow(COLLECTION)]
 	};
+	const store = datastore(tables);
 	const published: any[] = [];
-	const collectionService = new PaymentCollectionService(
-		repository(tables, 'payment_collection') as never,
-		{} as never
-	);
+	const collectionService = new PaymentCollectionService(store.repository('payment_collection') as never, {} as never);
 	const service = new PaymentCaptureService(
-		repository(tables, 'payment_capture') as never,
+		store.repository('payment_capture') as never,
 		{} as never,
-		repository(tables, 'payment') as never,
+		store.repository('payment') as never,
 		collectionService,
 		{
 			publish: async (event: any) => {
@@ -396,6 +515,53 @@ describe('PaymentCaptureService — the ledger and the payment row move together
 		await expect(fixture.service.delete('capture-1')).rejects.toThrow(/PAYMENT_CAPTURE_APPEND_ONLY/);
 		expect(fixture.tables.payment_capture).toHaveLength(1);
 		expect(fixture.tables.payment_capture[0].amount).toBe('40');
+	});
+
+	it('refuses a capture whose payment moved between the ceiling being measured and the row being written', async () => {
+		// The over-capture ceiling is computed from `capturedAmount` as this call read it, so the write
+		// has to be conditional on the payment still holding that figure. Two captures of the whole
+		// authorisation that both read zero would otherwise both pass the ceiling and both write the same
+		// total: two ledger rows for twice the money, with the payment claiming one of them.
+		//
+		// The second writer is reproduced here by moving the payment between the read and the write, which
+		// is the only ordering a single-threaded suite can state. The interleaving is real: the read is
+		// `findPaymentOrFail` at the top of `capture`, the write is the compare-and-swap inside the
+		// transaction, and any other capture that commits in between takes this branch.
+		const fixture = captureFixture({
+			payments: [paymentRow(PAYMENT, { authorizedAmount: '100', capturedAmount: '0' })]
+		});
+		const read = fixture.service.findPaymentOrFail.bind(fixture.service);
+		jest.spyOn(fixture.service, 'findPaymentOrFail').mockImplementation(async (paymentId) => {
+			// The read hands back a detached row, which is what a read from a database hands back: the
+			// object the caller reasons about does not follow the table afterwards.
+			const payment = { ...(await read(paymentId)) } as never;
+
+			// The other capture lands, taking the payment to 100, while this one still holds the zero it
+			// measured its ceiling against.
+			fixture.payment().capturedAmount = '100';
+
+			return payment;
+		});
+
+		const refusal = await fixture.service
+			.capture(captureInput({ amount: '100' }) as never)
+			.then(() => undefined)
+			.catch((thrown) => thrown);
+
+		expect(refusal).toBeInstanceOf(ConflictException);
+		expect(String(refusal.message)).toContain('PAYMENT_CAPTURE_CONFLICT');
+		// The refusal names the figure it reasoned about, so the caller can tell a lost race from a
+		// request that was always too large and knows to read the payment again.
+		expect(refusal.getResponse()).toMatchObject({
+			code: 'PAYMENT_CAPTURE_CONFLICT',
+			details: { paymentId: PAYMENT, capturedAmount: '0' }
+		});
+
+		// The refusal is what the transaction is ordered for: the payment keeps the figure the winner
+		// wrote, and no ledger row was appended for money the payment does not account for.
+		expect(fixture.payment().capturedAmount).toBe('100');
+		expect(fixture.tables.payment_capture).toEqual([]);
+		expect(fixture.published).toEqual([]);
 	});
 
 	it('sums the captures of a payment exactly, and answers zero when there are none', async () => {

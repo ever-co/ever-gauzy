@@ -375,7 +375,11 @@ function fixture(
 		shipmentRepository as never,
 		{} as never,
 		lineService,
-		orderLineService as never
+		orderLineService as never,
+		// The outbox the service appends its state changes to, stubbed for the same reason the return
+		// shipment suite stubs it: the constructor gained it when the lifecycle started announcing
+		// itself, and a double that stops matching the constructor fails to compile.
+		{ append: jest.fn() } as never
 	);
 	const service = new WarehouseFulfillmentService(
 		fulfillmentService,

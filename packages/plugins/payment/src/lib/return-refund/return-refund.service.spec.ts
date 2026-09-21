@@ -94,6 +94,11 @@ jest.mock('@gauzy/core', () => {
 		},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
 		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
+		// The affected-row reader is the platform's own, pulled through the seam rather than written
+		// again here: the approval this entry point settles through decides whether its compare-and-swap
+		// was refused from whatever the driver answered the `UPDATE` with, and a double that understood
+		// a different set of shapes would pass this suite while the four supported drivers disagreed.
+		readAffectedRows: jest.requireActual('@gauzy/core/src/lib/database/database.helper').readAffectedRows,
 		BaseEvent: class {},
 		EventBus: class {},
 		Payment: class Payment {},
@@ -115,6 +120,7 @@ jest.mock(
 	'@gauzy/config',
 	() => ({
 		isMySQL: () => false,
+		isPostgres: () => false,
 		DatabaseTypeEnum: {
 			mongodb: 'mongodb',
 			sqlite: 'sqlite',
@@ -127,7 +133,9 @@ jest.mock(
 );
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { RequestContext } from '@gauzy/core';
+import { FindOperator } from 'typeorm';
+import { Payment, RequestContext } from '@gauzy/core';
+import { PaymentCapture } from '../payment-capture/payment-capture.entity';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { RefundStatus } from '../payment.types';
@@ -155,7 +163,10 @@ import { ReturnRefundService } from './return-refund.service';
  * - **The spend is measured, never assumed.** The figure a payment can still give back is its captures
  *   less the refunds that already succeeded against it, so no entry point can pay back more than was
  *   collected through that payment; a return whose money arrived by means no payment row records is
- *   still recorded against the return it came from.
+ *   still recorded against the return it came from. That escape is for an order the platform recorded
+ *   no money for — **not** for one being over-refunded: a refund attributed to a return rather than to
+ *   a payment is one the refund service's own ceiling never sees, so an order that did capture money is
+ *   measured here against what all of its payments can still give back between them.
  * - **The scope is the caller's.** A payment or a reason of another organization is not attributed and
  *   not cited, and a request that would do so is refused rather than written.
  *
@@ -191,7 +202,12 @@ interface ITables {
 /** The entity classes the services hand to their transaction manager, resolved to tables. */
 const ENTITY_TABLES = new Map<unknown, keyof ITables>([
 	[Refund, 'refund'],
-	[RefundLine, 'refund_line']
+	[RefundLine, 'refund_line'],
+	// The capture and the payment it moves are written in one transaction, so the manager has to know
+	// both: a capture row that outlived a refused compare-and-swap on the payment would be a ledger
+	// entry for money the payment does not account for.
+	[PaymentCapture, 'payment_capture'],
+	[Payment, 'payment']
 ]);
 
 /**
@@ -208,6 +224,13 @@ function datastore(tables: ITables) {
 			// an `undefined` member from the condition rather than matching nothing.
 			if (expected === undefined) {
 				return true;
+			}
+
+			// A compare-and-swap on a running total states `IS NULL` for a column it read as absent,
+			// because `= NULL` matches nothing in SQL. The double has to make the same distinction, or a
+			// criteria the database would honour would silently match nothing here.
+			if (expected instanceof FindOperator && expected.type === 'isNull') {
+				return row[field] === null || row[field] === undefined;
 			}
 
 			return String(row[field] ?? '') === String(expected ?? '');
@@ -271,7 +294,21 @@ function datastore(tables: ITables) {
 		find: async (entity: unknown, options: any = {}) =>
 			tables[tableOf(entity)].filter((row) => matches(row, options.where)),
 		findOne: async (entity: unknown, options: any = {}) =>
-			tables[tableOf(entity)].find((row) => matches(row, options.where)) ?? null
+			tables[tableOf(entity)].find((row) => matches(row, options.where)) ?? null,
+		// TypeORM applies the WHOLE criteria it was handed, not the id alone. The running total a
+		// compare-and-swap predicates its statement on is part of that criteria, so a double that matched
+		// on the id only would report a lost race as a successful write.
+		update: async (entity: unknown, criteria: any, partial: Row) => {
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const rows = tables[tableOf(entity)];
+			const index = rows.findIndex((row) => matches(row, where));
+
+			if (index >= 0) {
+				Object.assign(rows[index], partial);
+			}
+
+			return { affected: index >= 0 ? 1 : 0 };
+		}
 	};
 
 	/** One table's TypeORM repository, as the base CRUD class reads it. */
@@ -290,7 +327,8 @@ function datastore(tables: ITables) {
 		create: (partial: Row) => ({ ...partial }),
 		save: async (entity: Row) => save(table, entity),
 		update: async (criteria: any, partial: Row) => {
-			const index = tables[table].findIndex((row) => row.id === identify(criteria));
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = tables[table].findIndex((row) => matches(row, where));
 
 			if (index >= 0) {
 				Object.assign(tables[table][index], partial);
@@ -525,19 +563,32 @@ describe('ReturnRefundService — the money a return or a claim pays back', () =
 	});
 
 	it('refuses a refund no payment can carry and no return explains, and writes nothing', async () => {
-		const { service, tables } = fixture({});
+		// Nothing explains this refund: no payment of the order can carry it, and no return and no claim
+		// is named. The order's money was never recorded by the payment package at all, so there is no
+		// captured figure to measure the amount against and the missing attribution is what refuses it.
+		const unrecorded = fixture({ payments: [], captures: [] });
 
 		await expect(
-			service.createRefund({ orderId: ORDER, amount: '500', currency: 'USD' })
+			unrecorded.service.createRefund({ orderId: ORDER, amount: '500', currency: 'USD' })
 		).rejects.toThrow(/REFUND_PAYMENT_UNAVAILABLE/);
-		expect(tables.refund).toEqual([]);
-		expect(tables.payment[0]).toMatchObject({ refundedAmount: '0' });
+		expect(unrecorded.tables.refund).toEqual([]);
+
+		// An order that *did* capture money is refused earlier and by a different name: 500 is past what
+		// its payments can give back between them, which is an over-refund whatever it is attributed to.
+		const captured = fixture({});
+
+		await expect(
+			captured.service.createRefund({ orderId: ORDER, amount: '500', currency: 'USD' })
+		).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
+		expect(captured.tables.refund).toEqual([]);
+		expect(captured.tables.payment[0]).toMatchObject({ refundedAmount: '0' });
 	});
 
 	it('records a return refund that no payment can carry, against the return it came from', async () => {
 		// A return's money may have arrived by means no payment row records — a transfer, a store credit —
-		// so the return is what explains the refund and the capture ceiling does not apply to it.
-		const { service, tables } = fixture({});
+		// so the return is what explains the refund, and there is no captured figure on the order for the
+		// ceiling to be read from.
+		const { service, tables } = fixture({ payments: [], captures: [] });
 
 		const refund = await service.createRefund({
 			orderId: ORDER,
@@ -555,7 +606,7 @@ describe('ReturnRefundService — the money a return or a claim pays back', () =
 		// A claim is the third flow that can owe money back, and it explains the refund on its own for
 		// the same reason a return does: the money may have arrived by means no payment row records.
 		// Without this the claim path could only ever refund an order the payment package had processed.
-		const { service, tables } = fixture({});
+		const { service, tables } = fixture({ payments: [], captures: [] });
 
 		const refund = await service.createRefund({
 			orderId: ORDER,
@@ -567,6 +618,44 @@ describe('ReturnRefundService — the money a return or a claim pays back', () =
 		expect(refund).toEqual({ refundId: 'refund-1', amount: '500.000000', currency: 'USD' });
 		expect(tables.refund[0]).toMatchObject({ claimId: CLAIM, status: RefundStatus.SUCCEEDED });
 		expect(tables.refund[0].paymentId).toBeUndefined();
+	});
+
+	it('refuses a return or a claim refund past what the order captured, however it is explained', async () => {
+		// The two escapes above are for an order whose money the platform never recorded, not for one
+		// being over-refunded. A refund that names no payment is a refund `assertRefundable` never sees,
+		// because that ceiling runs only on the path that has a payment — which is how a return for one
+		// $20 item could be refunded for 100000, repeatedly, with nothing anywhere to stop it. An order
+		// that has captured money is therefore measured against what its payments can still give back
+		// between them, and the refusal carries that figure.
+		const { service, tables } = fixture({});
+
+		const refusal = await service
+			.createRefund({ orderId: ORDER, returnId: RETURN, amount: '100000', currency: 'USD' })
+			.then(() => undefined)
+			.catch((thrown) => thrown);
+
+		expect(refusal).toBeInstanceOf(BadRequestException);
+		expect(refusal.getResponse()).toMatchObject({
+			code: 'REFUND_AMOUNT_EXCEEDS_CAPTURED',
+			details: { orderId: ORDER, requested: '100000', refundable: '100', currency: 'USD' }
+		});
+		await expect(
+			service.createRefund({ orderId: ORDER, claimId: CLAIM, amount: '100000', currency: 'USD' })
+		).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
+		expect(tables.refund).toEqual([]);
+		expect(tables.payment[0]).toMatchObject({ refundedAmount: '0' });
+
+		// The ceiling is the figure, not a smaller one: the return refund that reaches exactly what the
+		// order can still give back is recorded and settled.
+		const exact = await service.createRefund({
+			orderId: ORDER,
+			returnId: RETURN,
+			amount: '100',
+			currency: 'USD'
+		});
+
+		expect(exact.amount).toBe('100.000000');
+		expect(tables.payment[0]).toMatchObject({ refundedAmount: '100', status: 'REFUNDED' });
 	});
 
 	it('refuses a refund on an order that has no payment at all, and writes nothing', async () => {

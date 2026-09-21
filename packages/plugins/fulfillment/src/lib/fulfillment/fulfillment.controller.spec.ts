@@ -305,7 +305,27 @@ function resource(row: Record<string, unknown> = { id: FULFILLMENT, version: 3 }
 		store,
 		controller: new FulfillmentController(service as never),
 		resolver: new FulfillmentResolver(service as never, {} as never),
-		guard: new VersionGuard(reflector, { get: () => service } as never),
+		/**
+		 * The guard resolves two different things from the module: the resource a `@Versioned` route
+		 * names, and — when the route also carries a retry key — the idempotency store, so that a replay
+		 * yields to its own record rather than being refused for a version that has since moved.
+		 *
+		 * A real `ModuleRef` throws for a provider the application never registered, and the guard reads
+		 * that refusal as "this installation does not run the idempotency kernel" and applies the
+		 * precondition as usual. A double that answered every token with the same object handed the
+		 * guard a shipment service where it had asked for the key store, and the guard then logged its
+		 * way past a method that was never going to be there — so the suite exercised the error path on
+		 * every versioned request and said nothing about the one it meant to.
+		 */
+		guard: new VersionGuard(reflector, {
+			get: (token: unknown) => {
+				if (token !== FulfillmentService) {
+					throw new Error('nothing is registered under that token in this module');
+				}
+
+				return service;
+			}
+		} as never),
 		interceptor: new IdempotencyInterceptor(store as never, reflector),
 		versioning: new VersionInterceptor(reflector)
 	};
@@ -490,10 +510,35 @@ describe('the label route — the concurrency declaration', () => {
 		);
 	});
 
+	it('honours a version on the four transition routes without demanding one', () => {
+		// A status move is the outcome of an event a carrier or an operator reports, and a carrier
+		// callback has never read an `ETag`: a route that *required* `If-Match` would make the shipment
+		// unmovable from the one caller that reports most of these events. The routes declare the
+		// convention all the same, so that a caller which does state a version has its precondition
+		// compared — and because the write underneath is the conditional update either way, which is
+		// what stops two operators shipping one parcel from both moving the order line's counters.
+		for (const route of ['ship', 'markInTransit', 'deliver', 'cancel']) {
+			expect(versionedDeclarationOf(FulfillmentController, route)).toEqual({
+				resource: FulfillmentService,
+				required: false
+			});
+		}
+
+		// The label route is the one that demands it, and the difference is deliberate: re-fetching a
+		// document the carrier already issued is the ordinary retry, and the version is what keeps that
+		// re-fetch from overwriting a shipment which moved on in the meantime.
+		expect(versionedDeclarationOf(FulfillmentController, 'requestLabel')).toEqual({
+			resource: FulfillmentService
+		});
+	});
+
 	it('leaves the routes that have not adopted the convention untouched', () => {
-		// Control: a route with no versioned declaration is not guarded, not intercepted and publishes
-		// no entity tag — which is what every route of this controller was before the label route.
-		expect(versionedDeclarationOf(FulfillmentController, 'cancel')).toBeUndefined();
+		// Control: the declaration is made per route and never class-wide, so a route that states none
+		// is not guarded, not intercepted and publishes no entity tag. Creating a shipment is one —
+		// there is no version yet to have been read at — and so is reading one back.
+		expect(versionedDeclarationOf(FulfillmentController, 'create')).toBeUndefined();
+		expect(versionedDeclarationOf(FulfillmentController, 'createReturn')).toBeUndefined();
+		expect(versionedDeclarationOf(FulfillmentController, 'findById')).toBeUndefined();
 	});
 });
 
