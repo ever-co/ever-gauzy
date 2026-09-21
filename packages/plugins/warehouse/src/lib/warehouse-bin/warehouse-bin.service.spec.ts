@@ -93,7 +93,15 @@ jest.mock('@gauzy/core', () => {
 			currentOrganizationId: () => null,
 			currentEmployeeId: () => null,
 			hasPermission: () => false
-		}
+		},
+		// The two SQL helpers are the real ones. They are pure functions over a statement and a parameter
+		// map, and what they decide is what this suite is about: which placeholder a dialect binds, how
+		// many times a name used twice is bound, and which quote a column gets. A doubled helper would let
+		// every closure assertion below pass while the statement the service issued was one no driver
+		// accepts — which is exactly the failure the helpers exist to prevent.
+		prepareSQLQuery: jest.requireActual('@gauzy/core/src/lib/database/database.helper').prepareSQLQuery,
+		toPositionalStatement: jest.requireActual('@gauzy/core/src/lib/database/database.helper')
+			.toPositionalStatement
 	};
 });
 

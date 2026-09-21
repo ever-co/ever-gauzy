@@ -139,13 +139,22 @@ function serviceUnderTest(budgets: IBudgetRow[], usages: IUsageRow[] = []) {
 		 * - the per-value row is the gate, and the parent advances by the same amount.
 		 */
 		query: async (sql: string, values: unknown[]) => {
-			// The service hands its named parameters over as positional values, so the statement's arity
-			// says which of them it carries: the reset statements carry the budget id alone.
-			const [first, second, third] = values;
-			const onlyBudgetId = values.length === 1;
-			const amount = String(onlyBudgetId ? '0' : first);
-			const budgetId = onlyBudgetId ? first : second;
-			const attributeValue = values.length > 2 ? String(third) : undefined;
+			// The service binds one placeholder per *occurrence* of a name, not one per name: `release`
+			// compares `used - :amount` and subtracts the same `:amount`, so the amount travels twice and
+			// the statement carries `[amount, amount, budgetId]`. Reading `values[1]` as the budget id —
+			// right only while each name is bound once — found no row, wrote nothing and still answered
+			// one affected row, which is how this double went stale without failing.
+			//
+			// So the values are resolved against what the double knows rather than by position: the one
+			// that names a stored budget is the budget, the first is the amount, and for a per-value
+			// statement the first value that is neither is the attribute value.
+			const reset = sql.includes('= 0');
+			const perValue = sql.includes('campaign_budget_usage');
+			const budgetId = values.find((one) => budgets.some((row) => same(row.id, one)));
+			const amount = reset ? '0' : String(values[0]);
+			const attributeValue = perValue
+				? values.find((one) => !same(one, budgetId) && !same(one, amount))
+				: undefined;
 			const row = budgets.find((one) => same(one.id, budgetId));
 
 			if (!row) {

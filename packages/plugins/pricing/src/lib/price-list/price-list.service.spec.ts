@@ -126,14 +126,23 @@ function serviceUnderTest(lists: IListRow[], prices: IPriceRow[] = []) {
 
 			return entity;
 		},
-		update: async (id: string, partial: Partial<IListRow>) => {
-			const row = lists.find((one) => same(one.id, id));
+		/**
+		 * The statement the platform's update really issues.
+		 *
+		 * `TenantAwareCrudService.update` resolves a bare id to a criteria *object* — `{ id, …tenant
+		 * scope }` — before it hands the write to the repository. A double that only understood a bare id
+		 * found no row, wrote nothing, and still answered `{ affected: 1 }`, so the read-back the service
+		 * performs returned the pre-update row and the suite failed on the status it never wrote.
+		 */
+		update: async (criteria: string | Record<string, unknown>, partial: Partial<IListRow>) => {
+			const where = typeof criteria === 'string' ? { id: criteria } : criteria;
+			const rows = lists.filter((row) => matches(row, where));
 
-			if (row) {
+			for (const row of rows) {
 				Object.assign(row, partial);
 			}
 
-			return { affected: 1 };
+			return { affected: rows.length };
 		},
 		softDelete: async (criteria: string | { id?: string }) => {
 			softDeleted.push(String(typeof criteria === 'string' ? criteria : criteria?.id));

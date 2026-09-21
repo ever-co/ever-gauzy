@@ -120,14 +120,24 @@ function serviceUnderTest(categories: ICategoryRow[]) {
 
 			return entity;
 		},
-		update: async (id: string, partial: Partial<ICategoryRow>) => {
-			const row = categories.find((one) => same(one.id, id));
+		/**
+		 * The statement the platform's update really issues.
+		 *
+		 * `TenantAwareCrudService.update` resolves a bare id to a criteria *object* — `{ id, …tenant
+		 * scope }` — before it hands the write to the repository. A double that only understood a bare id
+		 * would find no row, write nothing, and still answer `{ affected: 1 }`, while the service under
+		 * test reads its own row back unchanged: a green-looking double proving the wrong thing. The
+		 * criteria shape is mirrored here, and the fields that are stated are the fields matched.
+		 */
+		update: async (criteria: string | Record<string, unknown>, partial: Partial<ICategoryRow>) => {
+			const where = typeof criteria === 'string' ? { id: criteria } : criteria;
+			const rows = categories.filter((row) => matches(row, where));
 
-			if (row) {
+			for (const row of rows) {
 				Object.assign(row, partial);
 			}
 
-			return { affected: 1 };
+			return { affected: rows.length };
 		}
 	};
 

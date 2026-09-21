@@ -369,10 +369,11 @@ describe('PurchaseOrderController — a retried create', () => {
 		expect(surface.service.create).toHaveBeenCalledTimes(1);
 	});
 
-	it('refuses the same body sent as different bytes, because that is a different request', async () => {
+	it('replays a body the client rebuilt, because that is the same request in different bytes', async () => {
 		// Key order, whitespace and number formatting survive the wire but not a parse-and-reserialize
-		// round trip, so a rebuilt body is a different request under the same key and is refused as a
-		// reuse rather than answered with the first attempt's order.
+		// round trip. The fingerprint is taken over the canonical form for exactly this reason: a client
+		// that rebuilds its JSON is retrying the same request, not reusing a key, and refusing it would
+		// be the module contradicting what it promises its callers.
 		const surface = resource();
 		const first = { ...request(body(), CREATE_KEY), rawBody: Buffer.from(JSON.stringify(body())) };
 		const rebuilt = {
@@ -384,7 +385,22 @@ describe('PurchaseOrderController — a retried create', () => {
 
 		await send(surface, 'create', first, [first.body]);
 
-		await expect(send(surface, 'create', rebuilt, [rebuilt.body])).rejects.toMatchObject({
+		await expect(send(surface, 'create', rebuilt, [rebuilt.body])).resolves.toMatchObject({
+			result: { id: ORDER }
+		});
+		expect(surface.service.create).toHaveBeenCalledTimes(1);
+	});
+
+	it('refuses bytes that are not JSON and do not match, because those are all there is to compare', async () => {
+		// The other half of the same rule: a body no parser can read has no canonical form, so the raw
+		// bytes are the fingerprint — and two different ones under one key are two different requests.
+		const surface = resource();
+		const first = { ...request(undefined, CREATE_KEY), rawBody: Buffer.from('variant=VARIANT&quantity=20') };
+		const different = { ...request(undefined, CREATE_KEY), rawBody: Buffer.from('variant=VARIANT&quantity=21') };
+
+		await send(surface, 'create', first, [first.body]);
+
+		await expect(send(surface, 'create', different, [different.body])).rejects.toMatchObject({
 			status: 409,
 			code: 'IDEMPOTENCY_KEY_REUSED'
 		});

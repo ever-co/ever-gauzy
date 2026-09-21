@@ -11,7 +11,14 @@
  * is the part that needs a request context.
  */
 jest.mock('@gauzy/core', () => {
-	const { NotFoundException } = require('@nestjs/common');
+	const { NotFoundException, SetMetadata } = require('@nestjs/common');
+
+	/**
+	 * The concurrency metadata key, taken from the kernel's own constant rather than restated as a
+	 * string literal: a spec that spelled it out would keep passing after the decorator and the guard
+	 * stopped agreeing on the key they use.
+	 */
+	const { VERSIONED_METADATA_KEY } = jest.requireActual('@gauzy/core/src/lib/concurrency/version.util');
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
@@ -129,9 +136,15 @@ jest.mock('@gauzy/core', () => {
 		// The optimistic-lock column is the same `@MultiORMColumn` every other column is, so the
 		// decorator double above is what stands in for it.
 		VersionedColumn: decorator,
-		// The two conventions the routes adopt are used for real, not doubled: what the suite asserts
-		// about a versioned write is the behaviour of the kernel's own conditional update.
-		Versioned: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned.decorator').Versioned,
+		// The convention as this suite needs it: the metadata the real decorator records, written on the
+		// same key. The decorator itself is not required, because it also applies the version guard —
+		// and the guard injects the idempotency service, which extends the CRUD service, which imports
+		// the entity registry. Required here, `@gauzy/core` loads in an order where
+		// `class TenantAwareCrudService extends CrudService` runs before `CrudService` is defined, and
+		// the suite fails to load rather than failing an assertion. No guard runs in this suite.
+		Versioned: (options: unknown = {}) => SetMetadata(VERSIONED_METADATA_KEY, options),
+		// The conditional update the routes reach for is used for real, not doubled: what the suite
+		// asserts about a versioned write is the behaviour of the kernel's own statement.
 		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.commitVersionedUpdate,
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
