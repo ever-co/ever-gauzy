@@ -19,6 +19,19 @@
 // Sized as a real 1.5rem icon button instead — and the Font Awesome `<i>` inside
 // it has to be sized WITH the box: it inherits 28px from the grid's action cell,
 // which is what overflowed the chip when the scale came off.
+//
+// Each action is a small icon button: the card surface with the hairline ring
+// every other icon button in the app carries, its glyph in the accent that says
+// what it does. Edit used to be a solid success-green block — a saturated
+// button in the first column of every row, the loudest thing in a grid whose
+// subject is the figures beside it — and bare glyphs went too far the other
+// way, reading as disabled text at this size.
+//
+// The library's own rule for these anchors (`a.angular2-smart-action` in
+// `_overrides.scss`) paints them from `--smart-table-add-button-*`, two custom
+// properties this repo never defines: the browser drops both declarations, so
+// what is left is a 1.75rem glyph in `--text-control-color`, i.e. white on
+// nothing. That is why this grid has always carried its own treatment.
 :host ::ng-deep angular2-smart-table .angular2-smart-actions a {
   display: inline-flex;
   align-items: center;
@@ -28,23 +41,55 @@
   padding: 0;
   margin: 0 0.125rem;
   border-radius: var(--gauzy-radius-sm, 0.375rem);
+  background-color: var(--gauzy-card-1, var(--background-basic-color-1)) !important;
+  box-shadow: $action-hairline;
+  color: nb-theme(color-primary-default);
   line-height: 1;
+  transition: background-color 0.15s ease, color 0.15s ease;
 
   i {
     font-size: 0.8125rem;
     line-height: 1;
   }
+
+  &:hover {
+    background-color: nb-theme(color-primary-transparent-200) !important;
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 1px;
+  }
 }
 
-:host ::ng-deep angular2-smart-table .angular2-smart-actions a:nth-child(1) {
-  background-color: nb-theme(color-success-default) !important;
-  color: nb-theme(text-control-color);
+// Each action in the colour of what it does, named by its own class rather than
+// its position: in edit mode the row swaps Edit / Delete for Save / Cancel, so
+// `:nth-child(2)` painted Cancel — which changes nothing — in the delete red.
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-edit-save {
+  color: nb-theme(color-success-default);
+
+  &:hover {
+    background-color: nb-theme(color-success-transparent-200) !important;
+  }
 }
 
-:host ::ng-deep angular2-smart-table .angular2-smart-actions a:nth-child(2) {
-  background-color: var(--gauzy-card-1) !important;
+// Cancel backs out of an edit; it is not destructive, so it stays neutral.
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-edit-cancel {
+  color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)) !important;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+}
+
+// Delete is the one destructive action in the row, so it is the one red thing.
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-delete-delete {
   color: nb-theme(color-danger-default);
-  box-shadow: $action-hairline;
+
+  &:hover {
+    background-color: nb-theme(color-danger-transparent-200) !important;
+  }
 }
 
 // The subtotal/total chips under the item grid.
