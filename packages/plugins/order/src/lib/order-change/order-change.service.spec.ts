@@ -397,6 +397,10 @@ function orderFixture(seeds: { lines?: any[]; shippingMethods?: any[]; order?: R
 		new OrderSummaryService(repo('order_summary') as never, {} as never) as never,
 		ledger(adjustments) as never,
 		ledger(taxLines) as never,
+		// The outbox every recomputation announces itself into. Stubbed rather than omitted: the
+		// constructor gained it when the order lifecycle started announcing its moves, and a double
+		// that stops matching the constructor is a suite that fails to compile.
+		{ append: jest.fn() } as never,
 		{ get: () => orderWriter } as never
 	);
 	const service = new OrderChangeService(

@@ -43,6 +43,40 @@ export const ANY_ORDER_VERSION: OrderVersionExpectation = { wildcard: true, vers
 export const ORDER_AGGREGATE_WRITER = 'ORDER_AGGREGATE_WRITER';
 
 /**
+ * The aggregate name every `order.*` outbox row is written under.
+ *
+ * The outbox partitions by `<aggregateType>:<aggregateId>` and promises ordering inside a partition
+ * and nowhere else, so this string is what makes "the events of one order arrive in the order they
+ * happened" true. It is a constant rather than a literal at each call site for exactly that reason: a
+ * single mistyped value would put one of an order's events in a partition of its own, where the
+ * dispatcher would be free to deliver it before the event that preceded it.
+ */
+export const ORDER_AGGREGATE_TYPE = 'ORDER';
+
+/**
+ * The `order.*` facts this package announces.
+ *
+ * The README states that observable changes leave through the core `event_outbox`, and these are the
+ * changes: an order is placed, confirmed, cancelled, completed or archived. They are the lifecycle
+ * moves — not every write — because an event is a fact another context acts on, and a totals refresh
+ * is not one. Naming them here rather than inline keeps the set answerable: a webhook subscriber that
+ * asks what it may subscribe to has one place to read, and a consumer registered for `order.*` gets
+ * exactly these.
+ */
+export const ORDER_EVENTS = {
+	/** A draft became a real order: its number is final and its stock is committed. */
+	PLACED: 'order.placed',
+	/** The money question is answered and the order may be worked. */
+	CONFIRMED: 'order.confirmed',
+	/** The order will not be fulfilled. */
+	CANCELED: 'order.canceled',
+	/** Every line is accounted for and nothing is outstanding. */
+	COMPLETED: 'order.completed',
+	/** A terminal order was put away; it is read-only from here. */
+	ARCHIVED: 'order.archived'
+} as const;
+
+/**
  * What kind of line this is.
  *
  * A closed set that genuinely does not grow, so it is an enumeration and not a lookup table. Before
