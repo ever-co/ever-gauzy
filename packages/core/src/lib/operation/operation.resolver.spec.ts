@@ -565,9 +565,23 @@ describe('OperationResolver — the SDL declares the capabilities the REST route
 		// rather than a refusal.
 		expect(fieldArgs('Query', 'operation')).toEqual(['id']);
 		expect(fieldType('Query', 'operation')).toBe('Operation');
-		// The aggregate query takes the two members that name the aggregate, which is the same narrowing
-		// the REST list route accepts as `aggregateType` and `aggregateId`.
-		expect(fieldArgs('Query', 'operationsByAggregate')).toEqual(['aggregateType', 'aggregateId']);
+		// The aggregate query states the two members that name the aggregate — the same narrowing the REST
+		// list route accepts as `aggregateType` and `aggregateId` — and then the *same* page protocol the
+		// list takes, because what it answers is that list narrowed rather than a second, unpaged read.
+		expect(fieldArgs('Query', 'operationsByAggregate')).toEqual([
+			'aggregateType',
+			'aggregateId',
+			'filter',
+			'sort',
+			'page',
+			'first',
+			'after',
+			'last',
+			'before',
+			'limit',
+			'offset'
+		]);
+		expect(fieldType('Query', 'operationsByAggregate')).toBe('OperationConnection!');
 		// The retry takes no body: the runtime's own rule decides where a retry continues.
 		expect(fieldArgs('Mutation', 'retryOperation')).toEqual(['id']);
 		// The subscriptions narrow by the operation, and the step stream by the step name; neither can
@@ -752,10 +766,16 @@ describe('OperationResolver — the kernel’s type is resolved from this resour
 		expect(await resolver.operation(SECOND_OPERATION)).toBeNull();
 	});
 
-	it('reads the operations of one aggregate, newest first', async () => {
+	it('reads the operations of one aggregate, newest first, as a connection over that aggregate', async () => {
 		const { resolver, operationService } = surfaces();
 
-		expect(await resolver.operationsByAggregate('commerce_cart', AGGREGATE)).toEqual(ROWS);
+		const connection = await resolver.operationsByAggregate('commerce_cart', AGGREGATE);
+
+		// Control: the rows are the ones the read answered, and the connection is what carries them — the
+		// count the client renders and the cursors it pages with are the point of the field being one.
+		expect(connection.nodes).toEqual(ROWS);
+		expect(connection.totalCount).toBe(ROWS.length);
+		expect(connection.edges).toHaveLength(ROWS.length);
 		expect(operationService.findByAggregate).toHaveBeenCalledWith('commerce_cart', AGGREGATE);
 	});
 

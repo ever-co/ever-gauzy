@@ -178,15 +178,36 @@ export class OperationResolver {
 	 * The operations of one aggregate, newest first.
 	 *
 	 * The read the REST list route answers with `aggregateType` and `aggregateId` stated, offered as
-	 * its own field because a client looking at one aggregate asks the question directly.
+	 * its own field because a client looking at one aggregate asks the question directly — and answered
+	 * as a connection because an aggregate's history grows with every attempt, retry and compensation,
+	 * so the client rendering it needs the count and a page rather than an unbounded list. The two
+	 * members that name the aggregate are the read's identity; the rest is the same narrowing
+	 * `operations` takes, over the same rows and through the same helper.
 	 */
 	@Query('operationsByAggregate')
 	@Permissions(PermissionsEnum.OPERATIONS_VIEW)
 	async operationsByAggregate(
 		@Args('aggregateType', { type: () => String }) aggregateType: string,
-		@Args('aggregateId', { type: () => ID }) aggregateId: Id
-	): Promise<IOperation[]> {
-		return this.operationService.findByAggregate(aggregateType, aggregateId);
+		@Args('aggregateId', { type: () => ID }) aggregateId: Id,
+		@Args('filter') filter?: ConnectionFilter,
+		@Args('sort') sort?: ConnectionSortKey[],
+		@Args('page') page?: ConnectionPageRequest,
+		@Args('first', { type: () => Int, nullable: true }) first?: number,
+		@Args('after', { type: () => String, nullable: true }) after?: string,
+		@Args('last', { type: () => Int, nullable: true }) last?: number,
+		@Args('before', { type: () => String, nullable: true }) before?: string,
+		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+	): Promise<GraphqlConnection<IOperation>> {
+		const rows = await this.operationService.findByAggregate(aggregateType, aggregateId);
+
+		return buildConnection<IOperation>({
+			rows,
+			filterable: OPERATION_FILTERABLE,
+			sortable: OPERATION_SORTABLE,
+			defaultSort: OPERATION_DEFAULT_SORT,
+			request: { filter, sort, page, first, after, last, before, limit, offset }
+		});
 	}
 
 	/**

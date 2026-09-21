@@ -1557,8 +1557,14 @@ type Query {
   At most one of them is live at a time — the runtime's exclusivity rule — so what this usually
   answers is the run in flight followed by the attempts that came before it, which is what an
   operator investigating an aggregate reads.
+  
+  **A connection rather than a bare array**, and for the same reason `operations` is one: an
+  aggregate's history grows with every attempt, every retry and every compensation the runtime runs,
+  so the client that has to render it needs the count and a page rather than an unbounded list. The
+  two members that name the aggregate stay the identity of the read; everything else is the same
+  narrowing `operations` takes, over the same rows.
   """
-  operationsByAggregate(aggregateType: String!, aggregateId: ID!): [Operation!]!
+  operationsByAggregate(aggregateType: String!, aggregateId: ID!, filter: OperationFilter, sort: [OperationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OperationConnection!
 
   """The awards of the caller's tenant, newest first."""
   organizationAwards(filter: OrganizationAwardFilter, sort: [OrganizationAwardSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationAwardConnection!

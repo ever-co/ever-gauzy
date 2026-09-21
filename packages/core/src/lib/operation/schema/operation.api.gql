@@ -19,7 +19,9 @@
 # than a capability: the aggregate's history is reachable over REST through the list route's
 # `aggregateType` and `aggregateId` parameters, and it is a root field here because a client looking
 # at one cart, order or subscription asks for it directly rather than by assembling a filter. It
-# carries the read permission the rest of this surface carries.
+# carries the read permission the rest of this surface carries, and it answers a connection for the
+# same reason `operations` does — the narrowing that names the aggregate is the read's identity, not
+# a reason to hand back an unbounded list.
 #
 # `resumeOperation` is the one move with no route of its own. The endpoint table names a cancel and a
 # retry, because those are the two decisions an operator makes about an operation; a resume is what
@@ -57,8 +59,26 @@ extend type Query {
 	At most one of them is live at a time — the runtime's exclusivity rule — so what this usually
 	answers is the run in flight followed by the attempts that came before it, which is what an
 	operator investigating an aggregate reads.
+
+	**A connection rather than a bare array**, and for the same reason `operations` is one: an
+	aggregate's history grows with every attempt, every retry and every compensation the runtime runs,
+	so the client that has to render it needs the count and a page rather than an unbounded list. The
+	two members that name the aggregate stay the identity of the read; everything else is the same
+	narrowing `operations` takes, over the same rows.
 	"""
-	operationsByAggregate(aggregateType: String!, aggregateId: ID!): [Operation!]!
+	operationsByAggregate(
+		aggregateType: String!
+		aggregateId: ID!
+		filter: OperationFilter
+		sort: [OperationSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OperationConnection!
 }
 
 extend type Mutation {

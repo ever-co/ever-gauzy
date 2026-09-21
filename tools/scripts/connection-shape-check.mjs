@@ -45,7 +45,7 @@ const schema = readFileSync(SDL, 'utf8')
 
 const BARE_ARRAYS = new Set([
 	'addressRoles', 'splitExpensesByEmployee', 'mySplitExpenses', 'featureToggleDefinitions',
-	'myIncomes', 'unitCategories', 'units', 'operationsByAggregate',
+	'myIncomes', 'unitCategories', 'units',
 	'organizationContactsByEmployee', 'organizationProjectsByEmployee', 'organizationStrategicInitiativesByProject', 'paymentTerms',
 	'myRolePermissions', 'resolvePrice', 'taxRateParts', 'resolveTaxRate',
 	'taxRegimeRates', 'stockLevels', 'stockMovements', 'stockReservations',
