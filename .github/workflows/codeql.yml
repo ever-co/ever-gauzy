@@ -57,7 +57,7 @@ concurrency:
   # as `build.yml`: both triggers above cover develop/stage/master, so while a cascade pull request
   # is open (develop -> stage), one push to `develop` fires a push run on `refs/heads/develop` AND a
   # pull_request run on `refs/pull/N/merge`. Under `github.ref` those are different strings, so
-  # neither could cancel the other and the same tree was analysed twice. Qualified by the head
+  # neither could cancel the other and the same tree was analyzed twice. Qualified by the head
   # REPOSITORY as well, because a fork pull request's run claims the group before its job skips.
   group: >-
     ${{ github.workflow }}-${{ github.event_name == 'pull_request'
