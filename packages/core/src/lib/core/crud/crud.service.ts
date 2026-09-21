@@ -18,7 +18,13 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { Collection, CreateOptions, FilterQuery as MikroFilterQuery, RequiredEntityData, wrap } from '@mikro-orm/core';
 import { AssignOptions } from '@mikro-orm/knex';
 import { ID, IPagination } from '@gauzy/contracts';
-import { BaseEntity, SoftDeletableBaseEntity } from '../entities/internal';
+// The base classes' own module rather than the entity-registry barrel. That barrel re-exports every
+// entity *and* every subscriber, and a subscriber imports a module, which imports a controller, which
+// imports `core/crud` — so reaching the registry from here closes a cycle whose second lap arrives at
+// `tenant-aware-crud.service` while this file is still on its import lines. `CrudService` is then
+// `undefined` and `class TenantAwareCrudService extends CrudService` throws, which reads as a broken
+// suite rather than as a cycle. Only the two base classes are wanted here; the registry is not.
+import { BaseEntity, SoftDeletableBaseEntity } from '../entities/base.entity';
 import { multiORMCreateQueryBuilder } from '../../core/orm/query-builder/query-builder.factory';
 import { IQueryBuilder } from '../../core/orm/query-builder/iquery-builder';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';

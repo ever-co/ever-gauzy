@@ -539,6 +539,28 @@ describe('the retention window', () => {
 		expect(service.isExpired({} as Pick<IdempotencyKey, 'expiresAt'>)).toBe(false);
 	});
 
+	it('does not free a key whose lease is still running, even past its retention window', async () => {
+		at('2026-03-01T10:00:00Z');
+
+		const { service, table } = store();
+		const policy = { retentionMs: 60_000 };
+
+		const first = await service.claim(request(), policy);
+		expect(first.outcome).toBe(IdempotencyOutcome.CLAIMED);
+
+		// The work outlives the window its response would be replayable in. That is a long request,
+		// not an abandoned one: the row is still the holder's lease.
+		at('2026-03-01T10:02:00Z');
+
+		const second = await service.claim(request(), policy);
+
+		// Control: clearing the expired row here would put two writers on one key, which is the single
+		// outcome the key exists to prevent. The caller is told to come back instead.
+		expect(second.outcome).toBe(IdempotencyOutcome.IN_FLIGHT);
+		expect(table.rows).toHaveLength(1);
+		expect(table.rows[0].id).toBe(first.record.id);
+	});
+
 	it('frees a key whose response is past its retention window', async () => {
 		at('2026-03-01T10:00:00Z');
 

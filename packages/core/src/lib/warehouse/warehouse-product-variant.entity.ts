@@ -12,7 +12,9 @@ import {
 	MultiORMEntity,
 	MultiORMManyToOne
 } from './../core/decorators/entity';
-import { VersionedColumn } from './../concurrency';
+// The decorator's own module rather than the `concurrency` barrel — see `warehouse-product.entity.ts`
+// for the cycle the barrel closes.
+import { VersionedColumn } from './../concurrency/versioned-column.decorator';
 import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
 
 /**
