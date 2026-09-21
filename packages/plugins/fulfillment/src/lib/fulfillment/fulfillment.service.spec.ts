@@ -31,6 +31,11 @@ jest.mock('@gauzy/core', () => {
 	// about what `commitVersionedUpdate` does with the version a caller stated and with a version that
 	// moved on, and a re-implementation here would assert the double rather than the platform.
 	const versionedWrite = jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write');
+	// The platform's error type and its catalogue, because the lifecycle move now *reads* the code the
+	// kernel raised in order to decide whether a lost race was a racer heading for the same status. A
+	// stand-in here would let that branch pass against a shape the platform does not produce.
+	const apiException = jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception');
+	const apiErrorCodes = jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes');
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
@@ -128,6 +133,10 @@ jest.mock('@gauzy/core', () => {
 		// suite's.
 		commitVersionedUpdate: versionedWrite.commitVersionedUpdate,
 		versionExpectationOf: versionedWrite.versionExpectationOf,
+		ApiException: apiException.ApiException,
+		ApiErrorCode: apiErrorCodes.ApiErrorCode,
+		EventOutboxService: class {},
+		VERSION_EXPECTATION_PROPERTY: 'versionExpectation',
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -474,30 +483,53 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 		repository(tables, 'fulfillment_line') as never,
 		{} as never
 	);
+	/** Every `fulfillment.*` row the service appended, in the order it appended them. */
+	const events: Row[] = [];
+	/**
+	 * The platform outbox, reduced to the one call this service makes on it.
+	 *
+	 * The manager it is handed is the shipment repository's own, which is what the assertions below
+	 * check: an event appended through some other connection is an event a crash can separate from the
+	 * write it describes, and the outbox is a table rather than a bus for exactly that reason.
+	 */
+	const outbox = {
+		append: async (manager: any, input: Row) => {
+			events.push({ manager, ...input });
+
+			return input;
+		}
+	};
+	const fulfillmentRepository = repository(
+		tables,
+		'fulfillment',
+		{ lines: { table: 'fulfillment_line', foreignKey: 'fulfillmentId' } },
+		{
+			// The table's own defaults, as the migration declares them: a shipment is shippable and
+			// notifies the customer unless the caller says otherwise.
+			requiresShipping: true,
+			noNotification: false,
+			status: FulfillmentStatusDetail.PENDING,
+			direction: FulfillmentDirection.OUTBOUND,
+			version: 1
+		}
+	);
+
+	// The entity manager the conditional update and the event both go through.
+	(fulfillmentRepository as Row).manager = { name: 'fulfillment-manager' };
 	const service = new FulfillmentService(
-		repository(
-			tables,
-			'fulfillment',
-			{ lines: { table: 'fulfillment_line', foreignKey: 'fulfillmentId' } },
-			{
-				// The table's own defaults, as the migration declares them: a shipment is shippable and
-				// notifies the customer unless the caller says otherwise.
-				requiresShipping: true,
-				noNotification: false,
-				status: FulfillmentStatusDetail.PENDING,
-				direction: FulfillmentDirection.OUTBOUND,
-				version: 1
-			}
-		) as never,
+		fulfillmentRepository as never,
 		{} as never,
 		lineService,
 		orderLineService(tables) as never,
+		outbox as never,
 		options.labelProvider as never
 	);
 
 	return {
 		service,
 		tables,
+		events,
+		manager: (fulfillmentRepository as Row).manager,
 		line: (id: string = LINE_A) => tables.order_line.find((row) => row.id === id),
 		row: (id: string) => tables.fulfillment.find((row) => row.id === id),
 		linesOf: (fulfillmentId: string) =>
@@ -583,12 +615,15 @@ describe('FulfillmentService — a shipment against what the order line has left
 		expect(created.lines[0].quantity).toBe(5);
 		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
 
+		// Both figures are named as the digits the comparison was made on, not as doubles rendered from
+		// them: the quantity is a `numeric(20,6)`, and a refusal that printed a remainder through
+		// `Number` would name a value the guard did not actually refuse the request against.
 		await expect(
 			fixture.service.create({ orderId: ORDER, lines: [request(LINE_B, 6)] } as never)
 		).rejects.toMatchObject({
 			response: {
 				code: 'FULFILLMENT_QUANTITY_EXCEEDED',
-				details: { orderLineId: LINE_B, requested: 6, outstanding: 5 }
+				details: { orderLineId: LINE_B, requested: '6', outstanding: '5' }
 			}
 		});
 		expect(fixture.tables.fulfillment).toHaveLength(1);
@@ -640,10 +675,14 @@ describe('FulfillmentService — a shipment against what the order line has left
 		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(4);
 		expect(fixture.tables.fulfillment_line).toHaveLength(2);
 
+		// The refusal reports both figures as the digits the comparison was made on. It used to render
+		// the remainder through `Number`, which prints a value that differs from the one the guard
+		// actually refused it against — the least helpful thing a refusal about a decimal boundary can
+		// do, and the reason the remainder is carried as text in the first place.
 		await expect(
 			fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never)
 		).rejects.toMatchObject({
-			response: { code: 'FULFILLMENT_QUANTITY_EXCEEDED', details: { outstanding: 1 } }
+			response: { code: 'FULFILLMENT_QUANTITY_EXCEEDED', details: { requested: '2', outstanding: '1' } }
 		});
 	});
 
@@ -662,6 +701,62 @@ describe('FulfillmentService — a shipment against what the order line has left
 
 		expect(created).toMatchObject({ direction: FulfillmentDirection.RETURN, status: FulfillmentStatusDetail.PENDING });
 		expect(created.lines[0].quantity).toBe(10);
+	});
+
+	it('writes a return shipment’s lines without moving the order line’s fulfilled counter', async () => {
+		// `createReturnLeg`'s own rule, which `create` used to break: a return does not fulfil anything,
+		// so adding its quantity to `fulfilledQuantity` counts the same units twice — once when they went
+		// out and once when they came back. A line ordered for 10 that shipped 10 and is then returned 4
+		// through `POST /fulfillments/returns` reached 14 against a `quantity` of 10, the outstanding
+		// remainder went negative, and every later outbound shipment on the line was refused. The lines
+		// themselves are still written, because they are what the returns package reconciles against.
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 10, fulfilledQuantity: 10 })] }
+		});
+
+		const created = await fixture.service.create({
+			orderId: ORDER,
+			direction: FulfillmentDirection.RETURN,
+			lines: [request(LINE_A, 4)]
+		} as never);
+
+		expect(fixture.linesOf(created.id)).toHaveLength(1);
+		expect(Number(fixture.linesOf(created.id)[0].quantity)).toBe(4);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(10);
+		// And the line is therefore still fully accounted for rather than over-fulfilled, so the
+		// remainder it reports is zero rather than a negative number.
+		expect(Number(await fixture.service.outstandingOf(LINE_A))).toBe(0);
+	});
+
+	it('moves no counter when a return leg ships, is delivered or is cancelled', async () => {
+		// The same rule on the three moves that ride on a shipment's lines. `shippedQuantity` and
+		// `deliveredQuantity` measure what reached the buyer, and a cancelation only gives back what the
+		// creation took — which, for a return leg, is nothing.
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 10, fulfilledQuantity: 10, shippedQuantity: 10 })] }
+		});
+
+		const leg = await fixture.service.create({
+			orderId: ORDER,
+			direction: FulfillmentDirection.RETURN,
+			lines: [request(LINE_A, 4)]
+		} as never);
+
+		await fixture.service.ship(leg.id);
+		await fixture.service.deliver(leg.id);
+
+		expect(Number(fixture.line(LINE_A).shippedQuantity)).toBe(10);
+		expect(Number(fixture.line(LINE_A).deliveredQuantity)).toBe(0);
+
+		const cancelled = await fixture.service.create({
+			orderId: ORDER,
+			direction: FulfillmentDirection.RETURN,
+			lines: [request(LINE_A, 2)]
+		} as never);
+
+		await fixture.service.cancel(cancelled.id, 'CUSTOMER_KEPT_THE_GOODS');
+
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(10);
 	});
 
 	it('refuses a line whose order line is not there', async () => {
@@ -910,6 +1005,111 @@ describe('FulfillmentService — the shipment’s own lifecycle (doc 09 §12.5)'
 		await expect(fixture.service.transition(UNKNOWN, FulfillmentStatusDetail.SHIPPED)).rejects.toBeInstanceOf(
 			NotFoundException
 		);
+	});
+
+	it('announces every lifecycle move into the outbox, through the write’s own manager', async () => {
+		// The package emitted nothing at all, so a parcel could be created, handed over, tracked and
+		// delivered and nothing outside it — no webhook subscriber, no search index, no buyer
+		// notification — could learn of any of it. Each event is appended by the call that committed the
+		// move, through the shipment repository's own entity manager, so the two cannot be separated by
+		// a crash.
+		const { fixture, created } = await pending();
+
+		await fixture.service.ship(created.id, { trackingNumber: 'TRACK-0001', carrier: 'DHL' });
+		await fixture.service.markInTransit(created.id);
+		await fixture.service.deliver(created.id);
+
+		expect(fixture.events.map((event) => event.name)).toEqual([
+			'fulfillment.created',
+			'fulfillment.shipped',
+			'fulfillment.in_transit',
+			'fulfillment.delivered'
+		]);
+		expect(fixture.events.every((event) => event.manager === fixture.manager)).toBe(true);
+		expect(fixture.events.every((event) => event.aggregateType === 'FULFILLMENT')).toBe(true);
+		expect(fixture.events.every((event) => event.aggregateId === created.id)).toBe(true);
+
+		// The hand-over's event describes a row that already carries the carrier's number, because the
+		// tracking details ride the same statement as the status rather than a write after it.
+		expect(fixture.events[1].data).toMatchObject({
+			fulfillmentId: created.id,
+			status: FulfillmentStatusDetail.SHIPPED,
+			trackingNumber: 'TRACK-0001',
+			carrier: 'DHL',
+			version: 2
+		});
+	});
+
+	it('announces nothing for a move that did not happen', async () => {
+		// A repeat submission writes nothing, so it announces nothing: an outbox that emitted on every
+		// call would tell a consumer a parcel had been delivered twice.
+		const { fixture, created } = await pending();
+
+		await fixture.service.ship(created.id);
+		await fixture.service.deliver(created.id);
+
+		const announced = fixture.events.length;
+
+		await fixture.service.deliver(created.id);
+
+		expect(fixture.events).toHaveLength(announced);
+	});
+
+	it('predicates the move on the version the caller read, and refuses one that moved on', async () => {
+		// The move used to be an unconditional `UPDATE … WHERE id = ?` carrying a version this service
+		// computed after a read, which is exactly the read-then-write window the kernel exists to close:
+		// a caller holding version 1 could overwrite whatever the row had become. The write is now the
+		// kernel's conditional statement, so a stated version that has been spent is a conflict.
+		const { fixture, created } = await pending();
+
+		await fixture.service.ship(created.id);
+
+		await expect(
+			fixture.service.markInTransit(created.id, { wildcard: false, versions: [1] })
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+		expect(fixture.row(created.id)).toMatchObject({ status: FulfillmentStatusDetail.SHIPPED, version: 2 });
+
+		// The version the shipment actually holds is accepted, and the statement that compares it is the
+		// statement that increments it.
+		await fixture.service.markInTransit(created.id, { wildcard: false, versions: [2] });
+
+		expect(fixture.row(created.id)).toMatchObject({ status: FulfillmentStatusDetail.IN_TRANSIT, version: 3 });
+	});
+
+	it('confines the conditional write to the shipment’s own tenant and organization', async () => {
+		// A shipment id travels — it is in a URL, a carrier callback and an exported manifest — so the
+		// statement has to say *whose* row it may touch as well as which row: criteria that name only
+		// the id are criteria another tenant's identifier can satisfy. The scope is taken from the row
+		// this call read, which is the only source available on the paths that run with no request
+		// behind them, and the version is the kernel's own precondition rather than a number this
+		// service computed.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5 })],
+				fulfillment: [shipment('pending', { version: 3 })],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+		// `as never` on the receiver makes the spy itself `never`, so its recorded calls cannot be
+		// read back. The receiver is widened instead of erased: the spy keeps a usable type and the
+		// assertions below can still name the criteria the conditional write stated.
+		const update = jest.spyOn(fixture.service as unknown as { update: (...args: unknown[]) => unknown }, 'update');
+
+		await fixture.service.ship('pending');
+
+		const conditional = update.mock.calls
+			.map(([criteria]) => criteria as Record<string, unknown>)
+			.filter((criteria) => criteria !== null && typeof criteria === 'object');
+
+		expect(conditional).toContainEqual({
+			id: 'pending',
+			tenantId: TENANT,
+			organizationId: ORG,
+			version: 3
+		});
+		expect(fixture.row('pending')).toMatchObject({ status: FulfillmentStatusDetail.SHIPPED, version: 4 });
+
+		update.mockRestore();
 	});
 });
 

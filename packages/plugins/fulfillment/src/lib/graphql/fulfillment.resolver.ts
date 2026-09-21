@@ -18,6 +18,7 @@ import { FulfillmentService } from '../fulfillment/fulfillment.service';
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
 import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
+import { fulfillmentVersionOf } from '../fulfillment.types';
 import {
 	FULFILLMENT_DIRECTIONS,
 	FULFILLMENT_STATUS_DETAILS,
@@ -170,41 +171,55 @@ export class FulfillmentResolver {
 	 * Marks a fulfilment as handed to the carrier.
 	 *
 	 * @param id The fulfilment.
-	 * @param input The tracking details.
+	 * @param input The tracking details, and the version the caller read the shipment at when it states
+	 * one.
+	 * @param context The operation's context, which carries the request the guard ran on.
 	 * @returns The shipped fulfilment.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
 	@Idempotent({ scope: 'fulfillment.ship', required: false, resourceType: 'fulfillment' })
+	@Versioned({ resource: FulfillmentService, required: false })
 	@Mutation(() => Object, { name: 'shipFulfillment' })
 	async shipFulfillment(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('input', { type: () => Object, nullable: true }) input?: Record<string, any>
+		@Args('input', { type: () => Object, nullable: true }) input?: Record<string, any>,
+		@Context() context?: any
 	): Promise<Fulfillment> {
-		return this.fulfillmentService.ship(id, input ?? {});
+		return this.fulfillmentService.ship(id, input ?? {}, fulfillmentVersionOf(context?.req));
 	}
 
 	/**
 	 * Records that the carrier reported movement.
 	 *
 	 * @param id The fulfilment.
+	 * @param context The operation's context, which carries the request the guard ran on.
 	 * @returns The updated fulfilment.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Versioned({ resource: FulfillmentService, required: false })
 	@Mutation(() => Object, { name: 'markFulfillmentInTransit' })
-	async markFulfillmentInTransit(@Args('id', { type: () => ID }) id: string): Promise<Fulfillment> {
-		return this.fulfillmentService.markInTransit(id);
+	async markFulfillmentInTransit(
+		@Args('id', { type: () => ID }) id: string,
+		@Context() context?: any
+	): Promise<Fulfillment> {
+		return this.fulfillmentService.markInTransit(id, fulfillmentVersionOf(context?.req));
 	}
 
 	/**
 	 * Marks a fulfilment as delivered.
 	 *
 	 * @param id The fulfilment.
+	 * @param context The operation's context, which carries the request the guard ran on.
 	 * @returns The delivered fulfilment.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Versioned({ resource: FulfillmentService, required: false })
 	@Mutation(() => Object, { name: 'deliverFulfillment' })
-	async deliverFulfillment(@Args('id', { type: () => ID }) id: string): Promise<Fulfillment> {
-		return this.fulfillmentService.deliver(id);
+	async deliverFulfillment(
+		@Args('id', { type: () => ID }) id: string,
+		@Context() context?: any
+	): Promise<Fulfillment> {
+		return this.fulfillmentService.deliver(id, undefined, fulfillmentVersionOf(context?.req));
 	}
 
 	/**
@@ -212,15 +227,18 @@ export class FulfillmentResolver {
 	 *
 	 * @param id The fulfilment.
 	 * @param reason Why it was cancelled.
+	 * @param context The operation's context, which carries the request the guard ran on.
 	 * @returns The cancelled fulfilment.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Versioned({ resource: FulfillmentService, required: false })
 	@Mutation(() => Object, { name: 'cancelFulfillment' })
 	async cancelFulfillment(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('reason', { type: () => String, nullable: true }) reason?: string
+		@Args('reason', { type: () => String, nullable: true }) reason?: string,
+		@Context() context?: any
 	): Promise<Fulfillment> {
-		return this.fulfillmentService.cancel(id, reason);
+		return this.fulfillmentService.cancel(id, reason, fulfillmentVersionOf(context?.req));
 	}
 
 	/**

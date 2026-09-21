@@ -18,6 +18,11 @@
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
 
+	// The kernel's conditional write is pulled through the seam rather than re-implemented: the edit
+	// cases below are about what the platform's `UPDATE … WHERE id = :id AND version = :expected` does
+	// with a version that moved on, and a stand-in here would assert this suite's own idea of a lock.
+	const versionedWrite = jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write');
+
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
@@ -106,6 +111,8 @@ jest.mock('@gauzy/core', () => {
 
 	return {
 		TenantAwareCrudService,
+		commitVersionedUpdate: versionedWrite.commitVersionedUpdate,
+		VERSION_EXPECTATION_PROPERTY: 'versionExpectation',
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
 		TenantOrganizationBaseEntity: BaseEntity,
@@ -272,10 +279,16 @@ function repository(tables: ITables, tableName: keyof ITables) {
 
 			return created;
 		},
-		// The platform's `update` reaches TypeORM's own, which answers an `UpdateResult` and not the row.
+		// The platform's `update` reaches TypeORM's own, which answers an `UpdateResult` and not the row —
+		// and which applies the WHOLE criteria it was handed rather than the id alone. The version the
+		// conditional write predicates its statement on is part of that criteria, so a double that matched
+		// on the id only would report a stale write as a successful one and make the concurrency case
+		// below vacuous.
 		update: async (criteria: any, partial: Row) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows().findIndex((row) => same(row.id, id));
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = rows().findIndex((row) =>
+				Object.entries(where).every(([field, expected]) => expected === undefined || same(row[field], expected))
+			);
 
 			if (index >= 0) {
 				Object.assign(rows()[index], partial);
@@ -705,14 +718,59 @@ describe('ShippingOptionService — what an option costs (doc 09 §12.3)', () =>
 });
 
 describe('ShippingOptionService — editing an option (doc 09 §12.2)', () => {
-	it('writes an edit that keeps the shape, bumps the optimistic lock and answers with the update result', async () => {
+	// This case pinned the previous shape, where the service read the row, computed `version + 1` in
+	// JavaScript and wrote both columns unconditionally, and it asserted the raw `UpdateResult` that
+	// produced. That write was the read-then-write window the optimistic lock exists to close, so the
+	// case now asserts the corrected contract: the version is set by the statement that checks it, and
+	// the answer is the version the row now holds.
+	it('writes an edit that keeps the shape and lets the conditional write set the next version', async () => {
 		const fixture = optionFixture([option('standard', { amount: 4.99, version: 3 })]);
 
 		const answered = await fixture.service.update('standard', { name: 'Standard (2–4 days)', amount: 5.5 } as never);
 
-		// The platform's `update` answers TypeORM's own result, so a caller that wants the row reads it.
-		expect(answered).toMatchObject({ affected: 1 });
+		expect(answered).toMatchObject({ version: 4 });
 		expect(fixture.row('standard')).toMatchObject({ name: 'Standard (2–4 days)', amount: 5.5, version: 4 });
+	});
+
+	it('predicates the edit on the version the row held, so a lost update is a conflict', async () => {
+		// Two operators editing one option from the same screen both read version 3. Written
+		// unconditionally, both wrote version 4 and the second silently replaced the first with nothing
+		// to show that anything was lost. The statement now names the version among its criteria, so the
+		// row the second write is predicated on no longer exists and the platform answers the conflict.
+		const fixture = optionFixture([option('standard', { amount: 4.99, version: 3 })]);
+		const stale = { ...fixture.row('standard') };
+
+		await fixture.service.update('standard', { name: 'First edit' } as never);
+
+		// The second writer still holds version 3, which is what the kernel is handed here in place of
+		// the re-read the wildcard would otherwise perform.
+		await expect(
+			(fixture.service as never as { update(id: unknown, entity: unknown): Promise<unknown> }).update(
+				{ id: 'standard', version: stale.version },
+				{ name: 'Second edit', version: Number(stale.version) + 1 }
+			)
+		).resolves.toMatchObject({ affected: 0 });
+		expect(fixture.row('standard')).toMatchObject({ name: 'First edit', version: 4 });
+	});
+
+	it('states the option’s own tenant and organization in the conditional write', async () => {
+		// An option id travels, so criteria that name only the row are criteria another tenant's
+		// identifier can satisfy. The scope comes from the row this call read.
+		const fixture = optionFixture([option('standard', { amount: 4.99, version: 2 })]);
+		// `as never` on the receiver makes the spy itself `never`, so its recorded calls cannot be
+		// read back. The receiver is widened instead of erased: the spy keeps a usable type and the
+		// assertions below can still name the criteria the conditional write stated.
+		const update = jest.spyOn(fixture.service as unknown as { update: (...args: unknown[]) => unknown }, 'update');
+
+		await fixture.service.update('standard', { name: 'Standard delivery' } as never);
+
+		expect(
+			update.mock.calls
+				.map(([criteria]) => criteria)
+				.filter((criteria) => criteria !== null && typeof criteria === 'object')
+		).toContainEqual({ id: 'standard', tenantId: TENANT, organizationId: ORG, version: 2 });
+
+		update.mockRestore();
 	});
 
 	it('refuses an edit that would leave a flat option without an amount', async () => {

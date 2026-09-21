@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import * as chalk from 'chalk';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, EventBus, Money, RequestContext } from '@gauzy/core';
+import { BaseEvent, CrudService, EventBus, Money, RequestContext } from '@gauzy/core';
 import { PaymentSession } from './payment-session.entity';
 import { TypeOrmPaymentSessionRepository } from './repository/type-orm-payment-session.repository';
 import { MikroOrmPaymentSessionRepository } from './repository/mikro-orm-payment-session.repository';
@@ -290,8 +291,9 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 		} as never);
 
 		await this.paymentCollectionService.recordAuthorization(collection.id, session.amount);
-		this.eventBus.publish(
-			new PaymentAuthorizedEvent(session.id, session.amount, session.currency, collection.id, session.organizationId)
+		await this.publish(
+			new PaymentAuthorizedEvent(session.id, session.amount, session.currency, collection.id, session.organizationId),
+			`session ${session.id}`
 		);
 
 		return this.findSessionOrFail(id);
@@ -323,7 +325,7 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 		} as never);
 
 		await this.paymentCollectionService.markFailed(session.collectionId);
-		this.eventBus.publish(
+		await this.publish(
 			new PaymentFailedEvent(
 				session.id,
 				session.collectionId,
@@ -331,7 +333,8 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 				session.currency,
 				reason,
 				session.organizationId
-			)
+			),
+			`session ${session.id}`
 		);
 
 		return this.findSessionOrFail(id);
@@ -381,14 +384,15 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 			await this.paymentCollectionService.recordCancellation(session.collectionId, released);
 		}
 
-		this.eventBus.publish(
+		await this.publish(
 			new PaymentCanceledEvent(
 				session.id,
 				session.collectionId,
 				released,
 				session.currency,
 				session.organizationId
-			)
+			),
+			`session ${session.id}`
 		);
 
 		return this.findSessionOrFail(id);
@@ -428,7 +432,7 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 	private async expireSession(session: IPaymentSession): Promise<IPaymentSession> {
 		await this.update(session.id, { status: PaymentSessionStatus.EXPIRED } as never);
 		await this.paymentCollectionService.markFailed(session.collectionId);
-		this.eventBus.publish(
+		await this.publish(
 			new PaymentFailedEvent(
 				session.id,
 				session.collectionId,
@@ -436,7 +440,8 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 				session.currency,
 				'PAYMENT_SESSION_EXPIRED',
 				session.organizationId
-			)
+			),
+			`session ${session.id}`
 		);
 
 		return this.findSessionOrFail(session.id);
@@ -496,6 +501,36 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 
 		if (input.status === PaymentSessionStatus.REQUIRES_MORE) {
 			throw new BadRequestException('REQUIRES_MORE is unreachable off-session: no buyer can complete the action.');
+		}
+	}
+
+	/**
+	 * Announces one session event, awaited and with its failure absorbed.
+	 *
+	 * **Awaited**, because `EventBus.publish` is asynchronous and a call left dangling turns a consumer's
+	 * throw into an unhandled promise rejection — which, under Node's default policy, terminates the API
+	 * process and every in-flight request with it. Four of these calls sat in `async` methods whose every
+	 * other call was awaited, so the publish was also unordered with respect to the response: a client
+	 * that read derived entitlement state immediately after authorising saw it stale.
+	 *
+	 * **Absorbed**, because the session has already moved and the collection has already been credited
+	 * by the time this runs. Failing the request over a consumer would tell the caller the
+	 * authorisation failed when the money is reserved at the provider, and the caller would authorise
+	 * again.
+	 *
+	 * @param event The event to publish.
+	 * @param what What the event is about, used in the log line.
+	 */
+	private async publish(event: BaseEvent, what: string): Promise<void> {
+		try {
+			await this.eventBus.publish(event);
+		} catch (error) {
+			console.log(
+				chalk.yellow(
+					`PAYMENT_EVENT_PUBLISH_FAILED: ${what} moved and its event was not delivered ` +
+						`(${error instanceof Error ? error.message : String(error)}). The session stands.`
+				)
+			);
 		}
 	}
 

@@ -258,7 +258,12 @@ function fixture(options: { shipments?: Row[]; shippingOptions?: Row[] } = {}) {
 		shipmentRepository as never,
 		{} as never,
 		lineService,
-		{} as never
+		{} as never,
+		// The outbox the service appends its state changes to. Stubbed rather than omitted: the
+		// constructor gained it when the fulfilment lifecycle started announcing itself, and a double
+		// that stops matching the constructor is a suite that fails to compile rather than one that
+		// tests the old behaviour.
+		{ append: jest.fn() } as never
 	);
 	const shippingOptionService = new ShippingOptionService(optionRepository as never, {} as never);
 	const service = new ReturnShipmentService(fulfillmentService, shippingOptionService);
