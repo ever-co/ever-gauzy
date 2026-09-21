@@ -48,15 +48,14 @@ const ROUTES = [
  * Each one belongs to an existing platform plugin that the GHSA-v79w-54p2-wmh5 fix did not reach. They
  * are listed rather than silently skipped so the gap stays visible: an exemption records a defect, it
  * does not call the route safe.
+ *
+ * The two job-search entries are the ones that need a decision rather than a patch: the grants that would
+ * naturally govern these rows (`ORG_JOB_SEARCH`, `ORG_JOB_EDIT`) are seeded for SUPER_ADMIN and ADMIN
+ * only (`default-role-permissions.ts`), while the feature they belong to is one an employee uses for
+ * their own presets — so stating them would lock employees out of their own data unless the catalogue's
+ * defaults move with them. That is a product call, not a syntax fix.
  */
 const EXEMPTIONS = new Map([
-	[
-		'packages/plugins/changelog/src/lib/changelog.controller.ts',
-		{
-			handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-			reason: 'pre-existing platform plugin; the controller declares no permission on any route'
-		}
-	],
 	[
 		'packages/plugins/job-proposal/src/lib/proposal-template/employee-proposal-template.controller.ts',
 		{
@@ -68,7 +67,7 @@ const EXEMPTIONS = new Map([
 		'packages/plugins/job-search/src/lib/employee-job-preset/job-search-category/job-search-category.controller.ts',
 		{
 			handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-			reason: 'pre-existing platform plugin; the controller declares no guard and no permission at all, so every route needs a product decision about its grant'
+			reason: 'pre-existing platform plugin; no guard and no permission on any route, and the grants that would fit them are not seeded for the employee role'
 		}
 	],
 	[
@@ -127,6 +126,7 @@ const failures = [];
 const exempted = [];
 let controllers = 0;
 let gated = 0;
+let gatedByRole = 0;
 
 for (const file of controllerFiles(PLUGINS)) {
 	const source = readFileSync(file, 'utf8');
@@ -150,13 +150,22 @@ for (const file of controllerFiles(PLUGINS)) {
 			continue;
 		}
 
+		// A route may state a permission, or name the roles allowed to reach it. `RoleGuard` is applied
+		// per route and refuses every caller whose role is not listed, which is a narrower gate than a
+		// permission — `ChangelogController` writes are SUPER_ADMIN-only for exactly that reason — so the
+		// two forms both count, and the summary reports how many of each.
 		const permission = member.decorators.match(/@Permissions\(([^)]*)\)/);
 		if (!permission || permission[1] === '') {
+			const roleGated = /@UseGuards\([^)]*RoleGuard/.test(member.decorators) && /@Roles\(/.test(member.decorators);
+			if (roleGated) {
+				gatedByRole++;
+				continue;
+			}
 			if (exemption?.handlers.includes(route.handler)) {
 				exempted.push(`${path} -> ${route.handler}`);
 				continue;
 			}
-			failures.push(`${path} -> \`${route.handler}\` declares no @Permissions(...)`);
+			failures.push(`${path} -> \`${route.handler}\` declares neither @Permissions(...) nor a role guard`);
 			continue;
 		}
 
@@ -177,12 +186,15 @@ if (failures.length > 0) {
 	console.error('FAILED — mutating routes a plugin controller inherits from CrudController without a permission:');
 	for (const failure of failures) console.error(`  ${failure}`);
 	console.error('');
-	console.error(`${failures.length} route(s) ungated, ${gated} gated, ${exempted.length} exempted of ${total}.`);
+	console.error(
+		`${failures.length} route(s) ungated, ${gated} gated by permission, ${gatedByRole} by role, ${exempted.length} exempted of ${total}.`
+	);
 	process.exit(1);
 }
 
 console.log(
-	`PASSED — ${gated} of ${total} mutating route(s) gated across ${controllers} plugin controller(s)` +
+	`PASSED — ${gated} of ${total} mutating route(s) gated by permission across ${controllers} plugin controller(s)` +
+		(gatedByRole > 0 ? `, ${gatedByRole} gated by a role guard` : '') +
 		(exempted.length > 0 ? `, ${exempted.length} exempted (pre-existing platform plugins, listed in the gate)` : '') +
 		'.'
 );

@@ -218,3 +218,10 @@ jobs:
       - name: Inherited mutating routes state their permission
         if: always()
         run: node tools/scripts/mutating-route-permission-check.mjs
+
+      # `@nestjs/graphql` refuses to build the schema when a resolver claims a field its own type does not
+      # declare — that is a boot failure, and it is invisible until the resolvers are actually registered.
+      # This gate compares every resolver field against the composed schema.
+      - name: Resolver fields exist on the type that resolves them
+        if: always()
+        run: node tools/scripts/graphql-field-binding-check.mjs
