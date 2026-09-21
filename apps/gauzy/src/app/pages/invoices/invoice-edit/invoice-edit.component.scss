@@ -543,27 +543,47 @@ div.button-action {
   margin-top: 1rem;
 }
 
-// Save as draft: the neutral step between the outline Cancel and the two success
-// buttons beside it, painted with the grey `_gauzy-dialogs` already shares with
-// the rest of the app rather than with a literal repeated here.
+// ── The form's actions ──────────────────────────────────────────────────────
+// Four buttons that used to sit in a row on the LEADING edge, each with a
+// bootstrap `mr-3`: an outline Cancel, which the shared dialog sheet paints
+// orange; a grey slab for Save as Draft, which reads as disabled; and two
+// identical filled greens, so nothing in the row said which one was the main
+// way out of the form.
 //
-// The block this replaces set the fill on the button but hung its hover state
-// off a `[nbButton]` DESCENDANT of it — markup that does not exist — so the
-// button stayed flat under the pointer while every other button in the row
-// responded.
-:host button.gray {
-  &[nbButton].appearance-filled {
-    background-color: $gray;
-    border-color: $gray;
-    color: nb-theme(text-control-color);
+// Cancel keeps the leading edge as the way back; the three ways to save sit on
+// the trailing edge in the order of how far they commit — draft, send to the
+// contact, send by email — and only the last carries the filled weight.
+nb-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+
+  // `!important` against bootstrap's own `.mr-3`, which some of these buttons
+  // still carry and which would stack on the row's gap.
+  button {
+    margin: 0 !important;
+  }
+
+  // `!important` in turn, or the bootstrap reset just above wins the tie and
+  // Cancel joins the group on the trailing edge.
+  .cancel-action {
+    margin-inline-end: auto !important;
+  }
+
+  // The last action — the one that saves AND sends — carries the weight of the
+  // row. It cannot do that through `appearance="filled"`: every theme here
+  // resolves `--button-filled-success-background-color` to `transparent`, so a
+  // filled success button is drawn exactly like the outline one beside it. It
+  // takes the success tint instead, the same weight the filled primary two
+  // along already carries.
+  .primary-action[nbButton].appearance-filled.status-success {
+    background-color: nb-theme(color-success-transparent-200);
 
     &:hover:not([disabled]) {
-      background-color: rgba($color: $gray, $alpha: 0.85);
-      border-color: rgba($color: $gray, $alpha: 0.85);
-    }
-
-    &:focus:not(:hover):not(:active) {
-      box-shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $gray, $alpha: 0.2);
+      background-color: nb-theme(color-success-transparent-300);
     }
   }
 }

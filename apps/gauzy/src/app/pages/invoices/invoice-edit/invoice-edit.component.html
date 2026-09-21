@@ -435,10 +435,10 @@
                     <nb-card-footer>
                       @if (!duplicate) {
                         <button
-                          class="mr-3"
+                          class="cancel-action"
                           status="basic"
                           size="small"
-                          outline
+                          ghost
                           (click)="cancel()"
                           nbButton
                           >
@@ -446,7 +446,7 @@
                         </button>
                       }
                       <button
-                        class="mr-3 gray"
+                        outline
                         (click)="updateInvoice('DRAFT')"
                         [disabled]="form.invalid"
                         size="small"
@@ -456,7 +456,7 @@
                         {{ 'BUTTONS.SAVE_AS_DRAFT' | translate }}
                       </button>
                       <button
-                        class="mr-3"
+                        outline
                         (click)="sendToContact()"
                         status="success"
                         size="small"
@@ -466,7 +466,7 @@
                         {{ 'BUTTONS.SAVE_AND_SEND_CONTACT' | translate }}
                       </button>
                       <button
-                        class="mr-3"
+                        class="primary-action"
                         (click)="sendViaEmail()"
                         status="success"
                         size="small"

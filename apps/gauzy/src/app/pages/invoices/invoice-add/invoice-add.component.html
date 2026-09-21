@@ -524,11 +524,11 @@
                   }
                 </nb-card-body>
                 <nb-card-footer>
-                  <button size="small" status="basic" outline nbButton (click)="cancel()">
+                  <button size="small" status="basic" ghost class="cancel-action" nbButton (click)="cancel()">
                     {{ 'BUTTONS.CANCEL' | translate }}
                   </button>
                   <button
-                    class="gray"
+                    outline
                     (click)="addInvoice('DRAFT')"
                     size="small"
                     status="primary"
@@ -538,6 +538,7 @@
                     {{ 'BUTTONS.SAVE_AS_DRAFT' | translate }}
                   </button>
                   <button
+                    outline
                     (click)="sendToContact()"
                     status="success"
                     size="small"
@@ -547,6 +548,7 @@
                     {{ 'BUTTONS.SAVE_AND_SEND_CONTACT' | translate }}
                   </button>
                   <button
+                    class="primary-action"
                     (click)="sendViaEmail()"
                     status="success"
                     size="small"
