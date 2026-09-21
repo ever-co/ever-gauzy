@@ -1,5 +1,5 @@
-import { Args, ID, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { BadRequestException, UseGuards } from '@nestjs/common';
+import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
@@ -8,7 +8,6 @@ import { OrderLineService } from '../order-line/order-line.service';
 import { ORDER_PERMISSIONS } from '../order.permissions';
 import { OrderLineInvoiceDirection, OrderLineKind } from '../order.types';
 import { ILineInvoicePosition } from '../order.types';
-import { OrderLine } from './types';
 
 /** The link as the schema declares it. */
 interface IOrderLineInvoiceInput {
@@ -43,7 +42,7 @@ interface IOrderLineInvoiceInput {
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
  */
-@Resolver('OrderLine')
+@Resolver('OrderLineInvoice')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)
@@ -142,24 +141,6 @@ export class OrderLineInvoiceResolver {
 		@Args('basisQuantity', { type: () => String, nullable: true }) basisQuantity?: string
 	) {
 		return await this.service.recomputeCounters(orderLineId, basisQuantity);
-	}
-
-	/**
-	 * The links of a line, read through the register when the line is reached from an order.
-	 *
-	 * @param line The parent line.
-	 * @returns The links.
-	 * @throws BadRequestException when the parent carries no identifier, which cannot happen for a row a
-	 * query returned.
-	 */
-	@Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)
-	@ResolveField('invoiceLinks', () => [Object], { nullable: true })
-	async invoiceLinks(@Parent() line: OrderLine) {
-		if (!line?.id) {
-			throw new BadRequestException('ORDER_LINE_ID_REQUIRED: a link is read for one order line.');
-		}
-
-		return await this.service.listForLine(line.id);
 	}
 
 	/**
