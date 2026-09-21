@@ -1,8 +1,8 @@
 import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { filter, Observable } from 'rxjs';
-import { ID, IPagination } from '@gauzy/contracts';
-import { EventBus, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { ID } from '@gauzy/contracts';
+import { connectionFromOffsetPage, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
@@ -50,12 +50,14 @@ export class ProductPublicationResolver {
 		@Args('filter') filterBy: { productId?: ID; channelId?: ID; status?: PublicationStatus } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number
-	): Promise<IPagination<ProductChannel>> {
-		return this.productChannelService.paginate({
+	): Promise<GraphqlConnection<ProductChannel>> {
+		const page = await this.productChannelService.paginate({
 			where: { ...filterBy },
 			...(limit ? { take: limit } : {}),
 			...(offset ? { skip: offset } : {})
 		});
+
+		return connectionFromOffsetPage<ProductChannel>(page, offset ?? 0);
 	}
 
 	/**
@@ -76,12 +78,14 @@ export class ProductPublicationResolver {
 		@Args('filter') filterBy: { variantId?: ID; channelId?: ID; status?: PublicationStatus } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number
-	): Promise<IPagination<ProductVariantChannel>> {
-		return this.productVariantChannelService.paginate({
+	): Promise<GraphqlConnection<ProductVariantChannel>> {
+		const page = await this.productVariantChannelService.paginate({
 			where: { ...filterBy },
 			...(limit ? { take: limit } : {}),
 			...(offset ? { skip: offset } : {})
 		});
+
+		return connectionFromOffsetPage<ProductVariantChannel>(page, offset ?? 0);
 	}
 
 	/**

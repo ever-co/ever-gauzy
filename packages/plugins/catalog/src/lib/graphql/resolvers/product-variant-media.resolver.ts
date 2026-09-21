@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { ID, IPagination } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { ID } from '@gauzy/contracts';
+import { connectionFromOffsetPage, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
@@ -40,13 +40,15 @@ export class ProductVariantMediaResolver {
 		@Args('filter') filter: { variantId?: ID; imageAssetId?: ID } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number
-	): Promise<IPagination<ProductVariantMedia>> {
-		return this.productVariantMediaService.paginate({
+	): Promise<GraphqlConnection<ProductVariantMedia>> {
+		const page = await this.productVariantMediaService.paginate({
 			where: { ...filter },
 			order: { position: 'ASC' },
 			...(limit ? { take: limit } : {}),
 			...(offset ? { skip: offset } : {})
 		});
+
+		return connectionFromOffsetPage<ProductVariantMedia>(page, offset ?? 0);
 	}
 
 	/**

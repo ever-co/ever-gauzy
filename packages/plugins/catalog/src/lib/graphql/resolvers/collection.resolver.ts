@@ -1,8 +1,8 @@
 import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { filter } from 'rxjs';
-import { ID, IPagination } from '@gauzy/contracts';
-import { EventBus, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { ID } from '@gauzy/contracts';
+import { connectionFromOffsetPage, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
@@ -47,12 +47,14 @@ export class CollectionResolver {
 		@Args('filter') filter?: Record<string, unknown>,
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number
-	): Promise<IPagination<Collection>> {
-		return this.collectionService.paginate({
+	): Promise<GraphqlConnection<Collection>> {
+		const page = await this.collectionService.paginate({
 			where: { ...(filter ?? {}) },
 			...(limit ? { take: limit } : {}),
 			...(offset ? { skip: offset } : {})
 		});
+
+		return connectionFromOffsetPage<Collection>(page, offset ?? 0);
 	}
 
 	/**

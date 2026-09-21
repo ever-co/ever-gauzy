@@ -460,11 +460,15 @@ async function main() {
 			token,
 			tenantId,
 			body: {
-				query: `query ($filter: CollectionFilter) { collections(filter: $filter) { items { id slug } total } }`,
+				// The connection's canonical shape: `nodes` and `totalCount`, which is what every list root
+				// field answers. The probe read `items`/`total` while the catalog's nine connections were
+				// still the old shape, and a suite that kept reading it would have gone on passing against a
+				// schema no other connection in the platform declares.
+				query: `query ($filter: CollectionFilter) { collections(filter: $filter) { nodes { id slug } totalCount pageInfo { hasNextPage } } }`,
 				variables: { filter: { slug } }
 			}
 		});
-		const items = graph.json?.data?.collections?.items ?? [];
+		const items = graph.json?.data?.collections?.nodes ?? [];
 		const overGraphql = items.find((item) => item.slug === slug);
 
 		record(
@@ -476,6 +480,11 @@ async function main() {
 			'the two surfaces agree about the identity of the row',
 			Boolean(overGraphql) && overGraphql.id === id,
 			overGraphql ? `REST ${id} vs GraphQL ${overGraphql.id}` : 'not served over GraphQL'
+		);
+		record(
+			'the GraphQL list answers a connection, with the count REST reports separately',
+			typeof graph.json?.data?.collections?.totalCount === 'number',
+			`totalCount=${graph.json?.data?.collections?.totalCount ?? 'absent'}`
 		);
 	} else {
 		record('the row is read back over REST', false, 'the create returned no id');

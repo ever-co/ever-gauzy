@@ -59,9 +59,7 @@ const BARE_ARRAYS = new Set([
 ]);
 
 const LEGACY_CONNECTIONS = new Set([
-	'CollectionVariantConnection', 'CollectionChannelConnection', 'TagProductVariantConnection', 'CollectionConnection',
-	'CollectionProductConnection', 'ProductPublicationConnection', 'ProductVariantPublicationConnection', 'ProductRelationConnection',
-	'ProductVariantMediaConnection', 'PriceListConnection', 'ProductPriceConnection', 'PricePreferenceConnection',
+	'PriceListConnection', 'ProductPriceConnection', 'PricePreferenceConnection',
 	'ExchangeRateConnection', 'CartConnection',
 	'CheckoutSessionConnection', 'OrderConnection', 'OrderChangeConnection', 'OrderSummaryConnection',
 	'OrderTransactionConnection', 'PaymentProviderConnection', 'PaymentCollectionConnection', 'PaymentSessionConnection',

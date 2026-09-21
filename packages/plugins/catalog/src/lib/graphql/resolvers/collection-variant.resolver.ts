@@ -1,7 +1,7 @@
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { ID, IPagination } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { ID } from '@gauzy/contracts';
+import { connectionFromOffsetPage, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
@@ -40,12 +40,14 @@ export class CollectionVariantResolver {
 		@Args('filter') filter: { collectionId?: ID; variantId?: ID } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number
-	): Promise<IPagination<CollectionVariant>> {
-		return this.collectionVariantService.paginate({
+	): Promise<GraphqlConnection<CollectionVariant>> {
+		const page = await this.collectionVariantService.paginate({
 			where: { ...filter },
 			order: { position: 'ASC', addedAt: 'ASC' },
 			...(limit ? { take: limit } : {}),
 			...(offset ? { skip: offset } : {})
 		});
+
+		return connectionFromOffsetPage<CollectionVariant>(page, offset ?? 0);
 	}
 }

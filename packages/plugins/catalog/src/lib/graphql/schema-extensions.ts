@@ -152,57 +152,138 @@ export const schemaExtensions = gql`
 	}
 
 	type CollectionVariantConnection {
-		items: [CollectionVariant!]!
-		total: Int!
-		pageInfo: PageInfo
+		"""The rows of this page, in the order the service returned them."""
+		nodes: [CollectionVariant!]!
+		edges: [CollectionVariantEdge!]!
+		"""How many rows the filters match, in total rather than in this page."""
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"""One collection variant inside a page, with the cursor that addresses it."""
+	type CollectionVariantEdge {
+		cursor: String!
+		node: CollectionVariant!
 	}
 
 	type CollectionChannelConnection {
-		items: [CollectionChannel!]!
-		total: Int!
-		pageInfo: PageInfo
+		"""The rows of this page, in the order the service returned them."""
+		nodes: [CollectionChannel!]!
+		edges: [CollectionChannelEdge!]!
+		"""How many rows the filters match, in total rather than in this page."""
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"""One collection channel inside a page, with the cursor that addresses it."""
+	type CollectionChannelEdge {
+		cursor: String!
+		node: CollectionChannel!
 	}
 
 	type TagProductVariantConnection {
-		items: [TagProductVariant!]!
-		total: Int!
-		pageInfo: PageInfo
+		"""The rows of this page, in the order the service returned them."""
+		nodes: [TagProductVariant!]!
+		edges: [TagProductVariantEdge!]!
+		"""How many rows the filters match, in total rather than in this page."""
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"""One tag product variant inside a page, with the cursor that addresses it."""
+	type TagProductVariantEdge {
+		cursor: String!
+		node: TagProductVariant!
 	}
 
 	type CollectionConnection {
-		items: [Collection!]!
-		total: Int!
-		pageInfo: PageInfo
+		"""The rows of this page, in the order the service returned them."""
+		nodes: [Collection!]!
+		edges: [CollectionEdge!]!
+		"""How many rows the filters match, in total rather than in this page."""
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"""One collection inside a page, with the cursor that addresses it."""
+	type CollectionEdge {
+		cursor: String!
+		node: Collection!
 	}
 
 	type CollectionProductConnection {
-		items: [CollectionProduct!]!
-		total: Int!
-		pageInfo: PageInfo
+		"""The rows of this page, in the order the service returned them."""
+		nodes: [CollectionProduct!]!
+		edges: [CollectionProductEdge!]!
+		"""How many rows the filters match, in total rather than in this page."""
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"""One collection product inside a page, with the cursor that addresses it."""
+	type CollectionProductEdge {
+		cursor: String!
+		node: CollectionProduct!
 	}
 
 	type ProductPublicationConnection {
-		items: [ProductPublication!]!
-		total: Int!
-		pageInfo: PageInfo
+		"""The rows of this page, in the order the service returned them."""
+		nodes: [ProductPublication!]!
+		edges: [ProductPublicationEdge!]!
+		"""How many rows the filters match, in total rather than in this page."""
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"""One product publication inside a page, with the cursor that addresses it."""
+	type ProductPublicationEdge {
+		cursor: String!
+		node: ProductPublication!
 	}
 
 	type ProductVariantPublicationConnection {
-		items: [ProductVariantPublication!]!
-		total: Int!
-		pageInfo: PageInfo
+		"""The rows of this page, in the order the service returned them."""
+		nodes: [ProductVariantPublication!]!
+		edges: [ProductVariantPublicationEdge!]!
+		"""How many rows the filters match, in total rather than in this page."""
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"""One product variant publication inside a page, with the cursor that addresses it."""
+	type ProductVariantPublicationEdge {
+		cursor: String!
+		node: ProductVariantPublication!
 	}
 
 	type ProductRelationConnection {
-		items: [ProductRelation!]!
-		total: Int!
-		pageInfo: PageInfo
+		"""The rows of this page, in the order the service returned them."""
+		nodes: [ProductRelation!]!
+		edges: [ProductRelationEdge!]!
+		"""How many rows the filters match, in total rather than in this page."""
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"""One product relation inside a page, with the cursor that addresses it."""
+	type ProductRelationEdge {
+		cursor: String!
+		node: ProductRelation!
 	}
 
 	type ProductVariantMediaConnection {
-		items: [ProductVariantMedia!]!
-		total: Int!
-		pageInfo: PageInfo
+		"""The rows of this page, in the order the service returned them."""
+		nodes: [ProductVariantMedia!]!
+		edges: [ProductVariantMediaEdge!]!
+		"""How many rows the filters match, in total rather than in this page."""
+		totalCount: Int!
+		pageInfo: PageInfo!
+	}
+
+	"""One product variant media inside a page, with the cursor that addresses it."""
+	type ProductVariantMediaEdge {
+		cursor: String!
+		node: ProductVariantMedia!
 	}
 
 	input CollectionFilter {

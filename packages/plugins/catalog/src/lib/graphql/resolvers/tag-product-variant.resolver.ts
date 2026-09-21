@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { ID, IPagination } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { ID } from '@gauzy/contracts';
+import { connectionFromOffsetPage, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
@@ -40,13 +40,15 @@ export class TagProductVariantResolver {
 		@Args('filter') filter: { productVariantId?: ID; tagId?: ID } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number
-	): Promise<IPagination<TagProductVariant>> {
-		return this.tagProductVariantService.paginate({
+	): Promise<GraphqlConnection<TagProductVariant>> {
+		const page = await this.tagProductVariantService.paginate({
 			where: { ...filter },
 			relations: ['tag'],
 			...(limit ? { take: limit } : {}),
 			...(offset ? { skip: offset } : {})
 		});
+
+		return connectionFromOffsetPage<TagProductVariant>(page, offset ?? 0);
 	}
 
 	/**
