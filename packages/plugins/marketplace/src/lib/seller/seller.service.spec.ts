@@ -447,11 +447,11 @@ describe('SellerService — the state machine (doc 20 §2.4, §8.3)', () => {
 	afterEach(() => jest.restoreAllMocks());
 
 	it.each([
-		[SellerStatus.DRAFT, SellerStatus.SUBMITTED, 'submit'],
-		[SellerStatus.IN_REVIEW, SellerStatus.REJECTED, 'reject'],
-		[SellerStatus.APPROVED, SellerStatus.ACTIVE, 'activate'],
-		[SellerStatus.ACTIVE, SellerStatus.OFFBOARDING, 'startOffboarding']
-	])('moves a %s seller to %s', async (from, to, method) => {
+		[SellerStatus.DRAFT, SellerStatus.SUBMITTED, 'submit', []],
+		[SellerStatus.IN_REVIEW, SellerStatus.REJECTED, 'reject', ['a reason']],
+		[SellerStatus.APPROVED, SellerStatus.ACTIVE, 'activate', []],
+		[SellerStatus.ACTIVE, SellerStatus.OFFBOARDING, 'startOffboarding', []]
+	])('moves a %s seller to %s', async (from, to, method, args) => {
 		const fixture = sellerFixture({
 			sellers: [
 				sellerRow({
@@ -463,7 +463,10 @@ describe('SellerService — the state machine (doc 20 §2.4, §8.3)', () => {
 			]
 		});
 
-		const moved = await (fixture.service as any)[method](SELLER, 'a reason');
+		// Each transition takes what its own signature takes: `reject` carries the reason, the others take
+		// the caller's seller scope and nothing else. Passing one fixed second argument to all four read as
+		// a scope on `activate` — a scope naming no seller — and was refused.
+		const moved = await (fixture.service as any)[method](SELLER, ...args);
 
 		expect(moved.status).toBe(to);
 	});
