@@ -10,7 +10,11 @@ import {
 	idempotencyKeyFromResolverArgs,
 	normalizeIdempotencyKey
 } from '../idempotency/idempotency.policy';
-import { IdempotencyService } from '../idempotency/idempotency.service';
+// The token, not the class. `IdempotencyService` reaches the persistence graph, and a guard that
+// imported it would pull that graph into every module — and every test module — that loads a route
+// carrying `@Versioned()`. `idempotency-constant.ts` imports nothing, and the type below is erased.
+import { IDEMPOTENCY_SERVICE } from '../idempotency/idempotency-constant';
+import type { IdempotencyService } from '../idempotency/idempotency.service';
 import {
 	IF_MATCH_HEADER,
 	VERSIONED_METADATA_KEY,
@@ -80,7 +84,9 @@ export class VersionGuard implements CanActivate {
 	private idempotency(): IdempotencyService | undefined {
 		if (this.idempotencyService === undefined) {
 			try {
-				this.idempotencyService = this.moduleRef.get(IdempotencyService, { strict: false }) ?? null;
+				this.idempotencyService = this.moduleRef.get<IdempotencyService>(IDEMPOTENCY_SERVICE, {
+					strict: false
+				}) ?? null;
 			} catch {
 				this.idempotencyService = null;
 			}

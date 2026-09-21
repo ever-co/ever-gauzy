@@ -4,7 +4,9 @@ import { IdempotencyStatus } from '@gauzy/contracts';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
 import { IDEMPOTENT_METADATA_KEY, IDEMPOTENCY_KEY_HEADER } from '../idempotency/idempotency.policy';
-import { IdempotencyService } from '../idempotency/idempotency.service';
+// The token the guard asks for, not the service class — importing the class here would pull the
+// persistence graph into a suite that stubs everything it needs.
+import { IDEMPOTENCY_SERVICE } from '../idempotency/idempotency-constant';
 import { VersionGuard } from './version.guard';
 import { IF_MATCH_HEADER, VERSION_EXPECTATION_PROPERTY, VERSIONED_METADATA_KEY } from './version.util';
 import type { IVersionedOptions } from './versioned.decorator';
@@ -462,7 +464,7 @@ describe('a route that carries retry safety as well as a version', () => {
 
 		const moduleRef = { get: () => undefined } as unknown as ModuleRef;
 		const get = jest.spyOn(moduleRef, 'get').mockImplementation((token: any) => {
-			if (token === IdempotencyService) {
+			if (token === IDEMPOTENCY_SERVICE) {
 				return { findByKey } as any;
 			}
 
