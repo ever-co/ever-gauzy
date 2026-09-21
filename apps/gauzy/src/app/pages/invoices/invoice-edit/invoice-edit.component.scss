@@ -92,6 +92,13 @@
   }
 }
 
+// The column headers read as one line each: "Apply Discount" wrapped to two
+// while every other label sat on one, which tipped the header row off its
+// baseline and pushed the filter funnel into the label beside it.
+:host ::ng-deep angular2-smart-table tr.angular2-smart-titles > th {
+  white-space: nowrap;
+}
+
 // The subtotal/total chips under the item grid.
 //
 // `float: right` took the block out of flow, so its parent did not grow to
