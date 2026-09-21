@@ -113,6 +113,12 @@ $side-by-side-min: 53rem;
 
   .span-3 {
     grid-column: span 3;
+
+    // One column below this, so three of them would create implicit columns and
+    // leave these fields narrow instead of filling the row.
+    @media (max-width: $single-column-below) {
+      grid-column: 1 / -1;
+    }
   }
 
   .span-6 {
@@ -170,13 +176,15 @@ $side-by-side-min: 53rem;
   .toggle-field {
     display: flex;
     align-items: center;
-    gap: 0.625rem;
     margin-top: 0.25rem;
     padding-top: 0.875rem;
     border-top: $divider;
   }
 
-  .toggle-label {
+  // The label now lives inside nb-toggle, where `status="primary"` would
+  // otherwise paint it with the primary colour at the toggle's own text size.
+  .toggle-field ::ng-deep nb-toggle .text {
+    padding-inline-start: 0.625rem;
     font-size: $control-font-size;
     font-weight: 600;
     line-height: 1rem;

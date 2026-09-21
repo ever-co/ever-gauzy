@@ -161,10 +161,11 @@
 
 				<!-- Turning this on adds the objective fields below, so it reads as the switch it is. -->
 				<div class="field span-6 toggle-field">
-					<nb-toggle id="updated-value" formControlName="assignAsObjective" status="primary"></nb-toggle>
-					<span class="toggle-label">
+					<!-- The label is projected into nb-toggle, so it sits inside the control's own
+					     <label> and names the switch for a screen reader. -->
+					<nb-toggle id="updated-value" formControlName="assignAsObjective" status="primary">
 						{{ 'KEY_RESULT_PAGE.FORM.LABELS.ASSIGN_AS_OBJECTIVE' | translate }}
-					</span>
+					</nb-toggle>
 				</div>
 
 				<ga-goal-level-select
