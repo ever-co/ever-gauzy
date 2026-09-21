@@ -34,7 +34,15 @@
 // and it scales with the viewport, topping out at the original 100px.
 :host {
   display: block;
-  padding: 25px clamp(1rem, 6vw, 100px) 0;
+  padding: 1rem clamp(1rem, 6vw, 100px) 0;
+}
+
+// The record's own `nb-card-body` sits inside the page's, and both were paying
+// Nebular's 1.5rem — with the host gutter above, that stacked to roughly 100px
+// of nothing between the page title and the record number. The gutter is the
+// host's job; this one only carries the spinner.
+:host nb-card-body {
+  padding: 0;
 }
 
 // ── Table density, without the list-page surface ─────────────────────────────
