@@ -471,73 +471,73 @@ export const schemaExtensions = gql`
 	}
 
 	type PaymentProviderConnection {
-		items: [PaymentProvider!]!
-		edges: [PaymentProviderEdge!]
-		total: Int!
-		pageInfo: PageInfo
+		nodes: [PaymentProvider!]!
+		edges: [PaymentProviderEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
 	type PaymentCollectionConnection {
-		items: [PaymentCollection!]!
-		edges: [PaymentCollectionEdge!]
-		total: Int!
-		pageInfo: PageInfo
+		nodes: [PaymentCollection!]!
+		edges: [PaymentCollectionEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
 	type PaymentSessionConnection {
-		items: [PaymentSession!]!
-		edges: [PaymentSessionEdge!]
-		total: Int!
-		pageInfo: PageInfo
+		nodes: [PaymentSession!]!
+		edges: [PaymentSessionEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
 	type PaymentCaptureConnection {
-		items: [PaymentCapture!]!
-		edges: [PaymentCaptureEdge!]
-		total: Int!
-		pageInfo: PageInfo
+		nodes: [PaymentCapture!]!
+		edges: [PaymentCaptureEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
 	type RefundConnection {
-		items: [Refund!]!
-		edges: [RefundEdge!]
-		total: Int!
-		pageInfo: PageInfo
+		nodes: [Refund!]!
+		edges: [RefundEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
 	type RefundReasonConnection {
-		items: [RefundReason!]!
-		edges: [RefundReasonEdge!]
-		total: Int!
-		pageInfo: PageInfo
+		nodes: [RefundReason!]!
+		edges: [RefundReasonEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
 	type RefundLineConnection {
-		items: [RefundLine!]!
-		edges: [RefundLineEdge!]
-		total: Int!
-		pageInfo: PageInfo
+		nodes: [RefundLine!]!
+		edges: [RefundLineEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
 	type PaymentWebhookEventConnection {
-		items: [PaymentWebhookEvent!]!
-		edges: [PaymentWebhookEventEdge!]
-		total: Int!
-		pageInfo: PageInfo
+		nodes: [PaymentWebhookEvent!]!
+		edges: [PaymentWebhookEventEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
 	type PaymentAccountHolderConnection {
-		items: [PaymentAccountHolder!]!
-		edges: [PaymentAccountHolderEdge!]
-		total: Int!
-		pageInfo: PageInfo
+		nodes: [PaymentAccountHolder!]!
+		edges: [PaymentAccountHolderEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
 	type PaymentMethodTokenConnection {
-		items: [PaymentMethodToken!]!
-		edges: [PaymentMethodTokenEdge!]
-		total: Int!
-		pageInfo: PageInfo
+		nodes: [PaymentMethodToken!]!
+		edges: [PaymentMethodTokenEdge!]!
+		totalCount: Int!
+		pageInfo: PageInfo!
 	}
 
 	input PaymentProviderFilter {

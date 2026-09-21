@@ -80,6 +80,10 @@ jest.mock('@gauzy/core', () => {
 		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
 		VisibleWith: jest.requireActual('@gauzy/core/src/lib/api/visible-with.decorator').VisibleWith,
 		FieldVisibility: jest.requireActual('@gauzy/core/src/lib/api/field-visibility.service').FieldVisibility,
+		// The page-to-connection mapping is the kernel's, and this package's resolver reaches it through its
+		// own `toConnection` — so the double has to carry it, or the suite fails on a missing function rather
+		// than on an assertion. Same reasoning as the visible-with double above: the real one is used.
+		connectionFromPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').connectionFromPage,
 		PaymentAccountHolder: class PaymentAccountHolder {},
 		PaymentMethodToken: class PaymentMethodToken {},
 		PaymentAccountHolderService: class PaymentAccountHolderService {},
@@ -402,7 +406,7 @@ describe('PaymentMethodTokenResolver — the gate on the stored reference (17 §
 
 		const connection = await tokenResolver.paymentMethodTokens({ accountHolderId: HOLDER });
 
-		expect(Object.prototype.hasOwnProperty.call(connection.items[0], 'token')).toBe(false);
+		expect(Object.prototype.hasOwnProperty.call(connection.nodes[0], 'token')).toBe(false);
 		expect(JSON.stringify(connection)).not.toContain(REFERENCE);
 
 		const related = await accountResolver.methodTokens({ id: HOLDER } as never);

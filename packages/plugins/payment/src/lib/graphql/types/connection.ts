@@ -1,5 +1,6 @@
 import { HttpException } from '@nestjs/common';
 import { IPagination } from '@gauzy/contracts';
+import { connectionFromPage } from '@gauzy/core';
 
 /**
  * The shapes every resolver in this package shares.
@@ -9,9 +10,9 @@ import { IPagination } from '@gauzy/contracts';
  * answered once here rather than in seven files:
  *
  * 1. **How a page of rows becomes a connection.** The platform's read path answers with
- *    `{ items, total }`; the schema promises `items`, `edges`, `total` and `pageInfo`, where only the
- *    first two are the same fact in two shapes. The cursor is derived from the row itself, so an edge
- *    and an item can never disagree about which row they describe.
+ *    `{ items, total }`; the schema promises `nodes`, `edges`, `totalCount` and `pageInfo`, where the
+ *    count is the same fact under the name every other connection in the platform gives it. The cursor is
+ *    derived from the row itself, so an edge and a node can never disagree about which row they describe.
  * 2. **How a mutation answers.** Every mutation answers with a payload carrying the resource, the
  *    durable operation when there is one, and `userErrors`. A business rejection — a refund above
  *    what was captured, a session that already settled — is a **successful operation with something
@@ -43,12 +44,16 @@ export interface IEdge<T> {
 
 /**
  * A page of rows, in the shape every `*Connection` type in the SDL promises.
+ *
+ * The count is `totalCount` — what REST's separate `/count` route answers, and the name every other
+ * connection in the platform declares — and `pageInfo` is never absent: a boundary that can be null makes
+ * every cursor walk defend against a state the schema cannot produce.
  */
 export interface IConnection<T> {
-	readonly items: T[];
-	readonly edges: IEdge<T>[];
-	readonly total: number;
-	readonly pageInfo: IPageInfo | null;
+	readonly nodes: readonly T[];
+	readonly edges: readonly IEdge<T>[];
+	readonly totalCount: number;
+	readonly pageInfo: IPageInfo;
 }
 
 /**
@@ -93,27 +98,16 @@ export type IResourcePayload<T, K extends string> = IMutationPayload<T> & {
 /**
  * Maps a page of rows onto a connection.
  *
+ * The mapping itself is the kernel's `connectionFromPage`, because this package's copy of it was one of
+ * three spellings of the same arithmetic across the branch. What stays here is the cursor: a payment row
+ * is addressed by its own identifier, which the caller derives.
+ *
  * @param page The page the service returned.
  * @param cursorOf A function deriving a row's cursor, usually its identifier.
  * @returns The connection the SDL promises.
  */
 export function toConnection<T>(page: IPagination<T>, cursorOf: (row: T) => string): IConnection<T> {
-	const items: T[] = (page?.items ?? []) as T[];
-	const edges: IEdge<T>[] = items.map((row) => ({ cursor: cursorOf(row), node: row }));
-
-	return {
-		items,
-		edges,
-		total: page?.total ?? items.length,
-		pageInfo: page
-			? {
-					hasNextPage: items.length < (page.total ?? items.length),
-					hasPreviousPage: false,
-					startCursor: edges.length ? edges[0].cursor : null,
-					endCursor: edges.length ? edges[edges.length - 1].cursor : null
-			  }
-			: null
-	};
+	return connectionFromPage<T>(page, { cursorOf });
 }
 
 /**

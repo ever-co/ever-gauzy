@@ -62,9 +62,7 @@ const LEGACY_CONNECTIONS = new Set([
 	'PriceListConnection', 'ProductPriceConnection', 'PricePreferenceConnection',
 	'ExchangeRateConnection', 'CartConnection',
 	'CheckoutSessionConnection', 'OrderConnection', 'OrderChangeConnection', 'OrderSummaryConnection',
-	'OrderTransactionConnection', 'PaymentProviderConnection', 'PaymentCollectionConnection', 'PaymentSessionConnection',
-	'PaymentCaptureConnection', 'RefundConnection', 'RefundReasonConnection', 'RefundLineConnection',
-	'PaymentWebhookEventConnection', 'PaymentAccountHolderConnection', 'PaymentMethodTokenConnection', 'ShippingProfileConnection',
+	'OrderTransactionConnection', 'ShippingProfileConnection',
 	'ShippingOptionConnection', 'FulfillmentConnection',
 ]);
 
