@@ -191,7 +191,7 @@ export const schemaExtensions = gql`
 		edges: [EntitlementEdge!]!
 		nodes: [Entitlement!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One right inside a page."
@@ -205,7 +205,7 @@ export const schemaExtensions = gql`
 		edges: [EntitlementActivationEdge!]!
 		nodes: [EntitlementActivation!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One activation inside a page."
@@ -219,7 +219,7 @@ export const schemaExtensions = gql`
 		edges: [EntitlementKeyEdge!]!
 		nodes: [EntitlementKey!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One licence key inside a page."

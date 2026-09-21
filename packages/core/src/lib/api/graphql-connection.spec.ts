@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CursorCodec } from './cursor';
-import { ConnectionFilter, ConnectionFieldKind, buildConnection } from './graphql-connection';
+import { ConnectionFilter, ConnectionFieldKind, buildConnection, connectionFromPage } from './graphql-connection';
 
 /**
  * The connection contract, at the kernel rather than through a domain.
@@ -124,6 +124,57 @@ describe('buildConnection — a date column is compared as an instant', () => {
 		});
 
 		expect(connection.nodes.map((row) => row.id)).toEqual([EARLY]);
+	});
+});
+
+describe('connectionFromPage — the page a service already sliced', () => {
+	it('answers the rows, the count of the filtered set and the boundary cursors', () => {
+		const connection = connectionFromPage({ items: ROWS.slice(0, 2), total: ROWS.length }, { skip: 0 });
+
+		// The count is the filtered total the service reported, not the size of the page: a client that
+		// is told "2" for a set of three cannot know whether to ask for more.
+		expect(connection.nodes).toHaveLength(2);
+		expect(connection.totalCount).toBe(ROWS.length);
+		expect(connection.pageInfo.hasNextPage).toBe(true);
+		expect(connection.pageInfo.hasPreviousPage).toBe(false);
+		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);
+		expect(connection.pageInfo.endCursor).toBe(connection.edges[1].cursor);
+	});
+
+	it('decides the boundary from the offset the caller stated, not from the rows', () => {
+		const connection = connectionFromPage({ items: ROWS.slice(2), total: ROWS.length }, { skip: 2 });
+
+		// A second page has a previous page whatever its rows look like, and the offset is the only fact
+		// that says so — which is why it is passed in rather than inferred.
+		expect(connection.pageInfo.hasPreviousPage).toBe(true);
+		expect(connection.pageInfo.hasNextPage).toBe(false);
+	});
+
+	it('derives a row’s cursor from the caller’s own key when it states one', () => {
+		const connection = connectionFromPage(
+			{ items: [{ id: EARLY, code: 'PO-1' }], total: 1 },
+			{ cursorOf: (row) => row.code }
+		);
+
+		expect(connection.edges[0].cursor).toBe('PO-1');
+		expect(connection.pageInfo.endCursor).toBe('PO-1');
+	});
+
+	it('answers an empty page rather than nulls when there is nothing to answer', () => {
+		const connection = connectionFromPage(undefined);
+
+		expect(connection.nodes).toEqual([]);
+		expect(connection.edges).toEqual([]);
+		expect(connection.totalCount).toBe(0);
+		expect(connection.pageInfo.startCursor).toBeNull();
+		expect(connection.pageInfo.endCursor).toBeNull();
+	});
+
+	it('takes the page size as the count when the service states no total', () => {
+		const connection = connectionFromPage({ items: ROWS.slice(0, 2) });
+
+		expect(connection.totalCount).toBe(2);
+		expect(connection.pageInfo.hasNextPage).toBe(false);
 	});
 });
 

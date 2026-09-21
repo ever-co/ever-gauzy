@@ -19,7 +19,14 @@ export interface IConnection<T> {
 		startCursor: string | null;
 		endCursor: string | null;
 	};
-	total: number;
+	/**
+	 * The count of the *filtered* set, which is what REST's separate `/count` route answers.
+	 *
+	 * Named `totalCount` rather than `total`, because that is the name the doctrine gives it and the name
+	 * every other connection in the platform declares — a client that writes one list handler has to find
+	 * the count under the same member on both.
+	 */
+	totalCount: number;
 }
 
 /** A page selection, as the `PageInput` input shapes it. */
@@ -90,7 +97,7 @@ export function encodeCursor(offset: number): string {
  */
 export function buildConnection<T>(page: IPagination<T>, skip: number): IConnection<T> {
 	const nodes = page?.items ?? [];
-	const total = page?.total ?? nodes.length;
+	const totalCount = page?.total ?? nodes.length;
 	const start = skip;
 	const end = skip + nodes.length;
 
@@ -98,11 +105,11 @@ export function buildConnection<T>(page: IPagination<T>, skip: number): IConnect
 		edges: nodes.map((node, index) => ({ cursor: encodeCursor(start + index), node })),
 		nodes,
 		pageInfo: {
-			hasNextPage: end < total,
+			hasNextPage: end < totalCount,
 			hasPreviousPage: start > 0,
 			startCursor: nodes.length ? encodeCursor(start) : null,
 			endCursor: nodes.length ? encodeCursor(end) : null
 		},
-		total
+		totalCount
 	};
 }

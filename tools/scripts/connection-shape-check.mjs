@@ -71,7 +71,7 @@ const LEGACY_CONNECTIONS = new Set([
 	'ShippingOptionConnection', 'FulfillmentConnection', 'OrderReturnConnection', 'OrderReturnReasonConnection',
 	'OrderClaimConnection', 'OrderExchangeConnection', 'SubscriptionPlanConnection', 'CustomerSubscriptionConnection',
 	'SubscriptionItemConnection', 'SubscriptionBillingConnection', 'PurchaseOrderConnection', 'GoodsReceiptConnection',
-	'VendorProductTermConnection', 'EntitlementConnection', 'EntitlementActivationConnection', 'EntitlementKeyConnection',
+	'VendorProductTermConnection',
 ]);
 
 /** The body of `type <name> { … }`, or null when the schema declares no such type. */

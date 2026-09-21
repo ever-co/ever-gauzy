@@ -739,3 +739,51 @@ export function resolveRestPage(take?: number, skip?: number): { readonly take: 
 export function paginateRows<T>(rows: readonly T[], take: number, skip: number): { items: T[]; total: number } {
 	return { items: rows.slice(skip, skip + take), total: rows.length };
 }
+
+/**
+ * The page a service already sliced, as the connection the schema promises.
+ *
+ * This is the other half of {@link buildConnection}, and the difference between them is where the page
+ * is decided. `buildConnection` applies the whole query protocol to rows the caller has not paged —
+ * `filter`, `sort`, cursors — because a kernel list method answers the filtered set in the order it
+ * means. A plugin's own list resource is paged in the store instead: `findAll({ skip, take })` answers
+ * `{ items, total }`, `total` is the count of the *filtered* rows rather than of the page, and the
+ * caller's filter and sort have already been applied by the criteria it was given.
+ *
+ * What such a resolver still owes the client is the connection: the page's rows addressable two ways,
+ * the count, and the boundary information a cursor walk needs. Writing that per connection is what
+ * produced three spellings of it across this branch — `{items, total}` in the payment family,
+ * `{nodes, total}` beside it, and the canonical shape here — so this function is the one place it is
+ * written, and a connection that answers anything else is a connection that drifted.
+ *
+ * The cursors are the caller's to derive, because only the resource knows what identifies a row: most
+ * pass the row's id, and a resource with a natural key passes that. `hasPreviousPage` is decided by
+ * the offset rather than by the rows, since the caller is the one who stated it.
+ *
+ * @param page The page the service returned: its rows and the count of the filtered set.
+ * @param options The offset the page starts at, and how a row's cursor is derived.
+ * @returns The connection, in the shape every `*Connection` type declares.
+ */
+export function connectionFromPage<T>(
+	page: { items?: readonly T[]; total?: number } | null | undefined,
+	options: { readonly skip?: number; readonly cursorOf?: (row: T) => string } = {}
+): GraphqlConnection<T> {
+	const nodes = page?.items ?? [];
+	const totalCount = page?.total ?? nodes.length;
+	const skip = Math.max(options.skip ?? 0, 0);
+	const cursorOf = options.cursorOf ?? ((row: T) => String((row as { id?: unknown })?.id ?? ''));
+	const cursors = nodes.map((row) => cursorOf(row));
+	const end = skip + nodes.length;
+
+	return {
+		nodes,
+		edges: nodes.map((node, index) => ({ node, cursor: cursors[index] })),
+		totalCount,
+		pageInfo: {
+			hasNextPage: end < totalCount,
+			hasPreviousPage: skip > 0,
+			startCursor: cursors.length > 0 ? cursors[0] : null,
+			endCursor: cursors.length > 0 ? cursors[cursors.length - 1] : null
+		}
+	};
+}
