@@ -99,6 +99,7 @@
   white-space: nowrap;
 }
 
+
 // The subtotal/total chips under the item grid.
 //
 // `float: right` took the block out of flow, so its parent did not grow to
@@ -582,3 +583,22 @@ div.button-action {
 // are full-size `nb-card-header` form actions (Save, Send, …), not the compact
 // list toolbar the mixin's button block is written for.
 @include ga-hub.list-page(null);
+
+// The item grid's own row rhythm: 0.5rem above and below every cell's content,
+// header included, against the 0.1875rem `density-tokens()` sets for one-line
+// list tables. The rows here carry wrapped task names, inline editors and the
+// row actions, so they need the room.
+//
+// After the `list-page()` include above, not before: that mixin sets the same
+// tokens on `:host`, so an earlier block of equal specificity loses to it.
+:host {
+  --gauzy-table-cell-padding-y: 0.5rem;
+  --gauzy-table-header-padding-y: 0.5rem;
+}
+
+// The actions cell takes the same padding as the cells beside it. A global rule
+// (`_overrides.scss`) zeroes this one cell, which is why the token alone does
+// not reach it.
+:host ::ng-deep angular2-smart-table table tr td.angular2-smart-actions {
+  padding: var(--gauzy-table-cell-padding-y) var(--gauzy-table-cell-padding-x);
+}
