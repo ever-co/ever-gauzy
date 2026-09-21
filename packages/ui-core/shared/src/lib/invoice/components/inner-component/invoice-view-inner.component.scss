@@ -123,6 +123,87 @@
   --gauzy-table-header-padding-y: 0.5rem;
 }
 
+// ── The figures under the grid ───────────────────────────────────────────────
+// Tax, discount and the total, as rows of label-against-value under the money
+// column of the table, with the internal note beside them. They were two
+// parallel flex columns whose rows only lined up by luck, pinned to the left
+// half of the card while every figure in the table above sat on the right.
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-top: 1rem;
+}
+
+.internal-note {
+  flex: 1 1 16rem;
+  min-width: 0;
+
+  h5 {
+    margin: 0 0 0.25rem;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.125rem;
+    white-space: pre-line;
+  }
+}
+
+.totals {
+  flex: 0 0 auto;
+  min-width: 14rem;
+  margin: 0 0 0 auto;
+  padding: 0;
+}
+
+.total-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.25rem 0;
+
+  dt {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  dd {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1rem;
+    // Money, so the digits line up down the column.
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+}
+
+// The one figure the reader is looking for.
+.total-row-grand {
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+
+  dt,
+  dd {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+}
+
 // ── Dates and parties ────────────────────────────────────────────────────────
 // Every fact on this row reads "Label: value" on one line. From / To used to
 // stack their value under the label in two columns while the dates beside them
