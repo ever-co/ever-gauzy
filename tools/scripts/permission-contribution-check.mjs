@@ -19,10 +19,25 @@
  * information rather than as a failure, because a permission may legitimately exist for a route that
  * is not written yet or for a guard that is not a decorator.
  *
+ * ## The second half: a flag is only switchable if it is seeded
+ *
+ * The same shape of gap exists one layer over. A plugin declares its feature codes in a
+ * `*.features.ts` contribution, and `@FeatureFlag(...)` gates a route on one of them — but what makes
+ * a code *exist* for an installation is the row the seed migration writes, and that migration seeds
+ * `COMMERCE_CATALOGUE` in `packages/core/src/lib/feature/commerce-feature-catalogue.ts`. A code a
+ * package contributes and the catalogue does not list is a flag with no row: nothing can switch it,
+ * so the capability behind it is permanently whatever the absent row defaults to, and again the build
+ * is green and the boot is clean. That is not hypothetical either — `FEATURE_MARKETPLACE_PAYOUTS` was
+ * in exactly that state, and `FEATURE_SELLER_PAYOUT_SCHEDULER` declared a dependency on it.
+ *
+ * A `dependsOn` naming a code nothing declares anywhere is the same fault seen from the other end and
+ * is reported with it.
+ *
  * Usage:
  *   node tools/scripts/permission-contribution-check.mjs [repoRoot]
  *
- * Exits 0 when every used permission value is contributed, 1 otherwise.
+ * Exits 0 when every used permission value is contributed and every contributed feature code is
+ * seeded, 1 otherwise.
  */
 'use strict';
 
@@ -287,6 +302,101 @@ for (const name of PACKAGES) {
 	});
 }
 
+/**
+ * Every feature code a plugin contributes, and the file that contributes it.
+ *
+ * @returns The codes, keyed by the file that declares them.
+ */
+function contributedFeatureCodes() {
+	const codes = new Map();
+
+	const walk = (directory) => {
+		for (const entry of readdirSync(directory, { withFileTypes: true })) {
+			if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+
+			const full = join(directory, entry.name);
+
+			if (entry.isDirectory()) {
+				walk(full);
+				continue;
+			}
+
+			if (!entry.name.endsWith('.features.ts')) continue;
+
+			const source = readFileSync(full, 'utf8');
+
+			for (const match of source.matchAll(/code:\s*'([A-Z0-9_]+)'/g)) {
+				if (!codes.has(match[1])) codes.set(match[1], relative(ROOT, full).split('\\').join('/'));
+			}
+		}
+	};
+
+	walk(PLUGINS);
+
+	return codes;
+}
+
+/**
+ * Every code the `dependsOn` of a contributed feature names.
+ *
+ * @returns The codes, keyed by the file that names them.
+ */
+function dependedFeatureCodes() {
+	const codes = new Map();
+
+	const walk = (directory) => {
+		for (const entry of readdirSync(directory, { withFileTypes: true })) {
+			if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+
+			const full = join(directory, entry.name);
+
+			if (entry.isDirectory()) {
+				walk(full);
+				continue;
+			}
+
+			if (!entry.name.endsWith('.features.ts')) continue;
+
+			const source = readFileSync(full, 'utf8');
+
+			for (const block of source.matchAll(/dependsOn:\s*\[([^\]]*)\]/g)) {
+				for (const match of block[1].matchAll(/'([A-Z0-9_]+)'/g)) {
+					if (!codes.has(match[1])) codes.set(match[1], relative(ROOT, full).split('\\').join('/'));
+				}
+			}
+		}
+	};
+
+	walk(PLUGINS);
+
+	return codes;
+}
+
+const CATALOGUE = join(ROOT, 'packages', 'core', 'src', 'lib', 'feature', 'commerce-feature-catalogue.ts');
+const seededCodes = new Set(
+	[...readFileSync(CATALOGUE, 'utf8').matchAll(/code:\s*'([A-Z0-9_]+)'/g)].map((match) => match[1])
+);
+const contributedFeatures = contributedFeatureCodes();
+const dependedFeatures = dependedFeatureCodes();
+const unseeded = [...contributedFeatures].filter(([code]) => !seededCodes.has(code));
+const undeclaredDependencies = [...dependedFeatures].filter(
+	([code]) => !seededCodes.has(code) && !contributedFeatures.has(code)
+);
+
+for (const [code, where] of unseeded) {
+	problems.push({
+		package: 'feature catalogue',
+		detail: `${code} is contributed by ${where} and is in no catalogue entry, so the seed writes no row for it`
+	});
+}
+
+for (const [code, where] of undeclaredDependencies) {
+	problems.push({
+		package: 'feature catalogue',
+		detail: `${where} depends on ${code}, which nothing declares`
+	});
+}
+
 console.log('');
 console.log('Permission contributions — a guard only as good as its grant');
 console.log('============================================================');
@@ -307,14 +417,21 @@ if (unused.length) {
 }
 
 console.log('');
+console.log(
+	`  feature codes  ${String(contributedFeatures.size).padStart(3)} contributed by a package, ` +
+		`${String(seededCodes.size).padStart(3)} seeded by the catalogue`
+);
+
+console.log('');
 if (problems.length === 0) {
 	console.log('  OK — every value a handler guards on is contributed, so every one of them can be granted');
+	console.log('  OK — every feature code a package contributes is seeded, so every one of them can be switched');
 } else {
-	console.log(`  ${problems.length} guard(s) reference a value that is never contributed:`);
+	console.log(`  ${problems.length} contribution(s) that cannot be reached:`);
 	for (const problem of problems) console.log(`    ${problem.package}: ${problem.detail}`);
 }
 
 console.log('');
-console.log(problems.length === 0 ? 'permission contribution check: PASSED' : 'permission contribution check: FAILED');
+console.log(problems.length === 0 ? 'contribution check: PASSED' : 'contribution check: FAILED');
 
 process.exit(problems.length === 0 ? 0 : 1);

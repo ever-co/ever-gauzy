@@ -105,10 +105,19 @@ export enum CommissionOn {
  * rather than a policy.
  */
 export interface ICommissionTier {
-	/** Inclusive lower bound, in major units for an amount basis and in units for a quantity basis. */
-	from: number;
-	/** Exclusive upper bound; `null` is open ended. */
-	to?: number | null;
+	/**
+	 * Inclusive lower bound, in major units for an amount basis and in units for a quantity basis.
+	 *
+	 * A `DecimalString` as well as a `number`, because a band boundary is money and a money value
+	 * stated as a JavaScript number is a value the platform cannot compare exactly. The columns the
+	 * tiers are stored in are `numeric(20,6)`, which is wider than a double can address without
+	 * rounding, so two boundaries closer together than a double's resolution collapse into one literal
+	 * — and the band a sale falls into is then decided by a comparison the money kernel would refuse
+	 * to make. The number form stays because it is what the existing rows and requests carry.
+	 */
+	from: DecimalString | number;
+	/** Exclusive upper bound; `null` is open ended. The two forms mean the same as on `from`. */
+	to?: DecimalString | number | null;
 	/** Rate applied to the whole amount or quantity when the value falls in this band. */
 	rate: DecimalString;
 }

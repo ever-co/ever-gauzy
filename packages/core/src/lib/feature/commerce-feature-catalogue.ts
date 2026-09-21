@@ -384,6 +384,22 @@ export const DETAIL_FEATURES: IFeatureCatalogueEntry[] = [
 		defaultEnabled: false
 	},
 	{
+		// The marketplace declares this code in `marketplace.features.ts` and
+		// `FEATURE_SELLER_PAYOUT_SCHEDULER` below depends on it, but it was missing from the catalogue
+		// this migration seeds — so the row never existed, and a gate naming it could only answer about
+		// a flag no installation has. It is listed here for the same reason every other contributed code
+		// is: the seed is what makes a flag switchable, and a flag that cannot be switched is not a
+		// staged adoption, it is a capability that is either always on or always off.
+		name: 'Marketplace payouts',
+		code: 'FEATURE_MARKETPLACE_PAYOUTS',
+		description: 'Building, approving and executing a payout through a payment provider.',
+		image: null,
+		link: 'settings/features',
+		status: 'info',
+		icon: 'credit-card-outline',
+		defaultEnabled: false
+	},
+	{
 		name: 'Scheduled seller payouts',
 		code: 'FEATURE_SELLER_PAYOUT_SCHEDULER',
 		description: 'Automatic payout runs on a seller payout schedule.',
@@ -395,7 +411,7 @@ export const DETAIL_FEATURES: IFeatureCatalogueEntry[] = [
 	}
 ];
 
-/** The 32 codes this programme introduces: the module flags and the finer-grained flags. */
+/** The 33 codes this programme introduces: the module flags and the finer-grained flags. */
 export const COMMERCE_CATALOGUE: IFeatureCatalogueEntry[] = [...MODULE_FEATURES, ...DETAIL_FEATURES];
 
 /** The features a tenant provisioned from scratch gets an **enabled** toggle row for. */
