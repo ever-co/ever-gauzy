@@ -184,7 +184,7 @@ jobs:
         if: always()
         run: node tools/scripts/port-binding-check.mjs
 
-      - name: Permission contributions
+      - name: Permission and feature contributions
         if: always()
         run: node tools/scripts/permission-contribution-check.mjs
 
