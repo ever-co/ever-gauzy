@@ -1956,6 +1956,7 @@
 		"EXPECTED": "Previsto/Aspettato",
 		"UPDATES": "Aggiornamenti",
 		"UPDATE": "Aggiornamento",
+		"ALIGNMENTS": "Allineamenti",
 		"COMMENTS": "Commenti",
 		"KEY_RESULTS": "Risultati chiave",
 		"GROUP_BY": "Raggruppa per",
@@ -1972,6 +1973,8 @@
 		"GOAL_TEMPLATES": "Modelli di obiettivi",
 		"CREATE_NEW_MENU": "Creare Nuovo",
 		"CREATE_FROM_PRESET": "Crea da preset",
+		"SELECT_A_PRESET": "Seleziona un preset",
+		"ADDITIONAL_DETAILS": "Dettagli aggiuntivi",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Impiegati",
 			"TEAMS": "Squadre",
@@ -2001,7 +2004,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Nessun risultato chiave da visualizzare",
 			"NO_UPDATES": "Ancora nessun aggiornamento",
-			"NO_ALIGNMENT": "Nessun allineamento ancora"
+			"NO_ALIGNMENT": "Nessun allineamento ancora",
+			"NO_PROGRESS_DATA": "Nessun dato di progresso da rappresentare"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organizzazione",
@@ -2457,6 +2461,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Durata del dialogo di conto alla rovescia di prova dell'attività, rappresenta un determinato numero di minuti dati per dimostrare l'attività",
 				"ENABLE_DETECTION_INACTIVITY": "Abilita il rilevamento dell'inattività dei dipendenti",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Abilitato: il sistema rileverà l'inattività e mostrerà un avviso. Disabilitato: non verrà mostrato alcun avviso quando un dipendente è inattivo",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Frequenza degli screenshot",
 				"SCREENSHOT_FREQUENCY_INFO": "Specificare la frequenza di aggiornamento o gli intervalli di sincronizzazione temporale.",
 				"RANDOM_SCREENSHOT": "Screenshot casuale",
@@ -3391,6 +3397,9 @@
 		"BROWSE": "Sfoglia",
 		"COMMENT": "Commento",
 		"COMMENTS": "Commenti",
+		"COMMENT_PLACEHOLDER": "Scrivi un commento…",
+		"NO_COMMENTS": "Nessun commento finora",
+		"NO_COMMENTS_HINT": "I commenti compaiono qui, dal più recente.",
 		"HEADER": "Fatture",
 		"INVOICE_NUMBER": "Numero di fattura",
 		"ESTIMATE_NUMBER": "Numero di stima",
@@ -4433,6 +4442,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Seleziona cliente",
+			"SELECT_PROJECT": "Seleziona progetto",
+			"SELECT_TEAM": "Seleziona squadra",
+			"SELECT_TASK": "Seleziona attività",
+			"DESCRIPTION": "Aggiungi una descrizione"
+		},
 		"IS_BILLABLE": "È fatturabile",
 		"STOP_TIMER": "Fermare il timer",
 		"START_TIMER": "Avvia cronometro",
@@ -4902,7 +4918,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Screenshot",
 			"OF": "di",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Screenshot acquisito alle {{ time }}",
+			"POSITION": "Screenshot {{ position }} di {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Avviso. Il cronometro è in esecuzione, è possibile rimuovere solo gli screenshot se si interrompe il cronometro o dall'app Timer interna",
 		"DELETE_CONFIRM": "Sei sicuro di voler eliminare queste schermate e il registro del tempo?",

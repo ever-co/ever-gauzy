@@ -16,6 +16,17 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-pr
  * - Team manager status (isManager in OrganizationTeamEmployee)
  * - Project manager status (isManager in OrganizationProjectEmployee)
  */
+/**
+ * Stands in for "this caller may see no employee at all".
+ *
+ * The employee predicates in this codebase are applied only when the id list is non-empty
+ * (`if (isNotEmpty(employeeIds))`), so an empty list reads as "do not filter" rather than "deny", and a
+ * caller whose token carries no employee identity would get the whole organization. Returning this id
+ * instead keeps the predicate in place and matches no row, so such a caller gets an empty result. It is
+ * the nil UUID, which is a valid value to compare against a uuid column.
+ */
+export const NO_ACCESSIBLE_EMPLOYEE_ID: ID = '00000000-0000-0000-0000-000000000000';
+
 @Injectable()
 export class ManagedEmployeeService {
 	constructor(
@@ -57,9 +68,17 @@ export class ManagedEmployeeService {
 			return [currentEmployeeId];
 		}
 
-		// Case 3: No employeeId (user not logged in as employee)
+		// Case 3: An authenticated caller whose token carries no employee identity — after switching to an
+		// organization they belong to without being an employee there, or when their employee record is gone.
+		// An organization-wide viewer keeps the access their role gives them; anyone else gets an id that
+		// matches nothing, so they see an empty result instead of every employee in the organization.
+		// A request with no user at all (a public share link, an internal call) is left to the scoping its own
+		// caller applies, exactly as before.
 		if (!currentEmployeeId) {
-			return [];
+			if (user && !RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+				return [NO_ACCESSIBLE_EMPLOYEE_ID];
+			}
+			return requestedEmployeeIds;
 		}
 
 		// Case 4: Check if user is manager of the specified teams/projects
@@ -145,12 +164,15 @@ export class ManagedEmployeeService {
 	 * 1. Global permissions (CHANGE_SELECTED_EMPLOYEE)
 	 * 2. Self-access (currentEmployeeId === targetEmployeeId)
 	 * 3. Manager status in the specified team (if organizationTeamId provided)
+	 * 4. Otherwise, manager status in any team of the record's organization that the target
+	 *    employee belongs to. This fallback needs `organizationId` and denies without it.
 	 *
 	 * @param targetEmployeeId - The employee ID to check access for
 	 * @param organizationTeamId - Optional team ID to check manager status
+	 * @param organizationId - The organization the record belongs to; anchors the no-team fallback
 	 * @returns true if the current employee can manage the target employee
 	 */
-	async canManageEmployee(targetEmployeeId: ID, organizationTeamId?: ID): Promise<boolean> {
+	async canManageEmployee(targetEmployeeId: ID, organizationTeamId?: ID, organizationId?: ID): Promise<boolean> {
 		const user = RequestContext.currentUser();
 		const currentEmployeeId = user?.employeeId;
 
@@ -159,8 +181,10 @@ export class ManagedEmployeeService {
 			return true;
 		}
 
-		// Case 2: No employeeId (user not logged in as employee)
-		if (!currentEmployeeId) {
+		// Case 2: No employee identity on either side (user not logged in as employee, or no target).
+		// Fail closed: an undefined target would be dropped from the membership queries below and
+		// match any member of the team.
+		if (!currentEmployeeId || !targetEmployeeId) {
 			return false;
 		}
 
@@ -203,8 +227,16 @@ export class ManagedEmployeeService {
 			return isTargetMemberOfTeam;
 		}
 
-		// Case 5: No team context provided → No access
-		return false;
+		// Case 5: Records such as daily plans carry a nullable organizationTeamId, so callers cannot
+		// always supply one. Fall back to "is there a team I manage that this employee belongs to",
+		// restricted to the record's organization. That organization is the only anchor this branch
+		// has: without it the check fails closed instead of spanning every organization of the tenant
+		// (an undefined where key is dropped from the query in this codebase).
+		if (!organizationId) {
+			return false;
+		}
+
+		return await this.canManageEmployeeInAnyTeam(targetEmployeeId, organizationId);
 	}
 
 	/**
@@ -346,13 +378,16 @@ export class ManagedEmployeeService {
 	 * Checks if the current employee can manage a target employee in ANY team.
 	 *
 	 * @param targetEmployeeId - The employee ID to check access for
+	 * @param organizationId - Optional organization to restrict the managed teams to
 	 * @returns true if the current employee manages the target employee in at least one team
 	 */
-	private async canManageEmployeeInAnyTeam(targetEmployeeId: ID): Promise<boolean> {
+	private async canManageEmployeeInAnyTeam(targetEmployeeId: ID, organizationId?: ID): Promise<boolean> {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 		const tenantId = RequestContext.currentTenantId();
 
-		if (!currentEmployeeId || !tenantId) {
+		// Fail closed on a missing target as well: an undefined key is dropped from the membership
+		// query, which would otherwise match any member of a managed team.
+		if (!currentEmployeeId || !targetEmployeeId || !tenantId) {
 			return false;
 		}
 
@@ -363,11 +398,14 @@ export class ManagedEmployeeService {
 				isManager: true,
 				isActive: true,
 				isArchived: false,
-				tenantId
+				tenantId,
+				// Scoped through the team, whose organizationId is authoritative,
+				// rather than through the membership row where it may be null.
+				...(organizationId ? { organizationTeam: { organizationId } } : {})
 			},
 			select: {
-                organizationTeamId: true
-            }
+				organizationTeamId: true
+			}
 		});
 
 		if (!isNotEmpty(managedTeams)) {
@@ -413,8 +451,8 @@ export class ManagedEmployeeService {
 					tenantId
 				},
 				select: {
-                    employeeId: true
-                }
+					employeeId: true
+				}
 			});
 
 			teamMembers.forEach((member) => employeeIds.add(member.employeeId));
@@ -430,8 +468,8 @@ export class ManagedEmployeeService {
 					tenantId
 				},
 				select: {
-                    employeeId: true
-                }
+					employeeId: true
+				}
 			});
 
 			projectMembers.forEach((member) => employeeIds.add(member.employeeId));

@@ -1,48 +1,73 @@
 @use 'themes';
 
 .organization-render-container {
+  display: flex;
+  flex-direction: column;
+
+  .organization-render {
+    width: 100%;
     display: flex;
-    flex-direction: column;
+    justify-content: flex-start;
 
-    .organization-render {
-        width: 100%;
-        display: flex;
-        justify-content: flex-start;
-
-        img {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            margin: 0 5px;
-            box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.25);
-            object-fit: cover;
-        }
-
-        span .member {
-            font-size: 11px;
-            color: rgba(126, 126, 143, 0.75);
-        }
+    // Sized on both the logo and the icon that stands in for a missing one, so
+    // a row without a logo keeps the same rhythm as the rows around it.
+    .organization-logo {
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      border-radius: 6px;
+      margin: 0 5px;
+      object-fit: cover;
+      // Was a literal `0px 1px 1px rgba(0, 0, 0, 0.25)` — a black drop shadow,
+      // invisible against the dark themes' canvas. `gauzy-shadow` is the shared
+      // token for this hairline; the literal survives as its fallback for the
+      // themes that emit no token.
+      box-shadow: var(--gauzy-shadow, 0px 1px 1px 0px rgb(0 0 0 / 25%));
     }
 
-    // Same treatment as the rest of the `NotesWithTagsComponent` family: the
-    // shared table-density tokens size the chips, flex `gap` owns chip↔chip
-    // spacing, and the text→chips separation is its own token. The 5px side
-    // margins stay — they align the chip row with the logo's own side margin.
-    .tags {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        gap: var(--gauzy-table-chip-gap, 0.1875rem);
-        margin: var(--gauzy-table-chip-block-gap, 0.25rem) 5px 0px 5px;
+    .organization-logo--empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--gauzy-sidebar-background-3);
+      color: var(--gauzy-text-color-2, rgba(126, 126, 143, 0.75));
 
-        .color {
-            position: static;
-            display: inline-block;
-            font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
-            font-weight: 600;
-            line-height: var(--gauzy-table-chip-line-height, 0.875rem);
-            letter-spacing: 0em;
-            padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
-        }
+      nb-icon {
+        font-size: 0.875rem;
+        width: 0.875rem;
+        height: 0.875rem;
+      }
     }
+
+    span .member {
+      // Was `11px` and a literal `rgba(126, 126, 143, 0.75)`. The size is the
+      // shared table chip tier, and the colour is the app's muted ramp — the
+      // literal is that ramp at 75%, which reads as a third, dimmer grey next
+      // to every other muted label in the table.
+      font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+      color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+    }
+  }
+
+  // Same treatment as the rest of the `NotesWithTagsComponent` family: the
+  // shared table-density tokens size the chips, flex `gap` owns chip↔chip
+  // spacing, and the text→chips separation is its own token. The 5px side
+  // margins stay — they align the chip row with the logo's own side margin.
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--gauzy-table-chip-gap, 0.1875rem);
+    margin: var(--gauzy-table-chip-block-gap, 0.25rem) 5px 0px 5px;
+
+    .color {
+      position: static;
+      display: inline-block;
+      font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+      font-weight: 600;
+      line-height: var(--gauzy-table-chip-line-height, 0.875rem);
+      letter-spacing: 0em;
+      padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
+    }
+  }
 }

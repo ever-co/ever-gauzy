@@ -1,10 +1,194 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
+// The Add / Edit KPI dialog, on the same scale as the app's other dialogs: a
+// header row, 12px labels over 2rem controls, the hover helper text as a quiet
+// column beside the form, and a footer whose buttons sit on the trailing edge.
+// Every custom property carries a fallback — `--gauzy-*` is undefined in
+// material-light / material-dark, where a `var()` without one is dropped.
+$control-height: 2rem;
+$control-font-size: 12px;
+$control-padding-x: 0.75rem;
+$inset: 1rem;
+$divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+$muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+// Below this, 60vw less the 15rem helper column leaves the form's two-column
+// value fields under 6rem each: the helper moves under the form instead.
+$stack-below: 991.98px;
+
+// 60vw put a 1150px dialog on this screen for a form that is 634px wide, so the
+// helper column carried the difference as empty space.
 .min-width-60vw {
-  width: 60vw !important;
+  width: min(60vw, 52rem) !important;
+
+  // Stacked, the dialog takes the viewport's width rather than 60vw of it.
+  @media (max-width: $stack-below) {
+    width: min(calc(100vw - 2rem), 52rem) !important;
+  }
 }
+
 :host {
   nb-card {
     background-color: nb-theme(background-basic-color-1);
+  }
+
+  // Title and close on one line; the close button used to sit stacked above it.
+  nb-card-header.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.875rem $inset;
+    border-bottom: $divider;
+
+    .title {
+      margin: 0;
+      font-size: $control-font-size;
+      font-weight: 600;
+      line-height: 1rem;
+      color: var(--gauzy-text-color-1, inherit);
+    }
+
+    // A real button, so the close is reachable from the keyboard and named for a
+    // screen reader; the browser's button chrome is stripped so it still reads
+    // as the bare icon it was.
+    .cancel {
+      width: auto;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      line-height: 1;
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: 2px solid nb-theme(color-primary-default);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+    }
+  }
+
+  nb-card-body {
+    padding: $inset;
+  }
+
+  // Form and helper side by side; the form's fields sit on one 6-column grid, so
+  // the three value fields at the bottom share edges with the pair above them.
+  .kpi-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: $inset;
+
+    @media (max-width: $stack-below) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  .kpi-form {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.75rem;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .field {
+    min-width: 0;
+  }
+
+  .span-2 {
+    grid-column: span 2;
+  }
+
+  .span-3 {
+    grid-column: span 3;
+  }
+
+  .span-6 {
+    grid-column: 1 / -1;
+  }
+
+  // A note beside the form, not a second column of body copy.
+  .kpi-help {
+    flex: 0 0 15rem;
+    align-self: stretch;
+    padding-inline-start: $inset;
+    border-inline-start: $divider;
+    font-size: $control-font-size;
+    line-height: 1.125rem;
+    color: $muted;
+
+    p {
+      margin: 0;
+    }
+
+    // Under the form, the hairline moves to the top edge; `flex: none` so the
+    // 15rem basis does not turn into a height in the column.
+    @media (max-width: $stack-below) {
+      flex: none;
+      padding-inline-start: 0;
+      padding-top: $inset;
+      border-inline-start: 0;
+      border-top: $divider;
+    }
+  }
+
+  ::ng-deep label.label {
+    display: block;
+    margin: 0 0 0.375rem;
+    font-size: $control-font-size;
+    font-weight: 600;
+    line-height: 1rem;
+    color: $muted;
+  }
+
+  input[nbInput],
+  textarea[nbInput] {
+    padding: 0.375rem $control-padding-x;
+    font-size: $control-font-size;
+    line-height: 1rem;
+  }
+
+  input[nbInput] {
+    height: $control-height;
+    // `!important` against the shared `dialog()` mixin (`gauzy/_gauzy-dialogs`),
+    // which pins every input and select in a dialog to a 2.375rem `min-height`
+    // with `!important` of its own.
+    min-height: $control-height !important;
+    padding: 0 $control-padding-x;
+  }
+
+  textarea[nbInput] {
+    min-height: 4.5rem !important;
+  }
+
+  // Both selectors on purpose: the `dialog()` mixin pins
+  // `nb-select.appearance-outline.status-basic .select-button` at 2.375rem with
+  // `!important`, so only a selector of its own shape (same specificity, later in
+  // the file) can win — while the bare one still reaches the selects whose status
+  // is not `basic`, like this dialog's Active/Inactive one.
+  ::ng-deep nb-select .select-button,
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button {
+    height: $control-height;
+    min-height: $control-height !important;
+    padding-block: 0;
+    padding-inline-start: $control-padding-x !important;
+    font-size: $control-font-size;
+    line-height: 1rem;
+  }
+
+  // Buttons on the trailing edge, Cancel quiet beside the primary action.
+  nb-card-footer.footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem $inset;
+    border-top: $divider;
+
+    button {
+      margin: 0;
+    }
   }
 }

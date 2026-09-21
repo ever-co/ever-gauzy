@@ -3,6 +3,7 @@ import {
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	IAiTranscribeOptions,
+	isPrivateAiProviderEndpointAllowed,
 	transcribeMultipart,
 	trimTrailingSlash
 } from '@gauzy/plugin-ai-chat';
@@ -46,7 +47,8 @@ const transcribeAudio = async (
 		headers: { 'xi-api-key': credentials.apiKey },
 		apiKey: credentials.apiKey,
 		providerLabel: 'ElevenLabs',
-		providerId: PROVIDER_ID
+		providerId: PROVIDER_ID,
+		allowPrivateHost: isPrivateAiProviderEndpointAllowed(credentials)
 	});
 
 /**

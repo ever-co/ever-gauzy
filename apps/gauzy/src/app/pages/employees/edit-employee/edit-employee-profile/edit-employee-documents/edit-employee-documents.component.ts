@@ -21,6 +21,7 @@ import { EmployeeStore } from '@gauzy/ui-core/core';
 @Component({
 	selector: 'ga-edit-employee-documents',
 	templateUrl: './edit-employee-documents.component.html',
+	styleUrls: ['./edit-employee-documents.component.scss'],
 	standalone: false
 })
 export class EditEmployeeDocumentsComponent implements OnInit, OnDestroy {

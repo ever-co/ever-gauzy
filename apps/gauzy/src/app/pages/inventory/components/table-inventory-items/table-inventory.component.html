@@ -1,17 +1,20 @@
 <nb-card>
 	<nb-card-header class="d-flex flex-column pb-0">
+		<!-- The heading and the section buttons are direct siblings of ONE
+			 `.card-header-title` row — the shape Employees and Equipment already
+			 use. They used to sit in a nested `.card-header-title` block of their
+			 own, which the outer row's `align-items: center` then centred against
+			 the TWO-line title block (the heading plus the breadcrumb trail parked
+			 under it), dropping them ~12px below `+ Add`. On the title's own row
+			 they share its line, and therefore `+ Add`'s. -->
 		<div class="card-header-title">
-			<div class="card-header-title">
-				<h4>
-					<ngx-header-title [allowEmployee]="false">
-						{{ 'INVENTORY_PAGE.HEADER' | translate }}
-					</ngx-header-title>
-				</h4>
-			</div>
-			<div class="card-header-title">
-				<div class="mr-2">
-					<ng-container [ngTemplateOutlet]="subActionButtons"></ng-container>
-				</div>
+			<h4>
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'INVENTORY_PAGE.HEADER' | translate }}
+				</ngx-header-title>
+			</h4>
+			<div class="sub-actions">
+				<ng-container [ngTemplateOutlet]="subActionButtons"></ng-container>
 			</div>
 		</div>
 		<div class="gauzy-button-container">

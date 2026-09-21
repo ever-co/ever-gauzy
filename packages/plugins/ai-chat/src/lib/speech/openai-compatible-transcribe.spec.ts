@@ -1,4 +1,6 @@
 import {
+	MAX_TRANSCRIPTION_RESPONSE_BYTES,
+	MAX_TRANSCRIPT_CHARS,
 	classifySpeechHttpFailure,
 	redactSecret,
 	resolveAudioExtension,
@@ -7,6 +9,13 @@ import {
 	transcribeViaOpenAiCompatible
 } from './openai-compatible-transcribe';
 import { SpeechProviderError, isSpeechProviderError } from './speech-provider-error';
+
+// The guard's transport opens real sockets and connects through its own address check. Hand its
+// requests to the `global.fetch` stub each case installs instead: only the socket layer is replaced,
+// while the URL check, the DNS pre-flight and the refusal of redirects all stay real.
+jest.mock('../ssrf/fetch-over-node-http', () => ({
+	fetchOverNodeHttp: (input: string | URL | Request, init?: RequestInit) => global.fetch(input, init)
+}));
 
 /**
  * The shared speech request every STT provider plugin goes through. What matters is observable
@@ -41,6 +50,12 @@ describe('speech helpers', () => {
 
 	const audio = Buffer.from('fake-audio-bytes');
 
+	/**
+	 * Answers the SSRF egress guard's DNS pre-flight with a public address, so these specs never touch
+	 * the network — and so a sandbox with no resolver does not turn every case into a refusal.
+	 */
+	const publicResolver = () => Promise.resolve(['93.184.215.14']);
+
 	describe('transcribeViaOpenAiCompatible', () => {
 		const call = (overrides: Partial<Parameters<typeof transcribeViaOpenAiCompatible>[0]> = {}) =>
 			transcribeViaOpenAiCompatible({
@@ -51,6 +66,7 @@ describe('speech helpers', () => {
 				model: 'whisper-large-v3',
 				providerLabel: 'Example',
 				providerId: 'example',
+				resolver: publicResolver,
 				...overrides
 			});
 
@@ -83,7 +99,10 @@ describe('speech helpers', () => {
 			const fetchMock = capture({ text: 'ok' });
 			await call({
 				path: '/v1/audio/transcriptions',
+				// A LAN/loopback server needs the deployment opt-in since the SSRF egress guard went in
+				// (GHSA-w3mx-m5cr-3gxp); this test is about the request shape, not about the guard.
 				baseUrl: 'http://localhost:8080',
+				allowPrivateHost: true,
 				language: 'de',
 				fields: { response_format: 'json' },
 				headers: { 'x-custom': '1' }
@@ -136,10 +155,88 @@ describe('speech helpers', () => {
 
 		it('wraps a network failure (server down) as a `network` error naming the provider', async () => {
 			global.fetch = jest.fn().mockRejectedValue(new TypeError('fetch failed')) as unknown as typeof fetch;
-			const error = await call({ baseUrl: 'http://localhost:8000/v1' }).catch((e: unknown) => e);
+			// The self-hosted case this message exists for: a local container that is not running. Needs
+			// the private-endpoint opt-in now that the SSRF egress guard refuses loopback by default.
+			const error = await call({ baseUrl: 'http://localhost:8000/v1', allowPrivateHost: true }).catch(
+				(e: unknown) => e
+			);
 			expect((error as SpeechProviderError).kind).toBe('network');
 			expect((error as SpeechProviderError).message).toMatch(/could not be reached/);
 			expect((error as SpeechProviderError).message).toMatch(/^Example transcription failed/);
+		});
+
+		it.each([
+			'http://169.254.169.254/latest/meta-data/',
+			'http://localhost:8000/v1',
+			'http://10.0.0.5/v1',
+			'http://[::1]:8000/v1'
+		])('refuses the internal endpoint %s without making a request', async (baseUrl) => {
+			// The reflected half of GHSA-w3mx-m5cr-3gxp: this path relays a bounded slice of the
+			// upstream body and distinguishes timeout / refused / HTTP, so an unguarded fetch here was
+			// both an SSRF and a host-discovery oracle.
+			const fetchMock = capture({ text: 'ok' });
+			const error = await call({ baseUrl }).catch((e: unknown) => e);
+
+			expect(isSpeechProviderError(error)).toBe(true);
+			expect((error as SpeechProviderError).kind).toBe('network');
+			expect((error as SpeechProviderError).message).toMatch(/not allowed/i);
+			expect(fetchMock).not.toHaveBeenCalled();
+		});
+
+		it('says nothing about the refused endpoint that a probe could read', async () => {
+			capture({ text: 'ok' });
+			const error = (await call({ baseUrl: 'http://10.11.12.13:9000/v1' }).catch((e: unknown) => e)) as Error;
+
+			expect(error.message).not.toContain('10.11.12.13');
+			expect(error.message).not.toContain('9000');
+		});
+
+		it('caps the transcript a tenant-configured endpoint can reflect back', async () => {
+			capture({ text: 'x'.repeat(MAX_TRANSCRIPT_CHARS + 5_000) });
+
+			await expect(call()).resolves.toHaveLength(MAX_TRANSCRIPT_CHARS);
+		});
+
+		it('refuses to buffer an oversized successful body, whether chunked or declared', async () => {
+			// A 2xx `{"text": …}` far past the budget, streamed with no content-length like a chunked reply.
+			const oversized = `{"text":"${'x'.repeat(MAX_TRANSCRIPTION_RESPONSE_BYTES)}"}`;
+			global.fetch = jest.fn().mockImplementation(() =>
+				Promise.resolve(
+					new Response(
+						new ReadableStream<Uint8Array>({
+							start(controller) {
+								controller.enqueue(new TextEncoder().encode(oversized));
+								controller.close();
+							}
+						}),
+						{ status: 200 }
+					)
+				)
+			) as unknown as typeof fetch;
+			const chunked = (await call().catch((e: unknown) => e)) as SpeechProviderError;
+			expect(chunked.kind).toBe('response');
+			expect(chunked.message).toMatch(/oversized response/);
+
+			capture(
+				{ text: 'short' },
+				{ status: 200, headers: { 'content-length': String(MAX_TRANSCRIPTION_RESPONSE_BYTES + 1) } }
+			);
+			const declared = (await call().catch((e: unknown) => e)) as SpeechProviderError;
+			expect(declared.kind).toBe('response');
+			expect(declared.message).toMatch(/oversized response/);
+		});
+
+		it('bounds the DNS pre-flight by the request timeout, not just the HTTP request', async () => {
+			const fetchMock = capture({ text: 'ok' });
+			const stalled = () => new Promise<string[]>(() => undefined);
+
+			const error = (await call({ timeoutMs: 50, resolver: stalled }).catch(
+				(e: unknown) => e
+			)) as SpeechProviderError;
+
+			expect(error.kind).toBe('network');
+			expect(error.message).toMatch(/no answer within/);
+			expect(fetchMock).not.toHaveBeenCalled();
 		});
 
 		it('wraps a timeout as a `network` error that says so', async () => {
@@ -178,7 +275,8 @@ describe('speech helpers', () => {
 				headers: { 'xi-api-key': 'xi-secret' },
 				apiKey: 'xi-secret',
 				providerLabel: 'ElevenLabs',
-				providerId: 'elevenlabs'
+				providerId: 'elevenlabs',
+				resolver: publicResolver
 			});
 			expect(text).toBe('from eleven');
 			const { options, form } = requestOf(fetchMock);
@@ -204,6 +302,7 @@ describe('speech helpers', () => {
 				apiKey: 'dg-secret',
 				providerLabel: 'Deepgram',
 				providerId: 'deepgram',
+				resolver: publicResolver,
 				parse: (body) =>
 					String(
 						(body as { results?: { channels?: { alternatives?: { transcript?: string }[] }[] } }).results
@@ -221,6 +320,7 @@ describe('speech helpers', () => {
 				init: { method: 'POST' },
 				apiKey: 'dg-secret',
 				providerLabel: 'X',
+				resolver: publicResolver,
 				parse: () => {
 					throw new Error('unexpected shape (dg-secret)');
 				}

@@ -28,14 +28,31 @@ export class OrganizationBelongsToUserConstraint implements ValidatorConstraintI
 	 * @returns {Promise<boolean>} - True if the user belongs to the organization, otherwise false.
 	 */
 	async validate(value: ID | IOrganization): Promise<boolean> {
+		// An organization OBJECT must name the organization it refers to. This runs before the
+		// `isEmpty` early-out on purpose: `isEmpty` treats `{}`, `{ id: null }` and `{ id: '' }` as
+		// empty, and a relation-filter object such as `{ isActive: true }` carries no id at all. Either
+		// shape used to pass here — and, being truthy, also switched off the `organizationId` check in
+		// `TenantOrganizationBaseDTO` — so the caller named no organization while still clearing the
+		// membership check (GHSA-44pv-34gx-q9p4).
+		if (value !== null && typeof value === 'object') {
+			const { id } = value as IOrganization;
+			if (typeof id !== 'string' || isEmpty(id)) {
+				return false;
+			}
+			return this.checkOrganizationExistence(id);
+		}
+
+		// An absent organization id is left to the field's own `@IsOptional` / `@IsNotEmpty` rules.
 		if (isEmpty(value)) {
 			return true;
 		}
 
-		const organizationId = typeof value === 'string' ? value : value.id;
+		if (typeof value !== 'string') {
+			return false;
+		}
 
 		// Use the consolidated ORM logic function
-		return this.checkOrganizationExistence(organizationId);
+		return this.checkOrganizationExistence(value);
 	}
 
 	/**
@@ -48,7 +65,10 @@ export class OrganizationBelongsToUserConstraint implements ValidatorConstraintI
 		const tenantId = RequestContext.currentTenantId();
 		const userId = RequestContext.currentUserId();
 
-		if (!tenantId || !userId) {
+		// Never issue the lookup with an empty organization id: TypeORM drops an `undefined` where key
+		// (`invalidWhereValuesBehavior.undefined: 'ignore'`), and the membership check would then match
+		// ANY organization the caller belongs to (GHSA-44pv-34gx-q9p4).
+		if (!tenantId || !userId || !organizationId || typeof organizationId !== 'string') {
 			return false;
 		}
 

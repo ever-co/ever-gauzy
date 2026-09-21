@@ -8,9 +8,10 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { createClient as createRedisClient } from 'redis';
 import { Cacheable, CacheableMemory } from 'cacheable';
 import * as chalk from 'chalk';
-import { RedisModule } from '../redis/redis.module';
+import { EVER_REDIS_CLIENT, RedisModule } from '../redis/redis.module';
 import { Keyv } from 'keyv';
 import * as moment from 'moment';
 import { ClsModule, ClsService } from 'nestjs-cls';
@@ -125,6 +126,7 @@ import { OrganizationVendorModule } from '../organization-vendor/organization-ve
 import { OrganizationModule } from '../organization/organization.module';
 import { PasswordHashModule } from '../password-hash/password-hash.module';
 import { PaymentModule } from '../payment/payment.module';
+import { PayrollRunModule } from '../payroll-run/payroll-run.module';
 import { StageModule } from '../pipeline-stage/pipeline-stage.module';
 import { PipelineModule } from '../pipeline/pipeline.module';
 import { ProductCategoryModule } from '../product-category/product-category.module';
@@ -168,7 +170,10 @@ import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { BillingModule } from '../shared/billing';
+import { createThrottlerStorage } from '../throttler/redis-throttler.storage';
 import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.guard';
+import { OfficialHolidayModule } from '../official-holiday/official-holiday.module';
+import { TimeOffBalanceModule } from '../time-off-balance/time-off-balance.module';
 import { TimeOffPolicyModule } from '../time-off-policy/time-off-policy.module';
 import { TimeOffRequestModule } from '../time-off-request/time-off-request.module';
 import { TimeTrackingModule } from '../time-tracking/time-tracking.module';
@@ -179,6 +184,7 @@ import { WarehouseModule } from '../warehouse/warehouse.module';
 import { AppBootstrapLogger } from './app-bootstrap-logger';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { describeUnleashConfig } from './unleash-config-log';
 
 const { unleashConfig } = environment;
 
@@ -203,7 +209,8 @@ if (unleashConfig.url) {
 		};
 	}
 
-	console.log(`Using Unleash Config: ${JSON.stringify(unleashInstanceConfig)}`);
+	// The Unleash API key travels in `customHeaders.Authorization` - never serialize the config as-is.
+	console.log(describeUnleashConfig(unleashInstanceConfig));
 
 	const instance = initializeUnleash(unleashInstanceConfig);
 
@@ -372,14 +379,24 @@ if (environment.THROTTLE_ENABLED) {
 		...(environment.THROTTLE_ENABLED
 			? [
 					ThrottlerModule.forRootAsync({
-						inject: [ConfigService],
-						useFactory: () => {
-							return [
-								{
-									ttl: environment.THROTTLE_TTL,
-									limit: environment.THROTTLE_LIMIT
-								}
-							];
+						imports: [RedisModule],
+						inject: [EVER_REDIS_CLIENT],
+						// Buckets live in Redis when one is configured, so the configured limit holds
+						// across every API replica instead of being multiplied by the replica count and
+						// reset by every rollout. Without Redis this resolves to `undefined` and the
+						// module keeps its own per-process store.
+						useFactory: (redisClient: ReturnType<typeof createRedisClient> | null) => {
+							const storage = createThrottlerStorage(redisClient);
+
+							return {
+								throttlers: [
+									{
+										ttl: environment.THROTTLE_TTL,
+										limit: environment.THROTTLE_LIMIT
+									}
+								],
+								...(storage ? { storage } : {})
+							};
 						}
 					})
 			  ]
@@ -439,6 +456,8 @@ if (environment.THROTTLE_ENABLED) {
 		CountryModule,
 		CurrencyModule,
 		InviteModule,
+		OfficialHolidayModule,
+		TimeOffBalanceModule,
 		TimeOffPolicyModule,
 		TimeOffRequestModule,
 		ApprovalPolicyModule,
@@ -457,6 +476,7 @@ if (environment.THROTTLE_ENABLED) {
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,
+		PayrollRunModule,
 		EstimateEmailModule,
 		GoalModule,
 		GoalTimeFrameModule,

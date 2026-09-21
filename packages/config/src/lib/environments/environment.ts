@@ -9,7 +9,9 @@ dotenv.config({ quiet: true });
 
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { IEnvironment, IGauzyFeatures } from './ienvironment';
-import { isFeatureEnabled } from './environment.helper';
+import { isEnvFlagEnabled, isFeatureEnabled, parseNonNegativeInt } from './environment.helper';
+import { resolveSocialAuthClients } from './social-auth.helper';
+import { resolveSecret } from './secret-resolver';
 
 if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
 	require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
@@ -27,19 +29,39 @@ export const environment: IEnvironment = {
 		LOG_LEVEL: 'debug'
 	},
 
-	EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET || 'gauzy',
+	/**
+	 * Token-signing and session secrets never fall back to a published literal, DEMO included: unset
+	 * means a random per-process value (and a refused boot in production). See resolveSecret()
+	 * (GHSA-39j7-x845-4w3c).
+	 *
+	 * They are GETTERS, so the value is resolved when it is first used rather than when this module
+	 * is imported. `apps/api/src/main.ts` calls `loadEnv()` (which reads `.env.local` and friends)
+	 * only AFTER its imports have run, so an eagerly resolved secret would be decided before those
+	 * files are loaded — this copy would generate a random value while a copy imported later saw the
+	 * configured one, and tokens signed by one would not verify in the other. With the published
+	 * literal that clash was invisible, because both copies ended up on the same literal.
+	 */
+	get EXPRESS_SESSION_SECRET(): string {
+		return resolveSecret('EXPRESS_SESSION_SECRET');
+	},
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
-	JWT_SECRET: process.env.JWT_SECRET || 'secretKey',
+	get JWT_SECRET(): string {
+		return resolveSecret('JWT_SECRET');
+	},
 	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
-	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
+	get JWT_REFRESH_TOKEN_SECRET(): string {
+		return resolveSecret('JWT_REFRESH_TOKEN_SECRET');
+	},
 	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options
 	 */
-	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
+	get JWT_VERIFICATION_TOKEN_SECRET(): string {
+		return resolveSecret('JWT_VERIFICATION_TOKEN_SECRET');
+	},
 	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
 
 	/**
@@ -61,6 +83,22 @@ export const environment: IEnvironment = {
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60 * 1000,
 	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 60000,
 	THROTTLE_ENABLED: process.env.THROTTLE_ENABLED == 'true',
+
+	/**
+	 * Honour Cloudflare's `CF-Connecting-IP` header when deriving the rate-limit bucket.
+	 *
+	 * MUST stay off unless every request provably transits Cloudflare before reaching this process:
+	 * the header is just a request header, so on any other deployment shape a client can set it to a
+	 * fresh value per request and never share a bucket with itself (GHSA-86mw-2crg-vmhc).
+	 * `CLOUDFLARE_PROXY_ENABLED` is accepted as an alias.
+	 */
+	THROTTLE_TRUST_CF_CONNECTING_IP: isEnvFlagEnabled('THROTTLE_TRUST_CF_CONNECTING_IP', 'CLOUDFLARE_PROXY_ENABLED'),
+
+	/**
+	 * Identifier-scoped brute-force control (0 disables it).
+	 */
+	AUTH_MAX_FAILED_ATTEMPTS: parseNonNegativeInt(process.env.AUTH_MAX_FAILED_ATTEMPTS, 10),
+	AUTH_LOCKOUT_SECONDS: parseNonNegativeInt(process.env.AUTH_LOCKOUT_SECONDS, 900),
 
 	/**
 	 * Jitsu Server Configuration
@@ -145,6 +183,12 @@ export const environment: IEnvironment = {
 		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
 		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`
 	},
+
+	/**
+	 * OAuth clients whose provider access tokens are accepted by the email-based social sign-in
+	 * routes. Defaults to Gauzy's own OAuth apps; see `resolveSocialAuthClients` (GHSA-58x4-7mw9-gmqg).
+	 */
+	socialAuth: resolveSocialAuthClients(),
 
 	jira: {
 		/** Jira Integration Configuration */

@@ -682,13 +682,20 @@ $default-box-shadow: $control-hairline;
 // that would add 8px to every tab bar in the app, and this pass is allowed to
 // change type sizes, not the boxes around them.
 @mixin nb-tabset-overrides() {
-  :root nb-route-tabset .route-tabset .route-tab a.tab-link.tab-link {
+  // Both families, one rule: an `nb-tabset` tab link used to take Nebular's own
+  // `display: flex` and nothing else, so its label sat wherever the box put it
+  // while a route tab's was centred in it.
+  :root nb-route-tabset .route-tabset .route-tab a.tab-link.tab-link,
+  :root nb-tabset .tabset .tab a.tab-link.tab-link {
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  :root nb-route-tabset .route-tabset .route-tab.route-tab a.tab-link.tab-link nb-icon + .tab-text {
+  // Nebular gives the label a 0.5rem inline margin of its own, which would be
+  // added to the 10px gap `includes/_tabset.scss` sets on the icon.
+  :root nb-route-tabset .route-tabset .route-tab.route-tab a.tab-link.tab-link nb-icon + .tab-text,
+  :root nb-tabset .tabset .tab.tab a.tab-link.tab-link nb-icon + .tab-text {
     margin-inline-start: 0;
   }
 

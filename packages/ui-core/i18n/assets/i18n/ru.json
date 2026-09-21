@@ -2005,6 +2005,7 @@
 		"EXPECTED": "Ожидается",
 		"UPDATES": "Обновления",
 		"UPDATE": "Обновить",
+		"ALIGNMENTS": "Выравнивания",
 		"COMMENTS": "Комментарии",
 		"KEY_RESULTS": "Ключевые результаты",
 		"GROUP_BY": "Группировать по",
@@ -2021,6 +2022,8 @@
 		"GOAL_TEMPLATES": "Шаблоны целей",
 		"CREATE_NEW_MENU": "Создать новый",
 		"CREATE_FROM_PRESET": "Создать из пресета",
+		"SELECT_A_PRESET": "Выберите пресет",
+		"ADDITIONAL_DETAILS": "Дополнительные сведения",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Сотрудники",
 			"TEAMS": "Команды",
@@ -2050,7 +2053,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Нет ключевых результатов для отображения.",
 			"NO_UPDATES": "Пока нет обновлений.",
-			"NO_ALIGNMENT": "Пока нет выравниваний."
+			"NO_ALIGNMENT": "Пока нет выравниваний.",
+			"NO_PROGRESS_DATA": "Пока нет данных о прогрессе для графика."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Организация",
@@ -2503,6 +2507,8 @@
 				"ACTIVITY_PROOF_DURATION": "Длительность проверки активности",
 				"ACTIVITY_PROOF_DURATION_INFO": "Длительность диалогового окна для проверки активности, оно отображает количество секунд, заданных для доказательства активности",
 				"ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Частота скриншотов",
 				"SCREENSHOT_FREQUENCY_INFO": "Укажите частоту обновления или временные интервалы синхронизации.",
 				"RANDOM_SCREENSHOT": "Случайный скриншот",
@@ -3420,6 +3426,9 @@
 		"BROWSE": "Обзор",
 		"COMMENT": "Комментарий",
 		"COMMENTS": "Комментарии",
+		"COMMENT_PLACEHOLDER": "Напишите комментарий…",
+		"NO_COMMENTS": "Комментариев пока нет",
+		"NO_COMMENTS_HINT": "Комментарии появляются здесь, начиная с новых.",
 		"HEADER": "Счета",
 		"INVOICE_NUMBER": "Номер счёта",
 		"ESTIMATE_NUMBER": "Расчетный номер",
@@ -4452,6 +4461,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Выберите клиента",
+			"SELECT_PROJECT": "Выберите проект",
+			"SELECT_TEAM": "Выберите команду",
+			"SELECT_TASK": "Выберите задачу",
+			"DESCRIPTION": "Добавьте описание"
+		},
 		"IS_BILLABLE": "Оплачивается",
 		"STOP_TIMER": "Остановить таймер",
 		"START_TIMER": "Запустить таймер",
@@ -4921,7 +4937,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Скриншот",
 			"OF": "из",
-			"TIME_LOG": "Журнал времени"
+			"TIME_LOG": "Журнал времени",
+			"TAKEN_AT": "Скриншот сделан в {{ time }}",
+			"POSITION": "Скриншот {{ position }} из {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Предупреждение. Таймер запущен, вы можете удалить только скриншоты, если вы остановите таймер или встроенный таймер",
 		"DELETE_CONFIRM": "Вы уверены, что хотите удалить эти скриншоты и журнал времени?",

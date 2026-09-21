@@ -1,5 +1,6 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-dialogs' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 // Row actions of the invoice-item grid. These were painted with literals: the
 // add/save pill as `#00d68f` and — the visible one — the cancel/delete pill as a
@@ -13,9 +14,26 @@
   transform: scale(0.9);
 }
 
+// `transform: scale(0.6)` shrank the anchor's PAINT but not its box, so each
+// action kept a full-size hit area and its glyph came out blurred and off-centre.
+// Sized as a real 1.5rem icon button instead — and the Font Awesome `<i>` inside
+// it has to be sized WITH the box: it inherits 28px from the grid's action cell,
+// which is what overflowed the chip when the scale came off.
 :host ::ng-deep angular2-smart-table .angular2-smart-actions a {
-  transform: scale(0.6);
-  border-radius: var(--border-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  margin: 0 0.125rem;
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  line-height: 1;
+
+  i {
+    font-size: 0.8125rem;
+    line-height: 1;
+  }
 }
 
 :host ::ng-deep angular2-smart-table .angular2-smart-actions a:nth-child(1) {
@@ -62,6 +80,10 @@
     border-radius: var(--border-radius);
     padding: 0.375rem 0.75rem;
     font-size: nb-theme(text-paragraph-font-size);
+    // Money, so the digits have to line up as the figures change: with the
+    // proportional default the whole chip reflows every time a quantity is
+    // edited in the grid above it.
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -73,26 +95,254 @@
   @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
 }
 
+// ── The title line ───────────────────────────────────────────────────────────
+// A bare `d-flex` aligned the back arrow and the heading on their box TOPS, and
+// the heading's own 0.5rem bottom margin then tipped it half a step below the
+// arrow beside it. Centring the row and dropping that margin is what
+// invoice-view's header already does; this puts Add / Edit on the same line.
+nb-card-header {
+  &.d-flex {
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  // invoice-edit wraps the arrow and the title in these (and hangs the Payments
+  // button off the outer one); invoice-add puts them straight in the header.
+  .card-header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  h4 {
+    margin-bottom: 0;
+  }
+}
+
+// ── The form body ────────────────────────────────────────────────────────────
+// Two columns: the record's own fields on the left, the Discount and Taxes
+// panels on the right.
 .form {
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 36px;
+  // The step down to the item grid belongs to that block (`.items` below), which
+  // is the only thing that ever follows the form. As a margin here it applied
+  // just as much when no grid had been generated yet, leaving 36px of nothing
+  // between the last field and the card footer.
+  margin-bottom: 0;
 
   .block-wrap {
     width: 100%;
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    // The columns were two 48% blocks pushed apart by `space-between` on a row
+    // that could not wrap, so the 4% between them shrank with the window and the
+    // fields inside kept squeezing with no floor. A wrapping row with a real gap
+    // and a basis wide enough for a pair of half-width controls puts them side
+    // by side while there is room for both and stacks them when there is not —
+    // the same behaviour with no breakpoint to keep in step with the grid.
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
     align-items: flex-start;
 
     .block {
-      width: 48%;
+      flex: 1 1 22rem;
+      // A flex item's `min-width` floor is its own content, so without this a
+      // long contact name or a wide select pushes its column past its share of
+      // the row instead of the control handling the overflow itself.
+      min-width: 0;
+      // Both columns start on the same line. The left one carries `mt-2` in the
+      // template and the right one carried nothing, so the first panel sat half
+      // a step above the first field beside it.
+      margin-top: 0.5rem;
     }
   }
+
+  // The Terms field. A bare `<textarea>` is two rows tall, which in a column of
+  // one-line controls reads as a slightly-too-tall input rather than somewhere
+  // to write a paragraph. Still draggable, but only on the axis that has room.
+  textarea[nbInput] {
+    min-height: 5rem;
+    resize: vertical;
+  }
+
+  // Every control in the form at the app's 2rem / 12px set — its labels were
+  // already 12px, while the fields under them stayed at Nebular's 2.375rem / 13px.
+  // Scoped to `.form`: the invoice-items grid below is a sibling (`.items`) and
+  // keeps the smaller inline editors its rows are built on.
+  input[nbInput],
+  textarea[nbInput] {
+    font-size: 12px;
+    line-height: 1rem;
+  }
+
+  input[nbInput] {
+    height: 2rem;
+    // `!important` against the shared `dialog()` mixin (`gauzy/_gauzy-dialogs`),
+    // which pins every input on the page to a 2.375rem `min-height` with
+    // `!important` of its own.
+    min-height: 2rem !important;
+    padding: 0 0.75rem;
+  }
+
+  ::ng-deep nb-select .select-button {
+    height: 2rem;
+    min-height: 2rem !important;
+    padding-block: 0;
+    padding-inline-start: 0.75rem !important;
+    font-size: 12px;
+    line-height: 1rem;
+  }
+
+  ::ng-deep .ng-select .ng-select-container {
+    min-height: 2rem !important;
+    font-size: 12px;
+  }
 }
+
+// ── The item-type selectors ──────────────────────────────────────────────────
+// Projects / Tasks / Products / Expenses on the Add form: `ng-select`s in
+// multiple mode, whose selected values are chips inside the trigger.
+//
+// The chips already wrapped — `flex-wrap: wrap` on `.ng-value-container` is
+// ng-select's own default — but nothing past the first line was ever visible:
+// `includes/_ng-select.scss` pins EVERY `.ng-select-container` in the app to
+// `height: 40px`, and ng-select's component sheet gives it `overflow: hidden`.
+// Between them, picking a fifth project made the four before it disappear.
+//
+// So let the trigger grow with its content, cap it at two rows of chips, and
+// scroll the VALUE box rather than the whole trigger — that keeps the clear
+// button and the arrow on their own axis while the chips move under them.
+//
+// SPECIFICITY: every selector below is spelled out to its full ng-select depth
+// on purpose. `@ng-select/ng-select/themes/default.theme.css` is listed after
+// `styles.scss` in the app's `styles` array, so its five-class rules win every
+// tie; naming the same chain plus this component's `:host` attribute is what
+// carries these past it without `!important`.
+
+// The chip's box, and the cap derived FROM it rather than pinned beside it: a
+// magic `max-height` next to the padding and line height that decide a chip's
+// real height is a pair that drifts the first time either side is retuned.
+$chip-line-height: 1.125rem;
+$chip-padding-y: 0.125rem;
+$chip-padding-x: 0.5rem;
+$chip-gap: 0.25rem;
+$value-box-padding-y: 0.25rem;
+// How many rows of chips the field shows before it starts scrolling.
+$visible-chip-rows: 2;
+$chip-height: $chip-line-height + $chip-padding-y * 2;
+
+:host ::ng-deep .item-selector.ng-select-multiple {
+  .ng-select-container {
+    height: auto;
+    // NO `align-items` here. It was `flex-start` — on the reasoning that an arrow
+    // centred against four rows of chips floats halfway down the field — and that
+    // was the wrong trade: the field is EMPTY or one line deep almost all of the
+    // time, and top-pinning threw the placeholder and the arrow off the trigger's
+    // centre in exactly that case. The arrow wrapper has no height of its own, so
+    // top-aligning it shrank it to its glyph instead of letting it stretch.
+    //
+    // Inheriting the shared `center` keeps one line perfectly centred and puts
+    // the arrow on the middle of a tall chip stack, which is what every
+    // component library does with a chips input.
+  }
+
+  .ng-select-container .ng-value-container {
+    flex-wrap: wrap;
+    // chip↔chip spacing, so the chips carry no margins of their own. The INLINE
+    // padding is left to the shared `ng-select-overrides()` block, which sets it
+    // `!important` so every trigger in the app starts its text on one x.
+    gap: $chip-gap;
+    // Symmetric, where ng-select's own theme pads this box `5px` at the top and
+    // nothing at the bottom — which is what tipped the chips above the trigger's
+    // centre line even before the wrapping was fixed.
+    padding-block: $value-box-padding-y;
+    // Two rows of chips and the gap between them, plus this box's own padding
+    // (`box-sizing: border-box` app-wide, so the padding is inside the cap).
+    // Anything past that scrolls.
+    max-height: $visible-chip-rows * $chip-height + ($visible-chip-rows - 1) * $chip-gap +
+      $value-box-padding-y * 2;
+    overflow-y: auto;
+
+    // The app's scrollbar — the same one the dropdown panels and card bodies use.
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: nb-theme(scrollbar-width);
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--gauzy-scrollbar);
+      border-radius: 1rem;
+    }
+  }
+
+  // The typing area. ng-select pads it `0 0 3px 3px`, i.e. 3px along the bottom
+  // and none along the top — so it is the tallest thing on the line and every
+  // chip beside it sits that much above the line's centre. The chip↔chip `gap`
+  // above is what separates the caret from the chips now, so the block half of
+  // that padding has nothing left to do; the inline 3px stays.
+  .ng-select-container .ng-value-container .ng-input {
+    padding-block: 0;
+  }
+
+  // One chip. ng-select's theme paints it `#333` on a pale blue with a 2px
+  // corner — light-mode literals, so in the four dark themes the chips were a
+  // foreign pale-blue block with near-black text on them. A neutral tint, the
+  // shared small radius and the same hairline every other small box on this page
+  // carries, all of which resolve per theme.
+  .ng-select-container .ng-value-container .ng-value {
+    // `margin: 0` because the row's spacing is the container's `gap` now.
+    // ng-select's own theme puts `margin-bottom: 5px` on every chip, which on a
+    // wrapped row is 5px of dead space under the LAST line as well — the other
+    // half of why the chips never sat on the centre line.
+    margin: 0;
+    padding: $chip-padding-y $chip-padding-x;
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    box-shadow: $action-hairline;
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    color: var(--gauzy-text-color-1);
+    font-size: nb-theme(text-caption-font-size);
+    // Pinned, not left to `normal`: the chip is what sets the height of its row,
+    // so an unresolved line box would make the row's height depend on the font
+    // that happened to load — and the two-row cap above is derived from it.
+    line-height: $chip-line-height;
+    // The chip is a flex item and a block box; centre its own text in it so a
+    // chip and the typing caret beside it share one centre line.
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+  }
+
+  // The chip's label comes from this form's own `ng-label-tmp`, which wraps the
+  // name in a `.selector-template`. A long project name ellipsizes inside the
+  // chip instead of pushing it past the edge of the field.
+  .ng-select-container .ng-value-container .ng-value .selector-template {
+    display: block;
+    // The chip above is a flex box, and a flex item will not shrink below its own
+    // content unless it is told it may — without this `text-overflow` never
+    // engages and a long project name widens the chip instead of picking up an
+    // ellipsis.
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// The generated item grid, its pager and the totals — one block, stepped away
+// from the form above it.
+.items {
+  margin-top: 1.5rem;
+}
+
 .footer-block-wrap {
   width: 100%;
   display: flex;
@@ -109,18 +359,54 @@
   width: 98%;
 }
 
+// ── The Discount and Taxes panels ────────────────────────────────────────────
+// Each one is a Bootstrap `.row` as well as a `.group`, and a `.row` bleeds 15px
+// past its container on both sides with negative margins — so the panel was
+// drawn wider than the column it belongs to, hanging into the gutter between the
+// two columns on one side and off the block on the other. The asymmetric
+// `9px 18px 2px 12px` padding was what that bleed had been tuned against.
+//
+// Zero the bleed, pad the panel evenly, and give it the radius and the hairline
+// every other surface on the page already carries. The fill stays where the
+// page's other surfaces are painted, on `.content .row.group` below.
 .group {
-  border-radius: 0.6rem;
-  margin-bottom: 20px;
-  padding: 9px 18px 2px 12px;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  box-shadow: $action-hairline;
 
   .label-group {
-    font-size: 14px;
+    display: block;
+    width: 100%;
+    // A section title, not a field label: one step above the 0.75rem that
+    // `input-appearance` gives every `.label`, and in the primary text colour
+    // rather than the muted one the fields under it use. It was pinned at 14px,
+    // so it did not follow the root font size either.
+    font-size: nb-theme(text-subtitle-2-font-size);
     font-weight: 600;
-    line-height: 17px;
+    line-height: 1.25;
     letter-spacing: -0.01em;
     text-align: left;
-    margin-bottom: 18px;
+    color: var(--gauzy-text-color-1);
+    margin-bottom: 0.75rem;
+  }
+
+  // The `.row`s INSIDE the panel bleed the same 15px, which put the first field
+  // flush against the panel's padding edge and the second one past it. A 0.5rem
+  // gutter keeps a pair of half-width fields inside the panel with a real gap
+  // between them.
+  > .row {
+    margin-inline: -0.5rem;
+
+    > [class*='col-'] {
+      padding-inline: 0.5rem;
+    }
+  }
+
+  // The panel's own bottom padding is the space under its last row of fields, so
+  // the field's `.form-group` margin would otherwise double it.
+  > .row:last-child > [class*='col-'] > .form-group:last-child {
+    margin-bottom: 0;
   }
 }
 
@@ -129,15 +415,40 @@
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
+  // Was an `ml-3` utility on the second button. A gap spaces however many
+  // buttons the selected invoice type puts on the line, and lets them wrap
+  // rather than overflow the column.
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
+// Was `20px -1rem`: a negative inline margin that pulled the checkbox out past
+// both edges of its column, so it lined up with neither the panels above it nor
+// the fields inside them.
 .discountCheckbox {
-  margin: 20px -1rem;
+  margin: 0 0 1rem;
 }
 
 nb-card {
   background-color: var(--gauzy-card-2);
 }
+
+// The action row under the card body. Its buttons spaced themselves with `mr-3`,
+// a Bootstrap utility — so the spacing was `!important`, it had to be repeated
+// on every button, and the last one left a trailing 1rem inside the footer. One
+// flex line with a gap says it once; the cancel below is for invoice-edit, whose
+// template still carries the utility.
+nb-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+
+  [nbButton] {
+    margin-right: 0 !important;
+  }
+}
+
 div.button-action {
   background-color: var(--gauzy-card-2);
   padding: 6px 8px;
@@ -152,8 +463,14 @@ div.button-action {
   .custom-table {
     display: flex;
     flex-direction: column;
-    background-color: var(--gauzy-card-2);
-    padding: 12px;
+    // `gauzy-card-1`, not `-2`: this element also carries
+    // `.table-scroll-container`, which `list-page()` at the bottom of this file
+    // paints with the shared table `surface()` — card-1, a hairline and a radius.
+    // Painting it card-2 here left that ring and radius drawn around a block the
+    // exact colour of the card body behind it, so the item grid read as a line
+    // on the page rather than as the bounded table surface every list page has.
+    background-color: var(--gauzy-card-1);
+    padding: 0.75rem;
 	.table {
 		margin: 0;
 	}
@@ -173,17 +490,43 @@ div.button-action {
   margin-top: 1rem;
 }
 
+// Save as draft: the neutral step between the outline Cancel and the two success
+// buttons beside it, painted with the grey `_gauzy-dialogs` already shares with
+// the rest of the app rather than with a literal repeated here.
+//
+// The block this replaces set the fill on the button but hung its hover state
+// off a `[nbButton]` DESCENDANT of it — markup that does not exist — so the
+// button stayed flat under the pointer while every other button in the row
+// responded.
 :host button.gray {
-  background-color: rgba(126, 126, 143, 1);
-  color: nb-theme(text-control-color);
-  border-color: var(--button-filled-basic-border-color);
-  [nbButton].appearance-filled.status-basic {
-    background-color: nb-theme(button-filled-basic-background-color);
-    border-color: nb-theme(button-filled-basic-border-color);
-    color: nb-theme(button-filled-basic-text-color);
-    :hover {
-      color: nb-theme(text-basic-color);
-      background-color: rgba($color: rgba(126, 126, 143), $alpha: 0.1);
+  &[nbButton].appearance-filled {
+    background-color: $gray;
+    border-color: $gray;
+    color: nb-theme(text-control-color);
+
+    &:hover:not([disabled]) {
+      background-color: rgba($color: $gray, $alpha: 0.85);
+      border-color: rgba($color: $gray, $alpha: 0.85);
+    }
+
+    &:focus:not(:hover):not(:active) {
+      box-shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $gray, $alpha: 0.2);
     }
   }
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The invoice-items grid, brought onto the same footing as the Invoices list
+// this form is opened from: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills and the pager. Emitted
+// into invoice-add's sheet too, through the `@forward` at the top of that file —
+// Add and Edit render the same grid.
+//
+// The density tokens only reach cell type and padding and the FILTER row's
+// controls (see `--gauzy-table-control-height` in `_overrides.scss`); the inline
+// row editors this grid is built on keep their own control sizing.
+//
+// `$actions: null`: there is no page-header action row here. This form's buttons
+// are full-size `nb-card-header` form actions (Save, Send, …), not the compact
+// list toolbar the mixin's button block is written for.
+@include ga-hub.list-page(null);

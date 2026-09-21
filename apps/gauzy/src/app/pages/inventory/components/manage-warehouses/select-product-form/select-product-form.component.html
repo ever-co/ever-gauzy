@@ -15,11 +15,13 @@
         (userRowSelect)="onUserRowSelect($event)"
       ></angular2-smart-table>
     </div>
-    @if (smartTableSource) {
-      <ngx-pagination
-        [source]="smartTableSource"
-      ></ngx-pagination>
-    }
+    <div class="pagination-container">
+      @if (smartTableSource) {
+        <ngx-pagination
+          [source]="smartTableSource"
+        ></ngx-pagination>
+      }
+    </div>
   </nb-card-body>
   <nb-card-footer>
     <button

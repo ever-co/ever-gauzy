@@ -1,3 +1,5 @@
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
 .featured-image {
   width: 100%;
 }
@@ -99,5 +101,26 @@ img.featured-image {
 
   nb-card-body {
     border-radius: 0 0 var(--border-radius) var(--border-radius);
+  }
+}
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The variants table on the item view is the same surface as the inventory list
+// it hangs off, so it takes the same density tokens, table surface and row
+// hover/selection. There is no pager and no action row here, but the block is
+// the whole contract and splitting it per page is how the list pages drifted
+// apart in the first place.
+@include ga-hub.list-page(null);
+
+// The Image column is `ImageRowComponent` (74x60), which keeps its size and its
+// padding; the Enabled column is `EnabledStatusComponent`, whose `.badge-success`
+// was painted only by `bootstrap.css` — a saturated fill with white text at 2.9:1.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  @include ga-hub.thumbnail-row-padding();
+  @include ga-hub.status-badge-tints();
+
+  .badge-disabled {
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+    background-color: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
   }
 }

@@ -1956,6 +1956,7 @@
 		"EXPECTED": "Verwacht",
 		"UPDATES": "Updates",
 		"UPDATE": "Bijwerken",
+		"ALIGNMENTS": "Uitlijningen",
 		"COMMENTS": "Reacties",
 		"KEY_RESULTS": "Belangrijkste Resultaten",
 		"GROUP_BY": "Groeperen op",
@@ -1972,6 +1973,8 @@
 		"GOAL_TEMPLATES": "Doelsjablonen",
 		"CREATE_NEW_MENU": "Maak nieuw",
 		"CREATE_FROM_PRESET": "Maken vanuit voorinstelling",
+		"SELECT_A_PRESET": "Selecteer een voorinstelling",
+		"ADDITIONAL_DETAILS": "Aanvullende gegevens",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Werknemers",
 			"TEAMS": "Teams",
@@ -2001,7 +2004,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Geen sleutelresultaten om weer te geven.",
 			"NO_UPDATES": "Nog geen updates.",
-			"NO_ALIGNMENT": "Nog geen uitlijningen."
+			"NO_ALIGNMENT": "Nog geen uitlijningen.",
+			"NO_PROGRESS_DATA": "Nog geen voortgangsgegevens om weer te geven."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organisatie",
@@ -2457,6 +2461,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Duur van de activiteitsbewijs countdown dialoog, het vertegenwoordigt een aantal minuten dat wordt gegeven om de activiteit te bewijzen.",
 				"ENABLE_DETECTION_INACTIVITY": "Mogelijkheid inschakelen om inactiviteit van werknemer te detecteren",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Ingeschakeld - het systeem detecteert inactiviteit en geeft een waarschuwing weer. Uitgeschakeld - er wordt geen waarschuwing weergegeven wanneer een werknemer inactief is.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Frequentie van schermafbeeldingen",
 				"SCREENSHOT_FREQUENCY_INFO": "Specificeer de updatefrequentie of tijdsinterval synchronisatie.",
 				"RANDOM_SCREENSHOT": "Willekeurige schermafbeelding",
@@ -3391,6 +3397,9 @@
 		"BROWSE": "Bladeren",
 		"COMMENT": "Opmerking",
 		"COMMENTS": "Reacties",
+		"COMMENT_PLACEHOLDER": "Schrijf een opmerking…",
+		"NO_COMMENTS": "Nog geen opmerkingen",
+		"NO_COMMENTS_HINT": "Opmerkingen verschijnen hier, de nieuwste eerst.",
 		"HEADER": "Facturen",
 		"INVOICE_NUMBER": "Factuurnummer",
 		"ESTIMATE_NUMBER": "Schattingnummer",
@@ -4433,6 +4442,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Selecteer klant",
+			"SELECT_PROJECT": "Selecteer project",
+			"SELECT_TEAM": "Selecteer team",
+			"SELECT_TASK": "Selecteer taak",
+			"DESCRIPTION": "Voeg een beschrijving toe"
+		},
 		"IS_BILLABLE": "Is factureerbaar",
 		"STOP_TIMER": "Stop Timer",
 		"START_TIMER": "Start Timer",
@@ -4902,7 +4918,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Screenshots",
 			"OF": "van",
-			"TIME_LOG": "Tijdregistratie"
+			"TIME_LOG": "Tijdregistratie",
+			"TAKEN_AT": "Screenshot gemaakt om {{ time }}",
+			"POSITION": "Screenshot {{ position }} van {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Waarschuwing. De timer loopt, je kunt alleen schermafbeeldingen verwijderen als je de timer stopt of de Inside Timer-app gebruikt.",
 		"DELETE_CONFIRM": "Weet u zeker dat u deze screenshots en tijdsregistratie wilt verwijderen?",

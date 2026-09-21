@@ -41,7 +41,7 @@ export class UniqueTenantStripeCustomer1790000009000 implements MigrationInterfa
 		// Trading a hypothetical for a possible outage is a bad deal, so the collision is resolved
 		// rather than hit.
 		//
-		// The oldest row keeps the customer and the others are set back to NULL. That is the safe
+		// The row with the smallest id keeps the customer and the others are set back to NULL. That is the safe
 		// direction: a tenant with no link simply shows no billing and can be relinked, whereas leaving
 		// two tenants pointed at one customer is the exact state this index exists to forbid. Anything
 		// cleared is logged loudly, because it means two tenants were sharing a billing account and
@@ -87,21 +87,25 @@ export class UniqueTenantStripeCustomer1790000009000 implements MigrationInterfa
 		}
 	}
 
-	/** Tenant ids that would violate the unique index, oldest row per customer excluded. */
+	/** Tenant ids that would violate the unique index, smallest id per customer excluded. */
 	private async findDuplicates(queryRunner: QueryRunner, type: DatabaseTypeEnum): Promise<string[]> {
+		// PostgreSQL can order UUIDs but has no MIN(uuid); aggregate their canonical text,
+		// then cast back so the outer predicate still compares UUIDs to UUIDs.
+		const minId = type === DatabaseTypeEnum.postgres ? 'MIN("id"::text)::uuid' : 'MIN("id")';
 		const q =
 			type === DatabaseTypeEnum.mysql
 				? 'SELECT `id` FROM `tenant` WHERE `stripeCustomerId` IS NOT NULL AND `id` NOT IN (SELECT id FROM (SELECT MIN(`id`) AS id FROM `tenant` WHERE `stripeCustomerId` IS NOT NULL GROUP BY `stripeCustomerId`) keep)'
-				: `SELECT "id" FROM "tenant" WHERE "stripeCustomerId" IS NOT NULL AND "id" NOT IN (SELECT MIN("id") FROM "tenant" WHERE "stripeCustomerId" IS NOT NULL GROUP BY "stripeCustomerId")`;
+				: `SELECT "id" FROM "tenant" WHERE "stripeCustomerId" IS NOT NULL AND "id" NOT IN (SELECT ${minId} FROM "tenant" WHERE "stripeCustomerId" IS NOT NULL GROUP BY "stripeCustomerId")`;
 		const rows: Array<{ id: string }> = await queryRunner.query(q);
 		return (rows ?? []).map((r) => r.id);
 	}
 
 	/** Sets those same rows back to NULL. Same predicate, so the two cannot drift apart. */
 	private clearDuplicatesSql(type: DatabaseTypeEnum): string {
+		const minId = type === DatabaseTypeEnum.postgres ? 'MIN("id"::text)::uuid' : 'MIN("id")';
 		return type === DatabaseTypeEnum.mysql
 			? 'UPDATE `tenant` SET `stripeCustomerId` = NULL WHERE `stripeCustomerId` IS NOT NULL AND `id` NOT IN (SELECT id FROM (SELECT MIN(`id`) AS id FROM `tenant` WHERE `stripeCustomerId` IS NOT NULL GROUP BY `stripeCustomerId`) keep)'
-			: `UPDATE "tenant" SET "stripeCustomerId" = NULL WHERE "stripeCustomerId" IS NOT NULL AND "id" NOT IN (SELECT MIN("id") FROM "tenant" WHERE "stripeCustomerId" IS NOT NULL GROUP BY "stripeCustomerId")`;
+			: `UPDATE "tenant" SET "stripeCustomerId" = NULL WHERE "stripeCustomerId" IS NOT NULL AND "id" NOT IN (SELECT ${minId} FROM "tenant" WHERE "stripeCustomerId" IS NOT NULL GROUP BY "stripeCustomerId")`;
 	}
 
 	public async down(queryRunner: QueryRunner): Promise<void> {
@@ -114,13 +118,17 @@ export class UniqueTenantStripeCustomer1790000009000 implements MigrationInterfa
 		switch (type) {
 			case DatabaseTypeEnum.postgres:
 				await queryRunner.query(`DROP INDEX "IDX_tenant_stripe_customer_id"`);
-				await queryRunner.query(`CREATE INDEX "IDX_tenant_stripe_customer_id" ON "tenant" ("stripeCustomerId")`);
+				await queryRunner.query(
+					`CREATE INDEX "IDX_tenant_stripe_customer_id" ON "tenant" ("stripeCustomerId")`
+				);
 				break;
 
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				await queryRunner.query(`DROP INDEX "IDX_tenant_stripe_customer_id"`);
-				await queryRunner.query(`CREATE INDEX "IDX_tenant_stripe_customer_id" ON "tenant" ("stripeCustomerId")`);
+				await queryRunner.query(
+					`CREATE INDEX "IDX_tenant_stripe_customer_id" ON "tenant" ("stripeCustomerId")`
+				);
 				break;
 
 			case DatabaseTypeEnum.mysql:

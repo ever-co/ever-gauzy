@@ -1955,6 +1955,7 @@
 		"EXPECTED": "متوقع",
 		"UPDATES": "التحديثات",
 		"UPDATE": "تحديث",
+		"ALIGNMENTS": "الاستقامات",
 		"COMMENTS": "تعليقات",
 		"KEY_RESULTS": "نتائج رئيسية",
 		"GROUP_BY": "تجميع حسب",
@@ -1971,6 +1972,8 @@
 		"GOAL_TEMPLATES": "قوالب الأهداف",
 		"CREATE_NEW_MENU": "إنشاء جديد",
 		"CREATE_FROM_PRESET": "إنشاء من الضبط المسبق",
+		"SELECT_A_PRESET": "اختر ضبطًا مسبقًا",
+		"ADDITIONAL_DETAILS": "تفاصيل إضافية",
 		"OWNERSHIP": {
 			"EMPLOYEES": "الموظفون",
 			"TEAMS": "الفِرَق",
@@ -2000,7 +2003,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "لا توجد نتائج مفتاحية لعرضها.",
 			"NO_UPDATES": "لا توجد تحديثات حتى الآن.",
-			"NO_ALIGNMENT": "لا توجد استقامات حتى الآن."
+			"NO_ALIGNMENT": "لا توجد استقامات حتى الآن.",
+			"NO_PROGRESS_DATA": "لا توجد بيانات تقدّم لرسمها بعد."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "المنظمة",
@@ -2459,6 +2463,8 @@
 				"DELETE_IDLE_TIME_INFO": "تفعيل - ستقوم النظام بحذف الوقت الخامل.\nتعطيل - لن يقوم النظام بحذف الوقت الخامل.",
 				"ALLOW_SCREEN_CAPTURE": "السماح بالتقاط الشاشة",
 				"ALLOW_SCREEN_CAPTURE_INFO": "تمكين - سيقوم المؤقت بأخذ لقطة للشاشة. تعطيل - سيعمل المؤقت دون أخذ لقطة للشاشة لجميع أعضاء المنظمة.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "السماح للموظفين برؤية بياناتهم المتعقبة",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "تمكين - يمكن للموظفين رؤية لقطات الشاشة والنشاط وسجل التطبيقات/الروابط وسجلات الوقت الخاصة بهم.",
 				"SCREENSHOT_FREQUENCY": "تردد التقاط الشاشة",
 				"SCREENSHOT_FREQUENCY_INFO": "حدد تردد التحديث أو فواصل الزمن للتزامن.",
 				"RANDOM_SCREENSHOT": "لقطة شاشة عشوائية",
@@ -3376,6 +3382,9 @@
 		"BROWSE": "تصفح",
 		"COMMENT": "تعليق",
 		"COMMENTS": "تعليقات",
+		"COMMENT_PLACEHOLDER": "اكتب تعليقًا…",
+		"NO_COMMENTS": "لا توجد تعليقات بعد",
+		"NO_COMMENTS_HINT": "تظهر التعليقات هنا، الأحدث أولاً.",
 		"HEADER": "الفواتير",
 		"INVOICE_NUMBER": "رقم الفاتورة",
 		"ESTIMATE_NUMBER": "رقم التقدير",
@@ -4418,6 +4427,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "اختر العميل",
+			"SELECT_PROJECT": "اختر المشروع",
+			"SELECT_TEAM": "اختر الفريق",
+			"SELECT_TASK": "اختر المهمة",
+			"DESCRIPTION": "أضف وصفًا"
+		},
 		"IS_BILLABLE": "هل يمكن تفريض رسوم؟",
 		"STOP_TIMER": "أوقف المؤقت",
 		"START_TIMER": "بدء المؤقت",
@@ -4887,7 +4903,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "لقطات الشاشة",
 			"OF": "من",
-			"TIME_LOG": "سجل الوقت"
+			"TIME_LOG": "سجل الوقت",
+			"TAKEN_AT": "لقطة شاشة التُقطت في {{ time }}",
+			"POSITION": "لقطة الشاشة {{ position }} من {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "تحذير. المؤقت يعمل، يمكنك إزالة اللقطات فقط إذا توقف المؤقت أو من داخل تطبيق المؤقت.",
 		"DELETE_CONFIRM": "هل أنت متأكد من حذف هذه اللقطات وسجل الوقت؟",

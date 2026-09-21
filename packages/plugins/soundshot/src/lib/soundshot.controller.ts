@@ -8,6 +8,7 @@ import {
 	FindOptionsQueryDTO,
 	LazyFileInterceptor,
 	shouldScanForMarkup,
+	EmployeeTrackedDataGuard,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -95,6 +96,7 @@ export class SoundshotController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get()
 	public async list(@Query() params: GetSoundshotsQueryDTO): Promise<IPagination<ISoundshot>> {
 		return this.queryBus.execute(new GetSoundshotsQuery(params));
@@ -200,6 +202,7 @@ export class SoundshotController {
 		status: HttpStatus.INTERNAL_SERVER_ERROR,
 		description: 'An error occurred while retrieving the soundshot count.'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('count')
 	@UseValidationPipe({
 		whitelist: true,
@@ -227,6 +230,7 @@ export class SoundshotController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get(':id')
 	public async findById(
 		@Param('id', UUIDValidationPipe) id: ID,

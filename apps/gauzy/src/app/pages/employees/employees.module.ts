@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import {
 	NbAccordionModule,
 	NbActionsModule,
-	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
@@ -110,7 +109,6 @@ const COMPONENTS = [
 		RichTextEditorModule,
 		NbAccordionModule,
 		NbActionsModule,
-		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
 		NbCheckboxModule,

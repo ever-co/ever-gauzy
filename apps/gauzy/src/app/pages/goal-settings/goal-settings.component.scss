@@ -1,5 +1,6 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/tabset-actions' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 :host {
   nb-tabset {
@@ -45,20 +46,177 @@
   }
 }
 
-.card-general {
-  // Same story as `--gauzy-card-2` above: `--gauzy-card-3` is not defined in
-  // material-light / material-dark, so without a fallback the General tab's
-  // settings panel lost its background entirely there.
-  background: var(--gauzy-card-3, rgba(126, 126, 143, 0.05));
-  border-radius: nb-theme(border-radius);
+// The General tab's form. Every control is the 2rem / 12px set the rest of the
+// app's forms use, laid out on one two-column grid so the pairs share their edges,
+// with a hairline between the three groups. Fallbacks on every custom property:
+// `--gauzy-*` is undefined in material-light / material-dark.
+$settings-divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+$control-height: 2rem;
+$control-font-size: 12px;
+$control-padding-x: 0.75rem;
+$control-column: 14rem;
+
+:host .settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  // The rows below answer to the panel's width, which the sidebar narrows as
+  // much as the window does.
+  container-type: inline-size;
+
+  .settings-group {
+    display: flex;
+    flex-direction: column;
+
+    & + .settings-group {
+      padding-top: 1.25rem;
+      border-top: $settings-divider;
+    }
+  }
+
+  .settings-title {
+    margin: 0 0 0.25rem;
+    font-size: $control-font-size;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  // Label, then the control column every row shares, then the rest of the panel:
+  // the row runs the panel's full width, so the hairline between two rows does
+  // too, while the control stays a readable distance from the label that names it.
+  .settings-row {
+    display: grid;
+    grid-template-columns: minmax(0, 22rem) $control-column minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+    // One height for every row, whatever sits in it: a 2rem input, a 2rem select
+    // and a toggle all leave the row the same size.
+    min-height: 2.75rem;
+    padding: 0.375rem 0;
+
+    & + .settings-row {
+      border-top: $settings-divider;
+    }
+  }
+
+  .settings-label {
+    margin: 0;
+    font-size: $control-font-size;
+    font-weight: 400;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  // Controls start on the column's leading edge, whatever their own width.
+  .settings-control {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  input[nbInput] {
+    height: $control-height;
+    // A global `input { min-height: … }` (≈2.375rem) beats a plain `height`.
+    min-height: $control-height;
+    width: 6rem;
+    padding: 0 $control-padding-x;
+    font-size: $control-font-size;
+    line-height: 1rem;
+  }
+
+  ::ng-deep nb-select {
+    width: 100%;
+  }
+
+  // `!important` against the dialog/select theme's own `min-height` and inline
+  // start padding, which out-rank anything reachable from here.
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button {
+    height: $control-height;
+    min-height: $control-height !important;
+    padding-block: 0;
+    padding-inline-start: $control-padding-x !important;
+    font-size: $control-font-size;
+    line-height: 1rem;
+  }
+}
+
+// On a narrow panel the fixed control column would squeeze the label towards
+// nothing, so the label goes over its control; the control keeps the width the
+// column gave it.
+@container (max-width: 32rem) {
+  :host .settings-form {
+    .settings-row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.5rem;
+    }
+
+    .settings-control {
+      max-width: $control-column;
+    }
+  }
+}
+
+// The settings panel is the General tab's surface, and it is the same surface the
+// other two tabs put their table on — `surface()`, the shared block's own mixin —
+// so the three tabs present one rectangle in one place instead of the panel's own
+// lighter `--gauzy-card-3` fill inside a card of a different colour.
+:host .card-general {
+  @include ga-hub.surface();
+  padding: 1rem;
+  // Named from `:host` to out-rank this file's own `nb-card-body` rule, which
+  // rounds the bottom corners only — right for a card body that ends a card, but
+  // this one is a free-standing panel.
+  border-radius: var(--border-radius, 0.5rem);
+}
+
+// The panel supplies the surface; the card around it would only paint a second,
+// differently coloured one behind it.
+:host .card-general-container nb-card {
+  background: transparent;
+  box-shadow: none;
+  margin: 0;
 }
 
 :host .card-general-container {
-  @include nb-ltr(padding, 0 0.5rem 0 0);
-  @include nb-rtl(padding, 0 0 0 0.5rem);
+  // No inline gutter: the table tabs' scroll container takes the tab's full
+  // content width, and the panel has to start and end on those same two lines.
+  padding: 0;
   overflow: auto;
   height: 100%;
 }
 :host .gauzy-button-container {
   @include tabset-action-row(1rem);
+}
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The same block Invoices carries: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills, the pager and the
+// toolbar scale. One `#tableLayout` template serves all three record tabs (time
+// frames, KPIs, goal general settings), so the block reaches every one of them.
+//
+// `$actions` is the toolbar, not `nb-card-header`: this page's header holds only
+// the title, and the action row rides the tab strip inside the card BODY (see
+// `tabset-action-row()` above).
+@include ga-hub.list-page('.gauzy-button-container');
+
+// Roomier rows on the Set Time Frame and KPI tables. The shared block's own
+// density token, set after its `list-page()` include (same `:host` specificity,
+// so source order decides), which reaches every cell in both tabs' one shared
+// table template.
+// The status pill in the read-only View drawer. `ga-status-badge` is built for a
+// smart-table cell, where `width: 100%` is what keeps a status column even; in a
+// drawer's value cell that stretched a one-word status across the whole column.
+:host ::ng-deep ngx-record-view .record-value ga-status-badge {
+  display: inline-flex;
+
+  > div {
+    width: auto;
+  }
+}
+
+:host {
+  --gauzy-table-cell-padding-y: 0.7rem;
+  // The tab labels at the page's own 12px, down from Nebular's 14px.
+  --tabset-tab-text-font-size: 12px;
 }

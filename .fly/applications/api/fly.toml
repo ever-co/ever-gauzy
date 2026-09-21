@@ -24,9 +24,11 @@ primary_region = "lax"
   SENTRY_POSTGRES_TRACKING_ENABLED="false"
   API_BASE_URL="https://ever-gauzy-api.fly.dev"
   CLIENT_BASE_URL="https://ever-gauzy-webapp.fly.dev"
-  EXPRESS_SESSION_SECRET="gauzy"
-  JWT_SECRET="secretKey"
-  JWT_REFRESH_TOKEN_SECRET="refreshSecretKey"
+  # Signing/session secrets are NOT set here: a value in this file is public (GHSA-39j7-x845-4w3c).
+  # Provide them as Fly secrets, e.g.
+  #   fly secrets set JWT_SECRET=... JWT_REFRESH_TOKEN_SECRET=... JWT_VERIFICATION_TOKEN_SECRET=... EXPRESS_SESSION_SECRET=...
+  # with each value from `openssl rand -hex 64`. Until they are set, this DEMO=true app still falls
+  # back to the published defaults in code (held, see resolveSecret in @gauzy/config).
   JWT_REFRESH_TOKEN_EXPIRATION_TIME="86400"
 
 [http_service]

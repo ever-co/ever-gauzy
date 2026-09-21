@@ -47,7 +47,7 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 	})
 	@Get('/sign/:id')
 	async signAppointment(@Param('id', UUIDValidationPipe) id: ID): Promise<string> {
-		return this.employeeAppointmentService.signAppointmentId(id);
+		return await this.employeeAppointmentService.signAppointmentId(id);
 	}
 
 	/**
@@ -68,8 +68,8 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 	})
 	@Get('/decode/:token')
 	async decodeToken(@Param('token') token: string): Promise<string> {
-		const decoded = this.employeeAppointmentService.decodeSignToken(token);
-		return decoded['appointmentId'];
+		// Verified, not merely decoded: the id used to come from an unsigned `jwt.decode`.
+		return await this.employeeAppointmentService.decodeSignToken(token);
 	}
 
 	/**

@@ -1998,6 +1998,7 @@
 		"EXPECTED": "Expected",
 		"UPDATES": "Updates",
 		"UPDATE": "Update",
+		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
@@ -2014,6 +2015,8 @@
 		"GOAL_TEMPLATES": "Goal Templates",
 		"CREATE_NEW_MENU": "Create New",
 		"CREATE_FROM_PRESET": "Create from Preset",
+		"SELECT_A_PRESET": "Select a Preset",
+		"ADDITIONAL_DETAILS": "Additional Details",
 		"OWNERSHIP": {
 			"EMPLOYEES": "עובדים",
 			"TEAMS": "Teams",
@@ -2043,7 +2046,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
-			"NO_ALIGNMENT": "No Alignments yet."
+			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organization",
@@ -2496,6 +2500,8 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
 				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "תדירות צילומי מסך",
 				"SCREENSHOT_FREQUENCY_INFO": "ציין את תדירות העדכון או המרווחים הזמניים לסנכרון.",
 				"RANDOM_SCREENSHOT": "צילום מסך אקראי",
@@ -3414,6 +3420,9 @@
 		"BROWSE": "Browse",
 		"COMMENT": "Comment",
 		"COMMENTS": "Comments",
+		"COMMENT_PLACEHOLDER": "כתבו תגובה…",
+		"NO_COMMENTS": "אין עדיין תגובות",
+		"NO_COMMENTS_HINT": "תגובות יופיעו כאן, החדשות ביותר תחילה.",
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
 		"ESTIMATE_NUMBER": "Estimate Number",
@@ -4446,6 +4455,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "בחר לקוח",
+			"SELECT_PROJECT": "בחר פרויקט",
+			"SELECT_TEAM": "בחר קבוצה",
+			"SELECT_TASK": "בחר משימה",
+			"DESCRIPTION": "הוסף תיאור"
+		},
 		"IS_BILLABLE": "ניתן לחיוב",
 		"STOP_TIMER": "עצור טיימר",
 		"START_TIMER": "התחל טיימר",
@@ -4915,7 +4931,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "תמונות מסך",
 			"OF": "של",
-			"TIME_LOG": "רשומת זמן"
+			"TIME_LOG": "רשומת זמן",
+			"TAKEN_AT": "צילום מסך שצולם ב-{{ time }}",
+			"POSITION": "צילום מסך {{ position }} מתוך {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "אזהרה. טיימר פועל, אתה יכול להסיר רק תמונות מסך אם תעצור את הטיימר או באמצעות אפליקציית Inside Timer",
 		"DELETE_CONFIRM": "האם אתה בטוח שברצונך למחוק את התמונות האלה ואת רשומת הזמן?",

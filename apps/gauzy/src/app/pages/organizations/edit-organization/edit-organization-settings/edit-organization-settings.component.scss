@@ -1,122 +1,126 @@
 @use 'var' as *;
-@use 'themes' as *;
-@forward '@shared/_edit-profile-form';
 
-.form-group input {
-  width: 100%;
-}
+// This page renders the SAME tab component as the employee edit page —
+// `<gz-dynamic-tabs class="tabset-container">` over the page tab registry — so the
+// rules below are a copy of `edit-employee-profile.component.scss`. Keep them in
+// step with it; the compiled CSS for the strip and its container chain is meant to
+// be byte-identical between the two files.
+//
+// Nothing here styles a tab link, on purpose. Everything a route tab needs already
+// arrives from three shared sheets, none of them page-specific:
+//
+//   * `styles/includes/_tabset.scss`  — the 10px icon gap, and the stacked
+//     icon-over-text layout below `dsk` (1532px).
+//   * `gauzy/_gauzy-overrides.scss`   — `nb-tabset-overrides()`: the tab link's
+//     flex box, the 0.875rem/400 type raised to 600 on the active tab, and the
+//     resting / hover / active colours.
+//   * `styles/_overrides.scss`        — `nb-overrides()`: the active tab's
+//     `--gauzy-card-2` fill and its 1px overlap onto the panel below.
+//
+// This file used to restate all of that locally, under `:host ::ng-deep`, where no
+// shared rule could reach it: a 7px/16px tab box against the theme's 0.75rem/1.25rem,
+// 15px icons with a 6px gap, an `!important` svg fill fighting the `currentColor`
+// chain, `letter-spacing: 0.02em` on `.tab-text`, its own copy of the active fill,
+// and a `display: flex !important` that suppressed the stacked layout at every
+// width. The result was a tab bar visibly smaller and tighter than every other tab
+// bar in the app. It is all gone, along with `fullWidth` on the tabset — which
+// switches Nebular's own `:host(.full-width) .route-tabset` to `space-around`, and
+// which a local `justify-content: flex-start !important` then had to undo — and
+// `flex-wrap: wrap` on the strip: the tabs scroll now, exactly as the employee
+// page's nine do.
+//
+// What remains is the flex chain that hands the routed tab its height, and the
+// strip's scroll port.
 
-.org-settings {
-  width: 100%;
-  height: 100%;
-  background-color: unset;
-}
-
-nb-tab,
-nb-tabset {
-  height: 100%;
-}
-
-nb-card-body {
-  overflow-y: hidden; //prevent extra scroll bar
-}
-
-.header {
+// The height the card body hands down, passed on to the routed tab.
+//
+// `nb-route-tabset`'s template is `<ul class="route-tabset">` followed by a bare
+// `<router-outlet>`, so the routed tab component is a SIBLING of the strip inside
+// that host — which is why the chain can be closed here rather than in each tab.
+// Every tab used to size itself with `height: calc(100vh - 19.25rem)`: three
+// copies of one estimate of this page's chrome, and wrong whenever the estimate
+// was (the demo-account banner alone puts the header band ~23px over the theme's
+// `header-height`). They take this box now, and it is measured, not guessed.
+:host {
   display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
-:host ::ng-deep {
-  nb-route-tabset {
-    ul.route-tabset {
-      padding: 0;
-      flex-wrap: wrap;
-      border-bottom: none;
-      margin-bottom: 0 !important;
-      // @include respond(dsk) {
-      //   flex-wrap: wrap;
-      // }
-    }
+:host {
+  ::ng-deep .tabset-container .route-tabset {
+    // `auto`, not `scroll`: with three tabs the strip always fits, and `scroll`
+    // reserves a scrollbar gutter whether or not there is anything to scroll.
+    overflow-x: auto;
+    overflow-y: hidden;
 
-    li {
-      &:last-of-type {
-        margin-left: auto;
-        @include respond(sm) {
-          margin-left: 0;
-        }
-      }
-      // The resting tab icon. Was a literal `#7e7e8f` — a mid grey that reads as
-      // disabled on the dark themes and is off the ramp on the light ones. That
-      // literal IS `gauzy-text-color-2` on the gauzy themes, so it is the token
-      // this always meant; the fallback keeps it working on the themes that do
-      // not emit the custom property.
-      & svg {
-        fill: var(--gauzy-text-color-2, rgba(126, 126, 143, 1)) !important;
-      }
-      &.active {
-        & .tab-link {
-          background: nb-theme(gauzy-card-2);
-          transition: background 0.5s ease-in-out;
-        }
-      }
-      &.active,
-      &:hover {
-        svg {
-          fill: nb-theme(text-primary-color) !important;
-        }
-      }
-      & .tab-link {
-        display: flex !important;
-        justify-content: space-between;
-        align-items: center;
-        transition: background 0.5s ease-in-out;
+    // `scrollbar-width` and `-ms-overflow-style` apply to the SCROLL CONTAINER,
+    // not to a `::-webkit-scrollbar` pseudo-element; nested inside that rule they
+    // match nothing, and Firefox then draws a real scrollbar across the bottom of
+    // the tab strip while Chrome hides it. They belong here.
+    /* Firefox */
+    scrollbar-width: none;
+    /* IE, Edge */
+    -ms-overflow-style: none;
 
-        &:before {
-          width: 0 !important;
-        }
-
-        @include respond(dsk) {
-          padding: px2rem(10px) px2rem(20px);
-        }
-
-        @include respond(1440px) {
-          padding: px2rem(10px) px2rem(25px);
-        }
-
-        @include respond(xxl) {
-          padding: px2rem(10px) px2rem(20px);
-        }
-
-        nb-icon {
-          margin: 0;
-          margin-right: 5px;
-          margin-left: -5px;
-          width: 18px;
-          height: 19px;
-        }
-      }
-    }
-
-    .tab-text {
-      margin-left: 0 !important;
-      font-size: 16px;
-      font-style: normal;
-      font-weight: 600;
-      line-height: 16px;
-      letter-spacing: 0em;
+    /* Chrome, Safari, Opera */
+    &::-webkit-scrollbar {
+      display: none;
     }
   }
 }
 
-::ng-deep .full-width .route-tabset {
+:host ::ng-deep .tabset-container {
   display: flex;
-  justify-content: flex-start !important;
-  @include respond(sm) {
-    justify-content: center !important;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  > nb-route-tabset {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    > .route-tabset {
+      flex: 0 0 auto;
+    }
+
+    // The outlet element is an anchor for the routed view, never a box of its
+    // own; without this it takes a share of the column as a flex item.
+    > router-outlet {
+      display: none;
+    }
+
+    > router-outlet ~ * {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      margin-inline-end: 0.5rem;
+    }
   }
 }
 
-@include respond(sm) {
-  .org-settings {
+// Below `lg` the three tabs all stack their panels and grow past the viewport
+// (see each tab's own `$break-lg` query), so the chain is released here too and
+// the page scrolls in the layout column instead of being clipped by the card.
+// This used to key off `sm` (480px) while the tabs switched at `lg` (991px),
+// which left a 500px-wide band where the tabs had stacked but nothing had
+// stopped constraining them.
+@include respond(lg) {
+  :host {
+    flex: 0 0 auto;
     height: auto;
+    min-height: 0;
+  }
+
+  :host ::ng-deep .tabset-container,
+  :host ::ng-deep .tabset-container > nb-route-tabset,
+  :host ::ng-deep .tabset-container > nb-route-tabset > router-outlet ~ * {
+    flex: 0 0 auto;
+    overflow: visible;
   }
 }

@@ -7,12 +7,30 @@
       </nb-card-header>
       @if (filterOptions.length) {
         <div class="list">
-          <nb-list>
-            @for (option of filterOptions; track option) {
+          <!-- These options filter the table by ONE tag type at a time: picking
+               one clears the last. `role="button"` + `aria-pressed` announced
+               them as independent toggles, so a screen reader user was never
+               told that the previous choice had been turned off. A radiogroup
+               says exactly that, and carries the single-tab-stop + arrow-key
+               behaviour such a user expects from it (`onFilterKeydown`). -->
+          <nb-list role="radiogroup" [attr.aria-label]="'TAGS_PAGE.TAGS_TYPE' | translate">
+            <!-- Tracked by VALUE, not by the option object: every refresh builds
+                 a fresh list of fresh literals, so identity tracking tore down
+                 and rebuilt every radio — including the one the keyboard user
+                 was standing on, which sent focus to the document. A tag type's
+                 id (and `''` for All) is the same across those rebuilds, so the
+                 elements are reused and focus stays where it was put. -->
+            @for (option of filterOptions; track option.value; let i = $index) {
               <nb-list-item
                 class="filter-item"
+                role="radio"
+                [attr.aria-checked]="selectedFilterValue === option.value"
+                [attr.tabindex]="i === filterTabStopIndex ? 0 : -1"
                 [class.selected]="selectedFilterValue === option.value"
                 (click)="selectedFilterOption(option.value)"
+                (keydown.enter)="selectedFilterOption(option.value)"
+                (keydown.space)="$event.preventDefault(); selectedFilterOption(option.value)"
+                (keydown)="onFilterKeydown($event, i)"
                 >
                 {{ option.displayName }}
               </nb-list-item>
@@ -54,9 +72,11 @@
               style="cursor: pointer"
             ></angular2-smart-table>
           </div>
-          @if (smartTableSource) {
-            <ngx-pagination [source]="smartTableSource"></ngx-pagination>
-          }
+          <div class="pagination-container">
+            @if (smartTableSource) {
+              <ngx-pagination [source]="smartTableSource"></ngx-pagination>
+            }
+          </div>
         } @else {
           <ga-card-grid
             [loading]="loading"

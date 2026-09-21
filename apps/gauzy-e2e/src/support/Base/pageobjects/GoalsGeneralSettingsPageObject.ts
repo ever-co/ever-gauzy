@@ -1,6 +1,9 @@
 export const GoalsGeneralSettingsPage = {
 	headerTextCss: 'nb-card-header.card-header-title h4',
-	subheaderTextCss: 'div.col-md-4 > p.font-weight-bold',
+	// The General tab is a settings list now (label + control per row), not two
+	// bootstrap columns of `p.font-weight-bold` blocks; its one group heading carries
+	// `.settings-title`.
+	subheaderTextCss: 'ga-goal-settings .settings-title',
 	// Scope toggle/checkbox selectors to the goal-settings component. The app shell renders ~50 other
 	// nb-toggle/nb-checkbox native inputs (sidebar, theme switcher, layout), so the unscoped
 	// 'div.toggle' / 'input.native-input' matched 51 elements and nth(0..2) landed on unrelated,

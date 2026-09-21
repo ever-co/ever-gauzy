@@ -14,6 +14,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
 			PermissionsEnum.ORG_INCOMES_VIEW,
 			PermissionsEnum.ORG_INCOMES_EDIT,
+			/** Payroll Permissions Start */
+			PermissionsEnum.ORG_PAYROLL_VIEW,
+			PermissionsEnum.ORG_PAYROLL_EDIT,
+			PermissionsEnum.ORG_PAYROLL_APPROVE,
+			/** Payroll Permissions End */
 			PermissionsEnum.ORG_EXPENSES_VIEW,
 			PermissionsEnum.ORG_EXPENSES_EDIT,
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
@@ -261,6 +266,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
 			PermissionsEnum.ORG_INCOMES_VIEW,
 			PermissionsEnum.ORG_INCOMES_EDIT,
+			/** Payroll Permissions Start */
+			PermissionsEnum.ORG_PAYROLL_VIEW,
+			PermissionsEnum.ORG_PAYROLL_EDIT,
+			PermissionsEnum.ORG_PAYROLL_APPROVE,
+			/** Payroll Permissions End */
 			PermissionsEnum.ORG_EXPENSES_VIEW,
 			PermissionsEnum.ORG_EXPENSES_EDIT,
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,

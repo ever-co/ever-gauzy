@@ -83,6 +83,8 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 
 	@Input() selectBy: 'code' | 'object' = 'code';
 
+	@Input() labelForId: string;
+
 	/*
 	 * Getter & Setter for dynamic template
 	 */

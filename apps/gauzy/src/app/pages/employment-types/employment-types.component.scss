@@ -1,5 +1,6 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 @use 'gauzy/tabset-actions' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 @forward '../expenses/expense-categories/expense-categories.component';
 
 :host {
@@ -78,3 +79,20 @@ nb-card-body {
 .no-data{
     height: 100%;
 }
+
+// ── The list-page contract, for a table built by hand ────────────────────────
+//
+// This page renders a stack of `nb-card` rows rather than the
+// `angular2-smart-table` every other page under `/pages/organization` does, so
+// the shared `list-page()` block — anchored on that element — never reached it,
+// and the page drifted: full-size toolbar buttons beside compacted ones on
+// Departments and Teams, and rows that were separately floating cards on the tab
+// body rather than rows on one surface.
+//
+// `card-list-page()` is the part of that contract which does not depend on the
+// smart table. The action row is the one thing this page positions itself: it
+// does not sit on the title line like the rest of the family, it sits ON the tab
+// strip (`tabset-action-row` above), so the toolbar scale is asked for by name
+// here rather than taken on `nb-card-header` — where this page has no buttons at
+// all.
+@include ga-hub.card-list-page('.gauzy-button-container');

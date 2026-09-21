@@ -1,9 +1,10 @@
-import { Component, OnInit, ElementRef, Input, ViewChild, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ElementRef, HostListener, Input, ViewChild, OnDestroy } from '@angular/core';
 import { trigger, style, animate, transition } from '@angular/animations';
 import { NbDialogRef } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { saveAs } from 'file-saver';
+import { sortBy } from 'underscore';
 import { IEmployee, TimeFormatEnum } from '@gauzy/contracts';
 import { GalleryItem } from './gallery.directive';
 import { GalleryService } from './gallery.service';
@@ -30,7 +31,7 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
     animations: [fadeInOutAnimation],
     standalone: false
 })
-export class GalleryComponent implements OnInit, OnDestroy {
+export class GalleryComponent implements OnInit, AfterViewInit, OnDestroy {
 	public active_index: number;
 	public items: GalleryItem[] = [];
 
@@ -38,6 +39,7 @@ export class GalleryComponent implements OnInit, OnDestroy {
 	@Input() employeeId: IEmployee['id'];
 
 	@ViewChild('customScroll', { static: true }) customScroll: ElementRef<HTMLElement>;
+	@ViewChild('galleryInner', { static: true }) galleryInner: ElementRef<HTMLElement>;
 
 	public timeZone$: Observable<string> = this._timeZoneService.timeZone$.pipe(
 		filter((timeZone: string) => !!timeZone)
@@ -64,13 +66,38 @@ export class GalleryComponent implements OnInit, OnDestroy {
 			.subscribe((items) => {
 				// Filter the items based on the employeeId property, if provided
 				if (this.employeeId) {
-					this.items = items.filter((item: GalleryItem) => item.employeeId === this.employeeId);
-				} else {
-					this.items = items;
+					items = items.filter((item: GalleryItem) => item.employeeId === this.employeeId);
 				}
+				// In time order: the store holds them in the order each card added them,
+				// so previous/next used to jump back and forth in time. Items without a
+				// `recordedAt` (product images) keep their order.
+				this.items = sortBy(items, 'recordedAt');
 				// Set the focus on the active item
 				this.setFocus(this.item);
 			});
+	}
+
+	/**
+	 * Moves focus into the viewer itself rather than onto its first button, where
+	 * the dialog's own auto-focus put it: an arrow-key press then drew a focus ring
+	 * on that button. The screenshot opener turns the dialog's auto-focus off.
+	 */
+	ngAfterViewInit() {
+		this.galleryInner.nativeElement.focus({ preventScroll: true });
+	}
+
+	/**
+	 * Steps through the screenshots with the left and right arrow keys.
+	 *
+	 * @param $event The keyboard event.
+	 */
+	@HostListener('document:keydown', ['$event'])
+	onKeydown($event: KeyboardEvent) {
+		if ($event.key === 'ArrowLeft' && this.active_index > 0) {
+			this.previous($event);
+		} else if ($event.key === 'ArrowRight' && this.active_index < this.items.length - 1) {
+			this.next($event);
+		}
 	}
 
 	/**
@@ -90,7 +117,7 @@ export class GalleryComponent implements OnInit, OnDestroy {
 	 *
 	 * @param $event The event object.
 	 */
-	next($event: PointerEvent) {
+	next($event: Event) {
 		// Stop event propagation to prevent parent event handlers from being triggered
 		$event.stopPropagation();
 
@@ -111,7 +138,7 @@ export class GalleryComponent implements OnInit, OnDestroy {
 	 * Ensures that the active item is visible within a scrollable container.
 	 * @param $event The event object.
 	 */
-	previous($event: PointerEvent) {
+	previous($event: Event) {
 		// Stop event propagation to prevent parent event handlers from being triggered
 		$event.stopPropagation();
 
@@ -150,34 +177,24 @@ export class GalleryComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Updates the active index to ensure that the active item is visible within the scrollable container.
-	 * If the active item is not fully visible, scrolls the container to make it visible.
+	 * Scrolls the filmstrip so the active thumbnail is in view.
 	 */
 	updateActiveIndex() {
-		// Find the active item within the scrollable container
-		const activeItem = this.customScroll.nativeElement.querySelector('.thumb-item-active');
+		// Deferred to the next frame: the `thumb-item-active` class only moves to the
+		// new thumbnail once change detection has run, so looking it up right away
+		// found the PREVIOUS one.
+		requestAnimationFrame(() => {
+			const activeItem = this.customScroll.nativeElement.querySelector('.thumb-item-active');
 
-		if (activeItem) {
-			// Get the position of the active item relative to the viewport
-			const position = activeItem.getBoundingClientRect();
-
-			if (position) {
-				// Calculate the left and right boundaries of the active item
-				const left: number = position.left;
-				const right: number = position.left + activeItem.clientWidth;
-
-				// Get the width of the scrollable container
-				const scrollRight: number = this.customScroll.nativeElement.clientWidth;
-				// Get the current scroll position of the container
-				const scrollLeft: number = this.customScroll.nativeElement.scrollLeft;
-
-				// Check if the active item is fully visible
-				if (left < Math.abs(scrollLeft) || right > scrollRight) {
-					// If not fully visible, scroll the container to make it visible
-					this.customScroll.nativeElement.scrollTo({ left });
-				}
-			}
-		}
+			// Centres the active thumbnail in the filmstrip. The stylesheet's reduced-motion
+			// query cannot reach a scripted scroll, so it jumps rather than glides there.
+			const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			activeItem?.scrollIntoView({
+				behavior: reduceMotion ? 'auto' : 'smooth',
+				block: 'nearest',
+				inline: 'center'
+			});
+		});
 	}
 
 	/**

@@ -1958,6 +1958,7 @@
 		"EXPECTED": "Esperado",
 		"UPDATES": "Actualizaciones",
 		"UPDATE": "Actualizar",
+		"ALIGNMENTS": "Alineaciones",
 		"COMMENTS": "Comentarios",
 		"KEY_RESULTS": "Resultados clave",
 		"GROUP_BY": "Agrupar Por",
@@ -1974,6 +1975,8 @@
 		"GOAL_TEMPLATES": "Plantillas de objetivos",
 		"CREATE_NEW_MENU": "Crear nuevo",
 		"CREATE_FROM_PRESET": "Crear a partir de un preajuste",
+		"SELECT_A_PRESET": "Seleccionar un preajuste",
+		"ADDITIONAL_DETAILS": "Detalles adicionales",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Empleados.",
 			"TEAMS": "Equipos",
@@ -2003,7 +2006,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No hay resultados clave para mostrar.",
 			"NO_UPDATES": "Aún no hay actualizaciones.",
-			"NO_ALIGNMENT": "Aún no hay alineaciones."
+			"NO_ALIGNMENT": "Aún no hay alineaciones.",
+			"NO_PROGRESS_DATA": "Aún no hay datos de progreso para el gráfico."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organización",
@@ -2459,6 +2463,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Duración del diálogo de cuenta regresiva de prueba de actividad, representa una cantidad de minutos otorgados para demostrar la actividad.",
 				"ENABLE_DETECTION_INACTIVITY": "Habilitar la detección de inactividad del empleado.",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Habilitado: el sistema detectará la inactividad y mostrará una advertencia. \nDeshabilitado: no se mostrará ninguna advertencia cuando un empleado esté inactivo.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Frecuencia de capturas de pantalla",
 				"SCREENSHOT_FREQUENCY_INFO": "Especifique la frecuencia de actualización o los intervalos de sincronización de tiempo.",
 				"RANDOM_SCREENSHOT": "Captura de pantalla aleatoria",
@@ -3393,6 +3399,9 @@
 		"BROWSE": "Buscar",
 		"COMMENT": "Comentario",
 		"COMMENTS": "Comentarios",
+		"COMMENT_PLACEHOLDER": "Escribe un comentario…",
+		"NO_COMMENTS": "Aún no hay comentarios",
+		"NO_COMMENTS_HINT": "Los comentarios aparecen aquí, los más recientes primero.",
 		"HEADER": "Facturas",
 		"INVOICE_NUMBER": "Número de factura",
 		"ESTIMATE_NUMBER": "Número de estimación",
@@ -4435,6 +4444,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Seleccionar cliente",
+			"SELECT_PROJECT": "Seleccionar proyecto",
+			"SELECT_TEAM": "Seleccionar equipo",
+			"SELECT_TASK": "Seleccionar tarea",
+			"DESCRIPTION": "Añadir una descripción"
+		},
 		"IS_BILLABLE": "Es facturable.",
 		"STOP_TIMER": "Detener temporizador",
 		"START_TIMER": "Iniciar temporizador",
@@ -4904,7 +4920,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Capturas de pantalla",
 			"OF": "de",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Captura de pantalla tomada a las {{ time }}",
+			"POSITION": "Captura de pantalla {{ position }} de {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Advertencia. El temporizador está en marcha, solo puedes eliminar capturas de pantalla si detienes el temporizador o dentro de la aplicación Timer.",
 		"DELETE_CONFIRM": "¿Estás seguro de borrar estas capturas de pantalla y el registro de tiempo?",

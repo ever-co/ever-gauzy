@@ -422,6 +422,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns A Promise resolving to an object containing paginated organization teams.
 	 */
 	public async findAll(options?: BaseQueryDTO<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
+		// This method builds its own query instead of going through the CRUD read methods, so the
+		// sink-level check in `CrudService` never runs for it. Assert the sensitive-relation table
+		// here too: every tenant-scoped entity exposes an `organization` relation, so a client-supplied
+		// `relations` reaches the protected rows from any entity, not only from the ones whose
+		// controller mounts `SensitiveRelationsInterceptor`.
+		this.assertRelationsPermitted(options);
+
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 

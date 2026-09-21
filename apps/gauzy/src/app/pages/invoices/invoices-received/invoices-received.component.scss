@@ -1,1 +1,9 @@
 @forward '@shared/_pg-card';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Received invoices and received estimates render this component, and both are
+// the same table as `/pages/accounting/invoices` — so they take the same block
+// that page does: density tokens, the table surface, row hover/selection, the
+// tag-chip stack, the status pills, the pager and the toolbar scale.
+@include ga-hub.list-page();

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
-import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, Max, MaxLength } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
 	ICandidate,
@@ -40,7 +40,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { BILLING_RATE_MAX, billingRateColumn, ColumnNumericTransformerPipe, toBillingRate } from './../shared/pipes';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -113,15 +113,17 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
-	@MultiORMColumn({ nullable: true })
+	@Max(BILLING_RATE_MAX)
+	@Transform(toBillingRate)
+	@MultiORMColumn(billingRateColumn())
 	billRateValue?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
-	@MultiORMColumn({ nullable: true })
+	@Max(BILLING_RATE_MAX)
+	@Transform(toBillingRate)
+	@MultiORMColumn(billingRateColumn())
 	minimumBillingRate?: number;
 
 	@ApiPropertyOptional({ type: () => String, enum: PayPeriodEnum, example: PayPeriodEnum.WEEKLY })

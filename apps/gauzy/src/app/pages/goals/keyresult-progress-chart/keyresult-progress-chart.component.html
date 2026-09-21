@@ -1,10 +1,12 @@
-<canvas
-	baseChart
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
-	class="progress-chart"
-	type="line"
-	[data]="data"
-	[options]="options"
-></canvas>
+<!-- The spinner and the empty state hang off this wrapper, not off the canvas. The canvas is created only once
+     its data and options exist — built earlier it took Chart.js's default 2:1 aspect ratio, which the options
+     arriving later (`maintainAspectRatio: false`) never re-sized, so it filled 480px of the dialog's width —
+     and a spinner on the canvas went with it whenever there was nothing to chart, leaving the region blank.
+     This wrapper is also the parent Chart.js measures the responsive chart against. -->
+<div class="chart-host" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	@if (data && options) {
+	<canvas baseChart class="progress-chart" type="line" [data]="data" [options]="options"></canvas>
+	} @else if (!loading) {
+	<p class="empty-state">{{ 'GOALS_PAGE.MESSAGE.NO_PROGRESS_DATA' | translate }}</p>
+	}
+</div>
