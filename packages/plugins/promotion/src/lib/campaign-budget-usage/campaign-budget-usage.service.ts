@@ -1,10 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { CrudService, RequestContext } from '@gauzy/core';
-import { ID } from '@gauzy/contracts';
+import { Money, RequestContext } from '@gauzy/core';
+import { CurrencyCode, ID } from '@gauzy/contracts';
 import { CampaignBudgetUsage } from './campaign-budget-usage.entity';
 import { TypeOrmCampaignBudgetUsageRepository } from './repository/type-orm-campaign-budget-usage.repository';
 import { MikroOrmCampaignBudgetUsageRepository } from './repository/mikro-orm-campaign-budget-usage.repository';
 import { ICampaignBudgetUsage } from '../promotion.types';
+import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
+
+/** The scale the `used` column holds: `numeric(20,6)`, the same one the parent budget carries. */
+const BUDGET_SCALE = 6;
+
+/** ISO 4217's "no currency" code: a usage row counts against a ceiling that may not be money at all. */
+const BUDGET_NEUTRAL_CURRENCY: CurrencyCode = 'XXX';
 
 /**
  * The per-attribute-value rows of a budget.
@@ -16,7 +23,7 @@ import { ICampaignBudgetUsage } from '../promotion.types';
  * which go through the same conditional path the budget itself uses.
  */
 @Injectable()
-export class CampaignBudgetUsageService extends CrudService<CampaignBudgetUsage> {
+export class CampaignBudgetUsageService extends TenantScopedCrudService<CampaignBudgetUsage> {
 	constructor(
 		readonly typeOrmCampaignBudgetUsageRepository: TypeOrmCampaignBudgetUsageRepository,
 		readonly mikroOrmCampaignBudgetUsageRepository: MikroOrmCampaignBudgetUsageRepository
@@ -69,13 +76,28 @@ export class CampaignBudgetUsageService extends CrudService<CampaignBudgetUsage>
 	 * commit. The nightly audit compares the two and reports a disagreement rather than repairing it
 	 * silently.
 	 *
+	 * **The sum is exact, because the figure it is compared against is.** The parent's `used` was
+	 * advanced by SQL — `used = used + :amount` on a `numeric(20,6)` column — so it holds the exact
+	 * decimal total; adding the same rows up with `+` on doubles does not. Three rows of `10.000000`,
+	 * `10.010000` and `0.000000` gave `'20.009999999999998'`, and the nightly audit this method exists
+	 * to serve reported a disagreement that was entirely its own, for ever, with nothing to repair.
+	 * A sub-microunit total came back in exponential notation, which is not a decimal string at all,
+	 * so a caller that fed the result to `Money.of` was handed an exception instead of a total.
+	 *
 	 * @param budgetId The budget to total.
-	 * @returns The sum of the rows.
+	 * @returns The sum of the rows, as an exact decimal at the storage scale.
 	 */
 	async totalFor(budgetId: ID): Promise<string> {
 		const rows = await this.findByBudget(budgetId);
-		const total = rows.reduce((sum, row) => sum + Number(row.used ?? 0), 0);
 
-		return String(total);
+		// The usage row carries no currency — a budget split by attribute may be counting redemptions
+		// rather than spending money — so the sum is taken in the ISO "no currency" code at the scale
+		// the column holds. What the audit compares is the stored figure, and the stored figure is what
+		// this reproduces.
+		return Money.sum(
+			rows.map((row) => Money.fromStorage(row.used ?? '0', BUDGET_NEUTRAL_CURRENCY, BUDGET_SCALE)),
+			BUDGET_NEUTRAL_CURRENCY,
+			BUDGET_SCALE
+		).toStorageString();
 	}
 }

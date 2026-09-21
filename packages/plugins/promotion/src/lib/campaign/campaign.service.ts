@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ID, IPagination } from '@gauzy/contracts';
-import { CrudService, RequestContext } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { Campaign } from './campaign.entity';
 import { TypeOrmCampaignRepository } from './repository/type-orm-campaign.repository';
 import { MikroOrmCampaignRepository } from './repository/mikro-orm-campaign.repository';
 import { CampaignStatus, ICampaign, ICampaignCreateInput, ICampaignUpdateInput } from '../promotion.types';
+import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
 
 /**
  * Campaigns: the window and the budget a group of promotions runs inside.
@@ -15,7 +16,7 @@ import { CampaignStatus, ICampaign, ICampaignCreateInput, ICampaignUpdateInput }
  * candidates at all.
  */
 @Injectable()
-export class CampaignService extends CrudService<Campaign> {
+export class CampaignService extends TenantScopedCrudService<Campaign> {
 	constructor(
 		readonly typeOrmCampaignRepository: TypeOrmCampaignRepository,
 		readonly mikroOrmCampaignRepository: MikroOrmCampaignRepository

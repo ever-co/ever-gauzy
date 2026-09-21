@@ -189,6 +189,26 @@ function same(left: unknown, right: unknown): boolean {
 	return String(left ?? '') === String(right ?? '');
 }
 
+/**
+ * What a write addresses, as a conditions object.
+ *
+ * Every write of these services is scoped to the caller's tenant, so the criteria that reaches the
+ * repository is `{ id, tenantId }` rather than a bare identifier — which is the whole point of the
+ * scoping: a statement that names only an identifier is one another tenant's identifier can satisfy.
+ * A double that understood only the identifier form would report a scoped write as having changed a
+ * row it never matched.
+ *
+ * @param criteria What the service addressed the row by.
+ * @returns The same thing as a conditions object.
+ */
+function criteriaOf(criteria: unknown): Record<string, unknown> {
+	if (typeof criteria === 'string' || typeof criteria === 'number') {
+		return { id: criteria };
+	}
+
+	return (criteria ?? {}) as Record<string, unknown>;
+}
+
 /** The fixture world: the tables an evaluation reads, and the writes it produced. */
 function world(fixture: {
 	promotions?: IPromotionRow[];
@@ -208,8 +228,9 @@ function world(fixture: {
 		find: async (options?: { where?: Record<string, unknown> }) =>
 			promotions.filter((row) => matches(row, options?.where)),
 		findOneBy: async (where?: Record<string, unknown>) => promotions.filter((row) => matches(row, where))[0] ?? null,
-		update: async (id: string, partial: Partial<IPromotionRow>) => {
-			const row = promotions.find((one) => same(one.id, id));
+		// Scoped criteria: the service merges the caller's tenant into every write.
+		update: async (criteria: string | Record<string, unknown>, partial: Partial<IPromotionRow>) => {
+			const row = promotions.find((one) => matches(one, criteriaOf(criteria)));
 
 			if (row) {
 				Object.assign(row, partial);
@@ -928,6 +949,187 @@ describe('PromotionService.evaluate — the behaviour each defect was found by',
 
 		expect(Money.of(evaluation.result.applications[0].amount, 'USD').toStorageString()).toBe('0.300000');
 		expect(Money.of(evaluation.result.discountTotal, 'USD').abs().toStorageString()).toBe('0.300000');
+	});
+
+	it('takes a tiered percentage from the band the amount falls in, not from the flat value', async () => {
+		// `metadata.tiers` was validated on write by `assertTiers` and read by nothing at all: a
+		// `TIERED_PERCENTAGE` used `action.value` like a flat percentage, so an action that carried a
+		// schedule and no value computed nothing and reported `NO_DISCOUNTABLE_AMOUNT`, and one that
+		// carried both gave the same percentage to every order whatever band it reached.
+		const tiered = promotion({ id: 'promo-tiered', code: 'TIERS', title: 'Tiered' });
+		const { service } = world({
+			promotions: [tiered],
+			actions: [
+				action({
+					id: 'act-tiered',
+					promotionId: tiered.id,
+					type: PromotionActionType.TIERED_PERCENTAGE,
+					targetType: PromotionActionTargetType.ITEMS,
+					allocation: PromotionActionAllocation.ONCE,
+					value: '',
+					metadata: {
+						tiers: [
+							{ threshold: 0, percent: 5 },
+							{ threshold: 100, percent: 10 }
+						]
+					}
+				})
+			]
+		});
+
+		// 250.00 reaches the second band: ten percent, not the five of the first and not nothing.
+		const high = await service.evaluate(context({ lines: [{ id: 'L1', amount: '250.000000', quantity: 1 }] }));
+
+		expect(Money.of(high.result.applications[0].amount, 'USD').toStorageString()).toBe('25.000000');
+
+		// 50.00 reaches only the first: five percent.
+		const low = await service.evaluate(context({ lines: [{ id: 'L1', amount: '50.000000', quantity: 1 }] }));
+
+		expect(Money.of(low.result.applications[0].amount, 'USD').toStorageString()).toBe('2.500000');
+	});
+
+	it('decides the band by exact comparison, so an amount exactly on a threshold is inside it', async () => {
+		// A threshold is money and the amount measured against it is money. Deciding which side of a
+		// boundary an order falls on by subtracting two doubles is how an order of exactly a hundred
+		// lands in the band below.
+		const tiered = promotion({ id: 'promo-tiered', code: 'TIERS', title: 'Tiered' });
+		const { service } = world({
+			promotions: [tiered],
+			actions: [
+				action({
+					id: 'act-tiered',
+					promotionId: tiered.id,
+					type: PromotionActionType.TIERED_PERCENTAGE,
+					targetType: PromotionActionTargetType.ITEMS,
+					allocation: PromotionActionAllocation.ONCE,
+					value: '5',
+					metadata: { tiers: [{ threshold: '100.000000', percent: '10' }] }
+				})
+			]
+		});
+
+		const onTheLine = await service.evaluate(
+			context({ lines: [{ id: 'L1', amount: '100.000000', quantity: 1 }] })
+		);
+		const below = await service.evaluate(
+			context({ lines: [{ id: 'L1', amount: '99.990000', quantity: 1 }] })
+		);
+
+		expect(Money.of(onTheLine.result.applications[0].amount, 'USD').toStorageString()).toBe('10.000000');
+		// No band matches, so the action's own stated value applies: five percent of 99.99 is 4.9995,
+		// which the currency scale resolves to 5.00.
+		expect(Money.of(below.result.applications[0].amount, 'USD').toStorageString()).toBe('5.000000');
+	});
+
+	it('closes a stacking group behind a non-combinable promotion and says why', async () => {
+		// `isCombinable` and `stackingGroup` were columns, DTO members and schema fields that nothing
+		// read, and `STACKING_CONFLICT` was a notice code nothing raised: a merchant could mark a
+		// fifty-percent offer exclusive in a group and watch a ten-percent offer of the same group
+		// stack on top of it, with no notice saying why the exclusivity did nothing.
+		const exclusive = promotion({
+			id: 'promo-exclusive',
+			code: 'HALF',
+			title: 'Half price',
+			priority: 0,
+			isCombinable: false,
+			stackingGroup: 'SITEWIDE'
+		});
+		const alsoSitewide = promotion({
+			id: 'promo-ten',
+			code: 'TEN',
+			title: 'Ten percent',
+			priority: 1,
+			stackingGroup: 'SITEWIDE'
+		});
+		const elsewhere = promotion({
+			id: 'promo-five',
+			code: 'FIVE',
+			title: 'Five percent',
+			priority: 2,
+			stackingGroup: 'DELIVERY'
+		});
+		const { service } = world({
+			promotions: [exclusive, alsoSitewide, elsewhere],
+			actions: [
+				action({
+					id: 'act-exclusive',
+					promotionId: exclusive.id,
+					targetType: PromotionActionTargetType.ITEMS,
+					allocation: PromotionActionAllocation.ONCE,
+					value: '50'
+				}),
+				action({
+					id: 'act-ten',
+					promotionId: alsoSitewide.id,
+					targetType: PromotionActionTargetType.ITEMS,
+					allocation: PromotionActionAllocation.ONCE,
+					value: '10'
+				}),
+				action({
+					id: 'act-five',
+					promotionId: elsewhere.id,
+					targetType: PromotionActionTargetType.ITEMS,
+					allocation: PromotionActionAllocation.ONCE,
+					value: '5'
+				})
+			]
+		});
+
+		const evaluation = await service.evaluate(context({ lines: [{ id: 'L1', amount: '100.000000', quantity: 1 }] }));
+		const applied = evaluation.result.applications.map((one) => one.promotionId);
+
+		expect(applied).toContain(exclusive.id);
+		expect(applied).not.toContain(alsoSitewide.id);
+		// A promotion of another group is untouched: the exclusivity closes one group, not the cart.
+		expect(applied).toContain(elsewhere.id);
+		expect(
+			evaluation.result.notices.find((notice) => notice.promotionId === alsoSitewide.id)?.notice
+		).toBe(PromotionNotice.STACKING_CONFLICT);
+	});
+
+	it('lets two combinable promotions of one group stack, which is what the flag is for', async () => {
+		// The control for the case above: the group closes because a promotion said it was exclusive,
+		// not because the promotions share a group.
+		const first = promotion({
+			id: 'promo-first',
+			code: 'FIRST',
+			title: 'First',
+			priority: 0,
+			stackingGroup: 'SITEWIDE'
+		});
+		const second = promotion({
+			id: 'promo-second',
+			code: 'SECOND',
+			title: 'Second',
+			priority: 1,
+			stackingGroup: 'SITEWIDE'
+		});
+		const { service } = world({
+			promotions: [first, second],
+			actions: [
+				action({
+					id: 'act-first',
+					promotionId: first.id,
+					targetType: PromotionActionTargetType.ITEMS,
+					allocation: PromotionActionAllocation.ONCE,
+					value: '10'
+				}),
+				action({
+					id: 'act-second',
+					promotionId: second.id,
+					targetType: PromotionActionTargetType.ITEMS,
+					allocation: PromotionActionAllocation.ONCE,
+					value: '10'
+				})
+			]
+		});
+
+		const evaluation = await service.evaluate(context({ lines: [{ id: 'L1', amount: '100.000000', quantity: 1 }] }));
+
+		expect(evaluation.result.applications).toHaveLength(2);
+		expect(
+			evaluation.result.notices.some((notice) => notice.notice === PromotionNotice.STACKING_CONFLICT)
+		).toBe(false);
 	});
 
 	it('reports a code that names no promotion as a notice', async () => {

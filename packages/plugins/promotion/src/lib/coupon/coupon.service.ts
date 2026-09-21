@@ -3,7 +3,6 @@ import { randomBytes } from 'crypto';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
 	booleanLiteral,
-	CrudService,
 	currentTimestampExpression,
 	EventBus,
 	quoteIdentifier,
@@ -22,6 +21,7 @@ import {
 	ICouponCreateInput,
 	PromotionUsageStatus
 } from '../promotion.types';
+import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
 
 /**
  * The alphabet codes are drawn from.
@@ -69,7 +69,7 @@ const RANDOM_BUFFER = 256;
  * characters are uniform over the alphabet rather than biased by a modulo.
  */
 @Injectable()
-export class CouponService extends CrudService<Coupon> {
+export class CouponService extends TenantScopedCrudService<Coupon> {
 	constructor(
 		readonly typeOrmCouponRepository: TypeOrmCouponRepository,
 		readonly mikroOrmCouponRepository: MikroOrmCouponRepository,
@@ -120,7 +120,15 @@ export class CouponService extends CrudService<Coupon> {
 			throw new BadRequestException(`COUPON_INVALID: the code "${code}" already exists.`);
 		}
 
-		return this.create({ ...input, code, usageCount: 0, ...this.scope } as never);
+		// The same key-stripping as `createBatch`: a create that carries a primary key is an upsert in
+		// both ORMs, and the row it would address is chosen by the caller rather than by the scope.
+		const { id: _key, tenantId: _tenant, organizationId: _organization, ...fields } = input as typeof input & {
+			id?: ID;
+			tenantId?: ID;
+			organizationId?: ID;
+		};
+
+		return this.create({ ...fields, code, usageCount: 0, ...this.scope } as never);
 	}
 
 	/**
@@ -151,10 +159,21 @@ export class CouponService extends CrudService<Coupon> {
 
 		const rows = [...codes];
 		let created = 0;
+		// **The batch request's own identity never travels onto a generated row.** `CrudService.create`
+		// upserts when the payload carries a primary key — the MikroORM arm looks the row up by id and
+		// assigns onto it, with no tenant predicate — and this route's body is unvalidated, so a caller
+		// that put an `id` in the batch request would have had every code in the batch written onto
+		// that one row, wherever it lives. The tenancy columns go the same way: the scope spread below
+		// is the only thing allowed to state them.
+		const { id: _key, tenantId: _tenant, organizationId: _organization, ...template } = input as typeof input & {
+			id?: ID;
+			tenantId?: ID;
+			organizationId?: ID;
+		};
 
 		for (let index = 0; index < rows.length; index += BATCH_CHUNK) {
 			const chunk = rows.slice(index, index + BATCH_CHUNK).map((code) => ({
-				...input,
+				...template,
 				code,
 				batchId,
 				count: undefined,

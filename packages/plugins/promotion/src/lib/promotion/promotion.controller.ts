@@ -26,7 +26,7 @@ import {
 } from '@gauzy/core';
 import { Promotion } from './promotion.entity';
 import { IPromotionEvaluationContext, PromotionService } from './promotion.service';
-import { CreatePromotionDTO, UpdatePromotionDTO } from './dto';
+import { CreatePromotionDTO, DeactivatePromotionDTO, ReplacePromotionActionsDTO, UpdatePromotionDTO } from './dto';
 import { IPromotionAction, IPromotion } from '../promotion.types';
 import { PromotionPermission } from '../promotion.permissions';
 
@@ -141,9 +141,10 @@ export class PromotionController extends CrudController<Promotion> {
 	@Permissions(PromotionPermission.PROMOTIONS_EDIT as PermissionsEnum)
 	@Post(':id/deactivate')
 	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async deactivate(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: { reason?: string }
+		@Body() body: DeactivatePromotionDTO
 	): Promise<IPromotion> {
 		return this.promotionService.deactivate(id, body?.reason);
 	}
@@ -163,11 +164,16 @@ export class PromotionController extends CrudController<Promotion> {
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The action set is empty or invalid' })
 	@Permissions(PromotionPermission.PROMOTIONS_EDIT as PermissionsEnum)
 	@Put(':id/actions')
+	// The body used to be an inline type literal with no pipe at all, so class-validator never ran on
+	// it and nothing was stripped: the array went through to `create`, primary keys and tenancy columns
+	// included. `whitelist` removes every member the DTO does not declare, and the service strips the
+	// key as well — a validated body and a defensive write are two different guarantees.
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async replaceActions(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: { actions: Partial<IPromotionAction>[] }
+		@Body() body: ReplacePromotionActionsDTO
 	): Promise<IPromotionAction[]> {
-		return this.promotionService.replaceActions(id, body?.actions);
+		return this.promotionService.replaceActions(id, body?.actions as Partial<IPromotionAction>[]);
 	}
 
 	/**
