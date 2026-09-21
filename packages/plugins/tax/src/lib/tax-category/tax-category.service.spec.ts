@@ -120,14 +120,25 @@ function serviceUnderTest(categories: ICategoryRow[]) {
 
 			return entity;
 		},
-		update: async (id: string, partial: Partial<ICategoryRow>) => {
-			const row = categories.find((one) => same(one.id, id));
+		/**
+		 * The criteria a *tenant-aware* update states, not a bare id.
+		 *
+		 * `TenantAwareCrudService.update` turns a string id into `{ ...scope, id }` before it reaches
+		 * the repository, so that the statement can only touch a row of the caller's own tenant. This
+		 * double only understood the string, so every update matched nothing, changed nothing, and
+		 * answered `affected: 1` — and the three cases that asserted the *result* of an update read the
+		 * row back unchanged. Both shapes are honoured here, and the criteria are matched with the same
+		 * `matches` the reads use, so a scope that does not select the row does not update it either.
+		 */
+		update: async (criteria: string | Record<string, unknown>, partial: Partial<ICategoryRow>) => {
+			const where = typeof criteria === 'string' ? { id: criteria } : criteria;
+			const affected = categories.filter((row) => matches(row, where));
 
-			if (row) {
+			for (const row of affected) {
 				Object.assign(row, partial);
 			}
 
-			return { affected: 1 };
+			return { affected: affected.length };
 		}
 	};
 

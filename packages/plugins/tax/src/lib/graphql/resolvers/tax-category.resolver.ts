@@ -1,8 +1,8 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { NotFoundException, UseGuards } from '@nestjs/common';
-import { FindManyOptions, FindOptionsWhere, In, Raw } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, LIKE_OPERATOR, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { TAX_PERMISSION_VALUES, taxPermission } from '../../tax.permissions';
@@ -12,6 +12,7 @@ import { TaxRate } from '../../tax-rate/tax-rate.entity';
 import { TaxRateService } from '../../tax-rate/tax-rate.service';
 import { TaxWriteInput } from '../../tax.types';
 import { toConnection } from '../connection.helper';
+import { applyPageWindow, searchConditions } from '../predicate.helper';
 import {
 	CreateTaxCategoryInput,
 	PageInput,
@@ -73,9 +74,11 @@ export class TaxCategoryResolver {
 		@Args('offset') offset?: number,
 		@Args('withDeleted') withDeleted?: boolean
 	): Promise<TaxCategoryConnection> {
-		const options = this.toFindOptions(filter, sort, withDeleted);
-		options.take = limit ?? page?.first ?? undefined;
-		options.skip = offset ?? undefined;
+		const options = applyPageWindow(this.toFindOptions(filter, sort, withDeleted), {
+			limit,
+			first: page?.first,
+			offset
+		});
 
 		const { items, total } = await this.taxCategoryService.paginate(options);
 
@@ -196,12 +199,7 @@ export class TaxCategoryResolver {
 			return where;
 		}
 
-		const like = (alias: string) => `${alias} ${LIKE_OPERATOR} :search`;
-
-		return [
-			{ ...where, code: Raw(like, { search: `%${search}%` }) },
-			{ ...where, name: Raw(like, { search: `%${search}%` }) }
-		];
+		return searchConditions<TaxCategory>(where, ['code', 'name'], search);
 	}
 
 	/**
