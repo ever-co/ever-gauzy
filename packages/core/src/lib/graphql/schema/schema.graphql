@@ -4370,15 +4370,13 @@ type Query {
   resolveTaxRegime(input: ResolveTaxRegimeInput!): ResolvedTaxRegime
 
   """
-  The levels of a location, of a variant, or of both — the first page of them.
+  The levels of a location, of a variant, or of both.
   
-  **This field is the one list here that is not a connection, and the read it answers from is why.**
-  `StockLevelService.findLevels` takes a limit and no row offset, answers no count and declares no
-  order, so a connection over it could carry neither a `totalCount` that is true of the filtered set
-  nor a cursor walk that resumes without repeating or skipping a row. It stays the list it is until
-  that read can page; the nine fields beside it answer connections.
+  The page is read from the service's own paged read, which answers the window and counts the set the
+  filters select on one predicate — the two things a connection owes its caller and the reason this
+  field was a bare list until that read existed.
   """
-  stockLevels(warehouseId: ID, variantId: ID, take: Int): [StockLevel!]!
+  stockLevels(warehouseId: ID, variantId: ID, page: PageInput): StockLevelConnection!
   stockLevel(warehouseId: ID!, variantId: ID!): StockLevel
   availableQuantity(warehouseId: ID!, variantId: ID!): Float!
   stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput): StockMovementConnection!
@@ -44827,6 +44825,20 @@ type ChannelWarehouseConnection {
 type ChannelWarehouseEdge {
   node: ChannelWarehouse!
   cursor: String!
+}
+
+"""One level in a page, with the cursor that addresses it."""
+type StockLevelEdge {
+  node: StockLevel!
+  cursor: String!
+}
+
+"""A page of stock levels, with their derived availability."""
+type StockLevelConnection {
+  nodes: [StockLevel!]!
+  edges: [StockLevelEdge!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
 }
 
 """

@@ -49,13 +49,12 @@ const schema = readFileSync(SDL, 'utf8')
 /**
  * List root fields this programme introduced that still answer a bare array.
  *
- * One name is left, and it is not a matter of writing the connection: `stockLevels` reads through a
- * service method that takes a limit and nothing else — no row offset, no count, and no `ORDER BY`, so a
- * connection over it could not report a truthful `totalCount` or resume a cursor stably. It converts when
- * that read grows an offset, an order and a count, which is a change to a service the REST route shares
- * rather than a change to this field.
+ * **Empty, and that is the point of keeping it.** The last name, `stockLevels`, left when its service grew a
+ * paged read — a window, an order and a count on one predicate — so a list root field that answers an array
+ * now fails this gate outright instead of being named here. The list stays because removing it would remove
+ * the stale-entry check with it: the next wave that needs an exemption gets the same accounting for free.
  */
-const PROGRAMME_BARE_ARRAYS = new Set(['stockLevels']);
+const PROGRAMME_BARE_ARRAYS = new Set([]);
 
 /**
  * List root fields whose answer is **computed** rather than read: a resolution over a context, an

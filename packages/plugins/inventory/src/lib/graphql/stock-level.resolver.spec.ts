@@ -167,6 +167,9 @@ function surfaces() {
 	const service = {
 		reconcile: jest.fn().mockResolvedValue(REPORT),
 		findLevels: jest.fn().mockResolvedValue([{ levelId: 'level-1' }]),
+		// The paged read the connection answers from, which the route's own read delegates to: a double that
+		// only stood in for the array would leave the spec asserting a shape the SDL no longer declares.
+		listLevels: jest.fn().mockResolvedValue({ items: [{ levelId: 'level-1' }], total: 1 }),
 		findLevel: jest.fn().mockResolvedValue({ levelId: 'level-1' }),
 		availableQuantity: jest.fn().mockResolvedValue(7)
 	};
@@ -249,10 +252,15 @@ describe('StockLevelResolver — one concept, two protocols, the same names (doc
 	it('gives the level query the same filters the REST list accepts', async () => {
 		const { service, resolver } = surfaces();
 
-		await resolver.stockLevels(WAREHOUSE, VARIANT, 25);
+		// The page is the connection's: the field answers the window the caller stated and the count of the set
+		// the filters select, both read from the paged read the service owns. `take` is gone with it, because a
+		// field that accepts both a page and a size has two ways to state one thing.
+		const connection = await resolver.stockLevels(WAREHOUSE, VARIANT, { first: 25 });
 
-		expect(service.findLevels).toHaveBeenCalledWith({ warehouseId: WAREHOUSE, variantId: VARIANT, take: 25 });
-		expect(schemaText).toMatch(/stockLevels\(warehouseId: ID, variantId: ID, take: Int\): \[StockLevel!\]!/);
+		expect(service.listLevels).toHaveBeenCalledWith({ warehouseId: WAREHOUSE, variantId: VARIANT, skip: 0, take: 25 });
+		expect(connection.pageInfo.hasNextPage).toBe(false);
+		expect(schemaText).toMatch(/stockLevels\(warehouseId: ID, variantId: ID, page: PageInput\): StockLevelConnection!/);
+		expect(schemaText).toMatch(/type StockLevelConnection \{\s*nodes: \[StockLevel!\]!\s*edges: \[StockLevelEdge!\]!\s*totalCount: Int!\s*pageInfo: PageInfo!\s*\}/);
 	});
 
 	it('spells the concept `stock*` on both halves of the schema', () => {

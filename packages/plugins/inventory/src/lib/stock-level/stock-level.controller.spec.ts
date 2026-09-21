@@ -310,6 +310,29 @@ function datastore(tables: ITables) {
 		let rawSelect: { expression: string; label: string } | null = null;
 		let updateSpec: Row | null = null;
 		const conditions: Array<{ sql: string; params: Row }> = [];
+		// The window and the order a read states, which this double applies rather than records: a paged read
+		// has to answer the page it asked for, and a double that ignored the offset would let a service that
+		// never applies one pass every test here.
+		const window: { offset: number; limit: number | null } = { offset: 0, limit: null };
+		let order: { column: string; descending: boolean } | null = null;
+		const matchedRows = (): Row[] => (target === WarehouseProductVariant ? levels(conditions) : rows(target));
+		/** The rows this builder answers: ordered as the read asked, then cut to the window it stated. */
+		const windowed = (): Row[] => {
+			const matched = matchedRows();
+			const ordered = order
+				? [...matched].sort((left, right) => {
+						const comparison = String(left[order!.column] ?? '').localeCompare(
+							String(right[order!.column] ?? ''),
+							'en',
+							{ numeric: true }
+						);
+
+						return order!.descending ? -comparison : comparison;
+					})
+				: matched;
+
+			return ordered.slice(window.offset, window.limit === null ? undefined : window.offset + window.limit);
+		};
 		const query: any = {
 			innerJoin: () => query,
 			leftJoin: () => query,
@@ -321,8 +344,38 @@ function datastore(tables: ITables) {
 				return query;
 			},
 			addSelect: () => query,
-			limit: () => query,
-			orderBy: () => query,
+			limit: (value: number) => {
+				window.limit = Number.isFinite(Number(value)) ? Number(value) : null;
+
+				return query;
+			},
+			offset: (value: number) => {
+				window.offset = Math.max(Number(value) || 0, 0);
+
+				return query;
+			},
+			orderBy: (column: string, direction?: string) => {
+				order = {
+					column: String(column).split('.').pop() ?? String(column),
+					descending: String(direction ?? 'ASC').toUpperCase() === 'DESC'
+				};
+
+				return query;
+			},
+			/**
+			 * The builder a read clones before applying its window, so the count describes the predicate rather
+			 * than the page. It shares the conditions and answers the same rows, with no window of its own.
+			 */
+			clone: () => ({
+				getCount: async () => matchedRows().length,
+				andWhere: () => query,
+				where: () => query,
+				orderBy: () => query,
+				offset: () => query,
+				limit: () => query,
+				getMany: async () => matchedRows()
+			}),
+			getCount: async () => matchedRows().length,
 			where: (sql: string, params: Row = {}) => {
 				conditions.push({ sql, params });
 
@@ -357,7 +410,7 @@ function datastore(tables: ITables) {
 
 				return query;
 			},
-			getMany: async () => (target === WarehouseProductVariant ? levels(conditions) : rows(target)),
+			getMany: async () => windowed(),
 			getOne: async () => {
 				const found = target === WarehouseProductVariant ? levels(conditions) : rows(target);
 

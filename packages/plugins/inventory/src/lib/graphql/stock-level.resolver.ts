@@ -14,11 +14,15 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import {
 	EventBus,
 	FeatureFlagGuard,
+	GraphqlConnection,
+	IConnectionPageSelection,
 	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
-	Versioned
+	Versioned,
+	connectionFromOffsetPage,
+	resolveConnectionWindow
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
@@ -55,13 +59,9 @@ export class StockLevelResolver {
 	 * letting the transport decide: the version travels out with the levels and is never demanded of
 	 * the caller.
 	 *
-	 * **This is the one list in the package that is not a connection, and the read is why.**
-	 * `StockLevelService.findLevels` applies `take` as a `LIMIT` from the start of the set: it takes no
-	 * row offset, answers no count and declares no order. A connection over it would therefore have to
-	 * invent its `totalCount` — a client reading "1–20 of 20" of a set of five hundred — and its pages
-	 * would be re-read in whatever order the store returned, so a cursor walk could repeat a level or
-	 * miss one. It stays the list it is until that read can page; the nine fields beside it, whose
-	 * services read `{ skip, take }` in the store, answer connections.
+	 * The page comes from `listLevels`, which reads the window *and* counts the set the filters select. The
+	 * `take` argument this field used to carry is gone with it: `page: { first: n }` is the page size now, and
+	 * a field with two ways to state one thing is a field whose two ways drift.
 	 */
 	@Query('stockLevels')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
@@ -69,11 +69,12 @@ export class StockLevelResolver {
 	async stockLevels(
 		@Args('warehouseId') warehouseId: string,
 		@Args('variantId') variantId: string,
-		@Args('take', { type: () => Int, nullable: true }) take: number
-	): Promise<IStockAvailability[]> {
-		// The service answers the filtered levels themselves. There is no page to unwrap here: the
-		// `LIMIT` is the only paging it offers, which is exactly what the note above states.
-		return await this.service.findLevels({ warehouseId, variantId, take });
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+	): Promise<GraphqlConnection<IStockAvailability>> {
+		const { skip, take } = resolveConnectionWindow(page);
+		const listing = await this.service.listLevels({ warehouseId, variantId, skip, take });
+
+		return connectionFromOffsetPage(listing, skip);
 	}
 
 	/** One level row with its derived availability, and the counter a write is conditioned on. */

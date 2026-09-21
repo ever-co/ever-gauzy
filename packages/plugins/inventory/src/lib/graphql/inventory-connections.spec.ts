@@ -177,12 +177,11 @@ interface IFieldCase {
 }
 
 /**
- * The nine list root fields this wave converted, each with the read it delegates to.
+ * The nine list root fields whose read is the ordinary `findAll`, each with the read it delegates to.
  *
- * `stockLevels` is deliberately absent: `StockLevelService.findLevels` applies `take` as a `LIMIT`,
- * takes no row offset, answers no count and declares no order, so a connection over it would have to
- * invent its `totalCount` and could not promise that a walk resumes. It stays the list the SDL says it
- * is.
+ * `stockLevels` is covered beside them by the SDL assertion below rather than by a case here: it answers from
+ * the service's own paged read, which is a query builder rather than `findAll`, so the stub that drives these
+ * nine would be the wrong instrument for it.
  */
 const CASES: IFieldCase[] = [
 	{
@@ -329,11 +328,15 @@ describe('the inventory list surface answers the connection contract', () => {
 			expect(edgeBody).toContain('cursor: String!');
 		}
 
-		// The one list field this wave left unconverted, pinned here so the exemption is a decision
-		// rather than an omission. Converting it means deleting these two assertions along with the
-		// service read that cannot page — see `stock-level.resolver.ts`.
-		expect(described).toMatch(/stockLevels\(warehouseId: ID, variantId: ID, take: Int\): \[StockLevel!\]!/);
-		expect(typeBody('StockLevelConnection')).toBeNull();
+		// `stockLevels` is a connection too, and it is pinned here rather than in the loop above because its
+		// read is the service's own query builder rather than `findAll`. It was the last list field holding
+		// out, on the grounds that its read answered neither a window nor a count; both exist now, so the
+		// exemption it used to carry is gone rather than merely unasserted.
+		expect(described).toMatch(/stockLevels\(warehouseId: ID, variantId: ID, page: PageInput\): StockLevelConnection!/);
+		expect(typeBody('StockLevelConnection')).toContain('nodes: [StockLevel!]!');
+		expect(typeBody('StockLevelConnection')).toContain('edges: [StockLevelEdge!]!');
+		expect(typeBody('StockLevelEdge')).toContain('cursor: String!');
+		expect(described).not.toMatch(/stockLevels\([^)]*take: Int/);
 	});
 });
 

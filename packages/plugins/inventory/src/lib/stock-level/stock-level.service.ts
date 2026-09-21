@@ -15,7 +15,7 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntityManager } from 'typeorm';
-import { ID } from '@gauzy/contracts';
+import { ID, IPagination } from '@gauzy/contracts';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import {
 	prepareSQLQuery,
@@ -252,9 +252,56 @@ export class StockLevelService {
 	 * query joins rather than filtering a column that does not exist on the level table. The rows are
 	 * the caller’s own: a level of another tenant is not a level this caller may read, which is why the
 	 * read is scoped to the tenant the request runs in.
+	 *
+	 * This is the route's read: it answers a list and fixes its own ceiling. A caller that pages reads
+	 * {@link listLevels}, which is the same read with a window and a count beside it.
 	 */
 	public async findLevels(filter: { warehouseId?: ID; variantId?: ID; take?: number }): Promise<IStockAvailability[]> {
-		const query = this.levelRead().limit(filter.take ?? 100);
+		const query = this.levelReadOf(filter);
+
+		// No count here: this read answers a list, and counting the set it was cut from is a query the caller
+		// never reads the answer to.
+		const rows = await query.orderBy('level.id', 'ASC').limit(filter.take ?? 100).getMany();
+
+		return this.toAvailabilities(rows as any[]);
+	}
+
+	/**
+	 * One page of the levels a filter selects, with how many it selects.
+	 *
+	 * The order is the row's identity and nothing else. A page cut from a set the store may answer in any order
+	 * is a page a cursor cannot resume: the next read is free to return the rows in another arrangement, so a
+	 * client walking the cursor sees some levels twice and others never. The order is therefore stated rather
+	 * than left to the planner, and the count is taken on the same predicate the page was, so `totalCount`
+	 * describes the set the filters select rather than the rows that happened to fit.
+	 */
+	public async listLevels(filter: {
+		warehouseId?: ID;
+		variantId?: ID;
+		skip?: number;
+		take?: number;
+	}): Promise<IPagination<IStockAvailability>> {
+		const query = this.levelReadOf(filter);
+
+		// The count is taken from the same builder before the window is applied to it: a count of the page
+		// would be the page size, which is the one number the caller already knows.
+		const counted = query.clone();
+		query.orderBy('level.id', 'ASC').offset(Math.max(filter.skip ?? 0, 0)).limit(filter.take ?? 100);
+
+		const [rows, total] = await Promise.all([query.getMany(), counted.getCount()]);
+
+		return { items: this.toAvailabilities(rows as any[]), total };
+	}
+
+	/**
+	 * The level read a filter selects, before any window or order is applied to it.
+	 *
+	 * Both reads above start here so that the filters, the join and the tenant scope are one statement: a
+	 * second builder assembled beside this one is how a paged read and a list read end up answering different
+	 * sets for the same arguments.
+	 */
+	private levelReadOf(filter: { warehouseId?: ID; variantId?: ID }) {
+		const query = this.levelRead();
 
 		if (filter.warehouseId) {
 			query.andWhere('aggregate.warehouseId = :warehouseId', { warehouseId: filter.warehouseId });
@@ -264,8 +311,18 @@ export class StockLevelService {
 		}
 		this.scopeToTenant(query);
 
-		const rows = await query.getMany();
-		return (rows as any[]).map((row) =>
+		return query;
+	}
+
+	/**
+	 * The rows a level read answered, as the availability each one derives.
+	 *
+	 * The location comes from the aggregate the join reached, because the level table has no location column of
+	 * its own — the row carries it as `warehouseId` when TypeORM maps the joined column onto the entity and as
+	 * the raw alias when it does not, which is why both are read.
+	 */
+	private toAvailabilities(rows: any[]): IStockAvailability[] {
+		return rows.map((row) =>
 			this.toAvailability(row as WarehouseProductVariant, row.warehouseId ?? row.__aggregate_warehouseId)
 		);
 	}
