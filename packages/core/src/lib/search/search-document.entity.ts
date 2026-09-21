@@ -64,8 +64,16 @@ export class SearchDocument extends TenantOrganizationBaseEntity implements ISea
 
 	/**
 	 * Promoted tokens: facet values, codes, tags, category ids and the foreign keys the definition
-	 * declared. Stored as text and read with a token predicate, which is the filter path that works on
-	 * every dialect — the attribute index is Postgres-only.
+	 * declared. They are the filter path that works on every dialect — the attribute index is
+	 * Postgres-only.
+	 *
+	 * **Stored as a JSON array, not as joined text.** `@JsonArrayColumn` resolves to `jsonb` on
+	 * Postgres, `json` on MySQL and a `simple-json` text column on SQLite, and the list is written as
+	 * `["colour:red","channelid:abc"]` on all four. A reader therefore renders the column as text
+	 * before applying `LOWER` or `LIKE` — Postgres has no `lower(jsonb)` — and matches one element by
+	 * its quotes rather than by a comma. `DatabaseSearchProvider.keywordsExpression` and
+	 * `tokenFragment` are where that is done, and the token predicate written for a comma-joined
+	 * string is what used to make every promoted filter and every channel-scoped search match nothing.
 	 */
 	@ApiPropertyOptional({ type: () => Array })
 	@IsOptional()

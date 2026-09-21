@@ -1,13 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, timingSafeEqual } from 'crypto';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, EventBus, Money, RequestContext } from '@gauzy/core';
+import { EventBus, Money, RequestContext } from '@gauzy/core';
 import { GiftCardRedeemedEvent } from '../events';
 import { GiftCard } from './gift-card.entity';
 import { TypeOrmGiftCardRepository } from './repository/type-orm-gift-card.repository';
 import { MikroOrmGiftCardRepository } from './repository/mikro-orm-gift-card.repository';
 import { GiftCardTransactionService } from '../gift-card-transaction/gift-card-transaction.service';
 import { GiftCardStatus, GiftCardTransactionType, IGiftCard } from '../promotion.types';
+import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
 
 /**
  * Gift cards: a stored-value instrument with its own ledger.
@@ -25,7 +26,7 @@ import { GiftCardStatus, GiftCardTransactionType, IGiftCard } from '../promotion
  *   movement, so the history of the liability survives on the ledger.
  */
 @Injectable()
-export class GiftCardService extends CrudService<GiftCard> {
+export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 	constructor(
 		readonly typeOrmGiftCardRepository: TypeOrmGiftCardRepository,
 		readonly mikroOrmGiftCardRepository: MikroOrmGiftCardRepository,

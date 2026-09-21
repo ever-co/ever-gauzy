@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
+import * as chalk from 'chalk';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, EventBus, Money, Payment, RequestContext } from '@gauzy/core';
+import { CrudService, EventBus, Money, Payment, RequestContext, readAffectedRows } from '@gauzy/core';
 import { PaymentCapture } from './payment-capture.entity';
 import { TypeOrmPaymentCaptureRepository } from './repository/type-orm-payment-capture.repository';
 import { MikroOrmPaymentCaptureRepository } from './repository/mikro-orm-payment-capture.repository';
@@ -60,12 +61,30 @@ export class PaymentCaptureService extends CrudService<PaymentCapture> {
 	/**
 	 * Records a capture against a payment, and moves the payment and its collection with it.
 	 *
+	 * **The over-capture guard is only a guard while the write is conditional on what it read.** The
+	 * ceiling above is computed from `payment.capturedAmount` as this call read it, and the payment row
+	 * is then written with an *absolute* new total. Written unconditionally, two concurrent captures of
+	 * the full authorisation both read `capturedAmount = 0`, both compute a remaining of the whole
+	 * amount, both pass, and both write the same total: two `payment_capture` rows totalling twice the
+	 * authorisation while the payment row claims one of them. `sumCapturedForPayment` then reports the
+	 * doubled figure, and `RefundService.assertRefundable` authorises refunds against money that was
+	 * never taken. The `UPDATE` therefore names `capturedAmount` among its criteria — the same
+	 * compare-and-swap `OrderLineService.recordRefund` makes — so the second writer changes no row and
+	 * is answered with `PAYMENT_CAPTURE_CONFLICT` instead of silently winning.
+	 *
+	 * **The payment row and the ledger row are written in one transaction, payment first.** The order
+	 * matters: a capture row written before the swap would be left behind by a refused swap, as a ledger
+	 * entry for money the payment does not account for. Inside one transaction neither can outlive the
+	 * other.
+	 *
 	 * @param input The capture to record.
 	 * @returns The stored capture.
 	 * @throws NotFoundException when the payment is not in the caller's organization.
 	 * @throws BadRequestException when the payment was never authorised, when it is already fully
 	 * captured, when the capture would pass what remains of the authorisation, or when it would take
 	 * the collection past the amount it is for.
+	 * @throws ConflictException with `PAYMENT_CAPTURE_CONFLICT` when another capture moved the payment's
+	 * running total between this call reading it and writing it.
 	 */
 	async capture(input: IPaymentCaptureCreateInput): Promise<IPaymentCapture> {
 		const payment = await this.findPaymentOrFail(input.paymentId);
@@ -107,40 +126,108 @@ export class PaymentCaptureService extends CrudService<PaymentCapture> {
 			this.paymentCollectionService.assertCanCapture(collection, amount.amount);
 		}
 
-		const capture = await this.create({
-			...input,
-			paymentId: payment.id,
-			amount: amount.amount,
-			currency,
-			capturedAt: input.capturedAt ?? new Date(),
-			...this.scope
-		} as never);
-
+		const capturedAt = input.capturedAt ?? new Date();
 		const capturedTotal = captured.add(amount);
-		await this.paymentRepository.update(
-			{ id: payment.id, ...this.scope } as never,
-			{
-				capturedAmount: capturedTotal.amount,
-				capturedAt: capture.capturedAt ?? new Date(),
-				status: this.derivePaymentStatus(payment, capturedTotal, Money.of(payment.refundedAmount ?? '0', currency))
-			} as never
-		);
+		const capture = await this.typeOrmPaymentCaptureRepository.manager.transaction(async (manager) => {
+			// The running total this call reasoned about is part of the criteria, so the statement lands
+			// only while the payment still holds it. A second capture that read the same total changes no
+			// row here and is refused below rather than overwriting the first one's figure.
+			const written = await manager.update(
+				Payment,
+				{ id: payment.id, capturedAmount: this.asRead(payment.capturedAmount), ...this.scope } as never,
+				{
+					capturedAmount: capturedTotal.amount,
+					capturedAt,
+					status: this.derivePaymentStatus(
+						payment,
+						capturedTotal,
+						Money.of(payment.refundedAmount ?? '0', currency)
+					)
+				} as never
+			);
+
+			if (readAffectedRows(written) === 0) {
+				throw new ConflictException({
+					message: `PAYMENT_CAPTURE_CONFLICT: payment '${payment.id}' was captured by another write between this capture reading its running total and writing it, so nothing was overwritten. Read the payment and capture again.`,
+					code: 'PAYMENT_CAPTURE_CONFLICT',
+					details: { paymentId: payment.id, capturedAmount: captured.amount }
+				});
+			}
+
+			return manager.save(
+				PaymentCapture,
+				manager.create(PaymentCapture, {
+					...input,
+					paymentId: payment.id,
+					amount: amount.amount,
+					currency,
+					capturedAt,
+					...this.scope
+				} as never)
+			);
+		});
 
 		if (payment.paymentCollectionId) {
 			await this.paymentCollectionService.recordCapture(payment.paymentCollectionId, amount.amount);
 		}
 
-		this.eventBus.publish(
+		await this.publish(
 			new PaymentCapturedEvent(
 				capture.id,
 				payment.id,
 				amount.amount,
 				currency,
 				payment.organizationId ?? this.scope.organizationId
-			)
+			),
+			`capture ${capture.id}`
 		);
 
 		return this.findCaptureOrFail(capture.id);
+	}
+
+	/**
+	 * One running total as the criteria of a compare-and-swap must state it.
+	 *
+	 * `= NULL` matches nothing in SQL, so a column that was read as absent has to be stated as
+	 * `IS NULL` rather than as a zero that would look equivalent in JavaScript and match no row at all —
+	 * which would turn every capture against such a payment into a permanent conflict. The column
+	 * carries `default 0` and is written on every path, so this is the belt rather than the braces; a
+	 * compare-and-swap whose criteria can silently match nothing is not one worth having.
+	 *
+	 * @param value The running total as the read handed it over.
+	 * @returns The criteria value that matches the row this call read.
+	 */
+	private asRead(value: number | string | null | undefined): unknown {
+		return value === null || value === undefined ? IsNull() : value;
+	}
+
+	/**
+	 * Announces one capture event, awaited and with its failure absorbed.
+	 *
+	 * **Awaited**, because `EventBus.publish` is asynchronous and a call left dangling turns a consumer's
+	 * throw into an unhandled promise rejection — which, under Node's default policy, terminates the API
+	 * process and every in-flight request with it. It also ordered the publish after the response, so a
+	 * client reading derived state immediately afterwards saw it stale.
+	 *
+	 * **Absorbed**, because by the time this runs the money has moved at the provider and the ledger row
+	 * is committed. Failing the request over a consumer would tell the caller the capture failed when it
+	 * did not, and the caller would capture again. The refusal is named and logged instead — the same
+	 * division `RefundService.mirrorToOrderLines` makes for the same reason.
+	 *
+	 * @param event The event to publish.
+	 * @param what What the event is about, used in the log line.
+	 */
+	private async publish(event: PaymentCapturedEvent, what: string): Promise<void> {
+		try {
+			await this.eventBus.publish(event);
+		} catch (error) {
+			console.log(
+				chalk.yellow(
+					`PAYMENT_EVENT_PUBLISH_FAILED: ${what} was recorded and its event was not delivered ` +
+						`(${error instanceof Error ? error.message : String(error)}). The capture stands.`
+				)
+			);
+		}
 	}
 
 	/**

@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { ID, IPagination, ShippingPriceType } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
+import { TenantAwareCrudService, commitVersionedUpdate } from '@gauzy/core';
 import { ShippingOption } from './shipping-option.entity';
 import { TypeOrmShippingOptionRepository } from './repository/type-orm-shipping-option.repository';
 import { MikroOrmShippingOptionRepository } from './repository/mikro-orm-shipping-option.repository';
+import { ANY_FULFILLMENT_VERSION } from '../fulfillment.types';
 
 /**
  * What a caller asks for when it wants to know which deliveries are available.
@@ -67,11 +68,30 @@ export class ShippingOptionService extends TenantAwareCrudService<ShippingOption
 	/**
 	 * Updates an option, keeping the price shape coherent and bumping its optimistic lock.
 	 *
-	 * @param id The option.
+	 * **The lock is bumped by the write, not by this method.** `version` on this entity is documented as
+	 * an optimistic lock, and computing `existing.version + 1` after a read and writing it with an
+	 * unconditional `UPDATE … WHERE id = ?` is precisely the read-then-write window the lock exists to
+	 * close: two operators editing one option from the same screen both read version 3, both write
+	 * version 4, and the second one's edit silently replaces the first one's with no conflict raised and
+	 * no counter to show that anything was lost. The write therefore goes through the kernel's
+	 * conditional update, whose `UPDATE … WHERE id = :id AND version = :expected` decides the outcome
+	 * from the affected-row count and sets the next version in the same statement. A `version` stated in
+	 * the patch is dropped for the same reason: the statement owns that column.
+	 *
+	 * **The criteria form is delegated rather than re-entered.** The kernel commits through
+	 * `CrudService.update`, which is this very method, and it calls it with a criteria *object* that
+	 * already carries the precondition and the next version. That call is the write itself and is passed
+	 * straight to the base class; re-entering the branch below would recurse without end.
+	 *
+	 * @param id The option, or the criteria object the conditional write states.
 	 * @param entity The fields to change.
 	 * @returns The update result or the option.
 	 */
 	public async update(id: any, entity: any): Promise<any> {
+		if (id !== null && typeof id === 'object') {
+			return super.update(id, entity);
+		}
+
 		const existing = await this.findOneByIdString(id as ID);
 
 		if (!existing) {
@@ -84,7 +104,20 @@ export class ShippingOptionService extends TenantAwareCrudService<ShippingOption
 			await this.assertCodeIsFree(entity.code, id as ID);
 		}
 
-		return super.update(id, { ...entity, version: Number(existing.version ?? 1) + 1 });
+		const { version, ...patch } = entity ?? {};
+		void version;
+
+		// The tenancy columns are criteria as well as the id: an option's identifier travels, and a
+		// conditional write that named only the row would be a write one identifier is the whole key to.
+		return await commitVersionedUpdate<ShippingOption>(this, {
+			id: existing.id,
+			expectation: ANY_FULFILLMENT_VERSION,
+			patch,
+			where: {
+				...(existing.tenantId ? { tenantId: existing.tenantId } : {}),
+				...(existing.organizationId ? { organizationId: existing.organizationId } : {})
+			}
+		});
 	}
 
 	/**

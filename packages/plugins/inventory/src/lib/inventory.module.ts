@@ -11,10 +11,16 @@
  * provider can only name a service the package makes reachable. Neither seam owns a table of its own;
  * they read the ledger’s rows and the level rows, and they are registered here so that one instance of
  * each answers the whole installation.
+ *
+ * The relational connection both seams read through is registered here for the same reason: it is the
+ * thing that decides which ORM answers, and one instance of it is what keeps the two seams from
+ * disagreeing about that.
  */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { WarehouseProductVariant } from '@gauzy/core';
+import { InventoryOrmConnection } from './inventory.connection';
 import { StockMovement } from './stock-movement/stock-movement.entity';
 import { StockLevelModule } from './stock-level/stock-level.module';
 import { InventorySequenceModule } from './inventory-sequence.module';
@@ -33,6 +39,12 @@ import { StockLedgerService } from './stock-ledger/stock-ledger.service';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([StockMovement, WarehouseProductVariant]),
+		// **Both ORMs, as every other module in this package registers both.** This was the one module
+		// in the package that registered only TypeORM, and the two providers it feeds are the package's
+		// capability seams — so under `DB_ORM=mikro-orm` there was no MikroORM repository for either of
+		// the two entities in the injector that owns them, and no arm could be added to the seams
+		// without a DI failure. The TypeORM registration is unchanged.
+		MikroOrmModule.forFeature([StockMovement, WarehouseProductVariant]),
 		StockLevelModule,
 		InventorySequenceModule,
 		StockMovementModule,
@@ -45,8 +57,9 @@ import { StockLedgerService } from './stock-ledger/stock-ledger.service';
 		StockCountModule,
 		StockCountLineModule
 	],
-	providers: [StockAvailabilityService, StockLedgerService],
+	providers: [InventoryOrmConnection, StockAvailabilityService, StockLedgerService],
 	exports: [
+		InventoryOrmConnection,
 		StockAvailabilityService,
 		StockLedgerService,
 		StockLevelModule,

@@ -543,9 +543,44 @@ describe('PurchaseOrderLineService — the three-way match (I-81, doc 05 §16.2)
 
 	afterEach(() => jest.restoreAllMocks());
 
+	it('counts the damaged units as delivered under ON_RECEIVED, because the supplier will invoice them', async () => {
+		// The corrected contract. `damagedQuantity` is documented on the entity as "counted against the
+		// ordered quantity exactly like a good unit, because the supplier delivered it and the
+		// organization paid for it", and every other consumer treats the pair together. The billable
+		// basis did not: ten units delivered as eight good and two broken measured as eight billable, so
+		// the supplier's invoice for the ten the organization is liable for was refused as over-billing
+		// and could not be posted at all. Recovering the value of the two is a debit note against a bill
+		// that exists, which is a different document from the one this refused.
+		const fixture = lineFixture({
+			lines: [
+				lineRow('line-1', {
+					quantity: '10.000000',
+					receivedQuantity: '8.000000',
+					damagedQuantity: '2.000000',
+					billedQuantity: '0'
+				})
+			]
+		});
+		const line = fixture.line('line-1') as never;
+
+		expect(fixture.service.toBillQuantity(line, PurchaseBillingPolicy.ON_RECEIVED)).toBe('10.000000');
+		// The control: counting the good units alone gave 8, and the supplier's invoice for 10 was refused.
+		expect(fixture.service.toBillQuantity(line, PurchaseBillingPolicy.ON_RECEIVED)).not.toBe('8.000000');
+		await expect(
+			fixture.service.assertNotOverbilled('line-1', '10.000000', PurchaseBillingPolicy.ON_RECEIVED)
+		).resolves.toMatchObject({ id: 'line-1' });
+		// And the ceiling still holds: what did not arrive at all is still not billable.
+		await expect(
+			fixture.service.assertNotOverbilled('line-1', '10.000001', PurchaseBillingPolicy.ON_RECEIVED)
+		).rejects.toThrow(new RegExp(PurchasingCodes.PURCHASE_LINE_OVERBILLED));
+		// `ON_ORDERED` is measured against what was ordered and is untouched by the disposition.
+		expect(fixture.service.toBillQuantity(line, PurchaseBillingPolicy.ON_ORDERED)).toBe('10.000000');
+	});
+
 	it('derives what is still billable from the policy, and never stores it', async () => {
-		// `ON_ORDERED ? quantity − billedQuantity : receivedQuantity − billedQuantity`, "derived at read,
-		// never stored" — a stored remainder is exactly what goes stale when a receipt is reversed.
+		// `ON_ORDERED ? quantity − billedQuantity : (receivedQuantity + damagedQuantity) − billedQuantity`,
+		// "derived at read, never stored" — a stored remainder is exactly what goes stale when a receipt
+		// is reversed. This line has nothing damaged, so the two readings of the received basis agree.
 		const fixture = lineFixture({
 			lines: [lineRow('line-1', { quantity: '10.000000', receivedQuantity: '6.000000', billedQuantity: '4.000000' })]
 		});

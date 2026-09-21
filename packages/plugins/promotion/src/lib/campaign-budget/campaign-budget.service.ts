@@ -1,7 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { isMySQL, isSqlite } from '@gauzy/config';
-import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, MultiORMEnum, readAffectedRows, RequestContext, toPositionalStatement } from '@gauzy/core';
+import { CurrencyCode, DecimalString, ID, IPagination } from '@gauzy/contracts';
+import {
+	Money,
+	MultiORMEnum,
+	readAffectedRows,
+	RequestContext,
+	toPositionalStatement
+} from '@gauzy/core';
 import { CampaignBudget } from './campaign-budget.entity';
 import { TypeOrmCampaignBudgetRepository } from './repository/type-orm-campaign-budget.repository';
 import { MikroOrmCampaignBudgetRepository } from './repository/mikro-orm-campaign-budget.repository';
@@ -13,6 +19,7 @@ import {
 	ICampaignBudgetCreateInput,
 	ICampaignBudgetUsage
 } from '../promotion.types';
+import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
 
 /** Result of an attempt to consume budget. */
 export interface IBudgetReservation {
@@ -26,6 +33,28 @@ export interface IBudgetReservation {
 
 /** How many times a SQLite write is retried when the database is momentarily busy. */
 const SQLITE_BUSY_RETRIES = 3;
+
+/**
+ * The scale a budget's figures are carried at: the `numeric(20,6)` of the two columns.
+ *
+ * The arithmetic is done at the column's scale rather than at a currency's, because what a caller
+ * compares a headroom against is the stored figure, and a `USAGE` budget has no currency at all.
+ */
+const BUDGET_SCALE = 6;
+
+/** ISO 4217's "no currency" code, used for the counting budgets that carry none. */
+const BUDGET_NEUTRAL_CURRENCY = 'XXX';
+
+/**
+ * What a budget with no ceiling reports as its headroom.
+ *
+ * A campaign may run unbudgeted — a window with no money limit — and the conditional statement that
+ * consumes budget already treats a null `limit` as "no ceiling" (`"limit" IS NULL OR ...`). The
+ * figure reported beside a reservation therefore has to say the same thing, and it has to be a
+ * `DecimalString` like every other headroom: this is the largest amount a `numeric(20,6)` column
+ * holds, which is the widest "no ceiling" the type can express.
+ */
+export const UNLIMITED_BUDGET_HEADROOM: DecimalString = '99999999999999.000000';
 
 /**
  * The spend or usage ceiling of a campaign.
@@ -54,7 +83,7 @@ const SQLITE_BUSY_RETRIES = 3;
  * it and repairs any drift through this same conditional path.
  */
 @Injectable()
-export class CampaignBudgetService extends CrudService<CampaignBudget> {
+export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudget> {
 	constructor(
 		readonly typeOrmCampaignBudgetRepository: TypeOrmCampaignBudgetRepository,
 		readonly mikroOrmCampaignBudgetRepository: MikroOrmCampaignBudgetRepository,
@@ -214,11 +243,34 @@ export class CampaignBudgetService extends CrudService<CampaignBudget> {
 	/**
 	 * Returns the remaining headroom of a budget.
 	 *
+	 * **The subtraction is the money layer's, not the language's.** `String(Number(limit) -
+	 * Number(used))` is wrong in three separate ways, and every one of them reaches a caller: with a
+	 * limit of `1000.100000` and a spend of `0.300000` it answers `999.8000000000001`, thirteen
+	 * fractional digits, which `Money.of` refuses outright with `MONEY_NOT_DECIMAL_STRING`; with
+	 * `100.000000` and `99.999999` it answers `9.999999974752427e-7`, exponential notation that is not
+	 * a decimal string at all *and* not the right figure either, the true headroom being `0.000001`;
+	 * and with no limit set — an unbudgeted campaign, which is the ordinary case — `Number(null)` is
+	 * zero, so an unlimited budget reported a *negative* headroom to every caller that read one.
+	 *
+	 * The value is declared `DecimalString` and travels to callers as `IBudgetReservation.headroom`,
+	 * so it has to be one.
+	 *
 	 * @param budget The budget to measure.
-	 * @returns `limit - used`, or a large sentinel when the budget is unlimited.
+	 * @returns `limit - used` as an exact decimal, or the unlimited sentinel when no ceiling is set.
 	 */
 	headroom(budget: ICampaignBudget): DecimalString {
-		return String(Number(budget.limit) - Number(budget.used));
+		if (budget?.limit === null || budget?.limit === undefined || String(budget.limit).trim() === '') {
+			return UNLIMITED_BUDGET_HEADROOM;
+		}
+
+		// A `USAGE` budget counts redemptions and carries no currency, so the arithmetic is done in the
+		// ISO "no currency" code at the storage scale: what is preserved is the exactness and the six
+		// decimal places the column holds, and neither depends on which currency the ceiling is in.
+		const currency = (budget.currency ?? BUDGET_NEUTRAL_CURRENCY) as CurrencyCode;
+
+		return Money.fromStorage(budget.limit, currency, BUDGET_SCALE)
+			.subtract(Money.fromStorage(budget.used, currency, BUDGET_SCALE))
+			.toStorageString();
 	}
 
 	/**

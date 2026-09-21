@@ -1,5 +1,5 @@
 import { CurrencyCode, DecimalString } from '@gauzy/contracts';
-import { Money } from '@gauzy/core';
+import { Money, divideDecimalUnits, formatDecimalUnits } from '@gauzy/core';
 import { SubscriptionBillingPeriod, ISubscriptionItem } from './subscription.types';
 
 /**
@@ -194,10 +194,24 @@ export function prorate(input: {
 	const credit = oldRecurring.multiply(ratio).round();
 	const charge = newRecurring.multiply(ratio).round();
 
-	return { credit, charge, net: charge.subtract(credit).round() };
+	// The net is the difference of the two values that were actually rounded, and is NOT rounded again:
+	// both already sit on the currency's scale, so their difference does too, and a second boundary
+	// could only move the net away from `charge - credit`. A caller that posts all three to a ledger
+	// posts a balanced triple.
+	return { credit, charge, net: charge.subtract(credit) };
 }
 
 /**
+ * The share of a period that is left, as an exact decimal.
+ *
+ * **The division is on the digits, never on a double.** `part / whole` is binary floating point and
+ * `toFixed` then rounds the *binary* value rather than the decimal one: ten days of thirty came out
+ * as `0.333333333333`, which is 3.33e-13 below the exact third, and the credit and the charge of a
+ * plan change are each that fraction of a recurring amount. The money layer has an exact integer
+ * division for precisely this — `divideDecimalUnits` — and the tax package one repository over uses
+ * it for the same job. Both arguments are whole milliseconds, so widening them to `bigint` loses
+ * nothing.
+ *
  * @param part A span of time.
  * @param whole The span it is a share of.
  * @returns The share as an exact decimal fraction, at the money layer's working scale.
@@ -207,7 +221,17 @@ export function ratioOf(part: number, whole: number): string {
 		return '0';
 	}
 
-	return (Math.min(Math.max(part, 0), whole) / whole).toFixed(Money.WORKING_SCALE);
+	// Truncated before widening: `BigInt` refuses a fractional number, and a span of time that arrives
+	// with a fraction of a millisecond in it carries no information this share can use.
+	const denominator = Math.trunc(whole);
+	const numerator = Math.min(Math.max(Math.trunc(part), 0), denominator);
+	const quotient = divideDecimalUnits(
+		{ units: BigInt(numerator), scale: 0 },
+		{ units: BigInt(denominator), scale: 0 },
+		Money.WORKING_SCALE
+	);
+
+	return formatDecimalUnits(quotient, Money.WORKING_SCALE);
 }
 
 /**

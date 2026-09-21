@@ -364,6 +364,42 @@ describe('OrderStateMachine.derivePaymentStatus (doc 10 §5.5)', () => {
 		).toBe(OrderPaymentStatus.PARTIALLY_CAPTURED);
 	});
 
+	it('takes the digits a caller summed exactly, rather than re-rendering them through a double', () => {
+		// The other half of the same defect. The comparison here was already exact, but every running
+		// sum it is handed is produced by the caller, and `decimal()` used to stringify whatever it was
+		// given: `String(0.7999999999999999)` is compared against `String(0.8)`, and an order captured
+		// in full by two transactions of `0.10` and `0.70` was reported `PARTIALLY_CAPTURED` for ever.
+		// The members are now `DecimalString | number`, so a caller that summed on the digits — which is
+		// what `OrderTotalsService` does — can hand the digits over as digits.
+		expect(
+			OrderStateMachine.derivePaymentStatus(
+				ledger({ grandTotal: '0.80', captured: '0.80', authorized: '0.80' }) as never
+			)
+		).toBe(OrderPaymentStatus.CAPTURED);
+
+		// Control: the same members as text, one cent short, is still short.
+		expect(
+			OrderStateMachine.derivePaymentStatus(
+				ledger({ grandTotal: '0.80', captured: '0.79', authorized: '0.80' }) as never
+			)
+		).toBe(OrderPaymentStatus.PARTIALLY_CAPTURED);
+	});
+
+	it('answers rather than throwing for a figure a double renders in exponential form', () => {
+		// `String(1e-7)` is `'1e-7'`, which the decimal kernel refuses rather than guesses at — correctly,
+		// but a credit of a ten-millionth read back off a column as a double does reach here, and the
+		// kernel's refusal would escape a status derivation as a `MONEY_NOT_DECIMAL_STRING` server fault
+		// rather than as an answer. The digits are laid out in full instead, which loses nothing.
+		expect(
+			OrderStateMachine.derivePaymentStatus(
+				ledger({ grandTotal: 1e-7, creditTotal: 0, captured: 1e-7, authorized: 1e-7 }) as never
+			)
+		).toBe(OrderPaymentStatus.CAPTURED);
+		expect(
+			OrderStateMachine.derivePaymentStatus(ledger({ grandTotal: 1e-7, captured: 0 }) as never)
+		).toBe(OrderPaymentStatus.NOT_PAID);
+	});
+
 	it('derives every branch of the decision list', () => {
 		const cases: Array<{ what: string; input: Record<string, unknown>; expected: OrderPaymentStatus }> = [
 			{
@@ -541,6 +577,65 @@ describe('OrderStateMachine.deriveFulfillmentStatus (doc 10 §5.6)', () => {
 		expect(
 			OrderStateMachine.deriveFulfillmentStatus(
 				quantities({ orderedQuantity: 10, writtenOffQuantity: 4, fulfilledQuantity: 5 }) as never
+			)
+		).toBe(FulfillmentStatus.PARTIALLY_FULFILLED);
+	});
+
+	it('subtracts the quantities as decimals, so a fully accounted-for line is fulfilled', () => {
+		// The counterexample, and the reason this half of the class no longer subtracts its inputs as
+		// numbers: `0.3 - 0.1 - 0.2` is `-2.7755575615628914e-17` in binary floating point. `netTarget`
+		// is then neither above zero nor equal to it, so a line whose every unit was accounted for fell
+		// through to `NOT_FULFILLED` — and stayed there, because the derivation is deterministic and the
+		// order could never be completed. `=== 0` is exactly the test a float can never pass.
+		expect(
+			OrderStateMachine.deriveFulfillmentStatus(
+				quantities({ orderedQuantity: 0.3, writtenOffQuantity: 0.1, dismissedQuantity: 0.2 }) as never
+			)
+		).toBe(FulfillmentStatus.FULFILLED);
+
+		// The parts still have to sum to the whole on the ceiling comparisons too: `0.1 + 0.2` shipped
+		// against `0.3` ordered is a line that shipped in full, and a `>=` on doubles says otherwise.
+		expect(
+			OrderStateMachine.deriveFulfillmentStatus(
+				quantities({ orderedQuantity: 0.3, fulfilledQuantity: 0.30000000000000004 }) as never
+			)
+		).toBe(FulfillmentStatus.FULFILLED);
+		expect(
+			OrderStateMachine.deriveFulfillmentStatus(
+				quantities({ orderedQuantity: 1, writtenOffQuantity: 0.3, fulfilledQuantity: 0.7 }) as never
+			)
+		).toBe(FulfillmentStatus.FULFILLED);
+		expect(
+			OrderStateMachine.deriveFulfillmentStatus(
+				quantities({ orderedQuantity: 1, writtenOffQuantity: 0.3, receivedReturnQuantity: 0.7 }) as never
+			)
+		).toBe(FulfillmentStatus.RETURNED);
+
+		// Control: a line that genuinely still owes a unit is still short, so the fix is exact
+		// arithmetic rather than a licence to call everything fulfilled.
+		expect(
+			OrderStateMachine.deriveFulfillmentStatus(
+				quantities({ orderedQuantity: 1, writtenOffQuantity: 0.3, fulfilledQuantity: 0.6 }) as never
+			)
+		).toBe(FulfillmentStatus.PARTIALLY_FULFILLED);
+	});
+
+	it('accepts the exact decimals a `numeric(20,6)` column hands back as text', () => {
+		// The counters arrive from the driver as decimal text on some dialects and as a `number` on
+		// others, and the digits are what the decision is made on either way. Rendering text through a
+		// double on the way in is the step that loses them, so text passes through untouched.
+		expect(
+			OrderStateMachine.deriveFulfillmentStatus(
+				quantities({
+					orderedQuantity: '10.000000',
+					writtenOffQuantity: '4.000000',
+					fulfilledQuantity: '6.000000'
+				}) as never
+			)
+		).toBe(FulfillmentStatus.FULFILLED);
+		expect(
+			OrderStateMachine.deriveFulfillmentStatus(
+				quantities({ orderedQuantity: '10.000000', fulfilledQuantity: '9.999999' }) as never
 			)
 		).toBe(FulfillmentStatus.PARTIALLY_FULFILLED);
 	});

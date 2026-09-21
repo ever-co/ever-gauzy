@@ -83,9 +83,27 @@ export async function commitVersionedUpdate<T extends BaseEntity>(
 	const expected = await resolveExpectedVersion(options.expectation, readCurrent);
 
 	if (expected === null) {
-		throw new ApiException(HttpStatus.NOT_FOUND, ApiErrorCode.RESOURCE_NOT_FOUND, 'The requested record was not found.', {
-			id: options.id
-		});
+		// 🛑 **"No usable version" is not "no row", and conflating them is how a record becomes
+		// permanently unwritable.** `resolveExpectedVersion` reads the row only for a caller that stated
+		// a condition rather than a number — a wildcard, or a list of accepted versions — and it answers
+		// null for a row that is absent *and* for a row that is plainly there but carries `0`, `NULL`,
+		// or a value the driver handed back in a shape `parseEntityVersion` refuses. Answering `404
+		// RESOURCE_NOT_FOUND` to the second case told the client the resource was deleted, so it stopped
+		// retrying, and every versioned route over that row answered the same thing for ever.
+		//
+		// `bumpVersion` already states what such a row means — "a row whose version is absent or
+		// unusable is treated as being at zero" — and this is the other half of that sentence: the
+		// update is predicated on the raw value the row actually holds, so the statement is still
+		// conditional and still atomic, and the row lands at 1.
+		const raw = await readRawVersion(service, options.id);
+
+		if (!raw.exists) {
+			throw new ApiException(HttpStatus.NOT_FOUND, ApiErrorCode.RESOURCE_NOT_FOUND, 'The requested record was not found.', {
+				id: options.id
+			});
+		}
+
+		return commitUnversionedRow(service, options, raw.value);
 	}
 
 	const nextVersion = bumpVersion(expected);
@@ -142,6 +160,63 @@ export async function commitVersionedUpdate<T extends BaseEntity>(
 }
 
 /**
+ * Writes a row that exists but carries no usable version, once, and leaves it at version 1.
+ *
+ * The statement stays conditional: it is predicated on the very value the row was read holding —
+ * `NULL`, `0`, or whatever else the column carried — so two concurrent callers still cannot both
+ * write it, and the second one is answered with a conflict exactly as it would be at any other
+ * version. A `null` predicate means `version IS NULL` rather than `version = NULL` under the
+ * platform's `TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR` (`null: 'sql-null'`), which is the setting that
+ * makes this criteria object mean the same thing on both ORMs.
+ *
+ * @param service The service that owns the record.
+ * @param options The record, what the caller accepted and what to write.
+ * @param current The raw value the version column was read holding.
+ * @returns The version the record now holds, which is 1.
+ * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the row moved on between the read and
+ * this statement, or with `RESOURCE_NOT_FOUND` when it was deleted in between.
+ */
+async function commitUnversionedRow<T extends BaseEntity>(
+	service: CrudService<T>,
+	options: IVersionedWriteOptions<T>,
+	current: unknown
+): Promise<{ version: number }> {
+	const nextVersion = bumpVersion(null);
+	const predicate = typeof current === 'number' || typeof current === 'string' ? current : null;
+	const criteria: Record<string, unknown> = {
+		...(options.where ?? {}),
+		id: options.id,
+		version: predicate
+	};
+
+	const result = await service.update(criteria as any, { ...options.patch, version: nextVersion } as any);
+
+	if (readAffected(result) > 0) {
+		return { version: nextVersion };
+	}
+
+	const state = await readRowState(service, options.id);
+
+	if (state.exists === false) {
+		throw new ApiException(HttpStatus.NOT_FOUND, ApiErrorCode.RESOURCE_NOT_FOUND, 'The requested record was not found.', {
+			id: options.id
+		});
+	}
+
+	throw new ApiException(
+		HttpStatus.CONFLICT,
+		ApiErrorCode.ENTITY_VERSION_CONFLICT,
+		'The record changed since you read it. Read it again and reapply your change.',
+		{
+			expectedVersion: 0,
+			...(state.actualVersion === undefined || state.actualVersion === null
+				? {}
+				: { actualVersion: state.actualVersion })
+		}
+	);
+}
+
+/**
  * How many rows an update changed, whichever ORM answered.
  *
  * TypeORM reports an `UpdateResult`; the MikroORM path of `CrudService.update` reports the same
@@ -186,6 +261,36 @@ async function readStoredVersion<T extends BaseEntity>(service: CrudService<T>, 
 	} catch (error) {
 		if (error instanceof NotFoundException) {
 			return null;
+		}
+
+		throw error;
+	}
+}
+
+/**
+ * Reads whether a record is there, and the raw value its version column holds.
+ *
+ * The value is deliberately **not** parsed: this is the reader for the case where the parsed value
+ * was refused, and its whole purpose is to tell "the record is gone" apart from "the record is here
+ * and its version is not a version". A read that fails is reported as the record being present with
+ * an unreadable version, which is the conservative answer — it predicates the write on `NULL` rather
+ * than telling the caller the record was deleted.
+ *
+ * @param service The service that owns the record.
+ * @param id The record id.
+ * @returns Whether the record exists, and the raw column value when it does.
+ */
+async function readRawVersion<T extends BaseEntity>(
+	service: CrudService<T>,
+	id: ID
+): Promise<{ exists: boolean; value: unknown }> {
+	try {
+		const row = await service.findOneByIdString(id);
+
+		return { exists: !!row, value: (row as any)?.['version'] };
+	} catch (error) {
+		if (error instanceof NotFoundException) {
+			return { exists: false, value: undefined };
 		}
 
 		throw error;

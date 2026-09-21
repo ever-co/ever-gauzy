@@ -100,6 +100,26 @@ function same(left: unknown, right: unknown): boolean {
 }
 
 /**
+ * What a write addresses, as a conditions object.
+ *
+ * Every write of these services is scoped to the caller's tenant, so the criteria that reaches the
+ * repository is `{ id, tenantId }` rather than a bare identifier — which is the whole point of the
+ * scoping: a statement that names only an identifier is one another tenant's identifier can satisfy.
+ * A double that understood only the identifier form would report a scoped write as having changed a
+ * row it never matched.
+ *
+ * @param criteria What the service addressed the row by.
+ * @returns The same thing as a conditions object.
+ */
+function criteriaOf(criteria: unknown): Record<string, unknown> {
+	if (typeof criteria === 'string' || typeof criteria === 'number') {
+		return { id: criteria };
+	}
+
+	return (criteria ?? {}) as Record<string, unknown>;
+}
+
+/**
  * @param cards The `gift_card` rows.
  * @returns The service, the cards, the ledger and the events the movements produced.
  */
@@ -130,8 +150,10 @@ function serviceUnderTest(cards: IGiftCardRow[]) {
 
 			return entity;
 		},
-		update: async (id: string, partial: Partial<IGiftCardRow>) => {
-			const row = cards.find((one) => same(one.id, id));
+		// Scoped criteria: see the note in the campaign budget suite. The write addresses
+		// `{ id, tenantId }` rather than an identifier on its own.
+		update: async (criteria: string | Record<string, unknown>, partial: Partial<IGiftCardRow>) => {
+			const row = cards.find((one) => matches(one, criteriaOf(criteria)));
 
 			if (row) {
 				Object.assign(row, partial);

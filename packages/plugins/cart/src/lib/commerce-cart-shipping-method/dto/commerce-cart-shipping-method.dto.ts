@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsNumber, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsBoolean, IsInt, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
+import { DecimalAmount, IsDecimalAmount } from '../../shared/is-decimal-amount.validator';
 
 /**
  * The writable surface of a delivery choice held against a cart.
@@ -23,9 +24,13 @@ export class CommerceCartShippingMethodDTO extends TenantOrganizationBaseDTO {
 	@MaxLength(255)
 	readonly name: string;
 
-	@ApiProperty({ type: () => Number })
-	@IsNumber()
-	readonly amount: number;
+	/**
+	 * The computed shipping amount. A decimal string or a number: the GraphQL schema types it
+	 * `Decimal!` and the two surfaces have to agree about one field's wire format.
+	 */
+	@ApiProperty({ type: () => String })
+	@IsDecimalAmount()
+	readonly amount: DecimalAmount;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()

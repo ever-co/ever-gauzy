@@ -47,10 +47,21 @@
  * platform gate and a domain gate is a real decision on a class that carries both, and because a
  * decision nothing prints is a decision nobody can review.
  *
+ * **A declaration with no guard to read it is the same defect one level down, and it is checked here
+ * too.** `@FeatureFlag(...)` and `@Permissions(...)` are metadata: they do nothing at all unless the
+ * handler runs behind the guard that reads them. A resolver that carries `@FeatureFlag(FEATURE_GRAPHQL)`
+ * and does not carry `FeatureFlagGuard` in a `@UseGuards(...)` passes the scan above — the decorator is
+ * right there in the file — while the capability it names gates nothing; the same is true of a field that
+ * states `@Permissions(ORG_TAGS_DELETE)` above a class whose chain has no `PermissionGuard`. Both read
+ * exactly like a guarded surface to anyone reviewing the source, which is why they are the shape of
+ * defect a mechanical check has to own. Every resolver in both trees is therefore read a second time,
+ * class decorators and field decorators alike, and a declaration whose guard is missing fails the run.
+ *
  * Usage:
  *   node tools/scripts/graphql-feature-gate-check.mjs [repoRoot]
  *
- * Exits 0 when every resolver carries the gate or is on the frozen allow-list, 1 otherwise.
+ * Exits 0 when every resolver carries the gate or is on the frozen allow-list and every gate and
+ * permission it declares has the guard that reads it, 1 otherwise.
  */
 'use strict';
 
@@ -176,6 +187,109 @@ function resolverClasses(source) {
 	return classes;
 }
 
+/**
+ * The decorator runs of one file: the ones above the class, and the ones above each member.
+ *
+ * Read line by line, because a decorator here legitimately spans several lines —
+ * `@Permissions(PermissionsEnum.A, PermissionsEnum.B)` wraps, and `@Query(() => X, { name: 'y' })`
+ * carries parentheses of its own, so any pattern that stops at the first `)` reads half of one. A
+ * member is recognised at one tab of indentation, which is this repository's convention, and the
+ * decorator run above it survives the JSDoc block and the blank lines between them.
+ *
+ * @param source The file's text.
+ * @returns `{ classLevel, members }`, each decorator kept as its own string.
+ */
+function decoratorRuns(source) {
+	const lines = source.split(/\r?\n/);
+	const classLevel = [];
+	const members = [];
+	let pending = [];
+	let buffer = null;
+	let seenClass = false;
+
+	const depthOf = (line) => {
+		let depth = 0;
+		for (const character of line) {
+			if (character === '(') depth++;
+			else if (character === ')') depth--;
+		}
+		return depth;
+	};
+
+	for (let index = 0; index < lines.length; index++) {
+		const line = lines[index];
+		const trimmed = line.trim();
+
+		if (buffer) {
+			buffer.text += `\n${line}`;
+			buffer.depth += depthOf(line);
+
+			if (buffer.depth <= 0) {
+				(seenClass ? pending : classLevel).push(buffer.text.trim());
+				buffer = null;
+			}
+
+			continue;
+		}
+
+		if (trimmed.startsWith('@')) {
+			const depth = depthOf(line);
+
+			if (depth > 0) buffer = { text: line, depth };
+			else (seenClass ? pending : classLevel).push(trimmed);
+
+			continue;
+		}
+
+		if (/^export\s+(?:abstract\s+)?class\s+\w+/.test(trimmed)) {
+			seenClass = true;
+			pending = [];
+			continue;
+		}
+
+		const isComment =
+			trimmed.length === 0 || trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*');
+
+		if (seenClass && pending.length > 0 && !isComment) {
+			const named = /^(?:public\s+|private\s+|protected\s+|readonly\s+|async\s+|static\s+)*([A-Za-z_]\w*)\s*[(<:]/.exec(trimmed);
+
+			members.push({ name: named ? named[1] : '(anonymous)', decorators: pending, line: index + 1 });
+			pending = [];
+		} else if (!isComment && pending.length > 0) {
+			pending = [];
+		}
+	}
+
+	return { classLevel, members };
+}
+
+/** The `@UseGuards(...)` of one decorator run, joined so the guard names can be looked for in it. */
+function guardsOf(decorators) {
+	return decorators.filter((decorator) => decorator.startsWith('@UseGuards')).join(',');
+}
+
+/**
+ * Whether a guard chain holds a guard that reads `@Permissions` metadata.
+ *
+ * Two names have to be told apart and one family has to be kept:
+ *
+ *   - `TenantPermissionGuard` ends in the same fifteen characters as `PermissionGuard` and is a
+ *     different guard reading different metadata, so it is struck out before the question is asked. A
+ *     chain that carries only the tenant guard answers no, which is the answer that matters: a
+ *     permission stated above such a handler is never evaluated by anything.
+ *   - A guard that **extends** `PermissionGuard` does read the metadata, and the platform has one:
+ *     `ProjectManagerOrPermissionGuard` (`organization-project/guards/`) grants a project's own
+ *     manager and defers to `super.canActivate` for everyone else. It is recognised by its name
+ *     ending in `PermissionGuard`, which is the convention those subclasses follow, so a chain
+ *     carrying it is not reported as a permission nothing reads.
+ *
+ * @param chain The joined `@UseGuards(...)` text.
+ * @returns True when the chain carries `PermissionGuard` or a subclass of it.
+ */
+function readsPermissions(chain) {
+	return /PermissionGuard/.test(chain.replace(/TenantPermissionGuard/g, ''));
+}
+
 const resolvers = [];
 const gated = [];
 const ungated = [];
@@ -183,6 +297,8 @@ const allowed = [];
 const gatedWithOtherCode = [];
 const multipleCodes = [];
 const staleAllowList = [];
+const inertGates = [];
+const inertPermissions = [];
 const perTree = new Map(TREES.map((tree) => [tree.label, { checked: 0, gated: 0, allowed: 0, ungated: 0 }]));
 
 for (const tree of TREES) {
@@ -224,10 +340,32 @@ for (const tree of TREES) {
 				found.ungated++;
 			}
 		}
+
+		// The second reading: a declaration is only a gate when the guard that reads it is in the
+		// chain. This runs once per file rather than once per class, because a file declares one
+		// resolver in practice and the guard chain is what the whole file's fields run behind.
+		const { classLevel, members } = decoratorRuns(source);
+		const classGuards = guardsOf(classLevel);
+
+		if (classLevel.some((decorator) => decorator.startsWith('@FeatureFlag')) && !/FeatureFlagGuard/.test(classGuards)) {
+			inertGates.push({ file: where });
+		}
+
+		if (classLevel.some((decorator) => decorator.startsWith('@Permissions')) && !readsPermissions(classGuards)) {
+			inertPermissions.push({ file: where, field: '(class)', line: 0 });
+		}
+
+		for (const member of members) {
+			if (!member.decorators.some((decorator) => decorator.startsWith('@Permissions'))) continue;
+
+			if (!readsPermissions(`${classGuards},${guardsOf(member.decorators)}`)) {
+				inertPermissions.push({ file: where, field: member.name, line: member.line });
+			}
+		}
 	}
 }
 
-const failed = ungated.length > 0;
+const failed = ungated.length > 0 || inertGates.length > 0 || inertPermissions.length > 0;
 const labels = TREES.map((tree) => tree.label);
 
 console.log('');
@@ -245,7 +383,26 @@ console.log(
 );
 console.log(`  ${allowed.length} predate the convention and are on the frozen allow-list`);
 console.log(`  ${ungated.length} carry no gate and no reason, which is the defect this check exists for`);
+console.log(
+	`  ${inertGates.length} declare a gate no guard reads, and ${inertPermissions.length} declare a permission no guard reads`
+);
 console.log('');
+
+if (inertGates.length) {
+	console.log('  Gates nothing reads — @FeatureFlag with no FeatureFlagGuard in the chain:');
+	for (const entry of inertGates) {
+		console.log(`    ${entry.file}  → the code is declared and the capability gates nothing`);
+	}
+	console.log('');
+}
+
+if (inertPermissions.length) {
+	console.log('  Permissions nothing reads — @Permissions with no PermissionGuard in the chain:');
+	for (const entry of inertPermissions) {
+		console.log(`    ${entry.file}:${entry.line}  → ${entry.field} states a permission that is never evaluated`);
+	}
+	console.log('');
+}
 
 if (ungated.length) {
 	console.log('  Un-gated resolvers — a capability the flag does not reach:');
@@ -295,8 +452,10 @@ if (staleAllowList.length) {
 
 console.log(
 	failed
-		? `graphql feature gate check: FAILED — ${ungated.length} un-gated resolver(s)`
-		: `graphql feature gate check: PASSED — ${gated.length} of ${resolvers.length} resolver(s) gated, ${allowed.length} allow-listed`
+		? `graphql feature gate check: FAILED — ${ungated.length} un-gated resolver(s), ` +
+				`${inertGates.length} gate(s) and ${inertPermissions.length} permission(s) no guard reads`
+		: `graphql feature gate check: PASSED — ${gated.length} of ${resolvers.length} resolver(s) gated, ${allowed.length} allow-listed, ` +
+				'every gate and permission behind the guard that reads it'
 );
 
 process.exit(failed ? 1 : 0);

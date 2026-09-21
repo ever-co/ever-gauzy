@@ -1,6 +1,6 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { NotFoundException, UseGuards } from '@nestjs/common';
-import { FindManyOptions, FindOptionsWhere, In, Raw } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
@@ -12,6 +12,7 @@ import { TaxRatePartService } from '../../tax-rate-part/tax-rate-part.service';
 import { TaxRate } from '../../tax-rate/tax-rate.entity';
 import { TaxRateService, formatTaxRate } from '../../tax-rate/tax-rate.service';
 import { toConnection } from '../connection.helper';
+import { applyPageWindow, liveWindowConditions } from '../predicate.helper';
 import {
 	CreateTaxRateInput,
 	PageInput,
@@ -84,9 +85,11 @@ export class TaxRateResolver {
 		@Args('offset') offset?: number,
 		@Args('withDeleted') withDeleted?: boolean
 	): Promise<TaxRateConnection> {
-		const options = this.toFindOptions(filter, sort, withDeleted);
-		options.take = limit ?? page?.first ?? undefined;
-		options.skip = offset ?? undefined;
+		const options = applyPageWindow(this.toFindOptions(filter, sort, withDeleted), {
+			limit,
+			first: page?.first,
+			offset
+		});
 
 		const { items, total } = await this.taxRateService.paginate(options);
 
@@ -264,12 +267,9 @@ export class TaxRateResolver {
 		if (filter?.direction) {
 			where.direction = filter.direction;
 		}
-		if (filter?.liveAt) {
-			this.applyLiveWindow(where, filter.liveAt);
-		}
 
 		return {
-			where,
+			where: filter?.liveAt ? this.applyLiveWindow(where, filter.liveAt) : where,
 			order: this.toOrder(sort),
 			...(withDeleted ? { withDeleted: true } : {})
 		};
@@ -279,12 +279,18 @@ export class TaxRateResolver {
 	 * Narrows the listing to the rates whose validity window contains a moment. An open bound is
 	 * unbounded, so a rate that never started and a rate that was never ended both stay eligible.
 	 *
-	 * @param where The conditions being built.
+	 * The window used to be written as two `Raw()` SQL fragments, which is a predicate only TypeORM can
+	 * read: under `DB_ORM=mikro-orm` it was answered as no predicate at all, and this listing returned
+	 * superseded rates and rates that had not started — the wrong rate, with nothing reported. The
+	 * conditions are now stated with operators both ORMs translate, which `liveWindowConditions`
+	 * expands into the four combinations of the two open bounds.
+	 *
+	 * @param where The conditions built so far.
 	 * @param liveAt The moment to test.
+	 * @returns The conditions to read as a disjunction.
 	 */
-	private applyLiveWindow(where: FindOptionsWhere<TaxRate>, liveAt: Date): void {
-		where.startsAt = Raw((alias: string) => `(${alias} IS NULL OR ${alias} <= :liveAt)`, { liveAt });
-		where.endsAt = Raw((alias: string) => `(${alias} IS NULL OR ${alias} > :liveAt)`, { liveAt });
+	private applyLiveWindow(where: FindOptionsWhere<TaxRate>, liveAt: Date): Array<FindOptionsWhere<TaxRate>> {
+		return liveWindowConditions<TaxRate>(where, liveAt);
 	}
 
 	/**

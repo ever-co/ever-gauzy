@@ -171,7 +171,15 @@ describe('TaxRateService.resolve — the specificity ladder (doc 07 §4.2 T3/T4,
 
 	afterEach(() => jest.restoreAllMocks());
 
-	/** One rate at each rung of the ladder, all eligible for {@link DESTINATION}. */
+	/**
+	 * One rate at each rung of the ladder, all eligible for {@link DESTINATION}.
+	 *
+	 * The postal zone is written `M5V.*` and not `^M5V`. A stored pattern is now compiled anchored —
+	 * `^(?:<pattern>)$`, the same shape the rule kernel compiles with — because an unanchored `test` asks
+	 * whether the pattern occurs *somewhere* in the code, and a rate configured for `90210` therefore
+	 * also claimed the destination `190210` and charged the wrong jurisdiction's tax on a real order. A
+	 * prefix zone is still a prefix zone; it is spelled with the tail it always meant.
+	 */
 	const ladder = (): IRateRow[] => [
 		rate({
 			id: 'r-postal',
@@ -179,7 +187,7 @@ describe('TaxRateService.resolve — the specificity ladder (doc 07 §4.2 T3/T4,
 			rate: 0.13,
 			countryCode: 'CA',
 			provinceCode: 'ON',
-			postalCodePattern: '^M5V',
+			postalCodePattern: 'M5V.*',
 			priority: 10
 		}),
 		rate({ id: 'r-province', name: 'Ontario', rate: 0.12, countryCode: 'CA', provinceCode: 'ON', priority: 5 }),
@@ -229,6 +237,35 @@ describe('TaxRateService.resolve — the specificity ladder (doc 07 §4.2 T3/T4,
 
 		expect(winner.taxRateId).toBe('r-postal');
 		expect(winner.code).toBe('CA-ON-TORONTO');
+	});
+
+	it('does not claim a destination whose code merely contains the pattern', async () => {
+		// The corrected contract: a stored pattern states what the whole postal code is, not what part of
+		// it contains. Unanchored, `90210` also matched `190210`, and the rate of one jurisdiction was
+		// charged on an order delivered to another — the kind of error that is only ever found in an
+		// audit. The rule kernel already compiles `^(?:…)$`, and the two halves of the platform now agree.
+		const beverlyHills = rate({
+			id: 'r-90210',
+			name: 'Beverly Hills',
+			rate: 0.095,
+			countryCode: 'US',
+			provinceCode: 'CA',
+			postalCodePattern: '90210'
+		});
+		const fallback = rate({ id: 'r-default', name: 'Fallback', rate: 0.19, isDefault: true });
+		const inUs = { ...DESTINATION, countryCode: 'US', provinceCode: 'CA' };
+
+		const [claimed] = await serviceUnderTest([beverlyHills, fallback]).resolve({
+			...inUs,
+			postalCode: '90210'
+		});
+		const [notClaimed] = await serviceUnderTest([beverlyHills, fallback]).resolve({
+			...inUs,
+			postalCode: '190210'
+		});
+
+		expect(claimed.taxRateId).toBe('r-90210');
+		expect(notClaimed.taxRateId).toBe('r-default');
 	});
 
 	it('descends past a level whose candidates are all excluded by their own rules', async () => {

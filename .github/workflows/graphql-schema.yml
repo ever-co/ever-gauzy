@@ -44,6 +44,12 @@ env:
 jobs:
   schema:
     name: schema
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes
+    # still run. This is the only PR-triggered workflow in the repository that was missing the guard,
+    # and the job behind it is the one that can least afford to: it runs on a self-hosted runner and
+    # configures the internal Verdaccio registry with `secrets.VERDACCIO_TOKEN`, so without this a
+    # fork's pull request could execute its own code on the fleet with that secret in the environment.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     # A cold dependency install on this fleet is measured in hours, not minutes. The ceiling costs
     # nothing on the warm path, which is a cache lookup.

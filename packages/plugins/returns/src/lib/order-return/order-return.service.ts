@@ -17,6 +17,7 @@ import {
 } from '../returns.types';
 import { fromQuantityUnits, subtractQuantities, sumQuantities, toQuantityUnits } from '../returns.quantity';
 import {
+	EventOutboxService,
 	IVersionExpectation,
 	Money,
 	RequestContext,
@@ -32,6 +33,41 @@ import { TypeOrmOrderReturnRepository } from './repository/type-orm-order-return
 
 /** The series key returns are numbered from. */
 const RETURN_NUMBER_KEY = 'RETURN';
+
+/**
+ * The aggregate name every `return.*` outbox row is written under.
+ *
+ * The outbox partitions by `<aggregateType>:<aggregateId>` and promises ordering inside a partition
+ * and nowhere else, so this string is what makes "one return's events arrive in the order they
+ * happened" true: a refund cannot be announced before the receipt that made it payable.
+ */
+const RETURN_AGGREGATE_TYPE = 'ORDER_RETURN';
+
+/**
+ * The `return.*` facts this domain announces.
+ *
+ * A return is the point at which goods and money move in the opposite direction, and every context
+ * downstream of it — the search index, the buyer's notifications, an outbound webhook, the accounting
+ * export — has to be told. This package announced nothing at all, so none of them could be. The set
+ * is the lifecycle, because a lifecycle move is what another context acts on; an edit of a note is
+ * not. Naming them here keeps the set answerable by a subscriber that asks what `return.*` contains.
+ */
+const RETURN_EVENTS = {
+	/** A customer or an operator asked to send goods back. */
+	REQUESTED: 'return.requested',
+	/** The request was granted; the customer may ship. */
+	APPROVED: 'return.approved',
+	/** The request was refused. */
+	REJECTED: 'return.rejected',
+	/** The request was withdrawn before anything moved. */
+	CANCELED: 'return.canceled',
+	/** Goods arrived, in full or in part, and stock moved. */
+	RECEIVED: 'return.received',
+	/** Money went back against the return. */
+	REFUNDED: 'return.refunded',
+	/** Nothing further can happen to the return. */
+	CLOSED: 'return.closed'
+} as const;
 
 /**
  * The version a write is predicated on when no caller stated one.
@@ -111,6 +147,15 @@ interface IPostedMovement extends IPlannedMovement {
  * back. Both are injected optionally — a tenant with neither can still run the lifecycle — but a
  * receipt that has units to move and no ledger fails loudly instead of adjusting a level itself.
  *
+ * **Every lifecycle move announces itself, from inside the write that made it.** A return is where
+ * goods and money travel back, so the search index, the buyer's notifications, an outbound webhook and
+ * the accounting export all have to be told — and this package told none of them, because it emitted
+ * nothing at all. Each move now appends a `return.*` row to the platform outbox in `commitHeader`,
+ * immediately after the conditional statement returned and through the return repository's own entity
+ * manager: a refused statement throws before the append is reached, so no event describes a move that
+ * did not happen, and an event that is a row cannot be lost by a crash the way one published over a
+ * bus after the commit can.
+ *
  * Every write of the header goes through `commitVersionedUpdate`, which is what makes the return an
  * optimistically concurrent aggregate rather than a row two people can overwrite in turn. A route
  * states the version its caller read; a write the platform makes on its own behalf is predicated on
@@ -124,6 +169,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		readonly mikroOrmOrderReturnRepository: MikroOrmOrderReturnRepository,
 		private readonly lineService: OrderReturnLineService,
 		private readonly sequenceService: SequenceService,
+		private readonly outbox: EventOutboxService,
 		@Optional()
 		@Inject(RETURNS_STOCK_LEDGER)
 		private readonly stockLedger?: IStockLedgerPort,
@@ -184,6 +230,12 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 		orderReturn.lines = await this.lineService.replaceLines(orderReturn.id, lines as any);
 
+		// Announced after the lines exist, because what a consumer of a return request acts on is the
+		// lines: a request with none is not something a warehouse could expect goods against.
+		await this.announce(RETURN_EVENTS.REQUESTED, orderReturn, Number(orderReturn.version ?? 1), {
+			lineCount: orderReturn.lines.length
+		});
+
 		return orderReturn;
 	}
 
@@ -222,7 +274,8 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 				approvedAt: new Date(),
 				note: note ?? orderReturn.note
 			},
-			expectation
+			expectation,
+			{ name: RETURN_EVENTS.APPROVED }
 		);
 
 		return await this.findOneScoped(id);
@@ -248,7 +301,8 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 				status: OrderReturnStatus.REJECTED,
 				reason: reason ?? orderReturn.reason
 			},
-			expectation
+			expectation,
+			{ name: RETURN_EVENTS.REJECTED, data: { reason: reason ?? orderReturn.reason ?? null } }
 		);
 
 		return await this.findOneScoped(id);
@@ -274,7 +328,8 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 				canceledAt: new Date(),
 				reason: reason ?? orderReturn.reason
 			},
-			expectation
+			expectation,
+			{ name: RETURN_EVENTS.CANCELED, data: { reason: reason ?? orderReturn.reason ?? null } }
 		);
 
 		return await this.findOneScoped(id);
@@ -359,7 +414,15 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 					warehouseId: options.warehouseId ?? orderReturn.warehouseId,
 					note: options.note ?? orderReturn.note
 				},
-				expectation
+				expectation,
+				{
+					name: RETURN_EVENTS.RECEIVED,
+					data: {
+						receivedQuantity: settlement.received,
+						outstandingQuantity: settlement.outstanding,
+						warehouseId: options.warehouseId ?? orderReturn.warehouseId ?? null
+					}
+				}
 			);
 		} catch (error) {
 			await this.compensateReceipt(orderReturn, plan, posted);
@@ -487,7 +550,10 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			.round()
 			.toStorageString();
 
-		const version = await this.commitHeader(orderReturn, { refundAmount: runningTotal }, expectation);
+		const version = await this.commitHeader(orderReturn, { refundAmount: runningTotal }, expectation, {
+			name: RETURN_EVENTS.REFUNDED,
+			data: { refundedAmount: result.amount, refundId: result.refundId ?? null }
+		});
 
 		return { refund: result, version };
 	}
@@ -568,7 +634,16 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 					  }
 					: {})
 			},
-			expectation
+			expectation,
+			{
+				name: RETURN_EVENTS.CLOSED,
+				data: {
+					shortClosed: shortfalls.length > 0,
+					outstandingQuantity: shortfalls.length
+						? sumQuantities(shortfalls.map((entry) => entry.outstanding))
+						: '0'
+				}
+			}
 		);
 
 		return await this.findOneScoped(id);
@@ -684,10 +759,19 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * the platform makes on its own behalf — a receipt compensating itself — runs with no request behind
 	 * it, and the row's own tenant and organization are then the only scope there is.
 	 *
+	 * **The move announces itself from inside this method, and that is deliberate.** A return is the
+	 * point at which goods and money travel back, so every context downstream of it has to be told —
+	 * and this is the one place that knows a move actually committed: the conditional update either
+	 * returned a version or threw. An event appended by a caller afterwards would announce transitions
+	 * the statement had declined, and an event published over a bus rather than written as a row beside
+	 * the change would be lost by any crash between the two. A write that announces nothing — the edit
+	 * route, the shipping-option record — states no event and appends no row.
+	 *
 	 * @param orderReturn The return as it was read, which supplies the id and the scope of the write.
 	 * @param patch The columns to write. `version` is set by the conditional update and never stated.
 	 * @param expectation The version the caller accepted, or `ANY_VERSION` for a write the platform
 	 * made on its own behalf.
+	 * @param event The fact this write announces, when it announces one.
 	 * @returns The version the return now holds.
 	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the return moved on, or with
 	 * `RESOURCE_NOT_FOUND` when it is gone.
@@ -695,7 +779,8 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	private async commitHeader(
 		orderReturn: OrderReturn,
 		patch: Record<string, unknown>,
-		expectation: IVersionExpectation = ANY_VERSION
+		expectation: IVersionExpectation = ANY_VERSION,
+		event?: { name: string; data?: Record<string, unknown> }
 	): Promise<number> {
 		const { version } = await commitVersionedUpdate(this, {
 			id: orderReturn.id,
@@ -707,7 +792,51 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			}
 		});
 
+		if (event) {
+			await this.announce(event.name, { ...orderReturn, ...patch } as OrderReturn, version, event.data);
+		}
+
 		return version;
+	}
+
+	/**
+	 * Appends one `return.*` event to the platform outbox.
+	 *
+	 * The append goes through the return repository's own entity manager — the manager the conditional
+	 * update was written through — and only after that update returned. The projection carries what a
+	 * consumer routes on: the return, the order it is against, where it is in its lifecycle, the money
+	 * it has given back and the version the write landed on. It does not carry the row or its lines: a
+	 * consumer that needs either reads them, and an event that shipped them would freeze their shape
+	 * into every subscriber.
+	 *
+	 * @param name The event name.
+	 * @param orderReturn The return as the move left it.
+	 * @param version The version the conditional update produced.
+	 * @param data What this particular move adds to the projection.
+	 */
+	private async announce(
+		name: string,
+		orderReturn: OrderReturn,
+		version: number,
+		data: Record<string, unknown> = {}
+	): Promise<void> {
+		await this.outbox.append(this.typeOrmOrderReturnRepository.manager, {
+			name,
+			aggregateType: RETURN_AGGREGATE_TYPE,
+			aggregateId: orderReturn.id,
+			data: {
+				returnId: orderReturn.id,
+				number: orderReturn.number ?? null,
+				orderId: orderReturn.orderId ?? null,
+				status: orderReturn.status,
+				currency: orderReturn.currency ?? null,
+				refundAmount: orderReturn.refundAmount ?? '0',
+				version,
+				...data
+			},
+			tenantId: orderReturn.tenantId,
+			organizationId: orderReturn.organizationId
+		});
 	}
 
 	/**

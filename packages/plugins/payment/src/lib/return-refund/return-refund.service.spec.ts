@@ -127,7 +127,9 @@ jest.mock(
 );
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { RequestContext } from '@gauzy/core';
+import { FindOperator } from 'typeorm';
+import { Payment, RequestContext } from '@gauzy/core';
+import { PaymentCapture } from '../payment-capture/payment-capture.entity';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { RefundStatus } from '../payment.types';
@@ -191,7 +193,12 @@ interface ITables {
 /** The entity classes the services hand to their transaction manager, resolved to tables. */
 const ENTITY_TABLES = new Map<unknown, keyof ITables>([
 	[Refund, 'refund'],
-	[RefundLine, 'refund_line']
+	[RefundLine, 'refund_line'],
+	// The capture and the payment it moves are written in one transaction, so the manager has to know
+	// both: a capture row that outlived a refused compare-and-swap on the payment would be a ledger
+	// entry for money the payment does not account for.
+	[PaymentCapture, 'payment_capture'],
+	[Payment, 'payment']
 ]);
 
 /**
@@ -208,6 +215,13 @@ function datastore(tables: ITables) {
 			// an `undefined` member from the condition rather than matching nothing.
 			if (expected === undefined) {
 				return true;
+			}
+
+			// A compare-and-swap on a running total states `IS NULL` for a column it read as absent,
+			// because `= NULL` matches nothing in SQL. The double has to make the same distinction, or a
+			// criteria the database would honour would silently match nothing here.
+			if (expected instanceof FindOperator && expected.type === 'isNull') {
+				return row[field] === null || row[field] === undefined;
 			}
 
 			return String(row[field] ?? '') === String(expected ?? '');
@@ -271,7 +285,21 @@ function datastore(tables: ITables) {
 		find: async (entity: unknown, options: any = {}) =>
 			tables[tableOf(entity)].filter((row) => matches(row, options.where)),
 		findOne: async (entity: unknown, options: any = {}) =>
-			tables[tableOf(entity)].find((row) => matches(row, options.where)) ?? null
+			tables[tableOf(entity)].find((row) => matches(row, options.where)) ?? null,
+		// TypeORM applies the WHOLE criteria it was handed, not the id alone. The running total a
+		// compare-and-swap predicates its statement on is part of that criteria, so a double that matched
+		// on the id only would report a lost race as a successful write.
+		update: async (entity: unknown, criteria: any, partial: Row) => {
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const rows = tables[tableOf(entity)];
+			const index = rows.findIndex((row) => matches(row, where));
+
+			if (index >= 0) {
+				Object.assign(rows[index], partial);
+			}
+
+			return { affected: index >= 0 ? 1 : 0 };
+		}
 	};
 
 	/** One table's TypeORM repository, as the base CRUD class reads it. */
@@ -290,7 +318,8 @@ function datastore(tables: ITables) {
 		create: (partial: Row) => ({ ...partial }),
 		save: async (entity: Row) => save(table, entity),
 		update: async (criteria: any, partial: Row) => {
-			const index = tables[table].findIndex((row) => row.id === identify(criteria));
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = tables[table].findIndex((row) => matches(row, where));
 
 			if (index >= 0) {
 				Object.assign(tables[table][index], partial);

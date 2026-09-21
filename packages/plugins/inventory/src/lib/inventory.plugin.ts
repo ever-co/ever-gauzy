@@ -1,6 +1,8 @@
 import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
 import { InventoryModule } from './inventory.module';
+import { InventoryMaintenanceModule } from './inventory-maintenance.module';
 import { INVENTORY_FEATURES } from './inventory.features';
 import { INVENTORY_PERMISSIONS } from './inventory.permissions';
 import { INVENTORY_SETTINGS } from './inventory.settings';
@@ -40,9 +42,18 @@ import {
  * `dependsOn` names the packages this one cannot function without. The catalog package is required
  * because a stock level is addressed by a product and a variant, and a movement names the variant it
  * changed; without it there is nothing to hold.
+ *
+ * **The maintenance module is imported behind the queue-root predicate**, exactly as the platform's
+ * own retry-key sweep and outbox dispatch pass are. It carries the schedule that releases holds whose
+ * expiry has passed — the sweep that was written and never called, so a cart hold taken for thirty
+ * minutes stayed `ACTIVE` for ever and its quantity stayed subtracted from what may be sold. The
+ * jobs travel on a queue, a queue needs a BullMQ root, and registering a worker where there is no
+ * root is a boot failure rather than a degraded sweep; an installation with no queue therefore keeps
+ * the whole reservation kernel and simply has no sweep, which is the same trade every other
+ * maintenance module on this platform makes.
  */
 const pluginMetadata = {
-	imports: [InventoryModule],
+	imports: [InventoryModule, ...(isSchedulerQueueRootEnabled() ? [InventoryMaintenanceModule] : [])],
 	entities: [
 		StockMovement,
 		StockReservation,

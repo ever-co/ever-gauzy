@@ -19,6 +19,9 @@ jest.mock('@gauzy/core', () => {
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
+	// The order service reaches the kernel's conditional write by name through this barrel, so a
+	// factory that replaces the barrel has to answer for it even where no transition is exercised.
+	const { ApiErrorCode, commitVersionedUpdate } = require('../testing/versioned-write.double');
 
 	class BaseEntity {}
 
@@ -35,6 +38,8 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		ApiErrorCode,
+		commitVersionedUpdate,
 		CrudController,
 		CrudService,
 		TenantAwareCrudService: CrudService,

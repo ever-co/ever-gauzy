@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { In, IsNull } from 'typeorm';
+import { In, IsNull, LessThan, MoreThan } from 'typeorm';
 import {
 	ID,
 	ISearchIndexRegistration,
@@ -8,7 +8,7 @@ import {
 	ISearchReindexResult,
 	SearchReindexScope
 } from '@gauzy/contracts';
-import { TypeOrmSearchDocumentRepository } from '@gauzy/core';
+import { RequestContext, TypeOrmSearchDocumentRepository } from '@gauzy/core';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { SearchIndexDefinitionService } from './search-index-definition.service';
 import { SearchIndexerService } from './search-indexer.service';
@@ -22,6 +22,17 @@ export interface ISearchReindexRun {
 	skipped: number;
 	removed: number;
 	batches: number;
+	/**
+	 * How many of the entity's documents are still stamped with a definition version behind the one
+	 * the run wrote.
+	 *
+	 * It is the one number that says whether the sweep actually finished the job the version column
+	 * exists for: a completed full rebuild leaves it at zero, and anything else is a document the
+	 * sweep did not reach — a source row that was skipped, or a page a failure cut short. The column
+	 * and its `(entity, definitionVersion, indexedAt)` index were being written and never read, so
+	 * nothing in the platform could tell a rebuilt index from a half-rebuilt one.
+	 */
+	stale: number;
 }
 
 /**
@@ -105,7 +116,7 @@ export class SearchReindexService {
 				// One entity that cannot be swept must not abandon the others: the run reports what it
 				// did and the failure is visible where the entity is, rather than only in a summary.
 				this.logger.error(`The "${entity}" index could not be rebuilt: ${describe(error)}`);
-				runs.push({ entity, indexed: 0, skipped: 0, removed: 0, batches: 0 });
+				runs.push({ entity, indexed: 0, skipped: 0, removed: 0, batches: 0, stale: 0 });
 			}
 		}
 
@@ -173,6 +184,7 @@ export class SearchReindexService {
 	 */
 	async drop(entity?: string, channelId?: ID): Promise<{ deletedCount: number }> {
 		const entities = entity ? [entity] : this.indexRegistry.registeredEntities();
+		const scope = this.tenantScope();
 		let deletedCount = 0;
 
 		for (const key of entities) {
@@ -181,29 +193,94 @@ export class SearchReindexService {
 			}
 
 			if (channelId) {
-				const documents = await this.typeOrmSearchDocumentRepository.find({
-					where: { entity: key, deletedAt: IsNull() } as any
-				});
-				const token = `${CHANNEL_TOKEN_PREFIX}:${String(channelId).toLowerCase()}`;
-				const ids = documents
-					.filter((document) => (document.keywords ?? []).includes(token))
-					.map((document) => document.id);
-
-				if (ids.length > 0) {
-					const result = await this.typeOrmSearchDocumentRepository.softDelete({ id: In(ids) } as any);
-
-					deletedCount += Number(result?.affected ?? ids.length);
-				}
+				deletedCount += await this.dropChannel(key, channelId, scope);
 
 				continue;
 			}
 
-			const result = await this.typeOrmSearchDocumentRepository.softDelete({ entity: key } as any);
+			const result = await this.typeOrmSearchDocumentRepository.softDelete({ entity: key, ...scope } as any);
 
 			deletedCount += Number(result?.affected ?? 0);
 		}
 
 		return { deletedCount };
+	}
+
+	/**
+	 * Drops one entity's documents for one channel, a page at a time.
+	 *
+	 * The channel is carried as a promoted token rather than a column, so the membership test is made
+	 * in JavaScript over the token list — but the *read* it is made over has to be bounded. It used to
+	 * be a single unpaged `find()` over every document of the entity, which on a production index of a
+	 * few million rows pulls every title, body, keyword list and attribute map into the Node heap at
+	 * once, and the only outcome of that is an out-of-memory kill of the API process.
+	 *
+	 * The paging is a **cursor on the row's own id**, not an offset. The read filters on
+	 * `deletedAt IS NULL` and the loop soft-deletes as it goes, so the set an offset counts into is the
+	 * set the loop is shrinking: every page would step over as many unexamined documents as the
+	 * previous one removed. A cursor is monotonic whatever the loop does to the rows behind it, which
+	 * is also what makes the loop guaranteed to terminate.
+	 *
+	 * @param entity The entity key.
+	 * @param channelId The channel whose documents are dropped.
+	 * @param scope The tenant predicate the read and the write both carry.
+	 * @returns How many documents were dropped.
+	 */
+	private async dropChannel(
+		entity: string,
+		channelId: ID,
+		scope: Record<string, unknown>
+	): Promise<number> {
+		const pageSize = Math.max(1, Number(SEARCH_SETTING_DEFAULTS.reindexBatchSize) || 500);
+		const token = `${CHANNEL_TOKEN_PREFIX}:${String(channelId).toLowerCase()}`;
+		let deletedCount = 0;
+		let after: string | undefined;
+
+		while (true) {
+			const documents = await this.typeOrmSearchDocumentRepository.find({
+				where: { entity, deletedAt: IsNull(), ...scope, ...(after ? { id: MoreThan(after) } : {}) } as any,
+				order: { id: 'ASC' } as any,
+				take: pageSize
+			});
+
+			if (documents.length === 0) {
+				break;
+			}
+
+			const ids = documents
+				.filter((document) => (document.keywords ?? []).some((keyword) => String(keyword).toLowerCase() === token))
+				.map((document) => document.id);
+
+			if (ids.length > 0) {
+				const result = await this.typeOrmSearchDocumentRepository.softDelete({ id: In(ids) } as any);
+
+				deletedCount += Number(result?.affected ?? ids.length);
+			}
+
+			after = String(documents[documents.length - 1].id);
+
+			if (documents.length < pageSize) {
+				break;
+			}
+		}
+
+		return deletedCount;
+	}
+
+	/**
+	 * The tenant predicate every write in this service carries.
+	 *
+	 * Dropping an index is an operator action inside a tenant, and `search_document` holds every
+	 * tenant's documents in one table: an unscoped `softDelete({ entity })` made an operator in tenant
+	 * A empty tenant B's index for the same entity. An absent tenant — a system context, a scheduled
+	 * sweep — keeps the unscoped behaviour, because that caller genuinely means the whole table.
+	 *
+	 * @returns The predicate fragment, empty when no tenant resolves.
+	 */
+	private tenantScope(): Record<string, unknown> {
+		const tenantId = RequestContext.currentTenantId();
+
+		return tenantId ? { tenantId } : {};
 	}
 
 	/**
@@ -228,39 +305,95 @@ export class SearchReindexService {
 			// that re-activating it starts from a clean index rather than from stale rows.
 			const dropped = await this.drop(entity);
 
-			return { entity, indexed: 0, skipped: 0, removed: dropped.deletedCount, batches: 0 };
+			return { entity, indexed: 0, skipped: 0, removed: dropped.deletedCount, batches: 0, stale: 0 };
 		}
 
 		const batchSize = Math.max(1, Number(SEARCH_SETTING_DEFAULTS.reindexBatchSize) || 500);
-		const version = Number(persisted?.version ?? 1);
-		const run: ISearchReindexRun = { entity, indexed: 0, skipped: 0, removed: 0, batches: 0 };
-		let skip = 0;
+		const rawVersion = Number(persisted?.version ?? 1);
+		const version = Number.isFinite(rawVersion) && rawVersion >= 1 ? Math.floor(rawVersion) : 1;
+		const run: ISearchReindexRun = { entity, indexed: 0, skipped: 0, removed: 0, batches: 0, stale: 0 };
 
-		while (true) {
+		if (request.ids?.length) {
+			// An id-scoped run is already enumerated: the caller named the rows, so there is nothing to
+			// page over. Paging one anyway re-passed the whole id set with a growing offset, and the
+			// second iteration read zero rows — which `SearchIndexerService.index` reads as "the sources
+			// are gone" and answers by removing the documents the first iteration had just written. A
+			// request naming exactly `reindexBatchSize` ids therefore indexed them all and then deleted
+			// them all, and reported `{ indexed: n, removed: 0 }` while doing it.
 			const outcome = await this.indexer.index(entity, {
 				ids: request.ids,
 				since: request.since,
-				skip,
-				take: batchSize,
-				definitionVersion: Number.isFinite(version) && version >= 1 ? version : 1
+				definitionVersion: version
 			});
 
-			run.batches += 1;
-			run.indexed += outcome.indexed;
-			run.skipped += outcome.skipped;
+			run.batches = 1;
+			run.indexed = outcome.indexed;
+			run.skipped = outcome.skipped;
+			run.removed = outcome.removed;
+		} else {
+			let skip = 0;
 
-			// The last page is the one that came back short. A page that is exactly full may or may not
-			// be the last, so the loop asks once more and stops on the empty answer.
-			if (outcome.indexed + outcome.skipped < batchSize) {
-				break;
+			while (true) {
+				const outcome = await this.indexer.index(entity, {
+					since: request.since,
+					skip,
+					take: batchSize,
+					definitionVersion: version
+				});
+
+				run.batches += 1;
+				run.indexed += outcome.indexed;
+				run.skipped += outcome.skipped;
+				// A removal the sweep performed used to be dropped on the floor here, so an operator was
+				// told nothing was removed by a run that had removed documents.
+				run.removed += outcome.removed;
+
+				// The last page is the one that came back short. A page that is exactly full may or may not
+				// be the last, so the loop asks once more and stops on the empty answer.
+				if (outcome.indexed + outcome.skipped < batchSize) {
+					break;
+				}
+
+				skip += batchSize;
 			}
-
-			skip += batchSize;
 		}
 
+		// The orphan sweep runs for either shape of request, exactly as it did before: a document whose
+		// source has been hard-deleted is unreachable by any event, and this is the only path that
+		// notices it.
 		run.removed += await this.removeOrphans(definition);
+		run.stale = await this.staleCount(entity, version);
 
 		return run;
+	}
+
+	/**
+	 * How many of an entity's documents are still behind the definition version the run wrote.
+	 *
+	 * This is the read the `(entity, definitionVersion, indexedAt)` index was created for and that
+	 * nothing performed: the column was stamped by every writer and compared by none, so a
+	 * re-weighting could not be told apart from a rebuild that had finished. A full sweep that
+	 * completed leaves this at zero; anything else names documents the sweep did not reach.
+	 *
+	 * @param entity The entity key.
+	 * @param version The version the run stamped.
+	 * @returns How many live documents carry an older version.
+	 */
+	private async staleCount(entity: string, version: number): Promise<number> {
+		try {
+			return await this.typeOrmSearchDocumentRepository.count({
+				where: {
+					entity,
+					deletedAt: IsNull(),
+					definitionVersion: LessThan(version),
+					...this.tenantScope()
+				} as any
+			});
+		} catch (error) {
+			this.logger.warn(`The stale document count for "${entity}" could not be read: ${describe(error)}`);
+
+			return 0;
+		}
 	}
 
 	/**
@@ -271,19 +404,31 @@ export class SearchReindexService {
 	 * unreachable by any event — a hard delete produces no update — which is exactly why the sweep has
 	 * to be the thing that notices.
 	 *
+	 * The paging is a **cursor on the document's own id**, not an offset. The read filters on
+	 * `deletedAt IS NULL` and the loop soft-deletes as it goes, so the set an offset counts into is the
+	 * set the loop is shrinking: a page that removed ten rows left the next offset ten rows too far
+	 * along, and those ten documents were never examined — they stayed in the index and kept being
+	 * returned as hits for sources that had been hard-deleted. A cursor is monotonic whatever the loop
+	 * does to the rows behind it, and it is also what makes the loop guaranteed to terminate.
+	 *
 	 * @param definition The declaration.
 	 * @returns How many documents were removed.
 	 */
 	private async removeOrphans(definition: ISearchIndexRegistration): Promise<number> {
 		const pageSize = Math.max(1, Number(SEARCH_SETTING_DEFAULTS.reindexBatchSize) || 500);
+		const scope = this.tenantScope();
 		let removed = 0;
-		let skip = 0;
+		let after: string | undefined;
 
 		while (true) {
 			const documents = await this.typeOrmSearchDocumentRepository.find({
-				where: { entity: definition.entity, deletedAt: IsNull() } as any,
-				order: { indexedAt: 'ASC', id: 'ASC' } as any,
-				skip,
+				where: {
+					entity: definition.entity,
+					deletedAt: IsNull(),
+					...scope,
+					...(after ? { id: MoreThan(after) } : {})
+				} as any,
+				order: { id: 'ASC' } as any,
 				take: pageSize
 			});
 
@@ -302,17 +447,18 @@ export class SearchReindexService {
 			if (orphans.length > 0) {
 				const result = await this.typeOrmSearchDocumentRepository.softDelete({
 					entity: definition.entity,
-					entityId: In(orphans)
+					entityId: In(orphans),
+					...scope
 				} as any);
 
 				removed += Number(result?.affected ?? orphans.length);
 			}
 
+			after = String(documents[documents.length - 1].id);
+
 			if (documents.length < pageSize) {
 				break;
 			}
-
-			skip += pageSize;
 		}
 
 		return removed;

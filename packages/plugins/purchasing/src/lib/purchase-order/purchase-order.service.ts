@@ -1,6 +1,13 @@
 import { ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { OrganizationVendor, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import {
+	ApiErrorCode,
+	OrganizationVendor,
+	RequestContext,
+	SequenceService,
+	TenantAwareCrudService,
+	commitVersionedUpdate
+} from '@gauzy/core';
 import {
 	IPurchaseApprovalPort,
 	IPurchaseOrder,
@@ -43,6 +50,16 @@ const CLOSABLE_STATUSES: PurchaseOrderStatus[] = [
 
 /** One day, which is the unit a settlement term and a lead time are stated in. */
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * How many times a derived write re-reads the order and redoes its derivation before giving up.
+ *
+ * The status a receipt leaves and the totals the lines produce are restatements of what the order
+ * already says, so a version conflict on one of them means another writer moved the row — not that
+ * the derivation was wrong. Three attempts is enough for the contention two concurrent receipts
+ * produce and small enough that a row being rewritten in a loop is reported rather than waited on.
+ */
+const DERIVED_WRITE_ATTEMPTS = 3;
 
 /**
  * Purchase orders: the lifecycle, the approval step and the derivation of the money.
@@ -162,7 +179,18 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		});
 		const withTotals = await this.lineService.writeLineTotals(written, currency);
 
-		return await this.recomputeTotals(purchaseOrder.id, withTotals, currency);
+		// The header totals are written as part of CONSTRUCTING the order, not as a transition: the row
+		// was inserted by this request a moment ago, no caller has read it and no version has been
+		// published for it, so there is nothing for a conditional write to be predicated against — and a
+		// second increment here would hand a freshly created order back at version 2. The totals have to
+		// be rewritten because the lines that were actually persisted may have been priced from the
+		// standing agreement rather than from what the caller stated. Every LATER recomputation goes
+		// through `recomputeTotals`, which is conditional and does move the version.
+		await super.update(purchaseOrder.id, {
+			...this.lineService.computeTotalsForLines(withTotals, currency, purchaseOrder.shippingTotal)
+		} as any);
+
+		return await this.findOneScoped(purchaseOrder.id);
 	}
 
 	/**
@@ -229,11 +257,7 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 			entity.shippingTotal !== undefined ? entity.shippingTotal : purchaseOrder.shippingTotal
 		);
 
-		await super.update(id, {
-			...changes,
-			...totals,
-			version: this.nextVersion(purchaseOrder)
-		} as any);
+		await this.commitTransition(purchaseOrder, { ...changes, ...totals }, (entity as { version?: number }).version);
 
 		return await this.findOneDetailed(id);
 	}
@@ -299,13 +323,16 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 			approvalId = result?.approvalId;
 		}
 
-		await super.update(id, {
-			approvedAt: new Date(),
-			approvedByUserId: RequestContext.currentUserId(),
-			approvalId: approvalId ?? purchaseOrder.approvalId,
-			note: note ?? purchaseOrder.note,
-			version: this.nextVersion(purchaseOrder)
-		} as any);
+		await this.commitTransition(
+			purchaseOrder,
+			{
+				approvedAt: new Date(),
+				approvedByUserId: RequestContext.currentUserId(),
+				approvalId: approvalId ?? purchaseOrder.approvalId,
+				note: note ?? purchaseOrder.note
+			},
+			expectedVersion
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -348,19 +375,17 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 			metadata.sentTo = options.email;
 		}
 
-		await super.update(id, {
-			status: PurchaseOrderStatus.SENT,
-			orderedAt: sentAt,
-			sentAt,
-			note: options.note ?? purchaseOrder.note,
-			metadata,
-			version: this.nextVersion(purchaseOrder)
-		} as any);
-
 		// This is the instant a lead time and a settlement term are measured from, so both are anchored
 		// here: `expectedAt = orderedAt + leadTimeDays` per line, and the due date from the settlement
 		// form that was snapshotted when the order was raised. Neither re-reads a supplier row or a term:
 		// the line carries its own lead time, and the order carries its own settlement snapshot.
+		//
+		// The lines are dated BEFORE the order is written and the anchors travel in the same statement as
+		// the status, because a transition is one version step. Two writes would move the counter twice
+		// for one operation — so a client that predicted the `ETag` of its own request from the version it
+		// read would be wrong about its own request — and the second of them would have been an
+		// unpredicated write sitting immediately after a conditional one, which is the hole the
+		// conditional one exists to close.
 		const lines = await this.lineService.applyLeadTimes(id, sentAt);
 		const anchored: Record<string, unknown> = {};
 
@@ -372,9 +397,18 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 			anchored.expectedAt = this.earliestExpectedAt(lines);
 		}
 
-		if (Object.keys(anchored).length) {
-			await super.update(id, anchored as any);
-		}
+		await this.commitTransition(
+			purchaseOrder,
+			{
+				status: PurchaseOrderStatus.SENT,
+				orderedAt: sentAt,
+				sentAt,
+				note: options.note ?? purchaseOrder.note,
+				metadata,
+				...anchored
+			},
+			options.expectedVersion
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -400,13 +434,16 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		this.assertVersion(purchaseOrder, options.expectedVersion);
 		this.assertStatus(purchaseOrder, [PurchaseOrderStatus.SENT], 'acknowledged');
 
-		await super.update(id, {
-			status: PurchaseOrderStatus.ACKNOWLEDGED,
-			acknowledgedAt: new Date(),
-			expectedAt: options.expectedAt ?? purchaseOrder.expectedAt,
-			note: options.note ?? purchaseOrder.note,
-			version: this.nextVersion(purchaseOrder)
-		} as any);
+		await this.commitTransition(
+			purchaseOrder,
+			{
+				status: PurchaseOrderStatus.ACKNOWLEDGED,
+				acknowledgedAt: new Date(),
+				expectedAt: options.expectedAt ?? purchaseOrder.expectedAt,
+				note: options.note ?? purchaseOrder.note
+			},
+			options.expectedVersion
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -429,13 +466,16 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		this.assertVersion(purchaseOrder, expectedVersion);
 		this.assertStatus(purchaseOrder, CANCELABLE_STATUSES, 'cancelled');
 
-		await super.update(id, {
-			status: PurchaseOrderStatus.CANCELED,
-			canceledAt: new Date(),
-			receivedAt: null,
-			note: reason ?? purchaseOrder.note,
-			version: this.nextVersion(purchaseOrder)
-		} as any);
+		await this.commitTransition(
+			purchaseOrder,
+			{
+				status: PurchaseOrderStatus.CANCELED,
+				canceledAt: new Date(),
+				receivedAt: null,
+				note: reason ?? purchaseOrder.note
+			},
+			expectedVersion
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -464,15 +504,18 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		this.assertVersion(purchaseOrder, expectedVersion);
 		this.assertStatus(purchaseOrder, CLOSABLE_STATUSES, 'closed');
 
-		await super.update(id, {
-			status: PurchaseOrderStatus.CLOSED,
-			closedAt: new Date(),
-			// `receivedAt` is non-null exactly when the status is `RECEIVED` or `CLOSED`, so an order
-			// closed before anything arrived is stamped here rather than left inconsistent.
-			receivedAt: purchaseOrder.receivedAt ?? new Date(),
-			note: reason ?? purchaseOrder.note,
-			version: this.nextVersion(purchaseOrder)
-		} as any);
+		await this.commitTransition(
+			purchaseOrder,
+			{
+				status: PurchaseOrderStatus.CLOSED,
+				closedAt: new Date(),
+				// `receivedAt` is non-null exactly when the status is `RECEIVED` or `CLOSED`, so an order
+				// closed before anything arrived is stamped here rather than left inconsistent.
+				receivedAt: purchaseOrder.receivedAt ?? new Date(),
+				note: reason ?? purchaseOrder.note
+			},
+			expectedVersion
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -560,27 +603,25 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 	 * @returns The refreshed order.
 	 */
 	public async refreshReceiptState(id: ID): Promise<PurchaseOrder> {
-		const purchaseOrder = await this.findOneScoped(id);
+		return await this.commitDerived(id, async (purchaseOrder) => {
+			if (
+				purchaseOrder.status === PurchaseOrderStatus.CANCELED ||
+				purchaseOrder.status === PurchaseOrderStatus.CLOSED
+			) {
+				return null;
+			}
 
-		if (
-			purchaseOrder.status === PurchaseOrderStatus.CANCELED ||
-			purchaseOrder.status === PurchaseOrderStatus.CLOSED
-		) {
-			return purchaseOrder;
-		}
+			const lines = await this.lineService.findForOrder(id);
+			const status = this.statusFromLines(lines, purchaseOrder);
 
-		const lines = await this.lineService.findForOrder(id);
-		const status = this.statusFromLines(lines, purchaseOrder);
-
-		// `receivedAt` is written with the status rather than beside it: the column is non-null exactly
-		// when the status is `RECEIVED` or `CLOSED`, and when a delivery last arrived on a partially
-		// received order that instant is the receipt's own `receivedAt`, not the order's.
-		await super.update(id, {
-			status,
-			receivedAt: status === PurchaseOrderStatus.RECEIVED ? new Date() : null
-		} as any);
-
-		return await this.findOneScoped(id);
+			// `receivedAt` is written with the status rather than beside it: the column is non-null exactly
+			// when the status is `RECEIVED` or `CLOSED`, and when a delivery last arrived on a partially
+			// received order that instant is the receipt's own `receivedAt`, not the order's.
+			return {
+				status,
+				receivedAt: status === PurchaseOrderStatus.RECEIVED ? new Date() : null
+			};
+		});
 	}
 
 	/**
@@ -681,12 +722,13 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		lines: PurchaseOrderLine[],
 		currency: CurrencyCode
 	): Promise<PurchaseOrder> {
-		const purchaseOrder = await this.findOneScoped(id);
-		const totals = this.lineService.computeTotalsForLines(lines, currency, purchaseOrder.shippingTotal);
-
-		await super.update(id, { ...totals } as any);
-
-		return await this.findOneScoped(id);
+		// The totals move the version like every other observable change. They used to be written with no
+		// version member at all, so a recomputation changed the order's `grandTotal` without moving the
+		// counter and a client still holding the older version passed `assertVersion` and filed an
+		// approval carrying a total that was no longer the order's.
+		return await this.commitDerived(id, async (purchaseOrder) => ({
+			...this.lineService.computeTotalsForLines(lines, currency, purchaseOrder.shippingTotal)
+		}));
 	}
 
 	/**
@@ -814,6 +856,15 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 	}
 
 	/**
+	 * The domain's statement of the increment: one transition, one step.
+	 *
+	 * The increment is no longer *applied* here. It is applied by `commitVersionedUpdate`'s `bumpVersion`
+	 * inside the same statement that checks the precondition, because a version computed by the
+	 * application and written by an unpredicated `UPDATE` is not a lock — it is a value two writers can
+	 * compute identically and both store. This remains the rule both halves follow, so a reader of this
+	 * service can see what the counter does without going to the kernel for it, and it is what a caller
+	 * predicting the `ETag` of its own write would compute.
+	 *
 	 * @param purchaseOrder The order.
 	 * @returns The next optimistic-lock value.
 	 */
@@ -823,6 +874,15 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 
 	/**
 	 * Refuses a transition when the caller acted on a version that has since moved.
+	 *
+	 * This is the *early* refusal, and on its own it was never enough: it compares a value already read
+	 * into memory against the caller's, and the `UPDATE` that followed carried no predicate at all, so
+	 * two operators who both read version 3 both passed here and both wrote version 4 — the second
+	 * silently erasing the first's approval. The write itself is now conditional
+	 * ({@link commitTransition}), and this stays because it produces the domain's own error before any
+	 * side effect of the transition has been attempted: `approve` asks the approval machinery for a
+	 * decision *before* it writes, and a caller whose version is plainly stale should not have caused
+	 * an approval request to be filed.
 	 *
 	 * @param purchaseOrder The order.
 	 * @param expectedVersion The version the caller read, when it stated one.
@@ -838,6 +898,174 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 				`PURCHASE_ORDER_VERSION_CONFLICT: purchase order '${purchaseOrder.id}' has moved on since version ${expectedVersion}.`
 			);
 		}
+	}
+
+	/**
+	 * The scope a conditional write on an order is predicated on, beyond the row's own identity.
+	 *
+	 * `commitVersionedUpdate` documents its `where` as the place the tenant and organization scope
+	 * belongs, and states it in the negative: a conditional statement that names only an identifier is
+	 * one another tenant's identifier can satisfy. The base class merges the caller's tenant into every
+	 * `UPDATE` it issues, so this is belt and braces rather than the only guard — but it is the guard
+	 * that survives a call that assembles its criteria by hand, and it costs a predicate.
+	 *
+	 * @returns The conditions a write is scoped by, empty when there is no caller in context — a job, a
+	 * seeder or a test has no tenant to be scoped by and must not be scoped by an absent one.
+	 */
+	private get writeScope(): Record<string, unknown> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		return {
+			...(tenantId ? { tenantId } : {}),
+			...(organizationId ? { organizationId } : {})
+		};
+	}
+
+	/**
+	 * The kernel's conditional write, said to the base repository rather than to this service.
+	 *
+	 * `commitVersionedUpdate` reaches storage through `service.update`, and this class *overrides*
+	 * `update` with the domain's amend-a-draft operation — a different method with a different meaning,
+	 * which would re-enter the lifecycle instead of issuing a statement. The adapter binds the helper to
+	 * the base class's own `update` and `findOneByIdString`, which is the same surface the helper
+	 * expects and the same one every other versioned writer on the platform hands it.
+	 *
+	 * @returns The storage surface `commitVersionedUpdate` writes through.
+	 */
+	private versionedWriter(): Parameters<typeof commitVersionedUpdate>[0] {
+		const writer = {
+			update: (criteria: Record<string, unknown>, patch: Record<string, unknown>) =>
+				super.update(criteria as any, patch as any),
+			findOneByIdString: (id: ID) => super.findOneByIdString(id)
+		};
+
+		return writer as unknown as Parameters<typeof commitVersionedUpdate>[0];
+	}
+
+	/**
+	 * Writes a transition under the version the order was read at, or refuses.
+	 *
+	 * **The comparison and the write are one statement.** `UPDATE purchase_order SET … , version =
+	 * :next WHERE id = :id AND version = :expected AND tenantId = … ` — so there is no window between
+	 * deciding and acting. What this replaces was a read, an in-memory comparison and an unpredicated
+	 * write: two operators who read the order at version 3 and both approved it both passed the
+	 * comparison and both wrote version 4, so one approval, one approver and (with the approval port
+	 * bound) one of the two filed `request_approval` rows were silently overwritten by the other.
+	 *
+	 * The version is never taken from the caller's payload: it is derived here and written by the same
+	 * statement that checks it, so a body carrying a `version` member cannot move the row past the
+	 * value the write was predicated on.
+	 *
+	 * @param purchaseOrder The order as it was read, which is the version the write is predicated on.
+	 * @param patch The columns to write, without a version.
+	 * @param expectedVersion The version the caller stated, when it stated one.
+	 * @returns The version the order now holds, for a second write in the same operation.
+	 * @throws ConflictException with `PURCHASE_ORDER_VERSION_CONFLICT` when the row moved on, and with
+	 * `PURCHASE_ORDER_NOT_FOUND` when it is gone.
+	 */
+	private async commitTransition(
+		purchaseOrder: Pick<IPurchaseOrder, 'id' | 'version'>,
+		patch: Record<string, unknown>,
+		expectedVersion?: number
+	): Promise<number> {
+		const read = purchaseOrder.version ?? 1;
+
+		try {
+			const committed = await commitVersionedUpdate(this.versionedWriter(), {
+				id: purchaseOrder.id,
+				// A caller that stated the version it read is measured against exactly that version; one
+				// that stated none is measured against the version this request read, which the wildcard
+				// reaches through `readVersion` without a second query.
+				expectation:
+					expectedVersion === undefined || expectedVersion === null
+						? { wildcard: true, versions: [] }
+						: { wildcard: false, versions: [expectedVersion] },
+				where: this.writeScope,
+				patch,
+				readVersion: async () => read
+			});
+
+			return committed.version;
+		} catch (error) {
+			throw this.asDomainConflict(error, purchaseOrder.id, expectedVersion ?? read);
+		}
+	}
+
+	/**
+	 * Re-reads the order, rebuilds the patch from what it now says and writes it conditionally, a
+	 * bounded number of times.
+	 *
+	 * The two derived writers — the receipt status and the header totals — are not caller transitions:
+	 * they restate what the lines already say, and a conflict means another writer moved the order
+	 * between the read and the statement, not that the derivation was wrong. Refusing the caller for
+	 * that would fail a goods receipt that had already posted its movements, so the derivation is
+	 * simply redone against the row as it now stands. Redoing it is safe because the patch is a pure
+	 * function of the lines and the order.
+	 *
+	 * Both writers used to carry no `version` member at all, which is worse than either outcome: a
+	 * receipt changed the order's status and a recomputation changed its `grandTotal` without moving
+	 * the counter, so a client still holding the older version passed `assertVersion` and filed an
+	 * approval carrying a total that was no longer the order's.
+	 *
+	 * @param id The order to rewrite.
+	 * @param build Produces the columns to write from the order as it now stands.
+	 * @returns The rewritten order.
+	 * @throws ConflictException when the order kept moving under every attempt.
+	 */
+	private async commitDerived(
+		id: ID,
+		build: (purchaseOrder: PurchaseOrder) => Promise<Record<string, unknown> | null>
+	): Promise<PurchaseOrder> {
+		let lastError: unknown;
+
+		for (let attempt = 0; attempt < DERIVED_WRITE_ATTEMPTS; attempt++) {
+			const purchaseOrder = await this.findOneScoped(id);
+			const patch = await build(purchaseOrder);
+
+			if (!patch) {
+				return purchaseOrder;
+			}
+
+			try {
+				await this.commitTransition(purchaseOrder, patch);
+
+				return await this.findOneScoped(id);
+			} catch (error) {
+				lastError = error;
+			}
+		}
+
+		throw lastError;
+	}
+
+	/**
+	 * Restates the kernel's conditional-write failure in this domain's own vocabulary.
+	 *
+	 * The kernel answers `409 ENTITY_VERSION_CONFLICT` and `404 RESOURCE_NOT_FOUND`; the purchasing
+	 * surface has answered `PURCHASE_ORDER_VERSION_CONFLICT` and `PURCHASE_ORDER_NOT_FOUND` since
+	 * before the conditional write existed, and a client that matches on those codes must keep working.
+	 * Anything that is not one of the two keeps its own identity rather than being relabelled.
+	 *
+	 * @param error Whatever the write threw.
+	 * @param id The order the write was for.
+	 * @param expectedVersion The version the statement was predicated on.
+	 * @returns The error to raise.
+	 */
+	private asDomainConflict(error: unknown, id: ID, expectedVersion: number): unknown {
+		const code = (error as { code?: unknown })?.code ?? (error as { response?: { code?: unknown } })?.response?.code;
+
+		if (code === ApiErrorCode.ENTITY_VERSION_CONFLICT) {
+			return new ConflictException(
+				`PURCHASE_ORDER_VERSION_CONFLICT: purchase order '${id}' has moved on since version ${expectedVersion}.`
+			);
+		}
+
+		if (code === ApiErrorCode.RESOURCE_NOT_FOUND) {
+			return new NotFoundException(`PURCHASE_ORDER_NOT_FOUND: purchase order '${id}' could not be found.`);
+		}
+
+		return error;
 	}
 
 	/**

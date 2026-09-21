@@ -4,12 +4,16 @@ module.exports = {
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {
-		// `isolatedModules` transpiles each file on its own, so a spec is not blocked by a compile error
-		// in a package it merely imports. `@gauzy/core`'s barrel is in every one of these suites' import
-		// graph, and a type error anywhere in it — including one another workstream is halfway through —
-		// would otherwise fail the suite to LOAD, which reads as "0 tests" rather than as a failure of
-		// the behaviour under test. The assertions are unaffected: nothing here is a type-level test.
-		'^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json', isolatedModules: true }]
+		// Type checking is ON, as it is in the thirteen sibling plugin packages. It used to be off here:
+		// `isolatedModules: true` transpiled each spec on its own so that a compile error in a package
+		// the spec merely imports could not fail the suite to LOAD. The cost was larger than the
+		// protection. These specs are excluded from `tsconfig.lib.json`, so nothing else type-checks
+		// them either — and a spec that calls a method that has since been renamed still transpiled, so
+		// a case sitting inside `await expect(...).rejects.toThrow(...)` went green on the `TypeError`
+		// the missing method threw, asserting nothing about the behaviour it names. The sibling packages
+		// import the same `@gauzy/core` barrel under a checking transform, so the compile error this
+		// exception was written against is not one this package is exposed to on its own.
+		'^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }]
 	},
 	moduleFileExtensions: ['ts', 'js', 'html'],
 	// A suite that exercises a service reaches `@gauzy/core` through its source barrel, and the barrel

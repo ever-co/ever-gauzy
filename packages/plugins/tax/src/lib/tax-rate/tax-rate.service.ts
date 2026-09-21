@@ -12,6 +12,7 @@ import {
 	normalizeDecimalString,
 	parseDecimalString
 } from '@gauzy/core';
+import { assertPostalCodePattern, matchesPostalCode } from '../postal-code.matcher';
 import { TaxCategory } from '../tax-category/tax-category.entity';
 import { TaxCategoryService } from '../tax-category/tax-category.service';
 import { TaxRatePart } from '../tax-rate-part/tax-rate-part.entity';
@@ -720,20 +721,17 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	}
 
 	/**
+	 * Delegates to the package's one matcher, which anchors the pattern and caches the compiled form.
+	 * The expression used to be built and tested here, unanchored, so a rate configured for `90210` also
+	 * claimed the destination `190210` and the wrong jurisdiction's rate was charged.
+	 *
 	 * @param pattern The rate's postal pattern.
 	 * @param postalCode The destination's postal code.
-	 * @returns Whether the pattern matches, case-insensitively and with the spacing of the code ignored,
-	 * because the same Canadian or British code is written with and without its space.
+	 * @returns Whether the pattern is the whole of the code, case-insensitively and with the spacing of
+	 * the code ignored, because the same Canadian or British code is written with and without its space.
 	 */
 	private matchesPostalCode(pattern: string, postalCode?: string): boolean {
-		if (!postalCode) {
-			return false;
-		}
-
-		const expression = new RegExp(pattern, 'i');
-		const compact = postalCode.replace(/\s+/g, '');
-
-		return expression.test(postalCode) || expression.test(compact);
+		return matchesPostalCode(pattern, postalCode);
 	}
 
 	/**
@@ -932,8 +930,6 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 		let running = net;
 
 		for (const rate of chain) {
-			const rateBase = rate.isCompound ? running : net;
-
 			for (const part of [...rate.parts].sort((left, right) => left.sequence - right.sequence)) {
 				if (part.partType !== TaxPartType.TAX) {
 					// A base part is declared, not posted: it exists so a rate can state more than one taxable
@@ -941,7 +937,15 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 					continue;
 				}
 
-				const base = rateBase.multiply(part.baseFactor).round();
+				// The base is read here, per part, and not once per rate. Hoisting it out of this loop froze
+				// the compounding base at the value it had when the rate was entered, so every part of a
+				// compound rate was assessed on the same base and the second part of a Québec-style
+				// GST-then-QST split came to 9.975 instead of 10.474 on a net of 100 — an understatement of
+				// roughly half a percent of the line, on every such line. `running` already carries the
+				// already-rounded amounts of the preceding parts, which is exactly what the rule above says
+				// a compound part is assessed on; the non-compound branch is unaffected because `net` does
+				// not move.
+				const base = (rate.isCompound ? running : net).multiply(part.baseFactor).round();
 				const amount = this.partAmount(part, base, rate, currency, quantity);
 
 				drafts.push({
@@ -1196,19 +1200,13 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 
 	/**
 	 * @param pattern The postal pattern, when the caller supplied one.
-	 * @throws BadRequestException when it does not compile as a pattern. A pattern is what the column
-	 * holds: a comma-separated list of postal codes is a list, and a list would need a table of its own.
+	 * @throws BadRequestException when it does not compile as a pattern, or when its cost depends on the
+	 * postal code it is matched against — the code is request input, so a pattern that can backtrack
+	 * without bound is a way to stall the process. A pattern is what the column holds: a comma-separated
+	 * list of postal codes is a list, and a list would need a table of its own.
 	 */
 	private assertPostalCodePattern(pattern?: string): void {
-		if (!pattern) {
-			return;
-		}
-
-		try {
-			new RegExp(pattern);
-		} catch {
-			throw new BadRequestException(`The postal code pattern "${pattern}" is not a valid pattern.`);
-		}
+		assertPostalCodePattern(pattern, 'tax rate');
 	}
 
 	/**

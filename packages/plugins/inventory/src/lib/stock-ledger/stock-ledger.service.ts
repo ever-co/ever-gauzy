@@ -57,7 +57,7 @@
  * this caller may be told about or write against. A caller with neither is not narrowed, which is how
  * the ledger’s own reads treat a worker, a migration or a system context.
  */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
@@ -70,6 +70,7 @@ import {
 	parseDecimalString,
 	pow10
 } from '@gauzy/core';
+import { InventoryOrmConnection } from './../inventory.connection';
 import { StockMovement } from './../stock-movement/stock-movement.entity';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { StockMovementReferenceType, StockMovementType } from './../inventory.enums';
@@ -109,7 +110,11 @@ export class StockLedgerService {
 		private readonly typeOrmStockMovementRepository: Repository<StockMovement>,
 		@InjectRepository(WarehouseProductVariant)
 		private readonly typeOrmWarehouseProductVariantRepository: Repository<WarehouseProductVariant>,
-		private readonly stockLevelService: StockLevelService
+		private readonly stockLevelService: StockLevelService,
+		// Optional so a suite that constructs this seam over doubled repositories, and an installation
+		// that registers only one ORM, both keep working: the TypeORM arm is what answers when no
+		// connection seam is present, which is exactly what it answered before the seam existed.
+		@Optional() private readonly connection?: InventoryOrmConnection
 	) {}
 
 	/*
@@ -128,6 +133,10 @@ export class StockLedgerService {
 	public async readBinBalance(query: IStockLedgerBalanceQuery): Promise<IStockLedgerBinBalance | undefined> {
 		if (!query?.warehouseId || !query?.variantId) {
 			return undefined;
+		}
+
+		if (this.connection?.usesMikroOrm) {
+			return await this.mikroBinBalance(query);
 		}
 
 		const read = this.ledgerRead()
@@ -173,6 +182,10 @@ export class StockLedgerService {
 			return [];
 		}
 
+		if (this.connection?.usesMikroOrm) {
+			return await this.mikroBinBalances(binIds);
+		}
+
 		const query = this.ledgerRead()
 			.select('movement.binId', 'binId')
 			.addSelect('movement.variantId', 'variantId')
@@ -207,6 +220,18 @@ export class StockLedgerService {
 	public async readExpectedBinBalances(query: { warehouseId: ID; binIds: ID[] }): Promise<IStockLedgerBinBalance[]> {
 		if (!query?.warehouseId || !query?.binIds?.length) {
 			return [];
+		}
+
+		if (this.connection?.usesMikroOrm) {
+			const levels = await this.mikroLevels({ warehouseId: query.warehouseId, binIds: query.binIds });
+
+			return levels
+				.filter((level) => level.binId && level.variantId)
+				.map((level) => ({
+					binId: level.binId as ID,
+					variantId: level.variantId as ID,
+					quantity: this.quantityText(level.quantity)
+				}));
 		}
 
 		const read = this.levelRead()
@@ -393,13 +418,26 @@ export class StockLedgerService {
 	 * put-away is how a level comes to hold them in a bin at all, so it writes the column and the movement
 	 * in one transaction.
 	 *
-	 * **The walk is two legs or none.** When the units are recorded in the receiving area's bin, that leg
-	 * is a `TRANSFER_OUT` and the target bin's is a `TRANSFER_IN`; the location's own quantity is unchanged
-	 * by the pair, which is the invariant a relocation states and this shares. When they are not — the
-	 * common case, because a receipt lands in the location rather than in an address — there is no leg to
-	 * leave, and the put-away writes the `TRANSFER_IN` and the home bin alone: a `TRANSFER_OUT` of stock
-	 * that was never recorded anywhere would subtract units the ledger does not have, which is how a level
-	 * goes negative through a correct-looking operation.
+	 * **The walk is two legs, and it is two legs whether or not the units were recorded in a bin.** When
+	 * the caller names the receiving bin, that leg is a `TRANSFER_OUT` from it and the target bin's is a
+	 * `TRANSFER_IN`. When it does not — the common case, because a receipt lands in the location rather
+	 * than in an address — the leg out is written with **no bin**, which is the position the receipt
+	 * recorded those units at. Either way the location's own quantity is the same before and after,
+	 * which is the invariant a relocation states and this shares.
+	 *
+	 * **This used to write the arrival alone, and that double-counted on-hand stock.** The reasoning
+	 * behind it was that a `TRANSFER_OUT` of stock "that was never recorded anywhere" would subtract
+	 * units the ledger does not have — but the units *are* recorded: the receipt wrote a positive
+	 * movement at the location with `binId` null, which is exactly the position the leg out subtracts
+	 * from. Without it, receiving a hundred units and putting the same hundred away left the level
+	 * reading two hundred against a building holding one hundred, the bin reporting the correct hundred,
+	 * and `reconcile` unable to see any of it, because the level and the ledger had both been inflated
+	 * by the same amount. `StockAvailabilityService` then offered two hundred for sale.
+	 *
+	 * The level cannot be driven negative by the correction: the leg out goes through the same engine as
+	 * every other movement, and its invariant refuses a quantity the location does not hold. A caller
+	 * that really is receiving and addressing in one call states `receiving`, and then the arrival is
+	 * the only leg written — which is the shape this method had, kept for the caller it is right for.
 	 *
 	 * @param request The location, the variant, the target bin, the quantity and its provenance.
 	 * @returns The movements that were written, the bin now named as home, and the level after the walk.
@@ -434,20 +472,24 @@ export class StockLedgerService {
 				reason: request.reason
 			};
 
-			const outbound = request.fromBinId
-				? await this.stockLevelService.applyMovement(
+			// The leg out is written for every walk. Its address is the receiving bin when the caller named
+			// one and **no bin** otherwise, because that is where a receipt records units it has not
+			// addressed yet — the position the walk is taking them out of. Only a caller that states it is
+			// also receiving has no leg to leave.
+			const outbound = request.receiving
+				? undefined
+				: await this.stockLevelService.applyMovement(
 						{
 							warehouseId: request.warehouseId,
 							variantId: request.variantId,
-							binId: request.fromBinId,
+							...(request.fromBinId ? { binId: request.fromBinId } : {}),
 							type: StockMovementType.TRANSFER_OUT,
 							quantityDelta: Number(this.negated(stated)),
 							reservedDelta: 0,
 							...reference
 						},
 						manager
-				  )
-				: undefined;
+				  );
 
 			const inbound = await this.stockLevelService.applyMovement(
 				{
@@ -531,6 +573,12 @@ export class StockLedgerService {
 
 	/** Reads one level row of a location and variant pair, scoped to the caller. */
 	private async findOneLevel(warehouseId: ID, variantId: ID): Promise<TReadLevel | null> {
+		if (this.connection?.usesMikroOrm) {
+			const levels = await this.mikroLevels({ warehouseId, variantId });
+
+			return levels[0] ?? null;
+		}
+
 		const read = this.levelRead()
 			.select(['level.id', 'level.variantId', 'level.quantity', 'level.binId'])
 			.where('aggregate.warehouseId = :warehouseId', { warehouseId })
@@ -539,6 +587,162 @@ export class StockLedgerService {
 		this.scopeToCaller(read);
 
 		return (await read.getOne()) as TReadLevel | null;
+	}
+
+	/*
+	|--------------------------------------------------------------------------
+	| The MikroORM arm of the reads above
+	|--------------------------------------------------------------------------
+	|
+	| Every read in this class was written against TypeORM's query builder, joining through entity
+	| metadata that `@MultiORMColumn` and `@MultiORMManyToOne` only emit when `getORMType()` names
+	| TypeORM. Under `DB_ORM=mikro-orm` that metadata carries the base entity's four columns and
+	| nothing else, so `movement.warehouseId` raised `EntityPropertyNotFoundError` and the join through
+	| `level.warehouseProduct` raised for the relation — on a seam the cart, the order and the
+	| warehouse packages all bind to. The arms below answer the same questions on that ORM, and the
+	| TypeORM ones above are unchanged.
+	|
+	| The two derived balances are raw statements rather than entity reads, because they are sums
+	| grouped in the database and that is what they are for: a count compares every position in scope,
+	| and pulling a location's whole movement history into memory to add it up would be a different
+	| operation wearing the same name. The statements are written once, in the one spelling a reader
+	| can check against the migration that created the tables, and the connection rewrites the
+	| identifiers and the parameters for whichever dialect is configured.
+	*/
+
+	/**
+	 * The derived balance of one pair, or of one bin of it, read through the MikroORM connection.
+	 *
+	 * @param query The location, the variant and, when the question is about a bin, the bin.
+	 * @returns The balance, or undefined when the ledger holds no movement for the pair.
+	 */
+	private async mikroBinBalance(query: IStockLedgerBalanceQuery): Promise<IStockLedgerBinBalance | undefined> {
+		const scope = this.callerScope();
+		const rows = await this.connection.rows<{ quantity: unknown }>(
+			`SELECT SUM(movement."quantity") AS "quantity"
+			 FROM "stock_movement" movement
+			 INNER JOIN "warehouse_product" aggregate ON aggregate."id" = movement."warehouseProductId"
+			 WHERE movement."warehouseId" = :warehouseId
+			   AND movement."variantId" = :variantId
+			   AND movement."deletedAt" IS NULL
+			   AND aggregate."deletedAt" IS NULL${query.binId ? `\n\t\t\t   AND movement."binId" = :binId` : ''}${scope.sql}`,
+			{
+				warehouseId: query.warehouseId,
+				variantId: query.variantId,
+				...(query.binId ? { binId: query.binId } : {}),
+				...scope.parameters
+			}
+		);
+		const quantity = rows?.[0]?.quantity;
+
+		// A sum over no rows is null rather than zero, and that is the only thing distinguishing "the
+		// ledger never recorded this pair" from "it recorded nothing net".
+		if (quantity === null || quantity === undefined) {
+			return undefined;
+		}
+
+		return {
+			variantId: query.variantId,
+			...(query.binId ? { binId: query.binId } : {}),
+			quantity: this.quantityText(quantity as number | DecimalString)
+		};
+	}
+
+	/**
+	 * Every derived balance the ledger holds for a set of bins, read through the MikroORM connection.
+	 *
+	 * @param binIds The bins to read.
+	 * @returns One balance per bin and variant the ledger recorded a movement for.
+	 */
+	private async mikroBinBalances(binIds: ID[]): Promise<IStockLedgerBinBalance[]> {
+		const scope = this.callerScope();
+		// The list is variable-length, so the names are generated with it and bound by the same rewrite
+		// every other statement here goes through.
+		const named = binIds.map((_binId, index) => `:bin${index}`).join(', ');
+		const values = Object.fromEntries(binIds.map((binId, index) => [`bin${index}`, binId]));
+		const rows = await this.connection.rows<{ binId: ID; variantId: ID; quantity: unknown }>(
+			`SELECT movement."binId" AS "binId", movement."variantId" AS "variantId", SUM(movement."quantity") AS "quantity"
+			 FROM "stock_movement" movement
+			 INNER JOIN "warehouse_product" aggregate ON aggregate."id" = movement."warehouseProductId"
+			 WHERE movement."binId" IN (${named})
+			   AND movement."deletedAt" IS NULL
+			   AND aggregate."deletedAt" IS NULL${scope.sql}
+			 GROUP BY movement."binId", movement."variantId"`,
+			{ ...values, ...scope.parameters }
+		);
+
+		return (rows ?? [])
+			.filter((row) => row.binId && row.variantId)
+			.map((row) => ({
+				binId: row.binId,
+				variantId: row.variantId,
+				quantity: this.quantityText(row.quantity as number | DecimalString)
+			}));
+	}
+
+	/**
+	 * The level rows a claim or a home-bin answer is read from, on the MikroORM arm.
+	 *
+	 * The condition on the aggregate is stated as a nested condition on the relation, which is how
+	 * MikroORM expresses the join the TypeORM arm states with `innerJoin`, and the aggregate is
+	 * populated so the location it carries travels back with the level.
+	 *
+	 * @param query The location, and either the bins in scope or the variant.
+	 * @returns The level rows, each carrying the location of the aggregate it hangs from.
+	 */
+	private async mikroLevels(query: { warehouseId: ID; binIds?: ID[]; variantId?: ID }): Promise<TReadLevel[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const aggregate: Record<string, unknown> = { warehouseId: query.warehouseId };
+
+		if (tenantId) {
+			aggregate.tenantId = tenantId;
+		}
+		if (organizationId) {
+			aggregate.$or = [{ organizationId }, { organizationId: null }];
+		}
+
+		const rows = await this.connection.fork().find(
+			WarehouseProductVariant,
+			{
+				...(query.variantId ? { variantId: query.variantId } : {}),
+				...(query.binIds?.length ? { binId: { $in: query.binIds } } : {}),
+				warehouseProduct: aggregate
+			} as never,
+			{ populate: ['warehouseProduct'] } as never
+		);
+
+		return (rows as unknown as TReadLevel[]).map((level) => ({
+			...(level as object),
+			warehouseId: (level as { warehouseProduct?: { warehouseId?: ID } }).warehouseProduct?.warehouseId
+		})) as TReadLevel[];
+	}
+
+	/**
+	 * The tenant and organization condition every read here is narrowed by, as a statement fragment.
+	 *
+	 * It is the same rule {@link scopeToCaller} states to the query builder, written for a raw
+	 * statement: the condition is on the aggregate row, and an aggregate that names no organization is
+	 * the tenant-wide row and is in scope for every organization of the tenant rather than for none.
+	 *
+	 * @returns The fragment to append to a `WHERE`, and the values it binds.
+	 */
+	private callerScope(): { sql: string; parameters: Record<string, unknown> } {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		let sql = '';
+		const parameters: Record<string, unknown> = {};
+
+		if (tenantId) {
+			sql += `\n\t\t\t   AND aggregate."tenantId" = :tenantId`;
+			parameters.tenantId = tenantId;
+		}
+		if (organizationId) {
+			sql += `\n\t\t\t   AND (aggregate."organizationId" = :organizationId OR aggregate."organizationId" IS NULL)`;
+			parameters.organizationId = organizationId;
+		}
+
+		return { sql, parameters };
 	}
 
 	/**

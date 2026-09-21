@@ -47,7 +47,11 @@ const NOT_ATTRIBUTED =
  *    refund service measures against, read rather than assumed. A return refund that no payment can
  *    carry is still recorded against the return, because a return's money may have come in through
  *    means no payment row records; a claim refund with nothing to attribute it to is refused, and
- *    refused by name.
+ *    refused by name. **That escape is for an order with no recorded money, not for one being
+ *    over-refunded.** An order that does have captured payments is measured against what they can
+ *    still give back between them, because a refund that names no payment is a refund
+ *    `RefundService.assertRefundable` never sees — which is how a return for one $20 item could be
+ *    refunded for 100000, repeatedly, with nothing to stop it.
  * 3. **That the refund has settled.** The capability this answers is "the money went back", not "an
  *    intention to send it": the caller records what it paid back on its own flow, so a refund left
  *    pending would have it record money that has not moved. The record and the settlement are both
@@ -103,7 +107,35 @@ export class ReturnRefundService {
 			await this.refundReasonService.findReasonOrFail(request.reasonId);
 		}
 
-		const paymentId = await this.attributedPayment(request, requested);
+		const attribution = await this.attributedPayment(request, requested);
+		const paymentId = attribution.paymentId;
+
+		/**
+		 * **The escape below is for an order that took money the platform never recorded, not for an
+		 * order that is being over-refunded.** A refund the caller could not attribute to a payment is
+		 * measured against nothing: `RefundService.assertRefundable` runs only inside `if (paymentId)`,
+		 * so a return refund with no payment named passed straight through, and a request for 100000
+		 * against a return for one $20 item was written and accumulated without limit. The two cases are
+		 * told apart by whether the order has any captured money at all in this currency. It has none —
+		 * a manual settlement, a credit the platform never processed — and the documented escape stands.
+		 * It has some, and the amount is above what those payments can still give back, and that is an
+		 * over-refund whatever it is attributed to: it is refused by the name the refund service already
+		 * refuses it by, with the figure it was measured against.
+		 */
+		if (attribution.headroom !== undefined && compareDecimalStrings(requested.amount, attribution.headroom) > 0) {
+			throw new BadRequestException({
+				message:
+					'REFUND_AMOUNT_EXCEEDS_CAPTURED: the order captured less than this refund would give back, ' +
+					'so there is no money on it to pay the amount from.',
+				code: 'REFUND_AMOUNT_EXCEEDS_CAPTURED',
+				details: {
+					orderId: request.orderId,
+					requested: requested.amount,
+					refundable: attribution.headroom,
+					currency: request.currency
+				}
+			});
+		}
 
 		/**
 		 * A refund has to be attributable to something, or it is money leaving with no record of why.
@@ -148,11 +180,22 @@ export class ReturnRefundService {
 	 * pair anyway. The payment with the most left to give is named, and the identifier breaks a tie, so
 	 * the same state always attributes a refund the same way.
 	 *
+	 * It also answers **how much the order can give back in total**, which is the ceiling the caller
+	 * refuses an over-refund against. The two questions share one pass over the payments because they
+	 * share the expensive part — two ledger sums per payment — and because an answer computed twice is
+	 * an answer that can disagree with itself. The total is `undefined`, rather than zero, for an order
+	 * that has no payment in this currency at all: that is the case the documented escape is for, and
+	 * a zero there would turn it into a refusal.
+	 *
 	 * @param request The refund being recorded.
 	 * @param amount The requested amount, already read as a monetary value.
-	 * @returns The payment to pay the refund back from, or nothing when no payment can carry it.
+	 * @returns The payment to pay the refund back from when one can carry it, and what every payment of
+	 * the order can still give back between them when the order has any.
 	 */
-	private async attributedPayment(request: IReturnRefundRequest, amount: Money): Promise<ID | undefined> {
+	private async attributedPayment(
+		request: IReturnRefundRequest,
+		amount: Money
+	): Promise<{ paymentId?: ID; headroom?: DecimalString }> {
 		const payments = await this.paymentRepository.find({
 			where: {
 				orderId: request.orderId,
@@ -160,6 +203,7 @@ export class ReturnRefundService {
 			} as FindOptionsWhere<Payment>
 		});
 		const candidates: Array<{ id: ID; headroom: DecimalString }> = [];
+		let total: Money | undefined;
 
 		for (const payment of payments ?? []) {
 			const currency = payment.currency ?? request.currency;
@@ -178,6 +222,12 @@ export class ReturnRefundService {
 				)
 			);
 
+			// A payment that has already given back more than it took carries no headroom, and a negative
+			// one must not reduce what the other payments of the order can still give.
+			total = (total ?? Money.zero(currency as CurrencyCode)).add(
+				headroom.isNegative() ? Money.zero(currency as CurrencyCode) : headroom
+			);
+
 			if (headroom.greaterThanOrEqual(amount)) {
 				candidates.push({ id: payment.id, headroom: headroom.amount });
 			}
@@ -189,7 +239,10 @@ export class ReturnRefundService {
 			return byHeadroom !== 0 ? byHeadroom : String(left.id).localeCompare(String(right.id));
 		});
 
-		return candidates.length ? candidates[0].id : undefined;
+		return {
+			...(candidates.length ? { paymentId: candidates[0].id } : {}),
+			...(total ? { headroom: total.amount } : {})
+		};
 	}
 
 	/**

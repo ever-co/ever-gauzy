@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { DecimalString, ID as Id, IPagination } from '@gauzy/contracts';
+import { DecimalString, ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -11,7 +11,8 @@ import {
 } from '../api/graphql-connection';
 import { BaseQueryDTO } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { OrganizationVendor } from './organization-vendor.entity';
 import { OrganizationVendorService } from './organization-vendor.service';
 
@@ -113,12 +114,17 @@ const ORGANIZATION_VENDOR_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * expense book and this master are read together, and a write here is what the expense form's own
  * supplier selector offers.
  *
- * **The guard chain is the controller's and the permission is the absence the controller states.** The
- * controller carries `TenantPermissionGuard` on the class and no `@Permissions` anywhere — on the class
- * or on any handler — so the class here carries that guard beside the gate and every field states no
- * permission at all. A field that demanded one would refuse a caller the REST route serves, which is the
- * narrowing this delivery exists to prevent. The `PermissionGuard` is deliberately absent too: the
- * controller does not carry it, so a permission stated here would never be read.
+ * **The guard chain and the permission are the controller's, read route by route.** The controller
+ * carries `TenantPermissionGuard` on the class, so the class here carries that guard beside the gate.
+ * Its reads — the list and the pagination route — state no permission, so the query fields state
+ * none. Its four writes do: `@UseGuards(PermissionGuard)` with `@Permissions(ALL_ORG_EDIT)` on the
+ * edit, the removal, the withdrawal and the recovery. Each of those four mutations below therefore
+ * repeats that pair. This used to claim the controller carried no `@Permissions` anywhere and that
+ * `PermissionGuard` was deliberately absent; both were false, and the consequence was that a caller
+ * without `ALL_ORG_EDIT` — refused by `PUT /api/organization-vendors/:id` — could make the identical
+ * write through `updateOrganizationVendor`. The creation is the one write the controller really does
+ * leave open (it is inherited from the CRUD base, which states nothing), so `createOrganizationVendor`
+ * still states nothing: parity is per route, not per resource.
  *
  * **The removal is the master's own rule and not a plain delete.** The route calls the service's own
  * `deleteVendor`, which refuses a supplier an expense already names rather than orphaning the expense
@@ -233,6 +239,8 @@ export class OrganizationVendorResolver {
 	 * one identifier and leaves neither reading undefined, and a member the caller omits is left as it is.
 	 */
 	@Mutation('updateOrganizationVendor')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async updateOrganizationVendor(
 		@Args('input') input: IUpdateOrganizationVendorInput
 	): Promise<OrganizationVendor> {
@@ -255,6 +263,8 @@ export class OrganizationVendorResolver {
 	 * not a row.
 	 */
 	@Mutation('deleteOrganizationVendor')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async deleteOrganizationVendor(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.organizationVendorService.deleteVendor(id);
 
@@ -264,20 +274,24 @@ export class OrganizationVendorResolver {
 	/**
 	 * Withdraws a supplier without removing the row.
 	 *
-	 * No permission is stated on the field, and none could be: the delivered route states none of its own
-	 * — the withdrawal is inherited from the CRUD base — and the controller states none on the class
-	 * either.
+	 * The permission is the delivered route's own: `DELETE /api/organization-vendors/:id/soft` is
+	 * declared on the controller with `@UseGuards(PermissionGuard)` and `@Permissions(ALL_ORG_EDIT)`
+	 * rather than inherited, so the field repeats that pair.
 	 */
 	@Mutation('softDeleteOrganizationVendor')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async softDeleteOrganizationVendor(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationVendor> {
 		return await this.organizationVendorService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn supplier back. Unpermissioned for the same reason the withdrawal above is: the
-	 * delivered route is inherited and carries no permission to mirror.
+	 * Puts a withdrawn supplier back, under the same permission as the withdrawal above: `PUT
+	 * /api/organization-vendors/:id/recover` states `@Permissions(ALL_ORG_EDIT)`, so the field does.
 	 */
 	@Mutation('recoverOrganizationVendor')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async recoverOrganizationVendor(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationVendor> {
 		return await this.organizationVendorService.softRecover(id);
 	}

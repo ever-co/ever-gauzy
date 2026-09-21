@@ -100,6 +100,13 @@ jest.mock('@gauzy/core', () => {
 		// answer unconditionally, so a versioned write is refused here as it is refused in production.
 		commitVersionedUpdate,
 		versionExpectationOf,
+		// The dialect helpers the ledger engine writes its raw fragments through. The engine imports
+		// them from the barrel this factory replaces, and a name a factory does not answer for is
+		// `undefined` at the call site — so the aggregate delta, which quotes three identifiers, would
+		// throw before it wrote anything. They are doubled for the embedded dialect every suite here
+		// runs against: a statement is left as it was written, and an identifier keeps its double quotes.
+		prepareSQLQuery: (sql: string) => sql,
+		quoteIdentifier: (identifier: string) => `"${identifier}"`,
 		RequestContext: {
 			// The engine reads the version the current request accepted from here, and a unit test has no
 			// request: the accepted version is then absent, which is the case the engine's own
@@ -231,21 +238,38 @@ function datastore(tables: Record<string, Row[]>) {
 			return true;
 		});
 	/** Reads the delta out of the SQL the engine builds for its aggregate update. */
-	const deltaFrom = (value: unknown): number => {
+	const deltaFrom = (value: unknown, parameters: Row = {}): number => {
 		const sql = typeof value === 'function' ? String((value as () => string)()) : String(value);
-		const match = /"\s*\+\s*(-?\d+(?:\.\d+)?)/.exec(sql);
+		// The engine writes `"quantity" + :quantityDelta` and **binds** the figure, because a number
+		// pasted into a statement is a number no driver ever checks. The double therefore resolves the
+		// named parameter out of the values the builder was given, exactly as a driver would, and still
+		// reads a literal for the one fragment that carries one — the version's own `+ 1`.
+		const bound = /\+\s*:(\w+)/.exec(sql);
 
-		if (!match) {
+		if (bound) {
+			const delta = Number(parameters?.[bound[1]]);
+
+			if (!Number.isFinite(delta)) {
+				throw new Error(`the in-memory double was given no value for ":${bound[1]}"`);
+			}
+
+			return delta;
+		}
+
+		const literal = /\+\s*(-?\d+(?:\.\d+)?)/.exec(sql);
+
+		if (!literal) {
 			throw new Error(`the in-memory double cannot read a delta out of "${sql}"`);
 		}
 
-		return Number(match[1]);
+		return Number(literal[1]);
 	};
 
 	let manager: any;
 	const createQueryBuilder = (entity?: unknown): any => {
 		let target = entity;
 		let updateSpec: Row | null = null;
+		let updateParameters: Row = {};
 		const conditions: Array<{ sql: string; params: Row }> = [];
 		const query: any = {
 			innerJoin: () => query,
@@ -273,6 +297,13 @@ function datastore(tables: Record<string, Row[]>) {
 
 				return query;
 			},
+			// The values a `set()` fragment's named parameters are bound to. Without this the builder has
+			// no `setParameters` at all, and the engine's aggregate delta throws before it writes.
+			setParameters: (values: Row = {}) => {
+				updateParameters = { ...updateParameters, ...values };
+
+				return query;
+			},
 			getMany: async () => (target === WarehouseProductVariant ? levels(conditions) : rows(target)),
 			getOne: async () => {
 				const found = target === WarehouseProductVariant ? levels(conditions) : rows(target);
@@ -297,7 +328,7 @@ function datastore(tables: Record<string, Row[]>) {
 				}
 
 				for (const [column, value] of Object.entries(updateSpec)) {
-					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value) : value;
+					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value, updateParameters) : value;
 				}
 
 				return { affected: 1 };

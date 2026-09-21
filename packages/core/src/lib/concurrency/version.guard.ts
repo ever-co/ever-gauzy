@@ -232,10 +232,20 @@ export class VersionGuard implements CanActivate {
 			default:
 				// The accepted version travels on the request so the write does not have to parse the
 				// header a second time — and cannot parse it differently.
+				// **Every version the caller accepted travels, not just the first one.** A client
+				// that has seen two revisions of a row sends `If-Match: "3", "4"` to say that either
+				// is acceptable; keeping only `decision.expected` turned that into "3 only", and a row
+				// sitting at 4 — a version the client had explicitly accepted — was then refused with
+				// `409`. `resolveExpectedVersion` already reads the row for a caller that accepted
+				// several, so carrying the whole list is all that is needed below this point.
 				if (request) {
 					request[VERSION_EXPECTATION_PROPERTY] = {
 						wildcard: decision.wildcard,
-						versions: decision.wildcard ? [] : [decision.expected]
+						versions: decision.wildcard
+							? []
+							: decision.versions?.length
+							? [...decision.versions]
+							: [decision.expected]
 					};
 				}
 

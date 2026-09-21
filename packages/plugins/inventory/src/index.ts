@@ -3,6 +3,8 @@
  */
 export * from './lib/inventory.plugin';
 export * from './lib/inventory.module';
+export * from './lib/inventory-maintenance.module';
+export * from './lib/inventory.connection';
 export * from './lib/inventory.enums';
 export * from './lib/inventory.errors';
 export * from './lib/inventory.permissions';
@@ -32,6 +34,9 @@ export * from './lib/stock-reservation/stock-reservation.entity';
 export * from './lib/stock-reservation/stock-reservation.service';
 export * from './lib/stock-reservation/stock-reservation.controller';
 export * from './lib/stock-reservation/stock-reservation.module';
+export * from './lib/stock-reservation/stock-reservation-constant';
+export * from './lib/stock-reservation/stock-reservation-expiry.scheduler';
+export * from './lib/stock-reservation/stock-reservation-expiry.worker';
 
 export * from './lib/stock-transfer/stock-transfer.entity';
 export * from './lib/stock-transfer/stock-transfer.service';

@@ -1,5 +1,5 @@
 import { Money } from '@gauzy/core';
-import { CurrencyCode, ICommerceCartTotals, RoundingMode } from '@gauzy/contracts';
+import { CurrencyCode, DecimalString, ICommerceCartTotals, RoundingMode } from '@gauzy/contracts';
 
 /**
  * One line as the totals chain sees it.
@@ -76,6 +76,18 @@ export interface ITotalsContext {
 	lineAdjustments: ITotalsAdjustment[];
 	/** Adjustments owned by a shipping method. */
 	shippingAdjustments: ITotalsAdjustment[];
+	/**
+	 * Adjustments owned by the document itself rather than by one of its children — the
+	 * `AdjustmentOwnerType.CART` and `AdjustmentOwnerType.ORDER` rows, which the ledger describes as
+	 * "an order-level discount, a fee, a rounding correction".
+	 *
+	 * They were read by nothing: the chain consumed the line and shipping ledgers only, so a
+	 * document-level row was written, stored, and then silently absent from every total. A discount
+	 * here joins the item discount total and a fee joins the item subtotal, for the same reason the
+	 * line-owned ones do — there is no third column to carry them and inventing one would make a
+	 * stored total mean something different from what it means today.
+	 */
+	documentAdjustments?: ITotalsAdjustment[];
 	/** Tax lines owned by a line. */
 	lineTaxLines: ITotalsTaxLine[];
 	/** Tax lines owned by a shipping method. */
@@ -155,17 +167,50 @@ export class TotalsCalculator {
 			lineNet.set(line.id, line.isTaxInclusive ? gross.subtract(tax) : gross);
 		}
 
-		const itemSubtotal = this.sum([...lineNet.values()], currency, decimals);
-
 		// Step 2 — line discounts and fees. An inclusive adjustment contributes its net part.
+		//
+		// **The ledger is signed in both directions and only one of them used to be read.** A negative
+		// row reduces what the customer pays; a positive one — `FEE`, or a positive `ROUNDING`
+		// correction — adds to it, and the fee leg below is what makes that second half of the ledger
+		// reach a total. Without it a `FEE` row of `+4.95` was written, stored, echoed back on the
+		// adjustment routes, and then silently dropped: the grand total came back identical to the
+		// fee-free cart, `assertSettled` passed because the components were internally consistent, and
+		// the customer was charged 4.95 less than the ledger said they owed.
+		//
+		// The fee joins the **subtotal** rather than a column of its own. A cart and an order store the
+		// eleven totals `ICommerceCartTotals` names and no more, so a new `itemFeeTotal` column would be
+		// a schema change on two tables in three dialects; netting the fee against the discount instead
+		// would make `discountTotal` — a figure shown to the buyer as a saving — go negative the moment
+		// the fees outweigh the discounts. What the subtotal means is therefore stated here: it is what
+		// the lines are worth plus what the adjustment layer added to them, before anything is taken
+		// off, which is the reading every one of `grandTotal`'s components already shares.
 		const lineDiscounts = new Map<string, Money>();
+		const lineFees = new Map<string, Money>();
 
 		for (const line of context.lines) {
 			const adjustments = context.lineAdjustments.filter((adjustment) => adjustment.ownerId === line.id);
+
 			lineDiscounts.set(line.id, this.discountOf(adjustments, currency, decimals));
+			lineFees.set(line.id, this.feeOf(adjustments, currency, decimals));
 		}
 
-		const itemDiscountTotal = this.sum([...lineDiscounts.values()], currency, decimals);
+		// A line-scoped row whose owner is no line of this document is still ignored: a `CART_LINE` row
+		// always names a line, so one that names a line this document does not have is a stale row or a
+		// row written against another aggregate, and letting it move this total is the defect the suite
+		// pins. A row that belongs to the document *as a whole* is a different owner type and arrives in
+		// its own member, below.
+		const documentAdjustments = context.documentAdjustments ?? [];
+
+		const itemSubtotal = this.sum(
+			[...lineNet.values(), ...lineFees.values(), this.feeOf(documentAdjustments, currency, decimals)],
+			currency,
+			decimals
+		);
+		const itemDiscountTotal = this.sum(
+			[...lineDiscounts.values(), this.discountOf(documentAdjustments, currency, decimals)],
+			currency,
+			decimals
+		);
 		const itemTaxTotal = this.sumTaxLines(context.lineTaxLines, currency, decimals);
 
 		// Steps 5–8 — shipping, on the same rules as a line.
@@ -179,29 +224,25 @@ export class TotalsCalculator {
 				currency,
 				decimals
 			);
+			const adjustments = context.shippingAdjustments.filter(
+				(adjustment) => adjustment.ownerId === method.id
+			);
 
-			shippingSubtotal = shippingSubtotal.add(
-				method.isTaxInclusive ? this.round(amount, decimals).subtract(tax) : this.round(amount, decimals)
-			);
-			shippingDiscountTotal = shippingDiscountTotal.add(
-				this.discountOf(
-					context.shippingAdjustments.filter((adjustment) => adjustment.ownerId === method.id),
-					currency,
-					decimals
-				)
-			);
+			shippingSubtotal = shippingSubtotal
+				.add(method.isTaxInclusive ? this.round(amount, decimals).subtract(tax) : this.round(amount, decimals))
+				.add(this.feeOf(adjustments, currency, decimals));
+			shippingDiscountTotal = shippingDiscountTotal.add(this.discountOf(adjustments, currency, decimals));
 		}
 
-		// A shipping-scoped discount whose owner is the cart itself rather than one method still reduces
-		// what is payable, so it is added to the shipping discount total.
-		const unattributedShippingDiscount = this.discountOf(
-			context.shippingAdjustments.filter(
-				(adjustment) => !context.shippingMethods.some((method) => method.id === adjustment.ownerId)
-			),
-			currency,
-			decimals
+		// A shipping-scoped adjustment whose owner is the cart itself rather than one method still moves
+		// what is payable, so its discount half is added to the shipping discount total and its fee half
+		// to the shipping subtotal — a delivery surcharge that names no method is still charged.
+		const unattributedShipping = context.shippingAdjustments.filter(
+			(adjustment) => !context.shippingMethods.some((method) => method.id === adjustment.ownerId)
 		);
-		shippingDiscountTotal = shippingDiscountTotal.add(unattributedShippingDiscount);
+
+		shippingSubtotal = shippingSubtotal.add(this.feeOf(unattributedShipping, currency, decimals));
+		shippingDiscountTotal = shippingDiscountTotal.add(this.discountOf(unattributedShipping, currency, decimals));
 
 		const shippingTaxTotal = this.sumTaxLines(context.shippingTaxLines, currency, decimals);
 
@@ -373,11 +414,52 @@ export class TotalsCalculator {
 				continue;
 			}
 
-			const net = adjustment.netAmount ?? Math.abs(adjustment.amount);
+			// The magnitude of the net, not the net as it was written. A ledger row's `amount` is signed
+			// and its recorded `netAmount` may be written either way round by whichever service produced
+			// it; taking it as it stands would let a net recorded as `-4.00` *reduce* the discount it is
+			// the net of, which reads as a promotion that made the cart dearer.
+			const net = Math.abs(adjustment.netAmount ?? adjustment.amount);
 			discount = discount.add(Money.of(net, currency, decimals));
 		}
 
 		return discount;
+	}
+
+	/**
+	 * The fee a set of ledger rows represents, as a positive magnitude.
+	 *
+	 * The mirror of {@link discountOf}, and it exists because the adjustment ledger is signed in both
+	 * directions: `AdjustmentType.FEE` is documented as "a positive charge added at the adjustment
+	 * layer: handling, small-order, cash on delivery", and a `ROUNDING` correction is explicitly
+	 * allowed to go either way, so the positive half of the ledger has to reach a total exactly as the
+	 * negative half does. Reading only the negative half is what let a handling fee be written and then
+	 * charged to nobody.
+	 *
+	 * The net part is used when the row carries one, for the same reason a discount uses it: a fee
+	 * stated in a tax-inclusive basis adds its net to the taxable base and its gross to what the
+	 * customer sees, and conflating the two is the classic one-cent mismatch.
+	 *
+	 * @param adjustments The ledger rows of one owner.
+	 * @param currency The currency.
+	 * @param decimals The currency's scale.
+	 * @returns The fee, never negative.
+	 */
+	private static feeOf(
+		adjustments: readonly ITotalsAdjustment[],
+		currency: CurrencyCode,
+		decimals: number
+	): Money {
+		let fee = Money.zero(currency, decimals);
+
+		for (const adjustment of adjustments) {
+			if (adjustment.amount <= 0) {
+				continue;
+			}
+
+			fee = fee.add(Money.of(Math.abs(adjustment.netAmount ?? adjustment.amount), currency, decimals));
+		}
+
+		return fee;
 	}
 
 	/**
@@ -410,11 +492,57 @@ export class TotalsCalculator {
 	 * has been crossed: the column is the platform's storage form for money and its transformer reads
 	 * it as a number, so the conversion belongs here rather than in any caller's arithmetic.
 	 *
+	 * **The conversion is checked rather than assumed.** `numeric(20,6)` holds fourteen integer digits
+	 * and a double holds fifteen significant ones, so the two ranges overlap but do not contain one
+	 * another: `Number('12345678901234.567890')` is `12345678901234.568`, a value inside the column's
+	 * declared range that the double cannot hold. Left unchecked, that difference is written as the
+	 * stored total while the exact figure is discarded, and `assertSettled` cannot see it because the
+	 * components and the grand total each lose different digits. A total that cannot survive the
+	 * column's own storage form is therefore refused here, loudly, in the same voice as the rest of
+	 * this class: a mismatch is not repaired, because repairing it would hide the writer that produced
+	 * it. Every amount a commerce document realistically carries round-trips exactly.
+	 *
 	 * @param value The exact computed value.
 	 * @param decimals The currency's scale.
 	 * @returns The value as the column carries it.
+	 * @throws Error when the storage form does not survive the conversion to a `number`.
 	 */
 	private static toColumn(value: Money, decimals: number): number {
-		return Number(value.round(RoundingMode.HALF_UP, decimals).toStorageString());
+		const rounded = value.round(RoundingMode.HALF_UP, decimals);
+		const exact = rounded.toStorageString();
+		const column = Number(exact);
+
+		if (!this.roundTrips(exact, column, rounded.currency, decimals)) {
+			throw new Error(
+				`TOTALS_PRECISION_LOST: ${exact} ${value.currency} cannot be carried by the column's numeric ` +
+					`form without losing a digit (it reads back as ${column}). The amount is past the range a ` +
+					'double holds exactly and must not be stored as an approximation.'
+			);
+		}
+
+		return column;
+	}
+
+	/**
+	 * @param exact The exact storage form of a computed amount.
+	 * @param column The number the column carries it as.
+	 * @param currency The currency, so the comparison is made by the money layer itself.
+	 * @param decimals The currency's scale.
+	 * @returns True when the two describe the same amount.
+	 */
+	private static roundTrips(exact: DecimalString, column: number, currency: CurrencyCode, decimals: number): boolean {
+		if (!Number.isFinite(column)) {
+			return false;
+		}
+
+		try {
+			// Read back through the same value object the amount was produced by, so the comparison is
+			// the money layer's rather than a second reading of what a decimal is. A double past the
+			// safe-integer range renders exponentially, which is not a decimal at all; `Money.of` refuses
+			// it, and a conversion that cannot even be read back has certainly not preserved the amount.
+			return Money.of(column, currency, decimals).toStorageString() === exact;
+		} catch {
+			return false;
+		}
 	}
 }

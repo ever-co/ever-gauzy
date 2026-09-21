@@ -338,14 +338,54 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 	}
 
 	/**
-	 * Cancels a transfer that has not been fully received.
+	 * Cancels a transfer that has not been fully received, and puts the units still in transit back.
+	 *
+	 * **A cancel is not a state change alone, and that is what this used to get wrong.** A dispatch has
+	 * already written one `TRANSFER_OUT` per line at the source, and a transfer cancelled from
+	 * `IN_TRANSIT` or `PARTIALLY_RECEIVED` has units that left the source and never arrived anywhere:
+	 * writing only the status left the source short by exactly those units, with no row in the ledger
+	 * that explains where they went. `StockLevelService.reconcile` cannot repair that either — it sets a
+	 * level to the sum of its own movements, and here it is the *ledger* that is missing the units, so
+	 * the level and the ledger agree on a number that is wrong. The conservation property the ledger
+	 * rests on is that a level is the sum of its movements; the only thing that restores it is the
+	 * opposite movement, so the cancel writes one compensating `TRANSFER_IN` at the source per line that
+	 * still has units in flight.
+	 *
+	 * In flight is `shipped − received − damaged`. Damaged units are deliberately not returned: they
+	 * left the source, the receipt recorded them as destroyed, and crediting them back would put units
+	 * the installation no longer holds into the number it sells against.
+	 *
+	 * The compensation and the status are one write: both go through the transaction this method opens,
+	 * so a transfer that reads `CANCELED` is a transfer whose units are back, and a compensation that
+	 * cannot be written takes the cancel with it.
+	 *
+	 * **The reason no longer overwrites the note.** It used to be patched onto `note`, which is the
+	 * operator's own free text from `createTransfer` — the document's explanation of why it exists was
+	 * replaced by the explanation of why it was stopped. It is recorded beside it, in the row's own
+	 * `metadata`, together with what the compensation put back.
 	 *
 	 * @param id Id of the transfer.
 	 * @param reason Why it was cancelled.
 	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 * @returns The transfer at the version this write produced.
 	 */
 	public async cancel(id: ID, reason?: string, expectedVersion?: number): Promise<StockTransfer> {
-		return await this.transition(id, StockTransferStatus.CANCELED, { note: reason }, expectedVersion);
+		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
+			const transfer = await this.requireTransfer(manager, id);
+			this.assertVersion(transfer, expectedVersion);
+			this.assertTransitionAllowed(transfer, StockTransferStatus.CANCELED);
+
+			const returned = await this.returnUnitsInFlight(manager, transfer);
+
+			return await this.commitTransition(manager, transfer, {
+				status: StockTransferStatus.CANCELED,
+				metadata: {
+					...(transfer.metadata ?? {}),
+					...(reason ? { cancelReason: reason } : {}),
+					...(returned.length ? { canceledInFlight: returned } : {})
+				}
+			});
+		});
 	}
 
 	/*
@@ -416,16 +456,92 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
 			const transfer = await this.requireTransfer(manager, id);
 			this.assertVersion(transfer, expectedVersion);
-			if (!ALLOWED_FROM[status].includes(transfer.status)) {
-				throw inventoryError(
-					InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
-					`A transfer cannot move from ${transfer.status} to ${status}.`,
-					{ details: { transferId: id, status: transfer.status, requestedStatus: status } }
-				);
-			}
+			this.assertTransitionAllowed(transfer, status);
 
 			return await this.commitTransition(manager, transfer, { ...patch, status });
 		});
+	}
+
+	/**
+	 * Refuses a transition the document's current state does not allow.
+	 *
+	 * Stated once and read by both callers: the ordinary transition path, and the cancel, which has a
+	 * stock effect of its own and therefore cannot go through that path.
+	 *
+	 * @param transfer The transfer as it was read, inside the transaction.
+	 * @param status The state the transition reaches.
+	 * @throws ApiException with `TRANSFER_ILLEGAL_TRANSITION` when the document is not in a state the
+	 * transition may start from.
+	 */
+	private assertTransitionAllowed(transfer: StockTransfer, status: StockTransferStatus): void {
+		if (!ALLOWED_FROM[status].includes(transfer.status)) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
+				`A transfer cannot move from ${transfer.status} to ${status}.`,
+				{ details: { transferId: transfer.id, status: transfer.status, requestedStatus: status } }
+			);
+		}
+	}
+
+	/**
+	 * Writes one compensating movement per line that still has units in transit.
+	 *
+	 * The quantity is what the dispatch took out of the source and nothing has since accounted for:
+	 * `shipped − received − damaged`. A line that never shipped, or one whose units have all arrived or
+	 * been written off as damaged, has nothing in flight and writes no movement — a compensation that
+	 * moved units the ledger has already accounted for would be the mirror image of the defect it
+	 * exists to fix.
+	 *
+	 * The movement is written at the **source**, because that is the location the dispatch decremented.
+	 * It is stated as `TRANSFER_IN` for the same reason the receipt is: the units are arriving at a
+	 * location, and the ledger's vocabulary describes what happened to the level rather than what the
+	 * document was called. `TRANSFER_CANCEL` is the reason carried on the row, so the compensation can
+	 * be told apart from an ordinary receipt in the history.
+	 *
+	 * Each movement joins the cancel's transaction: a line that cannot be compensated takes the whole
+	 * cancel back with it, so a transfer never reads `CANCELED` with only some of its units returned.
+	 *
+	 * @param manager The transaction the cancel runs in.
+	 * @param transfer The transfer being cancelled.
+	 * @returns One entry per line that was compensated, with the movement that did it.
+	 */
+	private async returnUnitsInFlight(
+		manager: any,
+		transfer: StockTransfer
+	): Promise<Array<{ lineId: ID; quantity: number; movementId: ID }>> {
+		const lines: StockTransferLine[] = await manager.find(StockTransferLine, {
+			where: { transferId: transfer.id }
+		});
+		const returned: Array<{ lineId: ID; quantity: number; movementId: ID }> = [];
+
+		for (const line of lines ?? []) {
+			const inFlight =
+				Number(line.shippedQuantity ?? 0) -
+				Number(line.receivedQuantity ?? 0) -
+				Number(line.damagedQuantity ?? 0);
+
+			if (!Number.isFinite(inFlight) || inFlight <= 0) {
+				continue;
+			}
+
+			const applied = await this.stockLevelService.applyMovement(
+				{
+					warehouseId: transfer.fromWarehouseId,
+					variantId: line.variantId,
+					type: StockMovementType.TRANSFER_IN,
+					quantityDelta: inFlight,
+					reservedDelta: 0,
+					referenceType: StockMovementReferenceType.TRANSFER,
+					referenceId: line.id,
+					reason: 'TRANSFER_CANCEL'
+				},
+				manager
+			);
+
+			returned.push({ lineId: line.id, quantity: inFlight, movementId: applied.movementId });
+		}
+
+		return returned;
 	}
 
 	/**

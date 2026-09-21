@@ -1,5 +1,7 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { In, LessThan } from 'typeorm';
+import { LockMode } from '@mikro-orm/core';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ID,
@@ -13,6 +15,7 @@ import {
 } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { MultiORMEnum } from '../core/utils';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
 import { isUniqueViolation } from '../core/errors/unique-violation';
@@ -56,10 +59,13 @@ export type IdempotencyKeyView = Omit<IIdempotencyKey, 'responseBody'>;
  * decision the caller owns.
  *
  * Storage is reached through the platform's dual-ORM CRUD path wherever that path can express the
- * call, so a deployment that switches `DB_ORM` runs the same kernel. Three calls it cannot carry go
- * to the TypeORM repository instead, and each says at the call site what it needs and why: the
- * claim's insert (whose lost race is read off the driver's own error), the sweep (which selects on a
- * range operator the converter does not translate) and the takeover (which takes a row lock).
+ * call, so a deployment that switches `DB_ORM` runs the same kernel. Three calls it cannot carry are
+ * written per ORM instead — never on one ORM's repository alone — and each says at the call site what
+ * it needs and why: the claim's insert (whose lost race is read off the driver's own error), the
+ * sweep (which selects on a range operator the converter does not translate) and the takeover (which
+ * takes a row lock). Writing those three on the TypeORM repository alone is what made every
+ * `@Idempotent` route fail under `DB_ORM=mikro-orm`, because the columns they name are
+ * `@MultiORMColumn`s and exist in only one ORM's metadata at a time.
  */
 @Injectable()
 export class IdempotencyService extends CrudService<IdempotencyKey> {
@@ -99,18 +105,24 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 		const now = new Date();
 		const retentionMs = policy.retentionMs ?? IdempotencyService.DEFAULT_RETENTION_MS;
 
-		// The claim's insert stays on the repository, and the reason is the answer the caller gets when
-		// it loses the race. The platform's CRUD write path cannot carry this call: `CrudService.create`
-		// and `CrudService.save` catch every write failure and rethrow it as a `BadRequestException`
-		// built from `toClientSafeError`, which is a client-facing message and a `400` rather than a
-		// driver error — so `isUniqueViolation` below would stop recognizing the duplicate tuple and a
-		// lost race would be reported as a failed write instead of resolving into the stored row. The
-		// MikroORM arm of `CrudService.save` is an upsert besides, which merges into the row the race
-		// was lost to instead of raising the violation the outcome is decided by. Porting this call
-		// therefore needs a dual-ORM write that lets the driver's error through, which is a change in
-		// `core/crud` rather than in this kernel, and it is reported as such rather than worked around
-		// here.
-		const claim = this.typeOrmIdempotencyKeyRepository.create({
+		// The claim's insert stays off the platform's CRUD write path, and the reason is the answer the
+		// caller gets when it loses the race. `CrudService.create` and `CrudService.save` catch every
+		// write failure and rethrow it as a `BadRequestException` built from `toClientSafeError`, which
+		// is a client-facing message and a `400` rather than a driver error — so `isUniqueViolation`
+		// below would stop recognizing the duplicate tuple and a lost race would be reported as a failed
+		// write instead of resolving into the stored row. The MikroORM arm of `CrudService.save` is an
+		// upsert besides, which merges into the row the race was lost to instead of raising the
+		// violation the outcome is decided by.
+		//
+		// It does **not** follow that the call may stay on the TypeORM repository, which is what it did
+		// and what made every `@Idempotent` route fail under `DB_ORM=mikro-orm`: `key`, `scope`,
+		// `requestHash`, `expiresAt` and `lockedAt` are `@MultiORMColumn`s, so on that ORM they are not
+		// in TypeORM's metadata at all and the insert reduced to the base-entity columns and violated
+		// the table's own NOT NULLs. The write is therefore branched on the configured ORM — the same
+		// shape `MeasurementAuditConnection` uses — and each arm is a *native* insert that lets the
+		// driver's error through: `em.insert` bypasses the unit of work and is not the upsert
+		// `CrudService.save` is.
+		const values: Partial<IdempotencyKey> = {
 			key: input.key,
 			scope: input.scope,
 			requestHash: input.requestHash,
@@ -121,10 +133,10 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 			lockedAt: now,
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: RequestContext.currentOrganizationId()
-		} as Partial<IdempotencyKey>);
+		};
 
 		try {
-			const record = await this.typeOrmIdempotencyKeyRepository.save(claim);
+			const record = await this.insertClaim(values, now);
 
 			return { outcome: IdempotencyOutcome.CLAIMED, record };
 		} catch (error) {
@@ -136,13 +148,112 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 			// race between our read and our write, and its row is the answer.
 			const raced = await this.findByKey(input.scope, input.key);
 
-			if (!raced) {
-				// The winner was deleted between our insert and this read. Surfacing the original error
-				// is the honest answer: the caller may simply retry and claim the key itself.
-				throw error;
+			if (raced) {
+				return this.resolveExisting(raced, input, policy);
 			}
 
-			return this.resolveExisting(raced, input, policy);
+			// The tuple was taken and yet the caller's own scope holds no row for it. There are two ways
+			// to arrive here and they need different answers.
+			//
+			// The first is the honest race: the winner was released or swept between our insert and this
+			// read, and the caller may simply retry and claim the key itself — the original driver error
+			// is the truthful report of that.
+			//
+			// The second is a collision across tenants, and it is reachable today. The unique tuple is
+			// `(COALESCE(organizationId, <zero uuid>), scope, key)` and carries no tenant, so two callers
+			// of *different* tenants who both have no organization selected — a service account, an
+			// integration, a token issued without `lastOrganizationId` — collapse onto the same tuple.
+			// The second caller's insert is then refused by a row it is not allowed to see, and before
+			// this branch that surfaced as an unmapped `QueryFailedError`, i.e. a 500 on an ordinary
+			// write. It is answered as a conflict instead, naming nothing about the row that holds the
+			// tuple: the caller learns that this key value cannot be claimed and that another will work,
+			// which is true and discloses nothing. The real repair is the index — see the note on
+			// {@link findByKey} — and this branch is what keeps the symptom explainable until it lands.
+			if (await this.tupleHeldOutsideScope(input.scope, input.key)) {
+				throw new ApiException(
+					HttpStatus.CONFLICT,
+					ApiErrorCode.IDEMPOTENCY_KEY_REUSED,
+					'This idempotency key cannot be claimed for this request. Retry the request under a different key.',
+					{ scope: input.scope }
+				);
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Inserts the claim row, on whichever ORM the installation runs.
+	 *
+	 * Both arms are native writes rather than ORM persistence: the outcome of a claim is read off the
+	 * driver's unique violation, and a write path that translates or swallows that error takes the
+	 * kernel's decision away from it.
+	 *
+	 * The identifier, the timestamps and the two boolean flags are stated rather than left to a
+	 * default, because the two ORMs disagree about where the default comes from. TypeORM's
+	 * `@PrimaryGeneratedColumn('uuid')` is generated in the driver; MikroORM's `@PrimaryKey` declares
+	 * `defaultRaw: 'gen_random_uuid()'`, which is a Postgres function and exists on neither MySQL nor
+	 * SQLite, and `em.insert` does not run the `onCreate` hooks that fill `createdAt` and `updatedAt`
+	 * during a flush. Stating all four is what makes the row identical on four dialects and two ORMs.
+	 *
+	 * @param values The claim's columns.
+	 * @param now The moment the claim is taken.
+	 * @returns The stored row.
+	 */
+	private async insertClaim(values: Partial<IdempotencyKey>, now: Date): Promise<IdempotencyKey> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			const id = randomUUID() as ID;
+			const em = this.mikroOrmIdempotencyKeyRepository.getEntityManager();
+
+			await em.insert(IdempotencyKey, {
+				...values,
+				id,
+				createdAt: now,
+				updatedAt: now,
+				isActive: true,
+				isArchived: false
+			} as any);
+
+			// Read back through the dual-ORM path rather than trusting the inserted object: the row the
+			// caller settles later is the row the store holds, defaults and column transformers included.
+			const stored = await this.findById(id);
+
+			if (stored) {
+				return stored;
+			}
+
+			return { ...values, id, createdAt: now, updatedAt: now } as IdempotencyKey;
+		}
+
+		const claim = this.typeOrmIdempotencyKeyRepository.create(values as Partial<IdempotencyKey>);
+
+		return this.typeOrmIdempotencyKeyRepository.save(claim);
+	}
+
+	/**
+	 * Whether the unique tuple this claim lost to is held by a row outside the caller's scope.
+	 *
+	 * Diagnostic only, and deliberately so: the row is counted and never read out, never returned and
+	 * never named in an answer. It exists to tell a lost race that the caller may retry apart from a
+	 * tuple collision the caller can never win, because the two need opposite answers and the scoped
+	 * read cannot tell them apart.
+	 *
+	 * @param scope The operation namespace.
+	 * @param key The client-supplied key.
+	 * @returns True when some row holds the tuple although the caller's own scope holds none.
+	 */
+	private async tupleHeldOutsideScope(scope: string, key: string): Promise<boolean> {
+		try {
+			const rows = await this.find({
+				where: { scope, key, organizationId: RequestContext.currentOrganizationId() } as any,
+				take: 1
+			});
+
+			return (rows?.length ?? 0) > 0;
+		} catch {
+			// The diagnosis is not worth failing a request over; without it the caller gets the driver's
+			// own error, which is the answer this branch was trying to improve on rather than replace.
+			return false;
 		}
 	}
 
@@ -210,18 +321,74 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 		const staleLockMs = policy.staleLockMs ?? IdempotencyService.DEFAULT_STALE_LOCK_MS;
 		const abandonedBefore = new Date(now.getTime() - Math.max(staleLockMs, 0));
 
-		// The sweep stays on the repository, and the operator it needs is the reason. It selects on a
-		// range — `expiresAt < now`, and `lockedAt < abandonedBefore` for the second rule — and the
-		// dual-ORM surface cannot carry a range: `parseTypeORMFindToMikroOrm` translates `In` but sends
+		// The sweep stays off the dual-ORM surface, and the operator it needs is the reason. It selects
+		// on a range — `expiresAt < now`, and `lockedAt < abandonedBefore` for the second rule — and
+		// that surface cannot carry a range: `parseTypeORMFindToMikroOrm` translates `In` but sends
 		// `LessThan` to the default branch of its `processFindOperator`, which warns and answers an
 		// empty condition. Routed through that path the expiry predicate would vanish on one ORM and
 		// the sweep would delete rows whose stored response is still replayable, which is the first of
-		// the two eligibility rules above. `In` alone is not enough to move the call, and the deletes
-		// below assert the same range, so the reads and the deletes travel together.
+		// the two eligibility rules above.
+		//
+		// What follows from that is a branch per ORM rather than a TypeORM repository on both, because
+		// every column this sweep selects on is a `@MultiORMColumn` and therefore absent from TypeORM's
+		// metadata under `DB_ORM=mikro-orm`: the read there raised `EntityPropertyNotFoundError` and the
+		// cleanup job never deleted a row. MikroORM expresses the same two rules with `$lt` and `$in`,
+		// which its own query language carries natively, so both arms assert the identical predicates —
+		// and both assert them twice, once to pick the rows and once to delete them, so a row that
+		// completed or was refreshed between the two statements survives.
+		const terminalStatuses = [IdempotencyStatus.COMPLETED, IdempotencyStatus.FAILED];
+
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			const em = this.mikroOrmIdempotencyKeyRepository.getEntityManager();
+
+			const terminalRows = await em.find(
+				IdempotencyKey,
+				{ expiresAt: { $lt: now }, status: { $in: terminalStatuses } } as any,
+				{ fields: ['id'] as any, limit }
+			);
+
+			const remainingRows = limit - terminalRows.length;
+			const abandonedRows =
+				remainingRows > 0
+					? await em.find(
+							IdempotencyKey,
+							{
+								expiresAt: { $lt: now },
+								status: IdempotencyStatus.IN_PROGRESS,
+								lockedAt: { $lt: abandonedBefore }
+							} as any,
+							{ fields: ['id'] as any, limit: remainingRows }
+					  )
+					: [];
+
+			const terminalKeys = terminalRows.map((row) => row.id);
+			const abandonedKeys = abandonedRows.map((row) => row.id);
+			let deleted = 0;
+
+			if (terminalKeys.length) {
+				deleted += await em.nativeDelete(IdempotencyKey, {
+					id: { $in: terminalKeys },
+					expiresAt: { $lt: now },
+					status: { $in: terminalStatuses }
+				} as any);
+			}
+
+			if (abandonedKeys.length) {
+				deleted += await em.nativeDelete(IdempotencyKey, {
+					id: { $in: abandonedKeys },
+					expiresAt: { $lt: now },
+					status: IdempotencyStatus.IN_PROGRESS,
+					lockedAt: { $lt: abandonedBefore }
+				} as any);
+			}
+
+			return deleted;
+		}
+
 		const terminal = await this.typeOrmIdempotencyKeyRepository.find({
 			where: {
 				expiresAt: LessThan(now),
-				status: In([IdempotencyStatus.COMPLETED, IdempotencyStatus.FAILED])
+				status: In(terminalStatuses)
 			} as any,
 			select: ['id'] as any,
 			take: limit
@@ -248,7 +415,7 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 			await this.typeOrmIdempotencyKeyRepository.delete({
 				id: In(terminalIds),
 				expiresAt: LessThan(now),
-				status: In([IdempotencyStatus.COMPLETED, IdempotencyStatus.FAILED])
+				status: In(terminalStatuses)
 			} as any);
 		}
 
@@ -268,15 +435,25 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	 * Clears one expired row, but only while it is still expired.
 	 *
 	 * The `LessThan` on the expiry is what makes the delete safe to lose a race to, and it is also why
-	 * this call stays on the repository: see {@link purgeExpired} for what the dual-ORM path does with
-	 * that operator.
+	 * this call states the predicate per ORM rather than through the dual-ORM surface: see
+	 * {@link purgeExpired} for what that surface does with a range operator.
 	 *
 	 * @param id The row id.
 	 */
 	private async clearExpired(id: ID): Promise<void> {
+		const now = new Date();
+
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			await this.mikroOrmIdempotencyKeyRepository
+				.getEntityManager()
+				.nativeDelete(IdempotencyKey, { id, expiresAt: { $lt: now } } as any);
+
+			return;
+		}
+
 		await this.typeOrmIdempotencyKeyRepository.delete({
 			id,
-			expiresAt: LessThan(new Date())
+			expiresAt: LessThan(now)
 		} as any);
 	}
 
@@ -325,6 +502,17 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	 * `TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR` (`null: 'sql-null'`), which is the setting that makes a
 	 * criteria object mean the same thing on both ORMs, so the scoping of this lookup is unchanged by
 	 * the port.
+	 *
+	 * 🛑 **This read is scoped by tenant and the unique index behind it is not**, and the difference is
+	 * the one open hole in the kernel. `UQ_idempotency_org_scope_key` is
+	 * `(COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "scope", "key")` — the
+	 * coalesce is what stops a null organization from escaping the lock entirely — but it carries no
+	 * `tenantId`, so two tenants whose callers have no organization selected share one tuple. The
+	 * lookup here answers "no such key" for the second tenant and its insert is then refused by a row
+	 * it may not see. The index has to become
+	 * `(COALESCE("tenantId", <zero uuid>), COALESCE("organizationId", <zero uuid>), "scope", "key")`
+	 * for the two to agree; until it does, {@link startOrReplay} answers that collision as a conflict
+	 * rather than as a driver error.
 	 *
 	 * @param scope The operation namespace.
 	 * @param key The client-supplied key.
@@ -611,7 +799,16 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 				outcome: IdempotencyOutcome.REPLAYED,
 				record: existing,
 				response: {
-					status: existing.responseStatus ?? 200,
+					// A row that settled without recording a status is answered by what the row itself
+					// says it was. `200` for every such row — which is what this did — replayed a stored
+					// *failure* as a success, so a request the server refused came back as one it
+					// accepted. The status a failure defaults to is the one a failure the platform could
+					// not describe is answered with anywhere else.
+					status:
+						existing.responseStatus ??
+						(existing.status === IdempotencyStatus.FAILED
+							? HttpStatus.INTERNAL_SERVER_ERROR
+							: HttpStatus.OK),
 					body: existing.responseBody
 				}
 			};
@@ -644,13 +841,14 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	 * The read and the write share a transaction and the row is locked where the dialect supports
 	 * it, so two requests cannot both decide that the same abandoned claim is theirs to take.
 	 *
-	 * The lock is the reason this call stays on the repository: a row lock is a database feature
-	 * rather than an ORM one, and the platform's cross-ORM surface carries neither half of it. The
+	 * The lock is the reason this call stays off the platform's cross-ORM surface: a row lock is a
+	 * database feature rather than an ORM one, and that surface carries neither half of it. The
 	 * dual-ORM query builder offers no `setLock` — `IQueryBuilder` has no such member — and
-	 * `CrudService` exposes no transaction for a MikroORM deployment to take the lock inside, so a
-	 * port would have to give up the lock and with it the guarantee that only one of two concurrent
-	 * takeovers wins. What a store that cannot lock does instead is unchanged and is the branch below:
-	 * the surrounding transaction is the lock.
+	 * `CrudService` exposes no transaction to take the lock inside. Each ORM is therefore driven
+	 * directly, and both arms make the same decision: read the row under `FOR UPDATE` where the
+	 * dialect has one, re-check the staleness, and write the takeover inside the same transaction. On
+	 * the embedded dialects there is no row lock to take and the surrounding transaction is the lock,
+	 * which is the branch both arms fall through to.
 	 *
 	 * @param id The row id.
 	 * @param policy Overrides for the retention window.
@@ -659,6 +857,36 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 	private async takeOver(id: ID, policy: IIdempotencyPolicy): Promise<IdempotencyKey | null> {
 		const staleLockMs = policy.staleLockMs ?? IdempotencyService.DEFAULT_STALE_LOCK_MS;
 		const retentionMs = policy.retentionMs ?? IdempotencyService.DEFAULT_RETENTION_MS;
+
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return this.mikroOrmIdempotencyKeyRepository.getEntityManager().transactional(async (em) => {
+				const current = await em.findOne(
+					IdempotencyKey,
+					{ id, status: IdempotencyStatus.IN_PROGRESS } as any,
+					isPostgres() || isMySQL() ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {}
+				);
+
+				if (!current) {
+					return null;
+				}
+
+				const lockedAt = current.lockedAt ? new Date(current.lockedAt).getTime() : 0;
+
+				if (Date.now() - lockedAt <= staleLockMs) {
+					// The holder is alive; the caller must wait rather than duplicate the work.
+					return null;
+				}
+
+				const now = new Date();
+
+				current.lockedAt = now;
+				current.expiresAt = new Date(now.getTime() + retentionMs);
+
+				await em.flush();
+
+				return current;
+			});
+		}
 
 		return this.typeOrmIdempotencyKeyRepository.manager.transaction(async (manager) => {
 			const query = manager

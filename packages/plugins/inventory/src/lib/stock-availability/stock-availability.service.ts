@@ -39,7 +39,7 @@
  * with neither (a worker, a migration, a system context) is not narrowed, exactly as the ledger’s own
  * reads behave.
  */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
@@ -52,6 +52,7 @@ import {
 	pow10,
 	subtractDecimalStrings
 } from '@gauzy/core';
+import { InventoryOrmConnection } from './../inventory.connection';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { IStockAvailabilityQuery, IStockSellability, UNBOUNDED_SELLABLE } from './stock-availability.types';
 
@@ -77,7 +78,11 @@ export class StockAvailabilityService {
 	constructor(
 		@InjectRepository(WarehouseProductVariant)
 		private readonly typeOrmWarehouseProductVariantRepository: Repository<WarehouseProductVariant>,
-		private readonly stockLevelService: StockLevelService
+		private readonly stockLevelService: StockLevelService,
+		// Optional so a suite that constructs this service over a doubled repository, and an
+		// installation that registers only one ORM, both keep working: the TypeORM arm is what answers
+		// when no connection seam is present, which is exactly what it answered before the seam existed.
+		@Optional() private readonly connection?: InventoryOrmConnection
 	) {}
 
 	/**
@@ -127,8 +132,20 @@ export class StockAvailabilityService {
 	 * joins through it rather than filtering a column the level table does not have — the same read
 	 * the ledger’s own availability lookups use. The scope is applied to the aggregate for the reason
 	 * the class documents: it is the row that carries the tenant and the organization of the stock.
+	 *
+	 * **The read is expressed once per ORM, because a query builder is not portable between them.**
+	 * `@MultiORMColumn` and `@MultiORMManyToOne` emit only the configured ORM's decorator, so under
+	 * `DB_ORM=mikro-orm` TypeORM's metadata for `warehouse_product_variant` carries the base entity's
+	 * four columns and nothing else — and this read, which filters on `level.variantId` and joins
+	 * through `level.warehouseProduct`, raised `EntityPropertyNotFoundError` on the first add-to-cart
+	 * of the installation. The two arms answer the same question and produce the same shape; the
+	 * TypeORM one below is unchanged.
 	 */
 	private async levelsOf(variantId: ID, warehouseId?: ID): Promise<TSellableLevel[]> {
+		if (this.connection?.usesMikroOrm) {
+			return await this.mikroLevelsOf(variantId, warehouseId);
+		}
+
 		const query = this.typeOrmWarehouseProductVariantRepository.manager
 			.createQueryBuilder(WarehouseProductVariant, 'level')
 			.innerJoin('level.warehouseProduct', 'aggregate')
@@ -150,6 +167,52 @@ export class StockAvailabilityService {
 		this.scopeToCaller(query);
 
 		return (await query.getMany()) as TSellableLevel[];
+	}
+
+	/**
+	 * The same read, expressed for MikroORM.
+	 *
+	 * The condition on the aggregate is stated as a nested condition on the relation, which is how
+	 * MikroORM expresses the join TypeORM's builder states with `innerJoin`: naming the relation makes
+	 * the read a join, and the aggregate is populated so the location it carries travels back with the
+	 * level. The organization condition is a disjunction for the reason the class documents — an
+	 * aggregate that names no organization is the tenant-wide row and is in scope for every
+	 * organization of the tenant, not for none.
+	 *
+	 * @param variantId The variant.
+	 * @param warehouseId The location, when the question names one.
+	 * @returns The level rows, each carrying the location of the aggregate it hangs from.
+	 */
+	private async mikroLevelsOf(variantId: ID, warehouseId?: ID): Promise<TSellableLevel[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const aggregate: Record<string, unknown> = {};
+
+		if (warehouseId) {
+			aggregate.warehouseId = warehouseId;
+		}
+		if (tenantId) {
+			aggregate.tenantId = tenantId;
+		}
+		if (organizationId) {
+			aggregate.$or = [{ organizationId }, { organizationId: null }];
+		}
+
+		const rows = await this.connection.fork().find(
+			WarehouseProductVariant,
+			{
+				variantId,
+				...(Object.keys(aggregate).length ? { warehouseProduct: aggregate } : {})
+			} as never,
+			{ populate: ['warehouseProduct'] } as never
+		);
+
+		return (rows as unknown as TSellableLevel[]).map((level) => ({
+			...(level as object),
+			// The joined read on the other arm answers the location under the join's own name, so the
+			// two arms hand the same shape to everything above them.
+			warehouseId: (level as { warehouseProduct?: { warehouseId?: ID } }).warehouseProduct?.warehouseId
+		})) as TSellableLevel[];
 	}
 
 	/**

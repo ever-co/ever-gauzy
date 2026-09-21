@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import {
+	ID,
 	ISearchFacet,
 	ISearchHit,
 	ISearchIndexRegistration,
@@ -7,7 +8,8 @@ import {
 	ISearchRequest,
 	ISearchResult,
 	ISearchSuggestion,
-	PermissionsEnum
+	PermissionsEnum,
+	RolesEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
@@ -80,7 +82,8 @@ export class SearchService {
 		const entities = this.permittedEntities(request);
 		const take = this.pageSize(request?.take);
 		const skip = this.offset(request?.skip);
-		const providerRequest = toSearchRequest({ ...request, skip, take });
+		const organizationId = this.scopedOrganizationId(request);
+		const providerRequest = toSearchRequest({ ...request, organizationId, skip, take });
 
 		if (!this.isBounded(providerRequest)) {
 			throw new BadRequestException(
@@ -104,7 +107,10 @@ export class SearchService {
 			throw error;
 		}
 
-		const items = await this.materialise(result.items ?? []);
+		const items = await this.materialise(result.items ?? [], {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: organizationId ?? null
+		});
 
 		return {
 			items,
@@ -129,7 +135,7 @@ export class SearchService {
 			return [];
 		}
 
-		const providerRequest = toSearchRequest(request);
+		const providerRequest = toSearchRequest({ ...request, organizationId: this.scopedOrganizationId(request) });
 
 		if (!this.isBounded(providerRequest)) {
 			throw new BadRequestException(
@@ -182,6 +188,54 @@ export class SearchService {
 	}
 
 	/**
+	 * The organization a request is answered inside, taken from the credential rather than from the
+	 * request.
+	 *
+	 * `organizationId` is a declared, optional member of both public request shapes, and it used to
+	 * be the *only* organization predicate the read carried: a caller in organization X could ask for
+	 * `organizationId=<Y>` and receive the indexed titles, bodies, keywords and highlight fragments of
+	 * an organization it has no membership in. Nothing checked the membership, because nothing
+	 * compared the stated organization with the one the credential carries.
+	 *
+	 * The credential's organization is `user.lastOrganizationId`, which the JWT strategy sets only
+	 * after verifying the user belongs to it — so it is the membership check, and a stated
+	 * organization is treated as a narrowing that has to agree with it. A tenant super administrator
+	 * is the documented exception, exactly as it is for `TenantPermissionGuard`: the role is
+	 * tenant-scoped, the tenant predicate still applies, and an operator moving between the tenant's
+	 * organizations is the workflow the role exists for.
+	 *
+	 * A caller with no organization at all is left unnarrowed rather than refused: the tenant
+	 * predicate still bounds the read, and a tenant-wide search is a legitimate answer for a caller
+	 * who has not selected an organization. What is not legitimate is *choosing* another one.
+	 *
+	 * @param request The request, as it arrived.
+	 * @returns The organization the read is scoped to, or `undefined` when the caller has none.
+	 * @throws ForbiddenException when the request names an organization the caller may not read.
+	 */
+	private scopedOrganizationId(request?: ISearchRequestInput): ID | undefined {
+		const credential = RequestContext.currentOrganizationId() ?? undefined;
+		const stated = request?.organizationId ? String(request.organizationId) : undefined;
+
+		if (!stated) {
+			return credential;
+		}
+
+		if (credential && stated === String(credential)) {
+			return credential;
+		}
+
+		if (RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])) {
+			return stated as ID;
+		}
+
+		throw new ForbiddenException(
+			'SEARCH_ORGANIZATION_FORBIDDEN: a search is answered inside the organization the caller is ' +
+				'authenticated for. Naming another one is refused rather than honoured, because the index ' +
+				'holds every organization of the tenant in one table.'
+		);
+	}
+
+	/**
 	 * Whether the caller holds the grant a declaration names.
 	 *
 	 * A declaration that names no grant is refused rather than admitted: an entity nobody can be
@@ -221,10 +275,24 @@ export class SearchService {
 	 * must not empty a page the index answered correctly. The alternative — dropping hits because the
 	 * database blinked — turns a blip into a wrong answer.
 	 *
+	 * The re-read carries the caller's own tenant and organization. `ISourceRowQuery` accepts both,
+	 * and the ids alone are not a scope: an index that returned a document it should not have — or a
+	 * caller reaching the service outside a request — would otherwise have the *source* rows read back
+	 * unscoped too, which is the one place the index's non-authoritative design stops protecting
+	 * anything.
+	 *
 	 * @param hits The hits the provider matched.
+	 * @param scope The tenant and organization the rows are re-read inside; the caller's own when it
+	 * states none.
 	 * @returns The hits that still exist, rendered from their rows.
 	 */
-	async materialise(hits: ISearchHit[]): Promise<ISearchHit[]> {
+	async materialise(
+		hits: ISearchHit[],
+		scope?: { tenantId?: ID | null; organizationId?: ID | null }
+	): Promise<ISearchHit[]> {
+		const tenantId = scope?.tenantId ?? RequestContext.currentTenantId();
+		const organizationId = scope?.organizationId ?? null;
+
 		const grouped = new Map<string, ISearchHit[]>();
 
 		for (const hit of hits ?? []) {
@@ -252,7 +320,9 @@ export class SearchService {
 
 			try {
 				rows = await this.indexer.readSourceRows(definition, {
-					ids: group.map((hit) => hit.entityId)
+					ids: group.map((hit) => hit.entityId),
+					tenantId,
+					organizationId
 				});
 			} catch (error) {
 				this.logger.warn(

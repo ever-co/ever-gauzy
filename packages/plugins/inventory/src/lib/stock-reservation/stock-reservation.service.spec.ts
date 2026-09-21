@@ -100,6 +100,13 @@ jest.mock('@gauzy/core', () => {
 		// answer unconditionally, so a versioned write is refused here as it is refused in production.
 		commitVersionedUpdate,
 		versionExpectationOf,
+		// The dialect helpers the ledger engine writes its raw fragments through. The engine imports
+		// them from the barrel this factory replaces, and a name a factory does not answer for is
+		// `undefined` at the call site — so the aggregate delta, which quotes three identifiers, would
+		// throw before it wrote anything. They are doubled for the embedded dialect every suite here
+		// runs against: a statement is left as it was written, and an identifier keeps its double quotes.
+		prepareSQLQuery: (sql: string) => sql,
+		quoteIdentifier: (identifier: string) => `"${identifier}"`,
 		RequestContext: {
 			// The engine reads the version the current request accepted from here, and a unit test has no
 			// request: the accepted version is then absent, which is the case the engine's own
@@ -301,15 +308,31 @@ function datastore(tables: Record<string, Row[]>, options: { contention?: IConte
 			return true;
 		});
 	/** Reads the delta out of the SQL the engine builds for its aggregate update. */
-	const deltaFrom = (value: unknown): number => {
+	const deltaFrom = (value: unknown, parameters: Row = {}): number => {
 		const sql = typeof value === 'function' ? String((value as () => string)()) : String(value);
-		const match = /"\s*\+\s*(-?\d+(?:\.\d+)?)/.exec(sql);
+		// The engine writes `"quantity" + :quantityDelta` and **binds** the figure, because a number
+		// pasted into a statement is a number no driver ever checks. The double therefore resolves the
+		// named parameter out of the values the builder was given, exactly as a driver would, and still
+		// reads a literal for the one fragment that carries one — the version's own `+ 1`.
+		const bound = /\+\s*:(\w+)/.exec(sql);
 
-		if (!match) {
+		if (bound) {
+			const delta = Number(parameters?.[bound[1]]);
+
+			if (!Number.isFinite(delta)) {
+				throw new Error(`the in-memory double was given no value for ":${bound[1]}"`);
+			}
+
+			return delta;
+		}
+
+		const literal = /\+\s*(-?\d+(?:\.\d+)?)/.exec(sql);
+
+		if (!literal) {
 			throw new Error(`the in-memory double cannot read a delta out of "${sql}"`);
 		}
 
-		return Number(match[1]);
+		return Number(literal[1]);
 	};
 
 	let manager: any;
@@ -317,6 +340,7 @@ function datastore(tables: Record<string, Row[]>, options: { contention?: IConte
 		let target = entity;
 		let rawSelect: string | null = null;
 		let updateSpec: Row | null = null;
+		let updateParameters: Row = {};
 		const conditions: Array<{ sql: string; params: Row }> = [];
 		const query: any = {
 			innerJoin: () => query,
@@ -349,6 +373,13 @@ function datastore(tables: Record<string, Row[]>, options: { contention?: IConte
 			},
 			set: (spec: Row) => {
 				updateSpec = spec;
+
+				return query;
+			},
+			// The values a `set()` fragment's named parameters are bound to. Without this the builder has
+			// no `setParameters` at all, and the engine's aggregate delta throws before it writes.
+			setParameters: (values: Row = {}) => {
+				updateParameters = { ...updateParameters, ...values };
 
 				return query;
 			},
@@ -414,7 +445,7 @@ function datastore(tables: Record<string, Row[]>, options: { contention?: IConte
 				}
 
 				for (const [column, value] of Object.entries(updateSpec)) {
-					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value) : value;
+					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value, updateParameters) : value;
 				}
 
 				return { affected: 1 };
@@ -754,6 +785,58 @@ describe('StockReservationService — holding stock (doc 09 §5, INV-03)', () =>
 		expect(fixture.store.level()).toMatchObject({ quantity: 10, reservedQuantity: 6, safetyStock: 4 });
 	});
 
+	it('re-checks the safety floor under the row lock, where a competing hold cannot overtake it', async () => {
+		// **The availability read happens before the transaction opens**, so the numbers it decides on
+		// are numbers a competing writer can move before the row lock is taken. Two carts asking for the
+		// last two sellable units of a level holding ten against a floor of eight both read
+		// `available = 2`, both passed that read, and both committed — because the only rule that ran
+		// under the lock asked whether `reserved (4) <= quantity (10)`, which says nothing about the
+		// floor. The level ended at a reservation of four against a buffer of eight, availability of
+		// minus two, and the stock that exists to protect a physical count sold through.
+		//
+		// The pre-flight read is neutralised here, because it is exactly the check a race overtakes:
+		// what is asserted is that the floor is still enforced afterwards, against the locked values.
+		const fixture = reservationFixture({ quantity: 10, safetyStock: 8, reservedQuantity: 2 });
+		const preflight = fixture.service as unknown as { assertAvailable: (...args: unknown[]) => void };
+		const stubbed = jest.spyOn(preflight, 'assertAvailable').mockImplementation(() => undefined);
+
+		try {
+			await expect(fixture.service.reserve(hold({ quantity: 2 }) as never)).rejects.toMatchObject({
+				response: { code: 'STOCK_INSUFFICIENT_AVAILABLE' }
+			});
+		} finally {
+			stubbed.mockRestore();
+		}
+
+		// Nothing landed: the hold row and the movement are one write, so a refusal under the lock takes
+		// the hold with it.
+		expect(fixture.store.reservations()).toEqual([]);
+		expect(fixture.store.ledger()).toEqual([]);
+		expect(fixture.store.level()).toMatchObject({ reservedQuantity: 2, version: 1 });
+	});
+
+	it('accepts the hold that lands exactly on the safety floor', async () => {
+		// The boundary the rule reads: `reserved <= quantity − safetyStock`. Ten on hand against a floor
+		// of eight is two sellable units, and a hold for both of them is a hold the level can carry.
+		const fixture = reservationFixture({ quantity: 10, safetyStock: 8 });
+
+		const accepted = await fixture.service.reserve(hold({ quantity: 2 }) as never);
+
+		expect(accepted).toMatchObject({ quantity: 2, status: StockReservationStatus.ACTIVE });
+		expect(fixture.store.level()).toMatchObject({ quantity: 10, reservedQuantity: 2, safetyStock: 8 });
+	});
+
+	it('lets a backordered hold through the floor, because a backorder is a demand past what is sellable', async () => {
+		// The floor bounds a hold the level is expected to cover. A caller that has decided the demand
+		// may be backordered has said the opposite, and the backorder limit is the rule that bounds it.
+		const fixture = reservationFixture({ quantity: 10, safetyStock: 8, allowBackorder: true });
+
+		const accepted = await fixture.service.reserve(hold({ quantity: 6 }) as never);
+
+		expect(accepted).toMatchObject({ quantity: 6, status: StockReservationStatus.ACTIVE });
+		expect(fixture.store.level()).toMatchObject({ reservedQuantity: 6 });
+	});
+
 	it('refuses a hold of zero or a negative quantity', async () => {
 		const fixture = reservationFixture({ quantity: 10 });
 
@@ -875,6 +958,60 @@ describe('StockReservationService — releasing, expiring and re-pointing (INV-0
 		expect(fixture.activeOf()).toEqual([]);
 	});
 
+	it('consumes a hold: the units leave and the hold closes with them, in one movement', async () => {
+		// **The third transition the class was written for and the one that was never written.**
+		// `CONSUMED` is declared in the status vocabulary as "the stock actually left; a matching
+		// movement was written in the same transaction", `consumedAt` is a column of the row, and the
+		// mutation was declared in the composed schema with nothing bound to it.
+		//
+		// It is not a release. A release gives the reserved quantity back and leaves the on-hand
+		// quantity where it was; a consumption removes both in one movement, because writing it as a
+		// release followed by a sale would leave a window where the units are unheld and still on the
+		// shelf — which is exactly the window a hold exists to close.
+		const fixture = reservationFixture({ quantity: 10 });
+		const reservation = await fixture.service.reserve(hold({ quantity: 3 }) as never);
+
+		expect(fixture.store.level()).toMatchObject({ quantity: 10, reservedQuantity: 3 });
+
+		const consumed = await fixture.service.consume(reservation.id, 'FULFILLED');
+
+		expect(consumed).toMatchObject({ status: StockReservationStatus.CONSUMED });
+		expect(consumed.consumedAt).toBeInstanceOf(Date);
+		expect(fixture.store.level()).toMatchObject({ quantity: 7, reservedQuantity: 0 });
+
+		const movement = fixture.store.ledger()[fixture.store.ledger().length - 1];
+
+		expect(movement).toMatchObject({
+			type: StockMovementType.SALE,
+			quantity: -3,
+			quantityBefore: 10,
+			quantityAfter: 7,
+			reservedBefore: 3,
+			reservedAfter: 0,
+			reason: 'FULFILLED'
+		});
+		// INV-03 on the level the hold was counted against: the reserved quantity is the sum of the
+		// holds that are still ACTIVE, and there are none.
+		expect(fixture.store.reservations().filter((row) => row.status === StockReservationStatus.ACTIVE)).toEqual([]);
+	});
+
+	it('refuses to consume a hold that is already closed, and removes nothing a second time', async () => {
+		const fixture = reservationFixture({ quantity: 10 });
+		const reservation = await fixture.service.reserve(hold({ quantity: 3 }) as never);
+
+		await fixture.service.consume(reservation.id);
+
+		await expect(fixture.service.consume(reservation.id)).rejects.toMatchObject({
+			response: {
+				code: 'RESERVATION_ALREADY_CLOSED',
+				details: { reservationId: reservation.id, status: StockReservationStatus.CONSUMED }
+			}
+		});
+		// One removal, not two: the guard runs inside the transaction that would write the second.
+		expect(fixture.store.level()).toMatchObject({ quantity: 7, reservedQuantity: 0 });
+		expect(fixture.store.ledger().filter((row) => row.type === StockMovementType.SALE)).toHaveLength(1);
+	});
+
 	it('refuses to close a hold twice and writes no second release', async () => {
 		// P4.7: a hold is consumed at most once. Releasing twice would give the reserved quantity back
 		// twice, which is how a level ends up holding negative stock.
@@ -962,6 +1099,47 @@ describe('StockReservationService — releasing, expiring and re-pointing (INV-0
 			expect(again).toMatchObject({ released: 0, batches: 0 });
 			expect(fixture.store.ledger()).toHaveLength(2);
 			expect(fixture.store.level()).toMatchObject({ reservedQuantity: 0 });
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	it('stops a sweep that closed nothing rather than re-reading the same batch until its budget is gone', async () => {
+		// **The loop control was the half the missing row lock actually broke.** The walk stopped only
+		// when a batch came back short, and a row that failed to close stayed `ACTIVE` and expired — so
+		// two workers reading the same batch, or one hold that could not be released for a real reason,
+		// made every batch come back full of rows the sweep had already tried. It then spent its whole
+		// budget re-reading them: two hundred batches of five hundred `findOne`-plus-transaction round
+		// trips, with `released` reported as zero and nothing anywhere saying why.
+		jest.useFakeTimers({ now: AT });
+
+		try {
+			const fixture = reservationFixture({ quantity: 100 });
+
+			await fixture.service.reserve(hold({ quantity: 1, expiresAt: new Date(AT.getTime() - MINUTE) }) as never);
+			await fixture.service.reserve(
+				hold({ quantity: 1, referenceId: 'order-2', expiresAt: new Date(AT.getTime() - MINUTE) }) as never
+			);
+
+			const closer = fixture.service as unknown as { close: (...args: unknown[]) => Promise<unknown> };
+			const refused = jest
+				.spyOn(closer, 'close')
+				.mockRejectedValue(new Error('the level could not take the release'));
+
+			try {
+				// One row per batch and a budget of five, so the old walk would have read the same row
+				// five times over: `expired.length < batchSize` is false for a full batch.
+				const swept = await fixture.service.releaseExpired(1, 5);
+
+				expect(swept).toEqual({ released: 0, batches: 1 });
+			} finally {
+				refused.mockRestore();
+			}
+
+			// The holds are exactly as they were: a sweep that could close nothing has changed nothing.
+			expect(
+				fixture.store.reservations().filter((row) => row.status === StockReservationStatus.ACTIVE)
+			).toHaveLength(2);
 		} finally {
 			jest.useRealTimers();
 		}

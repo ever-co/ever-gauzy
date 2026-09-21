@@ -8,7 +8,7 @@ import {
 	SearchMatchMode,
 	SearchSortDirection
 } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions } from '@gauzy/core';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { SearchService, decodeCursor } from '../../services/search.service';
@@ -55,6 +55,17 @@ interface IPageArgs {
  * for a REST call, and the service removes an entity the caller may not read before the merge rather
  * than after it.
  *
+ * **The guard chain is the controller's, in full.** `TenantPermissionGuard` used to be missing here
+ * and on the definition resolver, and those two were the only surfaces on the branch without it —
+ * their own REST counterpart carries all three (`search.controller.ts`). The two guards are not
+ * interchangeable: `PermissionGuard` checks the caller's *role* grants and asserts nothing about the
+ * tenant, while `TenantPermissionGuard` refuses a request with no resolved tenant outright, verifies
+ * the tenant row itself, runs the separate *tenant*-level grant lookup that decides whether the tenant
+ * was ever given the capability, and carries the super-administrator short circuit. Without it a
+ * caller whose tenant was never granted search could run these fields although the identical REST
+ * route refused them, and a super administrator authorised on `GET /api/search` was refused on the
+ * GraphQL `search` field — a parity break in both directions on one capability.
+ *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
  * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
  * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
@@ -66,7 +77,7 @@ interface IPageArgs {
  * 404.
  */
 @Resolver('SearchResult')
-@UseGuards(PermissionGuard, FeatureFlagGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class SearchResolver {
 	constructor(private readonly searchService: SearchService) {}

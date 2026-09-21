@@ -33,11 +33,17 @@ const ZERO: DecimalString = '0';
  * throws, because a guard that answers "is this a quantity?" with a silent `false` is what lets a
  * shipment nothing can reconcile through.
  *
+ * Exported because the callers of this vocabulary hold quantities in whatever form a column or a
+ * caller handed them over in — a `numeric(20,6)` read back as text by one driver and as a `number` by
+ * another, a DTO member, a literal in a test — and every comparison and every message they build has
+ * to name the same digits the arithmetic here uses. A caller that rendered its own would be a second
+ * answer to "what does this quantity say", which is the class of drift this file exists to remove.
+ *
  * @param value The quantity.
  * @returns The quantity as decimal text.
  * @throws Error when the value is not an exact decimal.
  */
-function toQuantityText(value: Quantity): DecimalString {
+export function toQuantityText(value: Quantity): DecimalString {
 	return value === null || value === undefined || value === '' ? ZERO : String(value).trim();
 }
 

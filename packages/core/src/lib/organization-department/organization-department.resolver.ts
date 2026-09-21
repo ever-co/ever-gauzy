@@ -100,13 +100,16 @@ const ORGANIZATION_DEPARTMENT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * the same command, that the `/api/organization-department` routes reach — including the six whose
  * routes the controller inherits from the CRUD base rather than declaring.
  *
- * **The guard chain is the controller's, and no permission is stated above it.** The delivered
- * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` on the class
- * at all, so its routes are tenant-guarded and otherwise unpermissioned, and the class here carries
- * the same tenant guard and nothing more. The one field that does state a permission is the employee
- * assignment, whose route states `@UseGuards(PermissionGuard)` and `@Permissions(ORG_EMPLOYEES_EDIT)`
- * of its own; the field restates exactly that pair beside the class's guard, which is what makes the
- * two surfaces one scope rather than two.
+ * **The guard chain is the controller's, and the permission is stated route by route.** The
+ * delivered controller carries `TenantPermissionGuard` on the class and no class-level
+ * `@Permissions`, so the class here carries the same tenant guard and nothing more — but six of its
+ * routes state a permission of their own, and each of those is restated on the field that mirrors it.
+ * The employee assignment states `@UseGuards(PermissionGuard)` with `@Permissions(ORG_EMPLOYEES_EDIT)`;
+ * the create, the edit, the removal, the withdrawal and the recovery each state `PermissionGuard`
+ * with `@Permissions(ALL_ORG_EDIT, ORG_EMPLOYEES_EDIT)` — they are declared on the controller, not
+ * inherited from the CRUD base. Only the reads it inherits are unpermissioned. This paragraph used to
+ * say the controller stated nothing anywhere and the five writes carried nothing, which made GraphQL
+ * the way around the department permission rather than a second view of it.
  *
  * **The employee read is a root field of its own rather than a filter on the connection.** The read
  * behind it joins the department-member pivot the list read does not, so a `members` filter on the
@@ -238,6 +241,8 @@ export class OrganizationDepartmentResolver {
 	 * for a caller to file a department into a tenant it is not acting in.
 	 */
 	@Mutation('createOrganizationDepartment')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async createOrganizationDepartment(
 		@Args('input') input: ICreateOrganizationDepartmentInput
 	): Promise<OrganizationDepartment> {
@@ -255,6 +260,8 @@ export class OrganizationDepartmentResolver {
 	 * and the answer is the row as it now stands.
 	 */
 	@Mutation('updateOrganizationDepartment')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async updateOrganizationDepartment(
 		@Args('input') input: IUpdateOrganizationDepartmentInput
 	): Promise<OrganizationDepartment> {
@@ -300,10 +307,15 @@ export class OrganizationDepartmentResolver {
 	/**
 	 * Removes a department outright.
 	 *
-	 * No permission is stated because the delivered route states none: the removal is inherited from
-	 * the CRUD base, where the controller's tenant guard is the whole of its scope.
+	 * The permission is the delivered route's own. `DELETE /api/organization-department/:id` is
+	 * declared on the controller with `@UseGuards(PermissionGuard)` and `@Permissions(ALL_ORG_EDIT,
+	 * ORG_EMPLOYEES_EDIT)` rather than inherited from the CRUD base, so the field repeats that pair.
+	 * It previously claimed the route was inherited and stated nothing, which let any authenticated
+	 * member of the tenant remove a department over GraphQL that REST refused them.
 	 */
 	@Mutation('deleteOrganizationDepartment')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async deleteOrganizationDepartment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.organizationDepartmentService.delete(id);
 
@@ -315,6 +327,8 @@ export class OrganizationDepartmentResolver {
 	 * pointing at it.
 	 */
 	@Mutation('softDeleteOrganizationDepartment')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async softDeleteOrganizationDepartment(
 		@Args('id', { type: () => ID }) id: Id
 	): Promise<OrganizationDepartment> {
@@ -325,6 +339,8 @@ export class OrganizationDepartmentResolver {
 	 * Puts a withdrawn department back, clearing the marker the withdrawal set.
 	 */
 	@Mutation('recoverOrganizationDepartment')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async recoverOrganizationDepartment(
 		@Args('id', { type: () => ID }) id: Id
 	): Promise<OrganizationDepartment> {

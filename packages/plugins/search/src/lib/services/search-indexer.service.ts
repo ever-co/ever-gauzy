@@ -1,10 +1,12 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { DataSource, EntityMetadata, In, IsNull, MoreThanOrEqual } from 'typeorm';
+import { IsNull } from 'typeorm';
 import { ID, IEventEnvelope, ISearchDocument, ISearchIndexRegistration, ISearchProvider } from '@gauzy/contracts';
 import { TypeOrmSearchIndexDefinitionRepository } from '@gauzy/core';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { SearchProviderRegistry } from '../providers/search-provider.registry';
+import { IScopedSearchDelete, ISearchDeleteScope } from '../providers/database-search.provider';
 import { buildDocument, readPath, SearchSourceRow } from './search-document.builder';
+import { ISearchSourceCriteria, ISearchSourceEntity, SearchSourceConnection } from './search-source.connection';
 
 /** How the source rows of one index run are selected. */
 export interface ISourceRowQuery {
@@ -52,13 +54,21 @@ export interface IIndexRunOutcome {
  * Weight normalisation happens here rather than at query time, so two entity types are comparable and
  * adding a searchable entity cannot silently reorder the ones that were already indexed. The
  * normalised number travels inside the document's own attribute map, so a rebuild reproduces it.
+ *
+ * **Both ORMs read.** The source rows are reached through {@link SearchSourceConnection} rather than
+ * through TypeORM's `DataSource` directly. The whole indexer used to be wired to TypeORM's runtime
+ * metadata, which under `DB_ORM=mikro-orm` describes entities carrying four columns — the four the
+ * base entity declares with raw TypeORM decorators — because `@MultiORMColumn` emits only the active
+ * ORM's. Every declared field came back as "not a column", the ordering was dropped, the tenant
+ * predicate raised `EntityPropertyNotFoundError`, and the installation's global search answered
+ * nothing with nothing to point at.
  */
 @Injectable()
 export class SearchIndexerService {
 	private readonly logger = new Logger(SearchIndexerService.name);
 
 	constructor(
-		private readonly dataSource: DataSource,
+		private readonly source: SearchSourceConnection,
 		private readonly indexRegistry: SearchIndexRegistry,
 		private readonly providerRegistry: SearchProviderRegistry,
 		private readonly typeOrmSearchIndexDefinitionRepository: TypeOrmSearchIndexDefinitionRepository
@@ -86,17 +96,33 @@ export class SearchIndexerService {
 			return key;
 		}
 
-		const byTable = this.dataSource.entityMetadatas.find((metadata) => metadata.tableName === key);
+		const byTable = this.source.byTable(key);
 
 		if (byTable) {
 			return byTable.tableName;
 		}
 
-		const byClass = this.dataSource.entityMetadatas.find(
-			(metadata) => metadata.name === key || metadata.targetName === key
-		);
+		const byClass = this.source.byClassName(key);
 
-		return byClass?.tableName;
+		if (byClass) {
+			return byClass.tableName;
+		}
+
+		// The last resort is a spelling-insensitive match, and it exists because the platform's events
+		// do not all spell an aggregate type the same way: the outbox rows this branch writes carry
+		// `SELLER_OFFERING`, a declaration names `seller_offering` and a class is `SellerOffering`. All
+		// three are the same entity, and an event whose aggregate type happens to be the third spelling
+		// must not be silently unindexable. Only the separators and the case are ignored — nothing else
+		// is guessed.
+		const normalised = normaliseEntityKey(key);
+
+		return this.source
+			.entities()
+			.find(
+				(entity) =>
+					normaliseEntityKey(entity.tableName) === normalised ||
+					normaliseEntityKey(entity.className) === normalised
+			)?.tableName;
 	}
 
 	/**
@@ -136,7 +162,19 @@ export class SearchIndexerService {
 		if (rows.length === 0) {
 			// An absent source row is success, not an error: the row was deleted between the event and
 			// this run, and the document that describes it is removed rather than left stale.
-			const removed = options.ids?.length ? await provider.delete(definition.entity, options.ids) : 0;
+			//
+			// **Only the first page may be read that way.** A paged run re-passes the whole id set on
+			// every iteration, so the page after the last one is empty for the ordinary reason that the
+			// rows have all been read — not because the sources are gone. Treating that empty page as a
+			// deletion soft-deleted every document the run had just written, and reported `removed: 0`
+			// while doing it. A run that skipped into the empty page therefore removes nothing.
+			const removed =
+				options.ids?.length && !(options.skip && options.skip > 0)
+					? await this.deleteDocuments(provider, definition.entity, options.ids, {
+							tenantId: options.tenantId ?? undefined,
+							engineKey
+						})
+					: 0;
 
 			return { entity: definition.entity, indexed: 0, removed, skipped: 0, providerKey: provider.key };
 		}
@@ -189,7 +227,45 @@ export class SearchIndexerService {
 			return 0;
 		}
 
-		return await this.writableProvider(definition).delete(definition.entity, ids);
+		const engineKey = (await this.engineKeyOf(definition.entity)) ?? undefined;
+		const provider = this.writableProvider(definition, engineKey);
+
+		return await this.deleteDocuments(provider, definition.entity, ids, { engineKey });
+	}
+
+	/**
+	 * Removes documents through a provider, narrowed to the copies this caller owns.
+	 *
+	 * A document is keyed by `(tenant, entity, entityId, engine)`. A removal that states only the
+	 * entity and the id removes every tenant's copy of it — two tenants that ever share an entity id,
+	 * which a seeded demo row or a copied fixture produces — and it removes an external engine's rows
+	 * for the same source, leaving that engine's own delete with nothing to do. The engine is always
+	 * known here, because it is what selected the provider; the tenant is stated only when the caller
+	 * has one, and an unstated tenant keeps the previous cross-tenant behaviour for the sweeps that
+	 * genuinely mean it.
+	 *
+	 * The third parameter is additive: `ISearchProvider.delete` in `@gauzy/contracts` declares two,
+	 * and a provider that has not been widened ignores it and behaves exactly as it did.
+	 *
+	 * @param provider The provider that holds the documents.
+	 * @param entity The entity key.
+	 * @param entityIds The source ids to remove.
+	 * @param scope The tenant and engine the removal belongs to.
+	 * @returns How many documents were removed.
+	 */
+	private async deleteDocuments(
+		provider: ISearchProvider,
+		entity: string,
+		entityIds: ID[],
+		scope: { tenantId?: ID | null; engineKey?: string }
+	): Promise<number> {
+		const narrowed: ISearchDeleteScope = { engineKey: scope.engineKey ?? null };
+
+		if (scope.tenantId) {
+			narrowed.tenantId = scope.tenantId;
+		}
+
+		return await (provider as unknown as IScopedSearchDelete).delete(entity, entityIds, narrowed);
 	}
 
 	/**
@@ -215,19 +291,29 @@ export class SearchIndexerService {
 		}
 
 		const definition = this.definitionFor(entity);
-		const engineKey = (await this.engineKeyOf(definition.entity)) ?? undefined;
+		const persisted = await this.persistedDefinitionOf(definition.entity);
+		const engineKey = persisted?.engineKey ?? undefined;
 		const provider = this.writableProvider(definition, engineKey);
 
 		if (action === 'deleted') {
-			const removed = await provider.delete(definition.entity, [aggregateId]);
+			const removed = await this.deleteDocuments(provider, definition.entity, [aggregateId], {
+				tenantId: event.tenantId ?? undefined,
+				engineKey
+			});
 
 			return { entity: definition.entity, indexed: 0, removed, skipped: 0, providerKey: provider.key };
 		}
 
+		// The live path stamps the declaration's real version, exactly as the sweep does. It used to
+		// stamp the default `1` for every event, so the first ordinary update after a re-weighting
+		// rewrote a document the sweep had just stamped at version 3 back down to 1 — and the column
+		// the reindex index exists to read (`entity, definitionVersion, indexedAt`) stopped
+		// identifying stale documents at all.
 		return await this.index(definition.entity, {
 			ids: [aggregateId],
 			tenantId: event.tenantId ?? null,
 			organizationId: event.organizationId ?? null,
+			definitionVersion: Number(persisted?.version ?? 1),
 			engineKey
 		});
 	}
@@ -258,42 +344,76 @@ export class SearchIndexerService {
 			);
 		}
 
+		const criteria = this.sourceCriteria(metadata, definition, options);
+
+		criteria.relations = definition.relations ?? [];
+		criteria.skip = options.skip && options.skip > 0 ? options.skip : undefined;
+		criteria.take = options.take && options.take > 0 ? options.take : undefined;
+
+		return await this.source.find(metadata, criteria);
+	}
+
+	/**
+	 * The selection one index run describes, in terms both ORMs can express.
+	 *
+	 * The scope is applied only where the entity actually carries the property. Not every searchable
+	 * entity is tenant- or organization-scoped, and a predicate naming a property the entity does not
+	 * declare is an error rather than a wider read — so the check is what lets every caller pass the
+	 * scope unconditionally. The property list is the *reading* ORM's, which is the reason it comes
+	 * from the source connection rather than from TypeORM's metadata.
+	 *
+	 * @param metadata The source entity.
+	 * @param definition The declaration.
+	 * @param options Which rows the caller asked for.
+	 * @returns The selection, without its paging.
+	 */
+	private sourceCriteria(
+		metadata: ISearchSourceEntity,
+		definition: ISearchIndexRegistration,
+		options: ISourceRowQuery
+	): ISearchSourceCriteria {
 		const updatedField = definition.sourceUpdatedAtField || 'updatedAt';
-		const where: Record<string, unknown> = {};
+		const equals: Record<string, unknown> = {};
+		const criteria: ISearchSourceCriteria = {};
 
 		if (options.ids?.length) {
-			where.id = In(options.ids.map((id) => String(id)));
+			criteria.in = { field: 'id', values: options.ids.map((id) => String(id)) };
 		}
 
 		if (options.since) {
-			where[updatedField] = MoreThanOrEqual(options.since);
+			// Stated unconditionally, unlike the scope below: the field is the declaration's own and a
+			// declaration naming a column its entity does not have must fail loudly rather than quietly
+			// widen an incremental run into a full sweep.
+			criteria.gte = { field: updatedField, value: options.since };
 		}
 
-		if (options.tenantId) {
-			where.tenantId = options.tenantId;
+		if (options.tenantId && this.hasColumn(metadata, 'tenantId')) {
+			equals.tenantId = options.tenantId;
 		}
 
-		if (options.organizationId) {
-			where.organizationId = options.organizationId;
+		if (options.organizationId && this.hasColumn(metadata, 'organizationId')) {
+			equals.organizationId = options.organizationId;
 		}
 
-		const order: Record<string, 'ASC' | 'DESC'> = {};
+		if (Object.keys(equals).length > 0) {
+			criteria.equals = equals;
+		}
+
+		const order: Array<{ field: string; direction: 'ASC' | 'DESC' }> = [];
 
 		if (this.hasColumn(metadata, updatedField)) {
-			order[updatedField] = 'ASC';
+			order.push({ field: updatedField, direction: 'ASC' });
 		}
 
 		if (this.hasColumn(metadata, 'id')) {
-			order.id = 'ASC';
+			order.push({ field: 'id', direction: 'ASC' });
 		}
 
-		return (await this.dataSource.getRepository(metadata.target).find({
-			where: where as any,
-			relations: (definition.relations ?? []) as any,
-			order: order as any,
-			skip: options.skip && options.skip > 0 ? options.skip : undefined,
-			take: options.take && options.take > 0 ? options.take : undefined
-		})) as SearchSourceRow[];
+		if (order.length > 0) {
+			criteria.order = order;
+		}
+
+		return criteria;
 	}
 
 	/**
@@ -323,7 +443,7 @@ export class SearchIndexerService {
 			return resolved;
 		}
 
-		const pivot = this.dataSource.entityMetadatas.find((metadata) => metadata.tableName === pivotName);
+		const pivot = this.source.byTable(pivotName);
 		const source = this.sourceMetadata(definition.entity);
 
 		if (!pivot || !source) {
@@ -335,10 +455,7 @@ export class SearchIndexerService {
 			return resolved;
 		}
 
-		const relation = pivot.relations.find(
-			(candidate) => candidate.inverseEntityMetadata?.tableName === source.tableName
-		);
-		const foreignKey = relation?.joinColumns?.[0]?.propertyName ?? `${singular(definition.entity)}Id`;
+		const foreignKey = this.source.foreignKeyOf(pivot, source) ?? `${singular(definition.entity)}Id`;
 
 		if (!this.hasColumn(pivot, foreignKey) || !this.hasColumn(pivot, 'channelId')) {
 			this.logger.warn(
@@ -350,9 +467,9 @@ export class SearchIndexerService {
 		}
 
 		try {
-			const pivots = (await this.dataSource.getRepository(pivot.target).find({
-				where: { [foreignKey]: In(rows.map((row) => String(row.id))) } as any
-			})) as SearchSourceRow[];
+			const pivots = await this.source.find(pivot, {
+				in: { field: foreignKey, values: rows.map((row) => String(row.id)) }
+			});
 
 			for (const row of pivots) {
 				const sourceId = readPath(row, foreignKey);
@@ -402,26 +519,8 @@ export class SearchIndexerService {
 			return 0;
 		}
 
-		const where: Record<string, unknown> = {};
-
-		if (options.ids?.length) {
-			where.id = In(options.ids.map((id) => String(id)));
-		}
-
-		if (options.since) {
-			where[definition.sourceUpdatedAtField || 'updatedAt'] = MoreThanOrEqual(options.since);
-		}
-
-		if (options.tenantId) {
-			where.tenantId = options.tenantId;
-		}
-
-		if (options.organizationId) {
-			where.organizationId = options.organizationId;
-		}
-
 		try {
-			return await this.dataSource.getRepository(metadata.target).count({ where: where as any });
+			return await this.source.count(metadata, this.sourceCriteria(metadata, definition, options));
 		} catch (error) {
 			this.logger.warn(`The "${definition.entity}" source rows could not be counted: ${describe(error)}`);
 
@@ -475,12 +574,28 @@ export class SearchIndexerService {
 	 * @returns The engine key, or `null` when the built-in provider owns the entity.
 	 */
 	private async engineKeyOf(entity: string): Promise<string | null> {
+		return (await this.persistedDefinitionOf(entity))?.engineKey ?? null;
+	}
+
+	/**
+	 * The persisted half of a declaration: the engine an installation chose and the version an
+	 * operator's edits have reached.
+	 *
+	 * Both are read in one statement because both are needed together on the live path — the engine
+	 * decides which provider writes the document, and the version is what the document is stamped
+	 * with. Reading them separately meant the event path read the engine and defaulted the version,
+	 * which is how the incremental writes drifted a version behind every sweep.
+	 *
+	 * @param entity The entity key.
+	 * @returns The row, or `null` when the entity has no persisted definition or it cannot be read.
+	 */
+	private async persistedDefinitionOf(entity: string): Promise<{ engineKey?: string; version?: number } | null> {
 		try {
 			const row = await this.typeOrmSearchIndexDefinitionRepository.findOne({
 				where: { entity, organizationId: IsNull() } as any
 			});
 
-			return row?.engineKey ?? null;
+			return row ?? null;
 		} catch (error) {
 			this.logger.warn(`The "${entity}" index definition could not be read: ${describe(error)}`);
 
@@ -494,22 +609,36 @@ export class SearchIndexerService {
 	 * @param entity The entity key.
 	 * @returns The metadata, or `undefined` when nothing maps the table.
 	 */
-	private sourceMetadata(entity: string): EntityMetadata | undefined {
-		const key = String(entity ?? '').trim();
-
-		return key ? this.dataSource.entityMetadatas.find((metadata) => metadata.tableName === key) : undefined;
+	private sourceMetadata(entity: string): ISearchSourceEntity | undefined {
+		return this.source.byTable(entity);
 	}
 
 	/**
-	 * Whether an entity carries a column.
+	 * Whether an entity carries a property, as the reading ORM describes it.
 	 *
-	 * @param metadata The entity's metadata.
-	 * @param name The column's property name.
-	 * @returns True when the column exists.
+	 * @param metadata The entity.
+	 * @param name The property name.
+	 * @returns True when the property exists.
 	 */
-	private hasColumn(metadata: EntityMetadata, name: string): boolean {
-		return Boolean(metadata.columns.find((column) => column.propertyName === name));
+	private hasColumn(metadata: ISearchSourceEntity, name: string): boolean {
+		return metadata.properties.has(name);
 	}
+}
+
+/**
+ * One entity key reduced to the form every spelling of it shares.
+ *
+ * A table is `product_variant`, a class is `ProductVariant` and an outbox row's aggregate type is
+ * `PRODUCT_VARIANT` — three spellings of one entity, all of which reach the indexer. Reducing each to
+ * lower case without separators is what makes them comparable without guessing at anything else.
+ *
+ * @param value The key, in any of the platform's spellings.
+ * @returns The comparable form.
+ */
+export function normaliseEntityKey(value: string): string {
+	return String(value ?? '')
+		.replace(/[_\-\s]/g, '')
+		.toLowerCase();
 }
 
 /**

@@ -1,4 +1,4 @@
-import { RolePermissionModule } from '@gauzy/core';
+import { EventOutboxModule, RolePermissionModule } from '@gauzy/core';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -53,6 +53,10 @@ import { ReturnShipmentService } from './return-shipment/return-shipment.service
 		RolePermissionModule,
 		TypeOrmModule.forFeature(ALL_FULFILLMENT_ENTITIES),
 		MikroOrmModule.forFeature(ALL_FULFILLMENT_ENTITIES),
+		// Every `fulfillment.*` event is appended by the same call that commits the move it describes, so
+		// the module that owns the outbox row is imported here. An event published after a commit is an
+		// event a crash loses, and the outbox is a table precisely so that it is not.
+		EventOutboxModule,
 		OrderModule
 	],
 	providers: [

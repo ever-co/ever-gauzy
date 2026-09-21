@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DecimalString, ID } from '@gauzy/contracts';
 import {
-	CrudService,
 	RequestContext,
 	STORAGE_SCALE,
 	addDecimalStrings,
@@ -13,6 +12,7 @@ import { GiftCardTransaction } from './gift-card-transaction.entity';
 import { TypeOrmGiftCardTransactionRepository } from './repository/type-orm-gift-card-transaction.repository';
 import { MikroOrmGiftCardTransactionRepository } from './repository/mikro-orm-gift-card-transaction.repository';
 import { GiftCardTransactionType, IGiftCardTransaction } from '../promotion.types';
+import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
 
 /**
  * The gift-card ledger.
@@ -26,7 +26,7 @@ import { GiftCardTransactionType, IGiftCardTransaction } from '../promotion.type
  * movement. A disagreement is a defect in the caller that moved the balance, not a rounding artefact.
  */
 @Injectable()
-export class GiftCardTransactionService extends CrudService<GiftCardTransaction> {
+export class GiftCardTransactionService extends TenantScopedCrudService<GiftCardTransaction> {
 	constructor(
 		readonly typeOrmGiftCardTransactionRepository: TypeOrmGiftCardTransactionRepository,
 		readonly mikroOrmGiftCardTransactionRepository: MikroOrmGiftCardTransactionRepository

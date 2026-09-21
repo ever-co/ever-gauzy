@@ -7,6 +7,11 @@
  */
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
+	// The conditional write is the kernel's, doubled: the order service reaches it by name through this
+	// barrel, and a factory that answered `undefined` for it would fail every transition at the call
+	// rather than at the assertion. The double decides — it compares, reads back and refuses — so the
+	// concurrency cases below exercise the same three outcomes production does.
+	const { ApiErrorCode, commitVersionedUpdate } = require('../testing/versioned-write.double');
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
@@ -68,6 +73,8 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		ApiErrorCode,
+		commitVersionedUpdate,
 		TenantAwareCrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
@@ -265,14 +272,18 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			return Array.isArray(rowOrRows) ? list : list[0];
 		},
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = tables[tableName].findIndex((row) => same(row.id, id));
+			// **A conditional write is a WHERE, not an id.** `commitVersionedUpdate` predicates its
+			// statement on the version and the tenant scope as well as the id, so a double that matched on
+			// the id alone would report every conditional write as landing — and a suite built on it would
+			// pass while the very race the write exists to refuse went unrefused.
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const matching = tables[tableName].filter((row) => matches(row, where));
 
-			if (index >= 0) {
-				Object.assign(tables[tableName][index], partial);
+			for (const row of matching) {
+				Object.assign(row, partial);
 			}
 
-			return { affected: index >= 0 ? 1 : 0 };
+			return { affected: matching.length };
 		},
 		softDelete: async (criteria: any) => {
 			const where = typeof criteria === 'string' ? { id: criteria } : criteria;
@@ -972,6 +983,79 @@ describe('PurchaseOrderService — the receipt side of the lifecycle (doc 05 §1
 			/PURCHASE_ORDER_VERSION_CONFLICT/
 		);
 		await expect(fixture.service.assertReceivable('order-1', 3)).resolves.toMatchObject({ version: 3 });
+	});
+
+	it('refuses a transition whose row was overtaken between the read and the write', async () => {
+		// **The defect this pins is the window, not the comparison.** `assertVersion` compares a value
+		// that is already in memory and the `UPDATE` that used to follow carried no predicate at all, so
+		// two operators who both read the order at version 3 both passed the comparison and both wrote
+		// version 4 — the second silently erasing the first's approver and, with the approval capability
+		// bound, leaving two `request_approval` rows for one order with only one of them recorded.
+		//
+		// The window is staged by handing the request a row as it stood when it read it while the stored
+		// row has already moved on. Everything between — the status check, the approval request — runs
+		// against the older copy exactly as it did in production; only the write is predicated, and it is
+		// the write that refuses.
+		const fixture = orderFixture({ orders: [orderRow('order-1', { version: 4 })], withApproval: true });
+		const asRead = { ...(fixture.order('order-1') as Row), version: 3 };
+
+		jest.spyOn(fixture.service, 'findOneScoped').mockResolvedValueOnce(asRead as never);
+
+		await expect(fixture.service.approve('order-1', 'second', 3)).rejects.toThrow(
+			/PURCHASE_ORDER_VERSION_CONFLICT/
+		);
+
+		// Nothing of the losing request reached the row: not the approval, not the note, not the counter.
+		expect(fixture.order('order-1')).toMatchObject({ version: 4 });
+		expect(fixture.order('order-1')?.approvedAt).toBeUndefined();
+		expect(fixture.order('order-1')?.note).toBeUndefined();
+	});
+
+	it('refuses a caller that states a version the order has already left, before it asks for an approval', async () => {
+		// The early comparison earns its place here: it runs before the approval capability is asked for a
+		// decision, so a caller whose version is plainly stale does not cause a `request_approval` row to
+		// be filed for a transition that is going to be refused. Only the window between the read and the
+		// write — which is what the conditional write closes — can still file one.
+		const fixture = orderFixture({ orders: [orderRow('order-1', { version: 4 })], withApproval: true });
+
+		await expect(fixture.service.approve('order-1', 'stale', 3)).rejects.toThrow(
+			/PURCHASE_ORDER_VERSION_CONFLICT/
+		);
+
+		expect(fixture.approvalCalls).toEqual([]);
+		expect(fixture.order('order-1')).toMatchObject({ version: 4 });
+		expect(fixture.order('order-1')?.approvedAt).toBeUndefined();
+	});
+
+	it('predicates a transition that states no version on the version this request read', async () => {
+		// A caller that states nothing is still measured against something: the version the request read.
+		// The alternative is a write that is conditional only when the client remembered to make it so,
+		// which is the opt-in that silently degrades to last-write-wins.
+		const fixture = orderFixture({ orders: [orderRow('order-1', { status: PurchaseOrderStatus.SENT, version: 2 })] });
+
+		await expect(fixture.service.acknowledge('order-1')).resolves.toMatchObject({
+			status: PurchaseOrderStatus.ACKNOWLEDGED,
+			version: 3
+		});
+	});
+
+	it('moves the version when a receipt rewrites the status and when the totals are recomputed', async () => {
+		// Both derived writers used to write no version at all, so a goods receipt changed the order's
+		// status and a recomputation changed its `grandTotal` while the counter stood still — and a client
+		// still holding the older version passed `assertVersion` and filed an approval carrying a total
+		// that was no longer the order's. Every change the caller can observe moves the counter.
+		const fixture = orderFixture({
+			orders: [orderRow('order-1', { status: PurchaseOrderStatus.SENT, subtotal: '0', grandTotal: '0' })],
+			lines: [lineRow('line-1', { quantity: '10.000000', receivedQuantity: '4.000000', lineTotal: '40.000000' })]
+		});
+
+		const refreshed = await fixture.service.refreshReceiptState('order-1');
+
+		expect(refreshed).toMatchObject({ status: PurchaseOrderStatus.PARTIALLY_RECEIVED, version: 2 });
+
+		const recomputed = await fixture.service.recomputeTotalsFor('order-1');
+
+		expect(recomputed.version).toBe(3);
 	});
 
 	it('derives the status from what the lines now say has arrived', async () => {

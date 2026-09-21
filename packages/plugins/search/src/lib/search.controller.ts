@@ -93,13 +93,20 @@ export class SearchController {
 	 * The counts come from the same predicate as the page, so a facet always describes the result set
 	 * it is shown beside.
 	 *
+	 * The route is served under `/search/facets`, where the other eight routes of this controller
+	 * live. It used to be registered as a bare `/facets`, which put an un-namespaced top-level noun on
+	 * the shared API root — the controller has an empty base path, so every route states its own — and
+	 * a client reading this surface had to learn that eight of nine are under `search` and one is not.
+	 * The original path is kept alongside the new one rather than replaced, because a published client
+	 * may already be calling it.
+	 *
 	 * @param query The search, asked for its breakdown.
 	 * @returns The facets.
 	 */
 	@ApiOperation({ summary: 'Facet value counts for a filter set' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The facets.' })
 	@Permissions(SearchPermissions.SEARCH_VIEW)
-	@Get('/facets')
+	@Get(['/search/facets', '/facets'])
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async facets(@Query() query: SearchFacetQueryDTO) {
 		return { items: await this.searchService.facets(query) };

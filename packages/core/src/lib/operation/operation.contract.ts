@@ -45,15 +45,33 @@ export interface IOperationStepContext {
 	 * as the provider's own idempotency key and a step that writes locally can use it as a guard.
 	 */
 	readonly idempotencyKey: string;
-	/** The transactional manager for the step's local writes. */
+	/**
+	 * The transactional manager for the step's local writes.
+	 *
+	 * **It is the attempt's own transaction, and writing through it is what makes the step atomic with
+	 * the row that records it.** The runtime opens a transaction per attempt, hands the step this
+	 * manager, and writes the step's `COMPLETED` row — with its output and its compensator's data —
+	 * through the same one before committing. A step that writes through anything else gets its own
+	 * auto-commit and the two can be torn apart by a crash: an effect applied with no record of it,
+	 * which the compensating walk then never undoes because the step was never recorded as completed.
+	 */
 	readonly manager: EntityManager;
 	readonly logger: IOperationLogger;
 	/** The operation's shared variables; mutated values are persisted with the step's outcome. */
 	readonly variables: Record<string, unknown>;
 	/** The operation deadline, so a step can fail fast instead of starting work that cannot finish. */
 	readonly deadlineAt?: Date;
-	/** True when a cancellation has been requested; steps check it at safe points. */
-	cancelRequested(): boolean;
+	/**
+	 * True when a cancellation has been requested; steps check it at safe points.
+	 *
+	 * **Awaited, because the answer is read from the operation's row rather than from a snapshot.** A
+	 * cancellation is requested by another process, against a row this attempt does not hold, so an
+	 * answer computed once when the step started is a constant that can only ever say "no" — a step
+	 * with a ten-minute timeout polling it would never observe a cancellation made two minutes in. The
+	 * runtime caches the read for a second, so a tight polling loop costs a query per second rather
+	 * than one per iteration, and a step may simply `await` it at every safe point.
+	 */
+	cancelRequested(): boolean | Promise<boolean>;
 }
 
 /**

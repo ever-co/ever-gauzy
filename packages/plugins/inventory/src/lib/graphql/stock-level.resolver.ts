@@ -8,7 +8,8 @@
  */
 import { Args, ID, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import {
 	EventBus,
@@ -23,8 +24,13 @@ import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.cod
 import { FeatureFlag } from '@gauzy/common';
 import { InventoryPermission } from './../inventory.permissions';
 import { WarehouseProductVariant } from '@gauzy/core';
+import { IStockAvailability } from './../stock-level/stock-level.types';
 import { StockLevelService } from './../stock-level/stock-level.service';
-import { InventoryLevelChangedEvent } from './../events';
+import {
+	InventoryLevelChangedEvent,
+	InventoryLevelLowEvent,
+	InventoryLevelOutOfStockEvent
+} from './../events';
 
 /**
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
@@ -112,9 +118,68 @@ export class StockLevelResolver {
 	 *
 	 * Declared so a client subscribes instead of polling. The stream is the platform’s event bus, so a
 	 * subscriber sees exactly the events the domain already publishes for its outbox.
+	 *
+	 * **The arguments narrow the stream.** They are declared in the schema and were read by nothing, so
+	 * a client that subscribed to one location's levels was handed every level of the tenant and had to
+	 * filter them itself — which is the opposite of what a subscription argument is for, and is
+	 * expensive on the one transport where the server pays for every frame it sends.
 	 */
 	@Subscription('stockLevelChanged')
 	stockLevelChanged(@Args('warehouseId') warehouseId: string, @Args('variantId') variantId: string): any {
-		return this.eventBus.ofType(InventoryLevelChangedEvent).pipe(map((event) => event.level));
+		return this.stream(InventoryLevelChangedEvent, warehouseId, variantId);
+	}
+
+	/**
+	 * Emitted when a level row crosses into a low state.
+	 *
+	 * The field was declared in the composed schema with nothing bound to it, so a client that
+	 * subscribed to it was accepted and then never heard anything — the one failure mode a
+	 * subscription cannot be distinguished from a quiet warehouse. The domain already publishes the
+	 * event; this binds the stream to it.
+	 */
+	@Subscription('stockLevelLow')
+	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
+	stockLevelLow(@Args('warehouseId') warehouseId: string): any {
+		return this.stream(InventoryLevelLowEvent, warehouseId);
+	}
+
+	/**
+	 * Emitted when a level row reaches zero availability.
+	 *
+	 * Declared and unbound for the same reason the low-stock stream was, and bound here to the event
+	 * the domain already publishes for it.
+	 */
+	@Subscription('stockLevelOutOfStock')
+	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
+	stockLevelOutOfStock(@Args('warehouseId') warehouseId: string): any {
+		return this.stream(InventoryLevelOutOfStockEvent, warehouseId);
+	}
+
+	/**
+	 * One event stream, narrowed to what the subscriber asked for.
+	 *
+	 * The three level events are separate classes so a subscriber declares which one it cares about
+	 * instead of filtering on a field, and the location and variant arguments are applied here so all
+	 * three streams narrow the same way rather than each inventing its own reading of them. An argument
+	 * the caller left out narrows nothing, which is what a nullable argument means.
+	 *
+	 * @param event The event class the stream carries.
+	 * @param warehouseId The location the subscriber asked about, when it asked about one.
+	 * @param variantId The variant the subscriber asked about, when it asked about one.
+	 * @returns The availabilities, in the order the domain published them.
+	 */
+	private stream(
+		event: new (...args: never[]) => InventoryLevelChangedEvent,
+		warehouseId?: string,
+		variantId?: string
+	): Observable<IStockAvailability> {
+		return this.eventBus.ofType(event as never).pipe(
+			map((published: InventoryLevelChangedEvent) => published.level),
+			filter(
+				(level: IStockAvailability) =>
+					(!warehouseId || String(level?.warehouseId ?? '') === String(warehouseId)) &&
+					(!variantId || String(level?.variantId ?? '') === String(variantId))
+			)
+		);
 	}
 }

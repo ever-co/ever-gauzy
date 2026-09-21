@@ -1,21 +1,76 @@
 import { BadRequestException } from '@nestjs/common';
-import { FulfillmentStatus, OrderStatus, OrderPaymentStatus } from '@gauzy/contracts';
+import { DecimalString, FulfillmentStatus, OrderStatus, OrderPaymentStatus } from '@gauzy/contracts';
 import { compareDecimalStrings, subtractDecimalStrings } from '@gauzy/core';
+
+/**
+ * A figure as the caller states it: exact decimal text, or the number form of one.
+ *
+ * Both are accepted because both genuinely reach here. A caller that read a `numeric(20,6)` column
+ * holds the digits the column stores and hands them over as text; a caller that was handed a
+ * `number` — a legacy projection, a GraphQL argument, a test — still has to be answered. What this
+ * type does *not* admit is arithmetic: a value only ever crosses into this class already summed, and
+ * the summing is the caller's responsibility to do exactly (see `OrderTotalsService`).
+ */
+export type OrderDecimalInput = DecimalString | number;
+
+/**
+ * Rewrites an exponential rendering as plain decimal digits.
+ *
+ * `String(1e-7)` is `'1e-7'`, and the decimal kernel refuses that form rather than guessing at it —
+ * correctly, because a value that has to be written in exponential notation is not a value that
+ * should be reaching money code as a `number`. It nevertheless *does* reach here: a credit of
+ * `0.0000001` read back off a column as a double renders that way, and the kernel's refusal would
+ * escape a status derivation as a `MONEY_NOT_DECIMAL_STRING` server fault rather than as an answer.
+ * The digits are therefore laid out in full instead, which loses nothing: the mantissa is exactly the
+ * digits the double holds.
+ *
+ * @param text A decimal rendering, possibly in exponential form.
+ * @returns The same value written as plain decimal digits.
+ */
+function expandExponential(text: string): string {
+	const match = /^([+-]?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/.exec(text);
+
+	if (!match) {
+		return text;
+	}
+
+	const [, sign, whole, fraction = '', exponentText] = match;
+	const digits = `${whole}${fraction}`;
+	// Where the point lands once the exponent has been applied, counted from the left of `digits`.
+	const point = whole.length + Number(exponentText);
+
+	if (point <= 0) {
+		return `${sign}0.${'0'.repeat(-point)}${digits}`;
+	}
+
+	if (point >= digits.length) {
+		return `${sign}${digits}${'0'.repeat(point - digits.length)}`;
+	}
+
+	return `${sign}${digits.slice(0, point)}.${digits.slice(point)}`;
+}
 
 /**
  * An amount as the decimal string it is compared as.
  *
- * The values arrive as `number` — that is what the totals chain hands over — and this does not pretend
- * otherwise: `String` renders the number the engine already rounded to the currency's scale, and the
- * decimal kernel then compares those renderings exactly. What it must not do is the *arithmetic* in
- * binary floating point, which is what the caller used to do and what a comparison of money cannot
- * survive.
+ * **Text passes through untouched.** A caller that already holds the column's own digits is the case
+ * this class is written for, and re-rendering those digits through a `number` is precisely the step
+ * that loses them: `Number('20.009999999999998')` and `Number('20.01')` are different doubles, but a
+ * `numeric(20,6)` that holds `20.010000` is the second one and must compare as it. Only a value that
+ * arrives as a `number` is rendered, and then in its shortest round-trip form with any exponent
+ * expanded, because that is the most this class can honestly recover from a double.
  *
  * @param value The amount as it arrives.
  * @returns The same amount as a decimal string.
  */
-function decimal(value: number): string {
-	return Number.isFinite(value) ? String(value) : '0';
+function decimal(value: OrderDecimalInput): string {
+	if (typeof value === 'string') {
+		const text = value.trim();
+
+		return text === '' ? '0' : expandExponential(text);
+	}
+
+	return Number.isFinite(value) ? expandExponential(String(value)) : '0';
 }
 
 /** Whether a decimal string is greater than zero. */
@@ -205,20 +260,28 @@ export class OrderStateMachine {
 	 * an order whose grand total is `0.05`, whose credit is `0.02` and which was captured for exactly
 	 * `0.03` compares as *underpaid* and is reported `PARTIALLY_CAPTURED`. The two subtractions and the
 	 * comparisons therefore go through the platform's decimal kernel, which works on the scaled integers
-	 * these values actually are. The parameters stay `number` because that is what the totals chain
-	 * hands over; what changes is that the arithmetic no longer trusts them.
+	 * these values actually are.
+	 *
+	 * **Exactness here is only half of it, and the caller owns the other half.** Three of these members
+	 * are running sums — `authorized`, `captured` and `refunded` — and a sum computed with `+` over
+	 * doubles has already lost the digits before this method is entered: `0.10 + 0.70` is
+	 * `0.7999999999999999`, and no comparison made afterwards can recover the `0.80` the ledger holds.
+	 * The members are therefore typed `DecimalString | number` rather than `number`, so a caller that
+	 * summed exactly can hand the digits over as digits; `OrderTotalsService` does exactly that. A
+	 * caller that still passes a `number` is answered as well as a double allows, which is what keeps
+	 * this change additive.
 	 *
 	 * @param input The derived inputs.
 	 * @returns The payment status.
 	 */
 	static derivePaymentStatus(input: {
 		orderStatus: OrderStatus;
-		grandTotal: number;
-		creditTotal: number;
-		authorized: number;
-		voided: number;
-		captured: number;
-		refunded: number;
+		grandTotal: OrderDecimalInput;
+		creditTotal: OrderDecimalInput;
+		authorized: OrderDecimalInput;
+		voided: OrderDecimalInput;
+		captured: OrderDecimalInput;
+		refunded: OrderDecimalInput;
 		hasRequiresMoreSession: boolean;
 		hasPendingSession: boolean;
 		hasFailedAttempt: boolean;
@@ -270,37 +333,51 @@ export class OrderStateMachine {
 	/**
 	 * Materialises the fulfilment state from the order's lines.
 	 *
+	 * **The quantities are decimals, and this decides on their digits.** A quantity column is a
+	 * `numeric(20,6)` exactly as a money column is, and the arithmetic below is the same arithmetic the
+	 * payment half above was converted for: `0.3 − 0.1 − 0.2` is `-2.7755575615628914e-17` in binary
+	 * floating point, so a line ordered for `0.3` that was written off `0.1` and dismissed `0.2` has a
+	 * `netTarget` that is neither above zero nor equal to it — and the fully accounted-for line falls
+	 * through to `NOT_FULFILLED`, where it stays, because the derivation is deterministic and the order
+	 * is then never completed. The subtraction, the sign test, the equality test and the two ceiling
+	 * comparisons therefore all go through the decimal kernel, which works on the scaled integers these
+	 * values actually are. `=== 0` in particular is exactly the test a float can never pass.
+	 *
 	 * @param input The derived quantities and counters.
 	 * @returns The fulfilment status.
 	 */
 	static deriveFulfillmentStatus(input: {
 		orderStatus: OrderStatus;
-		orderedQuantity: number;
-		writtenOffQuantity: number;
-		dismissedQuantity: number;
-		fulfilledQuantity: number;
-		receivedReturnQuantity: number;
+		orderedQuantity: OrderDecimalInput;
+		writtenOffQuantity: OrderDecimalInput;
+		dismissedQuantity: OrderDecimalInput;
+		fulfilledQuantity: OrderDecimalInput;
+		receivedReturnQuantity: OrderDecimalInput;
 	}): FulfillmentStatus {
 		if (input.orderStatus === OrderStatus.CANCELED) {
 			return FulfillmentStatus.CANCELED;
 		}
 
-		const netTarget =
-			input.orderedQuantity - input.writtenOffQuantity - input.dismissedQuantity;
+		const netTarget = subtractDecimalStrings(
+			subtractDecimalStrings(decimal(input.orderedQuantity), decimal(input.writtenOffQuantity)),
+			decimal(input.dismissedQuantity)
+		);
+		const fulfilled = decimal(input.fulfilledQuantity);
+		const received = decimal(input.receivedReturnQuantity);
 
-		if (netTarget > 0 && input.receivedReturnQuantity >= netTarget) {
+		if (isPositive(netTarget) && compareDecimalStrings(received, netTarget) >= 0) {
 			return FulfillmentStatus.RETURNED;
 		}
-		if (input.receivedReturnQuantity > 0) {
+		if (isPositive(received)) {
 			return FulfillmentStatus.PARTIALLY_RETURNED;
 		}
-		if (netTarget > 0 && input.fulfilledQuantity >= netTarget) {
+		if (isPositive(netTarget) && compareDecimalStrings(fulfilled, netTarget) >= 0) {
 			return FulfillmentStatus.FULFILLED;
 		}
-		if (netTarget === 0) {
+		if (isZero(netTarget)) {
 			return FulfillmentStatus.FULFILLED;
 		}
-		if (input.fulfilledQuantity > 0) {
+		if (isPositive(fulfilled)) {
 			return FulfillmentStatus.PARTIALLY_FULFILLED;
 		}
 

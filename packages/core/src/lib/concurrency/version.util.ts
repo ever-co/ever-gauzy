@@ -73,7 +73,22 @@ export type VersionPrecondition =
 	| { action: 'REQUIRE' }
 	| { action: 'INVALID'; reason: VersionParseFailure }
 	| { action: 'NOT_FOUND' }
-	| { action: 'PROCEED'; expected: number; wildcard: boolean }
+	| {
+			action: 'PROCEED';
+			expected: number;
+			wildcard: boolean;
+			/**
+			 * Every version the caller accepted, in the order it stated them.
+			 *
+			 * `expected` is one of them and is what a caller that has to pick a single number uses.
+			 * The list is carried beside it because `If-Match: "3", "4"` states that *either* is
+			 * acceptable, and collapsing it to its first member refused a write whose row sat at the
+			 * second — the caller was answered `409` for a version it had explicitly accepted, re-read,
+			 * got the same version back, and could loop. Empty for a wildcard, which accepts any
+			 * version that exists and therefore states no list.
+			 */
+			versions: number[];
+	  }
 	| { action: 'CONFLICT'; expectedVersion: number; actualVersion: number };
 
 /** What an update that ran under a version precondition produced. */
@@ -305,14 +320,28 @@ export function evaluateVersionPrecondition(input: {
 	const actual = parseEntityVersion(input.currentVersion);
 
 	if (actual === null) {
-		// The row's version is unknown: the write still pins the version the caller stated, and the
-		// conditional update is what decides the outcome. This is the pre-handler half of the check,
-		// not the only half.
-		const stated = parsed.expectation.wildcard ? null : parsed.expectation.versions[0];
+		// The row's version is unknown — the route named no `resource` for the guard to read, or the
+		// read failed — so the write still pins what the caller stated and the conditional update is
+		// what decides the outcome. This is the pre-handler half of the check, not the only half.
+		//
+		// 🛑 **A wildcard is a statement and not the absence of one.** `SKIP` here meant the guard left
+		// no expectation on the request at all, and the handler's own `versionExpectationOf` then threw
+		// `428 VERSION_REQUIRED` — telling a caller that had just written `If-Match: *` to state a
+		// version. `*` says "any version, as long as the row exists", which is exactly the condition
+		// `resolveExpectedVersion` resolves against the row at write time, so it proceeds and the
+		// wildcard travels with it. `expected` is never read for a wildcard (the guard writes an empty
+		// list for one, and the write reads the row) and is stated as zero rather than left out, because
+		// the variant declares it.
+		if (parsed.expectation.wildcard) {
+			return { action: 'PROCEED', expected: 0, wildcard: true, versions: [] };
+		}
 
-		return stated === null
-			? { action: 'SKIP' }
-			: { action: 'PROCEED', expected: stated, wildcard: false };
+		return {
+			action: 'PROCEED',
+			expected: parsed.expectation.versions[0],
+			wildcard: false,
+			versions: [...parsed.expectation.versions]
+		};
 	}
 
 	if (!matchesExpectation(parsed.expectation, actual)) {
@@ -323,7 +352,12 @@ export function evaluateVersionPrecondition(input: {
 		};
 	}
 
-	return { action: 'PROCEED', expected: actual, wildcard: parsed.expectation.wildcard };
+	return {
+		action: 'PROCEED',
+		expected: actual,
+		wildcard: parsed.expectation.wildcard,
+		versions: parsed.expectation.wildcard ? [] : [...parsed.expectation.versions]
+	};
 }
 
 /**

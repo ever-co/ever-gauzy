@@ -18,6 +18,15 @@ jest.mock('@gauzy/core', () => {
 	 */
 	const { commitVersionedUpdate, versionExpectationOf } = require('../testing/versioned-write.double');
 
+	/**
+	 * The platform's exact decimal primitives, taken **real** rather than doubled.
+	 *
+	 * The session's variance total is summed over them, and the property this suite asserts about that
+	 * total — that readings whose decimals do not divide evenly add up to the number the sheet says —
+	 * is a property of this arithmetic. Doubling it would be doubling the thing under test.
+	 */
+	const decimal = jest.requireActual('@gauzy/core/src/lib/money/decimal');
+
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
@@ -100,6 +109,24 @@ jest.mock('@gauzy/core', () => {
 		// answer unconditionally, so a versioned write is refused here as it is refused in production.
 		commitVersionedUpdate,
 		versionExpectationOf,
+		// The dialect helpers the ledger engine writes its raw fragments through. The engine imports
+		// them from the barrel this factory replaces, and a name a factory does not answer for is
+		// `undefined` at the call site — so the aggregate delta, which quotes three identifiers, would
+		// throw before it wrote anything. They are doubled for the embedded dialect every suite here
+		// runs against: a statement is left as it was written, and an identifier keeps its double quotes.
+		prepareSQLQuery: (sql: string) => sql,
+		quoteIdentifier: (identifier: string) => `"${identifier}"`,
+		// The exact decimal primitives the session totals its variance with. These are the **real**
+		// ones: a double of decimal arithmetic would be a double of the thing under test, and the
+		// property being asserted is that three readings of a tenth sum to three tenths rather than to
+		// `0.30000000000000004`.
+		addDecimalStrings: decimal.addDecimalStrings,
+		subtractDecimalStrings: decimal.subtractDecimalStrings,
+		compareDecimalStrings: decimal.compareDecimalStrings,
+		parseDecimalString: decimal.parseDecimalString,
+		formatDecimalUnits: decimal.formatDecimalUnits,
+		multiplyDecimalUnits: decimal.multiplyDecimalUnits,
+		pow10: decimal.pow10,
 		RequestContext: {
 			// The engine reads the version the current request accepted from here, and a unit test has no
 			// request: the accepted version is then absent, which is the case the engine's own
@@ -212,7 +239,11 @@ function datastore(tables: Record<string, Row[]>) {
 			tables[table] = tableRows;
 		}
 	};
-	/** One column's condition, including the null test the pending-line count builds with `IsNull`. */
+	/**
+	 * One column's condition: the null test the pending-line count builds with `IsNull`, the negation,
+	 * and the set membership the "one session per location" guard states with `In` over every
+	 * non-terminal status.
+	 */
 	const matches = (row: Row, where: Row = {}) =>
 		Object.entries(where).every(([field, expected]) => {
 			if (expected instanceof FindOperator) {
@@ -221,6 +252,8 @@ function datastore(tables: Record<string, Row[]>) {
 						return row[field] === null || row[field] === undefined;
 					case 'not':
 						return !same(row[field], expected.value);
+					case 'in':
+						return (expected.value as unknown[]).some((candidate) => same(row[field], candidate));
 					default:
 						throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
 				}
@@ -246,21 +279,38 @@ function datastore(tables: Record<string, Row[]>) {
 			return true;
 		});
 	/** Reads the delta out of the SQL the engine builds for its aggregate update. */
-	const deltaFrom = (value: unknown): number => {
+	const deltaFrom = (value: unknown, parameters: Row = {}): number => {
 		const sql = typeof value === 'function' ? String((value as () => string)()) : String(value);
-		const match = /"\s*\+\s*(-?\d+(?:\.\d+)?)/.exec(sql);
+		// The engine writes `"quantity" + :quantityDelta` and **binds** the figure, because a number
+		// pasted into a statement is a number no driver ever checks. The double therefore resolves the
+		// named parameter out of the values the builder was given, exactly as a driver would, and still
+		// reads a literal for the one fragment that carries one — the version's own `+ 1`.
+		const bound = /\+\s*:(\w+)/.exec(sql);
 
-		if (!match) {
+		if (bound) {
+			const delta = Number(parameters?.[bound[1]]);
+
+			if (!Number.isFinite(delta)) {
+				throw new Error(`the in-memory double was given no value for ":${bound[1]}"`);
+			}
+
+			return delta;
+		}
+
+		const literal = /\+\s*(-?\d+(?:\.\d+)?)/.exec(sql);
+
+		if (!literal) {
 			throw new Error(`the in-memory double cannot read a delta out of "${sql}"`);
 		}
 
-		return Number(match[1]);
+		return Number(literal[1]);
 	};
 
 	let manager: any;
 	const createQueryBuilder = (entity?: unknown): any => {
 		let target = entity;
 		let updateSpec: Row | null = null;
+		let updateParameters: Row = {};
 		const conditions: Array<{ sql: string; params: Row }> = [];
 		const query: any = {
 			innerJoin: () => query,
@@ -288,6 +338,13 @@ function datastore(tables: Record<string, Row[]>) {
 
 				return query;
 			},
+			// The values a `set()` fragment's named parameters are bound to. Without this the builder has
+			// no `setParameters` at all, and the engine's aggregate delta throws before it writes.
+			setParameters: (values: Row = {}) => {
+				updateParameters = { ...updateParameters, ...values };
+
+				return query;
+			},
 			getMany: async () => (target === WarehouseProductVariant ? levels(conditions) : rows(target)),
 			getOne: async () => {
 				const found = target === WarehouseProductVariant ? levels(conditions) : rows(target);
@@ -312,7 +369,7 @@ function datastore(tables: Record<string, Row[]>) {
 				}
 
 				for (const [column, value] of Object.entries(updateSpec)) {
-					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value) : value;
+					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value, updateParameters) : value;
 				}
 
 				return { affected: 1 };
@@ -546,10 +603,81 @@ describe('StockCountService — opening a session (doc 09 §10.4, §15.3)', () =
 		await expect(
 			fixture.service.createCount({ warehouseId: WAREHOUSE, mode: StockCountMode.SPOT } as never)
 		).rejects.toMatchObject({
-			response: { code: 'STOCK_COUNT_ALREADY_OPEN', details: { stockCountId: count.id } }
+			response: {
+				code: 'STOCK_COUNT_ALREADY_OPEN',
+				details: { stockCountId: count.id, status: StockCountStatus.OPEN }
+			}
 		});
 		expect(fixture.tables.stock_count).toHaveLength(1);
 		expect(fixture.allocated).toEqual(['STOCK_COUNT']);
+	});
+
+	it('refuses a second session while the first is being counted, and while it is still a draft', async () => {
+		// **The guard used to compare against `OPEN` alone**, and a session spends almost none of its
+		// life there: the first sheet recorded moves it to `COUNTING`, which is where a real count sits
+		// for hours. So an operator could open a second session over the same shelves the moment the
+		// first one had a reading in it — both snapshot the expectation from the same levels at
+		// different moments, both close, and the second writes a correction computed from a stale sheet
+		// over the first operator's reconciliation. A `DRAFT` session was invisible to it for the same
+		// reason, and the refusal now names the state so an operator knows which session to close.
+		const { fixture, count } = await openSession();
+
+		await fixture.service.recordLines(count.id, [
+			{ lineId: fixture.lineFor(VARIANT).id, countedQuantity: 9 }
+		]);
+		expect(fixture.count()).toMatchObject({ status: StockCountStatus.COUNTING });
+
+		await expect(
+			fixture.service.createCount({ warehouseId: WAREHOUSE, mode: StockCountMode.SPOT } as never)
+		).rejects.toMatchObject({
+			response: {
+				code: 'STOCK_COUNT_ALREADY_OPEN',
+				details: { stockCountId: count.id, status: StockCountStatus.COUNTING }
+			}
+		});
+
+		// A session that has finished is not in the way of the next one, which is the whole point of the
+		// terminal set: the location can be counted again once the sheet is signed off.
+		await fixture.service.close(count.id);
+
+		const draft = await fixture.service.createCount({ warehouseId: WAREHOUSE } as never);
+
+		expect(draft.status).toBe(StockCountStatus.DRAFT);
+
+		// And a draft is a session too: it has a number and a location, and a second one over the same
+		// shelves is the same collision one step earlier.
+		await expect(
+			fixture.service.createCount({ warehouseId: WAREHOUSE } as never)
+		).rejects.toMatchObject({
+			response: {
+				code: 'STOCK_COUNT_ALREADY_OPEN',
+				details: { stockCountId: draft.id, status: StockCountStatus.DRAFT }
+			}
+		});
+		expect(fixture.tables.stock_count).toHaveLength(2);
+	});
+
+	it('does not see a session of another location or of another organization', async () => {
+		// The rule is one session per location, and it is scoped the way every other read in this package
+		// is: another location's session is not in the way, and neither is another organization's.
+		const { fixture } = await openSession();
+
+		fixture.tables.stock_count.push({
+			id: 'count-elsewhere',
+			number: 'CNT-000099',
+			warehouseId: 'another-location',
+			status: StockCountStatus.COUNTING,
+			tenantId: TENANT,
+			organizationId: ORG
+		});
+
+		await expect(
+			fixture.service.createCount({ warehouseId: 'another-location' } as never)
+		).rejects.toMatchObject({ response: { code: 'STOCK_COUNT_ALREADY_OPEN' } });
+
+		const elsewhere = await fixture.service.createCount({ warehouseId: 'a-third-location' } as never);
+
+		expect(elsewhere.status).toBe(StockCountStatus.DRAFT);
 	});
 
 	it('reports a session that does not exist as missing', async () => {
@@ -587,6 +715,24 @@ describe('StockCountService — recording readings (doc 09 §4, §15.3)', () => 
 			note: 'Recount'
 		});
 		expect(fixture.lineFor(VARIANT).countedAt).toBeInstanceOf(Date);
+	});
+
+	it('takes the variance of a sheet whose decimals do not divide evenly over the exact digits', async () => {
+		// A variance is the difference of two `numeric(20,6)` columns and the header total is the sum of
+		// their magnitudes. Both used to be double arithmetic: `9.9 - 10` evaluates to
+		// `-0.09999999999999964`, and `0.1 + 0.2` to `0.30000000000000004`. The first is the number the
+		// sheet reports and the closing correction is computed from; the second is the one number an
+		// operator reads to decide whether the location needs a recount.
+		const { fixture, count } = await openSession();
+
+		await fixture.service.recordLines(count.id, [
+			{ lineId: fixture.lineFor(VARIANT).id, countedQuantity: 9.9 },
+			{ lineId: fixture.lineFor(OTHER_VARIANT).id, countedQuantity: 5.8 }
+		]);
+
+		expect(fixture.lineFor(VARIANT).variance).toBe(-0.1);
+		expect(fixture.lineFor(OTHER_VARIANT).variance).toBe(-0.2);
+		expect(fixture.count()).toMatchObject({ varianceUnits: 0.3, countedLineCount: 2 });
 	});
 
 	it('reports how many lines are still awaiting a reading', async () => {

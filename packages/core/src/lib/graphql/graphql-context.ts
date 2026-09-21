@@ -1,4 +1,7 @@
+import { HttpStatus } from '@nestjs/common';
 import { RequestContext } from '../core/context/request-context';
+import { ApiErrorCode } from '../core/errors/api-error-codes';
+import { ApiException } from '../core/errors/api-exception';
 import { RelationLoaderRegistry } from './batch/relation-loader.registry';
 
 /**
@@ -19,7 +22,12 @@ export interface GraphqlRequestContext {
 	readonly loaders: RelationLoaderRegistry;
 	/** The correlation id an operator can quote in a support ticket. */
 	readonly traceId?: string;
-	/** The tenant the caller is acting in, taken from the credential. */
+	/**
+	 * The tenant the caller is acting in, taken from the credential.
+	 *
+	 * A `Tenant-Id` header may repeat it and may never contradict it: see
+	 * {@link createGraphqlRequestContext} for why the header is an assertion rather than a source.
+	 */
 	readonly tenantId?: string;
 	/** The organization the caller is acting in, when it is scoped to one. */
 	readonly organizationId?: string;
@@ -52,24 +60,89 @@ export interface CreateGraphqlRequestContextOptions {
  *
  * Every operation gets its own loader registry, so a value batched and cached for one caller is
  * invisible to the next request. Sharing a registry across requests is the one mistake this factory
- * exists to make impossible in the ordinary path: the driver calls it per operation.
+ * exists to make impossible in the ordinary path: the driver calls it per operation. The registry is
+ * also given the operation's own scope, so a loader key that a resolver builds out of an id alone
+ * still cannot be shared across tenants — see {@link RelationLoaderRegistry}.
+ *
+ * 🛑 **The credential decides the scope and a header may only agree with it.** This used to resolve
+ * `tenantId: options.tenantId ?? readHeader(headers, 'tenant-id') ?? resolveRequestTenantId()`, with
+ * the credential-derived value last. `Tenant-Id` and `Organization-Id` are both in the endpoint's
+ * CORS `allowedHeaders`, so any browser client could send them: a caller authenticated in tenant A
+ * sent `Tenant-Id: <tenant B>` and every resolver, relation loader and field gate that scoped on
+ * `context.tenantId` for the rest of that operation scoped on tenant B. Nothing downstream re-checked
+ * it, and the `RelationLoaderRegistry` contract requires a batch function to be "scoped to the
+ * caller's tenant" — a loader taking that scope from the context was taking it from the header.
+ *
+ * The order is inverted: the credential wins, and a header that names a *different* tenant or
+ * organization is refused with the same `FORBIDDEN` the REST tenant guard answers rather than
+ * silently ignored. Silently ignoring it would leave a client believing it had switched scope, which
+ * is how a support ticket becomes a data-exposure report. A header that merely repeats the
+ * credential's own value is accepted, because that is what every existing client sends.
  *
  * @param options The request and any scope the caller resolved itself.
  * @returns The context.
+ * @throws ApiException `403 FORBIDDEN` when a `Tenant-Id` or `Organization-Id` header contradicts the
+ * caller's credential.
  */
 export function createGraphqlRequestContext(
 	options: CreateGraphqlRequestContextOptions = {}
 ): GraphqlRequestContext {
 	const headers = options.headers ?? readHeaders(options.req);
 
+	const tenantId = options.tenantId ?? resolveRequestTenantId();
+	const organizationId = options.organizationId ?? resolveRequestOrganizationId();
+
+	assertHeaderAgrees(headers, 'tenant-id', tenantId, 'tenant', ApiErrorCode.TENANT_MISMATCH);
+	assertHeaderAgrees(headers, 'organization-id', organizationId, 'organization', ApiErrorCode.ORGANIZATION_MISMATCH);
+
 	return {
 		req: options.req,
-		loaders: options.loaders ?? new RelationLoaderRegistry(),
+		loaders: options.loaders ?? new RelationLoaderRegistry({ scope: { tenantId, organizationId } }),
 		traceId: options.traceId ?? resolveRequestTraceId(),
-		tenantId: options.tenantId ?? readHeader(headers, 'tenant-id') ?? resolveRequestTenantId(),
-		organizationId: options.organizationId ?? readHeader(headers, 'organization-id') ?? resolveRequestOrganizationId(),
+		tenantId,
+		organizationId,
 		channelId: options.channelId ?? readHeader(headers, 'x-channel-id')
 	};
+}
+
+/**
+ * Refuses a scope header that contradicts the credential.
+ *
+ * The header is compared only when the credential resolved a value of its own: an unauthenticated
+ * operation — an introspection query, a `@Public()` field — has no credential to contradict, and
+ * refusing it here would close the public surface rather than protect the private one. The guards
+ * that every non-public field carries are what refuse an operation with no credential.
+ *
+ * The code is the catalogue's own `TENANT_MISMATCH`/`ORGANIZATION_MISMATCH` at `403`, which is what
+ * the REST surface answers when a request reaches a row outside its scope — so a client branching on
+ * `extensions.code` needs no second table for this refusal either.
+ *
+ * @param headers The request headers, lower-cased.
+ * @param name The header name.
+ * @param credential The value the credential resolved, when it resolved one.
+ * @param what The scope the header names, for the refusal message.
+ * @param code The catalogued code the refusal carries.
+ * @throws ApiException `403` with `code` when the header names something else.
+ */
+function assertHeaderAgrees(
+	headers: Record<string, string | string[] | undefined>,
+	name: string,
+	credential: string | undefined,
+	what: string,
+	code: ApiErrorCode
+): void {
+	const asserted = readHeader(headers, name);
+
+	if (!asserted || !credential || asserted === credential) {
+		return;
+	}
+
+	throw new ApiException(
+		HttpStatus.FORBIDDEN,
+		code,
+		`The ${what} stated in the request does not match the credential it was made with.`,
+		{ header: name }
+	);
 }
 
 /**

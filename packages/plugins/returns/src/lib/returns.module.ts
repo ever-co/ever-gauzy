@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { FeatureModule, RolePermissionModule, SequenceModule } from '@gauzy/core';
+import { EventOutboxModule, FeatureModule, RolePermissionModule, SequenceModule } from '@gauzy/core';
 import { resolvers } from './graphql/resolvers';
 import { OrderClaimLine } from './order-claim-line/order-claim-line.entity';
 import { OrderClaimLineController } from './order-claim-line/order-claim-line.controller';
@@ -80,7 +80,11 @@ export const ALL_RETURNS_ENTITIES = [
 		// this module, so this module is what has to import the feature service it reads.
 		FeatureModule,
 		RolePermissionModule,
-		SequenceModule
+		SequenceModule,
+		// Every `return.*` event is appended by the same call that commits the move it describes, so the
+		// module that owns the outbox row is imported here. An event published after a commit is an
+		// event a crash loses, and the outbox is a table precisely so that it is not.
+		EventOutboxModule
 	],
 	providers: [
 		OrderReturnService,

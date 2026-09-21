@@ -122,6 +122,13 @@ jest.mock('@gauzy/core', () => {
 		// answer unconditionally, so a versioned write is refused here as it is refused in production.
 		commitVersionedUpdate,
 		versionExpectationOf,
+		// The dialect helpers the ledger engine writes its raw fragments through. The engine imports
+		// them from the barrel this factory replaces, and a name a factory does not answer for is
+		// `undefined` at the call site — so the aggregate delta, which quotes three identifiers, would
+		// throw before it wrote anything. They are doubled for the embedded dialect every suite here
+		// runs against: a statement is left as it was written, and an identifier keeps its double quotes.
+		prepareSQLQuery: (sql: string) => sql,
+		quoteIdentifier: (identifier: string) => `"${identifier}"`,
 		RequestContext: {
 			// The engine reads the version the current request accepted from here, and a unit test has no
 			// request: the accepted version is then absent, which is the case the engine's own
@@ -342,15 +349,31 @@ function datastore(tables: Record<string, Row[]>) {
 			return true;
 		});
 	/** Reads the delta out of the SQL the engine builds for its aggregate update. */
-	const deltaFrom = (value: unknown): number => {
+	const deltaFrom = (value: unknown, parameters: Row = {}): number => {
 		const sql = typeof value === 'function' ? String((value as () => string)()) : String(value);
-		const match = /"\s*\+\s*(-?\d+(?:\.\d+)?)/.exec(sql);
+		// The engine writes `"quantity" + :quantityDelta` and **binds** the figure, because a number
+		// pasted into a statement is a number no driver ever checks. The double therefore resolves the
+		// named parameter out of the values the builder was given, exactly as a driver would, and still
+		// reads a literal for the one fragment that carries one — the version's own `+ 1`.
+		const bound = /\+\s*:(\w+)/.exec(sql);
 
-		if (!match) {
+		if (bound) {
+			const delta = Number(parameters?.[bound[1]]);
+
+			if (!Number.isFinite(delta)) {
+				throw new Error(`the in-memory double was given no value for ":${bound[1]}"`);
+			}
+
+			return delta;
+		}
+
+		const literal = /\+\s*(-?\d+(?:\.\d+)?)/.exec(sql);
+
+		if (!literal) {
 			throw new Error(`the in-memory double cannot read a delta out of "${sql}"`);
 		}
 
-		return Number(match[1]);
+		return Number(literal[1]);
 	};
 
 	let manager: any;
@@ -358,6 +381,7 @@ function datastore(tables: Record<string, Row[]>) {
 		let target = entity;
 		let rawSelect: string | null = null;
 		let updateSpec: Row | null = null;
+		let updateParameters: Row = {};
 		const conditions: Array<{ sql: string; params: Row }> = [];
 		const query: any = {
 			innerJoin: () => query,
@@ -389,6 +413,13 @@ function datastore(tables: Record<string, Row[]>) {
 			},
 			set: (spec: Row) => {
 				updateSpec = spec;
+
+				return query;
+			},
+			// The values a `set()` fragment's named parameters are bound to. Without this the builder has
+			// no `setParameters` at all, and the engine's aggregate delta throws before it writes.
+			setParameters: (values: Row = {}) => {
+				updateParameters = { ...updateParameters, ...values };
 
 				return query;
 			},
@@ -432,7 +463,7 @@ function datastore(tables: Record<string, Row[]>) {
 				}
 
 				for (const [column, value] of Object.entries(updateSpec)) {
-					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value) : value;
+					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value, updateParameters) : value;
 				}
 				recordWrite(entityToTable.get(target), row.id);
 
@@ -651,6 +682,8 @@ function transferFixture(options: { source?: number; destination?: number; seedD
 		store,
 		tables,
 		allocated,
+		/** The real ledger engine behind the service, so a case can make one movement fail. */
+		levelService: stockLevelService,
 		transfer: (id: string = 'stock_transfer-1') => tables.stock_transfer.find((row) => row.id === id),
 		lines: () => tables.stock_transfer_line,
 		aggregateAt: (warehouseId: string) => tables.warehouse_product.find((row) => row.warehouseId === warehouseId),
@@ -723,8 +756,14 @@ function dispatchedFixture(options: { requested?: number; shipped?: number } = {
 	return { ...fixture, transferId: 'transfer-seeded', lineId: 'line-seeded' };
 }
 
-/** The in-transit remainder of every line: what has left a source and not yet arrived. */
-const stillInTransit = (fixture: ReturnType<typeof dispatchedFixture>) =>
+/**
+ * The in-transit remainder of every line: what has left a source and not yet arrived.
+ *
+ * It is a reading of an **open** transfer. A cancelled one keeps its lines exactly as the dispatch
+ * left them — the ledger is append-only and history is not edited — and what accounts for those units
+ * is the compensating movement the cancel writes, not a rewritten line.
+ */
+const stillInTransit = (fixture: { lines: () => Row[] }) =>
 	fixture
 		.lines()
 		.reduce(
@@ -732,6 +771,19 @@ const stillInTransit = (fixture: ReturnType<typeof dispatchedFixture>) =>
 				sum + Number(line.shippedQuantity) - Number(line.receivedQuantity) - Number(line.damagedQuantity),
 			0
 		);
+
+/**
+ * What the movement ledger sums to at one location.
+ *
+ * The conservation property a transfer owes is stated over this: a dispatch takes the units out, a
+ * cancel of what never arrived puts them back, and the two rows net to nothing.
+ *
+ * @param fixture The fixture holding the store.
+ * @param warehouseId The location.
+ * @returns The signed sum of every movement recorded there.
+ */
+const ledgerSumAt = (fixture: { store: { ledgerOf: (warehouseId: string) => Row[] } }, warehouseId: string) =>
+	fixture.store.ledgerOf(warehouseId).reduce((sum, movement) => sum + Number(movement.quantity ?? 0), 0);
 
 describe('StockTransferService — creating, numbering and the state machine (doc 09 §8.1, §8.2)', () => {
 	it('numbers a draft transfer from the platform sequence and starts its lines at nothing moved', async () => {
@@ -1153,42 +1205,125 @@ describe('StockTransferService — shipping and receiving (doc 09 §8.3, INV-13,
 });
 
 describe('StockTransferService — cancelling a transfer (doc 09 §8.2)', () => {
-	it('cancels a draft with a reason and writes nothing at all', async () => {
+	it('cancels a draft with a reason, keeps the operator’s note and writes nothing at all', async () => {
+		// Nothing has left, so there is nothing to put back: a cancel before a dispatch is a state change
+		// and only that. The reason is recorded beside the operator's own note rather than over it — the
+		// note says why the document exists, and the reason says why it was stopped.
 		const fixture = transferFixture();
 		const transfer = await fixture.service.createTransfer({
 			fromWarehouseId: SOURCE,
 			toWarehouseId: DESTINATION,
+			note: 'Rebalancing the pick face',
 			lines: [{ variantId: VARIANT, requestedQuantity: 10 }]
 		});
 
 		const cancelled = await fixture.service.cancel(transfer.id, 'No longer needed');
 
-		expect(cancelled).toMatchObject({ status: StockTransferStatus.CANCELED, note: 'No longer needed' });
+		expect(cancelled).toMatchObject({
+			status: StockTransferStatus.CANCELED,
+			note: 'Rebalancing the pick face'
+		});
+		expect(cancelled.metadata).toMatchObject({ cancelReason: 'No longer needed' });
+		expect(cancelled.metadata?.canceledInFlight).toBeUndefined();
 		expect(fixture.store.ledgerOf(SOURCE)).toEqual([]);
 		expect(fixture.onHand(SOURCE)).toBe(100);
 	});
 
-	it('cancels a transfer in transit without un-shipping what already left', async () => {
-		// Dispatched stock returns through a compensating transfer, never by rewriting the row (§8.2): the
-		// cancellation stops the document, and the units that left the source stay recorded as having left.
-		const fixture = dispatchedFixture({ requested: 10, shipped: 10 });
-		const ledgerBefore = fixture.store.ledgerOf(SOURCE).length;
+	it('returns the units still in transit to the source, so the level stays the sum of its movements', async () => {
+		// **This case used to pin the defect.** A dispatch writes one `TRANSFER_OUT` per line at the
+		// source and nothing anywhere credits the destination until a receipt arrives, so a transfer
+		// cancelled from `IN_TRANSIT` left the source short by exactly what was dispatched with no row in
+		// the ledger explaining where those units went. `reconcile` cannot repair that — it sets a level
+		// to the sum of its own movements, and here the ledger itself is missing them — so the only thing
+		// that restores the conservation property is the opposite movement, which is what the cancel now
+		// writes.
+		const { fixture, transfer, lineId } = await approvedTransfer(10);
 
-		const cancelled = await fixture.service.cancel(fixture.transferId, 'Goods lost in transit');
+		await fixture.service.ship(transfer.id, [{ lineId, shippedQuantity: 10 }]);
 
-		expect(cancelled).toMatchObject({
-			status: StockTransferStatus.CANCELED,
-			note: 'Goods lost in transit'
-		});
-		// No half-state: the cancellation rewrote no ledger row, credited the source nothing back, and left
-		// the line saying what was dispatched.
-		expect(fixture.store.ledgerOf(SOURCE)).toHaveLength(ledgerBefore);
-		expect(fixture.onHand(SOURCE)).toBe(100);
-		expect(fixture.lines()[0]).toMatchObject({ shippedQuantity: 10, receivedQuantity: 0 });
-		// The ten units are on the road: they are in neither location, and what the documents say about them
-		// is the lines' remainder, which is the in-transit balance a reconciliation reads.
+		expect(fixture.onHand(SOURCE)).toBe(90);
+		expect(ledgerSumAt(fixture, SOURCE)).toBe(-10);
+		expect(fixture.store.totalOnHand()).toBe(130);
+		// While the document is open, the lines are what says the units are on the road.
 		expect(stillInTransit(fixture)).toBe(10);
+
+		const cancelled = await fixture.service.cancel(transfer.id, 'Truck recalled');
+
+		expect(cancelled).toMatchObject({ status: StockTransferStatus.CANCELED });
+		expect(cancelled.metadata).toMatchObject({
+			cancelReason: 'Truck recalled',
+			canceledInFlight: [{ lineId, quantity: 10 }]
+		});
+
+		// The units are back where the dispatch took them from, and the ledger says so: the two movements
+		// at the source net to zero, and the level moved with them.
+		expect(fixture.onHand(SOURCE)).toBe(100);
+		expect(ledgerSumAt(fixture, SOURCE)).toBe(0);
 		expect(fixture.store.totalOnHand()).toBe(140);
+
+		// The compensation is a row of its own, told apart from an ordinary receipt by its reason, and it
+		// cites the line whose units it returned.
+		const compensation = fixture.store.ledgerOf(SOURCE).filter((movement) => movement.reason === 'TRANSFER_CANCEL');
+
+		expect(compensation).toHaveLength(1);
+		expect(compensation[0]).toMatchObject({
+			type: StockMovementType.TRANSFER_IN,
+			quantity: 10,
+			referenceType: StockMovementReferenceType.TRANSFER,
+			referenceId: lineId
+		});
+
+		// The line keeps saying what was dispatched: the ledger is append-only and history is not edited.
+		// What stops those units from being read as still on the road is the document's own state, not a
+		// rewritten line — `stillInTransit` derives from the lines alone and is a reading of an open
+		// transfer.
+		expect(fixture.lines()[0]).toMatchObject({ shippedQuantity: 10, receivedQuantity: 0 });
+	});
+
+	it('returns only the shortfall when a partially received transfer is cancelled', async () => {
+		// Six of ten arrived and one was damaged; three are on the road. Damaged units are deliberately
+		// not returned — they left the source and the receipt recorded them as destroyed, so crediting
+		// them back would put units the installation no longer holds into the number it sells against.
+		const { fixture, transfer, lineId } = await approvedTransfer(10);
+
+		await fixture.service.ship(transfer.id, [{ lineId, shippedQuantity: 10 }]);
+		await fixture.service.receive(transfer.id, [{ lineId, receivedQuantity: 6, damagedQuantity: 1 }]);
+
+		expect(fixture.transfer(transfer.id)).toMatchObject({ status: StockTransferStatus.PARTIALLY_RECEIVED });
+		expect(fixture.onHand(SOURCE)).toBe(90);
+		expect(fixture.onHand(DESTINATION)).toBe(46);
+
+		const cancelled = await fixture.service.cancel(transfer.id, 'Remainder recalled');
+
+		expect(cancelled.metadata).toMatchObject({ canceledInFlight: [{ lineId, quantity: 3 }] });
+		expect(fixture.onHand(SOURCE)).toBe(93);
+		expect(fixture.onHand(DESTINATION)).toBe(46);
+		// Ten left, six arrived, one was written off and three came back: the network is one unit short,
+		// which is exactly the damage the receipt recorded.
+		expect(fixture.store.totalOnHand()).toBe(139);
+	});
+
+	it('takes the whole cancel back when a compensating movement cannot be written', async () => {
+		// The compensation and the status are one write. A movement that cannot be applied — here a level
+		// whose invariants the return would break — must leave the document open rather than `CANCELED`
+		// with some of its units still unaccounted for.
+		const { fixture, transfer, lineId } = await approvedTransfer(10);
+
+		await fixture.service.ship(transfer.id, [{ lineId, shippedQuantity: 10 }]);
+
+		const applyMovement = jest
+			.spyOn(fixture.levelService, 'applyMovement')
+			.mockRejectedValueOnce(new Error('the level could not be written'));
+
+		await expect(fixture.service.cancel(transfer.id, 'Truck recalled')).rejects.toThrow(
+			'the level could not be written'
+		);
+
+		applyMovement.mockRestore();
+
+		expect(fixture.transfer(transfer.id)).toMatchObject({ status: StockTransferStatus.IN_TRANSIT });
+		expect(fixture.onHand(SOURCE)).toBe(90);
+		expect(ledgerSumAt(fixture, SOURCE)).toBe(-10);
 	});
 });
 

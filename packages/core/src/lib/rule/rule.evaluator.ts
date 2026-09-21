@@ -6,6 +6,16 @@ import {
 	RuleValueType
 } from '@gauzy/contracts';
 import { compareDecimalStrings, normalizeDecimalString } from '../money/decimal';
+import { RULE_MAX_MATCH_INPUT, analyzePattern } from './rule.pattern-safety';
+
+/**
+ * The longest pattern the evaluator will compile.
+ *
+ * Stated here rather than imported from the validator so that the evaluator keeps no dependency on
+ * the write path: the evaluator is pure and runs in a seed script and a migration, and the two
+ * numbers are asserted equal by the validator's own suite.
+ */
+const MAX_PATTERN_LENGTH = 256;
 
 /**
  * The platform's rule evaluator.
@@ -284,6 +294,18 @@ function equalsComparable(left: IComparable, right: IComparable): boolean {
  * @returns The compiled pattern, or null when it is not a usable regular expression. A pattern that
  * does not compile is a configuration mistake, and it makes its rule not match rather than throwing
  * in the middle of a pricing run.
+ *
+ * 🛑 **The safety analysis is applied here and not only on the write path.** `validateRuleDefinition`
+ * is reached from `RuleService.create` and `RuleService.update` and from nowhere else, so a row that
+ * arrived by a seed, an import, a migration, a restore from a backup taken before the analysis
+ * existed, or a future writer that does not route through the service was compiled and executed
+ * unscreened — and the cache guaranteed the hostile pattern was reused rather than recompiled, so
+ * every evaluation paid the full cost. The verdict is cached alongside the compiled form, so the
+ * analysis runs once per distinct pattern rather than once per evaluation.
+ *
+ * A refused pattern answers `null`, which this function already documents as "the rule does not
+ * match": the evaluator's second rule — a value that cannot be compared does not widen a rule set —
+ * is what makes that the safe direction to fail in.
  */
 function compilePattern(pattern: string): RegExp | null {
 	const cached = compiledPatterns.get(pattern);
@@ -294,12 +316,14 @@ function compilePattern(pattern: string): RegExp | null {
 
 	let compiled: RegExp | null = null;
 
-	try {
-		// Anchored: a rule states that the attribute *matches* the pattern, not that the pattern occurs
-		// somewhere inside it.
-		compiled = new RegExp(`^(?:${pattern})$`);
-	} catch {
-		compiled = null;
+	if (analyzePattern(pattern, MAX_PATTERN_LENGTH).safe) {
+		try {
+			// Anchored: a rule states that the attribute *matches* the pattern, not that the pattern
+			// occurs somewhere inside it.
+			compiled = new RegExp(`^(?:${pattern})$`);
+		} catch {
+			compiled = null;
+		}
 	}
 
 	if (compiledPatterns.size >= MAX_COMPILED_PATTERNS) {
@@ -604,6 +628,20 @@ function applyOperator(
 			return evaluateAffix(rule.operator, attributeValue, rule.value);
 		case RuleOperator.MATCHES: {
 			if (typeof attributeValue !== 'string' || typeof rule.value !== 'string') {
+				return coercionFailure();
+			}
+
+			// The subject is bounded, and this is the bound that does not depend on the pattern
+			// analysis being complete. A pattern that survives the analysis has no nested loop and no
+			// ambiguous loop, so its worst remaining case is polynomial in the length of what it is
+			// matched against — and what it is matched against is buyer-controlled text: a SKU, an
+			// email, a customer attribute. Capping it turns "polynomial in whatever the buyer sent"
+			// into "polynomial in 512", which is a constant.
+			//
+			// Over the cap the comparison is reported as one that could not be made, which the
+			// evaluator already treats as not matching and records in the trace, rather than silently
+			// answering false: a rule that stopped applying is a fact an operator needs to see.
+			if (attributeValue.length > RULE_MAX_MATCH_INPUT) {
 				return coercionFailure();
 			}
 

@@ -1,5 +1,6 @@
 import { IRule, RuleOperator, RuleOwnerType, RuleScope, RuleValueType } from '@gauzy/contracts';
 import { compareDecimalStrings, isValidDecimalString } from '../money/decimal';
+import { IPatternVerdict, analyzePattern } from './rule.pattern-safety';
 
 /**
  * What is checked when a rule is written.
@@ -184,27 +185,34 @@ export function isOperatorAllowedForType(operator: RuleOperator, valueType: Rule
 }
 
 /**
+ * Whether a `MATCHES` pattern may be compiled and run.
+ *
+ * The decision itself lives in {@link analyzePattern}, which states what it checks and — as
+ * importantly — what it cannot. This is the yes-or-no face of it, kept because it is what the
+ * validator, the evaluator and every existing caller ask for; {@link describePattern} is the face
+ * that says why, for a caller that has to tell an author what to change.
+ *
+ * The screen this replaced was two regular expressions and was bypassed by `(a|a)+$`, `(a|a?)+$` and
+ * `((a)*)*`, none of which contains a quantifier directly inside a flat group — the only thing it
+ * looked for. A rule carrying one of those was accepted, stored, and then run against
+ * buyer-controlled text on every cart write, where it pinned the event loop for every tenant on the
+ * pod.
+ *
  * @param pattern The pattern to inspect.
  * @returns True when the pattern is a full-match expression that cannot backtrack catastrophically.
  */
 export function isSafePattern(pattern: string): boolean {
-	if (typeof pattern !== 'string' || pattern.length === 0 || pattern.length > RULE_MAX_PATTERN_LENGTH) {
-		return false;
-	}
+	return describePattern(pattern).safe;
+}
 
-	// A backreference makes a pattern's cost depend on the input it is matched against, which is the
-	// first half of a denial-of-service pattern; a quantifier applied to a group that is itself
-	// quantified is the second.
-	if (/\\[1-9]/.test(pattern) || /\([^)]*[+*][^)]*\)\s*[+*]/.test(pattern)) {
-		return false;
-	}
-
-	try {
-		new RegExp(`^(?:${pattern})$`);
-		return true;
-	} catch {
-		return false;
-	}
+/**
+ * Whether a `MATCHES` pattern may be run, and why not when it may not.
+ *
+ * @param pattern The pattern to inspect.
+ * @returns The verdict, carrying the reason and a sentence naming the offending construct.
+ */
+export function describePattern(pattern: string): IPatternVerdict {
+	return analyzePattern(pattern, RULE_MAX_PATTERN_LENGTH);
 }
 
 /**
@@ -310,14 +318,30 @@ export function validateRuleDefinition(
 				});
 			}
 			break;
-		case RuleOperator.MATCHES:
-			if (typeof rule.value !== 'string' || !isSafePattern(rule.value)) {
+		case RuleOperator.MATCHES: {
+			if (typeof rule.value !== 'string') {
 				problems.push({
 					code: RuleValidationCode.RULE_REGEX_UNSAFE,
-					message: 'The MATCHES pattern must compile, be at most 256 characters, and not backtrack.'
+					message: `The MATCHES pattern must be text, at most ${RULE_MAX_PATTERN_LENGTH} characters, and must not be able to backtrack.`
+				});
+				break;
+			}
+
+			const verdict = describePattern(rule.value);
+
+			if (!verdict.safe) {
+				// The analysis' own sentence is reported rather than one message for every refusal: an
+				// author told "the pattern must not backtrack" cannot tell which part of theirs does.
+				problems.push({
+					code: RuleValidationCode.RULE_REGEX_UNSAFE,
+					message:
+						verdict.detail ??
+						`The MATCHES pattern must compile, be at most ${RULE_MAX_PATTERN_LENGTH} characters, and not backtrack.`
 				});
 			}
+
 			break;
+		}
 		default:
 			// A decimal operand has to arrive as an exact decimal string: a JSON number has already lost
 			// whatever precision the author meant, and rounding it here would hide that.

@@ -18,6 +18,23 @@ import {
  */
 
 /**
+ * The scope the loaders of one operation are narrowed by.
+ *
+ * It is part of every loader's key rather than a check inside a batch function, because a check can
+ * be forgotten and a key cannot. A relation loader keyed on an id alone — `order_line:orderId` — is
+ * correct only for as long as the registry holding it belongs to one request; the moment a registry
+ * is shared, deliberately or by a later refactor that memoises one, that key makes tenant A's rows
+ * answer tenant B's selection. Folding the tenant and the organization into the key means the worst
+ * such a mistake can produce is a cache miss.
+ */
+export interface RelationLoaderScope {
+	/** The tenant the operation is acting in, from the caller's credential. */
+	readonly tenantId?: string;
+	/** The organization the operation is acting in, when it is scoped to one. */
+	readonly organizationId?: string;
+}
+
+/**
  * What the registry has done, for tests and for a diagnostic endpoint.
  */
 export interface RelationLoaderRegistryStats {
@@ -37,14 +54,28 @@ export interface RelationLoaderRegistryStats {
 export class RelationLoaderRegistry {
 	private readonly loaders = new Map<string, RelationLoader<unknown, unknown>>();
 	private readonly options: RelationLoaderOptions;
+	private readonly prefix: string;
 	private disposed = false;
 
 	/**
-	 * @param options Defaults applied to every loader this registry opens. A relation that needs a
-	 * different batch size declares it where it is registered.
+	 * @param options Defaults applied to every loader this registry opens, plus the operation's own
+	 * scope. A relation that needs a different batch size declares it where it is registered.
 	 */
-	constructor(options: RelationLoaderOptions = {}) {
-		this.options = { maxBatchSize: DEFAULT_RELATION_BATCH_SIZE, ...options };
+	constructor(options: RelationLoaderOptions & { readonly scope?: RelationLoaderScope } = {}) {
+		const { scope, ...loaderOptions } = options;
+
+		this.options = { maxBatchSize: DEFAULT_RELATION_BATCH_SIZE, ...loaderOptions };
+		this.prefix = scopePrefix(scope);
+	}
+
+	/**
+	 * The scope every key of this registry is qualified by, as it appears in a key.
+	 *
+	 * Exposed so a diagnostic can show which scope a registry is serving, and so a spec can assert
+	 * that two scopes really do produce two loaders.
+	 */
+	get scopeKey(): string {
+		return this.prefix;
 	}
 
 	/**
@@ -65,7 +96,9 @@ export class RelationLoaderRegistry {
 	 * The loader of one relation, opening it on first use.
 	 *
 	 * The key is the relation and the column it is joined on — `order_line:orderId` — never the
-	 * parent object: the key is what makes two selections of the same relation share a batch.
+	 * parent object: the key is what makes two selections of the same relation share a batch. The
+	 * operation's tenant and organization are prepended to whatever the caller passes, so a resolver
+	 * that keys only on an id cannot produce a key another scope could also produce.
 	 *
 	 * @param key The relation key.
 	 * @param batchFn One repository call for a set of keys. It must be scoped to the caller's tenant
@@ -85,15 +118,16 @@ export class RelationLoaderRegistry {
 			);
 		}
 
-		const existing = this.loaders.get(key);
+		const scoped = this.scoped(key);
+		const existing = this.loaders.get(scoped);
 		if (existing) {
 			// The first registration of a key owns it, so a second resolver selecting the same
 			// relation shares the batch and the cache rather than opening a competing loader.
 			return existing as RelationLoader<K, V>;
 		}
 
-		const loader = new RelationLoader<K, V>(batchFn, { ...this.options, ...options, name: key });
-		this.loaders.set(key, loader as RelationLoader<unknown, unknown>);
+		const loader = new RelationLoader<K, V>(batchFn, { ...this.options, ...options, name: scoped });
+		this.loaders.set(scoped, loader as RelationLoader<unknown, unknown>);
 
 		return loader;
 	}
@@ -105,7 +139,7 @@ export class RelationLoaderRegistry {
 	 * @returns True when a loader exists.
 	 */
 	has(key: string): boolean {
-		return this.loaders.has(key);
+		return this.loaders.has(this.scoped(key));
 	}
 
 	/**
@@ -115,7 +149,17 @@ export class RelationLoaderRegistry {
 	 * @returns The loader, or undefined.
 	 */
 	get<K, V>(key: string): RelationLoader<K, V> | undefined {
-		return this.loaders.get(key) as RelationLoader<K, V> | undefined;
+		return this.loaders.get(this.scoped(key)) as RelationLoader<K, V> | undefined;
+	}
+
+	/**
+	 * The stored key of a relation: the operation's scope, then the caller's key.
+	 *
+	 * @param key The relation key as the caller wrote it.
+	 * @returns The key the map is addressed by.
+	 */
+	private scoped(key: string): string {
+		return `${this.prefix}${key}`;
 	}
 
 	/**
@@ -150,4 +194,23 @@ export class RelationLoaderRegistry {
 		this.loaders.clear();
 		this.disposed = true;
 	}
+}
+
+/**
+ * The prefix every key of one registry carries.
+ *
+ * A registry with no scope — a test, or an operation whose credential resolved neither value —
+ * produces the empty prefix, so its keys are exactly what the caller wrote. A registry that has a
+ * scope produces one that cannot collide with a relation name: the separator is a character a
+ * relation key never contains.
+ *
+ * @param scope The operation's scope, when it has one.
+ * @returns The prefix, possibly empty.
+ */
+function scopePrefix(scope?: RelationLoaderScope): string {
+	if (!scope || (!scope.tenantId && !scope.organizationId)) {
+		return '';
+	}
+
+	return `${scope.tenantId ?? '-'}${scope.organizationId ?? '-'}`;
 }
