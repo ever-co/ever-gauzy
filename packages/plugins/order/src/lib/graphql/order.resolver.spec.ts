@@ -23,6 +23,10 @@ jest.mock('@gauzy/core', () => {
 	class BaseEntity {}
 
 	return {
+		// The statement helpers are pure and dialect-driven; loading the real module here would pull
+		// `@gauzy/config` and the request context into a suite that doubles the barrel on purpose.
+		quoteIdentifier: (identifier: string) => `"${identifier}"`,
+		prepareSQLQuery: (query: string) => query,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
 		TenantOrganizationBaseEntity: BaseEntity,
@@ -49,7 +53,15 @@ jest.mock('@gauzy/core', () => {
 		// the resolver imports: an undefined guard handed to the real `@UseGuards` fails the suite.
 		FeatureFlagGuard: class {},
 		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
-		Versioned: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned.decorator').Versioned,
+		// Rebuilt rather than required: the real decorator imports the version guard, the interceptor behind
+		// it and the idempotency service behind that, which reaches the entity graph and — under this
+		// workspace's ESM-only `uuid` — fails the whole suite to LOAD. What this suite reads is the
+		// metadata the decorator writes, so that is what the double writes.
+		Versioned: (options: any = {}) =>
+			require('@nestjs/common').SetMetadata(
+				jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').VERSIONED_METADATA_KEY,
+				options
+			),
 		VersionedColumn: decorator,
 		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.commitVersionedUpdate,
@@ -60,6 +72,16 @@ jest.mock('@gauzy/core', () => {
 				return value;
 			}
 			from(value: unknown) {
+				return value;
+			}
+		},
+		// The validation pipe the resolvers' routes build at class-definition time; Nest refuses a pipe with
+		// no `transform`, and the resolver file reaches it through this barrel.
+		AbstractValidationPipe: class AbstractValidationPipe {
+			constructor(..._args: any[]) {
+				/* no validation happens in this suite */
+			}
+			transform(value: any): any {
 				return value;
 			}
 		},

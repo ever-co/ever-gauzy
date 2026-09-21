@@ -9,6 +9,16 @@
  * `@gauzy/config` is read at import time by other packages of the workspace, so it is doubled too.
  */
 jest.mock('@gauzy/core', () => ({
+	// `@UsePipes(new AbstractValidationPipe(…))` runs when the controller class is defined, and Nest
+	// refuses a pipe without `transform`; the double carries both so the suite can load.
+	AbstractValidationPipe: class AbstractValidationPipe {
+		constructor(..._args: any[]) {
+			/* no validation happens in this suite */
+		}
+		transform(value: any): any {
+			return value;
+		}
+	},
 	Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
 	// The decimal comparison the commission bands are decided by is the kernel's own, so the double
 	// hands over the real one: a comparison doubled here would agree with the service about arithmetic

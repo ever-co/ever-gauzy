@@ -11,6 +11,16 @@ jest.mock('@gauzy/core', () => {
 	const decimal = jest.requireActual('@gauzy/core/src/lib/money/decimal');
 
 	return {
+		// `@UsePipes(new AbstractValidationPipe(…))` runs when the controller class is defined, and Nest
+		// refuses a pipe without `transform`; the double carries both so the suite can load.
+		AbstractValidationPipe: class AbstractValidationPipe {
+			constructor(..._args: any[]) {
+				/* no validation happens in this suite */
+			}
+			transform(value: any): any {
+				return value;
+			}
+		},
 		// The kernel's ledger service, doubled: what this suite is about is which rows the reader counts
 		// and how it adds them, not how the ledger is queried.
 		AdjustmentService: class AdjustmentService {},

@@ -14,6 +14,16 @@ jest.mock('@gauzy/core', () => {
 	class BaseEntity {}
 
 	return {
+		// `@UsePipes(new AbstractValidationPipe(…))` runs when the controller class is defined, and Nest
+		// refuses a pipe without `transform`; the double carries both so the suite can load.
+		AbstractValidationPipe: class AbstractValidationPipe {
+			constructor(..._args: any[]) {
+				/* no validation happens in this suite */
+			}
+			transform(value: any): any {
+				return value;
+			}
+		},
 		TenantAwareCrudService: class {},
 		CrudService: class {},
 		BaseEntity,

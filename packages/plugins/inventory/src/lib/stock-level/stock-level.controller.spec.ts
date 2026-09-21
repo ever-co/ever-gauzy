@@ -74,6 +74,10 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		// The statement helpers are pure and dialect-driven; loading the real module here would pull
+		// `@gauzy/config` and the request context into a suite that doubles the barrel on purpose.
+		quoteIdentifier: (identifier: string) => `"${identifier}"`,
+		prepareSQLQuery: (query: string) => query,
 		TenantAwareCrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
@@ -138,6 +142,9 @@ jest.mock('@gauzy/core', () => {
 jest.mock(
 	'@gauzy/config',
 	() => ({
+		isMySQL: () => false,
+		isPostgres: () => false,
+		isSqlite: () => true,
 		DatabaseTypeEnum: {
 			mongodb: 'mongodb',
 			sqlite: 'sqlite',
@@ -274,16 +281,27 @@ function datastore(tables: ITables) {
 				return true;
 			})
 			.map((level) => ({ ...level, warehouseId: aggregateOf(level)?.warehouseId }));
-	/** Reads the delta out of the SQL the engine builds for its aggregate update. */
-	const deltaFrom = (value: unknown): number => {
+		/**
+	 * Reads the delta out of the SQL the engine builds for its aggregate update.
+	 *
+	 * The engine binds its delta as a named parameter now (`"quantity" + :quantityDelta`, handed over
+	 * through `setParameters`) and used to interpolate it as a literal; the double reads both spellings,
+	 * so it pins neither. The parameters arrive from the caller because they live in the query builder's
+	 * closure, not beside the in-memory tables.
+	 */
+	const deltaFrom = (value: unknown, boundParams: Row = {}): number => {
 		const sql = typeof value === 'function' ? String((value as () => string)()) : String(value);
-		const match = /"\s*\+\s*(-?\d+(?:\.\d+)?)/.exec(sql);
-
-		if (!match) {
-			throw new Error(`the in-memory double cannot read a delta out of "${sql}"`);
+		const literal = /"\s*\+\s*(-?\d+(?:\.\d+)?)/.exec(sql);
+		if (literal) {
+			return Number(literal[1]);
 		}
 
-		return Number(match[1]);
+		const bound = /"\s*\+\s*:(\w+)/.exec(sql);
+		if (bound) {
+			return Number(boundParams[bound[1]]);
+		}
+
+		throw new Error(`the in-memory double cannot read a delta out of "${sql}"`);
 	};
 
 	let manager: any;
@@ -312,6 +330,20 @@ function datastore(tables: ITables) {
 			},
 			andWhere: (sql: string, params: Row = {}) => {
 				conditions.push({ sql, params });
+
+				return query;
+			},
+
+			// The statement names its parameters in a call of their own, after the predicate that uses
+			// them; `execute` reads one map, so they join the condition the predicate pushed.
+			setParameters: (params: Row = {}) => {
+				const last = conditions[conditions.length - 1];
+
+				if (last) {
+					last.params = { ...last.params, ...params };
+				} else {
+					conditions.push({ sql: '', params });
+				}
 
 				return query;
 			},
@@ -366,7 +398,7 @@ function datastore(tables: ITables) {
 				}
 
 				for (const [column, value] of Object.entries(updateSpec)) {
-					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value) : value;
+					row[column] = typeof value === 'function' ? Number(row[column] ?? 0) + deltaFrom(value, conditions.reduce<Row>((all, one) => ({ ...all, ...one.params }), {})) : value;
 				}
 
 				return { affected: 1 };

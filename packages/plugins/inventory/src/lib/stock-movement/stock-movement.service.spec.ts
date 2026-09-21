@@ -244,6 +244,20 @@ function ledgerFixture(movements: Row[] = [], level?: Row) {
 
 				return query;
 			},
+
+			// The statement names its parameters in a call of their own, after the predicate that uses
+			// them; `execute` reads one map, so they join the condition the predicate pushed.
+			setParameters: (params: Row = {}) => {
+				const last = conditions[conditions.length - 1];
+
+				if (last) {
+					last.params = { ...last.params, ...params };
+				} else {
+					conditions.push({ sql: '', params });
+				}
+
+				return query;
+			},
 			getRawOne: async () => {
 				if (!/SUM\(movement\.quantity\)/.test(rawSelect ?? '')) {
 					throw new Error(`the in-memory double does not implement the raw read "${rawSelect}"`);

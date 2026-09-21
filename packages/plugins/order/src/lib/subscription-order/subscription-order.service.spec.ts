@@ -135,6 +135,11 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		// The statement helpers are pure and dialect-driven; loading the real module here would pull
+		// `@gauzy/config` and the request context into a suite that doubles the barrel on purpose.
+		quoteIdentifier: (identifier: string) => `"${identifier}"`,
+		prepareSQLQuery: (query: string) => query,
+		...jest.requireActual('@gauzy/core/src/lib/money/decimal'),
 		CrudService,
 		TenantAwareCrudService,
 		BaseEntity,
@@ -176,7 +181,9 @@ jest.mock('@gauzy/core', () => {
 		AdjustmentService: class {},
 		TaxLineService: class {},
 		IdempotencyService: class {},
-		SequenceService: class {}
+		SequenceService: class {},
+	// Added when core grew this export: the double has to carry it, or the code under
+	// test calls nothing and the suite fails for a reason that is not its own.
 	};
 });
 

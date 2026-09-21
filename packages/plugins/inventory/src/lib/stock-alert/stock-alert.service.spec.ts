@@ -229,6 +229,20 @@ function repository(tables: Record<string, Row[]>, entityToTable: Map<unknown, s
 
 				return query;
 			},
+
+			// The statement names its parameters in a call of their own, after the predicate that uses
+			// them; `execute` reads one map, so they join the condition the predicate pushed.
+			setParameters: (params: Row = {}) => {
+				const last = conditions[conditions.length - 1];
+
+				if (last) {
+					last.params = { ...last.params, ...params };
+				} else {
+					conditions.push({ sql: '', params });
+				}
+
+				return query;
+			},
 			getMany: async () => (target === WarehouseProductVariant ? levels(conditions) : rows(target)),
 			getOne: async () => {
 				const found = target === WarehouseProductVariant ? levels(conditions) : rows(target);
