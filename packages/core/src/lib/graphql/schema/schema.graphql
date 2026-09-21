@@ -45004,7 +45004,7 @@ type WarehouseZoneConnection {
   edges: [WarehouseZoneEdge!]!
   nodes: [WarehouseZone!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One zone inside a page."""
@@ -45018,7 +45018,7 @@ type WarehouseBinConnection {
   edges: [WarehouseBinEdge!]!
   nodes: [WarehouseBin!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One bin inside a page."""
@@ -45032,7 +45032,7 @@ type PickWaveConnection {
   edges: [PickWaveEdge!]!
   nodes: [PickWave!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One wave inside a page."""
@@ -45046,7 +45046,7 @@ type PickListConnection {
   edges: [PickListEdge!]!
   nodes: [PickList!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One pick list inside a page."""
@@ -45060,7 +45060,7 @@ type PackSlipConnection {
   edges: [PackSlipEdge!]!
   nodes: [PackSlip!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One pack slip inside a page."""
@@ -45074,7 +45074,7 @@ type CarrierManifestConnection {
   edges: [CarrierManifestEdge!]!
   nodes: [CarrierManifest!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One manifest inside a page."""
@@ -49054,7 +49054,7 @@ type OrderReturnConnection {
   edges: [OrderReturnEdge!]!
   nodes: [OrderReturn!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One return inside a page."""
@@ -49068,7 +49068,7 @@ type OrderReturnReasonConnection {
   edges: [OrderReturnReasonEdge!]!
   nodes: [OrderReturnReason!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One return reason inside a page."""
@@ -49082,7 +49082,7 @@ type OrderClaimConnection {
   edges: [OrderClaimEdge!]!
   nodes: [OrderClaim!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One claim inside a page."""
@@ -49096,7 +49096,7 @@ type OrderExchangeConnection {
   edges: [OrderExchangeEdge!]!
   nodes: [OrderExchange!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One exchange inside a page."""
@@ -49484,7 +49484,7 @@ type SubscriptionPlanConnection {
   edges: [SubscriptionPlanEdge!]!
   nodes: [SubscriptionPlan!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One plan inside a page."""
@@ -49498,7 +49498,7 @@ type CustomerSubscriptionConnection {
   edges: [CustomerSubscriptionEdge!]!
   nodes: [CustomerSubscription!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One subscription inside a page."""
@@ -49512,7 +49512,7 @@ type SubscriptionItemConnection {
   edges: [SubscriptionItemEdge!]!
   nodes: [SubscriptionItem!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One recurring line inside a page."""
@@ -49526,7 +49526,7 @@ type SubscriptionBillingConnection {
   edges: [SubscriptionBillingEdge!]!
   nodes: [SubscriptionBilling!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One billing cycle inside a page."""
@@ -50119,7 +50119,7 @@ type PurchaseOrderConnection {
   edges: [PurchaseOrderEdge!]!
   nodes: [PurchaseOrder!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One purchase order inside a page."""
@@ -50133,7 +50133,7 @@ type GoodsReceiptConnection {
   edges: [GoodsReceiptEdge!]!
   nodes: [GoodsReceipt!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One goods receipt inside a page."""
@@ -50203,7 +50203,7 @@ type VendorProductTermConnection {
   edges: [VendorProductTermEdge!]!
   nodes: [VendorProductTerm!]!
   pageInfo: PageInfo!
-  total: Int!
+  totalCount: Int!
 }
 
 """One vendor term inside a page."""

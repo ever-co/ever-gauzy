@@ -216,7 +216,7 @@ export const schemaExtensions = gql`
 		edges: [PurchaseOrderEdge!]!
 		nodes: [PurchaseOrder!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One purchase order inside a page."
@@ -230,7 +230,7 @@ export const schemaExtensions = gql`
 		edges: [GoodsReceiptEdge!]!
 		nodes: [GoodsReceipt!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One goods receipt inside a page."
@@ -282,7 +282,7 @@ export const schemaExtensions = gql`
 		edges: [VendorProductTermEdge!]!
 		nodes: [VendorProductTerm!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One vendor term inside a page."

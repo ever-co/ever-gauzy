@@ -62,16 +62,12 @@ const LEGACY_CONNECTIONS = new Set([
 	'CollectionVariantConnection', 'CollectionChannelConnection', 'TagProductVariantConnection', 'CollectionConnection',
 	'CollectionProductConnection', 'ProductPublicationConnection', 'ProductVariantPublicationConnection', 'ProductRelationConnection',
 	'ProductVariantMediaConnection', 'PriceListConnection', 'ProductPriceConnection', 'PricePreferenceConnection',
-	'ExchangeRateConnection', 'WarehouseZoneConnection', 'WarehouseBinConnection', 'PickWaveConnection',
-	'PickListConnection', 'PackSlipConnection', 'CarrierManifestConnection', 'CartConnection',
+	'ExchangeRateConnection', 'CartConnection',
 	'CheckoutSessionConnection', 'OrderConnection', 'OrderChangeConnection', 'OrderSummaryConnection',
 	'OrderTransactionConnection', 'PaymentProviderConnection', 'PaymentCollectionConnection', 'PaymentSessionConnection',
 	'PaymentCaptureConnection', 'RefundConnection', 'RefundReasonConnection', 'RefundLineConnection',
 	'PaymentWebhookEventConnection', 'PaymentAccountHolderConnection', 'PaymentMethodTokenConnection', 'ShippingProfileConnection',
-	'ShippingOptionConnection', 'FulfillmentConnection', 'OrderReturnConnection', 'OrderReturnReasonConnection',
-	'OrderClaimConnection', 'OrderExchangeConnection', 'SubscriptionPlanConnection', 'CustomerSubscriptionConnection',
-	'SubscriptionItemConnection', 'SubscriptionBillingConnection', 'PurchaseOrderConnection', 'GoodsReceiptConnection',
-	'VendorProductTermConnection',
+	'ShippingOptionConnection', 'FulfillmentConnection',
 ]);
 
 /** The body of `type <name> { … }`, or null when the schema declares no such type. */

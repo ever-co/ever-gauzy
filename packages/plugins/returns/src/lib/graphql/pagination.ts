@@ -1,116 +1,71 @@
 import { IPagination } from '@gauzy/contracts';
+import {
+	DEFAULT_CONNECTION_PAGE_SIZE,
+	GraphqlConnection,
+	IConnectionPageSelection,
+	MAX_CONNECTION_PAGE_SIZE,
+	connectionFromOffsetPage,
+	decodeOffsetCursor,
+	encodeOffsetCursor,
+	resolveConnectionWindow
+} from '@gauzy/core';
 
 /**
- * Cursor pagination for the returns domain's connection fields.
+ * This package's connection helpers, which are the kernel's.
  *
- * A cursor here is an opaque string that carries the offset it resumes at. It is deliberately opaque:
- * a client stores it and hands it back, and the codec can change without breaking one. The page size
- * comes from `first`/`last`, and `hasNextPage` is computed from the total the listing already
- * counted, so a client never has to probe for the end of a list.
+ * The module used to carry its own copy of the offset window, the cursor codec and the page-to-connection
+ * mapping — as five other packages did, all of them the same arithmetic with a name or two changed. A
+ * change to the page cap, the default page size or the cursor encoding therefore had to be made in every
+ * copy, and the one that was forgotten was the one that drifted. The kernel's `graphql-connection` module
+ * owns all of it now, and this file re-exports it under the names this package's call sites already use,
+ * so the consolidation changed no call site.
  */
 
-/** A page of nodes with the boundary information a connection carries. */
-export interface IConnection<T> {
-	edges: Array<{ cursor: string; node: T }>;
-	nodes: T[];
-	pageInfo: {
-		hasNextPage: boolean;
-		hasPreviousPage: boolean;
-		startCursor: string | null;
-		endCursor: string | null;
-	};
-	total: number;
-}
+/** The connection a list field answers with, in the shape the SDL declares. */
+export type IConnection<T> = GraphqlConnection<T>;
 
-/** A page selection, as the GraphQL `PageInput` shapes it. */
-export interface IPageSelection {
-	first?: number;
-	after?: string;
-	last?: number;
-	before?: string;
-}
+/** The page a caller may state, in either of the protocol's two spellings. */
+export type IPageSelection = IConnectionPageSelection;
 
 /** The page size used when a caller states none. */
-export const DEFAULT_PAGE_SIZE = 25;
+export const DEFAULT_PAGE_SIZE = DEFAULT_CONNECTION_PAGE_SIZE;
 
 /** The largest page a caller may ask for. */
-export const MAX_PAGE_SIZE = 200;
+export const MAX_PAGE_SIZE = MAX_CONNECTION_PAGE_SIZE;
 
 /**
  * @param selection The requested page.
  * @returns The offset the page starts at and how many rows it holds.
  * @throws Error when a caller mixes forward and backward pagination, which has no defined meaning.
  */
-export function resolvePageWindow(selection?: IPageSelection): { skip: number; take: number } {
-	const first = selection?.first;
-	const last = selection?.last;
-
-	if (first !== undefined && last !== undefined) {
-		throw new Error('PAGINATION_DIRECTION_CONFLICT: state first or last, not both.');
-	}
-
-	const take = Math.min(Math.max(first ?? last ?? DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE);
-	const cursor = first !== undefined ? selection?.after : selection?.before;
-	const skip = decodeCursor(cursor);
-
-	return { skip: Math.max(skip, 0), take };
-}
+export const resolvePageWindow = resolveConnectionWindow;
 
 /**
  * @param cursor The cursor a caller handed back.
- * @returns The offset it carries; zero when there is none.
+ * @returns The offset it carries; zero when there is none or when it is unreadable.
  */
-export function decodeCursor(cursor?: string): number {
-	if (!cursor) {
-		return 0;
-	}
-
-	try {
-		const decoded = Buffer.from(cursor, 'base64').toString('utf8');
-		const offset = Number.parseInt(decoded, 10);
-
-		return Number.isFinite(offset) && offset >= 0 ? offset : 0;
-	} catch (error) {
-		return 0;
-	}
-}
+export const decodeCursor = decodeOffsetCursor;
 
 /**
  * @param offset The offset a page starts at.
  * @returns The cursor that resumes at it.
  */
-export function encodeCursor(offset: number): string {
-	return Buffer.from(String(Math.max(offset, 0)), 'utf8').toString('base64');
-}
+export const encodeCursor = encodeOffsetCursor;
 
-/**
- * @param id A row's identity.
- * @param offset The row's offset in the listing.
- * @returns The cursor that points at the row.
- */
-export function cursorFor(id: string | undefined, offset: number): string {
-	return encodeCursor(offset);
-}
 /**
  * @param page The listing the service returned.
  * @param skip The offset the page started at.
  * @returns The connection a GraphQL field answers with.
  */
 export function buildConnection<T>(page: IPagination<T>, skip: number): IConnection<T> {
-	const nodes = page?.items ?? [];
-	const total = page?.total ?? nodes.length;
-	const start = skip;
-	const end = skip + nodes.length;
+	return connectionFromOffsetPage<T>(page, skip);
+}
 
-	return {
-		edges: nodes.map((node, index) => ({ cursor: cursorFor((node as { id?: string })?.id, start + index), node })),
-		nodes,
-		pageInfo: {
-			hasNextPage: end < total,
-			hasPreviousPage: start > 0,
-			startCursor: nodes.length ? encodeCursor(start) : null,
-			endCursor: nodes.length ? encodeCursor(end) : null
-		},
-		total
-	};
+/**
+ * @param id A row's identity, which the offset scheme does not use.
+ * @param offset The row's offset in the listing.
+ * @returns The cursor that points at the row.
+ */
+export function cursorFor(id: string | undefined, offset: number): string {
+	return encodeOffsetCursor(offset);
 }

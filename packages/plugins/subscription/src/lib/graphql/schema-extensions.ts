@@ -180,7 +180,7 @@ export const schemaExtensions = gql`
 		edges: [SubscriptionPlanEdge!]!
 		nodes: [SubscriptionPlan!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One plan inside a page."
@@ -194,7 +194,7 @@ export const schemaExtensions = gql`
 		edges: [CustomerSubscriptionEdge!]!
 		nodes: [CustomerSubscription!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One subscription inside a page."
@@ -208,7 +208,7 @@ export const schemaExtensions = gql`
 		edges: [SubscriptionItemEdge!]!
 		nodes: [SubscriptionItem!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One recurring line inside a page."
@@ -222,7 +222,7 @@ export const schemaExtensions = gql`
 		edges: [SubscriptionBillingEdge!]!
 		nodes: [SubscriptionBilling!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One billing cycle inside a page."

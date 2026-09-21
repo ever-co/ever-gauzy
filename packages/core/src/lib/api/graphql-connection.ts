@@ -787,3 +787,117 @@ export function connectionFromPage<T>(
 		}
 	};
 }
+
+/**
+ * What a caller may state about the page it wants.
+ *
+ * Two spellings, because two are in use and both are the query protocol's: the cursor spelling
+ * (`first`/`after`, `last`/`before`) and the offset spelling (`limit`/`offset`). Stating a forward and
+ * a backward walk together has no defined meaning and is refused rather than resolved by preferring one.
+ */
+export interface IConnectionPageSelection {
+	first?: number;
+	after?: string;
+	last?: number;
+	before?: string;
+	limit?: number;
+	offset?: number;
+}
+
+/** The page size used when a caller states none. */
+export const DEFAULT_CONNECTION_PAGE_SIZE = 25;
+
+/** The largest page a caller may ask for, so one request cannot pull a table. */
+export const MAX_CONNECTION_PAGE_SIZE = 200;
+
+/**
+ * The window a caller's page selection asks for, for a resource paged in the store.
+ *
+ * This is the offset scheme rather than the cursor one {@link buildConnection} implements, and the
+ * difference is what the caller can be told. A cursor there names a row (it carries the row's id and its
+ * sort value), which is stable under inserts because the walk resumes from a value rather than a count. A
+ * cursor here names a *position* — the offset to resume at, encoded opaquely — which is what a store-paged
+ * read can honour: `findAll({ skip, take })` has no way to resume from a value, and inventing a cursor
+ * that looked row-addressed while behaving positionally is how a client ends up skipping rows after an
+ * insert.
+ *
+ * `last`/`before` walk backwards from the cursor by the same arithmetic, which is why one function
+ * answers both: the offset is the cursor's, and the direction only decides whether the page runs forward
+ * or back. A caller that states both directions is refused.
+ *
+ * @param selection The requested page.
+ * @returns The offset the page starts at and how many rows it holds.
+ * @throws Error when a caller mixes forward and backward pagination.
+ */
+export function resolveConnectionWindow(selection?: IConnectionPageSelection): { skip: number; take: number } {
+	if (selection?.first !== undefined && selection?.last !== undefined) {
+		throw new Error('PAGINATION_DIRECTION_CONFLICT: state first or last, not both.');
+	}
+
+	const requested = selection?.first ?? selection?.last ?? selection?.limit ?? DEFAULT_CONNECTION_PAGE_SIZE;
+	const take = Math.min(Math.max(Math.trunc(requested) || DEFAULT_CONNECTION_PAGE_SIZE, 1), MAX_CONNECTION_PAGE_SIZE);
+	const cursor = selection?.first !== undefined ? selection?.after : selection?.before;
+	const offset = selection?.offset !== undefined ? Math.max(Math.trunc(selection.offset) || 0, 0) : 0;
+
+	return { skip: Math.max(decodeOffsetCursor(cursor) || offset, 0), take };
+}
+
+/**
+ * @param cursor The cursor a caller handed back.
+ * @returns The offset it carries; zero when there is none or when it is unreadable.
+ */
+export function decodeOffsetCursor(cursor?: string): number {
+	if (!cursor) {
+		return 0;
+	}
+
+	try {
+		const offset = Number.parseInt(Buffer.from(cursor, 'base64').toString('utf8'), 10);
+
+		return Number.isFinite(offset) && offset >= 0 ? offset : 0;
+	} catch (error) {
+		return 0;
+	}
+}
+
+/**
+ * @param offset The offset a page starts at.
+ * @returns The opaque cursor that resumes at it.
+ */
+export function encodeOffsetCursor(offset: number): string {
+	return Buffer.from(String(Math.max(offset, 0)), 'utf8').toString('base64');
+}
+
+/**
+ * The store-paged page, as the connection the schema promises, with position cursors.
+ *
+ * {@link connectionFromPage} addresses each row by whatever identifies it, which is what a resource with
+ * a natural key wants. This is the same shape with the offset scheme's cursors: the page's first row is
+ * addressed by the offset the page started at and its last by the offset after it, so the next page is
+ * `first: n, after: pageInfo.endCursor` and the walk cannot skip a row it has already answered.
+ *
+ * @param page The page the service returned.
+ * @param skip The offset the page started at.
+ * @returns The connection, in the shape every `*Connection` type declares.
+ */
+export function connectionFromOffsetPage<T>(
+	page: { items?: readonly T[]; total?: number } | null | undefined,
+	skip = 0
+): GraphqlConnection<T> {
+	const nodes = page?.items ?? [];
+	const start = Math.max(skip, 0);
+	const totalCount = page?.total ?? nodes.length;
+	const end = start + nodes.length;
+
+	return {
+		nodes: [...nodes],
+		edges: nodes.map((node, index) => ({ node, cursor: encodeOffsetCursor(start + index) })),
+		totalCount,
+		pageInfo: {
+			hasNextPage: end < totalCount,
+			hasPreviousPage: start > 0,
+			startCursor: nodes.length > 0 ? encodeOffsetCursor(start) : null,
+			endCursor: nodes.length > 0 ? encodeOffsetCursor(end) : null
+		}
+	};
+}

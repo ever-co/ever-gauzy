@@ -210,7 +210,7 @@ export const schemaExtensions = gql`
 		edges: [OrderReturnEdge!]!
 		nodes: [OrderReturn!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One return inside a page."
@@ -224,7 +224,7 @@ export const schemaExtensions = gql`
 		edges: [OrderReturnReasonEdge!]!
 		nodes: [OrderReturnReason!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One return reason inside a page."
@@ -238,7 +238,7 @@ export const schemaExtensions = gql`
 		edges: [OrderClaimEdge!]!
 		nodes: [OrderClaim!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One claim inside a page."
@@ -252,7 +252,7 @@ export const schemaExtensions = gql`
 		edges: [OrderExchangeEdge!]!
 		nodes: [OrderExchange!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One exchange inside a page."

@@ -316,7 +316,7 @@ export const schemaExtensions = gql`
 		edges: [WarehouseZoneEdge!]!
 		nodes: [WarehouseZone!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One zone inside a page."
@@ -330,7 +330,7 @@ export const schemaExtensions = gql`
 		edges: [WarehouseBinEdge!]!
 		nodes: [WarehouseBin!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One bin inside a page."
@@ -344,7 +344,7 @@ export const schemaExtensions = gql`
 		edges: [PickWaveEdge!]!
 		nodes: [PickWave!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One wave inside a page."
@@ -358,7 +358,7 @@ export const schemaExtensions = gql`
 		edges: [PickListEdge!]!
 		nodes: [PickList!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One pick list inside a page."
@@ -372,7 +372,7 @@ export const schemaExtensions = gql`
 		edges: [PackSlipEdge!]!
 		nodes: [PackSlip!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One pack slip inside a page."
@@ -386,7 +386,7 @@ export const schemaExtensions = gql`
 		edges: [CarrierManifestEdge!]!
 		nodes: [CarrierManifest!]!
 		pageInfo: PageInfo!
-		total: Int!
+		totalCount: Int!
 	}
 
 	"One manifest inside a page."
