@@ -72,6 +72,13 @@ jest.mock('@gauzy/core', () => {
 		// The double answers with the fixture’s scope, which is what a request-scoped read resolves to.
 		// Every case that is about tenancy re-points it with a spy, so the scope is never a constant of
 		// this specification.
+		// The dialect helpers the ledger engine writes its raw fragments through. The engine imports
+		// them from the barrel this factory replaces, and a name a factory does not answer for is
+		// `undefined` at the call site — so the aggregate delta, which quotes three identifiers, would
+		// throw before it wrote anything. They are doubled for the embedded dialect every suite here
+		// runs against: a statement is left as it was written, and an identifier keeps its double quotes.
+		prepareSQLQuery: (sql: string) => sql,
+		quoteIdentifier: (identifier: string) => `"${identifier}"`,
 		RequestContext: {
 			// The engine reads the version the current request accepted from here, and a unit test has no
 			// request: the accepted version is then absent, which is the case the engine's own
@@ -532,5 +539,161 @@ describe('StockAvailabilityService — what may be sold of a variant', () => {
 		const service = new StockAvailabilityService(repository as never, new StockLevelService(null as never));
 
 		expect(await service.availabilityOf({ variantId: VARIANT })).toMatchObject({ sellableQuantity: 8 });
+	});
+});
+
+/**
+ * Whether a level row satisfies the condition the MikroORM arm states.
+ *
+ * The arm expresses the join the TypeORM one states with `innerJoin` as a nested condition on the
+ * relation, so the double resolves the nested members against the aggregate the row hangs from — and
+ * the organization disjunction the same way the query-builder double does, because it is the same
+ * rule: an aggregate that names no organization is the tenant-wide row and is in scope for every
+ * organization of the tenant.
+ *
+ * @param row The level row.
+ * @param where The condition the arm stated.
+ * @returns Whether the row is in the answer.
+ */
+function matchesMikroWhere(row: ILevelRow, where: Record<string, any>): boolean {
+	if (where.variantId !== undefined && !same(row.variantId, where.variantId)) {
+		return false;
+	}
+
+	const aggregate = where.warehouseProduct ?? {};
+
+	if (aggregate.warehouseId !== undefined && !same(row.aggregate.warehouseId, aggregate.warehouseId)) {
+		return false;
+	}
+
+	if (aggregate.tenantId !== undefined && !same(row.aggregate.tenantId, aggregate.tenantId)) {
+		return false;
+	}
+
+	if (Array.isArray(aggregate.$or)) {
+		return aggregate.$or.some((alternative: Record<string, any>) =>
+			alternative.organizationId === null
+				? row.aggregate.organizationId == null
+				: same(row.aggregate.organizationId, alternative.organizationId)
+		);
+	}
+
+	return true;
+}
+
+/**
+ * The service over the MikroORM arm of its read connection.
+ *
+ * The TypeORM repository it is also given **throws** when it is touched, because the property being
+ * asserted is that the other arm is not taken: under `DB_ORM=mikro-orm` that builder would raise
+ * `EntityPropertyNotFoundError` on `level.variantId` rather than answer, and a double that quietly
+ * answered would hide exactly the failure this arm exists to end.
+ *
+ * @param rows The level rows the connection holds.
+ * @returns The service, and the conditions each read stated.
+ */
+function mikroFixture(rows: ILevelRow[] = []) {
+	const asked: Array<Record<string, any>> = [];
+	const refuse = () => {
+		throw new Error('the TypeORM query builder must not be reached on the MikroORM arm');
+	};
+	const repository = { createQueryBuilder: refuse, manager: { createQueryBuilder: refuse } };
+	const connection = {
+		usesMikroOrm: true,
+		fork: () => ({
+			find: async (_entity: unknown, where: Record<string, any>) => {
+				asked.push(where);
+
+				return rows
+					.filter((row) => matchesMikroWhere(row, where))
+					.map((row) => ({ ...row, warehouseProduct: row.aggregate }));
+			}
+		})
+	};
+
+	return {
+		asked,
+		service: new StockAvailabilityService(
+			repository as never,
+			new StockLevelService(null as never),
+			connection as never
+		)
+	};
+}
+
+describe('StockAvailabilityService — the MikroORM arm of the same read', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	it('answers the same availability without touching the TypeORM query builder', async () => {
+		// Under `DB_ORM=mikro-orm` the TypeORM metadata for `warehouse_product_variant` carries the base
+		// entity's four columns and nothing else, so the builder this seam was written against raised
+		// `EntityPropertyNotFoundError` on `level.variantId` — and this is the seam the cart and the
+		// order packages bind to, so every add-to-cart of the installation failed there.
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+
+		const { service, asked } = mikroFixture([
+			level({ quantity: 10, reservedQuantity: 2, safetyStock: 1 }),
+			level({ id: 'level-2', quantity: 5, aggregate: { warehouseId: OTHER_WAREHOUSE, tenantId: TENANT, organizationId: ORG } })
+		]);
+
+		expect(await service.availabilityOf({ variantId: VARIANT, warehouseId: WAREHOUSE })).toMatchObject({
+			sellableQuantity: 7
+		});
+
+		// The join the other arm states with `innerJoin` is a nested condition on the relation here, and
+		// the scope travels on the aggregate for the same reason it does there.
+		expect(asked).toEqual([
+			{
+				variantId: VARIANT,
+				warehouseProduct: {
+					warehouseId: WAREHOUSE,
+					tenantId: TENANT,
+					$or: [{ organizationId: ORG }, { organizationId: null }]
+				}
+			}
+		]);
+	});
+
+	it('sums every location the variant is stocked at when the question names none', async () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+
+		const { service, asked } = mikroFixture([
+			level({ quantity: 4 }),
+			level({ id: 'level-2', quantity: 6, aggregate: { warehouseId: OTHER_WAREHOUSE, tenantId: TENANT, organizationId: ORG } })
+		]);
+
+		expect(await service.availabilityOf({ variantId: VARIANT })).toMatchObject({ sellableQuantity: 10 });
+		expect(asked[0].warehouseProduct.warehouseId).toBeUndefined();
+	});
+
+	it('counts a level the whole tenant shares and leaves another organization’s out', async () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+
+		const { service } = mikroFixture([
+			level({ quantity: 3 }),
+			level({
+				id: 'level-shared',
+				quantity: 2,
+				aggregate: { warehouseId: WAREHOUSE, tenantId: TENANT, organizationId: null as never }
+			}),
+			level({
+				id: 'level-theirs',
+				quantity: 100,
+				aggregate: { warehouseId: WAREHOUSE, tenantId: TENANT, organizationId: OTHER_ORG }
+			})
+		]);
+
+		expect(await service.availabilityOf({ variantId: VARIANT, warehouseId: WAREHOUSE })).toMatchObject({
+			sellableQuantity: 5
+		});
+	});
+
+	it('answers nothing when the connection holds no level for the variant', async () => {
+		const { service } = mikroFixture([]);
+
+		expect(await service.availabilityOf({ variantId: VARIANT })).toBeNull();
 	});
 });

@@ -106,6 +106,26 @@ export class StockReservationResolver {
 	}
 
 	/**
+	 * Consumes a hold: the held units leave, and the hold closes with them.
+	 *
+	 * The field was declared in the composed schema with nothing bound to it, so a document that
+	 * selected it passed validation and then failed with `Cannot return null for non-nullable field
+	 * Mutation.consumeStockReservation`. It is bound here to the service method the status vocabulary
+	 * already described — `CONSUMED` is "the stock actually left; a matching movement was written in
+	 * the same transaction" — and carries the permission and the conventions the release beside it
+	 * carries: the version is optional, because the compare-and-set the movement is written under is
+	 * the guarantee, and a key already used for this operation is replayed rather than removing the
+	 * units twice.
+	 */
+	@Mutation('consumeStockReservation')
+	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	@Versioned({ required: false })
+	@Idempotent({ scope: 'stock.reservation.consume', required: false, resourceType: 'stock-reservation' })
+	async consumeStockReservation(@Args('id') id: string): Promise<any> {
+		return await this.service.consume(id);
+	}
+
+	/**
 	 * Emitted whenever a hold is created, released, consumed or expired.
 	 *
 	 * Declared so a client subscribes instead of polling. The stream is the platform’s event bus, so a

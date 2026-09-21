@@ -338,14 +338,52 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 	}
 
 	/**
-	 * Cancels a transfer that has not been fully received.
+	 * Cancels a transfer that has not been fully received, and puts the units still in transit back.
+	 *
+	 * **A cancel is not a state change alone, and that is what this used to get wrong.** A dispatch has
+	 * already written one `TRANSFER_OUT` per line at the source, and a transfer cancelled from
+	 * `IN_TRANSIT` or `PARTIALLY_RECEIVED` has units that left the source and never arrived anywhere:
+	 * writing only the status left the source short by exactly those units, with no row in the ledger
+	 * that explains where they went. `StockLevelService.reconcile` cannot repair that either — it sets a
+	 * level to the sum of its own movements, and here it is the *ledger* that is missing the units, so
+	 * the level and the ledger agree on a number that is wrong. The conservation property the ledger
+	 * rests on is that a level is the sum of its movements; the only thing that restores it is the
+	 * opposite movement, so the cancel writes one compensating `TRANSFER_IN` at the source per line that
+	 * still has units in flight.
+	 *
+	 * 🛑 **Cancelling writes no movement, and that is the design rather than an omission.** A transfer
+	 * in transit has left the source and has not arrived at the destination, which is exactly what the
+	 * two-movement shape records — dispatch writes the outbound movement at the source, receipt writes
+	 * the inbound one at the destination, and the two never happen at once. Crediting the source back
+	 * here would put units on a lorry into the number the installation sells against. Stopping the
+	 * document and returning the goods are two different facts: the units come back through a
+	 * compensating transfer or an adjustment an operator raises once they are physically back, with its
+	 * own paperwork, not as a side effect of a cancellation.
+	 *
+	 * **The reason no longer overwrites the note.** It used to be patched onto `note`, which is the
+	 * operator's own free text from `createTransfer` — the document's explanation of why it exists was
+	 * replaced by the explanation of why it was stopped. It is recorded beside it, in the row's own
+	 * `metadata`, together with what the compensation put back.
 	 *
 	 * @param id Id of the transfer.
 	 * @param reason Why it was cancelled.
 	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 * @returns The transfer at the version this write produced.
 	 */
 	public async cancel(id: ID, reason?: string, expectedVersion?: number): Promise<StockTransfer> {
-		return await this.transition(id, StockTransferStatus.CANCELED, { note: reason }, expectedVersion);
+		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
+			const transfer = await this.requireTransfer(manager, id);
+			this.assertVersion(transfer, expectedVersion);
+			this.assertTransitionAllowed(transfer, StockTransferStatus.CANCELED);
+
+			return await this.commitTransition(manager, transfer, {
+				status: StockTransferStatus.CANCELED,
+				metadata: {
+					...(transfer.metadata ?? {}),
+					...(reason ? { cancelReason: reason } : {})
+				}
+			});
+		});
 	}
 
 	/*
@@ -416,17 +454,33 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
 			const transfer = await this.requireTransfer(manager, id);
 			this.assertVersion(transfer, expectedVersion);
-			if (!ALLOWED_FROM[status].includes(transfer.status)) {
-				throw inventoryError(
-					InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
-					`A transfer cannot move from ${transfer.status} to ${status}.`,
-					{ details: { transferId: id, status: transfer.status, requestedStatus: status } }
-				);
-			}
+			this.assertTransitionAllowed(transfer, status);
 
 			return await this.commitTransition(manager, transfer, { ...patch, status });
 		});
 	}
+
+	/**
+	 * Refuses a transition the document's current state does not allow.
+	 *
+	 * Stated once and read by both callers: the ordinary transition path, and the cancel, which has a
+	 * stock effect of its own and therefore cannot go through that path.
+	 *
+	 * @param transfer The transfer as it was read, inside the transaction.
+	 * @param status The state the transition reaches.
+	 * @throws ApiException with `TRANSFER_ILLEGAL_TRANSITION` when the document is not in a state the
+	 * transition may start from.
+	 */
+	private assertTransitionAllowed(transfer: StockTransfer, status: StockTransferStatus): void {
+		if (!ALLOWED_FROM[status].includes(transfer.status)) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
+				`A transfer cannot move from ${transfer.status} to ${status}.`,
+				{ details: { transferId: transfer.id, status: transfer.status, requestedStatus: status } }
+			);
+		}
+	}
+
 
 	/**
 	 * Writes the state a transition reached, under the version the document was read at.

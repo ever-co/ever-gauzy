@@ -77,6 +77,27 @@ export class StockTransferResolver {
 	}
 
 	/**
+	 * Edits a transfer's own fields.
+	 *
+	 * The field was declared in the composed schema with nothing bound to it, so a document that
+	 * selected it passed validation and then failed with `Cannot return null for non-nullable field
+	 * Mutation.updateStockTransfer`. It is bound to the same service method the REST route calls and
+	 * carries the permission that route carries, so the two protocols ask the caller for the same
+	 * thing.
+	 *
+	 * The field states no version, because the field declares none to state: the REST route reads one
+	 * from `If-Match` and a GraphQL field would have to carry it beside the input it qualifies. The
+	 * edit is still conditional — `commitTransition` predicates the `UPDATE` on the version it read
+	 * inside the transaction and refuses a document another writer moved in between — so a concurrent
+	 * edit is reported as the conflict it is rather than silently landing on top of one.
+	 */
+	@Mutation('updateStockTransfer')
+	@Permissions(InventoryPermission.STOCK_TRANSFER_CREATE as PermissionsEnum)
+	async updateStockTransfer(@Args('id') id: string, @Args('note') note: string): Promise<any> {
+		return await this.service.update(id, { note } as never);
+	}
+
+	/**
 	 * Dispatches a transfer and writes the outbound movements.
 	 *
 	 * The movements land on the levels of the source location, one per line, so the level write is

@@ -70,6 +70,13 @@ jest.mock('@gauzy/core', () => {
 		// The double answers with the fixture’s scope, which is what a request-scoped read resolves to.
 		// Every case that is about tenancy re-points it with a spy, so the scope is never a constant of
 		// this specification.
+		// The dialect helpers the ledger engine writes its raw fragments through. The engine imports
+		// them from the barrel this factory replaces, and a name a factory does not answer for is
+		// `undefined` at the call site — so the aggregate delta, which quotes three identifiers, would
+		// throw before it wrote anything. They are doubled for the embedded dialect every suite here
+		// runs against: a statement is left as it was written, and an identifier keeps its double quotes.
+		prepareSQLQuery: (sql: string) => sql,
+		quoteIdentifier: (identifier: string) => `"${identifier}"`,
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
@@ -1280,11 +1287,17 @@ describe('StockLedgerService — the put-away that walks received units into a b
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('records the arrival in the bin and names it the variant’s home, which nothing else writes', async () => {
+	it('moves the units from the location’s unaddressed pool into the bin and names it the variant’s home', async () => {
 		// The home bin is `warehouse_product_variant.binId` — what a pick reads to know where to send the
 		// picker — and the put-away is the only operation that writes it. Before this, the column was
 		// declared, indexed, read by the ledger's own home-bin answer, and written by nobody.
-		const { service, store } = fixture(stocked(0));
+		//
+		// **This case used to pin the double count.** The walk wrote the arrival alone when the caller
+		// named no source bin, on the reasoning that there was no recorded position to leave. There is:
+		// the receipt recorded those units at the location with `binId` null, which is exactly the
+		// position the leg out subtracts from. The pair therefore nets to zero at the location, which is
+		// the invariant a walk owes — the units moved address, they did not arrive twice.
+		const { service, store } = fixture(stocked(6));
 
 		const result = await service.putAway({
 			warehouseId: WAREHOUSE,
@@ -1298,19 +1311,112 @@ describe('StockLedgerService — the put-away that walks received units into a b
 		const legs = movementsOf(store, 'GOODS_RECEIPT');
 
 		expect(legs.map((movement) => [movement.type, movement.quantity, movement.binId])).toEqual([
+			[StockMovementType.TRANSFER_OUT, -6, undefined],
 			[StockMovementType.TRANSFER_IN, 6, BIN]
 		]);
-		expect(result.transferOutMovementId).toBeUndefined();
-		expect(result.transferInMovementId).toBe(legs[0].id);
+		expect(result.transferOutMovementId).toBe(legs[0].id);
+		expect(result.transferInMovementId).toBe(legs[1].id);
 		expect(result.binId).toBe(BIN);
 		expect(result.quantityAfter).toBe('6.000000');
-		// The level holds the units and names the bin they are in.
+		// The location holds exactly what it held, and names the bin the units are in.
 		expect(store.levels[0].quantity).toBe(6);
 		expect(store.levels[0].binId).toBe(BIN);
 		expect(await service.resolveHomeBin({ warehouseId: WAREHOUSE, variantId: VARIANT })).toMatchObject({
 			binId: BIN,
 			quantity: '6.000000'
 		});
+		// Both legs are one write, and the ledger still sums to the level.
+		expect(legs[0].__transaction).toBe(legs[1].__transaction);
+		expect(store.transactions).toHaveLength(1);
+		expect(compareDecimalStrings(ledgerSum(store, VARIANT, WAREHOUSE), store.levels[0].quantity)).toBe(0);
+		// And the bin holds the units while the unaddressed pool no longer does.
+		expect(await service.readBinBalance({ warehouseId: WAREHOUSE, variantId: VARIANT, binId: BIN })).toMatchObject({
+			quantity: '6.000000'
+		});
+	});
+
+	it('does not credit the location a second time for units a receipt has already recorded', async () => {
+		// The whole failure, end to end: a receipt of a hundred units, then the same hundred put away.
+		// Written as one leg the level read two hundred against a building holding one hundred, the bin
+		// reported the correct hundred, and `reconcile` could not see it because the level and the ledger
+		// had both been inflated by the same amount — so `StockAvailabilityService` offered two hundred.
+		const { service, store } = fixture({ levels: [levelRow({ quantity: 0 })] });
+
+		await service.recordMovement({
+			warehouseId: WAREHOUSE,
+			variantId: VARIANT,
+			quantity: '100',
+			kind: StockMovementType.RECEIPT,
+			referenceType: 'GOODS_RECEIPT',
+			referenceId: REFERENCE
+		});
+
+		expect(store.levels[0].quantity).toBe(100);
+
+		await service.putAway({
+			warehouseId: WAREHOUSE,
+			variantId: VARIANT,
+			binId: BIN,
+			quantity: '100',
+			referenceType: 'PUTAWAY',
+			referenceId: REFERENCE
+		});
+
+		expect(store.levels[0].quantity).toBe(100);
+		expect(compareDecimalStrings(ledgerSum(store, VARIANT, WAREHOUSE), store.levels[0].quantity)).toBe(0);
+		expect(await service.readBinBalance({ warehouseId: WAREHOUSE, variantId: VARIANT, binId: BIN })).toMatchObject({
+			quantity: '100.000000'
+		});
+	});
+
+	it('refuses a walk of more units than the location holds, and writes neither leg', async () => {
+		// The leg out goes through the same engine as every other movement, so the invariant that keeps a
+		// level from going negative is what bounds a walk. A put-away of units the location does not hold
+		// is a caller mistake, and it is refused rather than written as an arrival out of nowhere.
+		const { service, store } = fixture(stocked(2));
+
+		await expect(
+			service.putAway({
+				warehouseId: WAREHOUSE,
+				variantId: VARIANT,
+				binId: BIN,
+				quantity: '6',
+				referenceType: 'GOODS_RECEIPT',
+				referenceId: REFERENCE
+			})
+		).rejects.toThrow(/INV-05/);
+
+		expect(movementsOf(store, 'GOODS_RECEIPT')).toEqual([]);
+		expect(store.levels[0].quantity).toBe(2);
+		expect(store.levels[0].binId).toBeUndefined();
+		expect(store.transactions).toEqual([]);
+	});
+
+	it('writes the arrival alone for a caller that states the walk is also the receipt', async () => {
+		// Stock that arrives directly into a storage position, with no separate receipt behind it. The
+		// caller says so, and then there is no position to leave: the arrival is the only leg, which is
+		// the shape this method had for every walk.
+		const { service, store } = fixture({ levels: [levelRow({ quantity: 0 })] });
+
+		const result = await service.putAway({
+			warehouseId: WAREHOUSE,
+			variantId: VARIANT,
+			binId: BIN,
+			quantity: '6',
+			receiving: true,
+			referenceType: 'GOODS_RECEIPT',
+			referenceId: REFERENCE
+		});
+
+		const legs = movementsOf(store, 'GOODS_RECEIPT');
+
+		expect(legs.map((movement) => [movement.type, movement.quantity, movement.binId])).toEqual([
+			[StockMovementType.TRANSFER_IN, 6, BIN]
+		]);
+		expect(result.transferOutMovementId).toBeUndefined();
+		expect(result.quantityAfter).toBe('6.000000');
+		expect(store.levels[0].quantity).toBe(6);
+		expect(store.levels[0].binId).toBe(BIN);
 		expect(compareDecimalStrings(ledgerSum(store, VARIANT, WAREHOUSE), store.levels[0].quantity)).toBe(0);
 	});
 

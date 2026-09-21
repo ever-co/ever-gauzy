@@ -142,13 +142,32 @@ export interface IStockLedgerPutAway {
 	readonly referenceId: ID;
 	/** The bin the units are walking from, when the receiving area is itself a bin. */
 	readonly fromBinId?: ID;
+	/**
+	 * Whether this put-away is *also* the receipt of the units into the location.
+	 *
+	 * **The default is false, and that default is the correction.** A put-away is a walk: the units are
+	 * already at the location — the receipt recorded them there — and the walk says which address they
+	 * live at. So it is two legs, and the location's own quantity is the same before and after. Written
+	 * as one leg it credited the location a second time: a receipt of a hundred units followed by a
+	 * put-away of the same hundred left the level reading two hundred while the building held one
+	 * hundred, and neither the ledger nor a reconciliation could see it, because both sides of the
+	 * comparison were inflated by the same amount.
+	 *
+	 * A caller that really is receiving and addressing in one call — stock that arrives directly into a
+	 * storage position, with no separate receipt behind it — states this, and the arrival leg is then
+	 * the only one written.
+	 */
+	readonly receiving?: boolean;
 	/** Free-text explanation kept beside both movements. */
 	readonly reason?: string;
 }
 
 /** What a put-away wrote. */
 export interface IStockLedgerPutAwayResult {
-	/** The leg out of the receiving area, when the units were recorded in a bin. */
+	/**
+	 * The leg the units left: the receiving bin when the caller named one, and the location's
+	 * unaddressed pool otherwise. Absent only for a put-away that states it is also the receipt.
+	 */
 	readonly transferOutMovementId?: ID;
 	/** The leg into the target bin. */
 	readonly transferInMovementId: ID;

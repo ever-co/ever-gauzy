@@ -1185,17 +1185,25 @@ describe('StockTransferService — shipping and receiving (doc 09 §8.3, INV-13,
 });
 
 describe('StockTransferService — cancelling a transfer (doc 09 §8.2)', () => {
-	it('cancels a draft with a reason and writes nothing at all', async () => {
+	it('cancels a draft with a reason, beside the operator’s own note rather than over it', async () => {
 		const fixture = transferFixture();
 		const transfer = await fixture.service.createTransfer({
 			fromWarehouseId: SOURCE,
 			toWarehouseId: DESTINATION,
+			note: 'Rebalancing the winter stock',
 			lines: [{ variantId: VARIANT, requestedQuantity: 10 }]
 		});
 
 		const cancelled = await fixture.service.cancel(transfer.id, 'No longer needed');
 
-		expect(cancelled).toMatchObject({ status: StockTransferStatus.CANCELED, note: 'No longer needed' });
+		// The reason used to be patched onto `note`, which is the operator's own free text from
+		// `createTransfer` — so the document's explanation of why it exists was replaced by the
+		// explanation of why it was stopped, and the first was simply gone. Both are kept now.
+		expect(cancelled).toMatchObject({
+			status: StockTransferStatus.CANCELED,
+			note: 'Rebalancing the winter stock',
+			metadata: { cancelReason: 'No longer needed' }
+		});
 		expect(fixture.store.ledgerOf(SOURCE)).toEqual([]);
 		expect(fixture.onHand(SOURCE)).toBe(100);
 	});
@@ -1210,7 +1218,7 @@ describe('StockTransferService — cancelling a transfer (doc 09 §8.2)', () => 
 
 		expect(cancelled).toMatchObject({
 			status: StockTransferStatus.CANCELED,
-			note: 'Goods lost in transit'
+			metadata: { cancelReason: 'Goods lost in transit' }
 		});
 		// No half-state: the cancellation rewrote no ledger row, credited the source nothing back, and left
 		// the line saying what was dispatched.

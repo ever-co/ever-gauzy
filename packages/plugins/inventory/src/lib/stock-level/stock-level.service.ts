@@ -91,12 +91,23 @@ function acceptedVersionExpectation(): TVersionExpectation | undefined {
  * The movement input as the engine reads it.
  *
  * The movement contract carries the change, its cause and the document that cites it. A caller may
- * state one thing more: the backorder policy it wants applied to *this* call, which is how the
- * reservation contract’s per-call override reaches the rule that evaluates a hold. It is read from
- * the input rather than declared on it because it qualifies the caller’s intent for one movement and
- * not the movement itself, and it is honoured in place of the level’s column only when stated.
+ * state two things more, and both qualify the caller’s intent for one movement rather than the
+ * movement itself, which is why they are read from the input rather than declared on it.
+ *
+ * `allowBackorder` is the backorder policy it wants applied to *this* call, which is how the
+ * reservation contract’s per-call override reaches the rule that evaluates a hold; it is honoured in
+ * place of the level’s column only when stated.
+ *
+ * `respectSafetyStock` says that this movement is a **new demand on availability**, so the unsellable
+ * buffer is a floor it may not consume. It exists because the buffer is not part of the invariant the
+ * engine checks for every movement — `reservedAfter <= quantityAfter` says nothing about a floor — and
+ * a hold that was only measured against availability *before* the row lock was taken could be
+ * overtaken between the two. Two holds for the last two sellable units of a level holding ten against
+ * a floor of eight both read `available = 2`, both passed, and both committed, because the only rule
+ * that ran under the lock asked whether four holds fit inside ten. A caller that states this has the
+ * rule evaluated where every other invariant is evaluated: against the values read under the lock.
  */
-type TStockMovementInput = IStockMovementInput & { allowBackorder?: boolean };
+type TStockMovementInput = IStockMovementInput & { allowBackorder?: boolean; respectSafetyStock?: boolean };
 
 /**
  * A level row as a reconciliation reads it.
@@ -896,7 +907,14 @@ export class StockLevelService {
 		const quantityAfter = quantityBefore + quantityDelta;
 		const reservedAfter = reservedBefore + reservedDelta;
 
-		this.assertInvariants(input.type, level, quantityAfter, reservedAfter, input.allowBackorder);
+		this.assertInvariants(
+			input.type,
+			level,
+			quantityAfter,
+			reservedAfter,
+			input.allowBackorder,
+			input.respectSafetyStock
+		);
 
 		const binId = await this.resolveBin(manager, input);
 
@@ -1089,17 +1107,55 @@ export class StockLevelService {
 	 * demand may be backordered is not refused by the column it is overriding. The limit the policy
 	 * states still comes from the level, because a per-call override loosens the policy, it does not
 	 * grant a policy the level never configured.
+	 *
+	 * **The third rule is the safety floor, and it runs only for a movement that states it is a new
+	 * demand on availability.** The two rules above say nothing about the buffer: `reservedAfter <=
+	 * quantityAfter` is satisfied by a hold that has eaten the whole floor. A hold was therefore only
+	 * ever measured against the floor *before* the row lock was taken, by the reservation service's own
+	 * pre-flight read, and two callers competing for the last sellable unit both passed that read and
+	 * both committed — the buffer that exists to protect a physical count was sold through, silently,
+	 * and only on a level that actually configured one, which is why single-writer testing never met it.
+	 * A caller that states `respectSafetyStock` has the floor evaluated here, against the locked values,
+	 * beside every other invariant.
+	 *
+	 * It is refused with the availability code rather than with an invariant violation on purpose: it is
+	 * the same rule the pre-flight read applies, on fresher values, so the caller that loses the race is
+	 * answered with the code it already handles for "not enough of this is sellable" rather than with a
+	 * second vocabulary for one condition. A level that permits a backorder — by its own column or by
+	 * the caller's override — is exempt, because a backorder is by definition a demand past what is
+	 * sellable, and an uncounted level has no floor to speak of.
 	 */
 	private assertInvariants(
 		type: StockMovementType,
 		level: WarehouseProductVariant,
 		quantityAfter: number,
 		reservedAfter: number,
-		allowBackorderOverride?: boolean
+		allowBackorderOverride?: boolean,
+		respectSafetyStock?: boolean
 	): void {
 		const allowBackorder = allowBackorderOverride ?? !!level.allowBackorder;
 		const isUnlimited = !!level.isUnlimited;
 		const levelDetail = { id: level.id, type, quantityAfter, reservedAfter };
+
+		if (respectSafetyStock && !allowBackorder && !isUnlimited) {
+			const safetyStock = Number(level.safetyStock ?? 0);
+			const sellableAfter = quantityAfter - safetyStock;
+
+			if (reservedAfter > sellableAfter) {
+				throw inventoryError(
+					InventoryErrorCode.INSUFFICIENT_AVAILABLE,
+					'Availability at this location does not cover the requested hold: the unsellable buffer is a floor a new hold may not consume.',
+					{
+						details: {
+							...levelDetail,
+							safetyStock,
+							requested: reservedAfter - Number(level.reservedQuantity ?? 0),
+							available: sellableAfter - Number(level.reservedQuantity ?? 0)
+						}
+					}
+				);
+			}
+		}
 
 		if (reservedAfter < 0) {
 			throw invariantViolation('INV-07', 'Reserved quantity must never become negative.', {

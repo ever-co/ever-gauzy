@@ -9,15 +9,52 @@
  * The base-class double mirrors `TenantAwareCrudService` where the behaviour is observable to a
  * caller: `create` answers with the saved row, `update` reaches the repository and answers with
  * TypeORM's `UpdateResult`, and a write against an id that is not there is a miss rather than a
- * silent no-op.
+ * silent no-op. **A criteria object that names a `version` is passed straight through**, exactly as
+ * the real base class does: that column is a precondition the `UPDATE` evaluates, and a pre-read
+ * would answer "not found" for a row that exists and has merely moved on.
+ *
+ * `commitVersionedUpdate` and `versionExpectationOf` are doubled here for the same reason the rest
+ * of the barrel is. The contract reproduced is
+ * `packages/core/src/lib/concurrency/versioned-write.ts`: the expected version is the one the caller
+ * stated or, for a wildcard, the one the row reports; the write is one statement predicated on it;
+ * and the affected-row count is the whole answer — one row means the record is now at the next
+ * version, zero means it moved on or is gone, and the read-back decides which of the two the caller
+ * is told about.
  */
 jest.mock('@gauzy/core', () => {
-	const { NotFoundException } = require('@nestjs/common');
+	const { HttpException, HttpStatus, NotFoundException } = require('@nestjs/common');
 
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
 	class BaseEntity {}
+
+	/** A refusal that names its status and the catalogued code a caller branches on. */
+	class VersionedWriteException extends HttpException {
+		readonly code: string;
+		readonly details?: Record<string, unknown>;
+
+		constructor(status: number, code: string, message: string, details?: Record<string, unknown>) {
+			super({ statusCode: status, error: 'Error', message }, status);
+			this.code = code;
+			this.details = details;
+		}
+	}
+
+	/** The version a row reports, read as a positive integer or as nothing at all. */
+	const parseEntityVersion = (value: unknown): number | null => {
+		if (typeof value === 'number') {
+			return Number.isInteger(value) && value > 0 ? value : null;
+		}
+
+		if (typeof value === 'string' && /^[0-9]+$/.test(value.trim())) {
+			const version = Number(value.trim());
+
+			return Number.isSafeInteger(version) && version > 0 ? version : null;
+		}
+
+		return null;
+	};
 
 	class TenantAwareCrudService {
 		constructor(
@@ -50,6 +87,13 @@ jest.mock('@gauzy/core', () => {
 		async update(id: any, partial: any): Promise<any> {
 			if (typeof id === 'string') {
 				await this.findOneByIdString(id);
+			}
+
+			// A criterion that names a version is a precondition rather than a locator, so it is not
+			// pre-read: the statement itself is what decides, and reading first would report a row that
+			// moved on as one that is gone.
+			if (id && typeof id === 'object' && !('version' in id) && id.id) {
+				await this.findOneByIdString(id.id);
 			}
 
 			return this.typeOrmRepository.update(id, partial);
@@ -86,12 +130,97 @@ jest.mock('@gauzy/core', () => {
 				throw new Error('no numbering series is configured in this double');
 			}
 		},
+		versionExpectationOf: (request: any) => {
+			const expectation = request?.['versionExpectation'];
+
+			if (!expectation) {
+				throw new VersionedWriteException(
+					HttpStatus.PRECONDITION_REQUIRED,
+					'VERSION_REQUIRED',
+					'This write must state the version it was based on, and no version was accepted for it.'
+				);
+			}
+
+			return expectation;
+		},
+		commitVersionedUpdate: async (service: any, options: any) => {
+			const readCurrent =
+				options.readVersion ??
+				(async () => parseEntityVersion((await service.findOneByIdString(options.id))?.version));
+			const expected =
+				!options.expectation?.wildcard && options.expectation?.versions?.length === 1
+					? options.expectation.versions[0]
+					: parseEntityVersion(await readCurrent());
+
+			if (expected === null) {
+				throw new VersionedWriteException(HttpStatus.NOT_FOUND, 'RESOURCE_NOT_FOUND', 'The requested record was not found.', {
+					id: options.id
+				});
+			}
+
+			const nextVersion = expected + 1;
+			const result = await service.update(
+				{ ...(options.where ?? {}), id: options.id, version: expected },
+				{ ...options.patch, version: nextVersion }
+			);
+
+			if (Number(result?.affected ?? 0) > 0) {
+				return { version: nextVersion };
+			}
+
+			let actualVersion: number | null = null;
+			let exists = true;
+
+			try {
+				const row = await service.findOneByIdString(options.id);
+
+				actualVersion = parseEntityVersion(row?.version);
+				exists = !!row;
+			} catch (error) {
+				exists = !(error instanceof NotFoundException);
+			}
+
+			if (!exists) {
+				throw new VersionedWriteException(HttpStatus.NOT_FOUND, 'RESOURCE_NOT_FOUND', 'The requested record was not found.', {
+					id: options.id
+				});
+			}
+
+			throw new VersionedWriteException(
+				HttpStatus.CONFLICT,
+				'ENTITY_VERSION_CONFLICT',
+				'The record changed since you read it. Read it again and reapply your change.',
+				{ expectedVersion: expected, ...(actualVersion === null ? {} : { actualVersion }) }
+			);
+		},
+		// The dialect helpers every closure statement is written through. The service imports them from
+		// the barrel this factory replaces, and a name a factory does not answer for is `undefined` at
+		// the call site — so the first descendant read would throw before it read anything. They are
+		// doubled for the embedded dialect this suite runs against: a statement is left as it was
+		// written, and a named parameter becomes the `?` both SQLite drivers bind, with the values in
+		// the order the placeholders appear.
+		prepareSQLQuery: (sql: string) => sql,
+		toPositionalStatement: (sql: string, parameters: Record<string, unknown>) => {
+			const values: unknown[] = [];
+			const positional = sql.replace(/(?<!:):(\w+)\b/g, (match: string, name: string) => {
+				if (!Object.prototype.hasOwnProperty.call(parameters ?? {}, name)) {
+					return match;
+				}
+
+				values.push(parameters[name]);
+
+				return '?';
+			});
+
+			return { sql: positional, parameters: values };
+		},
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
 			currentTenantId: () => null,
 			currentOrganizationId: () => null,
 			currentEmployeeId: () => null,
+			currentRequest: () => null,
 			hasPermission: () => false
 		},
 		// The two SQL helpers are the real ones. They are pure functions over a statement and a parameter
@@ -168,10 +297,15 @@ const pairKey = (pair: { id_ancestor: string; id_descendant: string }) =>
  *
  * @param tables The whole datastore.
  * @param tableName The table this repository reads and writes.
- * @param writes Where the partial updates this repository receives are kept, so a test can tell a
- * rewrite of a cached snapshot from a write that did not happen.
+ * @param writes Where the updates this repository receives are kept — the criteria the statement ran
+ * with as well as the columns it wrote — so a test can tell a rewrite of a cached snapshot from a
+ * write that did not happen, and can read the predicate a conditional write was made under.
  */
-function repository(tables: ITables, tableName: 'bin' | 'zone', writes: Array<{ id: string; partial: any }> = []) {
+function repository(
+	tables: ITables,
+	tableName: 'bin' | 'zone',
+	writes: Array<{ id: string; criteria: any; partial: any }> = []
+) {
 	let sequence = 0;
 	const rows = () => tables[tableName];
 	const matches = (row: any, where: any = {}): boolean =>
@@ -254,11 +388,17 @@ function repository(tables: ITables, tableName: 'bin' | 'zone', writes: Array<{ 
 			return created;
 		},
 		// The platform's `update` reaches TypeORM's own, which answers an `UpdateResult` and not the row.
+		//
+		// **Every member of the criteria is a predicate of the statement**, not just the id. A
+		// conditional write states the version it was read at — and the tenant and organization the row
+		// must belong to — in the same object, and a double that matched on the id alone would let a
+		// write land that the database would have refused, which is the whole defect these criteria
+		// exist to catch.
 		update: async (criteria: any, partial: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows().findIndex((row) => row.id === id);
+			const where = typeof criteria === 'string' ? { id: criteria } : criteria ?? {};
+			const index = rows().findIndex((row) => matches(row, where));
 
-			writes.push({ id, partial });
+			writes.push({ id: where.id, criteria: where, partial });
 
 			if (index >= 0) {
 				Object.assign(rows()[index], partial);
@@ -551,19 +691,28 @@ function ledger(seed: ILedgerSeed = {}) {
 
 			return true;
 		},
-		// The walk received units take into a bin: the arrival, and the leg out of the receiving bin when
-		// the units were recorded in one, recorded against the document that asked for the walk.
+		// The walk received units take into a bin: the arrival, and the leg out of the position they were
+		// recorded at, recorded against the document that asked for the walk.
+		//
+		// **The leg out is written whether or not a source bin was named.** A receipt records units at
+		// the location with no address, so a walk that names no source bin leaves the unaddressed pool
+		// rather than nothing: the pair nets to zero at the location, which is what stops a put-away from
+		// crediting the same units a second time.
 		putAway: async (request) => {
 			putAways.push(request as unknown as Record<string, unknown>);
 			const variantId = String(request.variantId);
 			const level = levels.get(variantId);
 			const legs: string[] = [];
+			const leaving = subtractQuantities('0', request.quantity);
 
 			if (request.fromBinId) {
 				const held = binsOf(variantId);
 
-				held.set(String(request.fromBinId), addQuantities(held.get(String(request.fromBinId)) ?? '0', subtractQuantities('0', request.quantity)));
+				held.set(String(request.fromBinId), addQuantities(held.get(String(request.fromBinId)) ?? '0', leaving));
 				placement.set(variantId, held);
+				legs.push(`putaway-${putAways.length}-out`);
+			} else {
+				unplaced.set(variantId, addQuantities(unplaced.get(variantId) ?? '0', leaving));
 				legs.push(`putaway-${putAways.length}-out`);
 			}
 
@@ -578,7 +727,7 @@ function ledger(seed: ILedgerSeed = {}) {
 			}
 
 			return {
-				...(request.fromBinId ? { transferOutMovementId: legs[0] } : {}),
+				transferOutMovementId: legs[0],
 				transferInMovementId: legs[legs.length - 1],
 				binId: String(request.binId),
 				quantityAfter: totalOf(variantId)
@@ -646,10 +795,11 @@ function binFixture(
 		closure: [...(options.closure ?? [])],
 		pickLine: [...(options.pickLines ?? [])]
 	};
-	const binWrites: Array<{ id: string; partial: any }> = [];
+	const binWrites: Array<{ id: string; criteria: any; partial: any }> = [];
 	const capability = options.ledger ? ledger(options.ledger) : undefined;
+	const binRepository = repository(tables, 'bin', binWrites);
 	const service = new WarehouseBinService(
-		repository(tables, 'bin', binWrites) as never,
+		binRepository as never,
 		{} as never,
 		repository(tables, 'zone') as never,
 		capability?.port as never,
@@ -661,6 +811,8 @@ function binFixture(
 		tables,
 		capability,
 		binWrites,
+		/** The position repository itself, so a test can stage the reading a stale writer took. */
+		binRepository,
 		store: (id: string) => tables.bin.find((row) => row.id === id),
 		ancestorsOf: (id: string): string[] =>
 			tables.closure.filter((pair) => pair.id_descendant === id).map((pair) => pair.id_ancestor),
@@ -1127,6 +1279,98 @@ describe('WarehouseBinService — the two facts a position may never change (doc
 	});
 });
 
+describe('WarehouseBinService — a position is written under the version it was read at (doc 09 §14.2 rule 1)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('predicates the statement on the version it read, and on the row’s own tenant and organization', async () => {
+		// The three writes on this service used to compute `version + 1` in application code and issue
+		// it through the unconditional base updater, so the statement carried no predicate at all. What
+		// is asserted here is the predicate itself: the version the service read, and the scope of the
+		// row it read — not merely that the counter ended up one higher.
+		const fixture = binFixture({ bins: [binRow('bin-1')] });
+
+		await fixture.service.setBlocked('bin-1', true);
+
+		expect(fixture.binWrites).toHaveLength(1);
+		expect(fixture.binWrites[0].criteria).toEqual({
+			id: 'bin-1',
+			version: 1,
+			tenantId: TENANT,
+			organizationId: ORG
+		});
+		expect(fixture.binWrites[0].partial).toEqual({ isBlocked: true, version: 2 });
+		expect(fixture.store('bin-1')).toMatchObject({ isBlocked: true, version: 2 });
+	});
+
+	it('refuses a rename made from a reading the position has already moved past, and keeps the write that won', async () => {
+		// Two operators read position B at version 5. One blocks it; the other renames it from the copy
+		// it read. Before the fix the second write landed unpredicated, erased the block and claimed the
+		// same version the first write had claimed — so a client holding an entity tag of that version
+		// read a row neither write had produced, and no conflict was ever reported.
+		const fixture = binFixture({ bins: [binRow('bin-1', { version: 5 })] });
+		const readAtFive = { ...fixture.store('bin-1') };
+
+		await fixture.service.setBlocked('bin-1', true);
+		expect(fixture.store('bin-1')).toMatchObject({ isBlocked: true, version: 6 });
+
+		// The second operator's edit, computed against the reading it took at version 5.
+		jest.spyOn(fixture.binRepository, 'findOne').mockResolvedValueOnce(readAtFive as never);
+
+		await expect(fixture.service.update('bin-1', { code: 'A-02-07' } as never)).rejects.toMatchObject({
+			code: 'ENTITY_VERSION_CONFLICT'
+		});
+
+		// The block stands, the rename did not land, and the counter moved exactly once.
+		expect(fixture.store('bin-1')).toMatchObject({ isBlocked: true, code: 'BIN-1', version: 6 });
+	});
+
+	it('refuses a re-parent made from a stale reading, and leaves the tree where the write that won put it', async () => {
+		const fixture = binFixture({
+			bins: [binRow('bin-1', { version: 3 }), binRow('parent', { version: 1 })],
+			closure: [
+				{ id_ancestor: 'bin-1', id_descendant: 'bin-1' },
+				{ id_ancestor: 'parent', id_descendant: 'parent' }
+			]
+		});
+		const readAtThree = { ...fixture.store('bin-1') };
+
+		await fixture.service.setBlocked('bin-1', true);
+		expect(fixture.store('bin-1')).toMatchObject({ version: 4 });
+
+		jest.spyOn(fixture.binRepository, 'findOne').mockResolvedValueOnce(readAtThree as never);
+
+		await expect(fixture.service.reparent('bin-1', 'parent')).rejects.toMatchObject({
+			code: 'ENTITY_VERSION_CONFLICT'
+		});
+
+		// A refused move rewrites no closure row either: the subtree is still where it was.
+		//
+		// The parent is asserted as a value rather than through `toMatchObject`, which distinguishes a
+		// property that is present and `undefined` from one that is absent — a distinction the row's
+		// shape now turns on and the claim never did. What is being said is that the bin has no parent.
+		expect(fixture.store('bin-1').parentId).toBeUndefined();
+		expect(fixture.store('bin-1')).toMatchObject({ version: 4 });
+		expect(fixture.pairs().sort()).toEqual(['bin-1->bin-1', 'parent->parent']);
+	});
+
+	it('refuses a write against a position another writer has deleted', async () => {
+		const fixture = binFixture({ bins: [binRow('bin-1')] });
+		const readBeforeDelete = { ...fixture.store('bin-1') };
+
+		fixture.tables.bin = [];
+		jest.spyOn(fixture.binRepository, 'findOne').mockResolvedValueOnce(readBeforeDelete as never);
+
+		await expect(fixture.service.setBlocked('bin-1', true)).rejects.toMatchObject({
+			code: 'RESOURCE_NOT_FOUND'
+		});
+	});
+});
+
 describe('WarehouseBinService — re-parenting a subtree (doc 09 §14.2 rule 2, INV-25)', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
@@ -1332,6 +1576,32 @@ describe('WarehouseBinService — where a variant is kept, and the walk that put
 		expect(fixture.capability?.movements).toEqual([]);
 		expect(fixture.capability?.putAways).toEqual([]);
 		expect(fixture.capability?.level('variant')?.binId).toBe('target');
+	});
+
+	it('refuses to declare a bin of another location as the home bin of a level at this one', async () => {
+		// The movement path refuses exactly this — `resolveBin` answers `BIN_LOCATION_MISMATCH` for a bin
+		// that belongs to another location — but a declaration writes no movement and so never reached
+		// that guard. The level row of one building could be pointed at a position standing in another,
+		// the write succeeded, and the pick generated from that level sent a picker to an address that is
+		// not in their building; reconciliation could never report it closed either, because a bin outside
+		// the location can never be in the partition a run over that location walks.
+		const fixture = binFixture({
+			bins: [binRow('target', { code: 'A-01' }), binRow('elsewhere', { code: 'X-01', warehouseId: OTHER_WAREHOUSE })],
+			ledger: { levels: { variant: { quantity: '10.000000' } } }
+		});
+
+		await expect(
+			fixture.service.assignHomeBin('elsewhere', { variantId: 'variant', warehouseId: WAREHOUSE })
+		).rejects.toThrow(/^BIN_LOCATION_MISMATCH/);
+		expect(fixture.capability?.declarations).toEqual([]);
+
+		// The same declaration against a position of the stated location is written.
+		await expect(
+			fixture.service.assignHomeBin('target', { variantId: 'variant', warehouseId: WAREHOUSE })
+		).resolves.toBe(true);
+		expect(fixture.capability?.declarations).toEqual([
+			{ warehouseId: WAREHOUSE, variantId: 'variant', binId: 'target' }
+		]);
 	});
 
 	it('walks received units into a bin, and refuses a declaration with no variant to declare', async () => {

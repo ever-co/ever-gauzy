@@ -1,7 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { FindManyOptions, IsNull } from 'typeorm';
-import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
+import { FindManyOptions, In, IsNull } from 'typeorm';
+import { DecimalString, ID, IPagination } from '@gauzy/contracts';
+import {
+	RequestContext,
+	TenantAwareCrudService,
+	WarehouseProductVariant,
+	addDecimalStrings,
+	formatDecimalUnits,
+	parseDecimalString,
+	subtractDecimalStrings
+} from '@gauzy/core';
 import {
 	StockCountLineStatus,
 	StockCountStatus,
@@ -22,6 +30,17 @@ const COUNTABLE: StockCountStatus[] = [StockCountStatus.OPEN, StockCountStatus.C
 
 /** States a session may not be opened from, because it has already finished. */
 const TERMINAL: StockCountStatus[] = [StockCountStatus.CLOSED, StockCountStatus.CANCELED];
+
+/**
+ * Every state a session is still being worked in: the complement of {@link TERMINAL}.
+ *
+ * It is derived rather than listed so the two can never disagree. A status added to the enumeration
+ * is a non-terminal one until it is stated to be terminal, which is the safe direction: a new state
+ * the "one session per location" rule had never heard of would otherwise be invisible to it.
+ */
+const NON_TERMINAL: StockCountStatus[] = Object.values(StockCountStatus).filter(
+	(status) => !TERMINAL.includes(status)
+);
 
 /**
  * Opens, counts and closes physical count sessions.
@@ -53,21 +72,36 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 	 * At most one session per location may be in a non-terminal state. Two open sessions over the same
 	 * shelves would each snapshot a different expectation and each write a correction, which is how a
 	 * count turns into a correction war.
+	 *
+	 * **The guard reads the whole non-terminal set, not `OPEN` alone.** It used to compare against that
+	 * one status, and a session spends almost none of its life there: the first sheet recorded moves it
+	 * to `COUNTING`, which is where a real count sits for hours. So an operator could open a second
+	 * session over the same shelves the moment the first one had a reading in it — both snapshot
+	 * `expectedQuantity` from the same levels at different moments, both close, and the second writes a
+	 * correction computed as `closing − current` that overwrites the first operator's reconciliation
+	 * with a stale sheet. A `DRAFT` session was invisible to it for the same reason.
+	 *
+	 * The organization travels with the tenant, because every other read in this package is scoped by
+	 * both; and the conflicting session's status is reported beside its id, so an operator is told which
+	 * session to close rather than being told only that one exists.
 	 */
 	public async createCount(input: Partial<StockCount>): Promise<StockCount> {
 		return await this.typeOrmStockCountRepository.manager.transaction(async (manager) => {
+			const tenantId = RequestContext.currentTenantId();
+			const organizationId = RequestContext.currentOrganizationId();
 			const open = await manager.findOne(StockCount, {
 				where: {
 					warehouseId: input.warehouseId,
-					status: StockCountStatus.OPEN,
-					tenantId: RequestContext.currentTenantId()
+					status: In(NON_TERMINAL),
+					...(tenantId ? { tenantId } : {}),
+					...(organizationId ? { organizationId } : {})
 				} as any
 			});
 			if (open) {
 				throw inventoryError(
 					InventoryErrorCode.COUNT_ALREADY_OPEN,
-					'A count session is already open for this location.',
-					{ details: { stockCountId: open.id } }
+					`A count session is already ${open.status} for this location, and a location may hold only one session that has not finished.`,
+					{ details: { stockCountId: open.id, status: open.status } }
 				);
 			}
 
@@ -141,15 +175,23 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 				}
 
 				const counted = Number(input.countedQuantity);
+				// The variance is the difference between two `numeric(20,6)` quantities, so it is taken
+				// over their exact digits: `9.9 − 10` evaluated as doubles is `-0.09999999999999964`, and
+				// that value is what the sheet would then report and what the closing correction would be
+				// computed from.
+				const variance = Number(
+					subtractDecimalStrings(this.decimalTextOf(input.countedQuantity), this.decimalTextOf(line.expectedQuantity))
+				);
+
 				if (line.status === StockCountLineStatus.PENDING) {
 					line.countedQuantity = counted;
-					line.variance = counted - Number(line.expectedQuantity);
+					line.variance = variance;
 					line.status = StockCountLineStatus.COUNTED;
 				} else {
 					// A second reading of the same position is a recount, and the recount is what closes
 					// the line. Keeping both readings is what makes the two counts comparable.
 					line.recountedQuantity = counted;
-					line.variance = counted - Number(line.expectedQuantity);
+					line.variance = variance;
 					line.status = StockCountLineStatus.RECOUNTED;
 				}
 				line.countedAt = new Date();
@@ -160,9 +202,17 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 
 			const all = await manager.find(StockCountLine, { where: { stockCountId: id } });
 			count.countedLineCount = all.filter((line: StockCountLine) => line.countedQuantity !== null && line.countedQuantity !== undefined).length;
-			count.varianceUnits = all.reduce(
-				(total: number, line: StockCountLine) => total + Math.abs(Number(line.variance ?? 0)),
-				0
+			// The running total is exact. A variance is a `numeric(20,6)` quantity, and accumulating
+			// magnitudes of those as JavaScript doubles is the arithmetic that makes three lines of
+			// `0.1` sum to `0.30000000000000004` — a session whose sheet says one thing and whose header
+			// says another, on the one number an operator reads to decide whether a recount is needed.
+			// The conversion to the column's `number` happens once, on a value that is already right.
+			count.varianceUnits = Number(
+				all.reduce<DecimalString>(
+					(total: DecimalString, line: StockCountLine) =>
+						addDecimalStrings(total, this.magnitudeOf(line.variance)),
+					'0'
+				)
 			);
 			if (count.status === StockCountStatus.OPEN) {
 				count.status = StockCountStatus.COUNTING;
@@ -193,8 +243,13 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 				}
 
 				const level = await manager.findOne(WarehouseProductVariant, { where: { id: line.warehouseProductVariantId } });
-				const current = Number(level?.quantity ?? 0);
-				const delta = Number(closing) - current;
+				// The correction is the difference between what the floor reported and what the level
+				// holds, taken over the exact digits of the two `numeric(20,6)` columns: a delta computed
+				// as a double difference is a correction that writes a residue into the ledger, and the
+				// ledger is the number every later reconciliation is measured against.
+				const delta = Number(
+					subtractDecimalStrings(this.decimalTextOf(closing), this.decimalTextOf(level?.quantity ?? 0))
+				);
 				if (delta === 0) {
 					continue;
 				}
@@ -219,7 +274,9 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 					manager
 				);
 				line.movementId = applied.movementId;
-				line.variance = Number(closing) - Number(line.expectedQuantity);
+				line.variance = Number(
+					subtractDecimalStrings(this.decimalTextOf(closing), this.decimalTextOf(line.expectedQuantity))
+				);
 				await manager.save(StockCountLine, line);
 				movements.push(applied.movementId);
 			}
@@ -274,6 +331,42 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 	| Internals
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * Reads a stored quantity as the exact decimal text the column holds.
+	 *
+	 * A `numeric(20,6)` column reaches this code as whatever the driver and the platform's transformer
+	 * produced — a `number` on one dialect, the digits as text on another — and both are exact
+	 * decimals. A column holding nothing, or something that is not a decimal at all, reads as zero
+	 * rather than raising: a count is a report about shelves, and refusing to record a sheet over one
+	 * unreadable column would be a worse answer than a figure that leaves it out.
+	 *
+	 * @param value The column as it was read.
+	 * @returns The exact decimal text.
+	 */
+	private decimalTextOf(value: unknown): DecimalString {
+		if (value === null || value === undefined) {
+			return '0';
+		}
+
+		try {
+			const { units, scale } = parseDecimalString(value as DecimalString | number);
+
+			return formatDecimalUnits(units, scale);
+		} catch {
+			return '0';
+		}
+	}
+
+	/**
+	 * @param value The variance column as it was read.
+	 * @returns Its magnitude as exact decimal text.
+	 */
+	private magnitudeOf(value: unknown): DecimalString {
+		const { units, scale } = parseDecimalString(this.decimalTextOf(value));
+
+		return formatDecimalUnits(units < 0n ? -units : units, scale);
+	}
 
 	/** Loads a session and refuses an operation the state does not allow. */
 	private async requireState(manager: any, id: ID, expected: StockCountStatus[]): Promise<StockCount> {

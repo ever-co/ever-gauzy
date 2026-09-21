@@ -179,13 +179,20 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	/**
 	 * Updates a bin.
 	 *
+	 * The route carries the version precondition so a caller can state the reading it edited. It is
+	 * optional, because a client that has never stated one must not start being refused; the service's
+	 * own conditional write is predicated on the version it read either way, so a concurrent edit is
+	 * reported as a conflict rather than silently overwritten whether or not the caller stated one.
+	 *
 	 * @param id The bin.
 	 * @param entity The fields to change.
 	 * @returns The updated bin.
 	 */
 	@ApiOperation({ summary: 'Update a bin' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The bin was updated.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The bin moved past the version the edit was based on.' })
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
+	@Versioned({ required: false })
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -206,7 +213,9 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	@ApiOperation({ summary: 'Move a bin in the hierarchy' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The bin was moved.' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The move would create a cycle.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The bin moved past the version the move was based on.' })
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
+	@Versioned({ required: false })
 	@Idempotent({ scope: 'warehouse.move', required: false, resourceType: 'warehouse-bin' })
 	@Post(':id/reparent')
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -225,7 +234,9 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	 */
 	@ApiOperation({ summary: 'Block a bin' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The bin was blocked; the stock in it did not move.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The bin moved past the version the block was based on.' })
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
+	@Versioned({ required: false })
 	@Post(':id/block')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async block(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: BlockWarehouseBinDTO): Promise<WarehouseBin> {
@@ -242,7 +253,9 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	 */
 	@ApiOperation({ summary: 'Unblock a bin' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The bin was unblocked.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The bin moved past the version the unblock was based on.' })
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
+	@Versioned({ required: false })
 	@Post(':id/unblock')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async unblock(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: BlockWarehouseBinDTO): Promise<WarehouseBin> {
