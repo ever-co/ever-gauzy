@@ -93,7 +93,7 @@ export class CreateWebhookTables1791000000040 implements MigrationInterface {
 		);
 		// One subscription per endpoint per organization.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_webhook_subscription_url" ON "webhook_subscription" ("organizationId", "url") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_webhook_subscription_url" ON "webhook_subscription" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "url") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_webhook_subscription_channel" ON "webhook_subscription" ("channelId") WHERE "channelId" IS NOT NULL`
@@ -173,7 +173,7 @@ export class CreateWebhookTables1791000000040 implements MigrationInterface {
 			`CREATE INDEX "IDX_webhook_subscription_active" ON "webhook_subscription" ("organizationId", "isActive") WHERE "isActive" = 1 AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_webhook_subscription_url" ON "webhook_subscription" ("organizationId", "url") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_webhook_subscription_url" ON "webhook_subscription" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "url") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_webhook_subscription_channel" ON "webhook_subscription" ("channelId") WHERE "channelId" IS NOT NULL`
@@ -242,24 +242,29 @@ export class CreateWebhookTables1791000000040 implements MigrationInterface {
 	/**
 	 * MySQL Up Migration
 	 *
+	 * MySQL has no partial index, so both rules are carried by the stored generated key columns
+	 * `CreateSequenceTable1791000000000` documents for the whole set: `deletedKey` for `"deletedAt" IS
+	 * NULL`, and `organizationKey` for the subscription's nullable scope column, without which a
+	 * subscription that belongs to no organization was held to no endpoint rule at all.
+	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`webhook_subscription\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`url\` varchar(1024) NOT NULL, \`secret\` varchar(255) NOT NULL, \`events\` json NOT NULL, \`channelId\` varchar(36) NULL, \`description\` text NULL, \`headers\` json NULL, \`apiVersion\` varchar(16) NULL, \`failureCount\` int NOT NULL DEFAULT 0, \`lastSuccessAt\` datetime NULL, \`lastFailureAt\` datetime NULL, \`disabledAt\` datetime NULL, \`metadata\` json NULL, INDEX \`IDX_webhook_subscription_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_webhook_subscription_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_webhook_subscription_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_webhook_subscription_is_active\` (\`isActive\`), INDEX \`IDX_webhook_subscription_is_archived\` (\`isArchived\`), INDEX \`IDX_webhook_subscription_tenant\` (\`tenantId\`), INDEX \`IDX_webhook_subscription_organization\` (\`organizationId\`), INDEX \`IDX_webhook_subscription_active\` (\`organizationId\`, \`isActive\`), INDEX \`IDX_webhook_subscription_channel\` (\`channelId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`webhook_subscription\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`name\` varchar(255) NOT NULL, \`url\` varchar(1024) NOT NULL, \`secret\` varchar(255) NOT NULL, \`events\` json NOT NULL, \`channelId\` varchar(36) NULL, \`description\` text NULL, \`headers\` json NULL, \`apiVersion\` varchar(16) NULL, \`failureCount\` int NOT NULL DEFAULT 0, \`lastSuccessAt\` datetime NULL, \`lastFailureAt\` datetime NULL, \`disabledAt\` datetime NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_webhook_subscription_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_webhook_subscription_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_webhook_subscription_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_webhook_subscription_is_active\` (\`isActive\`), INDEX \`IDX_webhook_subscription_is_archived\` (\`isArchived\`), INDEX \`IDX_webhook_subscription_tenant\` (\`tenantId\`), INDEX \`IDX_webhook_subscription_organization\` (\`organizationId\`), INDEX \`IDX_webhook_subscription_active\` (\`organizationId\`, \`isActive\`), INDEX \`IDX_webhook_subscription_channel\` (\`channelId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		// A 1024-character column cannot be indexed in full under InnoDB's key limit, so the endpoint
 		// uniqueness is expressed over a prefix; two endpoints differing only past that prefix are
 		// caught by the service check instead.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_webhook_subscription_url\` ON \`webhook_subscription\` (\`organizationId\`, \`url\`(255), \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_webhook_subscription_url\` ON \`webhook_subscription\` (\`organizationKey\`, \`url\`(255), \`deletedKey\`)`
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`webhook_delivery\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`subscriptionId\` varchar(36) NOT NULL, \`eventId\` varchar(36) NOT NULL, \`eventName\` varchar(160) NOT NULL, \`payload\` json NOT NULL, \`status\` varchar(255) NOT NULL DEFAULT 'PENDING', \`attemptCount\` int NOT NULL DEFAULT 0, \`responseStatus\` int NULL, \`responseBody\` text NULL, \`durationMs\` int NULL, \`nextAttemptAt\` datetime NULL, \`deliveredAt\` datetime NULL, \`lastError\` text NULL, INDEX \`IDX_webhook_delivery_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_webhook_delivery_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_webhook_delivery_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_webhook_delivery_is_active\` (\`isActive\`), INDEX \`IDX_webhook_delivery_is_archived\` (\`isArchived\`), INDEX \`IDX_webhook_delivery_tenant\` (\`tenantId\`), INDEX \`IDX_webhook_delivery_organization\` (\`organizationId\`), INDEX \`IDX_webhook_delivery_retry\` (\`subscriptionId\`, \`status\`, \`nextAttemptAt\`), INDEX \`IDX_webhook_delivery_event\` (\`eventId\`), INDEX \`IDX_webhook_delivery_org_created\` (\`organizationId\`, \`createdAt\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`webhook_delivery\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`subscriptionId\` varchar(36) NOT NULL, \`eventId\` varchar(36) NOT NULL, \`eventName\` varchar(160) NOT NULL, \`payload\` json NOT NULL, \`status\` varchar(255) NOT NULL DEFAULT 'PENDING', \`attemptCount\` int NOT NULL DEFAULT 0, \`responseStatus\` int NULL, \`responseBody\` text NULL, \`durationMs\` int NULL, \`nextAttemptAt\` datetime NULL, \`deliveredAt\` datetime NULL, \`lastError\` text NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_webhook_delivery_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_webhook_delivery_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_webhook_delivery_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_webhook_delivery_is_active\` (\`isActive\`), INDEX \`IDX_webhook_delivery_is_archived\` (\`isArchived\`), INDEX \`IDX_webhook_delivery_tenant\` (\`tenantId\`), INDEX \`IDX_webhook_delivery_organization\` (\`organizationId\`), INDEX \`IDX_webhook_delivery_retry\` (\`subscriptionId\`, \`status\`, \`nextAttemptAt\`), INDEX \`IDX_webhook_delivery_event\` (\`eventId\`), INDEX \`IDX_webhook_delivery_org_created\` (\`organizationId\`, \`createdAt\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_webhook_delivery\` ON \`webhook_delivery\` (\`subscriptionId\`, \`eventId\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_webhook_delivery\` ON \`webhook_delivery\` (\`subscriptionId\`, \`eventId\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`webhook_delivery\` ADD CONSTRAINT \`FK_webhook_delivery_subscription\` FOREIGN KEY (\`subscriptionId\`) REFERENCES \`webhook_subscription\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`

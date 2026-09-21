@@ -52,16 +52,20 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * NULL` predicate accomplishes on the other two dialects. That generated column exists on MySQL only
  * and is declared by no entity.
  *
- * The other two uniqueness rules are guarded by a **value** rather than by nullability — one live
- * account per party, provider and role is guarded by `"status" = 'ACTIVE'`, and one default instrument
- * per account and instrument type by `"isDefault" = true`. No generated-column form exists for those in
- * the supported MySQL range, and neither can be expressed as a nullable key part without adding a
- * column the entities do not need. On MySQL they therefore get **no index at all** and are enforced by
- * the account-holder and instrument services inside the writing transaction — the default rule under a
- * row lock on the account — and re-reported nightly by the schema audit, exactly as the schema chapter
- * prescribes. A constraint a dialect silently ignores would be worse than a documented service check,
- * because it reads as enforcement and is not. The remaining filtered indexes are lookup narrowings
- * rather than uniqueness rules, so MySQL gets them without their predicate.
+ * A third rule is guarded by a **value** that no null rule can stand in for: a provider token is unique
+ * among the tokens that are not revoked, `"status" <> 'REVOKED'`. That one gets a generated key of its
+ * own, `notRevokedKey`, which is the row's id once the token is revoked, so a revoked token can never
+ * collide — exactly what excluding it from a partial index does. Without it the MySQL index was the
+ * *stricter* of the three, refusing to re-register a token that had been revoked.
+ *
+ * Two further uniqueness rules are guarded by a value and have **no index at all** on MySQL: one live
+ * account per party, provider and role (`"status" = 'ACTIVE'`), and one default instrument per account
+ * and instrument type (`"isDefault" = true`). The same generated-key form would express both — the
+ * `notRevokedKey` beside them is the proof — so this is a gap in the MySQL branch rather than a limit
+ * of the dialect, and until it is closed the rules are enforced by the account-holder and instrument
+ * services inside the writing transaction, the default rule under a row lock on the account, and
+ * re-reported nightly by the schema audit. The remaining filtered indexes are lookup narrowings rather
+ * than uniqueness rules, so MySQL gets them without their predicate.
  */
 export class CreatePaymentInstrumentTables1791000000125 implements MigrationInterface {
 	name = 'CreatePaymentInstrumentTables1791000000125';
@@ -419,7 +423,7 @@ export class CreatePaymentInstrumentTables1791000000125 implements MigrationInte
 				: '';
 
 			await queryRunner.query(
-				`CREATE TABLE \`payment_method_token\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`accountHolderId\` varchar(36) NOT NULL, \`paymentProviderId\` varchar(36) NULL, \`providerKey\` varchar(64) NOT NULL, \`token\` varchar(255) NOT NULL, \`type\` varchar(16) NOT NULL DEFAULT 'CARD', \`brand\` varchar(64) NULL, \`last4\` varchar(4) NULL, \`expiryMonth\` int NULL, \`expiryYear\` int NULL, \`holderName\` varchar(255) NULL, \`billingAddressId\` varchar(36) NULL, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`lastUsedAt\` datetime NULL, \`revokedAt\` datetime NULL, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_payment_method_token_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_payment_method_token_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_payment_method_token_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_payment_method_token_is_active\` (\`isActive\`), INDEX \`IDX_payment_method_token_is_archived\` (\`isArchived\`), INDEX \`IDX_payment_method_token_tenant\` (\`tenantId\`), INDEX \`IDX_payment_method_token_organization\` (\`organizationId\`), UNIQUE INDEX \`UQ_payment_method_token_provider_token\` (\`providerKey\`, \`token\`, \`deletedKey\`), INDEX \`IDX_payment_method_token_holder\` (\`accountHolderId\`, \`status\`, \`type\`), INDEX \`IDX_payment_method_token_provider\` (\`paymentProviderId\`), INDEX \`IDX_payment_method_token_address\` (\`billingAddressId\`), INDEX \`IDX_payment_method_token_expiry\` (\`status\`, \`expiryYear\`, \`expiryMonth\`)${holder}${address}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+				`CREATE TABLE \`payment_method_token\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`accountHolderId\` varchar(36) NOT NULL, \`paymentProviderId\` varchar(36) NULL, \`providerKey\` varchar(64) NOT NULL, \`token\` varchar(255) NOT NULL, \`type\` varchar(16) NOT NULL DEFAULT 'CARD', \`brand\` varchar(64) NULL, \`last4\` varchar(4) NULL, \`expiryMonth\` int NULL, \`expiryYear\` int NULL, \`holderName\` varchar(255) NULL, \`billingAddressId\` varchar(36) NULL, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`lastUsedAt\` datetime NULL, \`revokedAt\` datetime NULL, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`notRevokedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`status\` <> 'REVOKED', '0', \`id\`)) STORED, INDEX \`IDX_payment_method_token_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_payment_method_token_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_payment_method_token_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_payment_method_token_is_active\` (\`isActive\`), INDEX \`IDX_payment_method_token_is_archived\` (\`isArchived\`), INDEX \`IDX_payment_method_token_tenant\` (\`tenantId\`), INDEX \`IDX_payment_method_token_organization\` (\`organizationId\`), UNIQUE INDEX \`UQ_payment_method_token_provider_token\` (\`providerKey\`, \`token\`, \`notRevokedKey\`, \`deletedKey\`), INDEX \`IDX_payment_method_token_holder\` (\`accountHolderId\`, \`status\`, \`type\`), INDEX \`IDX_payment_method_token_provider\` (\`paymentProviderId\`), INDEX \`IDX_payment_method_token_address\` (\`billingAddressId\`), INDEX \`IDX_payment_method_token_expiry\` (\`status\`, \`expiryYear\`, \`expiryMonth\`)${holder}${address}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 			);
 		}
 	}

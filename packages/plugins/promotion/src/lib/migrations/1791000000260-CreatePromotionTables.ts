@@ -134,7 +134,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		await this.baseIndexes(queryRunner, 'campaign');
 		// The stable handle an import is keyed on: a replayed import must not create a second campaign.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_campaign_identifier" ON "campaign" ("organizationId", "identifier") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_campaign_identifier" ON "campaign" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "identifier") WHERE "deletedAt" IS NULL`
 		);
 		// The window query: which campaigns are running inside a channel at an instant.
 		await queryRunner.query(
@@ -176,7 +176,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 		await this.baseIndexes(queryRunner, 'promotion');
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_promotion_org_code" ON "promotion" ("organizationId", "code") WHERE "code" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_promotion_org_code" ON "promotion" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "code" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		// The candidate query: the automatic promotions that are running right now.
 		await queryRunner.query(
@@ -222,7 +222,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		await this.baseIndexes(queryRunner, 'coupon');
 		// Codes are stored upper-cased, so one code is one row per organization.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_coupon_org_code" ON "coupon" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_coupon_org_code" ON "coupon" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_coupon_promotion" ON "coupon" ("promotionId") WHERE "promotionId" IS NOT NULL`
@@ -274,7 +274,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 		await this.baseIndexes(queryRunner, 'gift_card');
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_gift_card_org_code" ON "gift_card" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_gift_card_org_code" ON "gift_card" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_gift_card_customer" ON "gift_card" ("customerId", "status") WHERE "customerId" IS NOT NULL AND "deletedAt" IS NULL`
@@ -361,7 +361,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 		await this.baseIndexes(queryRunner, 'campaign');
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_campaign_identifier" ON "campaign" ("organizationId", "identifier") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_campaign_identifier" ON "campaign" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "identifier") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_campaign_window" ON "campaign" ("organizationId", "status", "startsAt", "endsAt") WHERE "deletedAt" IS NULL`
@@ -394,7 +394,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 		await this.baseIndexes(queryRunner, 'promotion');
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_promotion_org_code" ON "promotion" ("organizationId", "code") WHERE "code" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_promotion_org_code" ON "promotion" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "code" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_promotion_automatic" ON "promotion" ("organizationId", "status", "isAutomatic", "startsAt", "endsAt") WHERE "status" = 'ACTIVE' AND "deletedAt" IS NULL`
@@ -425,7 +425,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 		await this.baseIndexes(queryRunner, 'coupon');
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_coupon_org_code" ON "coupon" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_coupon_org_code" ON "coupon" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_coupon_promotion" ON "coupon" ("promotionId") WHERE "promotionId" IS NOT NULL`
@@ -462,7 +462,7 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 		await this.baseIndexes(queryRunner, 'gift_card');
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_gift_card_org_code" ON "gift_card" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_gift_card_org_code" ON "gift_card" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_gift_card_customer" ON "gift_card" ("customerId", "status") WHERE "customerId" IS NOT NULL AND "deletedAt" IS NULL`
@@ -501,10 +501,13 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 	 * MySQL Up Migration
 	 *
 	 * MySQL cannot express a filtered unique index, so every uniqueness rule that the other two
-	 * dialects express with `WHERE "deletedAt" IS NULL` carries `deletedAt` inside its key instead:
-	 * a live row has a null there and collides, a deleted row has a timestamp and does not. The
-	 * service enforces the same tuple inside the writing transaction, and the nightly audit reports
-	 * any row that slipped through.
+	 * dialects express with `WHERE "deletedAt" IS NULL` carries the stored generated `deletedKey` that
+	 * `CreateSequenceTable1791000000000` documents for the whole set, and the nullable organization
+	 * scope carries `organizationKey`. A live row takes the shared constant and collides; a deleted row
+	 * takes its own id and does not. Carrying `deletedAt` itself, which this file used to do, does the
+	 * opposite of what it reads as: a unique index in MySQL exempts every tuple that contains a null,
+	 * and a live row is exactly the row whose `deletedAt` is null. The service enforces the same tuple
+	 * inside the writing transaction, and the nightly audit reports any row that slipped through.
 	 *
 	 * @param queryRunner
 	 */
@@ -514,40 +517,40 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 			`INDEX \`IDX_${table}_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_${table}_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_${table}_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_${table}_is_active\` (\`isActive\`), INDEX \`IDX_${table}_is_archived\` (\`isArchived\`), INDEX \`IDX_${table}_tenant\` (\`tenantId\`), INDEX \`IDX_${table}_organization\` (\`organizationId\`)`;
 
 		await queryRunner.query(
-			`CREATE TABLE \`campaign\` (${i}, \`identifier\` varchar(64) NOT NULL, \`name\` varchar(255) NOT NULL, \`description\` text NULL, \`status\` varchar(16) NOT NULL DEFAULT 'DRAFT', \`startsAt\` datetime NULL, \`endsAt\` datetime NULL, \`metadata\` json NULL, ${base('campaign')}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`campaign\` (${i}, \`identifier\` varchar(64) NOT NULL, \`name\` varchar(255) NOT NULL, \`description\` text NULL, \`status\` varchar(16) NOT NULL DEFAULT 'DRAFT', \`startsAt\` datetime NULL, \`endsAt\` datetime NULL, \`metadata\` json NULL, ${base('campaign')}, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_campaign_identifier\` ON \`campaign\` (\`organizationId\`, \`identifier\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_campaign_identifier\` ON \`campaign\` (\`organizationKey\`, \`identifier\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_campaign_window\` ON \`campaign\` (\`organizationId\`, \`status\`, \`startsAt\`, \`endsAt\`)`
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`campaign_budget\` (${i}, \`campaignId\` varchar(36) NOT NULL, \`type\` varchar(32) NOT NULL DEFAULT 'SPEND', \`limit\` decimal(20,6) NOT NULL, \`used\` decimal(20,6) NOT NULL DEFAULT 0, \`attribute\` varchar(128) NULL, \`currency\` varchar(3) NULL, ${base('campaign_budget')}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`campaign_budget\` (${i}, \`campaignId\` varchar(36) NOT NULL, \`type\` varchar(32) NOT NULL DEFAULT 'SPEND', \`limit\` decimal(20,6) NOT NULL, \`used\` decimal(20,6) NOT NULL DEFAULT 0, \`attribute\` varchar(128) NULL, \`currency\` varchar(3) NULL, ${base('campaign_budget')}, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_campaign_budget\` ON \`campaign_budget\` (\`campaignId\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_campaign_budget\` ON \`campaign_budget\` (\`campaignId\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`campaign_budget\` ADD CONSTRAINT \`FK_campaign_budget_campaign\` FOREIGN KEY (\`campaignId\`) REFERENCES \`campaign\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`campaign_budget_usage\` (${i}, \`budgetId\` varchar(36) NOT NULL, \`attributeValue\` varchar(191) NOT NULL, \`used\` decimal(20,6) NOT NULL DEFAULT 0, ${base('campaign_budget_usage')}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`campaign_budget_usage\` (${i}, \`budgetId\` varchar(36) NOT NULL, \`attributeValue\` varchar(191) NOT NULL, \`used\` decimal(20,6) NOT NULL DEFAULT 0, ${base('campaign_budget_usage')}, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_campaign_budget_usage\` ON \`campaign_budget_usage\` (\`budgetId\`, \`attributeValue\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_campaign_budget_usage\` ON \`campaign_budget_usage\` (\`budgetId\`, \`attributeValue\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`campaign_budget_usage\` ADD CONSTRAINT \`FK_campaign_budget_usage_budget\` FOREIGN KEY (\`budgetId\`) REFERENCES \`campaign_budget\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`promotion\` (${i}, \`code\` varchar(64) NULL, \`title\` varchar(255) NOT NULL, \`description\` text NULL, \`type\` varchar(16) NOT NULL DEFAULT 'STANDARD', \`status\` varchar(16) NOT NULL DEFAULT 'DRAFT', \`isAutomatic\` tinyint NOT NULL DEFAULT 0, \`isCombinable\` tinyint NOT NULL DEFAULT 1, \`stackingGroup\` varchar(64) NULL, \`priority\` int NOT NULL DEFAULT 0, \`campaignId\` varchar(36) NULL, \`channelId\` varchar(36) NULL, \`currency\` varchar(3) NULL, \`customerGroupId\` varchar(36) NULL, \`startsAt\` datetime NULL, \`endsAt\` datetime NULL, \`usageLimit\` int NULL, \`usageCount\` int NOT NULL DEFAULT 0, \`perCustomerUsageLimit\` int NULL, \`budgetAmount\` decimal(20,6) NULL, \`budgetSpent\` decimal(20,6) NOT NULL DEFAULT 0, \`isTaxInclusive\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, ${base('promotion')}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`promotion\` (${i}, \`code\` varchar(64) NULL, \`title\` varchar(255) NOT NULL, \`description\` text NULL, \`type\` varchar(16) NOT NULL DEFAULT 'STANDARD', \`status\` varchar(16) NOT NULL DEFAULT 'DRAFT', \`isAutomatic\` tinyint NOT NULL DEFAULT 0, \`isCombinable\` tinyint NOT NULL DEFAULT 1, \`stackingGroup\` varchar(64) NULL, \`priority\` int NOT NULL DEFAULT 0, \`campaignId\` varchar(36) NULL, \`channelId\` varchar(36) NULL, \`currency\` varchar(3) NULL, \`customerGroupId\` varchar(36) NULL, \`startsAt\` datetime NULL, \`endsAt\` datetime NULL, \`usageLimit\` int NULL, \`usageCount\` int NOT NULL DEFAULT 0, \`perCustomerUsageLimit\` int NULL, \`budgetAmount\` decimal(20,6) NULL, \`budgetSpent\` decimal(20,6) NOT NULL DEFAULT 0, \`isTaxInclusive\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, ${base('promotion')}, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_promotion_org_code\` ON \`promotion\` (\`organizationId\`, \`code\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_promotion_org_code\` ON \`promotion\` (\`organizationKey\`, \`code\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_promotion_automatic\` ON \`promotion\` (\`organizationId\`, \`status\`, \`isAutomatic\`, \`startsAt\`, \`endsAt\`)`
@@ -581,10 +584,10 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`coupon\` (${i}, \`code\` varchar(64) NOT NULL, \`promotionId\` varchar(36) NULL, \`batchId\` varchar(64) NULL, \`usageLimit\` int NULL, \`usageCount\` int NOT NULL DEFAULT 0, \`perCustomerLimit\` int NULL, \`startsAt\` datetime NULL, \`endsAt\` datetime NULL, \`metadata\` json NULL, ${base('coupon')}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`coupon\` (${i}, \`code\` varchar(64) NOT NULL, \`promotionId\` varchar(36) NULL, \`batchId\` varchar(64) NULL, \`usageLimit\` int NULL, \`usageCount\` int NOT NULL DEFAULT 0, \`perCustomerLimit\` int NULL, \`startsAt\` datetime NULL, \`endsAt\` datetime NULL, \`metadata\` json NULL, ${base('coupon')}, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_coupon_org_code\` ON \`coupon\` (\`organizationId\`, \`code\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_coupon_org_code\` ON \`coupon\` (\`organizationKey\`, \`code\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(`CREATE INDEX \`IDX_coupon_promotion\` ON \`coupon\` (\`promotionId\`)`);
 		await queryRunner.query(`CREATE INDEX \`IDX_coupon_batch\` ON \`coupon\` (\`batchId\`)`);
@@ -596,10 +599,10 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`promotion_usage\` (${i}, \`promotionId\` varchar(36) NOT NULL, \`couponId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`cartId\` varchar(36) NULL, \`customerId\` varchar(36) NULL, \`code\` varchar(64) NULL, \`amount\` decimal(20,6) NOT NULL, \`currency\` varchar(3) NOT NULL, \`usedAt\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`status\` varchar(16) NOT NULL DEFAULT 'RESERVED', ${base('promotion_usage')}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`promotion_usage\` (${i}, \`promotionId\` varchar(36) NOT NULL, \`couponId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`cartId\` varchar(36) NULL, \`customerId\` varchar(36) NULL, \`code\` varchar(64) NULL, \`amount\` decimal(20,6) NOT NULL, \`currency\` varchar(3) NOT NULL, \`usedAt\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`status\` varchar(16) NOT NULL DEFAULT 'RESERVED', ${base('promotion_usage')}, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_promotion_usage_order\` ON \`promotion_usage\` (\`promotionId\`, \`orderId\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_promotion_usage_order\` ON \`promotion_usage\` (\`promotionId\`, \`orderId\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_promotion_usage_promotion\` ON \`promotion_usage\` (\`promotionId\`, \`status\`)`
@@ -624,10 +627,10 @@ export class CreatePromotionTables1791000000260 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`gift_card\` (${i}, \`code\` varchar(64) NOT NULL, \`initialAmount\` decimal(20,6) NOT NULL, \`balance\` decimal(20,6) NOT NULL DEFAULT 0, \`currency\` varchar(3) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`customerId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`expiresAt\` datetime NULL, \`pin\` varchar(255) NULL, \`metadata\` json NULL, ${base('gift_card')}, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`gift_card\` (${i}, \`code\` varchar(64) NOT NULL, \`initialAmount\` decimal(20,6) NOT NULL, \`balance\` decimal(20,6) NOT NULL DEFAULT 0, \`currency\` varchar(3) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`customerId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`expiresAt\` datetime NULL, \`pin\` varchar(255) NULL, \`metadata\` json NULL, ${base('gift_card')}, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_gift_card_org_code\` ON \`gift_card\` (\`organizationId\`, \`code\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_gift_card_org_code\` ON \`gift_card\` (\`organizationKey\`, \`code\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_gift_card_customer\` ON \`gift_card\` (\`customerId\`, \`status\`)`

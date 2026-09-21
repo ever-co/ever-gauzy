@@ -222,18 +222,21 @@ export class CreateRefundLineTable1791000000285 implements MigrationInterface {
 	/**
 	 * MySQL Up Migration
 	 *
-	 * MySQL has no partial indexes, so the predicate that makes the pair unique among live rows is
-	 * carried by including `deletedAt` in the key, exactly as the platform's other migrations do: a
-	 * soft-deleted row no longer collides with the live row that replaced it.
+	 * MySQL has no partial index, so the predicate that makes the pair unique among live rows is
+	 * carried by the stored generated `deletedKey` that `CreateSequenceTable1791000000000` documents
+	 * for the whole set — `'0'` while the row is live, the row's own id once it is deleted, so a
+	 * soft-deleted row no longer collides with the live row that replaced it. Including `deletedAt`
+	 * itself in the key, which this file used to do, carries no rule at all: a unique index in MySQL
+	 * exempts every tuple that contains a null, and `deletedAt` is null on exactly the live rows.
 	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`refund_line\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`refundId\` varchar(36) NOT NULL, \`orderLineId\` varchar(36) NOT NULL, \`quantity\` decimal(20,6) NOT NULL, \`amount\` decimal(20,6) NOT NULL, \`currency\` varchar(3) NOT NULL, \`metadata\` json NULL, INDEX \`IDX_refund_line_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_refund_line_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_refund_line_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_refund_line_is_active\` (\`isActive\`), INDEX \`IDX_refund_line_is_archived\` (\`isArchived\`), INDEX \`IDX_refund_line_tenant\` (\`tenantId\`), INDEX \`IDX_refund_line_organization\` (\`organizationId\`), INDEX \`IDX_refund_line_order_line\` (\`orderLineId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`refund_line\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`refundId\` varchar(36) NOT NULL, \`orderLineId\` varchar(36) NOT NULL, \`quantity\` decimal(20,6) NOT NULL, \`amount\` decimal(20,6) NOT NULL, \`currency\` varchar(3) NOT NULL, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_refund_line_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_refund_line_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_refund_line_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_refund_line_is_active\` (\`isActive\`), INDEX \`IDX_refund_line_is_archived\` (\`isArchived\`), INDEX \`IDX_refund_line_tenant\` (\`tenantId\`), INDEX \`IDX_refund_line_organization\` (\`organizationId\`), INDEX \`IDX_refund_line_order_line\` (\`orderLineId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_refund_line\` ON \`refund_line\` (\`refundId\`, \`orderLineId\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_refund_line\` ON \`refund_line\` (\`refundId\`, \`orderLineId\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(

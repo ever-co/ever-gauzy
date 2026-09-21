@@ -100,7 +100,7 @@ export class CreateEntitlementTables1791000000360 implements MigrationInterface 
 		await queryRunner.query(`CREATE INDEX "IDX_entitlement_organization" ON "entitlement" ("organizationId")`);
 		// One number per organization: a customer quoting a number means one right.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_entitlement_number" ON "entitlement" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_entitlement_number" ON "entitlement" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		// The two scans the domain actually runs: a customer's live rights, and the rights of one line.
 		await queryRunner.query(
@@ -144,7 +144,7 @@ export class CreateEntitlementTables1791000000360 implements MigrationInterface 
 		);
 		// The digest is the lookup column and the key is the identity: one key, one organization.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_entitlement_key_hash" ON "entitlement_key" ("organizationId", "keyHash") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_entitlement_key_hash" ON "entitlement_key" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "keyHash") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_entitlement_key_entitlement" ON "entitlement_key" ("entitlementId", "status") WHERE "deletedAt" IS NULL`
@@ -342,7 +342,7 @@ export class CreateEntitlementTables1791000000360 implements MigrationInterface 
 		await queryRunner.query(`CREATE INDEX "IDX_entitlement_tenant" ON "entitlement" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_entitlement_organization" ON "entitlement" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_entitlement_number" ON "entitlement" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_entitlement_number" ON "entitlement" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_entitlement_customer_status" ON "entitlement" ("customerId", "status") WHERE "deletedAt" IS NULL`
@@ -382,7 +382,7 @@ export class CreateEntitlementTables1791000000360 implements MigrationInterface 
 			`CREATE INDEX "IDX_entitlement_key_organization" ON "entitlement_key" ("organizationId")`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_entitlement_key_hash" ON "entitlement_key" ("organizationId", "keyHash") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_entitlement_key_hash" ON "entitlement_key" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "keyHash") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_entitlement_key_entitlement" ON "entitlement_key" ("entitlementId", "status") WHERE "deletedAt" IS NULL`
@@ -488,35 +488,37 @@ export class CreateEntitlementTables1791000000360 implements MigrationInterface 
 	/**
 	 * MySQL Up Migration
 	 *
-	 * MySQL has no partial indexes. Where the predicate only excludes soft-deleted rows the key
-	 * carries `deletedAt` instead, exactly as the platform's other migrations do. Where the predicate
-	 * is the business rule itself — at most one **live** activation per right and device — the index
-	 * stays non-unique and the rule is enforced by the service inside the transaction that takes the
-	 * entitlement's row lock, and reported by the `schema-uniqueness-audit` job, which is the
-	 * documented fallback for a constraint this dialect cannot express.
+	 * MySQL has no partial index. Where the predicate only excludes soft-deleted rows, the key carries
+	 * the stored generated `deletedKey` that `CreateSequenceTable1791000000000` documents for the whole
+	 * set, and the nullable scope column is folded into `organizationKey`; carrying `deletedAt` itself,
+	 * which this file used to do, carries no rule at all, because a unique index in MySQL exempts every
+	 * tuple that contains a null. Where the predicate is the business rule itself — at most one **live**
+	 * activation per right and device — the index stays non-unique and the rule is enforced by the
+	 * service inside the transaction that takes the entitlement's row lock, and reported by the
+	 * `schema-uniqueness-audit` job.
 	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`entitlement\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`customerId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`orderLineId\` varchar(36) NULL, \`subscriptionId\` varchar(36) NULL, \`productId\` varchar(36) NULL, \`variantId\` varchar(36) NULL, \`number\` varchar(32) NOT NULL, \`kind\` varchar(16) NOT NULL DEFAULT 'LICENCE', \`quantity\` int NOT NULL DEFAULT 1, \`startsAt\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, \`endsAt\` datetime NULL, \`gracePeriodDays\` int NOT NULL DEFAULT 0, \`activationLimit\` int NULL, \`activationCount\` int NOT NULL DEFAULT 0, \`status\` varchar(16) NOT NULL DEFAULT 'PENDING', \`revokedAt\` datetime NULL, \`revokedByUserId\` varchar(36) NULL, \`revokedReason\` varchar(255) NULL, \`suspendedReason\` varchar(255) NULL, \`metadata\` json NULL, INDEX \`IDX_entitlement_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_entitlement_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_entitlement_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_entitlement_is_active\` (\`isActive\`), INDEX \`IDX_entitlement_is_archived\` (\`isArchived\`), INDEX \`IDX_entitlement_tenant\` (\`tenantId\`), INDEX \`IDX_entitlement_organization\` (\`organizationId\`), INDEX \`IDX_entitlement_customer_status\` (\`customerId\`, \`status\`), INDEX \`IDX_entitlement_order_line\` (\`orderLineId\`), INDEX \`IDX_entitlement_variant_status\` (\`variantId\`, \`status\`), INDEX \`IDX_entitlement_term\` (\`status\`, \`endsAt\`), INDEX \`IDX_entitlement_order\` (\`orderId\`), INDEX \`IDX_entitlement_subscription\` (\`subscriptionId\`), CONSTRAINT \`CHK_entitlement_term_order\` CHECK (\`endsAt\` IS NULL OR \`endsAt\` > \`startsAt\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`entitlement\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`customerId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`orderLineId\` varchar(36) NULL, \`subscriptionId\` varchar(36) NULL, \`productId\` varchar(36) NULL, \`variantId\` varchar(36) NULL, \`number\` varchar(32) NOT NULL, \`kind\` varchar(16) NOT NULL DEFAULT 'LICENCE', \`quantity\` int NOT NULL DEFAULT 1, \`startsAt\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, \`endsAt\` datetime NULL, \`gracePeriodDays\` int NOT NULL DEFAULT 0, \`activationLimit\` int NULL, \`activationCount\` int NOT NULL DEFAULT 0, \`status\` varchar(16) NOT NULL DEFAULT 'PENDING', \`revokedAt\` datetime NULL, \`revokedByUserId\` varchar(36) NULL, \`revokedReason\` varchar(255) NULL, \`suspendedReason\` varchar(255) NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_entitlement_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_entitlement_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_entitlement_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_entitlement_is_active\` (\`isActive\`), INDEX \`IDX_entitlement_is_archived\` (\`isArchived\`), INDEX \`IDX_entitlement_tenant\` (\`tenantId\`), INDEX \`IDX_entitlement_organization\` (\`organizationId\`), INDEX \`IDX_entitlement_customer_status\` (\`customerId\`, \`status\`), INDEX \`IDX_entitlement_order_line\` (\`orderLineId\`), INDEX \`IDX_entitlement_variant_status\` (\`variantId\`, \`status\`), INDEX \`IDX_entitlement_term\` (\`status\`, \`endsAt\`), INDEX \`IDX_entitlement_order\` (\`orderId\`), INDEX \`IDX_entitlement_subscription\` (\`subscriptionId\`), CONSTRAINT \`CHK_entitlement_term_order\` CHECK (\`endsAt\` IS NULL OR \`endsAt\` > \`startsAt\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_entitlement_number\` ON \`entitlement\` (\`organizationId\`, \`number\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_entitlement_number\` ON \`entitlement\` (\`organizationKey\`, \`number\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`entitlement_key\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`entitlementId\` varchar(36) NOT NULL, \`keyHash\` varchar(64) NOT NULL, \`keyCiphertext\` varchar(512) NULL, \`keyPrefix\` varchar(16) NULL, \`format\` varchar(64) NOT NULL DEFAULT 'UUID', \`status\` varchar(16) NOT NULL DEFAULT 'ISSUED', \`assignedAt\` datetime NULL, \`assignedToEmail\` varchar(320) NULL, \`assignedToCustomerId\` varchar(36) NULL, \`activationLimit\` int NULL, \`activationCount\` int NOT NULL DEFAULT 0, \`expiresAt\` datetime NULL, \`revokedAt\` datetime NULL, \`revokedByUserId\` varchar(36) NULL, \`metadata\` json NULL, INDEX \`IDX_entitlement_key_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_entitlement_key_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_entitlement_key_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_entitlement_key_is_active\` (\`isActive\`), INDEX \`IDX_entitlement_key_is_archived\` (\`isArchived\`), INDEX \`IDX_entitlement_key_tenant\` (\`tenantId\`), INDEX \`IDX_entitlement_key_organization\` (\`organizationId\`), INDEX \`IDX_entitlement_key_entitlement\` (\`entitlementId\`, \`status\`), INDEX \`IDX_entitlement_key_assigned\` (\`assignedToCustomerId\`, \`status\`), INDEX \`IDX_entitlement_key_expiry\` (\`status\`, \`expiresAt\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`entitlement_key\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`entitlementId\` varchar(36) NOT NULL, \`keyHash\` varchar(64) NOT NULL, \`keyCiphertext\` varchar(512) NULL, \`keyPrefix\` varchar(16) NULL, \`format\` varchar(64) NOT NULL DEFAULT 'UUID', \`status\` varchar(16) NOT NULL DEFAULT 'ISSUED', \`assignedAt\` datetime NULL, \`assignedToEmail\` varchar(320) NULL, \`assignedToCustomerId\` varchar(36) NULL, \`activationLimit\` int NULL, \`activationCount\` int NOT NULL DEFAULT 0, \`expiresAt\` datetime NULL, \`revokedAt\` datetime NULL, \`revokedByUserId\` varchar(36) NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_entitlement_key_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_entitlement_key_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_entitlement_key_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_entitlement_key_is_active\` (\`isActive\`), INDEX \`IDX_entitlement_key_is_archived\` (\`isArchived\`), INDEX \`IDX_entitlement_key_tenant\` (\`tenantId\`), INDEX \`IDX_entitlement_key_organization\` (\`organizationId\`), INDEX \`IDX_entitlement_key_entitlement\` (\`entitlementId\`, \`status\`), INDEX \`IDX_entitlement_key_assigned\` (\`assignedToCustomerId\`, \`status\`), INDEX \`IDX_entitlement_key_expiry\` (\`status\`, \`expiresAt\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_entitlement_key_hash\` ON \`entitlement_key\` (\`organizationId\`, \`keyHash\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_entitlement_key_hash\` ON \`entitlement_key\` (\`organizationKey\`, \`keyHash\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(
 			`CREATE TABLE \`entitlement_activation\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`entitlementId\` varchar(36) NOT NULL, \`entitlementKeyId\` varchar(36) NULL, \`deviceId\` varchar(255) NOT NULL, \`deviceName\` varchar(255) NULL, \`fingerprint\` varchar(255) NULL, \`seatReference\` varchar(255) NULL, \`activatedByCustomerId\` varchar(36) NULL, \`status\` varchar(16) NOT NULL DEFAULT 'ACTIVE', \`activatedAt\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, \`lastSeenAt\` datetime NULL, \`deactivatedAt\` datetime NULL, \`revokedAt\` datetime NULL, \`revokedByUserId\` varchar(36) NULL, \`revocationReason\` varchar(255) NULL, \`ipAddress\` varchar(64) NULL, \`userAgent\` varchar(512) NULL, \`metadata\` json NULL, INDEX \`IDX_entitlement_activation_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_entitlement_activation_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_entitlement_activation_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_entitlement_activation_is_active\` (\`isActive\`), INDEX \`IDX_entitlement_activation_is_archived\` (\`isArchived\`), INDEX \`IDX_entitlement_activation_tenant\` (\`tenantId\`), INDEX \`IDX_entitlement_activation_organization\` (\`organizationId\`), INDEX \`IDX_entitlement_activation_entitlement\` (\`entitlementId\`, \`status\`), INDEX \`IDX_entitlement_activation_dormant\` (\`status\`, \`lastSeenAt\`), INDEX \`IDX_entitlement_activation_key\` (\`entitlementKeyId\`), INDEX \`IDX_entitlement_activation_customer\` (\`activatedByCustomerId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
-		// The live-device rule: MySQL cannot index it partially, so the service enforces it under the
-		// entitlement's row lock and the schema-uniqueness-audit job reports a violation it finds.
+		// The live-device rule is not carried by an index on this dialect: the service enforces it under
+		// the entitlement's row lock and the schema-uniqueness-audit job reports a violation it finds.
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_entitlement_activation_device\` ON \`entitlement_activation\` (\`entitlementId\`, \`deviceId\`, \`status\`)`
 		);

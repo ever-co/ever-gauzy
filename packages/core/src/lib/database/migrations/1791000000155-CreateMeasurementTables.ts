@@ -107,7 +107,7 @@ export class CreateMeasurementTables1791000000155 implements MigrationInterface 
 			// The machine key is unique per organization among live rows: a soft-deleted family must not keep
 			// its code occupied for ever, and a second `MASS` family would make conversion ambiguous.
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_unit_category_code" ON "unit_category" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_unit_category_code" ON "unit_category" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 			);
 			await queryRunner.query(
 				`CREATE INDEX "IDX_unit_category_org" ON "unit_category" ("organizationId") WHERE "deletedAt" IS NULL`
@@ -126,7 +126,7 @@ export class CreateMeasurementTables1791000000155 implements MigrationInterface 
 			await queryRunner.query(`CREATE INDEX "IDX_unit_tenant" ON "unit" ("tenantId")`);
 			await queryRunner.query(`CREATE INDEX "IDX_unit_organization" ON "unit" ("organizationId")`);
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_unit_code" ON "unit" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_unit_code" ON "unit" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 			);
 			// Exactly one unit per family defines its base quantity. `factor = 1` on that unit is what makes
 			// a family's arithmetic monotone, and the check constraint above states it.
@@ -169,7 +169,7 @@ export class CreateMeasurementTables1791000000155 implements MigrationInterface 
 			await queryRunner.query(`CREATE INDEX "IDX_unit_category_is_archived" ON "unit_category" ("isArchived")`);
 			await queryRunner.query(`CREATE INDEX "IDX_unit_category_tenant" ON "unit_category" ("tenantId")`);
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_unit_category_code" ON "unit_category" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_unit_category_code" ON "unit_category" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 			);
 			await queryRunner.query(
 				`CREATE INDEX "IDX_unit_category_org" ON "unit_category" ("organizationId") WHERE "deletedAt" IS NULL`
@@ -188,7 +188,7 @@ export class CreateMeasurementTables1791000000155 implements MigrationInterface 
 			await queryRunner.query(`CREATE INDEX "IDX_unit_tenant" ON "unit" ("tenantId")`);
 			await queryRunner.query(`CREATE INDEX "IDX_unit_organization" ON "unit" ("organizationId")`);
 			await queryRunner.query(
-				`CREATE UNIQUE INDEX "UQ_unit_code" ON "unit" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+				`CREATE UNIQUE INDEX "UQ_unit_code" ON "unit" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 			);
 			await queryRunner.query(
 				`CREATE UNIQUE INDEX "UQ_unit_reference" ON "unit" ("categoryId") WHERE "isReference" = true AND "deletedAt" IS NULL`
@@ -218,21 +218,24 @@ export class CreateMeasurementTables1791000000155 implements MigrationInterface 
 	 * is deleted, appended to the tuple. Live rows then collide on the key and soft-deleted rows never
 	 * do — which is what a `WHERE "deletedAt" IS NULL` predicate accomplishes on the other two dialects.
 	 * `unit.isReference` needs a second generated key of the same shape (`'1'` or `NULL`), because a
-	 * boolean cannot be a null-guarded tuple member. Those columns exist on MySQL only and are declared
-	 * by no entity: they are the documented price of a filtered index on a dialect that has none.
+	 * boolean cannot be a null-guarded tuple member, and the nullable organization scope needs a third,
+	 * `organizationKey`, for the reason `CreateSequenceTable1791000000000` sets out: a code that belongs
+	 * to no organization was held to no rule at all while the column was named raw. Those columns exist
+	 * on MySQL only and are declared by no entity: they are the documented price of a filtered index on
+	 * a dialect that has none.
 	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		if (!(await queryRunner.hasTable('unit_category'))) {
 			await queryRunner.query(
-				`CREATE TABLE \`unit_category\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`code\` varchar(32) NOT NULL, \`name\` varchar(64) NOT NULL, \`isSystem\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_unit_category_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_unit_category_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_unit_category_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_unit_category_is_active\` (\`isActive\`), INDEX \`IDX_unit_category_is_archived\` (\`isArchived\`), INDEX \`IDX_unit_category_tenant\` (\`tenantId\`), UNIQUE INDEX \`UQ_unit_category_code\` (\`organizationId\`, \`code\`, \`deletedKey\`), INDEX \`IDX_unit_category_org\` (\`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+				`CREATE TABLE \`unit_category\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`code\` varchar(32) NOT NULL, \`name\` varchar(64) NOT NULL, \`isSystem\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, INDEX \`IDX_unit_category_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_unit_category_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_unit_category_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_unit_category_is_active\` (\`isActive\`), INDEX \`IDX_unit_category_is_archived\` (\`isArchived\`), INDEX \`IDX_unit_category_tenant\` (\`tenantId\`), UNIQUE INDEX \`UQ_unit_category_code\` (\`organizationKey\`, \`code\`, \`deletedKey\`), INDEX \`IDX_unit_category_org\` (\`organizationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 			);
 		}
 
 		if (!(await queryRunner.hasTable('unit'))) {
 			await queryRunner.query(
-				`CREATE TABLE \`unit\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`categoryId\` varchar(36) NOT NULL, \`code\` varchar(32) NOT NULL, \`name\` varchar(64) NOT NULL, \`symbol\` varchar(16) NULL, \`factor\` decimal(24,12) NOT NULL DEFAULT 1, \`isReference\` tinyint NOT NULL DEFAULT 0, \`decimalPlaces\` int NOT NULL DEFAULT 0, \`isSystem\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`isReferenceKey\` varchar(1) GENERATED ALWAYS AS (IF(\`isReference\`, '1', NULL)) STORED, INDEX \`IDX_unit_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_unit_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_unit_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_unit_is_active\` (\`isActive\`), INDEX \`IDX_unit_is_archived\` (\`isArchived\`), INDEX \`IDX_unit_tenant\` (\`tenantId\`), INDEX \`IDX_unit_organization\` (\`organizationId\`), UNIQUE INDEX \`UQ_unit_code\` (\`organizationId\`, \`code\`, \`deletedKey\`), UNIQUE INDEX \`UQ_unit_reference\` (\`categoryId\`, \`isReferenceKey\`, \`deletedKey\`), INDEX \`IDX_unit_category\` (\`categoryId\`, \`factor\`), CONSTRAINT \`CHK_unit_factor_at_least_one\` CHECK (\`factor\` >= 1), CONSTRAINT \`CHK_unit_reference_factor\` CHECK (NOT \`isReference\` OR \`factor\` = 1), CONSTRAINT \`CHK_unit_decimal_places\` CHECK (\`decimalPlaces\` BETWEEN 0 AND 6), CONSTRAINT \`FK_unit_category\` FOREIGN KEY (\`categoryId\`) REFERENCES \`unit_category\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+				`CREATE TABLE \`unit\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`categoryId\` varchar(36) NOT NULL, \`code\` varchar(32) NOT NULL, \`name\` varchar(64) NOT NULL, \`symbol\` varchar(16) NULL, \`factor\` decimal(24,12) NOT NULL DEFAULT 1, \`isReference\` tinyint NOT NULL DEFAULT 0, \`decimalPlaces\` int NOT NULL DEFAULT 0, \`isSystem\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, \`isReferenceKey\` varchar(1) GENERATED ALWAYS AS (IF(\`isReference\`, '1', NULL)) STORED, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, INDEX \`IDX_unit_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_unit_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_unit_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_unit_is_active\` (\`isActive\`), INDEX \`IDX_unit_is_archived\` (\`isArchived\`), INDEX \`IDX_unit_tenant\` (\`tenantId\`), INDEX \`IDX_unit_organization\` (\`organizationId\`), UNIQUE INDEX \`UQ_unit_code\` (\`organizationKey\`, \`code\`, \`deletedKey\`), UNIQUE INDEX \`UQ_unit_reference\` (\`categoryId\`, \`isReferenceKey\`, \`deletedKey\`), INDEX \`IDX_unit_category\` (\`categoryId\`, \`factor\`), CONSTRAINT \`CHK_unit_factor_at_least_one\` CHECK (\`factor\` >= 1), CONSTRAINT \`CHK_unit_reference_factor\` CHECK (NOT \`isReference\` OR \`factor\` = 1), CONSTRAINT \`CHK_unit_decimal_places\` CHECK (\`decimalPlaces\` BETWEEN 0 AND 6), CONSTRAINT \`FK_unit_category\` FOREIGN KEY (\`categoryId\`) REFERENCES \`unit_category\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 			);
 		}
 	}

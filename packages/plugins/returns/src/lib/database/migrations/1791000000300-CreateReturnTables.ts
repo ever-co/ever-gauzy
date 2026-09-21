@@ -104,7 +104,7 @@ export class CreateReturnTables1791000000300 implements MigrationInterface {
 		);
 		// A reason code is the tenant's own reporting key and means one thing inside one organization.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_return_reason_org_code" ON "order_return_reason" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_return_reason_org_code" ON "order_return_reason" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_return_reason_parent" ON "order_return_reason" ("parentId") WHERE "parentId" IS NOT NULL`
@@ -128,7 +128,7 @@ export class CreateReturnTables1791000000300 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_order_return_organization" ON "order_return" ("organizationId")`);
 		// One return number per organization: a customer quoting a number means one document.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_return_number" ON "order_return" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_return_number" ON "order_return" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		// The two scans the domain actually runs: the returns of an order, and the open queue.
 		await queryRunner.query(
@@ -199,7 +199,7 @@ export class CreateReturnTables1791000000300 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_order_claim_tenant" ON "order_claim" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_order_claim_organization" ON "order_claim" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_claim_number" ON "order_claim" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_claim_number" ON "order_claim" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_claim_order" ON "order_claim" ("orderId", "status") WHERE "deletedAt" IS NULL`
@@ -261,7 +261,7 @@ export class CreateReturnTables1791000000300 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_order_exchange_tenant" ON "order_exchange" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_order_exchange_organization" ON "order_exchange" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_exchange_number" ON "order_exchange" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_exchange_number" ON "order_exchange" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_exchange_order" ON "order_exchange" ("orderId", "status") WHERE "deletedAt" IS NULL`
@@ -540,7 +540,7 @@ export class CreateReturnTables1791000000300 implements MigrationInterface {
 			`CREATE INDEX "IDX_order_return_reason_organization" ON "order_return_reason" ("organizationId")`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_return_reason_org_code" ON "order_return_reason" ("organizationId", "code") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_return_reason_org_code" ON "order_return_reason" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "code") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_return_reason_parent" ON "order_return_reason" ("parentId") WHERE "parentId" IS NOT NULL`
@@ -563,7 +563,7 @@ export class CreateReturnTables1791000000300 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_order_return_tenant" ON "order_return" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_order_return_organization" ON "order_return" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_return_number" ON "order_return" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_return_number" ON "order_return" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_return_order" ON "order_return" ("orderId", "status") WHERE "deletedAt" IS NULL`
@@ -631,7 +631,7 @@ export class CreateReturnTables1791000000300 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_order_claim_tenant" ON "order_claim" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_order_claim_organization" ON "order_claim" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_claim_number" ON "order_claim" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_claim_number" ON "order_claim" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_claim_order" ON "order_claim" ("orderId", "status") WHERE "deletedAt" IS NULL`
@@ -691,7 +691,7 @@ export class CreateReturnTables1791000000300 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_order_exchange_tenant" ON "order_exchange" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_order_exchange_organization" ON "order_exchange" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_exchange_number" ON "order_exchange" ("organizationId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_exchange_number" ON "order_exchange" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_exchange_order" ON "order_exchange" ("orderId", "status") WHERE "deletedAt" IS NULL`
@@ -838,39 +838,45 @@ export class CreateReturnTables1791000000300 implements MigrationInterface {
 	/**
 	 * MySQL Up Migration
 	 *
-	 * MySQL has no partial indexes, so the predicates that make a unique index business-scoped are
-	 * carried by including `deletedAt` in the key, exactly as the platform's other migrations do: a
-	 * soft-deleted row no longer collides with the live one it was replaced by.
+	 * MySQL has no partial index, so the predicates that make a unique index business-scoped are
+	 * carried by the stored generated key columns `CreateSequenceTable1791000000000` documents for the
+	 * whole set: `deletedKey` for `"deletedAt" IS NULL`, and `organizationKey` for the nullable scope
+	 * column that the numbering rules are per. Including `deletedAt` itself in the key, which this file
+	 * used to do, expresses nothing — a unique index in MySQL exempts every tuple that contains a null.
+	 *
+	 * `order_return_line.orderLineId` stays raw, on every dialect: a return line that references no
+	 * order line is an unsolicited item, and a return may carry several of them.
+	 * null-exempt: order_return_line.orderLineId
 	 *
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`order_return_reason\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`code\` varchar(64) NOT NULL, \`label\` varchar(255) NOT NULL, \`description\` text NULL, \`parentId\` varchar(36) NULL, INDEX \`IDX_order_return_reason_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_return_reason_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_return_reason_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_return_reason_is_active\` (\`isActive\`), INDEX \`IDX_order_return_reason_is_archived\` (\`isArchived\`), INDEX \`IDX_order_return_reason_tenant\` (\`tenantId\`), INDEX \`IDX_order_return_reason_organization\` (\`organizationId\`), INDEX \`IDX_return_reason_parent\` (\`parentId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`order_return_reason\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`code\` varchar(64) NOT NULL, \`label\` varchar(255) NOT NULL, \`description\` text NULL, \`parentId\` varchar(36) NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_order_return_reason_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_return_reason_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_return_reason_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_return_reason_is_active\` (\`isActive\`), INDEX \`IDX_order_return_reason_is_archived\` (\`isArchived\`), INDEX \`IDX_order_return_reason_tenant\` (\`tenantId\`), INDEX \`IDX_order_return_reason_organization\` (\`organizationId\`), INDEX \`IDX_return_reason_parent\` (\`parentId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_return_reason_org_code\` ON \`order_return_reason\` (\`organizationId\`, \`code\`, \`deletedAt\`)`
-		);
-
-		await queryRunner.query(
-			`CREATE TABLE \`order_return\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`number\` varchar(64) NOT NULL, \`status\` varchar(32) NOT NULL DEFAULT 'OPEN', \`warehouseId\` varchar(36) NULL, \`reasonId\` varchar(36) NULL, \`reason\` varchar(255) NULL, \`refundAmount\` decimal(20,6) NULL, \`currency\` varchar(3) NOT NULL, \`requestedAt\` datetime NULL, \`approvedAt\` datetime NULL, \`receivedAt\` datetime NULL, \`canceledAt\` datetime NULL, \`closedAt\` datetime NULL, \`claimId\` varchar(36) NULL, \`exchangeId\` varchar(36) NULL, \`shippingOptionId\` varchar(36) NULL, \`noNotification\` tinyint NOT NULL DEFAULT 0, \`note\` text NULL, \`metadata\` json NULL, INDEX \`IDX_order_return_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_return_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_return_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_return_is_active\` (\`isActive\`), INDEX \`IDX_order_return_is_archived\` (\`isArchived\`), INDEX \`IDX_order_return_tenant\` (\`tenantId\`), INDEX \`IDX_order_return_organization\` (\`organizationId\`), INDEX \`IDX_return_order\` (\`orderId\`, \`status\`), INDEX \`IDX_return_status\` (\`organizationId\`, \`status\`, \`createdAt\`), INDEX \`IDX_return_warehouse\` (\`warehouseId\`, \`status\`), INDEX \`IDX_return_claim\` (\`claimId\`), INDEX \`IDX_return_exchange\` (\`exchangeId\`), INDEX \`IDX_order_return_order\` (\`orderId\`), INDEX \`IDX_order_return_shipping_option\` (\`shippingOptionId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
-		);
-		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_return_number\` ON \`order_return\` (\`organizationId\`, \`number\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_return_reason_org_code\` ON \`order_return_reason\` (\`organizationKey\`, \`code\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`order_return_line\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`returnId\` varchar(36) NOT NULL, \`orderLineId\` varchar(36) NULL, \`quantity\` decimal(20,6) NOT NULL, \`receivedQuantity\` decimal(20,6) NOT NULL DEFAULT 0, \`damagedQuantity\` decimal(20,6) NOT NULL DEFAULT 0, \`reasonId\` varchar(36) NULL, \`restock\` tinyint NOT NULL DEFAULT 1, \`warehouseId\` varchar(36) NULL, \`note\` text NULL, \`metadata\` json NULL, INDEX \`IDX_order_return_line_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_return_line_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_return_line_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_return_line_is_active\` (\`isActive\`), INDEX \`IDX_order_return_line_is_archived\` (\`isArchived\`), INDEX \`IDX_order_return_line_tenant\` (\`tenantId\`), INDEX \`IDX_order_return_line_organization\` (\`organizationId\`), INDEX \`IDX_return_line_order_line\` (\`orderLineId\`), INDEX \`IDX_return_line_warehouse\` (\`warehouseId\`), INDEX \`IDX_order_return_line_reason\` (\`reasonId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`order_return\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`number\` varchar(64) NOT NULL, \`status\` varchar(32) NOT NULL DEFAULT 'OPEN', \`warehouseId\` varchar(36) NULL, \`reasonId\` varchar(36) NULL, \`reason\` varchar(255) NULL, \`refundAmount\` decimal(20,6) NULL, \`currency\` varchar(3) NOT NULL, \`requestedAt\` datetime NULL, \`approvedAt\` datetime NULL, \`receivedAt\` datetime NULL, \`canceledAt\` datetime NULL, \`closedAt\` datetime NULL, \`claimId\` varchar(36) NULL, \`exchangeId\` varchar(36) NULL, \`shippingOptionId\` varchar(36) NULL, \`noNotification\` tinyint NOT NULL DEFAULT 0, \`note\` text NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_order_return_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_return_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_return_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_return_is_active\` (\`isActive\`), INDEX \`IDX_order_return_is_archived\` (\`isArchived\`), INDEX \`IDX_order_return_tenant\` (\`tenantId\`), INDEX \`IDX_order_return_organization\` (\`organizationId\`), INDEX \`IDX_return_order\` (\`orderId\`, \`status\`), INDEX \`IDX_return_status\` (\`organizationId\`, \`status\`, \`createdAt\`), INDEX \`IDX_return_warehouse\` (\`warehouseId\`, \`status\`), INDEX \`IDX_return_claim\` (\`claimId\`), INDEX \`IDX_return_exchange\` (\`exchangeId\`), INDEX \`IDX_order_return_order\` (\`orderId\`), INDEX \`IDX_order_return_shipping_option\` (\`shippingOptionId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_return_line\` ON \`order_return_line\` (\`returnId\`, \`orderLineId\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_return_number\` ON \`order_return\` (\`organizationKey\`, \`number\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`order_claim\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`number\` varchar(64) NOT NULL, \`type\` varchar(16) NOT NULL DEFAULT 'REFUND', \`status\` varchar(16) NOT NULL DEFAULT 'OPEN', \`refundAmount\` decimal(20,6) NULL, \`currency\` varchar(3) NOT NULL, \`returnId\` varchar(36) NULL, \`reason\` varchar(255) NULL, \`note\` text NULL, \`canceledAt\` datetime NULL, \`metadata\` json NULL, INDEX \`IDX_order_claim_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_claim_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_claim_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_claim_is_active\` (\`isActive\`), INDEX \`IDX_order_claim_is_archived\` (\`isArchived\`), INDEX \`IDX_order_claim_tenant\` (\`tenantId\`), INDEX \`IDX_order_claim_organization\` (\`organizationId\`), INDEX \`IDX_claim_order\` (\`orderId\`, \`status\`), INDEX \`IDX_claim_status\` (\`organizationId\`, \`status\`, \`createdAt\`), INDEX \`IDX_claim_return\` (\`returnId\`), INDEX \`IDX_order_claim_order\` (\`orderId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`order_return_line\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`returnId\` varchar(36) NOT NULL, \`orderLineId\` varchar(36) NULL, \`quantity\` decimal(20,6) NOT NULL, \`receivedQuantity\` decimal(20,6) NOT NULL DEFAULT 0, \`damagedQuantity\` decimal(20,6) NOT NULL DEFAULT 0, \`reasonId\` varchar(36) NULL, \`restock\` tinyint NOT NULL DEFAULT 1, \`warehouseId\` varchar(36) NULL, \`note\` text NULL, \`metadata\` json NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_order_return_line_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_return_line_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_return_line_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_return_line_is_active\` (\`isActive\`), INDEX \`IDX_order_return_line_is_archived\` (\`isArchived\`), INDEX \`IDX_order_return_line_tenant\` (\`tenantId\`), INDEX \`IDX_order_return_line_organization\` (\`organizationId\`), INDEX \`IDX_return_line_order_line\` (\`orderLineId\`), INDEX \`IDX_return_line_warehouse\` (\`warehouseId\`), INDEX \`IDX_order_return_line_reason\` (\`reasonId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_claim_number\` ON \`order_claim\` (\`organizationId\`, \`number\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_return_line\` ON \`order_return_line\` (\`returnId\`, \`orderLineId\`, \`deletedKey\`)`
+		);
+
+		await queryRunner.query(
+			`CREATE TABLE \`order_claim\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`number\` varchar(64) NOT NULL, \`type\` varchar(16) NOT NULL DEFAULT 'REFUND', \`status\` varchar(16) NOT NULL DEFAULT 'OPEN', \`refundAmount\` decimal(20,6) NULL, \`currency\` varchar(3) NOT NULL, \`returnId\` varchar(36) NULL, \`reason\` varchar(255) NULL, \`note\` text NULL, \`canceledAt\` datetime NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_order_claim_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_claim_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_claim_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_claim_is_active\` (\`isActive\`), INDEX \`IDX_order_claim_is_archived\` (\`isArchived\`), INDEX \`IDX_order_claim_tenant\` (\`tenantId\`), INDEX \`IDX_order_claim_organization\` (\`organizationId\`), INDEX \`IDX_claim_order\` (\`orderId\`, \`status\`), INDEX \`IDX_claim_status\` (\`organizationId\`, \`status\`, \`createdAt\`), INDEX \`IDX_claim_return\` (\`returnId\`), INDEX \`IDX_order_claim_order\` (\`orderId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX \`UQ_claim_number\` ON \`order_claim\` (\`organizationKey\`, \`number\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(
@@ -878,10 +884,10 @@ export class CreateReturnTables1791000000300 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`order_exchange\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`number\` varchar(64) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'OPEN', \`differenceDue\` decimal(20,6) NULL, \`currency\` varchar(3) NOT NULL, \`returnId\` varchar(36) NULL, \`allowBackorder\` tinyint NOT NULL DEFAULT 0, \`note\` text NULL, \`canceledAt\` datetime NULL, \`metadata\` json NULL, INDEX \`IDX_order_exchange_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_exchange_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_exchange_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_exchange_is_active\` (\`isActive\`), INDEX \`IDX_order_exchange_is_archived\` (\`isArchived\`), INDEX \`IDX_order_exchange_tenant\` (\`tenantId\`), INDEX \`IDX_order_exchange_organization\` (\`organizationId\`), INDEX \`IDX_exchange_order\` (\`orderId\`, \`status\`), INDEX \`IDX_exchange_status\` (\`organizationId\`, \`status\`, \`createdAt\`), INDEX \`IDX_exchange_return\` (\`returnId\`), INDEX \`IDX_order_exchange_order\` (\`orderId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`order_exchange\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NULL, \`number\` varchar(64) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'OPEN', \`differenceDue\` decimal(20,6) NULL, \`currency\` varchar(3) NOT NULL, \`returnId\` varchar(36) NULL, \`allowBackorder\` tinyint NOT NULL DEFAULT 0, \`note\` text NULL, \`canceledAt\` datetime NULL, \`metadata\` json NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_order_exchange_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_exchange_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_exchange_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_exchange_is_active\` (\`isActive\`), INDEX \`IDX_order_exchange_is_archived\` (\`isArchived\`), INDEX \`IDX_order_exchange_tenant\` (\`tenantId\`), INDEX \`IDX_order_exchange_organization\` (\`organizationId\`), INDEX \`IDX_exchange_order\` (\`orderId\`, \`status\`), INDEX \`IDX_exchange_status\` (\`organizationId\`, \`status\`, \`createdAt\`), INDEX \`IDX_exchange_return\` (\`returnId\`), INDEX \`IDX_order_exchange_order\` (\`orderId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_exchange_number\` ON \`order_exchange\` (\`organizationId\`, \`number\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_exchange_number\` ON \`order_exchange\` (\`organizationKey\`, \`number\`, \`deletedKey\`)`
 		);
 
 		await queryRunner.query(

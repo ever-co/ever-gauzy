@@ -20,8 +20,10 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * `AddPaymentOrderForeignKey1791000000230`, which is the companion file of this set.
  *
  * Partial unique indexes are the Postgres and SQLite form. MySQL has no filtered index, so its branch
- * creates the equivalent unfiltered lookup indexes and states, per rule, that the tuple is enforced by
- * the service inside the writing transaction and audited by the `schema-uniqueness-audit` job.
+ * carries each predicate in a stored generated key column instead, in the form
+ * `CreateSequenceTable1791000000000` documents for the whole set. Where a rule has no index on that
+ * dialect the comment beside it says so, and the tuple is enforced by the service inside the writing
+ * transaction and audited by the `schema-uniqueness-audit` job.
  */
 export class CreateOrderTables1791000000220 implements MigrationInterface {
 	name = 'CreateOrderTables1791000000220';
@@ -93,7 +95,7 @@ export class CreateOrderTables1791000000220 implements MigrationInterface {
 		// The business key: a number is unique inside its channel, and the predicate is what lets a
 		// deleted order release its number without ever letting two live orders collide.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_order_number" ON "order" ("organizationId", "channelId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_order_number" ON "order" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "channelId", "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_order_customer_history" ON "order" ("customerId", "placedAt") WHERE "deletedAt" IS NULL`
@@ -135,7 +137,7 @@ export class CreateOrderTables1791000000220 implements MigrationInterface {
 		);
 		// One upstream order maps to one order; an import run twice cannot double-place it.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_order_org_external" ON "order" ("organizationId", "externalId") WHERE "externalId" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_order_org_external" ON "order" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "externalId") WHERE "externalId" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`ALTER TABLE "order" ADD CONSTRAINT "FK_order_cart" FOREIGN KEY ("cartId") REFERENCES "commerce_cart"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
@@ -445,7 +447,7 @@ export class CreateOrderTables1791000000220 implements MigrationInterface {
 		await queryRunner.query(`CREATE INDEX "IDX_order_tenant" ON "order" ("tenantId")`);
 		await queryRunner.query(`CREATE INDEX "IDX_order_organization" ON "order" ("organizationId")`);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_order_number" ON "order" ("organizationId", "channelId", "number") WHERE "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_order_number" ON "order" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "channelId", "number") WHERE "deletedAt" IS NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_order_customer_history" ON "order" ("customerId", "placedAt") WHERE "deletedAt" IS NULL`
@@ -482,7 +484,7 @@ export class CreateOrderTables1791000000220 implements MigrationInterface {
 			`CREATE INDEX "IDX_order_external" ON "order" ("externalId") WHERE "externalId" IS NOT NULL`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX "UQ_order_org_external" ON "order" ("organizationId", "externalId") WHERE "externalId" IS NOT NULL AND "deletedAt" IS NULL`
+			`CREATE UNIQUE INDEX "UQ_order_org_external" ON "order" (COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "externalId") WHERE "externalId" IS NOT NULL AND "deletedAt" IS NULL`
 		);
 
 		await queryRunner.query(
@@ -851,17 +853,18 @@ export class CreateOrderTables1791000000220 implements MigrationInterface {
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
-			`CREATE TABLE \`order\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`number\` varchar(64) NOT NULL, \`displayId\` varchar(64) NULL, \`channelId\` varchar(36) NOT NULL, \`regionId\` varchar(36) NULL, \`customerId\` varchar(36) NULL, \`userId\` varchar(36) NULL, \`email\` varchar(255) NULL, \`phone\` varchar(32) NULL, \`currency\` varchar(3) NOT NULL, \`currencyDecimals\` int NOT NULL DEFAULT 2, \`locale\` varchar(10) NULL, \`status\` varchar(16) NOT NULL DEFAULT 'DRAFT', \`paymentStatus\` varchar(32) NOT NULL DEFAULT 'NOT_PAID', \`fulfillmentStatus\` varchar(32) NOT NULL DEFAULT 'NOT_FULFILLED', \`isDraft\` tinyint NOT NULL DEFAULT 0, \`isTest\` tinyint NOT NULL DEFAULT 0, \`cartId\` varchar(36) NULL, \`parentOrderId\` varchar(36) NULL, \`invoiceId\` varchar(36) NULL, \`quoteInvoiceId\` varchar(36) NULL, \`source\` varchar(64) NULL, \`shippingAddressId\` varchar(36) NULL, \`billingAddressId\` varchar(36) NULL, \`sellerCount\` int NOT NULL DEFAULT 0, \`itemSubtotal\` decimal(20,6) NOT NULL DEFAULT 0, \`itemDiscountTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`itemTaxTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`shippingSubtotal\` decimal(20,6) NOT NULL DEFAULT 0, \`shippingDiscountTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`shippingTaxTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`discountTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`taxTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`grandTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`paidTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`refundedTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`creditTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`outstandingTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`version\` int NOT NULL DEFAULT 1, \`placedAt\` datetime NULL, \`completedAt\` datetime NULL, \`canceledAt\` datetime NULL, \`cancelReason\` varchar(255) NULL, \`purchaseOrderNumber\` varchar(64) NULL, \`metadata\` json NULL, \`externalId\` varchar(255) NULL, INDEX \`IDX_order_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_is_active\` (\`isActive\`), INDEX \`IDX_order_is_archived\` (\`isArchived\`), INDEX \`IDX_order_tenant\` (\`tenantId\`), INDEX \`IDX_order_organization\` (\`organizationId\`), INDEX \`IDX_order_number\` (\`organizationId\`, \`channelId\`, \`number\`), INDEX \`IDX_order_customer_history\` (\`customerId\`, \`placedAt\`), INDEX \`IDX_order_org_status_placed\` (\`organizationId\`, \`status\`, \`placedAt\`), INDEX \`IDX_order_org_placed\` (\`organizationId\`, \`placedAt\`), INDEX \`IDX_order_payment_status\` (\`organizationId\`, \`paymentStatus\`, \`placedAt\`), INDEX \`IDX_order_fulfillment_status\` (\`organizationId\`, \`fulfillmentStatus\`, \`placedAt\`), INDEX \`IDX_order_email\` (\`email\`, \`placedAt\`), INDEX \`IDX_order_channel_number\` (\`channelId\`, \`number\`), INDEX \`IDX_order_invoice\` (\`invoiceId\`), INDEX \`IDX_order_parent\` (\`parentOrderId\`), INDEX \`IDX_order_cart\` (\`cartId\`), INDEX \`IDX_order_shipping_address\` (\`shippingAddressId\`), INDEX \`IDX_order_billing_address\` (\`billingAddressId\`), INDEX \`IDX_order_region\` (\`regionId\`), INDEX \`IDX_order_external\` (\`externalId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`order\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`number\` varchar(64) NOT NULL, \`displayId\` varchar(64) NULL, \`channelId\` varchar(36) NOT NULL, \`regionId\` varchar(36) NULL, \`customerId\` varchar(36) NULL, \`userId\` varchar(36) NULL, \`email\` varchar(255) NULL, \`phone\` varchar(32) NULL, \`currency\` varchar(3) NOT NULL, \`currencyDecimals\` int NOT NULL DEFAULT 2, \`locale\` varchar(10) NULL, \`status\` varchar(16) NOT NULL DEFAULT 'DRAFT', \`paymentStatus\` varchar(32) NOT NULL DEFAULT 'NOT_PAID', \`fulfillmentStatus\` varchar(32) NOT NULL DEFAULT 'NOT_FULFILLED', \`isDraft\` tinyint NOT NULL DEFAULT 0, \`isTest\` tinyint NOT NULL DEFAULT 0, \`cartId\` varchar(36) NULL, \`parentOrderId\` varchar(36) NULL, \`invoiceId\` varchar(36) NULL, \`quoteInvoiceId\` varchar(36) NULL, \`source\` varchar(64) NULL, \`shippingAddressId\` varchar(36) NULL, \`billingAddressId\` varchar(36) NULL, \`sellerCount\` int NOT NULL DEFAULT 0, \`itemSubtotal\` decimal(20,6) NOT NULL DEFAULT 0, \`itemDiscountTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`itemTaxTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`shippingSubtotal\` decimal(20,6) NOT NULL DEFAULT 0, \`shippingDiscountTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`shippingTaxTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`discountTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`taxTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`grandTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`paidTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`refundedTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`creditTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`outstandingTotal\` decimal(20,6) NOT NULL DEFAULT 0, \`version\` int NOT NULL DEFAULT 1, \`placedAt\` datetime NULL, \`completedAt\` datetime NULL, \`canceledAt\` datetime NULL, \`cancelReason\` varchar(255) NULL, \`purchaseOrderNumber\` varchar(64) NULL, \`metadata\` json NULL, \`externalId\` varchar(255) NULL, \`organizationKey\` varchar(36) GENERATED ALWAYS AS (IFNULL(\`organizationId\`, '00000000-0000-0000-0000-000000000000')) STORED, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_order_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_is_active\` (\`isActive\`), INDEX \`IDX_order_is_archived\` (\`isArchived\`), INDEX \`IDX_order_tenant\` (\`tenantId\`), INDEX \`IDX_order_organization\` (\`organizationId\`), INDEX \`IDX_order_number\` (\`organizationId\`, \`channelId\`, \`number\`), INDEX \`IDX_order_customer_history\` (\`customerId\`, \`placedAt\`), INDEX \`IDX_order_org_status_placed\` (\`organizationId\`, \`status\`, \`placedAt\`), INDEX \`IDX_order_org_placed\` (\`organizationId\`, \`placedAt\`), INDEX \`IDX_order_payment_status\` (\`organizationId\`, \`paymentStatus\`, \`placedAt\`), INDEX \`IDX_order_fulfillment_status\` (\`organizationId\`, \`fulfillmentStatus\`, \`placedAt\`), INDEX \`IDX_order_email\` (\`email\`, \`placedAt\`), INDEX \`IDX_order_channel_number\` (\`channelId\`, \`number\`), INDEX \`IDX_order_invoice\` (\`invoiceId\`), INDEX \`IDX_order_parent\` (\`parentOrderId\`), INDEX \`IDX_order_cart\` (\`cartId\`), INDEX \`IDX_order_shipping_address\` (\`shippingAddressId\`), INDEX \`IDX_order_billing_address\` (\`billingAddressId\`), INDEX \`IDX_order_region\` (\`regionId\`), INDEX \`IDX_order_external\` (\`externalId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
-		// MySQL has no filtered index. "A number is unique inside its channel" and "one upstream order maps
-		// to one order" are enforced by the writing service and audited by the schema-uniqueness-audit job;
-		// the unique keys below are the dialect's unfiltered equivalent and additionally cover soft-deleted
-		// rows, which is why the service check runs first.
+		// MySQL has no filtered index, so both rules are carried by the generated key columns declared
+		// above: `deletedKey` for `"deletedAt" IS NULL`, `organizationKey` for the nullable scope column.
+		// `externalId` stays raw, because it is already a member of its tuple and MySQL's rule that a null
+		// key part exempts the tuple is exactly the `WHERE "externalId" IS NOT NULL` of the other two
+		// dialects. The writing service still checks both rules first; the indexes are the floor under it.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_order_number\` ON \`order\` (\`organizationId\`, \`channelId\`, \`number\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_order_number\` ON \`order\` (\`organizationKey\`, \`channelId\`, \`number\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_order_org_external\` ON \`order\` (\`organizationId\`, \`externalId\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_order_org_external\` ON \`order\` (\`organizationKey\`, \`externalId\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`order\` ADD CONSTRAINT \`FK_order_cart\` FOREIGN KEY (\`cartId\`) REFERENCES \`commerce_cart\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
@@ -878,12 +881,12 @@ export class CreateOrderTables1791000000220 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`order_address\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NOT NULL, \`type\` varchar(16) NOT NULL, \`sourceAddressId\` varchar(36) NULL, \`contactName\` varchar(255) NULL, \`company\` varchar(255) NULL, \`firstName\` varchar(128) NULL, \`lastName\` varchar(128) NULL, \`phone\` varchar(32) NULL, \`email\` varchar(255) NULL, \`line1\` varchar(255) NOT NULL, \`line2\` varchar(255) NULL, \`city\` varchar(128) NOT NULL, \`province\` varchar(128) NULL, \`provinceCode\` varchar(16) NULL, \`postalCode\` varchar(32) NULL, \`countryCode\` varchar(2) NOT NULL, \`countryId\` varchar(36) NULL, \`latitude\` decimal(10,6) NULL, \`longitude\` decimal(10,6) NULL, INDEX \`IDX_order_address_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_address_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_address_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_address_is_active\` (\`isActive\`), INDEX \`IDX_order_address_is_archived\` (\`isArchived\`), INDEX \`IDX_order_address_tenant\` (\`tenantId\`), INDEX \`IDX_order_address_organization\` (\`organizationId\`), INDEX \`IDX_order_address_order\` (\`orderId\`), INDEX \`IDX_order_address_country\` (\`countryId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`order_address\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NOT NULL, \`type\` varchar(16) NOT NULL, \`sourceAddressId\` varchar(36) NULL, \`contactName\` varchar(255) NULL, \`company\` varchar(255) NULL, \`firstName\` varchar(128) NULL, \`lastName\` varchar(128) NULL, \`phone\` varchar(32) NULL, \`email\` varchar(255) NULL, \`line1\` varchar(255) NOT NULL, \`line2\` varchar(255) NULL, \`city\` varchar(128) NOT NULL, \`province\` varchar(128) NULL, \`provinceCode\` varchar(16) NULL, \`postalCode\` varchar(32) NULL, \`countryCode\` varchar(2) NOT NULL, \`countryId\` varchar(36) NULL, \`latitude\` decimal(10,6) NULL, \`longitude\` decimal(10,6) NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_order_address_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_address_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_address_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_address_is_active\` (\`isActive\`), INDEX \`IDX_order_address_is_archived\` (\`isArchived\`), INDEX \`IDX_order_address_tenant\` (\`tenantId\`), INDEX \`IDX_order_address_organization\` (\`organizationId\`), INDEX \`IDX_order_address_order\` (\`orderId\`), INDEX \`IDX_order_address_country\` (\`countryId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		// "One billing and one shipping address per order" is enforced by the service and audited by the
 		// schema-uniqueness-audit job on this dialect.
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_order_address_type\` ON \`order_address\` (\`orderId\`, \`type\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_order_address_type\` ON \`order_address\` (\`orderId\`, \`type\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`order_address\` ADD CONSTRAINT \`FK_order_address_order\` FOREIGN KEY (\`orderId\`) REFERENCES \`order\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
@@ -897,10 +900,10 @@ export class CreateOrderTables1791000000220 implements MigrationInterface {
 		);
 
 		await queryRunner.query(
-			`CREATE TABLE \`order_summary\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NOT NULL, \`version\` int NOT NULL, \`totals\` json NOT NULL, \`currency\` varchar(3) NOT NULL, \`reason\` varchar(255) NULL, INDEX \`IDX_order_summary_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_summary_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_summary_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_summary_is_active\` (\`isActive\`), INDEX \`IDX_order_summary_is_archived\` (\`isArchived\`), INDEX \`IDX_order_summary_tenant\` (\`tenantId\`), INDEX \`IDX_order_summary_organization\` (\`organizationId\`), INDEX \`IDX_order_summary_order\` (\`orderId\`, \`version\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+			`CREATE TABLE \`order_summary\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NOT NULL, \`version\` int NOT NULL, \`totals\` json NOT NULL, \`currency\` varchar(3) NOT NULL, \`reason\` varchar(255) NULL, \`deletedKey\` varchar(36) GENERATED ALWAYS AS (IF(\`deletedAt\` IS NULL, '0', \`id\`)) STORED, INDEX \`IDX_order_summary_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_summary_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_summary_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_summary_is_active\` (\`isActive\`), INDEX \`IDX_order_summary_is_archived\` (\`isArchived\`), INDEX \`IDX_order_summary_tenant\` (\`tenantId\`), INDEX \`IDX_order_summary_organization\` (\`organizationId\`), INDEX \`IDX_order_summary_order\` (\`orderId\`, \`version\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(
-			`CREATE UNIQUE INDEX \`UQ_order_summary_version\` ON \`order_summary\` (\`orderId\`, \`version\`, \`deletedAt\`)`
+			`CREATE UNIQUE INDEX \`UQ_order_summary_version\` ON \`order_summary\` (\`orderId\`, \`version\`, \`deletedKey\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`order_summary\` ADD CONSTRAINT \`FK_order_summary_order\` FOREIGN KEY (\`orderId\`) REFERENCES \`order\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
@@ -916,11 +919,11 @@ export class CreateOrderTables1791000000220 implements MigrationInterface {
 		await queryRunner.query(
 			`CREATE TABLE \`order_change\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(36) NULL, \`updatedByUserId\` varchar(36) NULL, \`deletedByUserId\` varchar(36) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(36) NULL, \`organizationId\` varchar(36) NULL, \`orderId\` varchar(36) NOT NULL, \`version\` int NOT NULL, \`changeType\` varchar(16) NOT NULL, \`status\` varchar(16) NOT NULL DEFAULT 'PENDING', \`returnId\` varchar(36) NULL, \`claimId\` varchar(36) NULL, \`exchangeId\` varchar(36) NULL, \`subscriptionId\` varchar(36) NULL, \`requestedByUserId\` varchar(36) NULL, \`confirmedByUserId\` varchar(36) NULL, \`requestedAt\` datetime NULL, \`confirmedAt\` datetime NULL, \`declinedAt\` datetime NULL, \`canceledAt\` datetime NULL, \`note\` text NULL, \`priceChange\` decimal(20,6) NULL, \`isSettled\` tinyint NOT NULL DEFAULT 0, \`metadata\` json NULL, INDEX \`IDX_order_change_created_by_user\` (\`createdByUserId\`), INDEX \`IDX_order_change_updated_by_user\` (\`updatedByUserId\`), INDEX \`IDX_order_change_deleted_by_user\` (\`deletedByUserId\`), INDEX \`IDX_order_change_is_active\` (\`isActive\`), INDEX \`IDX_order_change_is_archived\` (\`isArchived\`), INDEX \`IDX_order_change_tenant\` (\`tenantId\`), INDEX \`IDX_order_change_organization\` (\`organizationId\`), INDEX \`IDX_order_change_order\` (\`orderId\`, \`status\`), INDEX \`IDX_order_change_version\` (\`orderId\`, \`version\`), INDEX \`IDX_order_change_pending\` (\`orderId\`, \`createdAt\`), INDEX \`IDX_order_change_return\` (\`returnId\`), INDEX \`IDX_order_change_claim\` (\`claimId\`), INDEX \`IDX_order_change_exchange\` (\`exchangeId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
-		// The exclusivity rule is enforced by taking the order row for update inside the creating
-		// transaction, and audited by the schema-uniqueness-audit job on this dialect. MySQL's functional
-		// key parts are available from 8.0.13, and the supported fallback is the generated column; this
-		// branch uses the service-plus-audit form because the generated column would be a column the entity
-		// does not declare, which synchronize would then want to drop.
+		// The exclusivity rule is not carried by an index on this dialect: it is enforced by taking the
+		// order row for update inside the creating transaction, and audited by the schema-uniqueness-audit
+		// job. A generated key over the three open statuses would express it, in the same form the rest of
+		// this set uses, and no such index is created here yet — this is a gap in the MySQL branch rather
+		// than something the dialect cannot say.
 		await queryRunner.query(
 			`ALTER TABLE \`order_change\` ADD CONSTRAINT \`FK_order_change_order\` FOREIGN KEY (\`orderId\`) REFERENCES \`order\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
