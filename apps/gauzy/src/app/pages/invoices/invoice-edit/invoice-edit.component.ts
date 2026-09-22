@@ -251,11 +251,35 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 		this.form.updateValueAndValidity();
 	}
 
+	/**
+	 * A figure with the record’s currency in front of it, and nothing at all when
+	 * there is no figure yet.
+	 *
+	 * Every column’s prepare function also runs on the EMPTY add row, and it feeds
+	 * the inline editor as well as the cell — which is why an untouched add row used
+	 * to open with "BGN undefined" already typed into the price box and "BGN NaN" in
+	 * the total beside it.
+	 */
+	private formatMoney(value: any): string {
+		const amount = Number(value);
+		if (value === null || value === undefined || value === '' || !Number.isFinite(amount)) {
+			return '';
+		}
+		return `${this.currency.value} ${value}`;
+	}
+
 	async loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			selectedRowIndex: -1,
-			mode: 'external',
+			// No `mode: 'external'` (the default is 'inline'). In external mode the
+			// library stops acting on the Add, Edit and Delete TRIGGERS itself and
+			// emits `create` / `edit` / `delete` for the host to handle. This form
+			// bound only `edit` — so the add button opened no row and the row's own
+			// delete button did nothing, while the `createConfirm` and `deleteConfirm`
+			// handlers below, both written against the inline flow (they resolve the
+			// grid's deferred), could never be reached. Inline is what those handlers
+			// expect and what the Add form beside this one has always run.
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -369,7 +393,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (value: IInvoiceItem['price']) => {
-					return `${this.currency.value} ${value}`;
+					return this.formatMoney(value);
 				}
 			};
 			quantity = {
@@ -389,7 +413,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell, row) => {
-					return `${this.currency.value} ${cell}`;
+					return this.formatMoney(cell);
 				}
 			};
 			quantity = {
@@ -413,7 +437,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			editable: false,
 			valuePrepareFunction: (value: IInvoiceItem['totalValue'], cell: Cell) => {
 				const row = cell.getRow().getData();
-				return `${this.currency.value} ${row.quantity * row.price}`;
+				return this.formatMoney(row.quantity * row.price);
 			},
 			isFilterable: false,
 			width: '13%'
@@ -448,14 +472,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				}
 			};
 		}
-	}
-
-	/**
-	 *
-	 * @param event
-	 */
-	onEditRowSelect({ row }) {
-		row.isInEditing = true;
 	}
 
 	private async _loadOrganizationData() {
@@ -925,7 +941,10 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			this.itemsToDelete.push(event.data.id);
 		}
 		this.subtotal -= +event.data.quantity * +event.data.price;
-		//await event.confirm.resolve(event.data);
+		// Resolving the grid's deferred is what removes the row; the id above is
+		// what deletes it server-side when the form is saved. Same two steps as the
+		// Add form, where this line was never commented out.
+		await event.confirm.resolve(event.data);
 		await this.calculateTotal();
 	}
 
