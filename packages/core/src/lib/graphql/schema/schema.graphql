@@ -877,7 +877,7 @@ type Query {
   equipmentSharingPolicyCount: Int
 
   """The sharing periods of the caller's tenant."""
-  equipmentSharings(filter: EquipmentSharingFilter, sort: [EquipmentSharingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EquipmentSharingConnection!
+  equipmentSharings(filter: EquipmentSharingFilter, sort: [EquipmentSharingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EquipmentSharingConnection!
 
   """One sharing period of the caller's tenant, or null when there is none."""
   equipmentSharing(id: ID!): EquipmentSharing
