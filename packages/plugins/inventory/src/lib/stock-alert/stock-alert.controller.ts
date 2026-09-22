@@ -12,7 +12,7 @@ import {
 import { InventoryPermission } from './../inventory.permissions';
 import { StockAlert } from './stock-alert.entity';
 import { StockAlertService } from './stock-alert.service';
-import { CreateStockAlertDTO, StockAlertDTO, UpdateStockAlertDTO } from './dto';
+import { CreateStockAlertDTO, StockAlertQueryDTO, UpdateStockAlertDTO } from './dto';
 
 /**
  * The alert-rule resource.
@@ -24,12 +24,21 @@ import { CreateStockAlertDTO, StockAlertDTO, UpdateStockAlertDTO } from './dto';
 export class StockAlertController {
 	constructor(private readonly stockAlertService: StockAlertService) {}
 
-	/** Lists alert rules. */
+	/** Lists alert rules, one page at a time and with the retired ones when they are asked for. */
 	@ApiOperation({ summary: 'List stock alert rules' })
 	@ApiResponse({ status: 200, description: 'Rules found.' })
 	@Get()
-	async findAll(@Query() filter: StockAlertDTO): Promise<IPagination<StockAlert>> {
-		return await this.stockAlertService.findAlerts({ where: filter as any });
+	async findAll(@Query() filter: StockAlertQueryDTO): Promise<IPagination<StockAlert>> {
+		// The page and the flag are taken out of the filters before they are used as one: spreading the whole
+		// DTO into `where` would ask the store for a rule whose `take` equals twenty-five, which matches nothing.
+		const { take, skip, withDeleted, ...where } = filter;
+
+		return await this.stockAlertService.findAlerts({
+			where: where as any,
+			...(take ? { take: Number(take) } : {}),
+			...(skip ? { skip: Number(skip) } : {}),
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 
 	/** Reads one rule. */
