@@ -1951,13 +1951,15 @@
 			"DISCARD_CONFIRM": "You have unsaved layout changes. Switching dashboards will discard them. Continue?"
 		},
 		"BUILDER": {
-			"EDIT_HINT": "Drag widgets from the panel on the right onto the canvas, use the grip to rearrange them, then click Save above.",
+			"EDIT_HINT": "Drag widgets from the panel on the right onto the canvas, drag a card to rearrange them, then click Save above.",
 			"UNSAVED_CHANGES": "Unsaved changes",
 			"HOST": {
 				"WIDGET_MENU": "Widget menu",
 				"CONFIGURE": "Configure",
 				"WIDTH": "Width",
 				"WIDTH_COLUMNS": "Width: {{ count }} columns",
+				"HEIGHT": "Height",
+				"HEIGHT_ROWS": "Height: {{ count }} rows",
 				"REMOVE": "Remove",
 				"RETRY": "Retry",
 				"LOADING": "Loading widget",
@@ -1974,7 +1976,7 @@
 				"HINT": "These settings apply to this widget only."
 			},
 			"CANVAS": {
-				"DRAG_HANDLE": "Drag to move this widget",
+				"DRAG_HANDLE": "Move this widget: drag the card, or use the arrow keys",
 				"EMPTY_TITLE": "Your canvas is empty",
 				"EMPTY_HINT": "Drag widgets from the panel on the right, or click one to add it.",
 				"EMPTY_HINT_READONLY": "Click \"Edit Dashboard\" to start adding widgets to this tab."
@@ -3766,7 +3768,7 @@
 		"EMPLOYEE": "Employee",
 		"DESCRIPTION": "Description",
 		"IS_DEFAULT": "Is Default",
-		"CONFIRM_DELETE": "Are you sure that, you want to delete",
+		"CONFIRM_DELETE": "Are you sure you want to delete this proposal template?",
 		"PROPOSAL_CREATE_MESSAGE": "Proposal template '{{ name }}' was added",
 		"PROPOSAL_EDIT_MESSAGE": "Proposal template '{{ name }}' was changed",
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",

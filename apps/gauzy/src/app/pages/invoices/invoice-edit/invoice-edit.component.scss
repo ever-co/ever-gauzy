@@ -2,16 +2,47 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 @use 'gauzy/_gauzy-table-hub' as ga-hub;
 
-// Row actions of the invoice-item grid. These were painted with literals: the
-// add/save pill as `#00d68f` and — the visible one — the cancel/delete pill as a
-// flat `white`, i.e. a bright white block on every item row of the four dark
-// themes. Same colours, read from the theme instead of spelled out, and the
-// delete pill takes the hairline ring every other button in the app carries
-// rather than a black drop shadow.
-:host ::ng-deep angular2-smart-table .angular2-smart-actions-title a {
-  background-color: nb-theme(color-success-default) !important;
-  color: nb-theme(text-control-color);
-  transform: scale(0.9);
+// ── The "add row" button ─────────────────────────────────────────────────────
+// The library puts the create trigger in the filter row's action cell, and it
+// was a saturated green slab: 36px around a 28px glyph, twice the height of the
+// filter fields beside it and the loudest thing on a form whose subject is the
+// figures below it.
+//
+// It is the same icon button as the row actions below — at the grid's one
+// control height, so the whole widget row lines up — and it carries the success
+// accent because adding a line is what it does.
+//
+// The glyph is sized on the `<i>`: `_overrides.scss` pins every smart-table
+// action anchor to `font-size: 1.75rem !important`, which the icon only INHERITS,
+// and any direct declaration beats an inherited value without an `!important` of
+// its own.
+:host ::ng-deep angular2-smart-table th.angular2-smart-actions-title a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--gauzy-table-control-height, 1.75rem);
+  height: var(--gauzy-table-control-height, 1.75rem);
+  padding: 0;
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  background-color: nb-theme(color-success-transparent-200);
+  box-shadow: $action-hairline;
+  color: nb-theme(color-success-default);
+  line-height: 1;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  i {
+    font-size: 0.875rem;
+    line-height: 1;
+  }
+
+  &:hover {
+    background-color: nb-theme(color-success-transparent-300);
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 1px;
+  }
 }
 
 // `transform: scale(0.6)` shrank the anchor's PAINT but not its box, so each
@@ -19,6 +50,19 @@
 // Sized as a real 1.5rem icon button instead — and the Font Awesome `<i>` inside
 // it has to be sized WITH the box: it inherits 28px from the grid's action cell,
 // which is what overflowed the chip when the scale came off.
+//
+// Each action is a small icon button: the card surface with the hairline ring
+// every other icon button in the app carries, its glyph in the accent that says
+// what it does. Edit used to be a solid success-green block — a saturated
+// button in the first column of every row, the loudest thing in a grid whose
+// subject is the figures beside it — and bare glyphs went too far the other
+// way, reading as disabled text at this size.
+//
+// The library's own rule for these anchors (`a.angular2-smart-action` in
+// `_overrides.scss`) paints them from `--smart-table-add-button-*`, two custom
+// properties this repo never defines: the browser drops both declarations, so
+// what is left is a 1.75rem glyph in `--text-control-color`, i.e. white on
+// nothing. That is why this grid has always carried its own treatment.
 :host ::ng-deep angular2-smart-table .angular2-smart-actions a {
   display: inline-flex;
   align-items: center;
@@ -28,24 +72,68 @@
   padding: 0;
   margin: 0 0.125rem;
   border-radius: var(--gauzy-radius-sm, 0.375rem);
+  background-color: var(--gauzy-card-1, var(--background-basic-color-1)) !important;
+  box-shadow: $action-hairline;
+  color: nb-theme(color-primary-default);
   line-height: 1;
+  transition: background-color 0.15s ease, color 0.15s ease;
 
   i {
     font-size: 0.8125rem;
     line-height: 1;
   }
+
+  &:hover {
+    background-color: nb-theme(color-primary-transparent-200) !important;
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 1px;
+  }
 }
 
-:host ::ng-deep angular2-smart-table .angular2-smart-actions a:nth-child(1) {
-  background-color: nb-theme(color-success-default) !important;
-  color: nb-theme(text-control-color);
+// Each action in the colour of what it does, named by its own class rather than
+// its position: in edit mode the row swaps Edit / Delete for Save / Cancel, so
+// `:nth-child(2)` painted Cancel — which changes nothing — in the delete red.
+// The add row (the one the button above opens) carries the same pair under its
+// own `-add-` names, so both are listed wherever one is.
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-edit-save,
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-add-create {
+  color: nb-theme(color-success-default);
+
+  &:hover {
+    background-color: nb-theme(color-success-transparent-200) !important;
+  }
 }
 
-:host ::ng-deep angular2-smart-table .angular2-smart-actions a:nth-child(2) {
-  background-color: var(--gauzy-card-1) !important;
+// Cancel backs out of an edit; it is not destructive, so it stays neutral.
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-edit-cancel,
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-add-cancel {
+  color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)) !important;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+}
+
+// Delete is the one destructive action in the row, so it is the one red thing.
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-delete-delete {
   color: nb-theme(color-danger-default);
-  box-shadow: $action-hairline;
+
+  &:hover {
+    background-color: nb-theme(color-danger-transparent-200) !important;
+  }
 }
+
+// The column headers read as one line each: "Apply Discount" wrapped to two
+// while every other label sat on one, which tipped the header row off its
+// baseline and pushed the filter funnel into the label beside it.
+:host ::ng-deep angular2-smart-table tr.angular2-smart-titles > th {
+  white-space: nowrap;
+}
+
 
 // The subtotal/total chips under the item grid.
 //
@@ -490,27 +578,47 @@ div.button-action {
   margin-top: 1rem;
 }
 
-// Save as draft: the neutral step between the outline Cancel and the two success
-// buttons beside it, painted with the grey `_gauzy-dialogs` already shares with
-// the rest of the app rather than with a literal repeated here.
+// ── The form's actions ──────────────────────────────────────────────────────
+// Four buttons that used to sit in a row on the LEADING edge, each with a
+// bootstrap `mr-3`: an outline Cancel, which the shared dialog sheet paints
+// orange; a grey slab for Save as Draft, which reads as disabled; and two
+// identical filled greens, so nothing in the row said which one was the main
+// way out of the form.
 //
-// The block this replaces set the fill on the button but hung its hover state
-// off a `[nbButton]` DESCENDANT of it — markup that does not exist — so the
-// button stayed flat under the pointer while every other button in the row
-// responded.
-:host button.gray {
-  &[nbButton].appearance-filled {
-    background-color: $gray;
-    border-color: $gray;
-    color: nb-theme(text-control-color);
+// Cancel keeps the leading edge as the way back; the three ways to save sit on
+// the trailing edge in the order of how far they commit — draft, send to the
+// contact, send by email — and only the last carries the filled weight.
+nb-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+
+  // `!important` against bootstrap's own `.mr-3`, which some of these buttons
+  // still carry and which would stack on the row's gap.
+  button {
+    margin: 0 !important;
+  }
+
+  // `!important` in turn, or the bootstrap reset just above wins the tie and
+  // Cancel joins the group on the trailing edge.
+  .cancel-action {
+    margin-inline-end: auto !important;
+  }
+
+  // The last action — the one that saves AND sends — carries the weight of the
+  // row. It cannot do that through `appearance="filled"`: every theme here
+  // resolves `--button-filled-success-background-color` to `transparent`, so a
+  // filled success button is drawn exactly like the outline one beside it. It
+  // takes the success tint instead, the same weight the filled primary two
+  // along already carries.
+  .primary-action[nbButton].appearance-filled.status-success {
+    background-color: nb-theme(color-success-transparent-200);
 
     &:hover:not([disabled]) {
-      background-color: rgba($color: $gray, $alpha: 0.85);
-      border-color: rgba($color: $gray, $alpha: 0.85);
-    }
-
-    &:focus:not(:hover):not(:active) {
-      box-shadow: 0 0 0 nb-theme(button-outline-width) rgba($color: $gray, $alpha: 0.2);
+      background-color: nb-theme(color-success-transparent-300);
     }
   }
 }
@@ -522,11 +630,145 @@ div.button-action {
 // into invoice-add's sheet too, through the `@forward` at the top of that file —
 // Add and Edit render the same grid.
 //
-// The density tokens only reach cell type and padding and the FILTER row's
-// controls (see `--gauzy-table-control-height` in `_overrides.scss`); the inline
-// row editors this grid is built on keep their own control sizing.
+// The density tokens reach cell type and padding, the filter row's controls and
+// — through the block at the foot of this file — the inline editors an edited
+// row swaps in, so the whole grid moves together when one of them is retuned.
 //
 // `$actions: null`: there is no page-header action row here. This form's buttons
 // are full-size `nb-card-header` form actions (Save, Send, …), not the compact
 // list toolbar the mixin's button block is written for.
 @include ga-hub.list-page(null);
+
+// The item grid's own row rhythm: 0.5rem above and below every cell's content,
+// header included, against the 0.1875rem `density-tokens()` sets for one-line
+// list tables. The rows here carry wrapped task names, inline editors and the
+// row actions, so they need the room.
+//
+// `--gauzy-table-control-height` is the same decision for the widgets: this grid
+// is edited in place, so it runs at the 1.75rem the rest of the app’s tables use
+// rather than the 1.5rem `density-tokens()` picks for read-only list rows. Every
+// control in the block — the add button at the top of this file, the filter
+// fields and the inline editors below — is sized from it, so the grid has ONE
+// control height.
+//
+// After the `list-page()` include above, not before: that mixin sets the same
+// tokens on `:host`, so an earlier block of equal specificity loses to it.
+:host {
+  --gauzy-table-cell-padding-y: 0.5rem;
+  --gauzy-table-header-padding-y: 0.5rem;
+  --gauzy-table-control-height: 1.75rem;
+}
+
+// The actions cell takes the same padding as the cells beside it. A global rule
+// (`_overrides.scss`) zeroes this one cell, which is why the token alone does
+// not reach it.
+:host ::ng-deep angular2-smart-table table tr td.angular2-smart-actions {
+  padding: var(--gauzy-table-cell-padding-y) var(--gauzy-table-cell-padding-x);
+}
+
+// ── The filter fields ───────────────────────────────────────────────────────
+// Their metrics come from `gauzy/_gauzy-table-filters.scss` — one home for the
+// whole app, read off the control-height token set above — and their colour from
+// `_overrides.scss`, which paints them in the sidebar tint and strips the
+// border. At this size that leaves a wash with no edge, sitting under a header
+// row it cannot be told apart from. The hairline and the small radius are what
+// every other box on this page carries; the focus ring is drawn INSIDE the field
+// because the table's own scroll container clips anything outside it.
+//
+// SPECIFICITY: the class is doubled to clear the `:root`-prefixed metric block in
+// that partial, which is written at (0,3,4) — the same idiom the partial itself
+// uses on the filter-toggle cell, and cheaper than an `!important`.
+:host ::ng-deep angular2-smart-table tr.angular2-smart-filters .angular2-smart-filter.angular2-smart-filter {
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea,
+  nb-select .select-button,
+  .ng-select .ng-select-container {
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    box-shadow: $action-hairline;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    box-shadow: inset 0 0 0 1px nb-theme(color-primary-default);
+  }
+}
+
+// ── The inline row editors ──────────────────────────────────────────────────
+// What a cell turns into while its row is being edited, and the same fields in
+// the add row the button at the top of this file opens.
+//
+// They were sized by this page's own `dialog()` include — 2.375rem, the metric of
+// the FORM above the grid — inside cells whose text is 0.6875rem: an editing row
+// stood ~10px taller than the rows around it, so the table jumped every time one
+// was opened, and each field read as a slab floating over its row rather than as
+// the cell it had replaced. They did not even agree with each other: the select
+// came in at 13px behind an 18px text inset while the boxes beside it ran 11px
+// behind 8px, so no two editors on the line started their text on the same x.
+//
+// One box for all of them: the grid's control height, the cell's own font size,
+// the small radius and the hairline. A toggle editor (Apply Tax / Apply Discount)
+// is left out — it is a switch, not a text box, and Nebular sizes it itself.
+//
+// SPECIFICITY: named per row — `tr.angular2-smart-row` for an edited row,
+// `tr[angular2-st-thead-form-row]` for the add row — because
+// `table-cell-edit-mode` alone is one class-level short of the library's own
+// `[_nghost] input[_ngcontent] { padding: .375em .75em }`. Each `!important`
+// below answers an `!important`, named where it is used.
+:host ::ng-deep angular2-smart-table tr.angular2-smart-row table-cell-edit-mode,
+:host ::ng-deep angular2-smart-table tr[angular2-st-thead-form-row] table-cell-edit-mode {
+  input:not([type='checkbox']):not([type='radio']):not(.native-input),
+  select,
+  textarea {
+    box-sizing: border-box;
+    height: var(--gauzy-table-control-height, 1.75rem);
+    // `!important` against `input-appearance()`, which the page's `dialog()`
+    // include emits as `[_nghost] input { min-height: 2.375rem !important }`.
+    min-height: var(--gauzy-table-control-height, 1.75rem) !important;
+    padding: 0 0.5rem;
+    font-size: var(--gauzy-table-font-size, 0.8125rem);
+    line-height: var(--gauzy-table-control-height, 1.75rem);
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    box-shadow: $action-hairline;
+
+    &:focus {
+      box-shadow: inset 0 0 0 1px nb-theme(color-primary-default);
+    }
+  }
+
+  textarea {
+    // The one editor that may hold more than a line: it starts at the control
+    // height and grows from there rather than being pinned to it.
+    height: auto;
+    padding-block: 0.25rem;
+    line-height: var(--gauzy-table-line-height, 1.25rem);
+    resize: vertical;
+  }
+
+  // The class is doubled for the same reason the filter block above doubles its
+  // own: `input-appearance()` floors this button at the form height from
+  // `[_nghost] nb-select.appearance-outline.status-basic .select-button`, which
+  // is (0,4,1) and `!important` — one class-level above anything the row path
+  // spells out on its own, and it clamped the select 10px taller than every
+  // other editor on the line.
+  nb-select .select-button.select-button {
+    height: var(--gauzy-table-control-height, 1.75rem);
+    min-height: var(--gauzy-table-control-height, 1.75rem) !important;
+    // `!important` against `_overrides.scss`'s `nb-select.size-medium button`,
+    // which pins the form's 1.125rem text inset with an `!important` of its own —
+    // three times the inset of the cell this select stands in. The trailing inset
+    // clears the chevron, which that same block pins to `right: 0.41rem`.
+    padding: 0 1.5rem 0 0.5rem !important;
+    font-size: var(--gauzy-table-font-size, 0.8125rem);
+    line-height: var(--gauzy-table-control-height, 1.75rem);
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
+    box-shadow: $action-hairline;
+  }
+
+  // The chevron comes down with the button: at the form's size it fills a
+  // 1.75rem control edge to edge.
+  nb-select .select-button.select-button nb-icon {
+    font-size: 0.875rem;
+  }
+}
