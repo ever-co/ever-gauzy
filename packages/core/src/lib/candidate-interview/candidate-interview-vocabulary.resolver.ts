@@ -160,10 +160,11 @@ export class CandidateInterviewVocabularyResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CandidateTechnologies>> {
 		return await this.list(
-			await this.candidateTechnologiesService.findAll({}),
+			await this.candidateTechnologiesService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) }),
 			VOCABULARY_FILTERABLE,
 			VOCABULARY_SORTABLE,
 			{ filter, sort, page, first, after, last, before, limit, offset }
@@ -306,10 +307,11 @@ export class CandidateInterviewVocabularyResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CandidatePersonalQualities>> {
 		return await this.list(
-			await this.candidatePersonalQualitiesService.findAll({}),
+			await this.candidatePersonalQualitiesService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) }),
 			VOCABULARY_FILTERABLE,
 			VOCABULARY_SORTABLE,
 			{ filter, sort, page, first, after, last, before, limit, offset }

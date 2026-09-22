@@ -69,9 +69,8 @@ const PROGRAMME_WITHOUT_WITH_DELETED = new Set([
 
 const PLATFORM_WITHOUT_WITH_DELETED = new Set([
 	'accountingTemplates', 'activities', 'activityLogs', 'addresses',
-	'apiCallLogs', 'appointmentEmployees', 'approvalPolicies', 'availabilitySlots',
-	'broadcasts', 'campaignBudgets', 'candidateCriterionsRatings', 'candidateFeedbacks',
-	'candidateInterviewers', 'candidateInterviews', 'candidatePersonalQualities', 'candidateTechnologies',
+	'apiCallLogs', 'approvalPolicies',
+	'broadcasts', 'campaignBudgets',
 	'candidates', 'channelDomains', 'comments', 'contactBuyers',
 	'contactCredentials', 'contactGroups', 'contacts', 'countries',
 	'currencies', 'customSmtpSettings', 'dailyPlans', 'dailyPlansForTask',

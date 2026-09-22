@@ -198,6 +198,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateInterviewConnection!
 
 	"One interview, or null when there is none."
@@ -217,6 +218,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateInterviewerConnection!
 
 	"One panel seat, or null when there is none."
@@ -236,6 +238,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateTechnologyConnection!
 
 	"One technology, or null when there is none."
@@ -255,6 +258,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidatePersonalQualityConnection!
 
 	"One personal quality, or null when there is none."
@@ -278,6 +282,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateFeedbackConnection!
 
 	"One verdict, or null when there is none."
@@ -297,6 +302,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateCriterionsRatingConnection!
 
 	"One criterion rating, or null when there is none."

@@ -124,9 +124,10 @@ export class CandidateFeedbacksResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CandidateFeedback>> {
-		const { items }: IPagination<ICandidateFeedback> = await this.candidateFeedbacksService.findAll({});
+		const { items }: IPagination<ICandidateFeedback> = await this.candidateFeedbacksService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<CandidateFeedback>({
 			rows: (items ?? []) as CandidateFeedback[],

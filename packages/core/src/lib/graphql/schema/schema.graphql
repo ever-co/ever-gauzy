@@ -84,7 +84,7 @@ type Query {
   The invitations of the caller's tenant, newest first. An appointment's invitees are this connection
   narrowed by `appointmentId`; an employee's invitations are the same connection narrowed by `employeeId`.
   """
-  appointmentEmployees(filter: AppointmentEmployeeFilter, sort: [AppointmentEmployeeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): AppointmentEmployeeConnection!
+  appointmentEmployees(filter: AppointmentEmployeeFilter, sort: [AppointmentEmployeeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): AppointmentEmployeeConnection!
 
   """One invitation of the caller's tenant, or null when there is none."""
   appointmentEmployee(id: ID!): AppointmentEmployee
@@ -139,7 +139,7 @@ type Query {
   When the caller states no sort, the order is the platform's own: newest first, then the identifier,
   because the delivered read states no order of its own and a cursor walk needs a total one.
   """
-  availabilitySlots(filter: AvailabilitySlotFilter, sort: [AvailabilitySlotSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): AvailabilitySlotConnection!
+  availabilitySlots(filter: AvailabilitySlotFilter, sort: [AvailabilitySlotSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): AvailabilitySlotConnection!
 
   """
   One slot of the caller's tenant, or null when there is none.
@@ -247,7 +247,7 @@ type Query {
   """
   The interviews of the caller's tenant. `candidateId` narrows them to the sittings of one candidacy.
   """
-  candidateInterviews(filter: CandidateInterviewFilter, sort: [CandidateInterviewSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateInterviewConnection!
+  candidateInterviews(filter: CandidateInterviewFilter, sort: [CandidateInterviewSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateInterviewConnection!
 
   """One interview, or null when there is none."""
   candidateInterview(id: ID!): CandidateInterview
@@ -258,7 +258,7 @@ type Query {
   """
   The panel seats of the caller's tenant. `interviewId` narrows them to the panel of one sitting.
   """
-  candidateInterviewers(filter: CandidateInterviewerFilter, sort: [CandidateInterviewerSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateInterviewerConnection!
+  candidateInterviewers(filter: CandidateInterviewerFilter, sort: [CandidateInterviewerSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateInterviewerConnection!
 
   """One panel seat, or null when there is none."""
   candidateInterviewer(id: ID!): CandidateInterviewer
@@ -269,7 +269,7 @@ type Query {
   """
   The technologies the panels assess. `interviewId` narrows them to the vocabulary of one sitting.
   """
-  candidateTechnologies(filter: CandidateTechnologyFilter, sort: [CandidateTechnologySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateTechnologyConnection!
+  candidateTechnologies(filter: CandidateTechnologyFilter, sort: [CandidateTechnologySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateTechnologyConnection!
 
   """One technology, or null when there is none."""
   candidateTechnology(id: ID!): CandidateTechnology
@@ -280,7 +280,7 @@ type Query {
   """
   The personal qualities the panels assess. `interviewId` narrows them to the vocabulary of one sitting.
   """
-  candidatePersonalQualities(filter: CandidatePersonalQualityFilter, sort: [CandidatePersonalQualitySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidatePersonalQualityConnection!
+  candidatePersonalQualities(filter: CandidatePersonalQualityFilter, sort: [CandidatePersonalQualitySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidatePersonalQualityConnection!
 
   """One personal quality, or null when there is none."""
   candidatePersonalQuality(id: ID!): CandidatePersonalQuality
@@ -291,7 +291,7 @@ type Query {
   """
   The verdicts of the caller's tenant. `interviewId` narrows them to one sitting and `candidateId` to one candidacy.
   """
-  candidateFeedbacks(filter: CandidateFeedbackFilter, sort: [CandidateFeedbackSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateFeedbackConnection!
+  candidateFeedbacks(filter: CandidateFeedbackFilter, sort: [CandidateFeedbackSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateFeedbackConnection!
 
   """One verdict, or null when there is none."""
   candidateFeedback(id: ID!): CandidateFeedback
@@ -302,7 +302,7 @@ type Query {
   """
   The criterion ratings of the caller's tenant. `feedbackId` narrows them to the criteria of one verdict.
   """
-  candidateCriterionsRatings(filter: CandidateCriterionsRatingFilter, sort: [CandidateCriterionsRatingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateCriterionsRatingConnection!
+  candidateCriterionsRatings(filter: CandidateCriterionsRatingFilter, sort: [CandidateCriterionsRatingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateCriterionsRatingConnection!
 
   """One criterion rating, or null when there is none."""
   candidateCriterionsRating(id: ID!): CandidateCriterionsRating

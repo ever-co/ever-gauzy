@@ -127,9 +127,10 @@ export class CandidateInterviewResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CandidateInterview>> {
-		const { items }: IPagination<ICandidateInterview> = await this.candidateInterviewService.findAll({});
+		const { items }: IPagination<ICandidateInterview> = await this.candidateInterviewService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<CandidateInterview>({
 			rows: (items ?? []) as CandidateInterview[],
