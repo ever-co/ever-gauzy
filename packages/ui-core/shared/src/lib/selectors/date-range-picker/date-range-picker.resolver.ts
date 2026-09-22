@@ -3,7 +3,16 @@ import { Observable, of } from 'rxjs';
 import moment from 'moment';
 import { IDateRangePicker } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/ui-core/common';
-import { DEFAULT_DATE_PICKER_CONFIG, IDatePickerConfig } from '@gauzy/ui-core/core';
+// TYPE-ONLY on purpose: a value import from the core barrel pulls the whole app graph
+// (store -> @datorama/akita) into every route resolution and into this file's unit test.
+import type { IDatePickerConfig } from '@gauzy/ui-core/core';
+
+/**
+ * Mirrors `DEFAULT_DATE_PICKER_CONFIG.unitOfTime`, kept local for the reason above. It is only
+ * reached by a route that resolves dates without declaring a `datePicker` at all — reading
+ * `.unitOfTime` off that missing config used to throw.
+ */
+const FALLBACK_UNIT_OF_TIME: moment.unitOfTime.Base = 'week';
 
 /**
  * Resolves the date range picker configuration based on the route parameters.
@@ -23,11 +32,10 @@ export const DateRangePickerResolver: ResolveFn<Observable<IDateRangePicker>> = 
 	const { date, date_end, unit_of_time, is_custom_date = false } = route.queryParams;
 
 	// The route's own picker configuration. Routes that declare no `datePicker` fall back to the
-	// global default instead of throwing on a missing `unitOfTime`.
-	const datePicker: IDatePickerConfig = {
-		...DEFAULT_DATE_PICKER_CONFIG,
-		...((route.data?.datePicker as Partial<IDatePickerConfig>) ?? {})
-	};
+	// defaults instead of throwing on a missing `unitOfTime`.
+	const datePicker = (route.data?.datePicker ?? {}) as Partial<IDatePickerConfig>;
+	const isLockDatePicker = datePicker.isLockDatePicker ?? false;
+	const routeUnitOfTime = datePicker.unitOfTime ?? FALLBACK_UNIT_OF_TIME;
 
 	// `isLockDatePicker` means the page only works at ONE granularity: a day page (Time & Activity,
 	// Screenshots, Videos, Apps, Visited Sites, Daily timesheet) shows the activity of a single date,
@@ -35,9 +43,7 @@ export const DateRangePickerResolver: ResolveFn<Observable<IDateRangePicker>> = 
 	// offers only this unit — so a `unit_of_time` left in the URL by a PREVIOUS page must never win.
 	// It used to: navigating from any week page landed on Time & Activity with 'week' selected while
 	// the input still showed one date. Only pages that let the user change the unit read it from the URL.
-	const unitOfTime: moment.unitOfTime.Base = datePicker.isLockDatePicker
-		? datePicker.unitOfTime
-		: unit_of_time ?? datePicker.unitOfTime;
+	const unitOfTime: moment.unitOfTime.Base = isLockDatePicker ? routeUnitOfTime : unit_of_time ?? routeUnitOfTime;
 
 	// The date the range is anchored on — the one carried in the URL, or today.
 	const anchor = date ? moment(date) : moment();
@@ -46,7 +52,7 @@ export const DateRangePickerResolver: ResolveFn<Observable<IDateRangePicker>> = 
 	// `date_end` is deliberately ignored: carried over from a week page it stretched a day page's
 	// range across seven days, and the arrows then stepped a week at a time (the `isCustomDate`
 	// branch of the arrow strategies measures the span of the range itself).
-	if (datePicker.isLockDatePicker) {
+	if (isLockDatePicker) {
 		return of({
 			startDate: anchor.clone().startOf(unitOfTime).toDate(),
 			endDate: anchor.clone().endOf(unitOfTime).toDate(),
