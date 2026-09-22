@@ -164,6 +164,14 @@ export class DashboardCanvasComponent extends TranslationBaseComponent {
 	 * pointer actually was. Only ever called for a drop that landed ON the
 	 * canvas, so the point is always somewhere a position can be computed for.
 	 *
+	 * That position counts the cells the point follows in the PRE-DRAG order,
+	 * which still contains the widget being dragged, whereas `movePlacement`
+	 * takes the index the widget lands at AFTER it has been lifted out (the same
+	 * convention as CDK's `currentIndex`). Dragging a widget forwards therefore
+	 * has to give back one position for the hole it leaves behind, or it
+	 * overshoots its target by one. Dragging backwards leaves the hole after the
+	 * point, so nothing is counted twice and the index already agrees.
+	 *
 	 * @param event - The CDK drop event.
 	 */
 	private _resolveDropIndex(event: CdkDragDrop<IDashboardWidgetPlacement[]>): number {
@@ -175,7 +183,9 @@ export class DashboardCanvasComponent extends TranslationBaseComponent {
 		if (!rects.length || rects.some((rect) => isPointInRect(rect, point))) {
 			return event.currentIndex;
 		}
-		return dropIndexAtPoint(rects, point);
+		const index = dropIndexAtPoint(rects, point);
+		const reordering = event.previousContainer === event.container;
+		return reordering && event.previousIndex < index ? index - 1 : index;
 	}
 
 	/**
