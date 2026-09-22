@@ -398,6 +398,42 @@ async function main() {
 	}
 	console.log(`  (${reachable} of ${RESOURCES.length} resources answered a bare read; the rest are mounted and refused it)`);
 
+	// --- every list route survives being used, not merely being reached --------------------------
+	//
+	// The check above asks whether a route is *there*, and a route can be there and unusable: eight payment
+	// list routes answered `200` to a bare read and `500` to every request that stated a page, because the
+	// handler nested the whole query DTO under `where` and the DTO's own members (`take`, `skip`,
+	// `withDeleted`) became predicates on columns that do not exist. Nothing here appended a query string, so
+	// nothing saw it. This pass does append one, and reports a 5xx rather than any 4xx: a resource that
+	// refuses a window it does not offer is a decision, while a resource that breaks on one is a defect.
+	console.log('');
+	let windowed = 0;
+	let broke = 0;
+
+	for (const resource of RESOURCES) {
+		if (resource.path.includes('?')) continue;
+
+		const response = await call('GET', `${resource.path}?take=1`, { token, tenantId });
+
+		if (response.status < 500) {
+			windowed++;
+			continue;
+		}
+
+		broke++;
+		record(
+			`${resource.capability}: ${resource.path} answers a paged read`,
+			false,
+			`HTTP ${response.status} on \`?take=1\` — ${brief(response)}`
+		);
+	}
+
+	record(
+		'no list route breaks on a page it advertises',
+		broke === 0,
+		`${windowed} of ${RESOURCES.length} route(s) took \`?take=1\``
+	);
+
 	// --- the same concepts over the one GraphQL endpoint ---------------------------------------
 	console.log('');
 	const { fields, error } = await readRootFields(token, tenantId);
