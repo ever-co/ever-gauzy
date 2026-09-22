@@ -63,11 +63,19 @@ export class InvoiceTasksSelectorComponent extends DefaultEditor implements OnIn
 	}
 
 	/**
+	 * Hand the chosen task back to the grid.
+	 *
+	 * This was commented out, so the editor was a select that changed nothing: the
+	 * item kept whatever task it already had, and a NEW line could never be created
+	 * on a by-task record at all — the form rejects an item with no task and shows
+	 * “invalid item”. The four sibling selectors (employee, project, product,
+	 * expense) have always written their value back through `setValue`, and the
+	 * save path reads `selectedItem.id` off it.
 	 *
 	 * @param task
 	 */
 	selectTask(task: ITask) {
-		// this.cell.newValue = task;
+		this.cell.setValue(task as any);
 	}
 
 	ngOnDestroy() {}
