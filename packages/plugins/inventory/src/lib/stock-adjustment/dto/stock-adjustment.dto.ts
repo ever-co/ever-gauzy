@@ -5,7 +5,8 @@
  * update shapes cannot drift apart from the read shape.
  */
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsEnum, IsInt, IsNumber, IsObject, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
 import { StockAdjustmentType, StockAdjustmentStatus } from './../../inventory.enums';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
@@ -95,4 +96,35 @@ export class StockAdjustmentDTO extends TenantOrganizationBaseDTO {
 	@IsOptional()
 	@IsObject()
 	metadata?: Record<string, any>;
+}
+
+/**
+ * The read shape: the filters a caller may narrow by, plus the page and the soft-delete visibility.
+ *
+ * The platform's pagination members live on `BaseQueryDTO`'s chain, which the tenant/organization DTO this
+ * class extends does not join ? so without these three a `take`, a `skip` or a `withDeleted` a client sends
+ * is dropped by the validation pipe before the controller sees it, and the route answers its first page of live
+ * rows for ever. `skip` is the page number, as it is on every REST list route here; the GraphQL connection's
+ * cursor is a row offset and answers a different question.
+ */
+export class StockAdjustmentQueryDTO extends StockAdjustmentDTO {
+	@ApiPropertyOptional({ type: () => Number, description: 'Rows per page.' })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	take?: number;
+
+	@ApiPropertyOptional({ type: () => Number, description: 'Page number, one-based.' })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	skip?: number;
+
+	@ApiPropertyOptional({ type: () => Boolean, description: 'Whether retired instructions are included.' })
+	@IsOptional()
+	@Transform(({ value }) => value === true || value === 'true')
+	@IsBoolean()
+	withDeleted?: boolean;
 }

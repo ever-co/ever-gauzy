@@ -13,7 +13,7 @@ import {
 import { InventoryPermission } from './../inventory.permissions';
 import { StockAdjustment } from './stock-adjustment.entity';
 import { StockAdjustmentService } from './stock-adjustment.service';
-import { CreateStockAdjustmentDTO, StockAdjustmentDTO } from './dto';
+import { CreateStockAdjustmentDTO, StockAdjustmentQueryDTO } from './dto';
 
 /**
  * The manual-correction resource: draft an instruction, apply it, cancel it.
@@ -29,8 +29,15 @@ export class StockAdjustmentController {
 	@ApiOperation({ summary: 'List stock adjustments' })
 	@ApiResponse({ status: 200, description: 'Adjustments found.' })
 	@Get()
-	async findAll(@Query() filter: StockAdjustmentDTO): Promise<IPagination<StockAdjustment>> {
-		return await this.stockAdjustmentService.findAdjustments({ where: filter as any });
+	async findAll(@Query() filter: StockAdjustmentQueryDTO): Promise<IPagination<StockAdjustment>> {
+		const { take, skip, withDeleted, ...where } = filter;
+
+		return await this.stockAdjustmentService.findAdjustments({
+			where: where as any,
+			...(take ? { take: Number(take) } : {}),
+			...(skip ? { skip: Number(skip) } : {}),
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 
 	/** Reads one instruction. */
