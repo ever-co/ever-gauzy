@@ -118,9 +118,10 @@ export class TaskViewResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<TaskView>> {
-		const { items }: IPagination<TaskView> = await this.taskViewService.findAll({} as BaseQueryDTO<TaskView>);
+		const { items }: IPagination<TaskView> = await this.taskViewService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<TaskView>);
 
 		return this.connection(items, { filter, sort, page, first, after, last, before, limit, offset });
 	}

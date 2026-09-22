@@ -117,14 +117,15 @@ export class OrganizationLanguageResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrganizationLanguage>> {
 		// The delivered list route binds `relations` and `findInput` out of its `data` query parameter
 		// and hands them to the service. This surface has no query string to bind, so the read runs with
 		// the route's own default for an unstated request — no criterion, no relations — and the
 		// connection protocol's `filter` is applied to the rows the service returns. The tenant is
 		// applied to the criterion by the service, from the credential rather than from the caller.
-		const { items }: IPagination<OrganizationLanguage> = await this.organizationLanguageService.findAll({});
+		const { items }: IPagination<OrganizationLanguage> = await this.organizationLanguageService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<OrganizationLanguage>({
 			rows: items ?? [],

@@ -1653,7 +1653,7 @@ type Query {
   organizationEmploymentTypeCount: Int
 
   """The languages of the caller's tenant, newest first."""
-  organizationLanguages(filter: OrganizationLanguageFilter, sort: [OrganizationLanguageSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationLanguageConnection!
+  organizationLanguages(filter: OrganizationLanguageFilter, sort: [OrganizationLanguageSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationLanguageConnection!
 
   """One language row of the caller's tenant, or null when there is none."""
   organizationLanguage(id: ID!): OrganizationLanguage
@@ -1662,7 +1662,7 @@ type Query {
   organizationLanguageCount: Int
 
   """The positions of the caller's tenant, newest first."""
-  organizationPositions(filter: OrganizationPositionFilter, sort: [OrganizationPositionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationPositionConnection!
+  organizationPositions(filter: OrganizationPositionFilter, sort: [OrganizationPositionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationPositionConnection!
 
   """One position of the caller's tenant, or null when there is none."""
   organizationPosition(id: ID!): OrganizationPosition
@@ -2195,7 +2195,7 @@ type Query {
   productCount: Int
 
   """The reactions of the caller's tenant, newest first."""
-  reactions(filter: ReactionFilter, sort: [ReactionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ReactionConnection!
+  reactions(filter: ReactionFilter, sort: [ReactionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ReactionConnection!
 
   """One reaction of the caller's tenant, or null when there is none."""
   reaction(id: ID!): Reaction
@@ -2584,7 +2584,7 @@ type Query {
   taskLinkedIssueCount: Int
 
   """The saved views the caller's tenant holds."""
-  taskViews(filter: TaskViewFilter, sort: [TaskViewSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): TaskViewConnection!
+  taskViews(filter: TaskViewFilter, sort: [TaskViewSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): TaskViewConnection!
 
   """One saved view, or null when there is none."""
   taskView(id: ID!): TaskView
@@ -4217,7 +4217,7 @@ type Query {
   userOrganizationOrganizationsCount(userOrganizationId: ID!): Int
 
   """The accounts of the caller's tenant, newest first."""
-  users(filter: UserFilter, sort: [UserSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): UserConnection!
+  users(filter: UserFilter, sort: [UserSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): UserConnection!
 
   """One account of the caller's tenant, or null when there is none."""
   user(id: ID!): User
