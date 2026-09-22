@@ -34,10 +34,27 @@ on:
       - stage
       - master
   pull_request:
-    branches:
+    # Off by owner decision (2026-09-21): a pull request INTO develop does not start this workflow. The
+    # cost belonged to every commit on the branch being merged, and the run belongs to the merge — the
+    # `push` trigger above still scans develop, stage and master when code lands on them, so nothing goes
+    # unscanned. Pull requests aimed at `stage` and `master` still run it, which is the release cascade.
+    #
+    # Measured on 2026-09-22 before this change, over the previous twelve runs: 178 run-minutes in total,
+    # 137 of them on pull requests, at two jobs of 22-45 minutes each on the 4-vCPU ARC pool — paid on
+    # every contributor's branch into develop, not just one (`feat/platform-extensions`, `develop`,
+    # `fix/custom-dashboard-drag-and-drop`, `feat/9873-restrict-agent-exit-logout`).
+    #
+    # `branches-ignore` rather than a `branches` list, because a list is what has to be edited when a new
+    # protected branch appears and this is the exception to it. `build.yml` and `secrets-analysis.yml`
+    # already spell their develop exception this way.
+    #
+    # To restore the pull-request trigger, replace this block with:
+    #   branches:
+    #     - develop
+    #     - stage
+    #     - master
+    branches-ignore:
       - develop
-      - stage
-      - master
   # Default setup ran a weekly scan so that a new CodeQL release re-examines unchanged code.
   # Keeping it means an advisory published after a file was last touched still finds it.
   schedule:
