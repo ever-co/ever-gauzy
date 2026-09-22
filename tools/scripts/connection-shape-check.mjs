@@ -88,6 +88,37 @@ const COMPUTED_ANSWERS = new Set([
 	'sellerSplitReconciliation',
 	// The capacity breaches of one bin's contents.
 	'warehouseBinCapacityWarnings',
+	// A report over a range: one row per day, member, project, task or activity, computed by grouping and
+	// folding the rows rather than read from a table.
+	'employeeMonthlyStatistics',
+	'employeeStatisticsHistory',
+	'organizationRecurringExpenseShares',
+	'payrollRunStatistics',
+	'payrollRunSummary',
+	'dailyActivities',
+	'timeTrackingMembers',
+	'timeTrackingProjects',
+	'timeTrackingTasks',
+	'timeTrackingManualTimes',
+	'timeTrackingTimeSlots',
+	'timeTrackingActivities',
+	'trackingSessionsBySessionId',
+	'activeTrackingSessions',
+	'timeLogDailyReport',
+	'timeLogDailyReportChart',
+	'timeLogOwedAmountReport',
+	'timeLogOwedAmountReportChart',
+	'timeLogWeeklyReport',
+	'timeLogTimeLimitReport',
+	'timerWorkedStatus',
+	'projectBudgetLimit',
+	'clientBudgetLimit',
+	// A check computed over a window rather than a page of the table: the logs one employee has that overlap
+	// the instants named, which is the condition a hand-recorded interval is checked against before it is
+	// written.
+	'timeLogConflicts',
+	// The corpus of legal documents a new account must accept as currently published, bounded by the locale.
+	'termsAcceptanceDocuments',
 ]);
 
 /**
@@ -136,17 +167,30 @@ function typeBody(name) {
 	return null;
 }
 
-/** The fields a type declares at depth 0, with their type text. */
+/**
+ * The fields a type declares at depth 0, with their type text.
+ *
+ * **A declaration is read as a whole statement, not as a line.** A field whose arguments carry descriptions
+ * spans a dozen lines — `dailyActivities(organizationId: ID!, …): [DailyActivityGroup!]!` is one example of
+ * twenty-five — and a reader that matched line by line never saw them: the name line has no type and the type
+ * line has no name, so both were skipped and the field was invisible to every rule below. The gate reported a
+ * list surface of 21 bare arrays while the schema declares 46, which is the worst way for a gate to be wrong:
+ * it passed, and it was measuring less than it claimed.
+ */
 function fieldsOf(body) {
 	const found = [];
 	let braces = 0;
 	let parens = 0;
+	let statement = '';
 
 	for (const line of body.split('\n')) {
-		if (braces === 0 && parens === 0) {
-			const field = /^\s*([A-Za-z_]\w*)\s*(\([\s\S]*?\))?\s*:\s*(.+?)\s*$/.exec(line);
+		const stripped = line.trim();
+		const opens = braces === 0 && parens === 0;
 
-			if (field) found.push({ name: field[1], type: field[3] });
+		if (opens && stripped !== '') {
+			statement = stripped;
+		} else if (statement !== '') {
+			statement += ` ${stripped}`;
 		}
 
 		for (const character of line) {
@@ -154,6 +198,15 @@ function fieldsOf(body) {
 			else if (character === '}') braces--;
 			else if (character === '(') parens++;
 			else if (character === ')') parens--;
+		}
+
+		// The statement is complete once it has closed every bracket it opened and states a type.
+		if (statement !== '' && braces === 0 && parens === 0) {
+			const field = /^([A-Za-z_]\w*)\s*(\(.*\))?\s*:\s*(.+)$/.exec(statement);
+
+			if (field) found.push({ name: field[1], type: field[3].trim() });
+
+			statement = '';
 		}
 	}
 

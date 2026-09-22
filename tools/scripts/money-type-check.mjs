@@ -55,20 +55,46 @@ const stale = [];
 const found = [];
 
 let type = null;
+let braces = 0;
+let parens = 0;
+let statement = '';
 
 for (const line of schema.split(/\r?\n/)) {
 	const declaration = /^(type|input|interface)\s+([A-Za-z_]\w*)/.exec(line);
 
 	if (declaration) {
 		type = declaration[2];
-		continue;
+		statement = '';
 	}
 
-	const field = /^\s{1,4}([A-Za-z_]\w*)\s*:\s*([A-Za-z_[\].!]+)\s*$/.exec(line);
+	// A member is read as a whole statement rather than as a line, for the reason the connection gate
+	// records at length: a declaration whose arguments span lines has no name on its type line and no type on
+	// its name line, so a line-by-line reader never sees it at all. A member sits one brace deep — inside the
+	// type or input it belongs to — which is the depth this reads at, and the brace the *declaration* line
+	// opens is counted below like any other, or every depth after it is off by one.
+	const atMemberDepth = !declaration && braces === 1 && parens === 0;
+
+	if (!declaration && atMemberDepth && line.trim() !== '') {
+		statement = line.trim();
+	} else if (!declaration && statement !== '' && line.trim() !== '') {
+		statement += ` ${line.trim()}`;
+	}
+
+	for (const character of line) {
+		if (character === '{') braces++;
+		else if (character === '}') braces--;
+		else if (character === '(') parens++;
+		else if (character === ')') parens--;
+	}
+
+	if (statement === '' || braces !== 1 || parens !== 0) continue;
+
+	const field = /^([A-Za-z_]\w*)\s*(\(.*\))?\s*:\s*([A-Za-z_[\].!]+)$/.exec(statement);
+	statement = '';
 
 	if (!field || !type) continue;
 
-	const [, name, fieldType] = field;
+	const [, name, , fieldType] = field;
 
 	if (!MONEY.test(name) || NOT_MONEY.test(name)) continue;
 
