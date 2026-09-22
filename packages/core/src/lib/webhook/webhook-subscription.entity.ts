@@ -1,3 +1,4 @@
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsDateString, IsInt, IsOptional, IsString, IsUrl, IsUUID, Min } from 'class-validator';
 import { ID, IWebhookSubscription, JsonData } from '@gauzy/contracts';
@@ -52,6 +53,8 @@ export class WebhookSubscription extends TenantOrganizationBaseEntity implements
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsSecret()
+	// the key a delivery is signed with
+	@ExportRedacted()
 	@MultiORMColumn({ type: 'varchar', length: 255 })
 	secret: string;
 

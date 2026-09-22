@@ -8,7 +8,8 @@ import {
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	ExportRedacted,
 } from '@gauzy/core';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { MikroOrmPaymentSessionRepository } from './repository/mikro-orm-payment-session.repository';
@@ -132,6 +133,8 @@ export class PaymentSession extends TenantOrganizationBaseEntity implements IPay
 	@IsOptional()
 	@IsString()
 	@MaxLength(255)
+	// the provider secret a payment attempt is confirmed with
+	@ExportRedacted()
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true })
 	clientSecret?: string;
 

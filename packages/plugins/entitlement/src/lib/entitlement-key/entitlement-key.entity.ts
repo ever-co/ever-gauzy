@@ -9,7 +9,8 @@ import {
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	ExportRedacted,
 } from '@gauzy/core';
 import { EntitlementKeyStatus, LicenceKeyFormat } from '../entitlement.enums';
 import { Entitlement } from '../entitlement/entitlement.entity';
@@ -62,6 +63,8 @@ export class EntitlementKey extends TenantOrganizationBaseEntity {
 	@IsNotEmpty()
 	@IsString()
 	@MaxLength(64)
+	// a digest of an issued key
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ length: 64 })
 	keyHash: string;
 

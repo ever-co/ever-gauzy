@@ -1,3 +1,4 @@
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ID, IIdempotencyKey, IdempotencyStatus, JsonData } from '@gauzy/contracts';
@@ -44,6 +45,8 @@ export class IdempotencyKey extends TenantOrganizationBaseEntity implements IIde
 	 */
 	@ApiProperty({ type: () => String })
 	@IsString()
+	// a digest of a request body
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ type: 'varchar', length: 64 })
 	requestHash: string;
 

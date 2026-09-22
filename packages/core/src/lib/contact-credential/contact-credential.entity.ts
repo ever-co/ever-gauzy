@@ -1,3 +1,4 @@
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDate, IsNumber, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
@@ -88,6 +89,8 @@ export class ContactCredential extends TenantOrganizationBaseEntity implements I
 	@IsString()
 	@MinLength(1)
 	@MaxLength(255)
+	// a bcrypt digest — the mask hint would only give an attacker free characters
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ type: 'varchar', length: 255, select: false })
 	passwordHash: string;
 
@@ -107,6 +110,8 @@ export class ContactCredential extends TenantOrganizationBaseEntity implements I
 	@IsOptional()
 	@IsString()
 	@MaxLength(255)
+	// a bearer token that confirms an address
+	@ExportRedacted()
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true, select: false })
 	verificationToken?: string;
 
@@ -122,6 +127,8 @@ export class ContactCredential extends TenantOrganizationBaseEntity implements I
 	@IsOptional()
 	@IsString()
 	@MaxLength(255)
+	// a bearer token that resets a credential
+	@ExportRedacted()
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true, select: false })
 	resetToken?: string;
 
@@ -171,6 +178,8 @@ export class ContactCredential extends TenantOrganizationBaseEntity implements I
 	@IsOptional()
 	@IsString()
 	@MaxLength(255)
+	// a TOTP seed, which is a standing second factor
+	@ExportRedacted()
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true, select: false })
 	mfaSecret?: string;
 

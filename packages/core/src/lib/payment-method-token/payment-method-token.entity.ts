@@ -1,3 +1,4 @@
+import { ExportRedacted } from '../export-import/export-redact.decorator';
 import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDate, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength } from 'class-validator';
@@ -125,6 +126,8 @@ export class PaymentMethodToken extends TenantOrganizationBaseEntity implements 
 	@IsString()
 	@MinLength(1)
 	@MaxLength(255)
+	// the stored instrument reference a charge is made with
+	@ExportRedacted()
 	@MultiORMColumn({ type: 'varchar', length: 255 })
 	token: string;
 
