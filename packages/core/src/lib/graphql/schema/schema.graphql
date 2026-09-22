@@ -774,7 +774,7 @@ type Query {
   so the connection applies the platform's — newest first, the identifier last so a cursor walk over
   them is stable.
   """
-  employees(filter: EmployeeFilter, sort: [EmployeeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeConnection!
+  employees(filter: EmployeeFilter, sort: [EmployeeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmployeeConnection!
 
   """
   One engagement of the caller's tenant, or null when there is none — and the caller's own engagement

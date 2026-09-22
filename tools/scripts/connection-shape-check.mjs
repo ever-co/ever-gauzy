@@ -79,7 +79,7 @@ const PLATFORM_WITHOUT_WITH_DELETED = new Set([
 	'emailTemplates', 'employeeAppointments', 'employeeAvailabilities', 'employeeAwards',
 	'employeeDailyPlans', 'employeeLevels', 'employeeMembers', 'employeeNotificationSettings',
 	'employeeNotifications', 'employeeProjectModules', 'employeeRecentVisits', 'employeeRecurringExpenses',
-	'employeeSettings', 'employeeTasks', 'employees', 'entitySubscriptions',
+	'employeeSettings', 'employeeTasks', 'entitySubscriptions',
 	'equipmentSharingPolicies', 'equipmentSharingsByEmployee', 'equipmentSharingsByOrganization',
 	'equipments', 'eventDeliveries', 'eventOutbox', 'eventTypes',
 	'exchangeRates', 'expenseCategories', 'expenses', 'favorites',

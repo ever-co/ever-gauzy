@@ -364,12 +364,18 @@ export class EmployeeResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Employee>> {
 		// The criterion is the route's: only the engagements whose account is live and unarchived are
 		// answered, and an archived account is what makes an engagement disappear from this list.
+		//
+		// `withDeleted` is the read's, not the connection's: the service hands these options to the base
+		// read, which is what lifts the soft-delete filter, and the rows are read before the connection
+		// ever sees them. It asks for retired *engagements*; the account criterion above still applies.
 		const { items }: IPagination<IEmployee> = await this.employeeService.findAll({
-			where: { user: { isActive: true, isArchived: false } }
+			where: { user: { isActive: true, isArchived: false } },
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return buildConnection<Employee>({
