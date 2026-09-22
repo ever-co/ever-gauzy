@@ -23,6 +23,58 @@ export const EEA_UK_COUNTRY_NAMES: ReadonlySet<string> = new Set([
 	'iceland', 'liechtenstein', 'norway', 'united kingdom', 'uk', 'great britain', 'england', 'scotland', 'wales'
 ]);
 
+const EEA_LANGUAGE_LOCALES: ReadonlySet<string> = new Set([
+	'bg', 'de', 'fr', 'es', 'it', 'nl', 'pl', 'ro', 'hu', 'cs', 'sk', 'sl',
+	'hr', 'da', 'fi', 'sv', 'et', 'lv', 'lt', 'ga', 'mt', 'el'
+]);
+
+const NON_EEA_EUROPE_TZS = [
+	'europe/moscow', 'europe/samara', 'europe/kaliningrad', 'europe/volgograd', 'europe/minsk', 'europe/istanbul'
+];
+
+export const EEA_UK_AGENT_RESTRICTION_ERR_MSG =
+	'In accordance with EEA/UK privacy regulations (GDPR / ECHR Art 8), desktop agent exit and logout restrictions cannot be enabled for workers in EEA/UK tenants.';
+
+export const ACKNOWLEDGEMENT_REQUIRED_ERR_MSG =
+	'An explicit recorded acknowledgement of legal and proportionality risks is required before restricting agent app exit or logout.';
+
+function checkCountryCode(countryCode?: string): boolean {
+	if (!countryCode) return false;
+	return EEA_UK_COUNTRY_CODES.has(countryCode.trim().toUpperCase());
+}
+
+function checkCountryName(country?: string): boolean {
+	if (!country) return false;
+	const normCountry = country.trim().toLowerCase();
+	return EEA_UK_COUNTRY_CODES.has(normCountry.toUpperCase()) || EEA_UK_COUNTRY_NAMES.has(normCountry);
+}
+
+function checkRegionCode(regionCode?: string): boolean {
+	if (!regionCode) return false;
+	const trimmedRegion = regionCode.trim();
+	const upperRegion = trimmedRegion.toUpperCase();
+
+	if (EEA_UK_COUNTRY_CODES.has(upperRegion)) {
+		return true;
+	}
+
+	if (trimmedRegion.includes('-') || trimmedRegion.includes('_')) {
+		const parts = trimmedRegion.split(/[-_]/);
+		const codePart = parts.at(-1)?.toUpperCase() ?? '';
+		if (EEA_UK_COUNTRY_CODES.has(codePart)) {
+			return true;
+		}
+	}
+
+	return EEA_LANGUAGE_LOCALES.has(trimmedRegion.toLowerCase());
+}
+
+function checkTimeZone(timeZone?: string): boolean {
+	if (!timeZone || typeof timeZone !== 'string') return false;
+	const normTz = timeZone.trim().toLowerCase();
+	return normTz.startsWith('europe/') && !NON_EEA_EUROPE_TZS.some((nonEea) => normTz.includes(nonEea));
+}
+
 /**
  * Determines whether a region, country, or timezone belongs to the EEA or the UK.
  *
@@ -39,56 +91,45 @@ export function isEEAOrUKRegion(params?: {
 		return false;
 	}
 
-	const { regionCode, countryCode, country, timeZone } = params;
+	return (
+		checkCountryCode(params.countryCode) ||
+		checkCountryName(params.country) ||
+		checkRegionCode(params.regionCode) ||
+		checkTimeZone(params.timeZone)
+	);
+}
 
-	// Check 2-letter country code
-	if (countryCode && EEA_UK_COUNTRY_CODES.has(countryCode.trim().toUpperCase())) {
-		return true;
+/**
+ * Validates agent exit and logout restriction rules for EEA/UK region compliance and required acknowledgements.
+ * Returns an error message if validation fails, or null if valid.
+ */
+export function validateAgentExitLogoutRestriction(
+	input: {
+		allowAgentAppExit?: boolean;
+		allowLogoutFromAgentApp?: boolean;
+		acknowledgeAgentExitLogoutRestriction?: boolean;
+	},
+	location: {
+		regionCode?: string;
+		countryCode?: string;
+		country?: string;
+		timeZone?: string;
+	}
+): string | null {
+	const isRestrictingExit = input.allowAgentAppExit === false;
+	const isRestrictingLogout = input.allowLogoutFromAgentApp === false;
+
+	if (!isRestrictingExit && !isRestrictingLogout) {
+		return null;
 	}
 
-	// Check country string
-	if (country) {
-		const normCountry = country.trim().toLowerCase();
-		if (EEA_UK_COUNTRY_CODES.has(normCountry.toUpperCase()) || EEA_UK_COUNTRY_NAMES.has(normCountry)) {
-			return true;
-		}
+	if (isEEAOrUKRegion(location)) {
+		return EEA_UK_AGENT_RESTRICTION_ERR_MSG;
 	}
 
-	// Check regionCode (e.g. 'bg', 'de', 'fr', 'en-GB', 'en-IE', 'DE', 'GB')
-	if (regionCode) {
-		const trimmedRegion = regionCode.trim();
-		const upperRegion = trimmedRegion.toUpperCase();
-
-		// If regionCode is a 2-letter country code (e.g., 'GB', 'DE', 'BG')
-		if (EEA_UK_COUNTRY_CODES.has(upperRegion)) {
-			return true;
-		}
-
-		// If regionCode contains a locale with country part like 'en-GB', 'de-DE', 'fr-FR'
-		if (trimmedRegion.includes('-') || trimmedRegion.includes('_')) {
-			const parts = trimmedRegion.split(/[-_]/);
-			const codePart = parts[parts.length - 1].toUpperCase();
-			if (EEA_UK_COUNTRY_CODES.has(codePart)) {
-				return true;
-			}
-		}
-
-		// Known 2-letter locale prefix mapping to EEA/UK languages if specific
-		const eeaLanguageLocales = new Set(['bg', 'de', 'fr', 'es', 'it', 'nl', 'pl', 'ro', 'hu', 'cs', 'sk', 'sl', 'hr', 'da', 'fi', 'sv', 'et', 'lv', 'lt', 'ga', 'mt', 'el']);
-		if (eeaLanguageLocales.has(trimmedRegion.toLowerCase())) {
-			return true;
-		}
+	if (!input.acknowledgeAgentExitLogoutRestriction) {
+		return ACKNOWLEDGEMENT_REQUIRED_ERR_MSG;
 	}
 
-	// Check timeZone starting with Europe/ (excluding non-EEA Eastern European zones if needed, but Europe timezones generally default to EEA/UK protection)
-	if (timeZone && typeof timeZone === 'string') {
-		const normTz = timeZone.trim().toLowerCase();
-		// Non-EEA Europe timezones: Moscow, Samara, Kaliningrad, Volgograd, Minsk, Istanbul (Turkey)
-		const nonEeaEuropeTzs = ['europe/moscow', 'europe/samara', 'europe/kaliningrad', 'europe/volgograd', 'europe/minsk', 'europe/istanbul'];
-		if (normTz.startsWith('europe/') && !nonEeaEuropeTzs.some((nonEea) => normTz.includes(nonEea))) {
-			return true;
-		}
-	}
-
-	return false;
+	return null;
 }

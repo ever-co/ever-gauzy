@@ -1,4 +1,9 @@
-import { isEEAOrUKRegion } from './eea-uk-region.util';
+import {
+	isEEAOrUKRegion,
+	validateAgentExitLogoutRestriction,
+	EEA_UK_AGENT_RESTRICTION_ERR_MSG,
+	ACKNOWLEDGEMENT_REQUIRED_ERR_MSG
+} from './eea-uk-region.util';
 
 describe('isEEAOrUKRegion', () => {
 	it('should return true for EEA country codes', () => {
@@ -47,5 +52,39 @@ describe('isEEAOrUKRegion', () => {
 	it('should handle empty/undefined inputs gracefully', () => {
 		expect(isEEAOrUKRegion()).toBe(false);
 		expect(isEEAOrUKRegion({})).toBe(false);
+	});
+});
+
+describe('validateAgentExitLogoutRestriction', () => {
+	it('should return null when exit and logout are allowed', () => {
+		const result = validateAgentExitLogoutRestriction(
+			{ allowAgentAppExit: true, allowLogoutFromAgentApp: true },
+			{ countryCode: 'DE' }
+		);
+		expect(result).toBeNull();
+	});
+
+	it('should return EEA/UK error message when restricting in EEA/UK region', () => {
+		const result = validateAgentExitLogoutRestriction(
+			{ allowAgentAppExit: false },
+			{ countryCode: 'DE' }
+		);
+		expect(result).toBe(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
+	});
+
+	it('should return acknowledgement error message when non-EEA/UK without acknowledgement', () => {
+		const result = validateAgentExitLogoutRestriction(
+			{ allowAgentAppExit: false },
+			{ countryCode: 'US' }
+		);
+		expect(result).toBe(ACKNOWLEDGEMENT_REQUIRED_ERR_MSG);
+	});
+
+	it('should return null when non-EEA/UK with acknowledgement', () => {
+		const result = validateAgentExitLogoutRestriction(
+			{ allowAgentAppExit: false, acknowledgeAgentExitLogoutRestriction: true },
+			{ countryCode: 'US' }
+		);
+		expect(result).toBeNull();
 	});
 });

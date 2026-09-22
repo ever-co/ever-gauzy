@@ -1,6 +1,6 @@
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ID, IOrganization, IOrganizationUpdateInput, isEEAOrUKRegion } from '@gauzy/contracts';
+import { ID, IOrganization, IOrganizationUpdateInput, validateAgentExitLogoutRestriction } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationUpdateCommand } from '../organization.update.command';
@@ -39,28 +39,20 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		}
 
 		// Check if attempting to set allowAgentAppExit or allowLogoutFromAgentApp to false
-		const isRestrictingExit = input.allowAgentAppExit === false;
-		const isRestrictingLogout = input.allowLogoutFromAgentApp === false;
+		const errorMsg = validateAgentExitLogoutRestriction(input, {
+			regionCode: input.regionCode || organization.regionCode,
+			timeZone: input.timeZone || organization.timeZone,
+			country: organization.contact?.country
+		});
 
-		if (isRestrictingExit || isRestrictingLogout) {
-			const isEEAOrUK = isEEAOrUKRegion({
-				regionCode: input.regionCode || organization.regionCode,
-				timeZone: input.timeZone || organization.timeZone,
-				country: organization.contact?.country
-			});
+		if (errorMsg) {
+			throw new BadRequestException(errorMsg);
+		}
 
-			if (isEEAOrUK) {
-				throw new BadRequestException(
-					'In accordance with EEA/UK privacy regulations (GDPR / ECHR Art 8), desktop agent exit and logout restrictions cannot be enabled for workers in EEA/UK tenants.'
-				);
-			}
-
-			if (!input.acknowledgeAgentExitLogoutRestriction) {
-				throw new BadRequestException(
-					'An explicit recorded acknowledgement of legal and proportionality risks is required before restricting agent app exit or logout.'
-				);
-			}
-
+		if (
+			(input.allowAgentAppExit === false || input.allowLogoutFromAgentApp === false) &&
+			input.acknowledgeAgentExitLogoutRestriction
+		) {
 			const currentUserId = RequestContext.currentUserId();
 			this.logger.log(
 				`[AGENT_RESTRICTION_ACKNOWLEDGEMENT] Admin User ${currentUserId} explicitly acknowledged legal/compliance risk for setting exit/logout restriction on Organization ID: ${id} at ${new Date().toISOString()}`
