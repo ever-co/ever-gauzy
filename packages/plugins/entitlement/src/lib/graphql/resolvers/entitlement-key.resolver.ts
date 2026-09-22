@@ -57,11 +57,16 @@ export class EntitlementKeyResolver {
 	 *
 	 * @param filter The key filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns One page of keys.
 	 */
 	@Versioned({ resource: EntitlementService, write: false })
 	@Query('entitlementKeys')
-	async entitlementKeys(@Args('filter') filter?: IEntitlementKeyFilter, @Args('page') page?: IPageSelection) {
+	async entitlementKeys(
+		@Args('filter') filter?: IEntitlementKeyFilter,
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
+	) {
 		const { skip, take } = resolvePageWindow(page);
 		const result = await this.entitlementKeyService.findAll({
 			where: {
@@ -72,7 +77,8 @@ export class EntitlementKeyResolver {
 			},
 			skip,
 			take,
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result as IPagination<EntitlementKey>, skip);

@@ -280,9 +280,11 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * Reads the lines of a list, in the order the pick path visits them.
 	 *
 	 * @param pickListId The list.
+	 * @param options Whether retired lines are included; the store's own find options carry the flag, so
+	 * it is stated rather than applied here.
 	 * @returns The lines.
 	 */
-	public async findForList(pickListId: ID): Promise<PickListLine[]> {
+	public async findForList(pickListId: ID, options: { withDeleted?: boolean } = {}): Promise<PickListLine[]> {
 		return await this.typeOrmPickListLineRepository.find({
 			where: {
 				pickListId,
@@ -290,7 +292,8 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 				organizationId: RequestContext.currentOrganizationId()
 			},
 			relations: { bin: true, zone: true },
-			order: { position: 'ASC' }
+			order: { position: 'ASC' },
+			...(options.withDeleted ? { withDeleted: true } : {})
 		});
 	}
 

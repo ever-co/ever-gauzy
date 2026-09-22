@@ -67,10 +67,16 @@ export class StockTransferResolver {
 	@Versioned({ write: false })
 	async stockTransfers(
 		@Args('status') status: StockTransferStatus,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<StockTransfer>> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const listing = (await this.service.findAll({ where: { status }, skip, take })) as IPagination<StockTransfer>;
+		const listing = (await this.service.findAll({
+			where: { status },
+			skip,
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
+		})) as IPagination<StockTransfer>;
 
 		return connectionFromOffsetPage(listing, skip);
 	}

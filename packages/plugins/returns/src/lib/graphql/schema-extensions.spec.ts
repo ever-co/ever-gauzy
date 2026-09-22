@@ -116,10 +116,20 @@ describe('the returns document — the three line lists answer a connection', ()
 
 	it('declares a pageable connection, with its edge, for the return, claim and exchange lines', () => {
 		const converted: Array<[string, string, string, string]> = [
-			['orderReturnLines(returnId: ID!, page: PageInput)', 'OrderReturnLineConnection', 'OrderReturnLineEdge', 'OrderReturnLine'],
-			['orderClaimLines(claimId: ID!, page: PageInput)', 'OrderClaimLineConnection', 'OrderClaimLineEdge', 'OrderClaimLine'],
 			[
-				'orderExchangeLines(exchangeId: ID!, page: PageInput)',
+				'orderReturnLines(returnId: ID!, page: PageInput, withDeleted: Boolean)',
+				'OrderReturnLineConnection',
+				'OrderReturnLineEdge',
+				'OrderReturnLine'
+			],
+			[
+				'orderClaimLines(claimId: ID!, page: PageInput, withDeleted: Boolean)',
+				'OrderClaimLineConnection',
+				'OrderClaimLineEdge',
+				'OrderClaimLine'
+			],
+			[
+				'orderExchangeLines(exchangeId: ID!, page: PageInput, withDeleted: Boolean)',
 				'OrderExchangeLineConnection',
 				'OrderExchangeLineEdge',
 				'OrderExchangeLine'
@@ -147,10 +157,39 @@ describe('the returns document — the three line lists answer a connection', ()
 
 			expect({ field, connection: schema.includes(`${field}: ${connection}!`) }).toEqual({ field, connection: true });
 			// The control: the field no longer answers the bare array it used to, stated as the document
-			// spelled it before the conversion.
-			const wasBare = `${field.replace(', page: PageInput', '')}: [${row}!]!`;
+			// spelled it before the conversion — the field name and the one argument that identifies the
+			// rows it lists.
+			const wasBare = `${field.slice(0, field.indexOf(','))}: [${row}!]!`;
 
 			expect({ wasBare, declared: schema.includes(wasBare) }).toEqual({ wasBare, declared: false });
+		}
+	});
+});
+
+/**
+ * The soft-delete visibility the REST list routes have.
+ *
+ * Every REST list route inherits `withDeleted` from `BaseQueryDTO`, so a client can ask it for the rows
+ * a tenant retired. The fields below are the routes' GraphQL counterparts, and a document that declares
+ * no such argument tells a client it can ask for the retired rows while answering the live ones — the
+ * client is refused at the schema rather than answered differently, and the two surfaces disagree about
+ * what exists.
+ */
+describe('the returns document — the soft-delete visibility the REST list routes have', () => {
+	it('declares withDeleted, nullable, on every converted list field', () => {
+		for (const field of [
+			'orderReturns',
+			'orderReturnReasons',
+			'orderClaims',
+			'orderExchanges',
+			'orderReturnLines',
+			'orderClaimLines',
+			'orderExchangeLines'
+		]) {
+			expect({ field, type: typeOf(argumentNamed('Query', field, 'withDeleted')) }).toEqual({
+				field,
+				type: 'Boolean'
+			});
 		}
 	});
 });

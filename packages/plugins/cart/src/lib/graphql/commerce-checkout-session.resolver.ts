@@ -62,6 +62,7 @@ export class CommerceCheckoutSessionResolver {
 	 * @param cartId Optional cart filter.
 	 * @param status Optional status filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns A page of sessions.
 	 * @throws BadRequestException when a status is given that a checkout session does not have.
 	 */
@@ -70,7 +71,8 @@ export class CommerceCheckoutSessionResolver {
 	async checkoutSessions(
 		@Args('cartId', { type: () => ID, nullable: true }) cartId?: string,
 		@Args('status', { type: () => String, nullable: true }) status?: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<ICheckoutSessionConnection> {
 		const where: FindOptionsWhere<CommerceCheckoutSession> = {};
 		const { skip, take } = resolveConnectionWindow(page);
@@ -91,7 +93,8 @@ export class CommerceCheckoutSessionResolver {
 		const listing = (await this.commerceCheckoutSessionService.findAll({
 			where,
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<CommerceCheckoutSession>;
 
 		return connectionFromOffsetPage(listing, skip);

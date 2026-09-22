@@ -48,6 +48,7 @@ export class PickListResolver {
 	 *
 	 * @param filter The list filter.
 	 * @param page The page.
+	 * @param withDeleted Whether the retired lists are included.
 	 * @returns One page of lists.
 	 */
 	@Permissions(WarehousePermissions.PICK_LISTS_VIEW)
@@ -63,7 +64,8 @@ export class PickListResolver {
 			assignedToUserId?: ID;
 			number?: string;
 		},
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolveWindow(page);
 		const result = await this.pickListService.findAll({
@@ -78,7 +80,8 @@ export class PickListResolver {
 			},
 			skip,
 			take,
-			order: { priority: 'DESC', createdAt: 'ASC' }
+			order: { priority: 'DESC', createdAt: 'ASC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

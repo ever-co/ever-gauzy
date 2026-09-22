@@ -64,6 +64,7 @@ export class CommerceCartResolver {
 	 * @param customerId The customer to filter by.
 	 * @param email The email to filter by.
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns A page of carts.
 	 * @throws BadRequestException when a status is given that the cart does not have.
 	 */
@@ -73,7 +74,8 @@ export class CommerceCartResolver {
 		@Args('status', { type: () => String, nullable: true }) status?: string,
 		@Args('customerId', { type: () => ID, nullable: true }) customerId?: string,
 		@Args('email', { type: () => String, nullable: true }) email?: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<ICartConnection> {
 		const where: FindOptionsWhere<CommerceCart> = {};
 		const { skip, take } = resolveConnectionWindow(page);
@@ -92,7 +94,12 @@ export class CommerceCartResolver {
 			where.email = email;
 		}
 
-		const listing = (await this.commerceCartService.findAll({ where, skip, take })) as IPagination<Cart>;
+		const listing = (await this.commerceCartService.findAll({
+			where,
+			skip,
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
+		})) as IPagination<Cart>;
 
 		return connectionFromOffsetPage(listing, skip);
 	}

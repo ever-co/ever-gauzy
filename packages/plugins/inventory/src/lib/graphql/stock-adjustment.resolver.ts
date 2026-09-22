@@ -66,13 +66,15 @@ export class StockAdjustmentResolver {
 		@Args('warehouseId') warehouseId: string,
 		@Args('variantId') variantId: string,
 		@Args('status') status: StockAdjustmentStatus,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<StockAdjustment>> {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { warehouseId, variantId, status },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<StockAdjustment>;
 
 		return connectionFromOffsetPage(listing, skip);

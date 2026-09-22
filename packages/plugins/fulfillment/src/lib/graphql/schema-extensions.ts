@@ -276,13 +276,13 @@ export const fulfillmentSchemaExtensions = gql`
 
 	extend type Query {
 		"List shipping profiles."
-		shippingProfiles(page: PageInput): ShippingProfileConnection!
+		shippingProfiles(page: PageInput, withDeleted: Boolean): ShippingProfileConnection!
 		"Read one shipping profile with its variants."
 		shippingProfile(id: ID!): ShippingProfile
 		"The profile a variant ships under, which is its own attachment or the organization default."
 		shippingProfileForVariant(variantId: ID!): ShippingProfile
 		"List shipping options."
-		shippingOptions(page: PageInput): ShippingOptionConnection!
+		shippingOptions(page: PageInput, withDeleted: Boolean): ShippingOptionConnection!
 		"Read one shipping option."
 		shippingOption(id: ID!): ShippingOption
 		"The options a cart may choose between, each with the reason it is or is not available."
@@ -290,7 +290,7 @@ export const fulfillmentSchemaExtensions = gql`
 		"Price one option for a cart context."
 		shippingRate(shippingOptionId: ID!, input: ShippingEligibilityInput): ShippingRate
 		"List fulfilments."
-		fulfillments(orderId: ID, status: String, warehouseId: ID, direction: String, page: PageInput): FulfillmentConnection!
+		fulfillments(orderId: ID, status: String, warehouseId: ID, direction: String, page: PageInput, withDeleted: Boolean): FulfillmentConnection!
 		"Read one fulfilment with its lines."
 		fulfillment(id: ID!): Fulfillment
 		"What an order line still has to ship."

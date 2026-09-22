@@ -61,13 +61,15 @@ export class ChannelWarehouseResolver {
 	async channelWarehouses(
 		@Args('channelId') channelId: string,
 		@Args('warehouseId') warehouseId: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<ChannelWarehouse>> {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { channelId, warehouseId },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<ChannelWarehouse>;
 
 		return connectionFromOffsetPage(listing, skip);

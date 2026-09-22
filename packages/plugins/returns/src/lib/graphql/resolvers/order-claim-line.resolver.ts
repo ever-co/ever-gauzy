@@ -45,20 +45,24 @@ export class OrderClaimLineResolver {
 	 *
 	 * `findForClaim` answers every line of the claim, oldest first, and takes no window of its own, so the
 	 * page is cut here: a store-side window would have to restate that order, and one that re-ordered
-	 * after the cut would answer a different page than the offset names.
+	 * after the cut would answer a different page than the offset names. The soft-delete flag travels into
+	 * that read, because it is the read that decides which rows exist for this caller.
 	 *
 	 * @param claimId The claim.
 	 * @param page The page.
+	 * @param withDeleted Whether retired lines are included, as the REST list route's own `withDeleted`
+	 * is.
 	 * @returns A page of lines, oldest first.
 	 */
 	@Query('orderClaimLines')
 	@Permissions(ReturnsPermissions.CLAIMS_VIEW)
 	async orderClaimLines(
 		@Args('claimId') claimId: ID,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrderClaimLine>> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const rows = await this.orderClaimLineService.findForClaim(claimId);
+		const rows = await this.orderClaimLineService.findForClaim(claimId, withDeleted);
 
 		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}

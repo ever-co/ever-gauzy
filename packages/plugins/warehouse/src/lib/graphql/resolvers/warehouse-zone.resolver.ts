@@ -65,6 +65,7 @@ export class WarehouseZoneResolver {
 	 *
 	 * @param filter The zone filter.
 	 * @param page The page.
+	 * @param withDeleted Whether the retired zones are included.
 	 * @returns One page of zones.
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_ZONES_VIEW)
@@ -77,7 +78,8 @@ export class WarehouseZoneResolver {
 			isPickable?: boolean;
 			isBlocked?: boolean;
 		},
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolveWindow(page);
 		const result = await this.warehouseZoneService.findAll({
@@ -90,7 +92,8 @@ export class WarehouseZoneResolver {
 			},
 			skip,
 			take,
-			order: { priority: 'ASC', code: 'ASC' }
+			order: { priority: 'ASC', code: 'ASC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

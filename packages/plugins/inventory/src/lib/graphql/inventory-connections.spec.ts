@@ -168,12 +168,14 @@ interface IFieldCase {
 	readonly resource: string;
 	/** Builds the resolver over a service stub and an event-bus stub. */
 	readonly build: (service: any, eventBus: any) => any;
-	/** Calls the field's resolver method with the page the caller stated. */
-	readonly call: (resolver: any, page?: any) => Promise<IConnection>;
+	/** Calls the field's resolver method with the page the caller stated, and the soft-delete flag. */
+	readonly call: (resolver: any, page?: any, withDeleted?: boolean) => Promise<IConnection>;
 	/** The filter the resolver must state to the service. */
 	readonly where: Record<string, unknown>;
 	/** The order the resource's own read means, when it states one. */
 	readonly order?: Record<string, unknown>;
+	/** Whether the field offers `withDeleted`, which the read it delegates to carries into the store. */
+	readonly withDeleted?: boolean;
 }
 
 /**
@@ -182,15 +184,21 @@ interface IFieldCase {
  * `stockLevels` is covered beside them by the SDL assertion below rather than by a case here: it answers from
  * the service's own paged read, which is a query builder rather than `findAll`, so the stub that drives these
  * nine would be the wrong instrument for it.
+ *
+ * `withDeleted` is stated per case rather than assumed: it is declared by the fields whose read hands its
+ * options to `findAll`, and `stockReservations` — the platform's own field rather than this wave's — does
+ * not declare it. Asserting one shape for both would either read a declaration that is not there or stop
+ * reading the ones that are.
  */
 const CASES: IFieldCase[] = [
 	{
 		field: 'stockMovements',
 		resource: 'StockMovement',
 		build: (service, eventBus) => new StockMovementResolver(service, eventBus),
-		call: (resolver, page) => resolver.stockMovements(WAREHOUSE, VARIANT, page),
+		call: (resolver, page, withDeleted) => resolver.stockMovements(WAREHOUSE, VARIANT, page, withDeleted),
 		where: { warehouseId: WAREHOUSE, variantId: VARIANT },
-		order: { occurredAt: 'DESC' }
+		order: { occurredAt: 'DESC' },
+		withDeleted: true
 	},
 	{
 		field: 'stockReservations',
@@ -203,50 +211,59 @@ const CASES: IFieldCase[] = [
 		field: 'stockTransfers',
 		resource: 'StockTransfer',
 		build: (service, eventBus) => new StockTransferResolver(service, eventBus),
-		call: (resolver, page) => resolver.stockTransfers('DRAFT' as never, page),
-		where: { status: 'DRAFT' }
+		call: (resolver, page, withDeleted) => resolver.stockTransfers('DRAFT' as never, page, withDeleted),
+		where: { status: 'DRAFT' },
+		withDeleted: true
 	},
 	{
 		field: 'stockTransferLines',
 		resource: 'StockTransferLine',
 		build: (service, eventBus) => new StockTransferLineResolver(service, eventBus),
-		call: (resolver, page) => resolver.stockTransferLines(TRANSFER, page),
-		where: { transferId: TRANSFER }
+		call: (resolver, page, withDeleted) => resolver.stockTransferLines(TRANSFER, page, withDeleted),
+		where: { transferId: TRANSFER },
+		withDeleted: true
 	},
 	{
 		field: 'stockAlerts',
 		resource: 'StockAlert',
 		build: (service, eventBus) => new StockAlertResolver(service, eventBus),
-		call: (resolver, page) => resolver.stockAlerts(VARIANT, true, page),
-		where: { variantId: VARIANT, isActive: true }
+		call: (resolver, page, withDeleted) => resolver.stockAlerts(VARIANT, true, page, withDeleted),
+		where: { variantId: VARIANT, isActive: true },
+		withDeleted: true
 	},
 	{
 		field: 'stockAdjustments',
 		resource: 'StockAdjustment',
 		build: (service, eventBus) => new StockAdjustmentResolver(service, eventBus),
-		call: (resolver, page) => resolver.stockAdjustments(WAREHOUSE, VARIANT, 'DRAFT' as never, page),
-		where: { warehouseId: WAREHOUSE, variantId: VARIANT, status: 'DRAFT' }
+		call: (resolver, page, withDeleted) =>
+			resolver.stockAdjustments(WAREHOUSE, VARIANT, 'DRAFT' as never, page, withDeleted),
+		where: { warehouseId: WAREHOUSE, variantId: VARIANT, status: 'DRAFT' },
+		withDeleted: true
 	},
 	{
 		field: 'stockCounts',
 		resource: 'StockCount',
 		build: (service, eventBus) => new StockCountResolver(service, eventBus),
-		call: (resolver, page) => resolver.stockCounts(WAREHOUSE, 'OPEN' as never, 'FULL' as never, page),
-		where: { warehouseId: WAREHOUSE, status: 'OPEN', mode: 'FULL' }
+		call: (resolver, page, withDeleted) =>
+			resolver.stockCounts(WAREHOUSE, 'OPEN' as never, 'FULL' as never, page, withDeleted),
+		where: { warehouseId: WAREHOUSE, status: 'OPEN', mode: 'FULL' },
+		withDeleted: true
 	},
 	{
 		field: 'stockCountLines',
 		resource: 'StockCountLine',
 		build: (service, eventBus) => new StockCountLineResolver(service, eventBus),
-		call: (resolver, page) => resolver.stockCountLines(COUNT, page),
-		where: { stockCountId: COUNT }
+		call: (resolver, page, withDeleted) => resolver.stockCountLines(COUNT, page, withDeleted),
+		where: { stockCountId: COUNT },
+		withDeleted: true
 	},
 	{
 		field: 'channelWarehouses',
 		resource: 'ChannelWarehouse',
 		build: (service, eventBus) => new ChannelWarehouseResolver(service, eventBus),
-		call: (resolver, page) => resolver.channelWarehouses(CHANNEL, WAREHOUSE, page),
-		where: { channelId: CHANNEL, warehouseId: WAREHOUSE }
+		call: (resolver, page, withDeleted) => resolver.channelWarehouses(CHANNEL, WAREHOUSE, page, withDeleted),
+		where: { channelId: CHANNEL, warehouseId: WAREHOUSE },
+		withDeleted: true
 	}
 ];
 
@@ -305,8 +322,12 @@ describe('the inventory list surface answers the connection contract', () => {
 
 			// The field states its page one way and answers a connection: a caller can walk it, and the
 			// page size is not stated twice — `take` beside `page` would be two spellings of one thing, and
-			// nothing would say which of them wins.
-			expect(described).toMatch(new RegExp(`${testCase.field}\\([^)]*page: PageInput\\): ${connection}!`));
+			// nothing would say which of them wins. `withDeleted` is asserted where the field declares it,
+			// and its absence is asserted where it does not: a field that gained the argument without the
+			// read behind it is the one failure this pair of assertions is here to catch.
+			const declared = `page: PageInput${testCase.withDeleted ? ', withDeleted: Boolean' : ''}`;
+
+			expect(described).toMatch(new RegExp(`${testCase.field}\\([^)]*${declared}\\): ${connection}!`));
 			expect(described).not.toMatch(new RegExp(`${testCase.field}\\([^)]*take: Int`));
 
 			// The connection is the canonical shape — the same four members every other connection in the
@@ -337,6 +358,25 @@ describe('the inventory list surface answers the connection contract', () => {
 		expect(typeBody('StockLevelConnection')).toContain('edges: [StockLevelEdge!]!');
 		expect(typeBody('StockLevelEdge')).toContain('cursor: String!');
 		expect(described).not.toMatch(/stockLevels\([^)]*take: Int/);
+	});
+
+	it('offers the retired rows its read can reach, and leaves an unflagged read exactly as it was', async () => {
+		for (const testCase of CASES.filter((entry) => entry.withDeleted)) {
+			// The flag travels into the read's own options: an argument the read drops is worse than a
+			// missing one, because the client is told it can ask and is answered the same rows either way.
+			const asked = serviceStub([], 0);
+			await testCase.call(testCase.build(asked, eventBusStub), { first: 2 }, true);
+
+			expect(asked.findAll).toHaveBeenCalledWith(expect.objectContaining({ withDeleted: true }));
+
+			// And a caller that asked for nothing hands the read no `withDeleted` at all rather than a
+			// `false` this file invented: the read's own default is what an unflagged request means.
+			const unflagged = serviceStub([], 0);
+			await testCase.call(testCase.build(unflagged, eventBusStub), { first: 2 });
+
+			expect(unflagged.findAll).toHaveBeenCalledTimes(1);
+			expect(unflagged.findAll.mock.calls[0][0]).not.toHaveProperty('withDeleted');
+		}
 	});
 
 	it('declares the money this package carries as an exact decimal, never a float', () => {

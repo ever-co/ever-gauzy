@@ -56,14 +56,20 @@ export class ShippingOptionResolver {
 	 * Lists shipping profiles.
 	 *
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns A page of profiles.
 	 */
 	@Query(() => Object, { name: 'shippingProfiles' })
 	async shippingProfiles(
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<IShippingProfileConnection> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const listing = (await this.profileService.findAll({ skip, take })) as IPagination<ShippingProfile>;
+		const listing = (await this.profileService.findAll({
+			skip,
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
+		})) as IPagination<ShippingProfile>;
 
 		return connectionFromOffsetPage(listing, skip);
 	}
@@ -96,14 +102,20 @@ export class ShippingOptionResolver {
 	 * Lists shipping options.
 	 *
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns A page of options.
 	 */
 	@Query(() => Object, { name: 'shippingOptions' })
 	async shippingOptions(
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<IShippingOptionConnection> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const listing = (await this.optionService.findAll({ skip, take })) as IPagination<ShippingOption>;
+		const listing = (await this.optionService.findAll({
+			skip,
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
+		})) as IPagination<ShippingOption>;
 
 		return connectionFromOffsetPage(listing, skip);
 	}

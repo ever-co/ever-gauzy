@@ -29,6 +29,11 @@ import { gql } from 'graphql-tag';
  * rather than a page of rows, and a `totalCount` and a `pageInfo` on it would be two figures it cannot
  * honour.
  *
+ * Each of the six also states `withDeleted`, because the REST list route it mirrors reads through
+ * `BaseQueryDTO` and therefore lets its caller ask for the rows a tenant retired. A connection query
+ * that omitted it would be a field a client cannot ask that question of, while the same question is one
+ * query parameter away on the other protocol.
+ *
  * The document is one half of the package's GraphQL contribution and the resolvers are the other: a
  * root field declared here with no resolver resolves to null with no error anywhere, and a field a
  * resolver declares without being declared here is never served at all. The two are written and
@@ -713,7 +718,7 @@ export const schemaExtensions = gql`
 
 	extend type Query {
 		"Lists the seller accounts of the caller's organization."
-		sellers(page: PageInput): SellerConnection!
+		sellers(page: PageInput, withDeleted: Boolean): SellerConnection!
 		"Reads one seller by id or by its human-usable code."
 		seller(idOrCode: String!): Seller
 		"Reads a seller's statement over a period, in one currency."
@@ -721,19 +726,19 @@ export const schemaExtensions = gql`
 		"Reads what a seller is owed in one currency. A negative figure is a reported fact rather than an error."
 		sellerBalance(sellerId: ID!, currency: String): SellerBalance
 		"Lists what sellers offer."
-		sellerOfferings(page: PageInput): SellerOfferingConnection!
+		sellerOfferings(page: PageInput, withDeleted: Boolean): SellerOfferingConnection!
 		"Lists the per-seller split of orders: the ledger that says what each seller earned."
-		sellerTransactions(page: PageInput): SellerTransactionConnection!
+		sellerTransactions(page: PageInput, withDeleted: Boolean): SellerTransactionConnection!
 		"Reconciles the split of the orders in a window against the money they captured."
 		sellerSplitReconciliation(orderId: ID, sellerId: ID): [SellerSplitReconciliation!]!
 		"Lists payout instructions."
-		sellerPayouts(page: PageInput): SellerPayoutConnection!
+		sellerPayouts(page: PageInput, withDeleted: Boolean): SellerPayoutConnection!
 		"Reads one payout with its lines."
 		sellerPayout(id: ID!): SellerPayout
 		"Lists the ledger rows one payout covers."
-		sellerPayoutLines(sellerPayoutId: ID!, page: PageInput): SellerPayoutLineConnection!
+		sellerPayoutLines(sellerPayoutId: ID!, page: PageInput, withDeleted: Boolean): SellerPayoutLineConnection!
 		"Lists what providers reported they settled."
-		sellerSettlements(page: PageInput): SellerSettlementConnection!
+		sellerSettlements(page: PageInput, withDeleted: Boolean): SellerSettlementConnection!
 	}
 
 	extend type Mutation {

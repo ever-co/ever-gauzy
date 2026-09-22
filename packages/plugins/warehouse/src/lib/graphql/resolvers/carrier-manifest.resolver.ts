@@ -43,6 +43,7 @@ export class CarrierManifestResolver {
 	 *
 	 * @param filter The manifest filter.
 	 * @param page The page.
+	 * @param withDeleted Whether the retired manifests are included.
 	 * @returns One page of manifests.
 	 */
 	@Permissions(WarehousePermissions.FULFILLMENTS_VIEW)
@@ -56,7 +57,8 @@ export class CarrierManifestResolver {
 			number?: string;
 			manifestDate?: Date;
 		},
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolveWindow(page);
 		const result = await this.carrierManifestService.findAll({
@@ -69,7 +71,8 @@ export class CarrierManifestResolver {
 			},
 			skip,
 			take,
-			order: { manifestDate: 'DESC', createdAt: 'DESC' }
+			order: { manifestDate: 'DESC', createdAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

@@ -69,24 +69,36 @@ function bodyOf(name: string): string {
 }
 
 /**
- * The three converted fields: the root field, the arguments it keeps, and the connection, edge and row
- * type each of them declares.
+ * The three converted fields: the root field, the arguments it declares — `withDeleted` where the read
+ * behind it carries the flag — and the connection, edge and row type each of them declares.
  */
 const CONVERTED: ReadonlyArray<readonly [string, string, string, string, string]> = [
-	['warehouseBinSubtree', 'id: ID!', 'WarehouseBinSubtreeConnection', 'WarehouseBinSubtreeEdge', 'WarehouseBin'],
+	[
+		'warehouseBinSubtree',
+		'id: ID!, page: PageInput, withDeleted: Boolean',
+		'WarehouseBinSubtreeConnection',
+		'WarehouseBinSubtreeEdge',
+		'WarehouseBin'
+	],
 	[
 		'warehouseBinContents',
-		'id: ID!',
+		'id: ID!, page: PageInput',
 		'WarehouseBinContentsConnection',
 		'WarehouseBinContentsEdge',
 		'WarehouseBinBalance'
 	],
-	['pickListLines', 'pickListId: ID!', 'PickListLinesConnection', 'PickListLinesEdge', 'PickListLine']
+	[
+		'pickListLines',
+		'pickListId: ID!, page: PageInput, withDeleted: Boolean',
+		'PickListLinesConnection',
+		'PickListLinesEdge',
+		'PickListLine'
+	]
 ];
 
 describe('the warehouse schema — the converted list fields answer connections', () => {
 	it('declares each of them as the canonical connection, with the edge that addresses its rows', () => {
-		for (const [field, argument, connection, edge, node] of CONVERTED) {
+		for (const [field, args, connection, edge, node] of CONVERTED) {
 			const connectionBody = bodyOf(connection);
 			const edgeBody = bodyOf(edge);
 
@@ -100,7 +112,9 @@ describe('the warehouse schema — the converted list fields answer connections'
 
 			// The root field answers the connection, keeps the argument it already took, and takes the page
 			// the connection is walked with — the one way a caller states how much of the set it wants.
-			expect(printed).toContain(`${field}(${argument}, page: PageInput): ${connection}!`);
+			// `warehouseBinContents` declares no `withDeleted`, because the balances it answers are derived
+			// from the ledger rather than read from a table the soft-delete filter ever applied to.
+			expect(printed).toContain(`${field}(${args}): ${connection}!`);
 			// The bare array it used to answer, which a client could neither page nor count.
 			expect(printed).not.toMatch(new RegExp(`${field}\\([^)]*\\): \\[`));
 		}
@@ -116,8 +130,9 @@ describe('the warehouse resolvers — the page is the one the caller asked for',
 		const first = await resolver.warehouseBinSubtree('rack', { first: 2 });
 
 		// No window reaches the service: the traversal takes an id and answers the whole subtree, so a
-		// resolver that stated one would state something the method cannot honour.
-		expect(service.findSubtree).toHaveBeenCalledWith('rack');
+		// resolver that stated one would state something the method cannot honour. The soft-delete flag is
+		// the one option it does take, and it is stated only when the caller asked for it.
+		expect(service.findSubtree).toHaveBeenCalledWith('rack', {});
 		expect(first.nodes).toEqual([bins[0], bins[1]]);
 		expect(first.totalCount).toBe(3);
 		expect(first.edges).toEqual([
@@ -162,7 +177,7 @@ describe('the warehouse resolvers — the page is the one the caller asked for',
 
 		const connection = await resolver.pickListLines('list-1', { first: 1 });
 
-		expect(service.findForList).toHaveBeenCalledWith('list-1');
+		expect(service.findForList).toHaveBeenCalledWith('list-1', {});
 		expect(connection.nodes).toEqual([lines[0]]);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.hasNextPage).toBe(true);
@@ -172,5 +187,30 @@ describe('the warehouse resolvers — the page is the one the caller asked for',
 		await expect(resolver.pickListLines('list-1', { first: 1, last: 1 })).rejects.toThrow(
 			/PAGINATION_DIRECTION_CONFLICT/
 		);
+	});
+});
+
+describe('the warehouse resolvers — the soft-delete flag reaches the method that read the rows', () => {
+	it('hands the flag to the traversal and to the line read, and hands nothing when it was not asked for', async () => {
+		// The flag belongs to the read that returned the rows rather than to the resolver that pages them:
+		// a resolver that declared it and dropped it would answer the same rows either way, and the client
+		// that asked for the retired positions would be told it had been understood.
+		const asked = { findSubtree: jest.fn().mockResolvedValue([{ id: 'bin-1' }]) };
+		await new WarehouseBinResolver(asked as any, {} as any).warehouseBinSubtree('rack', { first: 1 }, true);
+
+		expect(asked.findSubtree).toHaveBeenCalledWith('rack', { withDeleted: true });
+
+		// A caller that asked for nothing is handed no `withDeleted` at all rather than a `false` this file
+		// invented: the read's own default is what an unflagged request means.
+		const silent = { findSubtree: jest.fn().mockResolvedValue([]) };
+		await new WarehouseBinResolver(silent as any, {} as any).warehouseBinSubtree('rack', { first: 1 });
+
+		expect(silent.findSubtree).toHaveBeenCalledWith('rack', {});
+		expect(silent.findSubtree.mock.calls[0][1]).not.toHaveProperty('withDeleted');
+
+		const lines = { findForList: jest.fn().mockResolvedValue([]) };
+		await new PickListLineResolver(lines as any, {} as any).pickListLines('list-1', { first: 1 }, true);
+
+		expect(lines.findForList).toHaveBeenCalledWith('list-1', { withDeleted: true });
 	});
 });

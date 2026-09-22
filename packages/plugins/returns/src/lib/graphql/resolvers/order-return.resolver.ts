@@ -112,6 +112,8 @@ export class OrderReturnResolver {
 	 *
 	 * @param filter The return filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired returns are included, as the REST list route's own
+	 * `withDeleted` is.
 	 * @returns One page of returns.
 	 */
 	@Versioned({ resource: OrderReturnService, write: false })
@@ -119,7 +121,8 @@ export class OrderReturnResolver {
 	@Permissions(ReturnsPermissions.RETURNS_VIEW)
 	async orderReturns(
 		@Args('filter') filter?: { status?: OrderReturnStatus; orderId?: ID; number?: string; warehouseId?: ID },
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolvePageWindow(page);
 		const result = await this.orderReturnService.findAll({
@@ -131,7 +134,8 @@ export class OrderReturnResolver {
 			},
 			skip,
 			take,
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

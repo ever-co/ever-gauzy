@@ -267,13 +267,13 @@ export const cartSchemaExtensions = gql`
 
 	extend type Query {
 		"List carts of the caller's organization."
-		carts(status: String, customerId: ID, email: String, page: PageInput): CartConnection!
+		carts(status: String, customerId: ID, email: String, page: PageInput, withDeleted: Boolean): CartConnection!
 		"Read one cart with its lines, delivery choices and promotions."
 		cart(id: ID!): Cart
 		"Read the cart a buyer token names."
 		cartByToken(token: String!): Cart
 		"List checkout sessions."
-		checkoutSessions(cartId: ID, status: String, page: PageInput): CheckoutSessionConnection!
+		checkoutSessions(cartId: ID, status: String, page: PageInput, withDeleted: Boolean): CheckoutSessionConnection!
 		"Read one checkout session."
 		checkoutSession(id: ID!): CheckoutSession
 	}

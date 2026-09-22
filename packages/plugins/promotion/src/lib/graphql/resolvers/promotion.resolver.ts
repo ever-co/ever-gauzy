@@ -98,6 +98,7 @@ export class PromotionResolver {
 	 * @param page The cursor window, when the caller walks one.
 	 * @param limit The page size, when the caller states one instead.
 	 * @param offset The offset, when the caller states one instead.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns One page of promotions.
 	 */
 	@Permissions(PromotionPermission.PROMOTIONS_VIEW as PermissionsEnum)
@@ -107,13 +108,15 @@ export class PromotionResolver {
 		@Args('sort') sort?: ISortInput,
 		@Args('page') page?: IPageInput,
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const order = toOrder(sort, PROMOTION_SORT_COLUMNS);
 		const result = await this.promotionService.findPromotions({
 			where: toWhere(filter),
 			...(order ? { order } : {}),
-			...toWindow(page, limit, offset)
+			...toWindow(page, limit, offset),
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return toConnection(result, cursorOffset(page, offset));

@@ -40,6 +40,12 @@ export class CollectionResolver {
 
 	/**
 	 * Lists the collections of the caller's organization.
+	 *
+	 * @param filter How the listing is narrowed.
+	 * @param limit The page size, when it is stated the offset way.
+	 * @param offset The row to start at, when it is stated the offset way.
+	 * @param page The page, when it is stated the cursor way.
+	 * @param withDeleted Whether the retired collections are included.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_VIEW))
 	@Query('collections')
@@ -47,13 +53,15 @@ export class CollectionResolver {
 		@Args('filter') filter?: Record<string, unknown>,
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Collection>> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.collectionService.findAll({
 			where: { ...(filter ?? {}) },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return connectionFromOffsetPage<Collection>(listing, skip);

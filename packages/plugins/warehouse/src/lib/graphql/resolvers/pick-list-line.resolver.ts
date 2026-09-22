@@ -63,6 +63,7 @@ export class PickListLineResolver {
 	 *
 	 * @param pickListId The list.
 	 * @param page The page.
+	 * @param withDeleted Whether the retired lines are included.
 	 * @returns One page of lines, in the order the pick path visits them.
 	 * @throws for a page the query protocol refuses — both styles at once, both directions at once, a
 	 * cursor this platform did not mint — which is deliberately not caught here.
@@ -71,10 +72,11 @@ export class PickListLineResolver {
 	@Query('pickListLines')
 	async pickListLines(
 		@Args('pickListId') pickListId: ID,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<PickListLine>> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const rows = await this.pickListLineService.findForList(pickListId);
+		const rows = await this.pickListLineService.findForList(pickListId, withDeleted ? { withDeleted: true } : {});
 
 		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}

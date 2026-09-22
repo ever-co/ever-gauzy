@@ -45,6 +45,7 @@ export class PackSlipResolver {
 	 *
 	 * @param filter The slip filter.
 	 * @param page The page.
+	 * @param withDeleted Whether the retired slips are included.
 	 * @returns One page of slips.
 	 */
 	@Permissions(WarehousePermissions.FULFILLMENTS_VIEW)
@@ -59,7 +60,8 @@ export class PackSlipResolver {
 			number?: string;
 			trackingNumber?: string;
 		},
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolveWindow(page);
 		const result = await this.packSlipService.findAll({
@@ -73,7 +75,8 @@ export class PackSlipResolver {
 			},
 			skip,
 			take,
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

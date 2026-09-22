@@ -410,19 +410,19 @@ export const schemaExtensions = gql`
 	# states both: PageInput walks by cursor, limit/offset walks by position — where offset is the row to
 	# start at, which is what the name says and what the connection's boundary reports back.
 	extend type Query {
-		collections(filter: CollectionFilter, page: PageInput, limit: Int, offset: Int): CollectionConnection!
+		collections(filter: CollectionFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionConnection!
 		collection(id: ID!): Collection
 		collectionBySlug(slug: String!): Collection
-		collectionProducts(filter: CollectionProductFilter, page: PageInput, limit: Int, offset: Int): CollectionProductConnection!
-		collectionVariants(filter: CollectionVariantFilter, page: PageInput, limit: Int, offset: Int): CollectionVariantConnection!
-		collectionChannels(filter: CollectionChannelFilter, page: PageInput, limit: Int, offset: Int): CollectionChannelConnection!
+		collectionProducts(filter: CollectionProductFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionProductConnection!
+		collectionVariants(filter: CollectionVariantFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionVariantConnection!
+		collectionChannels(filter: CollectionChannelFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionChannelConnection!
 		productVariantFacets(
 			filter: TagProductVariantFilter
 			page: PageInput
 			limit: Int
 			offset: Int
 		): TagProductVariantConnection!
-		productPublications(filter: ProductPublicationFilter, page: PageInput, limit: Int, offset: Int): ProductPublicationConnection!
+		productPublications(filter: ProductPublicationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductPublicationConnection!
 		productPublication(id: ID!): ProductPublication
 		productVariantPublications(
 			filter: ProductVariantPublicationFilter
@@ -430,8 +430,8 @@ export const schemaExtensions = gql`
 			limit: Int
 			offset: Int
 		): ProductVariantPublicationConnection!
-		productRelations(filter: ProductRelationFilter, page: PageInput, limit: Int, offset: Int): ProductRelationConnection!
-		productVariantMedia(filter: ProductVariantMediaFilter, page: PageInput, limit: Int, offset: Int): ProductVariantMediaConnection!
+		productRelations(filter: ProductRelationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductRelationConnection!
+		productVariantMedia(filter: ProductVariantMediaFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantMediaConnection!
 	}
 
 	extend type Mutation {

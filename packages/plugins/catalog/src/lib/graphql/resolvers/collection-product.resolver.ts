@@ -33,6 +33,12 @@ export class CollectionProductResolver {
 
 	/**
 	 * Lists the manual product membership of the collections that match the filter.
+	 *
+	 * @param filter The collection and the product the membership is narrowed to.
+	 * @param limit The page size, when it is stated the offset way.
+	 * @param offset The row to start at, when it is stated the offset way.
+	 * @param page The page, when it is stated the cursor way.
+	 * @param withDeleted Whether the retired membership rows are included.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_VIEW))
 	@Query('collectionProducts')
@@ -40,14 +46,16 @@ export class CollectionProductResolver {
 		@Args('filter') filter: { collectionId?: ID; productId?: ID } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CollectionProduct>> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.collectionProductService.findAll({
 			where: { ...filter },
 			order: { position: 'ASC', addedAt: 'ASC' },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return connectionFromOffsetPage<CollectionProduct>(listing, skip);

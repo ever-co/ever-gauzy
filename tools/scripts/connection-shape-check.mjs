@@ -47,6 +47,83 @@ const schema = readFileSync(SDL, 'utf8')
 	.replace(/^[ \t]*#.*$/gm, '');
 
 /**
+ * Connection root fields that offer no `withDeleted`.
+ *
+ * Doc 17 ?3.1 requires a connection query to offer "the same soft-delete visibility as the REST list route",
+ * and every REST list route inherits the flag from `BaseQueryDTO` ? so a client that can ask REST for a
+ * retired row cannot ask GraphQL for it. The two lists are the same measurement split the way the work is:
+ * the fields a plugin of this programme declares, which this wave converts, and the fields core declares
+ * itself, which are the platform's own surface and a wave of its own. Both are stale-checked, so a
+ * conversion has to leave the list it was in.
+ */
+const PROGRAMME_WITHOUT_WITH_DELETED = new Set([
+	// Its read builds its own query builder over the level table and destructures the filter down to the two
+	// ids it uses, so a flag spread into that filter is dropped rather than honoured — and an argument the
+	// read ignores is worse than a missing one, because the client is told it can ask.
+	'stockLevels',
+	// Its read answers a derived balance per (bin, variant) from the stock ledger's aggregation, not rows the
+	// soft-delete filter ever applied to. There is no retired balance for the flag to reach.
+	'warehouseBinContents',
+	// The index reads are the platform's registered index declarations and a computed status per entity,
+	// neither of which is a soft-deletable row — and their REST counterparts take no `withDeleted` either
+	// (their query DTOs do not extend `BaseQueryDTO`), so both surfaces agree as they stand.
+	'searchIndexDefinitions',
+	'searchIndexStatus',
+]);
+
+const PLATFORM_WITHOUT_WITH_DELETED = new Set([
+	'accountingTemplates', 'activities', 'activityLogs', 'addresses',
+	'apiCallLogs', 'appointmentEmployees', 'approvalPolicies', 'availabilitySlots',
+	'broadcasts', 'campaignBudgets', 'candidateCriterionsRatings', 'candidateDocuments',
+	'candidateEducations', 'candidateExperiences', 'candidateFeedbacks', 'candidateInterviewers',
+	'candidateInterviews', 'candidatePersonalQualities', 'candidateSkills', 'candidateSources',
+	'candidateTechnologies', 'candidates', 'channelDomains', 'comments',
+	'contactBuyers', 'contactCredentials', 'contactGroups', 'contacts',
+	'countries', 'currencies', 'customSmtpSettings', 'dailyPlans',
+	'dailyPlansForTask', 'dashboardWidgets', 'dashboards', 'deals',
+	'emailHistories', 'emailTemplates', 'employeeAppointments', 'employeeAvailabilities',
+	'employeeAwards', 'employeeDailyPlans', 'employeeLevels', 'employeeMembers',
+	'employeeNotificationSettings', 'employeeNotifications', 'employeeProjectModules', 'employeeRecentVisits',
+	'employeeRecurringExpenses', 'employeeSettings', 'employeeTasks', 'employees',
+	'entitySubscriptions', 'equipmentSharingPolicies', 'equipmentSharings', 'equipmentSharingsByEmployee',
+	'equipmentSharingsByOrganization', 'equipments', 'eventDeliveries', 'eventOutbox',
+	'eventTypes', 'exchangeRates', 'expenseCategories', 'expenses',
+	'favorites', 'favoritesByEmployee', 'featureToggles', 'features',
+	'goalGeneralSettings', 'goalKpiTemplates', 'goalKpis', 'goalTemplates',
+	'goalTimeFrames', 'goals', 'idempotencyKeys', 'imageAssets',
+	'importHistories', 'incomes', 'integrationEntitySettings', 'integrationTenants',
+	'integrationTypes', 'integrations', 'invites', 'invoiceEstimateHistories',
+	'invoiceItems', 'invoices', 'issueTypes', 'keyResultTemplates',
+	'keyResultUpdates', 'keyResults', 'languages', 'mentions',
+	'merchants', 'moduleTasks', 'myDailyPlans', 'myInvites',
+	'myOrganizationTeams', 'myTasks', 'myTimeOffBalances', 'oauthClients',
+	'officialHolidays', 'operations', 'operationsByAggregate', 'orders',
+	'organizationAwards', 'organizationContacts', 'organizationDepartments', 'organizationDepartmentsByEmployee',
+	'organizationDocuments', 'organizationEmploymentTypes', 'organizationLanguages', 'organizationPositions',
+	'organizationProjectModules', 'organizationProjectModulesByEmployee', 'organizationProjects', 'organizationRecurringExpenses',
+	'organizationSprints', 'organizationStrategicInitiatives', 'organizationTeamJoinRequests', 'organizationTeams',
+	'organizationVendors', 'organizations', 'paymentAccountHolders', 'paymentCaptures',
+	'paymentCollections', 'paymentMethodTokens', 'paymentProviders', 'paymentSessions',
+	'paymentWebhookEvents', 'payments', 'payrollRuns', 'pipelineDeals',
+	'pipelines', 'priceLists', 'pricePreferences', 'productCategories',
+	'productOptions', 'productPrices', 'productTypes', 'productVariantFacets',
+	'productVariantPrices', 'productVariantPublications', 'productVariantSettings', 'productVariants',
+	'products', 'promotionUsages', 'reactions', 'refundLines',
+	'refundReasons', 'regions', 'reportCategories', 'reports',
+	'requestApprovals', 'requestApprovalsByEmployee', 'resourceLinks', 'rolePermissions',
+	'screeningTasks', 'sequences', 'sharedEntities', 'skills',
+	'stockReservations', 'syncedOrganizationProjects', 'tagTypes', 'tags',
+	'tagsByLevel', 'taskEstimations', 'taskLinkedIssues', 'taskPriorities',
+	'taskRelatedIssueTypes', 'taskSizes', 'taskStatuses', 'taskVersions',
+	'taskViews', 'tasks', 'tasksByDate', 'tasksByView',
+	'teamDailyPlans', 'teamProjectModules', 'teamTasks', 'tenantRoles',
+	'tenantSettings', 'timeLogs', 'timeOffBalances', 'timeOffPolicies',
+	'timeOffRequests', 'timeSlots', 'timesheetProjectChangeRequests', 'timesheets',
+	'userOrganizations', 'users', 'warehouseInventory', 'warehouses',
+	'webhookDeliveries', 'webhookSubscriptions', 'workingEmployees'
+]);
+
+/**
  * List root fields this programme introduced that still answer a bare array.
  *
  * **Empty, and that is the point of keeping it.** The last name, `stockLevels`, left when its service grew a
@@ -204,7 +281,7 @@ function fieldsOf(body) {
 		if (statement !== '' && braces === 0 && parens === 0) {
 			const field = /^([A-Za-z_]\w*)\s*(\(.*\))?\s*:\s*(.+)$/.exec(statement);
 
-			if (field) found.push({ name: field[1], type: field[3].trim() });
+			if (field) found.push({ name: field[1], args: field[2] ?? '', type: field[3].trim() });
 
 			statement = '';
 		}
@@ -242,6 +319,22 @@ for (const field of queryFields) {
 	if (!isCount || !field.type.endsWith('!')) continue;
 
 	failures.push(`Query.${field.name} -> returns \`${field.type}\`; a count is nullable, because REST's bare number is`);
+}
+
+// 4. A connection offers the soft-delete visibility its REST route offers.
+//
+// Doc 17 §3.1 asks a connection query for "the same filters, the same sort keys, the same relation loading and
+// the same soft-delete visibility as the REST list route". The flag is what states the last of those, every
+// REST list route inherits it from `BaseQueryDTO`, and a field that omits it tells a client the retired rows
+// are unreachable over GraphQL when the route beside it reaches them.
+for (const field of queryFields) {
+	if (!/Connection!$/.test(field.type)) continue;
+	if (/withDeleted/.test(field.args)) continue;
+	if (PROGRAMME_WITHOUT_WITH_DELETED.has(field.name) || PLATFORM_WITHOUT_WITH_DELETED.has(field.name)) continue;
+
+	failures.push(
+		`Query.${field.name} -> offers no \`withDeleted\`, while the REST list route beside it inherits the flag`
+	);
 }
 
 // 2. A connection is the canonical shape.
@@ -284,13 +377,24 @@ for (const name of [...COMPUTED_ANSWERS, ...PROGRAMME_BARE_ARRAYS, ...PLATFORM_B
 	}
 }
 
+for (const name of [...PROGRAMME_WITHOUT_WITH_DELETED, ...PLATFORM_WITHOUT_WITH_DELETED]) {
+	if (queryFields.some((field) => field.name === name && /withDeleted/.test(field.args))) {
+		const list = PROGRAMME_WITHOUT_WITH_DELETED.has(name)
+			? 'PROGRAMME_WITHOUT_WITH_DELETED'
+			: 'PLATFORM_WITHOUT_WITH_DELETED';
+
+		stale.push(`Query.${name} offers \`withDeleted\` now — take it out of ${list}`);
+	}
+}
+
 if (failures.length > 0) {
 	console.error('FAILED — the list surface departs from the connection contract:');
 	for (const failure of failures) console.error(`  ${failure}`);
 	console.error('');
 	console.error('A list root field returns a connection; a connection carries nodes, edges, totalCount');
-	console.error('and a non-null pageInfo; a count is nullable. A field that cannot follow the rule is named in');
-	console.error('one of the three lists at the top of this file, with the reason it is exempt.');
+	console.error('and a non-null pageInfo; a count is nullable; a connection offers the soft-delete visibility');
+	console.error('its REST route offers. A field that cannot follow a rule is named in one of the lists at the');
+	console.error('top of this file, with the reason it is exempt.');
 	process.exit(1);
 }
 
@@ -305,6 +409,8 @@ if (stale.length > 0) {
 console.log(
 	`PASSED — ${queryFields.length} root field(s) read: ${PROGRAMME_BARE_ARRAYS.size} list field(s) of this ` +
 		`programme still answer a bare array, ${COMPUTED_ANSWERS.size} are computed answers that have no page to ` +
-		`walk, and ${PLATFORM_BARE_ARRAYS.size} predate the programme — each named in the baseline. All ` +
-		`${connections.length} connection type(s) are the canonical shape, and every other list field is a connection.`
+		`walk, and ${PLATFORM_BARE_ARRAYS.size} predate the programme. All ${connections.length} connection ` +
+		`type(s) are the canonical shape. ${PROGRAMME_WITHOUT_WITH_DELETED.size} connection(s) of this programme ` +
+		`and ${PLATFORM_WITHOUT_WITH_DELETED.size} the platform declares itself still offer no ` +
+		`\`withDeleted\` — each named in the baseline.`
 );

@@ -85,6 +85,7 @@ export class GiftCardResolver {
 	 * @param page The cursor window, when the caller walks one.
 	 * @param limit The page size, when the caller states one instead.
 	 * @param offset The offset, when the caller states one instead.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns One page of cards.
 	 */
 	@Permissions(PromotionPermission.GIFT_CARDS_VIEW as PermissionsEnum)
@@ -94,13 +95,15 @@ export class GiftCardResolver {
 		@Args('sort') sort?: ISortInput,
 		@Args('page') page?: IPageInput,
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const order = toOrder(sort, GIFT_CARD_SORT_COLUMNS);
 		const result = await this.giftCardService.findGiftCards({
 			where: toWhere(filter),
 			...(order ? { order } : {}),
-			...toWindow(page, limit, offset)
+			...toWindow(page, limit, offset),
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return toConnection(result, cursorOffset(page, offset));

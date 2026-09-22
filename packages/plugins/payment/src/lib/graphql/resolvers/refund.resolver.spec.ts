@@ -27,7 +27,16 @@ jest.mock('@gauzy/core', () => {
 		// The retry declaration the mutations carry is the kernel's own decorator, as it is in the
 		// production graph: a double would make the resolver import a different function than the one
 		// the interceptor reads.
-		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent
+		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
+		// The connection helpers the list fields page and answer with, taken from the kernel rather than
+		// restated: a double that stubbed them would let a page drift from the contract in a suite that
+		// still passed, which is the whole class of defect the conversion removed.
+		connectionFromPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').connectionFromPage,
+		connectionFromOffsetPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.connectionFromOffsetPage,
+		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.resolveConnectionWindow,
+		paginateRows: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').paginateRows
 	};
 });
 
@@ -48,7 +57,9 @@ jest.mock('../../refund-line/refund-line.service', () => ({ RefundLineService: c
 
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { ObjectTypeDefinitionNode, ObjectTypeExtensionNode } from 'graphql';
 import { PaymentPermission } from '../../payment.permissions';
+import { schemaExtensions } from '../schema-extensions';
 import { RefundResolver } from './refund.resolver';
 
 /**
@@ -107,5 +118,61 @@ describe('RefundResolver — the declaration on each field (17 §3.2)', () => {
 		expect(
 			Reflect.getMetadata(PERMISSIONS_METADATA, RefundResolver.prototype.lines)
 		).toEqual([PaymentPermission.REFUNDS_VIEW]);
+	});
+});
+
+/**
+ * The soft-delete visibility of the refund list (17 §3.1).
+ *
+ * A connection query has to offer the same filters, the same sort keys, the same relation loading and
+ * the same soft-delete visibility as the REST list route it mirrors. The last of the four was missing,
+ * so a client that can ask REST for the retired refunds could not ask GraphQL for them at all.
+ *
+ * The document is read from the real one — a member the document does not carry is a member no client
+ * can send — and the field is then driven, because an argument the read drops is worse than a missing
+ * one: the client is told it can ask and receives the same rows either way. The flag absent is asserted
+ * too, where the option must be missing altogether rather than present as `false`, which is a statement
+ * the caller never made.
+ */
+describe('RefundResolver — the soft-delete visibility the REST list route already has (17 §3.1)', () => {
+	it('declares `withDeleted: Boolean` on `refunds` beside the arguments it already carried', () => {
+		const query = schemaExtensions.definitions.find(
+			(definition): definition is ObjectTypeDefinitionNode | ObjectTypeExtensionNode =>
+				(definition.kind === 'ObjectTypeDefinition' || definition.kind === 'ObjectTypeExtension') &&
+				definition.name.value === 'Query'
+		);
+		const field = query?.fields?.find((candidate) => candidate.name.value === 'refunds');
+
+		if (!field) {
+			throw new Error('the payment document declares no Query field named "refunds"');
+		}
+
+		const declared = (field.arguments ?? []).map((argument) => argument.name.value);
+
+		expect(declared).toEqual(expect.arrayContaining(['filter', 'sort', 'limit', 'offset']));
+
+		const argument = field.arguments?.find((candidate) => candidate.name.value === 'withDeleted');
+
+		expect(argument && `${argument.type.kind === 'NamedType' ? argument.type.name.value : ''}`).toBe('Boolean');
+	});
+
+	it('forwards the flag into the read, and writes nothing when the caller states none', async () => {
+		const calls: Array<Record<string, any>> = [];
+		const resolver = new RefundResolver(
+			{
+				findRefunds: async (options: Record<string, any>) => {
+					calls.push(options);
+
+					return { items: [], total: 0 };
+				}
+			} as never,
+			{} as never
+		);
+
+		await resolver.refunds(undefined, undefined, undefined, undefined, true);
+		await resolver.refunds();
+
+		expect(calls[0]).toMatchObject({ withDeleted: true });
+		expect(calls[1]).not.toHaveProperty('withDeleted');
 	});
 });

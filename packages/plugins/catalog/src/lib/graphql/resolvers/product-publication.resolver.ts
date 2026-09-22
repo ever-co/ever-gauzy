@@ -43,6 +43,12 @@ export class ProductPublicationResolver {
 
 	/**
 	 * Lists product publication rows.
+	 *
+	 * @param filterBy The product, the channel and the status the publications are narrowed to.
+	 * @param limit The page size, when it is stated the offset way.
+	 * @param offset The row to start at, when it is stated the offset way.
+	 * @param page The page, when it is stated the cursor way.
+	 * @param withDeleted Whether the retired publications are included.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_VIEW))
 	@Query('productPublications')
@@ -50,13 +56,15 @@ export class ProductPublicationResolver {
 		@Args('filter') filterBy: { productId?: ID; channelId?: ID; status?: PublicationStatus } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<ProductChannel>> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.productChannelService.findAll({
 			where: { ...filterBy },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return connectionFromOffsetPage<ProductChannel>(listing, skip);

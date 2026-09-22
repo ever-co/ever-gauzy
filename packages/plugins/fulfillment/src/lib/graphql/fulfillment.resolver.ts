@@ -73,6 +73,7 @@ export class FulfillmentResolver {
 	 *
 	 * @param filter The filter arguments.
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns A page of fulfilments.
 	 * @throws BadRequestException when a status or a direction is given that a fulfilment does not have.
 	 */
@@ -82,7 +83,8 @@ export class FulfillmentResolver {
 		@Args('status', { type: () => String, nullable: true }) status?: string,
 		@Args('warehouseId', { type: () => ID, nullable: true }) warehouseId?: string,
 		@Args('direction', { type: () => String, nullable: true }) direction?: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<IFulfillmentConnection> {
 		const where: FindOptionsWhere<Fulfillment> = {};
 		const { skip, take } = resolveConnectionWindow(page);
@@ -115,7 +117,12 @@ export class FulfillmentResolver {
 			where.direction = direction;
 		}
 
-		const listing = (await this.fulfillmentService.findAll({ where, skip, take })) as IPagination<Fulfillment>;
+		const listing = (await this.fulfillmentService.findAll({
+			where,
+			skip,
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
+		})) as IPagination<Fulfillment>;
 
 		return connectionFromOffsetPage(listing, skip);
 	}

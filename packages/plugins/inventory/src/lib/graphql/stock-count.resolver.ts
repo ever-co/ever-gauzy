@@ -64,13 +64,15 @@ export class StockCountResolver {
 		@Args('warehouseId') warehouseId: string,
 		@Args('status') status: StockCountStatus,
 		@Args('mode') mode: StockCountMode,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<StockCount>> {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { warehouseId, status, mode },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<StockCount>;
 
 		return connectionFromOffsetPage(listing, skip);

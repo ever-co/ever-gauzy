@@ -70,13 +70,15 @@ export class RefundResolver {
 		@Args('filter') filter?: IRefundFilter,
 		@Args('sort') sort?: IPaymentSort,
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<IRefundConnection> {
 		const page = await this.refundService.findRefunds({
 			where: withoutRange(filter as Record<string, unknown>),
 			order: toOrder(sort, REFUND_SORT_FIELDS),
 			...(limit ? { take: limit } : {}),
-			...(offset ? { skip: offset } : {})
+			...(offset ? { skip: offset } : {}),
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return toConnection(page, (row) => row.id);

@@ -89,6 +89,7 @@ export class WarehouseBinResolver {
 	 *
 	 * @param filter The bin filter.
 	 * @param page The page.
+	 * @param withDeleted Whether the retired positions are included.
 	 * @returns One page of bins.
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_VIEW)
@@ -103,7 +104,8 @@ export class WarehouseBinResolver {
 			isPickable?: boolean;
 			isBlocked?: boolean;
 		},
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolveWindow(page);
 		const result = await this.warehouseBinService.findAll({
@@ -118,7 +120,8 @@ export class WarehouseBinResolver {
 			},
 			skip,
 			take,
-			order: { sortOrder: 'ASC', code: 'ASC' }
+			order: { sortOrder: 'ASC', code: 'ASC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);
@@ -150,6 +153,7 @@ export class WarehouseBinResolver {
 	 *
 	 * @param id The root of the subtree.
 	 * @param page The page.
+	 * @param withDeleted Whether the retired positions are included.
 	 * @returns One page of the subtree, in walking order.
 	 * @throws for a page the query protocol refuses — both styles at once, both directions at once, a
 	 * cursor this platform did not mint — which is deliberately not caught here, because answering a
@@ -159,10 +163,11 @@ export class WarehouseBinResolver {
 	@Query('warehouseBinSubtree')
 	async warehouseBinSubtree(
 		@Args('id') id: ID,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<WarehouseBin>> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const rows = await this.warehouseBinService.findSubtree(id);
+		const rows = await this.warehouseBinService.findSubtree(id, withDeleted ? { withDeleted: true } : {});
 
 		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}

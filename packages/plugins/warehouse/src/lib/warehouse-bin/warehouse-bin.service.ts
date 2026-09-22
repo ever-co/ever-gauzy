@@ -715,9 +715,11 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * This is the query the closure table exists for — one indexed join instead of a recursive walk.
 	 *
 	 * @param id The root of the subtree.
+	 * @param options Whether retired positions are included; the store's own find options carry the flag,
+	 * so it is stated rather than applied here.
 	 * @returns The descendants, in walking order.
 	 */
-	public async findSubtree(id: ID): Promise<WarehouseBin[]> {
+	public async findSubtree(id: ID, options: { withDeleted?: boolean } = {}): Promise<WarehouseBin[]> {
 		const ids = await this.descendantIds(id);
 
 		if (!ids.length) {
@@ -730,7 +732,8 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
 			},
-			order: { sortOrder: 'ASC', code: 'ASC' }
+			order: { sortOrder: 'ASC', code: 'ASC' },
+			...(options.withDeleted ? { withDeleted: true } : {})
 		});
 	}
 

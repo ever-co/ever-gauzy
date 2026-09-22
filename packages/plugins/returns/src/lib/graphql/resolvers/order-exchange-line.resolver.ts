@@ -47,20 +47,25 @@ export class OrderExchangeLineResolver {
 	 *
 	 * `findForExchange` answers every line of the exchange, in the order it was written, and takes no
 	 * window of its own, so the page is cut here. Answering the whole set to a caller that stated a page
-	 * is the failure this avoids: the client would page a connection whose `pageInfo` never advances.
+	 * is the failure this avoids: the client would page a connection whose `pageInfo` never advances. The
+	 * soft-delete flag travels into that read, because the read is what decides which rows exist for this
+	 * caller.
 	 *
 	 * @param exchangeId The exchange.
 	 * @param page The page.
+	 * @param withDeleted Whether retired lines are included, as the REST list route's own `withDeleted`
+	 * is.
 	 * @returns A page of lines, in the order they were written.
 	 */
 	@Query('orderExchangeLines')
 	@Permissions(ReturnsPermissions.EXCHANGES_VIEW)
 	async orderExchangeLines(
 		@Args('exchangeId') exchangeId: ID,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrderExchangeLine>> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const rows = await this.orderExchangeLineService.findForExchange(exchangeId);
+		const rows = await this.orderExchangeLineService.findForExchange(exchangeId, withDeleted);
 
 		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}

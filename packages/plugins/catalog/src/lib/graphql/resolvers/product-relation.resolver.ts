@@ -33,6 +33,12 @@ export class ProductRelationResolver {
 
 	/**
 	 * Lists product relations, optionally narrowed to a source product and a type.
+	 *
+	 * @param filter The product, the related product and the type the relations are narrowed to.
+	 * @param limit The page size, when it is stated the offset way.
+	 * @param offset The row to start at, when it is stated the offset way.
+	 * @param page The page, when it is stated the cursor way.
+	 * @param withDeleted Whether the retired relations are included.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_VIEW))
 	@Query('productRelations')
@@ -40,7 +46,8 @@ export class ProductRelationResolver {
 		@Args('filter') filter: { productId?: ID; relatedProductId?: ID; type?: ProductRelationType } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<ProductRelation>> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.productRelationService.findAll({
@@ -48,7 +55,8 @@ export class ProductRelationResolver {
 			relations: ['relatedProduct'],
 			order: { type: 'ASC', position: 'ASC' },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return connectionFromOffsetPage<ProductRelation>(listing, skip);

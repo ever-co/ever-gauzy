@@ -482,27 +482,31 @@ export const schemaExtensions = gql`
 
 	extend type Query {
 		"Returns of the caller's organization."
-		orderReturns(filter: OrderReturnFilter, page: PageInput): OrderReturnConnection!
+		orderReturns(filter: OrderReturnFilter, page: PageInput, withDeleted: Boolean): OrderReturnConnection!
 		"One return, with its lines and its governed reason."
 		orderReturn(id: ID!): OrderReturn
 		"Governed return reasons, as a two-level tree."
-		orderReturnReasons(filter: OrderReturnReasonFilter, page: PageInput): OrderReturnReasonConnection!
+		orderReturnReasons(
+			filter: OrderReturnReasonFilter
+			page: PageInput
+			withDeleted: Boolean
+		): OrderReturnReasonConnection!
 		"One governed return reason."
 		orderReturnReason(id: ID!): OrderReturnReason
 		"Claims of the caller's organization."
-		orderClaims(filter: OrderClaimFilter, page: PageInput): OrderClaimConnection!
+		orderClaims(filter: OrderClaimFilter, page: PageInput, withDeleted: Boolean): OrderClaimConnection!
 		"One claim, with its lines and its linked return."
 		orderClaim(id: ID!): OrderClaim
 		"Exchanges of the caller's organization."
-		orderExchanges(filter: OrderExchangeFilter, page: PageInput): OrderExchangeConnection!
+		orderExchanges(filter: OrderExchangeFilter, page: PageInput, withDeleted: Boolean): OrderExchangeConnection!
 		"One exchange, with its outbound lines and its inbound return."
 		orderExchange(id: ID!): OrderExchange
 		"The lines of a return."
-		orderReturnLines(returnId: ID!, page: PageInput): OrderReturnLineConnection!
+		orderReturnLines(returnId: ID!, page: PageInput, withDeleted: Boolean): OrderReturnLineConnection!
 		"The lines of a claim."
-		orderClaimLines(claimId: ID!, page: PageInput): OrderClaimLineConnection!
+		orderClaimLines(claimId: ID!, page: PageInput, withDeleted: Boolean): OrderClaimLineConnection!
 		"The outbound lines of an exchange."
-		orderExchangeLines(exchangeId: ID!, page: PageInput): OrderExchangeLineConnection!
+		orderExchangeLines(exchangeId: ID!, page: PageInput, withDeleted: Boolean): OrderExchangeLineConnection!
 	}
 
 	extend type Mutation {

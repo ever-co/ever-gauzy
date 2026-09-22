@@ -102,6 +102,12 @@ import {
  * out of it. Asking for the first page and slicing that instead would answer ten rows whatever the caller
  * asked for, because ten is the store's default page size, and would report ten as the size of the whole
  * collection: a client would read a paged surface as a complete one.
+ *
+ * **Every list field offers the soft-delete visibility its route offers.** Each REST list route reads
+ * through `BaseQueryDTO`, so its caller can ask for the rows a tenant retired; the six fields here state
+ * the same `withDeleted` argument and hand it to the read, which forwards it into `paginate`. A field that
+ * declared the argument and dropped it would answer the live rows however the caller asked, so a client
+ * would be told it could ask and be given the same page either way.
  */
 @Resolver(() => SellerType)
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard, SellerAccessGuard)
@@ -129,20 +135,30 @@ export class SellerEntityResolver {
 	 * request naming a deep offset would turn into a scan of the table, and the count it reports would still
 	 * be right, so nothing would look wrong.
 	 *
+	 * The soft-delete flag rides in the same options object as the window, because that object is what the
+	 * read forwards into `paginate`: a field that declared the argument and dropped it here would answer the
+	 * live rows however the caller asked, while the document said otherwise.
+	 *
 	 * @param skip The offset the page starts at.
 	 * @param take The page size.
 	 * @param read The page-numbered listing read.
+	 * @param withDeleted Whether retired rows are included, as the REST list route's own `withDeleted` is.
 	 * @returns The connection, with the count the listing itself reported rather than the size of the page.
 	 */
 	private async connectionOf<T>(
 		skip: number,
 		take: number,
-		read: (window: { skip: number; take: number }) => Promise<IPagination<T>>
+		read: (window: { skip: number; take: number; withDeleted?: boolean }) => Promise<IPagination<T>>,
+		withDeleted?: boolean
 	): Promise<GraphqlConnection<T>> {
 		const firstPage = Math.floor(skip / take) + 1;
 		// How far into that page the window starts, which is how many rows of it are not the caller's.
 		const leading = skip - (firstPage - 1) * take;
-		const listing = await read({ skip: firstPage, take: leading > 0 ? take * 2 : take });
+		const listing = await read({
+			skip: firstPage,
+			take: leading > 0 ? take * 2 : take,
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 		const window = paginateRows(listing.items, take, leading);
 
 		return connectionFromOffsetPage({ items: window.items, total: listing.total }, skip);
@@ -153,11 +169,17 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLERS_VIEW)
 	async sellers(
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 		@Context() context?: any
 	): Promise<GraphqlConnection<Seller>> {
 		const { skip, take } = resolveConnectionWindow(page);
 
-		return this.connectionOf(skip, take, (window) => this.sellerService.listSellers(window, this.scope(context)));
+		return this.connectionOf(
+			skip,
+			take,
+			(window) => this.sellerService.listSellers(window, this.scope(context)),
+			withDeleted
+		);
 	}
 
 	/** Reads one seller by id or code. */
@@ -201,11 +223,17 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLER_OFFERINGS_VIEW)
 	async sellerOfferings(
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 		@Context() context?: any
 	): Promise<GraphqlConnection<SellerOffering>> {
 		const { skip, take } = resolveConnectionWindow(page);
 
-		return this.connectionOf(skip, take, (window) => this.sellerOfferingService.listOfferings(window, this.scope(context)));
+		return this.connectionOf(
+			skip,
+			take,
+			(window) => this.sellerOfferingService.listOfferings(window, this.scope(context)),
+			withDeleted
+		);
 	}
 
 	/** Lists the per-seller split of orders, one page at a time. */
@@ -213,11 +241,17 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLER_TRANSACTIONS_VIEW)
 	async sellerTransactions(
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 		@Context() context?: any
 	): Promise<GraphqlConnection<SellerTransaction>> {
 		const { skip, take } = resolveConnectionWindow(page);
 
-		return this.connectionOf(skip, take, (window) => this.sellerTransactionService.listTransactions(window, this.scope(context)));
+		return this.connectionOf(
+			skip,
+			take,
+			(window) => this.sellerTransactionService.listTransactions(window, this.scope(context)),
+			withDeleted
+		);
 	}
 
 	/** The split reconciliation report. */
@@ -238,11 +272,17 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
 	async sellerPayouts(
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 		@Context() context?: any
 	): Promise<GraphqlConnection<SellerPayout>> {
 		const { skip, take } = resolveConnectionWindow(page);
 
-		return this.connectionOf(skip, take, (window) => this.sellerPayoutService.listPayouts(window, this.scope(context)));
+		return this.connectionOf(
+			skip,
+			take,
+			(window) => this.sellerPayoutService.listPayouts(window, this.scope(context)),
+			withDeleted
+		);
 	}
 
 	/** Reads one payout with its lines. */
@@ -258,12 +298,17 @@ export class SellerEntityResolver {
 	async sellerPayoutLines(
 		@Args('sellerPayoutId', { type: () => ID }) sellerPayoutId: string,
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 		@Context() context?: any
 	): Promise<GraphqlConnection<SellerPayoutLine>> {
 		const { skip, take } = resolveConnectionWindow(page);
 
-		return this.connectionOf(skip, take, (window) =>
-			this.sellerPayoutLineService.listLines({ where: { sellerPayoutId }, ...window }, this.scope(context))
+		return this.connectionOf(
+			skip,
+			take,
+			(window) =>
+				this.sellerPayoutLineService.listLines({ where: { sellerPayoutId }, ...window }, this.scope(context)),
+			withDeleted
 		);
 	}
 
@@ -272,11 +317,17 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_VIEW)
 	async sellerSettlements(
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 		@Context() context?: any
 	): Promise<GraphqlConnection<SellerSettlement>> {
 		const { skip, take } = resolveConnectionWindow(page);
 
-		return this.connectionOf(skip, take, (window) => this.sellerSettlementService.listSettlements(window, this.scope(context)));
+		return this.connectionOf(
+			skip,
+			take,
+			(window) => this.sellerSettlementService.listSettlements(window, this.scope(context)),
+			withDeleted
+		);
 	}
 
 	/** Submits a seller application for review. */

@@ -47,16 +47,20 @@ export class OrderExchangeLineService extends TenantAwareCrudService<OrderExchan
 	 * Reads the outbound lines of an exchange, scoped to the caller's tenant and organization.
 	 *
 	 * @param exchangeId The exchange to read.
+	 * @param withDeleted Whether lines retired by a later replacement write are included. Stated through
+	 * the find options rather than as a filter on the returned rows, because the store is what knows a
+	 * row was retired.
 	 * @returns The lines, in the order they were written.
 	 */
-	public async findForExchange(exchangeId: ID): Promise<OrderExchangeLine[]> {
+	public async findForExchange(exchangeId: ID, withDeleted?: boolean): Promise<OrderExchangeLine[]> {
 		return await this.typeOrmOrderExchangeLineRepository.find({
 			where: {
 				exchangeId,
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
 			},
-			order: { createdAt: 'ASC' }
+			order: { createdAt: 'ASC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 	}
 

@@ -821,15 +821,15 @@ export const schemaExtensions = gql`
 
 	extend type Query {
 		"Zones of the caller's organization."
-		warehouseZones(filter: WarehouseZoneFilter, page: PageInput): WarehouseZoneConnection!
+		warehouseZones(filter: WarehouseZoneFilter, page: PageInput, withDeleted: Boolean): WarehouseZoneConnection!
 		"One zone, with the positions inside it."
 		warehouseZone(id: ID!): WarehouseZone
 		"Bins of the caller's organization."
-		warehouseBins(filter: WarehouseBinFilter, page: PageInput): WarehouseBinConnection!
+		warehouseBins(filter: WarehouseBinFilter, page: PageInput, withDeleted: Boolean): WarehouseBinConnection!
 		"One bin, with its place in the hierarchy."
 		warehouseBin(id: ID!): WarehouseBin
 		"Everything under a bin, itself included, read through the closure table."
-		warehouseBinSubtree(id: ID!, page: PageInput): WarehouseBinSubtreeConnection!
+		warehouseBinSubtree(id: ID!, page: PageInput, withDeleted: Boolean): WarehouseBinSubtreeConnection!
 		"The derived contents of a bin."
 		warehouseBinContents(id: ID!, page: PageInput): WarehouseBinContentsConnection!
 		"Measures a requested quantity against a bin's declared capacity, in the capacity's own unit."
@@ -837,23 +837,23 @@ export const schemaExtensions = gql`
 		"Bins whose capacity is declared without the unit it is counted in; pallet positions first."
 		warehouseBinCapacityWarnings(warehouseId: ID): [WarehouseBinCapacityWarning!]!
 		"Pick waves of the caller's organization."
-		pickWaves(filter: PickWaveFilter, page: PageInput): PickWaveConnection!
+		pickWaves(filter: PickWaveFilter, page: PageInput, withDeleted: Boolean): PickWaveConnection!
 		"One wave, with its pick lists."
 		pickWave(id: ID!): PickWave
 		"Pick lists of the caller's organization."
-		pickLists(filter: PickListFilter, page: PageInput): PickListConnection!
+		pickLists(filter: PickListFilter, page: PageInput, withDeleted: Boolean): PickListConnection!
 		"One pick list, with its lines and their bins."
 		pickList(id: ID!): PickList
 		"The lines of a pick list, in the order the pick path visits them."
-		pickListLines(pickListId: ID!, page: PageInput): PickListLinesConnection!
+		pickListLines(pickListId: ID!, page: PageInput, withDeleted: Boolean): PickListLinesConnection!
 		"One pick line."
 		pickListLine(id: ID!): PickListLine
 		"Pack slips of the caller's organization."
-		packSlips(filter: PackSlipFilter, page: PageInput): PackSlipConnection!
+		packSlips(filter: PackSlipFilter, page: PageInput, withDeleted: Boolean): PackSlipConnection!
 		"One pack slip, with the lines it covers."
 		packSlip(id: ID!): PackSlip
 		"Carrier manifests of the caller's organization."
-		carrierManifests(filter: CarrierManifestFilter, page: PageInput): CarrierManifestConnection!
+		carrierManifests(filter: CarrierManifestFilter, page: PageInput, withDeleted: Boolean): CarrierManifestConnection!
 		"One manifest, with the shipments it covers."
 		carrierManifest(id: ID!): CarrierManifest
 	}

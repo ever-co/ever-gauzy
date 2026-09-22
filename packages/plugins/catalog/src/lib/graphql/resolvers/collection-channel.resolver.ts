@@ -33,6 +33,12 @@ export class CollectionChannelResolver {
 
 	/**
 	 * Lists collection publication rows.
+	 *
+	 * @param filter The collection, the channel and the status the publications are narrowed to.
+	 * @param limit The page size, when it is stated the offset way.
+	 * @param offset The row to start at, when it is stated the offset way.
+	 * @param page The page, when it is stated the cursor way.
+	 * @param withDeleted Whether the retired publications are included.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_VIEW))
 	@Query('collectionChannels')
@@ -40,13 +46,15 @@ export class CollectionChannelResolver {
 		@Args('filter') filter: { collectionId?: ID; channelId?: ID; status?: PublicationStatus } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CollectionChannel>> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.collectionChannelService.findAll({
 			where: { ...filter },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return connectionFromOffsetPage<CollectionChannel>(listing, skip);

@@ -59,13 +59,15 @@ export class StockTransferLineResolver {
 	@Permissions(InventoryPermission.STOCK_TRANSFER_VIEW as PermissionsEnum)
 	async stockTransferLines(
 		@Args('transferId') transferId: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<StockTransferLine>> {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { transferId },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<StockTransferLine>;
 
 		return connectionFromOffsetPage(listing, skip);

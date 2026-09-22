@@ -55,13 +55,16 @@ export class OrderReturnReasonResolver {
 	 *
 	 * @param filter The reason filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired reasons are included, as the REST list route's own
+	 * `withDeleted` is.
 	 * @returns One page of reasons.
 	 */
 	@Query('orderReturnReasons')
 	@Permissions(ReturnsPermissions.RETURNS_VIEW)
 	async orderReturnReasons(
 		@Args('filter') filter?: { isActive?: boolean; parentId?: ID; code?: string },
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolvePageWindow(page);
 		const result = await this.orderReturnReasonService.findTree({
@@ -72,7 +75,8 @@ export class OrderReturnReasonResolver {
 			},
 			skip,
 			take,
-			order: { code: 'ASC' }
+			order: { code: 'ASC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

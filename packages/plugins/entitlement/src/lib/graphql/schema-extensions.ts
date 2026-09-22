@@ -429,13 +429,13 @@ export const schemaExtensions = gql`
 
 	extend type Query {
 		"Rights of the caller's organization."
-		entitlements(filter: EntitlementFilter, page: PageInput): EntitlementConnection!
+		entitlements(filter: EntitlementFilter, page: PageInput, withDeleted: Boolean): EntitlementConnection!
 		"One right, with its activations and its keys."
 		entitlement(id: ID!): Entitlement
 		"Activations, by right, device or state."
-		entitlementActivations(filter: EntitlementActivationFilter, page: PageInput): EntitlementActivationConnection!
+		entitlementActivations(filter: EntitlementActivationFilter, page: PageInput, withDeleted: Boolean): EntitlementActivationConnection!
 		"Issued credentials. The digest and the ciphertext are never part of the answer."
-		entitlementKeys(filter: EntitlementKeyFilter, page: PageInput): EntitlementKeyConnection!
+		entitlementKeys(filter: EntitlementKeyFilter, page: PageInput, withDeleted: Boolean): EntitlementKeyConnection!
 		"Whether a right may be exercised, with the code that explains the answer."
 		checkEntitlement(input: CheckEntitlementInput!): EntitlementCheckResult!
 	}

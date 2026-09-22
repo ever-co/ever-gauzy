@@ -231,3 +231,73 @@ describe('the cart resolvers — the same declarations the REST routes carry', (
 		expect(versioningOf(CommerceCartResolver.prototype, 'updateCart').identify).toBeUndefined();
 	});
 });
+
+/**
+ * The soft-delete visibility of the cart's two list fields (17 §3.1).
+ *
+ * A connection query has to offer the same filters, the same sort keys, the same relation loading and
+ * the same soft-delete visibility as the REST list route it mirrors. The last of the four was missing,
+ * so a client that can ask REST for the retired rows could not ask GraphQL for them at all.
+ *
+ * Both halves are pinned, because either alone is useless: the document has to declare the argument,
+ * since a member the document does not carry is one no client can send, and the field has to forward
+ * it, since an argument the read drops is worse than a missing one — the client is told it can ask and
+ * receives the same rows either way. The flag absent is asserted as well, where the option must be
+ * missing altogether rather than present as `false`: a read that wrote `withDeleted: false` would
+ * answer for a request nobody sent.
+ */
+describe('the cart list fields — the soft-delete visibility the REST routes already have', () => {
+	/** One page, as a service double answers it. */
+	const EMPTY_PAGE = { items: [], total: 0 };
+
+	/**
+	 * A service double that records the options it was handed.
+	 *
+	 * @returns The double and the options it received, in order.
+	 */
+	function recordingService() {
+		const calls: Array<Record<string, any>> = [];
+
+		return {
+			calls,
+			service: {
+				findAll: async (options: Record<string, any>) => {
+					calls.push(options);
+
+					return EMPTY_PAGE;
+				}
+			}
+		};
+	}
+
+	it('declares the argument on both fields, keeping every argument they already carried', () => {
+		expect(printed).toMatch(
+			/carts\(status: String, customerId: ID, email: String, page: PageInput, withDeleted: Boolean\): CartConnection!/
+		);
+		expect(printed).toMatch(
+			/checkoutSessions\(cartId: ID, status: String, page: PageInput, withDeleted: Boolean\): CheckoutSessionConnection!/
+		);
+	});
+
+	it('forwards it into `carts`, and writes nothing when the caller states none', async () => {
+		const { service, calls } = recordingService();
+		const resolver = new CommerceCartResolver(service as never);
+
+		await resolver.carts(undefined, undefined, undefined, undefined, true);
+		await resolver.carts();
+
+		expect(calls[0]).toMatchObject({ withDeleted: true });
+		expect(calls[1]).not.toHaveProperty('withDeleted');
+	});
+
+	it('forwards it into `checkoutSessions`, and writes nothing when the caller states none', async () => {
+		const { service, calls } = recordingService();
+		const resolver = new CommerceCheckoutSessionResolver({} as never, service as never);
+
+		await resolver.checkoutSessions(undefined, undefined, undefined, true);
+		await resolver.checkoutSessions();
+
+		expect(calls[0]).toMatchObject({ withDeleted: true });
+		expect(calls[1]).not.toHaveProperty('withDeleted');
+	});
+});

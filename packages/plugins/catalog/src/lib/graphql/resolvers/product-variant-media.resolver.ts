@@ -33,6 +33,12 @@ export class ProductVariantMediaResolver {
 
 	/**
 	 * Lists the gallery rows matching the filter.
+	 *
+	 * @param filter The variant and the image the gallery is narrowed to.
+	 * @param limit The page size, when it is stated the offset way.
+	 * @param offset The row to start at, when it is stated the offset way.
+	 * @param page The page, when it is stated the cursor way.
+	 * @param withDeleted Whether the retired gallery rows are included.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_VIEW))
 	@Query('productVariantMedia')
@@ -40,14 +46,16 @@ export class ProductVariantMediaResolver {
 		@Args('filter') filter: { variantId?: ID; imageAssetId?: ID } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<ProductVariantMedia>> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.productVariantMediaService.findAll({
 			where: { ...filter },
 			order: { position: 'ASC' },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return connectionFromOffsetPage<ProductVariantMedia>(listing, skip);

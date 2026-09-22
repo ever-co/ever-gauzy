@@ -72,6 +72,7 @@ export class GoodsReceiptResolver {
 	 *
 	 * @param filter The receipt filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns One page of receipts.
 	 */
 	@Query('goodsReceipts')
@@ -79,7 +80,8 @@ export class GoodsReceiptResolver {
 	async goodsReceipts(
 		@Args('filter')
 		filter?: { purchaseOrderId?: ID; warehouseId?: ID; status?: GoodsReceiptStatus; number?: string },
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolvePageWindow(page);
 		const result = await this.goodsReceiptService.findAll({
@@ -91,7 +93,8 @@ export class GoodsReceiptResolver {
 			},
 			skip,
 			take,
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

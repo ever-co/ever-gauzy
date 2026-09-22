@@ -59,13 +59,15 @@ export class StockCountLineResolver {
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
 	async stockCountLines(
 		@Args('stockCountId') stockCountId: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<StockCountLine>> {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { stockCountId },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<StockCountLine>;
 
 		return connectionFromOffsetPage(listing, skip);

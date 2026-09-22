@@ -4298,18 +4298,18 @@ type Query {
 
   """One delivery of the caller's organization, or null when there is none."""
   webhookDelivery(id: ID!): WebhookDelivery
-  collections(filter: CollectionFilter, page: PageInput, limit: Int, offset: Int): CollectionConnection!
+  collections(filter: CollectionFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionConnection!
   collection(id: ID!): Collection
   collectionBySlug(slug: String!): Collection
-  collectionProducts(filter: CollectionProductFilter, page: PageInput, limit: Int, offset: Int): CollectionProductConnection!
-  collectionVariants(filter: CollectionVariantFilter, page: PageInput, limit: Int, offset: Int): CollectionVariantConnection!
-  collectionChannels(filter: CollectionChannelFilter, page: PageInput, limit: Int, offset: Int): CollectionChannelConnection!
+  collectionProducts(filter: CollectionProductFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionProductConnection!
+  collectionVariants(filter: CollectionVariantFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionVariantConnection!
+  collectionChannels(filter: CollectionChannelFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionChannelConnection!
   productVariantFacets(filter: TagProductVariantFilter, page: PageInput, limit: Int, offset: Int): TagProductVariantConnection!
-  productPublications(filter: ProductPublicationFilter, page: PageInput, limit: Int, offset: Int): ProductPublicationConnection!
+  productPublications(filter: ProductPublicationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductPublicationConnection!
   productPublication(id: ID!): ProductPublication
   productVariantPublications(filter: ProductVariantPublicationFilter, page: PageInput, limit: Int, offset: Int): ProductVariantPublicationConnection!
-  productRelations(filter: ProductRelationFilter, page: PageInput, limit: Int, offset: Int): ProductRelationConnection!
-  productVariantMedia(filter: ProductVariantMediaFilter, page: PageInput, limit: Int, offset: Int): ProductVariantMediaConnection!
+  productRelations(filter: ProductRelationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductRelationConnection!
+  productVariantMedia(filter: ProductVariantMediaFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantMediaConnection!
 
   """Price lists of the caller's organization, most useful first."""
   priceLists(filter: PriceListFilter, sort: PriceListSort, page: PageInput, limit: Int, offset: Int): PriceListConnection!
@@ -4379,30 +4379,30 @@ type Query {
   stockLevels(warehouseId: ID, variantId: ID, page: PageInput): StockLevelConnection!
   stockLevel(warehouseId: ID!, variantId: ID!): StockLevel
   availableQuantity(warehouseId: ID!, variantId: ID!): Float!
-  stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput): StockMovementConnection!
+  stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput, withDeleted: Boolean): StockMovementConnection!
   stockReservations(referenceType: String, referenceId: ID, status: String, page: PageInput): StockReservationConnection!
   stockReservation(id: ID!): StockReservation
-  stockTransfers(status: String, page: PageInput): StockTransferConnection!
+  stockTransfers(status: String, page: PageInput, withDeleted: Boolean): StockTransferConnection!
   stockTransfer(id: ID!): StockTransfer
-  stockTransferLines(transferId: ID!, page: PageInput): StockTransferLineConnection!
+  stockTransferLines(transferId: ID!, page: PageInput, withDeleted: Boolean): StockTransferLineConnection!
   stockTransferLine(id: ID!): StockTransferLine
-  stockAlerts(variantId: ID, isActive: Boolean, page: PageInput): StockAlertConnection!
-  stockAdjustments(warehouseId: ID, variantId: ID, status: String, page: PageInput): StockAdjustmentConnection!
-  stockCounts(warehouseId: ID, status: String, mode: String, page: PageInput): StockCountConnection!
+  stockAlerts(variantId: ID, isActive: Boolean, page: PageInput, withDeleted: Boolean): StockAlertConnection!
+  stockAdjustments(warehouseId: ID, variantId: ID, status: String, page: PageInput, withDeleted: Boolean): StockAdjustmentConnection!
+  stockCounts(warehouseId: ID, status: String, mode: String, page: PageInput, withDeleted: Boolean): StockCountConnection!
   stockCount(id: ID!): StockCount
-  stockCountLines(stockCountId: ID!, page: PageInput): StockCountLineConnection!
+  stockCountLines(stockCountId: ID!, page: PageInput, withDeleted: Boolean): StockCountLineConnection!
   stockCountLine(id: ID!): StockCountLine
   stockCountVariance(stockCountId: ID!): StockCountVariance!
-  channelWarehouses(channelId: ID, warehouseId: ID, page: PageInput): ChannelWarehouseConnection!
+  channelWarehouses(channelId: ID, warehouseId: ID, page: PageInput, withDeleted: Boolean): ChannelWarehouseConnection!
 
   """Zones of the caller's organization."""
-  warehouseZones(filter: WarehouseZoneFilter, page: PageInput): WarehouseZoneConnection!
+  warehouseZones(filter: WarehouseZoneFilter, page: PageInput, withDeleted: Boolean): WarehouseZoneConnection!
 
   """One zone, with the positions inside it."""
   warehouseZone(id: ID!): WarehouseZone
 
   """Bins of the caller's organization."""
-  warehouseBins(filter: WarehouseBinFilter, page: PageInput): WarehouseBinConnection!
+  warehouseBins(filter: WarehouseBinFilter, page: PageInput, withDeleted: Boolean): WarehouseBinConnection!
 
   """One bin, with its place in the hierarchy."""
   warehouseBin(id: ID!): WarehouseBin
@@ -4410,7 +4410,7 @@ type Query {
   """
   Everything under a bin, itself included, read through the closure table.
   """
-  warehouseBinSubtree(id: ID!, page: PageInput): WarehouseBinSubtreeConnection!
+  warehouseBinSubtree(id: ID!, page: PageInput, withDeleted: Boolean): WarehouseBinSubtreeConnection!
 
   """The derived contents of a bin."""
   warehouseBinContents(id: ID!, page: PageInput): WarehouseBinContentsConnection!
@@ -4426,37 +4426,37 @@ type Query {
   warehouseBinCapacityWarnings(warehouseId: ID): [WarehouseBinCapacityWarning!]!
 
   """Pick waves of the caller's organization."""
-  pickWaves(filter: PickWaveFilter, page: PageInput): PickWaveConnection!
+  pickWaves(filter: PickWaveFilter, page: PageInput, withDeleted: Boolean): PickWaveConnection!
 
   """One wave, with its pick lists."""
   pickWave(id: ID!): PickWave
 
   """Pick lists of the caller's organization."""
-  pickLists(filter: PickListFilter, page: PageInput): PickListConnection!
+  pickLists(filter: PickListFilter, page: PageInput, withDeleted: Boolean): PickListConnection!
 
   """One pick list, with its lines and their bins."""
   pickList(id: ID!): PickList
 
   """The lines of a pick list, in the order the pick path visits them."""
-  pickListLines(pickListId: ID!, page: PageInput): PickListLinesConnection!
+  pickListLines(pickListId: ID!, page: PageInput, withDeleted: Boolean): PickListLinesConnection!
 
   """One pick line."""
   pickListLine(id: ID!): PickListLine
 
   """Pack slips of the caller's organization."""
-  packSlips(filter: PackSlipFilter, page: PageInput): PackSlipConnection!
+  packSlips(filter: PackSlipFilter, page: PageInput, withDeleted: Boolean): PackSlipConnection!
 
   """One pack slip, with the lines it covers."""
   packSlip(id: ID!): PackSlip
 
   """Carrier manifests of the caller's organization."""
-  carrierManifests(filter: CarrierManifestFilter, page: PageInput): CarrierManifestConnection!
+  carrierManifests(filter: CarrierManifestFilter, page: PageInput, withDeleted: Boolean): CarrierManifestConnection!
 
   """One manifest, with the shipments it covers."""
   carrierManifest(id: ID!): CarrierManifest
 
   """List carts of the caller's organization."""
-  carts(status: String, customerId: ID, email: String, page: PageInput): CartConnection!
+  carts(status: String, customerId: ID, email: String, page: PageInput, withDeleted: Boolean): CartConnection!
 
   """Read one cart with its lines, delivery choices and promotions."""
   cart(id: ID!): Cart
@@ -4465,7 +4465,7 @@ type Query {
   cartByToken(token: String!): Cart
 
   """List checkout sessions."""
-  checkoutSessions(cartId: ID, status: String, page: PageInput): CheckoutSessionConnection!
+  checkoutSessions(cartId: ID, status: String, page: PageInput, withDeleted: Boolean): CheckoutSessionConnection!
 
   """Read one checkout session."""
   checkoutSession(id: ID!): CheckoutSession
@@ -4483,16 +4483,16 @@ type Query {
   orderTotals(id: ID!): OrderTotals
 
   """The totals history of one order, one row per version, newest first."""
-  orderSummaries(orderId: ID!, page: PageInput): OrderSummaryConnection!
+  orderSummaries(orderId: ID!, page: PageInput, withDeleted: Boolean): OrderSummaryConnection!
 
   """The money ledger of one order."""
-  orderTransactions(orderId: ID!, type: String, page: PageInput): OrderTransactionConnection!
+  orderTransactions(orderId: ID!, type: String, page: PageInput, withDeleted: Boolean): OrderTransactionConnection!
 
   """The timeline of one order."""
-  orderHistory(orderId: ID!, page: PageInput): OrderHistoryConnection!
+  orderHistory(orderId: ID!, page: PageInput, withDeleted: Boolean): OrderHistoryConnection!
 
   """The changes of one order."""
-  orderChanges(orderId: ID!, status: String, page: PageInput): OrderChangeConnection!
+  orderChanges(orderId: ID!, status: String, page: PageInput, withDeleted: Boolean): OrderChangeConnection!
 
   """Read one change with its actions."""
   orderChange(id: ID!): OrderChange
@@ -4500,7 +4500,7 @@ type Query {
   """
   Every item and credit-note item one order line was billed through, oldest first.
   """
-  orderLineInvoices(orderLineId: ID!, page: PageInput): OrderLineInvoiceConnection!
+  orderLineInvoices(orderLineId: ID!, page: PageInput, withDeleted: Boolean): OrderLineInvoiceConnection!
 
   """How much of one order line is left to bill."""
   orderLineInvoicingPosition(orderLineId: ID!, basisQuantity: Decimal): OrderLineInvoicingPosition!
@@ -4512,7 +4512,7 @@ type Query {
   paymentSession(id: ID!): PaymentSession
   paymentCaptures(filter: PaymentCaptureFilter, sort: PaymentCaptureSort, page: PageInput, limit: Int, offset: Int): PaymentCaptureConnection!
   paymentCapture(id: ID!): PaymentCapture
-  refunds(filter: RefundFilter, sort: RefundSort, page: PageInput, limit: Int, offset: Int): RefundConnection!
+  refunds(filter: RefundFilter, sort: RefundSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): RefundConnection!
   refund(id: ID!): Refund
   refundReasons(filter: RefundReasonFilter, sort: RefundReasonSort, page: PageInput, limit: Int, offset: Int): RefundReasonConnection!
   refundReason(id: ID!): RefundReason
@@ -4528,7 +4528,7 @@ type Query {
   """
   One page of the promotions of the caller's organization, most specific first.
   """
-  promotions(filter: PromotionFilter, sort: PromotionSort, page: PageInput, limit: Int, offset: Int): PromotionConnection!
+  promotions(filter: PromotionFilter, sort: PromotionSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PromotionConnection!
 
   """One promotion by id."""
   promotion(id: ID!): Promotion
@@ -4543,7 +4543,7 @@ type Query {
   validateCoupon(code: String!, cartId: ID, customerId: ID): CouponValidationPayload!
 
   """One page of campaigns."""
-  campaigns(filter: CampaignFilter, sort: CampaignSort, page: PageInput, limit: Int, offset: Int): CampaignConnection!
+  campaigns(filter: CampaignFilter, sort: CampaignSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CampaignConnection!
 
   """One campaign by id."""
   campaign(id: ID!): Campaign
@@ -4554,7 +4554,7 @@ type Query {
   campaignBudgets(filter: CampaignBudgetFilter, sort: CampaignBudgetSort, page: PageInput, limit: Int, offset: Int): CampaignBudgetConnection!
 
   """One page of coupons."""
-  coupons(filter: CouponFilter, sort: CouponSort, page: PageInput, limit: Int, offset: Int): CouponConnection!
+  coupons(filter: CouponFilter, sort: CouponSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CouponConnection!
 
   """One coupon by id."""
   coupon(id: ID!): Coupon
@@ -4563,7 +4563,7 @@ type Query {
   promotionUsages(filter: PromotionUsageFilter, sort: PromotionUsageSort, page: PageInput, limit: Int, offset: Int): PromotionUsageConnection!
 
   """One page of gift cards."""
-  giftCards(filter: GiftCardFilter, sort: GiftCardSort, page: PageInput, limit: Int, offset: Int): GiftCardConnection!
+  giftCards(filter: GiftCardFilter, sort: GiftCardSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): GiftCardConnection!
 
   """One gift card by id."""
   giftCard(id: ID!): GiftCard
@@ -4573,7 +4573,7 @@ type Query {
   giftCardBalance(code: String!, pin: String): GiftCardBalancePayload!
 
   """List shipping profiles."""
-  shippingProfiles(page: PageInput): ShippingProfileConnection!
+  shippingProfiles(page: PageInput, withDeleted: Boolean): ShippingProfileConnection!
 
   """Read one shipping profile with its variants."""
   shippingProfile(id: ID!): ShippingProfile
@@ -4584,7 +4584,7 @@ type Query {
   shippingProfileForVariant(variantId: ID!): ShippingProfile
 
   """List shipping options."""
-  shippingOptions(page: PageInput): ShippingOptionConnection!
+  shippingOptions(page: PageInput, withDeleted: Boolean): ShippingOptionConnection!
 
   """Read one shipping option."""
   shippingOption(id: ID!): ShippingOption
@@ -4598,7 +4598,7 @@ type Query {
   shippingRate(shippingOptionId: ID!, input: ShippingEligibilityInput): ShippingRate
 
   """List fulfilments."""
-  fulfillments(orderId: ID, status: String, warehouseId: ID, direction: String, page: PageInput): FulfillmentConnection!
+  fulfillments(orderId: ID, status: String, warehouseId: ID, direction: String, page: PageInput, withDeleted: Boolean): FulfillmentConnection!
 
   """Read one fulfilment with its lines."""
   fulfillment(id: ID!): Fulfillment
@@ -4607,40 +4607,40 @@ type Query {
   fulfillmentOutstanding(orderLineId: ID!): Decimal!
 
   """Returns of the caller's organization."""
-  orderReturns(filter: OrderReturnFilter, page: PageInput): OrderReturnConnection!
+  orderReturns(filter: OrderReturnFilter, page: PageInput, withDeleted: Boolean): OrderReturnConnection!
 
   """One return, with its lines and its governed reason."""
   orderReturn(id: ID!): OrderReturn
 
   """Governed return reasons, as a two-level tree."""
-  orderReturnReasons(filter: OrderReturnReasonFilter, page: PageInput): OrderReturnReasonConnection!
+  orderReturnReasons(filter: OrderReturnReasonFilter, page: PageInput, withDeleted: Boolean): OrderReturnReasonConnection!
 
   """One governed return reason."""
   orderReturnReason(id: ID!): OrderReturnReason
 
   """Claims of the caller's organization."""
-  orderClaims(filter: OrderClaimFilter, page: PageInput): OrderClaimConnection!
+  orderClaims(filter: OrderClaimFilter, page: PageInput, withDeleted: Boolean): OrderClaimConnection!
 
   """One claim, with its lines and its linked return."""
   orderClaim(id: ID!): OrderClaim
 
   """Exchanges of the caller's organization."""
-  orderExchanges(filter: OrderExchangeFilter, page: PageInput): OrderExchangeConnection!
+  orderExchanges(filter: OrderExchangeFilter, page: PageInput, withDeleted: Boolean): OrderExchangeConnection!
 
   """One exchange, with its outbound lines and its inbound return."""
   orderExchange(id: ID!): OrderExchange
 
   """The lines of a return."""
-  orderReturnLines(returnId: ID!, page: PageInput): OrderReturnLineConnection!
+  orderReturnLines(returnId: ID!, page: PageInput, withDeleted: Boolean): OrderReturnLineConnection!
 
   """The lines of a claim."""
-  orderClaimLines(claimId: ID!, page: PageInput): OrderClaimLineConnection!
+  orderClaimLines(claimId: ID!, page: PageInput, withDeleted: Boolean): OrderClaimLineConnection!
 
   """The outbound lines of an exchange."""
-  orderExchangeLines(exchangeId: ID!, page: PageInput): OrderExchangeLineConnection!
+  orderExchangeLines(exchangeId: ID!, page: PageInput, withDeleted: Boolean): OrderExchangeLineConnection!
 
   """Subscription plans of the caller's organization."""
-  subscriptionPlans(filter: SubscriptionPlanFilter, page: PageInput): SubscriptionPlanConnection!
+  subscriptionPlans(filter: SubscriptionPlanFilter, page: PageInput, withDeleted: Boolean): SubscriptionPlanConnection!
 
   """One plan."""
   subscriptionPlan(id: ID!): SubscriptionPlan
@@ -4649,37 +4649,37 @@ type Query {
   subscriptionPlanByCode(code: String!): SubscriptionPlan
 
   """Subscriptions of the caller's organization."""
-  subscriptions(filter: SubscriptionFilter, page: PageInput): CustomerSubscriptionConnection!
+  subscriptions(filter: SubscriptionFilter, page: PageInput, withDeleted: Boolean): CustomerSubscriptionConnection!
 
   """One subscription, with its lines and its billing history."""
   subscription(id: ID!): CustomerSubscription
 
   """The recurring lines of a subscription."""
-  subscriptionItems(filter: SubscriptionItemFilter, page: PageInput): SubscriptionItemConnection!
+  subscriptionItems(filter: SubscriptionItemFilter, page: PageInput, withDeleted: Boolean): SubscriptionItemConnection!
 
   """One recurring line."""
   subscriptionItem(id: ID!): SubscriptionItem
 
   """Billing cycles of the caller's organization."""
-  subscriptionBillings(filter: SubscriptionBillingFilter, page: PageInput): SubscriptionBillingConnection!
+  subscriptionBillings(filter: SubscriptionBillingFilter, page: PageInput, withDeleted: Boolean): SubscriptionBillingConnection!
 
   """One billing cycle."""
   subscriptionBilling(id: ID!): SubscriptionBilling
 
   """Purchase orders of the caller's organization."""
-  purchaseOrders(filter: PurchaseOrderFilter, page: PageInput): PurchaseOrderConnection!
+  purchaseOrders(filter: PurchaseOrderFilter, page: PageInput, withDeleted: Boolean): PurchaseOrderConnection!
 
   """One purchase order, with its lines, its receipts and its supplier."""
   purchaseOrder(id: ID!): PurchaseOrder
 
   """Goods receipts of the caller's organization."""
-  goodsReceipts(filter: GoodsReceiptFilter, page: PageInput): GoodsReceiptConnection!
+  goodsReceipts(filter: GoodsReceiptFilter, page: PageInput, withDeleted: Boolean): GoodsReceiptConnection!
 
   """One goods receipt, with its lines and the movements they produced."""
   goodsReceipt(id: ID!): GoodsReceipt
 
   """Standing negotiated terms of the caller's organization."""
-  vendorProductTerms(filter: VendorProductTermFilter, page: PageInput): VendorProductTermConnection!
+  vendorProductTerms(filter: VendorProductTermFilter, page: PageInput, withDeleted: Boolean): VendorProductTermConnection!
 
   """One negotiated term."""
   vendorProductTerm(id: ID!): VendorProductTerm
@@ -4690,18 +4690,18 @@ type Query {
   resolveVendorProductTerm(input: ResolveVendorProductTermInput!): VendorProductTermResolution!
 
   """Rights of the caller's organization."""
-  entitlements(filter: EntitlementFilter, page: PageInput): EntitlementConnection!
+  entitlements(filter: EntitlementFilter, page: PageInput, withDeleted: Boolean): EntitlementConnection!
 
   """One right, with its activations and its keys."""
   entitlement(id: ID!): Entitlement
 
   """Activations, by right, device or state."""
-  entitlementActivations(filter: EntitlementActivationFilter, page: PageInput): EntitlementActivationConnection!
+  entitlementActivations(filter: EntitlementActivationFilter, page: PageInput, withDeleted: Boolean): EntitlementActivationConnection!
 
   """
   Issued credentials. The digest and the ciphertext are never part of the answer.
   """
-  entitlementKeys(filter: EntitlementKeyFilter, page: PageInput): EntitlementKeyConnection!
+  entitlementKeys(filter: EntitlementKeyFilter, page: PageInput, withDeleted: Boolean): EntitlementKeyConnection!
 
   """
   Whether a right may be exercised, with the code that explains the answer.
@@ -4709,7 +4709,7 @@ type Query {
   checkEntitlement(input: CheckEntitlementInput!): EntitlementCheckResult!
 
   """Lists the seller accounts of the caller's organization."""
-  sellers(page: PageInput): SellerConnection!
+  sellers(page: PageInput, withDeleted: Boolean): SellerConnection!
 
   """Reads one seller by id or by its human-usable code."""
   seller(idOrCode: String!): Seller
@@ -4723,12 +4723,12 @@ type Query {
   sellerBalance(sellerId: ID!, currency: String): SellerBalance
 
   """Lists what sellers offer."""
-  sellerOfferings(page: PageInput): SellerOfferingConnection!
+  sellerOfferings(page: PageInput, withDeleted: Boolean): SellerOfferingConnection!
 
   """
   Lists the per-seller split of orders: the ledger that says what each seller earned.
   """
-  sellerTransactions(page: PageInput): SellerTransactionConnection!
+  sellerTransactions(page: PageInput, withDeleted: Boolean): SellerTransactionConnection!
 
   """
   Reconciles the split of the orders in a window against the money they captured.
@@ -4736,16 +4736,16 @@ type Query {
   sellerSplitReconciliation(orderId: ID, sellerId: ID): [SellerSplitReconciliation!]!
 
   """Lists payout instructions."""
-  sellerPayouts(page: PageInput): SellerPayoutConnection!
+  sellerPayouts(page: PageInput, withDeleted: Boolean): SellerPayoutConnection!
 
   """Reads one payout with its lines."""
   sellerPayout(id: ID!): SellerPayout
 
   """Lists the ledger rows one payout covers."""
-  sellerPayoutLines(sellerPayoutId: ID!, page: PageInput): SellerPayoutLineConnection!
+  sellerPayoutLines(sellerPayoutId: ID!, page: PageInput, withDeleted: Boolean): SellerPayoutLineConnection!
 
   """Lists what providers reported they settled."""
-  sellerSettlements(page: PageInput): SellerSettlementConnection!
+  sellerSettlements(page: PageInput, withDeleted: Boolean): SellerSettlementConnection!
 
   """Search every indexed entity the caller may see."""
   search(input: SearchInput!, page: PageInput): SearchResult!

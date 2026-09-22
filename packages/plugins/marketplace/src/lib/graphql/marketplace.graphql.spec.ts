@@ -661,6 +661,34 @@ function recordingResolver(calls: Array<{ field: string; scope?: ISellerScope }>
 }
 
 /**
+ * The six list reads again, recording the options each was handed.
+ *
+ * The failure these doubles exist for is the one the connection helper hides: a field that declared
+ * `withDeleted` and let its read default it answers the live rows however the caller asked, which looks
+ * exactly like a field that honoured the flag from the outside.
+ *
+ * @param calls Where each read records the service method it reached and the options it was handed.
+ * @returns A resolver over the recording doubles.
+ */
+function listingResolver(calls: Array<{ field: string; options: any }>): any {
+	const record = (field: string) => async (options: any) => {
+		calls.push({ field, options });
+
+		return { items: [], total: 0 };
+	};
+
+	return new SellerEntityResolver(
+		{ listSellers: record('listSellers') } as any,
+		{ listOfferings: record('listOfferings') } as any,
+		{ listTransactions: record('listTransactions') } as any,
+		{ listPayouts: record('listPayouts') } as any,
+		{ listLines: record('listLines') } as any,
+		{ listSettlements: record('listSettlements') } as any,
+		new BulkExecutor({ assertCanSee: () => undefined, canSee: () => true } as never)
+	);
+}
+
+/**
  * How each declared field is called, and the row its own type is read from.
  *
  * A list field now states the page it is read at, because what it answers is the connection the SDL
@@ -1052,6 +1080,65 @@ describe('the marketplace GraphQL contribution', () => {
 
 			expect(mismatches).toEqual([]);
 		});
+
+		it('declares withDeleted on every converted list field, as the REST list route does', () => {
+			// The six REST list routes read through `BaseQueryDTO`, so a REST caller can ask for the rows a
+			// tenant retired. A connection field that declared no such argument would refuse that question
+			// at the schema while the same question is one query parameter away on the other protocol.
+			for (const { field } of CONNECTIONS) {
+				const declared = COMPOSED.getQueryType()?.getFields()[field];
+				const argument = declared?.args.find((candidate) => candidate.name === 'withDeleted');
+
+				expect({ field, type: argument ? getNamedType(argument.type).name : undefined }).toEqual({
+					field,
+					type: 'Boolean'
+				});
+				// Nullable: the flag is the caller's to state, so a document that required it would refuse
+				// every query that says nothing about retired rows.
+				expect({ field, required: argument ? isNonNullType(argument.type) : undefined }).toEqual({
+					field,
+					required: false
+				});
+			}
+		});
+	});
+
+	describe('the soft-delete visibility the REST list routes have', () => {
+		it('asks each read for retired rows when the caller states withDeleted, and states nothing when it does not', async () => {
+			const calls: Array<{ field: string; options: any }> = [];
+			const resolver = listingResolver(calls);
+
+			await resolver.sellers({ first: 20 }, true);
+			await resolver.sellerOfferings({ first: 20 }, true);
+			await resolver.sellerTransactions({ first: 20 }, true);
+			await resolver.sellerPayouts({ first: 20 }, true);
+			await resolver.sellerPayoutLines('payout-1', { first: 20 }, true);
+			await resolver.sellerSettlements({ first: 20 }, true);
+			await resolver.sellers({ first: 20 }, undefined);
+
+			// Every converted field reaches its own read, so a field whose flag stopped at the resolver is
+			// reported by name rather than by a count that happens to match.
+			expect(calls.map((call) => call.field)).toEqual([
+				'listSellers',
+				'listOfferings',
+				'listTransactions',
+				'listPayouts',
+				'listLines',
+				'listSettlements',
+				'listSellers'
+			]);
+
+			for (const call of calls.slice(0, 6)) {
+				expect({ field: call.field, withDeleted: call.options.withDeleted }).toEqual({
+					field: call.field,
+					withDeleted: true
+				});
+			}
+
+			// Absent rather than `false`: the two select the same rows, but the option is not stated, so a
+			// read whose default ever changes is not silently pinned to the older behaviour by this field.
+			expect('withDeleted' in calls[6].options).toBe(false);
+		});
 	});
 
 	describe('the rows the resolvers hand back', () => {
@@ -1169,17 +1256,17 @@ describe('the marketplace GraphQL contribution', () => {
 			const resolver = recordingResolver(calls);
 			const context = { req: { sellerScope: scope } };
 
-			await resolver.sellers(undefined, context);
+			await resolver.sellers(undefined, undefined, context);
 			await resolver.seller('seller-1', context);
 			await resolver.sellerStatement('seller-1', 'USD', context);
 			await resolver.sellerBalance('seller-1', 'USD', context);
-			await resolver.sellerOfferings(undefined, context);
-			await resolver.sellerTransactions(undefined, context);
+			await resolver.sellerOfferings(undefined, undefined, context);
+			await resolver.sellerTransactions(undefined, undefined, context);
 			await resolver.sellerSplitReconciliation('order-1', 'seller-1', context);
-			await resolver.sellerPayouts(undefined, context);
+			await resolver.sellerPayouts(undefined, undefined, context);
 			await resolver.sellerPayout('payout-1', context);
-			await resolver.sellerPayoutLines('payout-1', undefined, context);
-			await resolver.sellerSettlements(undefined, context);
+			await resolver.sellerPayoutLines('payout-1', undefined, undefined, context);
+			await resolver.sellerSettlements(undefined, undefined, context);
 			await resolver.createSellerPayout('seller-1', 'USD', ['transaction-1'], 'note', undefined, context);
 			await resolver.approveSellerPayout('payout-1', context);
 			await resolver.markSellerPayoutPaid('payout-1', 'provider-1', 'transfer-1', undefined, context);
@@ -1206,7 +1293,7 @@ describe('the marketplace GraphQL contribution', () => {
 			const calls: Array<{ field: string; scope?: ISellerScope }> = [];
 			const scope: ISellerScope = { sellerId: 'seller-1', staff: false } as ISellerScope;
 
-			await recordingResolver(calls).sellerPayouts(undefined, { sellerScope: scope });
+			await recordingResolver(calls).sellerPayouts(undefined, undefined, { sellerScope: scope });
 
 			expect(calls).toEqual([{ field: 'listPayouts', scope }]);
 		});

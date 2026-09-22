@@ -227,9 +227,10 @@ jobs:
         run: node tools/scripts/graphql-field-binding-check.mjs
 
       # The list surface is where GraphQL parity is easiest to lose: a bare array cannot be paged,
-      # filtered or counted, so the client that has the REST list has no counterpart to move to. The
-      # gate names whatever list field is still not a connection, so the remainder is countable and a
-      # new one cannot appear unnoticed.
+      # filtered or counted, so the client that has the REST list has no counterpart to move to — and a
+      # connection that offers no `withDeleted` tells a client the retired rows are unreachable while the
+      # REST route beside it reaches them. The gate names whatever is still off the contract, so the
+      # remainder is countable and a new one cannot appear unnoticed.
       - name: The list surface follows the connection contract
         if: always()
         run: node tools/scripts/connection-shape-check.mjs

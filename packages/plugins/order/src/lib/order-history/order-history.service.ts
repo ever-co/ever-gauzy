@@ -55,10 +55,13 @@ export class OrderHistoryService extends TenantAwareCrudService<OrderHistory> {
 	 * Reads an order's timeline in the order it happened.
 	 *
 	 * @param orderId The order.
+	 * @param withDeleted Whether entries retired from the timeline are included. Stated through the find
+	 * options rather than as a filter on the rows handed back, because the store is what knows a row was
+	 * retired.
 	 * @returns The entries, oldest first.
 	 */
-	public async timeline(orderId: ID): Promise<OrderHistory[]> {
-		const page = await this.findAll({ where: { orderId } });
+	public async timeline(orderId: ID, withDeleted?: boolean): Promise<OrderHistory[]> {
+		const page = await this.findAll({ where: { orderId }, ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return [...page.items].sort(
 			(left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()

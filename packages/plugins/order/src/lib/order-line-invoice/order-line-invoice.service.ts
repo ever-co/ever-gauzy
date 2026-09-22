@@ -101,16 +101,20 @@ export class OrderLineInvoiceService extends TenantAwareCrudService<OrderLineInv
 	 * Reads every link of one order line, in the order they were written.
 	 *
 	 * @param orderLineId The line to read.
+	 * @param withDeleted Whether links retired from the register are included. Stated through the find
+	 * options rather than as a filter on the rows handed back, because the store is what knows a row was
+	 * retired.
 	 * @returns The links, oldest first — which is the order the documents were issued in.
 	 */
-	public async listForLine(orderLineId: ID): Promise<OrderLineInvoice[]> {
+	public async listForLine(orderLineId: ID, withDeleted?: boolean): Promise<OrderLineInvoice[]> {
 		return await this.typeOrmOrderLineInvoiceRepository.find({
 			where: {
 				orderLineId,
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
 			},
-			order: { createdAt: 'ASC' }
+			order: { createdAt: 'ASC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 	}
 

@@ -61,13 +61,15 @@ export class StockAlertResolver {
 	async stockAlerts(
 		@Args('variantId') variantId: string,
 		@Args('isActive') isActive: boolean,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<StockAlert>> {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { variantId, isActive },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<StockAlert>;
 
 		return connectionFromOffsetPage(listing, skip);

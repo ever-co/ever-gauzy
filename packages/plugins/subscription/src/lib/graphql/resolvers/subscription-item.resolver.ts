@@ -50,11 +50,16 @@ export class SubscriptionItemResolver {
 	 *
 	 * @param filter The item filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns One page of lines.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 	@Query('subscriptionItems')
-	async subscriptionItems(@Args('filter') filter?: ISubscriptionItemFilter, @Args('page') page?: IPageSelection) {
+	async subscriptionItems(
+		@Args('filter') filter?: ISubscriptionItemFilter,
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
+	) {
 		const { skip, take } = resolvePageWindow(page);
 		const where: FindOptionsWhere<SubscriptionItem> = {};
 
@@ -70,7 +75,8 @@ export class SubscriptionItemResolver {
 			where,
 			skip,
 			take,
-			order: { position: 'ASC' }
+			order: { position: 'ASC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

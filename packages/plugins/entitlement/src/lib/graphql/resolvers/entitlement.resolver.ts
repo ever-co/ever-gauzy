@@ -104,11 +104,16 @@ export class EntitlementResolver {
 	 *
 	 * @param filter The right filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns One page of rights.
 	 */
 	@Versioned({ resource: EntitlementService, write: false })
 	@Query('entitlements')
-	async entitlements(@Args('filter') filter?: IEntitlementFilter, @Args('page') page?: IPageSelection) {
+	async entitlements(
+		@Args('filter') filter?: IEntitlementFilter,
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
+	) {
 		const { skip, take } = resolvePageWindow(page);
 		const result = await this.entitlementService.findAll({
 			where: {
@@ -124,7 +129,8 @@ export class EntitlementResolver {
 			},
 			skip,
 			take,
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result as IPagination<Entitlement>, skip);

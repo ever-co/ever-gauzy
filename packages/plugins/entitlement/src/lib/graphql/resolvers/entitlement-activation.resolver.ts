@@ -61,13 +61,15 @@ export class EntitlementActivationResolver {
 	 *
 	 * @param filter The activation filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns One page of activations.
 	 */
 	@Versioned({ resource: EntitlementService, write: false })
 	@Query('entitlementActivations')
 	async entitlementActivations(
 		@Args('filter') filter?: IEntitlementActivationFilter,
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolvePageWindow(page);
 		const result = await this.entitlementActivationService.findAll({
@@ -79,7 +81,8 @@ export class EntitlementActivationResolver {
 			},
 			skip,
 			take,
-			order: { activatedAt: 'DESC' }
+			order: { activatedAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result as IPagination<EntitlementActivation>, skip);

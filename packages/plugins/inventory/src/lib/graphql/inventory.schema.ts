@@ -326,7 +326,7 @@ export const inventorySchemaExtensions = gql`
 		stockLevels(warehouseId: ID, variantId: ID, page: PageInput): StockLevelConnection!
 		stockLevel(warehouseId: ID!, variantId: ID!): StockLevel
 		availableQuantity(warehouseId: ID!, variantId: ID!): Float!
-		stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput): StockMovementConnection!
+		stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput, withDeleted: Boolean): StockMovementConnection!
 		stockReservations(
 			referenceType: String
 			referenceId: ID
@@ -334,18 +334,18 @@ export const inventorySchemaExtensions = gql`
 			page: PageInput
 		): StockReservationConnection!
 		stockReservation(id: ID!): StockReservation
-		stockTransfers(status: String, page: PageInput): StockTransferConnection!
+		stockTransfers(status: String, page: PageInput, withDeleted: Boolean): StockTransferConnection!
 		stockTransfer(id: ID!): StockTransfer
-		stockTransferLines(transferId: ID!, page: PageInput): StockTransferLineConnection!
+		stockTransferLines(transferId: ID!, page: PageInput, withDeleted: Boolean): StockTransferLineConnection!
 		stockTransferLine(id: ID!): StockTransferLine
-		stockAlerts(variantId: ID, isActive: Boolean, page: PageInput): StockAlertConnection!
-		stockAdjustments(warehouseId: ID, variantId: ID, status: String, page: PageInput): StockAdjustmentConnection!
-		stockCounts(warehouseId: ID, status: String, mode: String, page: PageInput): StockCountConnection!
+		stockAlerts(variantId: ID, isActive: Boolean, page: PageInput, withDeleted: Boolean): StockAlertConnection!
+		stockAdjustments(warehouseId: ID, variantId: ID, status: String, page: PageInput, withDeleted: Boolean): StockAdjustmentConnection!
+		stockCounts(warehouseId: ID, status: String, mode: String, page: PageInput, withDeleted: Boolean): StockCountConnection!
 		stockCount(id: ID!): StockCount
-		stockCountLines(stockCountId: ID!, page: PageInput): StockCountLineConnection!
+		stockCountLines(stockCountId: ID!, page: PageInput, withDeleted: Boolean): StockCountLineConnection!
 		stockCountLine(id: ID!): StockCountLine
 		stockCountVariance(stockCountId: ID!): StockCountVariance!
-		channelWarehouses(channelId: ID, warehouseId: ID, page: PageInput): ChannelWarehouseConnection!
+		channelWarehouses(channelId: ID, warehouseId: ID, page: PageInput, withDeleted: Boolean): ChannelWarehouseConnection!
 	}
 
 	extend type Mutation {

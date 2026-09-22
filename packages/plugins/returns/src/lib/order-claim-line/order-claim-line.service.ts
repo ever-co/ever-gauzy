@@ -47,16 +47,20 @@ export class OrderClaimLineService extends TenantAwareCrudService<OrderClaimLine
 	 * Reads the lines of a claim, scoped to the caller's tenant and organization.
 	 *
 	 * @param claimId The claim to read.
+	 * @param withDeleted Whether lines retired by a later replacement write are included. Stated through
+	 * the find options rather than as a filter on the returned rows, because the store is what knows a
+	 * row was retired.
 	 * @returns The lines, oldest first.
 	 */
-	public async findForClaim(claimId: ID): Promise<OrderClaimLine[]> {
+	public async findForClaim(claimId: ID, withDeleted?: boolean): Promise<OrderClaimLine[]> {
 		return await this.typeOrmOrderClaimLineRepository.find({
 			where: {
 				claimId,
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
 			},
-			order: { createdAt: 'ASC' }
+			order: { createdAt: 'ASC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 	}
 

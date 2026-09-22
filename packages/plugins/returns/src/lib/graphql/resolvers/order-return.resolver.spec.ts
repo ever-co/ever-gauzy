@@ -95,6 +95,15 @@ jest.mock('@gauzy/core', () => {
 		Versioned: versioned.Versioned,
 		commitVersionedUpdate: versionedWrite.commitVersionedUpdate,
 		versionExpectationOf: versionedWrite.versionExpectationOf,
+		// The page window and the connection the list fields answer with are the kernel's own, so a case
+		// that calls one of those fields asserts the page the platform builds rather than a restatement of
+		// it. A double that left them undefined would fail with "not a function" the moment such a case
+		// ran, which says nothing about the field.
+		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.resolveConnectionWindow,
+		connectionFromOffsetPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.connectionFromOffsetPage,
+		paginateRows: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').paginateRows,
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
@@ -241,6 +250,7 @@ function resource(row: Record<string, unknown> = returnRow()) {
 			outstandingQuantity: '0.000000'
 		})),
 		approve: jest.fn(async () => ({ ...row, status: OrderReturnStatus.APPROVED, version: 4 })),
+		findAll: jest.fn(async (_options?: Record<string, unknown>) => ({ items: [], total: 0 })),
 		findOneDetailed: jest.fn(async () => row),
 		findOneByIdString: jest.fn(async (id: string) => {
 			if (id !== row.id) {
@@ -483,5 +493,33 @@ describe('OrderReturnResolver — the read that states a version', () => {
 
 		expect(result).toMatchObject({ version: 9 });
 		expect(response.headers['ETag']).toBe('"9"');
+	});
+});
+
+/**
+ * The soft-delete visibility the REST list route has.
+ *
+ * `GET /order-returns` reads through `BaseQueryDTO`, so its caller can ask for the rows a tenant retired.
+ * `orderReturns` is that route's counterpart, and an argument the resolver declared while the read
+ * dropped it would be worse than no argument at all: the document would tell a client it may ask, and the
+ * answer would be the live rows either way.
+ */
+describe('OrderReturnResolver — the soft-delete visibility of the list route', () => {
+	/** The find options the listing was read with, in the order the cases asked for it. */
+	const optionsOf = (surface: Surface): Array<Record<string, unknown>> =>
+		surface.service.findAll.mock.calls.map((call) => (call as Array<Record<string, unknown>>)[0]);
+
+	it('asks the read for retired rows when the caller states withDeleted, and states nothing when it does not', async () => {
+		const surface = resource();
+
+		await send(surface, 'orderReturns', 'query', { withDeleted: true }, () => [undefined, undefined, true]);
+		await send(surface, 'orderReturns', 'query', {}, () => [undefined, undefined, undefined]);
+
+		const asked = optionsOf(surface);
+
+		expect(asked[0]).toMatchObject({ withDeleted: true });
+		// Absent rather than `false`: the two select the same rows, but the option is not stated, so a read
+		// whose default ever changes is not silently pinned to the older behaviour by this field.
+		expect('withDeleted' in asked[1]).toBe(false);
 	});
 });

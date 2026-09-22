@@ -47,13 +47,15 @@ export class SubscriptionBillingResolver {
 	 *
 	 * @param filter The billing filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns One page of cycles.
 	 */
 	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 	@Query('subscriptionBillings')
 	async subscriptionBillings(
 		@Args('filter') filter?: ISubscriptionBillingFilter,
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolvePageWindow(page);
 		const where: FindOptionsWhere<SubscriptionBilling> = {};
@@ -74,7 +76,8 @@ export class SubscriptionBillingResolver {
 			where,
 			skip,
 			take,
-			order: { periodStart: 'DESC' }
+			order: { periodStart: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

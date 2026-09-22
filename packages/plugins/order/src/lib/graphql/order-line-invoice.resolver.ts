@@ -73,16 +73,20 @@ export class OrderLineInvoiceResolver {
 	 *
 	 * @param orderLineId The line to read.
 	 * @param page The page.
+	 * @param withDeleted Whether retired links are included, as the REST list route's own `withDeleted`
+	 * is. The flag belongs to `listForLine`, which is the read that decided which rows exist, rather
+	 * than to the page cut here.
 	 * @returns A page of links, oldest first.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)
 	@Query('orderLineInvoices')
 	async orderLineInvoices(
 		@Args('orderLineId', { type: () => ID }) orderLineId: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrderLineInvoice>> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const rows = await this.service.listForLine(orderLineId);
+		const rows = await this.service.listForLine(orderLineId, withDeleted);
 
 		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}

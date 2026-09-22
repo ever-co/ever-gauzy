@@ -70,13 +70,16 @@ export class OrderClaimResolver {
 	 *
 	 * @param filter The claim filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired claims are included, as the REST list route's own `withDeleted`
+	 * is.
 	 * @returns One page of claims.
 	 */
 	@Query('orderClaims')
 	@Permissions(ReturnsPermissions.CLAIMS_VIEW)
 	async orderClaims(
 		@Args('filter') filter?: { status?: OrderClaimStatus; type?: OrderClaimType; orderId?: ID; number?: string },
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolvePageWindow(page);
 		const result = await this.orderClaimService.findAll({
@@ -88,7 +91,8 @@ export class OrderClaimResolver {
 			},
 			skip,
 			take,
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

@@ -1219,7 +1219,7 @@ export const schemaExtensions = gql`
 
 	extend type Query {
 		"One page of the promotions of the caller's organization, most specific first."
-		promotions(filter: PromotionFilter, sort: PromotionSort, page: PageInput, limit: Int, offset: Int): PromotionConnection!
+		promotions(filter: PromotionFilter, sort: PromotionSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PromotionConnection!
 		"One promotion by id."
 		promotion(id: ID!): Promotion
 		"""
@@ -1231,7 +1231,7 @@ export const schemaExtensions = gql`
 		"""
 		validateCoupon(code: String!, cartId: ID, customerId: ID): CouponValidationPayload!
 		"One page of campaigns."
-		campaigns(filter: CampaignFilter, sort: CampaignSort, page: PageInput, limit: Int, offset: Int): CampaignConnection!
+		campaigns(filter: CampaignFilter, sort: CampaignSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CampaignConnection!
 		"One campaign by id."
 		campaign(id: ID!): Campaign
 		"One page of campaign ceilings, with the per-value consumption of a split one."
@@ -1243,7 +1243,7 @@ export const schemaExtensions = gql`
 			offset: Int
 		): CampaignBudgetConnection!
 		"One page of coupons."
-		coupons(filter: CouponFilter, sort: CouponSort, page: PageInput, limit: Int, offset: Int): CouponConnection!
+		coupons(filter: CouponFilter, sort: CouponSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CouponConnection!
 		"One coupon by id."
 		coupon(id: ID!): Coupon
 		"One page of the redemption ledger, most recent first."
@@ -1255,7 +1255,7 @@ export const schemaExtensions = gql`
 			offset: Int
 		): PromotionUsageConnection!
 		"One page of gift cards."
-		giftCards(filter: GiftCardFilter, sort: GiftCardSort, page: PageInput, limit: Int, offset: Int): GiftCardConnection!
+		giftCards(filter: GiftCardFilter, sort: GiftCardSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): GiftCardConnection!
 		"One gift card by id."
 		giftCard(id: ID!): GiftCard
 		" The balance of a card, read from its code and answered from its ledger."

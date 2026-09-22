@@ -65,13 +65,16 @@ export class OrderExchangeResolver {
 	 *
 	 * @param filter The exchange filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired exchanges are included, as the REST list route's own
+	 * `withDeleted` is.
 	 * @returns One page of exchanges.
 	 */
 	@Query('orderExchanges')
 	@Permissions(ReturnsPermissions.EXCHANGES_VIEW)
 	async orderExchanges(
 		@Args('filter') filter?: { status?: OrderExchangeStatus; orderId?: ID; number?: string },
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolvePageWindow(page);
 		const result = await this.orderExchangeService.findAll({
@@ -82,7 +85,8 @@ export class OrderExchangeResolver {
 			},
 			skip,
 			take,
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

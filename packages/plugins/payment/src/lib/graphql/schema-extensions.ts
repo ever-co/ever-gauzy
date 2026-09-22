@@ -1110,7 +1110,14 @@ export const schemaExtensions = gql`
 			offset: Int
 		): PaymentCaptureConnection!
 		paymentCapture(id: ID!): PaymentCapture
-		refunds(filter: RefundFilter, sort: RefundSort, page: PageInput, limit: Int, offset: Int): RefundConnection!
+		refunds(
+			filter: RefundFilter
+			sort: RefundSort
+			page: PageInput
+			limit: Int
+			offset: Int
+			withDeleted: Boolean
+		): RefundConnection!
 		refund(id: ID!): Refund
 		refundReasons(
 			filter: RefundReasonFilter

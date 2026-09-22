@@ -75,16 +75,20 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 	 * Reads the lines of a return, scoped to the caller's tenant and organization.
 	 *
 	 * @param returnId The return to read.
+	 * @param withDeleted Whether lines retired by a later replacement write are included. Stated through
+	 * the find options rather than as a filter on the returned rows, because the store is what knows a
+	 * row was retired.
 	 * @returns The lines, oldest first.
 	 */
-	public async findForReturn(returnId: ID): Promise<OrderReturnLine[]> {
+	public async findForReturn(returnId: ID, withDeleted?: boolean): Promise<OrderReturnLine[]> {
 		return await this.typeOrmOrderReturnLineRepository.find({
 			where: {
 				returnId,
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
 			},
-			order: { createdAt: 'ASC' }
+			order: { createdAt: 'ASC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 	}
 

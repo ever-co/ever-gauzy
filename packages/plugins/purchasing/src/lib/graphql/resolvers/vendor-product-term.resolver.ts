@@ -79,6 +79,7 @@ export class VendorProductTermResolver {
 	 *
 	 * @param filter The term filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired rows are included.
 	 * @returns One page of terms.
 	 */
 	@Query('vendorProductTerms')
@@ -92,7 +93,8 @@ export class VendorProductTermResolver {
 			status?: VendorTermStatus;
 			vendorProductCode?: string;
 		},
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolvePageWindow(page);
 		const result = await this.vendorProductTermService.findAll({
@@ -105,7 +107,8 @@ export class VendorProductTermResolver {
 			},
 			skip,
 			take,
-			order: { priority: 'ASC', createdAt: 'DESC' }
+			order: { priority: 'ASC', createdAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

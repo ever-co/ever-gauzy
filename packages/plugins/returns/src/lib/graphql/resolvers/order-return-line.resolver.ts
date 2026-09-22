@@ -48,20 +48,25 @@ export class OrderReturnLineResolver {
 	 *
 	 * `findForReturn` answers every line of the return, oldest first, and takes no window of its own, so
 	 * the page is cut here. A field that declared a page and answered the whole set would leave a client
-	 * walking a `pageInfo` that never moves.
+	 * walking a `pageInfo` that never moves. The soft-delete flag travels into that read rather than
+	 * being applied to the rows afterwards: a line replaced by a later write is retired, and whether the
+	 * caller may see it is a decision the store makes.
 	 *
 	 * @param returnId The return.
 	 * @param page The page.
+	 * @param withDeleted Whether retired lines are included, as the REST list route's own `withDeleted`
+	 * is.
 	 * @returns A page of lines, oldest first.
 	 */
 	@Query('orderReturnLines')
 	@Permissions(ReturnsPermissions.RETURNS_VIEW)
 	async orderReturnLines(
 		@Args('returnId') returnId: ID,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrderReturnLine>> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const rows = await this.orderReturnLineService.findForReturn(returnId);
+		const rows = await this.orderReturnLineService.findForReturn(returnId, withDeleted);
 
 		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}

@@ -85,6 +85,8 @@ export class OrderChangeResolver {
 	 * @param orderId The order.
 	 * @param status Optional status filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired changes are included, as the REST list route's own
+	 * `withDeleted` is.
 	 * @returns A page of changes.
 	 * @throws BadRequestException when a status is given that a change does not have.
 	 */
@@ -92,7 +94,8 @@ export class OrderChangeResolver {
 	async orderChanges(
 		@Args('orderId', { type: () => ID }) orderId: string,
 		@Args('status', { type: () => String, nullable: true }) status?: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<IOrderChangeConnection> {
 		const where: FindOptionsWhere<OrderChange> = { orderId };
 		const { skip, take } = resolveConnectionWindow(page);
@@ -111,7 +114,8 @@ export class OrderChangeResolver {
 			where,
 			relations: ['actions'],
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<OrderChange>;
 
 		return connectionFromOffsetPage(listing, skip);
@@ -137,19 +141,23 @@ export class OrderChangeResolver {
 	 *
 	 * @param orderId The order.
 	 * @param page The page.
+	 * @param withDeleted Whether retired summaries are included, as the REST list route's own
+	 * `withDeleted` is.
 	 * @returns A page of summaries, newest version first.
 	 */
 	@Query(() => Object, { name: 'orderSummaries' })
 	async orderSummaries(
 		@Args('orderId', { type: () => ID }) orderId: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<IOrderSummaryConnection> {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.summaryService.findAll({
 			where: { orderId },
 			order: { version: 'DESC' },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<OrderSummary>;
 
 		return connectionFromOffsetPage(listing, skip);
@@ -161,6 +169,8 @@ export class OrderChangeResolver {
 	 * @param orderId The order.
 	 * @param type Optional transaction-type filter.
 	 * @param page The page.
+	 * @param withDeleted Whether retired ledger rows are included, as the REST list route's own
+	 * `withDeleted` is.
 	 * @returns A page of transactions.
 	 * @throws BadRequestException when a type is given that the ledger does not carry.
 	 */
@@ -168,7 +178,8 @@ export class OrderChangeResolver {
 	async orderTransactions(
 		@Args('orderId', { type: () => ID }) orderId: string,
 		@Args('type', { type: () => String, nullable: true }) type?: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<IOrderTransactionConnection> {
 		const where: FindOptionsWhere<OrderTransaction> = { orderId };
 		const { skip, take } = resolveConnectionWindow(page);
@@ -183,7 +194,12 @@ export class OrderChangeResolver {
 			where.type = type;
 		}
 
-		const listing = (await this.transactionService.findAll({ where, skip, take })) as IPagination<OrderTransaction>;
+		const listing = (await this.transactionService.findAll({
+			where,
+			skip,
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
+		})) as IPagination<OrderTransaction>;
 
 		return connectionFromOffsetPage(listing, skip);
 	}
@@ -198,15 +214,20 @@ export class OrderChangeResolver {
 	 *
 	 * @param orderId The order.
 	 * @param page The page.
+	 * @param withDeleted Whether retired entries are included, as the REST list route's own
+	 * `withDeleted` is. The flag belongs to `timeline`, which is the read that decided which rows exist
+	 * — filtering the page afterwards would answer a short page with a `totalCount` that disagrees with
+	 * it.
 	 * @returns A page of timeline entries, oldest first.
 	 */
 	@Query(() => Object, { name: 'orderHistory' })
 	async orderHistory(
 		@Args('orderId', { type: () => ID }) orderId: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrderHistory>> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const rows = await this.historyService.timeline(orderId);
+		const rows = await this.historyService.timeline(orderId, withDeleted);
 
 		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
 	}

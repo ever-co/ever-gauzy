@@ -517,15 +517,15 @@ export const schemaExtensions = gql`
 
 	extend type Query {
 		"Purchase orders of the caller's organization."
-		purchaseOrders(filter: PurchaseOrderFilter, page: PageInput): PurchaseOrderConnection!
+		purchaseOrders(filter: PurchaseOrderFilter, page: PageInput, withDeleted: Boolean): PurchaseOrderConnection!
 		"One purchase order, with its lines, its receipts and its supplier."
 		purchaseOrder(id: ID!): PurchaseOrder
 		"Goods receipts of the caller's organization."
-		goodsReceipts(filter: GoodsReceiptFilter, page: PageInput): GoodsReceiptConnection!
+		goodsReceipts(filter: GoodsReceiptFilter, page: PageInput, withDeleted: Boolean): GoodsReceiptConnection!
 		"One goods receipt, with its lines and the movements they produced."
 		goodsReceipt(id: ID!): GoodsReceipt
 		"Standing negotiated terms of the caller's organization."
-		vendorProductTerms(filter: VendorProductTermFilter, page: PageInput): VendorProductTermConnection!
+		vendorProductTerms(filter: VendorProductTermFilter, page: PageInput, withDeleted: Boolean): VendorProductTermConnection!
 		"One negotiated term."
 		vendorProductTerm(id: ID!): VendorProductTerm
 		"What the standing agreement prices a quantity at, and what it says about delivery."

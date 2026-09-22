@@ -502,17 +502,22 @@ export const orderSchemaExtensions = gql`
 		"The computed totals of one order."
 		orderTotals(id: ID!): OrderTotals
 		"The totals history of one order, one row per version, newest first."
-		orderSummaries(orderId: ID!, page: PageInput): OrderSummaryConnection!
+		orderSummaries(orderId: ID!, page: PageInput, withDeleted: Boolean): OrderSummaryConnection!
 		"The money ledger of one order."
-		orderTransactions(orderId: ID!, type: String, page: PageInput): OrderTransactionConnection!
+		orderTransactions(
+			orderId: ID!
+			type: String
+			page: PageInput
+			withDeleted: Boolean
+		): OrderTransactionConnection!
 		"The timeline of one order."
-		orderHistory(orderId: ID!, page: PageInput): OrderHistoryConnection!
+		orderHistory(orderId: ID!, page: PageInput, withDeleted: Boolean): OrderHistoryConnection!
 		"The changes of one order."
-		orderChanges(orderId: ID!, status: String, page: PageInput): OrderChangeConnection!
+		orderChanges(orderId: ID!, status: String, page: PageInput, withDeleted: Boolean): OrderChangeConnection!
 		"Read one change with its actions."
 		orderChange(id: ID!): OrderChange
 		"Every item and credit-note item one order line was billed through, oldest first."
-		orderLineInvoices(orderLineId: ID!, page: PageInput): OrderLineInvoiceConnection!
+		orderLineInvoices(orderLineId: ID!, page: PageInput, withDeleted: Boolean): OrderLineInvoiceConnection!
 		"How much of one order line is left to bill."
 		orderLineInvoicingPosition(orderLineId: ID!, basisQuantity: Decimal): OrderLineInvoicingPosition!
 	}

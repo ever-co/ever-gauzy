@@ -74,6 +74,7 @@ jest.mock('@gauzy/core', () => {
 			.connectionFromOffsetPage,
 		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
 			.resolveConnectionWindow,
+		paginateRows: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').paginateRows,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -108,6 +109,7 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { Reflector } from '@nestjs/core';
+import { print } from 'graphql';
 import { OrderController } from '../order/order.controller';
 import { OrderService } from '../order/order.service';
 import { OrderResolver } from './order.resolver';
@@ -190,8 +192,15 @@ describe('The order mutations mirror the order routes', () => {
 });
 
 describe('The order schema states the version and the retry key a caller supplies', () => {
-	/** The schema, with the line breaks the template writes flattened so a declaration reads as one line. */
-	const schema = (orderSchemaExtensions as any).loc.source.body.replace(/\s+/g, ' ');
+	/**
+	 * The document as the schema is composed from it, printed from its own definitions rather than read
+	 * as the source text.
+	 *
+	 * The printer states every declaration on one line whatever the template's layout, so a signature is
+	 * asserted the way a caller would write it — and an argument list the template happens to wrap does
+	 * not turn into an expectation about the template's line breaks.
+	 */
+	const schema = print(orderSchemaExtensions);
 
 	it('carries the version of both versioned aggregates on their object types', () => {
 		for (const type of ['type Order {', 'type OrderChange {']) {
@@ -242,11 +251,13 @@ describe('The order schema states the version and the retry key a caller supplie
 		}
 
 		// A connection whose field accepts no page can only ever answer one page, whatever its `pageInfo`
-		// claims, so every field that answers one states the page it takes.
+		// claims, so every field that answers one states the page it takes — and the soft-delete
+		// visibility its REST list route offers, because a field that stated only the page would be a
+		// question the other protocol answers and this one refuses.
 		for (const field of [
-			'orderSummaries(orderId: ID!, page: PageInput)',
-			'orderTransactions(orderId: ID!, type: String, page: PageInput)',
-			'orderChanges(orderId: ID!, status: String, page: PageInput)'
+			'orderSummaries(orderId: ID!, page: PageInput, withDeleted: Boolean)',
+			'orderTransactions(orderId: ID!, type: String, page: PageInput, withDeleted: Boolean)',
+			'orderChanges(orderId: ID!, status: String, page: PageInput, withDeleted: Boolean)'
 		]) {
 			expect({ field, declared: schema.includes(field) }).toEqual({ field, declared: true });
 		}
@@ -256,12 +267,17 @@ describe('The order schema states the version and the retry key a caller supplie
 		// Both fields used to answer a bare array — `[OrderHistory!]!` and `[OrderLineInvoice!]!` — so a
 		// client that had the REST list had nothing to page over GraphQL while the schema said otherwise.
 		for (const [type, edge, row, field] of [
-			['OrderHistoryConnection', 'OrderHistoryEdge', 'OrderHistory', 'orderHistory(orderId: ID!, page: PageInput)'],
+			[
+				'OrderHistoryConnection',
+				'OrderHistoryEdge',
+				'OrderHistory',
+				'orderHistory(orderId: ID!, page: PageInput, withDeleted: Boolean)'
+			],
 			[
 				'OrderLineInvoiceConnection',
 				'OrderLineInvoiceEdge',
 				'OrderLineInvoice',
-				'orderLineInvoices(orderLineId: ID!, page: PageInput)'
+				'orderLineInvoices(orderLineId: ID!, page: PageInput, withDeleted: Boolean)'
 			]
 		]) {
 			const body = schema.slice(schema.indexOf(`type ${type} {`), schema.indexOf('}', schema.indexOf(`type ${type} {`)));
@@ -282,11 +298,69 @@ describe('The order schema states the version and the retry key a caller supplie
 			}
 
 			expect({ field, connection: schema.includes(`${field}: ${type}!`) }).toEqual({ field, connection: true });
-			// The control: the field no longer answers the bare array it used to.
-			expect({ field, bare: schema.includes(`${field.replace(', page: PageInput', '')}: [${row}!]!`) }).toEqual({
-				field,
-				bare: false
-			});
+			// The control: the field no longer answers the bare array it used to, stated as the document
+			// spelled it before the conversion — the field name and the one argument that identifies the
+			// rows it lists.
+			const wasBare = `${field.slice(0, field.indexOf(','))}: [${row}!]!`;
+
+			expect({ field, bare: schema.includes(wasBare) }).toEqual({ field, bare: false });
 		}
+	});
+});
+
+/**
+ * The soft-delete visibility the REST list routes have.
+ *
+ * Every list route of the order controller reads through `BaseQueryDTO`, so its caller can ask for the
+ * rows a tenant retired. Each field here is one of those routes' counterparts, and the two kinds of read
+ * behind them take the flag differently: a listing read through `findAll` carries it in the find options,
+ * while a read through a method of its own — the timeline — is handed it as an argument, because that
+ * method is what builds the options the store sees. A field that declared the argument and dropped it
+ * would be worse than one without it: the document would say the client may ask, and the answer would be
+ * the live rows either way.
+ */
+describe('The order list fields offer the soft-delete visibility their routes offer', () => {
+	/** The reader the two cases below drive, over the reads their fields call. */
+	function readers() {
+		const summaryService = { findAll: jest.fn(async (_options?: Record<string, unknown>) => ({ items: [], total: 0 })) };
+		const historyService = { timeline: jest.fn(async (_orderId?: string, _withDeleted?: boolean) => []) };
+
+		return {
+			summaryService,
+			historyService,
+			resolver: new OrderChangeResolver(
+				{} as any,
+				{} as any,
+				summaryService as any,
+				{} as any,
+				historyService as any
+			)
+		};
+	}
+
+	it('asks the listing read for retired rows when the caller states withDeleted, and states nothing when it does not', async () => {
+		const { summaryService, resolver } = readers();
+
+		await resolver.orderSummaries('order-1', undefined, true);
+		await resolver.orderSummaries('order-1', undefined, undefined);
+
+		const asked = summaryService.findAll.mock.calls.map(
+			(call) => (call as Array<Record<string, unknown>>)[0]
+		);
+
+		expect(asked[0]).toMatchObject({ withDeleted: true });
+		// Absent rather than `false`: the two select the same rows, but the option is not stated, so a read
+		// whose default ever changes is not silently pinned to the older behaviour by this field.
+		expect('withDeleted' in asked[1]).toBe(false);
+	});
+
+	it('hands the flag to the read that builds the timeline’s own options, because that read is the one that decides', async () => {
+		const { historyService, resolver } = readers();
+
+		await resolver.orderHistory('order-1', undefined, true);
+		await resolver.orderHistory('order-1', undefined, undefined);
+
+		expect(historyService.timeline).toHaveBeenNthCalledWith(1, 'order-1', true);
+		expect(historyService.timeline).toHaveBeenNthCalledWith(2, 'order-1', undefined);
 	});
 });

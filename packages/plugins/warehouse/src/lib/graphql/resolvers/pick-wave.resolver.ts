@@ -47,6 +47,7 @@ export class PickWaveResolver {
 	 *
 	 * @param filter The wave filter.
 	 * @param page The page.
+	 * @param withDeleted Whether the retired waves are included.
 	 * @returns One page of waves.
 	 */
 	@Permissions(WarehousePermissions.PICK_LISTS_VIEW)
@@ -60,7 +61,8 @@ export class PickWaveResolver {
 			pickerUserId?: ID;
 			number?: string;
 		},
-		@Args('page') page?: IPageSelection
+		@Args('page') page?: IPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const { skip, take } = resolveWindow(page);
 		const result = await this.pickWaveService.findAll({
@@ -73,7 +75,8 @@ export class PickWaveResolver {
 			},
 			skip,
 			take,
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			...(withDeleted ? { withDeleted: true } : {})
 		} as any);
 
 		return buildConnection(result, skip);

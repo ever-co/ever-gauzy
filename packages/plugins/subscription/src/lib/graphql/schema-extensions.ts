@@ -514,21 +514,21 @@ export const schemaExtensions = gql`
 
 	extend type Query {
 		"Subscription plans of the caller's organization."
-		subscriptionPlans(filter: SubscriptionPlanFilter, page: PageInput): SubscriptionPlanConnection!
+		subscriptionPlans(filter: SubscriptionPlanFilter, page: PageInput, withDeleted: Boolean): SubscriptionPlanConnection!
 		"One plan."
 		subscriptionPlan(id: ID!): SubscriptionPlan
 		"A plan by the code the organization knows it by."
 		subscriptionPlanByCode(code: String!): SubscriptionPlan
 		"Subscriptions of the caller's organization."
-		subscriptions(filter: SubscriptionFilter, page: PageInput): CustomerSubscriptionConnection!
+		subscriptions(filter: SubscriptionFilter, page: PageInput, withDeleted: Boolean): CustomerSubscriptionConnection!
 		"One subscription, with its lines and its billing history."
 		subscription(id: ID!): CustomerSubscription
 		"The recurring lines of a subscription."
-		subscriptionItems(filter: SubscriptionItemFilter, page: PageInput): SubscriptionItemConnection!
+		subscriptionItems(filter: SubscriptionItemFilter, page: PageInput, withDeleted: Boolean): SubscriptionItemConnection!
 		"One recurring line."
 		subscriptionItem(id: ID!): SubscriptionItem
 		"Billing cycles of the caller's organization."
-		subscriptionBillings(filter: SubscriptionBillingFilter, page: PageInput): SubscriptionBillingConnection!
+		subscriptionBillings(filter: SubscriptionBillingFilter, page: PageInput, withDeleted: Boolean): SubscriptionBillingConnection!
 		"One billing cycle."
 		subscriptionBilling(id: ID!): SubscriptionBilling
 	}
