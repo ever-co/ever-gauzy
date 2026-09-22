@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -9,7 +9,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationPosition } from './organization-position.entity';
 import { OrganizationPositionService } from './organization-position.service';
@@ -80,11 +81,16 @@ const ORGANIZATION_POSITION_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * than a statement about the write. The field calls the same method with the same merge, so a caller
  * gets the same behaviour and the same answer over either protocol.
  *
- * **The guard is the controller's guard, and no permission is stated above it.** The delivered
- * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` anywhere, so
- * every one of its routes is tenant-guarded and otherwise unpermissioned. A resolver that demanded a
- * permission here would refuse a caller the REST route serves, which is exactly the asymmetry the
- * two-protocol rule forbids.
+ * **The guard chain and the permission are the controller's, field by field.** The delivered controller
+ * carries `TenantPermissionGuard` on the class and adds `PermissionGuard` with `ALL_ORG_EDIT` on each of
+ * its five write routes: filing a position, changing it, removing it, and the withdrawal and the
+ * restoration of it are administrative acts on an organization's own reference data. The five fields
+ * that mirror those routes restate that guard with that permission, so this surface cannot serve a
+ * caller a route refuses. The three reads mirror routes that state neither and therefore state neither
+ * — a field demanding a permission its own route does not would refuse a caller REST serves, which is
+ * the same asymmetry stated the other way round. The guard sits on those five fields rather than on the
+ * class because that is where the controller states it: a class-level one would guard the three reads
+ * with something no read route carries, and this surface's chain has to be the route's own.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -166,8 +172,13 @@ export class OrganizationPositionResolver {
 	 * The payload is the input as stated, and the tenant is the credential's: the service stamps it and
 	 * overwrites whatever a body states, so a caller states which organization the row is filed under
 	 * and never which tenant it is written into.
+	 *
+	 * The create route demands `ALL_ORG_EDIT`, so this field states it too: a caller who may not file a
+	 * position through REST may not file one here.
 	 */
 	@Mutation('createOrganizationPosition')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async createOrganizationPosition(
 		@Args('input') input: ICreateOrganizationPositionInput
 	): Promise<OrganizationPosition> {
@@ -181,8 +192,13 @@ export class OrganizationPositionResolver {
 	 * this field does the same rather than reaching for the partial update: the two surfaces have to
 	 * write the same thing, and a field that reached for a different service method would be a second
 	 * write path for one fact.
+	 *
+	 * The update route demands `ALL_ORG_EDIT`, so this field states it too: the edit writes the row the
+	 * route writes, and it is refused to the same callers.
 	 */
 	@Mutation('updateOrganizationPosition')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async updateOrganizationPosition(
 		@Args('input') input: IUpdateOrganizationPositionInput
 	): Promise<OrganizationPosition> {
@@ -196,8 +212,13 @@ export class OrganizationPositionResolver {
 
 	/**
 	 * Removes a position outright.
+	 *
+	 * The delete route demands `ALL_ORG_EDIT`, so this field states it too: removing the position other
+	 * rows are filed under is as administrative as filing it.
 	 */
 	@Mutation('deleteOrganizationPosition')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async deleteOrganizationPosition(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.organizationPositionService.delete(id);
 
@@ -206,16 +227,26 @@ export class OrganizationPositionResolver {
 
 	/**
 	 * Withdraws a position: the row is marked rather than removed, and the recovery below reads it back.
+	 *
+	 * The withdrawal route demands `ALL_ORG_EDIT`, so this field states it too: a withdrawal a caller
+	 * may not perform through REST is not one this surface performs for them.
 	 */
 	@Mutation('softDeleteOrganizationPosition')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async softDeleteOrganizationPosition(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationPosition> {
 		return await this.organizationPositionService.softRemove(id);
 	}
 
 	/**
 	 * Puts a withdrawn position back, clearing the marker the withdrawal set.
+	 *
+	 * The restoration route demands `ALL_ORG_EDIT`, so this field states it too: undoing a removal is
+	 * the removal's own capability, and this surface does not hand it to a caller the route refuses.
 	 */
 	@Mutation('recoverOrganizationPosition')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async recoverOrganizationPosition(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationPosition> {
 		return await this.organizationPositionService.softRecover(id);
 	}

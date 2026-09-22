@@ -15,6 +15,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../../api/cursor';
 import {
+	EmployeeTrackedDataGuard,
 	FeatureFlagGuard,
 	OrganizationPermissionGuard,
 	PermissionGuard,
@@ -39,7 +40,7 @@ import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } f
  * - every field reaches the same service method, or dispatches the same command, that the REST route
  *   reaches, with the same query DTO its route binds — reduced to the members the delivered read
  *   actually consults, so an argument the read would ignore is not offered at all;
- * - **the guard chain is the controller's, field by field, the two method-level guards included**, and
+ * - **the guard chain is the controller's, field by field, the method-level guards included**, and
  *   every field states the permission its own route runs under rather than the class's;
  * - the type carries the row's own columns and the four members the load derives from them, and carries
  *   every relation as the identifier the row holds — the delivered list read joins the employee and
@@ -875,7 +876,7 @@ describe('TimeSlotResolver — the guard stack and the permission are the contro
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(TimeSlotController, route));
 	});
 
-	it('carries the guard the two writing routes add, on the two fields that mirror them', () => {
+	it('carries on each field the guard that field’s own route adds, read from both surfaces', () => {
 		// A method-level guard is part of a resolver field's chain exactly as it is part of a route's, so
 		// the two writes are held to the controller-wide chain *and* to the guard their routes add.
 		for (const field of ['updateTimeSlot', 'deleteTimeSlots']) {
@@ -888,9 +889,28 @@ describe('TimeSlotResolver — the guard stack and the permission are the contro
 			);
 		}
 
-		// The three reads and the recording declare no guard of their own, on either surface.
-		for (const field of ['timeSlots', 'timeSlot', 'createTimeSlot']) {
+		// The list route is the third route of this resource that states a guard of its own. The
+		// organization setting `allowEmployeeToSeeTrackedData` has the route hide one employee's tracked
+		// slots — what they did, for how long, on which machine — from that employee, and this field is
+		// where the same data is reachable over the other protocol. The guard is asserted on both surfaces
+		// rather than restated here, because what has to hold is that the two agree: a list field without
+		// it would answer a caller the route refuses.
+		expect(Reflect.getMetadata('__guards__', fieldsOf(TimeSlotResolver)['timeSlots'])).toEqual([
+			EmployeeTrackedDataGuard
+		]);
+		expect(Reflect.getMetadata('__guards__', handlersOf(TimeSlotController)['findAll'])).toEqual([
+			EmployeeTrackedDataGuard
+		]);
+
+		// The node read and the recording are the other half of that classification and declare no guard of
+		// their own on either surface: the desktop timer's screenshot retry queue reads a slot by id, and a
+		// recording has to keep working while the setting is off.
+		for (const [field, route] of [
+			['timeSlot', 'findById'],
+			['createTimeSlot', 'create']
+		] as ReadonlyArray<[string, string]>) {
 			expect(Reflect.getMetadata('__guards__', fieldsOf(TimeSlotResolver)[field])).toBeUndefined();
+			expect(Reflect.getMetadata('__guards__', handlersOf(TimeSlotController)[route])).toBeUndefined();
 		}
 	});
 

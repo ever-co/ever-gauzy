@@ -45,10 +45,12 @@
 #
 # **No permission is stated on the reads, because no read route states one.** This controller's class
 # carries the tenant guard and no `@Permissions`, and its list, its level lookup, its count and the
-# node query it inherits from the CRUD base all run under that alone. Only the two writes carry a
-# permission guard, with the two permissions their routes carry. Stating a permission on a read here
-# would refuse a caller the REST route serves; tightening the resource is a change to make in both
-# places at once, and it is not this delivery's to make.
+# node query it inherits from the CRUD base all run under that alone. The five writes carry the
+# permissions their own routes carry: `create` and `update` their two, and the three lifecycle moves —
+# delete, softRemove and softRecover — `ALL_ORG_EDIT` beside the tag permissions those same three
+# routes state. Stating a permission on a read here would refuse a caller the REST route serves, and
+# dropping one from a write would serve a caller the REST route refuses; tightening the resource is a
+# change to make in both places at once, and it is not this delivery's to make.
 
 extend type Query {
 	"""

@@ -14,7 +14,12 @@ import { PARAM_ARGS_METADATA } from '@nestjs/graphql';
 import { buildSchema, printSchema } from 'graphql';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import {
+	EmployeeTrackedDataGuard,
+	FeatureFlagGuard,
+	PermissionGuard,
+	TenantPermissionGuard
+} from '../../shared/guards';
 import { ProfileActivityResolver } from './profile-activity.resolver';
 import { StatisticController } from './statistic.controller';
 import { StatisticModule } from './statistic.module';
@@ -294,17 +299,23 @@ function permissionOfField(field: string): unknown {
 	);
 }
 
-/** The guards one resolver field runs under, as a copy of the class's own chain. */
+/**
+ * The guards one resolver field runs under, the class chain first.
+ *
+ * The field's own list is **appended to** the class's rather than preferred over it, which is what the
+ * guard context creator does with the two: `ContextCreator.createContext` concatenates the class's
+ * `__guards__` metadata and the handler's, so a field that states a guard of its own runs under the
+ * class's guards *and* that one. Reading the field's list alone would under-report the chain for
+ * exactly the fields this half of the doctrine exists to check — the six whose route carries
+ * `EmployeeTrackedDataGuard` on the handler rather than on the controller — and would report a chain
+ * neither surface runs under.
+ */
 function guardsOfField(field: string): unknown[] {
 	const fields = StatisticResolver.prototype as unknown as Record<string, object>;
+	const declared = Reflect.getMetadata('__guards__', StatisticResolver) ?? [];
+	const restated = Reflect.getMetadata('__guards__', fields[field]) ?? [];
 
-	// Copied rather than handed back: a field that states no guards of its own runs under the class's
-	// array, and a caller that sorts what it was given would reorder the resolver's own metadata.
-	return [
-		...(Reflect.getMetadata('__guards__', fields[field]) ??
-			Reflect.getMetadata('__guards__', StatisticResolver) ??
-			[])
-	];
+	return Array.from(new Set([...declared, ...restated]));
 }
 
 /**
@@ -776,6 +787,31 @@ describe('StatisticResolver — the guard stack and the permission are the contr
 			[...guardsOfRoute(StatisticController, route), FeatureFlagGuard].sort()
 		);
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(StatisticController, route));
+	});
+
+	it('gates six of the seven routes on the handler, which is the placement the six fields mirror', () => {
+		// A control, and not a restatement of the expectation: the comparison above is exact in both
+		// directions, so six routes that lost the guard and six fields that lost it with them would
+		// compare equal and read as parity. This pins the side the guard is supposed to exist on, so
+		// dropping it from the routes is reported here rather than silently matched. The task route is
+		// the one exception, and it is named rather than described: the desktop timer's task picker
+		// needs that read to start tracking, so a guard there would be a defect of its own.
+		const gated = ROUTE_PARITY.filter(({ route }) =>
+			guardsOfRoute(StatisticController, route).includes(EmployeeTrackedDataGuard)
+		).map(({ route }) => route);
+
+		expect(gated).toEqual([
+			'getCountsStatistics',
+			'getMembersStatistics',
+			'getProjectsStatistics',
+			'getManualTimesStatistics',
+			'getEmployeeTimeSlotsStatistics',
+			'getActivitiesStatistics'
+		]);
+
+		// And the guard is on the handler rather than on the controller, which is what makes it possible
+		// for one of the seven routes to be exempt at all.
+		expect(Reflect.getMetadata('__guards__', StatisticController)).not.toContain(EmployeeTrackedDataGuard);
 	});
 
 	it('states on every field the permission its own route inherits, and never a narrower one', () => {

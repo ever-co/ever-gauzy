@@ -28,7 +28,13 @@ import {
 } from '../../api/graphql-connection';
 import { RequestContext } from '../../core/context';
 import { Permissions } from '../../shared/decorators';
-import { FeatureFlagGuard, OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from '../../shared/guards';
+import {
+	EmployeeTrackedDataGuard,
+	FeatureFlagGuard,
+	OrganizationPermissionGuard,
+	PermissionGuard,
+	TenantBaseGuard
+} from '../../shared/guards';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
@@ -292,6 +298,19 @@ const TIME_LOG_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * inherited the class grant instead would let a caller record time it may not record, and a field that
  * dropped the guard would skip the organization check the route performs.
  *
+ * **Nine of the reads carry the tracked-data guard their own route carries.** The organization setting
+ * `allowEmployeeToSeeTrackedData` lets an administrator hide an employee's own tracked data — who was
+ * tracked, when, and on what — and `EmployeeTrackedDataGuard` is what enforces it on the REST reads that
+ * expose that data. The nine routes behind `timeLogs`, the four reports and their two charts, and the two
+ * budget limits each carry the guard, so each of those fields states it on the method — the placement is
+ * the controller's, and a method-level guard is part of a resolver field's chain exactly as it is part of
+ * a route's. A field that skipped it would answer that caller the tracked hours the route it mirrors
+ * refuses: the same capability decided twice with this surface the permissive one. The node read and the
+ * conflict read carry neither, which is the controller's own exemption rather than an omission — the
+ * desktop timer's offline sync reads its own log by id and the manual-time overlap check runs while a
+ * caller records time, and both must keep working while the setting is off.
+ * `employee-tracked-data-routes.spec.ts` pins that classification.
+ *
  * **A computed answer is a root field of its own.** Eight of the queries below are computed rather than
  * read: the daily, weekly, owed and time-limit reports, the two charts those reports are drawn from,
  * and the two budget limits. None of them is a subset of the list's rows — a per-day aggregation, a
@@ -346,7 +365,11 @@ export class TimeLogResolver {
 	 * excludes `timeZone` and `groupBy`: the list read computes no calendar grouping and reads no time
 	 * zone, and an argument the read ignores is worse than an argument that is absent.
 	 */
+	// The list route states the tracked-data guard of its own, and the field states it in the same place:
+	// these are the rows that say who worked and when, so a field without it would answer a caller the
+	// route refuses.
 	@Query('timeLogs')
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeLogs(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -455,7 +478,10 @@ export class TimeLogResolver {
 	 * The answer's shape is the delivered answer's own, with each nested row carried as the identifier
 	 * it is read by — see `TimeLogDailyReportEntry`.
 	 */
+	// A per-day report of who worked and on what is that employee's tracked data as much as the rows
+	// behind it are, so the field carries the guard its route carries.
 	@Query('timeLogDailyReport')
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeLogDailyReport(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('groupBy', { type: () => String, nullable: true }) groupBy?: ReportGroupFilterEnum,
@@ -502,7 +528,10 @@ export class TimeLogResolver {
 	 * fills an absent day with four zeroes rather than dropping it, so a chart drawn from this answer
 	 * has a point for every date the caller asked about.
 	 */
+	// The same tracked hours as one figure per day: a chart of an employee's day is that employee's
+	// tracked data, which is why the route this mirrors guards it.
 	@Query('timeLogDailyReportChart')
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeLogDailyReportChart(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -555,7 +584,11 @@ export class TimeLogResolver {
 	 * selected for them — and the field answers it rather than recomputing it: an amount multiplied a
 	 * second time on this surface is an amount that can disagree with the route's own.
 	 */
+	// What each employee is owed is computed from their tracked hours and names them line by line, which
+	// the organization setting hides as much as the hours themselves — the route guards it, so the field
+	// does too.
 	@Query('timeLogOwedAmountReport')
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeLogOwedAmountReport(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -607,7 +640,10 @@ export class TimeLogResolver {
 	 * answers the day's total, and the report above answers the lines that total is made of, which is
 	 * the difference between a chart and the table behind it.
 	 */
+	// The same owed amounts as one figure per day, under the same guard: the computation behind this
+	// field reads exactly the tracked time the report above reads.
 	@Query('timeLogOwedAmountReportChart')
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeLogOwedAmountReportChart(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -654,7 +690,10 @@ export class TimeLogResolver {
 	 * carrying its date, and an absent day read as the zero it is. A map keyed by data has no GraphQL
 	 * type, and the list is that same statement with the key moved into the row.
 	 */
+	// A week of one employee's tracked logs, per employee, which is the data the organization setting
+	// hides — the route guards it, and the field the route mirrors does too.
 	@Query('timeLogWeeklyReport')
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeLogWeeklyReport(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -705,7 +744,10 @@ export class TimeLogResolver {
 	 * same request it is there. Its three known values are `day`, `week` and `month`, and the limit is
 	 * the employee's weekly limit converted to whichever of them the caller named.
 	 */
+	// How much of an employee's limit their tracked time used, per employee and per day: the same tracked
+	// data in a different summary, under the guard its route carries.
 	@Query('timeLogTimeLimitReport')
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeLogTimeLimitReport(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -761,7 +803,11 @@ export class TimeLogResolver {
 	 * reads, and nothing else — the source, the log type, the timesheet, the activity window and the
 	 * calendar are not members of the question it answers.
 	 */
+	// Tracked hours priced against a project's budget, so the field carries the guard the budget route
+	// carries although the answer names projects rather than people: the spent column is still the
+	// tracked time the setting hides.
 	@Query('projectBudgetLimit')
+	@UseGuards(EmployeeTrackedDataGuard)
 	async projectBudgetLimit(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -785,7 +831,10 @@ export class TimeLogResolver {
 	 * budgets are one computation over two different rows, and the two fields are two because a client
 	 * budget and a project budget are two different questions about the same tracked time.
 	 */
+	// The same computation against a client's budget, under the same guard and for the same reason: the
+	// client-budget route carries it, so the field that mirrors that route does.
 	@Query('clientBudgetLimit')
+	@UseGuards(EmployeeTrackedDataGuard)
 	async clientBudgetLimit(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,

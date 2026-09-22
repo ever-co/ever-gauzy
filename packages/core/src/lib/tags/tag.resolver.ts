@@ -96,10 +96,12 @@ const TAG_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  *
  * **The guard chain and the permissions are the controller's, field by field.** The delivered
  * controller carries `TenantPermissionGuard` on the class, no class-level permission, and
- * `PermissionGuard` with `ALL_ORG_EDIT` plus the add or edit permission on each of the two writes it
- * declares of its own. This resolver carries the tenant guard on the class and the permission guard
- * with the same two permissions on the same two fields; every other field mirrors a route that states
- * no permission — the list, the level lookup, the count and the node query the controller inherits
+ * `PermissionGuard` with `ALL_ORG_EDIT` plus the resource's own permission on each of the five writes
+ * it declares of its own: the add permission on the create, the edit permission on the update, and
+ * `ALL_ORG_EDIT` beside the edit and the delete permissions on the removal, the withdrawal and the
+ * restoration. This resolver carries the tenant guard on the class and the permission guard with the
+ * same permissions on the same five fields; every other field mirrors a route that states no
+ * permission — the list, the level lookup, and the count and the node query the controller inherits
  * from the CRUD base — and therefore states none either. A field that demanded a permission the route
  * does not would refuse here a caller REST serves, and tightening the resource is a change to make in
  * both places at once.
@@ -267,8 +269,15 @@ export class TagResolver {
 
 	/**
 	 * Removes a tag outright, with the pivot rows that attach it to the records it labelled.
+	 *
+	 * The delivered route demands `ALL_ORG_EDIT` or `ORG_TAGS_EDIT` or `ORG_TAGS_DELETE` — the tags page
+	 * offers a removal to any of the three and an edit to the middle one, and any of them passes
+	 * (GHSA-v79w-54p2-wmh5) — so this field states the same three rather than the tenant guard alone: a
+	 * caller the route refuses must not be able to remove the tag here.
 	 */
 	@Mutation('deleteTag')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE)
 	async deleteTag(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.tagService.delete(id);
 
@@ -276,20 +285,29 @@ export class TagResolver {
 	}
 
 	/**
-	 * Withdraws a tag without removing it. No permission is stated because the delivered route states
-	 * none: the soft removal is inherited from the CRUD base, where the controller's own tenant guard
-	 * is the whole of its scope.
+	 * Withdraws a tag without removing it.
+	 *
+	 * The delivered route demands the same three permissions the removal above does, so this field
+	 * states them too: a withdrawal is the removal with the row kept, and a caller who may not perform
+	 * one on the route may not perform one here.
 	 */
 	@Mutation('softDeleteTag')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE)
 	async softDeleteTag(@Args('id', { type: () => ID }) id: Id): Promise<Tag> {
 		return await this.tagService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn tag back. Unpermissioned for the same reason the withdrawal above is: the
-	 * delivered route carries no permission to mirror.
+	 * Puts a withdrawn tag back.
+	 *
+	 * The restoration route demands the same three permissions the withdrawal does, so this field states
+	 * them too — undoing a removal is the removal's own capability, and this surface does not hand it to
+	 * a caller the route refuses.
 	 */
 	@Mutation('recoverTag')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE)
 	async recoverTag(@Args('id', { type: () => ID }) id: Id): Promise<Tag> {
 		return await this.tagService.softRecover(id);
 	}

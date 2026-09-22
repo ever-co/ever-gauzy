@@ -12,6 +12,7 @@ import {
 import { FeatureFlag } from '@gauzy/common';
 import { Permissions } from '../../shared/decorators';
 import {
+	EmployeeTrackedDataGuard,
 	FeatureFlagGuard,
 	OrganizationPermissionGuard,
 	PermissionGuard,
@@ -154,7 +155,14 @@ const TIME_SLOT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * mirrors. The two writes are the case that reads oddly and is nevertheless the parity: their routes
  * add `OrganizationPermissionGuard` to the chain and state a permission that is not the class's, so
  * each of those two fields carries the same guard on the field itself — a method-level guard is part
- * of a resolver field's chain exactly as it is part of a route's — and the same permission.
+ * of a resolver field's chain exactly as it is part of a route's — and the same permission. The list
+ * route adds one guard of its own as well, `EmployeeTrackedDataGuard`, which is what enforces the
+ * organization setting `allowEmployeeToSeeTrackedData`: while an administrator has it off, a slot is
+ * one employee's tracked data — what they did, for how long, on which machine — and the route answers
+ * that caller none of it. The list field carries the guard in the same place, so this surface cannot
+ * serve what the route refuses. The node read is the other half of that classification: its route
+ * carries no guard, because the desktop timer's screenshot retry queue reads its own slot by id and
+ * must keep working while the setting is off, so the field carries none either.
  *
  * **The list is the connection and the list is where the route's narrowing lives.** The delivered
  * `GET /` route binds a query DTO and hands it to the list read; that DTO's members are this field's
@@ -200,7 +208,11 @@ export class TimeSlotResolver {
 	 * delivered reads load the relations a caller names, and this surface's type carries no relation
 	 * member for one to fill — every relation is carried as the identifier the row itself holds.
 	 */
+	// The list route states the tracked-data guard of its own, and the field states it in the same place:
+	// these are the rows that say what one employee did and for how long, so a field without it would
+	// answer a caller the route refuses.
 	@Query('timeSlots')
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 	async timeSlots(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,

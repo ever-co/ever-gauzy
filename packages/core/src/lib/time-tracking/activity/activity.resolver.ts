@@ -27,7 +27,12 @@ import {
 	buildConnection
 } from '../../api/graphql-connection';
 import { Permissions } from '../../shared/decorators';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import {
+	EmployeeTrackedDataGuard,
+	FeatureFlagGuard,
+	PermissionGuard,
+	TenantPermissionGuard
+} from '../../shared/guards';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { ActivityController } from './activity.controller';
 import { Activity } from './activity.entity';
@@ -268,6 +273,18 @@ const ACTIVITY_PERMISSIONS = (Reflect.getMetadata(PERMISSIONS_METADATA, Activity
  * own metadata states, which for this controller is its class-level pair, because no handler of it
  * overrides that.
  *
+ * **The tracked-data guard is the route's as well, and it is per route on both surfaces.** The three read
+ * routes state `EmployeeTrackedDataGuard`, which applies the organization's `allowEmployeeToSeeTrackedData`
+ * setting: an activity row is a window title, a URL or an application name stamped with who was in front of
+ * it and when, and that is the organization's to withhold from its own employees. The three reads below
+ * state the same guard, because a field that answered one without it would serve over this protocol a read
+ * the REST route refuses — the same capability decided two ways with GraphQL as the permissive side, which
+ * for tracked data is a privacy defect rather than a cosmetic mismatch. The bulk write mirrors the one route
+ * that carries no such guard, and it carries none here either: recording is what produces tracked data, so
+ * gating it would stop the tracker rather than protect anyone. `EmployeeTrackedDataGuard` injects only the
+ * global `DataSource`, which `TypeOrmCoreModule` exports to every module, so this module can construct it as
+ * it constructs the three guards above.
+ *
  * **The list is the connection and the two computations are root fields of their own.** The daily read and
  * the report do not answer activity rows — they fold them — so neither is a narrowing of the list; the
  * module comment in `activity.api.gql` states the reasoning for both.
@@ -306,6 +323,7 @@ export class ActivityResolver {
 	 */
 	@Query('activities')
 	@Permissions(...ACTIVITY_PERMISSIONS)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async activities(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -362,6 +380,7 @@ export class ActivityResolver {
 	 */
 	@Query('dailyActivities')
 	@Permissions(...ACTIVITY_PERMISSIONS)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async dailyActivities(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -406,6 +425,7 @@ export class ActivityResolver {
 	 */
 	@Query('dailyActivitiesReport')
 	@Permissions(...ACTIVITY_PERMISSIONS)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async dailyActivitiesReport(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('groupBy', { type: () => String, nullable: true }) groupBy?: string,

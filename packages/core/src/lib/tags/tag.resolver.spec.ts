@@ -35,8 +35,10 @@ import { TagListCommand } from './commands';
  *   organization fragment, and this surface feeds them the organization the credential names rather
  *   than the one a client would have put in the query string;
  * - **the guard chain is the controller's and every field states the permission its own route runs
- *   under**: the two writes carry the two permissions their routes carry, and the reads carry none,
- *   because the routes they mirror carry none — the controller's class states no permission at all;
+ *   under**: the five writes carry the permissions their routes carry — `ALL_ORG_EDIT` beside the
+ *   resource's own — and the reads carry none, because the routes they mirror carry none — the
+ *   controller's class states no permission at all, and its five write routes state theirs one at a
+ *   time;
  * - the members the delivered readers answer are what the object type carries, and the counters and
  *   the grouping relation one branch of the list reader computes are not declared at all;
  * - a tag that is not there is `null` on the one-row field rather than a refusal.
@@ -538,7 +540,7 @@ describe('TagResolver — one concept, two protocols, the same operations', () =
 describe('TagResolver — the guard stack and the permission are the controller’s', () => {
 	it('guards the resolver the way the controller is guarded, plus the gate', () => {
 		// This controller carries the tenant guard alone on the class: `PermissionGuard` is stated on
-		// each of its two writes and nowhere else, so the resolver's class states the same one guard —
+		// each of its five writes and nowhere else, so the resolver's class states the same one guard —
 		// and then the gate on the endpoint itself, which is the one addition and is not a scope.
 		expect(Reflect.getMetadata('__guards__', TagResolver)).toEqual([
 			...Reflect.getMetadata('__guards__', TagController),
@@ -551,7 +553,7 @@ describe('TagResolver — the guard stack and the permission are the controller�
 		for (const [field, handler] of ROUTE_OF_FIELD) {
 			// The controller's chain plus the gate on the endpoint itself and the field's are the same
 			// set, which is the whole parity claim: a field that added a guard of its own would narrow
-			// GraphQL below REST — or, here, widen it — and either way is caught here. The two writes
+			// GraphQL below REST — or, here, widen it — and either way is caught here. The five writes
 			// restate `PermissionGuard` beside the class that already carries the tenant guard, which is
 			// exactly what their routes do.
 			expect(guardsOfField(field).sort()).toEqual(
@@ -575,11 +577,26 @@ describe('TagResolver — the guard stack and the permission are the controller�
 		expect(stated).toEqual(expected);
 	});
 
-	it('carries the two write permissions and no permission on the reads, because the routes do not', () => {
-		// The two writes state what their routes state, `ALL_ORG_EDIT` beside the resource's own
+	it('carries the three write permission sets and no permission on the reads, because the routes do not', () => {
+		// The five writes state what their routes state, `ALL_ORG_EDIT` beside the resource's own
 		// permission, and nothing narrower.
 		expect(permissionOfField('createTag')).toEqual([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD]);
 		expect(permissionOfField('updateTag')).toEqual([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT]);
+
+		// The removal, the withdrawal and the restoration state the triple their routes state: the tags
+		// page offers a removal to `ALL_ORG_EDIT` or `ORG_TAGS_DELETE` and an edit to `ORG_TAGS_EDIT`,
+		// and any of the three passes, which is the OR semantics the routes have (GHSA-v79w-54p2-wmh5).
+		const removal = [
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_TAGS_EDIT,
+			PermissionsEnum.ORG_TAGS_DELETE
+		];
+		for (const field of ['deleteTag', 'softDeleteTag', 'recoverTag']) {
+			expect(permissionOfField(field)).toEqual(removal);
+		}
+		for (const handler of ['delete', 'softRemove', 'softRecover']) {
+			expect(permissionOfRoute(TagController, handler)).toEqual(removal);
+		}
 
 		// Every read mirrors a route that states none of its own, and this controller's class states
 		// none either, so all four run under the guards alone. Demanding a permission here would refuse

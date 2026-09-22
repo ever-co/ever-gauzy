@@ -28,8 +28,10 @@ import { OrganizationPositionResolver } from './organization-position.resolver';
  *   connection with the platform's own cursor codec behind it;
  * - every field reaches the same service method the REST route reaches — including the delivered edit,
  *   which writes through the create path and is therefore an upsert rather than a partial update;
- * - **the guard chain is the controller's and no field states a permission**, because the delivered
- *   controller states none anywhere;
+ * - **the guard chain and the permission are the controller's, field by field**: its class carries the
+ *   tenant guard, its five write routes add `PermissionGuard` with `ALL_ORG_EDIT`, and its three reads
+ *   state neither — so every field restates exactly what the route it mirrors states and nothing more,
+ *   because a field demanding a permission its own route does not would refuse a caller REST serves;
  * - the tag pivot the read does not join is neither a field nor a filter;
  * - a position that is not there is `null` on the one-row field rather than a refusal.
  */
@@ -178,11 +180,29 @@ function guardsOfRoute(controller: typeof OrganizationPositionController, handle
 	return Array.from(new Set([...declared, ...restated]));
 }
 
+/** The fields of the resolver, as functions. */
+function fieldsOf(resolver: typeof OrganizationPositionResolver): Record<string, object> {
+	return resolver.prototype as unknown as Record<string, object>;
+}
+
 /** The permission one resolver field runs under. */
 function permissionOfField(field: string): unknown {
-	const fields = OrganizationPositionResolver.prototype as unknown as Record<string, object>;
+	return Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(OrganizationPositionResolver)[field]);
+}
 
-	return Reflect.getMetadata(PERMISSIONS_METADATA, fields[field]);
+/**
+ * The guards one resolver field actually runs under: the class's chain followed by whatever the field
+ * states of its own, which is the order the guard context creator concatenates them in.
+ *
+ * This is what a route's own chain has to be compared against rather than the class chain, because the
+ * delivered controller does not state one chain for its routes: its five writes restate the permission
+ * guard beside the class and its three reads do not.
+ */
+function guardsOfField(field: string): unknown[] {
+	const declared = Reflect.getMetadata('__guards__', OrganizationPositionResolver) ?? [];
+	const restated = Reflect.getMetadata('__guards__', fieldsOf(OrganizationPositionResolver)[field]) ?? [];
+
+	return Array.from(new Set([...declared, ...restated]));
 }
 
 describe('OrganizationPositionResolver — the SDL declares the capabilities the REST routes serve', () => {
@@ -433,53 +453,97 @@ describe('OrganizationPositionResolver — one concept, two protocols, the same 
 	});
 });
 
-describe('OrganizationPositionResolver — the guard stack is the controller’s, and no permission is stated', () => {
-	it('guards the resolver the way the controller is guarded', () => {
+/**
+ * Every root field and the delivered route it mirrors.
+ *
+ * The two surfaces are one capability stated twice, so the guard chain and the permission of a field
+ * are read from the field and from the route's own metadata and compared, rather than restated here: a
+ * table of permission names would agree with the resolver while disagreeing with the controller, which
+ * is the failure this half of the doctrine exists to catch.
+ */
+const ROUTE_PARITY: ReadonlyArray<{ field: string; route: string }> = [
+	{ field: 'organizationPositions', route: 'findAll' },
+	{ field: 'organizationPosition', route: 'findById' },
+	{ field: 'organizationPositionCount', route: 'getCount' },
+	{ field: 'createOrganizationPosition', route: 'create' },
+	{ field: 'updateOrganizationPosition', route: 'update' },
+	{ field: 'deleteOrganizationPosition', route: 'delete' },
+	{ field: 'softDeleteOrganizationPosition', route: 'softRemove' },
+	{ field: 'recoverOrganizationPosition', route: 'softRecover' }
+];
+
+describe('OrganizationPositionResolver — the guard stack and the permission are the controller’s, field by field', () => {
+	it('guards the resolver with the controller’s class chain, plus the gate the endpoint adds', () => {
 		const resolverGuards = Reflect.getMetadata('__guards__', OrganizationPositionResolver) ?? [];
 		const controllerGuards = Reflect.getMetadata('__guards__', OrganizationPositionController) ?? [];
 
-		expect(resolverGuards).toEqual(expect.arrayContaining([TenantPermissionGuard, FeatureFlagGuard]));
-		expect(controllerGuards).toEqual(expect.arrayContaining([TenantPermissionGuard]));
-		expect(resolverGuards).not.toContain(PermissionGuard);
-		expect(controllerGuards).not.toContain(PermissionGuard);
+		// The scope guard is the part both surfaces carry on the class; the gate is this surface's own,
+		// because a capability is asked of the endpoint rather than of the resource behind it. Neither
+		// class carries the permission guard: the controller states it on each of its five write routes,
+		// and the parity below reads it back off the field that mirrors one — a class-level one here
+		// would guard the three reads with something no read route carries.
+		expect(controllerGuards).toEqual([TenantPermissionGuard]);
+		expect(resolverGuards).toEqual([...controllerGuards, FeatureFlagGuard]);
 	});
 
-	it('runs every route under the guard chain the resolver states', () => {
-		const stated = Reflect.getMetadata('__guards__', OrganizationPositionResolver) ?? [];
-		const routes = ['findAll', 'findById', 'getCount', 'create', 'update', 'delete', 'softRemove', 'softRecover'];
+	it('restates the permission guard on the five routes that state a permission, and not on the three that do not', () => {
+		const writes = ROUTE_PARITY.filter(({ route }) => permissionOfRoute(OrganizationPositionController, route));
+		const reads = ROUTE_PARITY.filter(({ route }) => !permissionOfRoute(OrganizationPositionController, route));
 
-		for (const handler of routes) {
-			expect([...guardsOfRoute(OrganizationPositionController, handler), FeatureFlagGuard].sort()).toEqual(
-				[...stated].sort()
+		// Five of the eight routes state a permission and three do not, so this cannot pass on a run
+		// that lost the metadata altogether: the two sets would collapse into one and one of the two
+		// counts below would be wrong.
+		expect(writes).toHaveLength(5);
+		expect(reads).toHaveLength(3);
+
+		// The guard is on the routes that state a permission and on no others, and the field that
+		// mirrors each one has to say the same: a read field carrying it would be a read this surface
+		// refuses and the REST route serves.
+		for (const { field } of writes) {
+			expect(guardsOfField(field)).toContain(PermissionGuard);
+		}
+		for (const { field } of reads) {
+			expect(guardsOfField(field)).not.toContain(PermissionGuard);
+		}
+	});
+
+	it('runs every field under the guard chain its own route runs under', () => {
+		for (const { field, route } of ROUTE_PARITY) {
+			// A route that is not served at all would make the comparison meaningless, so the handler is
+			// asserted to be there before the two readings are compared — inherited handlers included.
+			expect(typeof handlersOf(OrganizationPositionController)[route]).toBe('function');
+
+			// Read per field rather than against one class chain, because the routes no longer share one:
+			// the five writes state the permission guard of their own and the three reads do not, so a
+			// single class-wide comparison would either miss a field that widened the surface or drag
+			// every field up to the widest route's chain. The one addition is the gate on the endpoint
+			// itself, which no route carries because it is not a scope.
+			expect(guardsOfField(field).sort()).toEqual(
+				[...guardsOfRoute(OrganizationPositionController, route), FeatureFlagGuard].sort()
 			);
 		}
 	});
 
-	it('states no permission on the class, because the controller states none', () => {
+	it('states no permission on the class, where the controller states none of its own', () => {
+		// A permission on the class would gate every field, the reads included, and the reads mirror
+		// routes that demand none; the controller states its permissions one route at a time instead,
+		// which is why the fields that mirror those routes state theirs one field at a time.
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, OrganizationPositionController)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, OrganizationPositionResolver)).toBeUndefined();
 	});
 
-	it('states on every field the permission its own route runs under', () => {
-		const routes: Array<[string, string]> = [
-			['organizationPositions', 'findAll'],
-			['organizationPosition', 'findById'],
-			['organizationPositionCount', 'getCount'],
-			['createOrganizationPosition', 'create'],
-			['updateOrganizationPosition', 'update'],
-			['deleteOrganizationPosition', 'delete'],
-			['softDeleteOrganizationPosition', 'softRemove'],
-			['recoverOrganizationPosition', 'softRecover']
-		];
+	it('states on every field exactly what its own route states, read from the route', () => {
+		// Read from both surfaces rather than restated here: a table of permission names would agree with
+		// the resolver while disagreeing with the controller, which is the failure this half of the
+		// doctrine exists to catch. Five of these routes demand `ALL_ORG_EDIT`, so their fields must too
+		// — and a comparison of two absences proves nothing, which is what the control rules out.
+		expect(ROUTE_PARITY.some(({ route }) => permissionOfRoute(OrganizationPositionController, route))).toBe(true);
 
-		const stated = Object.fromEntries(routes.map(([field]) => [field, permissionOfField(field)]));
-		const expected = Object.fromEntries(
-			routes.map(([field, handler]) => [field, permissionOfRoute(OrganizationPositionController, handler)])
-		);
-
-		expect(stated).toEqual(expected);
-		for (const [, permission] of Object.entries(stated)) {
-			expect(permission).toBeUndefined();
+		for (const { field, route } of ROUTE_PARITY) {
+			expect(
+				Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(OrganizationPositionResolver)[field])
+			).toEqual(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(OrganizationPositionController)[route]));
+			expect(permissionOfField(field)).toEqual(permissionOfRoute(OrganizationPositionController, route));
 		}
 	});
 });

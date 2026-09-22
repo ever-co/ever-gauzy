@@ -12,7 +12,12 @@ import { FeatureFlag } from '@gauzy/common';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { ID as Id, ITrackingSessionResponse, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from '../../shared/decorators';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import {
+	EmployeeTrackedDataGuard,
+	FeatureFlagGuard,
+	PermissionGuard,
+	TenantPermissionGuard
+} from '../../shared/guards';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { CustomTrackingController } from './custom-tracking.controller';
 import { CustomTrackingService } from './custom-tracking.service';
@@ -82,6 +87,17 @@ const DEFAULT_ACTIVITY_THRESHOLD_MINUTES = 30;
  * own metadata states, which for this controller is its class-level triple, because no handler of it
  * overrides that.
  *
+ * **The tracked-data guard is the route's as well, and it is per route on both surfaces.** The four read
+ * routes state `EmployeeTrackedDataGuard`, which applies the organization's `allowEmployeeToSeeTrackedData`
+ * setting: a tracking session is who was tracked, when, and on what — screenshots, app usage and URL
+ * history — and that is the organization's to withhold from its own employees. The four reads below state
+ * the same guard, because a field that answered one without it would serve over this protocol a read the
+ * REST route refuses, which for tracked data is a privacy defect rather than a cosmetic mismatch. The two
+ * writes mirror the two routes that carry no such guard, and they carry none here either: recording is
+ * what produces tracked data, so gating it would stop the tracker rather than protect anyone.
+ * `EmployeeTrackedDataGuard` injects only the global `DataSource`, which `TypeOrmCoreModule` exports to
+ * every module, so this module can construct it as it constructs the three guards above.
+ *
  * **Every read here is a computed answer rather than a resource list**, which is why there is no connection
  * on this surface: a session is recovered by decoding the documents the writes stored, and the rows that
  * are stored belong to the slot domain. The module comment in `custom-tracking.api.gql` states the
@@ -140,6 +156,7 @@ export class CustomTrackingResolver {
 	 */
 	@Query('trackingSessions')
 	@Permissions(...CUSTOM_TRACKING_PERMISSIONS)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async trackingSessions(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -175,6 +192,7 @@ export class CustomTrackingResolver {
 	 */
 	@Query('timeSlotTrackingData')
 	@Permissions(...CUSTOM_TRACKING_PERMISSIONS)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeSlotTrackingData(@Args('timeSlotId', { type: () => ID }) timeSlotId: Id) {
 		try {
 			return await this.customTrackingService.getTimeSlotTrackingData(timeSlotId);
@@ -198,6 +216,7 @@ export class CustomTrackingResolver {
 	 */
 	@Query('trackingSessionsBySessionId')
 	@Permissions(...CUSTOM_TRACKING_PERMISSIONS)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async trackingSessionsBySessionId(
 		@Args('sessionId', { type: () => String }) sessionId: string,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -224,6 +243,7 @@ export class CustomTrackingResolver {
 	 */
 	@Query('activeTrackingSessions')
 	@Permissions(...CUSTOM_TRACKING_PERMISSIONS)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async activeTrackingSessions(
 		@Args('employeeId', { type: () => ID, nullable: true }) employeeId?: Id,
 		@Args('activityThresholdMinutes', { type: () => Int, nullable: true }) activityThresholdMinutes?: number

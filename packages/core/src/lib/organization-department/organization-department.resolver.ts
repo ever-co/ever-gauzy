@@ -100,13 +100,19 @@ const ORGANIZATION_DEPARTMENT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * the same command, that the `/api/organization-department` routes reach — including the six whose
  * routes the controller inherits from the CRUD base rather than declaring.
  *
- * **The guard chain is the controller's, and no permission is stated above it.** The delivered
- * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` on the class
- * at all, so its routes are tenant-guarded and otherwise unpermissioned, and the class here carries
- * the same tenant guard and nothing more. The one field that does state a permission is the employee
- * assignment, whose route states `@UseGuards(PermissionGuard)` and `@Permissions(ORG_EMPLOYEES_EDIT)`
- * of its own; the field restates exactly that pair beside the class's guard, which is what makes the
- * two surfaces one scope rather than two.
+ * **The guard chain and the permission are the controller's, field by field.** The delivered
+ * controller carries `TenantPermissionGuard` on the class and states `PermissionGuard` with a
+ * permission on six of the routes this surface mirrors rather than on the class — the create, the
+ * edit, the employee assignment, the removal, the soft removal and the recovery — so this resolver
+ * carries the tenant guard on the class and restates exactly that pair on exactly those six fields.
+ * Without it the GraphQL surface would serve a caller the REST route refuses: any authenticated
+ * member of the tenant could file, rewrite, remove, withdraw or restore a department here while the
+ * route each field mirrors demands `ALL_ORG_EDIT` (or `ORG_EMPLOYEES_EDIT`), which is one capability
+ * decided two different ways with this surface as the permissive one. The class states no permission
+ * of its own, because one there would gate the reads as well — and the reads, the list, the node, the
+ * count and the employee read, are served to any member of the tenant on both protocols, so their
+ * fields state nothing. A field that demanded a permission its route does not would refuse a caller
+ * that route serves, which is the same defect read the other way round.
  *
  * **The employee read is a root field of its own rather than a filter on the connection.** The read
  * behind it joins the department-member pivot the list read does not, so a `members` filter on the
@@ -238,8 +244,16 @@ export class OrganizationDepartmentResolver {
 	 * The payload is the input as the schema states it, mapped onto the relations this row owns. The
 	 * tenant is stamped from the credential by the service and is never a member here: there is no way
 	 * for a caller to file a department into a tenant it is not acting in.
+	 *
+	 * The route overrides the inherited `CrudController.create()` for no other reason than to attach
+	 * `@UseGuards(PermissionGuard)` and `@Permissions(ALL_ORG_EDIT, ORG_EMPLOYEES_EDIT)`: filing a
+	 * department is an administrative act, and `PermissionGuard` authorizes any handler that asks for
+	 * no permission, so the inherited route was reachable by every member of the tenant until it was
+	 * gated. The field states the same pair, or this mutation would be that way round again.
 	 */
 	@Mutation('createOrganizationDepartment')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async createOrganizationDepartment(
 		@Args('input') input: ICreateOrganizationDepartmentInput
 	): Promise<OrganizationDepartment> {
@@ -255,8 +269,15 @@ export class OrganizationDepartmentResolver {
 	 * itself has: `:id` names the row and the body carries the facts. The handler writes through the
 	 * create path with the identifier merged in, so a member the caller leaves out is left as it is
 	 * and the answer is the row as it now stands.
+	 *
+	 * The route states `@UseGuards(PermissionGuard)` with `ALL_ORG_EDIT, ORG_EMPLOYEES_EDIT`, and the
+	 * field states the same pair: rewriting a department's name or its people is the same
+	 * administrative act as filing one, and an ungated mutation here would let a caller the edit route
+	 * refuses rewrite the row through the other protocol.
 	 */
 	@Mutation('updateOrganizationDepartment')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async updateOrganizationDepartment(
 		@Args('input') input: IUpdateOrganizationDepartmentInput
 	): Promise<OrganizationDepartment> {
@@ -302,10 +323,15 @@ export class OrganizationDepartmentResolver {
 	/**
 	 * Removes a department outright.
 	 *
-	 * No permission is stated because the delivered route states none: the removal is inherited from
-	 * the CRUD base, where the controller's tenant guard is the whole of its scope.
+	 * The route overrides the inherited `CrudController.delete()` only to attach the gate, and states
+	 * `@UseGuards(PermissionGuard)` with `ALL_ORG_EDIT, ORG_EMPLOYEES_EDIT`; the field states the same
+	 * pair. An ungated removal here would be the way around that route for a caller who may not delete
+	 * a department — and the pivot rows that point at the department are removed with it, so the act
+	 * the route refuses is not one this surface may serve on the caller's behalf.
 	 */
 	@Mutation('deleteOrganizationDepartment')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async deleteOrganizationDepartment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.organizationDepartmentService.delete(id);
 
@@ -315,8 +341,15 @@ export class OrganizationDepartmentResolver {
 	/**
 	 * Withdraws a department: the row is marked rather than removed, and the people filed under it keep
 	 * pointing at it.
+	 *
+	 * Withdrawal is a removal as far as authority goes, and the route — an override of the inherited
+	 * `CrudController.softRemove()` that exists to attach the gate — states `@UseGuards(PermissionGuard)`
+	 * with `ALL_ORG_EDIT, ORG_EMPLOYEES_EDIT`. The field states the same pair: a department hidden from
+	 * every list by a caller the route refuses is the same act as deleting it, only quieter.
 	 */
 	@Mutation('softDeleteOrganizationDepartment')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async softDeleteOrganizationDepartment(
 		@Args('id', { type: () => ID }) id: Id
 	): Promise<OrganizationDepartment> {
@@ -325,8 +358,15 @@ export class OrganizationDepartmentResolver {
 
 	/**
 	 * Puts a withdrawn department back, clearing the marker the withdrawal set.
+	 *
+	 * The route — an override of the inherited `CrudController.softRecover()` that exists to attach the
+	 * gate — states `@UseGuards(PermissionGuard)` with `ALL_ORG_EDIT, ORG_EMPLOYEES_EDIT`, and the field
+	 * states the same pair. Restoring is what undoes the withdrawal above, so a caller the withdrawal
+	 * route refuses must not be able to reverse one here either.
 	 */
 	@Mutation('recoverOrganizationDepartment')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async recoverOrganizationDepartment(
 		@Args('id', { type: () => ID }) id: Id
 	): Promise<OrganizationDepartment> {

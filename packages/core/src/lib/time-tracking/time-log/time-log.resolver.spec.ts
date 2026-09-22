@@ -16,6 +16,7 @@ import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../../api/cursor';
 import { RequestContext } from '../../core/context';
 import {
+	EmployeeTrackedDataGuard,
 	FeatureFlagGuard,
 	OrganizationPermissionGuard,
 	PermissionGuard,
@@ -46,7 +47,9 @@ import { IGetConflictTimeLogCommand } from './commands';
  * - **the guard chain is the controller's and every field's permission is its own route's** — read
  *   from the controller's metadata rather than restated here. The class carries `TenantBaseGuard`,
  *   which is the guard the delivered controller carries and deliberately **not** `TenantPermissionGuard`
- *   — the two are different guards and only one of them is the route's;
+ *   — the two are different guards and only one of them is the route's — and the nine reads whose routes
+ *   carry `EmployeeTrackedDataGuard`, the guard behind the `allowEmployeeToSeeTrackedData` setting, carry
+ *   it on the field exactly where their routes carry it on the handler;
  * - **the three writes carry the guard and the permission their handlers state**, which are not the
  *   class's: each adds `OrganizationPermissionGuard` and one `ALLOW_*` permission, and a field that
  *   inherited the class grant instead would let a caller record time it may not record;
@@ -1552,8 +1555,12 @@ describe('TimeLogResolver — the guard stack and the permission are the route�
 		}
 	});
 
-	it('leaves every read under the class grant, because not one read handler states its own', () => {
-		for (const route of [
+	it('leaves every read under the class grant, and under exactly the guard its own route states', () => {
+		// Which field mirrors which route is read from the table above rather than written out a second
+		// time here: a second copy of the pairing could agree with this file while disagreeing with the
+		// resolver, which is the one thing this comparison exists to catch.
+		const fieldOfRoute = new Map(ROUTE_PARITY.map(({ field, route }) => [route, field]));
+		const reads = [
 			'getLogs',
 			'findById',
 			'getConflict',
@@ -1565,10 +1572,28 @@ describe('TimeLogResolver — the guard stack and the permission are the route�
 			'getTimeLimitReport',
 			'getProjectBudgetLimit',
 			'clientBudgetLimit'
-		]) {
+		];
+
+		for (const route of reads) {
+			// Not one read handler states a permission of its own, on either surface, so every read runs
+			// under the class grant the assertions below read.
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(TimeLogController)[route])).toBeUndefined();
-			expect(Reflect.getMetadata('__guards__', handlersOf(TimeLogController)[route])).toBeUndefined();
+			// A read's own guard is its route's own, compared from the two surfaces rather than restated:
+			// nine of these routes carry `EmployeeTrackedDataGuard`, which is how the organization setting
+			// `allowEmployeeToSeeTrackedData` hides an employee's tracked data — who worked, when, on what —
+			// and the two the desktop timer needs, `findById` for its offline sync and `getConflict` for the
+			// overlap check while time is recorded, carry none. A field that skipped the guard its route
+			// states would answer that caller the same tracked hours over this protocol.
+			expect(
+				Reflect.getMetadata('__guards__', fieldsOf(TimeLogResolver)[fieldOfRoute.get(route) as string])
+			).toEqual(Reflect.getMetadata('__guards__', handlersOf(TimeLogController)[route]));
 		}
+
+		// A control, because the comparison above would also hold if both surfaces stated nothing: nine of
+		// these eleven reads state the tracked-data guard, so it is not comparing two absences.
+		expect(
+			reads.filter((route) => guardsOfRoute(TimeLogController, route).includes(EmployeeTrackedDataGuard))
+		).toHaveLength(9);
 
 		expect(permissionOfField('timeLogs')).toEqual([
 			PermissionsEnum.TIME_TRACKER,

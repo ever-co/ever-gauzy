@@ -35,9 +35,9 @@ import {
  * - every field reaches the same service method, or dispatches the same command, that the REST route
  *   reaches, so a client does not choose a better surface by choosing a protocol;
  * - **the guard chain is the controller's and every field states the permission its own route runs
- *   under** — and because the controller states no class-level permission at all, that parity is the
- *   absence of a permission on every field except the employee assignment, which states the one its
- *   own route states;
+ *   under** — and because the controller states no permission on the class, that parity is the
+ *   controller's per-route pair restated on exactly the six fields whose routes state it, and nothing
+ *   at all on the four reads whose routes state nothing;
  * - the columns the delivered reads can produce are what the object type carries, and the three
  *   many-to-many pivots are neither members nor filters because the list read joins none of them;
  * - the paginated spelling of the list folds into the connection and contributes no root field, and
@@ -727,24 +727,51 @@ describe('OrganizationDepartmentResolver — the guard stack is the controller�
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(OrganizationDepartmentController, route));
 	});
 
-	it('permits the reads and the lifecycle pair exactly as far as their routes do, and no further', () => {
+	it('permits the four reads exactly as far as their routes do, and no further', () => {
 		const proto = fieldsOf(OrganizationDepartmentResolver);
 
-		// The list, the node read, the count, the employee read and the two lifecycle moves are
-		// delivered without a permission — the lifecycle pair is inherited from the CRUD base, where
-		// the controller's tenant guard is the whole of its scope. A resolver that demanded one here
-		// would refuse a caller the REST route serves.
+		// The list, the node read, the count and the employee read are delivered without a permission
+		// — the controller states none on the class and none on those four routes — so their fields
+		// state none either and add no guard of their own. A resolver that demanded one here would
+		// refuse a caller the REST route serves, which is the same defect as an ungated write read the
+		// other way round. The route side is read rather than assumed, so an upstream change that gates
+		// one of these reads fails here instead of leaving the field quietly more permissive than it.
 		for (const field of [
 			'organizationDepartments',
 			'organizationDepartment',
 			'organizationDepartmentCount',
-			'organizationDepartmentsByEmployee',
+			'organizationDepartmentsByEmployee'
+		]) {
+			const entry = ROUTE_PARITY.find((candidate) => candidate.field === field) as { route: string };
+
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toBeUndefined();
+			expect(Reflect.getMetadata('__guards__', proto[field])).toBeUndefined();
+			expect(permissionOfRoute(OrganizationDepartmentController, entry.route)).toBeUndefined();
+			expect(guardsOfRoute(OrganizationDepartmentController, entry.route)).toEqual([TenantPermissionGuard]);
+		}
+	});
+
+	it('holds the lifecycle pair to the pair its own routes state, which is the one the writes carry', () => {
+		const proto = fieldsOf(OrganizationDepartmentResolver);
+		const pair = [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT];
+
+		// This test used to assert the opposite — that the three lifecycle fields state no permission —
+		// because the controller inherited `delete`, `softRemove` and `softRecover` from the CRUD base,
+		// whose handlers state none. It now overrides all three for no other reason than to attach
+		// `@UseGuards(PermissionGuard)` with this pair, so a field left unpermissioned here is a way to
+		// remove, withdraw or restore a department that the route refuses. The route side is read first
+		// so the comparison below cannot pass on the two surfaces being empty together.
+		for (const route of ['delete', 'softRemove', 'softRecover']) {
+			expect(permissionOfRoute(OrganizationDepartmentController, route)).toEqual(pair);
+		}
+
+		for (const field of [
 			'deleteOrganizationDepartment',
 			'softDeleteOrganizationDepartment',
 			'recoverOrganizationDepartment'
 		]) {
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toBeUndefined();
-			expect(Reflect.getMetadata('__guards__', proto[field])).toBeUndefined();
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toEqual(pair);
+			expect(Reflect.getMetadata('__guards__', proto[field])).toEqual([PermissionGuard]);
 		}
 	});
 
@@ -760,10 +787,16 @@ describe('OrganizationDepartmentResolver — the guard stack is the controller�
 		expect(Reflect.getMetadata('__guards__', proto['updateOrganizationDepartmentByEmployee'])).toEqual([
 			PermissionGuard
 		]);
-		// The two writes that carry no permission of their own are not given this one: the resource's
-		// own edit is unpermissioned on both surfaces.
+		// The two writes that mirror the resource's own edit routes are not given the employee
+		// permission: their routes admit either `ALL_ORG_EDIT` or `ORG_EMPLOYEES_EDIT`, so a field that
+		// carried the employee permission alone would refuse a caller holding only the organisation-wide
+		// one whom the route serves — two scopes for one concept, which is what the two-protocol rule
+		// forbids.
 		for (const field of ['createOrganizationDepartment', 'updateOrganizationDepartment']) {
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toBeUndefined();
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toEqual([
+				PermissionsEnum.ALL_ORG_EDIT,
+				PermissionsEnum.ORG_EMPLOYEES_EDIT
+			]);
 		}
 	});
 

@@ -20,7 +20,12 @@ import {
 } from '@gauzy/contracts';
 import { FeatureFlag } from '@gauzy/common';
 import { Permissions } from '../../shared/decorators';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import {
+	EmployeeTrackedDataGuard,
+	FeatureFlagGuard,
+	PermissionGuard,
+	TenantPermissionGuard
+} from '../../shared/guards';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { StatisticService } from './statistic.service';
 
@@ -58,6 +63,19 @@ export interface ITimeTrackingActivityLevel {
  * states a permission of its own — so every route runs under that list, and every field below states
  * it. A caller that may read the dashboard over REST is therefore the caller that may read it here,
  * and no field is narrower or wider than the route it mirrors.
+ *
+ * **The tracked-data guard is the route's as well, and it is per route on both surfaces.** Six of the
+ * seven routes below state `EmployeeTrackedDataGuard`, which applies the organization's
+ * `allowEmployeeToSeeTrackedData` setting: who was tracked, when, and on what is the organization's to
+ * withhold from its own employees. A field that answered that without the guard would serve over this
+ * protocol a read the REST route refuses — the same capability decided two ways with GraphQL as the
+ * permissive side, which for tracked data is a privacy defect rather than a cosmetic mismatch. The
+ * guard is therefore stated on each of those six fields rather than on the class, because the seventh
+ * route — the desktop timer's task picker, `POST /tasks` — deliberately carries none, and a
+ * class-level guard here would refuse `timeTrackingTasks` a read its route serves.
+ * `EmployeeTrackedDataGuard` injects only the global `DataSource`, which `TypeOrmCoreModule` exports
+ * to every module, so the module that declares this resolver can construct it as it constructs the
+ * three guards above.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -103,6 +121,7 @@ export class StatisticResolver {
 		PermissionsEnum.ALL_ORG_EDIT,
 		PermissionsEnum.ALL_ORG_VIEW
 	)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeTrackingCounts(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -153,6 +172,7 @@ export class StatisticResolver {
 		PermissionsEnum.ALL_ORG_EDIT,
 		PermissionsEnum.ALL_ORG_VIEW
 	)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeTrackingMembers(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -194,6 +214,7 @@ export class StatisticResolver {
 		PermissionsEnum.ALL_ORG_EDIT,
 		PermissionsEnum.ALL_ORG_VIEW
 	)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeTrackingProjects(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -233,6 +254,12 @@ export class StatisticResolver {
 	 * tasks of the whole history, which is the route's default as well. An absent `unitOfTime` is the
 	 * read's own `week` for the range and its own `day` for the today figures, so this field substitutes
 	 * neither.
+	 *
+	 * **This is the one field of the seven that carries no `EmployeeTrackedDataGuard`, because it
+	 * mirrors the one route of the seven that carries none.** The task picker of the desktop timer needs
+	 * this read to start tracking, so gating it would refuse a caller a read its route serves — which is
+	 * the failure the guard's per-route placement on both surfaces exists to avoid, not one it is meant
+	 * to cause.
 	 */
 	@Query('timeTrackingTasks')
 	@Permissions(
@@ -295,6 +322,7 @@ export class StatisticResolver {
 		PermissionsEnum.ALL_ORG_EDIT,
 		PermissionsEnum.ALL_ORG_VIEW
 	)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeTrackingManualTimes(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -335,6 +363,7 @@ export class StatisticResolver {
 		PermissionsEnum.ALL_ORG_EDIT,
 		PermissionsEnum.ALL_ORG_VIEW
 	)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeTrackingTimeSlots(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
@@ -374,6 +403,7 @@ export class StatisticResolver {
 		PermissionsEnum.ALL_ORG_EDIT,
 		PermissionsEnum.ALL_ORG_VIEW
 	)
+	@UseGuards(EmployeeTrackedDataGuard)
 	async timeTrackingActivities(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
 		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,

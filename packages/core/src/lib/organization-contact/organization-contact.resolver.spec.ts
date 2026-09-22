@@ -673,22 +673,45 @@ describe('OrganizationContactResolver — the guard stack is the controller’s,
 		]);
 	});
 
-	it('permits the reads and the lifecycle pair exactly as far as their routes do, and no further', () => {
+	it('permits the node read and the employee look-up exactly as far as their routes do, and no further', () => {
 		const proto = fieldsOf(OrganizationContactResolver);
 
-		// The node read, the employee look-up and the two lifecycle moves are delivered without a
-		// permission of their own — the lifecycle pair is inherited from the CRUD base, where the
-		// controller's tenant guard is the whole of its scope. A resolver that demanded one here would
-		// refuse a caller the REST route serves.
+		// The node read and the employee look-up are delivered without a permission — the controller
+		// states none on the class and none on either route — so the fields mirroring them state none
+		// either and add no guard of their own. A resolver that demanded one here would refuse a caller
+		// the REST route serves. The route side is read rather than assumed, so an upstream change that
+		// gates one of these reads fails here instead of leaving the field quietly more permissive.
+		for (const field of ['organizationContact', 'organizationContactsByEmployee']) {
+			const entry = ROUTE_PARITY.find((candidate) => candidate.field === field) as { route: string };
+
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toBeUndefined();
+			expect(Reflect.getMetadata('__guards__', proto[field])).toBeUndefined();
+			expect(permissionOfRoute(OrganizationContactController, entry.route)).toBeUndefined();
+			expect(guardsOfRoute(OrganizationContactController, entry.route)).toEqual([TenantPermissionGuard]);
+		}
+	});
+
+	it('holds the lifecycle trio to the permission its own routes state, which is the resource’s edit permission', () => {
+		const proto = fieldsOf(OrganizationContactResolver);
+
+		// This test used to assert the opposite — that the three lifecycle fields state no permission —
+		// because the controller inherited `delete`, `softRemove` and `softRecover` from the CRUD base,
+		// whose handlers state none. It now overrides all three for no other reason than to attach
+		// `@UseGuards(PermissionGuard)` with `ORG_CONTACT_EDIT` (GHSA-v79w-54p2-wmh5), so a field left
+		// unpermissioned here is a way to remove, withdraw or restore a party that the route refuses.
+		// The route side is read first so the comparison below cannot pass on the two surfaces being
+		// empty together.
+		for (const route of ['delete', 'softRemove', 'softRecover']) {
+			expect(permissionOfRoute(OrganizationContactController, route)).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
+		}
+
 		for (const field of [
-			'organizationContact',
-			'organizationContactsByEmployee',
 			'deleteOrganizationContact',
 			'softDeleteOrganizationContact',
 			'recoverOrganizationContact'
 		]) {
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toBeUndefined();
-			expect(Reflect.getMetadata('__guards__', proto[field])).toBeUndefined();
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
+			expect(Reflect.getMetadata('__guards__', proto[field])).toEqual([PermissionGuard]);
 		}
 	});
 
