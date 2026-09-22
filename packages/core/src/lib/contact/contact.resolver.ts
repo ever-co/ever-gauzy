@@ -130,14 +130,15 @@ export class ContactResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Contact>> {
 		// The delivered list route hands the service the `where` and the `relations` its `data` query
 		// parameter carries. This surface has no query string to bind, so the read runs with no
 		// narrowing of its own — the tenant is applied to the criterion by the service, from the
 		// credential rather than from the caller — and the connection protocol's `filter` is applied to
 		// the rows it returns.
-		const { items }: IPagination<Contact> = await this.contactService.findAll();
+		const { items }: IPagination<Contact> = await this.contactService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<Contact>({
 			rows: items ?? [],

@@ -325,7 +325,7 @@ type Query {
   channel(id: ID!): Channel
 
   """The comments of the caller's tenant, newest first."""
-  comments(filter: CommentFilter, sort: [CommentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CommentConnection!
+  comments(filter: CommentFilter, sort: [CommentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CommentConnection!
 
   """One comment of the caller's tenant, or null when there is none."""
   comment(id: ID!): Comment
@@ -359,7 +359,7 @@ type Query {
   contactGroup(id: ID!): ContactGroup
 
   """The contacts of the caller's tenant, newest first."""
-  contacts(filter: ContactFilter, sort: [ContactSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ContactConnection!
+  contacts(filter: ContactFilter, sort: [ContactSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ContactConnection!
 
   """One contact of the caller's tenant, or null when there is none."""
   contact(id: ID!): Contact
@@ -376,15 +376,15 @@ type Query {
   contactCount: Int
 
   """The platform's country master, by ISO 3166-1 code."""
-  countries(filter: CountryFilter, sort: [CountrySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CountryConnection!
+  countries(filter: CountryFilter, sort: [CountrySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CountryConnection!
 
   """The platform's currency master, by ISO 4217 code."""
-  currencies(filter: CurrencyFilter, sort: [CurrencySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CurrencyConnection!
+  currencies(filter: CurrencyFilter, sort: [CurrencySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CurrencyConnection!
 
   """
   The SMTP configurations of the caller's tenant, the installation-wide one included.
   """
-  customSmtpSettings(filter: SmtpSettingFilter, sort: [SmtpSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): SmtpSettingConnection!
+  customSmtpSettings(filter: SmtpSettingFilter, sort: [SmtpSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): SmtpSettingConnection!
 
   """One SMTP configuration, or null when there is none."""
   customSmtpSetting(id: ID!): SmtpSetting
@@ -537,7 +537,7 @@ type Query {
   ): EmailTemplatePreview!
 
   """The appointments of the caller's tenant, newest first."""
-  employeeAppointments(filter: EmployeeAppointmentFilter, sort: [EmployeeAppointmentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeAppointmentConnection!
+  employeeAppointments(filter: EmployeeAppointmentFilter, sort: [EmployeeAppointmentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmployeeAppointmentConnection!
 
   """One appointment of the caller's tenant, or null when there is none."""
   employeeAppointment(id: ID!): EmployeeAppointment
@@ -565,7 +565,7 @@ type Query {
   When the caller states no sort, the order is the platform's own: newest first, then the identifier,
   because the delivered read states no order of its own and a cursor walk needs a total one.
   """
-  employeeAvailabilities(filter: EmployeeAvailabilityFilter, sort: [EmployeeAvailabilitySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeAvailabilityConnection!
+  employeeAvailabilities(filter: EmployeeAvailabilityFilter, sort: [EmployeeAvailabilitySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmployeeAvailabilityConnection!
 
   """
   One availability row of the caller's tenant, or null when there is none.
@@ -868,7 +868,7 @@ type Query {
   entitySubscriptionCount: Int
 
   """The sharing policies of the caller's organization, in name order."""
-  equipmentSharingPolicies(filter: EquipmentSharingPolicyFilter, sort: [EquipmentSharingPolicySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EquipmentSharingPolicyConnection!
+  equipmentSharingPolicies(filter: EquipmentSharingPolicyFilter, sort: [EquipmentSharingPolicySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EquipmentSharingPolicyConnection!
 
   """One policy of the caller's tenant, or null when there is none."""
   equipmentSharingPolicy(id: ID!): EquipmentSharingPolicy

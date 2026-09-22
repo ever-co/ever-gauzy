@@ -104,9 +104,10 @@ export class CountryResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Country>> {
-		const { items }: IPagination<Country> = await this.countryService.findAll();
+		const { items }: IPagination<Country> = await this.countryService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<Country>({
 			rows: items ?? [],

@@ -162,7 +162,8 @@ export class CommentResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Comment>> {
 		// The delivered list route binds `params` out of its query string and hands the service that
 		// object — its own narrowing and the relations its caller names. This surface has no query string
@@ -170,7 +171,7 @@ export class CommentResolver {
 		// is applied to the rows the service returns, so the read runs with the route's own defaults — no
 		// criterion and no joined collection. The tenant is applied to the criterion by the service, from
 		// the credential rather than from the caller.
-		const { items }: IPagination<Comment> = await this.commentService.findAll({} as BaseQueryDTO<Comment>);
+		const { items }: IPagination<Comment> = await this.commentService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<Comment>);
 
 		return buildConnection<Comment>({
 			rows: items ?? [],
