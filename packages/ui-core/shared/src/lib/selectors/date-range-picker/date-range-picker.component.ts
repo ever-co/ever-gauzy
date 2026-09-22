@@ -26,7 +26,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
-import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
+import { dayOfWeekAsString, selectUnitOfTime, shiftUTCtoLocal } from './date-picker.utils';
 import { DateRangeClicked, DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
 import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
@@ -305,29 +305,22 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					this.isLockDatePicker = isLockDatePicker;
 					this.isSingleDatePicker = isSingleDatePicker;
 
-					// The route config and the URL each carry a unit, and during a route
-					// transition they disagree: `route.queryParams` emits BEFORE NavigationEnd
-					// hands this picker the new route's config, so for one turn the OLD config
-					// is paired with the new URL. The picker's own derivation then wrote that
-					// stale unit back into the URL, where — because the URL used to outrank the
-					// route unconditionally — it beat every config that arrived afterwards. That
-					// is what left day-locked pages (Employees → Time & Activity) showing a
-					// single date in the input while WEEK was the selected range.
-					//
-					// A FRESH config wins, because the resolver has already folded the URL's
-					// `unit_of_time` into it (honouring it only on routes that let the user
-					// change the unit). BETWEEN resolutions the URL wins, which is the in-page
-					// case the query param exists for: the user picking a different range from
-					// the menu, or stepping back to it in history. Comparing against the current
-					// unit also drops this picker's own echo — the query param re-emitting the
-					// value it just wrote — instead of re-deriving and writing again.
+					// Reference equality: the config object is rebuilt once per route RESOLUTION,
+					// so this separates "a new route settled" from an organization or timezone
+					// re-emission of the same one. `selectUnitOfTime` holds the precedence rule
+					// and the reasoning behind it, and is unit-tested on its own.
 					const isNewRouteConfig = datePickerConfig !== this._appliedDatePickerConfig;
 					this._appliedDatePickerConfig = datePickerConfig;
 
-					if (isNewRouteConfig) {
-						this.unitOfTime = datePickerConfig.unitOfTime;
-					} else if (unitOfTimeFromQuery && unitOfTimeFromQuery !== this.unitOfTime) {
-						this.unitOfTime = unitOfTimeFromQuery;
+					const nextUnitOfTime = selectUnitOfTime({
+						isNewRouteConfig,
+						routeUnitOfTime: datePickerConfig.unitOfTime,
+						queryUnitOfTime: unitOfTimeFromQuery,
+						currentUnitOfTime: this.unitOfTime
+					});
+
+					if (nextUnitOfTime) {
+						this.unitOfTime = nextUnitOfTime;
 					}
 				}),
 				tap(() => {
