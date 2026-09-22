@@ -253,6 +253,21 @@ jobs:
         if: always()
         run: node tools/scripts/pr-trigger-check.mjs
 
+      # Two gates existed and neither ran here: a check nothing invokes is a check that measures nothing, and
+      # the GraphQL schema is exactly the surface those two guard (one composes it and proves every kernel type
+      # is declared once, the other compares it against the committed classification).
+      - name: The GraphQL schema composes, and is unchanged
+        if: always()
+        run: |
+          node tools/scripts/check-graphql-composition.js
+          node tools/scripts/check-graphql-schema.js
+
+      # And the wiring itself is checked, so the next gate cannot be added and left uninvoked. This one caught
+      # itself before it was added here, which is the proof that it reads what it claims to.
+      - name: Every gate is wired into this workflow
+        if: always()
+        run: node tools/scripts/gate-wiring-check.mjs
+
       # An event name is an API contract for subscribers and webhook receivers, and the doctrine spells
       # its aggregate segment the way the table it names is spelled. A name whose aggregate follows the
       # *package* spelling instead (`seller-offering.created`) names one concept two ways and cannot be
