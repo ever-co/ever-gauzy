@@ -35,6 +35,19 @@ const THAT_WEEK: [string, string] = ['2026-09-20', '2026-09-26'];
 const THAT_MONTH: [string, string] = ['2026-09-01', '2026-09-30'];
 
 describe('DateRangePickerResolver — the route owns the unit where the picker is locked', () => {
+	// The resolver reads the clock for any range the URL does not pin down, so the clock is frozen
+	// to the same instant the constants above describe. Comparing a resolver `moment()` against an
+	// expectation's separate `moment()` would disagree across a month or week boundary.
+	// Built from LOCAL parts (month is 0-indexed) so the calendar day is 2026-09-23 in every zone.
+	beforeAll(() => {
+		jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
+		jest.setSystemTime(new Date(2026, 8, 23, 12, 0, 0));
+	});
+
+	afterAll(() => {
+		jest.useRealTimers();
+	});
+
 	describe('locked routes ignore a unit_of_time carried over from the page the user came from', () => {
 		// The regression this guards: arriving on a day-locked page (Time & Activity, Screenshots,
 		// Dashboard -> Teams) from any week page resolved a WEEK range, so the input showed one
@@ -99,8 +112,7 @@ describe('DateRangePickerResolver — the route owns the unit where the picker i
 			const range = resolve({ unit_of_time: 'month' }, { unitOfTime: 'week' });
 
 			expect(range.unitOfTime).toBe('month');
-			expect(day(range.startDate)).toBe(moment().startOf('month').format('YYYY-MM-DD'));
-			expect(day(range.endDate)).toBe(moment().endOf('month').format('YYYY-MM-DD'));
+			expect([day(range.startDate), day(range.endDate)]).toEqual(THAT_MONTH);
 		});
 
 		it('preserves an explicit start and end, spanning whatever the user dragged', () => {
@@ -118,7 +130,29 @@ describe('DateRangePickerResolver — the route owns the unit where the picker i
 			const range = resolve({}, { unitOfTime: 'month' });
 
 			expect(range.unitOfTime).toBe('month');
-			expect(day(range.startDate)).toBe(moment().startOf('month').format('YYYY-MM-DD'));
+			expect([day(range.startDate), day(range.endDate)]).toEqual(THAT_MONTH);
+		});
+
+		// The dashboard widgets and the time-tracking page deep-link into the manual-time and
+		// apps-urls reports with only `date` + `date_end`. Those routes are unlocked `week`, so a
+		// range reported as not custom would have the arrows step a whole week instead of the span
+		// the caller handed over.
+		it('treats an explicit end date as custom when the URL carries no is_custom_date flag', () => {
+			const range = resolve({ date: '2026-09-07', date_end: '2026-09-10' }, { unitOfTime: 'week' });
+
+			expect(range.isCustomDate).toBe(true);
+			expect([day(range.startDate), day(range.endDate)]).toEqual(['2026-09-07', '2026-09-10']);
+		});
+
+		// ...but a flag that IS present wins, because the picker writes `date_end` for predefined
+		// ranges too. Reading the bare end date here would mark every reloaded week custom.
+		it('lets an explicit is_custom_date=false win over the end date the picker always writes', () => {
+			const range = resolve(
+				{ date: '2026-09-20', date_end: '2026-09-26', is_custom_date: 'false' },
+				{ unitOfTime: 'week' }
+			);
+
+			expect(range.isCustomDate).toBe(false);
 		});
 
 		it('completes a lone date to the end of the route unit', () => {
