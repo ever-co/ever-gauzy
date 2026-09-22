@@ -185,10 +185,11 @@ interface IFieldCase {
  * the service's own paged read, which is a query builder rather than `findAll`, so the stub that drives these
  * nine would be the wrong instrument for it.
  *
- * `withDeleted` is stated per case rather than assumed: it is declared by the fields whose read hands its
- * options to `findAll`, and `stockReservations` — the platform's own field rather than this wave's — does
- * not declare it. Asserting one shape for both would either read a declaration that is not there or stop
- * reading the ones that are.
+ * `withDeleted` is stated per case rather than assumed: every one of these fields now declares it, because the
+ * REST list route beside each of them inherits it from `BaseQueryDTO` and the connection has to offer the same
+ * visibility. It is still stated per case rather than asserted once, because a field that gained the argument
+ * without the read behind it is the failure this table exists to catch — `stockReservations` was the last to
+ * declare it, and its case was updated with the resolver rather than the assertion being loosened.
  */
 const CASES: IFieldCase[] = [
 	{
@@ -204,8 +205,10 @@ const CASES: IFieldCase[] = [
 		field: 'stockReservations',
 		resource: 'StockReservation',
 		build: (service, eventBus) => new StockReservationResolver(service, eventBus),
-		call: (resolver, page) => resolver.stockReservations('ORDER' as never, REFERENCE, 'ACTIVE' as never, page),
-		where: { referenceType: 'ORDER', referenceId: REFERENCE, status: 'ACTIVE' }
+		call: (resolver, page, withDeleted) =>
+			resolver.stockReservations('ORDER' as never, REFERENCE, 'ACTIVE' as never, page, withDeleted),
+		where: { referenceType: 'ORDER', referenceId: REFERENCE, status: 'ACTIVE' },
+		withDeleted: true
 	},
 	{
 		field: 'stockTransfers',
