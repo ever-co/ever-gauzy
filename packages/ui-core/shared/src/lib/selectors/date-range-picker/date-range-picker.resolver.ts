@@ -29,7 +29,7 @@ export const DateRangePickerResolver: ResolveFn<Observable<IDateRangePicker>> = 
 	route: ActivatedRouteSnapshot
 ): Observable<IDateRangePicker> => {
 	// Extract the date range picker configuration from the route query parameters
-	const { date, date_end, unit_of_time, is_custom_date = false } = route.queryParams;
+	const { date, date_end, unit_of_time, is_custom_date } = route.queryParams;
 
 	// The route's own picker configuration. Routes that declare no `datePicker` fall back to the
 	// defaults instead of throwing on a missing `unitOfTime`.
@@ -67,9 +67,16 @@ export const DateRangePickerResolver: ResolveFn<Observable<IDateRangePicker>> = 
 	// Calculate the end date based on the route query parameter or the start date
 	const endDate = date_end ? moment(date_end).endOf('day') : moment(startDate).endOf(unitOfTime);
 
-	// Determine if a custom date range is being used. The picker writes `date_end` on EVERY range
-	// it stores, predefined ones included, so the flag itself is the only reliable signal here.
-	const isCustomDate = parseToBoolean(is_custom_date);
+	// `is_custom_date` is authoritative WHEN PRESENT: the picker writes it alongside every
+	// `date_end` it stores, predefined ranges included, so letting a bare `date_end` override it
+	// would mark every reloaded week or month custom and make the arrows step by the span.
+	//
+	// When the flag is ABSENT the link came from somewhere else — the dashboard widgets and the
+	// time-tracking page deep-link into the manual-time and apps-urls reports with only `date` and
+	// `date_end` — and there an explicit end date is the one signal that the span belongs to the
+	// caller rather than to the route's unit, which is what the arrows need in order to step by
+	// that span instead of a whole week.
+	const isCustomDate = is_custom_date !== undefined ? parseToBoolean(is_custom_date) : !!date_end;
 
 	// Return an observable emitting the resolved date range picker configuration
 	return of({ startDate: startDate.toDate(), endDate: endDate.toDate(), isCustomDate, unitOfTime });
