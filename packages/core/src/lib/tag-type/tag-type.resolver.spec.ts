@@ -270,7 +270,7 @@ describe('TagTypeResolver — the connection contract', () => {
 
 		// The read is the one the REST list route performs, with the route's own defaults: this surface
 		// binds no query string, so the read is made with no options.
-		expect(tagTypeService.findAll).toHaveBeenCalledWith();
+		expect(tagTypeService.findAll).toHaveBeenCalledWith({});
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);

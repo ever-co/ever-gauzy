@@ -444,6 +444,7 @@ describe('EquipmentSharingResolver — the SDL declares the capabilities the RES
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 		expect(fieldArgs('Query', 'equipmentSharingsByOrganization')[0]).toBe('organizationId');
 		expect(fieldArgs('Query', 'equipmentSharingsByEmployee')[0]).toBe('employeeId');

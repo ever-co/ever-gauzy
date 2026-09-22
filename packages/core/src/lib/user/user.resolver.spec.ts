@@ -359,6 +359,7 @@ describe('UserResolver — the SDL declares the capabilities the REST routes ser
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 	});
 

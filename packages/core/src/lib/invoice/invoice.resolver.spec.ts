@@ -463,6 +463,7 @@ describe('InvoiceResolver — the SDL declares the capabilities the REST routes 
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 		expect(fieldArgs('Query', 'invoices')).not.toContain('relations');
 		// The count route binds its query string to the store's own `where`, which is a shape no schema

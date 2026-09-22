@@ -396,6 +396,7 @@ describe('DashboardWidgetResolver — the SDL declares the capabilities the REST
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 		// The count route passes its query string through as the store's own `where`, which this surface
 		// cannot hand to that call, so the count states no filter it could not honour.

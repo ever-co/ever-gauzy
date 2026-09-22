@@ -407,6 +407,7 @@ describe('EquipmentResolver — the SDL declares the capabilities the REST route
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 		// The count route binds its query string to the store's own `where`, which is a shape no schema
 		// can state, so the field states no narrowing of its own — and it is nullable, because a count is

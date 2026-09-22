@@ -362,6 +362,7 @@ describe('EmployeeNotificationResolver — the SDL declares the capabilities the
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 	});
 

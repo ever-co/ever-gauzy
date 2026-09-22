@@ -301,7 +301,7 @@ describe('CountryResolver — the connection contract', () => {
 		const connection = await resolver.countries(undefined, undefined, undefined, 20);
 
 		// The read is the route's own: no options, no relations and no narrowing it does not state.
-		expect(countryService.findAll).toHaveBeenCalledWith();
+		expect(countryService.findAll).toHaveBeenCalledWith({});
 		expect(connection.nodes).toHaveLength(4);
 		expect(connection.totalCount).toBe(4);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);

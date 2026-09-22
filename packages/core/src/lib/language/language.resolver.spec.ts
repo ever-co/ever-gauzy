@@ -217,7 +217,7 @@ describe('LanguageResolver — the connection contract', () => {
 
 		const connection = await resolver.languages(undefined, undefined, undefined, 20);
 
-		expect(languageService.findAll).toHaveBeenCalledWith();
+		expect(languageService.findAll).toHaveBeenCalledWith({});
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);
 		// The vocabulary's own order is by name, so English leads the page.

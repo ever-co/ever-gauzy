@@ -423,7 +423,7 @@ describe('TenantSettingResolver — the connection contract', () => {
 		const connection = await resolver.tenantSettings(undefined, undefined, undefined, 20);
 
 		// The read is the set the delivered paginated list route slices.
-		expect(tenantSettingService.findAll).toHaveBeenCalledWith();
+		expect(tenantSettingService.findAll).toHaveBeenCalledWith({});
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);

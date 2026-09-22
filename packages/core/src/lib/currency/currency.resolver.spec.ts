@@ -340,7 +340,7 @@ describe('CurrencyResolver — the connection contract', () => {
 		const connection = await resolver.currencies(undefined, undefined, undefined, 20);
 
 		// The read is the route's own: no options, no relations and no narrowing it does not state.
-		expect(currencyService.findAll).toHaveBeenCalledWith();
+		expect(currencyService.findAll).toHaveBeenCalledWith({});
 		expect(connection.nodes).toHaveLength(4);
 		expect(connection.totalCount).toBe(4);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);

@@ -276,6 +276,7 @@ describe('ContactResolver — the SDL declares the capabilities the REST routes 
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 	});
 
@@ -350,7 +351,7 @@ describe('ContactResolver — the connection contract', () => {
 
 		const connection = await resolver.contacts(undefined, undefined, undefined, 20);
 
-		expect(contactService.findAll).toHaveBeenCalledWith();
+		expect(contactService.findAll).toHaveBeenCalledWith({});
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);

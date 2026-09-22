@@ -360,6 +360,7 @@ describe('TimeOffPolicyResolver — the SDL declares the capabilities the REST r
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 	});
 

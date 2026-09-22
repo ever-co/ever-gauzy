@@ -405,7 +405,7 @@ describe('FeatureToggleResolver — the connection contract', () => {
 		const connection = await resolver.features(undefined, undefined, undefined, 20);
 
 		// The read is the one the REST list route performs.
-		expect(featureService.findAll).toHaveBeenCalledWith();
+		expect(featureService.findAll).toHaveBeenCalledWith({});
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);
@@ -474,7 +474,7 @@ describe('FeatureToggleResolver — the connection contract', () => {
 
 		const all = await resolver.featureToggles(undefined, undefined, undefined, 20);
 
-		expect(featureOrganizationService.findAll).toHaveBeenCalledWith();
+		expect(featureOrganizationService.findAll).toHaveBeenCalledWith({});
 		// Newest first by default, with the identifier as the tie-break.
 		expect(all.nodes.map((node) => node.id)).toEqual([ORGANIZATION_TOGGLE, ROOT_TOGGLE]);
 
@@ -529,14 +529,14 @@ describe('FeatureToggleResolver — one concept, two protocols, the same operati
 		const { resolver, featureService } = surfaces();
 
 		expect((await resolver.features()).totalCount).toBe(2);
-		expect(featureService.findAll).toHaveBeenCalledWith();
+		expect(featureService.findAll).toHaveBeenCalledWith({});
 	});
 
 	it('reads the toggle rows through the same service method the organizations route calls', async () => {
 		const { resolver, featureOrganizationService } = surfaces();
 
 		expect((await resolver.featureToggles()).totalCount).toBe(2);
-		expect(featureOrganizationService.findAll).toHaveBeenCalledWith();
+		expect(featureOrganizationService.findAll).toHaveBeenCalledWith({});
 	});
 
 	it('answers the provider’s definitions narrowed to the codes this installation knows', async () => {

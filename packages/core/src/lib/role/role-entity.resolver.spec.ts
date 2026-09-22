@@ -345,6 +345,7 @@ describe('RoleEntityResolver — the SDL declares the capabilities the REST rout
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 		// The count route passes its query string through as the store's own `where`, which this
 		// surface cannot hand to that call, so the count states no narrowing it could not honour.
@@ -362,7 +363,7 @@ describe('RoleEntityResolver — the connection contract', () => {
 
 		// The read is the one the REST list route performs, with no criterion of its own — the tenant is
 		// applied to it by the service, from the credential.
-		expect(roleService.findAll).toHaveBeenCalledWith();
+		expect(roleService.findAll).toHaveBeenCalledWith({});
 		expect(connection.nodes).toHaveLength(3);
 		expect(connection.totalCount).toBe(3);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);

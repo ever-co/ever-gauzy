@@ -356,6 +356,7 @@ describe('AppointmentEmployeesResolver — the SDL declares the capabilities the
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 	});
 

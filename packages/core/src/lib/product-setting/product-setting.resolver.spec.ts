@@ -286,7 +286,7 @@ describe('ProductVariantSettingResolver — the connection contract', () => {
 
 		const connection = await resolver.productVariantSettings(undefined, undefined, undefined, 20);
 
-		expect(productVariantSettingService.findAll).toHaveBeenCalledWith();
+		expect(productVariantSettingService.findAll).toHaveBeenCalledWith({});
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);

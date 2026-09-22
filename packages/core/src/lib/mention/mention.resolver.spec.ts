@@ -390,6 +390,7 @@ describe('MentionResolver — the SDL declares the capabilities the REST routes 
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 	});
 

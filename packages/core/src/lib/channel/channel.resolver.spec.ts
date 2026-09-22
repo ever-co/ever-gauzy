@@ -186,7 +186,7 @@ describe('ChannelResolver — the connection contract (§7.1, §7.2)', () => {
 
 		const connection = await resolver.channels(undefined, undefined, undefined, 20);
 
-		expect(channelService.listChannels).toHaveBeenCalledWith();
+		expect(channelService.listChannels).toHaveBeenCalledWith({});
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);

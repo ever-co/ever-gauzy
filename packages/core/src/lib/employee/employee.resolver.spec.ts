@@ -420,6 +420,7 @@ describe('EmployeeResolver — the SDL declares the capabilities the REST routes
 			'before',
 			'limit',
 			'offset'
+			'withDeleted',
 		]);
 		expect(fieldArgs('Query', 'workingEmployees')).toEqual([
 			'organizationId',
